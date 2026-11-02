@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJECT_DIR="/Users/mrl2_bolonhini/heimdal-ai"
+PROJECT_DIR="/Users/mrl2_bolonhini/heimdall-ai"
 cd "$PROJECT_DIR" || exit 1
 
 VENV_PYTHON="$PROJECT_DIR/venv/bin/python"
