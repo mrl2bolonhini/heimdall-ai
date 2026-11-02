@@ -1,0 +1,48 @@
+model_list:
+  - model_name: qwen-3.8-uncensored
+    litellm_params:
+      model: ollama/eriktonon/qwen3.8-uncensored:9b
+      api_base: http://localhost:11434
+
+  - model_name: gemma-4-uncensored
+    litellm_params:
+      model: ollama/eriktonon/gemma4-uncensored
+      api_base: http://localhost:11434
+
+  - model_name: dolphin3-cyber-8b
+    litellm_params:
+      model: ollama/mparvin/dolphin3-cyber-8b-gguf:q8_0
+      api_base: http://localhost:11434
+
+  - model_name: wizard-vicuna-uncensored:13b
+    litellm_params:
+      model: ollama/wizard-vicuna-uncensored:13b
+      api_base: http://localhost:11434
+
+  - model_name: deepseek-coder-v2:16b
+    litellm_params:
+      model: ollama/deepseek-coder-v2:16b
+      api_base: http://localhost:11434
+
+  - model_name: mistral-nemo-thinking
+    litellm_params:
+      model: ollama/hf.co/mradermacher/Mistral-Nemo-Inst-2407-12B-Thinking-Uncensored-HERETIC-HI-Claude-Opus-GGUF:Q4_K_M
+      api_base: http://localhost:11434
+
+  - model_name: llama3.2-vision
+    litellm_params:
+      model: ollama/llama3.2-vision
+      api_base: http://localhost:11434
+
+  - model_name: bonsai-27b
+    litellm_params:
+      model: ollama/eriktonon/bonsai-2-uncensored:27b
+      api_base: http://localhost:11434
+
+mcp_servers:
+  StudioMacLocalHub:
+    url: http://localhost:8000/messages
+    transport: http
+
+general_settings:
+  master_key: sk-123456
