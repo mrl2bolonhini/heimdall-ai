@@ -1,0 +1,188 @@
+{
+  "id": "hdAwsDiario0001",
+  "name": "Heimdall: resumo diário da AWS para dados",
+  "active": false,
+  "nodes": [
+    {
+      "id": "tododias8h870",
+      "name": "Todo dia às 8h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "novidadesdaaws994",
+      "name": "Novidades da AWS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
+      }
+    },
+    {
+      "id": "filtrarserviosdedado546",
+      "name": "Filtrar serviços de dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const limite = Date.now() - 36 * 3600 * 1000;\nconst kw = /\\b(glue|redshift|athena|s3|kinesis|emr|lake formation|dynamodb|datazone|quicksight|msk|opensearch|aurora|rds|dms|firehose)\\b/i;\nconst itens = $input.all().map(i => i.json).filter(j => {\n  const d = Date.parse(j.isoDate || j.pubDate || '');\n  const recente = isNaN(d) ? true : d >= limite;\n  return recente && kw.test(String(j.title || '') + ' ' + String(j.contentSnippet || ''));\n}).slice(0, 8);\nif (itens.length === 0) return [];\nconst lista = itens.map((j, n) => (n + 1) + '. ' + j.title + ' - ' + String(j.contentSnippet || '').slice(0, 300)).join('\\n');\nreturn [{ json: { total: itens.length, prompt: lista } }];"
+      }
+    },
+    {
+      "id": "resumiremportugus396",
+      "name": "Resumir em português",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:9000/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __LITELLM_KEY__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: '__MODELO__', temperature: 0.3, max_tokens: 700, stream: false, messages: [ { role: 'system', content: 'Você escreve em português do Brasil, de forma clara e direta, sem enfeites e sem inventar nada além do texto recebido.' }, { role: 'user', content: 'Resuma em até 6 linhas, em português, as novidades da AWS abaixo, destacando o que importa para quem trabalha com engenharia de dados.\\n\\n' + $json.prompt } ] }) }}",
+        "options": {
+          "timeout": 600000
+        }
+      }
+    },
+    {
+      "id": "enviaraoiphone700",
+      "name": "Enviar ao iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'Novidades da AWS para dados', body: String($json.choices[0].message.content).slice(0, 1500), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "executaragora763",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Todo dia às 8h": {
+      "main": [
+        [
+          {
+            "node": "Novidades da AWS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Novidades da AWS": {
+      "main": [
+        [
+          {
+            "node": "Filtrar serviços de dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar serviços de dados": {
+      "main": [
+        [
+          {
+            "node": "Resumir em português",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumir em português": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Novidades da AWS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  }
+}

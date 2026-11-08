@@ -1,0 +1,138 @@
+AUTOMAÇÕES AVANÇADAS DO HEIMDALL-AI
+===================================
+
+Conteúdo do pacote (tudo vai para a pasta ~/heimdall-ai, por cima dos arquivos atuais):
+1. heimdall_agente.py: agente do Mac. Ponte entre o n8n (no Docker) e o app Notas. Só usa a biblioteca padrão do Python.
+2. start_heimdall.sh: versão atualizada. Sobe o agente sozinho quando HEIMDALL_AGENTE_TOKEN existe no .env (ou com --agente).
+3. instalar_automacoes_avancadas.sh: instala os três fluxos no n8n e confere as dependências.
+4. instalar_hook_gitops.sh: liga um repositório git ao GitOps (instala o gancho pre-push).
+5. n8n_flows_avancados/: os fluxos (6 GitOps, 7 Digest, 8 Second Brain, 9 aviso de falha do GitOps).
+
+PASSO A PASSO
+-------------
+1. Copie os arquivos e dê permissão de execução:
+   unzip -o ~/Downloads/automacoes_avancadas.zip -d ~/heimdall-ai
+   cd ~/heimdall-ai
+   chmod +x start_heimdall.sh instalar_automacoes_avancadas.sh instalar_hook_gitops.sh
+
+2. Garanta o modelo de embeddings (uma vez): ollama pull nomic-embed-text
+
+3. Teste o acesso ao app Notas (uma vez). O macOS vai pedir permissão para o Terminal controlar o app Notas;
+   com o VoiceOver, o alerta recebe o foco sozinho: aperte Tab até "Permitir" (ou "OK") e Espaço.
+   python3 heimdall_agente.py --teste
+   O teste mostra quantas notas existem e lista as alteradas nas últimas 24 horas.
+
+4. Instale os fluxos (pede a chave do Bark, o token do GitHub e os repositórios, tudo com digitação oculta):
+   bash instalar_automacoes_avancadas.sh
+   Para o GitHub, crie um token "fine-grained" em github.com/settings/personal-access-tokens, limitado aos
+   repositórios escolhidos, com Contents e Pull requests em "Read and write". Aperte Enter sem colar nada para pular o GitOps.
+
+5. Reinicie o ecossistema para o agente subir com o token novo:
+   nohup bash start_heimdall.sh > heimdall.log 2>&1 &
+
+6. Ligue um repositório ao GitOps (repita para cada repositório; depois rode de novo o passo 4):
+   bash instalar_hook_gitops.sh ~/caminho/do/repositorio
+
+COMO CADA AUTOMAÇÃO TRABALHA
+----------------------------
+GitOps inteligente
+  Gatilho: git push (o gancho pre-push avisa o n8n em segundo plano, sem atrasar o push).
+  O git não tem evento de "criação de PR" local; um push numa branch que já tem PR aberto dispara do mesmo jeito.
+  1. O n8n lê o commit no GitHub: diff, arquivos da raiz, manifesto (package.json, requirements.txt, ...) e a linguagem do repositório.
+  2. Até 4 arquivos de código (até 10 mil caracteres cada) vão para o deepseek-coder-v2:16b, um por vez, com o contexto do projeto.
+  3. O modelo analisa segurança, performance e arquitetura e devolve achados didáticos e o arquivo inteiro refatorado.
+  4. Filtros antes de agir: descarta refatoração idêntica, reescrita de mais de 60% do arquivo, tamanho muito diferente,
+     parênteses/colchetes/chaves desbalanceados (resposta truncada) e resposta sem achados.
+  5. Cria a branch fix/refactor-auto-AAAAMMDDHHMMSS, grava um commit por arquivo e abre o Pull Request COMO RASCUNHO, com a
+     justificativa detalhada. Avisa no iPhone pelo Bark com o link.
+  6. Você sempre recebe um aviso no Bark, com o hash do commit: PR aberto (com o link), "nada a refatorar", "sem código para
+     analisar", "commit ignorado", "nenhuma mudança aceita" (o modelo respondeu algo que os filtros descartaram) ou
+     "Falha: ..." com a etapa que deu erro (fluxo 9, aviso de falha). Sem aviso nenhum depois de uns 15 minutos significa
+     que o webhook não chegou ao n8n: confira o gancho e a lista de repositórios autorizados.
+  Proteções: só age em repositórios da lista autorizada; o webhook exige token; branches fix/refactor-auto-* e commits com
+  [skip-heimdall] são ignorados (sem laço infinito); nada é feito na branch original.
+  Limite: o modelo não executa nem testa o código. Por isso o PR é rascunho e pede revisão.
+
+Digest hiperpersonalizado
+  Gatilho: todos os dias às 8h e às 18h (fuso America/Sao_Paulo). O Mac precisa estar ligado e com o Docker rodando.
+  1. Lê 15 feeds (tecnologia, IA, dados/AWS, Brasil, São Paulo, mundo, astronomia, curiosidades, ciência).
+  2. Descarta o que tem mais de 30 horas e o que já apareceu nos últimos 4 dias; mistura as fontes e manda até 50 títulos ao modelo.
+  3. O modelo escolhe até 7 itens com nota 6 ou mais para o seu perfil (carreira em dados, AWS, IA, astronomia, notícias).
+  4. O n8n baixa as matérias escolhidas e extrai o texto (se o site bloquear, usa o trecho do feed).
+  5. Para cada matéria, procura nas SUAS notas (base do Second Brain) e nos SEUS livros (base do RAG) o que trata do
+     mesmo assunto, e o modelo faz uma chamada por matéria. O resultado de cada item é: título em português, resumo factual,
+     "por que importa para você" e pontos de atenção.
+  6. "Por que importa para você" só traz ligação concreta com uma nota ou um livro seu, citando qual. Se não houver, o
+     digest diz "Sem ligação com as suas notas ou estudos" e dá apenas a relevância do fato em si, sem tom motivacional.
+     Os links vêm dos dados, nunca do modelo.
+  7. O Markdown vai para o app Notas (pasta "Heimdall Digest", e cópia em cerebro/heimdall-digest/) e um resumo curto chega pelo Bark.
+  O rodapé do digest diz quantas fontes responderam e quais falharam. Para trocar fontes ou o perfil, edite os nós
+  "Fontes" e "Analisar feeds" no n8n (a lista e o texto do perfil estão no começo do código de cada nó).
+
+Second Brain
+  Gatilho: a cada 5 minutos o n8n pergunta ao agente quais notas do app Notas (Mac e iPhone, via iCloud) mudaram e
+  ficaram paradas por pelo menos 2 minutos. Processa até 3 por vez.
+  1. Lê o texto da nota; ignora notas com menos de 80 caracteres, notas que não mudaram desde a última análise e as notas do
+     próprio Heimdall (títulos "Cérebro: ..." e "Digest AAAA-MM-DD HHh"), para nunca analisar os próprios espelhos.
+  2. Gera o embedding (nomic-embed-text) e procura as notas mais parecidas na base vetorial (Qdrant, coleção heimdall_notas).
+  3. O modelo extrai tags, conceitos, entidades, conexões (complementa, contradiz, relacionada, duplica) e lacunas.
+  4. Grava a nota ESPELHO "Cérebro: <título>" na pasta "Heimdall Cérebro" do app Notas, com cabeçalho YAML (tags,
+     conceitos, entidades), links [[Nota Correlata]], lacunas e perguntas. Grava também o .md de verdade, com frontmatter
+     YAML, em ~/heimdall-ai/cerebro/heimdall-cerebro/ (pode ser aberto no Obsidian).
+  5. Indexa a nota na base vetorial e, se achar uma contradição ou falhar ao gravar, avisa pelo Bark.
+  Por que espelho e não edição da nota original: o app Notas não tem frontmatter YAML e editar a nota enquanto você
+  escreve, ou durante a sincronização com o iPhone, pode gerar conflitos. As suas notas nunca são alteradas: o agente só
+  escreve em pastas que começam com "Heimdall".
+
+TESTAR AGORA (sem esperar o horário)
+------------------------------------
+Digest:        docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdDigest00000001 2>&1 | tail -n 40
+Second Brain:  docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdSecondBrain001 2>&1 | tail -n 40
+GitOps:        o hash do teste precisa existir no GitHub (commit já enviado) e a branch precisa ser a mesma do push. Faça um git push num repositório ligado e acompanhe em Execuções, na interface do n8n (http://localhost:5678).
+               Ou teste só o webhook, sem push (precisa de um commit já publicado no GitHub; troque o hash):
+               curl -X POST http://localhost:5678/webhook/heimdall-gitops -H "X-Heimdall-Token: $HEIMDALL_GITOPS_TOKEN" \
+                 -H "Content-Type: application/json" -d '{"repo":"dono/repo","branch":"main","sha":"HASH_COMPLETO_DE_40_CARACTERES"}'
+Observação: o n8n só guarda memória de "já visto" (digest) e "última nota analisada" (second brain) nas execuções
+agendadas; testes manuais por "execute" não gravam esse estado e podem repetir itens.
+
+PROBLEMAS COMUNS
+----------------
+1. Agente fora do ar: veja agente_debug.log. Confira com: curl -s http://localhost:8003/saude
+2. O n8n não alcança o agente: ponha HEIMDALL_AGENTE_HOST=0.0.0.0 no .env e rode o start_heimdall.sh de novo.
+   (O agente exige o token em todas as rotas, menos /saude, mesmo escutando em todas as interfaces.)
+3. "Not authorized" ao ler notas: autorize o Terminal em Ajustes do Sistema > Privacidade e Segurança > Automação > Notas.
+4. O app Notas abre sozinho: o agente o consulta por AppleScript; ele abre em segundo plano. É esperado.
+5. Memória (16 GB): o deepseek-coder-v2:16b e o qwen3-vl:8b alternam no Ollama. Se um push cair enquanto o Second Brain
+   está analisando uma nota, um espera o outro; a primeira resposta de cada um pode demorar um pouco mais.
+6. Fontes do digest sem resposta aparecem no rodapé do digest; troque o endereço no nó "Fontes".
+7. Para desligar uma automação: na lista de fluxos do n8n, desligue o interruptor dela.
+8. Para desligar o GitOps de um repositório: bash instalar_hook_gitops.sh --remover ~/caminho/do/repositorio
+
+SEGURANÇA
+---------
+1. As chaves (LiteLLM, Bark, GitHub, tokens) ficam dentro dos fluxos no volume do n8n e no .env (permissão 600). Não as cole em conversas.
+2. O token do GitHub deve ser fine-grained, só dos repositórios escolhidos. O fluxo nunca faz push direto na branch principal:
+   só cria branch nova e PR em rascunho.
+3. O agente do Mac lê qualquer nota, mas só escreve em pastas "Heimdall*" e só grava arquivos dentro de ~/heimdall-ai/cerebro.
+4. O conteúdo das suas notas e dos seus commits só passa por modelos locais (Ollama via LiteLLM). O que sai da máquina:
+   consultas à API do GitHub (o código já está lá), leitura dos feeds e das matérias, e o aviso do Bark.
+
+
+PASTA PRIVADA (notas que nunca são lidas)
+-----------------------------------------
+1. Crie no app Notas uma pasta chamada exatamente "Privado" e guarde nela as notas muito pessoais. Subpastas também ficam protegidas.
+2. O agente do Mac nunca lista nem lê notas dessa pasta. Se ele não conseguir consultar a pasta, entrega nenhuma nota (falha fechado).
+3. Para proteger outras pastas, ponha no .env: HEIMDALL_NOTAS_PRIVADAS="Diário,Segredos" e reinicie o agente.
+4. Se uma nota JÁ tinha sido analisada antes de ir para a pasta privada, rode: python3 limpar_privadas.py --so-listar
+   e depois sem o --so-listar. Ele apaga só os derivados dessa nota (pontos no Qdrant, cópia .md e nota espelho).
+5. Para a base de conhecimento (knowledge/), pastas cujo nome começa com ponto (por exemplo knowledge/.privado) nunca são indexadas.
+
+TEMAS NA BASE DE CONHECIMENTO (knowledge/)
+------------------------------------------
+1. Cada subpasta de primeiro nível de knowledge/ vira um tema: knowledge/aws/guia.pdf tem o tema "aws";
+   knowledge/Estatística Básica/x.pdf tem o tema "estatistica-basica"; arquivos soltos têm o tema "geral".
+2. Rode python3 ingest_docs.py de novo. Para o que já está indexado, só a etiqueta é atualizada (sem refazer os embeddings).
+3. A ferramenta rag_temas lista os temas e quantos trechos cada um tem; rag_search aceita o parâmetro tema.
+   Exemplo de pedido ao modelo: "busque na base de conhecimento, no tema aws, como funciona o particionamento".
+   Sem o parâmetro tema, a busca varre tudo, como antes.
+4. Para reorganizar, mova os arquivos entre as subpastas, rode python3 ingest_docs.py --prune e os temas se ajustam.

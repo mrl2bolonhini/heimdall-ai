@@ -1,0 +1,88 @@
+{
+  "id": "hdFalhaAviso0001",
+  "name": "Heimdall: aviso de falha",
+  "active": false,
+  "nodes": [
+    {
+      "id": "falhanofluxo319",
+      "name": "Falha no fluxo",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "montaraviso203",
+      "name": "Montar aviso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const e = $input.first().json || {};\nconst ex = e.execution || {};\nconst wf = e.workflow || {};\nconst err = ex.error || {};\nconst onde = ex.lastNodeExecuted || (err.node && err.node.name) || 'etapa desconhecida';\nconst msg = String(err.message || 'sem detalhes').slice(0, 300);\nreturn [{ json: { titulo: 'Falha: ' + String(wf.name || 'fluxo').replace(/^Heimdall:\\s*/, ''),\n  corpo: 'Etapa: ' + onde + '. ' + msg + (ex.id ? ' (execução ' + ex.id + ')' : '') } }];"
+      }
+    },
+    {
+      "id": "avisarfalha154",
+      "name": "Avisar falha",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.corpo).slice(0, 900), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Falha no fluxo": {
+      "main": [
+        [
+          {
+            "node": "Montar aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar aviso": {
+      "main": [
+        [
+          {
+            "node": "Avisar falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  }
+}

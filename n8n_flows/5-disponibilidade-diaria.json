@@ -1,0 +1,221 @@
+{
+  "id": "hdDisponib000001",
+  "name": "Heimdall: relatório diário de disponibilidade",
+  "active": false,
+  "nodes": [
+    {
+      "id": "tododias7h30669",
+      "name": "Todo dia às 7h30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pginadestatus54",
+      "name": "Página de status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "http://uptime-kuma:3001/api/status-page/__KUMA_SLUG__",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "batimentos279",
+      "name": "Batimentos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "http://uptime-kuma:3001/api/status-page/heartbeat/__KUMA_SLUG__",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "montarrelatrio185",
+      "name": "Montar relatório",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const pagina = $('Página de status').first().json;\nconst hb = $input.first().json;\nconst nomes = {};\n(pagina.publicGroupList || []).forEach(g => (g.monitorList || []).forEach(m => { nomes[String(m.id)] = m.name; }));\nconst linhas = [];\nObject.keys(nomes).forEach(id => {\n  const up = hb.uptimeList ? hb.uptimeList[id + '_24'] : undefined;\n  const batidas = (hb.heartbeatList && hb.heartbeatList[id]) || [];\n  const falhas = batidas.filter(b => b.status === 0).length;\n  const ultima = batidas.length ? batidas[batidas.length - 1].status : null;\n  const estado = ultima === 1 ? 'no ar' : ultima === 0 ? 'FORA DO AR' : ultima === 2 ? 'pendente' : ultima === 3 ? 'em manutenção' : 'sem dados';\n  linhas.push(nomes[id] + ': ' + estado + '; disponibilidade em 24 h: ' + (typeof up === 'number' ? (up * 100).toFixed(2) + '%' : 'sem dado') + '; falhas nas últimas ' + batidas.length + ' verificações: ' + falhas);\n});\nif (linhas.length === 0) return [{ json: { prompt: 'Nenhum monitor foi encontrado na página de status.' } }];\nreturn [{ json: { prompt: linhas.join('\\n') } }];"
+      }
+    },
+    {
+      "id": "resumir747",
+      "name": "Resumir",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:9000/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __LITELLM_KEY__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: '__MODELO__', temperature: 0.3, max_tokens: 400, stream: false, messages: [ { role: 'system', content: 'Você escreve em português do Brasil, de forma clara e direta, sem enfeites e sem inventar nada além do texto recebido.' }, { role: 'user', content: 'Escreva em até 4 linhas, em português, um relatório de disponibilidade com base nos dados abaixo. Comece dizendo se está tudo no ar ou o que falhou. Use apenas os números fornecidos.\\n\\n' + $json.prompt } ] }) }}",
+        "options": {
+          "timeout": 600000
+        }
+      }
+    },
+    {
+      "id": "enviaraoiphone700",
+      "name": "Enviar ao iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'Disponibilidade do Heimdall (24 h)', body: String($json.choices[0].message.content).slice(0, 1500), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "executaragora763",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Todo dia às 7h30": {
+      "main": [
+        [
+          {
+            "node": "Página de status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Página de status": {
+      "main": [
+        [
+          {
+            "node": "Batimentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batimentos": {
+      "main": [
+        [
+          {
+            "node": "Montar relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar relatório": {
+      "main": [
+        [
+          {
+            "node": "Resumir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumir": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Página de status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  }
+}

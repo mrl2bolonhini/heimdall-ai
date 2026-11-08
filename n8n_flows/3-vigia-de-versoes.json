@@ -1,0 +1,224 @@
+{
+  "id": "hdVersoesSem0001",
+  "name": "Heimdall: vigia de versões (semanal)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "segundas9h52",
+      "name": "Segunda às 9h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "listadeprojetos602",
+      "name": "Lista de projetos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [\n  { json: { nome: 'Open WebUI', url: 'https://github.com/open-webui/open-webui/releases.atom' } },\n  { json: { nome: 'Ollama', url: 'https://github.com/ollama/ollama/releases.atom' } },\n  { json: { nome: 'LiteLLM', url: 'https://github.com/BerriAI/litellm/releases.atom' } }\n];"
+      }
+    },
+    {
+      "id": "baixarlanamentos502",
+      "name": "Baixar lançamentos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "reunirnovidades780",
+      "name": "Reunir novidades",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const feeds = $('Lista de projetos').all();\nconst limite = Date.now() - 8 * 24 * 3600 * 1000;\nconst limpar = t => String(t || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '\"').replace(/&#39;/g, \"'\").replace(/\\s+/g, ' ').trim();\nconst saida = [];\n$input.all().forEach((it, i) => {\n  const nome = feeds[i] ? feeds[i].json.nome : 'Projeto ' + (i + 1);\n  const entradas = String(it.json.data || '').split('<entry>').slice(1);\n  let n = 0;\n  entradas.forEach(e => {\n    if (n >= 3) return;\n    const titulo = ((e.match(/<title>([\\s\\S]*?)<\\/title>/) || [])[1] || '').trim();\n    const data = Date.parse(((e.match(/<updated>([\\s\\S]*?)<\\/updated>/) || [])[1] || ''));\n    const corpo = limpar(((e.match(/<content[^>]*>([\\s\\S]*?)<\\/content>/) || [])[1] || '')).slice(0, 400);\n    if (/nightly|\\bdev\\b|\\brc\\d*\\b|alpha|beta/i.test(titulo)) return;\n    if (!isNaN(data) && data >= limite) { saida.push('- ' + nome + ' ' + titulo + ': ' + corpo); n++; }\n  });\n});\nif (saida.length === 0) return [];\nreturn [{ json: { prompt: saida.join('\\n') } }];"
+      }
+    },
+    {
+      "id": "avaliarsevaleatualiz891",
+      "name": "Avaliar se vale atualizar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:9000/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __LITELLM_KEY__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: '__MODELO__', temperature: 0.3, max_tokens: 800, stream: false, messages: [ { role: 'system', content: 'Você escreve em português do Brasil, de forma clara e direta, sem enfeites e sem inventar nada além do texto recebido.' }, { role: 'user', content: 'Abaixo estão as versões novas, da última semana, de projetos que o usuário usa em casa (Open WebUI, Ollama e LiteLLM). Para cada projeto com novidade, escreva em uma ou duas linhas em português o que mudou de relevante e se vale atualizar já ou esperar. Diga claramente quando o texto não permitir concluir.\\n\\n' + $json.prompt } ] }) }}",
+        "options": {
+          "timeout": 600000
+        }
+      }
+    },
+    {
+      "id": "enviaraoiphone700",
+      "name": "Enviar ao iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'Versões novas no Heimdall', body: String($json.choices[0].message.content).slice(0, 1500), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "executaragora763",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Segunda às 9h": {
+      "main": [
+        [
+          {
+            "node": "Lista de projetos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista de projetos": {
+      "main": [
+        [
+          {
+            "node": "Baixar lançamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar lançamentos": {
+      "main": [
+        [
+          {
+            "node": "Reunir novidades",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reunir novidades": {
+      "main": [
+        [
+          {
+            "node": "Avaliar se vale atualizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar se vale atualizar": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Lista de projetos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  }
+}

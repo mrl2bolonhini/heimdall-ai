@@ -1,0 +1,204 @@
+{
+  "id": "hdEstudoDiario01",
+  "name": "Heimdall: pergunta de estudo dos livros",
+  "active": false,
+  "nodes": [
+    {
+      "id": "tododias20h664",
+      "name": "Todo dia às 20h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "trechosaleatrios729",
+      "name": "Trechos aleatórios",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://qdrant:6333/collections/heimdall_docs/points/query",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"query\": {\"sample\": \"random\"}, \"limit\": 5, \"with_payload\": true}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "escolhertrecho683",
+      "name": "Escolher trecho",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const pts = (($input.first().json.result || {}).points) || [];\nconst p = pts.find(x => x.payload && String(x.payload.text || '').length >= 300);\nif (!p) return [];\nconst livro = String(p.payload.source || 'livro').split('/').pop().replace(/\\.pdf$/i, '');\nconst trecho = String(p.payload.text).slice(0, 1800);\nreturn [{ json: { livro: livro, prompt: 'Livro: ' + livro + '\\n\\nTrecho:\\n' + trecho } }];"
+      }
+    },
+    {
+      "id": "criarpergunta135",
+      "name": "Criar pergunta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:9000/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __LITELLM_KEY__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: '__MODELO__', temperature: 0.3, max_tokens: 500, stream: false, messages: [ { role: 'system', content: 'Você escreve em português do Brasil, de forma clara e direta, sem enfeites e sem inventar nada além do texto recebido.' }, { role: 'user', content: 'Com base somente no trecho abaixo, crie uma pergunta de revisão que teste a compreensão do conceito (não a memorização de frases) e, depois de uma linha em branco, a resposta esperada em duas ou três frases. Use exatamente este formato: Pergunta: ... e Resposta: ...\\n\\n' + $json.prompt } ] }) }}",
+        "options": {
+          "timeout": 600000
+        }
+      }
+    },
+    {
+      "id": "enviaraoiphone700",
+      "name": "Enviar ao iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'Estudo: ' + $('Escolher trecho').first().json.livro, body: String($json.choices[0].message.content).slice(0, 1500), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "executaragora763",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Todo dia às 20h": {
+      "main": [
+        [
+          {
+            "node": "Trechos aleatórios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trechos aleatórios": {
+      "main": [
+        [
+          {
+            "node": "Escolher trecho",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escolher trecho": {
+      "main": [
+        [
+          {
+            "node": "Criar pergunta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar pergunta": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Trechos aleatórios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  }
+}

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heimdall-ai</title>
+<meta name="description" content="Heimdall-ai é um projeto privado de Inteligência Artificial desenvolvido por Murillo Bolonhini Cita.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230c1224'/%3E%3Cpath d='M8 42a24 24 0 0 1 48 0' fill='none' stroke='%2342a5f5' stroke-width='6'/%3E%3Cpath d='M16 42a16 16 0 0 1 32 0' fill='none' stroke='%2326c6da' stroke-width='5'/%3E%3Cellipse cx='32' cy='42' rx='11' ry='6' fill='%23e6eef8'/%3E%3Ccircle cx='32' cy='42' r='4.2' fill='%23ffc107'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f2f6fb;
+    --ink: #101a33;
+    --muted: #4a5878;
+    --line: #c9d5e6;
+    --link: #0d5db8;
+    --gold: #b37f00;
+    --sclera: #ffffff;
+    --pupil: #101a33;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c1224;
+      --ink: #e6eef8;
+      --muted: #9fb0cc;
+      --line: #25314f;
+      --link: #7cc0ff;
+      --gold: #ffc107;
+      --sclera: #eef4fc;
+      --pupil: #0c1224;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c1224;
+    --ink: #e6eef8;
+    --muted: #9fb0cc;
+    --line: #25314f;
+    --link: #7cc0ff;
+    --gold: #ffc107;
+    --sclera: #eef4fc;
+    --pupil: #0c1224;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  @media (min-width: 640px) { .wrap { padding: 0 2rem; } }
+
+  a { color: var(--link); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+  a:hover { text-decoration-thickness: 2px; }
+  a:focus-visible { outline: 3px solid var(--link); outline-offset: 3px; border-radius: 2px; }
+
+  header.top { padding: 1.5rem 0 0; font-family: var(--serif); font-size: 1.125rem; letter-spacing: 0.02em; }
+
+  /* Abertura */
+  .hero {
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 2.5rem 0 3.5rem;
+  }
+  @media (min-width: 860px) {
+    .hero { grid-template-columns: 1fr 1.15fr; gap: 3rem; padding: 4.5rem 0 5rem; }
+  }
+  h1 {
+    margin: 0 0 1.25rem;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(3rem, 9vw, 5.5rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .lead {
+    margin: 0 0 1rem;
+    font-family: var(--serif);
+    font-size: clamp(1.25rem, 2.6vw, 1.6rem);
+    line-height: 1.4;
+    max-width: 30ch;
+  }
+  .note { margin: 0; color: var(--muted); max-width: 46ch; }
+
+  .bridge { width: 100%; height: auto; display: block; }
+  .arc { fill: none; stroke-linecap: butt; }
+
+  /* Seções */
+  section { padding: 2.5rem 0; border-top: 1px solid var(--line); }
+  h2 {
+    margin: 0 0 1.25rem;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  .two { display: grid; gap: 1.5rem; }
+  @media (min-width: 860px) { .two { grid-template-columns: 1fr 1.6fr; gap: 3rem; } }
+  .prose p { margin: 0 0 1rem; max-width: 62ch; }
+  .prose p:last-child { margin-bottom: 0; }
+
+  dl.list { margin: 0; }
+  .list > div {
+    display: grid;
+    gap: 0.15rem 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .list > div:first-child { padding-top: 0; }
+  .list > div:last-child { border-bottom: 0; padding-bottom: 0; }
+  @media (min-width: 640px) { .list > div { grid-template-columns: 14rem 1fr; } }
+  .list dt { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; }
+  .list dd { margin: 0; color: var(--muted); }
+
+  footer { padding: 2rem 0 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.95rem; }
+  footer p { margin: 0 0 0.25rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">Heimdall-ai</header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>Heimdall-ai</h1>
+        <p class="lead">Um projeto privado de Inteligência Artificial, desenvolvido por Murillo Bolonhini Cita.</p>
+        <p class="note">Esta página é só uma porta de entrada. O projeto não é um produto nem um serviço aberto ao público; o acesso é feito por convite.</p>
+      </div>
+
+      <svg class="bridge" id="bridge" viewBox="0 0 800 440" role="img" aria-label="Um arco de seis faixas em tons de azul e dourado, com um olho no centro que acompanha o ponteiro.">
+        <g class="arc">
+          <path d="M40 380A360 360 0 0 1 760 380" stroke="#e0f2fe" stroke-width="46" style="stroke: var(--arc1, #bfe3fb)"/>
+          <path d="M86 380A314 314 0 0 1 714 380" stroke="#93d2fa" stroke-width="46"/>
+          <path d="M132 380A268 268 0 0 1 668 380" stroke="#42a5f5" stroke-width="46"/>
+          <path d="M178 380A222 222 0 0 1 622 380" stroke="#26c6da" stroke-width="46"/>
+          <path d="M224 380A176 176 0 0 1 576 380" stroke="#1e88e5" stroke-width="46"/>
+          <path d="M270 380A130 130 0 0 1 530 380" stroke="#ffc107" stroke-width="46"/>
+        </g>
+        <ellipse cx="400" cy="380" rx="118" ry="58" fill="var(--sclera)"/>
+        <g id="iris">
+          <circle cx="400" cy="380" r="40" fill="#ffc107"/>
+          <circle cx="400" cy="380" r="19" fill="var(--pupil)"/>
+          <circle cx="409" cy="371" r="6" fill="#ffffff" opacity=".85"/>
+        </g>
+      </svg>
+    </div>
+
+    <section>
+      <div class="two">
+        <h2>O que é</h2>
+        <div class="prose">
+          <p>Heimdall, na mitologia nórdica, é o guardião de Bifröst, a ponte em arco-íris que liga os mundos. O projeto leva o nome dele: um assistente de Inteligência Artificial que vigia e conecta as ferramentas de quem o criou.</p>
+          <p>Os modelos de linguagem rodam em um computador do próprio autor, e não em serviços de terceiros. Eles se ligam a ferramentas de busca, documentos e automações, e podem ser usados pelo navegador ou pelo celular.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="two">
+        <h2>Acessos</h2>
+        <dl class="list">
+          <div>
+            <dt><a href="https://chat.heimdall-ai.tech">Chat</a></dt>
+            <dd>O assistente de IA. Exige uma conta, criada por convite.</dd>
+          </div>
+          <div>
+            <dt><a href="https://uptime.heimdall-ai.tech">Status</a></dt>
+            <dd>Painel que mostra se os serviços estão no ar. Acesso restrito.</dd>
+          </div>
+          <div>
+            <dt><a href="https://pt.wikipedia.org/wiki/Heimdall">Quem é Heimdall</a></dt>
+            <dd>O personagem da mitologia nórdica que inspirou o nome.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section>
+      <div class="two">
+        <h2>Feito com</h2>
+        <dl class="list">
+          <div><dt><a href="https://ollama.com">Ollama</a></dt><dd>Executa os modelos de linguagem no computador.</dd></div>
+          <div><dt><a href="https://www.litellm.ai">LiteLLM</a></dt><dd>Reúne os modelos em um único ponto de acesso.</dd></div>
+          <div><dt><a href="https://openwebui.com">Open WebUI</a></dt><dd>A interface de chat usada pelos convidados.</dd></div>
+          <div><dt><a href="https://modelcontextprotocol.io">Model Context Protocol</a></dt><dd>Padrão que liga o assistente a ferramentas externas.</dd></div>
+          <div><dt><a href="https://qdrant.tech">Qdrant</a></dt><dd>Base de busca por significado, usada com os documentos.</dd></div>
+          <div><dt><a href="https://docs.searxng.org">SearXNG</a></dt><dd>Mecanismo de busca na web que não rastreia quem pesquisa.</dd></div>
+          <div><dt><a href="https://n8n.io">n8n</a></dt><dd>Automações e tarefas agendadas.</dd></div>
+          <div><dt><a href="https://tailscale.com">Tailscale</a></dt><dd>Rede privada que liga o celular ao computador.</dd></div>
+          <div><dt><a href="https://www.cloudflare.com">Cloudflare</a></dt><dd>Publica o domínio e controla quem pode entrar.</dd></div>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p>
+    <p>Projeto privado. Acesso somente por convite.</p>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var svg = document.getElementById('bridge');
+    var iris = document.getElementById('iris');
+    if (!svg || !iris) return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var maxX = 52, maxY = 20;
+    function look(x, y) {
+      var r = svg.getBoundingClientRect();
+      var scale = r.width / 800;
+      var cx = r.left + 400 * scale, cy = r.top + 380 * scale;
+      var dx = x - cx, dy = y - cy;
+      var d = Math.sqrt(dx * dx + dy * dy) || 1;
+      var k = Math.min(1, d / (r.width * 0.5));
+      iris.setAttribute('transform', 'translate(' + (dx / d * maxX * k).toFixed(1) + ' ' + (Math.min(0, dy / d) * maxY * k + (dy > 0 ? dy / d * 8 * k : 0)).toFixed(1) + ')');
+    }
+    window.addEventListener('pointermove', function (e) { look(e.clientX, e.clientY); }, { passive: true });
+    window.addEventListener('pointerleave', function () { iris.removeAttribute('transform'); });
+    if (reduce) iris.style.transition = 'none'; else iris.style.transition = 'transform .12s ease-out';
+  })();
+</script>
+</body>
+</html>

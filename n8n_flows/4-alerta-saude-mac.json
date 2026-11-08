@@ -1,0 +1,147 @@
+{
+  "id": "hdSaudeMac00001",
+  "name": "Heimdall: alerta de saúde do Mac",
+  "active": false,
+  "nodes": [
+    {
+      "id": "acadahora982",
+      "name": "A cada hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mtricasdomac848",
+      "name": "Métricas do Mac",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "http://host.docker.internal:8000/metricas",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "avaliarlimites14",
+      "name": "Avaliar limites",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const limites = { ramPercent: __ALERTA_RAM__, swapGb: __ALERTA_SWAP__, discoPercent: __ALERTA_DISCO__, discoLivreGb: __ALERTA_LIVRE__ };\nconst m = $input.first().json;\nconst problemas = [];\nif (m.ram_percent >= limites.ramPercent) problemas.push('RAM em ' + m.ram_percent + '% (' + m.ram_used_gb + ' de ' + m.ram_total_gb + ' GB)');\nif (m.swap_used_gb >= limites.swapGb) problemas.push('swap em ' + m.swap_used_gb + ' GB');\nif (m.disk_percent >= limites.discoPercent || m.disk_free_gb <= limites.discoLivreGb) problemas.push('disco em ' + m.disk_percent + '% (livre ' + m.disk_free_gb + ' GB)');\nif (problemas.length === 0) return [];\nconst est = $getWorkflowStaticData('global');\nconst agora = Date.now();\nif (est.ultimoAlerta && agora - est.ultimoAlerta < 6 * 3600 * 1000) return [];\nest.ultimoAlerta = agora;\nreturn [{ json: { mensagem: problemas.join('; ') + '. CPU em ' + m.cpu_percent + '%.' } }];"
+      }
+    },
+    {
+      "id": "enviaraoiphone700",
+      "name": "Enviar ao iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'Alerta do Mac', body: String($json.mensagem).slice(0, 1500), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "executaragora763",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "A cada hora": {
+      "main": [
+        [
+          {
+            "node": "Métricas do Mac",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Métricas do Mac": {
+      "main": [
+        [
+          {
+            "node": "Avaliar limites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avaliar limites": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Métricas do Mac",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  }
+}

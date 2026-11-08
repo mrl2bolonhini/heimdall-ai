@@ -1,0 +1,887 @@
+{
+  "id": "hdGitOps00000001",
+  "name": "Heimdall: GitOps inteligente (auditor e refatorador)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "pushrecebido277",
+      "name": "Push recebido",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "heimdall-gitops",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "6975bb0c-44f9-5535-ba5f-ae7061c7c1aa"
+    },
+    {
+      "id": "validar707",
+      "name": "Validar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const TOKEN = '__GITOPS_TOKEN__';\nconst PERMITIDOS = '__GITOPS_REPOS__'.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);\nconst it = $input.first().json;\nconst h = it.headers || {};\nconst b = it.body || {};\nif (!TOKEN || h['x-heimdall-token'] !== TOKEN) throw new Error('Token do webhook inválido.');\nconst repo = String(b.repo || '');\nconst branch = String(b.branch || '');\nconst sha = String(b.sha || '');\nif (!/^[A-Za-z0-9_.-]+\\/[A-Za-z0-9_.-]+$/.test(repo)) throw new Error('Nome de repositório inválido.');\nif (!/^[0-9a-f]{40}$/.test(sha)) throw new Error('SHA inválido.');\nif (!/^[A-Za-z0-9._\\/-]+$/.test(branch)) throw new Error('Nome de branch inválido.');\nif (!PERMITIDOS.includes(repo.toLowerCase())) throw new Error('Repositório não autorizado: ' + repo);\nif (branch.startsWith('fix/refactor-auto-')) return [];\nreturn [{ json: { repo, branch, sha } }];"
+      }
+    },
+    {
+      "id": "listarraiz93",
+      "name": "Listar raiz",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.github.com/repos/' + $json.repo + '/contents?ref=' + $json.sha }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __GITHUB_TOKEN__"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "User-Agent",
+              "value": "heimdall-ai-gitops"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 15000
+    },
+    {
+      "id": "escolhermanifesto819",
+      "name": "Escolher manifesto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const nomes = $input.all().map(i => i.json && i.json.name).filter(Boolean);\nconst v = $('Validar').first().json;\nconst lista = ['package.json', 'requirements.txt', 'pyproject.toml', 'go.mod', 'Cargo.toml', 'pom.xml', 'build.gradle', 'Gemfile', 'composer.json'];\nconst m = lista.find(x => nomes.includes(x));\n// Sem manifesto, busca os metadados do repositório (que trazem a linguagem principal).\nconst url = m\n  ? 'https://api.github.com/repos/' + v.repo + '/contents/' + m + '?ref=' + v.sha\n  : 'https://api.github.com/repos/' + v.repo;\nreturn [{ json: { nomes, manifesto: m || '', url } }];"
+      }
+    },
+    {
+      "id": "lermanifesto289",
+      "name": "Ler manifesto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __GITHUB_TOKEN__"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "User-Agent",
+              "value": "heimdall-ai-gitops"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "commitnogithub481",
+      "name": "Commit no GitHub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.github.com/repos/' + $('Validar').first().json.repo + '/commits/' + $('Validar').first().json.sha }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __GITHUB_TOKEN__"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "User-Agent",
+              "value": "heimdall-ai-gitops"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 15000
+    },
+    {
+      "id": "selecionararquivos951",
+      "name": "Selecionar arquivos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nconst v = $('Validar').first().json;\nconst msg = String((c.commit && c.commit.message) || '');\nconst rotulo = 'Commit ' + v.sha.slice(0, 7) + ' (' + v.repo + ', branch ' + v.branch + '): ';\nconst vazio = (titulo, motivo) => [{ json: { vazio: true, titulo, motivo: rotulo + motivo } }];\nif (/\\[(skip|auto)[- ]?(ai|refactor|heimdall)\\]/i.test(msg) || /^refactor\\(auto\\)/i.test(msg)) return vazio('GitOps: commit ignorado', 'a mensagem pede para não analisar, então não analisei.');\nconst EXT = { py: 'Python', js: 'JavaScript', mjs: 'JavaScript', ts: 'TypeScript', jsx: 'JavaScript (React)', tsx: 'TypeScript (React)',\n  go: 'Go', rs: 'Rust', java: 'Java', kt: 'Kotlin', rb: 'Ruby', php: 'PHP', cs: 'C#', c: 'C', cpp: 'C++', sh: 'Shell',\n  sql: 'SQL', scala: 'Scala', swift: 'Swift', tf: 'Terraform' };\nconst IGN = /(^|\\/)(node_modules|vendor|dist|build|\\.venv|venv|__pycache__|migrations)\\//;\nconst arquivos = (c.files || [])\n  .filter(f => f.filename && f.status !== 'removed' && f.patch && !IGN.test(f.filename) && !/\\.min\\./.test(f.filename)\n    && EXT[String(f.filename.split('.').pop()).toLowerCase()])\n  .sort((a, b) => (b.changes || 0) - (a.changes || 0))\n  .slice(0, 4);\nif (arquivos.length === 0) return vazio('GitOps: sem código para analisar', 'nenhum arquivo de código alterado (' + (c.files || []).length + ' arquivo(s) no commit, só documentação, dados ou tipos que não analiso).');\nreturn arquivos.map(f => ({ json: {\n  vazio: false,\n  path: f.filename,\n  linguagem: EXT[String(f.filename.split('.').pop()).toLowerCase()],\n  patch: String(f.patch).slice(0, 4000),\n  url: 'https://api.github.com/repos/' + v.repo + '/contents/' + f.filename.split('/').map(encodeURIComponent).join('/') + '?ref=' + v.sha,\n} }));"
+      }
+    },
+    {
+      "id": "hcdigo153",
+      "name": "Há código?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1820,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "59a0eebb-5eba-5964-aa78-e6ec50b9584b",
+              "leftValue": "={{ $json.vazio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "lerarquivo98",
+      "name": "Ler arquivo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2080,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __GITHUB_TOKEN__"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "User-Agent",
+              "value": "heimdall-ai-gitops"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "montaranlise518",
+      "name": "Montar análise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2340,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const sel = $('Selecionar arquivos').all();\nconst v = $('Validar').first().json;\nconst man = $('Ler manifesto').first().json || {};\nconst nomes = $('Escolher manifesto').first().json.nomes || [];\nconst commit = $('Commit no GitHub').first().json || {};\nlet manifesto = '';\nif (man.content && man.encoding === 'base64') manifesto = Buffer.from(man.content, 'base64').toString('utf8').slice(0, 1500);\nconst contexto = 'Repositório: ' + v.repo + ' | branch: ' + v.branch\n  + '\\nLinguagem principal segundo o GitHub: ' + (man.language || 'não informada')\n  + '\\nArquivos na raiz: ' + nomes.slice(0, 40).join(', ')\n  + (manifesto ? '\\nManifesto de dependências (' + $('Escolher manifesto').first().json.manifesto + '):\\n' + manifesto : '')\n  + '\\nMensagem do commit: ' + String((commit.commit && commit.commit.message) || '').slice(0, 300);\nconst SYS = `Você é um engenheiro de software sênior fazendo a revisão de um commit. Analise o ARQUIVO sob três óticas rigorosas:\n1. Segurança: injeção de comandos ou SQL, segredos no código, validação de entrada, desserialização insegura, criptografia fraca, permissões excessivas.\n2. Performance e eficiência: complexidade desnecessária, consultas ou I/O repetidos, alocações inúteis, estruturas de dados inadequadas.\n3. Boas práticas de arquitetura: responsabilidade única, acoplamento, tratamento de erros, legibilidade, testabilidade.\nSeja conservador: proponha apenas melhorias claras e seguras. Não mude o comportamento visível, a API pública, nomes públicos nem as dependências, e não faça mudanças só de estilo. Concentre-se nas linhas alteradas no commit (o diff), mas pode corrigir problemas no mesmo trecho.\nResponda em português do Brasil, EXATAMENTE neste formato, sem nenhum texto fora dele.\nPara cada problema encontrado:\nACHADO\nCATEGORIA: seguranca ou performance ou arquitetura\nSEVERIDADE: alta ou media ou baixa\nLINHAS: faixa aproximada de linhas\nPROBLEMA: o que está errado, em uma ou duas frases\nPOR_QUE_IMPORTA: explicação didática, como para um colega júnior, com o risco concreto\nCORRECAO: o que foi mudado e por que a nova forma é melhor\nFIM_ACHADO\nDepois dos achados, uma linha: VEREDITO: REFATORAR ou VEREDITO: OK\nSe o veredito for REFATORAR, inclua o arquivo INTEIRO já corrigido entre estas marcas, sem cercas de markdown:\n<<<ARQUIVO>>>\n(código completo)\n<<<FIM_ARQUIVO>>>\nSe não houver melhoria clara, escreva somente VEREDITO: OK, sem achados.`;\nconst out = [];\n$input.all().forEach((it, i) => {\n  const j = it.json || {};\n  const s = (sel[i] || { json: {} }).json;\n  if (j.encoding !== 'base64' || !j.content) return;\n  const codigo = Buffer.from(j.content, 'base64').toString('utf8');\n  if (codigo.length < 30 || codigo.length > 10000) return;\n  const user = contexto + '\\n\\nARQUIVO: ' + s.path + ' (' + s.linguagem + ')\\n\\nDIFF DO COMMIT:\\n' + s.patch\n    + '\\n\\nCONTEÚDO COMPLETO ATUAL:\\n<<<ATUAL>>>\\n' + codigo + '\\n<<<FIM_ATUAL>>>';\n  out.push({ json: { vazio: false, path: s.path, shaBlob: j.sha, original: codigo, req: {\n    model: '__MODELO_CODIGO__', temperature: 0.1, max_tokens: 4500, stream: false, num_ctx: 12288,\n    messages: [ { role: 'system', content: SYS }, { role: 'user', content: user } ] } } });\n});\nif (out.length === 0) return [{ json: { vazio: true, titulo: 'GitOps: nada para analisar',\n  motivo: 'Commit ' + v.sha.slice(0, 7) + ' (' + v.repo + ', branch ' + v.branch + '): os arquivos alterados estavam vazios, tinham mais de 10 mil caracteres ou não consegui lê-los no GitHub.' } }];\nreturn out;"
+      }
+    },
+    {
+      "id": "hoqueanalisar741",
+      "name": "Há o que analisar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2600,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "83f42369-3689-5000-8e2d-31affbf445fe",
+              "leftValue": "={{ $json.vazio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "analisarcomdeepsee32",
+      "name": "Analisar com deepseek",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2860,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:9000/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __LITELLM_KEY__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.req) }}",
+        "options": {
+          "timeout": 900000
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "consolidar38",
+      "name": "Consolidar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const base = $('Montar análise').all();\nconst v = $('Validar').first().json;\nconst CAT = { seguranca: 'Segurança', performance: 'Performance e eficiência', arquitetura: 'Arquitetura e boas práticas' };\nconst SEV = { alta: 'ALTA', media: 'MÉDIA', baixa: 'BAIXA' };\nconst sem = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();\nfunction parseAchados(txt) {\n  const out = [];\n  const re = /ACHADO\\s*\\r?\\n([\\s\\S]*?)FIM_ACHADO/g;\n  let m;\n  while ((m = re.exec(txt))) {\n    const campos = {};\n    let atual = null;\n    m[1].split(/\\r?\\n/).forEach(l => {\n      const k = /^\\s*(CATEGORIA|SEVERIDADE|LINHAS|PROBLEMA|POR_QUE_IMPORTA|CORRECAO):\\s*(.*)$/.exec(l);\n      if (k) { atual = k[1]; campos[atual] = k[2]; } else if (atual) { campos[atual] += ' ' + l.trim(); }\n    });\n    if (campos.PROBLEMA) out.push(campos);\n  }\n  return out;\n}\nconst balanceado = t => [['(', ')'], ['[', ']'], ['{', '}']].every(p => t.split(p[0]).length === t.split(p[1]).length);\nconst arquivos = [];\nconst secoes = [];\nconst contagem = { seguranca: 0, performance: 0, arquitetura: 0 };\nconst tally = { analisados: 0, ok: 0, descartados: 0 };\n$input.all().forEach((r, i) => {\n  const info = base[i].json;\n  const txt = String(((((r.json || {}).choices || [])[0] || {}).message || {}).content || '');\n  const ver = /VEREDITO:\\s*(REFATORAR|OK)/i.exec(txt);\n  tally.analisados++;\n  if (!ver) { tally.descartados++; return; }\n  if (ver[1].toUpperCase() !== 'REFATORAR') { tally.ok++; return; }\n  const m = /<<<ARQUIVO>>>\\r?\\n([\\s\\S]*?)\\r?\\n?<<<FIM_ARQUIVO>>>/.exec(txt);\n  if (!m) { tally.descartados++; return; }\n  let novo = m[1].replace(/^\\s*```[A-Za-z0-9+#.-]*\\r?\\n/, '').replace(/\\r?\\n```\\s*$/, '');\n  if (info.original.endsWith('\\n') && !novo.endsWith('\\n')) novo += '\\n';\n  if (novo.trim() === info.original.trim()) { tally.ok++; return; }\n  const razao = novo.length / info.original.length;\n  if (razao < 0.5 || razao > 1.8) { tally.descartados++; return; }\n  const A = new Set(info.original.split('\\n'));\n  const B = novo.split('\\n');\n  if (B.filter(l => !A.has(l)).length / Math.max(B.length, 1) > 0.6) { tally.descartados++; return; }\n  if (balanceado(info.original) && !balanceado(novo)) { tally.descartados++; return; }\n  const achados = parseAchados(txt);\n  if (achados.length === 0) { tally.descartados++; return; }\n  arquivos.push({ path: info.path, novo, shaBlob: info.shaBlob });\n  const linhas = ['### Arquivo `' + info.path + '`', ''];\n  achados.forEach((a, n) => {\n    const cat = sem(a.CATEGORIA).replace(/[^a-z]/g, '');\n    if (contagem[cat] !== undefined) contagem[cat]++;\n    linhas.push('#### ' + (n + 1) + '. [' + (SEV[sem(a.SEVERIDADE)] || 'MÉDIA') + '] ' + (CAT[cat] || 'Geral') + ': ' + a.PROBLEMA);\n    if (a.LINHAS) linhas.push('Linhas: ' + a.LINHAS);\n    linhas.push('', '**Por que isso importa:** ' + (a.POR_QUE_IMPORTA || ''), '', '**O que foi alterado:** ' + (a.CORRECAO || ''), '');\n  });\n  secoes.push(linhas.join('\\n'));\n});\nif (arquivos.length === 0) {\n  let motivo = 'Commit ' + v.sha.slice(0, 7) + ' (' + v.repo + ', branch ' + v.branch + '): ' + tally.analisados + ' arquivo(s) analisado(s). ';\n  let titulo = 'GitOps: nada a refatorar';\n  if (tally.descartados === 0) motivo += 'Nada a refatorar.';\n  else {\n    titulo = 'GitOps: nenhuma mudança aceita';\n    motivo += tally.ok + ' sem problemas; em ' + tally.descartados + ' o modelo respondeu de forma inválida ou propôs uma mudança grande ou suspeita demais, e descartei por segurança.';\n  }\n  return [{ json: { vazio: true, titulo, motivo } }];\n}\nconst ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);\nconst corpo = [\n  '## Revisão automática do commit `' + v.sha.slice(0, 7) + '`',\n  '',\n  'Este rascunho de Pull Request foi aberto automaticamente pelo Heimdall-ai (modelo deepseek-coder-v2:16b) depois de um push na branch `' + v.branch + '`. O código alterado no commit foi analisado sob três óticas: segurança, performance e arquitetura.',\n  '',\n  '**Revise com atenção antes de aceitar.** Um modelo local pode errar, e a refatoração não foi executada nem testada.',\n  '',\n  '### Resumo',\n  '- Segurança: ' + contagem.seguranca + ' achado(s)',\n  '- Performance e eficiência: ' + contagem.performance + ' achado(s)',\n  '- Arquitetura e boas práticas: ' + contagem.arquitetura + ' achado(s)',\n  '- Arquivos alterados: ' + arquivos.length,\n  '',\n].concat(secoes).concat([\n  '### Como validar',\n  '- Rode os testes do projeto e confira se o comportamento visível não mudou.',\n  '- Compare cada arquivo com a versão original pela aba de diferenças deste Pull Request.',\n  '- Se algum achado não fizer sentido, descarte o arquivo ou feche este rascunho. Nada foi alterado na branch `' + v.branch + '`.',\n]).join('\\n');\nconst nomes = arquivos.map(a => a.path.split('/').pop()).slice(0, 3).join(', ');\nreturn [{ json: { vazio: false, repo: v.repo, base: v.branch, sha: v.sha, branch: 'fix/refactor-auto-' + ts, arquivos,\n  titulo: ('Refatoração automática (rascunho): ' + nomes).slice(0, 100), corpo } }];"
+      }
+    },
+    {
+      "id": "hmudanas368",
+      "name": "Há mudanças?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3380,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2d8581e2-9f47-59ea-828d-54f0753e9c7f",
+              "leftValue": "={{ $json.vazio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "criarbranch151",
+      "name": "Criar branch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3640,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.github.com/repos/' + $json.repo + '/git/refs' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __GITHUB_TOKEN__"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "User-Agent",
+              "value": "heimdall-ai-gitops"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ref: 'refs/heads/' + $json.branch, sha: $json.sha }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "expandirarquivos749",
+      "name": "Expandir arquivos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3900,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c = $('Consolidar').first().json;\nreturn c.arquivos.map(a => ({ json: {\n  url: 'https://api.github.com/repos/' + c.repo + '/contents/' + a.path.split('/').map(encodeURIComponent).join('/'),\n  mensagem: 'refactor(auto): ' + a.path + ' (Heimdall-ai)',\n  conteudo: Buffer.from(a.novo, 'utf8').toString('base64'),\n  sha: a.shaBlob,\n  branch: c.branch,\n} }));"
+      }
+    },
+    {
+      "id": "gravararquivo418",
+      "name": "Gravar arquivo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4160,
+        0
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __GITHUB_TOKEN__"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "User-Agent",
+              "value": "heimdall-ai-gitops"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $json.mensagem, content: $json.conteudo, sha: $json.sha, branch: $json.branch }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "fecharcommits381",
+      "name": "Fechar commits",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4420,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: { ok: true, arquivos: $input.all().length } }];"
+      }
+    },
+    {
+      "id": "abrirpremrascunho831",
+      "name": "Abrir PR em rascunho",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4680,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.github.com/repos/' + $('Consolidar').first().json.repo + '/pulls' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __GITHUB_TOKEN__"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "User-Agent",
+              "value": "heimdall-ai-gitops"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $('Consolidar').first().json.titulo, head: $('Consolidar').first().json.branch, base: $('Consolidar').first().json.base, body: $('Consolidar').first().json.corpo, draft: true }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "avisarnoiphone510",
+      "name": "Avisar no iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4940,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'PR em rascunho aberto', body: String($('Consolidar').first().json.titulo + ' (' + $('Consolidar').first().json.repo + ')').slice(0, 900), group: 'heimdall', url: $json.html_url }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "avisarsemcdigo822",
+      "name": "Avisar: sem código",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.motivo).slice(0, 900), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "avisarnadaparaanal435",
+      "name": "Avisar: nada para analisar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2600,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.motivo).slice(0, 900), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "avisarsemmudanas37",
+      "name": "Avisar: sem mudanças",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3380,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.motivo).slice(0, 900), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Push recebido": {
+      "main": [
+        [
+          {
+            "node": "Validar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar": {
+      "main": [
+        [
+          {
+            "node": "Listar raiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar raiz": {
+      "main": [
+        [
+          {
+            "node": "Escolher manifesto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escolher manifesto": {
+      "main": [
+        [
+          {
+            "node": "Ler manifesto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler manifesto": {
+      "main": [
+        [
+          {
+            "node": "Commit no GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit no GitHub": {
+      "main": [
+        [
+          {
+            "node": "Selecionar arquivos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Selecionar arquivos": {
+      "main": [
+        [
+          {
+            "node": "Há código?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Há código?": {
+      "main": [
+        [
+          {
+            "node": "Avisar: sem código",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ler arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler arquivo": {
+      "main": [
+        [
+          {
+            "node": "Montar análise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar análise": {
+      "main": [
+        [
+          {
+            "node": "Há o que analisar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Há o que analisar?": {
+      "main": [
+        [
+          {
+            "node": "Avisar: nada para analisar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analisar com deepseek",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analisar com deepseek": {
+      "main": [
+        [
+          {
+            "node": "Consolidar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidar": {
+      "main": [
+        [
+          {
+            "node": "Há mudanças?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Há mudanças?": {
+      "main": [
+        [
+          {
+            "node": "Avisar: sem mudanças",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Criar branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar branch": {
+      "main": [
+        [
+          {
+            "node": "Expandir arquivos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expandir arquivos": {
+      "main": [
+        [
+          {
+            "node": "Gravar arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gravar arquivo": {
+      "main": [
+        [
+          {
+            "node": "Fechar commits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fechar commits": {
+      "main": [
+        [
+          {
+            "node": "Abrir PR em rascunho",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Abrir PR em rascunho": {
+      "main": [
+        [
+          {
+            "node": "Avisar no iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "errorWorkflow": "hdFalhaAviso0001"
+  }
+}

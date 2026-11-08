@@ -1,0 +1,33 @@
+Subida padrão
+nohup bash start_heimdall.sh ---terminal > heimdall.log 2>&1 &
+
+Sobe tudo e verifica update do Docker
+nohup bash start_heimdall.sh --webui --terminal --update > heimdall.log 2>&1 &
+
+Confere update
+grep -n "atualizada\|Backup" heimdall.log
+
+Últimas linhas dos logos de subida
+tail -n 10 heimdall.log
+
+URL do Uptime com subdomínio
+https://uptime.heimdall-ai.tech
+
+URL do Tailscale para o Uptime
+https://studiomac.tail67c3c5.ts.net:8443/
+
+Emulador da AWS (LocalStack)
+http://localhost:4566
+
+Para desativar Dozzle e Uptime no .env
+HEIMDALL_MONITORING=0
+
+Para desativar emulador da AWS (LocalStack) no .env
+HEIMDALL_AWS_EMULATOR=off
+Ou moto ou localstack
+
+Logs do dozzle
+Localhost:8081 (só Mac)
+
+OCR para PDF (fora do heimdall-ai)
+ocrmypdf -l por+eng --skip-text entrada.pdf saida.pdf
