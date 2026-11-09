@@ -29,7 +29,7 @@ from urllib.parse import urljoin, urlparse
 import psutil
 import requests
 
-USER_BASE_DIR = Path(os.getenv("HEIMDALL_BASE_DIR", "/Users/mrl2_bolonhini")).resolve()
+USER_BASE_DIR = Path(os.getenv("HEIMDALL_BASE_DIR", str(Path.home()))).resolve()
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 SEARXNG_URL = os.getenv("SEARXNG_URL", "http://localhost:8080")
 NASA_API_KEY = os.getenv("NASA_API_KEY", "DEMO_KEY")

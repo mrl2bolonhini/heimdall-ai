@@ -5,7 +5,7 @@
 
 Uso, dentro da pasta do projeto:
     venv/bin/python test_mcp.py                 # testa em localhost
-    venv/bin/python test_mcp.py 100.106.3.26    # testa pelo IP do Tailscale
+    venv/bin/python test_mcp.py <IP-do-Tailscale>    # testa pelo IP do Tailscale
 """
 import asyncio
 import os

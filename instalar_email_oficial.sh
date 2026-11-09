@@ -64,8 +64,9 @@ fi
 
 # .env guarda o resto (Bark, token, chave do LiteLLM); o vigia lê tudo de lá.
 USUARIO_ATUAL="$(grep -E '^HEIMDALL_EMAIL_USUARIO=' .env | tail -1 | cut -d= -f2- | tr -d "'\"")"
-read -r -p "Seu endereço do Gmail [Enter mantém: ${USUARIO_ATUAL:-mbolonhinic@gmail.com}] " USUARIO
-USUARIO="${USUARIO:-${USUARIO_ATUAL:-mbolonhinic@gmail.com}}"
+if [ -n "$USUARIO_ATUAL" ]; then PROMPT_USU="Seu endereço do Gmail [Enter mantém: $USUARIO_ATUAL] "; else PROMPT_USU="Seu endereço do Gmail: "; fi
+read -r -p "$PROMPT_USU" USUARIO
+USUARIO="${USUARIO:-$USUARIO_ATUAL}"
 [[ "$USUARIO" =~ ^[A-Za-z0-9._%+-]+@gmail\.com$ ]] || fail "informe um endereço @gmail.com."
 
 echo "Cole a senha de aplicativo do Gmail (16 letras, com ou sem espaços). Nada aparece na tela enquanto você cola."

@@ -11,7 +11,7 @@ Para cada modelo ele faz duas etapas pelo LiteLLM (porta 9000):
 Uso, na pasta do projeto, com o sistema no ar (heimdall claude up):
     python test_models_tools.py                     # todos os modelos
     python test_models_tools.py --only qwen         # só os que contêm "qwen" no nome
-    python test_models_tools.py --host 100.106.3.26 # pelo IP do Tailscale
+    python test_models_tools.py --host <IP-do-Tailscale> # pelo IP do Tailscale
 
 A primeira chamada de cada modelo demora, porque o Ollama precisa carregá-lo.
 Ao terminar cada um, o script o descarrega da memória (use --keep-loaded para evitar).
