@@ -34,7 +34,7 @@ model_list:
     litellm_params:
       model: ollama_chat/deepseek-coder-v2:16b
       api_base: http://localhost:11434
-      num_ctx: 8192
+      num_ctx: 6144   # o GitOps usa trechos pequenos; menos contexto = menos memória
       keep_alive: "30s"   # libera a memória logo depois da análise do GitOps
     model_info:
       supports_function_calling: true
