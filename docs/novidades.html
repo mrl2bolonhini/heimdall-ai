@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Novidades · Heimdall-ai</title>
+<meta name="description" content="Histórico de recursos do Heimdall-ai, do mais recente ao mais antigo.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<div class="wrap">
+<header class="top">
+<a class="brand" href="index.html">Heimdall-ai</a>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos (LLMs)</a></li><li><a href="mcp.html">MCP e ferramentas</a></li><li><a href="fluxos.html">Fluxos e automações</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html" aria-current="page">Novidades</a></li></ul></nav>
+</header>
+<main id="conteudo" tabindex="-1">
+<h1>Novidades</h1><p class="muted">Gerado do arquivo CHANGELOG.md.</p><section aria-labelledby="d2026-11-09"><h2 id="d2026-11-09">09/11/2026 · GitOps explica os descartes</h2><ul><li>Quando o GitOps descarta uma refatoração por segurança, o aviso agora diz o arquivo e o motivo exato (por exemplo, tamanho fora do limite, parênteses desbalanceados, resposta cortada ou sem o arquivo corrigido).</li><li>Se o GitHub recusar abrir o Pull Request, o aviso do iPhone diz que a branch foi criada, o motivo e traz o link de comparação.</li><li>O modelo do GitOps não pode mais sugerir remover textos de interação com o usuário (prompts e mensagens).</li></ul></section><section aria-labelledby="d2026-11-09"><h2 id="d2026-11-09">09/11/2026 · Documentação e site</h2><ul><li>Site de documentação no GitHub Pages (pasta docs/), gerado por gerar_docs.py a partir do código: modelos, servidores MCP, ferramentas, fluxos e comandos.</li><li>README completo com tabelas atualizadas automaticamente.</li><li>Publicação automática pelo GitHub Actions e domínio heimdall-ai.tech.</li></ul></section><section aria-labelledby="dAnteriores"><h2 id="dAnteriores">Anteriores · recursos construídos até a documentação</h2><ul><li>O fluxo de estudo roda às 6h, 13h e 20h, uma nota por tema de knowledge/, em pasta do app Notas com o nome do tema.</li><li>Cada nota traz leitura de um trecho, pergunta e resposta, 1 a 3 links de artigos e áudio narrado com voz Premium do macOS.</li><li>ouvir_estudo.sh toca o áudio mais recente no Mac.</li><li>Pastas com nomes próprios (Monitor de Privacidade, Digest, Cérebro), sem prefixo.</li><li>Notas de pastas privadas nunca são lidas; limpar_privadas.py remove o que foi indexado por engano.</li><li>Vigia de e-mail de serviços públicos no Gmail, somente leitura, com checagem de autenticidade do remetente.</li><li>E-mails oficiais com prazo geram evento no Calendário e lembrete no app Lembretes.</li><li>Diários oficiais do município, da União e do Estado, com aviso só do que for novo.</li><li>Lembrete mensal para conferir INSS, FGTS, Carteira de Trabalho, Registrato e Serasa.</li><li>Monitor de privacidade: busca menções ao dono na web, separa homônimos e avisa só o novo.</li><li>test_models_tools.py: teste de chamada de ferramentas por modelo.</li><li>GitOps: Pull Request em rascunho com refatorações a cada push, com aviso sempre.</li><li>Digest, Second Brain e aviso de falha de fluxos.</li></ul></section>
+</main>
+<footer>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p>
+<p>Documentação gerada do código do projeto. <a href="novidades.html">Novidades</a> · <a href="comandos.html">Comandos</a></p>
+</footer>
+<p id="aviso-copia" class="sr" role="status" aria-live="polite"></p>
+</div>
+<script src="heimdall.js" defer></script>
+</body>
+</html>
