@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelos (LLMs) · Heimdall-ai</title>
+<meta name="description" content="Modelos de linguagem do Heimdall-ai: quais são, para que servem e como foram testados.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<div class="wrap">
+<header class="top">
+<a class="brand" href="index.html">Heimdall-ai</a>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html" aria-current="page">Modelos (LLMs)</a></li><li><a href="mcp.html">MCP e ferramentas</a></li><li><a href="fluxos.html">Fluxos e automações</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li></ul></nav>
+</header>
+<main id="conteudo" tabindex="-1">
+
+<h1>Modelos de linguagem (LLMs)</h1>
+<section aria-labelledby="lista"><h2 id="lista">Modelos configurados</h2>
+<div class="tablewrap"><table><caption>Modelos no LiteLLM</caption><thead><tr><th scope="col">Nome no LiteLLM</th><th scope="col">Modelo no Ollama</th><th scope="col">Uso</th><th scope="col">Declara suporte a</th><th scope="col">Observações</th></tr></thead><tbody><tr><th scope="row"><code>qwen-3.8-uncensored</code></th><td><code>ollama_chat/eriktonon/qwen3.8-uncensored:9b</code></td><td>Uso geral</td><td>ferramentas</td><td>Confira a chamada de ferramentas com test_models_tools.py.</td></tr><tr><th scope="row"><code>gemma-4-uncensored</code></th><td><code>ollama_chat/eriktonon/gemma4-uncensored</code></td><td>Uso geral</td><td>ferramentas</td><td>Confira a chamada de ferramentas com test_models_tools.py.</td></tr><tr><th scope="row"><code>dolphin3-cyber-8b</code></th><td><code>ollama_chat/mparvin/dolphin3-cyber-8b-gguf:q8_0</code></td><td>Segurança e conversa livre</td><td>ferramentas</td><td>Confira a chamada de ferramentas com test_models_tools.py.</td></tr><tr><th scope="row"><code>deepseek-coder-v2:16b</code></th><td><code>ollama_chat/deepseek-coder-v2:16b</code></td><td>Código (usado pelo GitOps)</td><td>ferramentas</td><td>O GitOps usa este modelo na etapa de análise de código.</td></tr><tr><th scope="row"><code>qwen3-vl-instruct</code></th><td><code>ollama_chat/qwen3-vl:8b-instruct</code></td><td>Modelo padrão dos fluxos; entende imagens</td><td>ferramentas, imagens</td><td>Declara suporte a imagens no LiteLLM.</td></tr><tr><th scope="row"><code>bonsai-27b</code></th><td><code>ollama_chat/eriktonon/bonsai-2-uncensored:27b</code></td><td>Modelo grande, respostas mais elaboradas</td><td>ferramentas</td><td>Confira a chamada de ferramentas com test_models_tools.py.</td></tr></tbody></table></div>
+<p class="muted">A coluna "Declara suporte a" vem do <code>litellm_config.yaml</code>; é o que o LiteLLM anuncia, não o resultado do teste. O resultado real de cada modelo se confere com <code>venv/bin/python test_models_tools.py</code>.</p></section>
+<section aria-labelledby="como"><h2 id="como">Como funciona</h2>
+<ul><li>Todos usam o prefixo <code>ollama_chat/</code>, que chama o endpoint de chat do Ollama e suporta chamada de ferramentas. O prefixo <code>ollama/</code> não suporta.</li>
+<li>O modelo só chama ferramentas se o template dele no Ollama tiver suporte a ferramentas; o LiteLLM apenas declara. Quem decide é o teste (<code>test_models_tools.py</code>).</li>
+<li>O contexto é de 8192 tokens (<code>num_ctx</code>) para todos.</li>
+<li>Modelo padrão dos fluxos do n8n: <code>qwen3-vl-instruct</code> (muda com <code>HEIMDALL_FLOW_MODEL</code> no <code>.env</code>). O GitOps usa o <code>deepseek-coder-v2:16b</code>.</li>
+<li>Embeddings: <code>nomic-embed-text</code>, para a base vetorial.</li></ul></section>
+<section aria-labelledby="teste"><h2 id="teste">Como testar um modelo</h2>
+<div class="cmd"><p>Testa todos os modelos</p><div class="box"><pre tabindex="0" aria-label="Comando: Testa todos os modelos"><code id="cmd1">venv/bin/python test_models_tools.py</code></pre><button type="button" class="copy" data-alvo="cmd1" aria-label="Copiar comando: Testa todos os modelos">Copiar</button></div></div>
+<div class="cmd"><p>Testa só os que têm &#x27;qwen&#x27; no nome</p><div class="box"><pre tabindex="0" aria-label="Comando: Testa só os que têm &#x27;qwen&#x27; no nome"><code id="cmd2">venv/bin/python test_models_tools.py --only qwen</code></pre><button type="button" class="copy" data-alvo="cmd2" aria-label="Copiar comando: Testa só os que têm &#x27;qwen&#x27; no nome">Copiar</button></div></div>
+<p>O teste faz duas etapas: a chamada (o modelo devolve uma chamada estruturada à ferramenta certa) e o ciclo (a ferramenta executa e a resposta final usa o resultado real). Chamada escrita como texto é reprovada.</p></section>
+
+</main>
+<footer>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p>
+<p>Documentação gerada do código do projeto. <a href="novidades.html">Novidades</a> · <a href="comandos.html">Comandos</a></p>
+</footer>
+<p id="aviso-copia" class="sr" role="status" aria-live="polite"></p>
+</div>
+<script src="heimdall.js" defer></script>
+</body>
+</html>

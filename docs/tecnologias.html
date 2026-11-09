@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tecnologias · Heimdall-ai</title>
+<meta name="description" content="Tecnologias usadas no Heimdall-ai e para que serve cada uma.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<div class="wrap">
+<header class="top">
+<a class="brand" href="index.html">Heimdall-ai</a>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html" aria-current="page">Tecnologias</a></li><li><a href="llms.html">Modelos (LLMs)</a></li><li><a href="mcp.html">MCP e ferramentas</a></li><li><a href="fluxos.html">Fluxos e automações</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li></ul></nav>
+</header>
+<main id="conteudo" tabindex="-1">
+
+<h1>Tecnologias</h1>
+<section aria-labelledby="stack"><h2 id="stack">O que foi usado</h2><ul><li><a href="https://ollama.com">Ollama</a>: Executa os modelos de linguagem no computador.</li><li><a href="https://www.litellm.ai">LiteLLM</a>: Reúne os modelos em um único ponto de acesso e expõe os servidores MCP.</li><li><a href="https://openwebui.com">Open WebUI</a>: Interface de chat.</li><li><a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a>: Padrão que liga o assistente a ferramentas externas.</li><li><a href="https://gofastmcp.com">FastMCP</a>: Biblioteca Python que implementa os servidores MCP do projeto.</li><li><a href="https://qdrant.tech">Qdrant</a>: Base vetorial para a busca por significado.</li><li><a href="https://docs.searxng.org">SearXNG</a>: Busca na web sem rastreamento.</li><li><a href="https://n8n.io">n8n</a>: Automações e agendamentos.</li><li><a href="https://github.com/Finb/Bark">Bark</a>: Aplicativo de notificações para o iPhone.</li><li><a href="https://www.docker.com">Docker</a>: Contêineres dos serviços auxiliares.</li><li><a href="https://tailscale.com">Tailscale</a>: Rede privada que liga o celular ao computador.</li><li><a href="https://www.cloudflare.com">Cloudflare</a>: Domínio, DNS e túnel de acesso ao chat.</li><li><a href="https://pages.github.com">GitHub e GitHub Pages</a>: Código e esta documentação.</li><li><a href="https://www.python.org">Python 3.12</a>: Servidores MCP, agente do Mac, indexação e testes.</li><li><a href="https://developer.apple.com/library/archive/documentation/AppleScript/">AppleScript e macOS</a>: Integração com Notas, Calendário, Lembretes e voz.</li></ul></section>
+<section aria-labelledby="req"><h2 id="req">Requisitos</h2>
+<ul><li>Mac com chip Apple e 16 GB de memória ou mais (o projeto roda em um MacBook M2 Pro de 16 GB).</li>
+<li>Docker Desktop, Ollama, Python 3.12 e, para o servidor de documentação da AWS, o <code>uv</code>.</li>
+<li>Para os avisos: o aplicativo Bark no iPhone. Para o acesso remoto: Tailscale.</li>
+<li>Pacotes Python no <code>venv</code>: fastmcp, litellm (com proxy), feedparser, psutil, pypdf, requests, starlette, pyyaml e youtube-transcript-api.</li>
+<li>Para o modelo de embeddings: <code>ollama pull nomic-embed-text</code>.</li></ul></section>
+
+</main>
+<footer>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p>
+<p>Documentação gerada do código do projeto. <a href="novidades.html">Novidades</a> · <a href="comandos.html">Comandos</a></p>
+</footer>
+<p id="aviso-copia" class="sr" role="status" aria-live="polite"></p>
+</div>
+<script src="heimdall.js" defer></script>
+</body>
+</html>

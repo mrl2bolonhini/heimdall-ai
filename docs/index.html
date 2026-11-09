@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heimdall-ai</title>
+<meta name="description" content="Heimdall-ai: assistente de Inteligência Artificial que roda no próprio computador, com ferramentas, documentos e automações. Documentação do projeto.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<div class="wrap">
+<header class="top">
+<a class="brand" href="index.html">Heimdall-ai</a>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html" aria-current="page">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos (LLMs)</a></li><li><a href="mcp.html">MCP e ferramentas</a></li><li><a href="fluxos.html">Fluxos e automações</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li></ul></nav>
+</header>
+<main id="conteudo" tabindex="-1">
+
+<div class="hero"><div>
+<h1>Heimdall-ai</h1>
+<p class="lead">Um assistente de Inteligência Artificial que roda no computador do autor, com ferramentas, memória e automações.</p>
+<p class="muted">Projeto desenvolvido por Murillo Bolonhini Cita. O chat é privado e o acesso é por convite; esta página documenta como o projeto funciona.</p>
+</div><svg class="bridge" id="bridge" viewBox="0 0 800 440" role="img" aria-label="Um arco de seis faixas em tons de azul e dourado, com um olho no centro que acompanha o ponteiro.">
+<g class="arc"><path d="M40 380A360 360 0 0 1 760 380" stroke="#bfe3fb" stroke-width="46"/><path d="M86 380A314 314 0 0 1 714 380" stroke="#93d2fa" stroke-width="46"/><path d="M132 380A268 268 0 0 1 668 380" stroke="#42a5f5" stroke-width="46"/><path d="M178 380A222 222 0 0 1 622 380" stroke="#26c6da" stroke-width="46"/><path d="M224 380A176 176 0 0 1 576 380" stroke="#1e88e5" stroke-width="46"/><path d="M270 380A130 130 0 0 1 530 380" stroke="#ffc107" stroke-width="46"/></g>
+<ellipse cx="400" cy="380" rx="118" ry="58" fill="var(--sclera)"/><g id="iris"><circle cx="400" cy="380" r="40" fill="#ffc107"/><circle cx="400" cy="380" r="19" fill="var(--pupil)"/><circle cx="409" cy="371" r="6" fill="#ffffff" opacity=".85"/></g></svg></div>
+<section aria-labelledby="proposito"><h2 id="proposito">Propósito</h2>
+<p>Heimdall, na mitologia nórdica, é o guardião de Bifröst, a ponte em arco-íris que liga os mundos. O projeto leva o nome dele: um assistente que vigia e conecta as ferramentas de quem o criou.</p>
+<p>Os objetivos são três. Manter os modelos de linguagem sob controle de quem os usa, rodando no próprio Mac e não em serviços de terceiros. Dar a esses modelos ferramentas reais (busca na web, arquivos, documentos, memória, Notas, Calendário). E automatizar rotinas que valem a pena: resumos, estudo, vigilância de privacidade e avisos no iPhone.</p>
+<p>O projeto foi pensado para ser usado por pessoa cega: tudo se opera por texto e comandos, e as automações entregam áudio e notas acessíveis.</p></section>
+<section aria-labelledby="numeros"><h2 id="numeros">Em números</h2>
+<ul class="stats"><li><strong>6</strong> modelos de linguagem</li><li><strong>20</strong> ferramentas (9 públicas, 11 do Mac)</li><li><strong>3</strong> servidores MCP</li><li><strong>12</strong> fluxos do n8n</li></ul>
+<p class="muted">Os números saem direto do código a cada geração das páginas.</p></section>
+<section aria-labelledby="paginas"><h2 id="paginas">Nesta documentação</h2><ul class="cards"><li><a href="arquitetura.html">Arquitetura</a><p>Como as peças se ligam, serviços e portas</p></li><li><a href="tecnologias.html">Tecnologias</a><p>O que foi usado e para quê</p></li><li><a href="llms.html">Modelos (LLMs)</a><p>Modelos de linguagem, usos e testes</p></li><li><a href="mcp.html">MCP e ferramentas</a><p>Servidores MCP e cada ferramenta</p></li><li><a href="fluxos.html">Fluxos e automações</a><p>Fluxos do n8n e scripts</p></li><li><a href="comandos.html">Comandos</a><p>Subir, testar, instalar e manter</p></li><li><a href="novidades.html">Novidades</a><p>Histórico de recursos</p></li></ul></section>
+<section aria-labelledby="acessos"><h2 id="acessos">Acessos</h2>
+<ul><li><a href="https://chat.heimdall-ai.tech">Chat</a>: o assistente. Exige conta, criada por convite.</li>
+<li><a href="https://uptime.heimdall-ai.tech">Status</a>: painel de disponibilidade. Acesso restrito.</li>
+<li><a href="https://pt.wikipedia.org/wiki/Heimdall">Quem é Heimdall</a>: o personagem que inspirou o nome.</li></ul></section>
+
+</main>
+<footer>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p>
+<p>Documentação gerada do código do projeto. <a href="novidades.html">Novidades</a> · <a href="comandos.html">Comandos</a></p>
+</footer>
+<p id="aviso-copia" class="sr" role="status" aria-live="polite"></p>
+</div>
+<script src="heimdall.js" defer></script>
+</body>
+</html>

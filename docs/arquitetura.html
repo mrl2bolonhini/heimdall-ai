@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitetura · Heimdall-ai</title>
+<meta name="description" content="Como as peças do Heimdall-ai se ligam: modelos, LiteLLM, MCP, Qdrant, n8n, agente do Mac e serviços.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<div class="wrap">
+<header class="top">
+<a class="brand" href="index.html">Heimdall-ai</a>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html" aria-current="page">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos (LLMs)</a></li><li><a href="mcp.html">MCP e ferramentas</a></li><li><a href="fluxos.html">Fluxos e automações</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li></ul></nav>
+</header>
+<main id="conteudo" tabindex="-1">
+
+<h1>Arquitetura</h1>
+<section aria-labelledby="camadas"><h2 id="camadas">Visão geral</h2>
+<p>O Heimdall-ai tem quatro camadas, da base para o topo.</p>
+<ol>
+<li><strong>Modelos.</strong> O Ollama executa os modelos de linguagem no Mac (chip Apple, 16 GB de memória).</li>
+<li><strong>Acesso único.</strong> O LiteLLM Proxy (porta 9000) expõe todos os modelos em uma API compatível com a da OpenAI e repassa os servidores MCP. Clientes como o Open WebUI e aplicativos de iPhone falam só com ele.</li>
+<li><strong>Ferramentas.</strong> Dois servidores MCP em Python (portas 8000 e 8001) e o servidor de documentação da AWS dão ao modelo ferramentas: busca na web, leitura de páginas, arquivos, memória, documentos pessoais.</li>
+<li><strong>Automações.</strong> O n8n agenda fluxos que usam os modelos e as ferramentas. O agente do Mac (porta 8003) liga o n8n, que roda em Docker, aos aplicativos do macOS. O Bark entrega os avisos no iPhone.</li>
+</ol></section>
+<section aria-labelledby="caminho"><h2 id="caminho">O caminho de uma pergunta no chat</h2>
+<ol><li>A pessoa escreve no Open WebUI (pelo navegador ou pelo celular, pela rede privada Tailscale).</li>
+<li>O Open WebUI envia ao LiteLLM, que encaminha ao Ollama o modelo escolhido.</li>
+<li>Se o modelo decide usar uma ferramenta, devolve uma chamada estruturada; o LiteLLM a executa no servidor MCP correspondente e devolve o resultado ao modelo.</li>
+<li>O modelo escreve a resposta final com o que a ferramenta trouxe.</li></ol></section>
+<section aria-labelledby="auto"><h2 id="auto">O caminho de uma automação</h2>
+<ol><li>O n8n dispara um fluxo no horário (ou por um evento, como um git push).</li>
+<li>O fluxo busca dados (feeds, SearXNG, Qdrant, notas) e pede análises ao modelo pelo LiteLLM.</li>
+<li>O resultado vai para o app Notas, o Calendário ou os Lembretes, pelo agente do Mac, e um resumo chega ao iPhone pelo Bark.</li>
+<li>Se qualquer etapa falha, o fluxo de aviso de falha notifica; nenhuma automação falha em silêncio.</li></ol></section>
+<section aria-labelledby="servicos"><h2 id="servicos">Serviços e portas</h2>
+<div class="tablewrap"><table><caption>Serviços do Heimdall-ai</caption><thead><tr><th scope="col">Serviço</th><th scope="col">Função</th><th scope="col">Porta</th><th scope="col">Como sobe</th></tr></thead><tbody><tr><th scope="row">Ollama</th><td>Executa os modelos de linguagem no Mac.</td><td><code>11434</code></td><td>start_heimdall.sh (inicia se não estiver rodando)</td></tr><tr><th scope="row">LiteLLM Proxy</th><td>Ponto único de acesso (API compatível com a da OpenAI) aos modelos; também expõe os servidores MCP.</td><td><code>9000</code></td><td>start_heimdall.sh</td></tr><tr><th scope="row">Servidor MCP do Mac (admin)</th><td>Ferramentas que mexem no Mac: arquivos, métricas, memória e documentos.</td><td><code>8000</code></td><td>start_heimdall.sh</td></tr><tr><th scope="row">Servidor MCP público</th><td>Ferramentas seguras para convidados: web, cálculo, feeds, transcrições.</td><td><code>8001</code></td><td>start_heimdall.sh</td></tr><tr><th scope="row">SearXNG</th><td>Mecanismo de busca na web que não rastreia quem pesquisa.</td><td><code>8080</code></td><td>start_heimdall.sh (Docker)</td></tr><tr><th scope="row">Qdrant</th><td>Base vetorial: busca por significado nos documentos e nas notas.</td><td><code>6333</code></td><td>start_heimdall.sh (Docker)</td></tr><tr><th scope="row">Open WebUI</th><td>Interface de chat usada pelos convidados e pelo dono.</td><td><code>3000</code></td><td>--webui ou HEIMDALL_WEBUI=1</td></tr><tr><th scope="row">Open Terminal</th><td>Terminal acessível pelo Open WebUI.</td><td><code>8002</code></td><td>--terminal</td></tr><tr><th scope="row">n8n</th><td>Automações e tarefas agendadas.</td><td><code>5678</code></td><td>--n8n ou HEIMDALL_N8N=1</td></tr><tr><th scope="row">Agente do Mac</th><td>Ponte entre o n8n (no Docker) e o app Notas, o Calendário, os Lembretes e a voz do macOS.</td><td><code>8003</code></td><td>--agente (sobe sozinho com HEIMDALL_AGENTE_TOKEN)</td></tr><tr><th scope="row">Docling</th><td>Extração de texto de PDFs, com OCR.</td><td><code>5001</code></td><td>--docling ou HEIMDALL_DOCLING=1</td></tr><tr><th scope="row">Uptime Kuma</th><td>Painel de disponibilidade dos serviços.</td><td><code>3001</code></td><td>start_heimdall.sh (HEIMDALL_MONITORING=0 desliga)</td></tr><tr><th scope="row">Dozzle</th><td>Leitor de logs dos contêineres.</td><td><code>8081</code></td><td>start_heimdall.sh (HEIMDALL_MONITORING=0 desliga)</td></tr><tr><th scope="row">Emulador de AWS (Moto ou LocalStack)</th><td>Para testar código de AWS sem custo.</td><td><code>4566</code></td><td>start_heimdall.sh (HEIMDALL_AWS_EMULATOR)</td></tr></tbody></table></div>
+<p class="muted">Os serviços de Docker escutam só no próprio computador. O acesso de fora passa pela rede privada Tailscale ou por túnel da Cloudflare com autenticação.</p></section>
+<section aria-labelledby="seg"><h2 id="seg">Princípios de privacidade e segurança</h2>
+<ul>
+<li><strong>Dados pessoais ficam no Mac.</strong> Chaves e identificadores ficam no arquivo <code>.env</code>, com permissão restrita, e nunca no repositório.</li>
+<li><strong>Pastas privadas são intocáveis.</strong> Notas de pastas marcadas como privadas nunca são lidas, indexadas nem analisadas. Se a verificação falhar, nenhuma nota é entregue.</li>
+<li><strong>O agente só escreve onde deve.</strong> Grava apenas nas pastas do próprio Heimdall e nas pastas de temas de estudo.</li>
+<li><strong>Autenticidade antes de confiança.</strong> O vigia de e-mail só trata como oficial o remetente que o Gmail confirmou, e nunca segue links.</li>
+<li><strong>Sem falha silenciosa.</strong> Quando uma fonte não responde, o aviso diz isso e nunca finge que não há novidade.</li>
+<li><strong>Entradas externas são dados, não ordens.</strong> Textos de páginas, e-mails e documentos passados ao modelo são tratados como conteúdo não confiável.</li></ul></section>
+
+</main>
+<footer>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p>
+<p>Documentação gerada do código do projeto. <a href="novidades.html">Novidades</a> · <a href="comandos.html">Comandos</a></p>
+</footer>
+<p id="aviso-copia" class="sr" role="status" aria-live="polite"></p>
+</div>
+<script src="heimdall.js" defer></script>
+</body>
+</html>

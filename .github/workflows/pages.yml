@@ -1,0 +1,42 @@
+name: Páginas
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**", "gerar_docs.py", "CHANGELOG.md", "README.md", "heimdall_tools.py", "litellm_config.yaml", "n8n_flows*/**", "start_heimdall.sh", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Documentação em dia?
+        run: python3 gerar_docs.py --check
+
+  publicar:
+    needs: conferir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -13,3 +13,5 @@ knowledge/
 qdrant_storage/
 backups/
 .email_oficial_estado.json
+
+atualizacao*.zip
