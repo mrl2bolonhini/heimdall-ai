@@ -315,7 +315,14 @@ esac
 if ! curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
     echo "[4/7] Iniciando o Ollama..."
     # OLLAMA_HOST do .env vale aqui; se não houver, o Ollama escuta só em 127.0.0.1.
-    OLLAMA_CONTEXT_LENGTH=8192 ollama serve > /dev/null 2>&1 &
+    # Memória: no máximo 2 modelos carregados (um de chat e um de embeddings), 1 pedido por vez
+    # (pedidos em paralelo multiplicam o cache de contexto) e cache de contexto quantizado.
+    OLLAMA_CONTEXT_LENGTH=8192 \
+    OLLAMA_MAX_LOADED_MODELS="${OLLAMA_MAX_LOADED_MODELS:-2}" \
+    OLLAMA_NUM_PARALLEL="${OLLAMA_NUM_PARALLEL:-1}" \
+    OLLAMA_FLASH_ATTENTION="${OLLAMA_FLASH_ATTENTION:-1}" \
+    OLLAMA_KV_CACHE_TYPE="${OLLAMA_KV_CACHE_TYPE:-q8_0}" \
+    ollama serve > /dev/null 2>&1 &
     sleep 3
 else
     echo "[4/7] Ollama já estava rodando (o contexto vem do num_ctx do litellm_config.yaml)."

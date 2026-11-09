@@ -35,6 +35,7 @@ model_list:
       model: ollama_chat/deepseek-coder-v2:16b
       api_base: http://localhost:11434
       num_ctx: 8192
+      keep_alive: "30s"   # libera a memória logo depois da análise do GitOps
     model_info:
       supports_function_calling: true
 
@@ -45,6 +46,7 @@ model_list:
       model: ollama_chat/qwen3-vl:8b-instruct
       api_base: http://localhost:11434
       num_ctx: 8192
+      keep_alive: "2m"   # modelo dos fluxos: libera a memória pouco depois do último uso
     model_info:
       supports_function_calling: true
       supports_vision: true
@@ -54,6 +56,7 @@ model_list:
       model: ollama_chat/eriktonon/bonsai-2-uncensored:27b
       api_base: http://localhost:11434
       num_ctx: 8192
+      keep_alive: "1m"   # modelo grande: não fica ocupando a memória depois da resposta
     model_info:
       supports_function_calling: true
 
