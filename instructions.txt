@@ -1,5 +1,5 @@
 Subida padrão
-nohup bash start_heimdall.sh ---terminal > heimdall.log 2>&1 &
+nohup bash start_heimdall.sh --webui --terminal > heimdall.log 2>&1 &tail -20 heimdall.log
 
 Sobe tudo e verifica update do Docker
 nohup bash start_heimdall.sh --webui --terminal --update > heimdall.log 2>&1 &

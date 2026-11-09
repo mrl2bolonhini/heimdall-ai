@@ -91,7 +91,7 @@ def limpar_notas() -> None:
         print(f"3. App Notas: não consegui executar ({e}).")
         return
     if r.returncode != 0:
-        print(f"3. App Notas: erro ({r.stderr.strip()[:200]}). Apague à mão na pasta 'Heimdall Cérebro' as notas que começam com 'Cérebro: Cérebro:' ou 'Cérebro: Digest'.")
+        print(f"3. App Notas: erro ({r.stderr.strip()[:200]}). Apague à mão na pasta 'Cérebro' as notas que começam com 'Cérebro: Cérebro:' ou 'Cérebro: Digest'.")
         return
     nomes = [l for l in r.stderr.splitlines() if l.strip()]
     print(f"3. App Notas: {r.stdout.strip() or 0} nota(s) {'encontrada(s)' if SO_LISTAR else 'apagada(s)'}.")

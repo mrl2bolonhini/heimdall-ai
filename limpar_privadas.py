@@ -5,7 +5,7 @@ Use depois de mover uma nota para a pasta "Privado" (ou outra listada em HEIMDAL
 sido analisada antes. O agente do Mac precisa estar no ar. O script remove, só dessas notas:
   1. os pontos na base vetorial (Qdrant, coleção heimdall_notas);
   2. a cópia em Markdown em cerebro/heimdall-cerebro/;
-  3. a nota espelho "Cérebro: <título>" na pasta "Heimdall Cérebro" do app Notas (vai para "Apagadas Recentemente").
+  3. a nota espelho "Cérebro: <título>" na pasta "Cérebro" do app Notas (vai para "Apagadas Recentemente").
 A nota original nunca é tocada.
 
 Uso (na pasta do projeto):   python3 limpar_privadas.py
@@ -106,7 +106,7 @@ def main() -> None:
                       '  end tell\nend run\n')
             r = subprocess.run(["osascript", "-e", script, n], capture_output=True, text=True, timeout=120)
             if r.returncode != 0:
-                print(f"   (não consegui apagar '{n}': {r.stderr.strip()[:120]}; apague à mão em 'Heimdall Cérebro')")
+                print(f"   (não consegui apagar '{n}': {r.stderr.strip()[:120]}; apague à mão em 'Cérebro')")
         print("   Apagadas.")
     print("Pronto." if not SO_LISTAR else "Nada foi apagado (--so-listar).")
 

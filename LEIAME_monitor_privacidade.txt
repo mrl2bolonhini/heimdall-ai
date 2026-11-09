@@ -1,0 +1,125 @@
+MONITOR DE PRIVACIDADE (fluxo 10 do n8n)
+
+O que faz
+Todos os dias às 9h o n8n pesquisa na web, pelo SearXNG, o que existe sobre você: nome, e-mails e usuários, em buscas comuns, de notícias e de imagens. Lê as páginas novas, separa homônimos, pede ao modelo uma análise de cada achado (menção, comentário, perfil, possível vazamento, dado exposto, imagem) e entrega:
+1. O relatório completo no app Notas, pasta "Monitor de Privacidade" (aparece no Mac e no iPhone): resumo, achados por nível de risco com o link de cada um, descrição breve das imagens, análise geral e o que fazer.
+2. Um resumo curto no iPhone pelo Bark, todos os dias, inclusive quando não há nada novo.
+
+Memória
+O fluxo guarda dentro do n8n:
+1. As páginas que já viu (por 120 dias), para nunca repetir o mesmo achado. Se uma página que era confirmada mudar de conteúdo, ela volta como "atualizada".
+2. O histórico dos últimos 90 dias (achados e nível por dia), usado para dizer há quantos dias não há novidades e comparar a semana.
+3. Os domínios que mais aparecem, para apontar correlações.
+Limite: a memória só vale nas execuções agendadas das 9h. Um teste manual não guarda nada. Reinstalar tenta levar a memória junto; se o n8n não aceitar, o instalador avisa e recomeça do zero.
+
+Instalar
+1. Copie para a raiz do projeto: instalar_monitor_privacidade.sh, LEIAME_monitor_privacidade.txt e a pasta n8n_flows_monitor.
+2. Com o n8n, o SearXNG e o agente de Notas no ar (bash start_heimdall.sh), rode: bash instalar_monitor_privacidade.sh
+3. Responda às perguntas: nome, outras grafias, e-mails, usuários, cidade, fatos que só combinam com você (empresa, área) e sites seus a ignorar. Não informe CPF, senhas nem documentos. O instalador recusa respostas que pareçam CPF.
+4. Suas respostas ficam só no .env (ignorado pelo git) e dentro do n8n. Para mudar depois: bash instalar_monitor_privacidade.sh --reconfigurar. Para tirar: bash instalar_monitor_privacidade.sh --remover.
+
+Testar agora
+1. Rode: docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdMonitor00000001 2>&1 | grep -E 'Execution was|rror'
+2. Espere alguns minutos e confira o Bark e o app Notas. A primeira execução lê até 14 páginas e deixa o resto para os dias seguintes. Ela mostra muita coisa antiga: é a linha de base do que já existe sobre você.
+
+Como ler o resultado
+1. Confirmado: seus identificadores batem (e-mail, usuário, ou nome mais um fato seu). Provável: o nome bate, mas falta contexto. Possível homônimo: aparece só em uma lista separada, sem análise.
+2. O nível de atenção do dia é o maior risco entre os achados. O risco tem um piso calculado por código: termos de vazamento junto ao seu e-mail, ou a análise citar dado sensível (senha, CPF, telefone, endereço), levam ao mínimo "médio"; se a análise do modelo falhar, o mínimo é "baixo". O modelo não consegue rebaixar esse piso.
+3. Os links vêm sempre do resultado da busca, nunca do modelo. Senhas ou dados vazados não são copiados para a nota.
+
+Avisos que você pode receber no Bark
+1. "Nada novo": nenhuma página nova relevante.
+2. "Busca sem resultados": as buscas voltaram vazias. Não significa que não exista nada; os motores podem estar bloqueando o SearXNG. Veja docker logs --tail 40 searxng.
+3. "Falha: ...": o SearXNG não respondeu ou outra etapa quebrou (fluxo 9, aviso de falha).
+
+Limites honestos
+1. Só encontra páginas públicas indexadas pelos motores do SearXNG. Não vê vazamentos em mercados clandestinos nem bancos de senhas. Para vazamentos de e-mail, cadastre também o serviço Have I Been Pwned.
+2. As buscas contêm seu nome e e-mail e passam pelos buscadores. Por isso o instalador não aceita CPF nem documentos.
+3. Descrição de imagens: só acontece para imagens públicas que o modelo consiga baixar (o LiteLLM busca a imagem). Se o site bloquear o download, aquele achado vem sem análise automática, mas com o link.
+4. O modelo pode errar a classificação. Por isso a nota separa confirmado, provável e homônimo, e o risco tem piso calculado por código.
+
+Problemas comuns
+1. O n8n não recebe JSON do SearXNG: confira "formats: - json" em searxng/settings.yml e reinicie com o start_heimdall.sh.
+2. Bark chega, mas a nota não aparece: o agente do Mac está fora do ar ou sem permissão no app Notas. Rode python3 heimdall_agente.py --teste.
+3. Muitos resultados antigos no primeiro dia: esperado. Eles não se repetem depois.
+
+=====================================================================
+ATUALIZAÇÃO: DIÁRIOS OFICIAIS E CHECAGEM MENSAL
+=====================================================================
+O mesmo instalador agora importa dois fluxos a mais.
+
+1. Diários oficiais (todos os dias às 8h30). Procura o seu nome (e as variações da pergunta 2) em três lugares: Diário Oficial do município de São Paulo, pelo Querido Diário (serviço público e aberto); Diário Oficial da União, pela busca do portal in.gov.br; e Diário Oficial do Estado de SP, por busca indireta (só encontra o que o buscador indexou, então a cobertura é parcial). Só avisa o que for novo. O relatório vai para a pasta "Monitor de Privacidade" do Notas e o resumo para o Bark. Nunca usa CPF.
+2. Se uma fonte não responder, o aviso diz qual e lembra que isso não significa "nada novo". Se todas falharem, o fluxo de falha avisa pelo Bark.
+3. Checagem mensal (dia 1, às 10h). Lembrete pelo Bark para abrir por conta própria o Meu INSS, o FGTS, a Carteira de Trabalho Digital, o Registrato e o Serasa. Esses serviços exigem login e bloqueiam acesso automático, então a checagem é sua, guiada pelo lembrete.
+4. O endereço do DOU e o formato da página podem mudar sem aviso. Esta parte não pôde ser testada com a internet real, só com respostas simuladas. Se o aviso disser que o DOU "mudou de formato", me mande essa mensagem.
+
+Como instalar: copie a pasta n8n_flows_monitor/ e o instalar_monitor_privacidade.sh para ~/heimdall-ai e rode:
+  bash instalar_monitor_privacidade.sh --reconfigurar
+Teste dos diários, digitado em uma linha:
+  docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdDiario00000001 2>&1 | tail -20
+
+=====================================================================
+ATUALIZAÇÃO: VIGIA DE E-MAIL DE SERVIÇOS PÚBLICOS (Gmail)
+=====================================================================
+Arquivos: heimdall_email_oficial.py e instalar_email_oficial.sh (copie os dois para ~/heimdall-ai, ao lado do .env).
+
+O que faz, a cada hora, só lendo (nada é marcado como lido, movido ou apagado):
+1. Procura nos últimos 3 dias, na caixa de entrada e no spam, e-mails de ou sobre: INSS, gov.br, FGTS e Caixa, Carteira de Trabalho e seguro-desemprego, Receita Federal e CPF, Serasa e SPC, Banco Central e Registrato, Detran e multas, tribunais e intimações, prefeitura e Estado de SP, título de eleitor, Conecte SUS e Correios. Qualquer domínio gov.br ou jus.br conta como oficial. Para incluir outros, acrescente no .env: HEIMDALL_EMAIL_DOMINIOS_EXTRA='dominio1.com.br,dominio2.com.br'.
+2. Confere a autenticidade: só vale como oficial se o Gmail registrou que o remetente passou na verificação (DMARC) de um domínio oficial. Imitação (domínio parecido, nome de exibição falso, domínio oficial sem autenticação, aviso de urgência vindo de domínio comum) gera ALERTA de possível golpe, com notificação de alta prioridade.
+3. E-mails oficiais confirmados são resumidos pelo modelo local, com urgência, prazo e o que fazer. Links nunca são repetidos nem seguidos.
+4. Relatório na pasta "Monitor de Privacidade" do Notas e aviso pelo Bark. Se nada houver, um aviso por dia, depois das 9h. Se o Gmail recusar o acesso, avisa uma vez por dia, dizendo que isso não significa ausência de e-mails.
+
+Antes de instalar, uma vez, crie a senha de aplicativo do Gmail:
+1. A verificação em duas etapas precisa estar ligada na conta Google.
+2. Abra o endereço myaccount.google.com/apppasswords, dê o nome Heimdall e crie. O Google mostra 16 letras; copie.
+3. No Gmail, em Configurações, aba Encaminhamento e POP/IMAP, confirme que o IMAP está ativado.
+Depois, na pasta do projeto:
+  bash instalar_email_oficial.sh
+O instalador pede o Gmail e a senha (digitação oculta), testa o login (se falhar, apaga a senha), e agenda a execução de hora em hora no launchd. A primeira rodada pode listar os últimos 3 dias; depois só o novo.
+Testar sem enviar nada: bash instalar_email_oficial.sh --testar
+Desligar e apagar a senha: bash instalar_email_oficial.sh --remover
+
+Cuidados:
+1. A senha de aplicativo dá acesso ao Gmail inteiro (o Google não oferece senha só de leitura). Ela fica apenas no .env, com permissão 600. Para revogar, apague a senha Heimdall na página do Google.
+2. Se o Mac estiver dormindo, a verificação espera; recupera quando acordar.
+3. Esta parte foi testada com e-mails simulados, não com o Gmail real. Se algo falhar, o log fica em ~/Library/Logs/heimdall-email-oficial.log (veja com: tail -30 ~/Library/Logs/heimdall-email-oficial.log).
+
+=====================================================================
+CORREÇÕES E AGENDA (lembretes e eventos)
+=====================================================================
+Arquivos desta atualização: heimdall_agente.py, heimdall_email_oficial.py e a pasta n8n_flows_monitor/ (cópia para ~/heimdall-ai, por cima).
+
+O que mudou:
+1. Erro do e-mail ("'ascii' codec can't encode character"): a busca no Gmail continha palavras com acento. Agora a consulta sai só em ASCII, mantendo o OR em maiúsculas que o Gmail exige.
+2. Erro do Querido Diário (SSL EPROTO): o n8n dentro do Docker não conseguiu o aperto de mão TLS com o servidor. Agora o município e o DOU são consultados pelo agente do Mac (rota /web/get), que usa o Python do próprio Mac. O agente só aceita api.queridodiario.ok.org.br e www.in.gov.br, só por https, e exige o token. A busca indireta do Diário do Estado continua pelo SearXNG.
+3. Agenda: para e-mails OFICIAIS confirmados com urgência média ou alta, o vigia agora cria, além do aviso:
+   a. Evento de dia inteiro no app Calendário, no calendário "Heimdall", na data do prazo, com alerta 1 dia antes, às 9h.
+   b. Lembrete no app Lembretes, na lista "Heimdall", na véspera do prazo às 9h (se o prazo é hoje ou amanhã, daqui a uma hora).
+   c. Sem data clara, mas com urgência alta: só um lembrete "Verificar" para amanhã às 9h.
+   O prazo vem do resumo do modelo local e só vale se for uma data real entre hoje e dois anos à frente. Nada é criado para e-mails suspeitos (golpes) nem para remetentes não oficiais. Não duplica: título igual na mesma data não é criado de novo. Se o calendário "Heimdall" for novo, ele sincroniza com o iPhone se a conta padrão do Calendário for o iCloud.
+
+Como aplicar, no Terminal, na pasta do projeto, um comando por vez:
+1. Copie os arquivos para ~/heimdall-ai (por cima).
+2. Reinicie o agente do Mac, que carrega as rotas novas: pkill -f heimdall_agente.py  e depois suba o sistema como de costume (o start_heimdall.sh sobe o agente).
+3. Dê as permissões do Calendário e dos Lembretes, uma vez: python3 heimdall_agente.py --teste
+   O macOS pede para autorizar o Terminal a controlar o Calendário e os Lembretes. Com o VoiceOver, o aviso aparece como janela; ative o botão OK ou Permitir. Se perder o aviso: Ajustes do Sistema > Privacidade e Segurança > Automação.
+4. Reinstale os fluxos do n8n: bash instalar_monitor_privacidade.sh --reconfigurar (Enter mantém as respostas anteriores).
+5. Teste dos diários: docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdDiario00000001 2>&1 | tail -20
+6. Teste do e-mail sem enviar nada: bash instalar_email_oficial.sh --testar
+   Na simulação, as criações aparecem como "[AGENDA]". Para valer de verdade, rode: python3 heimdall_email_oficial.py
+
+Se o Querido Diário ainda falhar, o aviso do Bark trará a causa. Para ver a resposta direta do Mac, digite: python3 -c "import urllib.request as u; print(u.urlopen('https://api.queridodiario.ok.org.br/gazettes?size=1', timeout=30).read(300))"
+
+=====================================================================
+PASTAS DO NOTAS COM NOMES PRÓPRIOS E PROTEÇÃO DA PASTA PRIVADA
+=====================================================================
+1. Novos nomes das pastas no app Notas: "Monitor de Privacidade" (antes Heimdall Privacidade), "Digest" (antes Heimdall Digest) e "Cérebro" (antes Heimdall Cérebro). O agente só escreve nessas três (e nas antigas que começam com Heimdall). Para mudar os nomes, use no .env: HEIMDALL_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro". As notas antigas ficam nas pastas antigas; apague-as à mão quando quiser. Essas pastas nunca são lidas como fonte, para não criar laço.
+2. Pasta privada: antes só valia o nome exato "Privado". Uma pasta chamada ".privado" (com ponto) passava batida e suas notas iam para o Cérebro. Agora a comparação ignora maiúsculas, acentos, espaços e pontos no começo: ".privado", "Privado" e " PRIVADO " são a mesma pasta, com as subpastas. Outras pastas privadas: HEIMDALL_NOTAS_PRIVADAS="Privado,Diário" no .env.
+
+Como aplicar (um comando por vez, na pasta do projeto):
+1. Copie os arquivos para ~/heimdall-ai, por cima, e reinicie o agente: pkill -f heimdall_agente.py  e suba o sistema como de costume.
+2. Confira a proteção: python3 heimdall_agente.py --teste
+   A linha do passo 1 deve dizer "Pastas privadas encontradas: .privado, ..." com pelo menos uma nota protegida. Se disser nenhuma, me mande a linha.
+3. Reinstale os fluxos: bash instalar_automacoes_avancadas.sh  e  bash instalar_monitor_privacidade.sh --reconfigurar
+4. Apague o que o Cérebro já guardou das notas privadas, primeiro só listando: python3 limpar_privadas.py --so-listar  e, se a lista estiver certa: python3 limpar_privadas.py
+   Isso remove os pontos da base vetorial, as cópias em Markdown e as notas espelho. As notas originais nunca são tocadas.

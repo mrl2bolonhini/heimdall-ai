@@ -12,7 +12,7 @@ Rotas:
                                         paradas há pelo menos "quieto" segundos, da mais antiga para a mais nova
     GET  /notas/nota?id=                texto simples de uma nota
     GET  /notas/privadas                pastas privadas e os ids das notas protegidas (usado pelo limpar_privadas.py)
-    POST /notas/gravar                  {"pasta": "Heimdall ...", "titulo": "...", "markdown": "..."}
+    POST /notas/gravar                  {"pasta": "Digest", "titulo": "...", "markdown": "...", "audio": "texto a narrar (opcional)"}
                                         cria ou atualiza uma nota e grava uma cópia .md na pasta do cofre
 
 Pastas privadas: notas da pasta "Privado" (e de outras listadas em HEIMDALL_NOTAS_PRIVADAS) nunca são listadas nem lidas.
@@ -35,6 +35,7 @@ import tempfile
 import threading
 import time
 import unicodedata
+import urllib.request
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -45,7 +46,52 @@ HOST = os.environ.get("HEIMDALL_AGENTE_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_AGENTE_PORT", "8003"))
 TOKEN = os.environ.get("HEIMDALL_AGENTE_TOKEN", "")
 VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(PROJECT_DIR / "cerebro"))).expanduser()
-PREFIXO_ESCRITA = "Heimdall"
+PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continuam aceitos e ignorados
+# Pastas do app Notas que o Heimdall cria e onde só ele escreve. Nunca são lidas como fonte (evita laço) e as
+# suas notas pessoais nunca são alteradas. Para mudar, use no .env: HEIMDALL_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro"
+PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("HEIMDALL_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Cérebro").split(",") if p.strip()]
+# Subpasta do cofre de cada pasta (mantém os nomes antigos para não separar o que já foi gravado).
+PASTA_DO_COFRE = {"Monitor de Privacidade": "heimdall-privacidade", "Digest": "heimdall-digest", "Cérebro": "heimdall-cerebro"}
+
+
+# Temas de estudo: cada subpasta de knowledge/ vira uma pasta no app Notas com o nome da tag do tema (o mesmo nome que
+# o ingest_docs.py usa: minúsculas, sem acentos, hífens). Pastas novas de conhecimento ganham a pasta de notas sozinhas.
+KNOWLEDGE = Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
+# Voz do áudio dos estudos. Vazio (padrão) = a melhor voz em português instalada (Premium, depois Aprimorada, depois a padrão).
+# Para fixar uma: HEIMDALL_VOZ="Luciana (Aprimorada)". Os nomes saem de: say -v '?' | grep pt_
+VOZ = os.environ.get("HEIMDALL_VOZ", "").strip()
+# Velocidade na escala de porcentagem da fala do macOS (0 a 100). 65 ≈ 350 palavras por minuto. Para fixar palavras por minuto: HEIMDALL_VOZ_PPM=300
+try:
+    VELOCIDADE = max(0.0, min(100.0, float(os.environ.get("HEIMDALL_VOZ_VELOCIDADE", "65"))))
+except ValueError:
+    VELOCIDADE = 65.0
+try:
+    PPM = int(os.environ.get("HEIMDALL_VOZ_PPM", "0"))
+except ValueError:
+    PPM = 0
+AUDIO_ATIVO = os.environ.get("HEIMDALL_ESTUDO_AUDIO", "1") != "0"
+
+
+def tema_slug(texto: str) -> str:
+    t = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", t).strip("-") or "geral"
+
+
+def temas_conhecimento() -> set:
+    temas = {"geral"}
+    try:
+        for d in KNOWLEDGE.iterdir():
+            if d.is_dir() and not d.name.startswith("."):
+                temas.add(tema_slug(d.name))
+    except OSError:
+        pass
+    return temas
+
+
+def norm_nome(s: str) -> str:
+    """Compara nomes de pasta sem ligar para maiúsculas, acentos, espaços e pontos no começo (".privado" = "Privado")."""
+    t = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"\s+", " ", t).strip(" .")
 IGNORAR_PASTAS = {
     "recently deleted", "apagadas recentemente", "excluídas recentemente", "notas excluídas",
     "excluidas recentemente", "notas apagadas",
@@ -141,12 +187,24 @@ on run argv
 				set body of (item 1 of found) to htmlBody
 				return "atualizada"
 			else
-				make new note at f with properties {name:noteTitle, body:htmlBody}
+				make new note at f with properties {body:htmlBody}
 				return "criada"
 			end if
 		end tell
 	end tell
 end run
+'''
+
+AS_NOMES_PASTAS = r'''-- heimdall:nomes-pastas
+set t to ""
+tell application "Notes"
+	repeat with f in (every folder)
+		try
+			set t to t & (name of f) & linefeed
+		end try
+	end repeat
+end tell
+return t
 '''
 
 AS_PRIVADAS = r'''-- heimdall:privadas
@@ -217,10 +275,13 @@ TITULO_DO_HEIMDALL = re.compile(r"^(C[ée]rebro: |Digest \d{4}-\d{2}-\d{2} \d{2}
 
 def pasta_ignorada(nome: str) -> bool:
     n = nome.strip().lower()
-    return n.startswith(PREFIXO_ESCRITA.lower()) or n in IGNORAR_PASTAS or n in {p.lower() for p in PRIVADAS}
+    nn = norm_nome(nome)
+    return (n.startswith(PREFIXO_ESCRITA.lower()) or n in IGNORAR_PASTAS or nn in {norm_nome(p) for p in PRIVADAS}
+            or nn in {norm_nome(p) for p in PASTAS_PROPRIAS} or nn in temas_conhecimento())
 
 
 _cache_privadas: tuple[float, set] = (0.0, set())
+_nomes_privados: list = []
 
 
 def ids_privados() -> set:
@@ -230,8 +291,12 @@ def ids_privados() -> set:
     if time.time() - _cache_privadas[0] < 20:
         return _cache_privadas[1]
     with _lock:
-        saida = osascript(AS_PRIVADAS, *PRIVADAS)
+        existentes = {l.strip() for l in osascript(AS_NOMES_PASTAS).splitlines() if l.strip()}
+        alvo = {norm_nome(p) for p in PRIVADAS}
+        nomes = sorted({n for n in existentes if norm_nome(n) in alvo} | set(PRIVADAS))
+        saida = osascript(AS_PRIVADAS, *nomes)
     ids = {l.strip() for l in saida.splitlines() if l.strip()}
+    _nomes_privados[:] = nomes
     _cache_privadas = (time.time(), ids)
     return ids
 
@@ -289,8 +354,14 @@ def inline(texto: str) -> str:
 def markdown_para_html(titulo: str, md: str) -> str:
     partes = [f"<div><h1>{html.escape(titulo, quote=False)}</h1></div>"]
     em_lista = False
+    primeira = True
     for bruta in md.splitlines():
         linha = bruta.rstrip()
+        if primeira and linha.strip():
+            primeira = False
+            m0 = re.match(r"^#{1,3}\s+(.*)$", linha)
+            if m0 and re.sub(r"\s+", " ", m0.group(1)).strip().lower() == re.sub(r"\s+", " ", titulo).strip().lower():
+                continue  # o título já aparece no topo da nota
         m_item = re.match(r"^\s*[-*]\s+(.*)$", linha)
         if m_item:
             if not em_lista:
@@ -314,31 +385,283 @@ def markdown_para_html(titulo: str, md: str) -> str:
     return "".join(partes)
 
 
-def gravar(pasta: str, titulo: str, markdown: str) -> dict:
-    if not pasta.startswith(PREFIXO_ESCRITA):
-        raise PermissionError(f"só escrevo em pastas que começam com '{PREFIXO_ESCRITA}'")
+_CONTROLE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\ufffe\uffff]")
+
+
+def _limpar(s: str) -> str:
+    """Tira caracteres de controle (comuns em texto extraído de PDF; o byte nulo derruba o osascript)."""
+    return _CONTROLE.sub("", str(s))
+
+
+def gravar(pasta: str, titulo: str, markdown: str, audio: str = "") -> dict:
+    titulo, markdown, audio = _limpar(titulo), _limpar(markdown), _limpar(audio)
+    if pasta not in PASTAS_PROPRIAS and not pasta.startswith(PREFIXO_ESCRITA) and pasta not in temas_conhecimento():
+        raise PermissionError("só escrevo nas pastas do Heimdall e nas pastas de temas de knowledge/: " + ", ".join(PASTAS_PROPRIAS))
     if not titulo.strip() or len(titulo) > 200:
         raise ValueError("título vazio ou longo demais")
-    if not re.fullmatch(r"Heimdall[\w .-]{0,60}", pasta):
+    if not re.fullmatch(r"[\w][\w .-]{0,60}", pasta):
         raise ValueError("nome de pasta inválido (use letras, números, espaço, ponto, hífen)")
     titulo = titulo.replace("\n", " ").replace("\t", " ").strip()
     # Cópia em Markdown no cofre (arquivo de verdade, com o frontmatter intacto).
-    destino = VAULT / slug(pasta)
+    destino = VAULT / PASTA_DO_COFRE.get(pasta, slug(pasta))
     destino.mkdir(parents=True, exist_ok=True)
     arquivo = destino / f"{slug(titulo)}.md"
     if arquivo.resolve().parent != destino.resolve():
         raise PermissionError("caminho fora do cofre")
     arquivo.write_text(markdown, encoding="utf-8")
+    # Áudio (opcional): gerado antes, para a própria nota dizer onde ele está.
+    m4a, motivo_audio = (None, "")
+    markdown_puro = markdown
+    if audio.strip():
+        m4a, motivo_audio = fazer_audio(titulo, audio, destino)
+        if m4a:
+            markdown = _com_dica(markdown, f"Áudio desta leitura: é o anexo no fim desta nota, arquivo {m4a.name}. Toque nele para ouvir.")
     # Nota no app Notas (a primeira linha vira o nome da nota).
     corpo_html = markdown_para_html(titulo, markdown)
     with _lock:
         estado = osascript(AS_GRAVAR, pasta, titulo, corpo_html)
-    return {"ok": True, "nota": estado, "arquivo": str(arquivo)}
+    r = {"ok": True, "nota": estado, "arquivo": str(arquivo)}
+    if m4a:
+        try:
+            with _lock:
+                osascript(AS_ANEXAR, pasta, titulo, str(m4a))
+            r["audio"] = "anexado"
+        except Exception:  # noqa: BLE001
+            r["audio"] = "salvo:" + str(m4a)
+            with _lock:
+                osascript(AS_GRAVAR, pasta, titulo, markdown_para_html(titulo, _com_dica(markdown_puro, f"Áudio desta leitura: não consegui anexar. Está no Mac, na pasta {m4a.parent}, arquivo {m4a.name}.")))
+    elif audio.strip():
+        r["audio"] = motivo_audio
+    return r
+
+
+AS_ANEXAR = r'''-- heimdall:anexar
+on run argv
+	set folderName to item 1 of argv
+	set noteTitle to item 2 of argv
+	set audioPath to item 3 of argv
+	tell application "Notes"
+		tell default account
+			set n to item 1 of (every note of folder folderName whose name is noteTitle)
+			make new attachment at end of attachments of n with data (POSIX file audioPath)
+			return "anexado"
+		end tell
+	end tell
+end run
+'''
+
+
+def palavras_por_minuto() -> int:
+    if PPM > 0:
+        return max(80, min(PPM, 720))
+    return int(round(90 * 8 ** (VELOCIDADE / 100)))  # 0% = 90, 50% = 255, 65% = 348, 100% = 720
+
+
+def vozes_pt() -> list:
+    """Vozes em português instaladas, da melhor para a pior."""
+    saida = subprocess.run(["say", "-v", "?"], capture_output=True, text=True, timeout=20).stdout
+    achadas = []
+    for linha in saida.splitlines():
+        m = re.match(r"^(.+?)\s+([a-z]{2,3}_[A-Za-z]{2,3})\s+#", linha)
+        if not m or not m.group(2).lower().startswith("pt_"):
+            continue
+        nome, lang = m.group(1).strip(), m.group(2)
+        nivel = 3 if re.search(r"premium", nome, re.I) else 2 if re.search(r"aprimorad|melhorad|enhanced", nome, re.I) else 1
+        achadas.append((-nivel, 0 if lang == "pt_BR" else 1, nome))
+    return [n for _, _, n in sorted(achadas)]
+
+
+def escolher_voz():
+    vozes = vozes_pt()
+    if VOZ:
+        return VOZ if VOZ in vozes else None
+    return vozes[0] if vozes else None
+
+
+def _com_dica(md: str, linha: str) -> str:
+    """Insere uma linha logo depois do título (primeiro cabeçalho) do markdown."""
+    linhas = md.splitlines()
+    for n, l in enumerate(linhas):
+        if re.match(r"^#{1,3}\s+", l):
+            return "\n".join(linhas[:n + 1] + ["", linha] + linhas[n + 1:])
+    return linha + "\n\n" + md
+
+
+def fazer_audio(titulo: str, texto: str, destino: Path):
+    """Lê o texto em voz alta (say, voz em português) e salva em .m4a na pasta do cofre.
+    Devolve (caminho, "") ou (None, motivo). Nunca levanta erro: a nota é gravada de qualquer jeito."""
+    if not AUDIO_ATIVO:
+        return None, "desligado"
+    if sys.platform != "darwin" or (VOZ and not re.fullmatch(r"[\w .()-]{1,40}", VOZ)):
+        return None, "indisponível neste sistema"
+    try:
+        voz = escolher_voz()
+        if not voz:
+            return None, ("a voz '%s' não está instalada" % VOZ if VOZ else "nenhuma voz em português instalada") + " (Ajustes do Sistema > Acessibilidade > Conteúdo falado > Vozes do sistema > Gerenciar vozes)"
+        pasta_audio = destino / "audio"
+        pasta_audio.mkdir(parents=True, exist_ok=True)
+        base = pasta_audio / slug(titulo)
+        if base.resolve().parent != pasta_audio.resolve():
+            return None, "caminho inválido"
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
+            f.write(re.sub(r"https?://\S+", " ", texto)[:12000])
+            txt = f.name
+        try:
+            subprocess.run(["say", "-v", voz, "-r", str(palavras_por_minuto()), "-o", str(base) + ".aiff", "-f", txt], check=True, timeout=240, capture_output=True)
+            subprocess.run(["afconvert", "-f", "m4af", "-d", "aac", str(base) + ".aiff", str(base) + ".m4a"], check=True, timeout=120, capture_output=True)
+        finally:
+            for x in (txt, str(base) + ".aiff"):
+                try:
+                    os.unlink(x)
+                except OSError:
+                    pass
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} áudio com a voz {voz} a {palavras_por_minuto()} palavras por minuto\n")
+        return Path(str(base) + ".m4a"), ""
+    except Exception as e:  # noqa: BLE001
+        return None, "falhou: " + str(e)[:120]
 
 
 # ----------------------------------------------------------------------------------------
 # Servidor HTTP
 # ----------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------
+# Calendário, Lembretes e busca em sites públicos (usados pelos fluxos de avisos)
+# ----------------------------------------------------------------------------------------
+NOME_AGENDA = "Heimdall"  # calendário e lista de lembretes que o Heimdall cria; nunca mexe nos seus outros
+AS_EVENTO = r'''
+on run argv
+    set tit to item 1 of argv
+    set y to (item 2 of argv) as integer
+    set m to (item 3 of argv) as integer
+    set dd to (item 4 of argv) as integer
+    set notas to item 5 of argv
+    set antes to (item 6 of argv) as integer
+    set nomeCal to item 7 of argv
+    set d to current date
+    set day of d to 1
+    set year of d to y
+    set month of d to m
+    set day of d to dd
+    set time of d to 0
+    tell application "Calendar"
+        if not (exists calendar nomeCal) then make new calendar with properties {name:nomeCal}
+        set cal to calendar nomeCal
+        if (count of (events of cal whose summary is tit and start date is d)) > 0 then return "ja_existe"
+        set ev to make new event at end of events of cal with properties {summary:tit, start date:d, end date:(d + 1 * days), allday event:true, description:notas}
+        if antes > 0 then
+            tell ev to make new display alarm at end of display alarms with properties {trigger interval:(-1440 * antes + 540)}
+        end if
+        return "criado"
+    end tell
+end run
+'''
+AS_LEMBRETE = r'''
+on run argv
+    set tit to item 1 of argv
+    set y to (item 2 of argv) as integer
+    set m to (item 3 of argv) as integer
+    set dd to (item 4 of argv) as integer
+    set h to (item 5 of argv) as integer
+    set notas to item 6 of argv
+    set nomeLista to item 7 of argv
+    set d to current date
+    set day of d to 1
+    set year of d to y
+    set month of d to m
+    set day of d to dd
+    set time of d to (h * 3600)
+    tell application "Reminders"
+        if not (exists list nomeLista) then make new list with properties {name:nomeLista}
+        set l to list nomeLista
+        if (count of (reminders of l whose name is tit and completed is false)) > 0 then return "ja_existe"
+        make new reminder at end of reminders of l with properties {name:tit, body:notas, due date:d, remind me date:d}
+        return "criado"
+    end tell
+end run
+'''
+
+
+AS_PREPARAR_CAL = r'''
+on run argv
+    set nomeCal to item 1 of argv
+    tell application "Calendar"
+        if not (exists calendar nomeCal) then
+            make new calendar with properties {name:nomeCal}
+            return "calendário criado"
+        end if
+        return "calendário já existe"
+    end tell
+end run
+'''
+AS_PREPARAR_LEM = r'''
+on run argv
+    set nomeLista to item 1 of argv
+    tell application "Reminders"
+        if not (exists list nomeLista) then
+            make new list with properties {name:nomeLista}
+            return "lista criada"
+        end if
+        return "lista já existe"
+    end tell
+end run
+'''
+
+
+def _data(s: str) -> tuple:
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(s)):
+        raise ValueError("data inválida (use AAAA-MM-DD)")
+    y, m, d = (int(x) for x in s.split("-"))
+    datetime(y, m, d)  # levanta ValueError se não existir
+    if not (2020 <= y <= 2100):
+        raise ValueError("ano fora do intervalo")
+    return str(y), str(m), str(d)
+
+
+def _texto_curto(s, limite: int) -> str:
+    return re.sub(r"[\x00-\x08\x0b-\x1f]", " ", str(s or "")).strip()[:limite]
+
+
+def criar_evento(dado: dict) -> dict:
+    titulo = _texto_curto(dado.get("titulo"), 200)
+    if not titulo:
+        raise ValueError("título vazio")
+    y, m, d = _data(dado.get("data", ""))
+    antes = max(0, min(int(dado.get("alerta_dias_antes", 1)), 14))
+    with _lock:
+        r = osascript(AS_EVENTO, titulo, y, m, d, _texto_curto(dado.get("notas"), 1000), str(antes), NOME_AGENDA)
+    return {"ok": True, "evento": r}
+
+
+def criar_lembrete(dado: dict) -> dict:
+    titulo = _texto_curto(dado.get("titulo"), 200)
+    if not titulo:
+        raise ValueError("título vazio")
+    y, m, d = _data(dado.get("vencimento", ""))
+    hora = max(0, min(int(dado.get("hora", 9)), 23))
+    with _lock:
+        r = osascript(AS_LEMBRETE, titulo, y, m, d, str(hora), _texto_curto(dado.get("notas"), 1000), NOME_AGENDA)
+    return {"ok": True, "lembrete": r}
+
+
+# Só estes sites podem ser buscados por aqui (o n8n no Docker às vezes falha no TLS com o Querido Diário e o DOU).
+SITES_PERMITIDOS = {"api.queridodiario.ok.org.br", "www.in.gov.br"}
+
+
+class _SemRedirecionar(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):
+        return None
+
+
+def buscar_site(url: str) -> str:
+    u = urlparse(url)
+    if u.scheme != "https" or (u.hostname or "").lower() not in SITES_PERMITIDOS or u.username or u.port not in (None, 443):
+        raise PermissionError("site não permitido")
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh) Heimdall", "Accept": "application/json, text/html;q=0.9, */*;q=0.8"})
+    with urllib.request.build_opener(_SemRedirecionar).open(req, timeout=40) as r:
+        return r.read(2_000_000).decode("utf-8", "replace")
+
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "HeimdallAgente/1.0"
 
@@ -371,6 +694,19 @@ class Handler(BaseHTTPRequestHandler):
                 limite = int(q.get("limite", ["3"])[0])
                 notas = notas_alteradas(desde, quieto, limite)
                 return self._json(200, {"notas": notas, "total": len(notas)})
+            if u.path == "/web/get":
+                try:
+                    corpo = buscar_site(q.get("u", [""])[0]).encode("utf-8")
+                except PermissionError:
+                    raise
+                except Exception as e:  # noqa: BLE001
+                    return self._json(502, {"erro": "falha ao buscar: " + str(e)[:200]})
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(corpo)))
+                self.end_headers()
+                self.wfile.write(corpo)
+                return
             if u.path == "/notas/privadas":
                 return self._json(200, {"pastas": PRIVADAS, "ids": sorted(ids_privados())})
             if u.path == "/notas/nota":
@@ -380,8 +716,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, ler_nota(nid))
             return self._json(404, {"erro": "rota desconhecida"})
         except PermissionError as e:
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} recusado em {u.path}: {e}\n")
             return self._json(403, {"erro": str(e)})
         except Exception as e:  # noqa: BLE001
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {u.path}: {type(e).__name__}: {str(e)[:300]}\n")
             return self._json(500, {"erro": str(e)[:400]})
 
     def do_POST(self):
@@ -394,14 +732,21 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(413, {"erro": "corpo ausente ou grande demais"})
             dado = json.loads(self.rfile.read(tam).decode("utf-8"))
             if u.path == "/notas/gravar":
-                r = gravar(str(dado.get("pasta", "")), str(dado.get("titulo", "")), str(dado.get("markdown", "")))
+                r = gravar(str(dado.get("pasta", "")), str(dado.get("titulo", "")), str(dado.get("markdown", "")), str(dado.get("audio", "")))
                 return self._json(200, r)
+            if u.path == "/calendario/evento":
+                return self._json(200, criar_evento(dado))
+            if u.path == "/lembretes/criar":
+                return self._json(200, criar_lembrete(dado))
             return self._json(404, {"erro": "rota desconhecida"})
         except PermissionError as e:
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} recusado em {u.path}: {e}\n")
             return self._json(403, {"erro": str(e)})
         except (ValueError, json.JSONDecodeError) as e:
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} pedido inválido em {u.path}: {e}\n")
             return self._json(400, {"erro": str(e)[:200]})
         except Exception as e:  # noqa: BLE001
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {u.path}: {type(e).__name__}: {str(e)[:300]}\n")
             return self._json(500, {"erro": str(e)[:400]})
 
 
@@ -415,7 +760,8 @@ def teste() -> int:
         return 1
     print(f"   Notas encontradas: {total}")
     try:
-        print(f"   Pastas privadas ({', '.join(PRIVADAS)}): {len(ids_privados())} nota(s) protegida(s), nunca lidas.")
+        n_priv = len(ids_privados())
+        print(f"   Pastas privadas encontradas: {', '.join(_nomes_privados) or 'nenhuma'}: {n_priv} nota(s) protegida(s), nunca lidas.")
     except Exception as e:  # noqa: BLE001
         print(f"   Não consegui consultar as pastas privadas ({e}); por segurança o agente não entrega nenhuma nota até isso funcionar.")
         return 1
@@ -431,6 +777,14 @@ def teste() -> int:
     if notas:
         c = ler_nota(notas[0]["id"])
         print(f"3. Leitura da primeira nota: {len(c['texto'])} caracteres de texto.")
+    print("4. Conferindo o Calendário e os Lembretes (cria o calendário e a lista \"%s\", se ainda não existirem; autorize se pedir)..." % NOME_AGENDA)
+    try:
+        print("   Calendário:", osascript(AS_PREPARAR_CAL, NOME_AGENDA))
+        print("   Lembretes:", osascript(AS_PREPARAR_LEM, NOME_AGENDA))
+    except Exception as e:  # noqa: BLE001
+        print(f"   Falhou: {e}")
+        print("   Autorize o Terminal em Ajustes do Sistema > Privacidade e Segurança > Automação > Calendário e Lembretes, e rode de novo.")
+        return 1
     print("Tudo certo." if total.isdigit() else "Resposta inesperada do app Notas.")
     return 0
 
@@ -438,7 +792,19 @@ def teste() -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Agente local do Heimdall para o app Notas")
     ap.add_argument("--teste", action="store_true", help="só confere o acesso ao app Notas e sai")
+    ap.add_argument("--voz", action="store_true", help="lista as vozes em português, diz qual será usada e fala uma amostra")
     args = ap.parse_args()
+    if args.voz:
+        vs = vozes_pt()
+        print("Vozes em português instaladas (da melhor para a pior):", ", ".join(vs) or "nenhuma")
+        voz = escolher_voz()
+        if not voz:
+            print("Nenhuma voz utilizável. Baixe uma em Ajustes do Sistema > Acessibilidade > Conteúdo falado > Vozes do sistema > Gerenciar vozes (procure Luciana ou Felipe, versão Aprimorada ou Premium).")
+            return 1
+        ppm = palavras_por_minuto()
+        print(f"Voz escolhida: {voz}. Velocidade: {ppm} palavras por minuto (HEIMDALL_VOZ_VELOCIDADE={VELOCIDADE:g}).")
+        subprocess.run(["say", "-v", voz, "-r", str(ppm), "Esta é uma amostra da voz e da velocidade usadas nos áudios de estudo."])
+        return 0
     if args.teste:
         return teste()
     if not TOKEN or len(TOKEN) < 16:

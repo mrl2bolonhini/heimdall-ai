@@ -1,0 +1,120 @@
+{
+  "id": "hdLembrete0000001",
+  "name": "Heimdall: checagem mensal de serviços públicos",
+  "active": false,
+  "nodes": [
+    {
+      "id": "dia1s10h955",
+      "name": "Dia 1 às 10h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 1 * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "montarlembrete505",
+      "name": "Montar lembrete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const itens = [\n  'Meu INSS (app ou meu.inss.gov.br): benefícios, pendências, mensagens e extrato',\n  'FGTS (app oficial): extrato e depósitos do empregador',\n  'Carteira de Trabalho Digital: contratos de trabalho e anotações novas',\n  'Registrato do Banco Central: contas, dívidas e chaves Pix em seu nome',\n  'Serasa ou SPC: pendências e consultas ao seu CPF'\n];\nreturn [{ json: { titulo: 'Checagem mensal dos serviços públicos', corpo: 'Abra os apps e sites oficiais por conta própria, sem usar links de mensagens: ' + itens.map((x, i) => (i + 1) + ') ' + x).join('; ') + '.' } }];"
+      }
+    },
+    {
+      "id": "enviaraoiphone496",
+      "name": "Enviar ao iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.corpo).slice(0, 900), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "executaragora387",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        220
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Dia 1 às 10h": {
+      "main": [
+        [
+          {
+            "node": "Montar lembrete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar lembrete": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Montar lembrete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "errorWorkflow": "hdFalhaAviso0001"
+  }
+}

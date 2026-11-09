@@ -65,7 +65,7 @@ Digest hiperpersonalizado
   6. "Por que importa para você" só traz ligação concreta com uma nota ou um livro seu, citando qual. Se não houver, o
      digest diz "Sem ligação com as suas notas ou estudos" e dá apenas a relevância do fato em si, sem tom motivacional.
      Os links vêm dos dados, nunca do modelo.
-  7. O Markdown vai para o app Notas (pasta "Heimdall Digest", e cópia em cerebro/heimdall-digest/) e um resumo curto chega pelo Bark.
+  7. O Markdown vai para o app Notas (pasta "Digest", e cópia em cerebro/heimdall-digest/) e um resumo curto chega pelo Bark.
   O rodapé do digest diz quantas fontes responderam e quais falharam. Para trocar fontes ou o perfil, edite os nós
   "Fontes" e "Analisar feeds" no n8n (a lista e o texto do perfil estão no começo do código de cada nó).
 
@@ -76,7 +76,7 @@ Second Brain
      próprio Heimdall (títulos "Cérebro: ..." e "Digest AAAA-MM-DD HHh"), para nunca analisar os próprios espelhos.
   2. Gera o embedding (nomic-embed-text) e procura as notas mais parecidas na base vetorial (Qdrant, coleção heimdall_notas).
   3. O modelo extrai tags, conceitos, entidades, conexões (complementa, contradiz, relacionada, duplica) e lacunas.
-  4. Grava a nota ESPELHO "Cérebro: <título>" na pasta "Heimdall Cérebro" do app Notas, com cabeçalho YAML (tags,
+  4. Grava a nota ESPELHO "Cérebro: <título>" na pasta "Cérebro" do app Notas, com cabeçalho YAML (tags,
      conceitos, entidades), links [[Nota Correlata]], lacunas e perguntas. Grava também o .md de verdade, com frontmatter
      YAML, em ~/heimdall-ai/cerebro/heimdall-cerebro/ (pode ser aberto no Obsidian).
   5. Indexa a nota na base vetorial e, se achar uma contradição ou falhar ao gravar, avisa pelo Bark.
@@ -136,3 +136,41 @@ TEMAS NA BASE DE CONHECIMENTO (knowledge/)
    Exemplo de pedido ao modelo: "busque na base de conhecimento, no tema aws, como funciona o particionamento".
    Sem o parâmetro tema, a busca varre tudo, como antes.
 4. Para reorganizar, mova os arquivos entre as subpastas, rode python3 ingest_docs.py --prune e os temas se ajustam.
+
+=====================================================================
+ESTUDO DOS LIVROS: 3 VEZES POR DIA, COM LEITURA, ÁUDIO E LINKS
+=====================================================================
+O fluxo "estudo dos livros" (13-estudo.json, substitui o antigo "pergunta de estudo") roda às 6h, 13h e 20h.
+A cada execução:
+1. Sorteia um trecho da base de conhecimento (sem repetir os últimos 60) e lê os trechos seguintes do mesmo livro, formando uma leitura de uns 5 mil caracteres.
+2. O modelo local cria uma pergunta de revisão, a resposta esperada e o nome do conceito.
+3. Busca de 1 a 3 artigos reais na web pelo SearXNG (sem vídeos, redes sociais e lojas, um por site, só https). Os links vêm da busca; o modelo nunca inventa endereços. Se a busca falhar, a nota diz isso.
+4. Grava uma nota no app Notas, em uma pasta com o nome da tag do tema, ou seja, o nome da subpasta de knowledge/ sem acentos, em minúsculas e com hífens (knowledge/AWS Dados vira a pasta "aws-dados"; arquivos soltos vão para "geral"). Subpastas novas de knowledge/ ganham a pasta no Notas sozinhas, na primeira vez em que forem sorteadas. A nota tem: Pergunta, Resposta (para conferir depois), Leitura e Para aprofundar (links). O título é "Estudo AAAA-MM-DD HHh: conceito".
+5. Áudio: o agente do Mac narra a leitura com a voz Luciana (pt-BR), salva em cerebro/<tema>/audio/ no formato .m4a e tenta anexar à nota; se anexar, o áudio toca no iPhone pela nota. Para trocar a voz: HEIMDALL_VOZ="Felipe" no .env. Para desligar: HEIMDALL_ESTUDO_AUDIO=0. Vozes instaladas: say -v '?' | grep pt_BR
+6. O Bark avisa com a pergunta (sem a resposta) e o endereço da leitura.
+As pastas de temas, como as outras pastas do Heimdall, nunca são lidas pelo Second Brain.
+
+Como aplicar (um comando por vez, na pasta do projeto):
+1. Copie heimdall_agente.py e a pasta n8n_flows_avancados para ~/heimdall-ai, por cima.
+2. Apague o fluxo antigo, para o instalador antigo não o recolocar: rm n8n_flows/2-pergunta-de-estudo.json
+3. Reinicie o agente: pkill -f heimdall_agente.py  e suba o sistema como de costume.
+4. Reinstale: bash instalar_automacoes_avancadas.sh
+5. Teste agora, sem esperar o horário: docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdEstudoDiario01 2>&1 | tail -20
+   A nota aparece no Notas, na pasta do tema. O áudio leva alguns segundos a mais.
+6. Se o áudio não anexar, ele fica em ~/heimdall-ai/cerebro/<tema>/audio/ e o Bark não diz "Áudio anexado". Me avise.
+
+ATUALIZAÇÃO DO ESTUDO: UMA NOTA POR TEMA, TÍTULO SEM REPETIÇÃO E COMO OUVIR O ÁUDIO
+1. Cada execução (6h, 13h e 20h) agora cria uma nota para CADA tema (cada subpasta de knowledge/), cada uma na pasta do seu tema. Um único aviso no Bark resume todas, com a pergunta de cada tema, sem as respostas. Se um tema falhar, os outros seguem e o aviso diz qual faltou e por quê. Com mais de 15 temas, cada execução cobre 15 e gira o grupo na seguinte.
+2. O título aparecia três vezes porque o agente colocava o título no topo e a nota também começava com ele. O agente agora ignora o título repetido, em todas as notas do Heimdall.
+3. Onde fica o áudio:
+   a. Na própria nota: logo abaixo do título há uma linha "Áudio desta leitura: é o anexo no fim desta nota, arquivo ....m4a". O anexo fica no fim da nota. No iPhone, com o VoiceOver, vá ao fim da nota, ache o item de anexo e dê dois toques; abre um player, e dois toques em Reproduzir toca. No Mac, com o VoiceOver, vá ao fim da nota, ache o anexo, aperte Control+Option+Espaço para abrir e depois Espaço no player.
+   b. Sem depender da nota: no Terminal, na pasta do projeto, bash ouvir_estudo.sh toca o áudio mais recente na hora; bash ouvir_estudo.sh 3 toca os três mais recentes; bash ouvir_estudo.sh --lista mostra os caminhos. Control+C para.
+   c. O arquivo também fica em ~/heimdall-ai/cerebro/<tema>/audio/.
+4. Como aplicar: copie heimdall_agente.py, ouvir_estudo.sh e n8n_flows_avancados para ~/heimdall-ai (por cima); pkill -f heimdall_agente.py e suba o sistema como de costume; bash instalar_automacoes_avancadas.sh. Teste: docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdEstudoDiario01 2>&1 | tail -20
+
+AJUSTES DE VOZ E DE TÍTULO
+1. Título repetido: o app Notas coloca o nome da nota como primeira linha quando recebe nome e corpo juntos, e o corpo já começava pelo título. Agora a nota é criada só com o corpo (o título vira a primeira linha). Vale para todas as notas do Heimdall. Notas já criadas continuam como estão.
+2. Voz: por padrão o agente usa a melhor voz em português instalada (Premium, depois Aprimorada, depois a padrão). Para ter voz melhor, baixe em Ajustes do Sistema > Acessibilidade > Conteúdo falado > Voz do sistema > Gerenciar vozes: Luciana ou Felipe, versão Aprimorada ou Premium.
+3. Velocidade: padrão 65 na escala de porcentagem da fala do macOS, que equivale a cerca de 350 palavras por minuto. Para mudar, no .env: HEIMDALL_VOZ_VELOCIDADE=60 (porcentagem) ou HEIMDALL_VOZ_PPM=300 (palavras por minuto exatas). Para fixar uma voz: HEIMDALL_VOZ="Felipe (Aprimorada)".
+4. Para ouvir uma amostra e ver qual voz será usada, sem esperar o fluxo: python3 heimdall_agente.py --voz
+   Depois de mudar o .env, reinicie o agente (pkill -f heimdall_agente.py e suba o sistema como de costume).
