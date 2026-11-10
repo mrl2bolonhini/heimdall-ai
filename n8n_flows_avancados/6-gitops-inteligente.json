@@ -532,12 +532,46 @@
       "onError": "continueRegularOutput"
     },
     {
+      "id": "prfalhou896",
+      "name": "PR falhou?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4940,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1bc7a410-8f2d-5751-86e7-8cef6a100d41",
+              "leftValue": "={{ !$json.html_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
       "id": "avisarnoiphone510",
       "name": "Avisar no iPhone",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4940,
+        5200,
         0
       ],
       "parameters": {
@@ -554,7 +588,75 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: ($json.html_url ? 'PR em rascunho aberto' : 'GitOps: branch criada, mas o PR não abriu'), body: String(($json.html_url ? $('Consolidar').first().json.titulo + ' (' + $('Consolidar').first().json.repo + ')' : 'Criei a branch ' + $('Consolidar').first().json.branch + ' em ' + $('Consolidar').first().json.repo + ', mas o GitHub recusou abrir o Pull Request: ' + String((($json.error || {}).message) || $json.message || JSON.stringify($json.error || $json)).slice(0, 300) + ' Abra a comparação pelo link e crie o PR à mão, ou apague a branch.')).slice(0, 900), group: 'heimdall', url: ($json.html_url || ('https://github.com/' + $('Consolidar').first().json.repo + '/compare/' + $('Consolidar').first().json.base + '...' + $('Consolidar').first().json.branch)) }) }}",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'PR em rascunho aberto', body: String($('Consolidar').first().json.titulo + ' (' + $('Consolidar').first().json.repo + ')').slice(0, 900), group: 'heimdall', url: $json.html_url }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "apagarbranch242",
+      "name": "Apagar branch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5200,
+        220
+      ],
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ 'https://api.github.com/repos/' + $('Consolidar').first().json.repo + '/git/refs/heads/' + $('Consolidar').first().json.branch }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer __GITHUB_TOKEN__"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            },
+            {
+              "name": "User-Agent",
+              "value": "heimdall-ai-gitops"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "avisarprnoabriu909",
+      "name": "Avisar: PR não abriu",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5460,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'GitOps: o PR não abriu, branch apagada', body: String('O GitHub recusou abrir o Pull Request em ' + $('Consolidar').first().json.repo + ': ' + String((($('Abrir PR em rascunho').first().json.error || {}).message) || $('Abrir PR em rascunho').first().json.message || 'motivo desconhecido').slice(0, 200) + '. ' + ($json.error ? 'Não consegui apagar a branch ' + $('Consolidar').first().json.branch + '; apague à mão. ' : 'Apaguei a branch ' + $('Consolidar').first().json.branch + ' para não deixar lixo. ') + 'Achados descartados com a branch: ' + String($('Consolidar').first().json.corpo || '').replace(/\\s+/g, ' ').slice(0, 450)).slice(0, 900), group: 'heimdall' }) }}",
         "options": {
           "timeout": 30000
         }
@@ -872,7 +974,36 @@
       "main": [
         [
           {
+            "node": "PR falhou?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PR falhou?": {
+      "main": [
+        [
+          {
+            "node": "Apagar branch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Avisar no iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apagar branch": {
+      "main": [
+        [
+          {
+            "node": "Avisar: PR não abriu",
             "type": "main",
             "index": 0
           }
