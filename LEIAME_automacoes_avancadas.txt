@@ -191,6 +191,6 @@ Configuração no app Health Auto Export (Premium), no iPhone:
 2. No app, abra a aba de automações e crie uma automação do tipo REST API.
 3. Endereço: http://<IP-do-Tailscale-do-Mac>:5678/webhook/heimdall-saude  Método: POST  Formato: JSON.
 4. Cabeçalho: nome X-Heimdall-Saude, valor igual ao HEIMDALL_SAUDE_TOKEN do .env. Para ler o valor no Mac, sem mostrá-lo a ninguém: grep HEIMDALL_SAUDE_TOKEN .env
-5. Métricas: Análise do sono, Frequência cardíaca em repouso, Variabilidade da frequência cardíaca, Frequência respiratória, Saturação de oxigênio, Passos e Energia ativa. Agregação por dia. Período: os últimos 2 dias. Frequência: de hora em hora (ou a menor que o app permitir).
+5. Métricas: pode marcar quantas quiser. O resumo analisa as que tiverem dado e ignora as que vierem vazias. As principais (sono, pulso em repouso, variabilidade, respiração, oxigênio, passos e energia ativa) têm critérios próprios; as demais são comparadas com a sua própria média de 30 dias e só aparecem se fugirem muito dela. Temperatura corporal de 37,8 ou mais sempre é destacada. Agregação por dia, sincronização diária (antes das 5h50) e período padrão.
 6. Rode a automação uma vez à mão e confira no n8n, em Execuções, o fluxo "monitor de saúde": o ramo "Receber do iPhone" deve aparecer como concluído.
 O app precisa da permissão de leitura do app Saúde e da atualização em segundo plano. Se o Mac estiver dormindo na hora do envio, o app tenta de novo na próxima rodada.
