@@ -50,6 +50,8 @@ PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continu
 # Pastas do app Notas que o Heimdall cria e onde só ele escreve. Nunca são lidas como fonte (evita laço) e as
 # suas notas pessoais nunca são alteradas. Para mudar, use no .env: HEIMDALL_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro"
 PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("HEIMDALL_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Cérebro").split(",") if p.strip()]
+if "Saúde" not in PASTAS_PROPRIAS:
+    PASTAS_PROPRIAS.append("Saúde")  # monitor de saúde: sempre permitida, mesmo com o .env personalizado
 # Subpasta do cofre de cada pasta (mantém os nomes antigos para não separar o que já foi gravado).
 PASTA_DO_COFRE = {"Monitor de Privacidade": "heimdall-privacidade", "Digest": "heimdall-digest", "Cérebro": "heimdall-cerebro"}
 
