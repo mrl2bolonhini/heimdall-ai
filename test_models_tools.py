@@ -81,6 +81,8 @@ def load_models():
     cfg = yaml.safe_load((BASE_DIR / "litellm_config.yaml").read_text())
     models = []
     for m in cfg["model_list"]:
+        if (m.get("model_info") or {}).get("supports_function_calling") is False:
+            continue  # modelos sem ferramentas (como o medgemma) têm teste próprio
         ollama_name = m["litellm_params"]["model"].split("/", 1)[1]
         models.append((m["model_name"], ollama_name))
     return models

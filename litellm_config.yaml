@@ -60,6 +60,17 @@ model_list:
     model_info:
       supports_function_calling: true
 
+  # Modelo de saúde (Google MedGemma, base Gemma 3, 4 bilhões de parâmetros, 3,3 GB). Usado só pelo monitor de saúde, sem ferramentas.
+  # Baixe com: ollama pull medgemma:4b
+  - model_name: medgemma
+    litellm_params:
+      model: ollama_chat/medgemma:4b
+      api_base: http://localhost:11434
+      num_ctx: 8192
+      keep_alive: "1m"
+    model_info:
+      supports_function_calling: false
+
 # Servidor MCP unificado (heimdall_mcp.py). O LiteLLM o expõe em
 # http://<host>:9000/mcp para clientes como o open-client.
 mcp_servers:
