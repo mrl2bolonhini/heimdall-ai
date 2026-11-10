@@ -52,6 +52,10 @@ PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continu
 PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("HEIMDALL_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Cérebro").split(",") if p.strip()]
 if "Saúde" not in PASTAS_PROPRIAS:
     PASTAS_PROPRIAS.append("Saúde")  # monitor de saúde: sempre permitida, mesmo com o .env personalizado
+# No app Notas, tudo que o Heimdall grava fica dentro de uma pasta-raiz: Heimdall-ai/Digest, Heimdall-ai/Saúde,
+# Heimdall-ai/Estudos/<tema> etc. Os fluxos continuam mandando só o nome da pasta; o agente monta o caminho.
+# Para voltar às pastas soltas: HEIMDALL_NOTAS_RAIZ="" no .env.
+RAIZ_NOTAS = os.environ.get("HEIMDALL_NOTAS_RAIZ", "Heimdall-ai").strip()
 # Subpasta do cofre de cada pasta (mantém os nomes antigos para não separar o que já foi gravado).
 PASTA_DO_COFRE = {"Monitor de Privacidade": "heimdall-privacidade", "Digest": "heimdall-digest", "Cérebro": "heimdall-cerebro"}
 
@@ -174,16 +178,62 @@ end run
 '''
 
 AS_GRAVAR = r'''-- heimdall:gravar
+on partes(txt)
+	set AppleScript's text item delimiters to "/"
+	set l to text items of txt
+	set AppleScript's text item delimiters to ""
+	return l
+end partes
+-- Acha (ou cria) a pasta pelo caminho "Raiz/Sub/Sub". A primeira só vale se estiver no nível de cima da conta;
+-- as seguintes, só se forem filhas da anterior. Assim "Digest" solto e "Heimdall-ai/Digest" não se confundem.
+on achar_pasta(caminho)
+	tell application "Notes"
+		tell default account
+			set atual to missing value
+			repeat with nm in my partes(caminho)
+				set nome to contents of nm
+				set achada to missing value
+				if atual is missing value then
+					set cand to every folder
+				else
+					set cand to every folder of atual
+				end if
+				repeat with f in cand
+					if (name of f) is nome then
+						set vale to true
+						if atual is missing value then
+							try
+								set vale to ((class of (container of f)) is account)
+							on error
+								set vale to true
+							end try
+						end if
+						if vale then
+							set achada to contents of f
+							exit repeat
+						end if
+					end if
+				end repeat
+				if achada is missing value then
+					if atual is missing value then
+						set achada to make new folder with properties {name:nome}
+					else
+						set achada to make new folder at atual with properties {name:nome}
+					end if
+				end if
+				set atual to achada
+			end repeat
+			return atual
+		end tell
+	end tell
+end achar_pasta
 on run argv
 	set folderName to item 1 of argv
 	set noteTitle to item 2 of argv
 	set htmlBody to item 3 of argv
 	tell application "Notes"
 		tell default account
-			if not (exists folder folderName) then
-				make new folder with properties {name:folderName}
-			end if
-			set f to folder folderName
+			set f to my achar_pasta(folderName)
 			set found to (every note of f whose name is noteTitle)
 			if (count of found) > 0 then
 				set body of (item 1 of found) to htmlBody
@@ -197,202 +247,14 @@ on run argv
 end run
 '''
 
-AS_NOMES_PASTAS = r'''-- heimdall:nomes-pastas
-set t to ""
-tell application "Notes"
-	repeat with f in (every folder)
-		try
-			set t to t & (name of f) & linefeed
-		end try
-	end repeat
-end tell
-return t
-'''
 
-AS_PRIVADAS = r'''-- heimdall:privadas
-on lista(f)
-	set t to ""
-	tell application "Notes"
-		try
-			set ids to (id of every note of f)
-			repeat with i in ids
-				set t to t & (i as string) & linefeed
-			end repeat
-		end try
-		try
-			repeat with sf in (every folder of f)
-				set t to t & my lista(sf)
-			end repeat
-		end try
-	end tell
-	return t
-end lista
-on run argv
-	set out to ""
-	tell application "Notes"
-		repeat with nm in argv
-			try
-				repeat with f in (every folder whose name is (nm as string))
-					set out to out & my lista(f)
-				end repeat
-			end try
-		end repeat
-	end tell
-	return out
-end run
-'''
-
-AS_CONTAR = r'''-- heimdall:contar
-tell application "Notes" to return (count of notes) as string
-'''
-
-
-def osascript(script: str, *args: str) -> str:
-    """Roda um AppleScript (arquivo temporário) com argumentos e devolve a saída."""
-    with tempfile.NamedTemporaryFile("w", suffix=".applescript", delete=False, encoding="utf-8") as f:
-        f.write(script)
-        caminho = f.name
-    try:
-        r = subprocess.run(
-            ["osascript", caminho, *args],
-            capture_output=True, text=True, timeout=OSASCRIPT_TIMEOUT,
-        )
-    finally:
-        try:
-            os.unlink(caminho)
-        except OSError:
-            pass
-    if r.returncode != 0:
-        raise RuntimeError((r.stderr or r.stdout or "osascript falhou").strip()[:400])
-    return r.stdout.rstrip("\n")
-
-
-# ----------------------------------------------------------------------------------------
-# Operações
-# ----------------------------------------------------------------------------------------
-# Notas que o próprio Heimdall cria (espelhos do Second Brain e digests). Também são ignoradas pelo título,
-# para não entrarem num laço caso o app Notas não informe a pasta de uma nota.
-TITULO_DO_HEIMDALL = re.compile(r"^(C[ée]rebro: |Digest \d{4}-\d{2}-\d{2} \d{2}h$)")
-
-
-def pasta_ignorada(nome: str) -> bool:
-    n = nome.strip().lower()
-    nn = norm_nome(nome)
-    return (n.startswith(PREFIXO_ESCRITA.lower()) or n in IGNORAR_PASTAS or nn in {norm_nome(p) for p in PRIVADAS}
-            or nn in {norm_nome(p) for p in PASTAS_PROPRIAS} or nn in temas_conhecimento())
-
-
-_cache_privadas: tuple[float, set] = (0.0, set())
-_nomes_privados: list = []
-
-
-def ids_privados() -> set:
-    """Identificadores das notas das pastas privadas (e subpastas). Se não der para consultar, falha: na dúvida,
-    nenhuma nota é entregue (a privacidade não pode depender de a consulta ter funcionado)."""
-    global _cache_privadas
-    if time.time() - _cache_privadas[0] < 20:
-        return _cache_privadas[1]
-    with _lock:
-        existentes = {l.strip() for l in osascript(AS_NOMES_PASTAS).splitlines() if l.strip()}
-        alvo = {norm_nome(p) for p in PRIVADAS}
-        nomes = sorted({n for n in existentes if norm_nome(n) in alvo} | set(PRIVADAS))
-        saida = osascript(AS_PRIVADAS, *nomes)
-    ids = {l.strip() for l in saida.splitlines() if l.strip()}
-    _nomes_privados[:] = nomes
-    _cache_privadas = (time.time(), ids)
-    return ids
-
-
-def notas_alteradas(desde: float, quieto: int, limite: int) -> list[dict]:
-    privadas = ids_privados()
-    agora = time.time()
-    janela = int(max(agora - desde, 0)) + 5
-    janela = min(janela, 60 * 60 * 24 * 90)  # no máximo 90 dias para trás
-    with _lock:
-        saida = osascript(AS_LISTAR, str(janela), str(max(quieto, 0)))
-    notas = []
-    for linha in saida.splitlines():
-        partes = linha.split("\t")
-        if len(partes) < 4:
-            continue
-        nid, pasta, titulo, data = partes[0], partes[1], "\t".join(partes[2:-1]), partes[-1]
-        if nid in privadas or pasta_ignorada(pasta) or TITULO_DO_HEIMDALL.match(titulo.strip()):
-            continue
-        try:
-            mod = datetime.strptime(data.strip(), "%Y-%m-%d %H:%M:%S").timestamp()
-        except ValueError:
-            continue
-        if mod <= desde:
-            continue
-        notas.append({"id": nid, "pasta": pasta, "titulo": titulo, "mod": mod})
-    notas.sort(key=lambda n: n["mod"])
-    return notas[: max(limite, 1)]
-
-
-def ler_nota(nid: str) -> dict:
-    if nid in ids_privados():
-        raise PermissionError("nota de pasta privada")
-    with _lock:
-        saida = osascript(AS_LER, nid)
-    titulo, _, corpo = saida.partition("\n<<<CORPO>>>\n")
-    return {"id": nid, "titulo": titulo.strip(), "texto": corpo[:MAX_TEXTO_NOTA]}
-
-
-def slug(texto: str) -> str:
-    t = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
-    t = re.sub(r"[^A-Za-z0-9]+", "-", t).strip("-").lower()
-    return t[:80] or "nota"
-
-
-def inline(texto: str) -> str:
-    """Escapa HTML e converte **negrito**, `codigo` e [texto](url) de uma linha."""
-    t = html.escape(texto, quote=False)
-    t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t)
-    t = re.sub(r"`([^`]+)`", r"<tt>\1</tt>", t)
-    t = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r'<a href="\2">\1</a>', t)
-    return t
-
-
-def markdown_para_html(titulo: str, md: str) -> str:
-    partes = [f"<div><h1>{html.escape(titulo, quote=False)}</h1></div>"]
-    em_lista = False
-    primeira = True
-    for bruta in md.splitlines():
-        linha = bruta.rstrip()
-        if primeira and linha.strip():
-            primeira = False
-            m0 = re.match(r"^#{1,3}\s+(.*)$", linha)
-            if m0 and re.sub(r"\s+", " ", m0.group(1)).strip().lower() == re.sub(r"\s+", " ", titulo).strip().lower():
-                continue  # o título já aparece no topo da nota
-        m_item = re.match(r"^\s*[-*]\s+(.*)$", linha)
-        if m_item:
-            if not em_lista:
-                partes.append("<ul>")
-                em_lista = True
-            partes.append(f"<li>{inline(m_item.group(1))}</li>")
-            continue
-        if em_lista:
-            partes.append("</ul>")
-            em_lista = False
-        m_tit = re.match(r"^(#{1,3})\s+(.*)$", linha)
-        if m_tit:
-            nivel = min(len(m_tit.group(1)) + 1, 3)  # o título da nota já é h1
-            partes.append(f"<div><h{nivel}>{inline(m_tit.group(2))}</h{nivel}></div>")
-        elif not linha.strip():
-            partes.append("<div><br></div>")
-        else:
-            partes.append(f"<div>{inline(linha)}</div>")
-    if em_lista:
-        partes.append("</ul>")
-    return "".join(partes)
-
-
-_CONTROLE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\ufffe\uffff]")
-
-
-def _limpar(s: str) -> str:
-    """Tira caracteres de controle (comuns em texto extraído de PDF; o byte nulo derruba o osascript)."""
-    return _CONTROLE.sub("", str(s))
+def caminho_notas(pasta: str) -> str:
+    """Caminho da pasta no app Notas, com "/" entre os níveis. Pastas antigas (Heimdall ...) ficam soltas."""
+    if not RAIZ_NOTAS or pasta.startswith(PREFIXO_ESCRITA):
+        return pasta
+    if pasta in PASTAS_PROPRIAS:
+        return RAIZ_NOTAS + "/" + pasta
+    return RAIZ_NOTAS + "/Estudos/" + pasta
 
 
 def gravar(pasta: str, titulo: str, markdown: str, audio: str = "") -> dict:
@@ -420,31 +282,94 @@ def gravar(pasta: str, titulo: str, markdown: str, audio: str = "") -> dict:
             markdown = _com_dica(markdown, f"Áudio desta leitura: é o anexo no fim desta nota, arquivo {m4a.name}. Toque nele para ouvir.")
     # Nota no app Notas (a primeira linha vira o nome da nota).
     corpo_html = markdown_para_html(titulo, markdown)
-    with _lock:
-        estado = osascript(AS_GRAVAR, pasta, titulo, corpo_html)
-    r = {"ok": True, "nota": estado, "arquivo": str(arquivo)}
+    caminho = caminho_notas(pasta)
+    aviso_pasta = ""
+    try:
+        with _lock:
+            estado = osascript(AS_GRAVAR, caminho, titulo, corpo_html)
+    except RuntimeError as e:
+        if caminho == pasta:
+            raise
+        # as subpastas falharam: grava na pasta solta para a nota não se perder
+        aviso_pasta = "subpasta indisponível (" + str(e)[:120] + "); gravei em pasta solta"
+        caminho = pasta
+        with _lock:
+            estado = osascript(AS_GRAVAR, caminho, titulo, corpo_html)
+    r = {"ok": True, "nota": estado, "arquivo": str(arquivo), "pasta": caminho}
+    if aviso_pasta:
+        r["aviso"] = aviso_pasta
     if m4a:
         try:
             with _lock:
-                osascript(AS_ANEXAR, pasta, titulo, str(m4a))
+                osascript(AS_ANEXAR, caminho, titulo, str(m4a))
             r["audio"] = "anexado"
         except Exception:  # noqa: BLE001
             r["audio"] = "salvo:" + str(m4a)
             with _lock:
-                osascript(AS_GRAVAR, pasta, titulo, markdown_para_html(titulo, _com_dica(markdown_puro, f"Áudio desta leitura: não consegui anexar. Está no Mac, na pasta {m4a.parent}, arquivo {m4a.name}.")))
+                osascript(AS_GRAVAR, caminho, titulo, markdown_para_html(titulo, _com_dica(markdown_puro, f"Áudio desta leitura: não consegui anexar. Está no Mac, na pasta {m4a.parent}, arquivo {m4a.name}.")))
     elif audio.strip():
         r["audio"] = motivo_audio
     return r
 
 
 AS_ANEXAR = r'''-- heimdall:anexar
+on partes(txt)
+	set AppleScript's text item delimiters to "/"
+	set l to text items of txt
+	set AppleScript's text item delimiters to ""
+	return l
+end partes
+-- Acha (ou cria) a pasta pelo caminho "Raiz/Sub/Sub". A primeira só vale se estiver no nível de cima da conta;
+-- as seguintes, só se forem filhas da anterior. Assim "Digest" solto e "Heimdall-ai/Digest" não se confundem.
+on achar_pasta(caminho)
+	tell application "Notes"
+		tell default account
+			set atual to missing value
+			repeat with nm in my partes(caminho)
+				set nome to contents of nm
+				set achada to missing value
+				if atual is missing value then
+					set cand to every folder
+				else
+					set cand to every folder of atual
+				end if
+				repeat with f in cand
+					if (name of f) is nome then
+						set vale to true
+						if atual is missing value then
+							try
+								set vale to ((class of (container of f)) is account)
+							on error
+								set vale to true
+							end try
+						end if
+						if vale then
+							set achada to contents of f
+							exit repeat
+						end if
+					end if
+				end repeat
+				if achada is missing value then
+					if atual is missing value then
+						set achada to make new folder with properties {name:nome}
+					else
+						set achada to make new folder at atual with properties {name:nome}
+					end if
+				end if
+				set atual to achada
+			end repeat
+			return atual
+		end tell
+	end tell
+end achar_pasta
 on run argv
 	set folderName to item 1 of argv
 	set noteTitle to item 2 of argv
 	set audioPath to item 3 of argv
 	tell application "Notes"
 		tell default account
-			set n to item 1 of (every note of folder folderName whose name is noteTitle)
+			set f to my achar_pasta(folderName)
+			set n to item 1 of (every note of f whose name is noteTitle)
 			make new attachment at end of attachments of n with data (POSIX file audioPath)
 			return "anexado"
 		end tell
