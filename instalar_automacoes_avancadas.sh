@@ -139,9 +139,15 @@ TMP="$(mktemp -d)"
 chmod 700 "$TMP"
 cleanup() {
     rm -rf "$TMP"
-    docker exec -u root n8n rm -rf /tmp/hd_flows_av > /dev/null 2>&1
+    docker exec -u root n8n sh -c 'rm -rf /tmp/hd_flows_av /tmp/hd_av_export_*.json' > /dev/null 2>&1
 }
 trap cleanup EXIT
+
+# Se o fluxo já existe, leva a memória dele (histórico de saúde, cursor do Second Brain, itens já vistos, fila de avisos) para a nova versão.
+for ID in hdSaude000000001 hdSecondBrain001 hdDigest00000001 hdResumo00000001 hdEstudoDiario01 hdGitOps00000001; do
+    docker exec n8n n8n export:workflow --id=$ID --output=/tmp/hd_av_export_$ID.json > /dev/null 2>&1
+    docker cp n8n:/tmp/hd_av_export_$ID.json "$TMP/export_antigo_$ID.json" > /dev/null 2>&1
+done
 
 SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_MODELO="$MODELO" SUBS_MODELO_COD="$MODELO_COD" \
 SUBS_GH="${GH_TOKEN:-}" SUBS_GITOPS="${HEIMDALL_GITOPS_TOKEN:-}" SUBS_REPOS="${REPOS:-}" SUBS_AGENTE="$HEIMDALL_AGENTE_TOKEN" \
@@ -174,9 +180,26 @@ if E["SUBS_SKIP_GIT"] == "1":
     files = [f for f in files if not f.name.startswith(("6-", "9-"))]
 if not files:
     sys.exit("nenhum fluxo em n8n_flows_avancados/")
+memorias = {}
+for antigo_arq in dst.glob("export_antigo_*.json"):
+    try:
+        antigo = json.loads(antigo_arq.read_text(encoding="utf-8"))
+        antigo = antigo[0] if isinstance(antigo, list) else antigo
+        sd = antigo.get("staticData")
+        if isinstance(sd, str):
+            sd = json.loads(sd)
+        if isinstance(sd, dict) and sd.get("global"):
+            memorias[antigo["id"]] = sd
+    except Exception:
+        pass
+    antigo_arq.unlink(missing_ok=True)
+
 ids = []
 for f in files:
     wf = fix(json.loads(f.read_text(encoding="utf-8")))
+    if wf.get("id") in memorias:
+        wf["staticData"] = memorias[wf["id"]]
+        print("Memória anterior preservada em %s." % f.name)
     text = json.dumps(wf, ensure_ascii=False, indent=1)
     sobra = re.search(r"__[A-Z_]{3,}__", text)
     if sobra:

@@ -283,7 +283,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "const base = $('Montar análise').all();\nconst sem = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\nconst arr = x => (Array.isArray(x) ? x.map(v => String(v).trim()).filter(Boolean) : []);\nconst q = s => JSON.stringify(String(s));\nconst TIPOS = ['complementa', 'contradiz', 'relacionada', 'duplica'];\nconst out = [];\n$input.all().forEach((r, i) => {\n  const b = base[i].json;\n  const txt = String(((((r.json || {}).choices || [])[0] || {}).message || {}).content || '');\n  let a = {};\n  try { a = JSON.parse(txt); } catch (e) {\n    const m = /\\{[\\s\\S]*\\}/.exec(txt);\n    try { a = m ? JSON.parse(m[0]) : {}; } catch (e2) { a = {}; }\n  }\n  let tags = Array.from(new Set(arr(a.tags).map(sem).filter(Boolean))).slice(0, 7);\n  const resumo = String(a.resumo || '').trim();\n  if (tags.length === 0 && !resumo) return;\n  const conceitos = arr(a.conceitos).slice(0, 6);\n  const entidades = arr(a.entidades).slice(0, 10);\n  if (!tags.length) tags = Array.from(new Set(entidades.map(sem).filter(Boolean))).slice(0, 5);\n  const lacunas = arr(a.lacunas).slice(0, 4);\n  const perguntas = arr(a.perguntas).slice(0, 3);\n  const conexoes = (Array.isArray(a.conexoes) ? a.conexoes : []).map(c => {\n    const v = b.viz.find(x => x.ref === String(c.ref));\n    return v ? { titulo: v.titulo, tipo: TIPOS.includes(String(c.tipo)) ? String(c.tipo) : 'relacionada', motivo: String(c.motivo || '').trim() } : null;\n  }).filter(Boolean);\n  const fm = ['---', 'titulo: ' + q(b.titulo), 'origem: apple-notes', 'pasta: ' + q(b.pasta), 'nota_id: ' + q(b.id),\n    'tags: [' + tags.join(', ') + ']', 'conceitos: [' + conceitos.map(q).join(', ') + ']',\n    'entidades: [' + entidades.map(q).join(', ') + ']', 'atualizado: ' + new Date().toISOString(), '---', ''];\n  const corpo = ['## Resumo', resumo || '(sem resumo)', '', '## Conexões sugeridas'];\n  if (conexoes.length) conexoes.forEach(c => corpo.push('- [[' + c.titulo + ']] (' + c.tipo + '): ' + c.motivo));\n  else corpo.push('- Nenhuma conexão clara com as notas existentes.');\n  corpo.push('', '## Lacunas e pontos a aprofundar');\n  if (lacunas.length) lacunas.forEach(l => corpo.push('- ' + l)); else corpo.push('- Nenhuma lacuna evidente.');\n  if (perguntas.length) { corpo.push('', '## Perguntas para estudar'); perguntas.forEach(p => corpo.push('- ' + p)); }\n  corpo.push('', 'Nota original: ' + b.titulo);\n  out.push({ json: { id: b.id, hash: b.hash, mod: b.mod, titulo: b.titulo, pasta: b.pasta, tags, vetor: b.vetor,\n    trecho: b.texto.slice(0, 500), contradicoes: conexoes.filter(c => c.tipo === 'contradiz'),\n    espelho: { pasta: 'Second Brain', titulo: ('Second Brain: ' + b.titulo).slice(0, 190), markdown: fm.concat(corpo).join('\\n') } } });\n});\nreturn out;"
+        "jsCode": "const base = $('Montar análise').all();\nconst sem = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\nconst arr = x => (Array.isArray(x) ? x.map(v => String(v).trim()).filter(Boolean) : []);\nconst q = s => JSON.stringify(String(s));\nconst TIPOS = ['complementa', 'contradiz', 'relacionada', 'duplica'];\nconst out = [];\n$input.all().forEach((r, i) => {\n  const b = base[i].json;\n  const txt = String(((((r.json || {}).choices || [])[0] || {}).message || {}).content || '');\n  let a = {};\n  try { a = JSON.parse(txt); } catch (e) {\n    const m = /\\{[\\s\\S]*\\}/.exec(txt);\n    try { a = m ? JSON.parse(m[0]) : {}; } catch (e2) { a = {}; }\n  }\n  let tags = Array.from(new Set(arr(a.tags).map(sem).filter(Boolean))).slice(0, 7);\n  const resumo = String(a.resumo || '').trim();\n  if (tags.length === 0 && !resumo) return;\n  const conceitos = arr(a.conceitos).slice(0, 6);\n  const entidades = arr(a.entidades).slice(0, 10);\n  if (!tags.length) tags = Array.from(new Set(entidades.map(sem).filter(Boolean))).slice(0, 5);\n  const lacunas = arr(a.lacunas).slice(0, 4);\n  const perguntas = arr(a.perguntas).slice(0, 3);\n  const conexoes = (Array.isArray(a.conexoes) ? a.conexoes : []).map(c => {\n    const v = b.viz.find(x => x.ref === String(c.ref));\n    return v ? { titulo: v.titulo, tipo: TIPOS.includes(String(c.tipo)) ? String(c.tipo) : 'relacionada', motivo: String(c.motivo || '').trim() } : null;\n  }).filter(Boolean);\n  const fm = ['---', 'titulo: ' + q(b.titulo), 'origem: apple-notes', 'pasta: ' + q(b.pasta), 'nota_id: ' + q(b.id),\n    'tags: [' + tags.join(', ') + ']', 'conceitos: [' + conceitos.map(q).join(', ') + ']',\n    'entidades: [' + entidades.map(q).join(', ') + ']', 'atualizado: ' + new Date().toISOString(), '---', ''];\n  const corpo = ['## Resumo', resumo || '(sem resumo)', '', '## Conexões sugeridas'];\n  if (conexoes.length) conexoes.forEach(c => corpo.push('- [[' + c.titulo + ']] (' + c.tipo + '): ' + c.motivo));\n  else corpo.push('- Nenhuma conexão clara com as notas existentes.');\n  corpo.push('', '## Lacunas e pontos a aprofundar');\n  if (lacunas.length) lacunas.forEach(l => corpo.push('- ' + l)); else corpo.push('- Nenhuma lacuna evidente.');\n  if (perguntas.length) { corpo.push('', '## Perguntas para estudar'); perguntas.forEach(p => corpo.push('- ' + p)); }\n  corpo.push('', 'Nota original: ' + b.titulo);\n  const analise = { nota_id: b.id, titulo: b.titulo, pasta: b.pasta, resumo, tags, conceitos, entidades, conexoes, lacunas, perguntas };\n  out.push({ json: { analise, id: b.id, hash: b.hash, mod: b.mod, titulo: b.titulo, pasta: b.pasta, tags, vetor: b.vetor,\n    trecho: b.texto.slice(0, 500), contradicoes: conexoes.filter(c => c.tipo === 'contradiz'),\n    espelho: { pasta: 'Second Brain', titulo: ('Second Brain: ' + b.titulo).slice(0, 190), markdown: fm.concat(corpo).join('\\n') } } });\n});\nreturn out;"
       }
     },
     {
@@ -415,6 +415,40 @@
         220
       ],
       "parameters": {}
+    },
+    {
+      "id": "gravaranlisenobanc304",
+      "name": "Gravar análise no banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3640,
+        220
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/banco/gravar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ tabela: 'analises', registros: [ $('Montar espelho').itemMatching($itemIndex).json.analise ] }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
     }
   ],
   "connections": {
@@ -565,7 +599,7 @@
       "main": [
         [
           {
-            "node": "Preparar indexação",
+            "node": "Gravar análise no banco",
             "type": "main",
             "index": 0
           }
@@ -610,6 +644,17 @@
         [
           {
             "node": "Cursor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gravar análise no banco": {
+      "main": [
+        [
+          {
+            "node": "Preparar indexação",
             "type": "main",
             "index": 0
           }

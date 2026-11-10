@@ -223,7 +223,75 @@
         440
       ],
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nsd.saude = sd.saude || { dias: {}, recebido: 0, metricas: [] };\nconst it = $input.first().json;\nconst h = it.headers || {};\nconst tk = String(h['x-heimdall-saude'] || h['authorization'] || '').replace(/^Bearer\\s+/i, '').trim();\nif (tk !== '__SAUDE_TOKEN__') return [{ json: { ok: false, motivo: 'token inválido' } }];\nconst corpo = (it.body && typeof it.body === 'object') ? it.body : it;\nconst mets = (corpo.data && corpo.data.metrics) || corpo.metrics || [];\nif (!Array.isArray(mets) || !mets.length) return [{ json: { ok: false, motivo: 'sem metrics' } }];\nconst dia = p => String(p.date || p.sleepEnd || p.sleepStart || '').slice(0, 10);\nconst num = v => (typeof v === 'number' && isFinite(v)) ? v : (typeof v === 'string' && v.trim() !== '' && isFinite(Number(v)) ? Number(v) : null);\nconst val = p => { const q = num(p.qty); if (q !== null) return q; const a = num(p.Avg); if (a !== null) return a; const m = num(p.avg); return m; };\nconst porDia = {};\nconst reg = (d, k, v, modo) => {\n  if (!d || v === null || v === undefined) return;\n  const o = porDia[d] = porDia[d] || {};\n  const c = o[k] = o[k] || { s: 0, n: 0, min: null };\n  c.s += v; c.n += 1; c.min = c.min === null ? v : Math.min(c.min, v); c.modo = modo;\n};\nconst SOMA = /^(basal_energy_burned|flights_climbed|walking_running_distance|cycling_distance|swimming_distance|wheelchair_distance|push_count|swimming_stroke_count|apple_exercise_time|apple_move_time|apple_stand_time|apple_stand_hour|time_in_daylight|mindful_minutes|number_of_times_fallen|handwashing|toothbrushing|dietary_.*|carbohydrates|protein|total_fat|saturated_fat|caffeine|fiber|alcohol_consumption|inhaler_usage|insulin_delivery|uv_exposure)$/;\nconst nomes = [];\nfor (const m of mets) {\n  const nome = String(m.name || ''); nomes.push(nome);\n  const un = String(m.units || '').toLowerCase();\n  const pts = Array.isArray(m.data) ? m.data : [];\n  for (const p of pts) {\n    const d = dia(p);\n    if (nome === 'step_count') reg(d, 'passos', val(p), 'soma');\n    else if (nome === 'active_energy') { let v = val(p); if (v !== null && /kj/.test(un)) v = v / 4.184; reg(d, 'energia', v, 'soma'); }\n    else if (nome === 'resting_heart_rate') reg(d, 'fc_repouso', val(p), 'media');\n    else if (nome === 'heart_rate_variability') reg(d, 'hrv', val(p), 'media');\n    else if (nome === 'respiratory_rate') reg(d, 'resp', val(p), 'media');\n    else if (nome === 'blood_oxygen_saturation') { let v = val(p); if (v !== null && v <= 1) v = v * 100; reg(d, 'spo2', v, 'media'); }\n    else if (nome === 'blood_glucose') { let v = val(p); if (v !== null && /mmol/.test(un)) v = v * 18.0182; reg(d, 'glicose', v, 'media'); }\n    else if (nome === 'sleep_analysis') {\n      const dd = String(p.sleepEnd || p.date || '').slice(0, 10);\n      const h2m = v => { const x = num(v); return x === null ? null : (x <= 24 ? x * 60 : x); };\n      let tot = h2m(p.totalSleep); if (tot === null) tot = h2m(p.asleep);\n      const deep = h2m(p.deep), rem = h2m(p.rem), core = h2m(p.core), cama = h2m(p.inBed);\n      if (tot === null && (deep !== null || rem !== null || core !== null)) tot = (deep || 0) + (rem || 0) + (core || 0);\n      if ((tot === null || tot <= 0) && cama !== null && cama > 0) { const o = porDia[dd] = porDia[dd] || {}; o.sono_cama = { s: cama, n: 1, modo: 'ultimo' }; }\n      if (tot !== null && tot > 0) { const o = porDia[dd] = porDia[dd] || {}; o.sono_total = { s: tot, n: 1, modo: 'ultimo' }; if (deep !== null) o.sono_profundo = { s: deep, n: 1, modo: 'ultimo' }; if (rem !== null) o.sono_rem = { s: rem, n: 1, modo: 'ultimo' }; }\n    }\n    else if (nome) {\n      // qualquer outra métrica que chegar: guarda o valor do dia para comparar com o padrão da própria pessoa\n      sd.saude.un = sd.saude.un || {};\n      if (nome === 'blood_pressure') {\n        const sis = num(p.systolic), dia2 = num(p.diastolic);\n        if (sis !== null) reg(d, 'x:pressao_sistolica', sis, 'media');\n        if (dia2 !== null) reg(d, 'x:pressao_diastolica', dia2, 'media');\n        sd.saude.un['x:pressao_sistolica'] = 'mmHg'; sd.saude.un['x:pressao_diastolica'] = 'mmHg';\n        continue;\n      }\n      let v = val(p); if (v === null) continue;\n      if (nome === 'body_temperature' && /f/.test(un) && !/c/.test(un)) v = (v - 32) * 5 / 9;\n      reg(d, 'x:' + nome, v, SOMA.test(nome) ? 'soma' : 'media');\n      sd.saude.un['x:' + nome] = (nome === 'body_temperature') ? '°C' : String(m.units || '');\n    }\n  }\n}\nfor (const d of Object.keys(porDia)) {\n  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(d)) continue;\n  sd.saude.dias[d] = sd.saude.dias[d] || {};\n  for (const k of Object.keys(porDia[d])) {\n    const c = porDia[d][k];\n    let v = c.modo === 'soma' ? c.s : c.s / c.n;\n    sd.saude.dias[d][k] = k.indexOf('x:') === 0 ? Math.round(v * 100) / 100 : Math.round(v * 10) / 10;\n    if (k.indexOf('x:') === 0) { sd.saude.modo = sd.saude.modo || {}; sd.saude.modo[k] = c.modo; }\n    if (k === 'glicose') sd.saude.dias[d].glicose_min = Math.round(c.min);\n  }\n}\nconst chaves = Object.keys(sd.saude.dias).sort();\nwhile (chaves.length > 75) delete sd.saude.dias[chaves.shift()];\nsd.saude.recebido = Date.now();\nsd.saude.metricas = nomes.slice(0, 120);\nreturn [{ json: { ok: true, dias: Object.keys(porDia).length } }];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nsd.saude = sd.saude || { dias: {}, recebido: 0, metricas: [] };\nconst it = $input.first().json;\nconst h = it.headers || {};\nconst tk = String(h['x-heimdall-saude'] || h['authorization'] || '').replace(/^Bearer\\s+/i, '').trim();\nif (tk !== '__SAUDE_TOKEN__') return [{ json: { ok: false, motivo: 'token inválido' } }];\nconst corpo = (it.body && typeof it.body === 'object') ? it.body : it;\nconst mets = (corpo.data && corpo.data.metrics) || corpo.metrics || [];\nif (!Array.isArray(mets) || !mets.length) return [{ json: { ok: false, motivo: 'sem metrics' } }];\nconst dia = p => String(p.date || p.sleepEnd || p.sleepStart || '').slice(0, 10);\nconst num = v => (typeof v === 'number' && isFinite(v)) ? v : (typeof v === 'string' && v.trim() !== '' && isFinite(Number(v)) ? Number(v) : null);\nconst val = p => { const q = num(p.qty); if (q !== null) return q; const a = num(p.Avg); if (a !== null) return a; const m = num(p.avg); return m; };\nconst porDia = {};\nconst reg = (d, k, v, modo) => {\n  if (!d || v === null || v === undefined) return;\n  const o = porDia[d] = porDia[d] || {};\n  const c = o[k] = o[k] || { s: 0, n: 0, min: null };\n  c.s += v; c.n += 1; c.min = c.min === null ? v : Math.min(c.min, v); c.modo = modo;\n};\nconst SOMA = /^(basal_energy_burned|flights_climbed|walking_running_distance|cycling_distance|swimming_distance|wheelchair_distance|push_count|swimming_stroke_count|apple_exercise_time|apple_move_time|apple_stand_time|apple_stand_hour|time_in_daylight|mindful_minutes|number_of_times_fallen|handwashing|toothbrushing|dietary_.*|carbohydrates|protein|total_fat|saturated_fat|caffeine|fiber|alcohol_consumption|inhaler_usage|insulin_delivery|uv_exposure)$/;\nconst nomes = [];\nfor (const m of mets) {\n  const nome = String(m.name || ''); nomes.push(nome);\n  const un = String(m.units || '').toLowerCase();\n  const pts = Array.isArray(m.data) ? m.data : [];\n  for (const p of pts) {\n    const d = dia(p);\n    if (nome === 'step_count') reg(d, 'passos', val(p), 'soma');\n    else if (nome === 'active_energy') { let v = val(p); if (v !== null && /kj/.test(un)) v = v / 4.184; reg(d, 'energia', v, 'soma'); }\n    else if (nome === 'resting_heart_rate') reg(d, 'fc_repouso', val(p), 'media');\n    else if (nome === 'heart_rate_variability') reg(d, 'hrv', val(p), 'media');\n    else if (nome === 'respiratory_rate') reg(d, 'resp', val(p), 'media');\n    else if (nome === 'blood_oxygen_saturation') { let v = val(p); if (v !== null && v <= 1) v = v * 100; reg(d, 'spo2', v, 'media'); }\n    else if (nome === 'blood_glucose') { let v = val(p); if (v !== null && /mmol/.test(un)) v = v * 18.0182; reg(d, 'glicose', v, 'media'); }\n    else if (nome === 'sleep_analysis') {\n      const dd = String(p.sleepEnd || p.date || '').slice(0, 10);\n      const h2m = v => { const x = num(v); return x === null ? null : (x <= 24 ? x * 60 : x); };\n      let tot = h2m(p.totalSleep); if (tot === null) tot = h2m(p.asleep);\n      const deep = h2m(p.deep), rem = h2m(p.rem), core = h2m(p.core), cama = h2m(p.inBed);\n      if (tot === null && (deep !== null || rem !== null || core !== null)) tot = (deep || 0) + (rem || 0) + (core || 0);\n      if ((tot === null || tot <= 0) && cama !== null && cama > 0) { const o = porDia[dd] = porDia[dd] || {}; o.sono_cama = { s: cama, n: 1, modo: 'ultimo' }; }\n      if (tot !== null && tot > 0) { const o = porDia[dd] = porDia[dd] || {}; o.sono_total = { s: tot, n: 1, modo: 'ultimo' }; if (deep !== null) o.sono_profundo = { s: deep, n: 1, modo: 'ultimo' }; if (rem !== null) o.sono_rem = { s: rem, n: 1, modo: 'ultimo' }; }\n    }\n    else if (nome) {\n      // qualquer outra métrica que chegar: guarda o valor do dia para comparar com o padrão da própria pessoa\n      sd.saude.un = sd.saude.un || {};\n      if (nome === 'blood_pressure') {\n        const sis = num(p.systolic), dia2 = num(p.diastolic);\n        if (sis !== null) reg(d, 'x:pressao_sistolica', sis, 'media');\n        if (dia2 !== null) reg(d, 'x:pressao_diastolica', dia2, 'media');\n        sd.saude.un['x:pressao_sistolica'] = 'mmHg'; sd.saude.un['x:pressao_diastolica'] = 'mmHg';\n        continue;\n      }\n      let v = val(p); if (v === null) continue;\n      if (nome === 'body_temperature' && /f/.test(un) && !/c/.test(un)) v = (v - 32) * 5 / 9;\n      reg(d, 'x:' + nome, v, SOMA.test(nome) ? 'soma' : 'media');\n      sd.saude.un['x:' + nome] = (nome === 'body_temperature') ? '°C' : String(m.units || '');\n    }\n  }\n}\nfor (const d of Object.keys(porDia)) {\n  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(d)) continue;\n  sd.saude.dias[d] = sd.saude.dias[d] || {};\n  for (const k of Object.keys(porDia[d])) {\n    const c = porDia[d][k];\n    let v = c.modo === 'soma' ? c.s : c.s / c.n;\n    sd.saude.dias[d][k] = k.indexOf('x:') === 0 ? Math.round(v * 100) / 100 : Math.round(v * 10) / 10;\n    if (k.indexOf('x:') === 0) { sd.saude.modo = sd.saude.modo || {}; sd.saude.modo[k] = c.modo; }\n    if (k === 'glicose') sd.saude.dias[d].glicose_min = Math.round(c.min);\n  }\n}\nconst chaves = Object.keys(sd.saude.dias).sort();\nwhile (chaves.length > 75) delete sd.saude.dias[chaves.shift()];\nsd.saude.recebido = Date.now();\nsd.saude.metricas = nomes.slice(0, 120);\nconst UN = { passos: 'count', energia: 'kcal', fc_repouso: 'bpm', hrv: 'ms', resp: 'rpm', spo2: '%', glicose: 'mg/dL', glicose_min: 'mg/dL', sono_total: 'min', sono_profundo: 'min', sono_rem: 'min', sono_cama: 'min' };\nconst registros = [];\nfor (const d of Object.keys(porDia)) {\n  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(d)) continue;\n  const o = sd.saude.dias[d] || {};\n  for (const k of Object.keys(o)) { if (typeof o[k] === 'number') registros.push({ dia: d, metrica: k, valor: o[k], unidade: UN[k] || ((sd.saude.un || {})[k]) || '' }); }\n}\nreturn [{ json: { ok: true, dias: Object.keys(porDia).length, registros } }];"
+      }
+    },
+    {
+      "id": "gravarnobanco411",
+      "name": "Gravar no banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        440
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/banco/gravar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ tabela: 'saude_diaria', registros: $json.registros || [] }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "guardarresumonoban209",
+      "name": "Guardar resumo no banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        220
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/banco/gravar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ tabela: 'saude_resumos', registros: [{ dia: new Date().toISOString().slice(0, 10), titulo: $json.titulo, texto: $json.markdown }] }) }}",
+        "options": {
+          "timeout": 60000
+        }
       }
     }
   ],
@@ -286,6 +354,11 @@
             "node": "Gravar no Notas",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Guardar resumo no banco",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -317,6 +390,17 @@
         [
           {
             "node": "Guardar dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar dados": {
+      "main": [
+        [
+          {
+            "node": "Gravar no banco",
             "type": "main",
             "index": 0
           }

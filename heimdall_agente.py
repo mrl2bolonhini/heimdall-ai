@@ -14,6 +14,11 @@ Rotas:
     GET  /notas/privadas                pastas privadas e os ids das notas protegidas (usado pelo limpar_privadas.py)
     POST /notas/gravar                  {"pasta": "Digest", "titulo": "...", "markdown": "...", "audio": "texto a narrar (opcional)"}
                                         cria ou atualiza uma nota e grava uma cópia .md na pasta do cofre
+    GET  /banco/resumo                  contagens e período de cada tabela do banco pessoal (SQLite)
+    GET  /banco/esquema                 descrição das tabelas
+    POST /banco/gravar                  {"tabela": "saude_diaria", "registros": [{"dia": "2026-11-10", "metrica": "passos", "valor": 8000}]}
+                                        insere ou atualiza pela chave primária (tabelas: saude_diaria, saude_resumos, diarios, analises)
+    POST /banco/consultar               {"sql": "SELECT ...", "limite": 200}  só um SELECT, em conexão somente leitura
 
 Pastas privadas: notas da pasta "Privado" (e de outras listadas em HEIMDALL_NOTAS_PRIVADAS) nunca são listadas nem lidas.
 Segurança: LÊ qualquer nota (menos as privadas), mas só ESCREVE em pastas cujo nome começa com "Heimdall" (as notas
@@ -40,6 +45,8 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+
+import heimdall_banco as banco
 
 PROJECT_DIR = Path(__file__).resolve().parent
 HOST = os.environ.get("HEIMDALL_AGENTE_HOST", "127.0.0.1")
@@ -850,6 +857,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(corpo)
                 return
+            if u.path == "/banco/resumo":
+                return self._json(200, banco.resumo())
+            if u.path == "/banco/esquema":
+                return self._json(200, {"esquema": banco.tabelas_para_modelo()})
             if u.path == "/notas/privadas":
                 return self._json(200, {"pastas": PRIVADAS, "ids": sorted(ids_privados())})
             if u.path == "/notas/nota":
@@ -877,6 +888,10 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/notas/gravar":
                 r = gravar(str(dado.get("pasta", "")), str(dado.get("titulo", "")), str(dado.get("markdown", "")), str(dado.get("audio", "")))
                 return self._json(200, r)
+            if u.path == "/banco/gravar":
+                return self._json(200, banco.gravar(str(dado.get("tabela", "")), dado.get("registros", [])))
+            if u.path == "/banco/consultar":
+                return self._json(200, banco.consulta_sql(str(dado.get("sql", "")), dado.get("limite", 200)))
             if u.path == "/calendario/evento":
                 return self._json(200, criar_evento(dado))
             if u.path == "/lembretes/criar":
@@ -954,6 +969,7 @@ def main() -> int:
         print("Erro: defina HEIMDALL_AGENTE_TOKEN (16+ caracteres) no .env.", file=sys.stderr)
         return 1
     VAULT.mkdir(parents=True, exist_ok=True)
+    banco.iniciar()
     srv = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Agente do Heimdall em http://{HOST}:{PORT} (cofre: {VAULT})", flush=True)
     try:

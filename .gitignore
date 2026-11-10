@@ -15,3 +15,8 @@ backups/
 .email_oficial_estado.json
 
 atualizacao*.zip
+
+banco/
+*.db
+*.db-wal
+*.db-shm
