@@ -104,6 +104,14 @@ else
     fi
 fi
 
+# --- Monitor de saúde: token do endereço que recebe os dados do iPhone ---
+if [ -z "${HEIMDALL_SAUDE_TOKEN:-}" ]; then
+    HEIMDALL_SAUDE_TOKEN="$(openssl rand -hex 24)"
+    env_append "HEIMDALL_SAUDE_TOKEN='$HEIMDALL_SAUDE_TOKEN'"
+    echo "Token do monitor de saúde gerado e gravado no .env."
+fi
+SAUDE_COND="${HEIMDALL_SAUDE_CONDICOES:-}"
+
 # --- Token do agente do Mac ---
 if [ -z "${HEIMDALL_AGENTE_TOKEN:-}" ]; then
     HEIMDALL_AGENTE_TOKEN="$(openssl rand -hex 24)"
@@ -137,7 +145,7 @@ trap cleanup EXIT
 
 SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_MODELO="$MODELO" SUBS_MODELO_COD="$MODELO_COD" \
 SUBS_GH="${GH_TOKEN:-}" SUBS_GITOPS="${HEIMDALL_GITOPS_TOKEN:-}" SUBS_REPOS="${REPOS:-}" SUBS_AGENTE="$HEIMDALL_AGENTE_TOKEN" \
-SUBS_EMBED="$EMBED" SUBS_DIM="$DIM" SUBS_SKIP_GIT="$SKIP_GIT" \
+SUBS_EMBED="$EMBED" SUBS_DIM="$DIM" SUBS_SKIP_GIT="$SKIP_GIT" SUBS_SAUDE="$HEIMDALL_SAUDE_TOKEN" SUBS_SAUDE_COND="$SAUDE_COND" \
 "$PY" - "$PROJECT_DIR/n8n_flows_avancados" "$TMP" <<'PYEOF' || fail "não consegui preparar os fluxos."
 import json, os, pathlib, re, sys
 
@@ -147,7 +155,7 @@ subs = {
     "__LITELLM_KEY__": E["SUBS_LITELLM_KEY"], "__BARK_KEY__": E["SUBS_BARK_KEY"], "__MODELO__": E["SUBS_MODELO"],
     "__MODELO_CODIGO__": E["SUBS_MODELO_COD"], "__GITHUB_TOKEN__": E["SUBS_GH"], "__GITOPS_TOKEN__": E["SUBS_GITOPS"],
     "__GITOPS_REPOS__": E["SUBS_REPOS"], "__AGENTE_TOKEN__": E["SUBS_AGENTE"], "__EMBED_MODELO__": E["SUBS_EMBED"],
-    "__EMBED_DIM__": E["SUBS_DIM"],
+    "__EMBED_DIM__": E["SUBS_DIM"], "__SAUDE_TOKEN__": E["SUBS_SAUDE"], "__SAUDE_CONDICOES__": re.sub(r"[\\'\"\r\n]", " ", E["SUBS_SAUDE_COND"]).strip()[:300],
 }
 
 def fix(o):
@@ -247,5 +255,10 @@ if [ "${NOVO_AGENTE:-0}" = "1" ]; then
     echo
     echo "O token do agente é novo: rode o start_heimdall.sh de novo para o agente subir com ele."
 fi
+{
+    echo
+    echo "Monitor de saúde: o endereço que recebe os dados do iPhone é http://<IP-do-Tailscale-do-Mac>:5678/webhook/heimdall-saude"
+    echo "O cabeçalho de autenticação é X-Heimdall-Saude, com o token HEIMDALL_SAUDE_TOKEN do .env (o roteiro do app está no LEIAME)."
+}
 echo
 echo "Pronto."

@@ -5,7 +5,7 @@
  "nodes": [
   {
    "id": "todososdiass8h30890",
-   "name": "Todos os dias às 8h30",
+   "name": "Todos os dias às 9h40",
    "type": "n8n-nodes-base.scheduleTrigger",
    "typeVersion": 1.2,
    "position": [
@@ -17,7 +17,7 @@
      "interval": [
       {
        "field": "cronExpression",
-       "expression": "30 8 * * *"
+       "expression": "40 9 * * *"
       }
      ]
     }
@@ -177,7 +177,7 @@
    ],
    "parameters": {
     "method": "POST",
-    "url": "https://api.day.app/push",
+    "url": "http://localhost:5678/webhook/heimdall-resumo",
     "sendHeaders": true,
     "headerParameters": {
      "parameters": [
@@ -189,11 +189,12 @@
     },
     "sendBody": true,
     "specifyBody": "json",
-    "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $('Reunir menções').first().json.tituloBark, body: String($('Reunir menções').first().json.bark).slice(0, 900), group: 'heimdall' }) }}",
+    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: $('Reunir menções').first().json.tituloBark, linha: String($('Reunir menções').first().json.bark).slice(0, 700) }) }}",
     "options": {
      "timeout": 30000
     }
-   }
+   },
+   "onError": "continueRegularOutput"
   },
   {
    "id": "executaragora387",
@@ -217,7 +218,7 @@
    ],
    "parameters": {
     "method": "POST",
-    "url": "https://api.day.app/push",
+    "url": "http://localhost:5678/webhook/heimdall-resumo",
     "sendHeaders": true,
     "headerParameters": {
      "parameters": [
@@ -229,25 +230,15 @@
     },
     "sendBody": true,
     "specifyBody": "json",
-    "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.corpo).slice(0, 900), group: 'heimdall' }) }}",
+    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: $json.titulo, linha: String($json.corpo).slice(0, 700) }) }}",
     "options": {
      "timeout": 30000
     }
-   }
+   },
+   "onError": "continueRegularOutput"
   }
  ],
  "connections": {
-  "Todos os dias às 8h30": {
-   "main": [
-    [
-     {
-      "node": "Consultas",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
   "Consultas": {
    "main": [
     [
@@ -311,6 +302,17 @@
    ]
   },
   "Executar agora": {
+   "main": [
+    [
+     {
+      "node": "Consultas",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Todos os dias às 9h40": {
    "main": [
     [
      {

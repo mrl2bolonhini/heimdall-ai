@@ -99,6 +99,7 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 | `deepseek-coder-v2:16b` | `ollama_chat/deepseek-coder-v2:16b` | Código (usado pelo GitOps) | O GitOps usa este modelo na etapa de análise de código. |
 | `qwen3-vl-instruct` | `ollama_chat/qwen3-vl:8b-instruct` | Modelo padrão dos fluxos; entende imagens | Declara suporte a imagens no LiteLLM. |
 | `bonsai-27b` | `ollama_chat/eriktonon/bonsai-2-uncensored:27b` | Modelo grande, respostas mais elaboradas | Confira a chamada de ferramentas com test_models_tools.py. |
+| `medgemma` | `ollama_chat/medgemma:4b` | Modelo médico pequeno; só para testes | Trocou o sentido de uma variação nos testes de saúde; não é usado nos fluxos. |
 <!-- /AUTO:MODELOS -->
 
 Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta chamada de ferramentas) e contexto de 8192 tokens. Modelo padrão dos fluxos: `qwen3-vl-instruct` (`HEIMDALL_FLOW_MODEL`). Embeddings: `nomic-embed-text`.
@@ -137,19 +138,23 @@ Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e
 <!-- AUTO:FLUXOS -->
 | Fluxo | Quando | O que faz |
 |---|---|---|
-| resumo diário da AWS para dados | todo dia às 8h00 | Lê o feed de novidades da AWS, filtra os serviços de dados (Glue, Redshift, Athena, S3, Kinesis e outros), resume em português e avisa no iPhone. |
+| resumo diário da AWS para dados | todo dia às 7h45 | Lê o feed de novidades da AWS, filtra os serviços de dados (Glue, Redshift, Athena, S3, Kinesis e outros), resume em português e avisa no iPhone. |
 | vigia de versões (semanal) | toda semana (segunda às 9h) | Consulta os lançamentos dos projetos que o Heimdall usa, avalia se vale atualizar e avisa no iPhone. |
 | alerta de saúde do Mac | a cada 1 hora(s) | Lê as métricas do Mac pelo MCP e avisa quando RAM, swap ou disco passam dos limites configurados. |
-| relatório diário de disponibilidade | todo dia às 7h30 | Lê a página de status do Uptime Kuma, monta o relatório de disponibilidade do dia e avisa no iPhone. |
+| relatório diário de disponibilidade | todo dia às 5h45 | Lê a página de status do Uptime Kuma, monta o relatório de disponibilidade do dia e avisa no iPhone. |
 | GitOps inteligente (auditor e refatorador) | a cada git push (webhook) | A cada git push, divide o código alterado em trechos de até 5 mil caracteres, analisa os trechos tocados pelo commit com o modelo de código (um de cada vez, para poupar memória), que responde com edições pontuais validadas uma a uma, e abre um Pull Request em rascunho com as refatorações sugeridas. Se o GitHub recusar o PR, apaga a branch para não deixar lixo e avisa com o motivo e o resumo dos achados. Sempre avisa o resultado, inclusive quando não há nada a refatorar. |
-| digest hiperpersonalizado (8h e 18h) | cron 0 8,18 * * * | Lê feeds de notícias, filtra pelo que interessa, cruza com as notas e os livros e grava um resumo personalizado no app Notas. |
+| digest hiperpersonalizado (7h45 e 18h) | cron 45 7 * * * | Lê feeds de notícias, filtra pelo que interessa, cruza com as notas e os livros e grava um resumo personalizado no app Notas. |
 | Second Brain (notas, conexões e lacunas) | a cada 5 minutos | Observa as notas alteradas do app Notas (nunca as de pastas privadas), cria embeddings, encontra conexões e lacunas e grava a análise na pasta Cérebro. |
 | aviso de falha | quando outro fluxo falha | Quando qualquer fluxo falha, avisa no iPhone qual fluxo, em que etapa e por quê. Fluxos nunca falham em silêncio. |
-| monitor de privacidade (diário) | cron 0 9 * * * | Pesquisa na web os identificadores pessoais configurados pelo dono (nome, e-mails, usuários) em busca de menções, comentários, vazamentos e imagens, separa homônimos, analisa o risco e grava o relatório. Tem memória: só avisa o que é novo. |
-| diários oficiais (diário) | cron 30 8 * * * | Procura o nome do dono nos diários oficiais do município de São Paulo, da União e do Estado de SP e, se a OAB estiver configurada, as comunicações dela no Diário da Justiça Eletrônico Nacional (CNJ). Avisa só o que for novo. Se uma fonte falhar, o aviso diz qual e nunca finge que não há nada. |
-| checagem mensal de serviços públicos | cron 0 10 1 * * | Lembrete mensal para conferir, nos aplicativos oficiais, serviços que exigem login (INSS, FGTS, Carteira de Trabalho, Registrato e Serasa). |
+| monitor de privacidade (diário) | cron 45 9 * * * | Pesquisa na web os identificadores pessoais configurados pelo dono (nome, e-mails, usuários) em busca de menções, comentários, vazamentos e imagens, separa homônimos, analisa o risco e grava o relatório. Tem memória: só avisa o que é novo. |
+| diários oficiais (diário) | cron 40 9 * * * | Procura o nome do dono nos diários oficiais do município de São Paulo, da União e do Estado de SP e, se a OAB estiver configurada, as comunicações dela no Diário da Justiça Eletrônico Nacional (CNJ). Avisa só o que for novo. Se uma fonte falhar, o aviso diz qual e nunca finge que não há nada. |
+| checagem mensal de serviços públicos | cron 50 9 1 * * | Lembrete mensal para conferir, nos aplicativos oficiais, serviços que exigem login (INSS, FGTS, Carteira de Trabalho, Registrato e Serasa). |
 | estudo dos livros (6h, 13h e 20h) | cron 0 6,13,20 * * * | Para cada tema da base de conhecimento (subpastas de knowledge/), sorteia um trecho, monta uma leitura, cria pergunta e resposta, busca de 1 a 3 artigos na web e grava a nota no app Notas, na pasta com o nome do tema, com áudio narrado. |
+| resumo agrupado (6h, 8h e 10h) | cron 0 6 * * * | Junta os avisos de rotina em três notificações por dia (6h, 8h e 10h), em vez de uma por fluxo. Avisos urgentes e os de situação (falhas, GitOps, alerta do Mac) continuam na hora. |
+| monitor de saúde (resumo das 5h50) | todo dia às 5h50 | Recebe os dados do app Saúde (iPhone e Apple Watch) e escreve às 5h50 um resumo de sono, pulso, variabilidade, respiração e atividade contra a média de 30 dias. As regras decidem o que é relevante, o modelo só redige e uma verificação barra texto com sentido trocado. |
 <!-- /AUTO:FLUXOS -->
+
+Resumos agrupados: os avisos de rotina saem em três notificações por dia (6h, 8h e 10h) pelo fluxo "Resumo agrupado" (webhook `heimdall-resumo`); falhas, GitOps, alerta do Mac e o estudo continuam na hora. O "Monitor de saúde" (webhook `heimdall-saude`, resumo às 5h50) recebe os dados do Health Auto Export; as regras decidem o que é relevante e o modelo só redige.
 
 Instalação: `bash instalar_fluxos_n8n.sh` (básicos), `bash instalar_automacoes_avancadas.sh` (GitOps, digest, Second Brain, estudo) e `bash instalar_monitor_privacidade.sh` (monitor e diários). Rodar um fluxo agora: `docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=<id>`.
 

@@ -1,0 +1,255 @@
+{
+  "id": "hdResumo00000001",
+  "name": "Heimdall: resumo agrupado (6h, 8h e 10h)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "s6h8he10h99",
+      "name": "Às 6h, 8h e 10h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "montarresumo324",
+      "name": "Montar resumo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nsd.fila = sd.fila || {};\nlet h = new Date().getHours();\ntry { if (typeof $now !== 'undefined' && $now) h = Number($now.toFormat('H')); } catch (e) {}\n// A agenda dispara às 6h, 8h e 10h; aceita pequeno atraso.\nconst slot = h < 7 ? 'manha1' : h < 9 ? 'manha2' : 'meio';\nconst rotulo = { manha1: '6h', manha2: '8h', meio: '10h' }[slot];\nconst fila = sd.fila[slot] || {};\nconst limite = Date.now() - 36 * 3600 * 1000;\nconst itens = Object.keys(fila).map(t => ({ titulo: t, linha: fila[t].linha, em: fila[t].em })).filter(x => x.em >= limite).sort((a, b) => a.em - b.em);\nsd.fila[slot] = {};\nif (!itens.length) return [];\nconst corpo = itens.map(x => {\n  const l = x.linha.split('\\n').map(y => y.trim()).filter(Boolean);\n  const primeiras = l.slice(0, 3).join(' ').slice(0, 260);\n  return x.titulo + ': ' + primeiras;\n}).join('\\n');\nreturn [{ json: { titulo: 'Resumo das ' + rotulo + ' (' + itens.length + ')', corpo: corpo.slice(0, 1800) } }];"
+      }
+    },
+    {
+      "id": "enviarresumo312",
+      "name": "Enviar resumo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.corpo).slice(0, 900), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "executaragora387",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        220
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "receberlinha252",
+      "name": "Receber linha",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        440
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "heimdall-resumo",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "a58fc4e2-a6df-5342-b53f-a2125013ed8d"
+    },
+    {
+      "id": "guardar710",
+      "name": "Guardar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        440
+      ],
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nsd.fila = sd.fila || {};\nconst b = ($input.first().json.body && typeof $input.first().json.body === 'object') ? $input.first().json.body : $input.first().json;\nconst slot = String(b.slot || '').trim();\nconst titulo = String(b.titulo || '').replace(/\\s+/g, ' ').trim().slice(0, 80);\nconst linha = String(b.linha || '').replace(/\\r/g, '').trim();\nif (!slot || !titulo) return [{ json: { enviar: false, motivo: 'faltam slot e titulo' } }];\n// \"direto\" e urgente furam a fila e vão na hora\nif (slot === 'direto' || b.urgente === true) return [{ json: { enviar: true, titulo: titulo, corpo: linha.slice(0, 900), nivel: b.nivel === 'passive' ? 'passive' : 'active' } }];\nsd.fila[slot] = sd.fila[slot] || {};\nsd.fila[slot][titulo] = { linha: linha, em: Date.now() };\nreturn [{ json: { enviar: false, guardado: slot + ': ' + titulo } }];"
+      }
+    },
+    {
+      "id": "enviarnahora373",
+      "name": "Enviar na hora?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        440
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ea93de2b-8dc5-55cb-bc3b-debb2edbe826",
+              "leftValue": "={{ !!$json.enviar }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "avisaragora168",
+      "name": "Avisar agora",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        440
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.day.app/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.corpo).slice(0, 900), group: 'heimdall', level: $json.nivel || 'active' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Às 6h, 8h e 10h": {
+      "main": [
+        [
+          {
+            "node": "Montar resumo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar resumo": {
+      "main": [
+        [
+          {
+            "node": "Enviar resumo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Montar resumo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receber linha": {
+      "main": [
+        [
+          {
+            "node": "Guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar": {
+      "main": [
+        [
+          {
+            "node": "Enviar na hora?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar na hora?": {
+      "main": [
+        [
+          {
+            "node": "Avisar agora",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "errorWorkflow": "hdFalhaAviso0001"
+  }
+}

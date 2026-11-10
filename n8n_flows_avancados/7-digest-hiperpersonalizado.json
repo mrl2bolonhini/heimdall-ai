@@ -1,11 +1,11 @@
 {
   "id": "hdDigest00000001",
-  "name": "Heimdall: digest hiperpersonalizado (8h e 18h)",
+  "name": "Heimdall: digest hiperpersonalizado (7h45 e 18h)",
   "active": false,
   "nodes": [
     {
-      "id": "s8hes18h244",
-      "name": "Às 8h e às 18h",
+      "id": "s7h45es18h348",
+      "name": "Às 7h45 e às 18h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -17,7 +17,11 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 8,18 * * *"
+              "expression": "45 7 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * *"
             }
           ]
         }
@@ -389,7 +393,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://api.day.app/push",
+        "url": "http://localhost:5678/webhook/heimdall-resumo",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -401,11 +405,12 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: 'Digest das ' + $('Montar Markdown').first().json.hh + 'h', body: String($('Montar Markdown').first().json.bark).slice(0, 900), group: 'heimdall' }) }}",
+        "jsonBody": "={{ JSON.stringify({ slot: Number($('Montar Markdown').first().json.hh) < 12 ? 'manha2' : 'direto', titulo: 'Digest das ' + $('Montar Markdown').first().json.hh + 'h', linha: String($('Montar Markdown').first().json.bark).slice(0, 700) }) }}",
         "options": {
           "timeout": 30000
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "id": "executaragora387",
@@ -420,7 +425,7 @@
     }
   ],
   "connections": {
-    "Às 8h e às 18h": {
+    "Às 7h45 e às 18h": {
       "main": [
         [
           {

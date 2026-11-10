@@ -1,649 +1,652 @@
 {
-  "id": "hdMonitor00000001",
-  "name": "Heimdall: monitor de privacidade (diário)",
-  "active": false,
-  "nodes": [
-    {
-      "id": "todososdiass9h792",
-      "name": "Todos os dias às 9h",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        0
-      ],
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 9 * * *"
-            }
-          ]
-        }
+ "id": "hdMonitor00000001",
+ "name": "Heimdall: monitor de privacidade (diário)",
+ "active": false,
+ "nodes": [
+  {
+   "id": "todososdiass9h792",
+   "name": "Todos os dias às 9h45",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "45 9 * * *"
       }
-    },
-    {
-      "id": "consultas956",
-      "name": "Consultas",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        260,
-        0
-      ],
-      "parameters": {
-        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\npodarVistos();\nconst nomes = [CFG.nome].concat(CFG.variacoes || []).map(s => String(s || '').trim()).filter(Boolean);\nif (nomes.length === 0 && (CFG.emails || []).length === 0 && (CFG.usuarios || []).length === 0) {\n  throw new Error('Nenhum identificador configurado. Rode de novo: bash instalar_monitor_privacidade.sh --reconfigurar');\n}\nconst q = [];\nconst add = (txt, tipo) => { if (!q.some(x => x.q === txt && x.tipo === tipo)) q.push({ q: txt, tipo }); };\nnomes.slice(0, 3).forEach((n, i) => {\n  add('\"' + n + '\"', 'web');\n  if (i === 0) {\n    if (CFG.cidade) add('\"' + n + '\" ' + CFG.cidade, 'web');\n    (CFG.sinais || []).slice(0, 2).forEach(s => add('\"' + n + '\" ' + s, 'web'));\n    add('\"' + n + '\" CPF OR telefone OR \"dados pessoais\" OR vazamento', 'web');\n    add('\"' + n + '\"', 'noticia');\n    add('\"' + n + '\"', 'imagem');\n  }\n});\n(CFG.emails || []).forEach(e => { add('\"' + e + '\"', 'web'); add('\"' + e + '\" senha OR password OR leak OR vazamento OR pastebin', 'web'); });\n(CFG.usuarios || []).forEach(u => add('\"' + u + '\"', 'web'));\nreturn q.slice(0, 16).map(x => ({ json: x }));"
-      }
-    },
-    {
-      "id": "buscarnosearxng525",
-      "name": "Buscar no SearXNG",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        520,
-        0
-      ],
-      "parameters": {
-        "method": "GET",
-        "url": "={{ 'http://searxng:8080/search?format=json&safesearch=0&language=pt-BR&categories=' + ({ web: 'general', imagem: 'images', noticia: 'news' }[$json.tipo] || 'general') + ($json.tipo === 'noticia' ? '&time_range=week' : '') + '&q=' + encodeURIComponent($json.q) }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000
-    },
-    {
-      "id": "reunirresultados755",
-      "name": "Reunir resultados",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        780,
-        0
-      ],
-      "parameters": {
-        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst consultas = $('Consultas').all();\nconst resp = $input.all();\nconst nomes = [CFG.nome].concat(CFG.variacoes || []).map(norm).map(s => s.trim()).filter(Boolean);\nconst emails = (CFG.emails || []).map(norm).filter(Boolean);\nconst users = (CFG.usuarios || []).map(norm).filter(Boolean);\nconst ignorar = (CFG.ignorar || []).map(norm).filter(Boolean);\nfunction hostDe(u) { const m = /^https?:\\/\\/([^\\/?#:]+)/i.exec(u || ''); return m ? m[1].toLowerCase().replace(/^www\\./, '') : ''; }\nfunction normUrl(u) {\n  const m = /^(https?):\\/\\/([^\\/?#]+)([^?#]*)(\\?[^#]*)?/i.exec(String(u || '').trim());\n  if (!m) return '';\n  const qs = (m[4] || '').replace(/^\\?/, '').split('&').filter(p => p && !/^(utm_|fbclid|gclid|ref=|igshid|mc_)/i.test(p)).sort().join('&');\n  return (m[1] + '://' + m[2].replace(/^www\\./i, '') + (m[3] || '').replace(/\\/+$/, '') + (qs ? '?' + qs : '')).toLowerCase();\n}\nconst st = { consultas: resp.length, falhas: 0, vazias: 0, resultados: 0, jaVistos: 0, ignorados: 0, novos: 0, analisados: 0 };\nconst mapa = new Map();\nresp.forEach((r, i) => {\n  const c = (consultas[i] || { json: {} }).json;\n  const j = r.json || {};\n  if (j.error || !Array.isArray(j.results)) { st.falhas++; return; }\n  if (j.results.length === 0) st.vazias++;\n  j.results.slice(0, 12).forEach(x => {\n    st.resultados++;\n    const url = String(x.url || '');\n    const un = normUrl(url);\n    if (!un) return;\n    const host = hostDe(url);\n    if (ignorar.some(d => host === d || host.endsWith('.' + d))) { st.ignorados++; return; }\n    if (sd.vistos[un]) { st.jaVistos++; return; }\n    let m = mapa.get(un);\n    if (!m) { m = { url, urlN: un, host, titulo: String(x.title || '').slice(0, 200), trecho: String(x.content || '').slice(0, 400), tipo: c.tipo, img: '', consultas: [] }; mapa.set(un, m); }\n    if (c.tipo === 'imagem' && x.img_src && /^https:\\/\\//i.test(String(x.img_src))) { m.img = String(x.img_src); m.tipo = 'imagem'; }\n    if (m.consultas.length < 4 && !m.consultas.includes(c.q)) m.consultas.push(c.q);\n  });\n});\nif (st.consultas > 0 && st.falhas === st.consultas) throw new Error('A busca (SearXNG) não respondeu em nenhuma das ' + st.consultas + ' consultas.');\nconst cand = Array.from(mapa.values());\ncand.forEach(m => {\n  const t = norm(m.titulo + ' ' + m.trecho + ' ' + m.url);\n  m.pre = { nome: nomes.some(n => t.includes(n)), email: emails.some(e => t.includes(e)), usuario: users.some(u => t.includes(u)) };\n  m.pts = (m.pre.email ? 3 : 0) + (m.pre.usuario ? 3 : 0) + (m.pre.nome ? 2 : 0) + m.consultas.length * 0.1;\n});\ncand.sort((a, b) => b.pts - a.pts);\nlet imgs = 0;\nconst escolhidos = cand.filter(m => { if (m.tipo !== 'imagem') return true; imgs++; return imgs <= 5; }).slice(0, 14);\nst.novos = cand.length;\nst.analisados = escolhidos.length;\nconst naoLidos = cand.filter(m => !escolhidos.includes(m)).map(m => m.urlN);\nif (escolhidos.length === 0) {\n  return [{ json: { vazio: true, titulo: 'Monitor de privacidade: nada novo', stats: st, processadas: [], possiveis: [], descartados: 0 } }];\n}\nreturn escolhidos.map(m => ({ json: Object.assign({ vazio: false, stats: st }, m) }));"
-      }
-    },
-    {
-      "id": "hresultadosnovos83",
-      "name": "Há resultados novos?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1040,
-        0
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "5b837d15-73e3-511e-b400-1f02812262b9",
-              "leftValue": "={{ $json.vazio }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "lerpgina75",
-      "name": "Ler página",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1300,
-        0
-      ],
-      "parameters": {
-        "method": "GET",
-        "url": "={{ $json.url }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "User-Agent",
-              "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15"
-            },
-            {
-              "name": "Accept",
-              "value": "text/html,*/*"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 20000,
-          "response": {
-            "response": {
-              "responseFormat": "text"
-            }
-          }
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "id": "prepararanlise722",
-      "name": "Preparar análise",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1560,
-        0
-      ],
-      "parameters": {
-        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst base = $('Reunir resultados').all();\nconst resp = $input.all();\nconst st = base[0].json.stats;\nconst nomes = [CFG.nome].concat(CFG.variacoes || []).map(s => String(s || '').trim()).filter(Boolean);\nconst emails = (CFG.emails || []).filter(Boolean);\nconst users = (CFG.usuarios || []).filter(Boolean);\nconst ctxTermos = (CFG.sinais || []).concat(CFG.cidade ? [CFG.cidade] : []).filter(Boolean);\nconst idsTexto = nomes.concat(emails, users);\nfunction ent(s) {\n  return String(s || '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '\"')\n    .replace(/&#(\\d+);/g, (m, n) => String.fromCharCode(Number(n))).replace(/&#x([0-9a-f]+);/gi, (m, n) => String.fromCharCode(parseInt(n, 16)))\n    .replace(/&amp;/g, '&');\n}\nfunction limpar(s) { return ent(String(s || '').replace(/<[^>]+>/g, ' ')).replace(/\\s+/g, ' ').trim(); }\nfunction esc(s) { return String(s).replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'); }\nfunction privado(u) {\n  const m = /^https:\\/\\/([^\\/?#:]+)/i.exec(String(u || ''));\n  if (!m) return true;\n  const h = m[1].toLowerCase();\n  return /^(localhost|127\\.|10\\.|192\\.168\\.|172\\.(1[6-9]|2\\d|3[01])\\.|169\\.254\\.|0\\.|\\[)/.test(h) || /\\.(local|internal|lan)$/.test(h) || !/\\./.test(h);\n}\nconst PALAVRAS_VAZAMENTO = /(vazamento|vazou|vazados?|leak|leaked|breach|pastebin|dump|combolist|senhas?|password|credenciais|hackeado|hacked)/;\nconst analisar = [];\nconst possiveis = [];\nconst processadas = [];\nlet descartados = 0;\nresp.forEach((r, i) => {\n  const it = base[i].json;\n  processadas.push(it.urlN);\n  const bruto = (r.json && !r.json.error && typeof r.json.data === 'string') ? r.json.data : '';\n  const paginaOk = bruto.length > 200;\n  let texto = '';\n  let tituloPag = '';\n  if (paginaOk) {\n    const tt = /<title[^>]*>([\\s\\S]*?)<\\/title>/i.exec(bruto);\n    tituloPag = tt ? limpar(tt[1]).slice(0, 200) : '';\n    texto = limpar(bruto.replace(/<(script|style|noscript|svg)[\\s\\S]*?<\\/\\1>/gi, ' '));\n  }\n  const todo = norm(it.titulo + ' ' + it.trecho + ' ' + it.url + ' ' + tituloPag + ' ' + texto);\n  const nomeOk = nomes.some(n => todo.includes(norm(n)));\n  const emailOk = emails.some(e => todo.includes(norm(e)));\n  const userOk = users.some(u => norm(u).length >= 5 && todo.includes(norm(u)));\n  const ctx = ctxTermos.filter(s => todo.includes(norm(s)));\n  let classe = 'nenhum';\n  if (emailOk || userOk) classe = 'confirmado';\n  else if (nomeOk) classe = ctxTermos.length === 0 ? 'provavel' : (ctx.length >= 2 ? 'confirmado' : (ctx.length === 1 ? 'provavel' : 'possivel'));\n  if (classe === 'nenhum') { descartados++; return; }\n  if (classe === 'possivel') { possiveis.push({ titulo: it.titulo || tituloPag || it.url, url: it.url }); return; }\n  // trechos da página ao redor das menções\n  let janelas = '';\n  if (texto) {\n    const re = new RegExp(idsTexto.map(esc).join('|'), 'gi');\n    const pos = [];\n    let m;\n    while ((m = re.exec(texto)) && pos.length < 3) { pos.push(m.index); re.lastIndex = m.index + Math.max(m[0].length, 400); }\n    janelas = pos.map(p => '… ' + texto.slice(Math.max(0, p - 450), p + 550) + ' …').join('\\n');\n    if (!janelas) janelas = texto.slice(0, 1500);\n  }\n  if (!janelas) janelas = it.trecho || '(sem texto da página)';\n  janelas = janelas.slice(0, 3400);\n  const vazamento = PALAVRAS_VAZAMENTO.test(norm(janelas + ' ' + it.titulo + ' ' + it.trecho));\n  const comImagem = !!it.img && !privado(it.img);\n  const sinais = { nome: nomeOk, email: emailOk, usuario: userOk, contexto: ctx };\n  const dono = 'nome ' + CFG.nome + (nomes.length > 1 ? ' (também: ' + nomes.slice(1).join(', ') + ')' : '')\n    + (CFG.cidade ? '; cidade ' + CFG.cidade : '') + ((CFG.sinais || []).length ? '; contexto: ' + CFG.sinais.join(', ') : '')\n    + (emails.length ? '; e-mails: ' + emails.join(', ') : '') + (users.length ? '; usuários: ' + users.join(', ') : '');\n  const SYS = 'Você analisa páginas da web para o dono de um monitor de privacidade pessoal. Responda em português do Brasil e SOMENTE com um objeto JSON. '\n    + 'Use apenas o que está nos trechos fornecidos; se não souber, escreva \"não informado\". Nunca invente fatos. '\n    + 'Não copie senhas, CPF, telefones nem endereços: cite só o TIPO do dado exposto. '\n    + 'Não identifique pessoas pelo rosto ou pela aparência: descreva a imagem (cena, objetos, texto visível, legenda) e diga se a legenda ou o texto da página a liga ao nome do dono.';\n  const USER = 'DONO DO MONITOR: ' + dono + '\\n\\nPÁGINA: ' + (tituloPag || it.titulo) + '\\nENDEREÇO: ' + it.url + '\\nTIPO DO RESULTADO: ' + it.tipo\n    + '\\nCLASSIFICAÇÃO DO CÓDIGO: ' + classe + ' (nome: ' + (nomeOk ? 'sim' : 'não') + '; e-mail: ' + (emailOk ? 'sim' : 'não') + '; usuário: ' + (userOk ? 'sim' : 'não')\n    + '; contexto encontrado: ' + (ctx.join(', ') || 'nenhum') + ')\\nPÁGINA LIDA: ' + (paginaOk ? 'sim' : 'não, só o trecho da busca')\n    + '\\n\\nTRECHOS DA PÁGINA:\\n' + janelas\n    + (comImagem ? '\\n\\nA imagem anexa é a que o buscador associou a esta página.' : '')\n    + '\\n\\nResponda com este JSON: {\"e_sobre_mim\": \"sim\" ou \"provavel\" ou \"incerto\", \"tipo\": \"mencao\" ou \"perfil\" ou \"noticia\" ou \"comentario\" ou \"vazamento\" ou \"diretorio\" ou \"imagem\" ou \"outro\", '\n    + '\"resumo\": \"2 a 3 frases sobre o que a página diz a meu respeito\", \"dados_expostos\": [\"tipos de dado pessoal visíveis, como e-mail, telefone, endereço, CPF, senha, data de nascimento, foto\"], '\n    + '\"risco\": \"nenhum\" ou \"baixo\" ou \"medio\" ou \"alto\", \"motivo_risco\": \"uma frase\", \"acao\": \"uma ação concreta e curta, ou nenhuma\", \"imagem\": \"descrição de 1 a 2 frases da imagem, ou vazio se não houver imagem\"}';\n  const conteudo = comImagem\n    ? [ { type: 'text', text: USER }, { type: 'image_url', image_url: { url: it.img } } ]\n    : USER;\n  analisar.push({ json: { vazio: false, urlN: it.urlN, url: it.url, host: it.host, titulo: it.titulo || tituloPag || it.url, tipo: it.tipo, classe, sinais, vazamento, paginaOk, comImagem,\n    req: { model: '__MODELO__', temperature: 0.1, max_tokens: 700, stream: false, response_format: { type: 'json_object' },\n      messages: [ { role: 'system', content: SYS }, { role: 'user', content: conteudo } ] } } });\n});\nst.possiveis = possiveis.length;\nst.descartados = descartados;\nif (analisar.length === 0) {\n  return [{ json: { vazio: true, titulo: 'Monitor de privacidade: nada confirmado', stats: st, processadas, possiveis, descartados } }];\n}\nanalisar[0].json.extra = { processadas, possiveis, descartados, stats: st };\nreturn analisar;"
-      }
-    },
-    {
-      "id": "hachados115",
-      "name": "Há achados?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1820,
-        0
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "dcab254a-fbda-53c7-bb44-a94b707b8b34",
-              "leftValue": "={{ $json.vazio }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "analisarachado451",
-      "name": "Analisar achado",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2080,
-        0
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "http://host.docker.internal:9000/v1/chat/completions",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer __LITELLM_KEY__"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.req) }}",
-        "options": {
-          "timeout": 900000
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "id": "montarrelatrio766",
-      "name": "Montar relatório",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2340,
-        0
-      ],
-      "parameters": {
-        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst base = $('Preparar análise').all();\nconst resp = $input.all();\nconst extra = base[0].json.extra || {};\nconst st = extra.stats || {};\nconst NIV = ['nenhum', 'baixo', 'medio', 'alto'];\nconst ROT = { nenhum: 'NENHUM', baixo: 'BAIXO', medio: 'MÉDIO', alto: 'ALTO' };\nconst CLS = { confirmado: 'Confirmado', provavel: 'Provável' };\nconst TIPO = { mencao: 'menção', perfil: 'perfil', noticia: 'notícia', comentario: 'comentário', vazamento: 'possível vazamento', diretorio: 'diretório de pessoas', imagem: 'imagem', outro: 'outro' };\nfunction jsonDe(r) {\n  const txt = String((((((r || {}).json || {}).choices || [])[0]) || {}).message && r.json.choices[0].message.content || '');\n  try { return JSON.parse(txt); } catch (e) {\n    const m = /\\{[\\s\\S]*\\}/.exec(txt);\n    try { return m ? JSON.parse(m[0]) : {}; } catch (e2) { return {}; }\n  }\n}\nconst achados = base.map((b, i) => {\n  const it = b.json;\n  const j = jsonDe(resp[i]);\n  const analiseOk = !!(j && j.resumo);\n  const dados = (Array.isArray(j.dados_expostos) ? j.dados_expostos : (j.dados_expostos ? [j.dados_expostos] : [])).map(s => String(s).trim()).filter(s => s && !/^(nenhum|não informado)$/i.test(s));\n  let r = Math.max(0, NIV.indexOf(norm(j.risco)));\n  if (!analiseOk) r = Math.max(r, 1);\n  if (it.vazamento) r = Math.max(r, 2);\n  if (/(senha|cpf|telefone|celular|endereco|cartao|documento|nascimento)/.test(norm(dados.join(' ')))) r = Math.max(r, 2);\n  return { n: 0, titulo: it.titulo, url: it.url, host: it.host, classe: it.classe, sinais: it.sinais, tipo: TIPO[norm(j.tipo)] || (it.tipo === 'imagem' ? 'imagem' : 'menção'),\n    resumo: String(j.resumo || '').trim() || 'Análise automática indisponível (o modelo não respondeu; se havia imagem, ela pode não ter sido lida).',\n    dados, risco: r, motivo: String(j.motivo_risco || '').trim(), acao: String(j.acao || '').trim(), imagem: String(j.imagem || '').trim(),\n    eSobreMim: String(j.e_sobre_mim || '').trim(), analiseOk, vazamento: it.vazamento };\n});\nachados.sort((a, b) => (b.risco - a.risco) || ((a.classe === 'confirmado' ? 0 : 1) - (b.classe === 'confirmado' ? 0 : 1)));\nachados.forEach((a, i) => { a.n = i + 1; });\nconst nivel = NIV[Math.max.apply(null, achados.map(a => a.risco).concat([0]))];\n// correlações calculadas pelo código\nconst porHost = {};\nachados.forEach(a => { porHost[a.host] = (porHost[a.host] || 0) + 1; });\nconst repetidos = Object.keys(porHost).filter(h => porHost[h] >= 2).map(h => h + ' (' + porHost[h] + ' páginas hoje)');\nconst recorrentes = Object.keys(porHost).filter(h => (sd.dominios[h] || 0) >= 1).map(h => h + ' (já apareceu em ' + sd.dominios[h] + ' dia(s) anterior(es))');\nconst porId = { email: achados.filter(a => a.sinais.email).length, usuario: achados.filter(a => a.sinais.usuario).length, nome: achados.filter(a => a.sinais.nome).length };\nconst t = tendencia();\nconst fatos = [\n  'Achados novos hoje: ' + achados.length + ' (' + achados.filter(a => a.classe === 'confirmado').length + ' confirmados, ' + achados.filter(a => a.classe === 'provavel').length + ' prováveis).',\n  'Páginas com o e-mail: ' + porId.email + '; com o usuário: ' + porId.usuario + '; com o nome: ' + porId.nome + '.',\n  repetidos.length ? 'Sites com mais de um achado hoje: ' + repetidos.join('; ') + '.' : 'Nenhum site se repete hoje.',\n  recorrentes.length ? 'Sites que já tinham aparecido antes: ' + recorrentes.join('; ') + '.' : 'Nenhum site recorrente.',\n  'Histórico: ' + t.seq + ' dia(s) sem novidades antes de hoje; nos últimos ' + t.dias7 + ' dias houve ' + t.novos7 + ' achado(s) em ' + t.diasComAchado7 + ' dia(s).',\n].join('\\n');\nconst lista = achados.map(a => a.n + '. [' + ROT[NIV[a.risco]] + '] ' + a.titulo + ' | ' + a.host + ' | ' + a.classe + ' | ' + a.tipo + ' | ' + a.resumo.slice(0, 220)\n  + (a.dados.length ? ' | dados expostos: ' + a.dados.join(', ') : '')).join('\\n');\nconst SYS = 'Você é um analista de privacidade pessoal. Escreva em português do Brasil, direto e sem tom motivacional. Use SOMENTE os fatos e achados fornecidos; não invente sites, pessoas nem riscos.';\nconst USER = 'FATOS CALCULADOS:\\n' + fatos + '\\n\\nACHADOS DE HOJE:\\n' + lista\n  + '\\n\\nEscreva exatamente 3 blocos, em texto simples (sem negrito, sem tabelas), cada um começando com o título na própria linha:\\n'\n  + 'Correlações: o que os achados têm em comum ou indicam em conjunto (se nada se liga, diga isso em uma frase).\\n'\n  + 'Riscos: riscos concretos (golpe, phishing, exposição de dado, falsa identidade) que decorrem dos achados, em lista numerada.\\n'\n  + 'O que fazer: passos práticos e curtos, em lista numerada, na ordem de prioridade.';\nreturn [{ json: { achados, nivel, fatos, extra, stats: st, req: { model: '__MODELO__', temperature: 0.2, max_tokens: 800, stream: false,\n  messages: [ { role: 'system', content: SYS }, { role: 'user', content: USER } ] } } }];"
-      }
-    },
-    {
-      "id": "anlisegeral384",
-      "name": "Análise geral",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2600,
-        0
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "http://host.docker.internal:9000/v1/chat/completions",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer __LITELLM_KEY__"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.req) }}",
-        "options": {
-          "timeout": 900000
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "id": "finalizar928",
-      "name": "Finalizar",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2860,
-        0
-      ],
-      "parameters": {
-        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst m = $('Montar relatório').first().json;\nconst r = $input.first().json || {};\nconst achados = m.achados;\nconst extra = m.extra || {};\nconst st = m.stats || {};\nconst ROT = { nenhum: 'nenhum', baixo: 'baixo', medio: 'médio', alto: 'alto' };\nconst ROTM = { nenhum: 'NENHUM', baixo: 'BAIXO', medio: 'MÉDIO', alto: 'ALTO' };\nconst NIV = ['nenhum', 'baixo', 'medio', 'alto'];\nlet analise = String((((r.choices || [])[0]) || {}).message && r.choices[0].message.content || '').trim();\nif (!analise) {\n  const acoes = achados.filter(a => a.acao && !/^nenhuma?$/i.test(a.acao)).map((a, i) => (i + 1) + '. ' + a.acao);\n  analise = 'A análise geral automática não respondeu. Ações sugeridas pelos achados individuais:\\n' + (acoes.join('\\n') || 'Nenhuma ação sugerida.');\n}\nconst dia = diaHoje();\nconst agora = Date.now();\nconst novosVistos = (extra.processadas || []);\nnovosVistos.forEach(u => { sd.vistos[u] = { t: agora, nivel: 'visto' }; });\nachados.forEach(a => { sd.dominios[a.host] = (sd.dominios[a.host] || 0) + 1; });\nregistrarDia(dia, m.nivel, achados.length);\nconst t = tendencia();\nconst conf = achados.filter(a => a.classe === 'confirmado').length;\nconst prov = achados.length - conf;\nconst linhas = ['# Monitor de privacidade ' + dia, '',\n  '**Nível de atenção: ' + ROT[m.nivel] + '.** ' + achados.length + ' achado(s) novo(s): ' + conf + ' confirmado(s) e ' + prov + ' provável(is).', ''];\nlinhas.push('## Achados', '');\nachados.forEach(a => {\n  linhas.push('### ' + a.n + '. [' + ROTM[NIV[a.risco]] + '] ' + a.titulo);\n  linhas.push(a.classe === 'confirmado' ? 'Confirmado' : 'Provável', ' · ' + a.tipo + ' · ' + a.host);\n  linhas.push('Endereço: ' + a.url, '', '**Resumo:** ' + a.resumo);\n  if (a.dados.length) linhas.push('**Dados pessoais visíveis:** ' + a.dados.join(', '));\n  if (a.motivo) linhas.push('**Risco:** ' + a.motivo);\n  if (a.imagem) linhas.push('**Imagem:** ' + a.imagem);\n  if (a.acao && !/^nenhuma?$/i.test(a.acao)) linhas.push('**O que fazer:** ' + a.acao);\n  linhas.push('');\n});\nlinhas.push('## Análise', '', analise, '');\nif ((extra.possiveis || []).length) {\n  linhas.push('## Possíveis homônimos (sem confirmação)', '');\n  extra.possiveis.slice(0, 8).forEach(p => linhas.push('- ' + p.titulo + ' — ' + p.url));\n  linhas.push('');\n}\nlinhas.push('## Memória e cobertura', '');\nlinhas.push('- Sequência antes de hoje: ' + t.seq + ' dia(s) sem novidades; últimos ' + t.dias7 + ' dias: ' + t.novos7 + ' achado(s) em ' + t.diasComAchado7 + ' dia(s).');\nlinhas.push('- Buscas: ' + st.consultas + ' (' + st.falhas + ' com falha); resultados lidos: ' + st.resultados + '; já vistos em dias anteriores: ' + st.jaVistos + '; de sites seus (ignorados): ' + st.ignorados + '.');\nlinhas.push('- Páginas examinadas hoje: ' + st.analisados + '; descartadas por não ligarem a você: ' + (extra.descartados || 0) + '.');\nif (achados.some(a => !a.analiseOk)) linhas.push('- Em alguns achados a análise automática não respondeu; confira os links.');\nconst top = achados.slice(0, 3).map(a => a.n + '. [' + ROTM[NIV[a.risco]] + '] ' + a.host + ': ' + a.titulo.slice(0, 70)).join('\\n');\nconst bark = achados.length + ' achado(s) novo(s): ' + conf + ' confirmado(s), ' + prov + ' provável(is).\\n' + top\n  + (achados.length > 3 ? '\\n… e mais ' + (achados.length - 3) + '.' : '') + '\\nRelatório completo no app Notas, pasta Monitor de Privacidade.';\nreturn [{ json: { titulo: 'Monitor ' + dia, markdown: linhas.join('\\n'), tituloBark: 'Monitor de privacidade: atenção ' + ROT[m.nivel], bark } }];"
-      }
-    },
-    {
-      "id": "gravarnonotas413",
-      "name": "Gravar no Notas",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3120,
-        0
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "http://host.docker.internal:8003/notas/gravar",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Heimdall-Token",
-              "value": "__AGENTE_TOKEN__"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ pasta: 'Monitor de Privacidade', titulo: $json.titulo, markdown: $json.markdown }) }}",
-        "options": {
-          "timeout": 120000
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "id": "enviaraoiphone496",
-      "name": "Enviar ao iPhone",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3380,
-        0
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.day.app/push",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $('Finalizar').first().json.tituloBark, body: String($('Finalizar').first().json.bark).slice(0, 900), group: 'heimdall' }) }}",
-        "options": {
-          "timeout": 30000
-        }
-      }
-    },
-    {
-      "id": "executaragora387",
-      "name": "Executar agora",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        0,
-        220
-      ],
-      "parameters": {}
-    },
-    {
-      "id": "fecharsemresultado68",
-      "name": "Fechar sem resultados",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1040,
-        220
-      ],
-      "parameters": {
-        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst v = $input.first().json;\nconst st = v.stats || {};\nconst dia = diaHoje();\nconst agora = Date.now();\nif ((st.resultados || 0) === 0) {\n  // Busca vazia não é \"nada novo\": pode ser bloqueio dos motores. Não conta como dia sem novidades.\n  return [{ json: { titulo: 'Monitor de privacidade: busca sem resultados', corpo: 'As ' + (st.consultas || 0) + ' buscas não trouxeram nenhum resultado ('\n    + (st.falhas || 0) + ' com falha). Isso não quer dizer que não exista nada sobre você: os motores de busca podem estar bloqueando o SearXNG. Confira com: docker logs --tail 40 searxng' } }];\n}\n(v.processadas || []).forEach(u => { sd.vistos[u] = { t: agora, nivel: 'nenhum' }; });\nregistrarDia(dia, 'nenhum', 0);\nconst t = tendencia();\nconst partes = [];\npartes.push('Nenhuma menção nova confirmada sobre você.');\npartes.push(st.novos ? st.novos + ' resultado(s) novo(s) examinado(s), nenhum ligado a você.' : 'Nenhum resultado novo nas buscas.');\nif (st.possiveis) partes.push(st.possiveis + ' possível(is) homônimo(s) descartado(s).');\nif (st.falhas) partes.push('Atenção: ' + st.falhas + ' de ' + st.consultas + ' buscas falharam.');\npartes.push('Sequência: ' + t.seq + ' dia(s) sem novidades. Últimos ' + t.dias7 + ' dias: ' + t.novos7 + ' achado(s).');\nreturn [{ json: { titulo: 'Monitor de privacidade: nada novo', corpo: partes.join(' ') } }];"
-      }
-    },
-    {
-      "id": "avisarsemresultado97",
-      "name": "Avisar sem resultados",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1300,
-        220
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.day.app/push",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.corpo).slice(0, 900), group: 'heimdall' }) }}",
-        "options": {
-          "timeout": 30000
-        }
-      }
-    },
-    {
-      "id": "fecharsemachados697",
-      "name": "Fechar sem achados",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1820,
-        220
-      ],
-      "parameters": {
-        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst v = $input.first().json;\nconst st = v.stats || {};\nconst dia = diaHoje();\nconst agora = Date.now();\nif ((st.resultados || 0) === 0) {\n  // Busca vazia não é \"nada novo\": pode ser bloqueio dos motores. Não conta como dia sem novidades.\n  return [{ json: { titulo: 'Monitor de privacidade: busca sem resultados', corpo: 'As ' + (st.consultas || 0) + ' buscas não trouxeram nenhum resultado ('\n    + (st.falhas || 0) + ' com falha). Isso não quer dizer que não exista nada sobre você: os motores de busca podem estar bloqueando o SearXNG. Confira com: docker logs --tail 40 searxng' } }];\n}\n(v.processadas || []).forEach(u => { sd.vistos[u] = { t: agora, nivel: 'nenhum' }; });\nregistrarDia(dia, 'nenhum', 0);\nconst t = tendencia();\nconst partes = [];\npartes.push('Nenhuma menção nova confirmada sobre você.');\npartes.push(st.novos ? st.novos + ' resultado(s) novo(s) examinado(s), nenhum ligado a você.' : 'Nenhum resultado novo nas buscas.');\nif (st.possiveis) partes.push(st.possiveis + ' possível(is) homônimo(s) descartado(s).');\nif (st.falhas) partes.push('Atenção: ' + st.falhas + ' de ' + st.consultas + ' buscas falharam.');\npartes.push('Sequência: ' + t.seq + ' dia(s) sem novidades. Últimos ' + t.dias7 + ' dias: ' + t.novos7 + ' achado(s).');\nreturn [{ json: { titulo: 'Monitor de privacidade: nada novo', corpo: partes.join(' ') } }];"
-      }
-    },
-    {
-      "id": "avisarsemachados726",
-      "name": "Avisar sem achados",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2080,
-        220
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.day.app/push",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ device_key: '__BARK_KEY__', title: $json.titulo, body: String($json.corpo).slice(0, 900), group: 'heimdall' }) }}",
-        "options": {
-          "timeout": 30000
-        }
-      }
+     ]
     }
-  ],
-  "connections": {
-    "Todos os dias às 9h": {
-      "main": [
-        [
-          {
-            "node": "Consultas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Consultas": {
-      "main": [
-        [
-          {
-            "node": "Buscar no SearXNG",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Buscar no SearXNG": {
-      "main": [
-        [
-          {
-            "node": "Reunir resultados",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Reunir resultados": {
-      "main": [
-        [
-          {
-            "node": "Há resultados novos?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Há resultados novos?": {
-      "main": [
-        [
-          {
-            "node": "Fechar sem resultados",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Ler página",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Ler página": {
-      "main": [
-        [
-          {
-            "node": "Preparar análise",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Preparar análise": {
-      "main": [
-        [
-          {
-            "node": "Há achados?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Há achados?": {
-      "main": [
-        [
-          {
-            "node": "Fechar sem achados",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Analisar achado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Analisar achado": {
-      "main": [
-        [
-          {
-            "node": "Montar relatório",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Montar relatório": {
-      "main": [
-        [
-          {
-            "node": "Análise geral",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Análise geral": {
-      "main": [
-        [
-          {
-            "node": "Finalizar",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Finalizar": {
-      "main": [
-        [
-          {
-            "node": "Gravar no Notas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gravar no Notas": {
-      "main": [
-        [
-          {
-            "node": "Enviar ao iPhone",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Executar agora": {
-      "main": [
-        [
-          {
-            "node": "Consultas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fechar sem resultados": {
-      "main": [
-        [
-          {
-            "node": "Avisar sem resultados",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fechar sem achados": {
-      "main": [
-        [
-          {
-            "node": "Avisar sem achados",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+   }
   },
-  "settings": {
-    "executionOrder": "v1",
-    "timezone": "America/Sao_Paulo",
-    "errorWorkflow": "hdFalhaAviso0001"
+  {
+   "id": "consultas956",
+   "name": "Consultas",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    260,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\npodarVistos();\nconst nomes = [CFG.nome].concat(CFG.variacoes || []).map(s => String(s || '').trim()).filter(Boolean);\nif (nomes.length === 0 && (CFG.emails || []).length === 0 && (CFG.usuarios || []).length === 0) {\n  throw new Error('Nenhum identificador configurado. Rode de novo: bash instalar_monitor_privacidade.sh --reconfigurar');\n}\nconst q = [];\nconst add = (txt, tipo) => { if (!q.some(x => x.q === txt && x.tipo === tipo)) q.push({ q: txt, tipo }); };\nnomes.slice(0, 3).forEach((n, i) => {\n  add('\"' + n + '\"', 'web');\n  if (i === 0) {\n    if (CFG.cidade) add('\"' + n + '\" ' + CFG.cidade, 'web');\n    (CFG.sinais || []).slice(0, 2).forEach(s => add('\"' + n + '\" ' + s, 'web'));\n    add('\"' + n + '\" CPF OR telefone OR \"dados pessoais\" OR vazamento', 'web');\n    add('\"' + n + '\"', 'noticia');\n    add('\"' + n + '\"', 'imagem');\n  }\n});\n(CFG.emails || []).forEach(e => { add('\"' + e + '\"', 'web'); add('\"' + e + '\" senha OR password OR leak OR vazamento OR pastebin', 'web'); });\n(CFG.usuarios || []).forEach(u => add('\"' + u + '\"', 'web'));\nreturn q.slice(0, 16).map(x => ({ json: x }));"
+   }
+  },
+  {
+   "id": "buscarnosearxng525",
+   "name": "Buscar no SearXNG",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    520,
+    0
+   ],
+   "parameters": {
+    "method": "GET",
+    "url": "={{ 'http://searxng:8080/search?format=json&safesearch=0&language=pt-BR&categories=' + ({ web: 'general', imagem: 'images', noticia: 'news' }[$json.tipo] || 'general') + ($json.tipo === 'noticia' ? '&time_range=week' : '') + '&q=' + encodeURIComponent($json.q) }}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Accept",
+       "value": "application/json"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 60000
+    }
+   },
+   "onError": "continueRegularOutput",
+   "retryOnFail": true,
+   "maxTries": 2,
+   "waitBetweenTries": 5000
+  },
+  {
+   "id": "reunirresultados755",
+   "name": "Reunir resultados",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    780,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst consultas = $('Consultas').all();\nconst resp = $input.all();\nconst nomes = [CFG.nome].concat(CFG.variacoes || []).map(norm).map(s => s.trim()).filter(Boolean);\nconst emails = (CFG.emails || []).map(norm).filter(Boolean);\nconst users = (CFG.usuarios || []).map(norm).filter(Boolean);\nconst ignorar = (CFG.ignorar || []).map(norm).filter(Boolean);\nfunction hostDe(u) { const m = /^https?:\\/\\/([^\\/?#:]+)/i.exec(u || ''); return m ? m[1].toLowerCase().replace(/^www\\./, '') : ''; }\nfunction normUrl(u) {\n  const m = /^(https?):\\/\\/([^\\/?#]+)([^?#]*)(\\?[^#]*)?/i.exec(String(u || '').trim());\n  if (!m) return '';\n  const qs = (m[4] || '').replace(/^\\?/, '').split('&').filter(p => p && !/^(utm_|fbclid|gclid|ref=|igshid|mc_)/i.test(p)).sort().join('&');\n  return (m[1] + '://' + m[2].replace(/^www\\./i, '') + (m[3] || '').replace(/\\/+$/, '') + (qs ? '?' + qs : '')).toLowerCase();\n}\nconst st = { consultas: resp.length, falhas: 0, vazias: 0, resultados: 0, jaVistos: 0, ignorados: 0, novos: 0, analisados: 0 };\nconst mapa = new Map();\nresp.forEach((r, i) => {\n  const c = (consultas[i] || { json: {} }).json;\n  const j = r.json || {};\n  if (j.error || !Array.isArray(j.results)) { st.falhas++; return; }\n  if (j.results.length === 0) st.vazias++;\n  j.results.slice(0, 12).forEach(x => {\n    st.resultados++;\n    const url = String(x.url || '');\n    const un = normUrl(url);\n    if (!un) return;\n    const host = hostDe(url);\n    if (ignorar.some(d => host === d || host.endsWith('.' + d))) { st.ignorados++; return; }\n    if (sd.vistos[un]) { st.jaVistos++; return; }\n    let m = mapa.get(un);\n    if (!m) { m = { url, urlN: un, host, titulo: String(x.title || '').slice(0, 200), trecho: String(x.content || '').slice(0, 400), tipo: c.tipo, img: '', consultas: [] }; mapa.set(un, m); }\n    if (c.tipo === 'imagem' && x.img_src && /^https:\\/\\//i.test(String(x.img_src))) { m.img = String(x.img_src); m.tipo = 'imagem'; }\n    if (m.consultas.length < 4 && !m.consultas.includes(c.q)) m.consultas.push(c.q);\n  });\n});\nif (st.consultas > 0 && st.falhas === st.consultas) throw new Error('A busca (SearXNG) não respondeu em nenhuma das ' + st.consultas + ' consultas.');\nconst cand = Array.from(mapa.values());\ncand.forEach(m => {\n  const t = norm(m.titulo + ' ' + m.trecho + ' ' + m.url);\n  m.pre = { nome: nomes.some(n => t.includes(n)), email: emails.some(e => t.includes(e)), usuario: users.some(u => t.includes(u)) };\n  m.pts = (m.pre.email ? 3 : 0) + (m.pre.usuario ? 3 : 0) + (m.pre.nome ? 2 : 0) + m.consultas.length * 0.1;\n});\ncand.sort((a, b) => b.pts - a.pts);\nlet imgs = 0;\nconst escolhidos = cand.filter(m => { if (m.tipo !== 'imagem') return true; imgs++; return imgs <= 5; }).slice(0, 14);\nst.novos = cand.length;\nst.analisados = escolhidos.length;\nconst naoLidos = cand.filter(m => !escolhidos.includes(m)).map(m => m.urlN);\nif (escolhidos.length === 0) {\n  return [{ json: { vazio: true, titulo: 'Monitor de privacidade: nada novo', stats: st, processadas: [], possiveis: [], descartados: 0 } }];\n}\nreturn escolhidos.map(m => ({ json: Object.assign({ vazio: false, stats: st }, m) }));"
+   }
+  },
+  {
+   "id": "hresultadosnovos83",
+   "name": "Há resultados novos?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1040,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "5b837d15-73e3-511e-b400-1f02812262b9",
+       "leftValue": "={{ $json.vazio }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "lerpgina75",
+   "name": "Ler página",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1300,
+    0
+   ],
+   "parameters": {
+    "method": "GET",
+    "url": "={{ $json.url }}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15"
+      },
+      {
+       "name": "Accept",
+       "value": "text/html,*/*"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 20000,
+     "response": {
+      "response": {
+       "responseFormat": "text"
+      }
+     }
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "prepararanlise722",
+   "name": "Preparar análise",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1560,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst base = $('Reunir resultados').all();\nconst resp = $input.all();\nconst st = base[0].json.stats;\nconst nomes = [CFG.nome].concat(CFG.variacoes || []).map(s => String(s || '').trim()).filter(Boolean);\nconst emails = (CFG.emails || []).filter(Boolean);\nconst users = (CFG.usuarios || []).filter(Boolean);\nconst ctxTermos = (CFG.sinais || []).concat(CFG.cidade ? [CFG.cidade] : []).filter(Boolean);\nconst idsTexto = nomes.concat(emails, users);\nfunction ent(s) {\n  return String(s || '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '\"')\n    .replace(/&#(\\d+);/g, (m, n) => String.fromCharCode(Number(n))).replace(/&#x([0-9a-f]+);/gi, (m, n) => String.fromCharCode(parseInt(n, 16)))\n    .replace(/&amp;/g, '&');\n}\nfunction limpar(s) { return ent(String(s || '').replace(/<[^>]+>/g, ' ')).replace(/\\s+/g, ' ').trim(); }\nfunction esc(s) { return String(s).replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'); }\nfunction privado(u) {\n  const m = /^https:\\/\\/([^\\/?#:]+)/i.exec(String(u || ''));\n  if (!m) return true;\n  const h = m[1].toLowerCase();\n  return /^(localhost|127\\.|10\\.|192\\.168\\.|172\\.(1[6-9]|2\\d|3[01])\\.|169\\.254\\.|0\\.|\\[)/.test(h) || /\\.(local|internal|lan)$/.test(h) || !/\\./.test(h);\n}\nconst PALAVRAS_VAZAMENTO = /(vazamento|vazou|vazados?|leak|leaked|breach|pastebin|dump|combolist|senhas?|password|credenciais|hackeado|hacked)/;\nconst analisar = [];\nconst possiveis = [];\nconst processadas = [];\nlet descartados = 0;\nresp.forEach((r, i) => {\n  const it = base[i].json;\n  processadas.push(it.urlN);\n  const bruto = (r.json && !r.json.error && typeof r.json.data === 'string') ? r.json.data : '';\n  const paginaOk = bruto.length > 200;\n  let texto = '';\n  let tituloPag = '';\n  if (paginaOk) {\n    const tt = /<title[^>]*>([\\s\\S]*?)<\\/title>/i.exec(bruto);\n    tituloPag = tt ? limpar(tt[1]).slice(0, 200) : '';\n    texto = limpar(bruto.replace(/<(script|style|noscript|svg)[\\s\\S]*?<\\/\\1>/gi, ' '));\n  }\n  const todo = norm(it.titulo + ' ' + it.trecho + ' ' + it.url + ' ' + tituloPag + ' ' + texto);\n  const nomeOk = nomes.some(n => todo.includes(norm(n)));\n  const emailOk = emails.some(e => todo.includes(norm(e)));\n  const userOk = users.some(u => norm(u).length >= 5 && todo.includes(norm(u)));\n  const ctx = ctxTermos.filter(s => todo.includes(norm(s)));\n  let classe = 'nenhum';\n  if (emailOk || userOk) classe = 'confirmado';\n  else if (nomeOk) classe = ctxTermos.length === 0 ? 'provavel' : (ctx.length >= 2 ? 'confirmado' : (ctx.length === 1 ? 'provavel' : 'possivel'));\n  if (classe === 'nenhum') { descartados++; return; }\n  if (classe === 'possivel') { possiveis.push({ titulo: it.titulo || tituloPag || it.url, url: it.url }); return; }\n  // trechos da página ao redor das menções\n  let janelas = '';\n  if (texto) {\n    const re = new RegExp(idsTexto.map(esc).join('|'), 'gi');\n    const pos = [];\n    let m;\n    while ((m = re.exec(texto)) && pos.length < 3) { pos.push(m.index); re.lastIndex = m.index + Math.max(m[0].length, 400); }\n    janelas = pos.map(p => '… ' + texto.slice(Math.max(0, p - 450), p + 550) + ' …').join('\\n');\n    if (!janelas) janelas = texto.slice(0, 1500);\n  }\n  if (!janelas) janelas = it.trecho || '(sem texto da página)';\n  janelas = janelas.slice(0, 3400);\n  const vazamento = PALAVRAS_VAZAMENTO.test(norm(janelas + ' ' + it.titulo + ' ' + it.trecho));\n  const comImagem = !!it.img && !privado(it.img);\n  const sinais = { nome: nomeOk, email: emailOk, usuario: userOk, contexto: ctx };\n  const dono = 'nome ' + CFG.nome + (nomes.length > 1 ? ' (também: ' + nomes.slice(1).join(', ') + ')' : '')\n    + (CFG.cidade ? '; cidade ' + CFG.cidade : '') + ((CFG.sinais || []).length ? '; contexto: ' + CFG.sinais.join(', ') : '')\n    + (emails.length ? '; e-mails: ' + emails.join(', ') : '') + (users.length ? '; usuários: ' + users.join(', ') : '');\n  const SYS = 'Você analisa páginas da web para o dono de um monitor de privacidade pessoal. Responda em português do Brasil e SOMENTE com um objeto JSON. '\n    + 'Use apenas o que está nos trechos fornecidos; se não souber, escreva \"não informado\". Nunca invente fatos. '\n    + 'Não copie senhas, CPF, telefones nem endereços: cite só o TIPO do dado exposto. '\n    + 'Não identifique pessoas pelo rosto ou pela aparência: descreva a imagem (cena, objetos, texto visível, legenda) e diga se a legenda ou o texto da página a liga ao nome do dono.';\n  const USER = 'DONO DO MONITOR: ' + dono + '\\n\\nPÁGINA: ' + (tituloPag || it.titulo) + '\\nENDEREÇO: ' + it.url + '\\nTIPO DO RESULTADO: ' + it.tipo\n    + '\\nCLASSIFICAÇÃO DO CÓDIGO: ' + classe + ' (nome: ' + (nomeOk ? 'sim' : 'não') + '; e-mail: ' + (emailOk ? 'sim' : 'não') + '; usuário: ' + (userOk ? 'sim' : 'não')\n    + '; contexto encontrado: ' + (ctx.join(', ') || 'nenhum') + ')\\nPÁGINA LIDA: ' + (paginaOk ? 'sim' : 'não, só o trecho da busca')\n    + '\\n\\nTRECHOS DA PÁGINA:\\n' + janelas\n    + (comImagem ? '\\n\\nA imagem anexa é a que o buscador associou a esta página.' : '')\n    + '\\n\\nResponda com este JSON: {\"e_sobre_mim\": \"sim\" ou \"provavel\" ou \"incerto\", \"tipo\": \"mencao\" ou \"perfil\" ou \"noticia\" ou \"comentario\" ou \"vazamento\" ou \"diretorio\" ou \"imagem\" ou \"outro\", '\n    + '\"resumo\": \"2 a 3 frases sobre o que a página diz a meu respeito\", \"dados_expostos\": [\"tipos de dado pessoal visíveis, como e-mail, telefone, endereço, CPF, senha, data de nascimento, foto\"], '\n    + '\"risco\": \"nenhum\" ou \"baixo\" ou \"medio\" ou \"alto\", \"motivo_risco\": \"uma frase\", \"acao\": \"uma ação concreta e curta, ou nenhuma\", \"imagem\": \"descrição de 1 a 2 frases da imagem, ou vazio se não houver imagem\"}';\n  const conteudo = comImagem\n    ? [ { type: 'text', text: USER }, { type: 'image_url', image_url: { url: it.img } } ]\n    : USER;\n  analisar.push({ json: { vazio: false, urlN: it.urlN, url: it.url, host: it.host, titulo: it.titulo || tituloPag || it.url, tipo: it.tipo, classe, sinais, vazamento, paginaOk, comImagem,\n    req: { model: '__MODELO__', temperature: 0.1, max_tokens: 700, stream: false, response_format: { type: 'json_object' },\n      messages: [ { role: 'system', content: SYS }, { role: 'user', content: conteudo } ] } } });\n});\nst.possiveis = possiveis.length;\nst.descartados = descartados;\nif (analisar.length === 0) {\n  return [{ json: { vazio: true, titulo: 'Monitor de privacidade: nada confirmado', stats: st, processadas, possiveis, descartados } }];\n}\nanalisar[0].json.extra = { processadas, possiveis, descartados, stats: st };\nreturn analisar;"
+   }
+  },
+  {
+   "id": "hachados115",
+   "name": "Há achados?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1820,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "dcab254a-fbda-53c7-bb44-a94b707b8b34",
+       "leftValue": "={{ $json.vazio }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "analisarachado451",
+   "name": "Analisar achado",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2080,
+    0
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:9000/v1/chat/completions",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "Bearer __LITELLM_KEY__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json.req) }}",
+    "options": {
+     "timeout": 900000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "montarrelatrio766",
+   "name": "Montar relatório",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2340,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst base = $('Preparar análise').all();\nconst resp = $input.all();\nconst extra = base[0].json.extra || {};\nconst st = extra.stats || {};\nconst NIV = ['nenhum', 'baixo', 'medio', 'alto'];\nconst ROT = { nenhum: 'NENHUM', baixo: 'BAIXO', medio: 'MÉDIO', alto: 'ALTO' };\nconst CLS = { confirmado: 'Confirmado', provavel: 'Provável' };\nconst TIPO = { mencao: 'menção', perfil: 'perfil', noticia: 'notícia', comentario: 'comentário', vazamento: 'possível vazamento', diretorio: 'diretório de pessoas', imagem: 'imagem', outro: 'outro' };\nfunction jsonDe(r) {\n  const txt = String((((((r || {}).json || {}).choices || [])[0]) || {}).message && r.json.choices[0].message.content || '');\n  try { return JSON.parse(txt); } catch (e) {\n    const m = /\\{[\\s\\S]*\\}/.exec(txt);\n    try { return m ? JSON.parse(m[0]) : {}; } catch (e2) { return {}; }\n  }\n}\nconst achados = base.map((b, i) => {\n  const it = b.json;\n  const j = jsonDe(resp[i]);\n  const analiseOk = !!(j && j.resumo);\n  const dados = (Array.isArray(j.dados_expostos) ? j.dados_expostos : (j.dados_expostos ? [j.dados_expostos] : [])).map(s => String(s).trim()).filter(s => s && !/^(nenhum|não informado)$/i.test(s));\n  let r = Math.max(0, NIV.indexOf(norm(j.risco)));\n  if (!analiseOk) r = Math.max(r, 1);\n  if (it.vazamento) r = Math.max(r, 2);\n  if (/(senha|cpf|telefone|celular|endereco|cartao|documento|nascimento)/.test(norm(dados.join(' ')))) r = Math.max(r, 2);\n  return { n: 0, titulo: it.titulo, url: it.url, host: it.host, classe: it.classe, sinais: it.sinais, tipo: TIPO[norm(j.tipo)] || (it.tipo === 'imagem' ? 'imagem' : 'menção'),\n    resumo: String(j.resumo || '').trim() || 'Análise automática indisponível (o modelo não respondeu; se havia imagem, ela pode não ter sido lida).',\n    dados, risco: r, motivo: String(j.motivo_risco || '').trim(), acao: String(j.acao || '').trim(), imagem: String(j.imagem || '').trim(),\n    eSobreMim: String(j.e_sobre_mim || '').trim(), analiseOk, vazamento: it.vazamento };\n});\nachados.sort((a, b) => (b.risco - a.risco) || ((a.classe === 'confirmado' ? 0 : 1) - (b.classe === 'confirmado' ? 0 : 1)));\nachados.forEach((a, i) => { a.n = i + 1; });\nconst nivel = NIV[Math.max.apply(null, achados.map(a => a.risco).concat([0]))];\n// correlações calculadas pelo código\nconst porHost = {};\nachados.forEach(a => { porHost[a.host] = (porHost[a.host] || 0) + 1; });\nconst repetidos = Object.keys(porHost).filter(h => porHost[h] >= 2).map(h => h + ' (' + porHost[h] + ' páginas hoje)');\nconst recorrentes = Object.keys(porHost).filter(h => (sd.dominios[h] || 0) >= 1).map(h => h + ' (já apareceu em ' + sd.dominios[h] + ' dia(s) anterior(es))');\nconst porId = { email: achados.filter(a => a.sinais.email).length, usuario: achados.filter(a => a.sinais.usuario).length, nome: achados.filter(a => a.sinais.nome).length };\nconst t = tendencia();\nconst fatos = [\n  'Achados novos hoje: ' + achados.length + ' (' + achados.filter(a => a.classe === 'confirmado').length + ' confirmados, ' + achados.filter(a => a.classe === 'provavel').length + ' prováveis).',\n  'Páginas com o e-mail: ' + porId.email + '; com o usuário: ' + porId.usuario + '; com o nome: ' + porId.nome + '.',\n  repetidos.length ? 'Sites com mais de um achado hoje: ' + repetidos.join('; ') + '.' : 'Nenhum site se repete hoje.',\n  recorrentes.length ? 'Sites que já tinham aparecido antes: ' + recorrentes.join('; ') + '.' : 'Nenhum site recorrente.',\n  'Histórico: ' + t.seq + ' dia(s) sem novidades antes de hoje; nos últimos ' + t.dias7 + ' dias houve ' + t.novos7 + ' achado(s) em ' + t.diasComAchado7 + ' dia(s).',\n].join('\\n');\nconst lista = achados.map(a => a.n + '. [' + ROT[NIV[a.risco]] + '] ' + a.titulo + ' | ' + a.host + ' | ' + a.classe + ' | ' + a.tipo + ' | ' + a.resumo.slice(0, 220)\n  + (a.dados.length ? ' | dados expostos: ' + a.dados.join(', ') : '')).join('\\n');\nconst SYS = 'Você é um analista de privacidade pessoal. Escreva em português do Brasil, direto e sem tom motivacional. Use SOMENTE os fatos e achados fornecidos; não invente sites, pessoas nem riscos.';\nconst USER = 'FATOS CALCULADOS:\\n' + fatos + '\\n\\nACHADOS DE HOJE:\\n' + lista\n  + '\\n\\nEscreva exatamente 3 blocos, em texto simples (sem negrito, sem tabelas), cada um começando com o título na própria linha:\\n'\n  + 'Correlações: o que os achados têm em comum ou indicam em conjunto (se nada se liga, diga isso em uma frase).\\n'\n  + 'Riscos: riscos concretos (golpe, phishing, exposição de dado, falsa identidade) que decorrem dos achados, em lista numerada.\\n'\n  + 'O que fazer: passos práticos e curtos, em lista numerada, na ordem de prioridade.';\nreturn [{ json: { achados, nivel, fatos, extra, stats: st, req: { model: '__MODELO__', temperature: 0.2, max_tokens: 800, stream: false,\n  messages: [ { role: 'system', content: SYS }, { role: 'user', content: USER } ] } } }];"
+   }
+  },
+  {
+   "id": "anlisegeral384",
+   "name": "Análise geral",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2600,
+    0
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:9000/v1/chat/completions",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "Bearer __LITELLM_KEY__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json.req) }}",
+    "options": {
+     "timeout": 900000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "finalizar928",
+   "name": "Finalizar",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2860,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst m = $('Montar relatório').first().json;\nconst r = $input.first().json || {};\nconst achados = m.achados;\nconst extra = m.extra || {};\nconst st = m.stats || {};\nconst ROT = { nenhum: 'nenhum', baixo: 'baixo', medio: 'médio', alto: 'alto' };\nconst ROTM = { nenhum: 'NENHUM', baixo: 'BAIXO', medio: 'MÉDIO', alto: 'ALTO' };\nconst NIV = ['nenhum', 'baixo', 'medio', 'alto'];\nlet analise = String((((r.choices || [])[0]) || {}).message && r.choices[0].message.content || '').trim();\nif (!analise) {\n  const acoes = achados.filter(a => a.acao && !/^nenhuma?$/i.test(a.acao)).map((a, i) => (i + 1) + '. ' + a.acao);\n  analise = 'A análise geral automática não respondeu. Ações sugeridas pelos achados individuais:\\n' + (acoes.join('\\n') || 'Nenhuma ação sugerida.');\n}\nconst dia = diaHoje();\nconst agora = Date.now();\nconst novosVistos = (extra.processadas || []);\nnovosVistos.forEach(u => { sd.vistos[u] = { t: agora, nivel: 'visto' }; });\nachados.forEach(a => { sd.dominios[a.host] = (sd.dominios[a.host] || 0) + 1; });\nregistrarDia(dia, m.nivel, achados.length);\nconst t = tendencia();\nconst conf = achados.filter(a => a.classe === 'confirmado').length;\nconst prov = achados.length - conf;\nconst linhas = ['# Monitor de privacidade ' + dia, '',\n  '**Nível de atenção: ' + ROT[m.nivel] + '.** ' + achados.length + ' achado(s) novo(s): ' + conf + ' confirmado(s) e ' + prov + ' provável(is).', ''];\nlinhas.push('## Achados', '');\nachados.forEach(a => {\n  linhas.push('### ' + a.n + '. [' + ROTM[NIV[a.risco]] + '] ' + a.titulo);\n  linhas.push(a.classe === 'confirmado' ? 'Confirmado' : 'Provável', ' · ' + a.tipo + ' · ' + a.host);\n  linhas.push('Endereço: ' + a.url, '', '**Resumo:** ' + a.resumo);\n  if (a.dados.length) linhas.push('**Dados pessoais visíveis:** ' + a.dados.join(', '));\n  if (a.motivo) linhas.push('**Risco:** ' + a.motivo);\n  if (a.imagem) linhas.push('**Imagem:** ' + a.imagem);\n  if (a.acao && !/^nenhuma?$/i.test(a.acao)) linhas.push('**O que fazer:** ' + a.acao);\n  linhas.push('');\n});\nlinhas.push('## Análise', '', analise, '');\nif ((extra.possiveis || []).length) {\n  linhas.push('## Possíveis homônimos (sem confirmação)', '');\n  extra.possiveis.slice(0, 8).forEach(p => linhas.push('- ' + p.titulo + ' — ' + p.url));\n  linhas.push('');\n}\nlinhas.push('## Memória e cobertura', '');\nlinhas.push('- Sequência antes de hoje: ' + t.seq + ' dia(s) sem novidades; últimos ' + t.dias7 + ' dias: ' + t.novos7 + ' achado(s) em ' + t.diasComAchado7 + ' dia(s).');\nlinhas.push('- Buscas: ' + st.consultas + ' (' + st.falhas + ' com falha); resultados lidos: ' + st.resultados + '; já vistos em dias anteriores: ' + st.jaVistos + '; de sites seus (ignorados): ' + st.ignorados + '.');\nlinhas.push('- Páginas examinadas hoje: ' + st.analisados + '; descartadas por não ligarem a você: ' + (extra.descartados || 0) + '.');\nif (achados.some(a => !a.analiseOk)) linhas.push('- Em alguns achados a análise automática não respondeu; confira os links.');\nconst top = achados.slice(0, 3).map(a => a.n + '. [' + ROTM[NIV[a.risco]] + '] ' + a.host + ': ' + a.titulo.slice(0, 70)).join('\\n');\nconst bark = achados.length + ' achado(s) novo(s): ' + conf + ' confirmado(s), ' + prov + ' provável(is).\\n' + top\n  + (achados.length > 3 ? '\\n… e mais ' + (achados.length - 3) + '.' : '') + '\\nRelatório completo no app Notas, pasta Monitor de Privacidade.';\nreturn [{ json: { titulo: 'Monitor ' + dia, markdown: linhas.join('\\n'), tituloBark: 'Monitor de privacidade: atenção ' + ROT[m.nivel], bark } }];"
+   }
+  },
+  {
+   "id": "gravarnonotas413",
+   "name": "Gravar no Notas",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    3120,
+    0
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/notas/gravar",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ pasta: 'Monitor de Privacidade', titulo: $json.titulo, markdown: $json.markdown }) }}",
+    "options": {
+     "timeout": 120000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "enviaraoiphone496",
+   "name": "Enviar ao iPhone",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    3380,
+    0
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://localhost:5678/webhook/heimdall-resumo",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: $('Finalizar').first().json.tituloBark, linha: String($('Finalizar').first().json.bark).slice(0, 700) }) }}",
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "executaragora387",
+   "name": "Executar agora",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    220
+   ],
+   "parameters": {}
+  },
+  {
+   "id": "fecharsemresultado68",
+   "name": "Fechar sem resultados",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1040,
+    220
+   ],
+   "parameters": {
+    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst v = $input.first().json;\nconst st = v.stats || {};\nconst dia = diaHoje();\nconst agora = Date.now();\nif ((st.resultados || 0) === 0) {\n  // Busca vazia não é \"nada novo\": pode ser bloqueio dos motores. Não conta como dia sem novidades.\n  return [{ json: { titulo: 'Monitor de privacidade: busca sem resultados', corpo: 'As ' + (st.consultas || 0) + ' buscas não trouxeram nenhum resultado ('\n    + (st.falhas || 0) + ' com falha). Isso não quer dizer que não exista nada sobre você: os motores de busca podem estar bloqueando o SearXNG. Confira com: docker logs --tail 40 searxng' } }];\n}\n(v.processadas || []).forEach(u => { sd.vistos[u] = { t: agora, nivel: 'nenhum' }; });\nregistrarDia(dia, 'nenhum', 0);\nconst t = tendencia();\nconst partes = [];\npartes.push('Nenhuma menção nova confirmada sobre você.');\npartes.push(st.novos ? st.novos + ' resultado(s) novo(s) examinado(s), nenhum ligado a você.' : 'Nenhum resultado novo nas buscas.');\nif (st.possiveis) partes.push(st.possiveis + ' possível(is) homônimo(s) descartado(s).');\nif (st.falhas) partes.push('Atenção: ' + st.falhas + ' de ' + st.consultas + ' buscas falharam.');\npartes.push('Sequência: ' + t.seq + ' dia(s) sem novidades. Últimos ' + t.dias7 + ' dias: ' + t.novos7 + ' achado(s).');\nreturn [{ json: { titulo: 'Monitor de privacidade: nada novo', corpo: partes.join(' ') } }];"
+   }
+  },
+  {
+   "id": "avisarsemresultado97",
+   "name": "Avisar sem resultados",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1300,
+    220
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://localhost:5678/webhook/heimdall-resumo",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: $json.titulo, linha: String($json.corpo).slice(0, 700) }) }}",
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "fecharsemachados697",
+   "name": "Fechar sem achados",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1820,
+    220
+   ],
+   "parameters": {
+    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst v = $input.first().json;\nconst st = v.stats || {};\nconst dia = diaHoje();\nconst agora = Date.now();\nif ((st.resultados || 0) === 0) {\n  // Busca vazia não é \"nada novo\": pode ser bloqueio dos motores. Não conta como dia sem novidades.\n  return [{ json: { titulo: 'Monitor de privacidade: busca sem resultados', corpo: 'As ' + (st.consultas || 0) + ' buscas não trouxeram nenhum resultado ('\n    + (st.falhas || 0) + ' com falha). Isso não quer dizer que não exista nada sobre você: os motores de busca podem estar bloqueando o SearXNG. Confira com: docker logs --tail 40 searxng' } }];\n}\n(v.processadas || []).forEach(u => { sd.vistos[u] = { t: agora, nivel: 'nenhum' }; });\nregistrarDia(dia, 'nenhum', 0);\nconst t = tendencia();\nconst partes = [];\npartes.push('Nenhuma menção nova confirmada sobre você.');\npartes.push(st.novos ? st.novos + ' resultado(s) novo(s) examinado(s), nenhum ligado a você.' : 'Nenhum resultado novo nas buscas.');\nif (st.possiveis) partes.push(st.possiveis + ' possível(is) homônimo(s) descartado(s).');\nif (st.falhas) partes.push('Atenção: ' + st.falhas + ' de ' + st.consultas + ' buscas falharam.');\npartes.push('Sequência: ' + t.seq + ' dia(s) sem novidades. Últimos ' + t.dias7 + ' dias: ' + t.novos7 + ' achado(s).');\nreturn [{ json: { titulo: 'Monitor de privacidade: nada novo', corpo: partes.join(' ') } }];"
+   }
+  },
+  {
+   "id": "avisarsemachados726",
+   "name": "Avisar sem achados",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2080,
+    220
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://localhost:5678/webhook/heimdall-resumo",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: $json.titulo, linha: String($json.corpo).slice(0, 700) }) }}",
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "onError": "continueRegularOutput"
   }
+ ],
+ "connections": {
+  "Consultas": {
+   "main": [
+    [
+     {
+      "node": "Buscar no SearXNG",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Buscar no SearXNG": {
+   "main": [
+    [
+     {
+      "node": "Reunir resultados",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Reunir resultados": {
+   "main": [
+    [
+     {
+      "node": "Há resultados novos?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Há resultados novos?": {
+   "main": [
+    [
+     {
+      "node": "Fechar sem resultados",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Ler página",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Ler página": {
+   "main": [
+    [
+     {
+      "node": "Preparar análise",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Preparar análise": {
+   "main": [
+    [
+     {
+      "node": "Há achados?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Há achados?": {
+   "main": [
+    [
+     {
+      "node": "Fechar sem achados",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Analisar achado",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Analisar achado": {
+   "main": [
+    [
+     {
+      "node": "Montar relatório",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar relatório": {
+   "main": [
+    [
+     {
+      "node": "Análise geral",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Análise geral": {
+   "main": [
+    [
+     {
+      "node": "Finalizar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Finalizar": {
+   "main": [
+    [
+     {
+      "node": "Gravar no Notas",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Gravar no Notas": {
+   "main": [
+    [
+     {
+      "node": "Enviar ao iPhone",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Executar agora": {
+   "main": [
+    [
+     {
+      "node": "Consultas",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Fechar sem resultados": {
+   "main": [
+    [
+     {
+      "node": "Avisar sem resultados",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Fechar sem achados": {
+   "main": [
+    [
+     {
+      "node": "Avisar sem achados",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Todos os dias às 9h45": {
+   "main": [
+    [
+     {
+      "node": "Consultas",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo",
+  "errorWorkflow": "hdFalhaAviso0001"
+ }
 }

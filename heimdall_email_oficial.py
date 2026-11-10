@@ -256,6 +256,15 @@ def avisar(cfg, titulo, corpo, urgente=False, simular=False):
     chave = cfg.get("HEIMDALL_BARK_KEY", "")
     if not chave:
         return False
+    if not urgente:
+        # Rotina: vai para o "Resumo agrupado" do n8n (resumo das 10h). Depois das 10h entra direto, mas em silêncio.
+        try:
+            from datetime import datetime as _dt
+            post_json("http://localhost:5678/webhook/heimdall-resumo",
+                      {"slot": "meio" if _dt.now().hour < 10 else "direto", "titulo": titulo[:80], "linha": corpo[:700], "nivel": "passive"}, timeout=15)
+            return True
+        except Exception as e:  # noqa: BLE001 - sem o n8n, cai no aviso direto
+            print("Resumo agrupado indisponível, aviso direto:", e, file=sys.stderr)
     try:
         post_json("https://api.day.app/push", {"device_key": chave, "title": titulo, "body": corpo[:900], "group": "heimdall",
                                                **({"level": "timeSensitive"} if urgente else {})}, timeout=30)

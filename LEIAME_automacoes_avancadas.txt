@@ -174,3 +174,23 @@ AJUSTES DE VOZ E DE TÍTULO
 3. Velocidade: padrão 65 na escala de porcentagem da fala do macOS, que equivale a cerca de 350 palavras por minuto. Para mudar, no .env: HEIMDALL_VOZ_VELOCIDADE=60 (porcentagem) ou HEIMDALL_VOZ_PPM=300 (palavras por minuto exatas). Para fixar uma voz: HEIMDALL_VOZ="Felipe (Aprimorada)".
 4. Para ouvir uma amostra e ver qual voz será usada, sem esperar o fluxo: python3 heimdall_agente.py --voz
    Depois de mudar o .env, reinicie o agente (pkill -f heimdall_agente.py e suba o sistema como de costume).
+
+RESUMOS AGRUPADOS (6h, 8h e 10h)
+Os avisos de rotina deixaram de tocar um a um. Cada fluxo entrega sua linha ao fluxo "Resumo agrupado", que manda uma só notificação em cada horário:
+1. 6h: saúde e disponibilidade dos serviços (os fluxos rodam às 5h50 e 5h45).
+2. 8h: resumo da AWS e digest hiperpersonalizado da manhã (rodam às 7h45).
+3. 10h: diários oficiais (9h40), privacidade (9h45), checagem mensal (9h50 no dia 1), vigia de versões (segunda, 9h55) e e-mails oficiais.
+Ficam fora do agrupamento e continuam na hora: alerta de saúde do Mac, GitOps, avisos de falha, o digest das 18h e o estudo (6h, 13h e 20h). E-mails marcados como urgentes ou suspeitos de golpe também vão na hora. Depois das 10h, e-mails novos de rotina entram direto, mas em silêncio. Os detalhes completos continuam no Notas.
+Importante: o "Resumo agrupado" precisa estar ativo, porque os outros fluxos falam com ele pelo endereço http://localhost:5678/webhook/heimdall-resumo. Instale primeiro este pacote (instalar_automacoes_avancadas.sh), depois o instalar_fluxos_n8n.sh e o instalar_monitor_privacidade.sh.
+
+MONITOR DE SAÚDE
+Recebe os dados do app Saúde pelo Health Auto Export e escreve, às 5h50, um resumo (Notas, pasta Saúde) que entra no aviso das 6h. As regras do código decidem o que é relevante (sono, pulso em repouso, variabilidade, respiração, oxigênio, passos e energia, sempre contra a sua média de 30 dias); o modelo só redige; e uma verificação descarta o texto se ele trocar o sentido de uma variação. Os critérios para procurar um médico são fixos e não vêm do modelo. O resumo não acompanha glicemia (sem sensor, o app Saúde não tem esse dado) e não é diagnóstico.
+Condições de saúde para o modelo respeitar nas sugestões (opcional, ficam só no seu .env): acrescente HEIMDALL_SAUDE_CONDICOES='texto curto' e rode de novo o instalar_automacoes_avancadas.sh.
+Configuração no app Health Auto Export (Premium), no iPhone:
+1. Ligue o Tailscale no iPhone. No Mac, descubra o endereço do Tailscale com: tailscale ip -4
+2. No app, abra a aba de automações e crie uma automação do tipo REST API.
+3. Endereço: http://<IP-do-Tailscale-do-Mac>:5678/webhook/heimdall-saude  Método: POST  Formato: JSON.
+4. Cabeçalho: nome X-Heimdall-Saude, valor igual ao HEIMDALL_SAUDE_TOKEN do .env. Para ler o valor no Mac, sem mostrá-lo a ninguém: grep HEIMDALL_SAUDE_TOKEN .env
+5. Métricas: Análise do sono, Frequência cardíaca em repouso, Variabilidade da frequência cardíaca, Frequência respiratória, Saturação de oxigênio, Passos e Energia ativa. Agregação por dia. Período: os últimos 2 dias. Frequência: de hora em hora (ou a menor que o app permitir).
+6. Rode a automação uma vez à mão e confira no n8n, em Execuções, o fluxo "monitor de saúde": o ramo "Receber do iPhone" deve aparecer como concluído.
+O app precisa da permissão de leitura do app Saúde e da atualização em segundo plano. Se o Mac estiver dormindo na hora do envio, o app tenta de novo na próxima rodada.
