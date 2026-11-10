@@ -3,7 +3,7 @@ name: Páginas
 on:
   push:
     branches: [main]
-    paths: ["docs/**", "gerar_docs.py", "CHANGELOG.md", "README.md", "heimdall_tools.py", "litellm_config.yaml", "n8n_flows*/**", "start_heimdall.sh", ".github/workflows/pages.yml"]
+    paths: ["docs/**", "gerar_docs.py", "docs_tema.py", "CHANGELOG.md", "README.md", "heimdall_tools.py", "litellm_config.yaml", "n8n_flows*/**", "start_heimdall.sh", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:

@@ -3,47 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Heimdall-ai</title>
+<title>Heimdall-ai: IA que roda em casa</title>
 <meta name="description" content="Heimdall-ai: assistente de Inteligência Artificial que roda no próprio computador, com ferramentas, documentos e automações. Documentação do projeto.">
+<meta name="theme-color" content="#080d1f">
+<link rel="canonical" href="https://heimdall-ai.tech/">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Heimdall-ai">
+<meta property="og:title" content="Heimdall-ai: IA que roda em casa">
+<meta property="og:description" content="Heimdall-ai: assistente de Inteligência Artificial que roda no próprio computador, com ferramentas, documentos e automações. Documentação do projeto.">
+<meta property="og:url" content="https://heimdall-ai.tech/">
+<meta property="og:image" content="https://heimdall-ai.tech/og.png">
+<meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
+<meta name="twitter:card" content="summary_large_image">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <a class="skip" href="#conteudo">Ir para o conteúdo</a>
-<div class="wrap">
-<header class="top">
-<a class="brand" href="index.html">Heimdall-ai</a>
-<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html" aria-current="page">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos (LLMs)</a></li><li><a href="mcp.html">MCP e ferramentas</a></li><li><a href="fluxos.html">Fluxos e automações</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li></ul></nav>
-</header>
-<main id="conteudo" tabindex="-1">
+<header class="top"><div class="wrap"><div class="barra">
+<a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<span class="gap"></span>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html" aria-current="page">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="marca.html">Marca</a></li></ul></nav>
+<div class="ferram"><button type="button" id="tema">Tema escuro</button></div>
+</div></div></header>
+<main id="conteudo" tabindex="-1"><div class="wrap">
 
 <div class="hero"><div>
 <h1>Heimdall-ai</h1>
-<p class="lead">Um assistente de Inteligência Artificial que roda no computador do autor, com ferramentas, memória e automações.</p>
-<p class="muted">Projeto desenvolvido por Murillo Bolonhini Cita. O chat é privado e o acesso é por convite; esta página documenta como o projeto funciona.</p>
-</div><svg class="bridge" id="bridge" viewBox="0 0 800 440" role="img" aria-label="Um arco de seis faixas em tons de azul e dourado, com um olho no centro que acompanha o ponteiro.">
-<g class="arc"><path d="M40 380A360 360 0 0 1 760 380" stroke="#bfe3fb" stroke-width="46"/><path d="M86 380A314 314 0 0 1 714 380" stroke="#93d2fa" stroke-width="46"/><path d="M132 380A268 268 0 0 1 668 380" stroke="#42a5f5" stroke-width="46"/><path d="M178 380A222 222 0 0 1 622 380" stroke="#26c6da" stroke-width="46"/><path d="M224 380A176 176 0 0 1 576 380" stroke="#1e88e5" stroke-width="46"/><path d="M270 380A130 130 0 0 1 530 380" stroke="#ffc107" stroke-width="46"/></g>
-<ellipse cx="400" cy="380" rx="118" ry="58" fill="var(--sclera)"/><g id="iris"><circle cx="400" cy="380" r="40" fill="#ffc107"/><circle cx="400" cy="380" r="19" fill="var(--pupil)"/><circle cx="409" cy="371" r="6" fill="#ffffff" opacity=".85"/></g></svg></div>
-<section aria-labelledby="proposito"><h2 id="proposito">Propósito</h2>
-<p>Heimdall, na mitologia nórdica, é o guardião de Bifröst, a ponte em arco-íris que liga os mundos. O projeto leva o nome dele: um assistente que vigia e conecta as ferramentas de quem o criou.</p>
-<p>Os objetivos são três. Manter os modelos de linguagem sob controle de quem os usa, rodando no próprio Mac e não em serviços de terceiros. Dar a esses modelos ferramentas reais (busca na web, arquivos, documentos, memória, Notas, Calendário). E automatizar rotinas que valem a pena: resumos, estudo, vigilância de privacidade e avisos no iPhone.</p>
-<p>O projeto foi pensado para ser usado por pessoa cega: tudo se opera por texto e comandos, e as automações entregam áudio e notas acessíveis.</p></section>
-<section aria-labelledby="numeros"><h2 id="numeros">Em números</h2>
-<ul class="stats"><li><strong>6</strong> modelos de linguagem</li><li><strong>20</strong> ferramentas (9 públicas, 11 do Mac)</li><li><strong>3</strong> servidores MCP</li><li><strong>12</strong> fluxos do n8n</li></ul>
-<p class="muted">Os números saem direto do código a cada geração das páginas.</p></section>
-<section aria-labelledby="paginas"><h2 id="paginas">Nesta documentação</h2><ul class="cards"><li><a href="arquitetura.html">Arquitetura</a><p>Como as peças se ligam, serviços e portas</p></li><li><a href="tecnologias.html">Tecnologias</a><p>O que foi usado e para quê</p></li><li><a href="llms.html">Modelos (LLMs)</a><p>Modelos de linguagem, usos e testes</p></li><li><a href="mcp.html">MCP e ferramentas</a><p>Servidores MCP e cada ferramenta</p></li><li><a href="fluxos.html">Fluxos e automações</a><p>Fluxos do n8n e scripts</p></li><li><a href="comandos.html">Comandos</a><p>Subir, testar, instalar e manter</p></li><li><a href="novidades.html">Novidades</a><p>Histórico de recursos</p></li></ul></section>
-<section aria-labelledby="acessos"><h2 id="acessos">Acessos</h2>
-<ul><li><a href="https://chat.heimdall-ai.tech">Chat</a>: o assistente. Exige conta, criada por convite.</li>
-<li><a href="https://uptime.heimdall-ai.tech">Status</a>: painel de disponibilidade. Acesso restrito.</li>
-<li><a href="https://pt.wikipedia.org/wiki/Heimdall">Quem é Heimdall</a>: o personagem que inspirou o nome.</li></ul></section>
+<p class="lead">Inteligência Artificial que roda em casa: modelos locais, ferramentas que fazem coisas de verdade e automações que avisam no iPhone.</p>
+<p class="muted nota">Projeto de Murillo Bolonhini Cita. O chat é privado, por convite; o código e esta documentação são abertos.</p>
+<div class="acoes"><a class="btn" href="arquitetura.html">Ver como funciona</a><a class="btn sec" href="https://github.com/mrl2bolonhini/heimdall-ai">Código no GitHub</a></div>
+</div><svg id="bridge" class="bridge" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" role="img"><title>Uma ponte em arco de seis faixas, em tons de azul e dourado, com um olho no centro que acompanha o ponteiro.</title><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g id="iris"><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg></div>
+<section class="faixa" aria-labelledby="acessos"><h2 id="acessos">Acessos</h2>
+<ul class="portas">
+<li class="porta" style="--cor:#42a5f5"><h3><a href="https://chat.heimdall-ai.tech">Chat</a></h3><p>Conversar com os modelos, com busca na web e documentos.</p><p class="quem">Por convite</p></li>
+<li class="porta" style="--cor:#ffc107"><h3><a href="https://n8n.heimdall-ai.tech">Automações</a></h3><p>Ver e ajustar os fluxos que rodam sozinhos (n8n).</p><p class="quem">Login do administrador</p></li>
+<li class="porta" style="--cor:#26c6da"><h3><a href="https://uptime.heimdall-ai.tech">Status</a></h3><p>Ver se os serviços estão no ar.</p><p class="quem">Acesso restrito</p></li>
+<li class="porta" style="--cor:#93d2fa"><h3><a href="https://github.com/mrl2bolonhini/heimdall-ai">Código</a></h3><p>Repositório do projeto no GitHub.</p><p class="quem">Público</p></li>
+</ul></section>
+<section class="faixa" aria-labelledby="proposito"><div class="dois"><h2 id="proposito">Por que existe</h2><div>
+<p>Heimdall, na mitologia nórdica, guarda Bifröst, a ponte em arco-íris que liga os mundos. O projeto leva o nome dele: um assistente que vigia e conecta as ferramentas de quem o criou.</p>
+<p>Os modelos rodam no próprio Mac, e não em serviços de terceiros. Eles ganham ferramentas reais (busca na web, arquivos, documentos, memória, Notas e Calendário) e rotinas automáticas: resumos, estudo, vigilância de privacidade e avisos no iPhone.</p>
+<p>Foi pensado para quem usa leitor de tela: tudo se opera por texto e comandos, e as automações entregam notas e áudio.</p></div></div></section>
+<section class="faixa" aria-labelledby="mapa"><h2 id="mapa">Como as peças se ligam</h2>
+<figure class="diagrama"><div class="rolagem" role="region" aria-label="Mapa do projeto (role para os lados em telas pequenas)" tabindex="0"><svg viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dg-t dg-d"><title id="dg-t">Mapa do Heimdall-ai</title><desc id="dg-d">Na linha de cima, a conversa: você usa o Open WebUI, que fala com o LiteLLM, que usa os modelos do Ollama, os servidores MCP e as bases de documentos e de busca. Na linha de baixo, as automações: o n8n usa o LiteLLM, aciona o agente do Mac, que grava nos aplicativos do Mac, e avisa no iPhone pelo Bark.</desc><defs><marker id="ponta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="am"/></marker></defs><text x="0" y="18" class="ln">Conversa</text><g><rect x="0" y="34" width="160" height="62" rx="10" class="nd"/><rect x="0" y="42" width="5" height="46" rx="2.5" fill="#42a5f5"/><text x="18" y="60" class="nt">Você</text><text x="18" y="80" class="ns">navegador ou iPhone</text></g><g><rect x="210" y="34" width="190" height="62" rx="10" class="nd"/><rect x="210" y="42" width="5" height="46" rx="2.5" fill="#42a5f5"/><text x="228" y="60" class="nt">Open WebUI</text><text x="228" y="80" class="ns">interface do chat</text></g><g><rect x="450" y="34" width="190" height="62" rx="10" class="nd"/><rect x="450" y="42" width="5" height="46" rx="2.5" fill="#26c6da"/><text x="468" y="60" class="nt">LiteLLM</text><text x="468" y="80" class="ns">acesso único, porta 9000</text></g><g><rect x="690" y="34" width="210" height="62" rx="10" class="nd"/><rect x="690" y="42" width="5" height="46" rx="2.5" fill="#1e88e5"/><text x="708" y="60" class="nt">Ollama</text><text x="708" y="80" class="ns">6 modelos no Mac</text></g><path d="M162 65H208" class="ar" marker-end="url(#ponta)"/><path d="M402 65H448" class="ar" marker-end="url(#ponta)"/><path d="M642 65H688" class="ar" marker-end="url(#ponta)"/><g><rect x="450" y="134" width="190" height="62" rx="10" class="nd"/><rect x="450" y="142" width="5" height="46" rx="2.5" fill="#93d2fa"/><text x="468" y="160" class="nt">Servidores MCP</text><text x="468" y="180" class="ns">portas 8000 e 8001</text></g><g><rect x="690" y="134" width="210" height="62" rx="10" class="nd"/><rect x="690" y="142" width="5" height="46" rx="2.5" fill="#93d2fa"/><text x="708" y="160" class="nt">Qdrant e SearXNG</text><text x="708" y="180" class="ns">documentos e busca</text></g><path d="M545 98V132" class="ar" marker-end="url(#ponta)"/><path d="M642 165H688" class="ar" marker-end="url(#ponta)"/><text x="0" y="262" class="ln">Automação</text><g><rect x="210" y="278" width="190" height="62" rx="10" class="nd"/><rect x="210" y="286" width="5" height="46" rx="2.5" fill="#ffc107"/><text x="228" y="304" class="nt">n8n</text><text x="228" y="324" class="ns">fluxos, porta 5678</text></g><g><rect x="450" y="278" width="190" height="62" rx="10" class="nd"/><rect x="450" y="286" width="5" height="46" rx="2.5" fill="#ffc107"/><text x="468" y="304" class="nt">Agente do Mac</text><text x="468" y="324" class="ns">ponte local, porta 8003</text></g><g><rect x="690" y="278" width="210" height="62" rx="10" class="nd"/><rect x="690" y="286" width="5" height="46" rx="2.5" fill="#ffc107"/><text x="708" y="304" class="nt">Notas, Calendário</text><text x="708" y="324" class="ns">e Lembretes do macOS</text></g><path d="M402 309H448" class="ar" marker-end="url(#ponta)"/><path d="M642 309H688" class="ar" marker-end="url(#ponta)"/><path d="M305 278V228H415V80H448" class="ar" marker-end="url(#ponta)"/><g><rect x="210" y="378" width="190" height="62" rx="10" class="nd"/><rect x="210" y="386" width="5" height="46" rx="2.5" fill="#ffc107"/><text x="228" y="404" class="nt">Bark</text><text x="228" y="424" class="ns">avisos no iPhone</text></g><path d="M305 342V376" class="ar" marker-end="url(#ponta)"/></svg></div><ul class="legenda" aria-label="Cores das camadas"><li><i style="background:#42a5f5"></i>Interface</li><li><i style="background:#26c6da"></i>Acesso único</li><li><i style="background:#1e88e5"></i>Modelos</li><li><i style="background:#93d2fa"></i>Ferramentas e dados</li><li><i style="background:#ffc107"></i>Automação</li></ul><figcaption class="muted">As setas mostram quem chama quem. A descrição completa está em texto logo abaixo.</figcaption></figure>
+<p><a href="arquitetura.html">Ler a arquitetura completa</a>, com serviços, portas e princípios de privacidade.</p></section>
+<section class="faixa" aria-labelledby="dentro"><h2 id="dentro">O que tem dentro</h2>
+<ul class="camadas">
+<li style="--cor:#1e88e5"><span class="num" aria-hidden="true">6</span><div><h3><a href="llms.html">6 modelos de linguagem</a></h3><p>Rodam no Ollama e se alternam conforme a tarefa: conversa, código, imagens.</p></div></li>
+<li style="--cor:#93d2fa"><span class="num" aria-hidden="true">20</span><div><h3><a href="mcp.html">20 ferramentas em 3 servidores MCP</a></h3><p>9 abertas a convidados e 11 restritas ao Mac do administrador.</p></div></li>
+<li style="--cor:#ffc107"><span class="num" aria-hidden="true">12</span><div><h3><a href="fluxos.html">12 fluxos de automação</a></h3><p>Estudo diário, monitor de privacidade, diários oficiais, revisão de código e mais.</p></div></li>
+<li style="--cor:#26c6da"><span class="num" aria-hidden="true">0</span><div><h3><a href="arquitetura.html#seg">Dados pessoais fora do código</a></h3><p>Chaves e identificadores ficam só no Mac; notas privadas nunca são lidas.</p></div></li>
+</ul></section>
 
-</main>
-<footer>
-<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p>
-<p>Documentação gerada do código do projeto. <a href="novidades.html">Novidades</a> · <a href="comandos.html">Comandos</a></p>
-</footer>
-<p id="aviso-copia" class="sr" role="status" aria-live="polite"></p>
-</div>
+</div></main>
+<footer><div class="wrap"><div class="linha">
+<div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
+<ul aria-label="Links do rodapé"><li><a href="https://github.com/mrl2bolonhini/heimdall-ai">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
+</div></div></footer>
+<p id="aviso" class="sr" role="status" aria-live="polite"></p>
 <script src="heimdall.js" defer></script>
 </body>
 </html>

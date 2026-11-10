@@ -6,6 +6,13 @@ Documentação publicada: https://heimdall-ai.tech (gerada da pasta docs/ pelo G
 
 Este README é mantido junto com o código. As tabelas entre marcadores `AUTO` são geradas por `python3 gerar_docs.py`; não as edite à mão.
 
+## Acessos
+
+1. Chat: https://chat.heimdall-ai.tech (por convite).
+2. Automações (n8n): https://n8n.heimdall-ai.tech (login do administrador).
+3. Status: https://uptime.heimdall-ai.tech (acesso restrito).
+4. Documentação: https://heimdall-ai.tech
+
 ## Propósito
 
 Heimdall, na mitologia nórdica, guarda a ponte Bifröst. O projeto vigia e conecta as ferramentas de quem o criou, com três objetivos: manter os modelos de linguagem sob controle de quem os usa, dar a eles ferramentas reais (web, arquivos, documentos, memória, Notas, Calendário) e automatizar rotinas (resumos, estudo, vigilância de privacidade, avisos no iPhone). Foi pensado para uso por pessoa cega: tudo opera por texto e comandos, com notas e áudio acessíveis.

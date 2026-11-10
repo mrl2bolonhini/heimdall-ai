@@ -226,17 +226,6 @@ SCRIPTS = [
     ("test_models_tools.py", "Testa a chamada de ferramentas de cada modelo."),
 ]
 
-PAGINAS = [
-    ("index.html", "Início", "Propósito e visão geral"),
-    ("arquitetura.html", "Arquitetura", "Como as peças se ligam, serviços e portas"),
-    ("tecnologias.html", "Tecnologias", "O que foi usado e para quê"),
-    ("llms.html", "Modelos (LLMs)", "Modelos de linguagem, usos e testes"),
-    ("mcp.html", "MCP e ferramentas", "Servidores MCP e cada ferramenta"),
-    ("fluxos.html", "Fluxos e automações", "Fluxos do n8n e scripts"),
-    ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
-    ("novidades.html", "Novidades", "Histórico de recursos"),
-]
-
 COMANDOS = [
     ("Subir e parar", [
         ("Subir tudo em segundo plano, com Open WebUI e Open Terminal", "nohup bash start_heimdall.sh --webui --terminal > heimdall.log 2>&1 &"),
@@ -296,152 +285,8 @@ PROBLEMAS = [
      "Autorize o Terminal em Ajustes do Sistema, Privacidade e Segurança, Automação (Notas, Calendário e Lembretes). python3 heimdall_agente.py --teste confere tudo."),
 ]
 
-# ---------------------------------------------------------------------------------------------------------
-# Estilo e montagem de página
-# ---------------------------------------------------------------------------------------------------------
-CSS = """/* Gerado por gerar_docs.py: edite o gerador, não este arquivo. */
-:root { --bg:#f2f6fb; --ink:#101a33; --muted:#4a5878; --line:#c9d5e6; --link:#0d5db8; --gold:#b37f00; --card:#ffffff; --code:#e8eef7; --sclera:#ffffff; --pupil:#101a33;
-  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0c1224; --ink:#e6eef8; --muted:#9fb0cc; --line:#25314f; --link:#7cc0ff; --gold:#ffc107; --card:#131b33; --code:#0a1020; --sclera:#eef4fc; --pupil:#0c1224; } }
-:root[data-theme="dark"] { --bg:#0c1224; --ink:#e6eef8; --muted:#9fb0cc; --line:#25314f; --link:#7cc0ff; --gold:#ffc107; --card:#131b33; --code:#0a1020; --sclera:#eef4fc; --pupil:#0c1224; }
-* { box-sizing:border-box; }
-html { -webkit-text-size-adjust:100%; scroll-padding-top:1rem; }
-body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:1.0625rem; line-height:1.6; }
-.wrap { max-width:68rem; margin:0 auto; padding:0 1rem; }
-@media (min-width:640px) { .wrap { padding:0 2rem; } }
-a { color:var(--link); text-underline-offset:.2em; text-decoration-thickness:1px; }
-a:hover { text-decoration-thickness:2px; }
-a:focus-visible, button:focus-visible, pre:focus-visible, summary:focus-visible { outline:3px solid var(--link); outline-offset:3px; border-radius:2px; }
-.skip { position:absolute; left:-999px; top:0; background:var(--ink); color:var(--bg); padding:.6rem 1rem; z-index:10; }
-.skip:focus { left:0; }
-header.top { padding:1.25rem 0 0; }
-.brand { font-family:var(--serif); font-size:1.25rem; font-weight:700; text-decoration:none; color:var(--ink); }
-nav.menu ul { list-style:none; margin:.75rem 0 0; padding:0; display:flex; flex-wrap:wrap; gap:.25rem 1.25rem; }
-nav.menu a { color:var(--ink); text-decoration:none; padding:.25rem 0; border-bottom:2px solid transparent; }
-nav.menu a:hover, nav.menu a[aria-current="page"] { border-bottom-color:var(--gold); }
-h1 { margin:2rem 0 1rem; font-family:var(--serif); font-size:clamp(2rem,6vw,3rem); line-height:1.1; letter-spacing:-.01em; }
-h2 { margin:0 0 1rem; font-family:var(--serif); font-size:1.65rem; line-height:1.2; }
-h3 { margin:1.5rem 0 .4rem; font-family:var(--serif); font-size:1.25rem; }
-main section { padding:2rem 0; border-top:1px solid var(--line); }
-main section:first-of-type { border-top:0; }
-p { max-width:68ch; margin:0 0 1rem; }
-.lead { font-family:var(--serif); font-size:clamp(1.2rem,2.5vw,1.5rem); line-height:1.4; max-width:40ch; }
-.muted { color:var(--muted); }
-.hero { display:grid; gap:1.5rem; align-items:center; padding:2rem 0 3rem; }
-@media (min-width:860px) { .hero { grid-template-columns:1fr 1.15fr; gap:3rem; } }
-.bridge { width:100%; height:auto; display:block; } .arc { fill:none; }
-ul.cards { list-style:none; margin:0; padding:0; display:grid; gap:1rem; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); }
-ul.cards li { background:var(--card); border:1px solid var(--line); border-radius:.5rem; padding:1rem; }
-ul.cards a { font-family:var(--serif); font-size:1.2rem; font-weight:700; }
-ul.cards p { margin:.25rem 0 0; color:var(--muted); }
-.stats { display:flex; flex-wrap:wrap; gap:1rem 2.5rem; margin:0 0 1rem; padding:0; list-style:none; }
-.stats strong { font-family:var(--serif); font-size:2rem; display:block; line-height:1; }
-table { width:100%; border-collapse:collapse; margin:0 0 1.5rem; font-size:.97rem; }
-caption { text-align:left; font-weight:700; padding:.25rem 0 .5rem; }
-th, td { text-align:left; vertical-align:top; padding:.55rem .75rem; border-bottom:1px solid var(--line); }
-th { font-family:var(--serif); }
-.tablewrap { overflow-x:auto; }
-code { font-family:var(--mono); font-size:.92em; background:var(--code); padding:.1em .35em; border-radius:.25rem; }
-.cmd { margin:0 0 1.25rem; }
-.cmd p { margin:0 0 .25rem; font-weight:600; }
-.cmd .box { display:flex; gap:.5rem; align-items:flex-start; }
-pre { flex:1; margin:0; padding:.75rem 1rem; background:var(--code); border:1px solid var(--line); border-radius:.4rem; overflow-x:auto; font-family:var(--mono); font-size:.92rem; line-height:1.5; }
-pre code { background:none; padding:0; }
-button.copy { font:inherit; background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:.4rem; padding:.55rem .8rem; cursor:pointer; white-space:nowrap; }
-button.copy:hover { border-color:var(--link); }
-details { margin:0 0 .75rem; } summary { cursor:pointer; font-weight:600; }
-ol.etapas { margin:.25rem 0 1rem; padding-left:1.3rem; } ol.etapas li { margin:.1rem 0; }
-.tag { display:inline-block; font-size:.8rem; border:1px solid var(--line); border-radius:1rem; padding:0 .55rem; color:var(--muted); margin-left:.4rem; }
-footer { padding:2rem 0 3rem; border-top:1px solid var(--line); color:var(--muted); font-size:.95rem; margin-top:2rem; }
-footer p { margin:0 0 .25rem; }
-.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-"""
-
-JS = """/* Gerado por gerar_docs.py. Copiar comando e olho do início. */
-(function () {
-  var live = document.getElementById('aviso-copia');
-  document.querySelectorAll('button.copy').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var alvo = document.getElementById(b.getAttribute('data-alvo'));
-      if (!alvo) return;
-      var txt = alvo.textContent;
-      var ok = function () { if (live) { live.textContent = ''; setTimeout(function () { live.textContent = 'Comando copiado.'; }, 50); } };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function () { if (live) live.textContent = 'Não foi possível copiar. Selecione o texto do comando.'; });
-      else { var r = document.createRange(); r.selectNodeContents(alvo); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); try { document.execCommand('copy'); ok(); } catch (e) {} }
-    });
-  });
-  var svg = document.getElementById('bridge'), iris = document.getElementById('iris');
-  if (!svg || !iris || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-  iris.style.transition = 'transform .12s ease-out';
-  window.addEventListener('pointermove', function (e) {
-    var r = svg.getBoundingClientRect(), k = r.width / 800, cx = r.left + 400 * k, cy = r.top + 380 * k;
-    var dx = e.clientX - cx, dy = e.clientY - cy, d = Math.sqrt(dx * dx + dy * dy) || 1, f = Math.min(1, d / (r.width * .5));
-    iris.setAttribute('transform', 'translate(' + (dx / d * 52 * f).toFixed(1) + ' ' + (Math.min(0, dy / d) * 20 * f + (dy > 0 ? dy / d * 8 * f : 0)).toFixed(1) + ')');
-  }, { passive: true });
-})();
-"""
-
-FAVICON = ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='#0c1224'/>"
-           "<path d='M8 42a24 24 0 0 1 48 0' fill='none' stroke='#42a5f5' stroke-width='6'/><path d='M16 42a16 16 0 0 1 32 0' fill='none' stroke='#26c6da' stroke-width='5'/>"
-           "<ellipse cx='32' cy='42' rx='11' ry='6' fill='#e6eef8'/><circle cx='32' cy='42' r='4.2' fill='#ffc107'/></svg>")
-
-OLHO = """<svg class="bridge" id="bridge" viewBox="0 0 800 440" role="img" aria-label="Um arco de seis faixas em tons de azul e dourado, com um olho no centro que acompanha o ponteiro.">
-<g class="arc"><path d="M40 380A360 360 0 0 1 760 380" stroke="#bfe3fb" stroke-width="46"/><path d="M86 380A314 314 0 0 1 714 380" stroke="#93d2fa" stroke-width="46"/><path d="M132 380A268 268 0 0 1 668 380" stroke="#42a5f5" stroke-width="46"/><path d="M178 380A222 222 0 0 1 622 380" stroke="#26c6da" stroke-width="46"/><path d="M224 380A176 176 0 0 1 576 380" stroke="#1e88e5" stroke-width="46"/><path d="M270 380A130 130 0 0 1 530 380" stroke="#ffc107" stroke-width="46"/></g>
-<ellipse cx="400" cy="380" rx="118" ry="58" fill="var(--sclera)"/><g id="iris"><circle cx="400" cy="380" r="40" fill="#ffc107"/><circle cx="400" cy="380" r="19" fill="var(--pupil)"/><circle cx="409" cy="371" r="6" fill="#ffffff" opacity=".85"/></g></svg>"""
-
-_contador = [0]
-
-
-def pagina(arquivo, titulo, descricao, corpo, hero=False):
-    menu = "".join('<li><a href="%s"%s>%s</a></li>' % (a, ' aria-current="page"' if a == arquivo else "", H(t)) for a, t, _ in PAGINAS)
-    nome = titulo if arquivo == "index.html" else titulo + " · Heimdall-ai"
-    return f"""<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{H(nome)}</title>
-<meta name="description" content="{H(descricao)}">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<a class="skip" href="#conteudo">Ir para o conteúdo</a>
-<div class="wrap">
-<header class="top">
-<a class="brand" href="index.html">Heimdall-ai</a>
-<nav class="menu" aria-label="Páginas do site"><ul>{menu}</ul></nav>
-</header>
-<main id="conteudo" tabindex="-1">
-{corpo}
-</main>
-<footer>
-<p>&copy; 2026 {H(AUTOR)}. Todos os direitos reservados.</p>
-<p>Documentação gerada do código do projeto. <a href="novidades.html">Novidades</a> · <a href="comandos.html">Comandos</a></p>
-</footer>
-<p id="aviso-copia" class="sr" role="status" aria-live="polite"></p>
-</div>
-<script src="heimdall.js" defer></script>
-</body>
-</html>
-"""
-
-
-def comando(texto, rotulo):
-    _contador[0] += 1
-    i = "cmd%d" % _contador[0]
-    return (f'<div class="cmd"><p>{H(rotulo)}</p><div class="box"><pre tabindex="0" aria-label="Comando: {H(rotulo)}"><code id="{i}">{H(texto)}</code></pre>'
-            f'<button type="button" class="copy" data-alvo="{i}" aria-label="Copiar comando: {H(rotulo)}">Copiar</button></div></div>')
-
-
-def tabela(legenda, cab, linhas):
-    t = '<div class="tablewrap"><table><caption>%s</caption><thead><tr>%s</tr></thead><tbody>' % (H(legenda), "".join('<th scope="col">%s</th>' % H(c) for c in cab))
-    for l in linhas:
-        t += "<tr>" + "".join(("<th scope=\"row\">%s</th>" if k == 0 else "<td>%s</td>") % c for k, c in enumerate(l)) + "</tr>"
-    return t + "</tbody></table></div>"
-
+from docs_tema import (CSS, JS, PAGINAS, REPO, ACESSOS, pagina, comando, tabela, corpo_inicio, corpo_marca, diagrama, favicon_svg,
+                        logo_arquivo, simbolo_arquivo, simbolo_mono)
 
 # ---------------------------------------------------------------------------------------------------------
 # Páginas
@@ -452,31 +297,16 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
     out = {}
     n_pub = sum(1 for f in ferr if f["grupo"] == "público")
     n_mac = len(ferr) - n_pub
-    cards = "".join('<li><a href="%s">%s</a><p>%s</p></li>' % (a, H(t), H(d)) for a, t, d in PAGINAS[1:])
-    out["index.html"] = pagina("index.html", "Heimdall-ai", "Heimdall-ai: assistente de Inteligência Artificial que roda no próprio computador, com ferramentas, documentos e automações. Documentação do projeto.", f"""
-<div class="hero"><div>
-<h1>Heimdall-ai</h1>
-<p class="lead">Um assistente de Inteligência Artificial que roda no computador do autor, com ferramentas, memória e automações.</p>
-<p class="muted">Projeto desenvolvido por {H(AUTOR)}. O chat é privado e o acesso é por convite; esta página documenta como o projeto funciona.</p>
-</div>{OLHO}</div>
-<section aria-labelledby="proposito"><h2 id="proposito">Propósito</h2>
-<p>Heimdall, na mitologia nórdica, é o guardião de Bifröst, a ponte em arco-íris que liga os mundos. O projeto leva o nome dele: um assistente que vigia e conecta as ferramentas de quem o criou.</p>
-<p>Os objetivos são três. Manter os modelos de linguagem sob controle de quem os usa, rodando no próprio Mac e não em serviços de terceiros. Dar a esses modelos ferramentas reais (busca na web, arquivos, documentos, memória, Notas, Calendário). E automatizar rotinas que valem a pena: resumos, estudo, vigilância de privacidade e avisos no iPhone.</p>
-<p>O projeto foi pensado para ser usado por pessoa cega: tudo se opera por texto e comandos, e as automações entregam áudio e notas acessíveis.</p></section>
-<section aria-labelledby="numeros"><h2 id="numeros">Em números</h2>
-<ul class="stats"><li><strong>{len(modelos)}</strong> modelos de linguagem</li><li><strong>{len(ferr)}</strong> ferramentas ({n_pub} públicas, {n_mac} do Mac)</li><li><strong>{len(mcp)}</strong> servidores MCP</li><li><strong>{len(fluxos)}</strong> fluxos do n8n</li></ul>
-<p class="muted">Os números saem direto do código a cada geração das páginas.</p></section>
-<section aria-labelledby="paginas"><h2 id="paginas">Nesta documentação</h2><ul class="cards">{cards}</ul></section>
-<section aria-labelledby="acessos"><h2 id="acessos">Acessos</h2>
-<ul><li><a href="https://chat.{DOMINIO}">Chat</a>: o assistente. Exige conta, criada por convite.</li>
-<li><a href="https://uptime.{DOMINIO}">Status</a>: painel de disponibilidade. Acesso restrito.</li>
-<li><a href="https://pt.wikipedia.org/wiki/Heimdall">Quem é Heimdall</a>: o personagem que inspirou o nome.</li></ul></section>
-""")
+    out["index.html"] = pagina("index.html", "Heimdall-ai", "Heimdall-ai: assistente de Inteligência Artificial que roda no próprio computador, com ferramentas, documentos e automações. Documentação do projeto.",
+                               corpo_inicio(len(modelos), len(ferr), n_pub, n_mac, len(mcp), len(fluxos)), home=True)
+    out["marca.html"] = pagina("marca.html", "Marca", "Logotipo, cores e tipografia do Heimdall-ai.", corpo_marca())
 
     # ---- arquitetura
     linhas = [(H(n), H(f), "<code>%s</code>" % p, H(c)) for n, f, p, c in SERVICOS]
     out["arquitetura.html"] = pagina("arquitetura.html", "Arquitetura", "Como as peças do Heimdall-ai se ligam: modelos, LiteLLM, MCP, Qdrant, n8n, agente do Mac e serviços.", f"""
 <h1>Arquitetura</h1>
+<section aria-labelledby="mapa"><h2 id="mapa">Mapa</h2>
+{diagrama()}</section>
 <section aria-labelledby="camadas"><h2 id="camadas">Visão geral</h2>
 <p>O Heimdall-ai tem quatro camadas, da base para o topo.</p>
 <ol>
@@ -657,7 +487,11 @@ def main():
     arquivos = dict(paginas)
     arquivos["style.css"] = CSS
     arquivos["heimdall.js"] = JS
-    arquivos["favicon.svg"] = FAVICON
+    arquivos["favicon.svg"] = favicon_svg()
+    arquivos["logo.svg"] = logo_arquivo(False)
+    arquivos["logo-escuro.svg"] = logo_arquivo(True)
+    arquivos["simbolo.svg"] = simbolo_arquivo()
+    arquivos["simbolo-uma-cor.svg"] = simbolo_mono()
     arquivos["CNAME"] = DOMINIO + "\n"
     arquivos[".nojekyll"] = ""
     arquivos["robots.txt"] = "User-agent: *\nAllow: /\n"

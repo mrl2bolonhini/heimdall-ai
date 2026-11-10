@@ -5,18 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MCP e ferramentas · Heimdall-ai</title>
 <meta name="description" content="Servidores MCP do Heimdall-ai e a documentação de cada ferramenta que o modelo pode chamar.">
+<meta name="theme-color" content="#080d1f">
+<link rel="canonical" href="https://heimdall-ai.tech/mcp.html">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Heimdall-ai">
+<meta property="og:title" content="MCP e ferramentas · Heimdall-ai">
+<meta property="og:description" content="Servidores MCP do Heimdall-ai e a documentação de cada ferramenta que o modelo pode chamar.">
+<meta property="og:url" content="https://heimdall-ai.tech/mcp.html">
+<meta property="og:image" content="https://heimdall-ai.tech/og.png">
+<meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
+<meta name="twitter:card" content="summary_large_image">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <a class="skip" href="#conteudo">Ir para o conteúdo</a>
-<div class="wrap">
-<header class="top">
-<a class="brand" href="index.html">Heimdall-ai</a>
-<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos (LLMs)</a></li><li><a href="mcp.html" aria-current="page">MCP e ferramentas</a></li><li><a href="fluxos.html">Fluxos e automações</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li></ul></nav>
-</header>
-<main id="conteudo" tabindex="-1">
-
+<header class="top"><div class="wrap"><div class="barra">
+<a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<span class="gap"></span>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html" aria-current="page">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="marca.html">Marca</a></li></ul></nav>
+<div class="ferram"><button type="button" id="tema">Tema escuro</button></div>
+</div></div></header>
+<main id="conteudo" tabindex="-1"><div class="wrap">
+<div class="doc"><div>
 <h1>MCP e ferramentas</h1>
 <section aria-labelledby="mcp"><h2 id="mcp">O que é o MCP</h2>
 <p>O Model Context Protocol é o padrão que permite ao modelo chamar ferramentas externas. No Heimdall-ai, os servidores são escritos em Python com a biblioteca FastMCP e o LiteLLM os expõe em <code>http://&lt;host&gt;:9000/mcp</code> para os clientes.</p>
@@ -31,14 +45,14 @@
 <li>Acrescente-a a <code>PUBLIC_TOOLS</code> (segura para convidados) ou <code>MAC_TOOLS</code> (acessa o Mac).</li>
 <li>Reinicie o sistema e rode <code>test_mcp.py</code>.</li>
 <li>Rode <code>python3 gerar_docs.py</code>: esta página se atualiza sozinha.</li></ol></section>
-
-</main>
-<footer>
-<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p>
-<p>Documentação gerada do código do projeto. <a href="novidades.html">Novidades</a> · <a href="comandos.html">Comandos</a></p>
-</footer>
-<p id="aviso-copia" class="sr" role="status" aria-live="polite"></p>
-</div>
+</div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#mcp">O que é o MCP</a></li><li><a href="#g-público">Ferramentas públicas</a></li><li><a href="#g-mac">Ferramentas do Mac (administrador)</a></li><li><a href="#teste">Como testar</a></li></ul></nav></aside></div>
+</div></main>
+<footer><div class="wrap"><div class="linha">
+<div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
+<ul aria-label="Links do rodapé"><li><a href="https://github.com/mrl2bolonhini/heimdall-ai">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
+</div></div></footer>
+<p id="aviso" class="sr" role="status" aria-live="polite"></p>
 <script src="heimdall.js" defer></script>
 </body>
 </html>
