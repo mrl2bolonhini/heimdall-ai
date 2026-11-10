@@ -51,4 +51,28 @@ if st == 200:
 else:
     ok = False
     print("  429 = espere 1 minuto; 403 = a API só atende o Brasil; 500 = data inválida ou instabilidade.")
+
+# Comparação: a mesma janela pelo nome do advogado (HEIMDALL_MONITOR_NOME no .env), para saber se o problema é o formato da OAB.
+def nome_do_env():
+    arq = Path(__file__).resolve().parent / ".env"
+    if arq.exists():
+        for linha in arq.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"^\s*(?:export\s+)?HEIMDALL_MONITOR_NOME=(.+)$", linha)
+            if m:
+                return m.group(1).strip().strip("'\"")
+    return ""
+
+nome = nome_do_env()
+if nome and st == 200:
+    q2 = urllib.parse.urlencode({"nomeAdvogado": nome, "meio": "D", "itensPorPagina": 5,
+                                 "dataDisponibilizacaoInicio": f(date.today() - timedelta(days=DIAS)), "dataDisponibilizacaoFim": f(date.today())})
+    st2, corpo2 = pegar("https://comunicaapi.pje.jus.br/api/v1/comunicacao?" + q2)
+    try:
+        d2 = json.loads(corpo2) if st2 == 200 else {}
+    except Exception:  # noqa: BLE001
+        d2 = {}
+    print("Comparação pelo nome do advogado: HTTP", st2, "| total informado:", d2.get("count"))
+    arr2 = d2.get("items") or []
+    if arr2:
+        print("  campos de cada item:", ", ".join(sorted(arr2[0].keys())))
 sys.exit(0 if ok else 1)
