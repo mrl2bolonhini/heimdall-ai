@@ -405,6 +405,23 @@ def inline(texto: str) -> str:
     return t
 
 
+def frontmatter_legivel(md: str) -> str:
+    """No app Notas o bloco YAML do começo vira ruído (traços e chaves). Mantém só tags, conceitos e entidades,
+    em linhas legíveis; o arquivo do cofre continua com o YAML inteiro."""
+    m = re.match(r"^---\n(.*?)\n---\n?", md, re.S)
+    if not m:
+        return md
+    linhas = []
+    for l in m.group(1).splitlines():
+        k, _, v = l.partition(":")
+        if k.strip() in ("tags", "conceitos", "entidades"):
+            itens = [x.strip().strip('"') for x in v.strip().strip("[]").split(",") if x.strip()]
+            if itens:
+                linhas.append(k.strip().capitalize() + ": " + ", ".join(itens) + ".")
+    resto = md[m.end():].lstrip("\n")
+    return ("\n".join(linhas) + "\n\n" if linhas else "") + resto
+
+
 def markdown_para_html(titulo: str, md: str) -> str:
     partes = [f"<div><h1>{html.escape(titulo, quote=False)}</h1></div>"]
     em_lista = False
@@ -480,7 +497,7 @@ def gravar(pasta: str, titulo: str, markdown: str, audio: str = "") -> dict:
         if m4a:
             markdown = _com_dica(markdown, f"Áudio desta leitura: é o anexo no fim desta nota, arquivo {m4a.name}. Toque nele para ouvir.")
     # Nota no app Notas (a primeira linha vira o nome da nota).
-    corpo_html = markdown_para_html(titulo, markdown)
+    corpo_html = markdown_para_html(titulo, frontmatter_legivel(markdown))
     caminho = caminho_notas(pasta)
     aviso_pasta = ""
     try:
@@ -505,7 +522,7 @@ def gravar(pasta: str, titulo: str, markdown: str, audio: str = "") -> dict:
         except Exception:  # noqa: BLE001
             r["audio"] = "salvo:" + str(m4a)
             with _lock:
-                osascript(AS_GRAVAR, caminho, titulo, markdown_para_html(titulo, _com_dica(markdown_puro, f"Áudio desta leitura: não consegui anexar. Está no Mac, na pasta {m4a.parent}, arquivo {m4a.name}.")))
+                osascript(AS_GRAVAR, caminho, titulo, markdown_para_html(titulo, frontmatter_legivel(_com_dica(markdown_puro, f"Áudio desta leitura: não consegui anexar. Está no Mac, na pasta {m4a.parent}, arquivo {m4a.name}."))))
     elif audio.strip():
         r["audio"] = motivo_audio
     return r
