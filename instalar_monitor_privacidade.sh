@@ -291,7 +291,7 @@ echo "$IMPORT_OUT" | tail -n 4
 for ID in hdMonitor00000001 hdDiario00000001 hdLembrete0000001; do
     if docker exec n8n n8n update:workflow --id=$ID --active=true > /dev/null 2>&1 \
        || docker exec n8n n8n publish:workflow --id=$ID > /dev/null 2>&1; then
-        echo "Fluxo $ID ativado (monitor às 9h, diários oficiais às 8h30)."
+        echo "Fluxo $ID ativado (avisos entregues ao resumo das 10h; diários às 9h40, monitor às 9h45, checagem mensal no dia 1)."
     else
         echo "O fluxo $ID foi importado, mas não consegui ativar. Ative-o na lista de fluxos do n8n (http://localhost:5678)."
     fi
