@@ -644,7 +644,7 @@ def criar_lembrete(dado: dict) -> dict:
 
 
 # Só estes sites podem ser buscados por aqui (o n8n no Docker às vezes falha no TLS com o Querido Diário e o DOU).
-SITES_PERMITIDOS = {"api.queridodiario.ok.org.br", "www.in.gov.br"}
+SITES_PERMITIDOS = {"api.queridodiario.org.br", "www.in.gov.br", "comunicaapi.pje.jus.br"}
 
 
 class _SemRedirecionar(urllib.request.HTTPRedirectHandler):

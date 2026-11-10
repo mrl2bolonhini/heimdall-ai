@@ -184,7 +184,7 @@ done
 SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_MODELO="$MODELO" SUBS_AGENTE="$HEIMDALL_AGENTE_TOKEN" \
 M_NOME="${HEIMDALL_MONITOR_NOME:-}" M_VAR="${HEIMDALL_MONITOR_VARIACOES:-}" M_EMAILS="${HEIMDALL_MONITOR_EMAILS:-}" \
 M_USERS="${HEIMDALL_MONITOR_USUARIOS:-}" M_CIDADE="${HEIMDALL_MONITOR_CIDADE:-}" M_SINAIS="${HEIMDALL_MONITOR_SINAIS:-}" \
-M_IGN="${HEIMDALL_MONITOR_IGNORAR:-}" \
+M_IGN="${HEIMDALL_MONITOR_IGNORAR:-}" M_OAB="${HEIMDALL_OAB:-}" \
 "$PY" - "$PROJECT_DIR/n8n_flows_monitor" "$TMP" <<'PYEOF' || fail "não consegui preparar os fluxos."
 import json, os, pathlib, re, sys
 
@@ -194,8 +194,19 @@ E = os.environ
 def lista(s):
     return [x.strip() for x in s.split(",") if x.strip()]
 
+def oab_cfg(v):
+    """HEIMDALL_OAB=NUMERO/UF (por exemplo 123456/SP). Vazio desliga a consulta ao Diário da Justiça."""
+    v = v.strip()
+    if not v:
+        return None
+    m = re.match(r"^(\d{1,7})\s*[/-]\s*([A-Za-z]{2})$", v)
+    if not m:
+        sys.exit("HEIMDALL_OAB inválida: use número/UF, por exemplo 123456/SP")
+    return {"numero": m.group(1), "uf": m.group(2).upper()}
+
 config = {
     "nome": E["M_NOME"], "variacoes": lista(E["M_VAR"]), "emails": lista(E["M_EMAILS"]), "usuarios": lista(E["M_USERS"]),
+    "oab": oab_cfg(E.get("M_OAB", "")),
     "cidade": E["M_CIDADE"], "sinais": lista(E["M_SINAIS"]), "ignorar": lista(E["M_IGN"]),
 }
 if not (config["nome"] or config["emails"] or config["usuarios"]):

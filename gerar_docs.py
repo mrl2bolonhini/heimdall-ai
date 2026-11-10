@@ -211,7 +211,7 @@ FLUXO_DESCRICAO = {
     "hdSecondBrain001": "Observa as notas alteradas do app Notas (nunca as de pastas privadas), cria embeddings, encontra conexões e lacunas e grava a análise na pasta Cérebro.",
     "hdFalhaAviso0001": "Quando qualquer fluxo falha, avisa no iPhone qual fluxo, em que etapa e por quê. Fluxos nunca falham em silêncio.",
     "hdMonitor00000001": "Pesquisa na web os identificadores pessoais configurados pelo dono (nome, e-mails, usuários) em busca de menções, comentários, vazamentos e imagens, separa homônimos, analisa o risco e grava o relatório. Tem memória: só avisa o que é novo.",
-    "hdDiario00000001": "Procura o nome do dono nos diários oficiais do município de São Paulo, da União e do Estado de SP e avisa só as menções novas. Se uma fonte falhar, o aviso diz qual e nunca finge que não há nada.",
+    "hdDiario00000001": "Procura o nome do dono nos diários oficiais do município de São Paulo, da União e do Estado de SP e, se a OAB estiver configurada, as comunicações dela no Diário da Justiça Eletrônico Nacional (CNJ). Avisa só o que for novo. Se uma fonte falhar, o aviso diz qual e nunca finge que não há nada.",
     "hdLembrete0000001": "Lembrete mensal para conferir, nos aplicativos oficiais, serviços que exigem login (INSS, FGTS, Carteira de Trabalho, Registrato e Serasa).",
 }
 
@@ -257,6 +257,7 @@ COMANDOS = [
         ("Monitor de privacidade e diários oficiais", "bash instalar_monitor_privacidade.sh"),
         ("Mudar o que o monitor procura", "bash instalar_monitor_privacidade.sh --reconfigurar"),
         ("Vigia de e-mail de serviços públicos", "bash instalar_email_oficial.sh"),
+        ("Conferir Querido Diário e Diário da Justiça", "python3 teste_diario_justica.py"),
         ("Ligar um repositório ao GitOps", "bash instalar_hook_gitops.sh /caminho/do/repositorio"),
     ]),
     ("Rodar um fluxo agora", [

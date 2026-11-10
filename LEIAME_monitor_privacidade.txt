@@ -91,7 +91,7 @@ Arquivos desta atualização: heimdall_agente.py, heimdall_email_oficial.py e a 
 
 O que mudou:
 1. Erro do e-mail ("'ascii' codec can't encode character"): a busca no Gmail continha palavras com acento. Agora a consulta sai só em ASCII, mantendo o OR em maiúsculas que o Gmail exige.
-2. Erro do Querido Diário (SSL EPROTO): o n8n dentro do Docker não conseguiu o aperto de mão TLS com o servidor. Agora o município e o DOU são consultados pelo agente do Mac (rota /web/get), que usa o Python do próprio Mac. O agente só aceita api.queridodiario.ok.org.br e www.in.gov.br, só por https, e exige o token. A busca indireta do Diário do Estado continua pelo SearXNG.
+2. Erro do Querido Diário (SSL EPROTO): o n8n dentro do Docker não conseguiu o aperto de mão TLS com o servidor. Agora o município e o DOU são consultados pelo agente do Mac (rota /web/get), que usa o Python do próprio Mac. O agente só aceita api.queridodiario.org.br (o endereço antigo, api.queridodiario.ok.org.br, foi desativado), www.in.gov.br e comunicaapi.pje.jus.br (Diário da Justiça), só por https, e exige o token. A busca indireta do Diário do Estado continua pelo SearXNG.
 3. Agenda: para e-mails OFICIAIS confirmados com urgência média ou alta, o vigia agora cria, além do aviso:
    a. Evento de dia inteiro no app Calendário, no calendário "Heimdall", na data do prazo, com alerta 1 dia antes, às 9h.
    b. Lembrete no app Lembretes, na lista "Heimdall", na véspera do prazo às 9h (se o prazo é hoje ou amanhã, daqui a uma hora).
@@ -108,7 +108,7 @@ Como aplicar, no Terminal, na pasta do projeto, um comando por vez:
 6. Teste do e-mail sem enviar nada: bash instalar_email_oficial.sh --testar
    Na simulação, as criações aparecem como "[AGENDA]". Para valer de verdade, rode: python3 heimdall_email_oficial.py
 
-Se o Querido Diário ainda falhar, o aviso do Bark trará a causa. Para ver a resposta direta do Mac, digite: python3 -c "import urllib.request as u; print(u.urlopen('https://api.queridodiario.ok.org.br/gazettes?size=1', timeout=30).read(300))"
+Se o Querido Diário ainda falhar, o aviso do Bark trará a causa. Para ver a resposta direta do Mac, digite: python3 -c "import urllib.request as u; print(u.urlopen('https://api.queridodiario.org.br/gazettes?size=1', timeout=30).read(300))"
 
 =====================================================================
 PASTAS DO NOTAS COM NOMES PRÓPRIOS E PROTEÇÃO DA PASTA PRIVADA
@@ -123,3 +123,6 @@ Como aplicar (um comando por vez, na pasta do projeto):
 3. Reinstale os fluxos: bash instalar_automacoes_avancadas.sh  e  bash instalar_monitor_privacidade.sh --reconfigurar
 4. Apague o que o Cérebro já guardou das notas privadas, primeiro só listando: python3 limpar_privadas.py --so-listar  e, se a lista estiver certa: python3 limpar_privadas.py
    Isso remove os pontos da base vetorial, as cópias em Markdown e as notas espelho. As notas originais nunca são tocadas.
+
+DIÁRIO DA JUSTIÇA (DJEN, do CNJ)
+O fluxo de diários oficiais também consulta, uma vez por dia, as comunicações (intimações e publicações) da sua OAB nos últimos 7 dias. Para ligar, acrescente ao .env a linha HEIMDALL_OAB=NUMERO/UF (por exemplo 123456/SP) e rode de novo: bash instalar_monitor_privacidade.sh. Sem essa linha, a consulta fica desligada. A API do CNJ só atende endereços do Brasil e é pública, sem chave. O resultado não substitui o sistema oficial: confira sempre prazos e conteúdo lá.
