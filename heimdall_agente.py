@@ -320,16 +320,17 @@ def osascript(script: str, *args: str) -> str:
 # ----------------------------------------------------------------------------------------
 # Operações
 # ----------------------------------------------------------------------------------------
-# Notas que o próprio Heimdall cria (espelhos do Second Brain e digests). Também são ignoradas pelo título,
+# Notas que o próprio Heimdall cria (espelhos do Second Brain, digests, saúde e monitores). As notas dos estudos
+# (pastas de temas) ENTRAM no Second Brain, para ele ligar o que você estuda ao que você escreve. Também são ignoradas pelo título,
 # para não entrarem num laço caso o app Notas não informe a pasta de uma nota.
-TITULO_DO_HEIMDALL = re.compile(r"^(C[ée]rebro: |Digest \d{4}-\d{2}-\d{2} \d{2}h$)")
+TITULO_DO_HEIMDALL = re.compile(r"^(C[ée]rebro: |Digest \d{4}-\d{2}-\d{2} \d{2}h$|Sa[úu]de \d{4}-\d{2}-\d{2}$|Monitor \d{4}-\d{2}-\d{2}$|Di[áa]rios oficiais \d{4}-\d{2}-\d{2}$)")
 
 
 def pasta_ignorada(nome: str) -> bool:
     n = nome.strip().lower()
     nn = norm_nome(nome)
     return (n.startswith(PREFIXO_ESCRITA.lower()) or n == "estudos" or n in IGNORAR_PASTAS or nn in {norm_nome(p) for p in PRIVADAS}
-            or nn in {norm_nome(p) for p in PASTAS_PROPRIAS} or nn in temas_conhecimento())
+            or nn in {norm_nome(p) for p in PASTAS_PROPRIAS})
 
 
 _cache_privadas: tuple[float, set] = (0.0, set())

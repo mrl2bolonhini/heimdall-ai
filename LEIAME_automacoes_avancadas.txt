@@ -148,7 +148,7 @@ A cada execução:
 4. Grava uma nota no app Notas, em uma pasta com o nome da tag do tema, ou seja, o nome da subpasta de knowledge/ sem acentos, em minúsculas e com hífens (knowledge/AWS Dados vira a pasta "aws-dados"; arquivos soltos vão para "geral"). Subpastas novas de knowledge/ ganham a pasta no Notas sozinhas, na primeira vez em que forem sorteadas. A nota tem: Pergunta, Resposta (para conferir depois), Leitura e Para aprofundar (links). O título é "Estudo AAAA-MM-DD HHh: conceito".
 5. Áudio: o agente do Mac narra a leitura com a voz Luciana (pt-BR), salva em cerebro/<tema>/audio/ no formato .m4a e tenta anexar à nota; se anexar, o áudio toca no iPhone pela nota. Para trocar a voz: HEIMDALL_VOZ="Felipe" no .env. Para desligar: HEIMDALL_ESTUDO_AUDIO=0. Vozes instaladas: say -v '?' | grep pt_BR
 6. O Bark avisa com a pergunta (sem a resposta) e o endereço da leitura.
-As pastas de temas, como as outras pastas do Heimdall, nunca são lidas pelo Second Brain.
+As notas das pastas de temas (Estudos) entram no Second Brain, para ele ligar o que você estuda ao que você escreve. Só as notas geradas pelo próprio Heimdall para ele mesmo (Cérebro, Digest, Saúde, Monitor e Diários oficiais) ficam de fora.
 
 Como aplicar (um comando por vez, na pasta do projeto):
 1. Copie heimdall_agente.py e a pasta n8n_flows_avancados para ~/heimdall-ai, por cima.
