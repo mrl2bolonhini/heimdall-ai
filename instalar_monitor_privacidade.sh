@@ -199,9 +199,9 @@ def oab_cfg(v):
     v = v.strip()
     if not v:
         return None
-    m = re.match(r"^(\d{1,7})\s*[/-]\s*([A-Za-z]{2})$", v)
+    m = re.match(r"^(\d{1,7})\s*[/-]?\s*([A-Za-z]{2})$", v)
     if not m:
-        sys.exit("HEIMDALL_OAB inválida: use número/UF, por exemplo 123456/SP")
+        sys.exit("HEIMDALL_OAB inválida: use número e UF, por exemplo 123456/SP ou 123456SP")
     return {"numero": m.group(1), "uf": m.group(2).upper()}
 
 config = {

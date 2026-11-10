@@ -8,7 +8,7 @@ def oab_do_env():
     arq = Path(__file__).resolve().parent / ".env"
     if arq.exists():
         for linha in arq.read_text(encoding="utf-8").splitlines():
-            m = re.match(r"^\s*(?:export\s+)?HEIMDALL_OAB=['\"]?(\d{1,7})\s*[/-]\s*([A-Za-z]{2})", linha)
+            m = re.match(r"^\s*(?:export\s+)?HEIMDALL_OAB=['\"]?(\d{1,7})\s*[/-]?\s*([A-Za-z]{2})", linha)
             if m:
                 return m.group(1), m.group(2).upper()
     return None
