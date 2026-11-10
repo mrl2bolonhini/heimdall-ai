@@ -49,15 +49,16 @@ VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(PROJECT_DIR / "cerebro")))
 PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continuam aceitos e ignorados
 # Pastas do app Notas que o Heimdall cria e onde só ele escreve. Nunca são lidas como fonte (evita laço) e as
 # suas notas pessoais nunca são alteradas. Para mudar, use no .env: HEIMDALL_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro"
-PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("HEIMDALL_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Cérebro").split(",") if p.strip()]
-if "Saúde" not in PASTAS_PROPRIAS:
-    PASTAS_PROPRIAS.append("Saúde")  # monitor de saúde: sempre permitida, mesmo com o .env personalizado
+PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("HEIMDALL_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Second Brain,Cérebro").split(",") if p.strip()]
+for _p in ("Saúde", "Second Brain", "Cérebro"):  # sempre permitidas, mesmo com o .env personalizado ("Cérebro" é o nome antigo)
+    if _p not in PASTAS_PROPRIAS:
+        PASTAS_PROPRIAS.append(_p)
 # No app Notas, tudo que o Heimdall grava fica dentro de uma pasta-raiz: Heimdall-ai/Digest, Heimdall-ai/Saúde,
 # Heimdall-ai/Estudos/<tema> etc. Os fluxos continuam mandando só o nome da pasta; o agente monta o caminho.
 # Para voltar às pastas soltas: HEIMDALL_NOTAS_RAIZ="" no .env.
 RAIZ_NOTAS = os.environ.get("HEIMDALL_NOTAS_RAIZ", "Heimdall-ai").strip()
 # Subpasta do cofre de cada pasta (mantém os nomes antigos para não separar o que já foi gravado).
-PASTA_DO_COFRE = {"Monitor de Privacidade": "heimdall-privacidade", "Digest": "heimdall-digest", "Cérebro": "heimdall-cerebro"}
+PASTA_DO_COFRE = {"Monitor de Privacidade": "heimdall-privacidade", "Digest": "heimdall-digest", "Cérebro": "heimdall-cerebro", "Second Brain": "heimdall-cerebro"}
 
 
 # Temas de estudo: cada subpasta de knowledge/ vira uma pasta no app Notas com o nome da tag do tema (o mesmo nome que
@@ -320,17 +321,17 @@ def osascript(script: str, *args: str) -> str:
 # ----------------------------------------------------------------------------------------
 # Operações
 # ----------------------------------------------------------------------------------------
-# Notas que o próprio Heimdall cria (espelhos do Second Brain, digests, saúde e monitores). As notas dos estudos
-# (pastas de temas) ENTRAM no Second Brain, para ele ligar o que você estuda ao que você escreve. Também são ignoradas pelo título,
+# Só os espelhos do próprio Second Brain ficam de fora da análise (evita laço). Todo o resto entra: suas notas, os
+# estudos, o digest, os diários oficiais, os monitores e a saúde (as pastas privadas continuam protegidas). Também são ignoradas pelo título,
 # para não entrarem num laço caso o app Notas não informe a pasta de uma nota.
-TITULO_DO_HEIMDALL = re.compile(r"^(C[ée]rebro: |Digest \d{4}-\d{2}-\d{2} \d{2}h$|Sa[úu]de \d{4}-\d{2}-\d{2}$|Monitor \d{4}-\d{2}-\d{2}$|Di[áa]rios oficiais \d{4}-\d{2}-\d{2}$)")
+TITULO_DO_HEIMDALL = re.compile(r"^(C[ée]rebro: |Second Brain: )")
 
 
 def pasta_ignorada(nome: str) -> bool:
     n = nome.strip().lower()
     nn = norm_nome(nome)
     return (n.startswith(PREFIXO_ESCRITA.lower()) or n == "estudos" or n in IGNORAR_PASTAS or nn in {norm_nome(p) for p in PRIVADAS}
-            or nn in {norm_nome(p) for p in PASTAS_PROPRIAS})
+            or nn in {"second brain", "cerebro"})
 
 
 _cache_privadas: tuple[float, set] = (0.0, set())

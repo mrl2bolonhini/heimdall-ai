@@ -73,10 +73,10 @@ Second Brain
   Gatilho: a cada 5 minutos o n8n pergunta ao agente quais notas do app Notas (Mac e iPhone, via iCloud) mudaram e
   ficaram paradas por pelo menos 2 minutos. Processa até 3 por vez.
   1. Lê o texto da nota; ignora notas com menos de 80 caracteres, notas que não mudaram desde a última análise e as notas do
-     próprio Heimdall (títulos "Cérebro: ..." e "Digest AAAA-MM-DD HHh"), para nunca analisar os próprios espelhos.
+     próprio Heimdall (títulos "Second Brain: ..." e o antigo "Cérebro: ..."), para nunca analisar os próprios espelhos.
   2. Gera o embedding (nomic-embed-text) e procura as notas mais parecidas na base vetorial (Qdrant, coleção heimdall_notas).
   3. O modelo extrai tags, conceitos, entidades, conexões (complementa, contradiz, relacionada, duplica) e lacunas.
-  4. Grava a nota ESPELHO "Cérebro: <título>" na pasta "Cérebro" do app Notas, com cabeçalho YAML (tags,
+  4. Grava a nota ESPELHO "Second Brain: <título>" na pasta "Second Brain" do app Notas, com cabeçalho YAML (tags,
      conceitos, entidades), links [[Nota Correlata]], lacunas e perguntas. Grava também o .md de verdade, com frontmatter
      YAML, em ~/heimdall-ai/cerebro/heimdall-cerebro/ (pode ser aberto no Obsidian).
   5. Indexa a nota na base vetorial e, se achar uma contradição ou falhar ao gravar, avisa pelo Bark.
@@ -148,7 +148,7 @@ A cada execução:
 4. Grava uma nota no app Notas, em uma pasta com o nome da tag do tema, ou seja, o nome da subpasta de knowledge/ sem acentos, em minúsculas e com hífens (knowledge/AWS Dados vira a pasta "aws-dados"; arquivos soltos vão para "geral"). Subpastas novas de knowledge/ ganham a pasta no Notas sozinhas, na primeira vez em que forem sorteadas. A nota tem: Pergunta, Resposta (para conferir depois), Leitura e Para aprofundar (links). O título é "Estudo AAAA-MM-DD HHh: conceito".
 5. Áudio: o agente do Mac narra a leitura com a voz Luciana (pt-BR), salva em cerebro/<tema>/audio/ no formato .m4a e tenta anexar à nota; se anexar, o áudio toca no iPhone pela nota. Para trocar a voz: HEIMDALL_VOZ="Felipe" no .env. Para desligar: HEIMDALL_ESTUDO_AUDIO=0. Vozes instaladas: say -v '?' | grep pt_BR
 6. O Bark avisa com a pergunta (sem a resposta) e o endereço da leitura.
-As notas das pastas de temas (Estudos) entram no Second Brain, para ele ligar o que você estuda ao que você escreve. Só as notas geradas pelo próprio Heimdall para ele mesmo (Cérebro, Digest, Saúde, Monitor e Diários oficiais) ficam de fora.
+O Second Brain analisa todas as suas notas: as que você escreve, os estudos, o digest, os diários oficiais, o monitor de privacidade e o resumo de saúde, para ligar uma notícia a um estudo, um hábito a um padrão de saúde, uma lei nova a um processo seu. Ficam de fora só os próprios espelhos dele (pasta Second Brain) e as pastas que você marcou como privadas. Tudo roda nos modelos locais do seu Mac. O espelho de cada nota é gravado em Heimdall-ai > Second Brain; a pasta antiga Cérebro guarda os espelhos de antes.
 
 Como aplicar (um comando por vez, na pasta do projeto):
 1. Copie heimdall_agente.py e a pasta n8n_flows_avancados para ~/heimdall-ai, por cima.

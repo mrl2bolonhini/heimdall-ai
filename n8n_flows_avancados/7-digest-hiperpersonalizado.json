@@ -255,7 +255,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "const emb = $('Embedding').all();\nconst base = $('Preparar contexto').all();\nconst ruim = t => /^(C[ée]rebro: |Digest \\d{4}-)/.test(String(t || ''));\nreturn $input.all().map((r, i) => {\n  const v = ((((emb[i] || { json: {} }).json || {}).embeddings) || [])[0];\n  const pts = ((((r.json || {}).result) || {}).points || [])\n    .filter(p => p.payload && (p.score || 0) >= 0.55 && !ruim(p.payload.titulo))\n    .slice(0, 2)\n    .map(p => ({ titulo: String(p.payload.titulo || ''), trecho: String(p.payload.trecho || '').slice(0, 300) }));\n  return { json: Object.assign({}, base[i].json, { vetor: Array.isArray(v) ? v : null, notas: pts }) };\n});"
+        "jsCode": "const emb = $('Embedding').all();\nconst base = $('Preparar contexto').all();\nconst ruim = t => /^(C[ée]rebro: |Second Brain: |Digest \\d{4}-)/.test(String(t || ''));\nreturn $input.all().map((r, i) => {\n  const v = ((((emb[i] || { json: {} }).json || {}).embeddings) || [])[0];\n  const pts = ((((r.json || {}).result) || {}).points || [])\n    .filter(p => p.payload && (p.score || 0) >= 0.55 && !ruim(p.payload.titulo))\n    .slice(0, 2)\n    .map(p => ({ titulo: String(p.payload.titulo || ''), trecho: String(p.payload.trecho || '').slice(0, 300) }));\n  return { json: Object.assign({}, base[i].json, { vetor: Array.isArray(v) ? v : null, notas: pts }) };\n});"
       }
     },
     {
