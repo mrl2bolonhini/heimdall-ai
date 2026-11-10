@@ -9,6 +9,8 @@ import re
 DOMINIO = "heimdall-ai.tech"
 AUTOR = "Murillo Bolonhini Cita"
 REPO = "https://github.com/mrl2bolonhini/heimdall-ai"
+EMAIL = "suporte@heimdall-ai.tech"
+LINKEDIN = "https://www.linkedin.com/in/murillobolonhinicita"
 ACESSOS = {
     "chat": "https://chat.heimdall-ai.tech",
     "n8n": "https://n8n.heimdall-ai.tech",
@@ -371,6 +373,7 @@ def pagina(arquivo, titulo, descricao, corpo, home=False):
 <footer><div class="wrap"><div class="linha">
 <div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial">{simbolo_svg()}<span>Heimdall-ai</span></a>
 <p>&copy; 2026 {H(AUTOR)}. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
+<div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:{EMAIL}">{EMAIL}</a></li><li><a href="{LINKEDIN}">LinkedIn de {H(AUTOR)}</a></li></ul></div>
 <ul aria-label="Links do rodapé"><li><a href="{REPO}">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
 </div></div></footer>
 <p id="aviso" class="sr" role="status" aria-live="polite"></p>

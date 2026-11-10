@@ -13,6 +13,8 @@ Este README é mantido junto com o código. As tabelas entre marcadores `AUTO` s
 3. Status: https://uptime.heimdall-ai.tech (acesso restrito).
 4. Documentação: https://heimdall-ai.tech
 
+Contato: suporte@heimdall-ai.tech e https://www.linkedin.com/in/murillobolonhinicita
+
 ## Propósito
 
 Heimdall, na mitologia nórdica, guarda a ponte Bifröst. O projeto vigia e conecta as ferramentas de quem o criou, com três objetivos: manter os modelos de linguagem sob controle de quem os usa, dar a eles ferramentas reais (web, arquivos, documentos, memória, Notas, Calendário) e automatizar rotinas (resumos, estudo, vigilância de privacidade, avisos no iPhone). Foi pensado para uso por pessoa cega: tudo opera por texto e comandos, com notas e áudio acessíveis.
