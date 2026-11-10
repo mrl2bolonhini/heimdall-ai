@@ -9,8 +9,8 @@ Este README é mantido junto com o código. As tabelas entre marcadores `AUTO` s
 ## Acessos
 
 1. Chat: https://chat.heimdall-ai.tech (por convite).
-2. Automações (n8n): https://n8n.heimdall-ai.tech (login do administrador).
-3. Status: https://uptime.heimdall-ai.tech (acesso restrito).
+2. Automações: https://flows.heimdall-ai.tech (login do administrador).
+3. Status: https://status.heimdall-ai.tech (acesso restrito).
 4. Documentação: https://heimdall-ai.tech
 
 Contato: suporte@heimdall-ai.tech e https://www.linkedin.com/in/murillobolonhinicita

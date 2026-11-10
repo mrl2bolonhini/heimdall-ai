@@ -13,8 +13,8 @@ EMAIL = "suporte@heimdall-ai.tech"
 LINKEDIN = "https://www.linkedin.com/in/murillobolonhinicita"
 ACESSOS = {
     "chat": "https://chat.heimdall-ai.tech",
-    "n8n": "https://n8n.heimdall-ai.tech",
-    "status": "https://uptime.heimdall-ai.tech",
+    "n8n": "https://flows.heimdall-ai.tech",
+    "status": "https://status.heimdall-ai.tech",
 }
 H = lambda s: html.escape(str(s), quote=True)
 
@@ -414,7 +414,7 @@ def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
 <section class="faixa" aria-labelledby="acessos"><h2 id="acessos">Acessos</h2>
 <ul class="portas">
 <li class="porta" style="--cor:#42a5f5"><h3><a href="{ACESSOS['chat']}">Chat</a></h3><p>Conversar com os modelos, com busca na web e documentos.</p><p class="quem">Por convite</p></li>
-<li class="porta" style="--cor:#ffc107"><h3><a href="{ACESSOS['n8n']}">Automações</a></h3><p>Ver e ajustar os fluxos que rodam sozinhos (n8n).</p><p class="quem">Login do administrador</p></li>
+<li class="porta" style="--cor:#ffc107"><h3><a href="{ACESSOS['n8n']}">Automações</a></h3><p>Ver e ajustar os fluxos que rodam sozinhos.</p><p class="quem">Login do administrador</p></li>
 <li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['status']}">Status</a></h3><p>Ver se os serviços estão no ar.</p><p class="quem">Acesso restrito</p></li>
 <li class="porta" style="--cor:#93d2fa"><h3><a href="{REPO}">Código</a></h3><p>Repositório do projeto no GitHub.</p><p class="quem">Público</p></li>
 </ul></section>
