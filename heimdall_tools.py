@@ -834,7 +834,19 @@ def banco_resumo() -> str:
     try:
         b = _banco()
         r = b.resumo()
-        return _BANCO_AVISO + "\n" + json.dumps(r, ensure_ascii=False, indent=1) + "\n\nTabelas:\n" + b.tabelas_para_modelo()
+        texto = _BANCO_AVISO + "\n" + json.dumps(r, ensure_ascii=False, indent=1) + "\n\nTabelas:\n" + b.tabelas_para_modelo()
+        # Modelos pequenos repetem esta ferramenta em vez de chamar a seguinte: já entrega os últimos dias de sono.
+        try:
+            sono = b.consulta_sql(
+                "SELECT dia, valor FROM saude_diaria WHERE metrica = 'sono_total' ORDER BY dia DESC LIMIT 7", 7)["linhas"]
+        except Exception:  # noqa: BLE001
+            sono = []
+        if sono:
+            texto += "\n\nSono total dos últimos dias com dado (mais recente primeiro): " + "; ".join(
+                f"{d}: {int(v // 60)}h{int(v % 60):02d}" for d, v in sono) + "."
+        texto += ("\n\nPróximo passo: este resumo basta uma vez; não o chame de novo. Para valores use saude_historico(metrica, dias) "
+                  "(ex.: metrica='sono') ou banco_consultar(sql) ou banco_buscar(termo).")
+        return texto
     except Exception as e:  # noqa: BLE001
         return f"Não consegui ler o banco: {e}"
 
