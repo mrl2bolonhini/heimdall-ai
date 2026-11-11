@@ -108,6 +108,23 @@ CREATE TABLE IF NOT EXISTS avisos (
 );
 CREATE INDEX IF NOT EXISTS ix_avisos_quando ON avisos (quando);
 
+CREATE TABLE IF NOT EXISTS triagem (
+    id TEXT PRIMARY KEY,            -- resumo legível + hash do identificador de origem
+    criado TEXT NOT NULL,           -- AAAA-MM-DDTHH:MM:SSZ (UTC)
+    fonte TEXT NOT NULL DEFAULT '', -- justica, saude, email, privacidade, diarios
+    nivel TEXT NOT NULL DEFAULT 'alto',     -- critico, alto, medio (como o Heimdall classificou)
+    titulo TEXT NOT NULL DEFAULT '',
+    resumo TEXT NOT NULL DEFAULT '',
+    estado TEXT NOT NULL DEFAULT 'pendente',        -- pendente, concluida, descartada
+    prioridade_usuario TEXT NOT NULL DEFAULT '',    -- alta, media, baixa, nenhuma, apagada: como você deixou o lembrete
+    decidido_em TEXT NOT NULL DEFAULT '',
+    adiado_ate TEXT NOT NULL DEFAULT '',
+    avisos INTEGER NOT NULL DEFAULT 0,
+    ultimo_aviso TEXT NOT NULL DEFAULT '',
+    atualizado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_triagem_estado ON triagem (estado, criado);
+
 CREATE TABLE IF NOT EXISTS analises (
     nota_id TEXT PRIMARY KEY,       -- id da nota no app Notas
     titulo TEXT NOT NULL,
@@ -295,6 +312,8 @@ def resumo() -> dict:
         saida["estudos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM estudos").fetchone()))
         saida["privacidade"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(data), MAX(data) FROM privacidade").fetchone()))
         saida["avisos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(quando), MAX(quando) FROM avisos").fetchone()))
+        saida["triagem"] = dict(zip(("linhas", "pendentes", "ate"), con.execute(
+            "SELECT COUNT(*), COALESCE(SUM(estado = 'pendente'), 0), MAX(criado) FROM triagem").fetchone()))
         saida["analises"] = dict(zip(("linhas", "ate"), con.execute("SELECT COUNT(*), MAX(atualizado) FROM analises").fetchone()))
         return saida
     finally:

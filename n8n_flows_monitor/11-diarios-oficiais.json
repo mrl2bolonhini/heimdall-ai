@@ -316,6 +316,53 @@
       "parameters": {
         "jsCode": "return [{ json: { modo: 'repetir' } }];"
       }
+    },
+    {
+      "id": "itenstriagem7701",
+      "name": "Itens de triagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        440
+      ],
+      "parameters": {
+        "jsCode": "// Cada comunicação do Diário da Justiça e cada aviso de fonte indisponível vira um item da triagem (lembrete que insiste até você agir).\nconst out = [];\nconst hoje = new Date().toISOString().slice(0, 10);\nconst URGENTE = /audi[eê]ncia|mandado|penhora|bloqueio|sisbajud|bacenjud|cita[cç][aã]o|senten[cç]a|tutela|liminar|prazo (de|para) (1|2|3|4|5|um|dois|tr[eê]s|quatro|cinco) dias?|24 horas|48 horas/i;\nfor (const it of $input.all()) {\n  const j = it.json || {};\n  if (j.aviso24) {\n    out.push({ json: { id: 'diarios-indisponivel|' + hoje + '|' + String(j.corpo).slice(0, 40), titulo: 'Fonte dos diários oficiais indisponível há 24 horas', resumo: String(j.corpo).slice(0, 700), nivel: 'alto', fonte: 'diarios' } });\n    continue;\n  }\n  if (j.vazio) continue;\n  for (const r of (j.registros || [])) {\n    if (r.fonte !== 'justica') continue;\n    const titulo = String(r.titulo || 'Comunicação do Diário da Justiça');\n    const cancelada = /CANCELADA/.test(titulo);\n    const nivel = cancelada ? 'medio' : (URGENTE.test(titulo + ' ' + (r.trecho || '')) ? 'critico' : 'alto');\n    out.push({ json: { id: r.id, titulo: 'Diário da Justiça: ' + titulo.slice(0, 110), resumo: ((r.data ? r.data + '. ' : '') + (r.trecho || '')).slice(0, 650) + ' Detalhes na nota do dia, pasta Monitor de Privacidade do Notas. Confira o prazo no sistema oficial.', nivel, fonte: 'justica' } });\n  }\n}\nreturn out.slice(0, 12);"
+      }
+    },
+    {
+      "id": "criartriagem7702",
+      "name": "Criar triagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        440
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/triagem/criar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
     }
   ],
   "connections": {
@@ -359,6 +406,11 @@
             "node": "Avisar sem menções",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Itens de triagem",
+            "type": "main",
+            "index": 0
           }
         ],
         [
@@ -369,6 +421,11 @@
           },
           {
             "node": "Gravar no banco",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Itens de triagem",
             "type": "main",
             "index": 0
           }
@@ -435,6 +492,17 @@
         [
           {
             "node": "Consultas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Itens de triagem": {
+      "main": [
+        [
+          {
+            "node": "Criar triagem",
             "type": "main",
             "index": 0
           }

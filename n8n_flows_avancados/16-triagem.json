@@ -1,0 +1,125 @@
+{
+  "id": "hdTriagem0000001",
+  "name": "Heimdall: triagem de avisos (insistência a cada 15 minutos)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "acada15min7731",
+      "name": "A cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 * * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "executaragora7732",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "rodarciclo7733",
+      "name": "Rodar ciclo no agente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/triagem/ciclo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "conferir7734",
+      "name": "Conferir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// O agente lê os lembretes, registra o que você concluiu, reclassificou ou adiou, e envia os avisos pelo Bark.\n// Se o agente ficar uma hora sem responder, avisa uma vez só (e não a cada 15 minutos).\nconst sd = $getWorkflowStaticData('global');\nconst j = $input.first().json || {};\nif (j.error || j.erro || j.lista_existe === undefined) {\n  sd.falhas = (sd.falhas || 0) + 1;\n  if (sd.falhas === 4) throw new Error('A triagem de avisos não responde há 1 hora: ' + String((j.error && (j.error.message || j.error)) || j.erro || 'sem resposta').slice(0, 150));\n  return [];\n}\nsd.falhas = 0;\nreturn [{ json: j }];"
+      }
+    }
+  ],
+  "connections": {
+    "A cada 15 minutos": {
+      "main": [
+        [
+          {
+            "node": "Rodar ciclo no agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Rodar ciclo no agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rodar ciclo no agente": {
+      "main": [
+        [
+          {
+            "node": "Conferir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "errorWorkflow": "hdFalhaAviso0001"
+  }
+}

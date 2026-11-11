@@ -19,6 +19,11 @@ Rotas:
     POST /banco/gravar                  {"tabela": "saude_diaria", "registros": [{"dia": "2026-11-10", "metrica": "passos", "valor": 8000}]}
                                         insere ou atualiza pela chave primária (tabelas: saude_diaria, saude_resumos, diarios, analises)
     POST /banco/consultar               {"sql": "SELECT ...", "limite": 200}  só um SELECT, em conexão somente leitura
+    POST /triagem/criar                 {"id": "origem estável", "titulo": "...", "resumo": "...", "nivel": "critico|alto|medio", "fonte": "justica"}
+                                        cria um lembrete na lista "Heimdall: Triagem" (não duplica) e o registra no banco
+    POST /triagem/ciclo                 {}  lê os lembretes, registra o que você concluiu, reclassificou ou adiou e avisa pelo Bark
+                                        quem está pendente (chamado pelo n8n a cada 15 minutos; regras em heimdall_triagem.py)
+    GET  /triagem/estado                itens pendentes da triagem
 
 Pastas privadas: notas da pasta "Privado" (e de outras listadas em HEIMDALL_NOTAS_PRIVADAS) nunca são listadas nem lidas.
 Segurança: LÊ qualquer nota (menos as privadas), mas só ESCREVE em pastas cujo nome começa com "Heimdall" (as notas
@@ -47,6 +52,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import heimdall_banco as banco
+import heimdall_triagem as triagem
 
 PROJECT_DIR = Path(__file__).resolve().parent
 HOST = os.environ.get("HEIMDALL_AGENTE_HOST", "127.0.0.1")
@@ -793,6 +799,12 @@ def criar_lembrete(dado: dict) -> dict:
     return {"ok": True, "lembrete": r}
 
 
+def osascript_travado(script: str, *args: str) -> str:
+    """O app Lembretes também atende um pedido de cada vez."""
+    with _lock:
+        return osascript(script, *args)
+
+
 # Só estes sites podem ser buscados por aqui (o n8n no Docker às vezes falha no TLS com o Querido Diário e o DOU).
 SITES_PERMITIDOS = {"api.queridodiario.org.br", "www.in.gov.br", "comunicaapi.pje.jus.br"}
 
@@ -861,6 +873,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, banco.resumo())
             if u.path == "/banco/esquema":
                 return self._json(200, {"esquema": banco.tabelas_para_modelo()})
+            if u.path == "/triagem/estado":
+                return self._json(200, triagem.estado())
             if u.path == "/notas/privadas":
                 return self._json(200, {"pastas": PRIVADAS, "ids": sorted(ids_privados())})
             if u.path == "/notas/nota":
@@ -896,6 +910,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, criar_evento(dado))
             if u.path == "/lembretes/criar":
                 return self._json(200, criar_lembrete(dado))
+            if u.path == "/triagem/criar":
+                return self._json(200, triagem.criar(dado, osascript_travado))
+            if u.path == "/triagem/ciclo":
+                return self._json(200, triagem.ciclo(osascript_travado))
             return self._json(404, {"erro": "rota desconhecida"})
         except PermissionError as e:
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} recusado em {u.path}: {e}\n")
@@ -939,6 +957,7 @@ def teste() -> int:
     try:
         print("   Calendário:", osascript(AS_PREPARAR_CAL, NOME_AGENDA))
         print("   Lembretes:", osascript(AS_PREPARAR_LEM, NOME_AGENDA))
+        print("   Triagem:", osascript(AS_PREPARAR_LEM, triagem.NOME_LISTA))
     except Exception as e:  # noqa: BLE001
         print(f"   Falhou: {e}")
         print("   Autorize o Terminal em Ajustes do Sistema > Privacidade e Segurança > Automação > Calendário e Lembretes, e rode de novo.")

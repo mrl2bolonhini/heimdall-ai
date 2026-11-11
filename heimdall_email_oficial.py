@@ -298,6 +298,29 @@ def registrar_banco(cfg, itens, simular=False):
         print("Banco falhou:", e, file=sys.stderr)
 
 
+def criar_triagem(cfg, itens, simular=False):
+    """Cada e-mail suspeito de golpe ou oficial e urgente vira um lembrete na lista "Heimdall: Triagem" (o agente do Mac
+    insiste por Bark até você concluir, reclassificar ou adiar). Não cria nada para e-mails de rotina."""
+    if simular or not itens:
+        return
+    for it in itens:
+        if it["classe"] == "suspeito":
+            nivel = "alto"
+            titulo = "Possível golpe por e-mail: " + (it["servico"] or "serviço público")
+            resumo = "De: %s. Assunto: %s. %s Não clique em links, não responda e não informe dados." % (it["de"], it["assunto"][:100], it["motivo"] or "")
+        elif it["classe"] == "oficial" and it.get("urg") in ("alta", "media"):
+            nivel = "critico" if it["urg"] == "alta" else "alto"
+            titulo = "E-mail oficial (urgência %s): %s" % (it["urg"], it["servico"] or "serviço público")
+            resumo = "Assunto: %s.%s Abra o app ou o site oficial por conta própria." % (it["assunto"][:100], (" Prazo: %s." % it["prazo"]) if it.get("prazo") else "")
+        else:
+            continue
+        try:
+            post_json("http://localhost:8003/triagem/criar", {"id": "email|" + it["mid"].lower(), "titulo": titulo[:150], "resumo": resumo[:800], "nivel": nivel, "fonte": "email"},
+                      {"X-Heimdall-Token": cfg.get("HEIMDALL_AGENTE_TOKEN", "")}, timeout=60)
+        except Exception as e:
+            print("Triagem falhou:", e, file=sys.stderr)
+
+
 def agendar(cfg, it, r, agora, simular=False):
     """Cria evento no Calendário e lembrete no app Lembretes (calendário e lista "Heimdall") para e-mails OFICIAIS confirmados.
     Devolve uma frase para o relatório, ou "" se nada foi criado."""
@@ -440,6 +463,7 @@ def executar(cfg, simular=False, agora=None, buscar=buscar_mensagens, estado_arq
     corpo = ", ".join(partes) + ". " + (primeiro["servico"] + ": " + primeiro["assunto"][:80] + ". " if primeiro else "") + "Detalhes na pasta Monitor de Privacidade do Notas. Não use links do e-mail."
     gravar_notas(cfg, "E-mails oficiais " + agora.strftime("%Y-%m-%d %H%M"), md, simular)
     registrar_banco(cfg, itens, simular)
+    criar_triagem(cfg, itens, simular)
     avisar(cfg, titulo, corpo, urgente=bool(n["suspeito"]) or any(i.get("urg") == "alta" for i in itens), simular=simular)
     if not simular:
         for it in itens:

@@ -237,16 +237,19 @@ FLUXO_DESCRICAO = {
     "hdDiario00000001": "Procura o nome do dono nos diários oficiais do município de São Paulo, da União e do Estado de SP e, se a OAB estiver configurada, as comunicações dela no Diário da Justiça Eletrônico Nacional (CNJ). Avisa só o que for novo. Se uma fonte externa falhar, repete a consulta dela a cada 2 horas (até 72 h), avisa na hora quando voltar e, depois de cerca de 24 h fora do ar, manda um único aviso de indisponibilidade. Nunca finge que não há nada.",
     "hdResumo00000001": "Junta os avisos de rotina em três notificações por dia (6h, 8h e 10h), em vez de uma por fluxo. Avisos urgentes e os de situação (falhas, GitOps, alerta do Mac) continuam na hora.",
     "hdSaude000000001": "Recebe os dados do app Saúde (iPhone e Apple Watch) e escreve às 5h50 um resumo de sono, pulso, variabilidade, respiração e atividade contra a média de 30 dias. As regras decidem o que é relevante, o modelo só redige e uma verificação barra texto com sentido trocado.",
+    "hdTriagem0000001": "A cada 15 minutos chama o agente do Mac, que lê a lista \"Heimdall: Triagem\" do app Lembretes, registra o que você concluiu, reclassificou ou adiou e insiste pelo Bark nos itens pendentes: a cada 2 horas das 7h às 21h, a cada 8 horas se você marcar prioridade baixa, e furando o modo silencioso nos itens críticos. Menções do Diário da Justiça viram críticas depois de 24 horas sem ação.",
     "hdLembrete0000001": "Lembrete mensal para conferir, nos aplicativos oficiais, serviços que exigem login (INSS, FGTS, Carteira de Trabalho, Registrato e Serasa).",
 }
 
 SCRIPTS = [
     ("heimdall_agente.py", "Agente do Mac (porta 8003). Recebe pedidos do n8n com um token e grava notas no app Notas, cria eventos no Calendário e lembretes no app Lembretes, narra textos com a voz do macOS e busca em dois sites públicos permitidos. Só escreve nas pastas do próprio Heimdall e nunca lê notas de pastas privadas."),
+    ("heimdall_triagem.py", "Triagem obrigatória de avisos importantes. Cria lembretes na lista \"Heimdall: Triagem\" do app Lembretes (menções do Diário da Justiça, alertas de saúde, e-mails suspeitos ou urgentes e achados de privacidade de risco médio ou alto) e insiste pelo Bark até você concluir, reclassificar ou adiar. Roda dentro do agente do Mac."),
     ("heimdall_email_oficial.py", "Vigia o Gmail a cada hora, só lendo. Confere se e-mails de serviços públicos (INSS, gov.br, FGTS, Receita, Serasa e outros) são autênticos, resume os verdadeiros, alerta sobre imitações e cria evento e lembrete quando há prazo. Nunca segue links."),
     ("ingest_docs.py", "Indexa os documentos de knowledge/ no Qdrant, de forma incremental. Cada subpasta vira um tema."),
     ("limpar_privadas.py", "Apaga do Second Brain o que veio de notas que depois foram para uma pasta privada."),
     ("limpar_espelhos.py", "Remove espelhos duplicados do Cérebro."),
     ("ouvir_estudo.sh", "Toca no Mac o áudio de estudo mais recente."),
+    ("teste_triagem.py", "Testa as regras da triagem com uma simulação do app Lembretes e do Bark. Com --mac, confere os scripts de verdade no Mac."),
     ("test_mcp.py", "Testa os servidores MCP direto e pelo LiteLLM."),
     ("test_models_tools.py", "Testa a chamada de ferramentas de cada modelo."),
 ]
@@ -283,6 +286,9 @@ COMANDOS = [
         ("Mudar o que o monitor procura", "bash instalar_monitor_privacidade.sh --reconfigurar"),
         ("Vigia de e-mail de serviços públicos", "bash instalar_email_oficial.sh"),
         ("Conferir Querido Diário e Diário da Justiça", "python3 teste_diario_justica.py"),
+        ("Testar as regras da triagem de avisos", "python3 teste_triagem.py"),
+        ("Conferir a triagem de verdade no Mac (cria um lembrete de teste)", "python3 teste_triagem.py --mac"),
+        ("Ver os itens pendentes da triagem", "python3 heimdall_banco.py --sql \"SELECT titulo, nivel, estado, avisos FROM triagem WHERE estado='pendente'\""),
         ("Ligar um repositório ao GitOps", "bash instalar_hook_gitops.sh /caminho/do/repositorio"),
     ]),
     ("Rodar um fluxo agora", [

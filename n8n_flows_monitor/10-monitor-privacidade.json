@@ -484,6 +484,53 @@
      "timeout": 60000
     }
    }
+  },
+  {
+   "id": "itenstriagem7711",
+   "name": "Itens de triagem",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1560,
+    440
+   ],
+   "parameters": {
+    "jsCode": "// Achados de risco médio ou alto viram itens da triagem. Achados confirmados de risco baixo (por exemplo, páginas suas) ficam só no relatório.\nconst j = $input.first().json || {};\nconst out = [];\nfor (const r of (j.registros || [])) {\n  if (r.risco !== 'alto' && r.risco !== 'medio') continue;\n  const conf = r.classe === 'confirmado';\n  const nivel = r.risco === 'alto' ? (conf ? 'critico' : 'alto') : (conf ? 'alto' : 'medio');\n  out.push({ json: { id: r.id, titulo: 'Privacidade (' + (r.risco === 'alto' ? 'risco alto' : 'risco médio') + '): ' + String(r.titulo || r.host).slice(0, 100),\n    resumo: (String(r.resumo || '') + (r.acao && !/^nenhuma?$/i.test(r.acao) ? ' O que fazer: ' + r.acao : '') + ' Endereço: ' + r.url).slice(0, 750) + ' Relatório completo na pasta Monitor de Privacidade do Notas.', nivel, fonte: 'privacidade' } });\n}\nreturn out.slice(0, 10);"
+   }
+  },
+  {
+   "id": "criartriagem7712",
+   "name": "Criar triagem",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1820,
+    440
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/triagem/criar",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": {
+     "timeout": 60000
+    }
+   }
   }
  ],
  "connections": {
@@ -623,6 +670,11 @@
       "node": "Gravar no banco",
       "type": "main",
       "index": 0
+     },
+     {
+      "node": "Itens de triagem",
+      "type": "main",
+      "index": 0
      }
     ]
    ]
@@ -676,6 +728,17 @@
     [
      {
       "node": "Consultas",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Itens de triagem": {
+   "main": [
+    [
+     {
+      "node": "Criar triagem",
       "type": "main",
       "index": 0
      }

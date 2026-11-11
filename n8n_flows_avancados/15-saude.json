@@ -293,6 +293,53 @@
           "timeout": 60000
         }
       }
+    },
+    {
+      "id": "itenstriagem7721",
+      "name": "Itens de triagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        440
+      ],
+      "parameters": {
+        "jsCode": "// Sinais \"MUITO RELEVANTES\" do dia viram um item da triagem (alto; crítico se envolver febre ou oxigênio). Não é diagnóstico.\nconst P = $('Preparar').first().json;\nconst fortes = (P.rel || []).filter(x => /\\[MUITO RELEVANTE\\]$/.test(x)).map(x => x.replace(/ \\[MUITO RELEVANTE\\]$/, ''));\nif (!fortes.length) return [];\nconst grave = fortes.some(x => /febre|temperatura corporal|oxig[eê]nio|satura/i.test(x));\nreturn [{ json: { id: 'saude|' + P.ymd, titulo: 'Saúde: ' + fortes.length + ' sinal(is) muito fora do padrão', resumo: fortes.join('; ').slice(0, 650) + '. Resumo completo na pasta Saúde do Notas. Isto não é diagnóstico: se houver sintomas, procure atendimento.', nivel: grave ? 'critico' : 'alto', fonte: 'saude' } }];"
+      }
+    },
+    {
+      "id": "criartriagem7722",
+      "name": "Criar triagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        440
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/triagem/criar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
     }
   ],
   "connections": {
@@ -359,6 +406,11 @@
             "node": "Guardar resumo no banco",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Itens de triagem",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -401,6 +453,17 @@
         [
           {
             "node": "Gravar no banco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Itens de triagem": {
+      "main": [
+        [
+          {
+            "node": "Criar triagem",
             "type": "main",
             "index": 0
           }
