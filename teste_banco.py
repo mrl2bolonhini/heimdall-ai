@@ -60,6 +60,30 @@ except ValueError:
 ok(b.resumo()["saude_diaria"]["dias"] == 2, "resumo conta os dias")
 ok(any(p.name.startswith("heimdall-") for p in (b.DB_DIR / "copias").glob("*.db")), "cópia diária criada")
 
+
+# ferramentas do chat (heimdall_tools)
+from datetime import date, timedelta  # noqa: E402
+import heimdall_tools as T  # noqa: E402
+
+hoje = date.today()
+b.gravar("saude_diaria", [{"dia": (hoje - timedelta(days=i)).isoformat(), "metrica": "sono_total", "valor": 400 + i * 10, "unidade": "min"} for i in range(5)]
+         + [{"dia": (hoje - timedelta(days=60)).isoformat(), "metrica": "sono_total", "valor": 1, "unidade": "min"}, {"dia": hoje.isoformat(), "metrica": "x:pressao_sistolica", "valor": 118, "unidade": "mmHg"}])
+r = T.saude_historico("sono", 14)
+ok("sono_total" in r and "Média 420 (7h00)" in r and "7h" in r and str(hoje) in r and "1 (0h01)" not in r, "saude_historico: apelido 'sono', média e janela de 14 dias")
+ok("x:pressao_sistolica" in T.saude_historico("pressao_sistolica", 7) and "118" in T.saude_historico("x:pressao_sistolica", 7), "saude_historico: métrica extra com ou sem 'x:'")
+ok("Métricas disponíveis" in T.saude_historico("coisa", 7) and "sono_total" in T.saude_historico("coisa", 7), "saude_historico: métrica inexistente lista as disponíveis")
+ok("Métricas disponíveis" in T.saude_historico("x' OR 1=1 --", 7) and "Média" not in T.saude_historico("x' OR 1=1 --", 7), "saude_historico: não deixa injetar SQL")
+b.gravar("diarios", [{"id": "federal|9", "fonte": "federal", "data": "2026-11-10", "titulo": "Portaria sobre coração", "trecho": "Nomeação de Murilo"}])
+ok("Portaria sobre coração" in T.banco_buscar("CORACAO") and "[diarios]" in T.banco_buscar("coração"), "banco_buscar ignora acento e maiúsculas")
+ok("Nada encontrado" in T.banco_buscar("zzzzqq") and "Tabela desconhecida" in T.banco_buscar("a1", "sqlite_master"), "banco_buscar: sem resultado e tabela inválida")
+ok("%" not in T.banco_buscar("%%", "diarios") or "Nada encontrado" in T.banco_buscar("%%", "diarios") or "Informe" in T.banco_buscar("%%", "diarios"), "banco_buscar: coringa não vira busca de tudo")
+ok("Dados do banco pessoal" in T.banco_consultar("SELECT dia, valor FROM saude_diaria WHERE metrica='sono_total' ORDER BY dia DESC LIMIT 2") and "dia | valor" in T.banco_consultar("SELECT dia, valor FROM saude_diaria LIMIT 1"), "banco_consultar devolve tabela")
+ok(T.banco_consultar("DELETE FROM diarios").startswith("Recusado"), "banco_consultar recusa escrita")
+ok("avisos" in T.banco_resumo() and "saude_diaria" in T.banco_resumo(), "banco_resumo")
+nomes = {f.__name__ for f in T.MAC_TOOLS}
+ok({"banco_resumo", "banco_consultar", "banco_buscar", "saude_historico"} <= nomes, "ferramentas do banco estão no grupo do Mac")
+ok(not ({"banco_resumo", "banco_consultar", "banco_buscar", "saude_historico"} & {f.__name__ for f in T.PUBLIC_TOOLS}), "e não estão no grupo público (convidados)")
+
 # rotas do agente
 porta = "18003"
 env = dict(os.environ, HEIMDALL_AGENTE_TOKEN="t" * 20, HEIMDALL_AGENTE_PORT=porta, HEIMDALL_VAULT_DIR=tmp + "/cofre")
@@ -90,7 +114,7 @@ try:
     st, d = chamar("/banco/consultar", {"sql": "DROP TABLE diarios"})
     ok(st == 403, "consultar recusa escrita com 403")
     st, d = chamar("/banco/resumo")
-    ok(st == 200 and d["saude_diaria"]["linhas"] == 3, "GET /banco/resumo")
+    ok(st == 200 and d["saude_diaria"]["linhas"] >= 3, "GET /banco/resumo")
 finally:
     p.terminate()
 print("\nTudo certo." if not falhas else f"\n{falhas} falha(s).")

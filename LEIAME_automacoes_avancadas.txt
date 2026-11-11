@@ -204,3 +204,4 @@ Para trazer o histórico de saúde que já está no n8n (uma vez): python import
 Para conferir o que há no banco: python heimdall_banco.py
 Para consultar: python heimdall_banco.py --sql "SELECT dia, valor FROM saude_diaria WHERE metrica='hrv' ORDER BY dia DESC LIMIT 14"
 Só SELECT é aceito. Os fluxos mudaram: reinicie o agente e rode de novo bash instalar_automacoes_avancadas.sh e bash instalar_monitor_privacidade.sh (eles levam a memória dos fluxos para a versão nova). Antes, rode o importar_saude_n8n.py, por garantia.
+Perguntar ao banco pelo chat (ferramentas do Mac, depois de reiniciar o start_heimdall.sh): "como foi meu sono nas últimas duas semanas", "o que apareceu nos diários oficiais sobre mim este mês", "quais e-mails suspeitos chegaram", "o que o Second Brain ligou aos meus estudos de dados". As ferramentas são banco_resumo, banco_consultar, banco_buscar e saude_historico.

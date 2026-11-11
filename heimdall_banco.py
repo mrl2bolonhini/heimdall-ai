@@ -14,6 +14,7 @@ import re
 import sqlite3
 import threading
 import time
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -248,7 +249,12 @@ def _autorizador(acao, a1, a2, banco, gatilho):
     return sqlite3.SQLITE_OK if acao in permitidas else sqlite3.SQLITE_DENY
 
 
-def consulta_sql(sql: str, limite: int = 200) -> dict:
+def sem_acento(texto) -> str:
+    """Minúsculas e sem acento; também disponível dentro do SQL como sem_acento(coluna)."""
+    return unicodedata.normalize("NFKD", "" if texto is None else str(texto).lower()).encode("ascii", "ignore").decode()
+
+
+def consulta_sql(sql: str, limite: int = 200, params: tuple = ()) -> dict:
     """Roda um único SELECT em conexão somente leitura. Qualquer outra coisa é recusada."""
     sql = (sql or "").strip().rstrip(";").strip()
     if not re.match(r"(?is)^(select|with)\b", sql) or ";" in sql:
@@ -258,11 +264,12 @@ def consulta_sql(sql: str, limite: int = 200) -> dict:
         iniciar()
     con = conectar(somente_leitura=True)
     try:
+        con.create_function("sem_acento", 1, sem_acento, deterministic=True)
         con.set_authorizer(_autorizador)
         # interrompe consultas lentas (ex.: produto cartesiano)
         t0 = time.time()
         con.set_progress_handler(lambda: 1 if time.time() - t0 > 5 else 0, 10000)
-        cur = con.execute(sql)
+        cur = con.execute(sql, tuple(params))
         linhas = cur.fetchmany(limite + 1)
         colunas = [d[0] for d in cur.description or []]
         cortado = len(linhas) > limite
@@ -308,7 +315,8 @@ def tabelas_para_modelo() -> str:
         "privacidade(id, data, host, url, titulo, tipo, classe, risco, resumo, dados, acao, visto_em): achados do monitor de privacidade; risco: nenhum, baixo, medio, alto.\n"
         "avisos(id, quando, slot, titulo, linha, urgente): cada aviso de rotina que passou pelo resumo agrupado.\n"
         "analises(nota_id, titulo, pasta, resumo, tags, conceitos, entidades, conexoes, lacunas, perguntas, atualizado): análise do Second Brain de cada nota; "
-        "as colunas de lista são JSON."
+        "as colunas de lista são JSON.\n"
+        "Dentro do SQL, sem_acento(coluna) devolve o texto em minúsculas e sem acento (use em buscas: WHERE sem_acento(titulo) LIKE '%coracao%')."
     )
 
 

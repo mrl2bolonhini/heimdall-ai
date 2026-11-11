@@ -152,6 +152,28 @@ def ler_changelog():
     return blocos
 
 
+def ler_roadmap():
+    """ROADMAP.md: '## Etapa', uma linha de texto livre (a nota da etapa) e itens '- Título: descrição'."""
+    arq = AQUI / "ROADMAP.md"
+    if not arq.exists():
+        return [], ""
+    etapas, atual, intro = [], None, ""
+    for l in arq.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^##\s+(.+)$", l)
+        if m:
+            atual = {"nome": m.group(1).strip(), "nota": "", "itens": []}; etapas.append(atual); continue
+        m = re.match(r"^\s*[-*]\s+(.*)$", l)
+        if m and atual:
+            t, _, d = m.group(1).partition(": ")
+            atual["itens"].append((t.strip(), d.strip()))
+        elif l.strip() and not l.startswith(("#", "<!--")):
+            if atual:
+                atual["nota"] = (atual["nota"] + " " + l.strip()).strip()
+            else:
+                intro = (intro + " " + l.strip()).strip()
+    return etapas, intro
+
+
 # ---------------------------------------------------------------------------------------------------------
 # Textos escritos à mão
 # ---------------------------------------------------------------------------------------------------------
@@ -447,6 +469,12 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
     cl = ler_changelog()
     nv = "".join('<section aria-labelledby="d%s"><h2 id="d%s">%s%s</h2><ul>%s</ul></section>' % (b["data"], b["data"], H(b["data"] if b["data"]=="Anteriores" else b["data"][8:10] + "/" + b["data"][5:7] + "/" + b["data"][:4]), (" · " + H(b["titulo"])) if b["titulo"] else "", "".join("<li>%s</li>" % H(i) for i in b["itens"])) for b in cl) or "<p>Sem registros ainda.</p>"
     out["novidades.html"] = pagina("novidades.html", "Novidades", "Histórico de recursos do Heimdall-ai, do mais recente ao mais antigo.", f"<h1>Novidades</h1><p class=\"muted\">Gerado do arquivo CHANGELOG.md.</p>{nv}")
+    etapas, intro_rm = ler_roadmap()
+    rm = "".join('<section aria-labelledby="r%d"><h2 id="r%d">%s</h2>%s<ul>%s</ul></section>' % (
+        k, k, H(e["nome"]), ('<p class="muted">%s</p>' % H(e["nota"])) if e["nota"] else "",
+        "".join("<li><strong>%s</strong>%s</li>" % (H(t), (": " + H(d)) if d else "") for t, d in e["itens"])) for k, e in enumerate(etapas)) or "<p>Sem itens ainda.</p>"
+    out["roadmap.html"] = pagina("roadmap.html", "Roadmap", "Próximos recursos do Heimdall-ai: o que está em andamento, o que vem em seguida e as ideias em avaliação.",
+                                 f"<h1>Roadmap</h1><p>{H(intro_rm)}</p>{rm}<p>O que já foi entregue está em <a href=\"novidades.html\">Novidades</a>.</p>")
     out["404.html"] = pagina("404.html", "Página não encontrada", "Página não encontrada.", f'<h1>Página não encontrada</h1><p>Volte ao <a href="index.html">início</a> ou veja o <a href="arquitetura.html">mapa do projeto</a>.</p>')
     return out
 

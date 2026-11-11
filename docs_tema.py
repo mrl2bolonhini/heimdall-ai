@@ -171,7 +171,7 @@ nav.menu ul{list-style:none;margin:0;padding:0 0 .35rem;display:flex;gap:.15rem 
 nav.menu a{display:block;padding:.35rem 0;color:var(--muted);text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;font-size:.98rem}
 nav.menu a:hover{color:var(--ink)}
 nav.menu a[aria-current="page"]{color:var(--ink);font-weight:600;border-bottom-color:#ffc107}
-@media (min-width:1280px){.barra{flex-wrap:nowrap}nav.menu{width:auto;min-width:0}nav.menu ul{padding:0;gap:.15rem 1rem}nav.menu a{font-size:.94rem}}
+@media (min-width:720px){nav.menu ul{flex-wrap:wrap;overflow-x:visible}}
 /* texto */
 h1,h2,h3{font-family:var(--serif);letter-spacing:-.015em;line-height:1.15;margin:0}
 h1{font-size:clamp(2.15rem,5.2vw,3.35rem);margin:2.75rem 0 1.25rem}
@@ -315,6 +315,7 @@ PAGINAS = [
     ("fluxos.html", "Fluxos", "Fluxos do n8n e scripts"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
     ("novidades.html", "Novidades", "Histórico de recursos"),
+    ("roadmap.html", "Roadmap", "Próximos recursos"),
     ("marca.html", "Marca", "Logotipo, cores e tipografia"),
 ]
 SITE = "https://" + DOMINIO + "/"
@@ -374,7 +375,7 @@ def pagina(arquivo, titulo, descricao, corpo, home=False):
 <div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial">{simbolo_svg()}<span>Heimdall-ai</span></a>
 <p>&copy; 2026 {H(AUTOR)}. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
 <div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:{EMAIL}">{EMAIL}</a></li><li><a href="{LINKEDIN}">LinkedIn de {H(AUTOR)}</a></li></ul></div>
-<ul aria-label="Links do rodapé"><li><a href="{REPO}">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
+<ul aria-label="Links do rodapé"><li><a href="{REPO}">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
 </div></div></footer>
 <p id="aviso" class="sr" role="status" aria-live="polite"></p>
 <script src="heimdall.js" defer></script>

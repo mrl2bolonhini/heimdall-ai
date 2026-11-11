@@ -129,6 +129,10 @@ Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta
 | `memory_forget` | Mac (8000) | `memory_id` | Apaga uma memória pelo id (mostrado por memory_search). |
 | `rag_search` | Mac (8000) | `query, top_k=4, tema=''` | Busca trechos relevantes nos documentos pessoais do usuário (base de conhecimento). |
 | `rag_temas` | Mac (8000) | `` | Lista os temas (subpastas de knowledge/) da base de conhecimento e quantos trechos cada um tem. |
+| `banco_resumo` | Mac (8000) | `` | Mostra o que há no banco pessoal do usuário: quantas linhas e que período cada tabela cobre (saúde, diários oficiais, e-mails, estudos, privacidade, avisos, Second Brain). |
+| `banco_consultar` | Mac (8000) | `sql, limite=50` | Roda um único SELECT no banco pessoal do usuário (somente leitura) e devolve o resultado em linhas separadas por barra vertical. |
+| `banco_buscar` | Mac (8000) | `termo, tabela='', limite=5` | Procura um termo (sem diferenciar maiúsculas nem acentos) em todo o banco pessoal do usuário: diários oficiais, e-mails de serviços públicos, achados de privacidade, estudos, análises do Second Brain, avisos e resumos de saúde. |
+| `saude_historico` | Mac (8000) | `metrica, dias=14` | Histórico de uma métrica de saúde do usuário nos últimos dias, com média, mínimo, máximo e o último valor. |
 <!-- /AUTO:FERRAMENTAS -->
 
 Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e docstring claro, acrescente-a a `PUBLIC_TOOLS` ou `MAC_TOOLS`, reinicie, rode `test_mcp.py` e `gerar_docs.py`. Ferramentas públicas são seguras para convidados; as do Mac acessam arquivos e memória e são só do administrador.
@@ -155,6 +159,8 @@ Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e
 <!-- /AUTO:FLUXOS -->
 
 Resumos agrupados: os avisos de rotina saem em três notificações por dia (6h, 8h e 10h) pelo fluxo "Resumo agrupado" (webhook `heimdall-resumo`); falhas, GitOps, alerta do Mac e o estudo continuam na hora. O "Monitor de saúde" (webhook `heimdall-saude`, resumo às 5h50) recebe os dados do Health Auto Export; as regras decidem o que é relevante e o modelo só redige.
+
+Banco pessoal: o Mac guarda um SQLite (`banco/heimdall.db`, fora do Git) com saúde, diários oficiais, e-mails de serviços públicos (sem o corpo), estudos, privacidade, avisos e a análise do Second Brain; o chat consulta pelas ferramentas `banco_*` e `saude_historico`. Os planos estão em `ROADMAP.md` e no site.
 
 Instalação: `bash instalar_fluxos_n8n.sh` (básicos), `bash instalar_automacoes_avancadas.sh` (GitOps, digest, Second Brain, estudo) e `bash instalar_monitor_privacidade.sh` (monitor e diários). Rodar um fluxo agora: `docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=<id>`.
 

@@ -1,0 +1,29 @@
+# Roadmap
+
+Os próximos recursos do Heimdall-ai, na ordem em que pretendo fazê-los. São intenções, não promessas, e não têm data.
+
+<!-- Formato: cada "## Nome" é uma etapa, com uma linha de nota e itens "- Título: descrição". O site é gerado deste arquivo (python3 gerar_docs.py); o que for entregue passa para o CHANGELOG.md. -->
+
+## Em andamento
+O que está sendo montado ou conferido agora.
+- Perguntas ao banco pelo chat: quatro ferramentas (banco_resumo, banco_consultar, banco_buscar e saude_historico) deixam perguntar em português sobre saúde, diários oficiais, e-mails, estudos, privacidade e Second Brain. Falta validar com cada modelo local e acertar o formato das respostas.
+
+## Em seguida
+O que vem depois de validar o banco.
+- Painel de saúde em subdomínio próprio: histórico de sono, pulso em repouso, variabilidade cardíaca e passos, lido do banco. Acesso só com senha forte e verificação em dois passos, atrás do limite de tentativas da Cloudflare.
+- Painel do Second Brain: notas, conexões entre áreas, lacunas de estudo e perguntas sugeridas.
+- Login pelo GitHub: entrar nos painéis com a conta do GitHub, depois de reforçá-la com senha gerada e chave de acesso.
+- Cópia de segurança: o banco copiado para fora do Mac, criptografado.
+
+## Depois
+Recursos maiores, que dependem dos anteriores.
+- Documentos pesquisáveis: Paperless-ngx em subdomínio próprio, com leitura de texto nos PDFs e etiquetas automáticas.
+- Painéis livres: Metabase ou Grafana sobre o banco, para cruzar saúde, estudos e avisos.
+- Progresso de estudos: temas vistos, lacunas e revisão espaçada, a partir da tabela de estudos.
+- Linha do tempo de privacidade e processos: diários oficiais, menções na internet e e-mails de serviços públicos lado a lado.
+
+## Ideias em avaliação
+Ainda sem decisão.
+- Resposta como suporte@: enviar e-mails com o endereço de suporte pelo Cloudflare Email Sending.
+- Áudio no iPhone: anexar o áudio dos estudos às notas direto pelo iPhone.
+- Política de dados para clientes: se o projeto passar a atendê-los, acesso separado por usuário e nenhum dado real compartilhado.
