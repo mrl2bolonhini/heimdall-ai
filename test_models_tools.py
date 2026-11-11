@@ -82,7 +82,7 @@ def load_models():
     models = []
     for m in cfg["model_list"]:
         if (m.get("model_info") or {}).get("supports_function_calling") is False:
-            continue  # modelos sem ferramentas (como o medgemma) têm teste próprio
+            continue  # modelos sem ferramentas têm teste próprio
         ollama_name = m["litellm_params"]["model"].split("/", 1)[1]
         models.append((m["model_name"], ollama_name))
     return models

@@ -219,7 +219,6 @@ MODELOS_NOTAS = {
     "gemma-4-uncensored": ("Uso geral", "Confira a chamada de ferramentas com test_models_tools.py."),
     "dolphin3-cyber-8b": ("Segurança e conversa livre", "Confira a chamada de ferramentas com test_models_tools.py."),
     "deepseek-coder-v2:16b": ("Código (usado pelo GitOps)", "O GitOps usa este modelo na etapa de análise de código."),
-    "medgemma": ("Modelo médico pequeno; só para testes", "Trocou o sentido de uma variação nos testes de saúde; não é usado nos fluxos."),
     "qwen3-vl-instruct": ("Modelo padrão dos fluxos; entende imagens", "Declara suporte a imagens no LiteLLM."),
     "bonsai-27b": ("Modelo grande, respostas mais elaboradas", "Confira a chamada de ferramentas com test_models_tools.py."),
 }

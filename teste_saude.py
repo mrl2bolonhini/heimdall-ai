@@ -1,9 +1,9 @@
 """Testa a análise de saúde com dados FICTÍCIOS de um dia, pelo LiteLLM (porta 9000).
 As regras (em Python) decidem o que é relevante e o modelo só redige; assim ele não trata variação pequena como alerta.
 Uso, na pasta do projeto, com o sistema no ar:
-    python3 teste_saude.py                       # modelo medgemma
+    python3 teste_saude.py                       # modelo qwen3-vl-instruct
     python3 teste_saude.py qwen3-vl-instruct     # compara com outro modelo do litellm_config.yaml
-    python3 teste_saude.py medgemma --bruto      # prompt antigo, sem as regras (para comparar)"""
+    python3 teste_saude.py qwen3-vl-instruct --bruto      # prompt antigo, sem as regras (para comparar)"""
 import json, re, sys, time, urllib.request
 from pathlib import Path
 
@@ -63,7 +63,7 @@ else:
               "(4) o que observar nas próximas 48 horas e em que caso procurar um médico, com um critério claro (por exemplo febre acima de 37,8, falta de ar ou dor no peito).\n\n"
               "RELEVANTE:\n" + "\n".join(linhas_rel) + "\n\nDENTRO DO NORMAL:\n" + "\n".join(linhas_ok) + "\n\nPADRÃO GERAL: " + padrao)
 
-modelo = next((a for a in sys.argv[1:] if not a.startswith("--")), "medgemma")
+modelo = next((a for a in sys.argv[1:] if not a.startswith("--")), "qwen3-vl-instruct")
 corpo = json.dumps({"model": modelo, "messages": [{"role": "user", "content": PROMPT}], "max_tokens": 700, "temperature": 0.2}).encode()
 req = urllib.request.Request("http://localhost:9000/v1/chat/completions", data=corpo, headers={"Authorization": "Bearer " + chave(), "Content-Type": "application/json"})
 t0 = time.time()

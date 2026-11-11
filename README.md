@@ -100,7 +100,6 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 | `deepseek-coder-v2:16b` | `ollama_chat/deepseek-coder-v2:16b` | Código (usado pelo GitOps) | O GitOps usa este modelo na etapa de análise de código. |
 | `qwen3-vl-instruct` | `ollama_chat/qwen3-vl:8b-instruct` | Modelo padrão dos fluxos; entende imagens | Declara suporte a imagens no LiteLLM. |
 | `bonsai-27b` | `ollama_chat/eriktonon/bonsai-2-uncensored:27b` | Modelo grande, respostas mais elaboradas | Confira a chamada de ferramentas com test_models_tools.py. |
-| `medgemma` | `ollama_chat/medgemma:4b` | Modelo médico pequeno; só para testes | Trocou o sentido de uma variação nos testes de saúde; não é usado nos fluxos. |
 <!-- /AUTO:MODELOS -->
 
 Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta chamada de ferramentas) e contexto de 8192 tokens. Modelo padrão dos fluxos: `qwen3-vl-instruct` (`HEIMDALL_FLOW_MODEL`). Embeddings: `nomic-embed-text`.
