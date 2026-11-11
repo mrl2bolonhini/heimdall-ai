@@ -3,6 +3,7 @@
 Uso:
     python heimdall_mcp.py --group mac      # ferramentas do Mac (admin), porta 8000
     python heimdall_mcp.py --group public   # ferramentas seguras para convidados, porta 8001
+    python heimdall_mcp.py --group dados    # só o banco pessoal, para o Open WebUI, 127.0.0.1:8004
     python heimdall_mcp.py                  # todas juntas, porta 8000 (comportamento antigo)
 
 O start_heimdall.sh sobe os grupos "mac" e "public" em dois processos. O LiteLLM
@@ -26,6 +27,8 @@ GROUPS = {
     "all": ("Heimdall", 8000, lambda m: m.ALL_TOOLS),
     "mac": ("Heimdall Mac", 8000, lambda m: m.MAC_TOOLS),
     "public": ("Heimdall Público", 8001, lambda m: m.PUBLIC_TOOLS),
+    # só o banco pessoal, escutando apenas em 127.0.0.1, para o Open WebUI (veja DADOS_TOOLS)
+    "dados": ("Heimdall Dados", 8004, lambda m: m.DADOS_TOOLS),
 }
 
 parser = argparse.ArgumentParser(description="Servidor MCP do Heimdall")
@@ -78,4 +81,4 @@ if args.group in ("mac", "all"):
 
 
 if __name__ == "__main__":
-    mcp.run(transport="http", host="0.0.0.0", port=port, path="/mcp")
+    mcp.run(transport="http", host="127.0.0.1" if args.group == "dados" else "0.0.0.0", port=port, path="/mcp")

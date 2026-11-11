@@ -961,5 +961,15 @@ MAC_TOOLS = [
     saude_historico,
 ]
 
+# DADOS_TOOLS: só as ferramentas do banco pessoal, para o Open WebUI. Servidas em 127.0.0.1:8004, sem leitura nem escrita
+# de arquivos, para que o chat (que fica na internet, atrás de login) nunca alcance o disco do Mac.
+DADOS_TOOLS = [
+    banco_resumo,
+    banco_consultar,
+    banco_buscar,
+    saude_historico,
+    get_system_timestamp,
+]
+
 # Lista completa: o agente local (heimdall_agent.py) usa todas.
 ALL_TOOLS = PUBLIC_TOOLS + MAC_TOOLS

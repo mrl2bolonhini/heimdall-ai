@@ -117,7 +117,7 @@ def diagrama():
          + _no(450, 34, 190, 62, "LiteLLM", "acesso único, porta 9000", L["acesso"])
          + _no(690, 34, 210, 62, "Ollama", "6 modelos no Mac", L["modelos"])
          + seta("M162 65H208") + seta("M402 65H448") + seta("M642 65H688")
-         + _no(450, 134, 190, 62, "Servidores MCP", "portas 8000 e 8001", L["ferr"])
+         + _no(450, 134, 190, 62, "Servidores MCP", "portas 8000, 8001 e 8004", L["ferr"])
          + _no(690, 134, 210, 62, "Qdrant e SearXNG", "documentos e busca", L["ferr"])
          + seta("M545 98V132") + seta("M642 165H688")
          + '<text x="0" y="262" class="ln">Automação</text>'

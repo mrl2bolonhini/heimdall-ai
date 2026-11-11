@@ -183,6 +183,7 @@ SERVICOS = [
     ("LiteLLM Proxy", "Ponto único de acesso (API compatível com a da OpenAI) aos modelos; também expõe os servidores MCP.", "9000", "start_heimdall.sh"),
     ("Servidor MCP do Mac (admin)", "Ferramentas que mexem no Mac: arquivos, métricas, memória e documentos.", "8000", "start_heimdall.sh"),
     ("Servidor MCP público", "Ferramentas seguras para convidados: web, cálculo, feeds, transcrições.", "8001", "start_heimdall.sh"),
+    ("Servidor MCP de dados", "Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain), para o Open WebUI. Escuta só em 127.0.0.1.", "8004", "start_heimdall.sh"),
     ("SearXNG", "Mecanismo de busca na web que não rastreia quem pesquisa.", "8080", "start_heimdall.sh (Docker)"),
     ("Qdrant", "Base vetorial: busca por significado nos documentos e nas notas.", "6333", "start_heimdall.sh (Docker)"),
     ("Open WebUI", "Interface de chat usada pelos convidados e pelo dono.", "3000", "--webui ou HEIMDALL_WEBUI=1"),
@@ -338,7 +339,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <ol>
 <li><strong>Modelos.</strong> O Ollama executa os modelos de linguagem no Mac (chip Apple, 16 GB de memória).</li>
 <li><strong>Acesso único.</strong> O LiteLLM Proxy (porta 9000) expõe todos os modelos em uma API compatível com a da OpenAI e repassa os servidores MCP. Clientes como o Open WebUI e aplicativos de iPhone falam só com ele.</li>
-<li><strong>Ferramentas.</strong> Dois servidores MCP em Python (portas 8000 e 8001) e o servidor de documentação da AWS dão ao modelo ferramentas: busca na web, leitura de páginas, arquivos, memória, documentos pessoais.</li>
+<li><strong>Ferramentas.</strong> Três servidores MCP em Python (portas 8000, 8001 e 8004, este só com o banco pessoal e só nesta máquina) e o servidor de documentação da AWS dão ao modelo ferramentas: busca na web, leitura de páginas, arquivos, memória, documentos pessoais.</li>
 <li><strong>Automações.</strong> O n8n agenda fluxos que usam os modelos e as ferramentas. O agente do Mac (porta 8003) liga o n8n, que roda em Docker, aos aplicativos do macOS. O Bark entrega os avisos no iPhone.</li>
 </ol></section>
 <section aria-labelledby="caminho"><h2 id="caminho">O caminho de uma pergunta no chat</h2>
@@ -418,7 +419,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="mcp"><h2 id="mcp">O que é o MCP</h2>
 <p>O Model Context Protocol é o padrão que permite ao modelo chamar ferramentas externas. No Heimdall-ai, os servidores são escritos em Python com a biblioteca FastMCP e o LiteLLM os expõe em <code>http://&lt;host&gt;:9000/mcp</code> para os clientes.</p>
 {tabela("Servidores MCP", ["Nome", "Função", "Endereço", "Transporte"], srv)}
-<p>Os grupos de ferramentas são separados de propósito: o Open WebUI dos convidados se conecta só ao grupo público (porta 8001), e o grupo do Mac fica restrito ao administrador.</p></section>
+<p>Os grupos de ferramentas são separados de propósito: o Open WebUI dos convidados se conecta só ao grupo público (porta 8001), e o grupo do Mac fica restrito ao administrador. O Open WebUI do administrador se conecta ao grupo de dados (porta 8004), que só tem as ferramentas do banco pessoal e escuta apenas em 127.0.0.1.</p></section>
 {blocos}
 <section aria-labelledby="teste"><h2 id="teste">Como testar</h2>
 {comando("venv/bin/python test_mcp.py", "Testa os dois grupos direto e pelo LiteLLM")}

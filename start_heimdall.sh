@@ -27,6 +27,7 @@ fi
 CONFIG_FILE="$PROJECT_DIR/litellm_config.yaml"
 MCP_PORT=8000
 PUBLIC_MCP_PORT=8001
+DADOS_MCP_PORT=8004
 TERMINAL_PORT=8002
 AGENTE_PORT="${HEIMDALL_AGENTE_PORT:-8003}"
 LLM_PORT=9000
@@ -102,6 +103,7 @@ lsof -ti:$AGENTE_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LLM_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$MCP_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$PUBLIC_MCP_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$DADOS_MCP_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$TERMINAL_PORT | xargs kill -9 2>/dev/null
 sleep 1
 
@@ -377,23 +379,25 @@ echo "[5/7] Subindo os servidores MCP do Heimdall..."
 MCP_PID=$!
 "$VENV_PYTHON" heimdall_mcp.py --group public > mcp_public_debug.log 2>&1 &
 MCP_PUBLIC_PID=$!
+"$VENV_PYTHON" heimdall_mcp.py --group dados > mcp_dados_debug.log 2>&1 &
+MCP_DADOS_PID=$!
 TERMINAL_PID=""
 AGENTE_PID=""
-trap 'kill $MCP_PID $MCP_PUBLIC_PID $TERMINAL_PID $AGENTE_PID 2>/dev/null' EXIT INT TERM
+trap 'kill $MCP_PID $MCP_PUBLIC_PID $MCP_DADOS_PID $TERMINAL_PID $AGENTE_PID 2>/dev/null' EXIT INT TERM
 
-for PORT in $MCP_PORT $PUBLIC_MCP_PORT; do
+for PORT in $MCP_PORT $PUBLIC_MCP_PORT $DADOS_MCP_PORT; do
     COUNTER=0
     while ! nc -z localhost $PORT > /dev/null 2>&1; do
         sleep 1
         COUNTER=$((COUNTER+1))
         if [ $COUNTER -gt 15 ]; then
-            echo "Erro: o servidor MCP da porta $PORT demorou demais para subir. Veja mcp_debug.log e mcp_public_debug.log:"
-            tail -n 20 mcp_debug.log mcp_public_debug.log
+            echo "Erro: o servidor MCP da porta $PORT demorou demais para subir. Veja mcp_debug.log, mcp_public_debug.log e mcp_dados_debug.log:"
+            tail -n 20 mcp_debug.log mcp_public_debug.log mcp_dados_debug.log
             exit 1
         fi
     done
 done
-echo "[5/7] MCP do Mac (admin) em http://localhost:$MCP_PORT/mcp e MCP público em http://localhost:$PUBLIC_MCP_PORT/mcp"
+echo "[5/7] MCP do Mac (admin) em http://localhost:$MCP_PORT/mcp e MCP público em http://localhost:$PUBLIC_MCP_PORT/mcp e MCP de dados (só o banco, só esta máquina) em http://127.0.0.1:$DADOS_MCP_PORT/mcp"
 
 # --- Agente do Mac (opcional): lê o app Notas e grava notas/Markdown só em pastas "Heimdall*" ---
 # Usa a biblioteca padrão do Python. Escuta em 127.0.0.1 (HEIMDALL_AGENTE_HOST=0.0.0.0 abre à rede) e exige o token.

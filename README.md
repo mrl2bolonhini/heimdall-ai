@@ -23,7 +23,7 @@ Heimdall, na mitologia nórdica, guarda a ponte Bifröst. O projeto vigia e cone
 
 1. Ollama executa os modelos no Mac.
 2. LiteLLM Proxy (porta 9000) é o ponto único de acesso, com API compatível com a da OpenAI, e expõe os servidores MCP.
-3. Dois servidores MCP em Python (8000, só do Mac; 8001, público) e o servidor de documentação da AWS fornecem as ferramentas.
+3. Três servidores MCP em Python (8000, só do Mac; 8001, público; 8004, só o banco pessoal e só em 127.0.0.1, para o Open WebUI) e o servidor de documentação da AWS fornecem as ferramentas.
 4. O n8n agenda fluxos; o agente do Mac (8003) liga o n8n ao app Notas, ao Calendário, aos Lembretes e à voz do macOS; o Bark entrega avisos no iPhone.
 
 Detalhes em https://heimdall-ai.tech/arquitetura.html.
@@ -37,6 +37,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | LiteLLM Proxy | 9000 | Ponto único de acesso (API compatível com a da OpenAI) aos modelos; também expõe os servidores MCP. |
 | Servidor MCP do Mac (admin) | 8000 | Ferramentas que mexem no Mac: arquivos, métricas, memória e documentos. |
 | Servidor MCP público | 8001 | Ferramentas seguras para convidados: web, cálculo, feeds, transcrições. |
+| Servidor MCP de dados | 8004 | Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain), para o Open WebUI. Escuta só em 127.0.0.1. |
 | SearXNG | 8080 | Mecanismo de busca na web que não rastreia quem pesquisa. |
 | Qdrant | 6333 | Base vetorial: busca por significado nos documentos e nas notas. |
 | Open WebUI | 3000 | Interface de chat usada pelos convidados e pelo dono. |

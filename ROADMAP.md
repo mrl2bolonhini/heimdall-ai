@@ -6,7 +6,7 @@ Os próximos recursos do Heimdall-ai, na ordem em que pretendo fazê-los. São i
 
 ## Em andamento
 O que está sendo montado ou conferido agora.
-- Perguntas ao banco pelo chat: quatro ferramentas (banco_resumo, banco_consultar, banco_buscar e saude_historico) deixam perguntar em português sobre saúde, diários oficiais, e-mails, estudos, privacidade e Second Brain. Falta validar com cada modelo local e acertar o formato das respostas.
+- Perguntas ao banco pelo chat: quatro ferramentas (banco_resumo, banco_consultar, banco_buscar e saude_historico) deixam perguntar em português sobre saúde, diários oficiais, e-mails, estudos, privacidade e Second Brain. Já funcionam pelo terminal; falta ligá-las ao chat, validar com cada modelo local (um modelo já inventou números quando não tinha acesso à ferramenta) e acertar o formato das respostas.
 
 ## Em seguida
 O que vem depois de validar o banco.
