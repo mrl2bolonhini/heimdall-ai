@@ -1,371 +1,450 @@
 {
- "id": "hdDiario00000001",
- "name": "Heimdall: diários oficiais (diário)",
- "active": false,
- "nodes": [
-  {
-   "id": "todososdiass8h30890",
-   "name": "Todos os dias às 9h40",
-   "type": "n8n-nodes-base.scheduleTrigger",
-   "typeVersion": 1.2,
-   "position": [
-    0,
-    0
-   ],
-   "parameters": {
-    "rule": {
-     "interval": [
-      {
-       "field": "cronExpression",
-       "expression": "40 9 * * *"
+  "id": "hdDiario00000001",
+  "name": "Heimdall: diários oficiais (diário)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "todososdiass8h30890",
+      "name": "Todos os dias às 9h40",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "40 9 * * *"
+            }
+          ]
+        }
       }
-     ]
-    }
-   }
-  },
-  {
-   "id": "consultas956",
-   "name": "Consultas",
-   "type": "n8n-nodes-base.code",
-   "typeVersion": 2,
-   "position": [
-    260,
-    0
-   ],
-   "parameters": {
-    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\n\nconst nomes = [CFG.nome].concat(CFG.variacoes || []).map(s => String(s || '').trim()).filter(Boolean).slice(0, 3);\nif (nomes.length === 0) throw new Error('Nenhum nome configurado. Rode: bash instalar_monitor_privacidade.sh --reconfigurar');\nconst desde = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);\nconst enc = encodeURIComponent;\nconst itens = [];\nnomes.forEach(n => {\n  const frase = '\"' + n + '\"';\n  // municipal e federal passam pelo agente do Mac (o n8n no Docker falhou no TLS com o Querido Diário); o agente só busca sites permitidos\n  const viaAgente = u => 'http://host.docker.internal:8003/web/get?u=' + enc(u);\n  itens.push({ json: { fonte: 'municipal', nome: n, agente: true, url: viaAgente('https://api.queridodiario.org.br/gazettes?territory_ids=3550308&querystring=' + enc(frase) + '&published_since=' + desde + '&size=10&excerpt_size=300&number_of_excerpts=2&sort_by=descending_date') } });\n  itens.push({ json: { fonte: 'federal', nome: n, agente: true, url: viaAgente('https://www.in.gov.br/consulta/-/buscar/dou?q=' + enc(frase) + '&s=todos&exactDate=semana&sortType=0') } });\n  itens.push({ json: { fonte: 'estadual', nome: n, url: 'http://searxng:8080/search?format=json&safesearch=0&language=pt-BR&categories=general&time_range=month&q=' + enc(frase + ' (site:doe.sp.gov.br OR site:imprensaoficial.com.br)') } });\n});\n// Diário da Justiça (DJEN, do CNJ): consulta pelo número da OAB, uma vez por execução (não por nome). Passa pelo agente do Mac porque a API só atende IPs do Brasil.\nif (CFG.oab && CFG.oab.numero && CFG.oab.uf) {\n  const dmy = d => ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear();\n  const ini = new Date(Date.now() - 7 * 86400000), fim = new Date();\n  itens.push({ json: { fonte: 'justica', nome: 'OAB ' + CFG.oab.numero + '/' + CFG.oab.uf, agente: true, url: 'http://host.docker.internal:8003/web/get?u=' + enc('https://comunicaapi.pje.jus.br/api/v1/comunicacao?numeroOab=' + CFG.oab.numero + '&ufOab=' + CFG.oab.uf + '&meio=D&itensPorPagina=100&dataDisponibilizacaoInicio=' + dmy(ini) + '&dataDisponibilizacaoFim=' + dmy(fim)) } });\n}\nreturn itens;"
-   }
-  },
-  {
-   "id": "buscarnosdirios883",
-   "name": "Buscar nos diários",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    520,
-    0
-   ],
-   "parameters": {
-    "method": "GET",
-    "url": "={{ $json.url }}",
-    "sendHeaders": true,
-    "headerParameters": {
-     "parameters": [
-      {
-       "name": "User-Agent",
-       "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15"
+    },
+    {
+      "id": "consultas956",
+      "name": "Consultas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\n\nconst nomes = [CFG.nome].concat(CFG.variacoes || []).map(s => String(s || '').trim()).filter(Boolean).slice(0, 3);\nif (nomes.length === 0) throw new Error('Nenhum nome configurado. Rode: bash instalar_monitor_privacidade.sh --reconfigurar');\nsd.pend = sd.pend || {};\nconst modo = (($input.first() || { json: {} }).json || {}).modo || 'diario';\nconst maisAntiga = Object.keys(sd.pend).reduce((m, k) => Math.min(m, (sd.pend[k] || {}).primeira || Date.now()), Date.now());\nconst dias = Math.min(30, Math.max(7, Math.ceil((Date.now() - maisAntiga) / 86400000) + 2));\nconst desde = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);\nconst enc = encodeURIComponent;\nconst itens = [];\nnomes.forEach(n => {\n  const frase = '\"' + n + '\"';\n  // municipal e federal passam pelo agente do Mac (o n8n no Docker falhou no TLS com o Querido Diário); o agente só busca sites permitidos\n  const viaAgente = u => 'http://host.docker.internal:8003/web/get?u=' + enc(u);\n  itens.push({ json: { fonte: 'municipal', nome: n, agente: true, url: viaAgente('https://api.queridodiario.org.br/gazettes?territory_ids=3550308&querystring=' + enc(frase) + '&published_since=' + desde + '&size=10&excerpt_size=300&number_of_excerpts=2&sort_by=descending_date') } });\n  itens.push({ json: { fonte: 'federal', nome: n, agente: true, url: viaAgente('https://www.in.gov.br/consulta/-/buscar/dou?q=' + enc(frase) + '&s=todos&exactDate=semana&sortType=0') } });\n  itens.push({ json: { fonte: 'estadual', nome: n, url: 'http://searxng:8080/search?format=json&safesearch=0&language=pt-BR&categories=general&time_range=month&q=' + enc(frase + ' (site:doe.sp.gov.br OR site:imprensaoficial.com.br)') } });\n});\n// Diário da Justiça (DJEN, do CNJ): consulta pelo número da OAB, uma vez por execução (não por nome). Passa pelo agente do Mac porque a API só atende IPs do Brasil.\nif (CFG.oab && CFG.oab.numero && CFG.oab.uf) {\n  const dmy = d => ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear();\n  const ini = new Date(Date.now() - dias * 86400000), fim = new Date();\n  itens.push({ json: { fonte: 'justica', nome: 'OAB ' + CFG.oab.numero + '/' + CFG.oab.uf, agente: true, url: 'http://host.docker.internal:8003/web/get?u=' + enc('https://comunicaapi.pje.jus.br/api/v1/comunicacao?numeroOab=' + CFG.oab.numero + '&ufOab=' + CFG.oab.uf + '&meio=D&itensPorPagina=100&dataDisponibilizacaoInicio=' + dmy(ini) + '&dataDisponibilizacaoFim=' + dmy(fim)) } });\n}\n// Modo \"repetir\": roda a cada 2 horas e consulta só as fontes que falharam (por até 72 h). O modo diário consulta tudo.\nlet sel = itens;\nif (modo === 'repetir') {\n  const ativas = Object.keys(sd.pend).filter(k => Date.now() - ((sd.pend[k] || {}).primeira || 0) < 72 * 3600 * 1000);\n  if (!ativas.length) return [];\n  sel = itens.filter(i => ativas.includes(i.json.fonte));\n}\nreturn sel.map(i => ({ json: Object.assign({ modo: modo }, i.json) }));\n"
+      }
+    },
+    {
+      "id": "buscarnosdirios883",
+      "name": "Buscar nos diários",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15"
+            },
+            {
+              "name": "Accept",
+              "value": "*/*"
+            },
+            {
+              "name": "X-Heimdall-Token",
+              "value": "={{ $json.agente ? '__AGENTE_TOKEN__' : '' }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
       },
-      {
-       "name": "Accept",
-       "value": "*/*"
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "reunirmenes673",
+      "name": "Reunir menções",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\n\nconst consultas = $('Consultas').all();\nconst modo = ((consultas[0] || { json: {} }).json || {}).modo || 'diario';\nconst consultadas = new Set(consultas.map(x => x.json.fonte));\nconst avisosParciais = [];\nsd.pend = sd.pend || {};\nconst resp = $input.all();\nconst ROT = { municipal: 'Município de São Paulo (Querido Diário)', federal: 'Diário Oficial da União', estadual: 'Diário Oficial do Estado de SP (busca indireta, cobertura parcial)', justica: 'Diário da Justiça Eletrônico Nacional (pela sua OAB)' };\nconst fontes = { municipal: { ok: 0, falha: 0, motivo: '' }, federal: { ok: 0, falha: 0, motivo: '' }, estadual: { ok: 0, falha: 0, motivo: '' }, justica: { ok: 0, falha: 0, motivo: '' } };\nconst achados = { municipal: [], federal: [], estadual: [], justica: [] };\nconst agora = Date.now();\nObject.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\nconst falhou = (f, m) => { fontes[f].falha++; if (!fontes[f].motivo) fontes[f].motivo = m; };\nresp.forEach((r, i) => {\n  const c = (consultas[i] || { json: {} }).json;\n  const f = c.fonte;\n  if (!fontes[f]) return;\n  const j = r.json || {};\n  if (j.error) { falhou(f, 'sem resposta (' + String((j.error.message || j.error)).slice(0, 80) + ')'); return; }\n  let lista = [];\n  try {\n    if (f === 'municipal') {\n      const d = JSON.parse(j.data);\n      if (!Array.isArray(d.gazettes)) throw new Error('formato inesperado');\n      lista = d.gazettes.map(g => ({ titulo: (g.territory_name || 'São Paulo') + ' - edição de ' + g.date + (g.edition ? ' (nº ' + g.edition + ')' : ''), data: g.date, url: g.url, trecho: (g.excerpts || []).join(' ... ').replace(/\\s+/g, ' ').slice(0, 500) }));\n    } else if (f === 'federal') {\n      const m = /<script[^>]*id=\"_br_com_seatecnologia_in_buscadou_BuscaDouPortlet_params\"[^>]*>([\\s\\S]*?)<\\/script>/.exec(String(j.data || ''));\n      if (!m) throw new Error('a página do DOU mudou de formato ou bloqueou o acesso');\n      const d = JSON.parse(m[1]);\n      const arr = d.jsonArray || d.results;\n      if (!Array.isArray(arr)) throw new Error('lista de resultados não encontrada');\n      lista = arr.map(x => ({ titulo: String(x.title || x.pubName || 'Publicação do DOU').replace(/<[^>]+>/g, '').slice(0, 200), data: x.pubDate || '', url: x.urlTitle ? 'https://www.in.gov.br/web/dou/-/' + x.urlTitle : '', trecho: String(x.content || x.abstract || '').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').slice(0, 500) }));\n    } else if (f === 'justica') {\n      const d = JSON.parse(j.data);\n      const arr = d.items || d.data || d.results;\n      if (!Array.isArray(arr)) throw new Error('formato inesperado (chaves: ' + Object.keys(d).slice(0, 8).join(', ') + ')');\n      lista = arr.map(x => {\n        const proc = x.numeroprocessocommascara || x.numero_processo || x.numeroProcesso || '';\n        const trib = x.siglaTribunal || x.sigla_tribunal || '';\n        const orgao = x.nomeOrgao || x.orgao || '';\n        const tipo = x.tipoComunicacao || x.tipoDocumento || x.tipo || '';\n        const texto = String(x.texto || x.conteudo || '').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n        return { id: String(x.id || x.hash || ''), titulo: ([trib, tipo, proc ? 'processo ' + proc : ''].filter(Boolean).join(' - ') || 'Comunicação do Diário da Justiça') + ((x.data_cancelamento || x.ativo === false) ? ' (CANCELADA' + (x.motivo_cancelamento ? ': ' + String(x.motivo_cancelamento).slice(0, 80) : '') + ')' : ''), data: x.data_disponibilizacao || x.dataDisponibilizacao || '', url: x.link || (proc ? 'https://comunica.pje.jus.br/consulta?numeroProcesso=' + String(proc).replace(/\\D/g, '') : 'https://comunica.pje.jus.br/'), trecho: (orgao ? orgao + '. ' : '') + texto.slice(0, 450) };\n      });\n      if (typeof d.count === 'number' && d.count > arr.length) avisosParciais.push('há ' + d.count + ' comunicações no Diário da Justiça e só as ' + arr.length + ' primeiras foram lidas');\n    } else {\n      const d = JSON.parse(typeof j.data === 'string' ? j.data : JSON.stringify(j));\n      if (!Array.isArray(d.results)) throw new Error('formato inesperado');\n      lista = d.results.filter(x => /doe\\.sp\\.gov\\.br|imprensaoficial\\.com\\.br/i.test(String(x.url || ''))).map(x => ({ titulo: String(x.title || '').slice(0, 200), data: '', url: x.url, trecho: String(x.content || '').slice(0, 500) }));\n    }\n  } catch (e) { falhou(f, String(e.message).slice(0, 100)); return; }\n  fontes[f].ok++;\n  lista.slice(0, 10).forEach(x => {\n    if (!x.url) return;\n    const chave = f + '|' + String(x.id || x.url).toLowerCase();\n    if (sd.vistos[chave]) return;\n    sd.vistos[chave] = { t: agora };\n    achados[f].push(Object.assign({ nome: c.nome }, x));\n  });\n});\nconst agora2 = Date.now();\nconst respondeu = Object.keys(fontes).filter(f => consultadas.has(f) && fontes[f].ok > 0);\nconst recuperadas = [];\nObject.keys(fontes).forEach(f => {\n  if (!consultadas.has(f)) return;\n  if (fontes[f].falha > 0) {\n    const p = sd.pend[f] || { primeira: agora2, avisou24: false, tentativas: 0 };\n    p.ultima = agora2; p.tentativas = (p.tentativas || 0) + 1; p.motivo = fontes[f].motivo;\n    sd.pend[f] = p;\n  } else if (sd.pend[f]) { recuperadas.push(f); delete sd.pend[f]; }\n});\nconst pendentes = Object.keys(sd.pend);\n// aviso de indisponibilidade: uma vez só, depois de cerca de 24 h sem resposta (23 h de folga, para cair na consulta do dia seguinte)\nconst avisos24 = pendentes.filter(f => !sd.pend[f].avisou24 && agora2 - sd.pend[f].primeira >= 23 * 3600 * 1000);\navisos24.forEach(f => { sd.pend[f].avisou24 = true; });\nconst out = [];\nconst hoje = new Date().toISOString().slice(0, 10);\nconst hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });\nconst qual = recuperadas.map(f => ROT[f]).join(', ');\nconst parcial = avisosParciais.length ? 'Atenção: ' + avisosParciais.join('; ') + '. ' : '';\nconst total = Object.keys(achados).reduce((s, f) => s + achados[f].length, 0);\nconst slot = modo === 'repetir' ? 'direto' : 'meio';\nif (total > 0) {\n  let md = '# Diários oficiais - ' + hoje + '\\n\\n' + (qual ? 'Fonte recuperada: ' + qual + ' voltou a responder.\\n\\n' : '') + (parcial ? parcial + '\\n\\n' : '') + (pendentes.length ? 'Fontes sem resposta nesta consulta (nova tentativa a cada 2 horas; aviso quando voltarem): ' + pendentes.map(f => ROT[f] + ' (' + sd.pend[f].motivo + ')').join('; ') + '.\\n\\n' : '') + 'Menções novas ao seu nome e comunicações novas da sua OAB. Confira o documento antes de concluir qualquer coisa: pode haver homônimo, e prazos devem ser conferidos no sistema oficial. Nunca clique em links recebidos por e-mail ou mensagem sobre isso; abra os sites oficiais por conta própria.\\n\\n';\n  Object.keys(achados).forEach(f => {\n    if (!achados[f].length) return;\n    md += '## ' + ROT[f] + '\\n\\n';\n    achados[f].forEach((x, k) => { md += (k + 1) + '. ' + x.titulo + (x.data ? ' - ' + x.data : '') + '\\n   Nome pesquisado: ' + x.nome + '\\n   Trecho: ' + (x.trecho || '(sem trecho)') + '\\n   Link: ' + x.url + '\\n\\n'; });\n  });\n  const resumo = Object.keys(achados).filter(f => achados[f].length).map(f => achados[f].length + ' no ' + (f === 'federal' ? 'federal' : f === 'estadual' ? 'estadual' : f === 'justica' ? 'Diário da Justiça' : 'municipal')).join(', ');\n  const registros = [];\n  Object.keys(achados).forEach(f => achados[f].forEach(x => registros.push({ id: (f + '|' + String(x.id || x.url)).toLowerCase(), fonte: f, data: x.data || '', titulo: x.titulo, nome: x.nome, trecho: x.trecho || '', url: x.url })));\n  out.push({ json: { vazio: false, registros, slot, titulo: 'Diários oficiais ' + hoje + (modo === 'repetir' ? ' (' + hora + ')' : ''), markdown: md, tituloBark: 'Diários oficiais: ' + total + ' menção(ões) nova(s)' + (qual ? ' (fonte recuperada)' : ''), bark: (qual ? qual + ' voltou a responder. ' : '') + resumo + '. ' + parcial + 'Leia o resumo na pasta Monitor de Privacidade do Notas.' } });\n} else if (modo === 'diario' && respondeu.length > 0) {\n  out.push({ json: { vazio: true, slot: 'meio', titulo: 'Diários oficiais: nada novo', corpo: parcial + (pendentes.length ? 'Nenhuma menção nova ao seu nome ou à sua OAB nas fontes que responderam hoje.' : 'Nenhuma menção nova ao seu nome ou à sua OAB nos diários consultados.') } });\n} else if (modo === 'repetir' && recuperadas.length) {\n  out.push({ json: { vazio: true, slot: 'direto', nivel: 'passive', titulo: 'Diários oficiais: fonte recuperada', corpo: qual + ' voltou a responder. Nada novo com o seu nome ou a sua OAB.' } });\n}\nif (avisos24.length) {\n  out.push({ json: { vazio: true, aviso24: true, slot: 'meio', nivel: 'active', titulo: 'Diários oficiais: fonte indisponível há 24 horas', corpo: avisos24.map(f => ROT[f] + ' (' + sd.pend[f].motivo + ')').join('; ') + '. Continuo tentando a cada 2 horas e aviso quando voltar. Isso não quer dizer que não haja publicações nessas fontes.' } });\n}\nreturn out;\n"
+      }
+    },
+    {
+      "id": "hmenesnovas987",
+      "name": "Há menções novas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1a4ca267-d640-5df1-bd0a-aaedb8caa51d",
+              "leftValue": "={{ $json.vazio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "gravarnonotas413",
+      "name": "Gravar no Notas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/notas/gravar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ pasta: 'Monitor de Privacidade', titulo: $json.titulo, markdown: $json.markdown }) }}",
+        "options": {
+          "timeout": 120000
+        }
       },
-      {
-       "name": "X-Heimdall-Token",
-       "value": "={{ $json.agente ? '__AGENTE_TOKEN__' : '' }}"
-      }
-     ]
+      "onError": "continueRegularOutput"
     },
-    "options": {
-     "timeout": 60000,
-     "response": {
-      "response": {
-       "responseFormat": "text"
-      }
-     },
-     "batching": {
-      "batch": {
-       "batchSize": 1,
-       "batchInterval": 2000
-      }
-     }
-    }
-   },
-   "onError": "continueRegularOutput",
-   "retryOnFail": true,
-   "maxTries": 2,
-   "waitBetweenTries": 5000
-  },
-  {
-   "id": "reunirmenes673",
-   "name": "Reunir menções",
-   "type": "n8n-nodes-base.code",
-   "typeVersion": 2,
-   "position": [
-    780,
-    0
-   ],
-   "parameters": {
-    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\n\nconst consultas = $('Consultas').all();\nconst resp = $input.all();\nconst ROT = { municipal: 'Município de São Paulo (Querido Diário)', federal: 'Diário Oficial da União', estadual: 'Diário Oficial do Estado de SP (busca indireta, cobertura parcial)', justica: 'Diário da Justiça Eletrônico Nacional (pela sua OAB)' };\nconst fontes = { municipal: { ok: 0, falha: 0, motivo: '' }, federal: { ok: 0, falha: 0, motivo: '' }, estadual: { ok: 0, falha: 0, motivo: '' }, justica: { ok: 0, falha: 0, motivo: '' } };\nconst achados = { municipal: [], federal: [], estadual: [], justica: [] };\nconst agora = Date.now();\nObject.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\nconst falhou = (f, m) => { fontes[f].falha++; if (!fontes[f].motivo) fontes[f].motivo = m; };\nresp.forEach((r, i) => {\n  const c = (consultas[i] || { json: {} }).json;\n  const f = c.fonte;\n  if (!fontes[f]) return;\n  const j = r.json || {};\n  if (j.error) { falhou(f, 'sem resposta (' + String((j.error.message || j.error)).slice(0, 80) + ')'); return; }\n  let lista = [];\n  try {\n    if (f === 'municipal') {\n      const d = JSON.parse(j.data);\n      if (!Array.isArray(d.gazettes)) throw new Error('formato inesperado');\n      lista = d.gazettes.map(g => ({ titulo: (g.territory_name || 'São Paulo') + ' - edição de ' + g.date + (g.edition ? ' (nº ' + g.edition + ')' : ''), data: g.date, url: g.url, trecho: (g.excerpts || []).join(' ... ').replace(/\\s+/g, ' ').slice(0, 500) }));\n    } else if (f === 'federal') {\n      const m = /<script[^>]*id=\"_br_com_seatecnologia_in_buscadou_BuscaDouPortlet_params\"[^>]*>([\\s\\S]*?)<\\/script>/.exec(String(j.data || ''));\n      if (!m) throw new Error('a página do DOU mudou de formato ou bloqueou o acesso');\n      const d = JSON.parse(m[1]);\n      const arr = d.jsonArray || d.results;\n      if (!Array.isArray(arr)) throw new Error('lista de resultados não encontrada');\n      lista = arr.map(x => ({ titulo: String(x.title || x.pubName || 'Publicação do DOU').replace(/<[^>]+>/g, '').slice(0, 200), data: x.pubDate || '', url: x.urlTitle ? 'https://www.in.gov.br/web/dou/-/' + x.urlTitle : '', trecho: String(x.content || x.abstract || '').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').slice(0, 500) }));\n    } else if (f === 'justica') {\n      const d = JSON.parse(j.data);\n      const arr = d.items || d.data || d.results;\n      if (!Array.isArray(arr)) throw new Error('formato inesperado (chaves: ' + Object.keys(d).slice(0, 8).join(', ') + ')');\n      lista = arr.map(x => {\n        const proc = x.numeroprocessocommascara || x.numero_processo || x.numeroProcesso || '';\n        const trib = x.siglaTribunal || x.sigla_tribunal || '';\n        const orgao = x.nomeOrgao || x.orgao || '';\n        const tipo = x.tipoComunicacao || x.tipoDocumento || x.tipo || '';\n        const texto = String(x.texto || x.conteudo || '').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n        return { id: String(x.id || x.hash || ''), titulo: ([trib, tipo, proc ? 'processo ' + proc : ''].filter(Boolean).join(' - ') || 'Comunicação do Diário da Justiça') + ((x.data_cancelamento || x.ativo === false) ? ' (CANCELADA' + (x.motivo_cancelamento ? ': ' + String(x.motivo_cancelamento).slice(0, 80) : '') + ')' : ''), data: x.data_disponibilizacao || x.dataDisponibilizacao || '', url: x.link || (proc ? 'https://comunica.pje.jus.br/consulta?numeroProcesso=' + String(proc).replace(/\\D/g, '') : 'https://comunica.pje.jus.br/'), trecho: (orgao ? orgao + '. ' : '') + texto.slice(0, 450) };\n      });\n      if (typeof d.count === 'number' && d.count > arr.length) falhou(f, 'há ' + d.count + ' comunicações e só as ' + arr.length + ' primeiras foram lidas');\n    } else {\n      const d = JSON.parse(typeof j.data === 'string' ? j.data : JSON.stringify(j));\n      if (!Array.isArray(d.results)) throw new Error('formato inesperado');\n      lista = d.results.filter(x => /doe\\.sp\\.gov\\.br|imprensaoficial\\.com\\.br/i.test(String(x.url || ''))).map(x => ({ titulo: String(x.title || '').slice(0, 200), data: '', url: x.url, trecho: String(x.content || '').slice(0, 500) }));\n    }\n  } catch (e) { falhou(f, String(e.message).slice(0, 100)); return; }\n  fontes[f].ok++;\n  lista.slice(0, 10).forEach(x => {\n    if (!x.url) return;\n    const chave = f + '|' + String(x.id || x.url).toLowerCase();\n    if (sd.vistos[chave]) return;\n    sd.vistos[chave] = { t: agora };\n    achados[f].push(Object.assign({ nome: c.nome }, x));\n  });\n});\nconst falhas = Object.keys(fontes).filter(f => fontes[f].falha > 0);\nconst todasFalharam = Object.keys(fontes).every(f => fontes[f].ok === 0);\nif (todasFalharam) throw new Error('Nenhum diário oficial respondeu. ' + falhas.map(f => ROT[f] + ': ' + fontes[f].motivo).join('; '));\nconst total = Object.keys(achados).reduce((s, f) => s + achados[f].length, 0);\nconst avisoFalha = falhas.length ? 'Atenção: ' + falhas.map(f => ROT[f] + ' não pôde ser consultado (' + fontes[f].motivo + ')').join('; ') + '. Isso não quer dizer que não haja nada nessas fontes. ' : '';\nif (total === 0) {\n  return [{ json: { vazio: true, titulo: falhas.length ? 'Diários oficiais: consulta incompleta' : 'Diários oficiais: nada novo', corpo: avisoFalha + (falhas.length ? 'Nas demais fontes, nada novo com o seu nome.' : 'Nenhuma menção nova ao seu nome ou à sua OAB nos diários consultados.') } }];\n}\nconst hoje = new Date().toISOString().slice(0, 10);\nlet md = '# Diários oficiais - ' + hoje + '\\n\\n' + (avisoFalha ? avisoFalha + '\\n\\n' : '') + 'Menções novas ao seu nome e comunicações novas da sua OAB. Confira o documento antes de concluir qualquer coisa: pode haver homônimo, e prazos devem ser conferidos no sistema oficial. Nunca clique em links recebidos por e-mail ou mensagem sobre isso; abra os sites oficiais por conta própria.\\n\\n';\nObject.keys(achados).forEach(f => {\n  if (!achados[f].length) return;\n  md += '## ' + ROT[f] + '\\n\\n';\n  achados[f].forEach((x, k) => { md += (k + 1) + '. ' + x.titulo + (x.data ? ' - ' + x.data : '') + '\\n   Nome pesquisado: ' + x.nome + '\\n   Trecho: ' + (x.trecho || '(sem trecho)') + '\\n   Link: ' + x.url + '\\n\\n'; });\n});\nconst resumo = Object.keys(achados).filter(f => achados[f].length).map(f => achados[f].length + ' no ' + (f === 'federal' ? 'federal' : f === 'estadual' ? 'estadual' : f === 'justica' ? 'Diário da Justiça' : 'municipal')).join(', ');\nconst registros = [];\nObject.keys(achados).forEach(f => achados[f].forEach(x => registros.push({ id: (f + '|' + String(x.id || x.url)).toLowerCase(), fonte: f, data: x.data || '', titulo: x.titulo, nome: x.nome, trecho: x.trecho || '', url: x.url })));\nreturn [{ json: { vazio: false, registros, titulo: 'Diários oficiais ' + hoje, markdown: md, tituloBark: 'Diários oficiais: ' + total + ' menção(ões) nova(s)', bark: resumo + '. ' + avisoFalha + 'Leia o resumo na pasta Monitor de Privacidade do Notas.' } }];"
-   }
-  },
-  {
-   "id": "hmenesnovas987",
-   "name": "Há menções novas?",
-   "type": "n8n-nodes-base.if",
-   "typeVersion": 2.2,
-   "position": [
-    1040,
-    0
-   ],
-   "parameters": {
-    "conditions": {
-     "options": {
-      "caseSensitive": true,
-      "leftValue": "",
-      "typeValidation": "loose",
-      "version": 2
-     },
-     "conditions": [
-      {
-       "id": "1a4ca267-d640-5df1-bd0a-aaedb8caa51d",
-       "leftValue": "={{ $json.vazio }}",
-       "rightValue": "",
-       "operator": {
-        "type": "boolean",
-        "operation": "true",
-        "singleValue": true
-       }
-      }
-     ],
-     "combinator": "and"
-    },
-    "options": {}
-   }
-  },
-  {
-   "id": "gravarnonotas413",
-   "name": "Gravar no Notas",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1300,
-    0
-   ],
-   "parameters": {
-    "method": "POST",
-    "url": "http://host.docker.internal:8003/notas/gravar",
-    "sendHeaders": true,
-    "headerParameters": {
-     "parameters": [
-      {
-       "name": "X-Heimdall-Token",
-       "value": "__AGENTE_TOKEN__"
+    {
+      "id": "enviaraoiphone496",
+      "name": "Enviar ao iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/heimdall-resumo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ slot: $('Reunir menções').first().json.slot || 'meio', titulo: $('Reunir menções').first().json.tituloBark, linha: String($('Reunir menções').first().json.bark).slice(0, 700) }) }}",
+        "options": {
+          "timeout": 30000
+        }
       },
-      {
-       "name": "Content-Type",
-       "value": "application/json"
-      }
-     ]
+      "onError": "continueRegularOutput"
     },
-    "sendBody": true,
-    "specifyBody": "json",
-    "jsonBody": "={{ JSON.stringify({ pasta: 'Monitor de Privacidade', titulo: $json.titulo, markdown: $json.markdown }) }}",
-    "options": {
-     "timeout": 120000
-    }
-   },
-   "onError": "continueRegularOutput"
-  },
-  {
-   "id": "enviaraoiphone496",
-   "name": "Enviar ao iPhone",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1560,
-    0
-   ],
-   "parameters": {
-    "method": "POST",
-    "url": "http://localhost:5678/webhook/heimdall-resumo",
-    "sendHeaders": true,
-    "headerParameters": {
-     "parameters": [
-      {
-       "name": "Content-Type",
-       "value": "application/json"
-      }
-     ]
+    {
+      "id": "executaragora387",
+      "name": "Executar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        220
+      ],
+      "parameters": {}
     },
-    "sendBody": true,
-    "specifyBody": "json",
-    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: $('Reunir menções').first().json.tituloBark, linha: String($('Reunir menções').first().json.bark).slice(0, 700) }) }}",
-    "options": {
-     "timeout": 30000
-    }
-   },
-   "onError": "continueRegularOutput"
-  },
-  {
-   "id": "executaragora387",
-   "name": "Executar agora",
-   "type": "n8n-nodes-base.manualTrigger",
-   "typeVersion": 1,
-   "position": [
-    0,
-    220
-   ],
-   "parameters": {}
-  },
-  {
-   "id": "avisarsemmenes15",
-   "name": "Avisar sem menções",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1040,
-    220
-   ],
-   "parameters": {
-    "method": "POST",
-    "url": "http://localhost:5678/webhook/heimdall-resumo",
-    "sendHeaders": true,
-    "headerParameters": {
-     "parameters": [
-      {
-       "name": "Content-Type",
-       "value": "application/json"
-      }
-     ]
-    },
-    "sendBody": true,
-    "specifyBody": "json",
-    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: $json.titulo, linha: String($json.corpo).slice(0, 700) }) }}",
-    "options": {
-     "timeout": 30000
-    }
-   },
-   "onError": "continueRegularOutput"
-  },
-  {
-   "id": "gravarnobanco411",
-   "name": "Gravar no banco",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1300,
-    220
-   ],
-   "onError": "continueRegularOutput",
-   "parameters": {
-    "method": "POST",
-    "url": "http://host.docker.internal:8003/banco/gravar",
-    "sendHeaders": true,
-    "headerParameters": {
-     "parameters": [
-      {
-       "name": "X-Heimdall-Token",
-       "value": "__AGENTE_TOKEN__"
+    {
+      "id": "avisarsemmenes15",
+      "name": "Avisar sem menções",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/heimdall-resumo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ slot: $json.slot || 'meio', titulo: $json.titulo, linha: String($json.corpo).slice(0, 700), nivel: $json.nivel }) }}",
+        "options": {
+          "timeout": 30000
+        }
       },
-      {
-       "name": "Content-Type",
-       "value": "application/json"
-      }
-     ]
+      "onError": "continueRegularOutput"
     },
-    "sendBody": true,
-    "specifyBody": "json",
-    "jsonBody": "={{ JSON.stringify({ tabela: 'diarios', registros: $json.registros || [] }) }}",
-    "options": {
-     "timeout": 60000
+    {
+      "id": "gravarnobanco411",
+      "name": "Gravar no banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        220
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/banco/gravar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ tabela: 'diarios', registros: $json.registros || [] }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "mododiario7741",
+      "name": "Modo diário",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        130,
+        110
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: { modo: 'diario' } }];"
+      }
+    },
+    {
+      "id": "acadaduashoras3306",
+      "name": "A cada 2 horas (repetir falhas)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        440
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 */2 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "modorepetir5128",
+      "name": "Modo repetir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        130,
+        440
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: { modo: 'repetir' } }];"
+      }
     }
-   }
+  ],
+  "connections": {
+    "Consultas": {
+      "main": [
+        [
+          {
+            "node": "Buscar nos diários",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar nos diários": {
+      "main": [
+        [
+          {
+            "node": "Reunir menções",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reunir menções": {
+      "main": [
+        [
+          {
+            "node": "Há menções novas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Há menções novas?": {
+      "main": [
+        [
+          {
+            "node": "Avisar sem menções",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gravar no Notas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gravar no banco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gravar no Notas": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar agora": {
+      "main": [
+        [
+          {
+            "node": "Modo diário",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todos os dias às 9h40": {
+      "main": [
+        [
+          {
+            "node": "Modo diário",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modo diário": {
+      "main": [
+        [
+          {
+            "node": "Consultas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A cada 2 horas (repetir falhas)": {
+      "main": [
+        [
+          {
+            "node": "Modo repetir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modo repetir": {
+      "main": [
+        [
+          {
+            "node": "Consultas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "errorWorkflow": "hdFalhaAviso0001"
   }
- ],
- "connections": {
-  "Consultas": {
-   "main": [
-    [
-     {
-      "node": "Buscar nos diários",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "Buscar nos diários": {
-   "main": [
-    [
-     {
-      "node": "Reunir menções",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "Reunir menções": {
-   "main": [
-    [
-     {
-      "node": "Há menções novas?",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "Há menções novas?": {
-   "main": [
-    [
-     {
-      "node": "Avisar sem menções",
-      "type": "main",
-      "index": 0
-     }
-    ],
-    [
-     {
-      "node": "Gravar no Notas",
-      "type": "main",
-      "index": 0
-     },
-     {
-      "node": "Gravar no banco",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "Gravar no Notas": {
-   "main": [
-    [
-     {
-      "node": "Enviar ao iPhone",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "Executar agora": {
-   "main": [
-    [
-     {
-      "node": "Consultas",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "Todos os dias às 9h40": {
-   "main": [
-    [
-     {
-      "node": "Consultas",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  }
- },
- "settings": {
-  "executionOrder": "v1",
-  "timezone": "America/Sao_Paulo",
-  "errorWorkflow": "hdFalhaAviso0001"
- }
 }

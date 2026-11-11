@@ -234,7 +234,7 @@ FLUXO_DESCRICAO = {
     "hdSecondBrain001": "Observa as notas alteradas do app Notas (nunca as de pastas privadas), cria embeddings, encontra conexões e lacunas e grava a análise na pasta Cérebro.",
     "hdFalhaAviso0001": "Quando qualquer fluxo falha, avisa no iPhone qual fluxo, em que etapa e por quê. Fluxos nunca falham em silêncio.",
     "hdMonitor00000001": "Pesquisa na web os identificadores pessoais configurados pelo dono (nome, e-mails, usuários) em busca de menções, comentários, vazamentos e imagens, separa homônimos, analisa o risco e grava o relatório. Tem memória: só avisa o que é novo.",
-    "hdDiario00000001": "Procura o nome do dono nos diários oficiais do município de São Paulo, da União e do Estado de SP e, se a OAB estiver configurada, as comunicações dela no Diário da Justiça Eletrônico Nacional (CNJ). Avisa só o que for novo. Se uma fonte falhar, o aviso diz qual e nunca finge que não há nada.",
+    "hdDiario00000001": "Procura o nome do dono nos diários oficiais do município de São Paulo, da União e do Estado de SP e, se a OAB estiver configurada, as comunicações dela no Diário da Justiça Eletrônico Nacional (CNJ). Avisa só o que for novo. Se uma fonte externa falhar, repete a consulta dela a cada 2 horas (até 72 h), avisa na hora quando voltar e, depois de cerca de 24 h fora do ar, manda um único aviso de indisponibilidade. Nunca finge que não há nada.",
     "hdResumo00000001": "Junta os avisos de rotina em três notificações por dia (6h, 8h e 10h), em vez de uma por fluxo. Avisos urgentes e os de situação (falhas, GitOps, alerta do Mac) continuam na hora.",
     "hdSaude000000001": "Recebe os dados do app Saúde (iPhone e Apple Watch) e escreve às 5h50 um resumo de sono, pulso, variabilidade, respiração e atividade contra a média de 30 dias. As regras decidem o que é relevante, o modelo só redige e uma verificação barra texto com sentido trocado.",
     "hdLembrete0000001": "Lembrete mensal para conferir, nos aplicativos oficiais, serviços que exigem login (INSS, FGTS, Carteira de Trabalho, Registrato e Serasa).",
@@ -360,7 +360,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li><strong>Pastas privadas são intocáveis.</strong> Notas de pastas marcadas como privadas nunca são lidas, indexadas nem analisadas. Se a verificação falhar, nenhuma nota é entregue.</li>
 <li><strong>O agente só escreve onde deve.</strong> Grava apenas nas pastas do próprio Heimdall e nas pastas de temas de estudo.</li>
 <li><strong>Autenticidade antes de confiança.</strong> O vigia de e-mail só trata como oficial o remetente que o Gmail confirmou, e nunca segue links.</li>
-<li><strong>Sem falha silenciosa.</strong> Quando uma fonte não responde, o aviso diz isso e nunca finge que não há novidade.</li>
+<li><strong>Falha externa não vira falso &quot;nada novo&quot;.</strong> Quando uma fonte de fora não responde, o fluxo tenta de novo a cada 2 horas, avisa assim que ela volta e, se ela passar de cerca de 24 horas fora do ar, manda um único aviso de indisponibilidade. Nunca finge que não há novidade.</li>
 <li><strong>Entradas externas são dados, não ordens.</strong> Textos de páginas, e-mails e documentos passados ao modelo são tratados como conteúdo não confiável.</li></ul></section>
 """)
 
