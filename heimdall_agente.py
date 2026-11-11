@@ -311,16 +311,19 @@ tell application "Notes" to return (count of notes) as string
 '''
 
 
-def osascript(script: str, *args: str) -> str:
+def osascript(script: str, *args: str, timeout: int = 0) -> str:
     """Roda um AppleScript (arquivo temporário) com argumentos e devolve a saída."""
     with tempfile.NamedTemporaryFile("w", suffix=".applescript", delete=False, encoding="utf-8") as f:
         f.write(script)
         caminho = f.name
+    limite = timeout or OSASCRIPT_TIMEOUT
     try:
         r = subprocess.run(
             ["osascript", caminho, *args],
-            capture_output=True, text=True, timeout=OSASCRIPT_TIMEOUT,
+            capture_output=True, text=True, timeout=limite,
         )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("o macOS não respondeu em %d s (provável pedido de permissão aberto na tela do Mac)" % limite) from None
     finally:
         try:
             os.unlink(caminho)
@@ -802,7 +805,7 @@ def criar_lembrete(dado: dict) -> dict:
 def osascript_travado(script: str, *args: str) -> str:
     """O app Lembretes também atende um pedido de cada vez."""
     with _lock:
-        return osascript(script, *args)
+        return osascript(script, *args, timeout=45)
 
 
 # Só estes sites podem ser buscados por aqui (o n8n no Docker às vezes falha no TLS com o Querido Diário e o DOU).

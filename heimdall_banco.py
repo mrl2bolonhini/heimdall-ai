@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS triagem (
     prioridade_usuario TEXT NOT NULL DEFAULT '',    -- alta, media, baixa, nenhuma, apagada: como você deixou o lembrete
     decidido_em TEXT NOT NULL DEFAULT '',
     adiado_ate TEXT NOT NULL DEFAULT '',
+    lembrete INTEGER NOT NULL DEFAULT 1,            -- 1 = o lembrete já existe no app Lembretes; 0 = ainda falta criar
     avisos INTEGER NOT NULL DEFAULT 0,
     ultimo_aviso TEXT NOT NULL DEFAULT '',
     atualizado TEXT NOT NULL
@@ -180,6 +181,8 @@ def iniciar() -> None:
         con = conectar()
         try:
             con.executescript(ESQUEMA)
+            if "lembrete" not in [r[1] for r in con.execute("PRAGMA table_info(triagem)")]:   # bancos criados antes desta coluna
+                con.execute("ALTER TABLE triagem ADD COLUMN lembrete INTEGER NOT NULL DEFAULT 1")
             con.commit()
         finally:
             con.close()

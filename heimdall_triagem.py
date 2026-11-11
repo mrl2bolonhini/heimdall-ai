@@ -205,8 +205,18 @@ def _atualizar(tid: str, **campos) -> None:
 # ----------------------------------------------------------------------------------------
 # Criar
 # ----------------------------------------------------------------------------------------
+def _corpo(resumo: str) -> str:
+    return (resumo + "\n\n" if resumo else "") + INSTRUCAO
+
+
+def _criar_lembrete(osa, tid: str, row: dict) -> str:
+    return osa(AS_CRIAR, tid, row["titulo"], _corpo(row.get("resumo", "")), str(PRIORIDADE_INICIAL[row["nivel"]]), NOME_LISTA)
+
+
 def criar(dado: dict, osa) -> dict:
-    """dado: {id (origem estável), titulo, resumo, nivel: critico|alto|medio, fonte}. osa(script, *args) roda o AppleScript."""
+    """dado: {id (origem estável), titulo, resumo, nivel: critico|alto|medio, fonte}. osa(script, *args) roda o AppleScript.
+    O item é registrado no banco ANTES de pedir o lembrete: se o app Lembretes não responder (por exemplo, permissão pendente no
+    Mac), nada se perde; o ciclo tenta criar o lembrete de novo e o Bark continua avisando."""
     origem = _texto(dado.get("id"), 300)
     titulo = _texto(dado.get("titulo"), 150)
     if not origem or not titulo:
@@ -217,18 +227,21 @@ def criar(dado: dict, osa) -> dict:
     fonte = re.sub(r"[^a-z0-9_-]", "", str(dado.get("fonte", "")).lower())[:20]
     resumo = _texto(dado.get("resumo"), 900)
     tid = gerar_id(origem)
-    corpo = (resumo + "\n\n" if resumo else "") + INSTRUCAO
-    r = osa(AS_CRIAR, tid, titulo, corpo, str(PRIORIDADE_INICIAL[nivel]), NOME_LISTA)
     agora = _iso(_agora())
     banco.iniciar() if not banco.DB_PATH.exists() else None
     with banco._trava:
         con = banco.conectar()
         try:
-            con.execute("INSERT OR IGNORE INTO triagem (id, criado, fonte, nivel, titulo, resumo, estado, atualizado) "
-                        "VALUES (?, ?, ?, ?, ?, ?, 'pendente', ?)", (tid, agora, fonte, nivel, titulo, resumo, agora))
+            con.execute("INSERT OR IGNORE INTO triagem (id, criado, fonte, nivel, titulo, resumo, estado, lembrete, atualizado) "
+                        "VALUES (?, ?, ?, ?, ?, ?, 'pendente', 0, ?)", (tid, agora, fonte, nivel, titulo, resumo, agora))
             con.commit()
         finally:
             con.close()
+    try:
+        r = _criar_lembrete(osa, tid, {"titulo": titulo, "resumo": resumo, "nivel": nivel})
+    except Exception as e:  # noqa: BLE001
+        raise RuntimeError("item registrado, mas o lembrete não pôde ser criado agora (o ciclo tenta de novo): " + str(e)[:200]) from e
+    _atualizar(tid, lembrete=1)
     return {"ok": True, "id": tid, "lembrete": r}
 
 
@@ -277,9 +290,13 @@ def deve_avisar(row: dict, prioridade: str, agora: datetime) -> tuple:
     return (dentro and agora - _dt(row["ultimo_aviso"]) >= intervalo), critico
 
 
-def montar_aviso(row: dict, critico: bool, pendentes: int) -> dict:
+def montar_aviso(row: dict, critico: bool, pendentes: int, sem_lembrete: bool = False) -> dict:
     corpo = (row.get("resumo") or "")[:350]
-    corpo = (corpo + "\n" if corpo else "") + "Abra o app Lembretes, lista " + NOME_LISTA + ". " + INSTRUCAO
+    if sem_lembrete:
+        corpo = (corpo + "\n" if corpo else "") + ("O lembrete ainda não foi criado no app Lembretes (autorização pendente no Mac); "
+                                                  "o aviso continua até isso ser resolvido.")
+    else:
+        corpo = (corpo + "\n" if corpo else "") + "Abra o app Lembretes, lista " + NOME_LISTA + ". " + INSTRUCAO
     p = {"title": (("CRÍTICO: " if critico else "Triagem: ") + row["titulo"])[:100], "body": corpo[:900], "group": "triagem",
          "level": "critical" if critico else "timeSensitive", "badge": pendentes}
     if critico:
@@ -318,21 +335,57 @@ def enviar_bark(payload: dict) -> bool:
 # ----------------------------------------------------------------------------------------
 def ciclo(osa, enviar=enviar_bark, agora: datetime = None) -> dict:
     agora = agora or _agora()
-    lista_existe, lembretes = ler_lembretes(osa)
-    res = {"pendentes": 0, "concluidas": 0, "descartadas": 0, "adiadas": 0, "classificadas": 0, "avisados": [], "falhas_aviso": 0,
-           "lista_existe": lista_existe}
-    if not lista_existe:
-        return res
+    res = {"pendentes": 0, "concluidas": 0, "descartadas": 0, "adiadas": 0, "classificadas": 0, "lembretes_criados": 0,
+           "avisados": [], "falhas_aviso": 0, "lista_existe": True, "erro_lembretes": ""}
+    try:
+        lista_existe, lembretes = ler_lembretes(osa)
+    except Exception as e:  # noqa: BLE001 - app Lembretes sem resposta (por exemplo, permissão pendente no Mac)
+        lista_existe, lembretes = True, {}
+        res["erro_lembretes"] = str(e)[:200]
+    res["lista_existe"] = lista_existe
+    sem_acesso = bool(res["erro_lembretes"])
     linhas = _linhas()
+    # 1. cria os lembretes que ainda faltam (itens registrados quando o app Lembretes não respondia)
+    if not sem_acesso:
+        criou = False
+        for tid, row in linhas.items():
+            if row["estado"] == "pendente" and not row["lembrete"]:
+                try:
+                    _criar_lembrete(osa, tid, row)
+                except Exception as e:  # noqa: BLE001
+                    res["erro_lembretes"] = str(e)[:200]
+                    sem_acesso = True
+                    break
+                _atualizar(tid, lembrete=1)
+                row["lembrete"] = 1
+                res["lembretes_criados"] += 1
+                criou = True
+        if criou and not sem_acesso:
+            try:
+                lista_existe, lembretes = ler_lembretes(osa)
+                res["lista_existe"] = lista_existe
+            except Exception as e:  # noqa: BLE001
+                res["erro_lembretes"] = str(e)[:200]
+                sem_acesso = True
+    # 2. lê as suas decisões e decide quem recebe aviso
     a_avisar = []
     for tid, row in linhas.items():
         if row["estado"] != "pendente":
             continue
         lem = lembretes.get(tid)
         if lem is None:
-            if agora - _dt(row["criado"]) > timedelta(minutes=10):
-                _atualizar(tid, estado="descartada", prioridade_usuario="apagada", decidido_em=_iso(agora))
-                res["descartadas"] += 1
+            if row["lembrete"] and lista_existe and not sem_acesso:
+                if agora - _dt(row["criado"]) > timedelta(minutes=10):
+                    _atualizar(tid, estado="descartada", prioridade_usuario="apagada", decidido_em=_iso(agora))
+                    res["descartadas"] += 1
+                continue
+            # sem lembrete (ainda não criado, ou o app não responde): continua pendente e o Bark segue avisando pelas regras
+            res["pendentes"] += 1
+            if row["adiado_ate"] and _dt(row["adiado_ate"]) > agora:
+                continue
+            avisar, critico = deve_avisar(row, row["prioridade_usuario"], agora)
+            if avisar:
+                a_avisar.append((tid, row, critico, True))
             continue
         txt = texto_prioridade(lem["prioridade"])
         if lem["feito"]:
@@ -356,9 +409,9 @@ def ciclo(osa, enviar=enviar_bark, agora: datetime = None) -> dict:
             _atualizar(tid, adiado_ate="")
         avisar, critico = deve_avisar(row, txt if txt != "nenhuma" else row["prioridade_usuario"], agora)
         if avisar:
-            a_avisar.append((tid, row, critico))
-    for tid, row, critico in a_avisar:
-        if enviar(montar_aviso(row, critico, res["pendentes"])):
+            a_avisar.append((tid, row, critico, False))
+    for tid, row, critico, sem_lembrete in a_avisar:
+        if enviar(montar_aviso(row, critico, res["pendentes"], sem_lembrete)):
             _atualizar(tid, avisos=int(row["avisos"] or 0) + 1, ultimo_aviso=_iso(agora))
             res["avisados"].append({"id": tid, "titulo": row["titulo"], "critico": critico})
         else:

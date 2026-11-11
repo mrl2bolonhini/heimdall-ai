@@ -32,7 +32,10 @@ def osascript_real(script, *args):
         f.write(script)
         caminho = f.name
     try:
-        r = subprocess.run(["osascript", caminho, *args], capture_output=True, text=True, timeout=120)
+        r = subprocess.run(["osascript", caminho, *args], capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("o macOS não respondeu em 60 s: provavelmente há um pedido de permissão aberto na tela do Mac, esperando você permitir "
+                           "o controle do app Lembretes") from None
     finally:
         os.unlink(caminho)
     if r.returncode != 0:
@@ -43,8 +46,13 @@ def osascript_real(script, *args):
 if "--mac" in sys.argv:
     print("1. Criando um lembrete de teste na lista \"%s\" (autorize o app Lembretes, se pedir)..." % T.NOME_LISTA)
     origem = "teste-mac-%d" % int(datetime.now().timestamp())
-    r = T.criar({"id": origem, "titulo": "Teste de triagem: pode concluir", "resumo": "Lembrete de teste criado por teste_triagem.py.",
-                 "nivel": "medio", "fonte": "teste"}, osascript_real)
+    try:
+        r = T.criar({"id": origem, "titulo": "Teste de triagem: pode concluir", "resumo": "Lembrete de teste criado por teste_triagem.py.",
+                     "nivel": "medio", "fonte": "teste"}, osascript_real)
+    except RuntimeError as e:
+        print("FALHA", e)
+        print("Quando você permitir no Mac (ou o app Lembretes voltar a responder), rode este teste de novo.")
+        sys.exit(1)
     ok(r["lembrete"] == "criado", "lembrete criado: %s" % r)
     r2 = T.criar({"id": origem, "titulo": "Teste de triagem: pode concluir", "nivel": "medio"}, osascript_real)
     ok(r2["lembrete"] == "ja_existe", "criar de novo não duplica: %s" % r2["lembrete"])
@@ -267,7 +275,57 @@ res, env = rodar(0, 16)
 ok(len(env) == 1 and linha(t9)["avisos"] == 1, "no próximo ciclo tenta de novo")
 lista_existe[0] = False
 res, env = rodar(5, 0)
-ok(res["lista_existe"] is False and not env and linha(t9)["estado"] == "pendente", "lista ausente: não mexe em nada")
+ok(res["lista_existe"] is False and linha(t9)["estado"] == "pendente" and res["descartadas"] == 0, "lista ausente: não descarta nem conclui nada")
+lista_existe[0] = True
+
+print("== App Lembretes sem resposta (permissão pendente no Mac)")
+store.clear()
+banco_con = banco.conectar(); banco_con.execute("DELETE FROM triagem"); banco_con.commit(); banco_con.close()
+BASE = NOW = datetime(2026, 11, 11, 13, 0, tzinfo=timezone.utc)   # 10h local
+funciona = [False]
+
+
+def osa_travado(script, *args):
+    if not funciona[0]:
+        raise RuntimeError("o macOS não respondeu em 45 s (provável pedido de permissão aberto na tela do Mac)")
+    return osa(script, *args)
+
+
+try:
+    T.criar({"id": "perm1", "titulo": "Sem permissão", "resumo": "Resumo", "nivel": "alto", "fonte": "justica"}, osa_travado)
+    ok(False, "criar avisa que o lembrete não foi criado")
+except RuntimeError as e:
+    ok("registrado" in str(e), "criar avisa que o lembrete não foi criado, mas o item foi registrado")
+tid_p = T.gerar_id("perm1")
+ok(linha(tid_p)["lembrete"] == 0 and linha(tid_p)["estado"] == "pendente", "item fica no banco com lembrete = 0")
+NOW = relogio(0, 1)
+enviados.clear()
+res = T.ciclo(osa_travado, bark, NOW)
+ok(res["erro_lembretes"] != "" and len(enviados) == 1, "ciclo sem acesso ao app: o Bark avisa mesmo assim")
+ok("autorização pendente" in enviados[0]["body"], "o aviso explica que falta a autorização no Mac")
+NOW = relogio(2, 5)
+res = T.ciclo(osa_travado, bark, NOW)
+ok(len(enviados) == 2, "e continua insistindo a cada 2 horas")
+funciona[0] = True
+NOW = relogio(4, 10)
+enviados.clear()
+res = T.ciclo(osa_travado, bark, NOW)
+ok(res["lembretes_criados"] == 1 and linha(tid_p)["lembrete"] == 1 and tid_p in store, "com o app de volta, o ciclo cria o lembrete que faltava")
+ok(len(enviados) == 1 and "Abra o app Lembretes" in enviados[0]["body"], "e o aviso volta ao texto normal")
+res = T.ciclo(osa_travado, bark, relogio(4, 25))
+ok(res["lembretes_criados"] == 0 and res["pendentes"] == 1, "no ciclo seguinte, nada é criado de novo")
+
+print("== Migração de um banco criado antes da coluna lembrete")
+con = banco.conectar()
+con.execute("DROP TABLE triagem")
+con.execute("CREATE TABLE triagem (id TEXT PRIMARY KEY, criado TEXT NOT NULL, fonte TEXT NOT NULL DEFAULT '', nivel TEXT NOT NULL DEFAULT 'alto', "
+            "titulo TEXT NOT NULL DEFAULT '', resumo TEXT NOT NULL DEFAULT '', estado TEXT NOT NULL DEFAULT 'pendente', "
+            "prioridade_usuario TEXT NOT NULL DEFAULT '', decidido_em TEXT NOT NULL DEFAULT '', adiado_ate TEXT NOT NULL DEFAULT '', "
+            "avisos INTEGER NOT NULL DEFAULT 0, ultimo_aviso TEXT NOT NULL DEFAULT '', atualizado TEXT NOT NULL)")
+con.execute("INSERT INTO triagem (id, criado, titulo, atualizado) VALUES ('velho', '2026-11-10T10:00:00Z', 'Antigo', '2026-11-10T10:00:00Z')")
+con.commit(); con.close()
+banco.iniciar()
+ok(linha("velho")["lembrete"] == 1, "a coluna é criada e as linhas antigas contam como já tendo lembrete")
 
 print("== Estado")
 e = T.estado()
