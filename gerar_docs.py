@@ -238,6 +238,7 @@ FLUXO_DESCRICAO = {
     "hdResumo00000001": "Junta os avisos de rotina em três notificações por dia (6h, 8h e 10h), em vez de uma por fluxo. Avisos urgentes e os de situação (falhas, GitOps, alerta do Mac) continuam na hora.",
     "hdSaude000000001": "Recebe os dados do app Saúde (iPhone e Apple Watch) e escreve às 5h50 um resumo de sono, pulso, variabilidade, respiração e atividade contra a média de 30 dias. As regras decidem o que é relevante, o modelo só redige e uma verificação barra texto com sentido trocado.",
     "hdTriagem0000001": "A cada 15 minutos chama o agente do Mac, que lê a lista \"Heimdall: Triagem\" do app Lembretes, registra o que você concluiu, reclassificou ou adiou e insiste pelo Bark nos itens pendentes: a cada 2 horas das 7h às 21h, a cada 8 horas se você marcar prioridade baixa, e furando o modo silencioso nos itens críticos. Menções do Diário da Justiça viram críticas depois de 24 horas sem ação.",
+    "hdBackup00000001": "Todo dia às 3h30 pede ao agente do Mac uma cópia do banco pessoal, criptografada com senha, enviada a uma pasta (iCloud Drive) e ao Cloudflare R2 quando configurado, mantendo as 14 mais recentes e uma por mês. Aos domingos, às 4h, baixa a cópia mais recente, decifra e confere a integridade. Qualquer falha aciona o aviso de falha pelo Bark.",
     "hdLembrete0000001": "Lembrete mensal para conferir, nos aplicativos oficiais, serviços que exigem login (INSS, FGTS, Carteira de Trabalho, Registrato e Serasa).",
 }
 

@@ -2,6 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-11 - Cópia de segurança criptografada do banco
+- O banco pessoal (saúde, diários, e-mails, estudos, privacidade, triagem) passa a ter cópia fora do arquivo original: tirada com o recurso de backup do SQLite, conferida por integridade, comprimida e criptografada com AES-256-GCM (chave derivada da senha com scrypt). Quem pegar o arquivo não lê nada sem a senha.
+- Destinos: uma pasta (por exemplo no iCloud Drive, que sincroniza para fora do Mac) e, quando configurado, um bucket do Cloudflare R2. Se um destino falhar, o outro continua sendo gravado e o fluxo avisa. Cada envio é relido e comparado antes de contar como feito.
+- Retenção: as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses.
+- Novo fluxo no n8n: cópia todo dia às 3h30 e verificação aos domingos às 4h (baixa a cópia mais recente, decifra e confere a integridade e as tabelas). Falha em qualquer um dos dois aciona o aviso de falha do Heimdall.
+- Novo módulo heimdall_backup.py com comandos preparar, senha, fazer, verificar, listar e restaurar (nunca sobrescreve um arquivo existente). Novas rotas do agente: POST /backup/executar, POST /backup/verificar e GET /backup/estado. Novo teste_backup.py (sem rede, com R2 simulado).
+- A senha fica no .env (HEIMDALL_BACKUP_SENHA). Guarde-a também fora do Mac: sem ela as cópias não abrem. As variáveis HEIMDALL_BACKUP_DESTINO e HEIMDALL_R2_* também ficam no .env.
+- Para aplicar: git fetch e reset do repositório, python3 heimdall_backup.py preparar, acrescentar HEIMDALL_BACKUP_DESTINO no .env, bash instalar_automacoes_avancadas.sh e reiniciar o sistema. Depois rode python3 heimdall_backup.py fazer e python3 heimdall_backup.py verificar.
+
 ## 2026-11-11 - Triagem obrigatória de avisos importantes
 - Novo sistema de triagem: o que for importante vira um lembrete na lista "Heimdall: Triagem" do app Lembretes (iPhone e Mac), com o resumo e o caminho para a nota completa no Notas. O Heimdall insiste pelo Bark até você agir. Concluir o lembrete dispensa o aviso; mudar a prioridade classifica a importância (alta, média ou baixa); mudar o horário adia.
 - O que entra na triagem: comunicações do Diário da Justiça (pela OAB), aviso de fonte dos diários indisponível há 24 horas, e-mails suspeitos de golpe e e-mails oficiais urgentes, achados de privacidade de risco médio ou alto (os de risco baixo, como páginas suas, ficam só no relatório) e sinais de saúde "muito relevantes" do resumo das 5h50.

@@ -1,0 +1,234 @@
+{
+ "id": "hdBackup00000001",
+ "name": "Heimdall: cópia de segurança do banco (diária) e verificação (semanal)",
+ "active": false,
+ "nodes": [
+  {
+   "id": "backupdiario8801",
+   "name": "Todo dia às 3h30",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "30 3 * * *"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "backupagora8802",
+   "name": "Fazer cópia agora",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    200
+   ],
+   "parameters": {}
+  },
+  {
+   "id": "backupexec8803",
+   "name": "Executar cópia no agente",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    280,
+    0
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/backup/executar",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({}) }}",
+    "options": {
+     "timeout": 300000
+    }
+   }
+  },
+  {
+   "id": "backupconf8804",
+   "name": "Conferir cópia",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    560,
+    0
+   ],
+   "parameters": {
+    "jsCode": "// Falha em qualquer destino derruba o fluxo, e o aviso de falha do Heimdall chega pelo Bark.\nconst j = $input.first().json || {};\nif (j.ok !== true) {\n  const falhos = (j.destinos || []).filter(d => !d.ok).map(d => d.destino + ': ' + (d.erro || 'falhou')).join('; ');\n  throw new Error('A cópia de segurança do banco não foi concluída. ' + (falhos || String(j.erro || 'sem resposta do agente')).slice(0, 300));\n}\nreturn [{ json: j }];"
+   }
+  },
+  {
+   "id": "backupsemana8805",
+   "name": "Domingo às 4h",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    400
+   ],
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "0 4 * * 0"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "backupverag8806",
+   "name": "Verificar agora",
+   "type": "n8n-nodes-base.manualTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    600
+   ],
+   "parameters": {}
+  },
+  {
+   "id": "backupverif8807",
+   "name": "Verificar cópia no agente",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    280,
+    400
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/backup/verificar",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({}) }}",
+    "options": {
+     "timeout": 300000
+    }
+   }
+  },
+  {
+   "id": "backupconf8808",
+   "name": "Conferir verificação",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    560,
+    400
+   ],
+   "parameters": {
+    "jsCode": "// Domingo: baixa a cópia mais recente, decifra e confere. Cópia que não abre não é cópia.\nconst j = $input.first().json || {};\nif (j.ok !== true) {\n  const falhos = Object.entries(j.destinos || {}).filter(([k, v]) => !v.ok).map(([k, v]) => k + ': ' + (v.erro || v.integridade || 'falhou')).join('; ');\n  throw new Error('A verificação semanal da cópia de segurança falhou. ' + (falhos || String(j.erro || 'sem resposta do agente')).slice(0, 300));\n}\nreturn [{ json: j }];"
+   }
+  }
+ ],
+ "connections": {
+  "Todo dia às 3h30": {
+   "main": [
+    [
+     {
+      "node": "Executar cópia no agente",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Fazer cópia agora": {
+   "main": [
+    [
+     {
+      "node": "Executar cópia no agente",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Executar cópia no agente": {
+   "main": [
+    [
+     {
+      "node": "Conferir cópia",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Domingo às 4h": {
+   "main": [
+    [
+     {
+      "node": "Verificar cópia no agente",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Verificar agora": {
+   "main": [
+    [
+     {
+      "node": "Verificar cópia no agente",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Verificar cópia no agente": {
+   "main": [
+    [
+     {
+      "node": "Conferir verificação",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo",
+  "errorWorkflow": "hdFalhaAviso0001"
+ }
+}

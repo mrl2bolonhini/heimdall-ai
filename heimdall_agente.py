@@ -24,6 +24,9 @@ Rotas:
     POST /triagem/ciclo                 {}  lê os lembretes, registra o que você concluiu, reclassificou ou adiou e avisa pelo Bark
                                         quem está pendente (chamado pelo n8n a cada 15 minutos; regras em heimdall_triagem.py)
     GET  /triagem/estado                itens pendentes da triagem
+    POST /backup/executar               {}  cópia criptografada do banco para os destinos do .env (pasta e/ou R2); regras em heimdall_backup.py
+    POST /backup/verificar              {}  baixa a cópia mais recente de cada destino, decifra e confere a integridade
+    GET  /backup/estado                 última cópia bem-sucedida e última tentativa
 
 Pastas privadas: notas da pasta "Privado" (e de outras listadas em HEIMDALL_NOTAS_PRIVADAS) nunca são listadas nem lidas.
 Segurança: LÊ qualquer nota (menos as privadas), mas só ESCREVE em pastas cujo nome começa com "Heimdall" (as notas
@@ -51,6 +54,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import heimdall_backup as backup
 import heimdall_banco as banco
 import heimdall_triagem as triagem
 
@@ -878,6 +882,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, {"esquema": banco.tabelas_para_modelo()})
             if u.path == "/triagem/estado":
                 return self._json(200, triagem.estado())
+            if u.path == "/backup/estado":
+                return self._json(200, backup.estado())
             if u.path == "/notas/privadas":
                 return self._json(200, {"pastas": PRIVADAS, "ids": sorted(ids_privados())})
             if u.path == "/notas/nota":
@@ -917,6 +923,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, triagem.criar(dado, osascript_travado))
             if u.path == "/triagem/ciclo":
                 return self._json(200, triagem.ciclo(osascript_travado))
+            if u.path == "/backup/executar":
+                return self._json(200, backup.fazer())
+            if u.path == "/backup/verificar":
+                r = backup.verificar()
+                return self._json(200, {"ok": bool(r) and all(v.get("ok") for v in r.values()), "destinos": r})
             return self._json(404, {"erro": "rota desconhecida"})
         except PermissionError as e:
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} recusado em {u.path}: {e}\n")

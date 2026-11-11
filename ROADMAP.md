@@ -13,7 +13,7 @@ O que vem depois de validar o banco.
 - Painel de saúde em subdomínio próprio: histórico de sono, pulso em repouso, variabilidade cardíaca e passos, lido do banco. Acesso só com senha forte e verificação em dois passos, atrás do limite de tentativas da Cloudflare.
 - Painel do Second Brain: notas, conexões entre áreas, lacunas de estudo e perguntas sugeridas.
 - Login pelo GitHub: entrar nos painéis com a conta do GitHub, depois de reforçá-la com senha gerada e chave de acesso.
-- Cópia de segurança: o banco copiado para fora do Mac, criptografado.
+- Cópia de segurança no Cloudflare R2: o código e o fluxo já existem e gravam em uma pasta (iCloud Drive); falta ativar o R2 no painel da Cloudflare e criar a chave de acesso para ligar o segundo destino.
 
 ## Depois
 Recursos maiores, que dependem dos anteriores.
