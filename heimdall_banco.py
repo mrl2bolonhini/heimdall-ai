@@ -52,6 +52,61 @@ CREATE TABLE IF NOT EXISTS diarios (
 );
 CREATE INDEX IF NOT EXISTS ix_diarios_data ON diarios (data);
 
+CREATE TABLE IF NOT EXISTS emails (
+    id TEXT PRIMARY KEY,            -- Message-ID
+    data TEXT NOT NULL DEFAULT '',
+    remetente TEXT NOT NULL DEFAULT '',
+    dominio TEXT NOT NULL DEFAULT '',
+    assunto TEXT NOT NULL DEFAULT '',
+    classe TEXT NOT NULL DEFAULT '',        -- oficial, suspeito, nao_oficial
+    servico TEXT NOT NULL DEFAULT '',
+    motivo TEXT NOT NULL DEFAULT '',
+    urgencia TEXT NOT NULL DEFAULT '',
+    prazo TEXT NOT NULL DEFAULT '',
+    visto_em TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_emails_classe ON emails (classe, visto_em);
+
+CREATE TABLE IF NOT EXISTS estudos (
+    id TEXT PRIMARY KEY,
+    dia TEXT NOT NULL,
+    hora TEXT NOT NULL DEFAULT '',
+    tema TEXT NOT NULL DEFAULT '',
+    livro TEXT NOT NULL DEFAULT '',
+    conceito TEXT NOT NULL DEFAULT '',
+    pergunta TEXT NOT NULL DEFAULT '',
+    resposta TEXT NOT NULL DEFAULT '',
+    artigos TEXT NOT NULL DEFAULT '[]',     -- JSON: [{titulo, url}]
+    atualizado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_estudos_tema ON estudos (tema, dia);
+
+CREATE TABLE IF NOT EXISTS privacidade (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL DEFAULT '',
+    host TEXT NOT NULL DEFAULT '',
+    url TEXT NOT NULL DEFAULT '',
+    titulo TEXT NOT NULL DEFAULT '',
+    tipo TEXT NOT NULL DEFAULT '',
+    classe TEXT NOT NULL DEFAULT '',        -- confirmado, provavel
+    risco TEXT NOT NULL DEFAULT '',         -- nenhum, baixo, medio, alto
+    resumo TEXT NOT NULL DEFAULT '',
+    dados TEXT NOT NULL DEFAULT '[]',       -- JSON: dados pessoais visíveis
+    acao TEXT NOT NULL DEFAULT '',
+    visto_em TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_privacidade_data ON privacidade (data);
+
+CREATE TABLE IF NOT EXISTS avisos (
+    id TEXT PRIMARY KEY,
+    quando TEXT NOT NULL,
+    slot TEXT NOT NULL DEFAULT '',          -- manha1, manha2, manha3, direto...
+    titulo TEXT NOT NULL DEFAULT '',
+    linha TEXT NOT NULL DEFAULT '',
+    urgente INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS ix_avisos_quando ON avisos (quando);
+
 CREATE TABLE IF NOT EXISTS analises (
     nota_id TEXT PRIMARY KEY,       -- id da nota no app Notas
     titulo TEXT NOT NULL,
@@ -72,9 +127,16 @@ TABELAS = {
     "saude_diaria": (["dia", "metrica", "valor", "unidade"], ["dia", "metrica"]),
     "saude_resumos": (["dia", "titulo", "texto"], ["dia"]),
     "diarios": (["id", "fonte", "data", "titulo", "nome", "trecho", "url"], ["id"]),
+    "emails": (["id", "data", "remetente", "dominio", "assunto", "classe", "servico", "motivo", "urgencia", "prazo"], ["id"]),
+    "estudos": (["id", "dia", "hora", "tema", "livro", "conceito", "pergunta", "resposta", "artigos"], ["id"]),
+    "privacidade": (["id", "data", "host", "url", "titulo", "tipo", "classe", "risco", "resumo", "dados", "acao"], ["id"]),
+    "avisos": (["id", "quando", "slot", "titulo", "linha", "urgente"], ["id"]),
     "analises": (["nota_id", "titulo", "pasta", "resumo", "tags", "conceitos", "entidades", "conexoes", "lacunas", "perguntas"], ["nota_id"]),
 }
-_JSON_COLS = {"tags", "conceitos", "entidades", "conexoes", "lacunas", "perguntas"}
+_JSON_COLS = {"tags", "conceitos", "entidades", "conexoes", "lacunas", "perguntas", "artigos", "dados"}
+# coluna de data de gravação de cada tabela (None = a tabela já traz a sua). visto_em guarda a 1ª vez; atualizado, a última.
+_CARIMBO = {"saude_diaria": "atualizado", "saude_resumos": "atualizado", "analises": "atualizado", "estudos": "atualizado",
+            "diarios": "visto_em", "emails": "visto_em", "privacidade": "visto_em", "avisos": None}
 _TEXTO_MAX = 8000
 _DATA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -155,9 +217,9 @@ def gravar(tabela: str, registros: list) -> dict:
     if not isinstance(registros, list):
         raise ValueError("registros deve ser uma lista")
     cols, chave = TABELAS[tabela]
-    extras = ["atualizado"] if tabela in ("saude_diaria", "saude_resumos", "analises") else (["visto_em"] if tabela == "diarios" else [])
-    todas = cols + extras
-    atualiza = [c for c in todas if c not in chave and not (tabela == "diarios" and c == "visto_em")]
+    carimbo = _CARIMBO[tabela]
+    todas = cols + ([carimbo] if carimbo else [])
+    atualiza = [c for c in todas if c not in chave and c != "visto_em"]
     sql = (f"INSERT INTO {tabela} ({', '.join(todas)}) VALUES ({', '.join('?' * len(todas))}) "
            f"ON CONFLICT ({', '.join(chave)}) DO " + (f"UPDATE SET {', '.join(c + '=excluded.' + c for c in atualiza)}" if atualiza else "NOTHING"))
     linhas, recusados = [], 0
@@ -166,7 +228,7 @@ def gravar(tabela: str, registros: list) -> dict:
             if not isinstance(r, dict) or any(r.get(k) in (None, "") for k in chave):
                 raise ValueError("falta a chave")
             vals = [_limpa(c, r.get(c, "")) if c != "valor" else _limpa(c, r["valor"]) for c in cols]
-            linhas.append(vals + [_agora()])
+            linhas.append(vals + ([_agora()] if carimbo else []))
         except (ValueError, TypeError, KeyError):
             recusados += 1
     if not linhas:
@@ -222,6 +284,10 @@ def resumo() -> dict:
             "SELECT COUNT(*), COUNT(DISTINCT dia), MIN(dia), MAX(dia), COUNT(DISTINCT metrica) FROM saude_diaria").fetchone()))
         saida["saude_resumos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM saude_resumos").fetchone()))
         saida["diarios"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(data), MAX(data) FROM diarios").fetchone()))
+        saida["emails"] = dict(zip(("linhas", "ate"), con.execute("SELECT COUNT(*), MAX(visto_em) FROM emails").fetchone()))
+        saida["estudos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM estudos").fetchone()))
+        saida["privacidade"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(data), MAX(data) FROM privacidade").fetchone()))
+        saida["avisos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(quando), MAX(quando) FROM avisos").fetchone()))
         saida["analises"] = dict(zip(("linhas", "ate"), con.execute("SELECT COUNT(*), MAX(atualizado) FROM analises").fetchone()))
         return saida
     finally:
@@ -236,6 +302,11 @@ def tabelas_para_modelo() -> str:
         "Sono em minutos.\n"
         "saude_resumos(dia, titulo, texto): o resumo de saúde escrito de cada dia.\n"
         "diarios(id, fonte, data, titulo, nome, trecho, url, visto_em): menções ao seu nome nos diários oficiais; fonte: municipal, federal, estadual, justica.\n"
+        "emails(id, data, remetente, dominio, assunto, classe, servico, motivo, urgencia, prazo, visto_em): e-mails de serviços públicos vistos pelo vigia (sem o corpo); "
+        "classe: oficial, suspeito (possível golpe) ou nao_oficial.\n"
+        "estudos(id, dia, hora, tema, livro, conceito, pergunta, resposta, artigos, atualizado): cada estudo dos livros (6h, 13h e 20h); artigos é JSON.\n"
+        "privacidade(id, data, host, url, titulo, tipo, classe, risco, resumo, dados, acao, visto_em): achados do monitor de privacidade; risco: nenhum, baixo, medio, alto.\n"
+        "avisos(id, quando, slot, titulo, linha, urgente): cada aviso de rotina que passou pelo resumo agrupado.\n"
         "analises(nota_id, titulo, pasta, resumo, tags, conceitos, entidades, conexoes, lacunas, perguntas, atualizado): análise do Second Brain de cada nota; "
         "as colunas de lista são JSON."
     )

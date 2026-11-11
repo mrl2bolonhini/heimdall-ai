@@ -36,6 +36,14 @@ b.gravar("diarios", [{"id": "justica|1", "fonte": "justica", "data": "2026-11-10
 ok(b.consulta_sql("SELECT COUNT(*) FROM diarios")["linhas"] == [[1]], "diários não duplicam")
 b.gravar("analises", [{"nota_id": "n1", "titulo": "Nota", "tags": ["a", "b"], "conexoes": [{"titulo": "X", "tipo": "complementa", "motivo": "m"}]}])
 ok(b.consulta_sql("SELECT json_extract(tags,'$[1]') FROM analises")["linhas"] == [["b"]], "listas viram JSON consultável")
+for tab, reg in [("emails", {"id": "<m1@x>", "data": "Mon, 9 Nov 2026", "remetente": "INSS <a@inss.gov.br>", "dominio": "inss.gov.br", "assunto": "A", "classe": "oficial", "urgencia": "alta", "prazo": "2026-11-15"}),
+                 ("estudos", {"id": "2026-11-10|13|T|C", "dia": "2026-11-10", "hora": "13", "tema": "T", "conceito": "C", "artigos": [{"titulo": "x", "url": "u"}]}),
+                 ("privacidade", {"id": "privacidade|https://a.com", "data": "2026-11-10", "host": "a.com", "url": "https://a.com", "risco": "alto", "dados": ["e-mail"]}),
+                 ("avisos", {"id": "manha1|Saúde|1", "quando": "2026-11-10T08:00:00Z", "slot": "manha1", "titulo": "Saúde", "linha": "ok", "urgente": 1})]:
+    ok(b.gravar(tab, [reg, reg])["gravados"] == 2 and b.consulta_sql(f"SELECT COUNT(*) FROM {tab}")["linhas"] == [[1]], f"tabela {tab}: grava e não duplica")
+ok(b.consulta_sql("SELECT SUM(urgente) FROM avisos")["linhas"] == [[1]], "avisos: urgente vira número")
+ok(b.consulta_sql("SELECT json_extract(artigos,'$[0].url') FROM estudos")["linhas"] == [["u"]], "estudos: artigos em JSON")
+ok(set(b.resumo()) >= {"emails", "estudos", "privacidade", "avisos"}, "resumo traz as tabelas novas")
 for ruim in ["DROP TABLE diarios", "DELETE FROM diarios", "SELECT 1; DROP TABLE diarios", "PRAGMA writable_schema=1",
              "ATTACH DATABASE '/tmp/x.db' AS x", "WITH a AS (SELECT 1) DELETE FROM diarios", "INSERT INTO diarios(id) VALUES ('x')"]:
     try:

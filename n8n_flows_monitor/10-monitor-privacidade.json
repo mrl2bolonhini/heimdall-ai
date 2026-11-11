@@ -287,7 +287,7 @@
     0
    ],
    "parameters": {
-    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst m = $('Montar relatório').first().json;\nconst r = $input.first().json || {};\nconst achados = m.achados;\nconst extra = m.extra || {};\nconst st = m.stats || {};\nconst ROT = { nenhum: 'nenhum', baixo: 'baixo', medio: 'médio', alto: 'alto' };\nconst ROTM = { nenhum: 'NENHUM', baixo: 'BAIXO', medio: 'MÉDIO', alto: 'ALTO' };\nconst NIV = ['nenhum', 'baixo', 'medio', 'alto'];\nlet analise = String((((r.choices || [])[0]) || {}).message && r.choices[0].message.content || '').trim();\nif (!analise) {\n  const acoes = achados.filter(a => a.acao && !/^nenhuma?$/i.test(a.acao)).map((a, i) => (i + 1) + '. ' + a.acao);\n  analise = 'A análise geral automática não respondeu. Ações sugeridas pelos achados individuais:\\n' + (acoes.join('\\n') || 'Nenhuma ação sugerida.');\n}\nconst dia = diaHoje();\nconst agora = Date.now();\nconst novosVistos = (extra.processadas || []);\nnovosVistos.forEach(u => { sd.vistos[u] = { t: agora, nivel: 'visto' }; });\nachados.forEach(a => { sd.dominios[a.host] = (sd.dominios[a.host] || 0) + 1; });\nregistrarDia(dia, m.nivel, achados.length);\nconst t = tendencia();\nconst conf = achados.filter(a => a.classe === 'confirmado').length;\nconst prov = achados.length - conf;\nconst linhas = ['# Monitor de privacidade ' + dia, '',\n  '**Nível de atenção: ' + ROT[m.nivel] + '.** ' + achados.length + ' achado(s) novo(s): ' + conf + ' confirmado(s) e ' + prov + ' provável(is).', ''];\nlinhas.push('## Achados', '');\nachados.forEach(a => {\n  linhas.push('### ' + a.n + '. [' + ROTM[NIV[a.risco]] + '] ' + a.titulo);\n  linhas.push(a.classe === 'confirmado' ? 'Confirmado' : 'Provável', ' · ' + a.tipo + ' · ' + a.host);\n  linhas.push('Endereço: ' + a.url, '', '**Resumo:** ' + a.resumo);\n  if (a.dados.length) linhas.push('**Dados pessoais visíveis:** ' + a.dados.join(', '));\n  if (a.motivo) linhas.push('**Risco:** ' + a.motivo);\n  if (a.imagem) linhas.push('**Imagem:** ' + a.imagem);\n  if (a.acao && !/^nenhuma?$/i.test(a.acao)) linhas.push('**O que fazer:** ' + a.acao);\n  linhas.push('');\n});\nlinhas.push('## Análise', '', analise, '');\nif ((extra.possiveis || []).length) {\n  linhas.push('## Possíveis homônimos (sem confirmação)', '');\n  extra.possiveis.slice(0, 8).forEach(p => linhas.push('- ' + p.titulo + ' — ' + p.url));\n  linhas.push('');\n}\nlinhas.push('## Memória e cobertura', '');\nlinhas.push('- Sequência antes de hoje: ' + t.seq + ' dia(s) sem novidades; últimos ' + t.dias7 + ' dias: ' + t.novos7 + ' achado(s) em ' + t.diasComAchado7 + ' dia(s).');\nlinhas.push('- Buscas: ' + st.consultas + ' (' + st.falhas + ' com falha); resultados lidos: ' + st.resultados + '; já vistos em dias anteriores: ' + st.jaVistos + '; de sites seus (ignorados): ' + st.ignorados + '.');\nlinhas.push('- Páginas examinadas hoje: ' + st.analisados + '; descartadas por não ligarem a você: ' + (extra.descartados || 0) + '.');\nif (achados.some(a => !a.analiseOk)) linhas.push('- Em alguns achados a análise automática não respondeu; confira os links.');\nconst top = achados.slice(0, 3).map(a => a.n + '. [' + ROTM[NIV[a.risco]] + '] ' + a.host + ': ' + a.titulo.slice(0, 70)).join('\\n');\nconst bark = achados.length + ' achado(s) novo(s): ' + conf + ' confirmado(s), ' + prov + ' provável(is).\\n' + top\n  + (achados.length > 3 ? '\\n… e mais ' + (achados.length - 3) + '.' : '') + '\\nRelatório completo no app Notas, pasta Monitor de Privacidade.';\nreturn [{ json: { titulo: 'Monitor ' + dia, markdown: linhas.join('\\n'), tituloBark: 'Monitor de privacidade: atenção ' + ROT[m.nivel], bark } }];"
+    "jsCode": "const CFG = __MON_CONFIG__;\nconst sd = $getWorkflowStaticData('global');\nsd.vistos = sd.vistos || {};\nsd.historico = sd.historico || [];\nsd.dominios = sd.dominios || {};\nconst norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();\nfunction diaHoje() {\n  let d = null;\n  try { if (typeof $now !== 'undefined') d = $now; } catch (e) { d = null; }\n  return d ? d.toFormat('yyyy-LL-dd') : new Date().toISOString().slice(0, 10);\n}\nfunction podarVistos() {\n  const agora = Date.now();\n  Object.keys(sd.vistos).forEach(k => { if (agora - ((sd.vistos[k] || {}).t || 0) > 120 * 86400000) delete sd.vistos[k]; });\n  const chaves = Object.keys(sd.vistos);\n  if (chaves.length > 4000) chaves.sort((a, b) => sd.vistos[a].t - sd.vistos[b].t).slice(0, chaves.length - 4000).forEach(k => delete sd.vistos[k]);\n}\nfunction registrarDia(dia, nivel, novos) {\n  const ult = sd.historico[sd.historico.length - 1];\n  const NV = ['nenhum', 'baixo', 'medio', 'alto'];\n  if (ult && ult.dia === dia) {\n    // segunda execução no mesmo dia (por exemplo, um teste manual): soma, para não apagar o que já foi achado\n    ult.novos = (ult.novos || 0) + novos;\n    ult.nivel = NV[Math.max(NV.indexOf(ult.nivel), NV.indexOf(nivel), 0)];\n  } else sd.historico.push({ dia, nivel, novos });\n  sd.historico = sd.historico.slice(-90);\n}\nfunction tendencia() {\n  const h = sd.historico;\n  let seq = 0;\n  for (let i = h.length - 1; i >= 0 && h[i].novos === 0; i--) seq++;\n  const ult7 = h.slice(-7);\n  return { seq, dias7: ult7.length, novos7: ult7.reduce((s, x) => s + (x.novos || 0), 0), diasComAchado7: ult7.filter(x => x.novos > 0).length };\n}\n\nconst m = $('Montar relatório').first().json;\nconst r = $input.first().json || {};\nconst achados = m.achados;\nconst extra = m.extra || {};\nconst st = m.stats || {};\nconst ROT = { nenhum: 'nenhum', baixo: 'baixo', medio: 'médio', alto: 'alto' };\nconst ROTM = { nenhum: 'NENHUM', baixo: 'BAIXO', medio: 'MÉDIO', alto: 'ALTO' };\nconst NIV = ['nenhum', 'baixo', 'medio', 'alto'];\nlet analise = String((((r.choices || [])[0]) || {}).message && r.choices[0].message.content || '').trim();\nif (!analise) {\n  const acoes = achados.filter(a => a.acao && !/^nenhuma?$/i.test(a.acao)).map((a, i) => (i + 1) + '. ' + a.acao);\n  analise = 'A análise geral automática não respondeu. Ações sugeridas pelos achados individuais:\\n' + (acoes.join('\\n') || 'Nenhuma ação sugerida.');\n}\nconst dia = diaHoje();\nconst agora = Date.now();\nconst novosVistos = (extra.processadas || []);\nnovosVistos.forEach(u => { sd.vistos[u] = { t: agora, nivel: 'visto' }; });\nachados.forEach(a => { sd.dominios[a.host] = (sd.dominios[a.host] || 0) + 1; });\nregistrarDia(dia, m.nivel, achados.length);\nconst t = tendencia();\nconst conf = achados.filter(a => a.classe === 'confirmado').length;\nconst prov = achados.length - conf;\nconst linhas = ['# Monitor de privacidade ' + dia, '',\n  '**Nível de atenção: ' + ROT[m.nivel] + '.** ' + achados.length + ' achado(s) novo(s): ' + conf + ' confirmado(s) e ' + prov + ' provável(is).', ''];\nlinhas.push('## Achados', '');\nachados.forEach(a => {\n  linhas.push('### ' + a.n + '. [' + ROTM[NIV[a.risco]] + '] ' + a.titulo);\n  linhas.push(a.classe === 'confirmado' ? 'Confirmado' : 'Provável', ' · ' + a.tipo + ' · ' + a.host);\n  linhas.push('Endereço: ' + a.url, '', '**Resumo:** ' + a.resumo);\n  if (a.dados.length) linhas.push('**Dados pessoais visíveis:** ' + a.dados.join(', '));\n  if (a.motivo) linhas.push('**Risco:** ' + a.motivo);\n  if (a.imagem) linhas.push('**Imagem:** ' + a.imagem);\n  if (a.acao && !/^nenhuma?$/i.test(a.acao)) linhas.push('**O que fazer:** ' + a.acao);\n  linhas.push('');\n});\nlinhas.push('## Análise', '', analise, '');\nif ((extra.possiveis || []).length) {\n  linhas.push('## Possíveis homônimos (sem confirmação)', '');\n  extra.possiveis.slice(0, 8).forEach(p => linhas.push('- ' + p.titulo + ' — ' + p.url));\n  linhas.push('');\n}\nlinhas.push('## Memória e cobertura', '');\nlinhas.push('- Sequência antes de hoje: ' + t.seq + ' dia(s) sem novidades; últimos ' + t.dias7 + ' dias: ' + t.novos7 + ' achado(s) em ' + t.diasComAchado7 + ' dia(s).');\nlinhas.push('- Buscas: ' + st.consultas + ' (' + st.falhas + ' com falha); resultados lidos: ' + st.resultados + '; já vistos em dias anteriores: ' + st.jaVistos + '; de sites seus (ignorados): ' + st.ignorados + '.');\nlinhas.push('- Páginas examinadas hoje: ' + st.analisados + '; descartadas por não ligarem a você: ' + (extra.descartados || 0) + '.');\nif (achados.some(a => !a.analiseOk)) linhas.push('- Em alguns achados a análise automática não respondeu; confira os links.');\nconst top = achados.slice(0, 3).map(a => a.n + '. [' + ROTM[NIV[a.risco]] + '] ' + a.host + ': ' + a.titulo.slice(0, 70)).join('\\n');\nconst bark = achados.length + ' achado(s) novo(s): ' + conf + ' confirmado(s), ' + prov + ' provável(is).\\n' + top\n  + (achados.length > 3 ? '\\n… e mais ' + (achados.length - 3) + '.' : '') + '\\nRelatório completo no app Notas, pasta Monitor de Privacidade.';\nconst registros = achados.map(a => ({ id: 'privacidade|' + String(a.url).toLowerCase(), data: dia, host: a.host, url: a.url, titulo: a.titulo, tipo: a.tipo, classe: a.classe, risco: NIV[a.risco], resumo: a.resumo, dados: a.dados, acao: a.acao }));\nreturn [{ json: { registros, titulo: 'Monitor ' + dia, markdown: linhas.join('\\n'), tituloBark: 'Monitor de privacidade: atenção ' + ROT[m.nivel], bark } }];"
    }
   },
   {
@@ -450,6 +450,40 @@
     }
    },
    "onError": "continueRegularOutput"
+  },
+  {
+   "id": "gravarnobanco411",
+   "name": "Gravar no banco",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2400,
+    520
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/banco/gravar",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ tabela: 'privacidade', registros: $json.registros || [] }) }}",
+    "options": {
+     "timeout": 60000
+    }
+   }
   }
  ],
  "connections": {
@@ -582,6 +616,11 @@
     [
      {
       "node": "Gravar no Notas",
+      "type": "main",
+      "index": 0
+     },
+     {
+      "node": "Gravar no banco",
       "type": "main",
       "index": 0
      }

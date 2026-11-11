@@ -285,6 +285,19 @@ def gravar_notas(cfg, titulo, markdown, simular=False):
         print("Notas falhou:", e, file=sys.stderr)
 
 
+def registrar_banco(cfg, itens, simular=False):
+    """Guarda no banco pessoal (agente do Mac) remetente, assunto e classificação. O corpo do e-mail nunca é guardado."""
+    if simular or not itens:
+        return
+    regs = [{"id": it["mid"].lower(), "data": it["data"], "remetente": it["de"], "dominio": it["dominio"], "assunto": it["assunto"],
+             "classe": it["classe"], "servico": it["servico"], "motivo": it["motivo"], "urgencia": it.get("urg", ""), "prazo": it.get("prazo", "")} for it in itens]
+    try:
+        post_json("http://localhost:8003/banco/gravar", {"tabela": "emails", "registros": regs},
+                  {"X-Heimdall-Token": cfg.get("HEIMDALL_AGENTE_TOKEN", "")}, timeout=30)
+    except Exception as e:
+        print("Banco falhou:", e, file=sys.stderr)
+
+
 def agendar(cfg, it, r, agora, simular=False):
     """Cria evento no Calendário e lembrete no app Lembretes (calendário e lista "Heimdall") para e-mails OFICIAIS confirmados.
     Devolve uma frase para o relatório, ou "" se nada foi criado."""
@@ -408,6 +421,7 @@ def executar(cfg, simular=False, agora=None, buscar=buscar_mensagens, estado_arq
             if r:
                 md += "   Resumo: %s\n   Urgência: %s%s\n   Ação: %s\n" % (r["resumo"], r["urgencia"], (" - prazo: " + r["prazo"]) if r["prazo"] else "", r["acao"])
                 it["urg"] = r["urgencia"]
+                it["prazo"] = r["prazo_iso"] or r["prazo"]
                 ag = agendar(cfg, it, r, agora, simular)
                 if ag:
                     md += "   Agenda: %s\n" % ag
@@ -425,6 +439,7 @@ def executar(cfg, simular=False, agora=None, buscar=buscar_mensagens, estado_arq
     titulo = ("ALERTA: possível golpe por e-mail" if n["suspeito"] else "E-mail de serviço público: %d novo(s)" % len(itens))
     corpo = ", ".join(partes) + ". " + (primeiro["servico"] + ": " + primeiro["assunto"][:80] + ". " if primeiro else "") + "Detalhes na pasta Monitor de Privacidade do Notas. Não use links do e-mail."
     gravar_notas(cfg, "E-mails oficiais " + agora.strftime("%Y-%m-%d %H%M"), md, simular)
+    registrar_banco(cfg, itens, simular)
     avisar(cfg, titulo, corpo, urgente=bool(n["suspeito"]) or any(i.get("urg") == "alta" for i in itens), simular=simular)
     if not simular:
         for it in itens:

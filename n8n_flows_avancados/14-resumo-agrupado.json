@@ -176,6 +176,40 @@
           "timeout": 30000
         }
       }
+    },
+    {
+      "id": "gravaravisonobanco989",
+      "name": "Gravar aviso no banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        520
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/banco/gravar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ tabela: 'avisos', registros: (() => { const j = $('Receber linha').first().json; const b = (j.body && typeof j.body === 'object') ? j.body : j; const slot = String(b.slot || '').trim(); const titulo = String(b.titulo || '').replace(/\\s+/g, ' ').trim().slice(0, 80); if (!slot || !titulo) return []; return [{ id: slot + '|' + titulo + '|' + Date.now(), quando: new Date().toISOString(), slot: slot, titulo: titulo, linha: String(b.linha || '').slice(0, 900), urgente: b.urgente === true ? 1 : 0 }]; })() }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
     }
   ],
   "connections": {
@@ -228,6 +262,11 @@
         [
           {
             "node": "Enviar na hora?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gravar aviso no banco",
             "type": "main",
             "index": 0
           }
