@@ -502,6 +502,21 @@ def gravar(pasta: str, titulo: str, markdown: str, audio: str = "") -> dict:
     if not re.fullmatch(r"[\w][\w .-]{0,60}", pasta):
         raise ValueError("nome de pasta inválido (use letras, números, espaço, ponto, hífen)")
     titulo = titulo.replace("\n", " ").replace("\t", " ").strip()
+    # Pastas de tema (estudo): o título agora é só o conceito, e dois estudos podem ter o mesmo conceito. Se já existe
+    # uma nota com esse nome e conteúdo diferente, esta ganha " (2)", " (3)"... em vez de substituir a anterior.
+    if pasta not in PASTAS_PROPRIAS and not pasta.startswith(PREFIXO_ESCRITA) and pasta in temas_conhecimento():
+        base_t, n_t = titulo, 1
+
+        def _com(t: str) -> str:
+            return markdown if t == base_t else re.sub(r"^#\s+" + re.escape(base_t) + r"\s*$", lambda _m: "# " + t, markdown, count=1, flags=re.M)
+
+        while n_t <= 50:
+            ja = VAULT / PASTA_DO_COFRE.get(pasta, slug(pasta)) / f"{slug(titulo)}.md"
+            if not ja.is_file() or ja.read_text(encoding="utf-8", errors="replace") == _com(titulo):
+                break
+            n_t += 1
+            titulo = f"{base_t} ({n_t})"
+        markdown = _com(titulo)
     # Cópia em Markdown no cofre (arquivo de verdade, com o frontmatter intacto).
     destino = VAULT / PASTA_DO_COFRE.get(pasta, slug(pasta))
     destino.mkdir(parents=True, exist_ok=True)

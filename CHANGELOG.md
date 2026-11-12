@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Nomes das notas mais claros
+- Biblioteca: o nome mostrado de cada nota perde os prefixos repetidos ("Estudo 2026-11-12 20h:", "Second Brain:") e títulos vagos ganham sentido a partir do conteúdo: "Monitor 2026-11-12" vira "Monitor de privacidade de 12/11/2026: 2 achados, atenção alto"; "Diários oficiais 2026-11-12" vira "Diários oficiais de 12/11/2026: 2 menções (DOU)"; "Saúde 2026-11-12" e títulos como "Resumo" ganham a primeira frase da nota. A data continua na linha abaixo do nome. Os arquivos e os nomes no app Notas das notas antigas não mudam.
+- O link "Leia mais sobre" agora usa até 45 letras do nome, cortando em palavra inteira.
+- Estudo: o título da nota nova passa a ser só o conceito (por exemplo "Média móvel simples"), sem "Estudo", data e hora; a data e a hora ficam na primeira linha do texto. Se já existir uma nota com o mesmo conceito no tema, a nova ganha " (2)", " (3)" em vez de substituir a anterior.
+- Para aplicar: git fetch e reset do repositório, rodar bash instalar_automacoes_avancadas.sh (atualiza o fluxo de estudo) e reiniciar o agente (pkill -f heimdall_agente.py) e a Biblioteca (pkill -f heimdall_biblioteca.py), subindo o sistema como de costume.
+
 ## 2026-11-12 - Correção: trechos de livros do estudo vinham cortados no meio e repetidos
 - Causa: em livros de PDF o texto vem em parágrafos enormes. O indexador (ingest_docs.py) cortava esses parágrafos a cada 1000 letras, no meio de palavras, e repetia a sobreposição de 150 letras duas vezes dentro do mesmo trecho. O fluxo de estudo tirava só uma das repetições, e a leitura ficava com uma frase cortada seguida da mesma frase de novo.
 - O fluxo Estudo (13-estudo.json) agora desfaz a repetição também nos trechos já indexados, junta palavras partidas no fim da linha (exte-ior em duas linhas vira exterior), troca quebras de linha soltas por espaço e começa e termina a leitura em frases inteiras.

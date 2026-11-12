@@ -198,6 +198,76 @@ def titulo_de(p: Path, md: str = None) -> str:
     return p.stem.replace("-", " ").replace("_", " ").strip().capitalize()[:200] or p.name
 
 
+GENERICO_RE = re.compile(r"^(resumo|resumos|nota|notas|anotações|anotacoes|sem t[ií]tulo|untitled|rascunho|ideia|ideias|lembrete|geral|diversos|teste)?\s*[-:–]?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}(/\d{2,4})?)?\s*(\d{1,2}h(\d{2})?)?$", re.I)
+DATA_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+
+
+def _data_br(texto: str, p: Path) -> str:
+    m = DATA_RE.search(texto)
+    return f"{m.group(3)}/{m.group(2)}/{m.group(1)}" if m else datetime.fromtimestamp(p.stat().st_mtime).strftime("%d/%m/%Y")
+
+
+def primeira_frase(corpo: str, maximo: int = 90) -> str:
+    """Primeira frase com texto de verdade, sem marcas de Markdown. Se for longa, corta numa vírgula ou num espaço."""
+    for l in corpo.splitlines():
+        t = re.sub(r"^\s*(#{1,6}\s+|[-*+>]\s+|\d+[.)]\s+)", "", l).strip()
+        t = re.sub(r"[*_`]|\[\[|\]\]", "", t)
+        t = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", t).strip()
+        if len(re.findall(r"[^\W\d_]", t)) < 15 or re.match(r"^(tema|livro|origem|pasta|tags?|nota_id|endere[cç]o)\s*:", t, re.I):
+            continue
+        m = re.match(r"(.+?[.!?…])(\s|$)", t)
+        f = (m.group(1) if m else t).rstrip(".")
+        if len(f) <= maximo:
+            return f
+        corte = max((f.rfind(c, 0, maximo) for c in (",", ";", ":", " — ", " - ")), default=-1)
+        if corte >= 35:
+            return f[:corte].rstrip()
+        corte = f.rfind(" ", 0, maximo)
+        return f[:corte if corte >= 35 else maximo].rstrip(" ,;:-") + "…"
+    return ""
+
+
+def titulo_exibicao(titulo: str, corpo: str, p: Path) -> str:
+    """Nome de leitura da nota: tira prefixos repetidos (Estudo, data, Second Brain) e dá sentido a títulos vagos."""
+    t = re.sub(r"\s+", " ", titulo).strip()
+    m = re.match(r"^Estudo\s+\d{4}-\d{2}-\d{2}(?:\s+\d{1,2}h)?\s*[:\-–]\s*(.+)$", t, re.I)
+    if m:
+        return m.group(1)[:1].upper() + m.group(1)[1:]
+    m = re.match(r"^(?:Second Brain|C[ée]rebro)\s*:\s*(.+)$", t, re.I)
+    if m:
+        t = m.group(1).strip()
+    data = _data_br(t, p)
+    if re.match(r"^Monitor(?: de privacidade)?\s*[-:]?\s*\d{4}-\d{2}-\d{2}\s*$", t, re.I):
+        m = re.search(r"Nível de atenção:\s*([^.*]+)\.?\*{0,2}\s*(\d+)\s*achado", corpo)
+        extra = f": {m.group(2)} {'achado' if m.group(2) == '1' else 'achados'}, atenção {m.group(1).strip().lower()}" if m else ""
+        return f"Monitor de privacidade de {data}{extra}"
+    if re.match(r"^Di[áa]rios oficiais\s*[-:]?\s*\d{4}-\d{2}-\d{2}(\s*\(.*\))?\s*$", t, re.I):
+        n = len(re.findall(r"^\d+\.\s", corpo, re.M))
+        fontes = [x.strip() for x in re.findall(r"^##\s+(.+)$", corpo, re.M)][:3]
+        extra = (f": {n} {'menção' if n == 1 else 'menções'}" if n else "") + (f" ({', '.join(fontes)})" if fontes else "")
+        return f"Diários oficiais de {data}{extra}"
+    if re.match(r"^Sa[úu]de\s*[-:]?\s*\d{4}-\d{2}-\d{2}\s*$", t, re.I):
+        f = primeira_frase(corpo)
+        return f"Saúde de {data}" + (f": {f}" if f else "")
+    if GENERICO_RE.match(t) or len(t) < 4:
+        f = primeira_frase(corpo)
+        base = re.sub(r"\s*[-:–]?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}(/\d{2,4})?)\s*$", "", t).strip() or "Nota"
+        if f:
+            return f"{base[:1].upper() + base[1:]} de {data}: {f}" if DATA_RE.search(t) else f"{base[:1].upper() + base[1:]}: {f}"
+        return f"{base[:1].upper() + base[1:]} de {data}"
+    return t
+
+
+def titulo_da_nota(p: Path, md: str = None) -> str:
+    """Título de exibição de um arquivo de nota."""
+    try:
+        texto = md if md is not None else p.read_text(encoding="utf-8", errors="replace")[:20000]
+    except OSError:
+        return p.stem
+    bruto = titulo_de(p, texto)
+    return titulo_exibicao(bruto, separa_frontmatter(texto)[1], p)[:220]
+
+
 def data_de(p: Path) -> str:
     return datetime.fromtimestamp(p.stat().st_mtime).strftime("%d/%m/%Y %H:%M")
 
@@ -222,7 +292,7 @@ def notas_da_pasta(chave: str) -> list:
     try:
         for p in base.iterdir():
             if p.suffix.lower() in EXT_NOTA and p.is_file() and not p.is_symlink() and not p.name.startswith("."):
-                saida.append((p, titulo_de(p), p.stat().st_mtime, audio_da_nota(chave, p) is not None))
+                saida.append((p, titulo_da_nota(p), p.stat().st_mtime, audio_da_nota(chave, p) is not None))
     except OSError:
         return []
     return sorted(saida, key=lambda t: t[2], reverse=True)
@@ -413,7 +483,7 @@ def plural(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
 
-def inicio_do_titulo(titulo: str, limite: int = 30) -> str:
+def inicio_do_titulo(titulo: str, limite: int = 45) -> str:
     t = re.sub(r"\s+", " ", titulo).strip()
     if len(t) > limite:
         corte = t.rfind(" ", 0, limite)
@@ -487,7 +557,8 @@ def leitor(src: str, chave: str, tipo: str) -> str:
 def pg_nota(chave: str, p: Path) -> tuple:
     md = ler_texto(p)
     meta, corpo_md = separa_frontmatter(md)
-    titulo = titulo_de(p, md)
+    titulo_bruto = titulo_de(p, md)
+    titulo = titulo_exibicao(titulo_bruto, corpo_md, p)
     a = audio_da_nota(chave, p)
     partes = [f'<p class="meta">{e(pastas()[chave]["nome"])} · {data_de(p)}</p>']
     if a:
@@ -495,7 +566,7 @@ def pg_nota(chave: str, p: Path) -> tuple:
     for k, rot in (("tags", "Tags"), ("conceitos", "Conceitos"), ("entidades", "Entidades")):
         if meta.get(k):
             partes.append(f'<p class="nota"><strong>{rot}:</strong> {e(", ".join(meta[k]))}.</p>')
-    partes.append(f'<article aria-label="Texto da nota">{markdown_html(corpo_md, titulo)}</article>')
+    partes.append(f'<article aria-label="Texto da nota">{markdown_html(corpo_md, titulo_bruto)}</article>')
     lista = [x[0].name for x in notas_da_pasta(chave)]
     if p.name in lista:
         i = lista.index(p.name)
@@ -544,7 +615,7 @@ def busca(q: str) -> list:
             except OSError:
                 continue
             plano = sem_acento(texto)
-            titulo = titulo_de(p, texto)
+            titulo = titulo_da_nota(p, texto)
             pos = plano.find(alvo)
             if pos < 0 and alvo not in sem_acento(titulo):
                 continue
