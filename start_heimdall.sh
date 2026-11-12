@@ -30,6 +30,7 @@ PUBLIC_MCP_PORT=8001
 DADOS_MCP_PORT=8004
 TERMINAL_PORT=8002
 AGENTE_PORT="${HEIMDALL_AGENTE_PORT:-8003}"
+CLOUD_PORT="${HEIMDALL_CLOUD_PORT:-8010}"
 LLM_PORT=9000
 WEBUI_PORT=3000
 
@@ -100,6 +101,7 @@ export HEIMDALL_AGENTE_TOKEN
 
 echo "[0/7] Liberando portas em uso..."
 lsof -ti:$AGENTE_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$CLOUD_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LLM_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$MCP_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$PUBLIC_MCP_PORT | xargs kill -9 2>/dev/null
@@ -301,9 +303,14 @@ case "$AWS_EMU" in
         if docker ps -a --format '{{.Names}}' | grep -qx localstack; then
             docker start localstack > /dev/null
         else
+            # Executar funções Lambda exige o socket do Docker dentro do LocalStack. Isso dá ao contêiner controle do Docker do Mac,
+            # então só liga com HEIMDALL_LOCALSTACK_DOCKER=1 no .env. Para valer num contêiner já criado: docker rm -f localstack
+            LS_DOCKER=()
+            [ "$HEIMDALL_LOCALSTACK_DOCKER" = "1" ] && LS_DOCKER=(-v /var/run/docker.sock:/var/run/docker.sock)
             docker run -d --name localstack --network heimdall \
                 -p 127.0.0.1:4566:4566 \
                 -e LOCALSTACK_AUTH_TOKEN="$LOCALSTACK_AUTH_TOKEN" \
+                "${LS_DOCKER[@]}" \
                 -v localstack:/var/lib/localstack \
                 localstack/localstack:latest > /dev/null
         fi
@@ -417,6 +424,24 @@ if [ "$WANT_AGENTE" = "1" ]; then
         echo "     Agente do Mac na porta $AGENTE_PORT (Second Brain e Digest). Na primeira vez, autorize o acesso ao app Notas."
     else
         echo "Aviso: heimdall_agente.py não está na pasta do projeto; o agente do Mac não foi iniciado."
+    fi
+fi
+
+# --- Heimdall Cloud (painel web do emulador de AWS): sobe sozinho se houver senha e código no .env ---
+# Para configurar: python3 heimdall_cloud.py --definir-senha. Escuta só em 127.0.0.1; o acesso público vem do túnel Cloudflare.
+if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] && [ "$AWS_EMU" != "off" ]; then
+    if [ -f heimdall_cloud.py ]; then
+        HEIMDALL_CLOUD_PORT="$CLOUD_PORT" "$VENV_PYTHON" heimdall_cloud.py > cloud_debug.log 2>&1 &
+        COUNTER=0
+        while ! nc -z localhost $CLOUD_PORT > /dev/null 2>&1; do
+            sleep 1
+            COUNTER=$((COUNTER+1))
+            if [ $COUNTER -gt 10 ]; then
+                echo "Aviso: o painel Heimdall Cloud não respondeu em 10s. Veja cloud_debug.log."
+                break
+            fi
+        done
+        echo "     Heimdall Cloud (painel do emulador de AWS) em http://localhost:$CLOUD_PORT"
     fi
 fi
 

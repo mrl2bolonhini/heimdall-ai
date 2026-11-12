@@ -48,6 +48,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Uptime Kuma | 3001 | Painel de disponibilidade dos serviços. |
 | Dozzle | 8081 | Leitor de logs dos contêineres. |
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
+| Heimdall Cloud | 8010 | Painel web do emulador de AWS (S3, Lambda e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
 <!-- /AUTO:SERVICOS -->
 
 ## Requisitos
@@ -83,6 +84,7 @@ venv/bin/python test_mcp.py                       # servidores MCP, direto e pel
 venv/bin/python test_models_tools.py              # chamada de ferramentas por modelo
 python3 heimdall_agente.py --teste                # Notas, Calendário e Lembretes
 python3 heimdall_agente.py --voz                  # voz e velocidade do áudio
+python3 teste_cloud.py                        # painel do emulador de AWS (sem rede)
 bash instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail
 python3 gerar_docs.py --check                     # documentação em dia
 ```
