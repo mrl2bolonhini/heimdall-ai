@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Correção: áudio dos estudos sumia quando a voz estava fixada no .env
+- Com HEIMDALL_VOZ="Felipe (Aprimorada)" o áudio não era gerado: o macOS lista as vozes em inglês neste Mac, como "Felipe (Enhanced)", e o nome fixado não batia. A nota era gravada sem áudio e sem aviso.
+- Agora (Aprimorada), (Melhorada) e (Enhanced) valem igual, maiúsculas não importam, e, se a voz fixada não existir, o agente usa a melhor voz em português instalada e registra isso no agente_debug.log em vez de ficar sem áudio.
+- Para aplicar: git fetch e reset do repositório e reiniciar o agente (pkill -f heimdall_agente.py e subir o sistema como de costume). Não precisa rodar instalador.
+
 ## 2026-11-12 - Heimdall Cloud: painel web do emulador de AWS
 - Novo painel web para usar o emulador de AWS (LocalStack ou Moto) pelo navegador, em texto, títulos, tabelas e formulários simples, bons para leitor de tela. Páginas: S3 (criar e apagar buckets, enviar, baixar e apagar arquivos), Lambda (criar a partir de código, executar com o registro de saída, apagar) e Console geral, que chama qualquer operação de qualquer serviço (DynamoDB, SQS, SNS, Kinesis, Glue, IAM, CloudFormation e outros) com os parâmetros em JSON e traz exemplos prontos.
 - Pensado para ficar público em cloud.heimdall-ai.tech pelo túnel Cloudflare, sem Cloudflare Access, por isso tem camadas próprias: entrada com senha forte (guardada só como hash PBKDF2 no .env) e código de 6 dígitos (TOTP, cadastrável no app Senhas da Apple); limite de tentativas por endereço e global, com bloqueio de 15 minutos; código de 6 dígitos que não pode ser reaproveitado; sessão em cookie HttpOnly e SameSite=Strict com validade de 8 horas; token contra CSRF nos formulários; só atende os nomes de site permitidos; cabeçalhos de segurança; arquivos baixados sempre como anexo. A porta 4566 do emulador continua só em 127.0.0.1, nunca exposta.

@@ -82,7 +82,7 @@ PASTA_DO_COFRE = {"Monitor de Privacidade": "heimdall-privacidade", "Digest": "h
 # o ingest_docs.py usa: minúsculas, sem acentos, hífens). Pastas novas de conhecimento ganham a pasta de notas sozinhas.
 KNOWLEDGE = Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
 # Voz do áudio dos estudos. Vazio (padrão) = a melhor voz em português instalada (Premium, depois Aprimorada, depois a padrão).
-# Para fixar uma: HEIMDALL_VOZ="Luciana (Aprimorada)". Os nomes saem de: say -v '?' | grep pt_
+# Para fixar uma: HEIMDALL_VOZ="Luciana (Enhanced)" ((Aprimorada) vale igual). Os nomes saem de: say -v '?' | grep pt_
 VOZ = os.environ.get("HEIMDALL_VOZ", "").strip()
 # Velocidade na escala de porcentagem da fala do macOS (0 a 100). 65 ≈ 350 palavras por minuto. Para fixar palavras por minuto: HEIMDALL_VOZ_PPM=300
 try:
@@ -634,10 +634,21 @@ def vozes_pt() -> list:
     return [n for _, _, n in sorted(achadas)]
 
 
+def _chave_voz(nome: str) -> str:
+    """Compara nomes de voz sem ligar para maiúsculas nem para o idioma do sistema: (Aprimorada), (Melhorada) e (Enhanced) são a mesma coisa."""
+    return re.sub(r"\s+", " ", re.sub(r"aprimorada|melhorada", "enhanced", nome.strip().lower()))
+
+
 def escolher_voz():
     vozes = vozes_pt()
     if VOZ:
-        return VOZ if VOZ in vozes else None
+        for v in vozes:
+            if _chave_voz(v) == _chave_voz(VOZ):
+                return v  # devolve o nome como o macOS lista, que é o que o say aceita
+        if vozes:  # a voz fixada não existe: melhor um áudio com a melhor voz instalada do que nota sem áudio
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} a voz '{VOZ}' não está instalada; usando {vozes[0]}\n")
+            return vozes[0]
+        return None
     return vozes[0] if vozes else None
 
 

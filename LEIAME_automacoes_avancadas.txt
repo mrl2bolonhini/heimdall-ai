@@ -171,7 +171,7 @@ ATUALIZAÇÃO DO ESTUDO: UMA NOTA POR TEMA, TÍTULO SEM REPETIÇÃO E COMO OUVIR
 AJUSTES DE VOZ E DE TÍTULO
 1. Título repetido: o app Notas coloca o nome da nota como primeira linha quando recebe nome e corpo juntos, e o corpo já começava pelo título. Agora a nota é criada só com o corpo (o título vira a primeira linha). Vale para todas as notas do Heimdall. Notas já criadas continuam como estão.
 2. Voz: por padrão o agente usa a melhor voz em português instalada (Premium, depois Aprimorada, depois a padrão). Para ter voz melhor, baixe em Ajustes do Sistema > Acessibilidade > Conteúdo falado > Voz do sistema > Gerenciar vozes: Luciana ou Felipe, versão Aprimorada ou Premium.
-3. Velocidade: padrão 65 na escala de porcentagem da fala do macOS, que equivale a cerca de 350 palavras por minuto. Para mudar, no .env: HEIMDALL_VOZ_VELOCIDADE=60 (porcentagem) ou HEIMDALL_VOZ_PPM=300 (palavras por minuto exatas). Para fixar uma voz: HEIMDALL_VOZ="Felipe (Aprimorada)".
+3. Velocidade: padrão 65 na escala de porcentagem da fala do macOS, que equivale a cerca de 350 palavras por minuto. Para mudar, no .env: HEIMDALL_VOZ_VELOCIDADE=60 (porcentagem) ou HEIMDALL_VOZ_PPM=300 (palavras por minuto exatas). Para fixar uma voz: HEIMDALL_VOZ="Felipe (Enhanced)" (os nomes aparecem em inglês no seu sistema; (Aprimorada) também é aceito).
 4. Para ouvir uma amostra e ver qual voz será usada, sem esperar o fluxo: python3 heimdall_agente.py --voz
    Depois de mudar o .env, reinicie o agente (pkill -f heimdall_agente.py e suba o sistema como de costume).
 
