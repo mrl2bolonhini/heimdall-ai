@@ -31,7 +31,7 @@ DADOS_MCP_PORT=8004
 TERMINAL_PORT=8002
 AGENTE_PORT="${HEIMDALL_AGENTE_PORT:-8003}"
 CLOUD_PORT="${HEIMDALL_CLOUD_PORT:-8010}"
-BIBLIOTECA_PORT="${HEIMDALL_BIBLIOTECA_PORT:-8011}"
+NOTAS_PORT="${HEIMDALL_NOTAS_PORT:-8011}"
 LLM_PORT=9000
 WEBUI_PORT=3000
 
@@ -103,7 +103,7 @@ export HEIMDALL_AGENTE_TOKEN
 echo "[0/7] Liberando portas em uso..."
 lsof -ti:$AGENTE_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$CLOUD_PORT | xargs kill -9 2>/dev/null
-lsof -ti:$BIBLIOTECA_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$NOTAS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LLM_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$MCP_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$PUBLIC_MCP_PORT | xargs kill -9 2>/dev/null
@@ -489,18 +489,18 @@ fi
 # --- Heimdall Notas (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Cloud ---
 # Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (library.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_biblioteca.py ]; then
-        HEIMDALL_BIBLIOTECA_PORT="$BIBLIOTECA_PORT" "$VENV_PYTHON" heimdall_biblioteca.py > biblioteca_debug.log 2>&1 &
+    if [ -f heimdall_notas.py ]; then
+        HEIMDALL_NOTAS_PORT="$NOTAS_PORT" "$VENV_PYTHON" heimdall_notas.py > notas_debug.log 2>&1 &
         COUNTER=0
-        while ! nc -z localhost $BIBLIOTECA_PORT > /dev/null 2>&1; do
+        while ! nc -z localhost $NOTAS_PORT > /dev/null 2>&1; do
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Notas não respondeu em 10s. Veja biblioteca_debug.log."
+                echo "Aviso: o Heimdall Notas não respondeu em 10s. Veja notas_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Notas (notas e áudios) em http://localhost:$BIBLIOTECA_PORT"
+        echo "     Heimdall Notas (notas e áudios) em http://localhost:$NOTAS_PORT"
     fi
 fi
 

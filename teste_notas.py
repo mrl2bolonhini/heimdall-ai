@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Teste da biblioteca (heimdall_biblioteca.py) com um cofre de mentira, sem rede e sem boto3.
+"""Teste do Heimdall Notas (heimdall_notas.py) com um cofre de mentira, sem rede e sem boto3.
 
-    python3 teste_biblioteca.py
+    python3 teste_notas.py
 
 Confere: Digest fora e o restante do cofre dentro, títulos com "Leia mais sobre", login (senha e código de 6 dígitos, sem reaproveitar o código), pastas privadas fora do ar, fuga de pasta,
 leitura das notas (HTML escapado, tabela, lista, link perigoso), leitor de áudio, Range 206 (exigido pelo iPhone),
@@ -77,9 +77,9 @@ import heimdall_cloud as hc  # noqa: E402
 os.environ["HEIMDALL_CLOUD_SENHA_HASH"] = hc.hash_senha(SENHA, iteracoes=100_000)
 hc.SENHA_HASH = os.environ["HEIMDALL_CLOUD_SENHA_HASH"]
 hc.TOTP_SEGREDO = SEGREDO
-import heimdall_biblioteca as hb  # noqa: E402
+import heimdall_notas as hb  # noqa: E402
 
-srv = ThreadingHTTPServer(("127.0.0.1", 0), hb.Biblioteca)
+srv = ThreadingHTTPServer(("127.0.0.1", 0), hb.Notas)
 srv.daemon_threads = True
 porta = srv.server_address[1]
 threading.Thread(target=srv.serve_forever, daemon=True).start()
@@ -174,14 +174,14 @@ s, _, c = req("GET", "/busca?q=segredo", cookie=ck)
 confere("busca acha privacidade e saúde, não o Digest", b"senha do banco" in c or b"Segredo" in c)
 s, _, c = req("GET", "/busca?q=resumo.", cookie=ck)
 confere("busca não acha o Digest", b"Digest do dia" not in c)
-os.environ["HEIMDALL_BIBLIOTECA_EXCLUIR"] = "heimdall-digest,saude"
+os.environ["HEIMDALL_NOTAS_EXCLUIR"] = "heimdall-digest,saude"
 s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
 confere("EXCLUIR tira outras pastas", s == 404)
-del os.environ["HEIMDALL_BIBLIOTECA_EXCLUIR"]
-os.environ["HEIMDALL_BIBLIOTECA_PASTAS"] = "heimdall-cerebro"
+del os.environ["HEIMDALL_NOTAS_EXCLUIR"]
+os.environ["HEIMDALL_NOTAS_PASTAS"] = "heimdall-cerebro"
 s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
 confere("PASTAS com lista mostra só as listadas e os temas", s == 404 and req("GET", "/nota?p=heimdall-cerebro&n=ideia.md", cookie=ck)[0] == 200 and req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)[0] == 200)
-del os.environ["HEIMDALL_BIBLIOTECA_PASTAS"]
+del os.environ["HEIMDALL_NOTAS_PASTAS"]
 
 # --- notas ---
 s, h, c = req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)

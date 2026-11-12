@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Heimdall Notas: nomes técnicos também trocados
+- O nome "Biblioteca" fica livre para o futuro: a ideia é uma biblioteca de verdade, com os documentos de knowledge/ separados em pastas por assunto e, mais adiante, uma base de conhecimento por modelo.
+- Arquivos e nomes novos: heimdall_notas.py (antes heimdall_biblioteca.py), teste_notas.py, variáveis HEIMDALL_NOTAS_* no .env (PORT, HOST, HOSTS, PASTAS, EXCLUIR) e log notas_debug.log. Os nomes antigos HEIMDALL_BIBLIOTECA_* continuam valendo, então o seu .env não precisa mudar.
+- Para aplicar: git fetch e reset do repositório, pkill -f heimdall_biblioteca.py (o processo antigo) e subir o sistema como de costume. O sistema libera a porta 8011 sozinho. Não precisa rodar instalador.
+
 ## 2026-11-12 - Biblioteca passa a se chamar Heimdall Notas
 - O site para ler as notas e ouvir os áudios (porta 8011, notes.heimdall-ai.tech) agora se chama Heimdall Notas, nome mais fiel ao conteúdo. Mudou o nome mostrado nas páginas, no sistema e na documentação (a página do site agora é notas.html). Os nomes técnicos ficam iguais, para não quebrar o seu .env: heimdall_biblioteca.py, HEIMDALL_BIBLIOTECA_* e biblioteca_debug.log.
 - Para aplicar: git fetch e reset do repositório e reiniciar com pkill -f heimdall_biblioteca.py, subindo o sistema como de costume.

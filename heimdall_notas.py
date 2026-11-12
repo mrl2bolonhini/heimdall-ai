@@ -12,18 +12,18 @@ O que tem:
   - Anterior e próxima nota dentro do tema; busca por texto; documentos de knowledge/ (PDF abre na página).
 
 Pastas: por padrão aparece o cofre inteiro (temas de estudo, Second Brain, Monitor de Privacidade, Saúde etc.), menos o
-Digest. Para tirar mais pastas: HEIMDALL_BIBLIOTECA_EXCLUIR="heimdall-digest,saude". Para mostrar só algumas pastas além
-dos temas de estudo: HEIMDALL_BIBLIOTECA_PASTAS="heimdall-cerebro,outra-pasta".
+Digest. Para tirar mais pastas: HEIMDALL_NOTAS_EXCLUIR="heimdall-digest,saude". Para mostrar só algumas pastas além
+dos temas de estudo: HEIMDALL_NOTAS_PASTAS="heimdall-cerebro,outra-pasta".
 
 Segurança (pode ficar público em notes.heimdall-ai.tech): escuta só em 127.0.0.1; senha forte + código de 6 dígitos
 (HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO, os mesmos do painel Cloud); limite de tentativas; sessão em cookie
 HttpOnly e SameSite=Strict; só nomes de site permitidos; somente leitura (nada aqui grava ou apaga arquivos); caminhos
 conferidos contra fuga de pasta; HTML sempre escapado; documentos que não são PDF ou áudio só baixam, nunca executam.
 
-Variáveis opcionais: HEIMDALL_BIBLIOTECA_PORT (8011), HEIMDALL_BIBLIOTECA_HOST (127.0.0.1), HEIMDALL_BIBLIOTECA_HOSTS
-(notes.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_BIBLIOTECA_PASTAS, HEIMDALL_BIBLIOTECA_EXCLUIR, HEIMDALL_VAULT_DIR, HEIMDALL_KNOWLEDGE_DIR.
+Variáveis opcionais: HEIMDALL_NOTAS_PORT (8011), HEIMDALL_NOTAS_HOST (127.0.0.1), HEIMDALL_NOTAS_HOSTS
+(notes.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_NOTAS_PASTAS, HEIMDALL_NOTAS_EXCLUIR, HEIMDALL_VAULT_DIR, HEIMDALL_KNOWLEDGE_DIR.
 
-    python3 heimdall_biblioteca.py     (o start_heimdall.sh sobe sozinho se houver senha e código no .env)
+    python3 heimdall_notas.py     (o start_heimdall.sh sobe sozinho se houver senha e código no .env)
 
 Usa só a biblioteca padrão do Python.
 """
@@ -45,7 +45,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 
 def carregar_env() -> None:
-    """Do .env lê só as variáveis desta biblioteca e as pastas do cofre (as outras chaves do projeto não entram aqui)."""
+    """Do .env lê só as variáveis do Heimdall Notas e as pastas do cofre (as outras chaves do projeto não entram aqui)."""
     try:
         linhas = (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines()
     except OSError:
@@ -58,7 +58,9 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        if not (chave.startswith("HEIMDALL_BIBLIOTECA_") or chave in ("HEIMDALL_VAULT_DIR", "HEIMDALL_KNOWLEDGE_DIR")):
+        if chave.startswith("HEIMDALL_BIBLIOTECA_"):  # nome antigo das variáveis: continua valendo
+            chave = "HEIMDALL_NOTAS_" + chave[len("HEIMDALL_BIBLIOTECA_"):]
+        elif not (chave.startswith("HEIMDALL_NOTAS_") or chave in ("HEIMDALL_VAULT_DIR", "HEIMDALL_KNOWLEDGE_DIR")):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -66,12 +68,14 @@ def carregar_env() -> None:
 
 
 carregar_env()
+for _k in [k for k in os.environ if k.startswith("HEIMDALL_BIBLIOTECA_")]:  # idem para variáveis já no ambiente
+    os.environ.setdefault("HEIMDALL_NOTAS_" + _k[len("HEIMDALL_BIBLIOTECA_"):], os.environ[_k])
 
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
 
-HOST = os.environ.get("HEIMDALL_BIBLIOTECA_HOST", "127.0.0.1")
-PORT = int(os.environ.get("HEIMDALL_BIBLIOTECA_PORT", "8011"))
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_BIBLIOTECA_HOSTS", "notes.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOST = os.environ.get("HEIMDALL_NOTAS_HOST", "127.0.0.1")
+PORT = int(os.environ.get("HEIMDALL_NOTAS_PORT", "8011"))
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_NOTAS_HOSTS", "notes.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(PROJECT_DIR / "cerebro"))).expanduser()
 KNOWLEDGE = Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
 COOKIE = "hbib"
@@ -112,10 +116,10 @@ def _subdirs(raiz: Path) -> list:
 
 def pastas() -> dict:
     """Pastas liberadas: chave (slug) -> {'nome', 'cofre' (notas e áudios), 'docs' (documentos de knowledge)}."""
-    cfg = os.environ.get("HEIMDALL_BIBLIOTECA_PASTAS", "*").strip() or "*"
+    cfg = os.environ.get("HEIMDALL_NOTAS_PASTAS", "*").strip() or "*"
     tudo = cfg == "*"
     liberadas = {slug(x) for x in cfg.split(",") if x.strip()}
-    fora = {slug(x) for x in os.environ.get("HEIMDALL_BIBLIOTECA_EXCLUIR", "heimdall-digest").split(",") if x.strip()}
+    fora = {slug(x) for x in os.environ.get("HEIMDALL_NOTAS_EXCLUIR", "heimdall-digest").split(",") if x.strip()}
     res = {}
     for d in _subdirs(KNOWLEDGE):
         if slug(d.name) not in fora:
@@ -641,8 +645,8 @@ def pg_busca(q: str) -> str:
 # ----------------------------------------------------------------------------------------
 # Servidor
 # ----------------------------------------------------------------------------------------
-class Biblioteca(BaseHTTPRequestHandler):
-    server_version = "HeimdallBiblioteca"
+class Notas(BaseHTTPRequestHandler):
+    server_version = "HeimdallNotas"
     sys_version = ""
     protocol_version = "HTTP/1.0"
 
@@ -727,7 +731,7 @@ class Biblioteca(BaseHTTPRequestHandler):
                 return
             if metodo == "POST":
                 if rota != "/sair":
-                    self._pagina(405, "Não permitido", '<p>Esta biblioteca é somente de leitura.</p>', sess)
+                    self._pagina(405, "Não permitido", '<p>Este site é somente de leitura.</p>', sess)
                     return
                 n = min(int(self.headers.get("Content-Length") or 0), 4096)
                 campos = {k: v[0] for k, v in parse_qs(self.rfile.read(n).decode("utf-8", "replace")).items()}
@@ -860,8 +864,8 @@ class Biblioteca(BaseHTTPRequestHandler):
 
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados a biblioteca não sobe. Rode: python3 heimdall_cloud.py --definir-senha")
-    srv = ThreadingHTTPServer((HOST, PORT), Biblioteca)
+        sys.exit("Sem senha e código configurados o Heimdall Notas não sobe. Rode: python3 heimdall_cloud.py --definir-senha")
+    srv = ThreadingHTTPServer((HOST, PORT), Notas)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Notas em http://{HOST}:{PORT} (cofre: {VAULT}; documentos: {KNOWLEDGE}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
