@@ -36,24 +36,55 @@ TEXT_EXT = {".txt", ".md", ".rst", ".csv", ".json", ".yaml", ".yml", ".py", ".sq
 DEFAULT_MAX_MB = 50
 
 
+def _unidades(par: str, size: int) -> list[str]:
+    """Quebra um parágrafo em frases. Frase maior que 'size' é cortada num espaço, nunca no meio de uma palavra."""
+    out: list[str] = []
+    for f in re.split(r"(?<=[.!?…])\s+", par):
+        f = f.strip()
+        while len(f) > size:
+            corte = f.rfind(" ", 0, size)
+            if corte < size // 2:
+                corte = size
+            out.append(f[:corte].rstrip())
+            f = f[corte:].lstrip()
+        if f:
+            out.append(f)
+    return out
+
+
 def chunk_text(text: str, size: int, overlap: int) -> list[str]:
-    """Quebra por parágrafos, juntando até 'size' caracteres, com sobreposição."""
+    """Junta frases inteiras até 'size' caracteres. Cada trecho começa repetindo, como sobreposição, as últimas frases
+    inteiras do anterior (até 'overlap' caracteres): o começo do trecho seguinte é exatamente o fim do anterior, e quem
+    lê em sequência (o fluxo de estudo) tira a repetição sem sobrar pedaço de palavra nem frase repetida."""
     paras = [p.strip() for p in text.replace("\r", "").split("\n\n") if p.strip()]
-    pieces: list[str] = []
+    unidades: list[tuple[str, str]] = []  # (separador antes, texto)
     for p in paras:
-        while len(p) > size:  # parágrafo gigante: corta em fatias
-            pieces.append(p[:size])
-            p = p[size - overlap:]
-        pieces.append(p)
-    chunks, cur = [], ""
-    for p in pieces:
-        if cur and len(cur) + len(p) + 2 > size:
-            chunks.append(cur)
-            cur = cur[-overlap:] + "\n\n" + p if overlap else p
-        else:
-            cur = f"{cur}\n\n{p}" if cur else p
-    if cur.strip():
-        chunks.append(cur)
+        for j, u in enumerate(_unidades(p, size)):
+            unidades.append(("\n\n" if j == 0 else " ", u))
+
+    def monta(us: list) -> str:
+        return "".join((sep if i else "") + t for i, (sep, t) in enumerate(us))
+
+    chunks: list[str] = []
+    cur: list = []
+    novas = 0  # unidades do trecho atual que não vieram da sobreposição
+    for u in unidades:
+        if cur and len(monta(cur)) + len(u[0]) + len(u[1]) > size:
+            if novas:
+                chunks.append(monta(cur))
+            ov, tam = [], 0
+            for x in reversed(cur):
+                if tam + len(x[1]) + len(x[0]) > overlap:
+                    break
+                ov.insert(0, x)
+                tam += len(x[1]) + len(x[0])
+            cur, novas = ov, 0
+            while cur and len(monta(cur)) + len(u[0]) + len(u[1]) > size:
+                cur.pop(0)
+        cur.append(u)
+        novas += 1
+    if cur and novas:
+        chunks.append(monta(cur))
     return chunks
 
 

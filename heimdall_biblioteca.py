@@ -11,17 +11,17 @@ O que tem:
     botões de voltar e avançar 15 segundos, e a página lembra onde você parou.
   - Anterior e próxima nota dentro do tema; busca por texto; documentos de knowledge/ (PDF abre na página).
 
-Privacidade: por padrão só aparecem as pastas dos temas de estudo (as subpastas de knowledge/) e a do Digest. Monitor de
-Privacidade, Second Brain, Saúde e qualquer outra pasta do cofre ficam de fora. Para incluir outra pasta:
-HEIMDALL_BIBLIOTECA_PASTAS="heimdall-cerebro,outra-pasta" (use "*" para liberar o cofre inteiro).
+Pastas: por padrão aparece o cofre inteiro (temas de estudo, Second Brain, Monitor de Privacidade, Saúde etc.), menos o
+Digest. Para tirar mais pastas: HEIMDALL_BIBLIOTECA_EXCLUIR="heimdall-digest,saude". Para mostrar só algumas pastas além
+dos temas de estudo: HEIMDALL_BIBLIOTECA_PASTAS="heimdall-cerebro,outra-pasta".
 
-Segurança (pode ficar público em library.heimdall-ai.tech): escuta só em 127.0.0.1; senha forte + código de 6 dígitos
+Segurança (pode ficar público em notes.heimdall-ai.tech): escuta só em 127.0.0.1; senha forte + código de 6 dígitos
 (HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO, os mesmos do painel Cloud); limite de tentativas; sessão em cookie
 HttpOnly e SameSite=Strict; só nomes de site permitidos; somente leitura (nada aqui grava ou apaga arquivos); caminhos
 conferidos contra fuga de pasta; HTML sempre escapado; documentos que não são PDF ou áudio só baixam, nunca executam.
 
 Variáveis opcionais: HEIMDALL_BIBLIOTECA_PORT (8011), HEIMDALL_BIBLIOTECA_HOST (127.0.0.1), HEIMDALL_BIBLIOTECA_HOSTS
-(library.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_BIBLIOTECA_PASTAS, HEIMDALL_VAULT_DIR, HEIMDALL_KNOWLEDGE_DIR.
+(notes.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_BIBLIOTECA_PASTAS, HEIMDALL_BIBLIOTECA_EXCLUIR, HEIMDALL_VAULT_DIR, HEIMDALL_KNOWLEDGE_DIR.
 
     python3 heimdall_biblioteca.py     (o start_heimdall.sh sobe sozinho se houver senha e código no .env)
 
@@ -71,11 +71,11 @@ import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígit
 
 HOST = os.environ.get("HEIMDALL_BIBLIOTECA_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_BIBLIOTECA_PORT", "8011"))
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_BIBLIOTECA_HOSTS", "library.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_BIBLIOTECA_HOSTS", "notes.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(PROJECT_DIR / "cerebro"))).expanduser()
 KNOWLEDGE = Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
 COOKIE = "hbib"
-FIXAS = {"heimdall-digest"}
+NOMES = {"heimdall-privacidade": "Monitor de Privacidade", "heimdall-cerebro": "Second Brain", "saude": "Saúde", "heimdall-digest": "Digest"}
 EXT_NOTA = {".md", ".markdown", ".txt"}
 EXT_AUDIO = {".m4a", ".mp3"}
 EXT_DOC = {".pdf", ".md", ".markdown", ".txt", ".docx", ".epub", ".m4a", ".mp3"}
@@ -97,6 +97,8 @@ def sem_acento(texto: str) -> str:
 
 
 def nome_bonito(chave: str) -> str:
+    if chave in NOMES:
+        return NOMES[chave]
     base = chave[len("heimdall-"):] if chave.startswith("heimdall-") else chave
     return base.replace("-", " ").strip().capitalize() or chave
 
@@ -110,14 +112,18 @@ def _subdirs(raiz: Path) -> list:
 
 def pastas() -> dict:
     """Pastas liberadas: chave (slug) -> {'nome', 'cofre' (notas e áudios), 'docs' (documentos de knowledge)}."""
-    extra = os.environ.get("HEIMDALL_BIBLIOTECA_PASTAS", "").strip()
-    tudo = extra == "*"
-    liberadas = set(FIXAS) | {slug(x) for x in extra.split(",") if x.strip() and not tudo}
+    cfg = os.environ.get("HEIMDALL_BIBLIOTECA_PASTAS", "*").strip() or "*"
+    tudo = cfg == "*"
+    liberadas = {slug(x) for x in cfg.split(",") if x.strip()}
+    fora = {slug(x) for x in os.environ.get("HEIMDALL_BIBLIOTECA_EXCLUIR", "heimdall-digest").split(",") if x.strip()}
     res = {}
     for d in _subdirs(KNOWLEDGE):
-        res.setdefault(slug(d.name), {"nome": d.name[:1].upper() + d.name[1:], "cofre": None, "docs": d})
+        if slug(d.name) not in fora:
+            res.setdefault(slug(d.name), {"nome": d.name[:1].upper() + d.name[1:], "cofre": None, "docs": d})
     for d in _subdirs(VAULT):
         k = slug(d.name)
+        if k in fora:
+            continue
         if tudo or k in liberadas or k in res:
             r = res.setdefault(k, {"nome": nome_bonito(k), "cofre": None, "docs": None})
             r["cofre"] = d
@@ -352,7 +358,7 @@ CSS = nuvem.CSS + """
 body{font-size:19px;line-height:1.7;max-width:46rem}
 main h1{line-height:1.25;margin-top:1rem}h2,h3,h4{line-height:1.3;margin-top:1.8rem}
 .lista{list-style:none;padding:0}.lista li{border-bottom:1px solid var(--linha);padding:.7rem 0}
-.lista a{font-weight:700;font-size:1.05em}.meta{color:var(--suave);font-size:.9em;display:block}
+.lista h3{margin:0 0 .2rem;font-size:1.15em}.lista a{font-weight:700;font-size:1.05em}.meta{color:var(--suave);font-size:.9em;display:block}
 .leitor{border:2px solid var(--acento);border-radius:.5rem;padding:.8rem;margin:1rem 0}.leitor audio{width:100%}
 .leitor button{margin:.4rem .4rem 0 0}.leitor button[aria-pressed=true]{background:var(--acento);color:var(--fundo)}
 .ant-prox{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-top:1px solid var(--linha);margin-top:2rem;padding-top:1rem}
@@ -407,10 +413,19 @@ def plural(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
 
+def inicio_do_titulo(titulo: str, limite: int = 30) -> str:
+    t = re.sub(r"\s+", " ", titulo).strip()
+    if len(t) > limite:
+        corte = t.rfind(" ", 0, limite)
+        t = t[:corte if corte >= limite // 2 else limite].rstrip(" ,;:.-")
+    return t
+
+
 def item_nota(chave: str, p: Path, titulo: str, mtime: float, audio: bool, mostrar_tema: str = "") -> str:
     extra = " · com áudio" if audio else ""
     tema = f" · {e(mostrar_tema)}" if mostrar_tema else ""
-    return (f'<li><a href="/nota?p={quote(chave)}&amp;n={quote(p.name)}">{e(titulo)}</a>'
+    link = f"/nota?p={quote(chave)}&amp;n={quote(p.name)}"
+    return (f'<li><h3>{e(titulo)}</h3><a href="{link}">Leia mais sobre {e(inicio_do_titulo(titulo))}...</a>'
             f'<span class="meta">{datetime.fromtimestamp(mtime).strftime("%d/%m/%Y %H:%M")}{tema}{extra}</span></li>')
 
 

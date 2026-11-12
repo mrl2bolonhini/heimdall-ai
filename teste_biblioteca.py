@@ -3,7 +3,7 @@
 
     python3 teste_biblioteca.py
 
-Confere: login (senha e código de 6 dígitos, sem reaproveitar o código), pastas privadas fora do ar, fuga de pasta,
+Confere: Digest fora e o restante do cofre dentro, títulos com "Leia mais sobre", login (senha e código de 6 dígitos, sem reaproveitar o código), pastas privadas fora do ar, fuga de pasta,
 leitura das notas (HTML escapado, tabela, lista, link perigoso), leitor de áudio, Range 206 (exigido pelo iPhone),
 documentos, busca sem acento e saída com token CSRF.
 """
@@ -59,6 +59,8 @@ escrever(COFRE / "python" / "audio" / "aula-1.m4a", AUDIO)
 escrever(COFRE / "heimdall-digest" / "dia.md", "# Digest do dia\nResumo.\n")
 escrever(COFRE / "heimdall-privacidade" / "segredo.md", "# Segredo\nsenha do banco\n")
 escrever(COFRE / "saude" / "exame.md", "# Exame\nsegredo medico\n")
+escrever(COFRE / "heimdall-cerebro" / "ideia.md", "# Ideia\nNota do Second Brain.\n")
+escrever(COFRE / "python" / "titulo-longo.md", "# Um título bem comprido que não cabe inteiro\nTexto.\n")
 os.utime(COFRE / "python" / "aula-1.md", (time.time() - 100, time.time() - 100))
 escrever(RAIZ / "fora.md", "# Fora do cofre\n")
 
@@ -139,17 +141,32 @@ confere("segundo login com outro código", s == 303)
 s, h, c = req("GET", "/", cookie=ck)
 t = texto(c)
 confere("início abre", s == 200 and "Últimas notas" in t and "Aula 1: Introdução" in t)
-confere("tema python e Digest aparecem", "Python" in t and "Digest" in t)
-confere("privacidade e saúde não aparecem", "Segredo" not in t and "Exame" not in t and "privacidade" not in t.lower() and "saude" not in t.lower())
+confere("tema python aparece", "Python" in t)
+confere("Digest fica de fora", "Digest" not in t and "Resumo." not in t)
+confere("privacidade, Second Brain e saúde aparecem", "Monitor de Privacidade" in t and "Second Brain" in t and "Saúde" in t and "Segredo" in t and "Exame" in t and "Ideia" in t)
+confere("título é cabeçalho e vem seguido do Leia mais", '<h3>Aula 1: Introdução</h3><a href="/nota?p=python&amp;n=aula-1.md">Leia mais sobre Aula 1: Introdução...</a>' in t)
+confere("Leia mais corta o nome longo", "Leia mais sobre Um título bem comprido que...</a>" in t, t[t.find("Leia mais sobre Um"):][:90])
 confere("áudio indicado na lista", "com áudio" in t)
 confere("cabeçalhos de segurança", "nosniff" in h["x-content-type-options"] and "frame-ancestors 'none'" in h["content-security-policy"])
 confere("landmarks e pular", 'href="#principal"' in t and "<main" in t and 'aria-label="Principal"' in t and 'lang="pt-BR"' in t)
 s, _, c = req("GET", "/nota?p=heimdall-privacidade&n=segredo.md", cookie=ck)
-confere("pasta de privacidade bloqueada", s == 404 and b"Segredo" not in c)
+confere("nota de privacidade abre", s == 200 and b"senha do banco" in c)
 s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
-confere("pasta de saúde bloqueada", s == 404)
+confere("nota de saúde abre", s == 200)
+s, _, c = req("GET", "/nota?p=heimdall-digest&n=dia.md", cookie=ck)
+confere("Digest bloqueado", s == 404 and b"Digest do dia" not in c)
 s, _, c = req("GET", "/busca?q=segredo", cookie=ck)
-confere("busca não acha pasta privada", b"Nada encontrado" in c and b"senha do banco" not in c)
+confere("busca acha privacidade e saúde, não o Digest", b"senha do banco" in c or b"Segredo" in c)
+s, _, c = req("GET", "/busca?q=resumo.", cookie=ck)
+confere("busca não acha o Digest", b"Digest do dia" not in c)
+os.environ["HEIMDALL_BIBLIOTECA_EXCLUIR"] = "heimdall-digest,saude"
+s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
+confere("EXCLUIR tira outras pastas", s == 404)
+del os.environ["HEIMDALL_BIBLIOTECA_EXCLUIR"]
+os.environ["HEIMDALL_BIBLIOTECA_PASTAS"] = "heimdall-cerebro"
+s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
+confere("PASTAS com lista mostra só as listadas e os temas", s == 404 and req("GET", "/nota?p=heimdall-cerebro&n=ideia.md", cookie=ck)[0] == 200 and req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)[0] == 200)
+del os.environ["HEIMDALL_BIBLIOTECA_PASTAS"]
 
 # --- notas ---
 s, h, c = req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)

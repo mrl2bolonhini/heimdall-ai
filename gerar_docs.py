@@ -535,17 +535,18 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8011, depois de subir o sistema.</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Cloud.</li>
-<li>Para abrir de fora de casa, o site pode ganhar um endereço público próprio pelo túnel Cloudflare, por exemplo library.heimdall-ai.tech. Isso é opcional e só funciona com o computador ligado.</li></ol></section>
+<li>Para abrir de fora de casa, o site pode ganhar um endereço público próprio pelo túnel Cloudflare, em notes.heimdall-ai.tech. Isso é opcional e só funciona com o computador ligado.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que dá para fazer</h2>
 <ul><li><strong>Ler</strong>: cada nota vira uma página limpa, com títulos, listas e tabelas, e as tags e os conceitos em linhas simples.</li>
 <li><strong>Ouvir</strong>: o leitor de áudio fica no topo da nota, com velocidade de 0,75 a 1,5 vez, botões de voltar e avançar 15 segundos, e a página lembra onde você parou.</li>
 <li><strong>Navegar</strong>: início com as últimas notas e os temas, lista por tema e botões de nota anterior e próxima nota.</li>
 <li><strong>Buscar</strong>: procura nas notas e nos documentos de texto, sem diferenciar acentos nem maiúsculas.</li>
 <li><strong>Documentos</strong>: os arquivos de knowledge/ (PDF abre na própria página; Markdown e texto são lidos como nota; outros formatos são baixados).</li></ul></section>
-<section aria-labelledby="privacidade"><h2 id="privacidade">O que aparece e o que fica de fora</h2>
-<ul><li>Por padrão só aparecem as pastas dos temas de estudo (as subpastas de knowledge/) e a do Digest.</li>
-<li>Monitor de Privacidade, Second Brain, Saúde e qualquer outra pasta do cofre ficam de fora.</li>
-<li>Para liberar outra pasta, use <code>HEIMDALL_BIBLIOTECA_PASTAS="pasta-um,pasta-dois"</code> no <code>.env</code>.</li></ul></section>
+<section aria-labelledby="privacidade"><h2 id="privacidade">O que aparece</h2>
+<ul><li>Por padrão aparece o cofre inteiro: temas de estudo, Second Brain, Monitor de Privacidade, Saúde e as demais pastas.</li>
+<li>Só o Digest fica de fora, porque terá outro uso.</li>
+<li>Para tirar outras pastas, use <code>HEIMDALL_BIBLIOTECA_EXCLUIR="heimdall-digest,saude"</code> no <code>.env</code>. Para mostrar só algumas, <code>HEIMDALL_BIBLIOTECA_PASTAS="pasta-um,pasta-dois"</code>.</li>
+<li>Como inclui notas pessoais, o endereço público exige a senha e o código de 6 dígitos em toda visita.</li></ul></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
 <ul><li>Escuta só em 127.0.0.1 e é somente de leitura: nada ali grava ou apaga arquivos.</li>
 <li>Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict.</li>
