@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - subir.sh: sobe uma vez só, guarda o log e avisa quando tudo está no ar
+- Novo comando ./subir.sh. Antes, rodar o start_heimdall.sh de novo enquanto uma subida ainda estava em andamento derrubava a anterior (aparecia "exit 137") e o heimdall.log era sobrescrito. Agora ele recusa iniciar uma segunda subida e diz como ver o andamento.
+- Cada subida grava o log em logs/heimdall-AAAAMMDD-HHMMSS.log, guardando os 15 mais recentes, e heimdall.log aponta para o atual. Um heimdall.log solto de antes vai para o histórico em vez de ser apagado.
+- Enquanto sobe, mostra cada serviço que ficou no ar ("No ar (3 de 11, 28s): Qdrant") e, ao final, "Tudo no ar" com notificação e voz do macOS, ou a lista do que faltou. Só confere o que deve subir naquela execução (Open WebUI, Open Terminal, n8n, agente, Cloud e Heimdall Notas dependem dos argumentos e do .env).
+- Também: ./subir.sh --status (confere agora), --log (últimas 40 linhas) e --reiniciar (encerra a subida em andamento e sobe de novo). Sem argumentos usa --webui --terminal. SUBIR_ESPERA define a espera máxima (padrão 900 s) e SUBIR_SOM=0 desliga voz e notificação.
+- O start_heimdall.sh continua igual e o comando antigo continua valendo. Não precisa rodar instalador nem reiniciar o agente.
+
 ## 2026-11-12 - Heimdall Notas: nomes técnicos também trocados
 - O nome "Biblioteca" fica livre para o futuro: a ideia é uma biblioteca de verdade, com os documentos de knowledge/ separados em pastas por assunto e, mais adiante, uma base de conhecimento por modelo.
 - Arquivos e nomes novos: heimdall_notas.py (antes heimdall_biblioteca.py), teste_notas.py, variáveis HEIMDALL_NOTAS_* no .env (PORT, HOST, HOSTS, PASTAS, EXCLUIR) e log notas_debug.log. Os nomes antigos HEIMDALL_BIBLIOTECA_* continuam valendo, então o seu .env não precisa mudar.

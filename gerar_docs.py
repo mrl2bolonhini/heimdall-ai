@@ -263,6 +263,10 @@ SCRIPTS = [
 
 COMANDOS = [
     ("Subir e parar", [
+        ("Subir uma vez só, guardando o log e avisando quando tudo estiver no ar (aceita os argumentos do start_heimdall.sh)", "./subir.sh"),
+        ("Ver agora o que está no ar, sem subir nada", "./subir.sh --status"),
+        ("Ver as últimas linhas do log da subida atual", "./subir.sh --log"),
+        ("Encerrar a subida em andamento e subir de novo", "./subir.sh --reiniciar"),
         ("Subir tudo em segundo plano, com Open WebUI e Open Terminal", "nohup bash start_heimdall.sh --webui --terminal > heimdall.log 2>&1 &"),
         ("Subir com n8n e agente do Mac", "nohup bash start_heimdall.sh --webui --terminal --n8n --agente > heimdall.log 2>&1 &"),
         ("Subir e indexar os documentos novos antes", "nohup bash start_heimdall.sh --ingest > heimdall.log 2>&1 &"),
