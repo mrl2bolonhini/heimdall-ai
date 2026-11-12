@@ -2,11 +2,25 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Correção: trechos de livros do estudo vinham cortados no meio e repetidos
+- Causa: em livros de PDF o texto vem em parágrafos enormes. O indexador (ingest_docs.py) cortava esses parágrafos a cada 1000 letras, no meio de palavras, e repetia a sobreposição de 150 letras duas vezes dentro do mesmo trecho. O fluxo de estudo tirava só uma das repetições, e a leitura ficava com uma frase cortada seguida da mesma frase de novo.
+- O fluxo Estudo (13-estudo.json) agora desfaz a repetição também nos trechos já indexados, junta palavras partidas no fim da linha (exte-ior em duas linhas vira exterior), troca quebras de linha soltas por espaço e começa e termina a leitura em frases inteiras.
+- O indexador passou a cortar em frases inteiras (e, no máximo, em espaços), com a sobreposição feita de frases completas. Vale para livros novos ou alterados; os já indexados não precisam ser refeitos (python3 ingest_docs.py --force só se quiser).
+- Erros que já estão no texto do PDF (letras trocadas pelo OCR, como "nêío", ou "cilín dricas") não dá para corrigir sem mudar o arquivo de origem.
+- Teste: python3 teste_trechos.py (50 conferências, usa o código real do fluxo no Node).
+- Para aplicar: git fetch e reset do repositório e rodar bash instalar_automacoes_avancadas.sh (atualiza os fluxos no n8n). O ingest_docs.py novo só é usado na próxima indexação.
+
+## 2026-11-12 - Biblioteca: cofre inteiro, sem o Digest, e "Leia mais"
+- A Biblioteca agora mostra o cofre inteiro (temas de estudo, Second Brain, Monitor de Privacidade, Saúde e as demais pastas), menos o Digest. Para tirar pastas: HEIMDALL_BIBLIOTECA_EXCLUIR no .env.
+- Nas listas, o nome de cada nota é um título e logo abaixo vem o link "Leia mais sobre [início do nome]...".
+- Endereço público previsto: notes.heimdall-ai.tech (HEIMDALL_BIBLIOTECA_HOSTS já vem com ele). Como agora há notas pessoais, a entrada exige senha e código de 6 dígitos.
+- Para aplicar: git fetch e reset do repositório e subir o sistema como de costume.
+
 ## 2026-11-12 - Biblioteca: site para ler as notas de estudo e ouvir os áudios
 - Novo site simples, feito para leitor de tela, que lê direto do cofre (notas em Markdown e áudios .m4a) e de knowledge/, sem depender de aplicativo de notas. Endereço no Mac: http://localhost:8011, com a mesma senha e o mesmo código de 6 dígitos do Heimdall Cloud.
 - Cada nota vira uma página limpa (títulos, listas, tabelas), com o leitor de áudio no topo: velocidade de 0,75 a 1,5 vez, voltar e avançar 15 segundos, e a página lembra onde você parou. O servidor aceita pedidos parciais (HTTP Range), exigidos pelo Safari do iPhone para tocar áudio.
 - Início com as últimas notas e os temas, lista por tema, nota anterior e próxima, busca sem acento e maiúsculas, e os documentos de knowledge/ (PDF abre na página, Markdown e texto são lidos, outros formatos baixam).
-- Privacidade: por padrão só aparecem as pastas dos temas de estudo e o Digest. Monitor de Privacidade, Second Brain, Saúde e outras pastas ficam de fora; para liberar uma, HEIMDALL_BIBLIOTECA_PASTAS="pasta-um,pasta-dois" no .env.
+- Pastas: no primeiro desenho só apareciam os temas de estudo; veja o bloco acima para o padrão atual.
 - Somente leitura, escuta só em 127.0.0.1, caminhos conferidos contra fuga de pasta e todo texto escapado. O start_heimdall.sh sobe a Biblioteca sozinho quando há senha e código no .env (porta 8011, log em biblioteca_debug.log). Teste: python3 teste_biblioteca.py (66 conferências).
 - Para aplicar: git fetch e reset do repositório e subir o sistema como de costume. Não precisa rodar instalador. Notas antigas podem não ter áudio; as novas terão, depois da correção da voz.
 

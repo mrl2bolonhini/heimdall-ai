@@ -88,6 +88,7 @@ python3 heimdall_agente.py --teste                # Notas, Calendário e Lembret
 python3 heimdall_agente.py --voz                  # voz e velocidade do áudio
 python3 teste_cloud.py                        # painel do emulador de AWS (sem rede)
 python3 teste_biblioteca.py                   # biblioteca de notas e áudios (sem rede)
+python3 teste_trechos.py                      # trechos de livros do estudo (sem rede)
 bash instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail
 python3 gerar_docs.py --check                     # documentação em dia
 ```
