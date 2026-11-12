@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Emulador de AWS cai para o Moto quando o LocalStack recusa a chave
+- Se o LocalStack parar logo ao subir, o start_heimdall.sh agora avisa o motivo e usa o Moto no mesmo endereço (porta 4566), em vez de deixar o painel Heimdall Cloud sem emulador. O caso comum é a licença recusada (LOCALSTACK_AUTH_TOKEN inválido, código de saída 55); o aviso diz para gerar outra chave em app.localstack.cloud e gravar no .env.
+- Com o Moto, S3, DynamoDB, SQS e o console geral funcionam; Lambda, Glue e Athena ficam só simulados.
+- Para aplicar: git fetch e reset do repositório e subir o sistema como de costume. Não precisa rodar instalador.
+
 ## 2026-11-12 - Heimdall Cloud: Lambda ativo, Glue e Athena
 - Lambda agora executa por padrão: o LocalStack passa a receber o socket do Docker e a rede heimdall (LAMBDA_DOCKER_NETWORK), para as funções rodarem em contêineres. Para desligar: HEIMDALL_LOCALSTACK_DOCKER=0 no .env. O start_heimdall.sh recria o contêiner sozinho uma vez, quando o ajuste muda (o volume localstack é mantido). Atenção: isso dá ao LocalStack controle do Docker do Mac, e quem passa pelo painel (senha e código de 6 dígitos) executa código em contêineres.
 - Nova página Glue: bancos de dados (criar, apagar), tabelas (criar a partir de uma pasta do S3 em CSV, JSON ou Parquet, com colunas e tipos; listar; apagar), crawlers (criar, executar, apagar, com a situação da última execução) e jobs (criar com o script Python guardado no bucket glue-scripts, executar, ver a última execução, apagar).

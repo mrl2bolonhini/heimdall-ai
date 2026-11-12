@@ -333,6 +333,31 @@ case "$AWS_EMU" in
         docker stop moto localstack > /dev/null 2>&1
         echo "     Emulador de AWS desligado." ;;
 esac
+# Se o LocalStack parar logo ao subir (o caso comum é o LOCALSTACK_AUTH_TOKEN recusado, código de saída 55), cai para o Moto,
+# para o painel Heimdall Cloud e o código de estudo continuarem com um emulador no ar.
+if [ "$AWS_EMU" = "localstack" ]; then
+    LS_PAROU=0
+    for _ in 1 2 3 4 5 6 7 8; do
+        sleep 1
+        [ "$(docker inspect -f '{{.State.Running}}' localstack 2>/dev/null)" = "true" ] || { LS_PAROU=1; break; }
+    done
+    if [ "$LS_PAROU" = "1" ]; then
+        LS_SAIDA="$(docker inspect -f '{{.State.ExitCode}}' localstack 2>/dev/null)"
+        if [ "$LS_SAIDA" = "55" ]; then
+            echo "Aviso: o LocalStack recusou a licença (LOCALSTACK_AUTH_TOKEN inválido). Gere outra chave em app.localstack.cloud e grave no .env."
+        else
+            echo "Aviso: o LocalStack parou (código $LS_SAIDA). Veja: docker logs --tail 30 localstack"
+        fi
+        echo "     Usando o Moto no lugar, no mesmo endereço (Lambda, Glue e Athena ficam só simulados)."
+        docker rm -f localstack > /dev/null 2>&1
+        AWS_EMU=moto
+        if docker ps -a --format '{{.Names}}' | grep -qx moto; then
+            docker start moto > /dev/null
+        else
+            docker run -d --name moto --network heimdall -p 127.0.0.1:4566:5000 motoserver/moto:latest > /dev/null
+        fi
+    fi
+fi
 
 # --- Ollama ---
 if ! curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
