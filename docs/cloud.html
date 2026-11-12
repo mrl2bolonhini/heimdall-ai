@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud · Heimdall-ai</title>
+<meta name="description" content="Heimdall Cloud: painel web do emulador de AWS do Heimdall-ai, com S3, Lambda, Glue, Athena e console geral, protegido por senha e código de 6 dígitos.">
+<meta name="theme-color" content="#080d1f">
+<link rel="canonical" href="https://heimdall-ai.tech/cloud.html">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Heimdall-ai">
+<meta property="og:title" content="Cloud · Heimdall-ai">
+<meta property="og:description" content="Heimdall Cloud: painel web do emulador de AWS do Heimdall-ai, com S3, Lambda, Glue, Athena e console geral, protegido por senha e código de 6 dígitos.">
+<meta property="og:url" content="https://heimdall-ai.tech/cloud.html">
+<meta property="og:image" content="https://heimdall-ai.tech/og.png">
+<meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
+<meta name="twitter:card" content="summary_large_image">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<header class="top"><div class="wrap"><div class="barra">
+<a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<span class="gap"></span>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="cloud.html" aria-current="page">Cloud</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li></ul></nav>
+<div class="ferram"><button type="button" id="tema">Tema escuro</button></div>
+</div></div></header>
+<main id="conteudo" tabindex="-1"><div class="wrap">
+<div class="doc"><div>
+<h1>Cloud</h1>
+<p>O Heimdall Cloud é um painel web para usar o emulador de AWS (LocalStack, com o Moto como alternativa) pelo navegador. Serve para estudar engenharia de dados na AWS sem custo e sem depender de um console visual: as páginas são texto, títulos, tabelas e formulários simples, boas para leitor de tela.</p>
+<section aria-labelledby="entrar"><h2 id="entrar">Como entrar</h2>
+<ol><li>Endereço: <a href="https://cloud.heimdall-ai.tech">cloud.heimdall-ai.tech</a>. É de uso pessoal, não é aberto ao público.</li>
+<li>A entrada pede uma senha forte e um código de 6 dígitos, que o aplicativo Senhas da Apple gera e troca a cada 30 segundos.</li>
+<li>O painel só responde com o computador ligado e o sistema rodando. No próprio computador, o endereço é http://localhost:8010.</li></ol></section>
+<section aria-labelledby="fazer"><h2 id="fazer">O que dá para fazer</h2>
+<ul><li><strong>S3</strong>: criar e apagar buckets, enviar, baixar e apagar arquivos.</li>
+<li><strong>Lambda</strong>: criar uma função a partir de código Python, executar com um evento e ver a resposta e o registro de saída.</li>
+<li><strong>Glue</strong>: bancos de dados, tabelas (a partir de uma pasta do S3 em CSV, JSON ou Parquet), crawlers e jobs.</li>
+<li><strong>Athena</strong>: consultas SQL sobre os arquivos do S3, com o resultado em tabela e o histórico das últimas consultas.</li>
+<li><strong>Console geral</strong>: qualquer operação de qualquer serviço (DynamoDB, SQS, SNS, Kinesis, IAM, CloudFormation e outros), com os parâmetros em JSON e exemplos prontos.</li></ul></section>
+<section aria-labelledby="roteiro"><h2 id="roteiro">Do arquivo à consulta</h2>
+<ol><li>No S3, crie um bucket e envie um arquivo CSV para dentro de uma pasta.</li>
+<li>No Glue, crie um banco de dados.</li>
+<li>No Glue, crie uma tabela apontando para a pasta do S3, com as colunas e os tipos.</li>
+<li>No Athena, escolha o banco e rode um SELECT na tabela.</li></ol>
+<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/mrl2bolonhini/heimdall-ai/blob/main/LEIAME_cloud_roteiro.txt">LEIAME_cloud_roteiro.txt</a>.</p></section>
+<section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
+<ul><li>O painel escuta só em 127.0.0.1. A porta do emulador nunca é exposta, porque ela não tem senha.</li>
+<li>Entrada com senha (guardada só como hash PBKDF2) e código de 6 dígitos (TOTP), que não pode ser reaproveitado.</li>
+<li>Limite de tentativas por endereço e global, com bloqueio de 15 minutos.</li>
+<li>Sessão em cookie HttpOnly e SameSite=Strict, com validade, e token contra CSRF nos formulários.</li>
+<li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
+<li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>HEIMDALL_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
+<section aria-labelledby="config"><h2 id="config">Configuração</h2>
+<ul><li>Definir a senha e gerar o código de 6 dígitos: <code>python3 heimdall_cloud.py --definir-senha</code></li>
+<li>Gerar só um novo código: <code>python3 heimdall_cloud.py --novo-codigo</code></li>
+<li>Conferir se o painel está no ar: <code>curl -s http://localhost:8010/saude</code></li>
+<li>Testar o painel sem o LocalStack: <code>python3 teste_cloud.py</code></li></ul>
+<p>O painel sobe sozinho com o sistema quando há senha e código no <code>.env</code>. Se o LocalStack recusar a licença, o sistema avisa e usa o Moto no lugar, onde Lambda, Glue e Athena são só simulados. Veja os comandos completos em <a href="comandos.html">Comandos</a> e o histórico em <a href="novidades.html">Novidades</a>.</p></section>
+</div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#entrar">Como entrar</a></li><li><a href="#fazer">O que dá para fazer</a></li><li><a href="#roteiro">Do arquivo à consulta</a></li><li><a href="#seguranca">Segurança</a></li><li><a href="#config">Configuração</a></li></ul></nav></aside></div>
+</div></main>
+<footer><div class="wrap"><div class="linha">
+<div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
+<div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:suporte@heimdall-ai.tech">suporte@heimdall-ai.tech</a></li><li><a href="https://www.linkedin.com/in/murillobolonhinicita">LinkedIn de Murillo Bolonhini Cita</a></li></ul></div>
+<ul aria-label="Links do rodapé"><li><a href="https://github.com/mrl2bolonhini/heimdall-ai">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
+</div></div></footer>
+<p id="aviso" class="sr" role="status" aria-live="polite"></p>
+<script src="heimdall.js" defer></script>
+</body>
+</html>

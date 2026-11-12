@@ -208,6 +208,8 @@ TECNOLOGIAS = [
     ("n8n", "https://n8n.io", "Automações e agendamentos."),
     ("Bark", "https://github.com/Finb/Bark", "Aplicativo de notificações para o iPhone."),
     ("Docker", "https://www.docker.com", "Contêineres dos serviços auxiliares."),
+    ("LocalStack e Moto", "https://www.localstack.cloud", "Emulam a AWS no computador (S3, Lambda, Glue, Athena e outros), para estudar e testar código sem custo."),
+    ("boto3", "https://boto3.amazonaws.com/v1/documentation/api/latest/index.html", "Biblioteca da AWS em Python, usada pelo painel Heimdall Cloud para falar com o emulador."),
     ("Tailscale", "https://tailscale.com", "Rede privada que liga o celular ao computador."),
     ("Cloudflare", "https://www.cloudflare.com", "Domínio, DNS e túnel de acesso ao chat."),
     ("GitHub e GitHub Pages", "https://pages.github.com", "Código e esta documentação."),
@@ -489,6 +491,39 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
         "".join("<li><strong>%s</strong>%s</li>" % (H(t), (": " + H(d)) if d else "") for t, d in e["itens"])) for k, e in enumerate(etapas)) or "<p>Sem itens ainda.</p>"
     out["roadmap.html"] = pagina("roadmap.html", "Roadmap", "Próximos recursos do Heimdall-ai: o que está em andamento, o que vem em seguida e as ideias em avaliação.",
                                  f"<h1>Roadmap</h1><p>{H(intro_rm)}</p>{rm}<p>O que já foi entregue está em <a href=\"novidades.html\">Novidades</a>.</p>")
+    out["cloud.html"] = pagina("cloud.html", "Cloud", "Heimdall Cloud: painel web do emulador de AWS do Heimdall-ai, com S3, Lambda, Glue, Athena e console geral, protegido por senha e código de 6 dígitos.", """
+<h1>Cloud</h1>
+<p>O Heimdall Cloud é um painel web para usar o emulador de AWS (LocalStack, com o Moto como alternativa) pelo navegador. Serve para estudar engenharia de dados na AWS sem custo e sem depender de um console visual: as páginas são texto, títulos, tabelas e formulários simples, boas para leitor de tela.</p>
+<section aria-labelledby="entrar"><h2 id="entrar">Como entrar</h2>
+<ol><li>Endereço: <a href="https://cloud.heimdall-ai.tech">cloud.heimdall-ai.tech</a>. É de uso pessoal, não é aberto ao público.</li>
+<li>A entrada pede uma senha forte e um código de 6 dígitos, que o aplicativo Senhas da Apple gera e troca a cada 30 segundos.</li>
+<li>O painel só responde com o computador ligado e o sistema rodando. No próprio computador, o endereço é http://localhost:8010.</li></ol></section>
+<section aria-labelledby="fazer"><h2 id="fazer">O que dá para fazer</h2>
+<ul><li><strong>S3</strong>: criar e apagar buckets, enviar, baixar e apagar arquivos.</li>
+<li><strong>Lambda</strong>: criar uma função a partir de código Python, executar com um evento e ver a resposta e o registro de saída.</li>
+<li><strong>Glue</strong>: bancos de dados, tabelas (a partir de uma pasta do S3 em CSV, JSON ou Parquet), crawlers e jobs.</li>
+<li><strong>Athena</strong>: consultas SQL sobre os arquivos do S3, com o resultado em tabela e o histórico das últimas consultas.</li>
+<li><strong>Console geral</strong>: qualquer operação de qualquer serviço (DynamoDB, SQS, SNS, Kinesis, IAM, CloudFormation e outros), com os parâmetros em JSON e exemplos prontos.</li></ul></section>
+<section aria-labelledby="roteiro"><h2 id="roteiro">Do arquivo à consulta</h2>
+<ol><li>No S3, crie um bucket e envie um arquivo CSV para dentro de uma pasta.</li>
+<li>No Glue, crie um banco de dados.</li>
+<li>No Glue, crie uma tabela apontando para a pasta do S3, com as colunas e os tipos.</li>
+<li>No Athena, escolha o banco e rode um SELECT na tabela.</li></ol>
+<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/mrl2bolonhini/heimdall-ai/blob/main/LEIAME_cloud_roteiro.txt">LEIAME_cloud_roteiro.txt</a>.</p></section>
+<section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
+<ul><li>O painel escuta só em 127.0.0.1. A porta do emulador nunca é exposta, porque ela não tem senha.</li>
+<li>Entrada com senha (guardada só como hash PBKDF2) e código de 6 dígitos (TOTP), que não pode ser reaproveitado.</li>
+<li>Limite de tentativas por endereço e global, com bloqueio de 15 minutos.</li>
+<li>Sessão em cookie HttpOnly e SameSite=Strict, com validade, e token contra CSRF nos formulários.</li>
+<li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
+<li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>HEIMDALL_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
+<section aria-labelledby="config"><h2 id="config">Configuração</h2>
+<ul><li>Definir a senha e gerar o código de 6 dígitos: <code>python3 heimdall_cloud.py --definir-senha</code></li>
+<li>Gerar só um novo código: <code>python3 heimdall_cloud.py --novo-codigo</code></li>
+<li>Conferir se o painel está no ar: <code>curl -s http://localhost:8010/saude</code></li>
+<li>Testar o painel sem o LocalStack: <code>python3 teste_cloud.py</code></li></ul>
+<p>O painel sobe sozinho com o sistema quando há senha e código no <code>.env</code>. Se o LocalStack recusar a licença, o sistema avisa e usa o Moto no lugar, onde Lambda, Glue e Athena são só simulados. Veja os comandos completos em <a href="comandos.html">Comandos</a> e o histórico em <a href="novidades.html">Novidades</a>.</p></section>
+""")
     out["404.html"] = pagina("404.html", "Página não encontrada", "Página não encontrada.", f'<h1>Página não encontrada</h1><p>Volte ao <a href="index.html">início</a> ou veja o <a href="arquitetura.html">mapa do projeto</a>.</p>')
     return out
 

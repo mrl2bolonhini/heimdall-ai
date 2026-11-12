@@ -11,7 +11,8 @@ Este README é mantido junto com o código. As tabelas entre marcadores `AUTO` s
 1. Chat: https://chat.heimdall-ai.tech (por convite).
 2. Automações: https://flows.heimdall-ai.tech (login do administrador).
 3. Status: https://status.heimdall-ai.tech (acesso restrito).
-4. Documentação: https://heimdall-ai.tech
+4. Cloud: https://cloud.heimdall-ai.tech (painel do emulador de AWS; senha e código de 6 dígitos).
+5. Documentação: https://heimdall-ai.tech (página do Cloud: https://heimdall-ai.tech/cloud.html)
 
 Contato: suporte@heimdall-ai.tech e https://www.linkedin.com/in/murillobolonhinicita
 

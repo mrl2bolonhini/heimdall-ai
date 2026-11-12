@@ -15,6 +15,7 @@ ACESSOS = {
     "chat": "https://chat.heimdall-ai.tech",
     "n8n": "https://flows.heimdall-ai.tech",
     "status": "https://status.heimdall-ai.tech",
+    "cloud": "https://cloud.heimdall-ai.tech",
 }
 H = lambda s: html.escape(str(s), quote=True)
 
@@ -313,6 +314,7 @@ PAGINAS = [
     ("llms.html", "Modelos", "Modelos de linguagem, usos e testes"),
     ("mcp.html", "Ferramentas", "Servidores MCP e cada ferramenta"),
     ("fluxos.html", "Fluxos", "Fluxos do n8n e scripts"),
+    ("cloud.html", "Cloud", "Painel do emulador de AWS: acesso, segurança e roteiro"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
     ("novidades.html", "Novidades", "Histórico de recursos"),
     ("roadmap.html", "Roadmap", "Próximos recursos"),
@@ -417,6 +419,7 @@ def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
 <li class="porta" style="--cor:#42a5f5"><h3><a href="{ACESSOS['chat']}">Chat</a></h3><p>Conversar com os modelos, com busca na web e documentos.</p><p class="quem">Por convite</p></li>
 <li class="porta" style="--cor:#ffc107"><h3><a href="{ACESSOS['n8n']}">Automações</a></h3><p>Ver e ajustar os fluxos que rodam sozinhos.</p><p class="quem">Login do administrador</p></li>
 <li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['status']}">Status</a></h3><p>Ver se os serviços estão no ar.</p><p class="quem">Acesso restrito</p></li>
+<li class="porta" style="--cor:#1e88e5"><h3><a href="{ACESSOS['cloud']}">Cloud</a></h3><p>Painel do emulador de AWS: S3, Lambda, Glue e Athena. <a href="cloud.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#93d2fa"><h3><a href="{REPO}">Código</a></h3><p>Repositório do projeto no GitHub.</p><p class="quem">Público</p></li>
 </ul></section>
 <section class="faixa" aria-labelledby="proposito"><div class="dois"><h2 id="proposito">Por que existe</h2><div>
