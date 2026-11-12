@@ -1,0 +1,76 @@
+HEIMDALL CLOUD: ROTEIRO PARA SEGUIR DEPOIS
+Escrito em 12/11/2026. Texto simples, para leitura com VoiceOver.
+
+ONDE VOCÊ PAROU
+
+1. Funcionando: o painel em http://localhost:8010 (senha e código de 6 dígitos do app Senhas) e o LocalStack saudável, com a chave nova. O Lambda está ligado por padrão.
+2. Ainda não testado: criar bucket, tabela e consulta, e executar uma função Lambda.
+3. Pendente: confirmar que https://cloud.heimdall-ai.tech abre fora de casa (use o iPhone no 4G). Se o Safari disser que não achou o endereço, é cache de DNS: veja a seção de problemas, no fim.
+4. Pendente: depois da correção da voz, conferir se o próximo estudo (6h, 13h ou 20h) traz o áudio anexado na nota.
+
+ROTEIRO 1: DO ARQUIVO À CONSULTA (S3, GLUE E ATHENA)
+
+Objetivo: guardar um CSV no S3, descrever esse arquivo como uma tabela no Glue e consultar com SQL no Athena. É o caminho básico de um lago de dados na AWS.
+
+1. No Terminal, crie um arquivo de exemplo: printf 'id,nome,valor\n1,Ana,10.5\n2,Bruno,20\n' > ~/Desktop/clientes.csv
+2. No painel, abra S3 e crie o bucket dados.
+3. Abra o bucket dados. Em Enviar arquivo, escolha o clientes.csv. No campo "Nome no bucket", escreva clientes/clientes.csv, para o arquivo ficar dentro de uma pasta. Envie.
+4. Abra Glue. Em Criar banco de dados, escreva vendas e crie. A página das tabelas desse banco abre sozinha.
+5. Em Criar tabela, preencha: nome clientes; local s3://dados/clientes/; formato csv; deixe marcado que o CSV tem linha de cabeçalho; colunas, uma por linha: id int, nome string, valor double. Crie.
+6. Abra Athena. Escolha o banco vendas, escreva SELECT * FROM clientes e execute. Devem aparecer duas linhas, de Ana e Bruno.
+7. Experimente outras consultas: SELECT count(*) AS total FROM clientes e SELECT nome FROM clientes WHERE valor > 15.
+
+Variação com crawler (o Glue descobre as colunas sozinho):
+1. Em Glue, crie um crawler: nome cr-clientes, banco vendas, pasta s3://dados/clientes/.
+2. Execute o crawler e atualize a página até a última execução aparecer como concluída.
+3. Abra as tabelas do banco vendas: uma tabela nova, criada pelo crawler, deve aparecer.
+
+ROTEIRO 2: LAMBDA
+
+1. Em Lambda, crie a função: nome minha-fn, runtime python3.12, handler app.handler, com o código que já vem preenchido.
+2. Em Executar função, escolha minha-fn, deixe o evento como {} e execute.
+3. Resultado esperado: código de status 200, erro da função "nenhum" e a resposta {"ok": true, "evento": {}}.
+4. A primeira execução de cada runtime baixa a imagem do Docker e pode levar alguns minutos. Se der erro de tempo, execute de novo.
+5. Depois, experimente mudar o código e criar outra função que leia um arquivo do S3. O endereço do emulador, visto de dentro de uma função, é o que o LocalStack informa nas variáveis de ambiente da função (AWS_ENDPOINT_URL).
+
+ROTEIRO 3: PRÓXIMOS PASSOS PARA ESTUDAR
+
+1. Troque o CSV por Parquet e compare o tamanho dos arquivos e o resultado das consultas.
+2. Crie um job no Glue, execute e veja a situação da última execução na página do Glue.
+3. Use o Console geral para o que não tem página própria. Exemplos prontos já estão na página: DynamoDB (criar tabela, gravar item, ler), SQS (criar fila), Kinesis (criar stream).
+4. Monte um fluxo completo: um evento cai no S3, uma função Lambda processa e o resultado vira tabela no Athena.
+
+REFERÊNCIA RÁPIDA
+
+Endereços
+1. Painel no Mac: http://localhost:8010
+2. Painel público: https://cloud.heimdall-ai.tech (só funciona com o Mac ligado e o sistema rodando)
+3. Emulador de AWS: http://localhost:4566 (é uma API, não uma página; chave de acesso e chave secreta: test; região: us-east-1)
+
+Comandos, na pasta do projeto
+1. Atualizar do GitHub: git fetch origin && git reset --hard origin/main
+2. Conferir o emulador: docker ps --format '{{.Names}}: {{.Status}}' | grep -E "localstack|moto" (deve mostrar o localstack como Up e healthy; se mostrar o moto, a chave do LocalStack foi recusada)
+3. Ver o motivo se o LocalStack parar: docker logs --tail 30 localstack
+4. Ver o log do painel: tail -20 cloud_debug.log
+5. Saúde do emulador: curl -s http://localhost:4566/_localstack/health | head -c 300
+6. Painel responde: curl -s http://localhost:8010/saude (deve dizer ok)
+7. Reiniciar só o painel: pkill -f heimdall_cloud.py e subir o sistema como de costume
+8. Nova senha e novo código de 6 dígitos: python3 heimdall_cloud.py --definir-senha
+9. Só um novo código de 6 dígitos (perdeu a chave, por exemplo): python3 heimdall_cloud.py --novo-codigo
+10. Teste do painel sem LocalStack: python3 teste_cloud.py
+11. Gravar uma chave nova do LocalStack sem colar no arquivo (copie a chave do site app.localstack.cloud antes): T=$(pbpaste | tr -d '[:space:]'); grep -v '^LOCALSTACK_AUTH_TOKEN=' .env > .env.novo && printf "LOCALSTACK_AUTH_TOKEN='%s'\n" "$T" >> .env.novo && mv .env.novo .env && chmod 600 .env
+12. Desligar a execução de Lambda: HEIMDALL_LOCALSTACK_DOCKER=0 no .env e subir o sistema de novo.
+
+Segurança
+1. O painel público exige senha e código de 6 dígitos, bloqueia depois de 5 tentativas erradas e nunca expõe a porta 4566.
+2. Com o Lambda ligado, quem passar pela senha e pelo código executa código em contêineres, com o Docker do Mac. Por isso mantenha a senha forte e não compartilhe o código nem a chave de configuração do app Senhas.
+3. Se o código ou a chave vazar: python3 heimdall_cloud.py --novo-codigo e cadastre a chave nova no app Senhas.
+
+SE ALGO FALHAR
+
+1. O Safari diz que não achou o endereço de cloud.heimdall-ai.tech: é cache de DNS. Teste dig +short cloud.heimdall-ai.tech @1.1.1.1 (se mostrar IPs, o registro está no ar). Limpe o cache do Mac: sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder. No iPhone, ligue e desligue o Modo Avião por 5 segundos ou use o 4G.
+2. A página inicial do painel avisa em vermelho que o emulador não respondeu: veja se o LocalStack está Up (comando 2 acima) e espere cerca de um minuto depois de subir o sistema.
+3. O LocalStack parou com "License activation failed": a chave do .env foi recusada. Gere outra em app.localstack.cloud e grave com o comando 11. Enquanto isso o sistema usa o Moto, onde Lambda, Glue e Athena são só simulados.
+4. Uma consulta do Athena falha: a mensagem aparece na própria página. Confira se o banco escolhido é o certo, se a tabela existe e se o arquivo está na pasta do S3 indicada na tabela.
+5. Erro de página ao entrar com a senha certa: confira se a data e a hora do Mac estão no ajuste automático (Ajustes do Sistema, Geral, Data e Hora). O código de 6 dígitos depende do relógio.
+6. Qualquer outro erro: copie a mensagem exata que a página mostrou e mande na conversa, junto com a saída de tail -20 cloud_debug.log.
