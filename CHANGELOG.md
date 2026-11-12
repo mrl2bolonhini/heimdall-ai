@@ -2,6 +2,14 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Heimdall Cloud: Lambda ativo, Glue e Athena
+- Lambda agora executa por padrão: o LocalStack passa a receber o socket do Docker e a rede heimdall (LAMBDA_DOCKER_NETWORK), para as funções rodarem em contêineres. Para desligar: HEIMDALL_LOCALSTACK_DOCKER=0 no .env. O start_heimdall.sh recria o contêiner sozinho uma vez, quando o ajuste muda (o volume localstack é mantido). Atenção: isso dá ao LocalStack controle do Docker do Mac, e quem passa pelo painel (senha e código de 6 dígitos) executa código em contêineres.
+- Nova página Glue: bancos de dados (criar, apagar), tabelas (criar a partir de uma pasta do S3 em CSV, JSON ou Parquet, com colunas e tipos; listar; apagar), crawlers (criar, executar, apagar, com a situação da última execução) e jobs (criar com o script Python guardado no bucket glue-scripts, executar, ver a última execução, apagar).
+- Nova página Athena: escolha o banco do Glue, escreva o SQL e veja o resultado em tabela (até 500 linhas), com o histórico das últimas 10 consultas e a abertura de resultados antigos. Os resultados vão para o bucket athena-resultados, criado se faltar.
+- A página inicial ganhou um roteiro de estudo (arquivo no S3, banco e tabela no Glue, consulta no Athena). A execução real de consultas do Athena e de crawlers e jobs do Glue depende do LocalStack; o Moto só simula parte disso.
+- teste_cloud.py passou a ter 53 conferências, agora cobrindo Glue e Athena.
+- Para aplicar: git fetch e reset do repositório e subir o sistema como de costume (o painel e o LocalStack reiniciam). Na primeira execução de cada runtime do Lambda, o Docker baixa a imagem, o que pode demorar.
+
 ## 2026-11-12 - Correção: áudio dos estudos sumia quando a voz estava fixada no .env
 - Com HEIMDALL_VOZ="Felipe (Aprimorada)" o áudio não era gerado: o macOS lista as vozes em inglês neste Mac, como "Felipe (Enhanced)", e o nome fixado não batia. A nota era gravada sem áudio e sem aviso.
 - Agora (Aprimorada), (Melhorada) e (Enhanced) valem igual, maiúsculas não importam, e, se a voz fixada não existir, o agente usa a melhor voz em português instalada e registra isso no agente_debug.log em vez de ficar sem áudio.
@@ -12,7 +20,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Pensado para ficar público em cloud.heimdall-ai.tech pelo túnel Cloudflare, sem Cloudflare Access, por isso tem camadas próprias: entrada com senha forte (guardada só como hash PBKDF2 no .env) e código de 6 dígitos (TOTP, cadastrável no app Senhas da Apple); limite de tentativas por endereço e global, com bloqueio de 15 minutos; código de 6 dígitos que não pode ser reaproveitado; sessão em cookie HttpOnly e SameSite=Strict com validade de 8 horas; token contra CSRF nos formulários; só atende os nomes de site permitidos; cabeçalhos de segurança; arquivos baixados sempre como anexo. A porta 4566 do emulador continua só em 127.0.0.1, nunca exposta.
 - Sem senha e código no .env o painel não sobe. Para configurar: python3 heimdall_cloud.py --definir-senha (a senha é digitada sem aparecer na tela; o código de 6 dígitos é mostrado uma vez para cadastrar no app Senhas). python3 heimdall_cloud.py --novo-codigo gera só outro código.
 - Executar funções Lambda exige o socket do Docker dentro do LocalStack, que dá ao contêiner controle do Docker do Mac. Por isso é opcional: HEIMDALL_LOCALSTACK_DOCKER=1 no .env (e docker rm -f localstack uma vez, para recriar o contêiner). Sem isso, criar e listar funções funciona; executar dá erro.
-- Novos arquivos: heimdall_cloud.py (usa a biblioteca padrão e o boto3, que já está no requirements.txt) e teste_cloud.py (34 conferências sem rede e sem LocalStack). O start_heimdall.sh sobe o painel sozinho (porta 8010, HEIMDALL_CLOUD_PORT muda) quando há senha e código no .env.
+- Novos arquivos: heimdall_cloud.py (usa a biblioteca padrão e o boto3, que já está no requirements.txt) e teste_cloud.py (53 conferências sem rede e sem LocalStack). O start_heimdall.sh sobe o painel sozinho (porta 8010, HEIMDALL_CLOUD_PORT muda) quando há senha e código no .env.
 - Para aplicar: git fetch e reset do repositório, python3 heimdall_cloud.py --definir-senha, e reiniciar o sistema. Depois, no túnel Cloudflare, acrescentar o nome cloud.heimdall-ai.tech apontando para http://localhost:8010.
 
 ## 2026-11-11 - Cópia de segurança criptografada do banco

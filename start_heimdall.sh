@@ -300,13 +300,27 @@ case "$AWS_EMU" in
         echo "     Emulador de AWS (Moto) em http://localhost:4566 (use credenciais falsas)" ;;
     localstack)
         docker rm -f moto > /dev/null 2>&1
+        # Lambda: o LocalStack executa as funções em contêineres, então precisa do socket do Docker (e da rede heimdall, para os
+        # contêineres das funções acharem o LocalStack). Ligado por padrão; HEIMDALL_LOCALSTACK_DOCKER=0 no .env desliga.
+        # Atenção: isso dá ao contêiner do LocalStack controle do Docker do Mac. Quem passa pelo painel Heimdall Cloud (senha e
+        # código de 6 dígitos) consegue executar código em contêineres.
+        LS_DOCKER=()
+        LS_QUER=0
+        if [ "${HEIMDALL_LOCALSTACK_DOCKER:-1}" != "0" ]; then
+            LS_QUER=1
+            LS_DOCKER=(-v /var/run/docker.sock:/var/run/docker.sock -e LAMBDA_DOCKER_NETWORK=heimdall)
+        fi
+        if docker ps -a --format '{{.Names}}' | grep -qx localstack; then
+            LS_TEM=0
+            docker inspect localstack --format '{{range .Mounts}}{{.Destination}} {{end}}' 2>/dev/null | grep -q 'docker.sock' && LS_TEM=1
+            if [ "$LS_TEM" != "$LS_QUER" ]; then
+                echo "     Recriando o LocalStack para aplicar HEIMDALL_LOCALSTACK_DOCKER (o volume localstack é mantido)."
+                docker rm -f localstack > /dev/null 2>&1
+            fi
+        fi
         if docker ps -a --format '{{.Names}}' | grep -qx localstack; then
             docker start localstack > /dev/null
         else
-            # Executar funções Lambda exige o socket do Docker dentro do LocalStack. Isso dá ao contêiner controle do Docker do Mac,
-            # então só liga com HEIMDALL_LOCALSTACK_DOCKER=1 no .env. Para valer num contêiner já criado: docker rm -f localstack
-            LS_DOCKER=()
-            [ "$HEIMDALL_LOCALSTACK_DOCKER" = "1" ] && LS_DOCKER=(-v /var/run/docker.sock:/var/run/docker.sock)
             docker run -d --name localstack --network heimdall \
                 -p 127.0.0.1:4566:4566 \
                 -e LOCALSTACK_AUTH_TOKEN="$LOCALSTACK_AUTH_TOKEN" \

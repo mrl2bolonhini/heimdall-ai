@@ -63,6 +63,60 @@ class Falso:
     def create_function(self, **kw):
         CHAMADAS.append(("create_function", kw))
 
+    def head_bucket(self, **kw):
+        raise Exception("não existe")
+
+    def get_databases(self, **kw):
+        return {"DatabaseList": [{"Name": "vendas"}]}
+
+    def get_tables(self, **kw):
+        return {"TableList": [{"Name": "clientes", "Parameters": {"classification": "csv"},
+                               "StorageDescriptor": {"Location": "s3://dados/clientes/", "Columns": [{"Name": "id", "Type": "int"}]}}]}
+
+    def create_database(self, **kw):
+        CHAMADAS.append(("create_database", kw))
+
+    def create_table(self, **kw):
+        CHAMADAS.append(("create_table", kw))
+
+    def get_crawlers(self, **kw):
+        return {"Crawlers": [{"Name": "cr1", "DatabaseName": "vendas", "Targets": {"S3Targets": [{"Path": "s3://dados/"}]}, "State": "READY", "LastCrawl": {"Status": "SUCCEEDED"}}]}
+
+    def create_crawler(self, **kw):
+        CHAMADAS.append(("create_crawler", kw))
+
+    def start_crawler(self, **kw):
+        CHAMADAS.append(("start_crawler", kw))
+
+    def get_jobs(self, **kw):
+        return {"Jobs": [{"Name": "job1", "GlueVersion": "4.0"}]}
+
+    def get_job_runs(self, **kw):
+        return {"JobRuns": [{"JobRunState": "SUCCEEDED", "Id": "jr_123456789012345"}]}
+
+    def create_job(self, **kw):
+        CHAMADAS.append(("create_job", kw))
+
+    def start_job_run(self, **kw):
+        CHAMADAS.append(("start_job_run", kw))
+        return {"JobRunId": "jr_abc"}
+
+    def start_query_execution(self, **kw):
+        CHAMADAS.append(("start_query_execution", kw))
+        return {"QueryExecutionId": "11111111-2222"}
+
+    def get_query_execution(self, **kw):
+        return {"QueryExecution": {"Status": {"State": "SUCCEEDED"}, "Query": "SELECT * FROM clientes", "QueryExecutionId": kw["QueryExecutionId"]}}
+
+    def get_query_results(self, **kw):
+        return {"ResultSet": {"Rows": [{"Data": [{"VarCharValue": "id"}, {"VarCharValue": "nome"}]}, {"Data": [{"VarCharValue": "1"}, {"VarCharValue": "Ana <b>"}]}]}}
+
+    def list_query_executions(self, **kw):
+        return {"QueryExecutionIds": ["11111111-2222"]}
+
+    def batch_get_query_execution(self, **kw):
+        return {"QueryExecutions": [{"Status": {"State": "SUCCEEDED"}, "Query": "SELECT 1", "QueryExecutionId": "11111111-2222"}]}
+
     def list_tables(self, **kw):
         return {"ResponseMetadata": {"HTTPStatusCode": 200}, "TableNames": ["clientes"]}
 
@@ -210,6 +264,55 @@ if fn:
 confere("criar função empacota o código no arquivo do handler", st == 303 and ok_zip)
 st, _, _ = req("POST", "/lambda/criar", form(csrf=csrf, nome="../ruim", runtime="python3.12", handler="app.handler", codigo="x"), cookie=cookie)
 confere("nome de função inválido é recusado", len([c for c in CHAMADAS if c[0] == "create_function"]) == 1)
+
+# ---- Glue ----
+st, _, corpo = req("GET", "/glue", cookie=cookie)
+confere("Glue lista bancos, crawlers e jobs", st == 200 and "vendas" in corpo and "cr1" in corpo and "job1" in corpo and "SUCCEEDED" in corpo)
+st, _, corpo = req("GET", "/glue/tabelas?banco=vendas", cookie=cookie)
+confere("Glue mostra tabelas com colunas e local", st == 200 and "clientes" in corpo and "id int" in corpo and "s3://dados/clientes/" in corpo)
+st, _, _ = req("GET", "/glue/tabelas?banco=Banco%20Ruim", cookie=cookie)
+confere("nome de banco inválido na URL dá erro tratado", st == 500)
+st, _, _ = req("POST", "/glue/banco/criar", form(csrf=csrf, nome="vendas2"), cookie=cookie)
+confere("criar banco chama o Glue", st == 303 and ("create_database", {"DatabaseInput": {"Name": "vendas2"}}) in CHAMADAS)
+st, _, _ = req("POST", "/glue/banco/criar", form(csrf=csrf, nome="Maiuscula"), cookie=cookie)
+confere("banco com maiúscula é recusado", len([c for c in CHAMADAS if c[0] == "create_database"]) == 1)
+st, _, _ = req("POST", "/glue/tabela/criar", form(csrf=csrf, banco="vendas", nome="pedidos", local="s3://dados/pedidos", formato="csv", cabecalho="1", colunas="id int\nvalor decimal(10,2)\nitens struct<a:int,b:string>"), cookie=cookie)
+tab = [c for c in CHAMADAS if c[0] == "create_table"]
+ti = tab[0][1]["TableInput"] if tab else {}
+confere("criar tabela monta colunas, formato, cabeçalho e barra final", st == 303 and ti.get("StorageDescriptor", {}).get("Location") == "s3://dados/pedidos/"
+        and [c["Name"] for c in ti["StorageDescriptor"]["Columns"]] == ["id", "valor", "itens"] and ti["Parameters"].get("skip.header.line.count") == "1"
+        and "LazySimpleSerDe" in ti["StorageDescriptor"]["SerdeInfo"]["SerializationLibrary"], str(tab))
+st, _, _ = req("POST", "/glue/tabela/criar", form(csrf=csrf, banco="vendas", nome="ruim", local="http://x", formato="csv", colunas="id int"), cookie=cookie)
+st2, _, _ = req("POST", "/glue/tabela/criar", form(csrf=csrf, banco="vendas", nome="ruim", local="s3://dados/x/", formato="csv", colunas="so_o_nome"), cookie=cookie)
+confere("tabela com local ou coluna inválidos é recusada", len([c for c in CHAMADAS if c[0] == "create_table"]) == 1)
+st, _, _ = req("POST", "/glue/crawler/criar", form(csrf=csrf, nome="cr2", banco="vendas", local="s3://dados/pedidos/"), cookie=cookie)
+cr = [c for c in CHAMADAS if c[0] == "create_crawler"]
+confere("criar crawler usa o banco e a pasta do S3", st == 303 and cr and cr[0][1]["Targets"] == {"S3Targets": [{"Path": "s3://dados/pedidos/"}]})
+st, _, _ = req("POST", "/glue/crawler/iniciar", form(csrf=csrf, nome="cr1"), cookie=cookie)
+confere("executar crawler chama o Glue", st == 303 and ("start_crawler", {"Name": "cr1"}) in CHAMADAS)
+antes = len([c for c in CHAMADAS if c[0] == "put_object"])
+st, _, _ = req("POST", "/glue/job/criar", form(csrf=csrf, nome="job2", versao="4.0", codigo="print(1)"), cookie=cookie)
+put = [c for c in CHAMADAS if c[0] == "put_object"][antes:]
+cj = [c for c in CHAMADAS if c[0] == "create_job"]
+confere("criar job guarda o script no S3 e aponta para ele", st == 303 and put and put[0][1]["Key"] == "job2.py" and cj and cj[0][1]["Command"]["ScriptLocation"] == "s3://glue-scripts/job2.py")
+confere("bucket de scripts é criado quando falta", ("create_bucket", {"Bucket": "glue-scripts"}) in CHAMADAS)
+st, _, _ = req("POST", "/glue/job/iniciar", form(csrf=csrf, nome="job1"), cookie=cookie)
+confere("executar job chama o Glue", st == 303 and ("start_job_run", {"JobName": "job1"}) in CHAMADAS)
+
+# ---- Athena ----
+st, _, corpo = req("GET", "/athena", cookie=cookie)
+confere("Athena abre com formulário, bancos e histórico", st == 200 and "Executar consulta" in corpo and "vendas" in corpo and "Últimas consultas" in corpo)
+st, _, corpo = req("POST", "/athena/executar", form(csrf=csrf, banco="vendas", sql="SELECT * FROM clientes"), cookie=cookie)
+qs = [c for c in CHAMADAS if c[0] == "start_query_execution"]
+confere("consulta roda e mostra a tabela de resultado", st == 200 and "Ana" in corpo and '<th scope="col">nome</th>' in corpo and qs and qs[0][1]["QueryExecutionContext"] == {"Database": "vendas"})
+confere("resultado do Athena vem escapado", "Ana <b>" not in corpo and "Ana &lt;b&gt;" in corpo)
+confere("bucket dos resultados é criado quando falta", ("create_bucket", {"Bucket": "athena-resultados"}) in CHAMADAS)
+st, _, corpo = req("GET", "/athena/resultado?id=11111111-2222", cookie=cookie)
+confere("resultado de consulta antiga abre pelo identificador", st == 200 and "11111111-2222" in corpo and "Ana" in corpo)
+st, _, _ = req("GET", "/athena/resultado?id=../x", cookie=cookie)
+confere("identificador de consulta inválido é recusado", st == 500)
+st, _, _ = req("POST", "/athena/executar", form(csrf=csrf, banco="vendas", sql="   "), cookie=cookie)
+confere("consulta vazia é recusada", st == 303 and len(qs) == 1)
 
 st, hd, _ = req("POST", "/sair", form(csrf=csrf), cookie=cookie)
 confere("sair apaga o cookie", st == 303 and "Max-Age=0" in hd["set-cookie"])

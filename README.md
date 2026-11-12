@@ -48,7 +48,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Uptime Kuma | 3001 | Painel de disponibilidade dos serviços. |
 | Dozzle | 8081 | Leitor de logs dos contêineres. |
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
-| Heimdall Cloud | 8010 | Painel web do emulador de AWS (S3, Lambda e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
+| Heimdall Cloud | 8010 | Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
 <!-- /AUTO:SERVICOS -->
 
 ## Requisitos
