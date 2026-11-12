@@ -186,7 +186,7 @@ del os.environ["HEIMDALL_BIBLIOTECA_PASTAS"]
 # --- notas ---
 s, h, c = req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)
 t = texto(c)
-confere("nota abre", s == 200 and "<title>Aula 1: Introdução - Biblioteca Heimdall</title>" in t and "<h1>Aula 1: Introdução</h1>" in t)
+confere("nota abre", s == 200 and "<title>Aula 1: Introdução - Heimdall Notas</title>" in t and "<h1>Aula 1: Introdução</h1>" in t)
 confere("título não repete no corpo", t.count("Aula 1: Introdução") == 2)
 confere("frontmatter vira linhas", "Tags:" in t and "séries" in t and "Conceitos:" in t and "name: " not in t)
 confere("negrito, itálico, código", "<strong>negrito</strong>" in t and "<em>itálico</em>" in t and "<code>codigo</code>" in t)

@@ -486,7 +486,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] 
     fi
 fi
 
-# --- Biblioteca (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Cloud ---
+# --- Heimdall Notas (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Cloud ---
 # Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (library.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_biblioteca.py ]; then
@@ -496,11 +496,11 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: a Biblioteca não respondeu em 10s. Veja biblioteca_debug.log."
+                echo "Aviso: o Heimdall Notas não respondeu em 10s. Veja biblioteca_debug.log."
                 break
             fi
         done
-        echo "     Biblioteca (notas e áudios) em http://localhost:$BIBLIOTECA_PORT"
+        echo "     Heimdall Notas (notas e áudios) em http://localhost:$BIBLIOTECA_PORT"
     fi
 fi
 

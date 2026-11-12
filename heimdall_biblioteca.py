@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Biblioteca do Heimdall: um site simples e agradável para LER as notas de estudo e OUVIR os áudios.
+"""Heimdall Notas: um site simples e agradável para LER as notas de estudo e OUVIR os áudios.
 
 Lê direto do cofre (cerebro/: notas em Markdown e áudios .m4a) e da pasta knowledge/ (seus documentos). Não depende de
 nenhum app: abre no Safari do Mac ou do iPhone, funciona com VoiceOver e usa o mesmo login do painel Cloud
@@ -464,8 +464,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
     js = f'<script nonce="{e(nonce)}">{script}</script>' if script else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Biblioteca Heimdall</title><style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a><header><p><strong>Biblioteca Heimdall</strong></p>{nav}</header>'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notas</title><style>{CSS}</style></head><body>'
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a><header><p><strong>Heimdall Notas</strong></p>{nav}</header>'
             f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main>{js}</body></html>').encode("utf-8")
 
 
@@ -863,7 +863,7 @@ def main() -> None:
         sys.exit("Sem senha e código configurados a biblioteca não sobe. Rode: python3 heimdall_cloud.py --definir-senha")
     srv = ThreadingHTTPServer((HOST, PORT), Biblioteca)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Biblioteca Heimdall em http://{HOST}:{PORT} (cofre: {VAULT}; documentos: {KNOWLEDGE}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Notas em http://{HOST}:{PORT} (cofre: {VAULT}; documentos: {KNOWLEDGE}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
