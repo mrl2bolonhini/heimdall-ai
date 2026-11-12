@@ -314,6 +314,7 @@ PAGINAS = [
     ("llms.html", "Modelos", "Modelos de linguagem, usos e testes"),
     ("mcp.html", "Ferramentas", "Servidores MCP e cada ferramenta"),
     ("fluxos.html", "Fluxos", "Fluxos do n8n e scripts"),
+    ("biblioteca.html", "Biblioteca", "Notas de estudo e áudios para ler e ouvir"),
     ("cloud.html", "Cloud", "Painel do emulador de AWS: acesso, segurança e roteiro"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
     ("novidades.html", "Novidades", "Histórico de recursos"),

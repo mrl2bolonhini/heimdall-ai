@@ -2,6 +2,14 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Biblioteca: site para ler as notas de estudo e ouvir os áudios
+- Novo site simples, feito para leitor de tela, que lê direto do cofre (notas em Markdown e áudios .m4a) e de knowledge/, sem depender de aplicativo de notas. Endereço no Mac: http://localhost:8011, com a mesma senha e o mesmo código de 6 dígitos do Heimdall Cloud.
+- Cada nota vira uma página limpa (títulos, listas, tabelas), com o leitor de áudio no topo: velocidade de 0,75 a 1,5 vez, voltar e avançar 15 segundos, e a página lembra onde você parou. O servidor aceita pedidos parciais (HTTP Range), exigidos pelo Safari do iPhone para tocar áudio.
+- Início com as últimas notas e os temas, lista por tema, nota anterior e próxima, busca sem acento e maiúsculas, e os documentos de knowledge/ (PDF abre na página, Markdown e texto são lidos, outros formatos baixam).
+- Privacidade: por padrão só aparecem as pastas dos temas de estudo e o Digest. Monitor de Privacidade, Second Brain, Saúde e outras pastas ficam de fora; para liberar uma, HEIMDALL_BIBLIOTECA_PASTAS="pasta-um,pasta-dois" no .env.
+- Somente leitura, escuta só em 127.0.0.1, caminhos conferidos contra fuga de pasta e todo texto escapado. O start_heimdall.sh sobe a Biblioteca sozinho quando há senha e código no .env (porta 8011, log em biblioteca_debug.log). Teste: python3 teste_biblioteca.py (66 conferências).
+- Para aplicar: git fetch e reset do repositório e subir o sistema como de costume. Não precisa rodar instalador. Notas antigas podem não ter áudio; as novas terão, depois da correção da voz.
+
 ## 2026-11-12 - Emulador de AWS cai para o Moto quando o LocalStack recusa a chave
 - Se o LocalStack parar logo ao subir, o start_heimdall.sh agora avisa o motivo e usa o Moto no mesmo endereço (porta 4566), em vez de deixar o painel Heimdall Cloud sem emulador. O caso comum é a licença recusada (LOCALSTACK_AUTH_TOKEN inválido, código de saída 55); o aviso diz para gerar outra chave em app.localstack.cloud e gravar no .env.
 - Com o Moto, S3, DynamoDB, SQS e o console geral funcionam; Lambda, Glue e Athena ficam só simulados.

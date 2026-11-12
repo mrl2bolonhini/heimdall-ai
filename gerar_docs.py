@@ -194,6 +194,7 @@ SERVICOS = [
     ("Uptime Kuma", "Painel de disponibilidade dos serviços.", "3001", "start_heimdall.sh (HEIMDALL_MONITORING=0 desliga)"),
     ("Dozzle", "Leitor de logs dos contêineres.", "8081", "start_heimdall.sh (HEIMDALL_MONITORING=0 desliga)"),
     ("Emulador de AWS (Moto ou LocalStack)", "Para testar código de AWS sem custo.", "4566", "start_heimdall.sh (HEIMDALL_AWS_EMULATOR)"),
+    ("Biblioteca", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Cloud", "Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare.", "8010", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
 ]
 
@@ -249,6 +250,7 @@ SCRIPTS = [
     ("heimdall_agente.py", "Agente do Mac (porta 8003). Recebe pedidos do n8n com um token e grava notas no app Notas, cria eventos no Calendário e lembretes no app Lembretes, narra textos com a voz do macOS e busca em dois sites públicos permitidos. Só escreve nas pastas do próprio Heimdall e nunca lê notas de pastas privadas."),
     ("heimdall_triagem.py", "Triagem obrigatória de avisos importantes. Cria lembretes na lista \"Heimdall: Triagem\" do app Lembretes (menções do Diário da Justiça, alertas de saúde, e-mails suspeitos ou urgentes e achados de privacidade de risco médio ou alto) e insiste pelo Bark até você concluir, reclassificar ou adiar. Roda dentro do agente do Mac."),
     ("heimdall_email_oficial.py", "Vigia o Gmail a cada hora, só lendo. Confere se e-mails de serviços públicos (INSS, gov.br, FGTS, Receita, Serasa e outros) são autênticos, resume os verdadeiros, alerta sobre imitações e cria evento e lembrete quando há prazo. Nunca segue links."),
+    ("heimdall_biblioteca.py", "Biblioteca (porta 8011): site para ler as notas de estudo do cofre e ouvir os áudios, com velocidade, voltar e avançar 15 segundos, busca e os documentos de knowledge/. Mesmo login do Heimdall Cloud; só mostra os temas de estudo e o Digest."),
     ("heimdall_cloud.py", "Painel web do emulador de AWS (porta 8010): S3, Lambda, Glue (bancos, tabelas, crawlers e jobs), Athena (consultas SQL) e um console geral que chama qualquer operação de qualquer serviço. Entrada com senha (hash PBKDF2) e código de 6 dígitos, limite de tentativas, sessão com validade e proteção contra CSRF. Escuta só em 127.0.0.1 e nunca expõe a porta do emulador."),
     ("ingest_docs.py", "Indexa os documentos de knowledge/ no Qdrant, de forma incremental. Cada subpasta vira um tema."),
     ("limpar_privadas.py", "Apaga do Second Brain o que veio de notas que depois foram para uma pasta privada."),
@@ -280,7 +282,10 @@ COMANDOS = [
         ("Acesso ao app Notas, Calendário e Lembretes", "python3 heimdall_agente.py --teste"),
         ("Voz e velocidade do áudio de estudo", "python3 heimdall_agente.py --voz"),
         ("Painel do emulador de AWS (deve responder ok)", "curl -s http://localhost:8010/saude"),
+        ("Biblioteca de notas e áudios (deve responder ok)", "curl -s http://localhost:8011/saude"),
+        ("Reiniciar só a Biblioteca", "pkill -f heimdall_biblioteca.py   # depois suba o sistema como de costume"),
         ("Teste do painel do emulador de AWS (sem rede)", "python3 teste_cloud.py"),
+        ("Teste da Biblioteca (sem rede)", "python3 teste_biblioteca.py"),
         ("Login e simulação do vigia de e-mail", "bash instalar_email_oficial.sh --testar"),
     ]),
     ("Documentos e conhecimento", [
@@ -523,6 +528,34 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Conferir se o painel está no ar: <code>curl -s http://localhost:8010/saude</code></li>
 <li>Testar o painel sem o LocalStack: <code>python3 teste_cloud.py</code></li></ul>
 <p>O painel sobe sozinho com o sistema quando há senha e código no <code>.env</code>. Se o LocalStack recusar a licença, o sistema avisa e usa o Moto no lugar, onde Lambda, Glue e Athena são só simulados. Veja os comandos completos em <a href="comandos.html">Comandos</a> e o histórico em <a href="novidades.html">Novidades</a>.</p></section>
+""")
+    out["biblioteca.html"] = pagina("biblioteca.html", "Biblioteca", "Biblioteca do Heimdall-ai: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Cloud.", """
+<h1>Biblioteca</h1>
+<p>A Biblioteca é um site simples e agradável para ler as notas de estudo e ouvir os áudios gerados pelo Heimdall-ai. Ela lê direto do cofre (notas em Markdown e áudios .m4a) e da pasta knowledge/, sem depender de nenhum aplicativo de notas. Foi feita para leitor de tela: títulos, listas e botões com nomes claros, link para pular ao conteúdo e áudio com controles nativos.</p>
+<section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
+<ol><li>No próprio computador: http://localhost:8011, depois de subir o sistema.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Cloud.</li>
+<li>Para abrir de fora de casa, o site pode ganhar um endereço público próprio pelo túnel Cloudflare, por exemplo library.heimdall-ai.tech. Isso é opcional e só funciona com o computador ligado.</li></ol></section>
+<section aria-labelledby="fazer"><h2 id="fazer">O que dá para fazer</h2>
+<ul><li><strong>Ler</strong>: cada nota vira uma página limpa, com títulos, listas e tabelas, e as tags e os conceitos em linhas simples.</li>
+<li><strong>Ouvir</strong>: o leitor de áudio fica no topo da nota, com velocidade de 0,75 a 1,5 vez, botões de voltar e avançar 15 segundos, e a página lembra onde você parou.</li>
+<li><strong>Navegar</strong>: início com as últimas notas e os temas, lista por tema e botões de nota anterior e próxima nota.</li>
+<li><strong>Buscar</strong>: procura nas notas e nos documentos de texto, sem diferenciar acentos nem maiúsculas.</li>
+<li><strong>Documentos</strong>: os arquivos de knowledge/ (PDF abre na própria página; Markdown e texto são lidos como nota; outros formatos são baixados).</li></ul></section>
+<section aria-labelledby="privacidade"><h2 id="privacidade">O que aparece e o que fica de fora</h2>
+<ul><li>Por padrão só aparecem as pastas dos temas de estudo (as subpastas de knowledge/) e a do Digest.</li>
+<li>Monitor de Privacidade, Second Brain, Saúde e qualquer outra pasta do cofre ficam de fora.</li>
+<li>Para liberar outra pasta, use <code>HEIMDALL_BIBLIOTECA_PASTAS="pasta-um,pasta-dois"</code> no <code>.env</code>.</li></ul></section>
+<section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
+<ul><li>Escuta só em 127.0.0.1 e é somente de leitura: nada ali grava ou apaga arquivos.</li>
+<li>Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict.</li>
+<li>Só atende os nomes de site permitidos. Os caminhos são conferidos contra fuga de pasta, todo texto é escapado e arquivos que não são PDF ou áudio só baixam, nunca executam.</li></ul></section>
+<section aria-labelledby="config"><h2 id="config">Configuração</h2>
+<ul><li>A Biblioteca sobe sozinha com o sistema quando há senha e código no <code>.env</code> (os mesmos do Cloud).</li>
+<li>Conferir se está no ar: <code>curl -s http://localhost:8011/saude</code></li>
+<li>Reiniciar só ela: <code>pkill -f heimdall_biblioteca.py</code> e subir o sistema como de costume.</li>
+<li>Testar sem rede: <code>python3 teste_biblioteca.py</code></li>
+<li>Se algo falhar: <code>tail -20 biblioteca_debug.log</code></li></ul></section>
 """)
     out["404.html"] = pagina("404.html", "Página não encontrada", "Página não encontrada.", f'<h1>Página não encontrada</h1><p>Volte ao <a href="index.html">início</a> ou veja o <a href="arquitetura.html">mapa do projeto</a>.</p>')
     return out
