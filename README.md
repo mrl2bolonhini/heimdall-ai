@@ -75,11 +75,14 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 ./subir.sh --update        # os argumentos são os do start_heimdall.sh
 ./subir.sh --status        # confere agora o que está no ar
 ./subir.sh --log           # últimas linhas do log da subida atual
+./subir.sh --log notas     # idem, de um serviço (mcp, agente, cloud, notas, open_terminal...)
+./subir.sh --logs          # lista os logs em logs/
+./subir.sh --limpar        # apaga os logs antigos que ficavam soltos na pasta do projeto
 ./subir.sh --reiniciar     # encerra a subida em andamento e sobe de novo
 docker ps --format '{{.Names}}: {{.Status}}'
 ```
 
-O `subir.sh` recusa iniciar uma segunda subida enquanto outra estiver em andamento, grava cada log em `logs/heimdall-AAAAMMDD-HHMMSS.log` (os 15 mais recentes) e aponta `heimdall.log` para o atual. Ao final avisa "Tudo no ar" com notificação e voz do macOS (`SUBIR_SOM=0` desliga). O comando antigo continua valendo: `nohup bash start_heimdall.sh --webui --terminal --n8n --agente > heimdall.log 2>&1 &`.
+O `subir.sh` recusa iniciar uma segunda subida enquanto outra estiver em andamento, grava cada log em `logs/heimdall-AAAAMMDD-HHMMSS.log` (os 15 mais recentes) e aponta `heimdall.log` para o atual. Os logs de cada serviço também ficam em `logs/` (por exemplo `logs/notas_debug.log`), com os 5 anteriores de cada um em `logs/historico/`. Ao final avisa "Tudo no ar" com notificação e voz do macOS (`SUBIR_SOM=0` desliga). O comando antigo continua valendo: `nohup bash start_heimdall.sh --webui --terminal --n8n --agente > heimdall.log 2>&1 &`.
 
 Opções: `--webui`, `--terminal`, `--n8n`, `--agente`, `--docling`, `--ingest`, `--update`. A lista completa está no cabeçalho de `start_heimdall.sh` e em https://heimdall-ai.tech/comandos.html.
 

@@ -266,6 +266,9 @@ COMANDOS = [
         ("Subir uma vez só, guardando o log e avisando quando tudo estiver no ar (aceita os argumentos do start_heimdall.sh)", "./subir.sh"),
         ("Ver agora o que está no ar, sem subir nada", "./subir.sh --status"),
         ("Ver as últimas linhas do log da subida atual", "./subir.sh --log"),
+        ("Ver o log de um serviço (mcp, mcp_public, mcp_dados, agente, cloud, notas, open_terminal, ingest)", "./subir.sh --log notas"),
+        ("Listar os logs, todos na pasta logs/", "./subir.sh --logs"),
+        ("Apagar os logs antigos que ficavam soltos na pasta do projeto", "./subir.sh --limpar"),
         ("Encerrar a subida em andamento e subir de novo", "./subir.sh --reiniciar"),
         ("Subir tudo em segundo plano, com Open WebUI e Open Terminal", "nohup bash start_heimdall.sh --webui --terminal > heimdall.log 2>&1 &"),
         ("Subir com n8n e agente do Mac", "nohup bash start_heimdall.sh --webui --terminal --n8n --agente > heimdall.log 2>&1 &"),
@@ -561,7 +564,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Conferir se está no ar: <code>curl -s http://localhost:8011/saude</code></li>
 <li>Reiniciar só ela: <code>pkill -f heimdall_notas.py</code> e subir o sistema como de costume.</li>
 <li>Testar sem rede: <code>python3 teste_notas.py</code></li>
-<li>Se algo falhar: <code>tail -20 notas_debug.log</code></li></ul></section>
+<li>Se algo falhar: <code>tail -20 logs/notas_debug.log</code></li></ul></section>
 """)
     out["404.html"] = pagina("404.html", "Página não encontrada", "Página não encontrada.", f'<h1>Página não encontrada</h1><p>Volte ao <a href="index.html">início</a> ou veja o <a href="arquitetura.html">mapa do projeto</a>.</p>')
     return out

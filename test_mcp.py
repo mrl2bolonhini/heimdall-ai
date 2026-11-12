@@ -65,7 +65,7 @@ async def main() -> None:
         "- Esperado: 8000 com 10 ferramentas, 8001 com 9, e o LiteLLM com as duas listas (19) mais as da AWS.\n"
         "- 8000 e 8001 certas e 9000 com menos (ou falha): o problema está no LiteLLM (config, chave ou permissões).\n"
         "- Tudo certo aqui, mas o app não vê: o problema está em como o app consulta.\n"
-        "- 8000 ou 8001 falhou: o servidor não subiu; veja mcp_debug.log e mcp_public_debug.log."
+        "- 8000 ou 8001 falhou: o servidor não subiu; veja logs/mcp_debug.log e logs/mcp_public_debug.log."
     )
 
 

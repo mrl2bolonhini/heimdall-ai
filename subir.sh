@@ -5,12 +5,16 @@
 #   ./subir.sh --update           sobe com os argumentos que você passar (os mesmos do start_heimdall.sh)
 #   ./subir.sh --status           só confere agora o que está no ar, sem subir nada
 #   ./subir.sh --log              mostra as últimas 40 linhas do log da subida atual
+#   ./subir.sh --log notas        idem, do serviço indicado (mcp, mcp_public, mcp_dados, agente, cloud, notas, open_terminal, ingest)
+#   ./subir.sh --logs             lista os logs em logs/
+#   ./subir.sh --limpar           apaga os logs antigos que ficavam soltos na pasta do projeto (agora ficam em logs/)
 #   ./subir.sh --reiniciar [args] encerra a subida em andamento e sobe de novo
 #
 # O que ele faz:
 #   1. Recusa subir se já houver uma subida em andamento (era isso que derrubava uma tentativa com a outra).
 #   2. Grava o log em logs/heimdall-AAAAMMDD-HHMMSS.log e aponta heimdall.log para o da subida atual. Os logs anteriores
-#      ficam guardados (os 15 mais recentes).
+#      ficam guardados (os 15 mais recentes). Os logs de cada serviço também ficam em logs/ (o start_heimdall.sh guarda os 5
+#      anteriores de cada um em logs/historico/).
 #   3. Confere, de poucos em poucos segundos, cada serviço que deve estar no ar nesta subida e conta o que já subiu.
 #   4. No fim avisa: "Tudo no ar" (com aviso do macOS e voz) ou lista o que ficou faltando e onde olhar no log.
 #
@@ -27,7 +31,21 @@ ESPERA="${SUBIR_ESPERA:-900}"
 # ---------------------------------------------------------------------------------------------------------------------
 MODO="subir"
 case "$1" in
-    --log) tail -n 40 "$PROJECT_DIR/heimdall.log" 2>/dev/null || echo "Ainda não há log. Rode ./subir.sh"; exit 0 ;;
+    --log)
+        if [ -n "$2" ]; then
+            alvo="$(ls -1 "$LOGS"/"$2"*.log 2> /dev/null | head -n 1)"
+            [ -n "$alvo" ] && { echo "== $alvo"; tail -n 40 "$alvo"; exit 0; }
+            echo "Não achei log para '$2'. Veja os nomes com: ./subir.sh --logs"; exit 1
+        fi
+        tail -n 40 "$PROJECT_DIR/heimdall.log" 2> /dev/null || echo "Ainda não há log. Rode ./subir.sh"; exit 0 ;;
+    --logs) ls -lt "$LOGS" 2> /dev/null | tail -n +2 || echo "Ainda não há logs."; exit 0 ;;
+    --limpar)
+        n=0
+        for f in mcp_debug mcp_public_debug mcp_dados_debug agente_debug cloud_debug notas_debug biblioteca_debug open_terminal ingest; do
+            if [ -f "$PROJECT_DIR/$f.log" ] && [ ! -L "$PROJECT_DIR/$f.log" ]; then rm -f "$PROJECT_DIR/$f.log" && n=$((n+1)) && echo "Apagado: $f.log"; fi
+        done
+        echo "$n arquivo(s) de log antigo apagado(s). Os logs atuais estão em logs/."
+        exit 0 ;;
     --status) MODO="status"; shift ;;
     --reiniciar) MODO="reiniciar"; shift ;;
 esac
@@ -146,6 +164,14 @@ echo "Esperando até $((ESPERA / 60)) minutos. Vou avisar cada serviço que fica
 declare -a JA
 ok_n=0
 inicio=$SECONDS
+# Antes de contar serviços, espera o start_heimdall.sh terminar de liberar as portas (etapa 1). Assim, restos de uma
+# subida anterior que ainda estejam de pé não contam como "no ar".
+MARCA="${SUBIR_MARCA:-\[1/7\]}"
+while ! grep -q "$MARCA" "$LOG" 2> /dev/null; do
+    kill -0 "$PID" 2> /dev/null || break
+    [ $((SECONDS - inicio)) -ge 180 ] && break
+    sleep 1
+done
 while :; do
     ok_n=0
     for i in "${!LISTA[@]}"; do

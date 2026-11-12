@@ -73,7 +73,8 @@ fi
 
 # --- Servidor MCP unificado ---
 echo "[4/5] Subindo o servidor MCP do Heimdall..."
-"$VENV_PYTHON" heimdall_mcp.py > mcp_debug.log 2>&1 &
+mkdir -p logs
+"$VENV_PYTHON" heimdall_mcp.py > logs/mcp_debug.log 2>&1 &
 MCP_PID=$!
 trap 'kill $MCP_PID 2>/dev/null' EXIT INT TERM
 
@@ -82,8 +83,8 @@ while ! nc -z localhost $MCP_PORT > /dev/null 2>&1; do
     sleep 1
     COUNTER=$((COUNTER+1))
     if [ $COUNTER -gt 15 ]; then
-        echo "Erro: o servidor MCP demorou demais para subir. Veja mcp_debug.log:"
-        tail -n 20 mcp_debug.log
+        echo "Erro: o servidor MCP demorou demais para subir. Veja logs/mcp_debug.log:"
+        tail -n 20 logs/mcp_debug.log
         exit 1
     fi
 done

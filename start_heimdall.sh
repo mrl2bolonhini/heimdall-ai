@@ -19,6 +19,19 @@
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR" || exit 1
 
+# Todos os logs ficam em logs/. A cada subida, o log anterior de cada serviço vai para logs/historico/ (os 5 mais recentes).
+LOGS_DIR="$PROJECT_DIR/logs"
+mkdir -p "$LOGS_DIR/historico"
+nova_log() {  # uso: nova_log nome  -> devolve o caminho de logs/nome.log, já guardando o anterior no histórico
+    local alvo="$LOGS_DIR/$1.log"
+    if [ -s "$alvo" ]; then
+        mv "$alvo" "$LOGS_DIR/historico/$1-$(date -r "$alvo" +%Y%m%d-%H%M%S 2>/dev/null || date +%Y%m%d-%H%M%S).log" 2>/dev/null
+        ls -1t "$LOGS_DIR/historico/$1"-*.log 2>/dev/null | tail -n +6 | while read -r velho; do rm -f "$velho"; done
+    fi
+    : > "$alvo"
+    echo "$alvo"
+}
+
 VENV_PYTHON="$PROJECT_DIR/venv/bin/python"
 if [ ! -x "$VENV_PYTHON" ]; then
     VENV_PYTHON="$(command -v python3)"
@@ -409,8 +422,8 @@ fi
 if [ "$WANT_INGEST" = "1" ]; then
     if ls knowledge/* > /dev/null 2>&1; then
         ollama list 2>/dev/null | grep -q "nomic-embed-text" || ollama pull nomic-embed-text > /dev/null 2>&1
-        echo "     Indexando knowledge/ em segundo plano (log em ingest.log)..."
-        "$VENV_PYTHON" ingest_docs.py > ingest.log 2>&1 &
+        echo "     Indexando knowledge/ em segundo plano (log em logs/ingest.log)..."
+        "$VENV_PYTHON" ingest_docs.py > "$(nova_log ingest)" 2>&1 &
     else
         echo "     Nada em knowledge/ para indexar."
     fi
@@ -423,11 +436,11 @@ fi
 
 # --- Servidores MCP: grupo do Mac (admin, 8000) e grupo público (convidados, 8001) ---
 echo "[5/7] Subindo os servidores MCP do Heimdall..."
-"$VENV_PYTHON" heimdall_mcp.py --group mac > mcp_debug.log 2>&1 &
+"$VENV_PYTHON" heimdall_mcp.py --group mac > "$(nova_log mcp_debug)" 2>&1 &
 MCP_PID=$!
-"$VENV_PYTHON" heimdall_mcp.py --group public > mcp_public_debug.log 2>&1 &
+"$VENV_PYTHON" heimdall_mcp.py --group public > "$(nova_log mcp_public_debug)" 2>&1 &
 MCP_PUBLIC_PID=$!
-"$VENV_PYTHON" heimdall_mcp.py --group dados > mcp_dados_debug.log 2>&1 &
+"$VENV_PYTHON" heimdall_mcp.py --group dados > "$(nova_log mcp_dados_debug)" 2>&1 &
 MCP_DADOS_PID=$!
 TERMINAL_PID=""
 AGENTE_PID=""
@@ -439,8 +452,8 @@ for PORT in $MCP_PORT $PUBLIC_MCP_PORT $DADOS_MCP_PORT; do
         sleep 1
         COUNTER=$((COUNTER+1))
         if [ $COUNTER -gt 15 ]; then
-            echo "Erro: o servidor MCP da porta $PORT demorou demais para subir. Veja mcp_debug.log, mcp_public_debug.log e mcp_dados_debug.log:"
-            tail -n 20 mcp_debug.log mcp_public_debug.log mcp_dados_debug.log
+            echo "Erro: o servidor MCP da porta $PORT demorou demais para subir. Veja logs/mcp_debug.log, logs/mcp_public_debug.log e logs/mcp_dados_debug.log:"
+            tail -n 20 "$LOGS_DIR/mcp_debug.log" "$LOGS_DIR/mcp_public_debug.log" "$LOGS_DIR/mcp_dados_debug.log"
             exit 1
         fi
     done
@@ -451,14 +464,14 @@ echo "[5/7] MCP do Mac (admin) em http://localhost:$MCP_PORT/mcp e MCP público 
 # Usa a biblioteca padrão do Python. Escuta em 127.0.0.1 (HEIMDALL_AGENTE_HOST=0.0.0.0 abre à rede) e exige o token.
 if [ "$WANT_AGENTE" = "1" ]; then
     if [ -f heimdall_agente.py ]; then
-        HEIMDALL_AGENTE_PORT="$AGENTE_PORT" "$VENV_PYTHON" heimdall_agente.py > agente_debug.log 2>&1 &
+        HEIMDALL_AGENTE_PORT="$AGENTE_PORT" "$VENV_PYTHON" heimdall_agente.py > "$(nova_log agente_debug)" 2>&1 &
         AGENTE_PID=$!
         COUNTER=0
         while ! nc -z localhost $AGENTE_PORT > /dev/null 2>&1; do
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 15 ]; then
-                echo "Aviso: o agente do Mac não respondeu em 15s. Veja agente_debug.log."
+                echo "Aviso: o agente do Mac não respondeu em 15s. Veja logs/agente_debug.log."
                 break
             fi
         done
@@ -472,13 +485,13 @@ fi
 # Para configurar: python3 heimdall_cloud.py --definir-senha. Escuta só em 127.0.0.1; o acesso público vem do túnel Cloudflare.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] && [ "$AWS_EMU" != "off" ]; then
     if [ -f heimdall_cloud.py ]; then
-        HEIMDALL_CLOUD_PORT="$CLOUD_PORT" "$VENV_PYTHON" heimdall_cloud.py > cloud_debug.log 2>&1 &
+        HEIMDALL_CLOUD_PORT="$CLOUD_PORT" "$VENV_PYTHON" heimdall_cloud.py > "$(nova_log cloud_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $CLOUD_PORT > /dev/null 2>&1; do
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o painel Heimdall Cloud não respondeu em 10s. Veja cloud_debug.log."
+                echo "Aviso: o painel Heimdall Cloud não respondeu em 10s. Veja logs/cloud_debug.log."
                 break
             fi
         done
@@ -490,13 +503,13 @@ fi
 # Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (library.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_notas.py ]; then
-        HEIMDALL_NOTAS_PORT="$NOTAS_PORT" "$VENV_PYTHON" heimdall_notas.py > notas_debug.log 2>&1 &
+        HEIMDALL_NOTAS_PORT="$NOTAS_PORT" "$VENV_PYTHON" heimdall_notas.py > "$(nova_log notas_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $NOTAS_PORT > /dev/null 2>&1; do
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Notas não respondeu em 10s. Veja notas_debug.log."
+                echo "Aviso: o Heimdall Notas não respondeu em 10s. Veja logs/notas_debug.log."
                 break
             fi
         done
@@ -509,17 +522,17 @@ if [ "$WANT_TERMINAL" = "1" ]; then
     if command -v uvx > /dev/null 2>&1; then
         # A chave vai por variável de ambiente (não por argumento), para não aparecer no "ps".
         # O programa imprime a chave ao iniciar, então o log só pode ser lido por você.
-        : > open_terminal.log; chmod 600 open_terminal.log
+        TERMINAL_LOG="$(nova_log open_terminal)"; chmod 600 "$TERMINAL_LOG"
         TERMINAL_ARGS=(run --host 0.0.0.0 --port $TERMINAL_PORT)
         [ -n "$OPEN_TERMINAL_CWD" ] && TERMINAL_ARGS+=(--cwd "$OPEN_TERMINAL_CWD")
-        uvx open-terminal "${TERMINAL_ARGS[@]}" >> open_terminal.log 2>&1 &
+        uvx open-terminal "${TERMINAL_ARGS[@]}" >> "$TERMINAL_LOG" 2>&1 &
         TERMINAL_PID=$!
         COUNTER=0
         while ! nc -z localhost $TERMINAL_PORT > /dev/null 2>&1; do
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 60 ]; then
-                echo "Aviso: o Open Terminal não respondeu em 60s (a primeira vez baixa pacotes). Veja open_terminal.log."
+                echo "Aviso: o Open Terminal não respondeu em 60s (a primeira vez baixa pacotes). Veja logs/open_terminal.log."
                 break
             fi
         done

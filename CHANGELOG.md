@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Todos os logs na pasta logs/
+- Os logs de cada serviço (MCP do Mac, público e de dados, agente do Mac, Heimdall Cloud, Heimdall Notas, Open Terminal e a indexação) passam a ser gravados em logs/, por exemplo logs/notas_debug.log, em vez de ficarem soltos na pasta do projeto. A cada subida, o log anterior de cada serviço vai para logs/historico/ (os 5 mais recentes de cada), então o motivo de uma falha não se perde na subida seguinte. O log do Open Terminal continua com permissão 600, porque contém a chave.
+- Mensagens, roteiros e a documentação passaram a apontar para logs/ (por exemplo: tail -20 logs/cloud_debug.log).
+- subir.sh: ./subir.sh --log notas (log de um serviço), ./subir.sh --logs (lista) e ./subir.sh --limpar (apaga os logs antigos soltos na pasta do projeto: mcp_debug.log, mcp_public_debug.log, mcp_dados_debug.log, agente_debug.log, cloud_debug.log, notas_debug.log, open_terminal.log e ingest.log). Rode o --limpar depois de uma subida nova, quando esses serviços já estiverem gravando em logs/.
+- subir.sh passou a esperar o start_heimdall.sh terminar de liberar as portas antes de contar serviços, para restos de uma subida anterior não aparecerem como "no ar" logo no início de um --reiniciar.
+- Para aplicar: git fetch e reset do repositório, ./subir.sh --reiniciar e, depois, ./subir.sh --limpar.
+
 ## 2026-11-12 - subir.sh: sobe uma vez só, guarda o log e avisa quando tudo está no ar
 - Novo comando ./subir.sh. Antes, rodar o start_heimdall.sh de novo enquanto uma subida ainda estava em andamento derrubava a anterior (aparecia "exit 137") e o heimdall.log era sobrescrito. Agora ele recusa iniciar uma segunda subida e diz como ver o andamento.
 - Cada subida grava o log em logs/heimdall-AAAAMMDD-HHMMSS.log, guardando os 15 mais recentes, e heimdall.log aponta para o atual. Um heimdall.log solto de antes vai para o histórico em vez de ser apagado.

@@ -51,7 +51,7 @@ Comandos, na pasta do projeto
 1. Atualizar do GitHub: git fetch origin && git reset --hard origin/main
 2. Conferir o emulador: docker ps --format '{{.Names}}: {{.Status}}' | grep -E "localstack|moto" (deve mostrar o localstack como Up e healthy; se mostrar o moto, a chave do LocalStack foi recusada)
 3. Ver o motivo se o LocalStack parar: docker logs --tail 30 localstack
-4. Ver o log do painel: tail -20 cloud_debug.log
+4. Ver o log do painel: tail -20 logs/cloud_debug.log
 5. Saúde do emulador: curl -s http://localhost:4566/_localstack/health | head -c 300
 6. Painel responde: curl -s http://localhost:8010/saude (deve dizer ok)
 7. Reiniciar só o painel: pkill -f heimdall_cloud.py e subir o sistema como de costume
@@ -73,4 +73,4 @@ SE ALGO FALHAR
 3. O LocalStack parou com "License activation failed": a chave do .env foi recusada. Gere outra em app.localstack.cloud e grave com o comando 11. Enquanto isso o sistema usa o Moto, onde Lambda, Glue e Athena são só simulados.
 4. Uma consulta do Athena falha: a mensagem aparece na própria página. Confira se o banco escolhido é o certo, se a tabela existe e se o arquivo está na pasta do S3 indicada na tabela.
 5. Erro de página ao entrar com a senha certa: confira se a data e a hora do Mac estão no ajuste automático (Ajustes do Sistema, Geral, Data e Hora). O código de 6 dígitos depende do relógio.
-6. Qualquer outro erro: copie a mensagem exata que a página mostrou e mande na conversa, junto com a saída de tail -20 cloud_debug.log.
+6. Qualquer outro erro: copie a mensagem exata que a página mostrou e mande na conversa, junto com a saída de tail -20 logs/cloud_debug.log.

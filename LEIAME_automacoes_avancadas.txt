@@ -97,7 +97,7 @@ agendadas; testes manuais por "execute" não gravam esse estado e podem repetir 
 
 PROBLEMAS COMUNS
 ----------------
-1. Agente fora do ar: veja agente_debug.log. Confira com: curl -s http://localhost:8003/saude
+1. Agente fora do ar: veja logs/agente_debug.log. Confira com: curl -s http://localhost:8003/saude
 2. O n8n não alcança o agente: ponha HEIMDALL_AGENTE_HOST=0.0.0.0 no .env e rode o start_heimdall.sh de novo.
    (O agente exige o token em todas as rotas, menos /saude, mesmo escutando em todas as interfaces.)
 3. "Not authorized" ao ler notas: autorize o Terminal em Ajustes do Sistema > Privacidade e Segurança > Automação > Notas.
