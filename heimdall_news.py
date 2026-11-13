@@ -32,6 +32,7 @@ HEIMDALL_NEWS_RSS_HORAS (72), HEIMDALL_NEWS_FUSO (America/Sao_Paulo).
 
 Usa só a biblioteca padrão do Python.
 """
+import gzip
 import hashlib
 import html
 import ipaddress
@@ -45,6 +46,7 @@ import sys
 import threading
 import time
 import unicodedata
+import zlib
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -287,11 +289,36 @@ _abridor = urllib.request.build_opener(_Redireciona)
 _abridor_local = urllib.request.build_opener(urllib.request.ProxyHandler({}))   # só para o LiteLLM, que é desta máquina
 
 
+def descomprimir(dados: bytes, codificacao: str, maximo: int) -> bytes:
+    """Alguns servidores (a Globo) mandam o corpo comprimido mesmo sem pedido: confere o cabeçalho e também os primeiros bytes.
+    Limita o tamanho depois de descomprimido (proteção contra arquivo-bomba)."""
+    cod = (codificacao or "").lower().strip()
+    if "br" in cod or "zstd" in cod:
+        raise ValueError(f"o servidor mandou o corpo comprimido em '{cod}', formato que este serviço não abre")
+    if cod in ("gzip", "x-gzip") or dados[:2] == b"\x1f\x8b":
+        dec = zlib.decompressobj(16 + zlib.MAX_WBITS)
+    elif cod == "deflate" or (dados[:1] == b"\x78" and len(dados) > 2 and (dados[0] * 256 + dados[1]) % 31 == 0):
+        dec = zlib.decompressobj()
+    else:
+        return dados
+    try:
+        saida = dec.decompress(dados, maximo + 1)
+    except zlib.error:
+        if cod == "deflate":   # alguns servidores mandam deflate "cru", sem o cabeçalho zlib
+            try:
+                saida = zlib.decompressobj(-zlib.MAX_WBITS).decompress(dados, maximo + 1)
+            except zlib.error as ex:
+                raise ValueError(f"corpo comprimido inválido: {ex}") from None
+        else:
+            raise ValueError("corpo comprimido inválido") from None
+    return saida[:maximo]
+
+
 def baixar(url: str, maximo: int = 3_000_000, timeout: int = 20, so_html: bool = False, condicional: bool = False):
     """Devolve (bytes, tipo). Com condicional=True devolve (None, '') se o servidor disser que não mudou."""
     checar_url(url)
     cab = {"User-Agent": AGENTE_USUARIO, "Accept": "text/html,application/xhtml+xml,application/xml,application/rss+xml,application/atom+xml;q=0.9,*/*;q=0.5",
-           "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.7"}
+           "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.7", "Accept-Encoding": "gzip, deflate"}
     if condicional and url in _cache_http:
         etag, mod = _cache_http[url]
         if etag:
@@ -303,7 +330,7 @@ def baixar(url: str, maximo: int = 3_000_000, timeout: int = 20, so_html: bool =
             tipo = (r.headers.get("Content-Type") or "").lower()
             if so_html and "html" not in tipo and "xml" not in tipo:
                 raise ValueError("a matéria não é uma página web")
-            dados = r.read(maximo + 1)[:maximo]
+            dados = descomprimir(r.read(maximo + 1)[:maximo], r.headers.get("Content-Encoding", ""), maximo)
             if condicional:
                 _cache_http[url] = (r.headers.get("ETag", ""), r.headers.get("Last-Modified", ""))
             return dados, tipo

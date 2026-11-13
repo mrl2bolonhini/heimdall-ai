@@ -87,6 +87,16 @@ class Web(BaseHTTPRequestHandler):
             self._resp(200, MATERIA.encode(), "text/html; charset=utf-8")
         elif self.path == "/img.png":
             self._resp(200, b"\x89PNG", "image/png")
+        elif self.path in ("/gz.xml", "/br.xml", "/bombagz.xml"):
+            import gzip as _gz
+            corpo = _gz.compress(rss(pt[:2]).encode() if self.path == "/gz.xml" else b"x" * 5_000_000)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/xml")
+            if self.path != "/bombagz.xml":   # a Globo manda comprimido até sem cabeçalho de codificação
+                self.send_header("Content-Encoding", "br" if self.path == "/br.xml" else "gzip")
+            self.send_header("Content-Length", str(len(corpo)))
+            self.end_headers()
+            self.wfile.write(corpo)
         elif self.path in SERVIDOR["feeds"]:
             v = SERVIDOR["feeds"][self.path]
             if isinstance(v, int):
@@ -187,6 +197,7 @@ hc.TOTP_SEGREDO = SEGREDO
 import heimdall_banco as banco  # noqa: E402
 import heimdall_news as hn  # noqa: E402
 
+
 banco.iniciar()
 
 
@@ -233,6 +244,19 @@ for alvo in ("http://127.0.0.1:1/", "http://10.1.1.1/", "file:///etc/passwd"):
 confere("lista de fontes: só as válidas e ativas", [f["nome"] for f in hn.carregar_fontes()] == ["Fonte PT", "Fonte EN", "Fonte Morta", "Fonte Bomba"])
 
 hn.PERMITIR_LOCAL = True   # daqui em diante a "internet" de mentira roda nesta máquina
+
+_dados, _tipo = hn.baixar(f"{BASE}/gz.xml")
+confere("feed comprimido (gzip) é aberto", _dados.startswith(b"<?xml") or b"<rss" in _dados[:200], repr(_dados[:40]))
+try:
+    hn.baixar(f"{BASE}/br.xml")
+    confere("brotli dá erro claro", False)
+except ValueError as _ex:
+    confere("brotli dá erro claro", "br" in str(_ex))
+_d2, _ = hn.baixar(f"{BASE}/bombagz.xml", maximo=100_000)
+confere("gzip sem cabeçalho (só pelos bytes) é aberto e o tamanho descomprimido é limitado", len(_d2) == 100_000)
+import zlib as _z
+_c = _z.compressobj(9, _z.DEFLATED, -15)
+confere("deflate cru é aberto", hn.descomprimir(_c.compress(b"<rss/>") + _c.flush(), "deflate", 1000) == b"<rss/>")
 
 # ----------------------------------------------------------------------------------------
 # Primeira atualização: coleta, repetidas, limite de resumos

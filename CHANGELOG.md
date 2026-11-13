@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - News abre feeds comprimidos; voz do anúncio do subir.sh configurável
+- Os feeds do G1 São Paulo e do ge futebol falhavam porque a Globo manda o corpo comprimido. O News agora pede e abre gzip/deflate (também quando o servidor comprime sem avisar), com limite de tamanho depois de descomprimir. Formatos que não abre (brotli, zstd) dão um erro claro no estado das fontes.
+- Nova opção SUBIR_VOZ no .env para a voz do anúncio falado do subir.sh, por exemplo SUBIR_VOZ='Felipe (Aprimorada)'. O script tenta o nome como escrito e as variantes (Aprimorada, Enhanced, Premium) e, se a voz não estiver instalada, usa a voz do sistema. Não muda HEIMDALL_VOZ (áudio de estudo das Notas).
+- Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - News: endereço news.heimdall-ai.tech e arquivo OPML
 - O endereço news.heimdall-ai.tech passou a existir no túnel Cloudflare, apontando para a porta 8012 (com o Mac ligado e o sistema no ar). O site continua protegido por senha e código de 6 dígitos, e os feeds RSS só respondem com a chave secreta.
 - Novo python3 heimdall_news.py --opml [arquivo]: grava um arquivo OPML com todos os feeds (padrão heimdall-news.opml, permissão 600). Ele leva a chave secreta nos endereços; importe no app de feeds e apague o arquivo.

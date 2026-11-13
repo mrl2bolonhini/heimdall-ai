@@ -18,7 +18,8 @@
 #   3. Confere, de poucos em poucos segundos, cada serviço que deve estar no ar nesta subida e conta o que já subiu.
 #   4. No fim avisa: "Tudo no ar" (com aviso do macOS e voz) ou lista o que ficou faltando e onde olhar no log.
 #
-# Opções no ambiente ou no .env: SUBIR_ESPERA=900 (segundos de espera máxima), SUBIR_SOM=0 (sem voz nem notificação).
+# Opções no ambiente ou no .env: SUBIR_ESPERA=900 (segundos de espera máxima), SUBIR_SOM=0 (sem voz nem notificação),
+# SUBIR_VOZ="Felipe (Aprimorada)" (voz do anúncio; aceita também "Felipe" ou "Felipe (Enhanced)"; sem isto usa a voz do sistema).
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR" || exit 1
@@ -97,10 +98,26 @@ esta_no_ar() {  # $1 = tipo, $2 = alvo
     fi
 }
 
+escolher_voz() {  # acha a voz pedida em SUBIR_VOZ, tentando as variantes de nome (Aprimorada, Enhanced, Premium); vazio = voz do sistema
+    VOZ_SUBIR=""
+    [ -n "$SUBIR_VOZ" ] || return 0
+    command -v say > /dev/null 2>&1 || return 0
+    local base cand
+    base="${SUBIR_VOZ%% (*}"
+    for cand in "$SUBIR_VOZ" "$base (Aprimorada)" "$base (Enhanced)" "$base (Premium)" "$base (Melhorada)" "$base"; do
+        if say -v "$cand" "" > /dev/null 2>&1; then VOZ_SUBIR="$cand"; return 0; fi
+    done
+}
+
 avisar() {  # $1 = texto curto para a notificação e a voz
     [ "$SUBIR_SOM" = "0" ] && return
     command -v osascript > /dev/null 2>&1 && osascript -e "display notification \"$1\" with title \"Heimdall-ai\"" > /dev/null 2>&1
-    command -v say > /dev/null 2>&1 && say "Heimdall. $1" > /dev/null 2>&1 &
+    if command -v say > /dev/null 2>&1; then
+        [ -z "${VOZ_ESCOLHIDA:-}" ] && { escolher_voz; VOZ_ESCOLHIDA=1; }
+        if [ -n "$VOZ_SUBIR" ]; then say -v "$VOZ_SUBIR" "Heimdall. $1" > /dev/null 2>&1 &
+        else say "Heimdall. $1" > /dev/null 2>&1 &
+        fi
+    fi
 }
 
 subida_em_andamento() {
