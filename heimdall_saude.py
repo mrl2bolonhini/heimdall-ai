@@ -842,12 +842,17 @@ def importar_exportacao(caminho: str, aviso=print) -> dict:
                                 o["inbed"].append(par)
                     el.clear()
                 elif tag == "Workout":
+                    res["treinos_vistos"] = res.get("treinos_vistos", 0) + 1
                     try:
                         t = _treino_de_xml(el, origem)
                         if t:
                             res["treinos"] += _salvar_treino(t)
-                    except Exception:  # noqa: BLE001
-                        pass
+                        else:
+                            res["treinos_erros"] = res.get("treinos_erros", 0) + 1
+                            res.setdefault("primeiro_erro", "treino sem data de início: " + str(el.attrib)[:200])
+                    except Exception as e:  # noqa: BLE001 - um treino ruim não derruba a importação, mas o motivo aparece no fim
+                        res["treinos_erros"] = res.get("treinos_erros", 0) + 1
+                        res.setdefault("primeiro_erro", f"{type(e).__name__}: {str(e)[:160]}")
                     el.clear()
                 elif tag == "ActivitySummary":
                     dia = el.get("dateComponents") or ""
@@ -1182,6 +1187,10 @@ def main() -> int:
             return 1
         print(f"Registros lidos: {r['registros']}. Treinos gravados: {r['treinos']}. ECG gravados: {r['ecg']}. Horas de frequência cardíaca: {r['fc_horas']}. "
               f"Valores diários novos: {r['dias_metricas']} (noites de sono: {r['sono_noites']}; anéis de atividade: {r['aneis']}).")
+        if r.get("treinos_vistos") is not None:
+            print(f"Treinos encontrados no arquivo: {r['treinos_vistos']}; com erro: {r.get('treinos_erros', 0)}." + (f" Primeiro erro: {r['primeiro_erro']}" if r.get("primeiro_erro") else ""))
+        else:
+            print("Nenhum treino (elemento Workout) apareceu no arquivo. Se você tem treinos no app Saúde, me diga.")
         if r["ecg_fibrilacao"]:
             print(f"Atenção: {r['ecg_fibrilacao']} ECG classificado(s) como fibrilação atrial pela Apple. Isto não é diagnóstico; mostre ao seu médico.")
         print("Rode de novo à vontade: não duplica. Para ver: python3 heimdall_saude.py --relatorio")
