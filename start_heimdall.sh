@@ -484,7 +484,7 @@ if [ "$WANT_AGENTE" = "1" ]; then
 fi
 
 # --- Heimdall Cloud (painel web do emulador de AWS): sobe sozinho se houver senha e código no .env ---
-# Para configurar: python3 heimdall_cloud.py --definir-senha. Escuta só em 127.0.0.1; o acesso público vem do túnel Cloudflare.
+# Para configurar: python3 heimdall_acesso.py --tudo. Escuta só em 127.0.0.1; o acesso público vem do túnel Cloudflare.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] && [ "$AWS_EMU" != "off" ]; then
     if [ -f heimdall_cloud.py ]; then
         HEIMDALL_CLOUD_PORT="$CLOUD_PORT" "$VENV_PYTHON" heimdall_cloud.py > "$(nova_log cloud_debug)" 2>&1 &

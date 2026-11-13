@@ -319,6 +319,55 @@ confere("sair apaga o cookie", st == 303 and "Max-Age=0" in hd["set-cookie"])
 st, _, _ = req("GET", "/s3", cookie=cookie)
 confere("depois de sair a sessão não vale mais", st == 303)
 
+# --- heimdall_acesso.py: senha e código dos serviços, em separado ---
+import getpass as _gp
+import io as _io
+import re as _re
+import tempfile as _tf
+from contextlib import redirect_stdout as _rs
+from pathlib import Path
+_dir = Path(_tf.mkdtemp(prefix="acesso_teste_"))
+_orig = (hc.PROJECT_DIR, _gp.getpass)
+hc.PROJECT_DIR = _dir
+(_dir / ".env").write_text("OUTRA='coisa'\n", encoding="utf-8")
+
+
+def _rodar(modo, senhas):
+    it = iter(senhas)
+    _gp.getpass = lambda *_a, **_k: next(it)
+    buf = _io.StringIO()
+    try:
+        with _rs(buf):
+            hc.definir_acesso(modo)
+        return buf.getvalue(), None
+    except SystemExit as ex:
+        return buf.getvalue(), str(ex)
+
+
+def _env():
+    return (_dir / ".env").read_text(encoding="utf-8")
+
+
+out, err = _rodar("tudo", ["uma frase bem longa 123", "uma frase bem longa 123"])
+e1 = _env()
+h1 = _re.search(r"SENHA_HASH='([^']+)'", e1).group(1)
+t1 = _re.search(r"TOTP_SEGREDO='([^']+)'", e1).group(1)
+confere("--tudo grava senha (hash) e código e preserva o resto", err is None and "OUTRA='coisa'" in e1 and hc.confere_senha("uma frase bem longa 123", h1) and "uma frase bem longa" not in e1)
+confere("--tudo mostra a chave do código e a lista de serviços", t1[:4] in out and "Cloud, o Heimdall Notas e o Heimdall News" in out)
+out, err = _rodar("senha", ["outra frase bem comprida 456", "outra frase bem comprida 456"])
+e2 = _env()
+confere("--senha troca só a senha", err is None and _re.search(r"TOTP_SEGREDO='([^']+)'", e2).group(1) == t1 and _re.search(r"SENHA_HASH='([^']+)'", e2).group(1) != h1 and "continua o mesmo" in out and t1[:4] not in out)
+confere("--senha: a senha nova confere e a velha não", hc.confere_senha("outra frase bem comprida 456", _re.search(r"SENHA_HASH='([^']+)'", e2).group(1)) and not hc.confere_senha("uma frase bem longa 123", _re.search(r"SENHA_HASH='([^']+)'", e2).group(1)))
+out, err = _rodar("codigo", [])
+e3 = _env()
+confere("--codigo troca só o código", err is None and _re.search(r"TOTP_SEGREDO='([^']+)'", e3).group(1) != t1 and _re.search(r"SENHA_HASH='([^']+)'", e3).group(1) == _re.search(r"SENHA_HASH='([^']+)'", e2).group(1))
+out, err = _rodar("senha", ["curta", "curta"])
+confere("senha curta é recusada sem gravar nada", err is not None and "curta" in err.lower() and _env() == e3)
+out, err = _rodar("senha", ["uma frase bem longa 123", "diferente de tudo aqui 999"])
+confere("senhas diferentes são recusadas sem gravar", err is not None and _env() == e3)
+confere("env com permissão 600", oct((_dir / ".env").stat().st_mode & 0o777) == "0o600")
+hc.PROJECT_DIR, _gp.getpass = _orig
+
 srv.shutdown()
 print("\n" + ("Tudo certo." if not falhas else f"{falhas} teste(s) falharam."))
 sys.exit(1 if falhas else 0)

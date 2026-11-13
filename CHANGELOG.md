@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Acesso universal, mais fontes no News e links em nova aba
+- Novo heimdall_acesso.py: a senha e o código de 6 dígitos valem para o Cloud, o Notas e o News, então o comando agora é um só. --tudo (nova senha e novo código), --senha (só troca a senha, o código continua o mesmo) e --codigo (só um código novo). Os comandos antigos do heimdall_cloud.py continuam funcionando. Depois de trocar: ./subir.sh --reiniciar.
+- News: corrigido o erro "no such table: noticias" ao rodar --token, --urls ou --copiar antes da primeira subida (agora a tabela é criada na hora).
+- News: seis fontes novas em português, sem tirar nenhuma: AWS Brasil (blog em português, em Dados e AWS), InfoMoney (Economia), ge futebol (Futebol), ESPN Brasil (Esportes), Jornal da USP e Agência FAPESP (Ciência). Agora são 21 fontes em 12 categorias. Se uma fonte não responder, ela aparece em "Estado das fontes".
+- News: o link "Leia mais sobre ..." abre em uma nova aba (o leitor de tela anuncia "abre em nova aba").
+- Para aplicar: git fetch e reset do repositório, python3 heimdall_news.py --token (se ainda não criou a chave dos feeds) e ./subir.sh --reiniciar. Se você já editou noticias_fontes.json, o git reset sobrescreve o arquivo: guarde uma cópia antes.
+
 ## 2026-11-12 - Heimdall News: notícias com resumo de IA e feeds RSS
 - Novo serviço heimdall_news.py (porta 8012, news.heimdall-ai.tech quando você autorizar o endereço). Lê as 15 fontes do Digest em noticias_fontes.json (arquivo editável, relido a cada atualização) de 30 em 30 minutos, tira repetidas, traduz os títulos em inglês e pede a um modelo local (qwen3-vl-instruct por padrão, HEIMDALL_NEWS_MODELO troca) um resumo de cada matéria.
 - Site com o mesmo login do Cloud e do Notas: notícias das últimas 24 horas, 10 por página (Anterior e Próxima), título como cabeçalho, resumo sempre marcado como "Resumo feito por IA" (e dito quando só havia o trecho do feed), link "Leia mais sobre ..." para a matéria, filtro por categoria e uma página de estado das fontes. Fica privado por enquanto.

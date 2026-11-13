@@ -358,7 +358,7 @@ confere("10 por página", len(re.findall(r"<li><h2>", t)) == 10, str(len(re.find
 confere("título como cabeçalho", "<h2>Notícia número 00 do dia</h2>" in t or "<h2>Teste" in t)
 confere("resumo marcado como IA", t.count("Resumo feito por IA") >= 5 and "podem conter erros" in t)
 confere("Leia mais com o início do título", 'Leia mais sobre Notícia número 00 do dia...' in t or "Leia mais sobre Notícia número 01 do dia..." in t)
-confere("link da matéria abre a original", f'href="{BASE}/materia/' in t and 'rel="noopener noreferrer"' in t)
+confere("link da matéria abre a original", f'href="{BASE}/materia/' in t and 'target="_blank" rel="noopener noreferrer"' in t and "(abre em nova aba)" in t)
 confere("matéria de 30 h não aparece", "ontem à noite" not in t)
 confere("categorias com contagem", "Brasil (" in t and "Tecnologia (3)" in t and "Ciência (0)" in t)
 total = hn.estatisticas()["24h"]
@@ -368,10 +368,10 @@ confere("paginação", f"Página 1 de {paginas}" in t and 'rel="next"' in t and 
 s, _, c = req("GET", "/?pagina=2", cookie=ck)
 t2 = txt(c)
 confere("segunda página", f"Página 2 de {paginas}" in t2 and 'rel="prev"' in t2 and len(re.findall(r"<li><h2>", t2)) == min(10, total - 10))
-confere("páginas não se repetem", not (set(re.findall(r'href="(http[^"]+)" rel="noopener', t)) & set(re.findall(r'href="(http[^"]+)" rel="noopener', t2))))
+confere("páginas não se repetem", not (set(re.findall(r'href="(http[^"]+)" target="_blank" rel="noopener', t)) & set(re.findall(r'href="(http[^"]+)" target="_blank" rel="noopener', t2))))
 todos = []
 for n_ in range(1, paginas + 1):
-    todos += re.findall(r'href="(http[^"]+)" rel="noopener', txt(req("GET", f"/?pagina={n_}", cookie=ck)[2]))
+    todos += re.findall(r'href="(http[^"]+)" target="_blank" rel="noopener', txt(req("GET", f"/?pagina={n_}", cookie=ck)[2]))
 confere("juntas, as páginas somam as notícias das 24 h, sem repetir", len(todos) == total and len(set(todos)) == total, f"{len(todos)} {len(set(todos))} {total}")
 s, _, c = req("GET", "/?pagina=999", cookie=ck)
 confere("página fora do limite vai para a última", s == 200 and f"Página {paginas} de {paginas}" in txt(c))
@@ -494,6 +494,16 @@ hn.mostrar_urls()
 sys.stdout = antigo
 confere("--urls mostra os endereços e o OPML", f"https://news.exemplo.test/rss/{TOKEN}/geral.xml" in saida.getvalue() and f"/rss/{TOKEN}/feeds.opml" in saida.getvalue())
 confere("endereços por categoria", f"/rss/{TOKEN}/tecnologia.xml" in saida.getvalue())
+con = banco.conectar()
+con.execute("DROP TABLE noticias")
+con.commit()
+con.close()
+saida = io.StringIO()
+antigo, sys.stdout = sys.stdout, saida
+sys.argv = ["heimdall_news.py", "--urls"]
+hn.main()
+sys.stdout = antigo
+confere("--urls funciona antes da primeira subida (tabela criada na hora)", "/geral.xml" in saida.getvalue() and sql("SELECT COUNT(*) FROM noticias") == [(0,)])
 hc.PROJECT_DIR = hn.PROJECT_DIR = RAIZ
 (RAIZ / ".env").write_text("OUTRA='coisa'\nHEIMDALL_NEWS_RSS_TOKEN='antiga'\n", encoding="utf-8")
 sys.argv = ["heimdall_news.py", "--token"]

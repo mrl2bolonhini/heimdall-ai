@@ -55,8 +55,8 @@ Comandos, na pasta do projeto
 5. Saúde do emulador: curl -s http://localhost:4566/_localstack/health | head -c 300
 6. Painel responde: curl -s http://localhost:8010/saude (deve dizer ok)
 7. Reiniciar só o painel: pkill -f heimdall_cloud.py e subir o sistema como de costume
-8. Nova senha e novo código de 6 dígitos: python3 heimdall_cloud.py --definir-senha
-9. Só um novo código de 6 dígitos (perdeu a chave, por exemplo): python3 heimdall_cloud.py --novo-codigo
+8. Nova senha e novo código de 6 dígitos (valem também para o Notas e o News): python3 heimdall_acesso.py --tudo
+9. Só um novo código de 6 dígitos (perdeu a chave, por exemplo): python3 heimdall_acesso.py --codigo (só a senha: --senha)
 10. Teste do painel sem LocalStack: python3 teste_cloud.py
 11. Gravar uma chave nova do LocalStack sem colar no arquivo (copie a chave do site app.localstack.cloud antes): T=$(pbpaste | tr -d '[:space:]'); grep -v '^LOCALSTACK_AUTH_TOKEN=' .env > .env.novo && printf "LOCALSTACK_AUTH_TOKEN='%s'\n" "$T" >> .env.novo && mv .env.novo .env && chmod 600 .env
 12. Desligar a execução de Lambda: HEIMDALL_LOCALSTACK_DOCKER=0 no .env e subir o sistema de novo.
@@ -64,7 +64,7 @@ Comandos, na pasta do projeto
 Segurança
 1. O painel público exige senha e código de 6 dígitos, bloqueia depois de 5 tentativas erradas e nunca expõe a porta 4566.
 2. Com o Lambda ligado, quem passar pela senha e pelo código executa código em contêineres, com o Docker do Mac. Por isso mantenha a senha forte e não compartilhe o código nem a chave de configuração do app Senhas.
-3. Se o código ou a chave vazar: python3 heimdall_cloud.py --novo-codigo e cadastre a chave nova no app Senhas.
+3. Se o código ou a chave vazar: python3 heimdall_acesso.py --codigo e cadastre a chave nova no app Senhas.
 
 SE ALGO FALHAR
 

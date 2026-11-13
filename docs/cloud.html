@@ -57,8 +57,9 @@
 <li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
 <li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>HEIMDALL_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>Definir a senha e gerar o código de 6 dígitos: <code>python3 heimdall_cloud.py --definir-senha</code></li>
-<li>Gerar só um novo código: <code>python3 heimdall_cloud.py --novo-codigo</code></li>
+<ul><li>Definir a senha e gerar o código de 6 dígitos (os mesmos valem para Cloud, Notas e News): <code>python3 heimdall_acesso.py --tudo</code></li>
+<li>Trocar só a senha: <code>python3 heimdall_acesso.py --senha</code></li>
+<li>Gerar só um novo código: <code>python3 heimdall_acesso.py --codigo</code></li>
 <li>Conferir se o painel está no ar: <code>curl -s http://localhost:8010/saude</code></li>
 <li>Testar o painel sem o LocalStack: <code>python3 teste_cloud.py</code></li></ul>
 <p>O painel sobe sozinho com o sistema quando há senha e código no <code>.env</code>. Se o LocalStack recusar a licença, o sistema avisa e usa o Moto no lugar, onde Lambda, Glue e Athena são só simulados. Veja os comandos completos em <a href="comandos.html">Comandos</a> e o histórico em <a href="novidades.html">Novidades</a>.</p></section>

@@ -749,6 +749,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:0 0 .3rem;fon
 .lista a{font-weight:700}.meta{color:var(--suave);font-size:.9em;display:block;margin-top:.2rem}
 .ia{margin:.2rem 0 .5rem}.cats ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1rem}
 .pags{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-top:1px solid var(--linha);margin-top:1.5rem;padding-top:1rem}
+.so-leitor{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .falha{color:var(--erro,#b00020);font-weight:700}
 """
 
@@ -796,7 +797,7 @@ def item_html(n: dict) -> str:
     extras = ""
     if n["idioma"] != "pt":
         extras = " · título traduzido por IA do inglês" if n["titulo_traduzido"] else " · em inglês, tradução na fila"
-    return (f'<li><h2>{e(titulo)}</h2>{bloco}<a href="{e(n["link"])}" rel="noopener noreferrer">Leia mais sobre {e(inicio_do_titulo(titulo))}...</a>'
+    return (f'<li><h2>{e(titulo)}</h2>{bloco}<a href="{e(n["link"])}" target="_blank" rel="noopener noreferrer">Leia mais sobre {e(inicio_do_titulo(titulo))}...<span class="so-leitor"> (abre em nova aba)</span></a>'
             f'<span class="meta">{e(n["fonte"])} · {e(n["categoria"])} · {e(local(n["publicado"]))}{e(extras)}</span></li>')
 
 
@@ -1132,6 +1133,7 @@ def main() -> None:
     ap.add_argument("--copiar", metavar="FEED", help="copia o endereço de um feed (geral, opml ou categoria) para a área de transferência")
     ap.add_argument("--uma-vez", action="store_true", help="faz só uma atualização agora e sai")
     a = ap.parse_args()
+    banco.iniciar()   # garante a tabela noticias mesmo antes da primeira subida
     if a.token:
         nuvem.env_gravar({"HEIMDALL_NEWS_RSS_TOKEN": secrets.token_urlsafe(24)})
         print("Chave nova gravada no .env (permissão 600). Os endereços antigos pararam de valer quando o serviço reiniciar.")
@@ -1149,12 +1151,11 @@ def main() -> None:
     if a.copiar:
         copiar(a.copiar)
         return
-    banco.iniciar()
     if a.uma_vez:
         print(json.dumps(ciclo(), ensure_ascii=False))
         return
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Heimdall News não sobe. Rode: python3 heimdall_cloud.py --definir-senha")
+        sys.exit("Sem senha e código configurados o Heimdall News não sobe. Rode: python3 heimdall_acesso.py --tudo")
     if COLETAR:
         threading.Thread(target=laco, name="coletor", daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), News)

@@ -15,8 +15,10 @@ Segurança (o painel pode ficar público em cloud.heimdall-ai.tech, então tem c
   6. Sem senha e sem código configurados, o painel não sobe.
 
 Configuração (tudo no .env):
-    python3 heimdall_cloud.py --definir-senha   pede a senha (sem mostrar), gera o código TOTP e grava no .env
-    python3 heimdall_cloud.py --novo-codigo     gera só um novo código TOTP (perdeu o app, por exemplo)
+    python3 heimdall_acesso.py --tudo     nova senha e novo código de 6 dígitos (vale para Cloud, Notas e News)
+    python3 heimdall_acesso.py --senha    só troca a senha
+    python3 heimdall_acesso.py --codigo   só gera um novo código TOTP (perdeu o app, por exemplo)
+    (python3 heimdall_cloud.py --definir-senha e --novo-codigo continuam funcionando)
     python3 heimdall_cloud.py                   sobe o painel (o start_heimdall.sh faz isso sozinho se houver senha e código)
 
 Variáveis opcionais: HEIMDALL_CLOUD_PORT (8010), HEIMDALL_CLOUD_HOST (127.0.0.1), HEIMDALL_CLOUD_ENDPOINT
@@ -1098,29 +1100,39 @@ def novo_segredo_totp() -> str:
 
 def mostrar_segredo(segredo: str) -> None:
     grupos = " ".join(segredo[i:i + 4] for i in range(0, len(segredo), 4))
-    print("\nCódigo de verificação (TOTP). Cadastre no app Senhas da Apple (o item antigo, cloud.heimdall-ai.tech e notes.heimdall-ai.tech, deve ter a chave substituída):")
-    print("1. Abra o app Senhas e crie (ou abra) o item cloud.heimdall-ai.tech.")
+    print("\nCódigo de verificação de 6 dígitos (TOTP). Cadastre no app Senhas da Apple:")
+    print("1. Abra o item que você usa para o login do Heimdall (cloud, notes e news usam o mesmo código) e apague o código de verificação antigo.")
     print("2. Escolha adicionar código de verificação e depois inserir a chave de configuração (o nome exato do botão varia com a versão do sistema).")
-    print("3. Digite a chave abaixo, que é de 6 dígitos, troca a cada 30 segundos e usa SHA-1:")
+    print("3. Digite a chave abaixo, que gera 6 dígitos, troca a cada 30 segundos e usa SHA-1:")
     print("   " + grupos)
     print("4. Guarde esta chave só aí. Ela não será mostrada de novo.")
 
 
-def definir_senha(so_codigo: bool) -> None:
+def definir_acesso(modo: str) -> None:
+    """Senha e código de 6 dígitos de todos os serviços Heimdall com login (Cloud, Notas e News). modo: tudo, senha ou codigo."""
     pares = {}
-    if not so_codigo:
-        s1 = getpass.getpass("Nova senha do painel (mínimo 14 caracteres; não aparece na tela): ")
+    if modo in ("tudo", "senha"):
+        s1 = getpass.getpass("Nova senha do Heimdall (mínimo 14 caracteres; não aparece na tela): ")
         if len(s1) < 14:
-            sys.exit("Senha curta demais. Use pelo menos 14 caracteres (uma frase longa serve).")
+            sys.exit("Senha curta demais. Use pelo menos 14 caracteres (uma frase longa serve). Nada foi gravado.")
         if getpass.getpass("Repita a senha: ") != s1:
             sys.exit("As senhas não são iguais. Nada foi gravado.")
         pares["HEIMDALL_CLOUD_SENHA_HASH"] = hash_senha(s1)
-    segredo = novo_segredo_totp()
-    pares["HEIMDALL_CLOUD_TOTP_SEGREDO"] = segredo
+    segredo = ""
+    if modo in ("tudo", "codigo"):
+        segredo = novo_segredo_totp()
+        pares["HEIMDALL_CLOUD_TOTP_SEGREDO"] = segredo
     env_gravar(pares)
-    print("Gravado no .env (permissão 600)." + (" Senha guardada só como hash." if not so_codigo else ""))
-    mostrar_segredo(segredo)
-    print("\nEsta chave vale também para o Heimdall Notas (mesmo login). Para valer, reinicie tudo: ./subir.sh --reiniciar")
+    print("Gravado no .env (permissão 600)." + (" A senha fica guardada só como hash." if "HEIMDALL_CLOUD_SENHA_HASH" in pares else ""))
+    if modo == "senha":
+        print("O código de 6 dígitos continua o mesmo.")
+    if segredo:
+        mostrar_segredo(segredo)
+    print("\nA senha e o código valem para o Heimdall Cloud, o Heimdall Notas e o Heimdall News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
+
+
+def definir_senha(so_codigo: bool) -> None:   # mantido por compatibilidade
+    definir_acesso("codigo" if so_codigo else "tudo")
 
 
 def main() -> None:
@@ -1132,7 +1144,7 @@ def main() -> None:
         definir_senha(so_codigo=args.novo_codigo and not args.definir_senha)
         return
     if not SENHA_HASH or not TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o painel não sobe. Rode: python3 heimdall_cloud.py --definir-senha")
+        sys.exit("Sem senha e código configurados o painel não sobe. Rode: python3 heimdall_acesso.py --tudo")
     srv = ThreadingHTTPServer((HOST, PORT), Painel)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Cloud em http://{HOST}:{PORT} (emulador em {ENDPOINT}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")

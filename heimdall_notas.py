@@ -864,7 +864,7 @@ class Notas(BaseHTTPRequestHandler):
 
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Heimdall Notas não sobe. Rode: python3 heimdall_cloud.py --definir-senha")
+        sys.exit("Sem senha e código configurados o Heimdall Notas não sobe. Rode: python3 heimdall_acesso.py --tudo")
     srv = ThreadingHTTPServer((HOST, PORT), Notas)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Notas em http://{HOST}:{PORT} (cofre: {VAULT}; documentos: {KNOWLEDGE}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")

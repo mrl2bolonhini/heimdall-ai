@@ -15,6 +15,12 @@
     {"categoria": "Astronomia", "nome": "NASA", "url": "https://www.nasa.gov/feed/", "idioma": "en", "limite": 6},
     {"categoria": "Astronomia", "nome": "Space.com", "url": "https://www.space.com/feeds/all", "idioma": "en", "limite": 8},
     {"categoria": "Curiosidades", "nome": "Superinteressante", "url": "https://super.abril.com.br/feed/", "idioma": "pt", "limite": 8},
-    {"categoria": "Ciência", "nome": "Quanta Magazine", "url": "https://www.quantamagazine.org/feed/", "idioma": "en", "limite": 5}
+    {"categoria": "Ciência", "nome": "Quanta Magazine", "url": "https://www.quantamagazine.org/feed/", "idioma": "en", "limite": 5},
+    {"categoria": "Dados e AWS", "nome": "AWS Brasil (blog em português)", "url": "https://aws.amazon.com/pt/blogs/aws-brasil/feed/", "idioma": "pt", "limite": 5},
+    {"categoria": "Economia", "nome": "InfoMoney", "url": "https://www.infomoney.com.br/feed/", "idioma": "pt", "limite": 10},
+    {"categoria": "Futebol", "nome": "ge futebol", "url": "https://ge.globo.com/rss/ge/futebol/", "idioma": "pt", "limite": 10},
+    {"categoria": "Esportes", "nome": "ESPN Brasil", "url": "https://www.espn.com.br/espn/rss/news", "idioma": "pt", "limite": 8},
+    {"categoria": "Ciência", "nome": "Jornal da USP", "url": "https://jornal.usp.br/feed/", "idioma": "pt", "limite": 6},
+    {"categoria": "Ciência", "nome": "Agência FAPESP", "url": "https://agencia.fapesp.br/rss/", "idioma": "pt", "limite": 5}
   ]
 }
