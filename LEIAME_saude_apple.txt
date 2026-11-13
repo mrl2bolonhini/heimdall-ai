@@ -1,0 +1,45 @@
+SAÚDE DO ECOSSISTEMA APPLE NO HEIMDALL: TREINOS, ECG, FREQUÊNCIA CARDÍACA E MAIS
+===============================================================================
+
+O que entra no banco (banco/heimdall.db, só no seu Mac):
+- treinos: tipo, duração, distância, energia, frequência cardíaca (mínima, média, máxima e a série), recuperação em 1 minuto, subida, passos, velocidade, esforço, temperatura e rota.
+- ecg: classificação da Apple, frequência média, a forma de onda inteira (comprimida) e, calculado pelo Heimdall a partir dela, o intervalo entre batimentos (RR), RMSSD, pNN50 e a irregularidade. Tudo informativo, nada é diagnóstico.
+- fc_hora: mínimo, média e máximo da frequência cardíaca por hora; e fc_min, fc_media e fc_max por dia em saude_diaria.
+- saude_eventos: sintomas, humor (estado de espírito), medicamentos, avisos de frequência cardíaca do relógio e ciclo.
+- saude_diaria: tudo o que o n8n já guardava, mais pulso em repouso, variabilidade, VO2 máx, frequência ao caminhar, recuperação cardíaca e os anéis de atividade (quando vêm do arquivo de exportação).
+
+Duas formas de alimentar, que se completam.
+
+1. HISTÓRICO, UMA VEZ (arquivo do app Saúde, traz tudo desde o começo, inclusive ECG e rotas)
+   a. No iPhone: app Saúde, botão do perfil (canto superior direito), "Exportar Todos os Dados de Saúde". Pode demorar. Envie o export.zip para o Mac por AirDrop.
+   b. No Mac, na pasta do projeto:
+        python3 heimdall_saude.py --importar ~/Downloads/export.zip
+      Pode rodar de novo: não duplica. Valores que o n8n já gravou não são sobrescritos.
+   c. Apague o export.zip depois (ele tem seu nome e data de nascimento; o Heimdall não lê nem grava essas duas coisas).
+
+2. CONTÍNUO (Health Auto Export, no iPhone, no mesmo endereço e com o mesmo cabeçalho X-Heimdall-Saude que você já usa para o resumo diário)
+   Crie uma automação nova do tipo REST API (ou ajuste a que já existe) com:
+   - Endereço e cabeçalho: os mesmos da automação de métricas.
+   - Formato: JSON, versão 2.
+   - Tipos de dado: Workouts (ligue "Include Workout Metrics", "Include Route Data" e os dados de frequência cardíaca), ECG, Heart Rate Notifications, Symptoms, State of Mind, Medications, Cycle Tracking.
+   - Em Health Metrics, escolha o máximo que quiser: o n8n guarda qualquer métrica extra como x:nome. Para a frequência cardíaca por hora, deixe heart rate com agrupamento por hora.
+   - Dica: o ECG gera arquivos grandes. Crie uma automação só para ECG e Workouts, com intervalo de datas curto (por exemplo, "últimos 7 dias") e sincronização uma vez por dia; e deixe as métricas leves na outra.
+   - No app Saúde do iPhone, dê ao Health Auto Export permissão para ler tudo (ECG, treinos, rotas, sintomas, estado de espírito, medicamentos).
+   Os nomes das opções podem variar um pouco conforme a versão do app.
+   Depois de importar o fluxo atualizado no n8n (./instalar_automacoes_avancadas.sh), cada envio que tiver treinos, ECG, frequência cardíaca, sintomas, humor, medicamentos ou avisos vai para o agente do Mac (POST /saude/hae) e é gravado.
+   Se o relógio disser que um ECG foi classificado como fibrilação atrial, o Heimdall abre um item na triagem (nível alto), com a observação de que não é diagnóstico.
+
+Como analisar:
+   python3 heimdall_saude.py --relatorio         tudo junto (30 dias): treinos, carga, cruzamento do treino com pulso em repouso e variabilidade, coração, ECG, sintomas, humor, medicamentos
+   python3 heimdall_saude.py --treinos 60        treinos dos últimos 60 dias
+   python3 heimdall_saude.py --ecg               ECG do último ano
+   python3 heimdall_saude.py --fc 14             frequência cardíaca dos últimos 14 dias
+   No chat (Open WebUI): peça "resumo dos meus treinos", "como estão meus ECG", "frequência cardíaca da semana" ou "relatório de saúde".
+   Perguntas livres também funcionam pelas ferramentas banco_consultar e banco_buscar (tabelas treinos, ecg, fc_hora, saude_eventos).
+
+Privacidade:
+   - A rota (GPS) dos treinos fica só no banco local, que entra na cópia criptografada do backup. Para não guardar rotas: HEIMDALL_SAUDE_ROTA=0 no .env.
+   - Nada disso sai do Mac. As ferramentas do chat devolvem texto resumido, nunca a forma de onda.
+   - Esta análise não é diagnóstico nem substitui o aplicativo de ECG da Apple ou um médico.
+
+Fora desta primeira versão (existem no ecossistema Apple e podem entrar depois): registros clínicos (FHIR) do app Saúde, batimento a batimento da variabilidade (heartbeat series), audiogramas, eventos e parciais dentro de cada treino, série de frequência cardíaca dos treinos vindos do arquivo de exportação (o resumo mínimo, média e máximo entra).

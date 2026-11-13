@@ -2,6 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Treinos, ECG, frequência cardíaca e mais do ecossistema Apple
+- Novas tabelas no banco pessoal: treinos (tipo, duração, distância, energia, frequência cardíaca e série, recuperação em 1 minuto, subida, esforço, rota), ecg (classificação da Apple e a forma de onda, com medidas dos batimentos calculadas pelo Heimdall), fc_hora (frequência cardíaca por hora) e saude_eventos (sintomas, humor, medicamentos, avisos de frequência cardíaca do relógio, ciclo).
+- Duas entradas: o arquivo do app Saúde (python3 heimdall_saude.py --importar export.zip, traz o histórico inteiro, inclusive ECG e rotas) e o Health Auto Export, pelo mesmo webhook do n8n, que agora repassa ao agente do Mac (POST /saude/hae) treinos, ECG, frequência cardíaca, sintomas, humor, medicamentos e avisos.
+- Análises em texto corrido: python3 heimdall_saude.py --relatorio, --treinos, --ecg e --fc, e quatro ferramentas no chat (treinos_resumo, ecg_resumo, frequencia_cardiaca_resumo, relatorio_saude). Cruzam a carga de treino com o pulso em repouso e a variabilidade.
+- Um ECG classificado pela Apple como fibrilação atrial abre um item de nível alto na triagem. Tudo é informativo, não é diagnóstico.
+- Privacidade: nome e data de nascimento do arquivo de exportação não são lidos; a rota dos treinos pode ser desligada com HEIMDALL_SAUDE_ROTA=0.
+- Roteiro de configuração do iPhone em LEIAME_saude_apple.txt.
+- Para aplicar: git fetch e reset do repositório, ./instalar_automacoes_avancadas.sh (atualiza o fluxo de saúde no n8n) e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Gravações das notas com voz de um atalho (Siri)
 - Nova opção HEIMDALL_VOZ_ATALHO no .env: nome de um atalho do app Atalhos que recebe o texto e devolve o áudio (ação "Criar áudio falado a partir de texto"). Permite usar vozes que o say não enxerga, como a Siri. A voz e a velocidade ficam no próprio atalho; o dicionário de pronúncia continua valendo.
 - Rodado à mão, o python3 heimdall_agente.py --voz agora lê as opções de voz do .env (antes só valiam com o serviço rodando).

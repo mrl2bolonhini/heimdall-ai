@@ -340,6 +340,53 @@
           "timeout": 60000
         }
       }
+    },
+    {
+      "id": "separartreinos731",
+      "name": "Separar treinos e ECG",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        640
+      ],
+      "parameters": {
+        "jsCode": "// Separa o que é novo no Health Auto Export (treinos, ECG, frequência cardíaca, sintomas, humor, medicamentos, avisos do relógio) e manda ao agente do Mac.\nconst it = $input.first().json;\nconst h = it.headers || {};\nconst tk = String(h['x-heimdall-saude'] || h['authorization'] || '').replace(/^Bearer\\s+/i, '').trim();\nif (tk !== '__SAUDE_TOKEN__') return [];\nconst corpo = (it.body && typeof it.body === 'object') ? it.body : it;\nconst d = (corpo.data && typeof corpo.data === 'object') ? corpo.data : corpo;\nconst CHAVES = ['workouts', 'ecg', 'symptoms', 'stateOfMind', 'medications', 'heartRateNotifications', 'cycleTracking'];\nconst o = {};\nfor (const k of CHAVES) { if (Array.isArray(d[k]) && d[k].length) o[k] = d[k]; }\nconst fc = Array.isArray(d.metrics) ? d.metrics.filter(m => m && m.name === 'heart_rate') : [];\nif (fc.length) o.metrics = fc;\nif (!Object.keys(o).length) return [];\nreturn [{ json: { corpo: { data: o } } }];"
+      }
+    },
+    {
+      "id": "enviartreinos732",
+      "name": "Enviar treinos e ECG ao agente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        640
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/saude/hae",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.corpo) }}",
+        "options": {
+          "timeout": 180000
+        }
+      }
     }
   ],
   "connections": {
@@ -444,6 +491,11 @@
             "node": "Guardar dados",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Separar treinos e ECG",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -464,6 +516,17 @@
         [
           {
             "node": "Criar triagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar treinos e ECG": {
+      "main": [
+        [
+          {
+            "node": "Enviar treinos e ECG ao agente",
             "type": "main",
             "index": 0
           }

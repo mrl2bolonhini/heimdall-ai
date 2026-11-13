@@ -16,6 +16,7 @@ Rotas:
                                         cria ou atualiza uma nota e grava uma cópia .md na pasta do cofre
     GET  /banco/resumo                  contagens e período de cada tabela do banco pessoal (SQLite)
     GET  /banco/esquema                 descrição das tabelas
+    POST /saude/hae                     corpo do Health Auto Export (treinos, ECG, frequência cardíaca, sintomas...); grava no banco (heimdall_saude.py)
     POST /banco/gravar                  {"tabela": "saude_diaria", "registros": [{"dia": "2026-11-10", "metrica": "passos", "valor": 8000}]}
                                         insere ou atualiza pela chave primária (tabelas: saude_diaria, saude_resumos, diarios, analises)
     POST /banco/consultar               {"sql": "SELECT ...", "limite": 200}  só um SELECT, em conexão somente leitura
@@ -56,6 +57,7 @@ from urllib.parse import parse_qs, urlparse
 
 import heimdall_backup as backup
 import heimdall_banco as banco
+import heimdall_saude as saude
 import heimdall_triagem as triagem
 import heimdall_voz as dicionario_voz
 
@@ -148,6 +150,7 @@ for _nome in ["Privado"] + os.environ.get("HEIMDALL_NOTAS_PRIVADAS", "").split("
     if _nome and _nome.lower() not in [x.lower() for x in PRIVADAS] and re.fullmatch(r'[^"\\\n\r\t]{1,80}', _nome):
         PRIVADAS.append(_nome)
 MAX_CORPO = 1_000_000
+MAX_CORPO_SAUDE = 64 * 1024 * 1024   # exportações com ECG (milhares de leituras por gravação) são grandes
 MAX_TEXTO_NOTA = 20_000
 OSASCRIPT_TIMEOUT = 120
 _lock = threading.Lock()  # o app Notas atende um pedido de cada vez
@@ -990,11 +993,22 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(401, {"erro": "token inválido"})
         try:
             tam = int(self.headers.get("Content-Length", "0"))
-            if tam <= 0 or tam > MAX_CORPO:
+            if tam <= 0 or tam > (MAX_CORPO_SAUDE if u.path == "/saude/hae" else MAX_CORPO):
                 return self._json(413, {"erro": "corpo ausente ou grande demais"})
             dado = json.loads(self.rfile.read(tam).decode("utf-8"))
             if u.path == "/notas/gravar":
                 r = gravar(str(dado.get("pasta", "")), str(dado.get("titulo", "")), str(dado.get("markdown", "")), str(dado.get("audio", "")))
+                return self._json(200, r)
+            if u.path == "/saude/hae":
+                r = saude.processar_hae(dado)
+                for f in r.pop("ecg_fibrilacao", []):   # a Apple classificou como fibrilação atrial: entra na triagem (não é diagnóstico)
+                    try:
+                        triagem.criar({"id": f["id"], "titulo": "ECG classificado pela Apple como fibrilação atrial",
+                                       "resumo": f"Gravação de {f['inicio']}. Não é diagnóstico: mostre ao seu médico. Detalhes: python3 heimdall_saude.py --ecg.",
+                                       "nivel": "alto", "fonte": "saude"}, osascript_travado)
+                        r["triagem"] = r.get("triagem", 0) + 1
+                    except Exception as e:  # noqa: BLE001 - a gravação já foi feita; a triagem é um aviso a mais
+                        sys.stderr.write(f"{time.strftime('%H:%M:%S')} triagem do ECG falhou: {str(e)[:120]}\n")
                 return self._json(200, r)
             if u.path == "/banco/gravar":
                 return self._json(200, banco.gravar(str(dado.get("tabela", "")), dado.get("registros", [])))

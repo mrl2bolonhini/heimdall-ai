@@ -907,6 +907,53 @@ def saude_historico(metrica: str, dias: int = 14) -> str:
     return _BANCO_AVISO + "\n" + "\n".join(linhas)
 
 
+def _saude_mod():
+    import heimdall_saude
+
+    return heimdall_saude
+
+
+def _limitar(dias, minimo=1, maximo=3650, padrao=30) -> int:
+    try:
+        return max(minimo, min(int(dias), maximo))
+    except (TypeError, ValueError):
+        return padrao
+
+
+def treinos_resumo(dias: int = 30, tipo: str = "") -> str:
+    """Resumo dos treinos do Apple Saúde/Apple Watch nos últimos dias: quantos, tempo, distância, energia, frequência cardíaca, recuperação, carga da semana.
+    tipo (opcional): corrida, caminhada, ciclismo, natação, musculação... dias: de 1 a 3650."""
+    try:
+        return _BANCO_AVISO + "\n" + _saude_mod().relatorio_treinos(_limitar(dias), str(tipo or "")[:40])
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui ler os treinos: {e}"
+
+
+def ecg_resumo(dias: int = 365) -> str:
+    """Resumo dos ECG feitos no Apple Watch: quantos, classificação da Apple (ritmo sinusal, fibrilação atrial, inconclusivo), último ECG e as medidas dos batimentos
+    calculadas pelo Heimdall. Informativo, não é diagnóstico. dias: de 1 a 3650."""
+    try:
+        return _BANCO_AVISO + "\n" + _saude_mod().relatorio_ecg(_limitar(dias, padrao=365))
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui ler os ECG: {e}"
+
+
+def frequencia_cardiaca_resumo(dias: int = 14) -> str:
+    """Frequência cardíaca nos últimos dias: pulso em repouso, variabilidade (HRV), mínima de madrugada, hora do dia mais alta, maior pico, recuperação, VO2 máx e avisos do relógio."""
+    try:
+        return _BANCO_AVISO + "\n" + _saude_mod().relatorio_fc(_limitar(dias, padrao=14))
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui ler a frequência cardíaca: {e}"
+
+
+def relatorio_saude(dias: int = 30) -> str:
+    """Relatório completo de saúde do Apple Saúde: treinos e carga, cruzamento do treino com pulso em repouso e variabilidade, frequência cardíaca, ECG, sintomas, humor e medicamentos."""
+    try:
+        return _BANCO_AVISO + "\n" + _saude_mod().relatorio_geral(_limitar(dias))
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui montar o relatório: {e}"
+
+
 def banco_buscar(termo: str, tabela: str = "", limite: int = 5) -> str:
     """Procura um termo (sem diferenciar maiúsculas nem acentos) em todo o banco pessoal do usuário: diários oficiais, e-mails de serviços públicos,
     achados de privacidade, estudos, análises do Second Brain, avisos e resumos de saúde. Devolve as ocorrências mais recentes de cada tabela.
@@ -971,6 +1018,10 @@ MAC_TOOLS = [
     banco_consultar,
     banco_buscar,
     saude_historico,
+    treinos_resumo,
+    ecg_resumo,
+    frequencia_cardiaca_resumo,
+    relatorio_saude,
 ]
 
 # DADOS_TOOLS: só as ferramentas do banco pessoal, para o Open WebUI. Servidas em 127.0.0.1:8004, sem leitura nem escrita
@@ -980,6 +1031,10 @@ DADOS_TOOLS = [
     banco_consultar,
     banco_buscar,
     saude_historico,
+    treinos_resumo,
+    ecg_resumo,
+    frequencia_cardiaca_resumo,
+    relatorio_saude,
     get_system_timestamp,
 ]
 

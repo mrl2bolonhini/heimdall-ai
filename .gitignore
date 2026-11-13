@@ -27,3 +27,7 @@ logs/
 
 # Suas entradas do dicionário de pronúncia
 pronuncias.local.txt
+
+# Exportação do app Saúde (tem nome e data de nascimento)
+export.zip
+apple_health_export/

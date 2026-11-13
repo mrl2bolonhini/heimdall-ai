@@ -158,6 +158,82 @@ CREATE TABLE IF NOT EXISTS analises (
     perguntas TEXT NOT NULL DEFAULT '[]',   -- JSON
     atualizado TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS treinos (
+    id TEXT PRIMARY KEY,            -- id do app (Health Auto Export) ou tipo|início quando vem do arquivo de exportação
+    dia TEXT NOT NULL,              -- AAAA-MM-DD do início, no horário local do treino
+    inicio TEXT NOT NULL,           -- data e hora com fuso
+    fim TEXT NOT NULL DEFAULT '',
+    tipo TEXT NOT NULL,             -- Corrida, Caminhada, Ciclismo, Natação, Musculação ...
+    tipo_original TEXT NOT NULL DEFAULT '',
+    duracao_min REAL,
+    local TEXT NOT NULL DEFAULT '', -- interno, externo, piscina ou vazio
+    distancia_km REAL,
+    energia_kcal REAL,              -- energia ativa
+    energia_total_kcal REAL,
+    met REAL,
+    fc_min REAL, fc_media REAL, fc_max REAL,
+    fc_recuperacao REAL,            -- queda de bpm no primeiro minuto depois de parar (quando o relógio mediu)
+    subida_m REAL,
+    passos REAL,
+    velocidade_kmh REAL,
+    esforco REAL,                   -- pontuação de esforço da Apple (iOS 18)
+    temperatura_c REAL,
+    fc_serie TEXT NOT NULL DEFAULT '[]',   -- JSON [[segundos desde o início, bpm], ...] (até 600 pontos)
+    rota TEXT NOT NULL DEFAULT '[]',       -- JSON [[lat, lon, altitude], ...] (até 400 pontos; HEIMDALL_SAUDE_ROTA=0 não guarda)
+    fonte TEXT NOT NULL DEFAULT '',
+    extra TEXT NOT NULL DEFAULT '{}',
+    atualizado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_treinos_dia ON treinos (dia);
+
+CREATE TABLE IF NOT EXISTS ecg (
+    id TEXT PRIMARY KEY,
+    dia TEXT NOT NULL,
+    inicio TEXT NOT NULL,
+    classificacao TEXT NOT NULL DEFAULT '',     -- como a Apple classificou, em português
+    classificacao_original TEXT NOT NULL DEFAULT '',
+    fc_media REAL,                              -- média que o relógio calculou
+    freq_hz REAL,
+    amostras INTEGER,                           -- quantas leituras de tensão tem a gravação
+    duracao_s REAL,
+    completo INTEGER NOT NULL DEFAULT 1,        -- 0 = a exportação trouxe só parte das leituras
+    sintomas TEXT NOT NULL DEFAULT '',
+    picos INTEGER, fc_forma_onda REAL,          -- análise do Heimdall sobre a forma de onda (não é diagnóstico)
+    rr_medio_ms REAL, sdnn_ms REAL, rmssd_ms REAL, pnn50 REAL, cv_rr REAL,
+    qualidade TEXT NOT NULL DEFAULT '',         -- boa, regular ou ruim (confiança da detecção dos batimentos)
+    fonte TEXT NOT NULL DEFAULT '',
+    atualizado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_ecg_dia ON ecg (dia);
+
+CREATE TABLE IF NOT EXISTS ecg_ondas (
+    ecg_id TEXT PRIMARY KEY,
+    freq_hz REAL NOT NULL,
+    amostras BLOB NOT NULL,         -- microvolts em inteiros de 16 bits (little-endian), comprimidos com zlib
+    atualizado TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS fc_hora (
+    dia TEXT NOT NULL,
+    hora INTEGER NOT NULL,          -- 0 a 23, horário local
+    fc_min REAL, fc_media REAL, fc_max REAL,
+    leituras INTEGER NOT NULL DEFAULT 0,
+    atualizado TEXT NOT NULL,
+    PRIMARY KEY (dia, hora)
+);
+
+CREATE TABLE IF NOT EXISTS saude_eventos (
+    id TEXT PRIMARY KEY,
+    tipo TEXT NOT NULL,             -- sintoma, humor, medicamento, aviso_fc, ciclo
+    dia TEXT NOT NULL,
+    inicio TEXT NOT NULL,
+    titulo TEXT NOT NULL DEFAULT '',
+    valor REAL,                     -- humor: de -1 (muito desagradável) a 1 (muito agradável); medicamento: dose
+    texto TEXT NOT NULL DEFAULT '', -- gravidade, situação, marcadores...
+    extra TEXT NOT NULL DEFAULT '{}',
+    atualizado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_eventos_tipo ON saude_eventos (tipo, dia);
 """
 
 # tabela -> (colunas graváveis, chave primária). Nada fora desta lista é aceito.
@@ -338,6 +414,10 @@ def resumo() -> dict:
             "SELECT COUNT(*), COALESCE(SUM(estado = 'pendente'), 0), MAX(criado) FROM triagem").fetchone()))
         saida["analises"] = dict(zip(("linhas", "ate"), con.execute("SELECT COUNT(*), MAX(atualizado) FROM analises").fetchone()))
         saida["noticias"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(publicado), MAX(publicado) FROM noticias").fetchone()))
+        saida["treinos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM treinos").fetchone()))
+        saida["ecg"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM ecg").fetchone()))
+        saida["fc_hora"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM fc_hora").fetchone()))
+        saida["saude_eventos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM saude_eventos").fetchone()))
         return saida
     finally:
         con.close()
@@ -360,6 +440,12 @@ def tabelas_para_modelo() -> str:
         "as colunas de lista são JSON.\n"
         "noticias(id, fonte, categoria, idioma, titulo, titulo_original, titulo_traduzido, link, publicado, trecho, resumo, resumo_base, coletado): "
         "notícias dos últimos 30 dias coletadas de 30 em 30 minutos (publicado e coletado em UTC); resumo é feito por IA; resumo_base: materia, trecho ou vazio.\n"
+        "treinos(id, dia, inicio, fim, tipo, duracao_min, local, distancia_km, energia_kcal, energia_total_kcal, met, fc_min, fc_media, fc_max, fc_recuperacao, "
+        "subida_m, passos, velocidade_kmh, esforco, temperatura_c, fonte): cada treino do Apple Saúde (fc_serie e rota são JSON longos; evite pedir).\n"
+        "ecg(id, dia, inicio, classificacao, fc_media, freq_hz, amostras, duracao_s, sintomas, picos, rr_medio_ms, sdnn_ms, rmssd_ms, pnn50, cv_rr, qualidade): "
+        "cada ECG do Apple Watch; classificacao é a da Apple (ritmo sinusal, fibrilação atrial, inconclusivo...); as medidas de batimento são do Heimdall, não diagnóstico.\n"
+        "fc_hora(dia, hora, fc_min, fc_media, fc_max, leituras): frequência cardíaca por hora do dia.\n"
+        "saude_eventos(id, tipo, dia, inicio, titulo, valor, texto): sintomas, humor (valor de -1 a 1), medicamentos, avisos de frequência cardíaca e ciclo.\n"
         "Dentro do SQL, sem_acento(coluna) devolve o texto em minúsculas e sem acento (use em buscas: WHERE sem_acento(titulo) LIKE '%coracao%')."
     )
 
