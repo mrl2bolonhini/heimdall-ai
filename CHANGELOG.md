@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Site de documentação em dia
+- Nova página Saúde: de onde vêm os dados (importação e Health Auto Export), análises, páginas do painel, relatório semanal, privacidade e solução de problemas.
+- Início com os acessos de Notas, News e Saúde; mapa da arquitetura com o caminho dos dados de saúde, o banco pessoal e os painéis web, mais um texto que o descreve.
+- Comandos de saúde, fila do News e voz na página Comandos; scripts de voz, importação e testes na lista de scripts; Notas e News descrevem a paginação em botões e os títulos inteiros.
+- O painel de saúde saiu do Roadmap, por já estar pronto.
+
 ## 2026-11-13 - Painéis com a marca do Heimdall
 - Cloud, Notas, News e Saúde passaram a usar a paleta da marca em um só lugar (o estilo compartilhado em heimdall_cloud.py): Papel (#f3f6fc) e Tinta (#0c1530) no tema claro, Noite (#080d1f) e Névoa (#e9effc) no escuro, azul da ponte nos links, campos e blocos de leitura sobre a superfície da marca. O Ouro do olhar marca só a página atual do menu e o botão de página selecionado (sublinhado e barra), nunca texto.
 - Novo cabeçalho de marca: símbolo da ponte com o olho (decorativo para o leitor de tela, porque o nome vem ao lado), nome do serviço em serifa, menu e a faixa de seis cores sob o cabeçalho, como no site. Todos têm o ícone da aba (embutido, sem arquivo externo; a política de segurança ganhou apenas img-src data:).

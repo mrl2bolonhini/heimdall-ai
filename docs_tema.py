@@ -16,6 +16,9 @@ ACESSOS = {
     "n8n": "https://flows.heimdall-ai.tech",
     "status": "https://status.heimdall-ai.tech",
     "cloud": "https://cloud.heimdall-ai.tech",
+    "notas": "https://notes.heimdall-ai.tech",
+    "news": "https://news.heimdall-ai.tech",
+    "saude": "https://health.heimdall-ai.tech",
 }
 H = lambda s: html.escape(str(s), quote=True)
 
@@ -110,7 +113,7 @@ def diagrama():
     s = ('<svg viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dg-t dg-d">'
          '<title id="dg-t">Mapa do Heimdall-ai</title>'
          '<desc id="dg-d">Na linha de cima, a conversa: você usa o Open WebUI, que fala com o LiteLLM, que usa os modelos do Ollama, os servidores MCP e as bases de documentos e de busca. '
-         'Na linha de baixo, as automações: o n8n usa o LiteLLM, aciona o agente do Mac, que grava nos aplicativos do Mac, e avisa no iPhone pelo Bark.</desc>'
+         'Na linha de baixo, as automações: o n8n usa o LiteLLM, aciona o agente do Mac, que grava nos aplicativos do Mac, e avisa no iPhone pelo Bark. O iPhone e o Apple Watch mandam os dados de saúde, pelo Health Auto Export, ao n8n; o agente os grava no banco pessoal, que alimenta os painéis web de Notas, News, Saúde e Cloud.</desc>'
          '<defs><marker id="ponta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="am"/></marker></defs>'
          '<text x="0" y="18" class="ln">Conversa</text>'
          + _no(0, 34, 160, 62, "Você", "navegador ou iPhone", L["interface"])
@@ -129,6 +132,12 @@ def diagrama():
          + seta("M305 278V228H415V80H448")
          + _no(210, 378, 190, 62, "Bark", "avisos no iPhone", L["auto"])
          + seta("M305 342V376")
+         + _no(0, 278, 160, 62, "iPhone e Watch", "Health Auto Export", L["interface"])
+         + seta("M162 309H208")
+         + _no(450, 378, 190, 62, "Banco pessoal", "SQLite: saúde, notícias", L["ferr"])
+         + seta("M545 342V376")
+         + _no(690, 378, 210, 62, "Painéis web", "Notas, News, Saúde, Cloud", L["acesso"])
+         + seta("M642 409H688")
          + '</svg>')
     legenda = ('<ul class="legenda" aria-label="Cores das camadas"><li><i style="background:#42a5f5"></i>Interface</li><li><i style="background:#26c6da"></i>Acesso único</li>'
                '<li><i style="background:#1e88e5"></i>Modelos</li><li><i style="background:#93d2fa"></i>Ferramentas e dados</li><li><i style="background:#ffc107"></i>Automação</li></ul>')
@@ -316,6 +325,7 @@ PAGINAS = [
     ("fluxos.html", "Fluxos", "Fluxos do n8n e scripts"),
     ("notas.html", "Notas", "Heimdall Notas: ler as notas e ouvir os áudios"),
     ("news.html", "News", "Heimdall News: notícias com resumo de IA e feeds RSS"),
+    ("saude.html", "Saúde", "Heimdall Saúde: dados do iPhone e Apple Watch, análises e painel"),
     ("cloud.html", "Cloud", "Painel do emulador de AWS: acesso, segurança e roteiro"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
     ("novidades.html", "Novidades", "Histórico de recursos"),
@@ -422,6 +432,9 @@ def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
 <li class="porta" style="--cor:#ffc107"><h3><a href="{ACESSOS['n8n']}">Automações</a></h3><p>Ver e ajustar os fluxos que rodam sozinhos.</p><p class="quem">Login do administrador</p></li>
 <li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['status']}">Status</a></h3><p>Ver se os serviços estão no ar.</p><p class="quem">Acesso restrito</p></li>
 <li class="porta" style="--cor:#1e88e5"><h3><a href="{ACESSOS['cloud']}">Cloud</a></h3><p>Painel do emulador de AWS: S3, Lambda, Glue e Athena. <a href="cloud.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
+<li class="porta" style="--cor:#ffc107"><h3><a href="{ACESSOS['notas']}">Notas</a></h3><p>Ler as notas de estudo e ouvir os áudios. <a href="notas.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
+<li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['news']}">News</a></h3><p>Notícias das últimas 24 horas com resumo de IA. <a href="news.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
+<li class="porta" style="--cor:#42a5f5"><h3><a href="{ACESSOS['saude']}">Saúde</a></h3><p>Análises dos dados de saúde, só leitura. <a href="saude.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#93d2fa"><h3><a href="{REPO}">Código</a></h3><p>Repositório do projeto no GitHub.</p><p class="quem">Público</p></li>
 </ul></section>
 <section class="faixa" aria-labelledby="proposito"><div class="dois"><h2 id="proposito">Por que existe</h2><div>

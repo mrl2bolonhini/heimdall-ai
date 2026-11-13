@@ -255,10 +255,16 @@ SCRIPTS = [
     ("heimdall_triagem.py", "Triagem obrigatória de avisos importantes. Cria lembretes na lista \"Heimdall: Triagem\" do app Lembretes (menções do Diário da Justiça, alertas de saúde, e-mails suspeitos ou urgentes e achados de privacidade de risco médio ou alto) e insiste pelo Bark até você concluir, reclassificar ou adiar. Roda dentro do agente do Mac."),
     ("heimdall_email_oficial.py", "Vigia o Gmail a cada hora, só lendo. Confere se e-mails de serviços públicos (INSS, gov.br, FGTS, Receita, Serasa e outros) são autênticos, resume os verdadeiros, alerta sobre imitações e cria evento e lembrete quando há prazo. Nunca segue links."),
     ("heimdall_notas.py", "Heimdall Notas (porta 8011): site para ler as notas de estudo do cofre e ouvir os áudios, com velocidade, voltar e avançar 15 segundos, busca e os documentos de knowledge/. Mesmo login do Heimdall Cloud; mostra o cofre inteiro, menos o Digest."),
-    ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Cloud, Notas e News): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
+    ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Cloud, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News e pelo Heimdall Notas: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
     ("heimdall_painel_saude.py", "Heimdall Saúde (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Cloud (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
+    ("heimdall_voz.py", "Dicionário de pronúncia: troca palavras por uma grafia que a voz do macOS lê certo (por exemplo, Heimdall vira Háimdal), no anúncio falado do subir.sh e no áudio das notas. Aceita --importar arquivo.csv para trazer as pronúncias do VoiceOver."),
+    ("pronuncias.txt", "Pronúncias que vêm com o projeto, uma por linha no formato palavra = como falar. As suas ficam em pronuncias.local.txt, que não vai para o GitHub."),
+    ("importar_saude_n8n.py", "Copia para o banco pessoal o histórico de saúde que já estava guardado dentro do n8n. Pode rodar de novo sem duplicar."),
+    ("teste_voz.py", "Testa o dicionário de pronúncia."),
+    ("teste_saude_dados.py", "Testa as análises de saúde com 200 dias de dados sintéticos, sem tocar no seu banco."),
+    ("teste_painel_saude.py", "Testa o painel Heimdall Saúde: login, páginas, segurança e acessibilidade."),
     ("noticias_fontes.json", "Fontes do Heimdall News (categoria, nome, endereço do feed, idioma, limite por atualização). Edite à vontade; é relido a cada atualização."),
     ("heimdall_cloud.py", "Painel web do emulador de AWS (porta 8010): S3, Lambda, Glue (bancos, tabelas, crawlers e jobs), Athena (consultas SQL) e um console geral que chama qualquer operação de qualquer serviço. Entrada com senha (hash PBKDF2) e código de 6 dígitos, limite de tentativas, sessão com validade e proteção contra CSRF. Escuta só em 127.0.0.1 e nunca expõe a porta do emulador."),
     ("ingest_docs.py", "Indexa os documentos de knowledge/ no Qdrant, de forma incremental. Cada subpasta vira um tema."),
@@ -284,11 +290,23 @@ COMANDOS = [
         ("Subir e indexar os documentos novos antes", "nohup bash start_heimdall.sh --ingest > heimdall.log 2>&1 &"),
         ("Atualizar as imagens Docker (com backup) ao subir", "nohup bash start_heimdall.sh --update > heimdall.log 2>&1 &"),
         ("Reiniciar só o agente do Mac", "pkill -f heimdall_agente.py   # depois suba o sistema como de costume"),
-        ("Nova senha e novo código de 6 dígitos (valem para Cloud, Notas e News)", "python3 heimdall_acesso.py --tudo"),
+        ("Nova senha e novo código de 6 dígitos (valem para Cloud, Notas, News e Saúde)", "python3 heimdall_acesso.py --tudo"),
         ("Trocar só a senha, mantendo o código de 6 dígitos", "python3 heimdall_acesso.py --senha"),
         ("Gerar só um novo código de 6 dígitos", "python3 heimdall_acesso.py --codigo"),
         ("Reiniciar só o painel do emulador de AWS", "pkill -f heimdall_cloud.py   # depois suba o sistema como de costume"),
         ("Ver o final do log", "tail -30 heimdall.log"),
+    ]),
+    ("Saúde: análises no terminal", [
+        ("Importar o export.zip do app Saúde", "python3 heimdall_saude.py --importar ~/Downloads/export.zip"),
+        ("Análise geral dos últimos 30 dias", "python3 heimdall_saude.py --relatorio"),
+        ("O que já chegou de hoje", "python3 heimdall_saude.py --hoje"),
+        ("Últimos 7 dias contra a média dos 90 anteriores", "python3 heimdall_saude.py --agora"),
+        ("Sono, atividade, recuperação e tendências", "python3 heimdall_saude.py --sono   # também --atividade, --recuperacao, --tendencias"),
+        ("Treinos, ECG e frequência cardíaca", "python3 heimdall_saude.py --treinos   # também --ecg e --fc"),
+        ("Relatório da semana (o n8n o envia aos domingos)", "python3 heimdall_saude.py --semanal"),
+        ("Fila de resumos do News", "python3 heimdall_news.py --fila"),
+        ("Testar as análises e o painel de saúde", "python3 teste_saude_dados.py && python3 teste_painel_saude.py"),
+        ("Testar a voz", "python3 teste_voz.py"),
     ]),
     ("Conferir se está no ar", [
         ("Agente do Mac (deve responder ok)", "curl -s http://localhost:8003/saude"),
@@ -383,13 +401,18 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <h1>Arquitetura</h1>
 <section aria-labelledby="mapa"><h2 id="mapa">Mapa</h2>
 {diagrama()}</section>
+<section aria-labelledby="saudecam"><h2 id="saudecam">Dados de saúde e painéis</h2>
+<ol><li>O iPhone e o Apple Watch guardam os dados no app Saúde. O app Health Auto Export manda os números ao n8n por um webhook, em automações agendadas (métricas gerais e frequência cardíaca de hora em hora, o resto uma vez por dia).</li>
+<li>O n8n repassa ao agente do Mac, que grava no banco pessoal (SQLite, só nesta máquina).</li>
+<li>Quatro painéis web leem esse banco e os arquivos do Mac: Cloud (8010), Notas (8011), News (8012) e Saúde (8013). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
+<li>Aos domingos, às 9h, o n8n pede o relatório da semana: ele vira nota com áudio e um aviso no Bark sem números.</li></ol></section>
 <section aria-labelledby="camadas"><h2 id="camadas">Visão geral</h2>
 <p>O Heimdall-ai tem quatro camadas, da base para o topo.</p>
 <ol>
 <li><strong>Modelos.</strong> O Ollama executa os modelos de linguagem no Mac (chip Apple, 16 GB de memória).</li>
 <li><strong>Acesso único.</strong> O LiteLLM Proxy (porta 9000) expõe todos os modelos em uma API compatível com a da OpenAI e repassa os servidores MCP. Clientes como o Open WebUI e aplicativos de iPhone falam só com ele.</li>
 <li><strong>Ferramentas.</strong> Três servidores MCP em Python (portas 8000, 8001 e 8004, este só com o banco pessoal e só nesta máquina) e o servidor de documentação da AWS dão ao modelo ferramentas: busca na web, leitura de páginas, arquivos, memória, documentos pessoais.</li>
-<li><strong>Automações.</strong> O n8n agenda fluxos que usam os modelos e as ferramentas. O agente do Mac (porta 8003) liga o n8n, que roda em Docker, aos aplicativos do macOS. O Bark entrega os avisos no iPhone.</li>
+<li><strong>Automações.</strong> (Veja também o caminho dos dados de saúde, mais abaixo.) O n8n agenda fluxos que usam os modelos e as ferramentas. O agente do Mac (porta 8003) liga o n8n, que roda em Docker, aos aplicativos do macOS. O Bark entrega os avisos no iPhone.</li>
 </ol></section>
 <section aria-labelledby="caminho"><h2 id="caminho">O caminho de uma pergunta no chat</h2>
 <ol><li>A pessoa escreve no Open WebUI (pelo navegador ou pelo celular, pela rede privada Tailscale).</li>
@@ -552,7 +575,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
 <li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>HEIMDALL_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>Definir a senha e gerar o código de 6 dígitos (os mesmos valem para Cloud, Notas e News): <code>python3 heimdall_acesso.py --tudo</code></li>
+<ul><li>Definir a senha e gerar o código de 6 dígitos (os mesmos valem para Cloud, Notas, News e Saúde): <code>python3 heimdall_acesso.py --tudo</code></li>
 <li>Trocar só a senha: <code>python3 heimdall_acesso.py --senha</code></li>
 <li>Gerar só um novo código: <code>python3 heimdall_acesso.py --codigo</code></li>
 <li>Conferir se o painel está no ar: <code>curl -s http://localhost:8010/saude</code></li>
@@ -577,6 +600,10 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Só o Digest fica de fora, porque terá outro uso.</li>
 <li>Para tirar outras pastas, use <code>HEIMDALL_NOTAS_EXCLUIR="heimdall-digest,saude"</code> no <code>.env</code>. Para mostrar só algumas, <code>HEIMDALL_NOTAS_PASTAS="pasta-um,pasta-dois"</code>.</li>
 <li>Como inclui notas pessoais, o endereço público exige a senha e o código de 6 dígitos em toda visita.</li></ul></section>
+<section aria-labelledby="leitura"><h2 id="leitura">Leitura e navegação</h2>
+<ul><li>As listas têm 10 notas por página, com paginação em botões (Página anterior, números com a atual marcada, Próxima página e Última página), na página inicial, nos temas e na busca.</li>
+<li>Os títulos aparecem inteiros: textos longos quebram em várias linhas em vez de serem cortados.</li>
+<li>O visual segue a marca do Heimdall (a mesma paleta do site e dos outros painéis, claro e escuro). Veja <a href="marca.html">Marca</a>.</li></ul></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
 <ul><li>Escuta só em 127.0.0.1 e é somente de leitura: nada ali grava ou apaga arquivos.</li>
 <li>Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict.</li>
@@ -596,7 +623,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Cloud e do Heimdall Notas.</li>
 <li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. O endereço já existe no túnel; o site continua privado, pois exige a senha e o código de 6 dígitos.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que mostra</h2>
-<ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com os botões Anterior e Próxima.</li>
+<ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com paginação em botões (Página anterior, números com a atual marcada, Próxima página e Última página).</li>
 <li><strong>Cada notícia</strong>: título como cabeçalho, o resumo sempre marcado como "Resumo feito por IA", o link "Leia mais sobre ..." para a matéria original, que abre em uma nova aba (o leitor de tela avisa), e a fonte, a categoria e a hora.</li>
 <li><strong>Títulos em inglês</strong> são traduzidos por IA e sinalizados. Matérias ainda sem resumo mostram o trecho original da fonte, e o resumo entra na atualização seguinte.</li>
 <li><strong>Categorias</strong>: filtro por categoria, com a contagem de cada uma.</li>
@@ -625,6 +652,43 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Atualizar agora, uma vez: <code>python3 heimdall_news.py --uma-vez</code></li>
 <li>Testar sem rede: <code>python3 teste_news.py</code></li>
 <li>Se algo falhar: <code>tail -20 logs/news_debug.log</code> ou <code>./subir.sh --log news</code></li></ul></section>
+""")
+    out["saude.html"] = pagina("saude.html", "Saúde", "Heimdall Saúde: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.", """
+<h1>Heimdall Saúde</h1>
+<p>O Heimdall Saúde guarda os dados do app Saúde do iPhone e do Apple Watch no banco pessoal do Mac, analisa e mostra em um painel de texto e tabelas feito para leitor de tela. Não é diagnóstico: são números e comparações com a sua própria média.</p>
+<section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
+<ol><li>No próprio computador: http://localhost:8013, depois de subir o sistema.</li>
+<li>De fora de casa: health.heimdall-ai.tech, pelo túnel Cloudflare.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, do Notas e do News. O painel é somente de leitura.</li></ol></section>
+<section aria-labelledby="dados"><h2 id="dados">De onde vêm os dados</h2>
+<ol><li><strong>Importação do histórico:</strong> exporte o app Saúde (export.zip) e rode <code>python3 heimdall_saude.py --importar ~/Downloads/export.zip</code>. Pode repetir sem duplicar.</li>
+<li><strong>Envio contínuo:</strong> o app Health Auto Export, com uma automação por tipo de dado, manda ao n8n. Métricas gerais e frequência cardíaca de hora em hora; treinos, ECG e o restante uma vez por dia.</li>
+<li>O que o n8n já guardava antes pode ser copiado com <code>python3 importar_saude_n8n.py</code>.</li></ol>
+<p>Tabelas do banco: saude_diaria (um dia por métrica), fc_hora (frequência cardíaca por hora), treinos, ecg e saude_eventos.</p></section>
+<section aria-labelledby="analises"><h2 id="analises">Análises</h2>
+<p>Todas existem no terminal, no painel e como ferramenta do chat (<code>analise_saude</code>).</p>
+<ul><li><strong>Hoje:</strong> o que já chegou do dia, ou o aviso de que nada chegou.</li>
+<li><strong>Estado atual:</strong> os últimos 7 dias contra a média dos 90 anteriores.</li>
+<li><strong>Tendências, sono, atividade e recuperação:</strong> funcionam sem treinos. Noites com menos de 3 horas de sono não entram nas médias, por serem sinal de que o relógio não foi usado.</li>
+<li><strong>Treinos e cruzamentos:</strong> só aparecem quando há treinos. O Watch só grava um treino quando você o inicia; sem isso, o relatório avisa que não há treinos.</li>
+<li><strong>Coração:</strong> frequência cardíaca, ECG e eventos.</li>
+<li>Datas no padrão brasileiro e um único aviso de que não é orientação médica.</li></ul></section>
+<section aria-labelledby="painel"><h2 id="painel">Páginas do painel</h2>
+<ul><li><strong>Início, Hoje e Semana:</strong> o resumo, o que chegou hoje e o relatório da semana.</li>
+<li><strong>Relatório:</strong> a análise geral, com seletor de período.</li>
+<li><strong>Coração, Treinos e Diário:</strong> tabelas dos dados, dia a dia.</li>
+<li><strong>Dados:</strong> o estado dos dados, que marca o que está sem chegar há mais de 2 dias. É o primeiro lugar a olhar se algo parecer parado.</li></ul></section>
+<section aria-labelledby="semanal"><h2 id="semanal">Relatório da semana</h2>
+<p>Todo domingo, às 9h, o fluxo "Saúde semanal" do n8n pede o relatório ao agente. O texto vira nota na pasta Saúde do app Notas, com áudio, e o iPhone recebe um aviso no Bark só em palavras, sem números, porque o aviso passa pelo servidor do Bark. Para ver agora: <code>python3 heimdall_saude.py --semanal</code>, ou rode o fluxo à mão no n8n (Gerar agora).</p></section>
+<section aria-labelledby="seguranca"><h2 id="seguranca">Privacidade e segurança</h2>
+<ul><li>Os dados ficam só no Mac, no banco pessoal, e entram na cópia de segurança criptografada.</li>
+<li>O painel escuta só em 127.0.0.1, exige senha e código de 6 dígitos, tem limite de tentativas, cookie HttpOnly e SameSite=Strict, só aceita os nomes de site permitidos e escapa todo texto.</li>
+<li>O recebimento do Health Auto Export exige o token do agente.</li></ul></section>
+<section aria-labelledby="config"><h2 id="config">Configuração e problemas</h2>
+<ul><li>Conferir se está no ar: <code>curl -s http://localhost:8013/saude</code></li>
+<li>Testar sem tocar no banco: <code>python3 teste_saude_dados.py</code> e <code>python3 teste_painel_saude.py</code></li>
+<li>Se faltar dado, abra a página Dados do painel e confira a automação correspondente no Health Auto Export.</li>
+<li>Se algo falhar: <code>./subir.sh --log saude_painel</code></li></ul></section>
 """)
     out["404.html"] = pagina("404.html", "Página não encontrada", "Página não encontrada.", f'<h1>Página não encontrada</h1><p>Volte ao <a href="index.html">início</a> ou veja o <a href="arquitetura.html">mapa do projeto</a>.</p>')
     return out

@@ -26,7 +26,7 @@
 <header class="top"><div class="wrap"><div class="barra">
 <a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
 <span class="gap"></span>
-<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="notas.html">Notas</a></li><li><a href="news.html">News</a></li><li><a href="cloud.html" aria-current="page">Cloud</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li></ul></nav>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="notas.html">Notas</a></li><li><a href="news.html">News</a></li><li><a href="saude.html">Saúde</a></li><li><a href="cloud.html" aria-current="page">Cloud</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li></ul></nav>
 <div class="ferram"><button type="button" id="tema">Tema escuro</button></div>
 </div></div></header>
 <main id="conteudo" tabindex="-1"><div class="wrap">
@@ -57,7 +57,7 @@
 <li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
 <li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>HEIMDALL_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>Definir a senha e gerar o código de 6 dígitos (os mesmos valem para Cloud, Notas e News): <code>python3 heimdall_acesso.py --tudo</code></li>
+<ul><li>Definir a senha e gerar o código de 6 dígitos (os mesmos valem para Cloud, Notas, News e Saúde): <code>python3 heimdall_acesso.py --tudo</code></li>
 <li>Trocar só a senha: <code>python3 heimdall_acesso.py --senha</code></li>
 <li>Gerar só um novo código: <code>python3 heimdall_acesso.py --codigo</code></li>
 <li>Conferir se o painel está no ar: <code>curl -s http://localhost:8010/saude</code></li>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saúde · Heimdall-ai</title>
+<meta name="description" content="Heimdall Saúde: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.">
+<meta name="theme-color" content="#080d1f">
+<link rel="canonical" href="https://heimdall-ai.tech/saude.html">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Heimdall-ai">
+<meta property="og:title" content="Saúde · Heimdall-ai">
+<meta property="og:description" content="Heimdall Saúde: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.">
+<meta property="og:url" content="https://heimdall-ai.tech/saude.html">
+<meta property="og:image" content="https://heimdall-ai.tech/og.png">
+<meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
+<meta name="twitter:card" content="summary_large_image">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<header class="top"><div class="wrap"><div class="barra">
+<a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<span class="gap"></span>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="notas.html">Notas</a></li><li><a href="news.html">News</a></li><li><a href="saude.html" aria-current="page">Saúde</a></li><li><a href="cloud.html">Cloud</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li></ul></nav>
+<div class="ferram"><button type="button" id="tema">Tema escuro</button></div>
+</div></div></header>
+<main id="conteudo" tabindex="-1"><div class="wrap">
+<div class="doc"><div>
+<h1>Heimdall Saúde</h1>
+<p>O Heimdall Saúde guarda os dados do app Saúde do iPhone e do Apple Watch no banco pessoal do Mac, analisa e mostra em um painel de texto e tabelas feito para leitor de tela. Não é diagnóstico: são números e comparações com a sua própria média.</p>
+<section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
+<ol><li>No próprio computador: http://localhost:8013, depois de subir o sistema.</li>
+<li>De fora de casa: health.heimdall-ai.tech, pelo túnel Cloudflare.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, do Notas e do News. O painel é somente de leitura.</li></ol></section>
+<section aria-labelledby="dados"><h2 id="dados">De onde vêm os dados</h2>
+<ol><li><strong>Importação do histórico:</strong> exporte o app Saúde (export.zip) e rode <code>python3 heimdall_saude.py --importar ~/Downloads/export.zip</code>. Pode repetir sem duplicar.</li>
+<li><strong>Envio contínuo:</strong> o app Health Auto Export, com uma automação por tipo de dado, manda ao n8n. Métricas gerais e frequência cardíaca de hora em hora; treinos, ECG e o restante uma vez por dia.</li>
+<li>O que o n8n já guardava antes pode ser copiado com <code>python3 importar_saude_n8n.py</code>.</li></ol>
+<p>Tabelas do banco: saude_diaria (um dia por métrica), fc_hora (frequência cardíaca por hora), treinos, ecg e saude_eventos.</p></section>
+<section aria-labelledby="analises"><h2 id="analises">Análises</h2>
+<p>Todas existem no terminal, no painel e como ferramenta do chat (<code>analise_saude</code>).</p>
+<ul><li><strong>Hoje:</strong> o que já chegou do dia, ou o aviso de que nada chegou.</li>
+<li><strong>Estado atual:</strong> os últimos 7 dias contra a média dos 90 anteriores.</li>
+<li><strong>Tendências, sono, atividade e recuperação:</strong> funcionam sem treinos. Noites com menos de 3 horas de sono não entram nas médias, por serem sinal de que o relógio não foi usado.</li>
+<li><strong>Treinos e cruzamentos:</strong> só aparecem quando há treinos. O Watch só grava um treino quando você o inicia; sem isso, o relatório avisa que não há treinos.</li>
+<li><strong>Coração:</strong> frequência cardíaca, ECG e eventos.</li>
+<li>Datas no padrão brasileiro e um único aviso de que não é orientação médica.</li></ul></section>
+<section aria-labelledby="painel"><h2 id="painel">Páginas do painel</h2>
+<ul><li><strong>Início, Hoje e Semana:</strong> o resumo, o que chegou hoje e o relatório da semana.</li>
+<li><strong>Relatório:</strong> a análise geral, com seletor de período.</li>
+<li><strong>Coração, Treinos e Diário:</strong> tabelas dos dados, dia a dia.</li>
+<li><strong>Dados:</strong> o estado dos dados, que marca o que está sem chegar há mais de 2 dias. É o primeiro lugar a olhar se algo parecer parado.</li></ul></section>
+<section aria-labelledby="semanal"><h2 id="semanal">Relatório da semana</h2>
+<p>Todo domingo, às 9h, o fluxo "Saúde semanal" do n8n pede o relatório ao agente. O texto vira nota na pasta Saúde do app Notas, com áudio, e o iPhone recebe um aviso no Bark só em palavras, sem números, porque o aviso passa pelo servidor do Bark. Para ver agora: <code>python3 heimdall_saude.py --semanal</code>, ou rode o fluxo à mão no n8n (Gerar agora).</p></section>
+<section aria-labelledby="seguranca"><h2 id="seguranca">Privacidade e segurança</h2>
+<ul><li>Os dados ficam só no Mac, no banco pessoal, e entram na cópia de segurança criptografada.</li>
+<li>O painel escuta só em 127.0.0.1, exige senha e código de 6 dígitos, tem limite de tentativas, cookie HttpOnly e SameSite=Strict, só aceita os nomes de site permitidos e escapa todo texto.</li>
+<li>O recebimento do Health Auto Export exige o token do agente.</li></ul></section>
+<section aria-labelledby="config"><h2 id="config">Configuração e problemas</h2>
+<ul><li>Conferir se está no ar: <code>curl -s http://localhost:8013/saude</code></li>
+<li>Testar sem tocar no banco: <code>python3 teste_saude_dados.py</code> e <code>python3 teste_painel_saude.py</code></li>
+<li>Se faltar dado, abra a página Dados do painel e confira a automação correspondente no Health Auto Export.</li>
+<li>Se algo falhar: <code>./subir.sh --log saude_painel</code></li></ul></section>
+</div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#abrir">Como abrir</a></li><li><a href="#dados">De onde vêm os dados</a></li><li><a href="#analises">Análises</a></li><li><a href="#painel">Páginas do painel</a></li><li><a href="#semanal">Relatório da semana</a></li><li><a href="#seguranca">Privacidade e segurança</a></li><li><a href="#config">Configuração e problemas</a></li></ul></nav></aside></div>
+</div></main>
+<footer><div class="wrap"><div class="linha">
+<div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
+<div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:suporte@heimdall-ai.tech">suporte@heimdall-ai.tech</a></li><li><a href="https://www.linkedin.com/in/murillobolonhinicita">LinkedIn de Murillo Bolonhini Cita</a></li></ul></div>
+<ul aria-label="Links do rodapé"><li><a href="https://github.com/mrl2bolonhini/heimdall-ai">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
+</div></div></footer>
+<p id="aviso" class="sr" role="status" aria-live="polite"></p>
+<script src="heimdall.js" defer></script>
+</body>
+</html>
