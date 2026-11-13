@@ -950,7 +950,7 @@ def _dias_atras(dias: int) -> str:
 def _num(v, casas=0) -> str:
     if v is None:
         return "sem dado"
-    t = f"{v:,.{casas}f}".replace(",", "_").replace(".", ",").replace("_", ".") if abs(v) >= 10000 else f"{v:.{casas}f}".replace(".", ",")
+    t = f"{v:,.{casas}f}".replace(",", "_").replace(".", ",").replace("_", ".") if abs(v) >= 1000 else f"{v:.{casas}f}".replace(".", ",")
     return t
 
 
@@ -971,6 +971,24 @@ def _semana(dia: str) -> str:
     return (d - timedelta(days=d.weekday())).strftime("%Y-%m-%d")
 
 
+_ISO = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+
+
+def _br(texto):
+    """Troca datas AAAA-MM-DD por DD/MM/AAAA no texto que o usuário lê."""
+    return _ISO.sub(lambda m: f"{m.group(3)}/{m.group(2)}/{m.group(1)}", texto) if isinstance(texto, str) else texto
+
+
+def _em_portugues(f):
+    import functools
+
+    @functools.wraps(f)
+    def interno(*a, **k):
+        return _br(f(*a, **k))
+    return interno
+
+
+@_em_portugues
 def relatorio_treinos(dias: int = 30, tipo: str = "") -> str:
     dias = max(1, min(int(dias), 3650))
     linhas = _ler("SELECT * FROM treinos WHERE dia >= ? ORDER BY inicio", (_dias_atras(dias),))
@@ -1052,6 +1070,7 @@ def _reclassificar_ecg() -> None:
                 con.close()
 
 
+@_em_portugues
 def relatorio_ecg(dias: int = 365) -> str:
     dias = max(1, min(int(dias), 3650))
     _reclassificar_ecg()
@@ -1088,6 +1107,7 @@ def relatorio_ecg(dias: int = 365) -> str:
     return "\n".join(out)
 
 
+@_em_portugues
 def relatorio_fc(dias: int = 14) -> str:
     dias = max(1, min(int(dias), 3650))
     de = _dias_atras(dias)
@@ -1106,7 +1126,7 @@ def relatorio_fc(dias: int = 14) -> str:
             frase = f"{nome}: média de {_num(statistics.fmean(vals), 1)} {un[k]} em {len(vals)} dia(s), último {_num(vals[-1], 1)} em {v[-1][0]}"
             if len(vals) >= 6:
                 a, b = statistics.fmean(vals[:len(vals) // 2]), statistics.fmean(vals[len(vals) // 2:])
-                frase += f"; a segunda metade do período ficou {'acima' if b > a + 0.5 else 'abaixo' if b < a - 0.5 else 'igual'} da primeira"
+                frase += f"; metade mais recente do período ({_num(b, 1)}) {'acima' if b > a + 0.5 else 'abaixo' if b < a - 0.5 else 'igual'} à metade mais antiga ({_num(a, 1)})"
             out.append(frase + ".")
     horas = _ler("SELECT dia, hora, fc_min, fc_media, fc_max, leituras FROM fc_hora WHERE dia >= ?", (de,))
     if horas:
@@ -1129,6 +1149,7 @@ def relatorio_fc(dias: int = 14) -> str:
     return "\n".join(out) if out else f"Sem dados de frequência cardíaca nos últimos {dias} dias no banco."
 
 
+@_em_portugues
 def relatorio_eventos(dias: int = 30) -> str:
     de = _dias_atras(dias)
     ev = _ler("SELECT tipo, dia, titulo, valor, texto FROM saude_eventos WHERE dia >= ? AND tipo != 'aviso_fc' ORDER BY inicio", (de,))
@@ -1154,6 +1175,7 @@ def relatorio_eventos(dias: int = 30) -> str:
     return "\n".join(out)
 
 
+@_em_portugues
 def relatorio_cruzado(dias: int = 30) -> str:
     """Cruza carga de treino com pulso em repouso e variabilidade: o que mudou depois de semanas mais pesadas."""
     sem = _ler("SELECT dia, duracao_min FROM treinos WHERE dia >= ?", (_dias_atras(dias + 14),))
@@ -1189,7 +1211,7 @@ def relatorio_cruzado(dias: int = 30) -> str:
 # ----------------------------------------------------------------------------------------
 _DIAS_SEMANA = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"]
 _NOMES = {"fc_repouso": ("Pulso em repouso", "bpm", 0), "hrv": ("Variabilidade (HRV)", "ms", 0), "resp": ("Respiração no sono", "rpm", 1),
-          "spo2": ("Oxigênio no sangue", "%", 1), "sono_total": ("Sono", "min", 0), "passos": ("Passos", "", 0), "energia": ("Energia ativa", "kcal", 0),
+          "spo2": ("Oxigênio no sangue", "por cento", 1), "sono_total": ("Sono", "min", 0), "passos": ("Passos", "", 0), "energia": ("Energia ativa", "kcal", 0),
           "x:vo2_max": ("VO2 máx", "mL/min·kg", 1), "x:walking_heart_rate_average": ("Frequência ao caminhar", "bpm", 0),
           "x:apple_exercise_time": ("Minutos de exercício", "min", 0)}
 
@@ -1198,8 +1220,14 @@ def _artigo(i: int) -> str:
     return "no" if i >= 5 else "na"
 
 
+_SONO_MIN = 180  # menos de 3 h costuma ser relógio tirado da cama ou registro cortado, não uma noite de verdade
+
+
 def _serie(metrica: str, de: str) -> dict:
-    return {r["dia"]: r["valor"] for r in _ler("SELECT dia, valor FROM saude_diaria WHERE metrica = ? AND dia >= ? ORDER BY dia", (metrica, de))}
+    d = {r["dia"]: r["valor"] for r in _ler("SELECT dia, valor FROM saude_diaria WHERE metrica = ? AND dia >= ? ORDER BY dia", (metrica, de))}
+    if metrica == "sono_total":
+        d = {k: v for k, v in d.items() if v >= _SONO_MIN}
+    return d
 
 
 def _fmt_v(metrica: str, v) -> str:
@@ -1221,6 +1249,7 @@ def _correlacao(xs: list, ys: list):
         return None
 
 
+@_em_portugues
 def relatorio_estado_atual() -> str:
     """Os últimos 7 dias contra a sua média dos 90 dias anteriores."""
     hoje = datetime.now()
@@ -1257,6 +1286,7 @@ def relatorio_estado_atual() -> str:
     return "Como você está agora:\n" + "\n".join(linhas) + "\n" + fecho
 
 
+@_em_portugues
 def relatorio_tendencias(dias: int = 90) -> str:
     dias = max(14, min(int(dias), 1825))
     hoje = datetime.now()
@@ -1283,6 +1313,7 @@ def relatorio_tendencias(dias: int = 90) -> str:
     return f"Tendências ({dias} dias contra os {dias} anteriores), das maiores mudanças para as menores:\n" + "\n".join(t for _, t in itens)
 
 
+@_em_portugues
 def relatorio_sono(dias: int = 90) -> str:
     dias = max(7, min(int(dias), 1825))
     de = _dias_atras(dias)
@@ -1294,6 +1325,9 @@ def relatorio_sono(dias: int = 90) -> str:
     out = [f"Sono ({len(v)} noites com dado nos últimos {dias} dias): média de {_dur(statistics.fmean(v))} por noite, mediana de {_dur(statistics.median(v))}."]
     curtas = sum(1 for x in v if x < 360)
     boas = sum(1 for x in v if x >= 420)
+    incompletas = [r for r in _ler("SELECT dia, valor FROM saude_diaria WHERE metrica = 'sono_total' AND dia >= ? AND valor < ? ORDER BY dia", (de, _SONO_MIN))]
+    if incompletas:
+        out.append(f"Deixei de fora das médias {len(incompletas)} noite(s) com menos de 3 horas registradas ({', '.join(r['dia'] + ' ' + _dur(r['valor']) for r in incompletas[:4])}), provavelmente registro cortado ou relógio fora do pulso.")
     out.append(f"{curtas} noite(s) com menos de 6 horas ({100 * curtas / len(v):.0f} por cento) e {boas} com 7 horas ou mais ({100 * boas / len(v):.0f} por cento). A recomendação para adultos é de 7 a 9 horas.")
     pares = [(prof[d], tot[d]) for d in prof if d in tot and tot[d] > 0]
     if len(pares) >= 5:
@@ -1317,10 +1351,11 @@ def relatorio_sono(dias: int = 90) -> str:
         a, b = statistics.fmean(tot[d] for d in ordem[:t3]), statistics.fmean(tot[d] for d in ordem[-t3:])
         out.append(f"Tendência: o último terço do período teve média de {_dur(b)}, contra {_dur(a)} no primeiro terço ({'mais' if b > a + 10 else 'menos' if b < a - 10 else 'o mesmo'} sono).")
     pior = sorted(tot.items(), key=lambda x: x[1])[:3]
-    out.append("Noites mais curtas: " + "; ".join(f"{d} ({_dur(x)})" for d, x in pior) + ".")
+    out.append("Noites mais curtas (de 3 horas ou mais): " + "; ".join(f"{d} ({_dur(x)})" for d, x in pior) + ".")
     return "\n".join(out)
 
 
+@_em_portugues
 def relatorio_atividade(dias: int = 90) -> str:
     dias = max(7, min(int(dias), 1825))
     de = _dias_atras(dias)
@@ -1361,6 +1396,7 @@ def relatorio_atividade(dias: int = 90) -> str:
     return ("Atividade (medida o dia todo pelo relógio, sem precisar iniciar treino):\n" + "\n".join(out)) if out else ""
 
 
+@_em_portugues
 def relatorio_recuperacao(dias: int = 180) -> str:
     dias = max(30, min(int(dias), 1825))
     de = _dias_atras(dias)
@@ -1420,6 +1456,7 @@ def relatorio_recuperacao(dias: int = 180) -> str:
     return ("Recuperação (o que costuma acompanhar a sua HRV e o seu pulso em repouso):\n" + "\n".join(out)) if out else ""
 
 
+@_em_portugues
 def relatorio_geral(dias: int = 30) -> str:
     tem_treinos = bool(_ler("SELECT 1 FROM treinos WHERE dia >= ? LIMIT 1", (_dias_atras(dias),)))
     longo = max(dias, 90)
@@ -1429,8 +1466,8 @@ def relatorio_geral(dias: int = 30) -> str:
     else:
         partes.append(f"Treinos: nenhum nos últimos {dias} dias. O Apple Watch só registra treino quando você inicia um no app Treino (ou aceita o aviso para iniciar quando ele detecta uma caminhada ou corrida); "
                       "por isso a atividade do dia a dia está na seção de atividade acima.")
-    partes += ["Coração:\n" + relatorio_fc(min(longo, 90)), relatorio_ecg(max(dias, 365)), relatorio_eventos(dias)]
-    return "\n\n".join(p for p in partes if p) + "\n\n" + AVISO
+    partes += [f"Coração (últimos {min(longo, 90)} dias):\n" + relatorio_fc(min(longo, 90)), relatorio_ecg(max(dias, 365)), relatorio_eventos(dias)]
+    return "\n\n".join(p.replace("\n" + AVISO, "").replace(AVISO, "").strip() for p in partes if p) + "\n\n" + AVISO
 
 
 # ----------------------------------------------------------------------------------------
