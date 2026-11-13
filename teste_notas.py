@@ -276,6 +276,7 @@ for _ in range(hc.MAX_POR_IP):
 s, h, _ = req("POST", "/entrar", urlencode({"senha": SENHA, "codigo": codigo(agora - 1)}))
 confere("bloqueio depois de muitas falhas", s == 429 and h.get("retry-after") == "900")
 
+confere("cabeçalhos quebram linha em vez de ficar cortados na tela", "overflow-wrap:anywhere" in hb.CSS and "h1,h2,h3,h4" in hb.CSS)
 # títulos suspeitos (cortados)
 confere("título inteiro não é suspeito", hb.motivos_de_corte("Média móvel simples") == [] and hb.motivos_de_corte("Vitamina A") == [] and hb.motivos_de_corte("Dados de A a Z") == [])
 confere("título cortado em conectivo, reticências, pontuação e parêntese é suspeito",

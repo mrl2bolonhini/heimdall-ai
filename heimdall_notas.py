@@ -431,6 +431,7 @@ def markdown_html(md: str, titulo: str = "") -> str:
 CSS = nuvem.CSS + """
 body{font-size:19px;line-height:1.7;max-width:46rem}
 main h1{line-height:1.25;margin-top:1rem}h2,h3,h4{line-height:1.3;margin-top:1.8rem}
+body{overflow-wrap:break-word}h1,h2,h3,h4,.lista a,.meta,td,th{overflow-wrap:anywhere;min-width:0}main{overflow-wrap:anywhere}
 .lista{list-style:none;padding:0}.lista li{border-bottom:1px solid var(--linha);padding:.7rem 0}
 .lista h3{margin:0 0 .2rem;font-size:1.15em}.lista a{font-weight:700;font-size:1.05em}.meta{color:var(--suave);font-size:.9em;display:block}
 .leitor{border:2px solid var(--acento);border-radius:.5rem;padding:.8rem;margin:1rem 0}.leitor audio{width:100%}
