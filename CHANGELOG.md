@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Gravações das notas com voz de um atalho (Siri)
+- Nova opção HEIMDALL_VOZ_ATALHO no .env: nome de um atalho do app Atalhos que recebe o texto e devolve o áudio (ação "Criar áudio falado a partir de texto"). Permite usar vozes que o say não enxerga, como a Siri. A voz e a velocidade ficam no próprio atalho; o dicionário de pronúncia continua valendo.
+- Se o atalho falhar, a gravação é feita pelo say com a voz de HEIMDALL_VOZ, e o motivo aparece no log. python3 heimdall_agente.py --voz toca uma amostra pelo atalho.
+- Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Pronúncias do VoiceOver no dicionário
 - O pronuncias.txt agora traz as 38 entradas do seu arquivo do VoiceOver (Heimdall vira Raimdall, GitHub, Whatsapp etc.). Ficaram de fora números romanos, símbolos, entradas vazias e a linha com dados pessoais.
 - Novo python3 heimdall_voz.py --importar arquivo.csv: traz para o pronuncias.local.txt as entradas de um novo arquivo exportado do VoiceOver.

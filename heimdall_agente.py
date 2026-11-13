@@ -95,6 +95,9 @@ try:
 except ValueError:
     PPM = 0
 AUDIO_ATIVO = os.environ.get("HEIMDALL_ESTUDO_AUDIO", "1") != "0"
+# Atalho do app Atalhos que gera o áudio (permite vozes que o say não enxerga, como a Siri). O atalho recebe o texto como entrada
+# e devolve o áudio ("Criar áudio falado a partir de texto"); a velocidade e a voz ficam no próprio atalho. Vazio = usa o say.
+ATALHO = os.environ.get("HEIMDALL_VOZ_ATALHO", "").strip()
 
 
 def tema_slug(texto: str) -> str:
@@ -677,6 +680,32 @@ def _com_dica(md: str, linha: str) -> str:
     return linha + "\n\n" + md
 
 
+def audio_por_atalho(txt: str, base: Path) -> str:
+    """Gera base.m4a com o atalho do app Atalhos (entrada: o arquivo de texto). Devolve "" se deu certo ou o motivo da falha."""
+    saida = str(base) + ".atalho"
+    try:
+        r = subprocess.run(["shortcuts", "run", ATALHO, "-i", txt, "-o", saida], capture_output=True, text=True, timeout=600)
+        if r.returncode != 0:
+            return "o atalho '%s' falhou: %s" % (ATALHO, (r.stderr or r.stdout or "sem mensagem").strip()[:120])
+        if not os.path.exists(saida) or os.path.getsize(saida) < 2000:
+            return "o atalho '%s' não devolveu áudio (a última ação dele deve ser 'Criar áudio falado a partir de texto')" % ATALHO
+        c = subprocess.run(["afconvert", "-f", "m4af", "-d", "aac", saida, str(base) + ".m4a"], capture_output=True, timeout=300)
+        if c.returncode != 0:
+            with open(saida, "rb") as f:
+                if f.read(12)[4:8] == b"ftyp":   # já é m4a: só renomeia
+                    os.replace(saida, str(base) + ".m4a")
+                    return ""
+            return "não consegui converter o áudio do atalho"
+        return ""
+    except (OSError, subprocess.SubprocessError) as e:
+        return "o atalho '%s' falhou: %s" % (ATALHO, str(e)[:100])
+    finally:
+        try:
+            os.unlink(saida)
+        except OSError:
+            pass
+
+
 def fazer_audio(titulo: str, texto: str, destino: Path):
     """Lê o texto em voz alta (say, voz em português) e salva em .m4a na pasta do cofre.
     Devolve (caminho, "") ou (None, motivo). Nunca levanta erro: a nota é gravada de qualquer jeito."""
@@ -685,8 +714,8 @@ def fazer_audio(titulo: str, texto: str, destino: Path):
     if sys.platform != "darwin" or (VOZ and not re.fullmatch(r"[\w .()-]{1,40}", VOZ)):
         return None, "indisponível neste sistema"
     try:
-        voz = escolher_voz()
-        if not voz:
+        voz = None if ATALHO else escolher_voz()
+        if not voz and not ATALHO:
             return None, ("a voz '%s' não está instalada" % VOZ if VOZ else "nenhuma voz em português instalada") + " (Ajustes do Sistema > Acessibilidade > Conteúdo falado > Vozes do sistema > Gerenciar vozes)"
         pasta_audio = destino / "audio"
         pasta_audio.mkdir(parents=True, exist_ok=True)
@@ -697,6 +726,15 @@ def fazer_audio(titulo: str, texto: str, destino: Path):
             f.write(dicionario_voz.aplicar(re.sub(r"https?://\S+", " ", texto)[:12000]))
             txt = f.name
         try:
+            if ATALHO:
+                motivo = audio_por_atalho(txt, base)
+                if not motivo:
+                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} áudio feito pelo atalho {ATALHO}\n")
+                    return Path(str(base) + ".m4a"), ""
+                sys.stderr.write(f"{time.strftime('%H:%M:%S')} {motivo}; usando o say\n")
+                voz = escolher_voz()
+                if not voz:
+                    return None, motivo
             subprocess.run(["say", "-v", voz, "-r", str(palavras_por_minuto()), "-o", str(base) + ".aiff", "-f", txt], check=True, timeout=240, capture_output=True)
             subprocess.run(["afconvert", "-f", "m4af", "-d", "aac", str(base) + ".aiff", str(base) + ".m4a"], check=True, timeout=120, capture_output=True)
         finally:
@@ -1012,6 +1050,18 @@ def main() -> int:
     ap.add_argument("--teste", action="store_true", help="só confere o acesso ao app Notas e sai")
     ap.add_argument("--voz", action="store_true", help="lista as vozes em português, diz qual será usada e fala uma amostra")
     args = ap.parse_args()
+    if args.voz and ATALHO:
+        import tempfile as _t
+        print(f"Voz pelo atalho '{ATALHO}' (HEIMDALL_VOZ_ATALHO). Gerando uma amostra...")
+        with _t.TemporaryDirectory() as d:
+            t = Path(d) / "amostra.txt"
+            t.write_text(dicionario_voz.aplicar("Esta é uma amostra da voz do Heimdall, para os áudios de estudo."), encoding="utf-8")
+            motivo = audio_por_atalho(str(t), Path(d) / "amostra")
+            if motivo:
+                print("Não deu certo: " + motivo)
+                return 1
+            subprocess.run(["afplay", str(Path(d) / "amostra.m4a")])
+        return 0
     if args.voz:
         vs = vozes_pt()
         print("Vozes em português instaladas (da melhor para a pior):", ", ".join(vs) or "nenhuma")
