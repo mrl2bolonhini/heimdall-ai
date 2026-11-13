@@ -2,9 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Pronúncias do VoiceOver no dicionário
+- O pronuncias.txt agora traz as 38 entradas do seu arquivo do VoiceOver (Heimdall vira Raimdall, GitHub, Whatsapp etc.). Ficaram de fora números romanos, símbolos, entradas vazias e a linha com dados pessoais.
+- Novo python3 heimdall_voz.py --importar arquivo.csv: traz para o pronuncias.local.txt as entradas de um novo arquivo exportado do VoiceOver.
+- O anúncio do subir.sh passou para 290 palavras por minuto (SUBIR_VOZ_PPM no .env muda).
+- Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Dicionário de pronúncia, velocidade do anúncio e comando da fila
 - Novo dicionário de pronúncia: o arquivo pronuncias.txt troca palavras por uma grafia que a voz lê certo ("Heimdall" vira "Háimdal"). Vale para o anúncio falado do subir.sh e para o áudio das notas. As suas entradas vão em pronuncias.local.txt (não sobe para o GitHub e ganha da outra). Formato: palavra = como falar.
-- O anúncio do subir.sh fala a 230 palavras por minuto; mude com SUBIR_VOZ_PPM no .env. A velocidade das notas continua em HEIMDALL_VOZ_VELOCIDADE.
+- O anúncio do subir.sh fala a 290 palavras por minuto; mude com SUBIR_VOZ_PPM no .env. A velocidade das notas continua em HEIMDALL_VOZ_VELOCIDADE.
 - Novo python3 heimdall_news.py --fila: mostra quantas notícias esperam resumo de IA, de quais fontes, o ritmo e quanto falta para esvaziar.
 - Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
 
