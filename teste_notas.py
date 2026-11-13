@@ -280,6 +280,9 @@ confere("bloqueio depois de muitas falhas", s == 429 and h.get("retry-after") ==
 confere("título inteiro não é suspeito", hb.motivos_de_corte("Média móvel simples") == [] and hb.motivos_de_corte("Vitamina A") == [] and hb.motivos_de_corte("Dados de A a Z") == [])
 confere("título cortado em conectivo, reticências, pontuação e parêntese é suspeito",
         all(hb.motivos_de_corte(t) for t in ("Arquitetura de data lakes com Glue e", "Governança de dados…", "Particionamento de dados:", "Particionamento (parte", "Conceito de partição de dados e sua importância para")))
+import unicodedata as _ud
+confere("acentos decompostos (macOS) não geram falso alarme", hb.motivos_de_corte(_ud.normalize("NFD", "Estudo 2026-11-10 06h: Fundamentos da arquitetura de software 2ª edição")) == [])
+confere("títulos de 45 e 60 caracteres que terminam em palavra inteira não são suspeitos", hb.motivos_de_corte("Estudo 2026-11-09 13h: Ordem de avaliação SQL") == [] and hb.motivos_de_corte("Estudo 2026-11-09 20h: Framework de arquitetura de dados AWS") == [])
 confere("título com 80 caracteres terminando em letra é suspeito", any("80 caracteres" in m for m in hb.motivos_de_corte("x" * 79 + "a")))
 escrever(COFRE / "python" / "cortada.md", "# Particionamento de tabelas no Athena para reduzir o custo de\nTexto.\n")
 sus = hb.titulos_suspeitos()

@@ -868,12 +868,12 @@ class Notas(BaseHTTPRequestHandler):
 # ----------------------------------------------------------------------------------------
 CONECTIVOS = {"de", "da", "do", "das", "dos", "e", "em", "com", "para", "por", "a", "o", "as", "os", "na", "no", "nas", "nos", "que", "ou", "um", "uma",
               "ao", "à", "sobre", "entre", "como", "se", "pela", "pelo", "sem", "the", "of", "and", "to", "in", "for", "with", "on", "a", "an"}
-LIMITES_ANTIGOS = (45, 60, 80, 90, 100, 120, 150, 200, 220)   # tamanhos em que o Heimdall já cortou títulos
+LIMITES_ANTIGOS = (80, 120, 150, 200, 220)   # tamanhos em que o Heimdall cortou títulos gravados (45, 60 e 90 só cortavam o que aparece na tela, não o arquivo)
 
 
 def motivos_de_corte(titulo: str) -> list:
     """Sinais de que o título foi cortado no meio. Lista vazia = parece inteiro."""
-    t = (titulo or "").strip()
+    t = unicodedata.normalize("NFC", titulo or "").strip()   # o macOS guarda acentos decompostos (c + cedilha); sem isto "edição" viraria "edi" + "o"
     if len(t) < 4:
         return []
     m = []
