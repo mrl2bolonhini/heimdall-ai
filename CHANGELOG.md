@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Análises de saúde que não dependem de treino
+- O Apple Watch só grava um treino quando você inicia um no app Treino (ou aceita o aviso "parece que você está caminhando, iniciar treino?"). Sem isso o export não traz treinos, e isso não é falha do Heimdall.
+- Novas análises em texto corrido, feitas com os dados do dia todo: --agora (últimos 7 dias contra a sua média dos 90 anteriores, para pulso em repouso, HRV, respiração, oxigênio e sono), --tendencias, --sono (duração, profundo, REM, eficiência, dia da semana), --atividade (passos, minutos de exercício, meta de 150 por semana, picos de esforço sem treino) e --recuperacao (o que acompanha a sua HRV e o seu pulso em repouso, dias de HRV baixa). O --relatorio passou a incluir tudo isso.
+- Nova ferramenta no chat: analise_saude (tema: agora, tendencias, sono, atividade ou recuperacao).
+- O texto de ECG com "Gravação Ruim" passou a ser explicado como inconclusivo, com dicas para uma gravação melhor; os ECG já gravados são reclassificados.
+- Para aplicar: git fetch e reset do repositório, ./subir.sh --reiniciar (para o chat enxergar a ferramenta nova).
+
 ## 2026-11-13 - Importação do app Saúde em português
 - No iPhone em português o arquivo principal do export.zip se chama exportar.xml, não export.xml, e a importação não o achava (só os ECG entravam). Agora ela reconhece os dois nomes e ignora o exportar_cda.xml (outro formato). Uma primeira versão da correção não funcionou com o arquivo real, porque o cabeçalho dele tem uma DTD longa; agora o nome basta e, para outros nomes, o conteúdo é conferido nos primeiros 60 mil bytes.
 - A importação passou a dizer, no fim, quantos treinos (elementos Workout) havia no arquivo e o primeiro erro, se algum treino falhar.

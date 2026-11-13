@@ -954,6 +954,21 @@ def relatorio_saude(dias: int = 30) -> str:
         return f"Não consegui montar o relatório: {e}"
 
 
+def analise_saude(tema: str = "agora", dias: int = 90) -> str:
+    """Análise de saúde do dia a dia, sem depender de treinos registrados. tema: agora (últimos 7 dias contra a média dos 90 anteriores), tendencias, sono, atividade (passos, minutos de exercício, picos de esforço) ou recuperacao (o que acompanha a HRV e o pulso em repouso)."""
+    tema = (tema or "agora").strip().lower().replace("ê", "e").replace("ç", "c").replace("ã", "a")
+    try:
+        m = _saude_mod()
+        d = _limitar(dias, padrao=90)
+        f = {"agora": lambda: m.relatorio_estado_atual(), "tendencias": lambda: m.relatorio_tendencias(d), "sono": lambda: m.relatorio_sono(d),
+             "atividade": lambda: m.relatorio_atividade(d), "recuperacao": lambda: m.relatorio_recuperacao(max(d, 30))}.get(tema)
+        if not f:
+            return "Tema desconhecido. Use: agora, tendencias, sono, atividade ou recuperacao."
+        return _BANCO_AVISO + "\n" + (f() or "Poucos dados no banco para esta análise.")
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui fazer a análise: {e}"
+
+
 def banco_buscar(termo: str, tabela: str = "", limite: int = 5) -> str:
     """Procura um termo (sem diferenciar maiúsculas nem acentos) em todo o banco pessoal do usuário: diários oficiais, e-mails de serviços públicos,
     achados de privacidade, estudos, análises do Second Brain, avisos e resumos de saúde. Devolve as ocorrências mais recentes de cada tabela.
@@ -1022,6 +1037,7 @@ MAC_TOOLS = [
     ecg_resumo,
     frequencia_cardiaca_resumo,
     relatorio_saude,
+    analise_saude,
 ]
 
 # DADOS_TOOLS: só as ferramentas do banco pessoal, para o Open WebUI. Servidas em 127.0.0.1:8004, sem leitura nem escrita
@@ -1035,6 +1051,7 @@ DADOS_TOOLS = [
     ecg_resumo,
     frequencia_cardiaca_resumo,
     relatorio_saude,
+    analise_saude,
     get_system_timestamp,
 ]
 

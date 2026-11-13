@@ -218,6 +218,10 @@ def classificacao_pt(s: str) -> str:
         return "Inconclusivo"
     if "sinus" in t:
         return "Ritmo sinusal"
+    if "gravacao ruim" in t or "gravacao de baixa" in t or "baixa qualidade" in t:
+        return "Inconclusivo (gravação ruim)"
+    if "frequencia cardiaca" in t and ("baixa" in t or "alta" in t):
+        return "Inconclusivo (frequência cardíaca baixa)" if "baixa" in t else "Inconclusivo (frequência cardíaca alta)"
     if "unrecogn" in t or "nao reconhec" in t:
         return "Não reconhecida"
     return str(s).strip()[:80]
@@ -946,7 +950,7 @@ def _dias_atras(dias: int) -> str:
 def _num(v, casas=0) -> str:
     if v is None:
         return "sem dado"
-    t = f"{v:.{casas}f}".replace(".", ",")
+    t = f"{v:,.{casas}f}".replace(",", "_").replace(".", ",").replace("_", ".") if abs(v) >= 10000 else f"{v:.{casas}f}".replace(".", ",")
     return t
 
 
@@ -1034,8 +1038,23 @@ def _carga(dias: int) -> list:
     return out
 
 
+def _reclassificar_ecg() -> None:
+    """Se o texto de classificação melhorou desde que o ECG foi gravado, atualiza (a classificação original da Apple fica guardada)."""
+    velhos = [(r["id"], classificacao_pt(r["classificacao_original"])) for r in _ler("SELECT id, classificacao, classificacao_original FROM ecg")
+              if r["classificacao_original"] and classificacao_pt(r["classificacao_original"]) != r["classificacao"]]
+    if velhos:
+        with banco._trava:
+            con = banco.conectar()
+            try:
+                con.executemany("UPDATE ecg SET classificacao = ? WHERE id = ?", [(c, i) for i, c in velhos])
+                con.commit()
+            finally:
+                con.close()
+
+
 def relatorio_ecg(dias: int = 365) -> str:
     dias = max(1, min(int(dias), 3650))
+    _reclassificar_ecg()
     linhas = _ler("SELECT * FROM ecg WHERE dia >= ? ORDER BY inicio", (_dias_atras(dias),))
     if not linhas:
         return f"Nenhum ECG nos últimos {dias} dias no banco. Para trazer o histórico: python3 heimdall_saude.py --importar export.zip."
@@ -1049,7 +1068,10 @@ def relatorio_ecg(dias: int = 365) -> str:
                    ". Mostre ao seu médico; o Heimdall não faz diagnóstico.")
     inc = [l for l in linhas if l["classificacao"].startswith("Inconclusivo")]
     if inc:
-        out.append(f"{len(inc)} gravação(ões) inconclusiva(s); costuma ser movimento ou dedo mal posicionado, mas uma frequência muito baixa ou alta também gera isso.")
+        ruins = [l for l in inc if "gravação ruim" in l["classificacao"]]
+        out.append(f"{len(inc)} de {len(linhas)} gravação(ões) inconclusiva(s)" + (f", {len(ruins)} por gravação ruim" if ruins else "") +
+                   ". Costuma ser movimento ou contato fraco: sente, apoie o braço do relógio numa mesa, mantenha o dedo da outra mão na coroa sem apertar e respire normalmente durante os 30 segundos. "
+                   "Frequência muito baixa ou alta também gera resultado inconclusivo.")
     u = linhas[-1]
     frase = f"Último ECG: {u['dia']}, {u['classificacao'] or 'sem classificação'}"
     if u["fc_media"]:
@@ -1161,8 +1183,253 @@ def relatorio_cruzado(dias: int = 30) -> str:
     return ("Cruzamento com o treino: " + " ".join(out)) if out else ""
 
 
+
+# ----------------------------------------------------------------------------------------
+# Análises do dia a dia (não dependem de treinos registrados)
+# ----------------------------------------------------------------------------------------
+_DIAS_SEMANA = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"]
+_NOMES = {"fc_repouso": ("Pulso em repouso", "bpm", 0), "hrv": ("Variabilidade (HRV)", "ms", 0), "resp": ("Respiração no sono", "rpm", 1),
+          "spo2": ("Oxigênio no sangue", "%", 1), "sono_total": ("Sono", "min", 0), "passos": ("Passos", "", 0), "energia": ("Energia ativa", "kcal", 0),
+          "x:vo2_max": ("VO2 máx", "mL/min·kg", 1), "x:walking_heart_rate_average": ("Frequência ao caminhar", "bpm", 0),
+          "x:apple_exercise_time": ("Minutos de exercício", "min", 0)}
+
+
+def _artigo(i: int) -> str:
+    return "no" if i >= 5 else "na"
+
+
+def _serie(metrica: str, de: str) -> dict:
+    return {r["dia"]: r["valor"] for r in _ler("SELECT dia, valor FROM saude_diaria WHERE metrica = ? AND dia >= ? ORDER BY dia", (metrica, de))}
+
+
+def _fmt_v(metrica: str, v) -> str:
+    if v is None:
+        return "sem dado"
+    if metrica.startswith("sono"):
+        return _dur(v)
+    casas = _NOMES.get(metrica, ("", "", 0))[2]
+    un = _NOMES.get(metrica, ("", "", 0))[1]
+    return _num(v, casas) + (f" {un}" if un else "")
+
+
+def _correlacao(xs: list, ys: list):
+    if len(xs) < 20:
+        return None
+    try:
+        return statistics.correlation(xs, ys)
+    except (statistics.StatisticsError, ValueError, AttributeError):
+        return None
+
+
+def relatorio_estado_atual() -> str:
+    """Os últimos 7 dias contra a sua média dos 90 dias anteriores."""
+    hoje = datetime.now()
+    de_rec, de_base = (hoje - timedelta(days=7)).strftime("%Y-%m-%d"), (hoje - timedelta(days=97)).strftime("%Y-%m-%d")
+    linhas, pioras = [], []
+    # (métrica, sentido ruim: 1 subir, -1 cair, limiar relativo, limiar absoluto)
+    for m, sentido, lim_abs in (("fc_repouso", 1, 3), ("hrv", -1, 0), ("resp", 1, 1), ("spo2", -1, 1), ("sono_total", -1, 45)):
+        todos = _serie(m, de_base)
+        rec = [v for d, v in todos.items() if d >= de_rec]
+        base = [v for d, v in todos.items() if d < de_rec]
+        if len(rec) < 3 or len(base) < 15:
+            continue
+        mr, mb = statistics.fmean(rec), statistics.fmean(base)
+        dp = statistics.pstdev(base) or 1e-9
+        pct = 100 * (mr - mb) / mb if mb else 0
+        z = (mr - mb) / dp
+        nome = _NOMES[m][0]
+        texto = f"{nome}: média de {_fmt_v(m, mr)} nos últimos 7 dias, contra {_fmt_v(m, mb)} nos 90 dias anteriores ({'+' if pct >= 0 else ''}{pct:.0f} por cento)"
+        pior = (sentido * (mr - mb)) > 0 and (abs(z) >= 1.0 or (lim_abs and abs(mr - mb) >= lim_abs))
+        if m == "hrv":
+            pior = mr < mb * 0.85
+        if pior:
+            pioras.append(nome.replace("Variabilidade (HRV)","HRV").lower() if "HRV" in nome else nome.lower())
+            texto += ", fora do seu padrão" if abs(z) >= 1.0 else ", um pouco pior que o seu padrão"
+        elif (sentido * (mr - mb)) < 0 and abs(z) >= 1.0:
+            texto += ", melhor que o seu padrão"
+        linhas.append(texto + ".")
+    if not linhas:
+        return ""
+    fecho = ("Vários sinais de recuperação pioraram juntos (" + ", ".join(pioras) + "): vale dormir mais, aliviar a carga e observar febre, cansaço ou falta de ar." if len(pioras) >= 3
+             else f"Sinal isolado de piora ({pioras[0]}), sem um padrão claro de recuperação ruim." if len(pioras) == 1
+             else "Sinais em mais de uma frente (" + ", ".join(pioras) + "), mas ainda sem um padrão forte." if len(pioras) == 2
+             else "Nada saiu do seu padrão nos últimos 7 dias.")
+    return "Como você está agora:\n" + "\n".join(linhas) + "\n" + fecho
+
+
+def relatorio_tendencias(dias: int = 90) -> str:
+    dias = max(14, min(int(dias), 1825))
+    hoje = datetime.now()
+    de_rec, de_ant = (hoje - timedelta(days=dias)).strftime("%Y-%m-%d"), (hoje - timedelta(days=2 * dias)).strftime("%Y-%m-%d")
+    itens = []
+    for m, (nome, un, _) in _NOMES.items():
+        todos = _serie(m, de_ant)
+        rec = [v for d, v in todos.items() if d >= de_rec]
+        ant = [v for d, v in todos.items() if d < de_rec]
+        if len(rec) < 5:
+            continue
+        mr = statistics.fmean(rec)
+        if len(ant) >= 5:
+            ma = statistics.fmean(ant)
+            pct = 100 * (mr - ma) / ma if ma else 0
+            sentido = "subiu" if pct > 3 else "caiu" if pct < -3 else "ficou estável"
+            itens.append((abs(pct), f"{nome}: média de {_fmt_v(m, mr)} nos últimos {dias} dias ({len(rec)} dias com dado); {sentido}" +
+                          (f" {abs(pct):.0f} por cento em relação aos {dias} dias anteriores ({_fmt_v(m, ma)})" if sentido != "ficou estável" else f" em relação aos {dias} dias anteriores ({_fmt_v(m, ma)})") + "."))
+        else:
+            itens.append((0, f"{nome}: média de {_fmt_v(m, mr)} nos últimos {dias} dias ({len(rec)} dias com dado); ainda não há período anterior para comparar."))
+    if not itens:
+        return ""
+    itens.sort(key=lambda x: -x[0])
+    return f"Tendências ({dias} dias contra os {dias} anteriores), das maiores mudanças para as menores:\n" + "\n".join(t for _, t in itens)
+
+
+def relatorio_sono(dias: int = 90) -> str:
+    dias = max(7, min(int(dias), 1825))
+    de = _dias_atras(dias)
+    tot = _serie("sono_total", de)
+    if len(tot) < 5:
+        return ""
+    prof, rem, cama = _serie("sono_profundo", de), _serie("sono_rem", de), _serie("sono_cama", de)
+    v = list(tot.values())
+    out = [f"Sono ({len(v)} noites com dado nos últimos {dias} dias): média de {_dur(statistics.fmean(v))} por noite, mediana de {_dur(statistics.median(v))}."]
+    curtas = sum(1 for x in v if x < 360)
+    boas = sum(1 for x in v if x >= 420)
+    out.append(f"{curtas} noite(s) com menos de 6 horas ({100 * curtas / len(v):.0f} por cento) e {boas} com 7 horas ou mais ({100 * boas / len(v):.0f} por cento). A recomendação para adultos é de 7 a 9 horas.")
+    pares = [(prof[d], tot[d]) for d in prof if d in tot and tot[d] > 0]
+    if len(pares) >= 5:
+        out.append(f"Sono profundo: média de {_dur(statistics.fmean(p for p, _ in pares))}, cerca de {100 * statistics.fmean(p / t for p, t in pares):.0f} por cento da noite.")
+    pares = [(rem[d], tot[d]) for d in rem if d in tot and tot[d] > 0]
+    if len(pares) >= 5:
+        out.append(f"Sono REM: média de {_dur(statistics.fmean(p for p, _ in pares))}, cerca de {100 * statistics.fmean(p / t for p, t in pares):.0f} por cento da noite.")
+    pcs = [(tot[d] / cama[d]) for d in tot if d in cama and cama[d] > 0 and tot[d] <= cama[d]]
+    if len(pcs) >= 5:
+        out.append(f"Eficiência do sono (tempo dormindo sobre o tempo na cama): {100 * statistics.fmean(pcs):.0f} por cento.")
+    ds = {}
+    for d, x in tot.items():
+        ds.setdefault(datetime.strptime(d, "%Y-%m-%d").weekday(), []).append(x)
+    meds = {k: statistics.fmean(x) for k, x in ds.items() if len(x) >= 3}
+    if len(meds) >= 5:
+        mx, mn = max(meds, key=meds.get), min(meds, key=meds.get)
+        out.append(f"Por dia da semana, você dorme mais na noite que termina {_artigo(mx)} {_DIAS_SEMANA[mx]} ({_dur(meds[mx])}) e menos {_artigo(mn)} {_DIAS_SEMANA[mn]} ({_dur(meds[mn])}).")
+    ordem = sorted(tot)
+    if len(ordem) >= 20:
+        t3 = len(ordem) // 3
+        a, b = statistics.fmean(tot[d] for d in ordem[:t3]), statistics.fmean(tot[d] for d in ordem[-t3:])
+        out.append(f"Tendência: o último terço do período teve média de {_dur(b)}, contra {_dur(a)} no primeiro terço ({'mais' if b > a + 10 else 'menos' if b < a - 10 else 'o mesmo'} sono).")
+    pior = sorted(tot.items(), key=lambda x: x[1])[:3]
+    out.append("Noites mais curtas: " + "; ".join(f"{d} ({_dur(x)})" for d, x in pior) + ".")
+    return "\n".join(out)
+
+
+def relatorio_atividade(dias: int = 90) -> str:
+    dias = max(7, min(int(dias), 1825))
+    de = _dias_atras(dias)
+    passos, ex, ene = _serie("passos", de), _serie("x:apple_exercise_time", de), _serie("energia", de)
+    out = []
+    if len(passos) >= 5:
+        v = list(passos.values())
+        out.append(f"Passos ({len(v)} dias com dado): média de {_num(statistics.fmean(v))} por dia, mediana de {_num(statistics.median(v))}; {sum(1 for x in v if x >= 7500)} dia(s) com 7.500 passos ou mais "
+                   f"({100 * sum(1 for x in v if x >= 7500) / len(v):.0f} por cento) e {sum(1 for x in v if x < 3000)} dia(s) com menos de 3.000.")
+        ds = {}
+        for d, x in passos.items():
+            ds.setdefault(datetime.strptime(d, "%Y-%m-%d").weekday(), []).append(x)
+        meds = {k: statistics.fmean(x) for k, x in ds.items() if len(x) >= 3}
+        if len(meds) >= 5:
+            mx, mn = max(meds, key=meds.get), min(meds, key=meds.get)
+            out.append(f"Dia mais ativo da semana: {_DIAS_SEMANA[mx]} ({_num(meds[mx])} passos). Menos ativo: {_DIAS_SEMANA[mn]} ({_num(meds[mn])}).")
+    if len(ex) >= 5:
+        v = list(ex.values())
+        semanas = {}
+        for d, x in ex.items():
+            semanas[_semana(d)] = semanas.get(_semana(d), 0) + x
+        cheias = {k: x for k, x in semanas.items() if sum(1 for d in ex if _semana(d) == k) >= 6}
+        out.append(f"Minutos de exercício (o que o relógio conta como atividade acima de uma caminhada leve): média de {_num(statistics.fmean(v))} por dia; "
+                   f"{sum(1 for x in v if x >= 30)} dia(s) com 30 minutos ou mais ({100 * sum(1 for x in v if x >= 30) / len(v):.0f} por cento)."
+                   + (f" Semanas completas com 150 minutos ou mais (meta da OMS): {sum(1 for x in cheias.values() if x >= 150)} de {len(cheias)}." if cheias else ""))
+    if len(ene) >= 5:
+        out.append(f"Energia ativa: média de {_num(statistics.fmean(ene.values()))} kcal por dia.")
+    horas = _ler("SELECT dia, hora, fc_media, fc_max FROM fc_hora WHERE dia >= ?", (de,))
+    if horas:
+        picos = {}
+        for h in horas:
+            if h["fc_max"] and h["fc_max"] >= 130 and 6 <= h["hora"] <= 23:
+                picos.setdefault(h["dia"], []).append(h["hora"])
+        if picos:
+            top = sorted(picos.items(), key=lambda x: -len(x[1]))[:3]
+            out.append(f"Esforço sem treino registrado: em {len(picos)} dia(s) o pulso passou de 130 bpm em algum momento da vigília (pode ser subida de escada, caminhada rápida, correria ou estresse). "
+                       "Mais horas com pico: " + "; ".join(f"{d} ({len(hs)} hora(s))" for d, hs in top) + ".")
+    return ("Atividade (medida o dia todo pelo relógio, sem precisar iniciar treino):\n" + "\n".join(out)) if out else ""
+
+
+def relatorio_recuperacao(dias: int = 180) -> str:
+    dias = max(30, min(int(dias), 1825))
+    de = _dias_atras(dias)
+    hrv, fcr, sono, passos, ex = _serie("hrv", de), _serie("fc_repouso", de), _serie("sono_total", de), _serie("passos", de), _serie("x:apple_exercise_time", de)
+    out = []
+
+    def dia_ant(d):
+        return (datetime.strptime(d, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    def frase(nome_x, nome_y, xs, ys, alto_bom):
+        r = _correlacao(xs, ys)
+        if r is None or abs(r) < 0.2:
+            return None
+        forca = "forte" if abs(r) >= 0.5 else "moderada" if abs(r) >= 0.3 else "fraca"
+        return f"Relação {forca} entre {nome_x} e {nome_y} (correlação {_num(r, 2)}, {len(xs)} dias)."
+
+    pares = [(sono[d], hrv[d]) for d in hrv if d in sono]
+    f = frase("sono da noite", "variabilidade (HRV) do dia", [p[0] for p in pares], [p[1] for p in pares], True)
+    if f:
+        out.append(f)
+    curto = [hrv[d] for d in hrv if d in sono and sono[d] < 360]
+    longo = [hrv[d] for d in hrv if d in sono and sono[d] >= 420]
+    if len(curto) >= 4 and len(longo) >= 4:
+        out.append(f"Depois de noites com menos de 6 horas, a HRV média foi de {_num(statistics.fmean(curto), 1)} ms; depois de noites com 7 horas ou mais, {_num(statistics.fmean(longo), 1)} ms.")
+    pares = [(sono[d], fcr[d]) for d in fcr if d in sono]
+    f = frase("sono da noite", "pulso em repouso do dia", [p[0] for p in pares], [p[1] for p in pares], False)
+    if f:
+        out.append(f)
+    pares = [(passos[dia_ant(d)], hrv[d]) for d in hrv if dia_ant(d) in passos]
+    f = frase("passos do dia anterior", "variabilidade (HRV)", [p[0] for p in pares], [p[1] for p in pares], True)
+    if f:
+        out.append(f)
+    pares = [(ex[dia_ant(d)], hrv[d]) for d in hrv if dia_ant(d) in ex]
+    f = frase("minutos de exercício do dia anterior", "variabilidade (HRV)", [p[0] for p in pares], [p[1] for p in pares], True)
+    if f:
+        out.append(f)
+    if len(hrv) >= 20:
+        mh, dh = statistics.fmean(hrv.values()), statistics.pstdev(hrv.values())
+        ruins = sorted((d for d, v in hrv.items() if v < mh - dh), key=lambda d: hrv[d])[:5]
+        if ruins:
+            det = []
+            for d in ruins:
+                partes = [f"{d}: HRV {_num(hrv[d], 0)} ms"]
+                if d in sono:
+                    partes.append(f"sono {_dur(sono[d])}")
+                if dia_ant(d) in passos:
+                    partes.append(f"{_num(passos[dia_ant(d)])} passos no dia anterior")
+                det.append(", ".join(partes))
+            out.append(f"Dias com a HRV mais baixa que o seu normal (abaixo de {_num(mh - dh, 0)} ms): " + "; ".join(det) + ".")
+        ds = {}
+        for d, x in hrv.items():
+            ds.setdefault(datetime.strptime(d, "%Y-%m-%d").weekday(), []).append(x)
+        meds = {k: statistics.fmean(x) for k, x in ds.items() if len(x) >= 4}
+        if len(meds) >= 5:
+            mx, mn = max(meds, key=meds.get), min(meds, key=meds.get)
+            out.append(f"A HRV é mais alta {_artigo(mx)} {_DIAS_SEMANA[mx]} ({_num(meds[mx], 1)} ms) e mais baixa {_artigo(mn)} {_DIAS_SEMANA[mn]} ({_num(meds[mn], 1)} ms).")
+    return ("Recuperação (o que costuma acompanhar a sua HRV e o seu pulso em repouso):\n" + "\n".join(out)) if out else ""
+
+
 def relatorio_geral(dias: int = 30) -> str:
-    partes = [relatorio_treinos(dias), relatorio_cruzado(dias), "Coração:\n" + relatorio_fc(min(dias, 60)), relatorio_ecg(max(dias, 90)), relatorio_eventos(dias)]
+    tem_treinos = bool(_ler("SELECT 1 FROM treinos WHERE dia >= ? LIMIT 1", (_dias_atras(dias),)))
+    longo = max(dias, 90)
+    partes = [relatorio_estado_atual(), relatorio_tendencias(longo), relatorio_sono(longo), relatorio_atividade(longo), relatorio_recuperacao(max(dias, 180))]
+    if tem_treinos:
+        partes += [relatorio_treinos(dias), relatorio_cruzado(dias)]
+    else:
+        partes.append(f"Treinos: nenhum nos últimos {dias} dias. O Apple Watch só registra treino quando você inicia um no app Treino (ou aceita o aviso para iniciar quando ele detecta uma caminhada ou corrida); "
+                      "por isso a atividade do dia a dia está na seção de atividade acima.")
+    partes += ["Coração:\n" + relatorio_fc(min(longo, 90)), relatorio_ecg(max(dias, 365)), relatorio_eventos(dias)]
     return "\n\n".join(p for p in partes if p) + "\n\n" + AVISO
 
 
@@ -1177,6 +1444,11 @@ def main() -> int:
     ap.add_argument("--treinos", nargs="?", const=30, type=int, metavar="DIAS")
     ap.add_argument("--ecg", nargs="?", const=365, type=int, metavar="DIAS")
     ap.add_argument("--fc", nargs="?", const=14, type=int, metavar="DIAS")
+    ap.add_argument("--sono", nargs="?", const=90, type=int, metavar="DIAS")
+    ap.add_argument("--atividade", nargs="?", const=90, type=int, metavar="DIAS")
+    ap.add_argument("--recuperacao", nargs="?", const=180, type=int, metavar="DIAS")
+    ap.add_argument("--tendencias", nargs="?", const=90, type=int, metavar="DIAS")
+    ap.add_argument("--agora", action="store_true", help="os últimos 7 dias contra a sua média dos 90 dias anteriores")
     a = ap.parse_args()
     if a.importar:
         print("Importando (um export grande pode levar vários minutos)...")
@@ -1201,6 +1473,16 @@ def main() -> int:
         print(relatorio_ecg(a.ecg))
     elif a.fc is not None:
         print(relatorio_fc(a.fc))
+    elif a.sono is not None:
+        print(relatorio_sono(a.sono) or "Poucos dados de sono no banco.")
+    elif a.atividade is not None:
+        print(relatorio_atividade(a.atividade) or "Poucos dados de atividade no banco.")
+    elif a.recuperacao is not None:
+        print(relatorio_recuperacao(a.recuperacao) or "Poucos dados de recuperação no banco (precisa de pelo menos 20 dias de HRV e sono).")
+    elif a.tendencias is not None:
+        print(relatorio_tendencias(a.tendencias) or "Poucos dados para tendências.")
+    elif a.agora:
+        print(relatorio_estado_atual() or "Poucos dados recentes para comparar.")
     elif a.relatorio is not None:
         print(relatorio_geral(a.relatorio))
     else:

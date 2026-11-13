@@ -43,3 +43,12 @@ Privacidade:
    - Esta análise não é diagnóstico nem substitui o aplicativo de ECG da Apple ou um médico.
 
 Fora desta primeira versão (existem no ecossistema Apple e podem entrar depois): registros clínicos (FHIR) do app Saúde, batimento a batimento da variabilidade (heartbeat series), audiogramas, eventos e parciais dentro de cada treino, série de frequência cardíaca dos treinos vindos do arquivo de exportação (o resumo mínimo, média e máximo entra).
+
+ANÁLISES SEM TREINO
+O relógio só grava um treino quando você inicia um no app Treino ou aceita o aviso de início. Mesmo sem treinos, estes comandos usam os dados do dia todo:
+1. python3 heimdall_saude.py --agora
+2. python3 heimdall_saude.py --sono
+3. python3 heimdall_saude.py --atividade
+4. python3 heimdall_saude.py --recuperacao
+5. python3 heimdall_saude.py --tendencias
+6. python3 heimdall_saude.py --relatorio   (junta tudo)

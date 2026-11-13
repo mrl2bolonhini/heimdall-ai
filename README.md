@@ -153,6 +153,7 @@ Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta
 | `ecg_resumo` | Mac (8000) | `dias=365` | Resumo dos ECG feitos no Apple Watch: quantos, classificação da Apple (ritmo sinusal, fibrilação atrial, inconclusivo), último ECG e as medidas dos batimentos calculadas pelo Heimdall. |
 | `frequencia_cardiaca_resumo` | Mac (8000) | `dias=14` | Frequência cardíaca nos últimos dias: pulso em repouso, variabilidade (HRV), mínima de madrugada, hora do dia mais alta, maior pico, recuperação, VO2 máx e avisos do relógio. |
 | `relatorio_saude` | Mac (8000) | `dias=30` | Relatório completo de saúde do Apple Saúde: treinos e carga, cruzamento do treino com pulso em repouso e variabilidade, frequência cardíaca, ECG, sintomas, humor e medicamentos. |
+| `analise_saude` | Mac (8000) | `tema='agora', dias=90` | Análise de saúde do dia a dia, sem depender de treinos registrados. |
 <!-- /AUTO:FERRAMENTAS -->
 
 Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e docstring claro, acrescente-a a `PUBLIC_TOOLS` ou `MAC_TOOLS`, reinicie, rode `test_mcp.py` e `gerar_docs.py`. Ferramentas públicas são seguras para convidados; as do Mac acessam arquivos e memória e são só do administrador.

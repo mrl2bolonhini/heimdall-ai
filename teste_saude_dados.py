@@ -212,6 +212,33 @@ confere("relatório de frequência cardíaca", "Frequência em repouso" in rf an
 rg = hs.relatorio_geral(30)
 confere("relatório geral junta tudo", "Corrida" in rg and "Coração" in rg and "ECG" in rg and "Sintomas registrados: Fadiga" in rg and "Humor registrado" in rg and "não diagnóstico" in rg, rg)
 confere("banco_resumo e esquema conhecem as tabelas novas", all(k in banco.resumo() for k in ("treinos", "ecg", "fc_hora", "saude_eventos")) and "treinos(" in banco.tabelas_para_modelo())
+# análises do dia a dia com 200 dias sintéticos (sem depender de treinos)
+import random as _rnd
+from datetime import datetime as _dt, timedelta as _td
+_rnd.seed(7)
+_con = sqlite3.connect(banco.DB_PATH)
+_agora = _dt.now().strftime("%Y-%m-%d %H:%M:%S")
+for i in range(200):
+    d = (_dt.now() - _td(days=i)).strftime("%Y-%m-%d")
+    sono = _rnd.gauss(400, 60) - (40 if i < 7 else 0)
+    hrv_v = 30 + (sono - 400) * 0.08 + _rnd.gauss(0, 3) - (8 if i < 7 else 0)
+    for m, v in (("sono_total", sono), ("sono_profundo", sono * 0.15), ("sono_rem", sono * 0.2), ("sono_cama", sono + 30), ("hrv", hrv_v),
+                 ("fc_repouso", 64 + _rnd.gauss(0, 2) + (5 if i < 7 else 0)), ("passos", max(500, _rnd.gauss(6500, 2500))),
+                 ("x:apple_exercise_time", max(0, _rnd.gauss(25, 15))), ("energia", _rnd.gauss(400, 80))):
+        _con.execute("INSERT OR REPLACE INTO saude_diaria (dia, metrica, valor, unidade, atualizado) VALUES (?,?,?,?,?)", (d, m, v, "", _agora))
+    _con.execute("INSERT OR REPLACE INTO fc_hora (dia, hora, fc_min, fc_media, fc_max, leituras, atualizado) VALUES (?,?,?,?,?,?,?)", (d, 18, 80, 110, 150 if i % 5 == 0 else 120, 10, _agora))
+_con.commit()
+_con.close()
+confere("estado atual compara 7 dias com 90", "Como você está agora" in hs.relatorio_estado_atual() and "fora do seu padrão" in hs.relatorio_estado_atual() or "pior" in hs.relatorio_estado_atual(), hs.relatorio_estado_atual())
+confere("tendências ordenadas", "Tendências" in hs.relatorio_tendencias(60) and "Sono" in hs.relatorio_tendencias(60), hs.relatorio_tendencias(60))
+rs_ = hs.relatorio_sono(90)
+confere("relatório de sono", "noites com dado" in rs_ and "Sono profundo" in rs_ and "Eficiência" in rs_ and "dia da semana" in rs_ and "Noites mais curtas" in rs_, rs_)
+ra_ = hs.relatorio_atividade(90)
+confere("relatório de atividade", "Passos" in ra_ and "Minutos de exercício" in ra_ and "130 bpm" in ra_ and "150 minutos" in ra_, ra_)
+rr_ = hs.relatorio_recuperacao(180)
+confere("relatório de recuperação acha a ligação sono-HRV", "sono da noite" in rr_ and "variabilidade" in rr_ and "HRV mais baixa" in rr_, rr_)
+rg2 = hs.relatorio_geral(30)
+confere("relatório geral inclui análises do dia a dia", "Como você está agora" in rg2 and "Sono (" in rg2 and "Atividade" in rg2 and "Recuperação" in rg2, rg2)
 # banco novo e vazio: relatórios não quebram
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "vazio")
 banco.DB_DIR = TMP / "vazio"
