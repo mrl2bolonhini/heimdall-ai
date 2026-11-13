@@ -312,6 +312,7 @@ COMANDOS = [
         ("Teste do Heimdall Notas (sem rede)", "python3 teste_notas.py"),
         ("Teste do Heimdall News (sem rede)", "python3 teste_news.py"),
         ("Teste do painel de saúde (sem rede)", "python3 teste_painel_saude.py"),
+        ("Listar notas com título que parece cortado", "python3 heimdall_notas.py --titulos-suspeitos"),
         ("Teste dos trechos de livros do estudo (sem rede, precisa do Node)", "python3 teste_trechos.py"),
         ("Login e simulação do vigia de e-mail", "bash instalar_email_oficial.sh --testar"),
     ]),

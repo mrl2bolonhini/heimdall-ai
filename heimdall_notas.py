@@ -863,7 +863,67 @@ class Notas(BaseHTTPRequestHandler):
             pass
 
 
+# ----------------------------------------------------------------------------------------
+# Títulos suspeitos (cortados): python3 heimdall_notas.py --titulos-suspeitos
+# ----------------------------------------------------------------------------------------
+CONECTIVOS = {"de", "da", "do", "das", "dos", "e", "em", "com", "para", "por", "a", "o", "as", "os", "na", "no", "nas", "nos", "que", "ou", "um", "uma",
+              "ao", "à", "sobre", "entre", "como", "se", "pela", "pelo", "sem", "the", "of", "and", "to", "in", "for", "with", "on", "a", "an"}
+LIMITES_ANTIGOS = (45, 60, 80, 90, 100, 120, 150, 200, 220)   # tamanhos em que o Heimdall já cortou títulos
+
+
+def motivos_de_corte(titulo: str) -> list:
+    """Sinais de que o título foi cortado no meio. Lista vazia = parece inteiro."""
+    t = (titulo or "").strip()
+    if len(t) < 4:
+        return []
+    m = []
+    if t.endswith("…") or t.endswith("..."):
+        m.append("termina em reticências")
+    if re.search(r"[,;:\-–—(/&+]$", t):
+        m.append("termina em pontuação que pede continuação")
+    ultima = re.findall(r"[\wÀ-ÿ']+", t)[-1:] or [""]
+    if ultima[0] in CONECTIVOS and len(t.split()) > 2:
+        m.append(f'termina na palavra "{ultima[0]}", que pede continuação')
+    if len(t) in LIMITES_ANTIGOS and t[-1].isalnum():
+        m.append(f"tem exatamente {len(t)} caracteres, um tamanho em que o Heimdall já cortou títulos")
+    if t.count("(") > t.count(")") or t.count("[") > t.count("]") or t.count('"') % 2 or t.count("“") > t.count("”"):
+        m.append("tem parêntese ou aspas sem fechar")
+    return m
+
+
+def titulos_suspeitos() -> list:
+    """[(nome da pasta, arquivo, título gravado no arquivo, [motivos])] das notas que o site publica."""
+    res = []
+    for chave, info in sorted(pastas().items()):
+        for p, _, _, _ in notas_da_pasta(chave):
+            bruto = titulo_de(p)
+            ms = motivos_de_corte(bruto)
+            if ms:
+                res.append((info["nome"], p, bruto, ms))
+    return res
+
+
+def mostrar_titulos_suspeitos() -> None:
+    lista = titulos_suspeitos()
+    if not lista:
+        print("Nenhum título com sinal de corte nas notas publicadas no site.")
+        return
+    print(f"{len(lista)} nota(s) com título que parece cortado:")
+    for i, (pasta, p, titulo, ms) in enumerate(lista, 1):
+        print(f"{i}. Pasta {pasta}, arquivo {p}")
+        print(f"   Título: {titulo}")
+        print(f"   Motivo: {'; '.join(ms)}.")
+    print("\nPara corrigir: abra o arquivo e edite a linha que começa com '# ' (o título); o site passa a mostrar o novo título na hora. "
+          "A cópia no app Notas tem o título antigo na primeira linha da nota; se quiser, ajuste lá também.")
+
+
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser(description="Heimdall Notas: site de notas e áudios")
+    ap.add_argument("--titulos-suspeitos", action="store_true", help="lista as notas cujo título parece cortado e sai")
+    if ap.parse_args().titulos_suspeitos:
+        mostrar_titulos_suspeitos()
+        return
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
         sys.exit("Sem senha e código configurados o Heimdall Notas não sobe. Rode: python3 heimdall_acesso.py --tudo")
     srv = ThreadingHTTPServer((HOST, PORT), Notas)
