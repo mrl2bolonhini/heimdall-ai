@@ -78,6 +78,7 @@ os.environ["HEIMDALL_CLOUD_SENHA_HASH"] = hc.hash_senha(SENHA, iteracoes=100_000
 hc.SENHA_HASH = os.environ["HEIMDALL_CLOUD_SENHA_HASH"]
 hc.TOTP_SEGREDO = SEGREDO
 import heimdall_notas as hb  # noqa: E402
+hb.POR_PAGINA = 50   # os testes antigos esperam tudo numa página; a paginação tem testes próprios mais abaixo
 
 srv = ThreadingHTTPServer(("127.0.0.1", 0), hb.Notas)
 srv.daemon_threads = True
@@ -187,6 +188,29 @@ s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
 confere("PASTAS com lista mostra só as listadas e os temas", s == 404 and req("GET", "/nota?p=heimdall-cerebro&n=ideia.md", cookie=ck)[0] == 200 and req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)[0] == 200)
 del os.environ["HEIMDALL_NOTAS_PASTAS"]
 
+# --- paginação em botões ---
+hb.POR_PAGINA = 3
+s, h, c = req("GET", "/", cookie=ck)
+t = texto(c)
+confere("início paginado: 3 notas, página 1 atual, próxima e última", s == 200 and t.count("Leia mais sobre") == 3 and 'aria-current="page">Página 1 (atual)<' in t and ">Próxima página<" in t and ">Última página<" in t and ">Página anterior<" not in t, t[-900:])
+s, h, c = req("GET", "/?pagina=2", cookie=ck)
+t2 = texto(c)
+confere("início, página 2: anterior, 1, 2 (atual), 3", ">Página anterior<" in t2 and ">Página 1<" in t2 and "Página 2 (atual)<" in t2 and ">Página 3<" in t2, t2[-900:])
+s, h, c = req("GET", "/?pagina=999", cookie=ck)
+confere("página fora do limite vai para a última", s == 200 and "(atual)<" in texto(c) and ">Próxima página<" not in texto(c))
+s, h, c = req("GET", "/?pagina=abc", cookie=ck)
+confere("página inválida vale 1", s == 200 and "Página 1 (atual)<" in texto(c))
+s, h, c = req("GET", "/tema?t=python&pagina=2", cookie=ck)
+tt = texto(c)
+confere("tema paginado mantém o tema no formulário", s == 200 and 'name="t" value="python"' in tt and "Página 2 (atual)<" in tt and 'action="/tema"' in tt, tt[-700:])
+s, h, c = req("GET", "/busca?q=aula&pagina=1", cookie=ck)
+confere("busca paginada mantém o termo", s == 200 and ("Nada encontrado" in texto(c) or 'name="q" value="aula"' in texto(c) or "resultado" in texto(c)))
+hb.POR_PAGINA = 50
+import heimdall_paginacao as _pg
+_ex = _pg.html_paginacao("/tema", 3, 10, {"t": "x"})
+_rot = re.findall(r">([^<]+)</button>", _ex)
+confere("paginação: ordem exata dos botões (anterior, 1 a 5, próxima, última)", _rot == ["Página anterior", "Página 1", "Página 2", "Página 3 (atual)", "Página 4", "Página 5", "Próxima página", "Última página"], _rot)
+confere("paginação: janela desliza e última página não tem próxima", _pg.janela(10, 10) == [6, 7, 8, 9, 10] and ">Próxima página<" not in _pg.html_paginacao("/", 10, 10) and _pg.html_paginacao("/", 1, 1) == "")
 # --- notas ---
 s, h, c = req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)
 t = texto(c)

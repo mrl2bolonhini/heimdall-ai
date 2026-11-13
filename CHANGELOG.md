@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Paginação em botões no Notas e no News
+- Os dois sites usam agora a mesma paginação, toda em botões: Página anterior, Página 1 a 5 (com a atual marcada como "Página 3 (atual)" e anunciada como página atual pelo leitor de tela), reticências quando há mais páginas, Próxima página e Última página. A janela de números acompanha a página atual. Página anterior some na primeira, Próxima e Última somem na última. Um resumo ("Página 3 de 10 · 97 notas") fica acima dos botões.
+- No Notas, a paginação vale para as últimas notas do início, as notas de cada tema e os resultados da busca (10 por página); antes o início mostrava só as 15 mais recentes e os temas e a busca vinham numa lista única. No News, ela substitui os botões Anterior e Próxima (10 notícias por página, mantendo a categoria).
+- O texto "Leia mais sobre..." do News tinha o mesmo corte de 45 caracteres com reticências que o do Notas; agora segue a mesma regra (inteiro até 110 caracteres).
+- Código compartilhado em heimdall_paginacao.py. Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Títulos das notas sem corte
 - No site Notas, o texto do link "Leia mais sobre ..." cortava o título em 45 caracteres e sempre acrescentava reticências, mesmo quando o título cabia. Agora o título aparece inteiro até 110 caracteres; acima disso, o corte é sempre num espaço, com reticências. A primeira frase usada para nomear notas genéricas passou de 90 para 140 caracteres.
 - No fluxo de estudo, o conceito (que vira o título da nota) era cortado em 80 caracteres no meio da palavra e o título em 150; agora o corte, se necessário, é no espaço (120 caracteres) e o título não é mais cortado. O pedido ao modelo agora diz "de 2 a 6 palavras completas, no máximo 80 caracteres".

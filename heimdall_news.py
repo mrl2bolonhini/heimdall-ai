@@ -86,6 +86,7 @@ carregar_env()
 
 import heimdall_banco as banco  # noqa: E402  (o banco pessoal)
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
 
 
 def _inteiro(nome: str, padrao: int, minimo: int = 0) -> int:
@@ -195,11 +196,12 @@ def id_do_link(link: str) -> str:
     return hashlib.sha1(link.encode("utf-8")).hexdigest()[:20]
 
 
-def inicio_do_titulo(titulo: str, limite: int = 45) -> str:
+def inicio_do_titulo(titulo: str, limite: int = 110) -> str:
+    """Título para o texto do link: só corta títulos muito longos (sempre num espaço) e só então põe reticências."""
     t = re.sub(r"\s+", " ", titulo).strip()
     if len(t) > limite:
         corte = t.rfind(" ", 0, limite)
-        t = t[:corte if corte >= limite // 2 else limite].rstrip(" ,;:.-")
+        t = t[:corte if corte >= limite // 2 else limite].rstrip(" ,;:.-") + "…"
     return t
 
 
@@ -774,13 +776,12 @@ def estatisticas() -> dict:
 # ----------------------------------------------------------------------------------------
 # Páginas
 # ----------------------------------------------------------------------------------------
-CSS = nuvem.CSS + """
+CSS = nuvem.CSS + paginacao.CSS + """
 body{font-size:19px;line-height:1.7;max-width:46rem}
 main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:0 0 .3rem;font-size:1.25em}
 .lista{list-style:none;padding:0}.lista li{border-bottom:1px solid var(--linha);padding:.9rem 0}
 .lista a{font-weight:700}.meta{color:var(--suave);font-size:.9em;display:block;margin-top:.2rem}
 .ia{margin:.2rem 0 .5rem}.cats ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1rem}
-.pags{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-top:1px solid var(--linha);margin-top:1.5rem;padding-top:1rem}
 .so-leitor{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .falha{color:var(--erro,#b00020);font-weight:700}
 """
@@ -827,15 +828,8 @@ def item_html(n: dict) -> str:
     extras = ""
     if n["idioma"] != "pt":
         extras = " · título traduzido por IA do inglês" if n["titulo_traduzido"] else " · em inglês, tradução na fila"
-    return (f'<li><h2>{e(titulo)}</h2>{bloco}<a href="{e(n["link"])}" target="_blank" rel="noopener noreferrer">Leia mais sobre {e(inicio_do_titulo(titulo))}...<span class="so-leitor"> (abre em nova aba)</span></a>'
+    return (f'<li><h2>{e(titulo)}</h2>{bloco}<a href="{e(n["link"])}" target="_blank" rel="noopener noreferrer">Leia mais sobre {e(inicio_do_titulo(titulo))}<span class="so-leitor"> (abre em nova aba)</span></a>'
             f'<span class="meta">{e(n["fonte"])} · {e(n["categoria"])} · {e(local(n["publicado"]))}{e(extras)}</span></li>')
-
-
-def botao_pagina(cat_slug: str, p: int, rotulo: str) -> str:
-    """Botão de paginação: um formulário GET que leva à página p (continua valendo o filtro de categoria)."""
-    cat = f'<input type="hidden" name="categoria" value="{e(cat_slug)}">' if cat_slug else ""
-    return (f'<form class="linha" method="get" action="/">{cat}<input type="hidden" name="pagina" value="{p}">'
-            f'<button type="submit">{e(rotulo)}</button></form>')
 
 
 def link_pagina(cat_slug: str, p: int) -> str:
@@ -867,9 +861,7 @@ def pg_inicio(cat_slug: str = "", pagina_n: int = 1) -> tuple:
         topo.append(f'<p class="falha" role="alert">Atenção: {e(ESTADO["erro_ia"])}.</p>')
     if itens:
         corpo = '<ul class="lista">' + "".join(item_html(n) for n in itens) + "</ul>"
-        ant = botao_pagina(cat_slug, pg - 1, "Anterior") if pg > 1 else "<span></span>"
-        prox = botao_pagina(cat_slug, pg + 1, "Próxima") if pg < paginas else "<span></span>"
-        corpo += f'<nav class="pags" aria-label="Paginação">{ant}<span>Página {pg} de {paginas} ({total} notícias)</span>{prox}</nav>'
+        corpo += paginacao.html_paginacao("/", pg, paginas, {"categoria": cat_slug}, f"{total} notícias")
     else:
         corpo = '<p class="nota">Nenhuma notícia nas últimas 24 horas' + (" nesta categoria" if categoria else "") + ". Veja o estado das fontes.</p>"
     titulo = f"Notícias: {categoria}" if categoria else "Notícias das últimas 24 horas"

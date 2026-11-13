@@ -214,7 +214,9 @@ def sql(q, *p):
 # ----------------------------------------------------------------------------------------
 confere("rastreadores saem do link", hn.normalizar_link("HTTPS://Site.com/a?x=1&utm_source=z&fbclid=9#t") == "https://site.com/a?x=1")
 confere("link perigoso vira vazio", hn.normalizar_link("javascript:alert(1)") == "" and hn.normalizar_link("file:///etc/passwd") == "")
-confere("Leia mais corta no limite de palavra", hn.inicio_do_titulo("Governo anuncia nova medida para reduzir a fila de espera da saúde") == "Governo anuncia nova medida para reduzir a")
+confere("Leia mais não corta título de tamanho normal", hn.inicio_do_titulo("Governo anuncia nova medida para reduzir a fila de espera da saúde") == "Governo anuncia nova medida para reduzir a fila de espera da saúde")
+_l = "Governo anuncia nova medida para reduzir a fila de espera da saúde em todos os hospitais públicos federais e estaduais do país durante o próximo ano"
+confere("Leia mais corta título muito longo só no espaço, com reticências", hn.inicio_do_titulo(_l).endswith("…") and len(hn.inicio_do_titulo(_l)) <= 111 and _l[len(hn.inicio_do_titulo(_l)) - 1] == " ", hn.inicio_do_titulo(_l))
 confere("limpa 'apareceu primeiro em'", hn.limpar_trecho("<p>Texto bom.</p> O post Título apareceu primeiro em Tecnoblog.") == "Texto bom.")
 confere("limpa prefixo do arXiv", hn.limpar_trecho("arXiv:2611.1 Announce Type: new Abstract: Um estudo.") == "Um estudo.")
 confere("Hacker News sem texto útil", hn.limpar_trecho("<p>Article URL: http://a</p><p>Comments URL: http://b</p>") == "")
@@ -381,17 +383,18 @@ confere("página abre", s == 200 and "Notícias das últimas 24 horas" in t)
 confere("10 por página", len(re.findall(r"<li><h2>", t)) == 10, str(len(re.findall(r"<li><h2>", t))))
 confere("título como cabeçalho", "<h2>Notícia número 00 do dia</h2>" in t or "<h2>Teste" in t)
 confere("resumo marcado como IA", t.count("Resumo feito por IA") >= 5 and "podem conter erros" in t)
-confere("Leia mais com o início do título", 'Leia mais sobre Notícia número 00 do dia...' in t or "Leia mais sobre Notícia número 01 do dia..." in t)
+confere("Leia mais com o título inteiro, sem reticências", "Leia mais sobre Notícia número 00 do dia<" in t or "Leia mais sobre Notícia número 01 do dia<" in t)
 confere("link da matéria abre a original", f'href="{BASE}/materia/' in t and 'target="_blank" rel="noopener noreferrer"' in t and "(abre em nova aba)" in t)
 confere("matéria de 30 h não aparece", "ontem à noite" not in t)
 confere("categorias com contagem", "Brasil (" in t and "Tecnologia (3)" in t and "Ciência (0)" in t)
 total = hn.estatisticas()["24h"]
 paginas = -(-total // 10)
 confere("há mais de uma página no teste", paginas >= 2, str(total))
-confere("paginação", f"Página 1 de {paginas}" in t and '<button type="submit">Próxima</button>' in t and ">Anterior<" not in t and 'name="pagina" value="2"' in t)
+confere("paginação em botões, com a página atual marcada", f"Página 1 de {paginas}" in t and ">Próxima página<" in t and ">Última página<" in t and ">Página anterior<" not in t
+        and 'aria-current="page">Página 1 (atual)<' in t and ">Página 2<" in t and 'name="pagina" value="2"' in t)
 s, _, c = req("GET", "/?pagina=2", cookie=ck)
 t2 = txt(c)
-confere("segunda página", f"Página 2 de {paginas}" in t2 and '<button type="submit">Anterior</button>' in t2 and 'name="pagina" value="1"' in t2 and len(re.findall(r"<li><h2>", t2)) == min(10, total - 10))
+confere("segunda página", f"Página 2 de {paginas}" in t2 and ">Página anterior<" in t2 and ">Página 1<" in t2 and "Página 2 (atual)<" in t2 and 'name="pagina" value="1"' in t2 and len(re.findall(r"<li><h2>", t2)) == min(10, total - 10))
 confere("páginas não se repetem", not (set(re.findall(r'href="(http[^"]+)" target="_blank" rel="noopener', t)) & set(re.findall(r'href="(http[^"]+)" target="_blank" rel="noopener', t2))))
 todos = []
 for n_ in range(1, paginas + 1):

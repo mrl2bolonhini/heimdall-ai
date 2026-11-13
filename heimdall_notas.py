@@ -72,6 +72,7 @@ for _k in [k for k in os.environ if k.startswith("HEIMDALL_BIBLIOTECA_")]:  # id
     os.environ.setdefault("HEIMDALL_NOTAS_" + _k[len("HEIMDALL_BIBLIOTECA_"):], os.environ[_k])
 
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
 
 HOST = os.environ.get("HEIMDALL_NOTAS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_NOTAS_PORT", "8011"))
@@ -428,7 +429,8 @@ def markdown_html(md: str, titulo: str = "") -> str:
 # ----------------------------------------------------------------------------------------
 # Páginas
 # ----------------------------------------------------------------------------------------
-CSS = nuvem.CSS + """
+POR_PAGINA = 10
+CSS = nuvem.CSS + paginacao.CSS + """
 body{font-size:19px;line-height:1.7;max-width:46rem}
 main h1{line-height:1.25;margin-top:1rem}h2,h3,h4{line-height:1.3;margin-top:1.8rem}
 body{overflow-wrap:break-word}h1,h2,h3,h4,.lista a,.meta,td,th{overflow-wrap:anywhere;min-width:0}main{overflow-wrap:anywhere}
@@ -505,16 +507,20 @@ def item_nota(chave: str, p: Path, titulo: str, mtime: float, audio: bool, mostr
             f'<span class="meta">{datetime.fromtimestamp(mtime).strftime("%d/%m/%Y %H:%M")}{tema}{extra}</span></li>')
 
 
-def pg_inicio() -> str:
+def pg_inicio(pagina: int = 1) -> str:
     ps = pastas()
     todas = []
     for k in ps:
         for p, t, m, a in notas_da_pasta(k):
             todas.append((m, k, p, t, a))
     todas.sort(reverse=True)
+    paginas = paginacao.total_de_paginas(len(todas), POR_PAGINA)
+    pagina = paginacao.limitar(pagina, paginas)
     corpo = ['<h2 id="ultimas">Últimas notas</h2>']
     if todas:
-        corpo.append('<ul class="lista" aria-labelledby="ultimas">' + "".join(item_nota(k, p, t, m, a, ps[k]["nome"]) for m, k, p, t, a in todas[:15]) + "</ul>")
+        fatia = todas[(pagina - 1) * POR_PAGINA:pagina * POR_PAGINA]
+        corpo.append('<ul class="lista" aria-labelledby="ultimas">' + "".join(item_nota(k, p, t, m, a, ps[k]["nome"]) for m, k, p, t, a in fatia) + "</ul>")
+        corpo.append(paginacao.html_paginacao("/", pagina, paginas, {}, plural(len(todas), "nota", "notas")))
     else:
         corpo.append('<p class="nota">Ainda não há notas aqui. Elas aparecem depois do próximo estudo (6h, 13h ou 20h).</p>')
     corpo.append('<h2 id="temas">Temas</h2>')
@@ -529,13 +535,17 @@ def pg_inicio() -> str:
     return "".join(corpo)
 
 
-def pg_tema(chave: str) -> tuple:
+def pg_tema(chave: str, pagina: int = 1) -> tuple:
     v = pastas()[chave]
     notas = notas_da_pasta(chave)
     docs = documentos_da_pasta(chave)
     corpo = ['<h2 id="notas">Notas</h2>']
     if notas:
-        corpo.append('<ul class="lista" aria-labelledby="notas">' + "".join(item_nota(chave, p, t, m, a) for p, t, m, a in notas) + "</ul>")
+        paginas = paginacao.total_de_paginas(len(notas), POR_PAGINA)
+        pagina = paginacao.limitar(pagina, paginas)
+        fatia = notas[(pagina - 1) * POR_PAGINA:pagina * POR_PAGINA]
+        corpo.append('<ul class="lista" aria-labelledby="notas">' + "".join(item_nota(chave, p, t, m, a) for p, t, m, a in fatia) + "</ul>")
+        corpo.append(paginacao.html_paginacao("/tema", pagina, paginas, {"t": chave}, plural(len(notas), "nota", "notas")))
     else:
         corpo.append('<p class="nota">Nenhuma nota neste tema ainda.</p>')
     corpo.append('<h2 id="docs">Documentos</h2>')
@@ -632,7 +642,7 @@ def busca(q: str) -> list:
     return res
 
 
-def pg_busca(q: str) -> str:
+def pg_busca(q: str, pagina: int = 1) -> str:
     form = ('<form class="busca" method="get" action="/busca" role="search"><div><label for="q">Buscar nas notas e documentos de texto</label>'
             f'<input id="q" name="q" type="text" value="{e(q)}" autocomplete="off"></div><button type="submit">Buscar</button></form>')
     if len(q.strip()) < 2:
@@ -640,8 +650,11 @@ def pg_busca(q: str) -> str:
     r = busca(q)
     if not r:
         return form + '<p role="status">Nada encontrado.</p>'
-    itens = "".join(f'<li><a href="{e(l)}">{e(t)}</a><span class="meta">{e(tema)}</span><span class="meta">{e(tr)}</span></li>' for l, t, tema, tr in r)
-    return form + f'<p role="status">{plural(len(r), "resultado", "resultados")}.</p><ul class="lista">{itens}</ul>'
+    paginas = paginacao.total_de_paginas(len(r), POR_PAGINA)
+    pagina = paginacao.limitar(pagina, paginas)
+    itens = "".join(f'<li><a href="{e(l)}">{e(t)}</a><span class="meta">{e(tema)}</span><span class="meta">{e(tr)}</span></li>' for l, t, tema, tr in r[(pagina - 1) * POR_PAGINA:pagina * POR_PAGINA])
+    return (form + f'<p role="status">{plural(len(r), "resultado", "resultados")}.</p><ul class="lista">{itens}</ul>'
+            + paginacao.html_paginacao("/busca", pagina, paginas, {"q": q}, plural(len(r), "resultado", "resultados")))
 
 
 # ----------------------------------------------------------------------------------------
@@ -774,11 +787,11 @@ class Notas(BaseHTTPRequestHandler):
         p = lambda k: (q.get(k) or [""])[0]  # noqa: E731
         ps = pastas()
         if rota == "/":
-            self._pagina(200, "Início", pg_inicio(), sess)
+            self._pagina(200, "Início", pg_inicio(p("pagina")), sess)
         elif rota == "/tema":
             if p("t") not in ps:
                 return self._nao_achei(sess)
-            nome, corpo = pg_tema(p("t"))
+            nome, corpo = pg_tema(p("t"), p("pagina"))
             self._pagina(200, nome, corpo, sess)
         elif rota == "/nota":
             base = ps.get(p("p"), {}).get("cofre")
@@ -802,7 +815,7 @@ class Notas(BaseHTTPRequestHandler):
             arq = doc_seguro(ps.get(p("t"), {}).get("docs"), p("c"))
             self._servir(arq, sess, inline=not p("baixar")) if arq else self._nao_achei(sess)
         elif rota == "/busca":
-            self._pagina(200, "Buscar", pg_busca(p("q")), sess)
+            self._pagina(200, "Buscar", pg_busca(p("q"), p("pagina")), sess)
         else:
             self._nao_achei(sess)
 
