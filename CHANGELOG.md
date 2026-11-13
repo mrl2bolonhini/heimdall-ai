@@ -3,7 +3,7 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-13 - Importação do app Saúde em português
-- No iPhone em português o arquivo principal do export.zip se chama exportar.xml, não export.xml, e a importação não o achava (só os ECG entravam). Agora ela reconhece os dois nomes e ignora o exportar_cda.xml (outro formato).
+- No iPhone em português o arquivo principal do export.zip se chama exportar.xml, não export.xml, e a importação não o achava (só os ECG entravam). Agora ela reconhece os dois nomes e ignora o exportar_cda.xml (outro formato). Uma primeira versão da correção não funcionou com o arquivo real, porque o cabeçalho dele tem uma DTD longa; agora o nome basta e, para outros nomes, o conteúdo é conferido nos primeiros 60 mil bytes.
 - Para aplicar: git fetch e reset do repositório e rodar de novo python3 heimdall_saude.py --importar ~/Downloads/export.zip. Os ECG que já entraram não duplicam.
 
 ## 2026-11-13 - Treinos, ECG, frequência cardíaca e mais do ecossistema Apple

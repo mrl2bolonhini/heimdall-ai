@@ -685,9 +685,12 @@ class _Origem:
             base = n.replace("\\", "/").split("/")[-1].lower()
             if not base.endswith(".xml") or "cda" in base or n.replace("\\", "/").count("/") > 1:
                 continue
+            if re.fullmatch(r"export(ar)?\.xml", base):
+                return n
             try:
-                with self.abrir(n) as f:
-                    if b"<HealthData" in f.read(6000):
+                with self.abrir(n) as f:   # outro nome: confere pelo conteúdo (o cabeçalho do arquivo real tem uma DTD longa antes do <HealthData>)
+                    cab = f.read(60000)
+                    if b"<HealthData" in cab or b"DOCTYPE HealthData" in cab:
                         return n
             except (OSError, KeyError):
                 continue

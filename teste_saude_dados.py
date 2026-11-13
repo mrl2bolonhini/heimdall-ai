@@ -135,7 +135,8 @@ hs.GUARDAR_ROTA = True
 d0 = (hoje - timedelta(days=5)).strftime("%Y-%m-%d")
 def reg(tipo, v, s, un="", fonte="Apple Watch", fim_=None):
     return f'<Record type="{tipo}" sourceName="{fonte}" unit="{un}" startDate="{s}" endDate="{fim_ or s}" value="{v}"/>'
-xml = ['<?xml version="1.0"?><!DOCTYPE HealthData [<!ELEMENT HealthData (Record)>]><HealthData locale="pt_BR">',
+DTD = "".join(f"<!ELEMENT Elemento{i} (#PCDATA)><!ATTLIST Elemento{i} atributo{i} CDATA #IMPLIED>" for i in range(150))   # o cabeçalho real tem milhares de bytes de DTD
+xml = ['<?xml version="1.0"?><!DOCTYPE HealthData [<!ELEMENT HealthData (Record)>' + DTD + ']><HealthData locale="pt_BR">',
        '<Me HKCharacteristicTypeIdentifierDateOfBirth="1980-05-05" HKCharacteristicTypeIdentifierBiologicalSex="HKBiologicalSexMale"/>']
 for i in range(5):
     xml.append(reg("HKQuantityTypeIdentifierHeartRate", 60 + i * 10, f"{d0} 10:0{i}:00 -0300", "count/min"))
@@ -166,6 +167,9 @@ with zipfile.ZipFile(zpath, "w") as z:
     z.writestr("apple_health_export/exportar_cda.xml", "<ClinicalDocument/>")
     z.writestr("apple_health_export/workout-routes/route_1.gpx", gpx)
     z.writestr("apple_health_export/electrocardiograms/ecg_2026-11-10.csv", csv_ecg)
+with zipfile.ZipFile(TMP / "outro-nome.zip", "w") as z2:
+    z2.writestr("apple_health_export/dados_saude.xml", "\n".join(xml))
+confere("pacote com outro nome de arquivo é achado pelo conteúdo", hs._Origem(str(TMP / "outro-nome.zip")).achar_xml_saude() == "apple_health_export/dados_saude.xml")
 avisos = []
 res = hs.importar_exportacao(str(zpath), aviso=avisos.append)
 confere("exportação: treino, ECG, horas, sono e anéis", res["treinos"] == 1 and res["ecg"] == 1 and res["fc_horas"] == 2 and res["sono_noites"] == 1 and res["aneis"] == 3, res)
