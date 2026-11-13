@@ -574,6 +574,13 @@ except SystemExit:
     pass
 sys.stdout = antigo
 confere("--copiar acha o feed da categoria", "ciencia" in saida.getvalue() and ("copiado" in saida.getvalue() or f"/rss/{novo}/ciencia.xml" in saida.getvalue()))
+saida = io.StringIO()
+antigo, sys.stdout = sys.stdout, saida
+sys.argv = ["heimdall_news.py", "--fila"]
+hn.main()
+sys.stdout = antigo
+_fila_real = sql("SELECT COUNT(*) FROM noticias WHERE resumo_base='' AND tentativas < ? AND publicado >= ?", hn.MAX_TENTATIVAS, hn.iso(hn.agora() - timedelta(hours=hn.JANELA_HORAS)))[0][0]
+confere("--fila mostra a fila e o ritmo", f"Na fila esperando resumo: {_fila_real}" in saida.getvalue() and "Notícias das últimas 24 horas" in saida.getvalue())
 sys.argv = ["heimdall_news.py", "--copiar", "inexistente"]
 try:
     hn.main()

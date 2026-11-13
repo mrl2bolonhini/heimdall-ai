@@ -19,7 +19,7 @@
 #   4. No fim avisa: "Tudo no ar" (com aviso do macOS e voz) ou lista o que ficou faltando e onde olhar no log.
 #
 # Opções no ambiente ou no .env: SUBIR_ESPERA=900 (segundos de espera máxima), SUBIR_SOM=0 (sem voz nem notificação),
-# SUBIR_VOZ="Felipe (Aprimorada)" (voz do anúncio; aceita também "Felipe" ou "Felipe (Enhanced)"; sem isto usa a voz do sistema).
+# SUBIR_VOZ="Felipe (Aprimorada)" (voz do anúncio; SUBIR_VOZ_PPM=230 é a velocidade em palavras por minuto; aceita também "Felipe" ou "Felipe (Enhanced)"; sem isto usa a voz do sistema).
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR" || exit 1
@@ -119,8 +119,10 @@ avisar() {  # $1 = texto curto para a notificação e a voz
     command -v osascript > /dev/null 2>&1 && osascript -e "display notification \"$1\" with title \"Heimdall-ai\"" > /dev/null 2>&1
     if command -v say > /dev/null 2>&1; then
         [ -z "${VOZ_ESCOLHIDA:-}" ] && { escolher_voz; VOZ_ESCOLHIDA=1; }
-        if [ -n "$VOZ_SUBIR" ]; then say -v "$VOZ_SUBIR" "Heimdall. $1" > /dev/null 2>&1 &
-        else say "Heimdall. $1" > /dev/null 2>&1 &
+        local fala="Heimdall. $1"
+        command -v python3 > /dev/null 2>&1 && fala=$(python3 "$PROJECT_DIR/heimdall_voz.py" "$fala" 2> /dev/null || printf '%s' "$fala")   # dicionário de pronúncia (pronuncias.txt)
+        if [ -n "$VOZ_SUBIR" ]; then say -v "$VOZ_SUBIR" -r "${SUBIR_VOZ_PPM:-230}" "$fala" > /dev/null 2>&1 &
+        else say -r "${SUBIR_VOZ_PPM:-230}" "$fala" > /dev/null 2>&1 &
         fi
     fi
 }

@@ -1,0 +1,6 @@
+# Dicionário de pronúncia do Heimdall. Formato:  palavra = como falar
+# Vale para o anúncio do subir.sh e para o áudio das notas. As suas entradas ficam em pronuncias.local.txt (não sobem para o GitHub).
+Heimdall-ai = Háimdal A I
+Heimdall = Háimdal
+LiteLLM = Lait é-le-le-ême
+n8n = ene oito ene

@@ -57,6 +57,7 @@ from urllib.parse import parse_qs, urlparse
 import heimdall_backup as backup
 import heimdall_banco as banco
 import heimdall_triagem as triagem
+import heimdall_voz as dicionario_voz
 
 PROJECT_DIR = Path(__file__).resolve().parent
 HOST = os.environ.get("HEIMDALL_AGENTE_HOST", "127.0.0.1")
@@ -693,7 +694,7 @@ def fazer_audio(titulo: str, texto: str, destino: Path):
         if base.resolve().parent != pasta_audio.resolve():
             return None, "caminho inválido"
         with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
-            f.write(re.sub(r"https?://\S+", " ", texto)[:12000])
+            f.write(dicionario_voz.aplicar(re.sub(r"https?://\S+", " ", texto)[:12000]))
             txt = f.name
         try:
             subprocess.run(["say", "-v", voz, "-r", str(palavras_por_minuto()), "-o", str(base) + ".aiff", "-f", txt], check=True, timeout=240, capture_output=True)

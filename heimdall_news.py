@@ -1162,6 +1162,29 @@ def copiar(qual: str) -> None:
     sys.exit("Não achei esse feed. Use geral, opml ou o nome de uma categoria: " + ", ".join(a for a, _, _ in urls_dos_feeds()))
 
 
+def mostrar_fila() -> None:
+    """Resumo da fila de resumos por IA (janela de 24 h), para acompanhar sem abrir o banco."""
+    corte = iso(agora() - timedelta(hours=JANELA_HORAS))
+    con = banco.conectar(somente_leitura=True)
+    try:
+        t, mat, tre, sem, fila = con.execute(
+            "SELECT COUNT(*), COALESCE(SUM(resumo_base='materia'),0), COALESCE(SUM(resumo_base='trecho'),0), COALESCE(SUM(resumo_base='sem'),0), "
+            "COALESCE(SUM(resumo_base='' AND tentativas < ?),0) FROM noticias WHERE publicado >= ?", (MAX_TENTATIVAS, corte)).fetchone()
+        porfonte = con.execute(
+            "SELECT fonte, COUNT(*) FROM noticias WHERE resumo_base='' AND tentativas < ? AND publicado >= ? GROUP BY fonte ORDER BY 2 DESC", (MAX_TENTATIVAS, corte)).fetchall()
+        ultima = con.execute("SELECT MAX(coletado) FROM noticias").fetchone()[0]
+    finally:
+        con.close()
+    print(f"Notícias das últimas {JANELA_HORAS} horas: {t}")
+    print(f"Resumidas a partir da matéria: {mat}. Resumidas a partir do trecho do feed: {tre}. Sem resumo (desistência): {sem}.")
+    print(f"Na fila esperando resumo: {fila}")
+    for nome, n in porfonte:
+        print(f"  {n} de {nome}")
+    if fila:
+        print(f"Ritmo: até {RESUMOS_POR_CICLO} por atualização, a cada {INTERVALO_MIN} minutos; a fila anda da notícia mais nova para a mais antiga (cerca de {-(-fila // max(1, RESUMOS_POR_CICLO)) * INTERVALO_MIN} minutos para esvaziar).")
+    print(f"Última notícia coletada: {ultima or 'nenhuma'}")
+
+
 def salvar_opml(arquivo: str) -> None:
     if not RSS_TOKEN:
         sys.exit("Ainda não há chave dos feeds. Rode: python3 heimdall_news.py --token")
@@ -1179,6 +1202,7 @@ def main() -> None:
     ap.add_argument("--urls", action="store_true", help="mostra os endereços dos feeds")
     ap.add_argument("--copiar", metavar="FEED", help="copia o endereço de um feed (geral, opml ou categoria) para a área de transferência")
     ap.add_argument("--opml", nargs="?", const="heimdall-news.opml", metavar="ARQUIVO", help="grava um arquivo OPML com todos os feeds (padrão: heimdall-news.opml)")
+    ap.add_argument("--fila", action="store_true", help="mostra quantas notícias esperam resumo de IA e quanto falta")
     ap.add_argument("--uma-vez", action="store_true", help="faz só uma atualização agora e sai")
     a = ap.parse_args()
     banco.iniciar()   # garante a tabela noticias mesmo antes da primeira subida
@@ -1198,6 +1222,9 @@ def main() -> None:
         return
     if a.copiar:
         copiar(a.copiar)
+        return
+    if a.fila:
+        mostrar_fila()
         return
     if a.opml:
         salvar_opml(a.opml)

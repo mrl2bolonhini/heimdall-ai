@@ -24,3 +24,6 @@ logs/
 
 # Arquivo OPML dos feeds do News (leva a chave secreta nos endereços)
 *.opml
+
+# Suas entradas do dicionário de pronúncia
+pronuncias.local.txt
