@@ -588,7 +588,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. O endereço já existe no túnel; o site continua privado, pois exige a senha e o código de 6 dígitos.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que mostra</h2>
 <ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com os botões Anterior e Próxima.</li>
-<li><strong>Cada notícia</strong>: título como cabeçalho, o resumo marcado como "Resumo feito por IA" (quando só havia o trecho do feed, isso é dito), o link "Leia mais sobre ..." para a matéria original, que abre em uma nova aba (o leitor de tela avisa), e a fonte, a categoria e a hora.</li>
+<li><strong>Cada notícia</strong>: título como cabeçalho, o resumo sempre marcado como "Resumo feito por IA", o link "Leia mais sobre ..." para a matéria original, que abre em uma nova aba (o leitor de tela avisa), e a fonte, a categoria e a hora.</li>
 <li><strong>Títulos em inglês</strong> são traduzidos por IA e sinalizados. Matérias ainda sem resumo mostram o trecho original da fonte, e o resumo entra na atualização seguinte.</li>
 <li><strong>Categorias</strong>: filtro por categoria, com a contagem de cada uma.</li>
 <li><strong>Estado das fontes</strong>: mostra a última atualização, a fila de resumos e cada fonte (ok ou falhou desde quando, avisando se passar de 24 horas fora do ar).</li></ul></section>

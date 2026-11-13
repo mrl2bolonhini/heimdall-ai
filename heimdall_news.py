@@ -778,9 +778,7 @@ def pg_entrar(erro: str = "") -> bytes:
 
 
 def rotulo_ia(base: str) -> str:
-    if base == "materia":
-        return "Resumo feito por IA"
-    return "Resumo feito por IA, só a partir do trecho que a fonte publica"
+    return "Resumo feito por IA"   # igual para todos; a base (matéria ou trecho do feed) fica só no banco, na coluna resumo_base
 
 
 def item_html(n: dict) -> str:

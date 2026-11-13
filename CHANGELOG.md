@@ -7,6 +7,9 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Novo python3 heimdall_news.py --opml [arquivo]: grava um arquivo OPML com todos os feeds (padrão heimdall-news.opml, permissão 600). Ele leva a chave secreta nos endereços; importe no app de feeds e apague o arquivo.
 - Para aplicar: git fetch e reset do repositório; não precisa reiniciar para o endereço, só para o comando novo (que roda direto).
 
+## 2026-11-13 - News: rótulo do resumo simplificado
+- O resumo passa a ser marcado sempre como "Resumo feito por IA:", sem o complemento sobre o trecho da fonte. No banco, a coluna resumo_base continua dizendo se foi lido a matéria ou só o trecho do feed.
+
 ## 2026-11-13 - News: paginação com botões
 - Anterior e Próxima deixam de ser links e viram botões (mantendo a categoria escolhida). Não precisa instalador: git fetch e reset do repositório e ./subir.sh --reiniciar.
 
