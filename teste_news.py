@@ -372,7 +372,7 @@ confere("saúde", s == 200 and c == b"ok")
 s, _, _ = req("POST", "/entrar", urlencode({"senha": "errada", "codigo": codigo(passo)}))
 confere("senha errada recusada", s == 401)
 s, hd, _ = req("POST", "/entrar", urlencode({"senha": SENHA, "codigo": codigo(passo)}))
-confere("login correto", s == 303 and "hnews=" in hd.get("set-cookie", "") and "HttpOnly" in hd["set-cookie"] and "SameSite=Strict" in hd["set-cookie"])
+confere("login correto", s == 303 and "heimdall_sessao=" in hd.get("set-cookie", "") and "HttpOnly" in hd["set-cookie"] and "SameSite=Strict" in hd["set-cookie"])
 ck = hd["set-cookie"].split(";")[0]
 s, _, _ = req("POST", "/entrar", urlencode({"senha": SENHA, "codigo": codigo(passo)}))
 confere("código não reaproveitável", s == 401)

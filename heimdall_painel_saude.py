@@ -65,7 +65,7 @@ try:
 except ValueError:
     PORT = 8013
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_SAUDE_PAINEL_HOSTS", "health.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
-COOKIE = "hsaude"
+COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 PERIODOS = (7, 14, 30, 90, 180, 365)
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 
@@ -315,10 +315,7 @@ class Painel(BaseHTTPRequestHandler):
         return token, nuvem.sessao_valida(token)
 
     def _cookie(self, token: str, apagar: bool = False) -> tuple:
-        v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else nuvem.SESSAO_SEG}"
-        if self._https():
-            v += "; Secure"
-        return ("Set-Cookie", v)
+        return nuvem.cabecalho_cookie(token, self.headers.get("Host", ""), self._https(), apagar)
 
     def do_GET(self):  # noqa: N802
         self._despachar("GET")
@@ -357,8 +354,7 @@ class Painel(BaseHTTPRequestHandler):
                 if not secrets.compare_digest(campos.get("csrf", ""), sess["csrf"]):
                     self._enviar(403, pagina("Pedido recusado", "<p>Token de segurança inválido. Volte e tente de novo.</p>", sess))
                     return
-                with nuvem._lock:
-                    nuvem._sessoes.pop(token, None)
+                nuvem.encerrar_sessao(token)
                 self._ir("/entrar", [self._cookie("", apagar=True)])
                 return
             funcao = ROTAS.get(rota)

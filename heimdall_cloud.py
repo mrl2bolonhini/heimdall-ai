@@ -88,7 +88,8 @@ SESSAO_SEG = int(float(os.environ.get("HEIMDALL_CLOUD_SESSAO_HORAS", "8")) * 360
 OCIOSA_SEG = 2 * 3600  # sem usar por 2 horas, a sessão cai
 MAX_ENVIO = int(float(os.environ.get("HEIMDALL_CLOUD_MAX_MB", "50")) * 1024 * 1024)
 ITERACOES = 600_000
-COOKIE = "hcloud"
+COOKIE = "heimdall_sessao"  # o mesmo nome nos quatro serviços (Cloud, Notas, News e Saúde)
+COOKIE_DOMINIO = os.environ.get("HEIMDALL_COOKIE_DOMINIO", "heimdall-ai.tech").strip().lstrip(".").lower()
 
 _lock = threading.Lock()
 
@@ -195,27 +196,77 @@ def registrar_falha(ip: str) -> None:
                 _falhas_ip.pop(k, None)
 
 
+def _chave_sessao() -> bytes:
+    """Chave que assina as sessões. Sai da senha e da chave do código gravadas no .env: trocar qualquer uma derruba todas as sessões."""
+    return hashlib.sha256(("heimdall-sessao-v1\0" + SENHA_HASH + "\0" + TOTP_SEGREDO).encode("utf-8")).digest()
+
+
+def _assinar(texto: str) -> str:
+    return hmac.new(_chave_sessao(), texto.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+_revogadas = {}  # assinaturas de sessões encerradas neste processo (o cookie também é apagado no navegador)
+
+
+def _dados_da_sessao(token: str, agora: float):
+    """Valida um token assinado (v1.validade.sorteio.assinatura). Devolve a validade ou None."""
+    partes = (token or "").split(".")
+    if len(partes) != 4 or partes[0] != "v1" or not SENHA_HASH or not TOTP_SEGREDO:
+        return None
+    try:
+        ate = int(partes[1])
+    except ValueError:
+        return None
+    if agora > ate or not hmac.compare_digest(_assinar(".".join(partes[:3])), partes[3]):
+        return None
+    if partes[3] in _revogadas:
+        return None
+    return ate
+
+
 def nova_sessao() -> tuple:
-    token = secrets.token_urlsafe(32)
+    """Sessão assinada, sem estado no servidor: qualquer um dos quatro serviços a reconhece (o cookie vale para o domínio todo)."""
     agora = time.time()
-    with _lock:
-        for t in [t for t, s in _sessoes.items() if agora > s["ate"] or agora - s["ultimo"] > OCIOSA_SEG]:
-            _sessoes.pop(t, None)
-        _sessoes[token] = {"csrf": secrets.token_urlsafe(24), "ate": agora + SESSAO_SEG, "ultimo": agora, "flash": None}
-        return token, _sessoes[token]
+    ate = int(agora + SESSAO_SEG)
+    base = f"v1.{ate}.{secrets.token_urlsafe(12)}"
+    token = f"{base}.{_assinar(base)}"
+    return token, sessao_valida(token)
 
 
 def sessao_valida(token: str):
     agora = time.time()
+    ate = _dados_da_sessao(token, agora)
+    if ate is None:
+        return None
     with _lock:
-        s = _sessoes.get(token or "")
-        if not s:
-            return None
-        if agora > s["ate"] or agora - s["ultimo"] > OCIOSA_SEG:
-            _sessoes.pop(token, None)
-            return None
+        for t in [t for t, s in _sessoes.items() if agora > s["ate"]]:
+            _sessoes.pop(t, None)
+        s = _sessoes.get(token)
+        if s is None:
+            s = _sessoes[token] = {"csrf": _assinar("csrf\0" + token)[:32], "ate": ate, "ultimo": agora, "flash": None}
         s["ultimo"] = agora
         return s
+
+
+def encerrar_sessao(token: str) -> None:
+    partes = (token or "").split(".")
+    with _lock:
+        _sessoes.pop(token, None)
+        if len(partes) == 4:
+            if len(_revogadas) > 5000:
+                _revogadas.clear()
+            _revogadas[partes[3]] = True
+
+
+def cabecalho_cookie(token: str, host: str, https: bool, apagar: bool = False) -> tuple:
+    """Set-Cookie da sessão. Em *.heimdall-ai.tech vale para todos os subdomínios; em localhost fica só naquele endereço."""
+    v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else SESSAO_SEG}"
+    h = (host or "").split(":")[0].strip().lower()
+    if COOKIE_DOMINIO and (h == COOKIE_DOMINIO or h.endswith("." + COOKIE_DOMINIO)):
+        v += f"; Domain={COOKIE_DOMINIO}"
+    if https:
+        v += "; Secure"
+    return ("Set-Cookie", v)
 
 
 # ----------------------------------------------------------------------------------------
@@ -780,10 +831,7 @@ class Painel(BaseHTTPRequestHandler):
         return self.rfile.read(n)
 
     def _cookie(self, token: str, apagar: bool = False) -> tuple:
-        v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else SESSAO_SEG}"
-        if self._https():
-            v += "; Secure"
-        return ("Set-Cookie", v)
+        return cabecalho_cookie(token, self.headers.get("Host", ""), self._https(), apagar)
 
     # --- despacho ---
     def do_GET(self):  # noqa: N802
@@ -906,8 +954,7 @@ class Painel(BaseHTTPRequestHandler):
         if not hmac.compare_digest(campos.get("csrf", ""), sess["csrf"]):
             raise ErroPainel("sessão expirada ou pedido inválido; recarregue a página")
         if rota == "/sair":
-            with _lock:
-                _sessoes.pop(token, None)
+            encerrar_sessao(token)
             self._ir("/entrar", [self._cookie("", apagar=True)])
             return
         voltar = "/"

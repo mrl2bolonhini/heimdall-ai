@@ -137,7 +137,7 @@ confere("senha errada recusada", s == 401)
 s, _, c = req("POST", "/entrar", urlencode({"senha": SENHA, "codigo": "000000"}))
 confere("código errado recusado", s == 401)
 s, h, c = req("POST", "/entrar", urlencode({"senha": SENHA, "codigo": codigo(agora)}))
-confere("login correto", s == 303 and "hbib=" in h.get("set-cookie", "") and "HttpOnly" in h["set-cookie"] and "SameSite=Strict" in h["set-cookie"])
+confere("login correto", s == 303 and "heimdall_sessao=" in h.get("set-cookie", "") and "HttpOnly" in h["set-cookie"] and "SameSite=Strict" in h["set-cookie"])
 ck = h["set-cookie"].split(";")[0]
 s, _, c = req("POST", "/entrar", urlencode({"senha": SENHA, "codigo": codigo(agora)}))
 confere("código não pode ser reaproveitado", s == 401)

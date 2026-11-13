@@ -205,7 +205,7 @@ confere("senha certa com código errado é recusado", st == 401)
 cod = codigo_agora()
 st, hd, _ = req("POST", "/entrar", form(senha="uma frase longa e boa", codigo=cod))
 cookie = hd.get("set-cookie", "").split(";")[0]
-confere("login certo entra e define cookie seguro", st == 303 and cookie.startswith("hcloud=") and "HttpOnly" in hd["set-cookie"] and "SameSite=Strict" in hd["set-cookie"])
+confere("login certo entra e define cookie seguro", st == 303 and cookie.startswith("heimdall_sessao=") and "HttpOnly" in hd["set-cookie"] and "SameSite=Strict" in hd["set-cookie"])
 st, _, _ = req("POST", "/entrar", form(senha="uma frase longa e boa", codigo=cod))
 confere("o mesmo código não pode ser reaproveitado", st == 401)
 
@@ -367,6 +367,34 @@ out, err = _rodar("senha", ["uma frase bem longa 123", "diferente de tudo aqui 9
 confere("senhas diferentes são recusadas sem gravar", err is not None and _env() == e3)
 confere("env com permissão 600", oct((_dir / ".env").stat().st_mode & 0o777) == "0o600")
 hc.PROJECT_DIR, _gp.getpass = _orig
+
+# ---- sessão compartilhada entre os quatro serviços ----
+print("\nSessão compartilhada")
+tk, ss = hc.nova_sessao()
+confere("token assinado no formato v1.validade.sorteio.assinatura", tk.startswith("v1.") and tk.count(".") == 3 and ss is not None)
+confere("o token vale em qualquer serviço (mesma verificação)", hc.sessao_valida(tk) is not None and hc.sessao_valida(tk)["csrf"] == ss["csrf"])
+confere("token adulterado é recusado", hc.sessao_valida(tk[:-1] + ("0" if tk[-1] != "0" else "1")) is None and hc.sessao_valida(tk.replace("v1.", "v1.9", 1)) is None)
+confere("token vazio ou lixo é recusado", hc.sessao_valida("") is None and hc.sessao_valida("a.b.c.d") is None and hc.sessao_valida(None) is None)
+_antes = hc.SESSAO_SEG
+hc.SESSAO_SEG = -5
+tv, _ = hc.nova_sessao()
+hc.SESSAO_SEG = _antes
+confere("sessão vencida é recusada", hc.sessao_valida(tv) is None)
+_hash0 = hc.SENHA_HASH
+hc.SENHA_HASH = _hash0 + "x"
+confere("trocar a senha derruba as sessões antigas", hc.sessao_valida(tk) is None)
+hc.SENHA_HASH = _hash0
+confere("voltando ao valor, a sessão volta a valer (a chave sai do .env)", hc.sessao_valida(tk) is not None)
+hc.encerrar_sessao(tk)
+confere("sair encerra a sessão", hc.sessao_valida(tk) is None)
+k1 = hc.cabecalho_cookie("T", "notes.heimdall-ai.tech", True)[1]
+confere("em *.heimdall-ai.tech o cookie vale para o domínio todo, seguro", "Domain=heimdall-ai.tech" in k1 and "Secure" in k1 and "HttpOnly" in k1 and "SameSite=Strict" in k1 and k1.startswith("heimdall_sessao=T;"))
+k2 = hc.cabecalho_cookie("T", "localhost:8011", False)[1]
+confere("em localhost o cookie não leva Domain", "Domain" not in k2 and "Secure" not in k2)
+k3 = hc.cabecalho_cookie("T", "evil-heimdall-ai.tech", True)[1]
+confere("domínio parecido não ganha Domain", "Domain" not in k3)
+k4 = hc.cabecalho_cookie("", "news.heimdall-ai.tech", True, apagar=True)[1]
+confere("apagar o cookie usa o mesmo Domain e Max-Age=0", "Domain=heimdall-ai.tech" in k4 and "Max-Age=0" in k4)
 
 srv.shutdown()
 print("\n" + ("Tudo certo." if not falhas else f"{falhas} teste(s) falharam."))

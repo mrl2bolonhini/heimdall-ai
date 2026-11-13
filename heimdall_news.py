@@ -113,7 +113,7 @@ JANELA_HORAS = 24
 POR_PAGINA = 10
 MAX_TENTATIVAS = 3
 ESPERA_RSS_MIN = 120   # no RSS, matéria sem resumo só entra depois de esperar isto (o leitor de feeds não atualiza item já baixado)
-COOKIE = "hnews"
+COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 RSS_TOKEN = os.environ.get("HEIMDALL_NEWS_RSS_TOKEN", "")
 PAUSA = os.environ.get("HEIMDALL_NEWS_PAUSA", "").strip()
 COLETAR = os.environ.get("HEIMDALL_NEWS_COLETAR", "1") != "0"
@@ -1014,10 +1014,7 @@ class News(BaseHTTPRequestHandler):
         return token, nuvem.sessao_valida(token)
 
     def _cookie(self, token: str, apagar: bool = False) -> tuple:
-        v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else nuvem.SESSAO_SEG}"
-        if self._https():
-            v += "; Secure"
-        return ("Set-Cookie", v)
+        return nuvem.cabecalho_cookie(token, self.headers.get("Host", ""), self._https(), apagar)
 
     def do_GET(self):  # noqa: N802
         self._despachar("GET")
@@ -1059,8 +1056,7 @@ class News(BaseHTTPRequestHandler):
                 if not secrets.compare_digest(campos.get("csrf", ""), sess["csrf"]):
                     self._pagina(403, "Pedido recusado", "<p>Token de segurança inválido. Volte e tente de novo.</p>", sess)
                     return
-                with nuvem._lock:
-                    nuvem._sessoes.pop(token, None)
+                nuvem.encerrar_sessao(token)
                 self._ir("/entrar", [self._cookie("", apagar=True)])
                 return
             self._get(rota, q, sess)

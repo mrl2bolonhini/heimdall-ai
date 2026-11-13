@@ -572,6 +572,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Entrada com senha (guardada só como hash PBKDF2) e código de 6 dígitos (TOTP), que não pode ser reaproveitado.</li>
 <li>Limite de tentativas por endereço e global, com bloqueio de 15 minutos.</li>
 <li>Sessão em cookie HttpOnly e SameSite=Strict, com validade, e token contra CSRF nos formulários.</li>
+<li>A sessão é única para Cloud, Notas, News e Saúde: entrando em um, os outros três já reconhecem você (o cookie vale para *.heimdall-ai.tech e é assinado com uma chave que sai da senha e da chave do código). Sair em um sai em todos; trocar a senha ou o código derruba todas as sessões. Em localhost a sessão fica só no endereço aberto.</li>
 <li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
 <li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>HEIMDALL_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>

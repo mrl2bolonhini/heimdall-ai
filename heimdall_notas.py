@@ -79,7 +79,7 @@ PORT = int(os.environ.get("HEIMDALL_NOTAS_PORT", "8011"))
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_NOTAS_HOSTS", "notes.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(PROJECT_DIR / "cerebro"))).expanduser()
 KNOWLEDGE = Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
-COOKIE = "hbib"
+COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 NOMES = {"heimdall-privacidade": "Monitor de Privacidade", "heimdall-cerebro": "Second Brain", "saude": "Saúde", "heimdall-digest": "Digest"}
 EXT_NOTA = {".md", ".markdown", ".txt"}
 EXT_AUDIO = {".m4a", ".mp3"}
@@ -711,10 +711,7 @@ class Notas(BaseHTTPRequestHandler):
         return token, nuvem.sessao_valida(token)
 
     def _cookie(self, token: str, apagar: bool = False) -> tuple:
-        v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else nuvem.SESSAO_SEG}"
-        if self._https():
-            v += "; Secure"
-        return ("Set-Cookie", v)
+        return nuvem.cabecalho_cookie(token, self.headers.get("Host", ""), self._https(), apagar)
 
     def do_GET(self):  # noqa: N802
         self._despachar("GET")
@@ -753,8 +750,7 @@ class Notas(BaseHTTPRequestHandler):
                 if not secrets.compare_digest(campos.get("csrf", ""), sess["csrf"]):
                     self._pagina(403, "Pedido recusado", "<p>Token de segurança inválido. Volte e tente de novo.</p>", sess)
                     return
-                with nuvem._lock:
-                    nuvem._sessoes.pop(token, None)
+                nuvem.encerrar_sessao(token)
                 self._ir("/entrar", [self._cookie("", apagar=True)])
                 return
             self._get(rota, q, sess)
