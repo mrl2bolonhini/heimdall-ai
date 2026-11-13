@@ -12,6 +12,7 @@ Este README é mantido junto com o código. As tabelas entre marcadores `AUTO` s
 2. Automações: https://flows.heimdall-ai.tech (login do administrador).
 3. Status: https://status.heimdall-ai.tech (acesso restrito).
 4. Cloud: https://cloud.heimdall-ai.tech (painel do emulador de AWS; senha e código de 6 dígitos).
+4b. Saúde: https://health.heimdall-ai.tech (painel de saúde, somente leitura; senha e código de 6 dígitos).
 5. Documentação: https://heimdall-ai.tech (página do Cloud: https://heimdall-ai.tech/cloud.html)
 
 Contato: suporte@heimdall-ai.tech e https://www.linkedin.com/in/murillobolonhinicita
@@ -51,6 +52,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
 | Heimdall Notas | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
+| Heimdall Saúde | 8013 | Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Cloud | 8010 | Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
 <!-- /AUTO:SERVICOS -->
 
@@ -168,7 +170,7 @@ Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e
 | alerta de saúde do Mac | a cada 1 hora(s) | Lê as métricas do Mac pelo MCP e avisa quando RAM, swap ou disco passam dos limites configurados. |
 | relatório diário de disponibilidade | todo dia às 5h45 | Lê a página de status do Uptime Kuma, monta o relatório de disponibilidade do dia e avisa no iPhone. |
 | GitOps inteligente (auditor e refatorador) | a cada git push (webhook) | A cada git push, divide o código alterado em trechos de até 5 mil caracteres, analisa os trechos tocados pelo commit com o modelo de código (um de cada vez, para poupar memória), que responde com edições pontuais validadas uma a uma, e abre um Pull Request em rascunho com as refatorações sugeridas. Se o GitHub recusar o PR, apaga a branch para não deixar lixo e avisa com o motivo e o resumo dos achados. Sempre avisa o resultado, inclusive quando não há nada a refatorar. |
-| digest hiperpersonalizado (7h45 e 18h) | cron 45 7 * * * | Lê feeds de notícias, filtra pelo que interessa, cruza com as notas e os livros e grava um resumo personalizado no app Notas. |
+| digest hiperpersonalizado (7h45 e 18h) | cron 45 7 * * * | Lê feeds de notícias, filtra pelo que interessa, cruza com as notas e os livros e grava um resumo personalizado no app Notas. Não avisa pelo Bark: as notícias chegam pelo Heimdall News e pelos feeds RSS. |
 | Second Brain (notas, conexões e lacunas) | a cada 5 minutos | Observa as notas alteradas do app Notas (nunca as de pastas privadas), cria embeddings, encontra conexões e lacunas e grava a análise na pasta Cérebro. |
 | aviso de falha | quando outro fluxo falha | Quando qualquer fluxo falha, avisa no iPhone qual fluxo, em que etapa e por quê. Fluxos nunca falham em silêncio. |
 | monitor de privacidade (diário) | cron 45 9 * * * | Pesquisa na web os identificadores pessoais configurados pelo dono (nome, e-mails, usuários) em busca de menções, comentários, vazamentos e imagens, separa homônimos, analisa o risco e grava o relatório. Tem memória: só avisa o que é novo. |
@@ -179,7 +181,7 @@ Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e
 | monitor de saúde (resumo das 5h50) | todo dia às 5h50 | Recebe os dados do app Saúde (iPhone e Apple Watch) e escreve às 5h50 um resumo de sono, pulso, variabilidade, respiração e atividade contra a média de 30 dias. As regras decidem o que é relevante, o modelo só redige e uma verificação barra texto com sentido trocado. |
 | triagem de avisos (insistência a cada 15 minutos) | cron */15 * * * * | A cada 15 minutos chama o agente do Mac, que lê a lista "Heimdall: Triagem" do app Lembretes, registra o que você concluiu, reclassificou ou adiou e insiste pelo Bark nos itens pendentes: a cada 2 horas das 7h às 21h, a cada 8 horas se você marcar prioridade baixa, e furando o modo silencioso nos itens críticos. Menções do Diário da Justiça viram críticas depois de 24 horas sem ação. |
 | cópia de segurança do banco (diária) e verificação (semanal) | cron 30 3 * * * | Todo dia às 3h30 pede ao agente do Mac uma cópia do banco pessoal, criptografada com senha, enviada a uma pasta (iCloud Drive) e ao Cloudflare R2 quando configurado, mantendo as 14 mais recentes e uma por mês. Aos domingos, às 4h, baixa a cópia mais recente, decifra e confere a integridade. Qualquer falha aciona o aviso de falha pelo Bark. |
-| relatório de saúde da semana (Notas e Bark, domingo) | cron 3 9 * * 0 | (descrição pendente) |
+| relatório de saúde da semana (Notas e Bark, domingo) | cron 3 9 * * 0 | Todo domingo às 9h pede ao agente do Mac o relatório de saúde da semana, que grava na pasta Saúde do app Notas, com áudio, e avisa pelo Bark com uma frase sem números. Tem botão para gerar na hora. |
 <!-- /AUTO:FLUXOS -->
 
 Resumos agrupados: os avisos de rotina saem em três notificações por dia (6h, 8h e 10h) pelo fluxo "Resumo agrupado" (webhook `heimdall-resumo`); falhas, GitOps, alerta do Mac e o estudo continuam na hora. O "Monitor de saúde" (webhook `heimdall-saude`, resumo às 5h50) recebe os dados do Health Auto Export; as regras decidem o que é relevante e o modelo só redige.

@@ -383,36 +383,6 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "enviaraoiphone496",
-      "name": "Enviar ao iPhone",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        4160,
-        0
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "http://localhost:5678/webhook/heimdall-resumo",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ slot: Number($('Montar Markdown').first().json.hh) < 12 ? 'manha2' : 'direto', titulo: 'Digest das ' + $('Montar Markdown').first().json.hh + 'h', linha: String($('Montar Markdown').first().json.bark).slice(0, 700) }) }}",
-        "options": {
-          "timeout": 30000
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
       "id": "executaragora387",
       "name": "Executar agora",
       "type": "n8n-nodes-base.manualTrigger",
@@ -584,17 +554,6 @@
         [
           {
             "node": "Gravar no Notas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gravar no Notas": {
-      "main": [
-        [
-          {
-            "node": "Enviar ao iPhone",
             "type": "main",
             "index": 0
           }

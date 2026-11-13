@@ -87,6 +87,7 @@ montar_lista() {
         case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Heimdall Cloud|http|http://127.0.0.1:${HEIMDALL_CLOUD_PORT:-8010}/saude") ;; esac
         LISTA+=("Heimdall Notas|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")
         LISTA+=("Heimdall News|http|http://127.0.0.1:${HEIMDALL_NEWS_PORT:-8012}/saude")
+        LISTA+=("Heimdall Saúde|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
     fi
 }
 

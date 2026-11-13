@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Instala no n8n as três automações avançadas da pasta n8n_flows_avancados/:
 #   6. GitOps inteligente   (webhook de git push -> análise com deepseek -> branch + PR em rascunho no GitHub)
-#   7. Digest hiperpersonalizado (8h e 18h -> feeds -> triagem -> "por que importa para mim" -> Notas + Bark)
+#   7. Digest hiperpersonalizado (8h e 18h -> feeds -> triagem -> "por que importa para mim" -> Notas; sem aviso no Bark, quem avisa é o Heimdall News)
 #   8. Second Brain         (app Notas -> conceitos, tags, conexões e lacunas -> nota espelho + base vetorial)
 #
 # Uso, na pasta do projeto, com o n8n no ar (start_heimdall.sh com --n8n ou HEIMDALL_N8N=1):

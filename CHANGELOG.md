@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Painel de saúde (health.heimdall-ai.tech) e Digest sem aviso no Bark
+- Novo serviço heimdall_painel_saude.py (porta 8013): painel somente de leitura com visão geral (como você está agora e tendências), semana, sono, atividade, recuperação, coração e ECG, treinos, sintomas/humor/medicamentos, diário em tabela e o estado dos dados, que mostra há quantos dias cada tipo de dado não chega (útil para saber se a exportação contínua do iPhone parou). Período selecionável (7 a 365 dias). Sem gráficos: texto e tabelas, bons para leitor de tela.
+- Mesmo login do Heimdall Cloud (senha e código de 6 dígitos), escuta só em 127.0.0.1, sessão HttpOnly, limite de tentativas, só atende os sites permitidos. Nunca mostra rota de treino nem forma de onda do ECG. Sobe sozinho no ./subir.sh --reiniciar.
+- O fluxo do Digest deixou de avisar pelo Bark (o nó "Enviar ao iPhone" foi removido). A nota continua sendo gravada no app Notas; as notícias chegam pelo Heimdall News e pelos feeds RSS.
+- Para aplicar: git fetch e reset do repositório, ./instalar_automacoes_avancadas.sh (atualiza o Digest no n8n) e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Relatório de saúde semanal (Notas e Bark)
 - Todo domingo às 9h o n8n pede ao agente do Mac o relatório da semana (POST /saude/relatorio-semanal). O agente grava a nota "Saúde: semana de DD/MM a DD/MM/AAAA" na pasta Saúde do app Notas, com áudio (mesma voz e dicionário de pronúncia das outras notas), e manda um aviso pelo Bark.
 - O aviso do Bark leva só uma frase qualitativa (por exemplo, se o sono saiu do seu padrão), sem números de saúde, porque o aviso passa pelo servidor do Bark. Os números ficam na nota.

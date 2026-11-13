@@ -1223,8 +1223,12 @@ def _artigo(i: int) -> str:
 _SONO_MIN = 180  # menos de 3 h costuma ser relógio tirado da cama ou registro cortado, não uma noite de verdade
 
 
+def _serie_bruta(metrica: str, de: str) -> dict:
+    return {r["dia"]: r["valor"] for r in _ler("SELECT dia, valor FROM saude_diaria WHERE metrica = ? AND dia >= ? ORDER BY dia", (metrica, de))}
+
+
 def _serie(metrica: str, de: str) -> dict:
-    d = {r["dia"]: r["valor"] for r in _ler("SELECT dia, valor FROM saude_diaria WHERE metrica = ? AND dia >= ? ORDER BY dia", (metrica, de))}
+    d = _serie_bruta(metrica, de)
     if metrica == "sono_total":
         d = {k: v for k, v in d.items() if v >= _SONO_MIN}
     return d

@@ -46,6 +46,7 @@ AGENTE_PORT="${HEIMDALL_AGENTE_PORT:-8003}"
 CLOUD_PORT="${HEIMDALL_CLOUD_PORT:-8010}"
 NOTAS_PORT="${HEIMDALL_NOTAS_PORT:-8011}"
 NEWS_PORT="${HEIMDALL_NEWS_PORT:-8012}"
+SAUDE_PAINEL_PORT="${HEIMDALL_SAUDE_PAINEL_PORT:-8013}"
 LLM_PORT=9000
 WEBUI_PORT=3000
 
@@ -119,6 +120,7 @@ lsof -ti:$AGENTE_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$CLOUD_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NOTAS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NEWS_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$SAUDE_PAINEL_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LLM_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$MCP_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$PUBLIC_MCP_PORT | xargs kill -9 2>/dev/null
@@ -538,6 +540,24 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
         if [ -z "$HEIMDALL_NEWS_RSS_TOKEN" ]; then
             echo "     Feeds RSS desligados: rode  python3 heimdall_news.py --token  para criar a chave."
         fi
+    fi
+fi
+
+# --- Heimdall Saúde (painel com as análises do app Saúde, somente leitura): mesmo login do Heimdall Cloud ---
+# Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (health.heimdall-ai.tech).
+if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
+    if [ -f heimdall_painel_saude.py ]; then
+        HEIMDALL_SAUDE_PAINEL_PORT="$SAUDE_PAINEL_PORT" "$VENV_PYTHON" heimdall_painel_saude.py > "$(nova_log saude_painel_debug)" 2>&1 &
+        COUNTER=0
+        while ! nc -z localhost $SAUDE_PAINEL_PORT > /dev/null 2>&1; do
+            sleep 1
+            COUNTER=$((COUNTER+1))
+            if [ $COUNTER -gt 10 ]; then
+                echo "Aviso: o painel Heimdall Saúde não respondeu em 10s. Veja logs/saude_painel_debug.log."
+                break
+            fi
+        done
+        echo "     Heimdall Saúde (painel de saúde) em http://localhost:$SAUDE_PAINEL_PORT"
     fi
 fi
 
