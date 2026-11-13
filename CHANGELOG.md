@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Títulos das notas sem corte
+- No site Notas, o texto do link "Leia mais sobre ..." cortava o título em 45 caracteres e sempre acrescentava reticências, mesmo quando o título cabia. Agora o título aparece inteiro até 110 caracteres; acima disso, o corte é sempre num espaço, com reticências. A primeira frase usada para nomear notas genéricas passou de 90 para 140 caracteres.
+- No fluxo de estudo, o conceito (que vira o título da nota) era cortado em 80 caracteres no meio da palavra e o título em 150; agora o corte, se necessário, é no espaço (120 caracteres) e o título não é mais cortado. O pedido ao modelo agora diz "de 2 a 6 palavras completas, no máximo 80 caracteres".
+- Notas que já foram gravadas com título cortado continuam como estão no app Notas; o site mostra o título que está dentro do arquivo.
+- Para aplicar: git fetch e reset do repositório, ./instalar_automacoes_avancadas.sh (atualiza o fluxo de estudo) e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Seção "Hoje" no relatório, no painel e no chat
 - Nova seção "Hoje": o que já chegou de hoje (sono da noite, pulso em repouso, HRV, respiração, oxigênio, passos, exercício e energia até agora, frequência cardíaca por hora, treinos, ECG, sintomas e medicamentos), cada número comparado com o seu dia típico (mediana de 30 dias). Passos, exercício e energia avisam que o dia ainda não acabou.
 - Se nada de hoje chegou, ela diz isso, informa a data do último dado recebido e lembra que a exportação diária pode ainda não ter rodado. Se só parte chegou, lista o que falta.

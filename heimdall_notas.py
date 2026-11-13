@@ -211,7 +211,7 @@ def _data_br(texto: str, p: Path) -> str:
     return f"{m.group(3)}/{m.group(2)}/{m.group(1)}" if m else datetime.fromtimestamp(p.stat().st_mtime).strftime("%d/%m/%Y")
 
 
-def primeira_frase(corpo: str, maximo: int = 90) -> str:
+def primeira_frase(corpo: str, maximo: int = 140) -> str:
     """Primeira frase com texto de verdade, sem marcas de Markdown. Se for longa, corta numa vírgula ou num espaço."""
     for l in corpo.splitlines():
         t = re.sub(r"^\s*(#{1,6}\s+|[-*+>]\s+|\d+[.)]\s+)", "", l).strip()
@@ -487,11 +487,12 @@ def plural(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
 
-def inicio_do_titulo(titulo: str, limite: int = 45) -> str:
+def inicio_do_titulo(titulo: str, limite: int = 110) -> str:
+    """Título para o texto do link. Só corta títulos muito longos (sempre num espaço, nunca no meio da palavra) e só então põe reticências."""
     t = re.sub(r"\s+", " ", titulo).strip()
     if len(t) > limite:
         corte = t.rfind(" ", 0, limite)
-        t = t[:corte if corte >= limite // 2 else limite].rstrip(" ,;:.-")
+        t = t[:corte if corte >= limite // 2 else limite].rstrip(" ,;:.-") + "…"
     return t
 
 
@@ -499,7 +500,7 @@ def item_nota(chave: str, p: Path, titulo: str, mtime: float, audio: bool, mostr
     extra = " · com áudio" if audio else ""
     tema = f" · {e(mostrar_tema)}" if mostrar_tema else ""
     link = f"/nota?p={quote(chave)}&amp;n={quote(p.name)}"
-    return (f'<li><h3>{e(titulo)}</h3><a href="{link}">Leia mais sobre {e(inicio_do_titulo(titulo))}...</a>'
+    return (f'<li><h3>{e(titulo)}</h3><a href="{link}">Leia mais sobre {e(inicio_do_titulo(titulo))}</a>'
             f'<span class="meta">{datetime.fromtimestamp(mtime).strftime("%d/%m/%Y %H:%M")}{tema}{extra}</span></li>')
 
 
