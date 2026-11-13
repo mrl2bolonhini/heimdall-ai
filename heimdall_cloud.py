@@ -1098,7 +1098,7 @@ def novo_segredo_totp() -> str:
 
 def mostrar_segredo(segredo: str) -> None:
     grupos = " ".join(segredo[i:i + 4] for i in range(0, len(segredo), 4))
-    print("\nCódigo de verificação (TOTP). Cadastre no app Senhas da Apple:")
+    print("\nCódigo de verificação (TOTP). Cadastre no app Senhas da Apple (o item antigo, cloud.heimdall-ai.tech e notes.heimdall-ai.tech, deve ter a chave substituída):")
     print("1. Abra o app Senhas e crie (ou abra) o item cloud.heimdall-ai.tech.")
     print("2. Escolha adicionar código de verificação e depois inserir a chave de configuração (o nome exato do botão varia com a versão do sistema).")
     print("3. Digite a chave abaixo, que é de 6 dígitos, troca a cada 30 segundos e usa SHA-1:")
@@ -1120,7 +1120,7 @@ def definir_senha(so_codigo: bool) -> None:
     env_gravar(pares)
     print("Gravado no .env (permissão 600)." + (" Senha guardada só como hash." if not so_codigo else ""))
     mostrar_segredo(segredo)
-    print("\nReinicie o painel para valer: pkill -f heimdall_cloud.py e suba o sistema como de costume.")
+    print("\nEsta chave vale também para o Heimdall Notas (mesmo login). Para valer, reinicie tudo: ./subir.sh --reiniciar")
 
 
 def main() -> None:
