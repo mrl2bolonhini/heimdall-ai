@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Conferir senha e código sem navegador
+- `python3 heimdall_acesso.py --verificar` lê o .env, confere a senha digitada, mostra o código que o app deve exibir agora e diz se o código do app confere. Serve para achar se o problema é a gravação, a chave cadastrada no Senhas ou o relógio.
+
 ## 2026-11-13 - Site de documentação em dia
 - Nova página Saúde: de onde vêm os dados (importação e Health Auto Export), análises, páginas do painel, relatório semanal, privacidade e solução de problemas.
 - Início com os acessos de Notas, News e Saúde; mapa da arquitetura com o caminho dos dados de saúde, o banco pessoal e os painéis web, mais um texto que o descreve.
