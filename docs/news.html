@@ -36,7 +36,7 @@
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8012, depois de subir o sistema.</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Cloud e do Heimdall Notas.</li>
-<li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. Por enquanto ele fica privado: o endereço só é criado quando você autorizar.</li></ol></section>
+<li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. O endereço já existe no túnel; o site continua privado, pois exige a senha e o código de 6 dígitos.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que mostra</h2>
 <ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com os botões Anterior e Próxima.</li>
 <li><strong>Cada notícia</strong>: título como cabeçalho, o resumo marcado como "Resumo feito por IA" (quando só havia o trecho do feed, isso é dito), o link "Leia mais sobre ..." para a matéria original, que abre em uma nova aba (o leitor de tela avisa), e a fonte, a categoria e a hora.</li>
@@ -47,6 +47,7 @@
 <p>Tudo fica 30 dias na tabela noticias do banco pessoal (entra na cópia de segurança criptografada). O site mostra só as últimas 24 horas; o resto serve para consulta, pelo chat ou por SQL. Matérias com mais de 30 dias são apagadas sozinhas.</p></section>
 <section aria-labelledby="rss"><h2 id="rss">Feeds RSS para o iPhone</h2>
 <ol><li>Crie a chave: <code>python3 heimdall_news.py --token</code> e reinicie com <code>./subir.sh --reiniciar</code>. Isso mostra o endereço de um feed geral, de um feed por categoria e de um arquivo OPML que traz todos de uma vez.</li>
+<li>Se o app pedir um arquivo em vez de um endereço: <code>python3 heimdall_news.py --opml</code> grava <code>heimdall-news.opml</code> na pasta atual (com permissão 600). Ele leva a chave secreta dentro; importe no app e apague o arquivo.</li>
 <li>Para copiar um endereço sem digitar: <code>python3 heimdall_news.py --copiar geral</code> (ou <code>opml</code>, ou o nome de uma categoria). Depois cole no app de feeds; a área de transferência universal leva do Mac para o iPhone.</li>
 <li>Apps de feeds não digitam o código de 6 dígitos, por isso o endereço leva uma chave secreta. Quem tem o endereço lê os feeds; para trocar, rode o comando da chave de novo (os endereços antigos param de valer).</li>
 <li>O feed guarda 72 horas de notícias, cada item com o resumo de IA identificado. Matérias que ainda esperam o resumo só entram no feed depois de 2 horas, porque os apps de feeds não atualizam um item já baixado.</li></ol></section>

@@ -16,6 +16,7 @@ Chave dos feeds (troque quando quiser; os endereços antigos deixam de funcionar
     python3 heimdall_news.py --copiar geral   (ou opml, ou o nome da categoria) copia o endereço para a área de transferência
 
 Outros comandos:
+    python3 heimdall_news.py --opml [ARQUIVO]   grava um arquivo OPML com todos os feeds (padrão: heimdall-news.opml na pasta atual)
     python3 heimdall_news.py --uma-vez     faz só uma atualização agora, mostra o resultado e sai
 
 Segurança: escuta só em 127.0.0.1; o site exige senha forte + código de 6 dígitos; só nomes de site permitidos; somente leitura;
@@ -1132,12 +1133,23 @@ def copiar(qual: str) -> None:
     sys.exit("Não achei esse feed. Use geral, opml ou o nome de uma categoria: " + ", ".join(a for a, _, _ in urls_dos_feeds()))
 
 
+def salvar_opml(arquivo: str) -> None:
+    if not RSS_TOKEN:
+        sys.exit("Ainda não há chave dos feeds. Rode: python3 heimdall_news.py --token")
+    destino = Path(arquivo).expanduser()
+    destino.write_bytes(opml_xml())
+    os.chmod(destino, 0o600)
+    print(f"Arquivo gravado em {destino.resolve()} (permissão 600).")
+    print("Atenção: os endereços dentro dele levam a chave secreta dos feeds. Importe no app de feeds e apague o arquivo; não compartilhe.")
+
+
 def main() -> None:
     import argparse
     ap = argparse.ArgumentParser(description="Heimdall News: notícias com resumo de IA e feeds RSS")
     ap.add_argument("--token", action="store_true", help="gera (ou troca) a chave dos feeds RSS no .env e mostra os endereços")
     ap.add_argument("--urls", action="store_true", help="mostra os endereços dos feeds")
     ap.add_argument("--copiar", metavar="FEED", help="copia o endereço de um feed (geral, opml ou categoria) para a área de transferência")
+    ap.add_argument("--opml", nargs="?", const="heimdall-news.opml", metavar="ARQUIVO", help="grava um arquivo OPML com todos os feeds (padrão: heimdall-news.opml)")
     ap.add_argument("--uma-vez", action="store_true", help="faz só uma atualização agora e sai")
     a = ap.parse_args()
     banco.iniciar()   # garante a tabela noticias mesmo antes da primeira subida
@@ -1157,6 +1169,9 @@ def main() -> None:
         return
     if a.copiar:
         copiar(a.copiar)
+        return
+    if a.opml:
+        salvar_opml(a.opml)
         return
     if a.uma_vez:
         print(json.dumps(ciclo(), ensure_ascii=False))

@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - News: endereço news.heimdall-ai.tech e arquivo OPML
+- O endereço news.heimdall-ai.tech passou a existir no túnel Cloudflare, apontando para a porta 8012 (com o Mac ligado e o sistema no ar). O site continua protegido por senha e código de 6 dígitos, e os feeds RSS só respondem com a chave secreta.
+- Novo python3 heimdall_news.py --opml [arquivo]: grava um arquivo OPML com todos os feeds (padrão heimdall-news.opml, permissão 600). Ele leva a chave secreta nos endereços; importe no app de feeds e apague o arquivo.
+- Para aplicar: git fetch e reset do repositório; não precisa reiniciar para o endereço, só para o comando novo (que roda direto).
+
 ## 2026-11-13 - News: paginação com botões
 - Anterior e Próxima deixam de ser links e viram botões (mantendo a categoria escolhida). Não precisa instalador: git fetch e reset do repositório e ./subir.sh --reiniciar.
 

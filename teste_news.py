@@ -526,6 +526,13 @@ s2, _, _ = req("GET", f"/rss/{novo}/geral.xml")
 confere("chave nova vale e a antiga deixa de valer", s == 404 and s2 == 200)
 saida = io.StringIO()
 antigo, sys.stdout = sys.stdout, saida
+sys.argv = ["heimdall_news.py", "--opml", str(RAIZ / "feeds.opml")]
+hn.main()
+sys.stdout = antigo
+op2 = ET.fromstring((RAIZ / "feeds.opml").read_bytes())
+confere("--opml grava o arquivo com todos os feeds e a chave nova", len(list(op2.iter("outline"))) == 4 and f"/rss/{novo}/geral.xml" in (RAIZ / "feeds.opml").read_text(encoding="utf-8") and oct((RAIZ / "feeds.opml").stat().st_mode & 0o777) == "0o600" and "Atenção" in saida.getvalue())
+saida = io.StringIO()
+antigo, sys.stdout = sys.stdout, saida
 sys.argv = ["heimdall_news.py", "--copiar", "ciencia"]
 try:
     hn.main()
