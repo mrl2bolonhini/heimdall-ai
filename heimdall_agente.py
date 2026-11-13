@@ -697,18 +697,22 @@ def _com_dica(md: str, linha: str) -> str:
 
 def audio_por_atalho(txt: str, base: Path) -> str:
     """Gera base.m4a com o atalho do app Atalhos (entrada: o arquivo de texto). Devolve "" se deu certo ou o motivo da falha."""
-    saida = str(base) + ".atalho"
+    saida = str(base) + ".atalho.m4a"   # a extensão diz ao Atalhos que tipo de arquivo gravar
+    sobras = lambda: [x for x in Path(saida).parent.glob(Path(saida).name.split(".atalho")[0] + ".atalho*")]  # noqa: E731
     try:
         r = subprocess.run(["shortcuts", "run", ATALHO, "-i", txt, "-o", saida], capture_output=True, text=True, timeout=600)
         if r.returncode != 0:
             return "o atalho '%s' falhou: %s" % (ATALHO, (r.stderr or r.stdout or "sem mensagem").strip()[:120])
-        if not os.path.exists(saida) or os.path.getsize(saida) < 2000:
-            return "o atalho '%s' não devolveu áudio (a última ação dele deve ser 'Criar áudio falado a partir de texto')" % ATALHO
-        c = subprocess.run(["afconvert", "-f", "m4af", "-d", "aac", saida, str(base) + ".m4a"], capture_output=True, timeout=300)
+        achados = sorted((x for x in sobras() if x.is_file() and x.stat().st_size >= 2000), key=lambda x: x.stat().st_size, reverse=True)
+        if not achados:
+            vistos = ", ".join("%s (%d bytes)" % (x.name.split(".atalho")[-1] or "sem nome", x.stat().st_size) for x in sobras() if x.is_file()) or "nenhum arquivo"
+            return "o atalho '%s' não devolveu áudio (arquivo gravado: %s; saída do atalho: %s)" % (ATALHO, vistos, (r.stdout or r.stderr or "vazia").strip()[:80])
+        origem = achados[0]
+        c = subprocess.run(["afconvert", "-f", "m4af", "-d", "aac", str(origem), str(base) + ".m4a"], capture_output=True, timeout=300)
         if c.returncode != 0:
-            with open(saida, "rb") as f:
+            with open(origem, "rb") as f:
                 if f.read(12)[4:8] == b"ftyp":   # já é m4a: só renomeia
-                    os.replace(saida, str(base) + ".m4a")
+                    os.replace(origem, str(base) + ".m4a")
                     return ""
             return "não consegui converter o áudio do atalho"
         return ""
@@ -716,7 +720,8 @@ def audio_por_atalho(txt: str, base: Path) -> str:
         return "o atalho '%s' falhou: %s" % (ATALHO, str(e)[:100])
     finally:
         try:
-            os.unlink(saida)
+            for x in sobras():
+                x.unlink()
         except OSError:
             pass
 
