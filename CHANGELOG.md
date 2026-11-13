@@ -7,6 +7,11 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Novo python3 heimdall_news.py --opml [arquivo]: grava um arquivo OPML com todos os feeds (padrão heimdall-news.opml, permissão 600). Ele leva a chave secreta nos endereços; importe no app de feeds e apague o arquivo.
 - Para aplicar: git fetch e reset do repositório; não precisa reiniciar para o endereço, só para o comando novo (que roda direto).
 
+## 2026-11-13 - News passa a usar o gemma3-4b
+- Testamos modelos pequenos para os resumos. O Tucano (Q3_K_M, 2,4 bilhões, feito para português) respondeu texto sem sentido e em repetição, mesmo com o formato de pedido que ele espera, e foi descartado. O gemma3:4b resumiu certo, sem inventar, em 8 a 25 segundos.
+- Novo modelo gemma3-4b no litellm_config.yaml (ollama pull gemma3:4b), agora o padrão do News. Para voltar ao anterior: HEIMDALL_NEWS_MODELO="qwen3-vl-instruct" no .env.
+- Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar (o LiteLLM precisa reler o litellm_config.yaml).
+
 ## 2026-11-13 - News: rótulo do resumo simplificado
 - O resumo passa a ser marcado sempre como "Resumo feito por IA:", sem o complemento sobre o trecho da fonte. No banco, a coluna resumo_base continua dizendo se foi lido a matéria ou só o trecho do feed.
 

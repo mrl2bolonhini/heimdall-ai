@@ -114,6 +114,7 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 | `dolphin3-cyber-8b` | `ollama_chat/mparvin/dolphin3-cyber-8b-gguf:q8_0` | Segurança e conversa livre | Confira a chamada de ferramentas com test_models_tools.py. |
 | `deepseek-coder-v2:16b` | `ollama_chat/deepseek-coder-v2:16b` | Código (usado pelo GitOps) | O GitOps usa este modelo na etapa de análise de código. |
 | `qwen3-vl-instruct` | `ollama_chat/qwen3-vl:8b-instruct` | Modelo padrão dos fluxos; entende imagens | Declara suporte a imagens no LiteLLM. |
+| `gemma3-4b` | `ollama_chat/gemma3:4b` | Modelo pequeno e rápido (3 GB), usado nos resumos do Heimdall News | No teste com um parágrafo resumiu certo em português; baixe com ollama pull gemma3:4b. |
 | `bonsai-27b` | `ollama_chat/eriktonon/bonsai-2-uncensored:27b` | Modelo grande, respostas mais elaboradas | Confira a chamada de ferramentas com test_models_tools.py. |
 <!-- /AUTO:MODELOS -->
 

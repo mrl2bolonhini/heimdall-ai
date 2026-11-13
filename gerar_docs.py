@@ -225,6 +225,7 @@ MODELOS_NOTAS = {
     "dolphin3-cyber-8b": ("Segurança e conversa livre", "Confira a chamada de ferramentas com test_models_tools.py."),
     "deepseek-coder-v2:16b": ("Código (usado pelo GitOps)", "O GitOps usa este modelo na etapa de análise de código."),
     "qwen3-vl-instruct": ("Modelo padrão dos fluxos; entende imagens", "Declara suporte a imagens no LiteLLM."),
+    "gemma3-4b": ("Modelo pequeno e rápido (3 GB), usado nos resumos do Heimdall News", "No teste com um parágrafo resumiu certo em português; baixe com ollama pull gemma3:4b."),
     "bonsai-27b": ("Modelo grande, respostas mais elaboradas", "Confira a chamada de ferramentas com test_models_tools.py."),
 }
 
@@ -602,7 +603,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>O feed guarda 72 horas de notícias, cada item com o resumo de IA identificado. Matérias que ainda esperam o resumo só entram no feed depois de 2 horas, porque os apps de feeds não atualizam um item já baixado.</li></ol></section>
 <section aria-labelledby="fontes"><h2 id="fontes">Fontes e modelo</h2>
 <ul><li>As fontes ficam em <code>noticias_fontes.json</code> (as mesmas do Digest). Para trocar, é só editar: o serviço relê o arquivo a cada atualização. Campos: categoria, nome, url, idioma (pt ou en), limite de matérias novas por atualização, ler_materia e ativa.</li>
-<li>O modelo é o <code>qwen3-vl-instruct</code> pelo LiteLLM. Para trocar por outro, mais rápido, use <code>HEIMDALL_NEWS_MODELO="nome-do-modelo"</code> no <code>.env</code>.</li>
+<li>O modelo é o <code>gemma3-4b</code> (Gemma 3 de 4 bilhões, 3 GB) pelo LiteLLM; baixe com <code>ollama pull gemma3:4b</code>. Foi escolhido em um teste com o Tucano e ele: o Tucano (2,4 bilhões) respondeu texto sem sentido e repetido, e o Gemma resumiu certo em cerca de 8 segundos. Para trocar por outro, use <code>HEIMDALL_NEWS_MODELO="nome-do-modelo"</code> no <code>.env</code>.</li>
 <li>Para não competir com o chat, cada atualização faz no máximo 10 resumos (<code>HEIMDALL_NEWS_RESUMOS_POR_CICLO</code>), das notícias mais novas para as mais antigas, e as outras esperam na fila. <code>HEIMDALL_NEWS_PAUSA="1-6"</code> suspende os resumos de madrugada.</li>
 <li>Se o modelo ou o LiteLLM estiver fora do ar, as matérias ficam na fila sem perder tentativa e o site avisa.</li></ul></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>

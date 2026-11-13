@@ -24,7 +24,7 @@ HTML sempre escapado; matérias e feeds são baixados só de endereços público
 texto deles nunca é obedecido como instrução pelo modelo. O RSS só aceita a chave certa; tentativas erradas têm limite próprio por endereço (não travam o login).
 
 Variáveis opcionais no .env: HEIMDALL_NEWS_PORT (8012), HEIMDALL_NEWS_HOSTS (news.heimdall-ai.tech,localhost,127.0.0.1),
-HEIMDALL_NEWS_URL (https://news.heimdall-ai.tech), HEIMDALL_NEWS_RSS_TOKEN, HEIMDALL_NEWS_MODELO (qwen3-vl-instruct),
+HEIMDALL_NEWS_URL (https://news.heimdall-ai.tech), HEIMDALL_NEWS_RSS_TOKEN, HEIMDALL_NEWS_MODELO (gemma3-4b),
 HEIMDALL_NEWS_LLM_URL (http://127.0.0.1:9000/v1/chat/completions; usa LITELLM_MASTER_KEY), HEIMDALL_NEWS_INTERVALO_MIN (30),
 HEIMDALL_NEWS_RESUMOS_POR_CICLO (10), HEIMDALL_NEWS_ORCAMENTO_MIN (20), HEIMDALL_NEWS_PAUSA (horas sem resumos, ex.: 1-6),
 HEIMDALL_NEWS_COLETAR (0 desliga a coleta e deixa só o site), HEIMDALL_NEWS_FONTES (outro arquivo de fontes),
@@ -98,7 +98,7 @@ PORT = _inteiro("HEIMDALL_NEWS_PORT", 8012, 1)
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_NEWS_HOSTS", "news.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 URL_BASE = os.environ.get("HEIMDALL_NEWS_URL", "https://news.heimdall-ai.tech").rstrip("/")
 FONTES_ARQ = Path(os.environ.get("HEIMDALL_NEWS_FONTES", str(PROJECT_DIR / "noticias_fontes.json"))).expanduser()
-MODELO = os.environ.get("HEIMDALL_NEWS_MODELO", "qwen3-vl-instruct")
+MODELO = os.environ.get("HEIMDALL_NEWS_MODELO", "gemma3-4b")
 LLM_URL = os.environ.get("HEIMDALL_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions")
 LLM_CHAVE = os.environ.get("LITELLM_MASTER_KEY", "")
 INTERVALO_MIN = _inteiro("HEIMDALL_NEWS_INTERVALO_MIN", 30, 1)
