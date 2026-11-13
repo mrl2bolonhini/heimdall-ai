@@ -801,6 +801,13 @@ def item_html(n: dict) -> str:
             f'<span class="meta">{e(n["fonte"])} · {e(n["categoria"])} · {e(local(n["publicado"]))}{e(extras)}</span></li>')
 
 
+def botao_pagina(cat_slug: str, p: int, rotulo: str) -> str:
+    """Botão de paginação: um formulário GET que leva à página p (continua valendo o filtro de categoria)."""
+    cat = f'<input type="hidden" name="categoria" value="{e(cat_slug)}">' if cat_slug else ""
+    return (f'<form class="linha" method="get" action="/">{cat}<input type="hidden" name="pagina" value="{p}">'
+            f'<button type="submit">{e(rotulo)}</button></form>')
+
+
 def link_pagina(cat_slug: str, p: int) -> str:
     q = []
     if cat_slug:
@@ -830,8 +837,8 @@ def pg_inicio(cat_slug: str = "", pagina_n: int = 1) -> tuple:
         topo.append(f'<p class="falha" role="alert">Atenção: {e(ESTADO["erro_ia"])}.</p>')
     if itens:
         corpo = '<ul class="lista">' + "".join(item_html(n) for n in itens) + "</ul>"
-        ant = f'<a href="{link_pagina(cat_slug, pg - 1)}" rel="prev">Anterior</a>' if pg > 1 else "<span></span>"
-        prox = f'<a href="{link_pagina(cat_slug, pg + 1)}" rel="next">Próxima</a>' if pg < paginas else "<span></span>"
+        ant = botao_pagina(cat_slug, pg - 1, "Anterior") if pg > 1 else "<span></span>"
+        prox = botao_pagina(cat_slug, pg + 1, "Próxima") if pg < paginas else "<span></span>"
         corpo += f'<nav class="pags" aria-label="Paginação">{ant}<span>Página {pg} de {paginas} ({total} notícias)</span>{prox}</nav>'
     else:
         corpo = '<p class="nota">Nenhuma notícia nas últimas 24 horas' + (" nesta categoria" if categoria else "") + ". Veja o estado das fontes.</p>"

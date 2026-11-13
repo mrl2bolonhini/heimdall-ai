@@ -364,10 +364,10 @@ confere("categorias com contagem", "Brasil (" in t and "Tecnologia (3)" in t and
 total = hn.estatisticas()["24h"]
 paginas = -(-total // 10)
 confere("há mais de uma página no teste", paginas >= 2, str(total))
-confere("paginação", f"Página 1 de {paginas}" in t and 'rel="next"' in t and 'rel="prev"' not in t)
+confere("paginação", f"Página 1 de {paginas}" in t and '<button type="submit">Próxima</button>' in t and ">Anterior<" not in t and 'name="pagina" value="2"' in t)
 s, _, c = req("GET", "/?pagina=2", cookie=ck)
 t2 = txt(c)
-confere("segunda página", f"Página 2 de {paginas}" in t2 and 'rel="prev"' in t2 and len(re.findall(r"<li><h2>", t2)) == min(10, total - 10))
+confere("segunda página", f"Página 2 de {paginas}" in t2 and '<button type="submit">Anterior</button>' in t2 and 'name="pagina" value="1"' in t2 and len(re.findall(r"<li><h2>", t2)) == min(10, total - 10))
 confere("páginas não se repetem", not (set(re.findall(r'href="(http[^"]+)" target="_blank" rel="noopener', t)) & set(re.findall(r'href="(http[^"]+)" target="_blank" rel="noopener', t2))))
 todos = []
 for n_ in range(1, paginas + 1):
@@ -377,6 +377,11 @@ s, _, c = req("GET", "/?pagina=999", cookie=ck)
 confere("página fora do limite vai para a última", s == 200 and f"Página {paginas} de {paginas}" in txt(c))
 s, _, c = req("GET", "/?pagina=abc", cookie=ck)
 confere("página inválida vale 1", s == 200 and f"Página 1 de {paginas}" in txt(c))
+# o botão leva à página certa, mantendo a categoria
+with_cat = txt(req("GET", "/?categoria=brasil", cookie=ck)[2])
+confere("botão Próxima mantém a categoria", 'name="categoria" value="brasil"' in with_cat and 'name="pagina" value="2"' in with_cat)
+s, _, c = req("GET", "/?categoria=brasil&pagina=2", cookie=ck)
+confere("o botão chega na segunda página da categoria", s == 200 and "Página 2 de" in txt(c))
 s, _, c = req("GET", "/?categoria=tecnologia", cookie=ck)
 confere("filtro por categoria", s == 200 and "Notícias: Tecnologia" in txt(c) and "Título traduzido para o português" in txt(c) and "Notícia número" not in txt(c))
 confere("título traduzido é sinalizado", "título traduzido por IA do inglês" in txt(c))

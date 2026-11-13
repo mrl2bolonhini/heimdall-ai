@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - News: paginação com botões
+- Anterior e Próxima deixam de ser links e viram botões (mantendo a categoria escolhida). Não precisa instalador: git fetch e reset do repositório e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Acesso universal, mais fontes no News e links em nova aba
 - Novo heimdall_acesso.py: a senha e o código de 6 dígitos valem para o Cloud, o Notas e o News, então o comando agora é um só. --tudo (nova senha e novo código), --senha (só troca a senha, o código continua o mesmo) e --codigo (só um código novo). Os comandos antigos do heimdall_cloud.py continuam funcionando. Depois de trocar: ./subir.sh --reiniciar.
 - News: corrigido o erro "no such table: noticias" ao rodar --token, --urls ou --copiar antes da primeira subida (agora a tabela é criada na hora).
