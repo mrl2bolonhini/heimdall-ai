@@ -4,6 +4,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 
 ## 2026-11-13 - Gravações das notas com voz de um atalho (Siri)
 - Nova opção HEIMDALL_VOZ_ATALHO no .env: nome de um atalho do app Atalhos que recebe o texto e devolve o áudio (ação "Criar áudio falado a partir de texto"). Permite usar vozes que o say não enxerga, como a Siri. A voz e a velocidade ficam no próprio atalho; o dicionário de pronúncia continua valendo.
+- Rodado à mão, o python3 heimdall_agente.py --voz agora lê as opções de voz do .env (antes só valiam com o serviço rodando).
 - Se o atalho falhar, a gravação é feita pelo say com a voz de HEIMDALL_VOZ, e o motivo aparece no log. python3 heimdall_agente.py --voz toca uma amostra pelo atalho.
 - Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
 

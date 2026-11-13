@@ -60,6 +60,21 @@ import heimdall_triagem as triagem
 import heimdall_voz as dicionario_voz
 
 PROJECT_DIR = Path(__file__).resolve().parent
+
+
+def _carregar_env_da_voz() -> None:
+    """Quando rodado à mão (python3 heimdall_agente.py --voz), o terminal não leu o .env: pega só as opções de voz de lá."""
+    try:
+        for linha in (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines():
+            chave, sep, valor = linha.partition("=")
+            chave = chave.strip()
+            if sep and (chave.startswith("HEIMDALL_VOZ") or chave == "HEIMDALL_ESTUDO_AUDIO") and chave not in os.environ:
+                os.environ[chave] = valor.strip().strip("'\"")
+    except OSError:
+        pass
+
+
+_carregar_env_da_voz()
 HOST = os.environ.get("HEIMDALL_AGENTE_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_AGENTE_PORT", "8003"))
 TOKEN = os.environ.get("HEIMDALL_AGENTE_TOKEN", "")
