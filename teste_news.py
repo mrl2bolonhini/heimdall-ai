@@ -482,6 +482,16 @@ confere("sem chave no .env o RSS fica desligado", s2 == 404)
 hn.RSS_TOKEN = chave_certa
 hn._rss_falhas.clear()
 
+# --- fonte que devolve uma página em vez de um feed: o erro diz o que veio ---
+_baixar = hn.baixar
+hn.baixar = lambda *a_, **k_: (b"<!DOCTYPE html><html><body>Pagina<br>nao encontrada</body></html>", "text/html; charset=utf-8")
+hn.coletar_fontes()
+hn.baixar = _baixar
+_erro = hn.ESTADO["fontes"]["Fonte PT"]["erro"]
+confere("erro de feed diz o tipo e o começo da resposta", "text/html" in _erro and "DOCTYPE" in _erro and not hn.ESTADO["fontes"]["Fonte PT"]["ok"], _erro)
+hn.coletar_fontes()
+confere("a fonte volta ao normal quando responde de novo", hn.ESTADO["fontes"]["Fonte PT"]["ok"] and hn.ESTADO["fontes"]["Fonte PT"]["falha_desde"] is None)
+
 # --- sair ---
 csrf = re.search(r'name="csrf" value="([^"]+)"', txt(req("GET", "/", cookie=ck)[2])).group(1)
 s, _, _ = req("POST", "/sair", urlencode({"csrf": "errado"}), cookie=ck)

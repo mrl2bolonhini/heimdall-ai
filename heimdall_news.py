@@ -533,11 +533,15 @@ def coletar_fontes() -> int:
         est = ESTADO["fontes"].setdefault(f["nome"], {"categoria": f["categoria"], "falha_desde": None})
         t0 = time.time()
         try:
-            dados, _ = baixar(f["url"], condicional=True)
+            dados, tipo = baixar(f["url"], condicional=True)
             if dados is None:
                 est.update(ok=True, quando=iso(ref), itens=est.get("itens", 0), novos=0, erro="", falha_desde=None, sem_mudanca=True)
                 continue
-            itens = analisar_feed(dados)
+            try:
+                itens = analisar_feed(dados)
+            except ET.ParseError as ex:
+                inicio = re.sub(r"\s+", " ", dados[:80].decode("utf-8", "replace")).strip()
+                raise ValueError(f"a resposta não é um feed XML (tipo {(tipo.split(';')[0] or 'desconhecido')}, {len(dados)} bytes; começa com: {inicio!r})") from ex
             n = guardar_novos(f, itens, ref)
             novos += n
             est.update(ok=True, quando=iso(ref), itens=len(itens), novos=n, erro="", falha_desde=None, sem_mudanca=False)
