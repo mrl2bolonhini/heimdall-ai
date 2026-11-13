@@ -188,6 +188,28 @@ s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
 confere("PASTAS com lista mostra só as listadas e os temas", s == 404 and req("GET", "/nota?p=heimdall-cerebro&n=ideia.md", cookie=ck)[0] == 200 and req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)[0] == 200)
 del os.environ["HEIMDALL_NOTAS_PASTAS"]
 
+# --- marca e paleta compartilhadas (a mesma do site) ---
+import docs_tema as _dt
+_css = hc.CSS
+_hex6 = lambda v: "#" + "".join(ch * 2 for ch in v[1:]) if len(v) == 4 else v
+_claro = dict(re.findall(r"--([a-z]+):(#[0-9a-f]{3,6})", _css.split("@media")[0]))
+_escuro = dict(re.findall(r"--([a-z]+):(#[0-9a-f]{3,6})", _css.split("@media")[1].split("}")[0]))
+_escuro = {**_claro, **_escuro}
+_claro = {k: _hex6(v) for k, v in _claro.items()}
+_escuro = {k: _hex6(v) for k, v in _escuro.items()}
+confere("paleta clara é a da marca (Papel e Tinta)", _claro["fundo"] == "#f3f6fc" and _claro["texto"] == "#0c1530" and _claro["ouro"] == "#ffc107", _claro)
+confere("paleta escura é a da marca (Noite e Névoa)", _escuro["fundo"] == "#080d1f" and _escuro["texto"] == "#e9effc", _escuro)
+for _nome, _t in (("claro", _claro), ("escuro", _escuro)):
+    _ruins = [(k, round(_dt.contraste(_t[k], _t[f]), 1)) for k in ("texto", "suave", "acento", "erro", "ok") for f in ("fundo", "superficie") if _dt.contraste(_t[k], _t[f]) < 4.5]
+    confere(f"contraste de texto no tema {_nome} é de pelo menos 4,5 para 1", not _ruins, _ruins)
+    _bordas = [(f, round(_dt.contraste(_t["linha"], _t[f]), 1)) for f in ("fundo", "superficie") if _dt.contraste(_t["linha"], _t[f]) < 3]
+    confere(f"bordas de campos no tema {_nome} têm pelo menos 3 para 1", not _bordas, _bordas)
+    confere(f"botão selecionado (fundo sobre azul) no tema {_nome} tem pelo menos 4,5 para 1", _dt.contraste(_t["fundo"], _t["acento"]) >= 4.5)
+s, h, c = req("GET", "/", cookie=ck)
+t = c.decode("utf-8", "replace") if isinstance(c, bytes) else str(c)
+confere("página tem símbolo decorativo, nome, favicon e faixa de seis cores", 'class="marca"' in t and 'aria-hidden="true"' in t and "<strong>Heimdall Notas</strong>" in t and 'rel="icon" href="data:image/svg+xml' in t and "#ffc107" in t and "#bfe3fb" in t)
+confere("o favicon em data: é permitido pela política de segurança e nada mais de fora", "img-src data:" in h.get("content-security-policy", "") and "default-src 'none'" in h.get("content-security-policy", ""), h.get("content-security-policy"))
+
 # --- paginação em botões ---
 hb.POR_PAGINA = 3
 s, h, c = req("GET", "/", cookie=ck)

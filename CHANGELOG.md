@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Painéis com a marca do Heimdall
+- Cloud, Notas, News e Saúde passaram a usar a paleta da marca em um só lugar (o estilo compartilhado em heimdall_cloud.py): Papel (#f3f6fc) e Tinta (#0c1530) no tema claro, Noite (#080d1f) e Névoa (#e9effc) no escuro, azul da ponte nos links, campos e blocos de leitura sobre a superfície da marca. O Ouro do olhar marca só a página atual do menu e o botão de página selecionado (sublinhado e barra), nunca texto.
+- Novo cabeçalho de marca: símbolo da ponte com o olho (decorativo para o leitor de tela, porque o nome vem ao lado), nome do serviço em serifa, menu e a faixa de seis cores sob o cabeçalho, como no site. Todos têm o ícone da aba (embutido, sem arquivo externo; a política de segurança ganhou apenas img-src data:).
+- O menu marca a página atual (negrito, sublinhado dourado e aria-current) nos painéis que já indicavam isso (Saúde).
+- Contraste conferido por teste nos dois temas: texto, links, erro e ok com pelo menos 4,5 para 1; bordas de campos com pelo menos 3 para 1.
+- Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Paginação em botões no Notas e no News
 - Os dois sites usam agora a mesma paginação, toda em botões: Página anterior, Página 1 a 5 (com a atual marcada como "Página 3 (atual)" e anunciada como página atual pelo leitor de tela), reticências quando há mais páginas, Próxima página e Última página. A janela de números acompanha a página atual. Página anterior some na primeira, Próxima e Última somem na última. Um resumo ("Página 3 de 10 · 97 notas") fica acima dos botões.
 - No Notas, a paginação vale para as últimas notas do início, as notas de cada tema e os resultados da busca (10 por página); antes o início mostrava só as 15 mais recentes e os temas e a busca vinham numa lista única. No News, ela substitui os botões Anterior e Próxima (10 notícias por página, mantendo a categoria).

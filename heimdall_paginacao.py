@@ -12,7 +12,7 @@ import html
 CSS = """
 .pags{border-top:1px solid var(--linha);margin-top:1.5rem;padding-top:1rem}
 .pags ul{list-style:none;padding:0;margin:.5rem 0;display:flex;flex-wrap:wrap;gap:.5rem}
-.pags button{margin:0;min-height:2.75rem}.pags button[aria-current=page]{background:var(--acento);color:var(--fundo);font-weight:700}
+.pags button{margin:0;min-height:2.75rem}.pags button[aria-current=page]{background:var(--acento);color:var(--fundo);font-weight:700;box-shadow:inset 0 -4px 0 var(--ouro,#ffc107)}
 .pags .reticencias{align-self:center;color:var(--suave)}
 """
 

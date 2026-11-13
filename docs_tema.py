@@ -467,7 +467,8 @@ def corpo_marca():
 <section aria-labelledby="cores"><h2 id="cores">Cores</h2>
 <p>As seis faixas da ponte dão a paleta. Os contrastes abaixo seguem a medida das diretrizes WCAG; para texto comum, o mínimo é 4,5 para 1.</p>
 {tabela("Paleta", ["Cor", "Hex", "Uso", "Sobre o Papel", "Sobre a Noite"], linhas)}
-<p class="muted">Cores claras servem para formas e destaques, não para texto sobre fundo claro.</p></section>
+<p class="muted">Cores claras servem para formas e destaques, não para texto sobre fundo claro.</p>
+<p>Os painéis com login (Cloud, Notas, News e Saúde) usam a mesma paleta: Papel e Tinta no tema claro, Noite e Névoa no escuro, azul da ponte nos links e o Ouro do olhar só como marcação (página atual e botão selecionado), nunca como cor de texto. Cada painel mostra o símbolo ao lado do nome, tem a faixa de seis cores sob o cabeçalho e o mesmo ícone de aba. O teste teste_notas.py confere que os contrastes do texto ficam em pelo menos 4,5 para 1 e os das bordas de campos em pelo menos 3 para 1, nos dois temas.</p></section>
 <section aria-labelledby="tipo"><h2 id="tipo">Tipografia</h2>
 <p>O site usa só fontes do sistema, sem baixar nada. Os títulos usam uma serifa de livro (Iowan Old Style, Palatino ou Georgia, o que o aparelho tiver), pelo tom de saga; o texto e a interface usam a fonte do sistema; comandos usam a monoespaçada.</p></section>
 <section aria-labelledby="terceiros"><h2 id="terceiros">Marcas de terceiros</h2>

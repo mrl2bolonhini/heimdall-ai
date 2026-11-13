@@ -436,7 +436,7 @@ main h1{line-height:1.25;margin-top:1rem}h2,h3,h4{line-height:1.3;margin-top:1.8
 body{overflow-wrap:break-word}h1,h2,h3,h4,.lista a,.meta,td,th{overflow-wrap:anywhere;min-width:0}main{overflow-wrap:anywhere}
 .lista{list-style:none;padding:0}.lista li{border-bottom:1px solid var(--linha);padding:.7rem 0}
 .lista h3{margin:0 0 .2rem;font-size:1.15em}.lista a{font-weight:700;font-size:1.05em}.meta{color:var(--suave);font-size:.9em;display:block}
-.leitor{border:2px solid var(--acento);border-radius:.5rem;padding:.8rem;margin:1rem 0}.leitor audio{width:100%}
+.leitor{background:var(--superficie);border:2px solid var(--acento);border-radius:.5rem;padding:.8rem;margin:1rem 0}.leitor audio{width:100%}
 .leitor button{margin:.4rem .4rem 0 0}.leitor button[aria-pressed=true]{background:var(--acento);color:var(--fundo)}
 .ant-prox{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-top:1px solid var(--linha);margin-top:2rem;padding-top:1rem}
 blockquote{border-left:4px solid var(--linha);margin-left:0;padding-left:1rem;color:var(--suave)}
@@ -471,8 +471,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
     js = f'<script nonce="{e(nonce)}">{script}</script>' if script else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notas</title><style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a><header><p><strong>Heimdall Notas</strong></p>{nav}</header>'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notas</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Notas", nav)}'
             f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main>{js}</body></html>').encode("utf-8")
 
 
@@ -685,7 +685,7 @@ class Notas(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
         script = f" script-src 'nonce-{nonce}';" if nonce else ""
-        self.send_header("Content-Security-Policy", f"default-src 'none'; style-src 'unsafe-inline';{script} media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+        self.send_header("Content-Security-Policy", f"default-src 'none'; img-src data:; style-src 'unsafe-inline';{script} media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
         self._cabecalhos_base()
         for k, v in (extra or []):
             self.send_header(k, v)

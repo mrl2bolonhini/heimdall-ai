@@ -253,8 +253,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "") -> bytes
         nav = ('<nav aria-label="Principal"><ul>' + itens + '<li><form class="linha" method="post" action="/sair">'
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Saúde</title><style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a><header><p><strong>Heimdall Saúde</strong></p>{nav}</header>'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Saúde</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Saúde", nav)}'
             f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main></body></html>').encode("utf-8")
 
 
@@ -290,7 +290,7 @@ class Painel(BaseHTTPRequestHandler):
         self.send_header("Content-Type", tipo)
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+        self.send_header("Content-Security-Policy", "default-src 'none'; img-src data:; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
