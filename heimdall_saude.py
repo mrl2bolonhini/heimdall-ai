@@ -1470,6 +1470,29 @@ def relatorio_geral(dias: int = 30) -> str:
     return "\n\n".join(p.replace("\n" + AVISO, "").replace(AVISO, "").strip() for p in partes if p) + "\n\n" + AVISO
 
 
+def relatorio_semanal() -> dict:
+    """Relatório da semana para gravar no app Notas (com áudio) e avisar pelo Bark.
+    O aviso do Bark leva só uma frase qualitativa, sem números de saúde: ele passa pelo servidor do Bark."""
+    fim = datetime.now()
+    ini = fim - timedelta(days=6)
+    titulo = f"Saúde: semana de {ini.strftime('%d/%m')} a {fim.strftime('%d/%m/%Y')}"
+    texto = relatorio_geral(7)
+    blocos = [b.strip() for b in texto.split("\n\n") if b.strip()]
+    md = [f"# {titulo}", ""]
+    for b in blocos:
+        linhas = b.split("\n")
+        if len(linhas) > 1 and linhas[0].endswith(":") and len(linhas[0]) < 80:
+            md += [f"## {linhas[0].rstrip(':')}", "", *[f"{l}" + "  " for l in linhas[1:]], ""]
+        else:
+            md += [*[f"{l}" + "  " for l in linhas], ""]
+    atual = relatorio_estado_atual()
+    veredito = atual.strip().split("\n")[-1] if atual else "Sem dados suficientes para comparar esta semana."
+    ecg_alto = "fibrilação atrial" in texto and bool(_ler("SELECT 1 FROM ecg WHERE dia >= ? AND classificacao_original LIKE '%trial%' LIMIT 1", (_dias_atras(7),)))
+    corpo = veredito + (" Há um ECG da semana para mostrar ao médico." if ecg_alto else "") + " O relatório completo está na nota, na pasta Saúde."
+    return {"titulo": titulo, "markdown": "\n".join(md).strip() + "\n", "audio": texto, "bark": {"title": "Saúde: relatório da semana", "body": corpo[:400],
+            "group": "saude", "level": "active"}}
+
+
 # ----------------------------------------------------------------------------------------
 # Linha de comando
 # ----------------------------------------------------------------------------------------
@@ -1485,6 +1508,7 @@ def main() -> int:
     ap.add_argument("--atividade", nargs="?", const=90, type=int, metavar="DIAS")
     ap.add_argument("--recuperacao", nargs="?", const=180, type=int, metavar="DIAS")
     ap.add_argument("--tendencias", nargs="?", const=90, type=int, metavar="DIAS")
+    ap.add_argument("--semanal", action="store_true", help="mostra o relatório da semana (o agente o grava nas Notas e avisa pelo Bark aos domingos)")
     ap.add_argument("--agora", action="store_true", help="os últimos 7 dias contra a sua média dos 90 dias anteriores")
     a = ap.parse_args()
     if a.importar:
@@ -1518,6 +1542,9 @@ def main() -> int:
         print(relatorio_recuperacao(a.recuperacao) or "Poucos dados de recuperação no banco (precisa de pelo menos 20 dias de HRV e sono).")
     elif a.tendencias is not None:
         print(relatorio_tendencias(a.tendencias) or "Poucos dados para tendências.")
+    elif a.semanal:
+        r = relatorio_semanal()
+        print(r["markdown"] + "\nAviso do Bark: " + r["bark"]["body"])
     elif a.agora:
         print(relatorio_estado_atual() or "Poucos dados recentes para comparar.")
     elif a.relatorio is not None:

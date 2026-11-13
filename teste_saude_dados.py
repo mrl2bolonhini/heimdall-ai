@@ -239,6 +239,9 @@ rr_ = hs.relatorio_recuperacao(180)
 confere("relatório de recuperação acha a ligação sono-HRV", "sono da noite" in rr_ and "variabilidade" in rr_ and "HRV mais baixa" in rr_, rr_)
 rg2 = hs.relatorio_geral(30)
 confere("relatório geral inclui análises do dia a dia", "Como você está agora" in rg2 and "Sono (" in rg2 and "Atividade" in rg2 and "Recuperação" in rg2, rg2)
+rsem = hs.relatorio_semanal()
+confere("relatório semanal: título, seções, áudio e Bark sem números", rsem["titulo"].startswith("Saúde: semana de ") and "## Como você está agora" in rsem["markdown"] and "Sono" in rsem["audio"]
+        and rsem["bark"]["group"] == "saude" and not any(c.isdigit() for c in rsem["bark"]["body"]) and "nota" in rsem["bark"]["body"], str(rsem["bark"]) + rsem["markdown"][:300])
 # banco novo e vazio: relatórios não quebram
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "vazio")
 banco.DB_DIR = TMP / "vazio"

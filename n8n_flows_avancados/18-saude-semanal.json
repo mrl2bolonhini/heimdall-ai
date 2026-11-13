@@ -1,0 +1,124 @@
+{
+  "id": "hdSaudeSemanal01",
+  "name": "Heimdall: relatório de saúde da semana (Notas e Bark, domingo)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "saudesem0000a01",
+      "name": "Domingo às 9h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "3 9 * * 0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "saudesem0000a02",
+      "name": "Gerar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "saudesem0000a03",
+      "name": "Gerar relatório no agente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/saude/relatorio-semanal",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 600000
+        }
+      }
+    },
+    {
+      "id": "saudesem0000a04",
+      "name": "Conferir relatório",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Se o relatório não foi gravado, o fluxo falha e o aviso de falha do Heimdall chega pelo Bark.\nconst j = $input.first().json || {};\nif (j.ok !== true) {\n  throw new Error('O relatório semanal de saúde não foi gerado. ' + String(j.erro || 'sem resposta do agente').slice(0, 300));\n}\nreturn [{ json: j }];"
+      }
+    }
+  ],
+  "connections": {
+    "Domingo às 9h": {
+      "main": [
+        [
+          {
+            "node": "Gerar relatório no agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar agora": {
+      "main": [
+        [
+          {
+            "node": "Gerar relatório no agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar relatório no agente": {
+      "main": [
+        [
+          {
+            "node": "Conferir relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "errorWorkflow": "hdFalhaAviso0001"
+  }
+}

@@ -20,6 +20,7 @@ Rotas:
     POST /banco/gravar                  {"tabela": "saude_diaria", "registros": [{"dia": "2026-11-10", "metrica": "passos", "valor": 8000}]}
                                         insere ou atualiza pela chave primária (tabelas: saude_diaria, saude_resumos, diarios, analises)
     POST /banco/consultar               {"sql": "SELECT ...", "limite": 200}  só um SELECT, em conexão somente leitura
+    POST /saude/relatorio-semanal       {}  monta o relatório da semana, grava na pasta Saúde do app Notas (com áudio) e avisa pelo Bark
     POST /triagem/criar                 {"id": "origem estável", "titulo": "...", "resumo": "...", "nivel": "critico|alto|medio", "fonte": "justica"}
                                         cria um lembrete na lista "Heimdall: Triagem" (não duplica) e o registra no banco
     POST /triagem/ciclo                 {}  lê os lembretes, registra o que você concluiu, reclassificou ou adiou e avisa pelo Bark
@@ -998,6 +999,13 @@ class Handler(BaseHTTPRequestHandler):
             dado = json.loads(self.rfile.read(tam).decode("utf-8"))
             if u.path == "/notas/gravar":
                 r = gravar(str(dado.get("pasta", "")), str(dado.get("titulo", "")), str(dado.get("markdown", "")), str(dado.get("audio", "")))
+                return self._json(200, r)
+            if u.path == "/saude/relatorio-semanal":
+                rel = saude.relatorio_semanal()
+                nota = gravar("Saúde", rel["titulo"], rel["markdown"], rel["audio"])
+                r = {"ok": True, "titulo": rel["titulo"], "nota": nota, "bark": triagem.enviar_bark(rel["bark"])}
+                if not r["bark"]:
+                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} relatório semanal gravado, mas o Bark não confirmou (HEIMDALL_BARK_KEY?)\n")
                 return self._json(200, r)
             if u.path == "/saude/hae":
                 r = saude.processar_hae(dado)

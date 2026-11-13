@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Relatório de saúde semanal (Notas e Bark)
+- Todo domingo às 9h o n8n pede ao agente do Mac o relatório da semana (POST /saude/relatorio-semanal). O agente grava a nota "Saúde: semana de DD/MM a DD/MM/AAAA" na pasta Saúde do app Notas, com áudio (mesma voz e dicionário de pronúncia das outras notas), e manda um aviso pelo Bark.
+- O aviso do Bark leva só uma frase qualitativa (por exemplo, se o sono saiu do seu padrão), sem números de saúde, porque o aviso passa pelo servidor do Bark. Os números ficam na nota.
+- Novo fluxo do n8n: 18-saude-semanal.json, com botão para gerar na hora. Se falhar, o aviso de falha do Heimdall chega pelo Bark. Para ver o relatório sem gravar: python3 heimdall_saude.py --semanal.
+- Para aplicar: git fetch e reset do repositório, ./instalar_automacoes_avancadas.sh (importa e ativa o fluxo novo) e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Análises de saúde que não dependem de treino
 - O Apple Watch só grava um treino quando você inicia um no app Treino (ou aceita o aviso "parece que você está caminhando, iniciar treino?"). Sem isso o export não traz treinos, e isso não é falha do Heimdall.
 - Novas análises em texto corrido, feitas com os dados do dia todo: --agora (últimos 7 dias contra a sua média dos 90 anteriores, para pulso em repouso, HRV, respiração, oxigênio e sono), --tendencias, --sono (duração, profundo, REM, eficiência, dia da semana), --atividade (passos, minutos de exercício, meta de 150 por semana, picos de esforço sem treino) e --recuperacao (o que acompanha a sua HRV e o seu pulso em repouso, dias de HRV baixa). O --relatorio passou a incluir tudo isso.
