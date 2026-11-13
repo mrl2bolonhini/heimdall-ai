@@ -98,15 +98,20 @@ esta_no_ar() {  # $1 = tipo, $2 = alvo
     fi
 }
 
-escolher_voz() {  # acha a voz pedida em SUBIR_VOZ, tentando as variantes de nome (Aprimorada, Enhanced, Premium); vazio = voz do sistema
+escolher_voz() {  # acha a voz pedida em SUBIR_VOZ na lista do sistema (qualquer variante Aprimorada/Aprimorado/Enhanced/Premium serve; a melhor ganha); vazio = voz do sistema
     VOZ_SUBIR=""
     [ -n "$SUBIR_VOZ" ] || return 0
     command -v say > /dev/null 2>&1 || return 0
-    local base cand
-    base="${SUBIR_VOZ%% (*}"
-    for cand in "$SUBIR_VOZ" "$base (Aprimorada)" "$base (Enhanced)" "$base (Premium)" "$base (Melhorada)" "$base"; do
-        if say -v "$cand" "" > /dev/null 2>&1; then VOZ_SUBIR="$cand"; return 0; fi
-    done
+    local base linha nome nivel melhor=0 lista
+    base=$(printf '%s' "${SUBIR_VOZ%% (*}" | tr '[:upper:]' '[:lower:]')
+    lista=$(say -v '?' 2> /dev/null)
+    while IFS= read -r linha; do
+        case "$linha" in *" pt_"*) ;; *) continue ;; esac
+        nome=$(printf '%s' "$linha" | sed -E 's/[[:space:]]+[a-z]{2,3}_[A-Za-z]{2,3}[[:space:]]+#.*$//')
+        [ "$(printf '%s' "${nome%% (*}" | tr '[:upper:]' '[:lower:]')" = "$base" ] || continue
+        case "$nome" in *[Pp]remium*) nivel=3 ;; *[Aa]primorad*|*[Mm]elhorad*|*[Ee]nhanced*) nivel=2 ;; *) nivel=1 ;; esac
+        if [ "$nivel" -gt "$melhor" ]; then melhor=$nivel; VOZ_SUBIR="$nome"; fi
+    done <<< "$lista"
 }
 
 avisar() {  # $1 = texto curto para a notificação e a voz

@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Voz Felipe: reconhece "Aprimorado"
+- No macOS em português a voz masculina aparece como "Felipe (Aprimorado)", no masculino, e por isso a primeira versão da SUBIR_VOZ não a achava. Agora o subir.sh procura a voz na lista do sistema (say -v '?') e usa a melhor variante instalada com aquele nome (Premium, depois Aprimorada/Aprimorado/Enhanced, depois a padrão).
+- O áudio dos estudos (HEIMDALL_VOZ) também passou a tratar Aprimorado, Aprimorada e Enhanced como o mesmo nome. Para usar o Felipe nas gravações: HEIMDALL_VOZ='Felipe (Aprimorada)' no .env e ./subir.sh --reiniciar.
+- Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - News abre feeds comprimidos; voz do anúncio do subir.sh configurável
 - Os feeds do G1 São Paulo e do ge futebol falhavam porque a Globo manda o corpo comprimido. O News agora pede e abre gzip/deflate (também quando o servidor comprime sem avisar), com limite de tamanho depois de descomprimir. Formatos que não abre (brotli, zstd) dão um erro claro no estado das fontes.
 - Nova opção SUBIR_VOZ no .env para a voz do anúncio falado do subir.sh, por exemplo SUBIR_VOZ='Felipe (Aprimorada)'. O script tenta o nome como escrito e as variantes (Aprimorada, Enhanced, Premium) e, se a voz não estiver instalada, usa a voz do sistema. Não muda HEIMDALL_VOZ (áudio de estudo das Notas).

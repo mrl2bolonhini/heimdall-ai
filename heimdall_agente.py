@@ -651,7 +651,7 @@ def vozes_pt() -> list:
 
 def _chave_voz(nome: str) -> str:
     """Compara nomes de voz sem ligar para maiúsculas nem para o idioma do sistema: (Aprimorada), (Melhorada) e (Enhanced) são a mesma coisa."""
-    return re.sub(r"\s+", " ", re.sub(r"aprimorada|melhorada", "enhanced", nome.strip().lower()))
+    return re.sub(r"\s+", " ", re.sub(r"aprimorad[oa]|melhorad[oa]", "enhanced", nome.strip().lower()))
 
 
 def escolher_voz():
