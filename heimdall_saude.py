@@ -1254,6 +1254,56 @@ def _correlacao(xs: list, ys: list):
 
 
 @_em_portugues
+def relatorio_hoje() -> str:
+    """O que já chegou de hoje, comparado com o seu dia típico; se nada chegou, diz isso e quando foi o último dado."""
+    hoje = datetime.now().strftime("%Y-%m-%d")
+    de = _dias_atras(31)
+    linhas, faltam = [], []
+    # (métrica, rótulo, acumula ao longo do dia?, casas)
+    for m, nome, acumula in (("sono_total", "Sono da última noite", False), ("fc_repouso", "Pulso em repouso", False), ("hrv", "Variabilidade (HRV)", False),
+                             ("resp", "Respiração no sono", False), ("spo2", "Oxigênio no sangue", False),
+                             ("passos", "Passos até agora", True), ("x:apple_exercise_time", "Minutos de exercício até agora", True), ("energia", "Energia ativa até agora", True)):
+        serie = _serie(m, de)
+        v = serie.get(hoje)
+        tipico = [x for d, x in serie.items() if d < hoje]
+        if v is None:
+            faltam.append(nome.replace(" da última noite", "").replace(" até agora", "").lower())
+            continue
+        t = f"{nome}: {_fmt_v(m, v)}"
+        if len(tipico) >= 7:
+            med = statistics.median(tipico)
+            t += f"; o seu dia típico (mediana de 30 dias) é {_fmt_v(m, med)}" + (", e o dia ainda não acabou" if acumula else "")
+        linhas.append(t + ".")
+    horas = _ler("SELECT hora, fc_min, fc_media, fc_max FROM fc_hora WHERE dia = ? ORDER BY hora", (hoje,))
+    if horas:
+        linhas.append(f"Frequência cardíaca de hoje: {len(horas)} hora(s) com leitura, mínima de {_num(min(h['fc_min'] for h in horas if h['fc_min']))} bpm, "
+                      f"máxima de {_num(max(h['fc_max'] for h in horas if h['fc_max']))} bpm; a última leitura chegou na faixa das {horas[-1]['hora']}h.")
+    else:
+        faltam.append("frequência cardíaca por hora")
+    for t in _ler("SELECT tipo, inicio, duracao_min, distancia_km FROM treinos WHERE dia = ? ORDER BY inicio", (hoje,)):
+        linhas.append(f"Treino de hoje: {t['tipo']}, {_dur(t['duracao_min'])}" + (f", {_num(t['distancia_km'], 1)} km" if t["distancia_km"] else "") + ".")
+    for x in _ler("SELECT classificacao, inicio FROM ecg WHERE dia = ? ORDER BY inicio", (hoje,)):
+        linhas.append(f"ECG de hoje: {x['classificacao'] or 'sem classificação'}.")
+    ev = _ler("SELECT tipo, titulo FROM saude_eventos WHERE dia = ? AND tipo != 'aviso_fc'", (hoje,))
+    for tipo, rot in (("sintoma", "Sintomas de hoje"), ("medicamento", "Medicamentos de hoje")):
+        t = sorted({e["titulo"] for e in ev if e["tipo"] == tipo})
+        if t:
+            linhas.append(f"{rot}: {', '.join(t)}.")
+    ult = _ler("SELECT MAX(atualizado) AS a FROM saude_diaria WHERE dia = ?", (hoje,))[0]["a"]
+    if not linhas:
+        anterior = _ler("SELECT MAX(dia) AS d FROM saude_diaria")[0]["d"]
+        return ("Hoje:\nAinda não chegou nenhum dado de hoje. " + (f"O último dado recebido é de {anterior}. " if anterior else "Ainda não há dados no banco. ") +
+                "Se as automações do Health Auto Export estão ligadas, elas podem simplesmente ainda não ter rodado hoje (as de uma vez por dia rodam num horário só). "
+                "Veja a página Estado dos dados do painel.")
+    fim = ""
+    if faltam:
+        fim = "Ainda sem dado de hoje: " + ", ".join(faltam) + ". Isso é normal para o sono e as métricas da manhã antes da exportação diária, mas se continuar assim à noite vale conferir a automação."
+    if ult:
+        fim += f" Última atualização dos números diários: {ult[:10]} às {ult[11:16]}."
+    return "Hoje:\n" + "\n".join(linhas) + ("\n" + fim.strip() if fim.strip() else "")
+
+
+@_em_portugues
 def relatorio_estado_atual() -> str:
     """Os últimos 7 dias contra a sua média dos 90 dias anteriores."""
     hoje = datetime.now()
@@ -1464,7 +1514,7 @@ def relatorio_recuperacao(dias: int = 180) -> str:
 def relatorio_geral(dias: int = 30) -> str:
     tem_treinos = bool(_ler("SELECT 1 FROM treinos WHERE dia >= ? LIMIT 1", (_dias_atras(dias),)))
     longo = max(dias, 90)
-    partes = [relatorio_estado_atual(), relatorio_tendencias(longo), relatorio_sono(longo), relatorio_atividade(longo), relatorio_recuperacao(max(dias, 180))]
+    partes = [relatorio_hoje(), relatorio_estado_atual(), relatorio_tendencias(longo), relatorio_sono(longo), relatorio_atividade(longo), relatorio_recuperacao(max(dias, 180))]
     if tem_treinos:
         partes += [relatorio_treinos(dias), relatorio_cruzado(dias)]
     else:
@@ -1513,6 +1563,7 @@ def main() -> int:
     ap.add_argument("--recuperacao", nargs="?", const=180, type=int, metavar="DIAS")
     ap.add_argument("--tendencias", nargs="?", const=90, type=int, metavar="DIAS")
     ap.add_argument("--semanal", action="store_true", help="mostra o relatório da semana (o agente o grava nas Notas e avisa pelo Bark aos domingos)")
+    ap.add_argument("--hoje", action="store_true", help="o que já chegou de hoje (ou o aviso de que nada chegou)")
     ap.add_argument("--agora", action="store_true", help="os últimos 7 dias contra a sua média dos 90 dias anteriores")
     a = ap.parse_args()
     if a.importar:
@@ -1549,6 +1600,8 @@ def main() -> int:
     elif a.semanal:
         r = relatorio_semanal()
         print(r["markdown"] + "\nAviso do Bark: " + r["bark"]["body"])
+    elif a.hoje:
+        print(relatorio_hoje())
     elif a.agora:
         print(relatorio_estado_atual() or "Poucos dados recentes para comparar.")
     elif a.relatorio is not None:

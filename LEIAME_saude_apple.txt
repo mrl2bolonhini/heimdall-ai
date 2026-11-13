@@ -52,3 +52,4 @@ O relógio só grava um treino quando você inicia um no app Treino ou aceita o 
 4. python3 heimdall_saude.py --recuperacao
 5. python3 heimdall_saude.py --tendencias
 6. python3 heimdall_saude.py --relatorio   (junta tudo)
+7. python3 heimdall_saude.py --hoje        (o que já chegou de hoje; avisa se nada chegou)

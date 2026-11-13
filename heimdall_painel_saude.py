@@ -77,7 +77,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 .atras{color:var(--erro);font-weight:700}
 """
 
-SECOES = [("/", "Visão geral"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"),
+SECOES = [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"),
           ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/dados", "Estado dos dados")]
 
 
@@ -128,11 +128,15 @@ def dias_de(q: dict, padrao: int) -> int:
 # ----------------------------------------------------------------------------------------
 def pg_inicio(q: dict) -> tuple:
     dias = dias_de(q, 90)
-    corpo = (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
+    corpo = secao("Hoje", saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
              or "<p>Ainda não há dados suficientes para comparar os últimos 7 dias. Veja o estado dos dados.</p>")
     corpo += seletor("/", dias, 90) + secao(f"Tendências ({dias} dias)", saude.relatorio_tendencias(dias).split("\n", 1)[-1])
     corpo += AVISO_HTML
     return "Visão geral", corpo
+
+
+def pg_hoje(q: dict) -> tuple:
+    return "Hoje", texto_html(saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + '<p><a href="/dados">Ver o estado dos dados</a></p>' + AVISO_HTML
 
 
 def pg_semana(q: dict) -> tuple:
@@ -228,6 +232,7 @@ def pg_dados(q: dict) -> tuple:
 
 ROTAS = {
     "/": pg_inicio,
+    "/hoje": pg_hoje,
     "/semana": pg_semana,
     "/sono": lambda q: pg_relatorio("Sono", "/sono", saude.relatorio_sono, 90, q, "Poucos dados de sono neste período."),
     "/atividade": lambda q: pg_relatorio("Atividade", "/atividade", saude.relatorio_atividade, 90, q, "Poucos dados de atividade neste período."),

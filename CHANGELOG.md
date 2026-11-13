@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Seção "Hoje" no relatório, no painel e no chat
+- Nova seção "Hoje": o que já chegou de hoje (sono da noite, pulso em repouso, HRV, respiração, oxigênio, passos, exercício e energia até agora, frequência cardíaca por hora, treinos, ECG, sintomas e medicamentos), cada número comparado com o seu dia típico (mediana de 30 dias). Passos, exercício e energia avisam que o dia ainda não acabou.
+- Se nada de hoje chegou, ela diz isso, informa a data do último dado recebido e lembra que a exportação diária pode ainda não ter rodado. Se só parte chegou, lista o que falta.
+- Aparece no começo do relatório geral (e do semanal), na visão geral e numa página própria do painel (Hoje), no comando python3 heimdall_saude.py --hoje e na ferramenta analise_saude (tema hoje).
+- Para aplicar: git fetch e reset do repositório e ./subir.sh --reiniciar.
+
 ## 2026-11-13 - Painel de saúde (health.heimdall-ai.tech) e Digest sem aviso no Bark
 - Novo serviço heimdall_painel_saude.py (porta 8013): painel somente de leitura com visão geral (como você está agora e tendências), semana, sono, atividade, recuperação, coração e ECG, treinos, sintomas/humor/medicamentos, diário em tabela e o estado dos dados, que mostra há quantos dias cada tipo de dado não chega (útil para saber se a exportação contínua do iPhone parou). Período selecionável (7 a 365 dias). Sem gráficos: texto e tabelas, bons para leitor de tela.
 - Mesmo login do Heimdall Cloud (senha e código de 6 dígitos), escuta só em 127.0.0.1, sessão HttpOnly, limite de tentativas, só atende os sites permitidos. Nunca mostra rota de treino nem forma de onda do ECG. Sobe sozinho no ./subir.sh --reiniciar.

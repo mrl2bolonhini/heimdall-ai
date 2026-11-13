@@ -89,7 +89,7 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 
 token, sess = hc.nova_sessao()
 ck = f"{ps.COOKIE}={token}"
-for rota, esperado in (("/", "Como você está agora"), ("/semana", "Saúde: semana de"), ("/sono", "noites com dado"), ("/atividade", "Passos"), ("/recuperacao", "Recuperação"),
+for rota, esperado in (("/", "Como você está agora"), ("/hoje", "Hoje"), ("/semana", "Saúde: semana de"), ("/sono", "noites com dado"), ("/atividade", "Passos"), ("/recuperacao", "Recuperação"),
                        ("/coracao", "Frequência"), ("/treinos", "Treinos"), ("/eventos", "Sintomas"), ("/diario", "Valores por dia"), ("/dados", "Último dia com dado")):
     st, corpo, cab = pedir(rota, ck)
     confere(f"página {rota}", st == 200 and esperado in corpo and "Pular para o conteúdo" in corpo, (st, corpo[:300]))
