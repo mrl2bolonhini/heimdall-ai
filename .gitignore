@@ -21,3 +21,6 @@ banco/
 *.db-wal
 *.db-shm
 logs/
+
+# Arquivo OPML dos feeds do News (leva a chave secreta nos endereços)
+*.opml
