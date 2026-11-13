@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-13 - Importação do app Saúde em português
+- No iPhone em português o arquivo principal do export.zip se chama exportar.xml, não export.xml, e a importação não o achava (só os ECG entravam). Agora ela reconhece os dois nomes e ignora o exportar_cda.xml (outro formato).
+- Para aplicar: git fetch e reset do repositório e rodar de novo python3 heimdall_saude.py --importar ~/Downloads/export.zip. Os ECG que já entraram não duplicam.
+
 ## 2026-11-13 - Treinos, ECG, frequência cardíaca e mais do ecossistema Apple
 - Novas tabelas no banco pessoal: treinos (tipo, duração, distância, energia, frequência cardíaca e série, recuperação em 1 minuto, subida, esforço, rota), ecg (classificação da Apple e a forma de onda, com medidas dos batimentos calculadas pelo Heimdall), fc_hora (frequência cardíaca por hora) e saude_eventos (sintomas, humor, medicamentos, avisos de frequência cardíaca do relógio, ciclo).
 - Duas entradas: o arquivo do app Saúde (python3 heimdall_saude.py --importar export.zip, traz o histórico inteiro, inclusive ECG e rotas) e o Health Auto Export, pelo mesmo webhook do n8n, que agora repassa ao agente do Mac (POST /saude/hae) treinos, ECG, frequência cardíaca, sintomas, humor, medicamentos e avisos.

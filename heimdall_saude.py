@@ -679,6 +679,20 @@ class _Origem:
     def achar(self, fim: str):
         return next((n for n in self.nomes() if n.replace("\\", "/").lower().endswith(fim)), None)
 
+    def achar_xml_saude(self):
+        """O arquivo principal se chama export.xml, mas no iPhone em português é exportar.xml (e há também o export_cda.xml, de outro formato)."""
+        for n in sorted(self.nomes(), key=lambda x: (x.count("/"), len(x))):
+            base = n.replace("\\", "/").split("/")[-1].lower()
+            if not base.endswith(".xml") or "cda" in base or n.replace("\\", "/").count("/") > 1:
+                continue
+            try:
+                with self.abrir(n) as f:
+                    if b"<HealthData" in f.read(6000):
+                        return n
+            except (OSError, KeyError):
+                continue
+        return None
+
 
 def _gpx(origem: _Origem, caminho: str) -> list:
     alvo = caminho.replace("\\", "/").lstrip("/")
@@ -765,7 +779,7 @@ def importar_exportacao(caminho: str, aviso=print) -> dict:
     """Lê export.zip (ou a pasta, ou o export.xml) do app Saúde e grava tudo no banco. Pode rodar de novo: grava pela chave, sem duplicar."""
     _garantir_banco()
     origem = _Origem(caminho)
-    nome_xml = str(origem.xml_direto) if origem.xml_direto else origem.achar("/export.xml") or origem.achar("export.xml")
+    nome_xml = str(origem.xml_direto) if origem.xml_direto else origem.achar_xml_saude()
     res = {"registros": 0, "treinos": 0, "ecg": 0, "dias_metricas": 0, "fc_horas": 0, "ecg_fibrilacao": 0, "sono_noites": 0, "aneis": 0}
     fcs = AgregadorFC()
     soma = {}      # (dia, métrica, fonte) -> [soma, n]
@@ -847,7 +861,7 @@ def importar_exportacao(caminho: str, aviso=print) -> dict:
                     aviso(f"  {res['registros']} registros lidos...")
                     raiz.clear()
     else:
-        aviso("Não achei o export.xml (só os ECG serão importados).")
+        aviso("Não achei o arquivo principal do app Saúde (export.xml ou exportar.xml) dentro do pacote; só os ECG serão importados. Nomes encontrados: " + ", ".join(n for n in origem.nomes() if n.count("/") <= 1)[:300])
     # diário: para somas, usa só a fonte com o maior total do dia (evita contar iPhone e relógio em dobro)
     por_dia = {}
     for (dia, metrica, modo, un, fonte_n), (s, n) in soma.items():
@@ -1150,7 +1164,7 @@ def relatorio_geral(dias: int = 30) -> str:
 def main() -> int:
     import argparse
     ap = argparse.ArgumentParser(description="Saúde do ecossistema Apple no Heimdall (treinos, ECG, frequência cardíaca)")
-    ap.add_argument("--importar", metavar="EXPORT", help="importa o export.zip (ou pasta, ou export.xml) do app Saúde")
+    ap.add_argument("--importar", metavar="EXPORT", help="importa o export.zip (ou pasta, ou o xml) do app Saúde")
     ap.add_argument("--relatorio", nargs="?", const=30, type=int, metavar="DIAS", help="análise geral (padrão 30 dias)")
     ap.add_argument("--treinos", nargs="?", const=30, type=int, metavar="DIAS")
     ap.add_argument("--ecg", nargs="?", const=365, type=int, metavar="DIAS")

@@ -162,7 +162,8 @@ csv_ecg = ("Nome,Fulano de Tal\nData de nascimento,1980-05-05\nData do registro,
            "Versão do software,2.0\nDispositivo,Watch6,2\nTaxa de amostragem,512 hertz\nDerivação,Derivação I\nUnidade,µV\n\n" + "\n".join(f'"{v:.2f}"'.replace(".", ",") for v in x) + "\n")
 zpath = TMP / "export.zip"
 with zipfile.ZipFile(zpath, "w") as z:
-    z.writestr("apple_health_export/export.xml", "\n".join(xml))
+    z.writestr("apple_health_export/exportar.xml", "\n".join(xml))   # no iPhone em português o nome é exportar.xml
+    z.writestr("apple_health_export/exportar_cda.xml", "<ClinicalDocument/>")
     z.writestr("apple_health_export/workout-routes/route_1.gpx", gpx)
     z.writestr("apple_health_export/electrocardiograms/ecg_2026-11-10.csv", csv_ecg)
 avisos = []
