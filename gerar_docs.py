@@ -195,6 +195,7 @@ SERVICOS = [
     ("Dozzle", "Leitor de logs dos contêineres.", "8081", "start_heimdall.sh (HEIMDALL_MONITORING=0 desliga)"),
     ("Emulador de AWS (Moto ou LocalStack)", "Para testar código de AWS sem custo.", "4566", "start_heimdall.sh (HEIMDALL_AWS_EMULATOR)"),
     ("Heimdall Notas", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Cloud", "Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare.", "8010", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
 ]
 
@@ -251,6 +252,8 @@ SCRIPTS = [
     ("heimdall_triagem.py", "Triagem obrigatória de avisos importantes. Cria lembretes na lista \"Heimdall: Triagem\" do app Lembretes (menções do Diário da Justiça, alertas de saúde, e-mails suspeitos ou urgentes e achados de privacidade de risco médio ou alto) e insiste pelo Bark até você concluir, reclassificar ou adiar. Roda dentro do agente do Mac."),
     ("heimdall_email_oficial.py", "Vigia o Gmail a cada hora, só lendo. Confere se e-mails de serviços públicos (INSS, gov.br, FGTS, Receita, Serasa e outros) são autênticos, resume os verdadeiros, alerta sobre imitações e cria evento e lembrete quando há prazo. Nunca segue links."),
     ("heimdall_notas.py", "Heimdall Notas (porta 8011): site para ler as notas de estudo do cofre e ouvir os áudios, com velocidade, voltar e avançar 15 segundos, busca e os documentos de knowledge/. Mesmo login do Heimdall Cloud; mostra o cofre inteiro, menos o Digest."),
+    ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
+    ("noticias_fontes.json", "Fontes do Heimdall News (categoria, nome, endereço do feed, idioma, limite por atualização). Edite à vontade; é relido a cada atualização."),
     ("heimdall_cloud.py", "Painel web do emulador de AWS (porta 8010): S3, Lambda, Glue (bancos, tabelas, crawlers e jobs), Athena (consultas SQL) e um console geral que chama qualquer operação de qualquer serviço. Entrada com senha (hash PBKDF2) e código de 6 dígitos, limite de tentativas, sessão com validade e proteção contra CSRF. Escuta só em 127.0.0.1 e nunca expõe a porta do emulador."),
     ("ingest_docs.py", "Indexa os documentos de knowledge/ no Qdrant, de forma incremental. Cada subpasta vira um tema."),
     ("limpar_privadas.py", "Apaga do Second Brain o que veio de notas que depois foram para uma pasta privada."),
@@ -266,7 +269,7 @@ COMANDOS = [
         ("Subir uma vez só, guardando o log e avisando quando tudo estiver no ar (aceita os argumentos do start_heimdall.sh)", "./subir.sh"),
         ("Ver agora o que está no ar, sem subir nada", "./subir.sh --status"),
         ("Ver as últimas linhas do log da subida atual", "./subir.sh --log"),
-        ("Ver o log de um serviço (mcp, mcp_public, mcp_dados, agente, cloud, notas, open_terminal, ingest)", "./subir.sh --log notas"),
+        ("Ver o log de um serviço (mcp, mcp_public, mcp_dados, agente, cloud, notas, news, open_terminal, ingest)", "./subir.sh --log notas"),
         ("Listar os logs, todos na pasta logs/", "./subir.sh --logs"),
         ("Apagar os logs antigos que ficavam soltos na pasta do projeto", "./subir.sh --limpar"),
         ("Encerrar a subida em andamento e subir de novo", "./subir.sh --reiniciar"),
@@ -290,9 +293,15 @@ COMANDOS = [
         ("Voz e velocidade do áudio de estudo", "python3 heimdall_agente.py --voz"),
         ("Painel do emulador de AWS (deve responder ok)", "curl -s http://localhost:8010/saude"),
         ("Heimdall Notas (deve responder ok)", "curl -s http://localhost:8011/saude"),
+        ("Heimdall News (deve responder ok)", "curl -s http://localhost:8012/saude"),
+        ("Criar ou trocar a chave dos feeds RSS e ver os endereços", "python3 heimdall_news.py --token"),
+        ("Ver de novo os endereços dos feeds RSS", "python3 heimdall_news.py --urls"),
+        ("Copiar o endereço de um feed sem digitar (geral, opml ou uma categoria)", "python3 heimdall_news.py --copiar geral"),
+        ("Atualizar as notícias agora, uma vez", "python3 heimdall_news.py --uma-vez"),
         ("Reiniciar só o Heimdall Notas", "pkill -f heimdall_notas.py   # depois suba o sistema como de costume"),
         ("Teste do painel do emulador de AWS (sem rede)", "python3 teste_cloud.py"),
         ("Teste do Heimdall Notas (sem rede)", "python3 teste_notas.py"),
+        ("Teste do Heimdall News (sem rede)", "python3 teste_news.py"),
         ("Teste dos trechos de livros do estudo (sem rede, precisa do Node)", "python3 teste_trechos.py"),
         ("Login e simulação do vigia de e-mail", "bash instalar_email_oficial.sh --testar"),
     ]),
@@ -565,6 +574,43 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Reiniciar só ela: <code>pkill -f heimdall_notas.py</code> e subir o sistema como de costume.</li>
 <li>Testar sem rede: <code>python3 teste_notas.py</code></li>
 <li>Se algo falhar: <code>tail -20 logs/notas_debug.log</code></li></ul></section>
+""")
+    out["news.html"] = pagina("news.html", "News", "Heimdall News: notícias das últimas 24 horas com resumo feito por IA e feeds RSS para o iPhone.", """
+<h1>Heimdall News</h1>
+<p>O Heimdall News reúne as notícias das fontes que você escolheu, atualiza de 30 em 30 minutos e mostra as das últimas 24 horas, com um resumo feito por um modelo local de IA. Também serve feeds RSS para você ler no iPhone em um app de feeds. Foi feito para leitor de tela: o título de cada notícia é um cabeçalho, o resumo vem sempre identificado como feito por IA e há link para pular ao conteúdo.</p>
+<section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
+<ol><li>No próprio computador: http://localhost:8012, depois de subir o sistema.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Cloud e do Heimdall Notas.</li>
+<li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. Por enquanto ele fica privado: o endereço só é criado quando você autorizar.</li></ol></section>
+<section aria-labelledby="fazer"><h2 id="fazer">O que mostra</h2>
+<ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com Anterior e Próxima.</li>
+<li><strong>Cada notícia</strong>: título como cabeçalho, o resumo marcado como "Resumo feito por IA" (quando só havia o trecho do feed, isso é dito), o link "Leia mais sobre ..." para a matéria original e a fonte, a categoria e a hora.</li>
+<li><strong>Títulos em inglês</strong> são traduzidos por IA e sinalizados. Matérias ainda sem resumo mostram o trecho original da fonte, e o resumo entra na atualização seguinte.</li>
+<li><strong>Categorias</strong>: filtro por categoria, com a contagem de cada uma.</li>
+<li><strong>Estado das fontes</strong>: mostra a última atualização, a fila de resumos e cada fonte (ok ou falhou desde quando, avisando se passar de 24 horas fora do ar).</li></ul></section>
+<section aria-labelledby="banco"><h2 id="banco">Banco pessoal</h2>
+<p>Tudo fica 30 dias na tabela noticias do banco pessoal (entra na cópia de segurança criptografada). O site mostra só as últimas 24 horas; o resto serve para consulta, pelo chat ou por SQL. Matérias com mais de 30 dias são apagadas sozinhas.</p></section>
+<section aria-labelledby="rss"><h2 id="rss">Feeds RSS para o iPhone</h2>
+<ol><li>Crie a chave: <code>python3 heimdall_news.py --token</code> e reinicie com <code>./subir.sh --reiniciar</code>. Isso mostra o endereço de um feed geral, de um feed por categoria e de um arquivo OPML que traz todos de uma vez.</li>
+<li>Para copiar um endereço sem digitar: <code>python3 heimdall_news.py --copiar geral</code> (ou <code>opml</code>, ou o nome de uma categoria). Depois cole no app de feeds; a área de transferência universal leva do Mac para o iPhone.</li>
+<li>Apps de feeds não digitam o código de 6 dígitos, por isso o endereço leva uma chave secreta. Quem tem o endereço lê os feeds; para trocar, rode o comando da chave de novo (os endereços antigos param de valer).</li>
+<li>O feed guarda 72 horas de notícias, cada item com o resumo de IA identificado. Matérias que ainda esperam o resumo só entram no feed depois de 2 horas, porque os apps de feeds não atualizam um item já baixado.</li></ol></section>
+<section aria-labelledby="fontes"><h2 id="fontes">Fontes e modelo</h2>
+<ul><li>As fontes ficam em <code>noticias_fontes.json</code> (as mesmas do Digest). Para trocar, é só editar: o serviço relê o arquivo a cada atualização. Campos: categoria, nome, url, idioma (pt ou en), limite de matérias novas por atualização, ler_materia e ativa.</li>
+<li>O modelo é o <code>qwen3-vl-instruct</code> pelo LiteLLM. Para trocar por outro, mais rápido, use <code>HEIMDALL_NEWS_MODELO="nome-do-modelo"</code> no <code>.env</code>.</li>
+<li>Para não competir com o chat, cada atualização faz no máximo 10 resumos (<code>HEIMDALL_NEWS_RESUMOS_POR_CICLO</code>), das notícias mais novas para as mais antigas, e as outras esperam na fila. <code>HEIMDALL_NEWS_PAUSA="1-6"</code> suspende os resumos de madrugada.</li>
+<li>Se o modelo ou o LiteLLM estiver fora do ar, as matérias ficam na fila sem perder tentativa e o site avisa.</li></ul></section>
+<section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
+<ul><li>Escuta só em 127.0.0.1 e é somente de leitura. Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict, só nomes de site permitidos e todo texto escapado.</li>
+<li>Os feeds RSS só respondem à chave certa; tentativas erradas têm limite próprio e a chave nunca aparece no log.</li>
+<li>Feeds e matérias só são baixados de endereços públicos (nunca da sua rede ou do próprio Mac), e o texto deles é tratado como dado: o modelo é instruído a ignorar qualquer ordem que apareça nele.</li>
+<li>Resumos de IA podem conter erros; o site e os feeds avisam e levam à matéria original.</li></ul></section>
+<section aria-labelledby="config"><h2 id="config">Configuração</h2>
+<ul><li>Sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Cloud).</li>
+<li>Conferir se está no ar: <code>curl -s http://localhost:8012/saude</code></li>
+<li>Atualizar agora, uma vez: <code>python3 heimdall_news.py --uma-vez</code></li>
+<li>Testar sem rede: <code>python3 teste_news.py</code></li>
+<li>Se algo falhar: <code>tail -20 logs/news_debug.log</code> ou <code>./subir.sh --log news</code></li></ul></section>
 """)
     out["404.html"] = pagina("404.html", "Página não encontrada", "Página não encontrada.", f'<h1>Página não encontrada</h1><p>Volte ao <a href="index.html">início</a> ou veja o <a href="arquitetura.html">mapa do projeto</a>.</p>')
     return out

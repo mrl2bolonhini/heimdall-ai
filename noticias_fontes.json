@@ -1,0 +1,20 @@
+{
+  "_ajuda": "Fontes do site de notícias (news). Edite à vontade; o serviço relê este arquivo a cada atualização. Campos: categoria, nome, url (feed RSS ou Atom), idioma (pt ou en; en tem o título traduzido), limite (quantas matérias novas pegar por atualização, padrão 10), ler_materia (true abre a matéria para resumir melhor; padrão true). Para desligar uma fonte sem apagar: \"ativa\": false.",
+  "fontes": [
+    {"categoria": "Tecnologia", "nome": "Tecnoblog", "url": "https://tecnoblog.net/feed/", "idioma": "pt", "limite": 10},
+    {"categoria": "Tecnologia", "nome": "Hacker News (populares)", "url": "https://hnrss.org/frontpage?points=200", "idioma": "en", "limite": 8},
+    {"categoria": "Inteligência artificial", "nome": "arXiv cs.AI", "url": "https://rss.arxiv.org/rss/cs.AI", "idioma": "en", "limite": 5, "ler_materia": false},
+    {"categoria": "Inteligência artificial", "nome": "arXiv cs.LG", "url": "https://rss.arxiv.org/rss/cs.LG", "idioma": "en", "limite": 5, "ler_materia": false},
+    {"categoria": "Inteligência artificial", "nome": "OpenAI", "url": "https://openai.com/news/rss.xml", "idioma": "en", "limite": 5},
+    {"categoria": "Dados e AWS", "nome": "AWS novidades", "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/", "idioma": "en", "limite": 8},
+    {"categoria": "Dados e AWS", "nome": "AWS big data", "url": "https://aws.amazon.com/blogs/big-data/feed/", "idioma": "en", "limite": 5},
+    {"categoria": "Brasil", "nome": "G1 principais", "url": "https://g1.globo.com/rss/g1/", "idioma": "pt", "limite": 10},
+    {"categoria": "Local (São Paulo)", "nome": "G1 São Paulo", "url": "https://g1.globo.com/rss/g1/sao-paulo/", "idioma": "pt", "limite": 8},
+    {"categoria": "Mundo", "nome": "BBC Brasil", "url": "https://feeds.bbci.co.uk/portuguese/rss.xml", "idioma": "pt", "limite": 8},
+    {"categoria": "Mundo", "nome": "DW Brasil", "url": "https://rss.dw.com/xml/rss-br-all", "idioma": "pt", "limite": 8},
+    {"categoria": "Astronomia", "nome": "NASA", "url": "https://www.nasa.gov/feed/", "idioma": "en", "limite": 6},
+    {"categoria": "Astronomia", "nome": "Space.com", "url": "https://www.space.com/feeds/all", "idioma": "en", "limite": 8},
+    {"categoria": "Curiosidades", "nome": "Superinteressante", "url": "https://super.abril.com.br/feed/", "idioma": "pt", "limite": 8},
+    {"categoria": "Ciência", "nome": "Quanta Magazine", "url": "https://www.quantamagazine.org/feed/", "idioma": "en", "limite": 5}
+  ]
+}

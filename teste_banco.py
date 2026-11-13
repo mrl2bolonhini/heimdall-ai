@@ -109,7 +109,7 @@ try:
     ok(st == 401, "rota exige token")
     st, d = chamar("/banco/gravar", {"tabela": "saude_diaria", "registros": [{"dia": "2026-11-11", "metrica": "hrv", "valor": 42}]})
     ok(st == 200 and d["gravados"] == 1, "POST /banco/gravar")
-    st, d = chamar("/banco/consultar", {"sql": "SELECT metrica, valor FROM saude_diaria WHERE dia='2026-11-11'"})
+    st, d = chamar("/banco/consultar", {"sql": "SELECT metrica, valor FROM saude_diaria WHERE dia='2026-11-11' AND metrica='hrv'"})
     ok(st == 200 and d["linhas"] == [["hrv", 42.0]], "POST /banco/consultar")
     st, d = chamar("/banco/consultar", {"sql": "DROP TABLE diarios"})
     ok(st == 403, "consultar recusa escrita com 403")

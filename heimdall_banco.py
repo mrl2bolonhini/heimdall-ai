@@ -126,6 +126,25 @@ CREATE TABLE IF NOT EXISTS triagem (
 );
 CREATE INDEX IF NOT EXISTS ix_triagem_estado ON triagem (estado, criado);
 
+CREATE TABLE IF NOT EXISTS noticias (
+    id TEXT PRIMARY KEY,            -- hash do link sem rastreadores
+    fonte TEXT NOT NULL DEFAULT '',
+    categoria TEXT NOT NULL DEFAULT '',
+    idioma TEXT NOT NULL DEFAULT 'pt',
+    titulo TEXT NOT NULL,           -- como aparece no site (em português; traduzido por IA se a fonte for em inglês)
+    titulo_original TEXT NOT NULL DEFAULT '',
+    titulo_traduzido INTEGER NOT NULL DEFAULT 0,
+    link TEXT NOT NULL,
+    publicado TEXT NOT NULL,        -- AAAA-MM-DDTHH:MM:SSZ (UTC)
+    trecho TEXT NOT NULL DEFAULT '',        -- texto que veio no feed, sem HTML
+    resumo TEXT NOT NULL DEFAULT '',        -- resumo feito por IA
+    resumo_base TEXT NOT NULL DEFAULT '',   -- materia (leu a matéria), trecho (só o trecho do feed) ou vazio (ainda sem resumo)
+    tentativas INTEGER NOT NULL DEFAULT 0,
+    coletado TEXT NOT NULL          -- AAAA-MM-DDTHH:MM:SSZ (UTC)
+);
+CREATE INDEX IF NOT EXISTS ix_noticias_publicado ON noticias (publicado);
+CREATE INDEX IF NOT EXISTS ix_noticias_categoria ON noticias (categoria, publicado);
+
 CREATE TABLE IF NOT EXISTS analises (
     nota_id TEXT PRIMARY KEY,       -- id da nota no app Notas
     titulo TEXT NOT NULL,
@@ -318,6 +337,7 @@ def resumo() -> dict:
         saida["triagem"] = dict(zip(("linhas", "pendentes", "ate"), con.execute(
             "SELECT COUNT(*), COALESCE(SUM(estado = 'pendente'), 0), MAX(criado) FROM triagem").fetchone()))
         saida["analises"] = dict(zip(("linhas", "ate"), con.execute("SELECT COUNT(*), MAX(atualizado) FROM analises").fetchone()))
+        saida["noticias"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(publicado), MAX(publicado) FROM noticias").fetchone()))
         return saida
     finally:
         con.close()
@@ -338,6 +358,8 @@ def tabelas_para_modelo() -> str:
         "avisos(id, quando, slot, titulo, linha, urgente): cada aviso de rotina que passou pelo resumo agrupado.\n"
         "analises(nota_id, titulo, pasta, resumo, tags, conceitos, entidades, conexoes, lacunas, perguntas, atualizado): análise do Second Brain de cada nota; "
         "as colunas de lista são JSON.\n"
+        "noticias(id, fonte, categoria, idioma, titulo, titulo_original, titulo_traduzido, link, publicado, trecho, resumo, resumo_base, coletado): "
+        "notícias dos últimos 30 dias coletadas de 30 em 30 minutos (publicado e coletado em UTC); resumo é feito por IA; resumo_base: materia, trecho ou vazio.\n"
         "Dentro do SQL, sem_acento(coluna) devolve o texto em minúsculas e sem acento (use em buscas: WHERE sem_acento(titulo) LIKE '%coracao%')."
     )
 

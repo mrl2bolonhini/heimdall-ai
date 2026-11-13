@@ -2,6 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-12 - Heimdall News: notícias com resumo de IA e feeds RSS
+- Novo serviço heimdall_news.py (porta 8012, news.heimdall-ai.tech quando você autorizar o endereço). Lê as 15 fontes do Digest em noticias_fontes.json (arquivo editável, relido a cada atualização) de 30 em 30 minutos, tira repetidas, traduz os títulos em inglês e pede a um modelo local (qwen3-vl-instruct por padrão, HEIMDALL_NEWS_MODELO troca) um resumo de cada matéria.
+- Site com o mesmo login do Cloud e do Notas: notícias das últimas 24 horas, 10 por página (Anterior e Próxima), título como cabeçalho, resumo sempre marcado como "Resumo feito por IA" (e dito quando só havia o trecho do feed), link "Leia mais sobre ..." para a matéria, filtro por categoria e uma página de estado das fontes. Fica privado por enquanto.
+- Banco pessoal: nova tabela noticias, com 30 dias de histórico para consulta (entra na cópia de segurança criptografada). O chat também enxerga a tabela.
+- Feeds RSS para o app de feeds do iPhone, em endereços com chave secreta: geral, um por categoria e um OPML que traz todos. python3 heimdall_news.py --token cria ou troca a chave; --urls mostra os endereços; --copiar geral copia um endereço sem digitar. A chave nunca vai para o log.
+- Para não competir com o chat: até 10 resumos por atualização (das notícias mais novas para as mais antigas, o resto espera na fila), orçamento de 20 minutos por atualização e pausa opcional de madrugada (HEIMDALL_NEWS_PAUSA). Se o modelo estiver fora do ar, as matérias esperam sem perder tentativa e o site avisa.
+- Cuidados: feeds e matérias só de endereços públicos, entidades XML recusadas, texto de terceiros tratado como dado pelo modelo, fonte fora do ar não derruba as outras e aparece no estado (com aviso depois de 24 horas).
+- Para aplicar: git fetch e reset do repositório, python3 heimdall_news.py --token e ./subir.sh --reiniciar. Não precisa rodar instalador. O Digest dos fluxos do n8n (7h45 e 18h) continua como está.
+
 ## 2026-11-12 - Todos os logs na pasta logs/
 - Os logs de cada serviço (MCP do Mac, público e de dados, agente do Mac, Heimdall Cloud, Heimdall Notas, Open Terminal e a indexação) passam a ser gravados em logs/, por exemplo logs/notas_debug.log, em vez de ficarem soltos na pasta do projeto. A cada subida, o log anterior de cada serviço vai para logs/historico/ (os 5 mais recentes de cada), então o motivo de uma falha não se perde na subida seguinte. O log do Open Terminal continua com permissão 600, porque contém a chave.
 - Mensagens, roteiros e a documentação passaram a apontar para logs/ (por exemplo: tail -20 logs/cloud_debug.log).

@@ -50,6 +50,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Dozzle | 8081 | Leitor de logs dos contêineres. |
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
 | Heimdall Notas | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
+| Heimdall News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Cloud | 8010 | Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
 <!-- /AUTO:SERVICOS -->
 
@@ -95,6 +96,7 @@ python3 heimdall_agente.py --teste                # Notas, Calendário e Lembret
 python3 heimdall_agente.py --voz                  # voz e velocidade do áudio
 python3 teste_cloud.py                        # painel do emulador de AWS (sem rede)
 python3 teste_notas.py                   # Heimdall Notas (sem rede)
+python3 teste_news.py                    # Heimdall News (sem rede)
 python3 teste_trechos.py                      # trechos de livros do estudo (sem rede)
 bash instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail
 python3 gerar_docs.py --check                     # documentação em dia
