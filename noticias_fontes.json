@@ -9,7 +9,7 @@
     {"categoria": "Dados e AWS", "nome": "AWS novidades", "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/", "idioma": "en", "limite": 8},
     {"categoria": "Dados e AWS", "nome": "AWS big data", "url": "https://aws.amazon.com/blogs/big-data/feed/", "idioma": "en", "limite": 5},
     {"categoria": "Brasil", "nome": "G1 principais", "url": "https://g1.globo.com/rss/g1/", "idioma": "pt", "limite": 10},
-    {"categoria": "Local (São Paulo)", "nome": "G1 São Paulo", "url": "https://g1.globo.com/rss/g1/sao-paulo/", "idioma": "pt", "limite": 8},
+    {"categoria": "Local (São Paulo)", "nome": "G1 São Paulo", "url": "https://g1.globo.com/rss/g1/sao-paulo/", "idioma": "pt", "limite": 8, "ativa": false},
     {"categoria": "Mundo", "nome": "BBC Brasil", "url": "https://feeds.bbci.co.uk/portuguese/rss.xml", "idioma": "pt", "limite": 8},
     {"categoria": "Mundo", "nome": "DW Brasil", "url": "https://rss.dw.com/xml/rss-br-all", "idioma": "pt", "limite": 8},
     {"categoria": "Astronomia", "nome": "NASA", "url": "https://www.nasa.gov/feed/", "idioma": "en", "limite": 6},
@@ -21,6 +21,12 @@
     {"categoria": "Futebol", "nome": "ge futebol", "url": "https://ge.globo.com/rss/ge/futebol/", "idioma": "pt", "limite": 10},
     {"categoria": "Esportes", "nome": "ESPN Brasil", "url": "https://www.espn.com.br/espn/rss/news", "idioma": "pt", "limite": 8},
     {"categoria": "Ciência", "nome": "Jornal da USP", "url": "https://jornal.usp.br/feed/", "idioma": "pt", "limite": 6},
-    {"categoria": "Ciência", "nome": "Agência FAPESP", "url": "https://agencia.fapesp.br/rss/", "idioma": "pt", "limite": 5}
+    {"categoria": "Ciência", "nome": "Agência FAPESP", "url": "https://agencia.fapesp.br/rss/", "idioma": "pt", "limite": 5, "ativa": false},
+    {"categoria": "Local (São Paulo)", "nome": "Metrópoles São Paulo", "url": "https://www.metropoles.com/sao-paulo/feed", "idioma": "pt", "limite": 10},
+    {"categoria": "Local (São Paulo)", "nome": "Câmara Municipal de São Paulo", "url": "https://www.saopaulo.sp.leg.br/blog/category/noticias/cidade/feed/", "idioma": "pt", "limite": 5},
+    {"categoria": "Inteligência artificial", "nome": "Hugging Face (blog)", "url": "https://huggingface.co/blog/feed.xml", "idioma": "en", "limite": 6},
+    {"categoria": "Astronomia", "nome": "Universe Today", "url": "https://www.universetoday.com/feed", "idioma": "en", "limite": 8},
+    {"categoria": "Ciência", "nome": "Revista Pesquisa FAPESP", "url": "https://revistapesquisa.fapesp.br/feed/", "idioma": "pt", "limite": 6},
+    {"categoria": "Ciência", "nome": "ScienceDaily", "url": "https://www.sciencedaily.com/rss/top/science.xml", "idioma": "en", "limite": 8}
   ]
 }

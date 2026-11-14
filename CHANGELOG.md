@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-14 - Fontes do News revisadas
+- Pelo python3 heimdall_news.py --fontes: o feed do G1 São Paulo estava parado havia 8 anos e o da Agência FAPESP vinha vazio; os dois foram desligados ("ativa": false).
+- Novas fontes: Metrópoles São Paulo e Câmara Municipal de São Paulo (local), Hugging Face (inteligência artificial), Universe Today (astronomia), Revista Pesquisa FAPESP e ScienceDaily (ciência). Os feeds foram conferidos como válidos e recentes.
+- O arXiv só publica de segunda a sexta, então aos sábados e domingos seus feeds vêm vazios, e isso é normal.
+- python3 heimdall_news.py --fontes NOME mostra só essa fonte ou categoria, com os 3 itens mais novos e as datas.
+
 ## 2026-11-14 - Mais serviços da Cloudflare
 - Caixa de entrada da saúde (Worker heimdall-saude-caixa, cloudflare/saude_caixa.js): fica na frente do webhook de saúde do n8n, no mesmo endereço que o Health Auto Export já usa, sem mudar nada no app. Com o Mac no ar, repassa tudo como veio. Com o Mac dormindo ou sem rede, guarda o envio no KV (7 dias, até 200 envios, até 8 MB cada) e responde 202 ao app; de 5 em 5 minutos reenvia ao n8n o que ficou e apaga o que foi aceito. Opcional: o segredo TOKEN_SAUDE faz a caixa guardar só envios com o cabeçalho certo.
 - Reserva de resumos do News no Workers AI: se o modelo local não responder, o resumo da notícia é feito pelo modelo mistral-small-3.1 (24 bilhões) da Cloudflare (limite de 60 por dia, desligável com HEIMDALL_NEWS_RESERVA=0). Só o News usa isso, só com matérias públicas; dados pessoais e de saúde nunca saem do Mac.

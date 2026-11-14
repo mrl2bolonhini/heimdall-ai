@@ -1231,7 +1231,7 @@ def copiar(qual: str) -> None:
     sys.exit("Não achei esse feed. Use geral, opml ou o nome de uma categoria: " + ", ".join(a for a, _, _ in urls_dos_feeds()))
 
 
-def mostrar_fontes() -> None:
+def mostrar_fontes(filtro: str = "") -> None:
     """Para cada fonte: baixa o feed agora (sem gravar nada) e mostra quantos itens ele traz e a idade deles."""
     ref = agora()
     con = banco.conectar(somente_leitura=True)
@@ -1240,6 +1240,8 @@ def mostrar_fontes() -> None:
     finally:
         con.close()
     for f in carregar_fontes():
+        if filtro and sem_acento(filtro) not in sem_acento(f["nome"] + " " + f["categoria"]):
+            continue
         try:
             dados, _tipo = baixar(f["url"])
             itens = analisar_feed(dados)
@@ -1252,6 +1254,9 @@ def mostrar_fontes() -> None:
         novo = f"{round((ref - max(datas)).total_seconds() / 3600, 1)} h" if datas else "sem datas"
         print(f"{f['categoria']} | {f['nome']}: o feed traz {len(itens)} itens ({h24} nas últimas 24 h, {h72} nas últimas 72 h; o mais novo tem {novo}); "
               f"limite por atualização {f['limite']}; no banco, nas últimas 24 h: {no_banco.get(f['nome'], 0)}")
+        if filtro and itens:
+            for i in sorted(itens, key=lambda i: i["data"] or ref, reverse=True)[:3]:
+                print(f"    {i['data'].isoformat() if i['data'] else 'sem data'} | {i['titulo'][:90]}")
 
 
 def mostrar_fila() -> None:
@@ -1294,7 +1299,7 @@ def main() -> None:
     ap.add_argument("--urls", action="store_true", help="mostra os endereços dos feeds")
     ap.add_argument("--copiar", metavar="FEED", help="copia o endereço de um feed (geral, opml ou categoria) para a área de transferência")
     ap.add_argument("--opml", nargs="?", const="heimdall-news.opml", metavar="ARQUIVO", help="grava um arquivo OPML com todos os feeds (padrão: heimdall-news.opml)")
-    ap.add_argument("--fontes", action="store_true", help="baixa cada feed agora e mostra quantos itens ele traz e a idade deles (não grava nada)")
+    ap.add_argument("--fontes", nargs="?", const="", metavar="FILTRO", help="baixa cada feed agora e mostra quantos itens ele traz e a idade deles (não grava nada); com um nome ou categoria, só essas fontes e os 3 itens mais novos")
     ap.add_argument("--fila", action="store_true", help="mostra quantas notícias esperam resumo de IA e quanto falta")
     ap.add_argument("--uma-vez", action="store_true", help="faz só uma atualização agora e sai")
     a = ap.parse_args()
@@ -1316,8 +1321,8 @@ def main() -> None:
     if a.copiar:
         copiar(a.copiar)
         return
-    if a.fontes:
-        mostrar_fontes()
+    if a.fontes is not None:
+        mostrar_fontes(a.fontes)
         return
     if a.fila:
         mostrar_fila()

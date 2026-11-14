@@ -712,6 +712,10 @@ with _cl.redirect_stdout(_buf):
     hn.mostrar_fontes()
 _saida = _buf.getvalue()
 confere("--fontes mostra cada fonte com itens, idade e contagem no banco", "Fonte PT: o feed traz" in _saida and "nas últimas 24 h" in _saida and "no banco" in _saida and "Fonte Morta" in _saida and "FALHOU" in _saida, _saida[:300])
+_buf = _io.StringIO()
+with _cl.redirect_stdout(_buf):
+    hn.mostrar_fontes("Fonte PT")
+confere("--fontes com filtro mostra só a fonte pedida e os 3 itens mais novos", "Fonte PT: o feed traz" in _buf.getvalue() and "Fonte EN" not in _buf.getvalue() and _buf.getvalue().count("    20") >= 1, _buf.getvalue()[:300])
 confere("campo renderizar é lido das fontes (padrão desligado)", _c == {"N1": True, "N2": False})
 
 print(f"\n{ok_n} conferências ok, {len(falhas)} falha(s).")

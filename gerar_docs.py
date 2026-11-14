@@ -309,7 +309,7 @@ COMANDOS = [
         ("Treinos, ECG e frequência cardíaca", "python3 heimdall_saude.py --treinos   # também --ecg e --fc"),
         ("Relatório da semana (o n8n o envia aos domingos)", "python3 heimdall_saude.py --semanal"),
         ("Fila de resumos do News", "python3 heimdall_news.py --fila"),
-        ("O que cada fonte do News entrega agora (itens, idade, quantos no banco)", "python3 heimdall_news.py --fontes"),
+        ("O que cada fonte do News entrega agora (itens, idade, quantos no banco)", "python3 heimdall_news.py --fontes   # com um nome ou categoria, só essas: --fontes Astronomia"),
         ("Testar a chave da Cloudflare (Workers AI e Browser Run)", "python3 cloudflare_chave.py --testar"),
         ("Testar as análises e o painel de saúde", "python3 teste_saude_dados.py && python3 teste_painel_saude.py"),
         ("Testar a voz", "python3 teste_voz.py"),
