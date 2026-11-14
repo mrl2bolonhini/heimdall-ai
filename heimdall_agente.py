@@ -28,6 +28,8 @@ Rotas:
     GET  /triagem/estado                itens pendentes da triagem
     POST /backup/executar               {}  cópia criptografada do banco para os destinos do .env (pasta e/ou R2); regras em heimdall_backup.py
     POST /backup/verificar              {}  baixa a cópia mais recente de cada destino, decifra e confere a integridade
+    POST /seguranca/executar            {"tarefa": "logs|commits|exposicao"}  o dolphin3-cyber-8b analisa os dados que o script coleta, grava a nota em
+                                        Segurança e devolve {gravidade, linha, gravar...} para o n8n decidir o aviso (regras em heimdall_seguranca.py)
     GET  /backup/estado                 última cópia bem-sucedida e última tentativa
 
 Pastas privadas: notas da pasta "Privado" (e de outras listadas em HEIMDALL_NOTAS_PRIVADAS) nunca são listadas nem lidas.
@@ -59,6 +61,7 @@ from urllib.parse import parse_qs, urlparse
 import heimdall_backup as backup
 import heimdall_banco as banco
 import heimdall_saude as saude
+import heimdall_seguranca as seguranca
 import heimdall_triagem as triagem
 import heimdall_voz as dicionario_voz
 
@@ -86,7 +89,7 @@ PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continu
 # Pastas do app Notas que o Heimdall cria e onde só ele escreve. Nunca são lidas como fonte (evita laço) e as
 # suas notas pessoais nunca são alteradas. Para mudar, use no .env: HEIMDALL_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro"
 PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("HEIMDALL_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Second Brain,Cérebro").split(",") if p.strip()]
-for _p in ("Saúde", "Second Brain", "Cérebro"):  # sempre permitidas, mesmo com o .env personalizado ("Cérebro" é o nome antigo)
+for _p in ("Saúde", "Segurança", "Second Brain", "Cérebro"):  # sempre permitidas, mesmo com o .env personalizado ("Cérebro" é o nome antigo)
     if _p not in PASTAS_PROPRIAS:
         PASTAS_PROPRIAS.append(_p)
 # No app Notas, tudo que o Heimdall grava fica dentro de uma pasta-raiz: Heimdall-ai/Digest, Heimdall-ai/Saúde,
@@ -1030,6 +1033,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, triagem.criar(dado, osascript_travado))
             if u.path == "/triagem/ciclo":
                 return self._json(200, triagem.ciclo(osascript_travado))
+            if u.path == "/seguranca/executar":
+                r = seguranca.executar(str(dado.get("tarefa", "")))
+                if r["gravar"]:
+                    r["nota"] = gravar("Segurança", r["titulo"], r["markdown"])
+                r.pop("markdown", None)
+                r.pop("dados", None)
+                return self._json(200, r)
             if u.path == "/backup/executar":
                 return self._json(200, backup.fazer())
             if u.path == "/backup/verificar":

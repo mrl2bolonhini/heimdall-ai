@@ -19,6 +19,7 @@ model_list:
       model: ollama_chat/mparvin/dolphin3-cyber-8b-gguf:q8_0
       api_base: http://localhost:11434
       num_ctx: 8192
+      keep_alive: "30s"   # 8,5 GB: sai da memória logo depois das tarefas de segurança
     model_info:
       supports_function_calling: false   # no teste de 02/11 não chamou ferramentas; uso só para texto
 

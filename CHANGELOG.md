@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-14 - Tarefas de segurança do dolphin
+- O dolphin3-cyber-8b passou a trabalhar sozinho, sem ferramentas: o script coleta os dados no Mac (heimdall_seguranca.py) e o modelo só analisa o texto. Três tarefas agendadas no fluxo "tarefas de segurança do dolphin": logs das últimas 24 horas todo dia às 4h30 (acessos recusados e erros repetidos), commits da semana aos domingos às 5h (segredos, caminhos pessoais, IPs privados, e-mails, arquivos sensíveis) e exposição à rede aos domingos às 5h30 (portas em escuta, contêineres, Tailscale Funnel, firewall), comparada com a semana anterior.
+- Como o modelo é de 8B e inventa achados: cada achado precisa citar um trecho dos dados e o script confere se o trecho existe; o script também define uma gravidade mínima por conta própria; sem evidência confirmada, média ou alta dita só pelo modelo vira baixa; segredos são mascarados e as notas não trazem os dados brutos. O modelo só é chamado quando há o que analisar.
+- A nota vai para Heimdall-ai/Segurança só quando há o que dizer. Gravidade média vira uma linha no aviso das 10h; alta fura a fila do Bark e entra na lista de triagem. Se o dolphin não responder, vale o que o script verificou e o aviso de falha chega pelo Bark.
+- Novo: rota POST /seguranca/executar no agente do Mac; python3 heimdall_seguranca.py logs|commits|exposicao [--sem-modelo] para rodar à mão; python3 teste_seguranca.py. O dolphin sai da memória 30 segundos depois do uso (keep_alive).
+- Para aplicar: reiniciar o agente (./subir.sh --reiniciar) e rodar bash instalar_automacoes_avancadas.sh para importar o fluxo novo.
+
 ## 2026-11-14 - Modelos revisados
 - Saíram do LiteLLM e do Ollama o qwen-3.8-uncensored e o bonsai-27b, que não estavam em uso. O agente local de teste (heimdall_agent.py) passou a usar o qwen3-vl:8b-instruct.
 - Entrou o llama-3.1-8b (ollama pull llama3.1:8b): o template do Ollama traz suporte a ferramentas e ele respondeu bem em português.
