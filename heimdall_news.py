@@ -1242,8 +1242,9 @@ def mostrar_fontes(filtro: str = "") -> None:
     for f in carregar_fontes():
         if filtro and sem_acento(filtro) not in sem_acento(f["nome"] + " " + f["categoria"]):
             continue
+        print(f"Baixando {f['nome']}...", flush=True)
         try:
-            dados, _tipo = baixar(f["url"])
+            dados, _tipo = baixar(f["url"], timeout=15)
             itens = analisar_feed(dados)
         except Exception as ex:  # noqa: BLE001
             print(f"{f['categoria']} | {f['nome']}: FALHOU ({type(ex).__name__}: {str(ex)[:100]})")
