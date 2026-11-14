@@ -265,6 +265,9 @@ SCRIPTS = [
     ("teste_voz.py", "Testa o dicionário de pronúncia."),
     ("teste_saude_dados.py", "Testa as análises de saúde com 200 dias de dados sintéticos, sem tocar no seu banco."),
     ("teste_painel_saude.py", "Testa o painel Heimdall Saúde: login, páginas, segurança e acessibilidade."),
+    ("cloudflare/saude_caixa.js", "Worker da Cloudflare na frente do webhook de saúde do n8n (mesmo endereço do Health Auto Export): repassa o envio quando o Mac está no ar e, quando não está, guarda no KV por 7 dias e reenvia de 5 em 5 minutos."),
+    ("cloudflare/teste_saude_caixa.mjs", "Testa a caixa de entrada da saúde com KV e rede de mentira: node cloudflare/teste_saude_caixa.mjs."),
+    ("cloudflare_chave.py", "Grava no .env o token da Cloudflare (pedido sem aparecer na tela) para a reserva de resumos e a leitura de páginas com navegador do News; descobre o número da conta sozinho."),
     ("cloudflare/vigia.js", "Worker da Cloudflare (cron de 5 em 5 minutos) que confere de fora de casa se chat, flows, cloud, notes, news e health respondem e avisa por e-mail quando algo cai ou volta. O destino do aviso fica na variável ALERTA_PARA, só na Cloudflare."),
     ("noticias_fontes.json", "Fontes do Heimdall News (categoria, nome, endereço do feed, idioma, limite por atualização). Edite à vontade; é relido a cada atualização."),
     ("heimdall_cloud.py", "Painel web do emulador de AWS (porta 8010): S3, Lambda, Glue (bancos, tabelas, crawlers e jobs), Athena (consultas SQL) e um console geral que chama qualquer operação de qualquer serviço. Entrada com senha (hash PBKDF2) e código de 6 dígitos, limite de tentativas, sessão com validade e proteção contra CSRF. Escuta só em 127.0.0.1 e nunca expõe a porta do emulador."),
@@ -308,6 +311,8 @@ COMANDOS = [
         ("Fila de resumos do News", "python3 heimdall_news.py --fila"),
         ("Testar as análises e o painel de saúde", "python3 teste_saude_dados.py && python3 teste_painel_saude.py"),
         ("Testar a voz", "python3 teste_voz.py"),
+        ("Ligar a reserva de resumos e a leitura de páginas do News na Cloudflare (token pedido sem aparecer)", "python3 cloudflare_chave.py"),
+        ("Testar a caixa de entrada da saúde (Worker da Cloudflare)", "node cloudflare/teste_saude_caixa.mjs"),
     ]),
     ("Conferir se está no ar", [
         ("Agente do Mac (deve responder ok)", "curl -s http://localhost:8003/saude"),
@@ -407,6 +412,12 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>O n8n repassa ao agente do Mac, que grava no banco pessoal (SQLite, só nesta máquina).</li>
 <li>Quatro painéis web leem esse banco e os arquivos do Mac: Cloud (8010), Notas (8011), News (8012) e Saúde (8013). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
 <li>Aos domingos, às 9h, o n8n pede o relatório da semana: ele vira nota com áudio e um aviso no Bark sem números.</li></ol></section>
+<section aria-labelledby="cfarq"><h2 id="cfarq">Serviços da Cloudflare</h2>
+<ol><li><strong>Túnel</strong> leva os endereços .heimdall-ai.tech até o Mac, sem abrir portas.</li>
+<li><strong>Vigia</strong> (Worker com cron de 5 em 5 minutos) confere de fora de casa se os serviços respondem e avisa por e-mail quando algo cai ou volta. A Cloudflare também avisa quando o túnel cai.</li>
+<li><strong>Caixa de entrada da saúde</strong> (Worker com KV) guarda os envios do Health Auto Export quando o Mac está fora e os reenvia depois.</li>
+<li><strong>Email Routing</strong> encaminha o e-mail de suporte do domínio.</li>
+<li><strong>Workers AI e Browser Rendering</strong> servem só ao News, como reserva de resumos e para ler páginas que dependem de JavaScript.</li></ol></section>
 <section aria-labelledby="camadas"><h2 id="camadas">Visão geral</h2>
 <p>O Heimdall-ai tem quatro camadas, da base para o topo.</p>
 <ol>
@@ -643,6 +654,11 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>O modelo é o <code>gemma3-4b</code> (Gemma 3 de 4 bilhões, 3 GB) pelo LiteLLM; baixe com <code>ollama pull gemma3:4b</code>. Foi escolhido em um teste com o Tucano e ele: o Tucano (2,4 bilhões) respondeu texto sem sentido e repetido, e o Gemma resumiu certo em cerca de 8 segundos. Para trocar por outro, use <code>HEIMDALL_NEWS_MODELO="nome-do-modelo"</code> no <code>.env</code>.</li>
 <li>Para não competir com o chat, cada atualização faz no máximo 10 resumos (<code>HEIMDALL_NEWS_RESUMOS_POR_CICLO</code>), das notícias mais novas para as mais antigas, e as outras esperam na fila. <code>HEIMDALL_NEWS_PAUSA="1-6"</code> suspende os resumos de madrugada.</li>
 <li>Se o modelo ou o LiteLLM estiver fora do ar, as matérias ficam na fila sem perder tentativa e o site avisa.</li></ul></section>
+<section aria-labelledby="cf"><h2 id="cf">Cloudflare (opcional)</h2>
+<p>Com uma chave da Cloudflare no <code>.env</code> (<code>python3 cloudflare_chave.py</code>, depois <code>./subir.sh --reiniciar</code>), o News ganha dois recursos. Só as matérias públicas passam por lá; dados pessoais e de saúde nunca saem do Mac.</p>
+<ul><li><strong>Reserva de resumos:</strong> se o modelo local não responder, o resumo é feito pelo Workers AI (modelo gemma-3-12b). Limite de 60 por dia, ajustável em <code>HEIMDALL_NEWS_RESERVA_POR_DIA</code>; para desligar, <code>HEIMDALL_NEWS_RESERVA=0</code>.</li>
+<li><strong>Leitura com navegador:</strong> em uma fonte de <code>noticias_fontes.json</code>, <code>"renderizar": true</code> faz a matéria ser lida por um navegador da Cloudflare, para sites que só mostram o texto com JavaScript. Limite de 20 por dia (<code>HEIMDALL_NEWS_RENDER_POR_DIA</code>); se falhar, volta ao jeito normal.</li>
+<li>A página Estado das fontes mostra se a Cloudflare está ligada e quanto foi usado. O token precisa das permissões Workers AI (leitura) e Browser Rendering (edição).</li></ul></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
 <ul><li>Escuta só em 127.0.0.1 e é somente de leitura. Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict, só nomes de site permitidos e todo texto escapado.</li>
 <li>Os feeds RSS só respondem à chave certa; tentativas erradas têm limite próprio e a chave nunca aparece no log.</li>
@@ -667,6 +683,8 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li><strong>Envio contínuo:</strong> o app Health Auto Export, com uma automação por tipo de dado, manda ao n8n. Métricas gerais e frequência cardíaca de hora em hora; treinos, ECG e o restante uma vez por dia.</li>
 <li>O que o n8n já guardava antes pode ser copiado com <code>python3 importar_saude_n8n.py</code>.</li></ol>
 <p>Tabelas do banco: saude_diaria (um dia por métrica), fc_hora (frequência cardíaca por hora), treinos, ecg e saude_eventos.</p></section>
+<section aria-labelledby="caixa"><h2 id="caixa">Caixa de entrada na Cloudflare</h2>
+<p>Um Worker da Cloudflare (heimdall-saude-caixa) fica na frente do webhook de saúde do n8n, no mesmo endereço que o Health Auto Export usa; nada muda no app. Com o Mac no ar, ele repassa o envio como veio. Com o Mac dormindo ou sem rede, guarda o envio por até 7 dias (até 200 envios) e responde ao app que recebeu. De 5 em 5 minutos reenvia ao n8n o que ficou e apaga o que foi aceito, então nenhuma leitura se perde. Para a caixa guardar só envios com o seu cabeçalho X-Heimdall-Saude, grave o segredo <code>TOKEN_SAUDE</code> no Worker.</p></section>
 <section aria-labelledby="analises"><h2 id="analises">Análises</h2>
 <p>Todas existem no terminal, no painel e como ferramenta do chat (<code>analise_saude</code>).</p>
 <ul><li><strong>Hoje:</strong> o que já chegou do dia, ou o aviso de que nada chegou.</li>

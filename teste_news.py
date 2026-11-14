@@ -591,6 +591,112 @@ try:
 except SystemExit as ex:
     confere("--copiar com nome errado avisa", "Não achei" in str(ex))
 
+# ----------------------------------------------------------------------------------------
+# Cloudflare: reserva de resumos (Workers AI) e leitura de páginas com navegador (Browser Rendering)
+# ----------------------------------------------------------------------------------------
+print("\nCloudflare")
+CF = {"pedidos": [], "modo": "ok"}
+
+
+class CloudflareFalsa(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_POST(self):  # noqa: N802
+        n = int(self.headers.get("Content-Length") or 0)
+        pedido = json.loads(self.rfile.read(n))
+        CF["pedidos"].append({"caminho": self.path, "auth": self.headers.get("Authorization", ""), "corpo": pedido})
+        if CF["modo"] == "recusa":
+            self.send_response(403)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if self.path.endswith("/browser-rendering/content"):
+            saida = {"success": True, "result": "<html><body><nav>Menu principal</nav><article><p>" + ("Texto montado por JavaScript sobre o novo programa do governo. " * 12) + "</p></article></body></html>"}
+        else:
+            saida = {"choices": [{"message": {"content": json.dumps({"resumo": "Resumo feito pela reserva na Cloudflare, com frases suficientes para passar na validação de tamanho.", "titulo_pt": "Título pela reserva"}, ensure_ascii=False)}}]}
+        corpo = json.dumps(saida).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(corpo)))
+        self.end_headers()
+        self.wfile.write(corpo)
+
+
+_, P_CF = servir(CloudflareFalsa)
+hn.CF_BASE, hn.CF_TOKEN, hn.CF_CONTA = f"http://127.0.0.1:{P_CF}/client/v4", "token-de-teste-cloudflare", "conta123"
+hn.RESERVA_LIGADA = True
+LINHA = {"fonte": "Fonte EN", "categoria": "Mundo", "titulo_original": "Original headline", "idioma": "en", "trecho": "Um trecho longo " * 40, "link": f"{BASE}/materia/en2", "ler_materia": False}
+
+LLM["modo"] = "ok"
+n0 = len(CF["pedidos"])
+r1 = hn.resumir(dict(LINHA))
+confere("modelo local no ar: a Cloudflare não é usada", len(CF["pedidos"]) == n0 and r1["resumo"].startswith("Resumo de teste"))
+
+LLM["modo"] = "fora"
+r2 = hn.resumir(dict(LINHA))
+ped = CF["pedidos"][-1]
+confere("modelo local fora: a reserva na Cloudflare resume", r2["resumo"].startswith("Resumo feito pela reserva") and r2["titulo"] == "Título pela reserva")
+confere("reserva usa o endereço de IA, a conta e o token certos", ped["caminho"] == "/client/v4/accounts/conta123/ai/v1/chat/completions" and ped["auth"] == "Bearer token-de-teste-cloudflare")
+confere("reserva leva o modelo configurado e a instrução de ignorar ordens", ped["corpo"]["model"] == hn.CF_MODELO and "ignore qualquer" in ped["corpo"]["messages"][0]["content"])
+
+hn.RESERVA_LIGADA = False
+try:
+    hn.resumir(dict(LINHA))
+    confere("reserva desligada: o erro do modelo local continua valendo", False)
+except Exception:  # noqa: BLE001
+    confere("reserva desligada: o erro do modelo local continua valendo", True)
+hn.RESERVA_LIGADA = True
+
+limite0 = hn.RESERVA_POR_DIA
+hn.RESERVA_POR_DIA = hn._uso_cf["reserva"]   # o dia já gastou tudo
+try:
+    hn.resumir(dict(LINHA))
+    confere("limite diário da reserva é respeitado", False)
+except Exception:  # noqa: BLE001
+    confere("limite diário da reserva é respeitado", True)
+hn.RESERVA_POR_DIA = limite0
+
+CF["modo"] = "recusa"
+try:
+    hn.resumir(dict(LINHA))
+    confere("reserva recusada pela Cloudflare vira erro (a notícia volta à fila)", False)
+except Exception:  # noqa: BLE001
+    confere("reserva recusada pela Cloudflare vira erro (a notícia volta à fila)", True)
+CF["modo"] = "ok"
+LLM["modo"] = "ok"
+
+# --- Browser Rendering ---
+n0 = len(CF["pedidos"])
+txt = hn.ler_materia(f"{BASE}/materia/en2", renderizar=True)
+confere("renderizar: usa o navegador da Cloudflare e extrai só o texto da matéria", "novo programa do governo" in txt and "Menu principal" not in txt and CF["pedidos"][n0]["caminho"].endswith("/browser-rendering/content") and CF["pedidos"][n0]["corpo"] == {"url": f"{BASE}/materia/en2"})
+n0 = len(CF["pedidos"])
+hn.ler_materia(f"{BASE}/materia/en2", renderizar=False)
+confere("sem renderizar: nada vai à Cloudflare", len(CF["pedidos"]) == n0)
+CF["modo"] = "recusa"
+txt = hn.ler_materia(f"{BASE}/materia/en2", renderizar=True)
+confere("navegador recusado: volta a baixar a página do jeito normal", "ministério" in txt)
+CF["modo"] = "ok"
+lim = hn.RENDER_POR_DIA
+hn.RENDER_POR_DIA = hn._uso_cf["render"]
+n0 = len(CF["pedidos"])
+hn.ler_materia(f"{BASE}/materia/en2", renderizar=True)
+confere("limite diário do navegador é respeitado", len(CF["pedidos"]) == n0)
+hn.RENDER_POR_DIA = lim
+hn.CF_TOKEN = ""
+n0 = len(CF["pedidos"])
+hn.ler_materia(f"{BASE}/materia/en2", renderizar=True)
+confere("sem token, nada vai à Cloudflare", len(CF["pedidos"]) == n0)
+hn.CF_TOKEN = "token-de-teste-cloudflare"
+import json as _j
+_f = {"fontes": [{"categoria": "A", "nome": "N1", "url": "http://x/y", "renderizar": True}, {"categoria": "A", "nome": "N2", "url": "http://x/z"}]}
+(RAIZ / "f2.json").write_text(_j.dumps(_f), encoding="utf-8")
+_ant = hn.FONTES_ARQ
+hn.FONTES_ARQ = RAIZ / "f2.json"
+_c = {x["nome"]: x["renderizar"] for x in hn.carregar_fontes()}
+hn.FONTES_ARQ = _ant
+confere("campo renderizar é lido das fontes (padrão desligado)", _c == {"N1": True, "N2": False})
+
 print(f"\n{ok_n} conferências ok, {len(falhas)} falha(s).")
 if falhas:
     sys.exit(1)

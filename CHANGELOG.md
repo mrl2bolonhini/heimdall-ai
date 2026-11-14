@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-14 - Mais serviços da Cloudflare
+- Caixa de entrada da saúde (Worker heimdall-saude-caixa, cloudflare/saude_caixa.js): fica na frente do webhook de saúde do n8n, no mesmo endereço que o Health Auto Export já usa, sem mudar nada no app. Com o Mac no ar, repassa tudo como veio. Com o Mac dormindo ou sem rede, guarda o envio no KV (7 dias, até 200 envios, até 8 MB cada) e responde 202 ao app; de 5 em 5 minutos reenvia ao n8n o que ficou e apaga o que foi aceito. Opcional: o segredo TOKEN_SAUDE faz a caixa guardar só envios com o cabeçalho certo.
+- Reserva de resumos do News no Workers AI: se o modelo local não responder, o resumo da notícia é feito pelo modelo gemma-3-12b da Cloudflare (limite de 60 por dia, desligável com HEIMDALL_NEWS_RESERVA=0). Só o News usa isso, só com matérias públicas; dados pessoais e de saúde nunca saem do Mac.
+- Leitura de páginas com navegador no News (Browser Rendering): em uma fonte de noticias_fontes.json, "renderizar": true faz a matéria ser lida por um navegador da Cloudflare, para sites que só mostram o texto com JavaScript (limite de 20 por dia; se falhar, volta ao jeito normal).
+- python3 cloudflare_chave.py grava o token da Cloudflare no .env (pedido sem aparecer na tela) e descobre o número da conta sozinho. A página de status do News mostra se a Cloudflare está ligada e quanto foi usado.
+
 ## 2026-11-14 - Vigia na Cloudflare
 - Aviso por e-mail da Cloudflare quando o túnel heimdall cai, fica degradado ou volta (política de Notificações da conta).
 - Worker heimdall-vigia (cloudflare/vigia.js): de 5 em 5 minutos confere de fora de casa os endereços chat, flows, cloud, notes, news e health. Avisa por e-mail só nas mudanças (cai depois de duas conferências seguidas, volta quando responde), guardando o estado em um KV. Quando o Mac dorme ou perde a rede, é isso que acusa.

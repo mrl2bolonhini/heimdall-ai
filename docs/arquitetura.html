@@ -39,6 +39,12 @@
 <li>O n8n repassa ao agente do Mac, que grava no banco pessoal (SQLite, só nesta máquina).</li>
 <li>Quatro painéis web leem esse banco e os arquivos do Mac: Cloud (8010), Notas (8011), News (8012) e Saúde (8013). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
 <li>Aos domingos, às 9h, o n8n pede o relatório da semana: ele vira nota com áudio e um aviso no Bark sem números.</li></ol></section>
+<section aria-labelledby="cfarq"><h2 id="cfarq">Serviços da Cloudflare</h2>
+<ol><li><strong>Túnel</strong> leva os endereços .heimdall-ai.tech até o Mac, sem abrir portas.</li>
+<li><strong>Vigia</strong> (Worker com cron de 5 em 5 minutos) confere de fora de casa se os serviços respondem e avisa por e-mail quando algo cai ou volta. A Cloudflare também avisa quando o túnel cai.</li>
+<li><strong>Caixa de entrada da saúde</strong> (Worker com KV) guarda os envios do Health Auto Export quando o Mac está fora e os reenvia depois.</li>
+<li><strong>Email Routing</strong> encaminha o e-mail de suporte do domínio.</li>
+<li><strong>Workers AI e Browser Rendering</strong> servem só ao News, como reserva de resumos e para ler páginas que dependem de JavaScript.</li></ol></section>
 <section aria-labelledby="camadas"><h2 id="camadas">Visão geral</h2>
 <p>O Heimdall-ai tem quatro camadas, da base para o topo.</p>
 <ol>
@@ -68,7 +74,7 @@
 <li><strong>Autenticidade antes de confiança.</strong> O vigia de e-mail só trata como oficial o remetente que o Gmail confirmou, e nunca segue links.</li>
 <li><strong>Falha externa não vira falso &quot;nada novo&quot;.</strong> Quando uma fonte de fora não responde, o fluxo tenta de novo a cada 2 horas, avisa assim que ela volta e, se ela passar de cerca de 24 horas fora do ar, manda um único aviso de indisponibilidade. Nunca finge que não há novidade.</li>
 <li><strong>Entradas externas são dados, não ordens.</strong> Textos de páginas, e-mails e documentos passados ao modelo são tratados como conteúdo não confiável.</li></ul></section>
-</div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#mapa">Mapa</a></li><li><a href="#saudecam">Dados de saúde e painéis</a></li><li><a href="#camadas">Visão geral</a></li><li><a href="#caminho">O caminho de uma pergunta no chat</a></li><li><a href="#auto">O caminho de uma automação</a></li><li><a href="#servicos">Serviços e portas</a></li><li><a href="#seg">Princípios de privacidade e segurança</a></li></ul></nav></aside></div>
+</div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#mapa">Mapa</a></li><li><a href="#saudecam">Dados de saúde e painéis</a></li><li><a href="#cfarq">Serviços da Cloudflare</a></li><li><a href="#camadas">Visão geral</a></li><li><a href="#caminho">O caminho de uma pergunta no chat</a></li><li><a href="#auto">O caminho de uma automação</a></li><li><a href="#servicos">Serviços e portas</a></li><li><a href="#seg">Princípios de privacidade e segurança</a></li></ul></nav></aside></div>
 </div></main>
 <footer><div class="wrap"><div class="linha">
 <div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>

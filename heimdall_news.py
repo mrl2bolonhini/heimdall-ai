@@ -116,6 +116,15 @@ ESPERA_RSS_MIN = 120   # no RSS, matéria sem resumo só entra depois de esperar
 COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 RSS_TOKEN = os.environ.get("HEIMDALL_NEWS_RSS_TOKEN", "")
 PAUSA = os.environ.get("HEIMDALL_NEWS_PAUSA", "").strip()
+# Serviços da Cloudflare, só para o News (matérias públicas; dados pessoais e de saúde nunca passam por aqui):
+#   reserva de resumos no Workers AI, quando o modelo local não responde; leitura de páginas pelo Browser Rendering.
+CF_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
+CF_CONTA = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
+CF_BASE = "https://api.cloudflare.com/client/v4"
+CF_MODELO = os.environ.get("HEIMDALL_NEWS_RESERVA_MODELO", "@cf/google/gemma-3-12b-it")
+RESERVA_LIGADA = os.environ.get("HEIMDALL_NEWS_RESERVA", "1") != "0" and bool(CF_TOKEN and CF_CONTA)
+RESERVA_POR_DIA = _inteiro("HEIMDALL_NEWS_RESERVA_POR_DIA", 60)
+RENDER_POR_DIA = _inteiro("HEIMDALL_NEWS_RENDER_POR_DIA", 20)
 COLETAR = os.environ.get("HEIMDALL_NEWS_COLETAR", "1") != "0"
 AGENTE_USUARIO = "Heimdall-News/1.0 (leitor de feeds pessoal)"
 PERMITIR_LOCAL = False   # só os testes ligam isto: em uso normal endereços da própria rede são recusados
@@ -128,6 +137,7 @@ except Exception:  # noqa: BLE001  (sem base de fusos: Brasília fixo)
     FUSO = timezone(timedelta(hours=-3))
 
 ESTADO = {"ultima": None, "proxima": None, "fontes": {}, "ultimo_resumo": None, "erro_ia": "", "rodando": False}
+_uso_cf = {"dia": "", "reserva": 0, "render": 0, "reserva_total": 0, "render_total": 0}   # contadores do dia, para respeitar a cota gratuita
 _trava_estado = threading.Lock()
 PARAR = threading.Event()
 _cache_http = {}   # url -> (etag, ultima modificação), para não baixar feed que não mudou
@@ -438,7 +448,45 @@ def texto_da_materia(pagina: str, maximo: int = 4000) -> str:
     return t
 
 
-def ler_materia(link: str) -> str:
+def _conta_cf(tipo: str, limite: int) -> bool:
+    """Reserva uma unidade do uso diário de um serviço da Cloudflare. False quando o limite do dia acabou."""
+    hoje = time.strftime("%Y-%m-%d")
+    with _trava_estado:
+        if _uso_cf["dia"] != hoje:
+            _uso_cf.update({"dia": hoje, "reserva": 0, "render": 0})
+        if _uso_cf[tipo] >= limite:
+            return False
+        _uso_cf[tipo] += 1
+        _uso_cf[tipo + "_total"] += 1
+        return True
+
+
+def _post_cf(caminho: str, corpo: dict, timeout: int = 90) -> dict:
+    req = urllib.request.Request(f"{CF_BASE}/accounts/{CF_CONTA}{caminho}", data=json.dumps(corpo).encode(),
+                                 headers={"Content-Type": "application/json", "Authorization": "Bearer " + CF_TOKEN}, method="POST")
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read(4_000_000))
+
+
+def renderizar_pagina(link: str) -> str:
+    """HTML da página já montado pelo navegador da Cloudflare (Browser Rendering), para matérias que dependem de JavaScript."""
+    if not (CF_TOKEN and CF_CONTA) or not _conta_cf("render", RENDER_POR_DIA):
+        return ""
+    checar_url(link)
+    try:
+        r = _post_cf("/browser-rendering/content", {"url": link})
+    except Exception:  # noqa: BLE001  (sem cota, sem permissão ou página recusada: volta ao jeito normal)
+        return ""
+    return r.get("result", "") if isinstance(r.get("result", ""), str) else ""
+
+
+def ler_materia(link: str, renderizar: bool = False) -> str:
+    if renderizar:
+        pagina = renderizar_pagina(link)
+        if pagina:
+            texto = texto_da_materia(pagina)
+            if texto:
+                return texto
     try:
         dados, tipo = baixar(link, maximo=1_500_000, timeout=15, so_html=True)
     except Exception:  # noqa: BLE001  (matéria fora do ar, paga ou bloqueada: o resumo sai do trecho)
@@ -455,6 +503,19 @@ SISTEMA = ("Você é um editor de notícias. Escreva em português do Brasil, em
 
 
 def chamar_llm(usuario: str, max_tokens: int = 500, timeout: int = 300) -> str:
+    """Modelo local; se ele não responder e houver chave da Cloudflare, o Workers AI faz o resumo (só aqui, só notícias públicas)."""
+    try:
+        return _chamar_local(usuario, max_tokens, timeout)
+    except Exception as ex:  # noqa: BLE001
+        if not RESERVA_LIGADA or not _conta_cf("reserva", RESERVA_POR_DIA):
+            raise
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} modelo local falhou ({type(ex).__name__}); resumo pela reserva na Cloudflare\n")
+        r = _post_cf("/ai/v1/chat/completions", {"model": CF_MODELO, "temperature": 0.2, "max_tokens": max_tokens,
+                                                  "messages": [{"role": "system", "content": SISTEMA}, {"role": "user", "content": usuario}]}, timeout=min(timeout, 120))
+        return r["choices"][0]["message"]["content"] or ""
+
+
+def _chamar_local(usuario: str, max_tokens: int = 500, timeout: int = 300) -> str:
     corpo = json.dumps({"model": MODELO, "temperature": 0.2, "max_tokens": max_tokens,
                         "messages": [{"role": "system", "content": SISTEMA}, {"role": "user", "content": usuario}]}).encode()
     cab = {"Content-Type": "application/json"}
@@ -490,7 +551,7 @@ def resumir(linha: dict) -> dict:
     """Devolve {titulo, resumo, base} ou levanta exceção. base: materia, trecho ou sem."""
     texto, base = linha["trecho"], "trecho"
     if linha.get("ler_materia", True) and len(texto) < 400:
-        mat = ler_materia(linha["link"])
+        mat = ler_materia(linha["link"], bool(linha.get("renderizar")))
         if len(mat) > len(texto):
             texto, base = mat, "materia"
     if not texto:
@@ -526,7 +587,8 @@ def carregar_fontes() -> list:
             continue
         saida.append({"categoria": str(f["categoria"])[:60], "nome": str(f["nome"])[:60], "url": str(f["url"]),
                       "idioma": "en" if str(f.get("idioma", "pt")).lower() != "pt" else "pt",
-                      "limite": max(1, min(int(f.get("limite", 10) or 10), 50)), "ler_materia": f.get("ler_materia", True) is not False})
+                      "limite": max(1, min(int(f.get("limite", 10) or 10), 50)), "ler_materia": f.get("ler_materia", True) is not False,
+                      "renderizar": f.get("renderizar") is True})
     return saida
 
 
@@ -638,6 +700,7 @@ def fazer_resumos(inicio: float) -> tuple:
         if time.time() - inicio > ORCAMENTO_MIN * 60 or PARAR.is_set():
             break
         linha["ler_materia"] = por_nome.get(linha["fonte"], {}).get("ler_materia", True)
+        linha["renderizar"] = por_nome.get(linha["fonte"], {}).get("renderizar", False)
         try:
             r = resumir(linha)
             gravar_resumo(linha["id"], r["titulo"], r["traduzido"], r["resumo"], r["base"])
@@ -877,6 +940,11 @@ def pg_estado() -> str:
               f"<li>Últimas 24 horas: {st['24h']} notícias, {st['com_resumo']} com resumo de IA, {st['fila']} na fila.</li>",
               f"<li>Guardadas no banco pessoal (30 dias): {st['total']}.</li>",
               f"<li>Modelo: {e(MODELO)}. Resumos por atualização: {RESUMOS_POR_CICLO}.{' Pausa de resumos: ' + e(PAUSA) + 'h.' if PAUSA else ''}</li>"]
+    if CF_TOKEN and CF_CONTA:
+        partes.append(f"<li>Cloudflare: reserva de resumos {'ligada' if RESERVA_LIGADA else 'desligada'} (usada {_uso_cf['reserva_total']} vez(es) desde que o serviço subiu, limite de {RESERVA_POR_DIA} por dia); "
+                      f"leitura de páginas com navegador usada {_uso_cf['render_total']} vez(es), limite de {RENDER_POR_DIA} por dia.</li>")
+    else:
+        partes.append("<li>Cloudflare: sem chave. Rode python3 cloudflare_chave.py para ligar a reserva de resumos e a leitura de páginas com navegador.</li>")
     if ESTADO["erro_ia"]:
         partes.append(f'<li class="falha">IA: {e(ESTADO["erro_ia"])}</li>')
     partes.append("</ul><h2>Fontes</h2><ul>")
