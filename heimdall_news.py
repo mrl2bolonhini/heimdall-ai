@@ -509,10 +509,22 @@ def chamar_llm(usuario: str, max_tokens: int = 500, timeout: int = 300) -> str:
     except Exception as ex:  # noqa: BLE001
         if not RESERVA_LIGADA or not _conta_cf("reserva", RESERVA_POR_DIA):
             raise
-        sys.stderr.write(f"{time.strftime('%H:%M:%S')} modelo local falhou ({type(ex).__name__}); resumo pela reserva na Cloudflare\n")
-        r = _post_cf("/ai/v1/chat/completions", {"model": CF_MODELO, "temperature": 0.2, "max_tokens": max_tokens,
-                                                  "messages": [{"role": "system", "content": SISTEMA}, {"role": "user", "content": usuario}]}, timeout=min(timeout, 120))
-        return r["choices"][0]["message"]["content"] or ""
+        local = f"{type(ex).__name__}: {str(getattr(ex, 'reason', ex))[:80]}"
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} modelo local falhou ({local}); resumo pela reserva na Cloudflare\n")
+        try:
+            r = _post_cf("/ai/run/" + CF_MODELO, {"temperature": 0.2, "max_tokens": max_tokens,
+                                                    "messages": [{"role": "system", "content": SISTEMA}, {"role": "user", "content": usuario}]}, timeout=min(timeout, 120))
+        except urllib.error.HTTPError as ex2:
+            detalhe = ""
+            try:
+                detalhe = "; ".join(str(x.get("message", "")) for x in json.loads(ex2.read(20000)).get("errors", []))[:120]
+            except Exception:  # noqa: BLE001
+                pass
+            raise RuntimeError(f"modelo local: {local}. Reserva na Cloudflare: HTTP {ex2.code} {detalhe}".strip()) from ex2
+        res = r.get("result", r)
+        if isinstance(res, dict) and res.get("choices"):
+            return res["choices"][0]["message"]["content"] or ""
+        return (res.get("response") if isinstance(res, dict) else "") or ""
 
 
 def _chamar_local(usuario: str, max_tokens: int = 500, timeout: int = 300) -> str:
@@ -708,7 +720,7 @@ def fazer_resumos(inicio: float) -> tuple:
             ESTADO["erro_ia"] = ""
             ESTADO["ultimo_resumo"] = iso(agora())
         except (urllib.error.URLError, OSError) as ex:   # o modelo ou o LiteLLM não respondeu (ou demorou demais): não gasta tentativa, tenta no próximo ciclo
-            ESTADO["erro_ia"] = f"modelo indisponível: {str(getattr(ex, 'reason', ex))[:100]}"
+            ESTADO["erro_ia"] = f"modelo indisponível: {str(getattr(ex, 'reason', ex))[:240]}"
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} {ESTADO['erro_ia']}\n")
             falhas += 1
             break
@@ -1218,6 +1230,29 @@ def copiar(qual: str) -> None:
     sys.exit("Não achei esse feed. Use geral, opml ou o nome de uma categoria: " + ", ".join(a for a, _, _ in urls_dos_feeds()))
 
 
+def mostrar_fontes() -> None:
+    """Para cada fonte: baixa o feed agora (sem gravar nada) e mostra quantos itens ele traz e a idade deles."""
+    ref = agora()
+    con = banco.conectar(somente_leitura=True)
+    try:
+        no_banco = dict(con.execute("SELECT fonte, COUNT(*) FROM noticias WHERE publicado >= ? GROUP BY fonte", (iso(ref - timedelta(hours=JANELA_HORAS)),)).fetchall())
+    finally:
+        con.close()
+    for f in carregar_fontes():
+        try:
+            dados, _tipo = baixar(f["url"])
+            itens = analisar_feed(dados)
+        except Exception as ex:  # noqa: BLE001
+            print(f"{f['categoria']} | {f['nome']}: FALHOU ({type(ex).__name__}: {str(ex)[:100]})")
+            continue
+        datas = [i["data"] for i in itens if i["data"]]
+        h24 = sum(1 for d in datas if d >= ref - timedelta(hours=24))
+        h72 = sum(1 for d in datas if d >= ref - timedelta(hours=72))
+        novo = f"{round((ref - max(datas)).total_seconds() / 3600, 1)} h" if datas else "sem datas"
+        print(f"{f['categoria']} | {f['nome']}: o feed traz {len(itens)} itens ({h24} nas últimas 24 h, {h72} nas últimas 72 h; o mais novo tem {novo}); "
+              f"limite por atualização {f['limite']}; no banco, nas últimas 24 h: {no_banco.get(f['nome'], 0)}")
+
+
 def mostrar_fila() -> None:
     """Resumo da fila de resumos por IA (janela de 24 h), para acompanhar sem abrir o banco."""
     corte = iso(agora() - timedelta(hours=JANELA_HORAS))
@@ -1258,6 +1293,7 @@ def main() -> None:
     ap.add_argument("--urls", action="store_true", help="mostra os endereços dos feeds")
     ap.add_argument("--copiar", metavar="FEED", help="copia o endereço de um feed (geral, opml ou categoria) para a área de transferência")
     ap.add_argument("--opml", nargs="?", const="heimdall-news.opml", metavar="ARQUIVO", help="grava um arquivo OPML com todos os feeds (padrão: heimdall-news.opml)")
+    ap.add_argument("--fontes", action="store_true", help="baixa cada feed agora e mostra quantos itens ele traz e a idade deles (não grava nada)")
     ap.add_argument("--fila", action="store_true", help="mostra quantas notícias esperam resumo de IA e quanto falta")
     ap.add_argument("--uma-vez", action="store_true", help="faz só uma atualização agora e sai")
     a = ap.parse_args()
@@ -1278,6 +1314,9 @@ def main() -> None:
         return
     if a.copiar:
         copiar(a.copiar)
+        return
+    if a.fontes:
+        mostrar_fontes()
         return
     if a.fila:
         mostrar_fila()

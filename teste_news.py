@@ -614,7 +614,7 @@ class CloudflareFalsa(BaseHTTPRequestHandler):
         if self.path.endswith("/browser-rendering/content"):
             saida = {"success": True, "result": "<html><body><nav>Menu principal</nav><article><p>" + ("Texto montado por JavaScript sobre o novo programa do governo. " * 12) + "</p></article></body></html>"}
         else:
-            saida = {"choices": [{"message": {"content": json.dumps({"resumo": "Resumo feito pela reserva na Cloudflare, com frases suficientes para passar na validação de tamanho.", "titulo_pt": "Título pela reserva"}, ensure_ascii=False)}}]}
+            saida = {"success": True, "result": {"response": json.dumps({"resumo": "Resumo feito pela reserva na Cloudflare, com frases suficientes para passar na validação de tamanho.", "titulo_pt": "Título pela reserva"}, ensure_ascii=False)}}
         corpo = json.dumps(saida).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -637,8 +637,8 @@ LLM["modo"] = "fora"
 r2 = hn.resumir(dict(LINHA))
 ped = CF["pedidos"][-1]
 confere("modelo local fora: a reserva na Cloudflare resume", r2["resumo"].startswith("Resumo feito pela reserva") and r2["titulo"] == "Título pela reserva")
-confere("reserva usa o endereço de IA, a conta e o token certos", ped["caminho"] == "/client/v4/accounts/conta123/ai/v1/chat/completions" and ped["auth"] == "Bearer token-de-teste-cloudflare")
-confere("reserva leva o modelo configurado e a instrução de ignorar ordens", ped["corpo"]["model"] == hn.CF_MODELO and "ignore qualquer" in ped["corpo"]["messages"][0]["content"])
+confere("reserva usa o endereço de IA, a conta e o token certos", ped["caminho"] == "/client/v4/accounts/conta123/ai/run/" + hn.CF_MODELO and ped["auth"] == "Bearer token-de-teste-cloudflare")
+confere("reserva leva o modelo configurado e a instrução de ignorar ordens", "model" not in ped["corpo"] and "ignore qualquer" in ped["corpo"]["messages"][0]["content"])
 
 hn.RESERVA_LIGADA = False
 try:
@@ -663,6 +663,10 @@ try:
     confere("reserva recusada pela Cloudflare vira erro (a notícia volta à fila)", False)
 except Exception:  # noqa: BLE001
     confere("reserva recusada pela Cloudflare vira erro (a notícia volta à fila)", True)
+try:
+    hn.resumir(dict(LINHA))
+except Exception as _ex:  # noqa: BLE001
+    confere("o erro mostra o motivo do modelo local e o código da Cloudflare", "modelo local" in str(_ex) and "HTTP 403" in str(_ex), str(_ex))
 CF["modo"] = "ok"
 LLM["modo"] = "ok"
 
@@ -695,6 +699,12 @@ _ant = hn.FONTES_ARQ
 hn.FONTES_ARQ = RAIZ / "f2.json"
 _c = {x["nome"]: x["renderizar"] for x in hn.carregar_fontes()}
 hn.FONTES_ARQ = _ant
+import io as _io, contextlib as _cl
+_buf = _io.StringIO()
+with _cl.redirect_stdout(_buf):
+    hn.mostrar_fontes()
+_saida = _buf.getvalue()
+confere("--fontes mostra cada fonte com itens, idade e contagem no banco", "Fonte PT: o feed traz" in _saida and "nas últimas 24 h" in _saida and "no banco" in _saida and "Fonte Morta" in _saida and "FALHOU" in _saida, _saida[:300])
 confere("campo renderizar é lido das fontes (padrão desligado)", _c == {"N1": True, "N2": False})
 
 print(f"\n{ok_n} conferências ok, {len(falhas)} falha(s).")
