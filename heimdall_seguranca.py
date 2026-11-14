@@ -173,7 +173,8 @@ def interpretar(texto: str, dados: str) -> dict:
         if not re.match(r"^\W*ACHADO\s*:", linha, re.I):
             continue
         corpo = re.sub(r"^\W*ACHADO\s*:\s*", "", linha, flags=re.I)
-        partes = [p.strip() for p in re.split(r"\s*\|\|\s*", corpo)]
+        # o modelo nem sempre usa "||": separa também pelas palavras EVIDENCIA e ACAO
+        partes = [p.strip() for p in re.split(r"\s*\|\|\s*|\s+(?=(?:EVID[EÊ]NCIA|A[CÇ][AÃ]O)\s*:)", corpo, flags=re.I)]
         achado = {"texto": partes[0], "evidencia": "", "acao": ""}
         for p in partes[1:]:
             mm = re.match(r"(?i)(evid[eê]ncia|a[cç][aã]o)\s*:\s*(.*)", p)

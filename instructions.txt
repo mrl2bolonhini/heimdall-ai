@@ -14,7 +14,7 @@ URL do Uptime com subdomínio
 https://status.heimdall-ai.tech
 
 URL do Tailscale para o Uptime
-https://studiomac.tail67c3c5.ts.net:8443/
+https://<nome-do-mac>.<nome-da-sua-rede>.ts.net:8443/   (o endereço real fica no app Tailscale)
 
 Emulador da AWS (LocalStack)
 http://localhost:4566

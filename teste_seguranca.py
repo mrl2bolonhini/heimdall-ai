@@ -33,6 +33,10 @@ ok(r["achados"][0]["confirmada"] is True, "evidência que existe nos dados é co
 ok(r["achados"][1]["confirmada"] is False, "evidência inventada é marcada como não confirmada")
 ok(S.interpretar("não sei responder", dados)["formato_ok"] is False, "resposta fora do formato é detectada")
 
+# modelo que escreve ACHADO/EVIDENCIA/ACAO sem usar "||"
+r5 = S.interpretar("GRAVIDADE: baixa\nRESUMO: x\nACHADO: Porta nova. EVIDENCIA: node escutando na porta 3333 ACAO: confirme", dados)
+ok(len(r5["achados"]) == 1 and r5["achados"][0]["confirmada"] and r5["achados"][0]["acao"] == "confirme", "separa evidência e ação mesmo sem '||'")
+
 # --- gravidade final ---
 ok(S.combinar("nenhuma", "alta", [{"confirmada": False}]) == "baixa", "modelo diz alta sem evidência confirmada: cai para baixa")
 ok(S.combinar("nenhuma", "alta", [{"confirmada": True}]) == "alta", "modelo diz alta com evidência confirmada: mantém alta")
