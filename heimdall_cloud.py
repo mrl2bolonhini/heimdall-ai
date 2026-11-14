@@ -1192,6 +1192,26 @@ def aplicar_no_webui(senha: str) -> None:
         print("Open WebUI: a troca não foi concluída (veja a mensagem acima). A senha dos serviços Heimdall já foi gravada.")
 
 
+def aplicar_no_kuma() -> None:
+    """Oferece usar a mesma senha no Uptime Kuma (status). Usa o reset de senha do próprio Kuma, que pede a senha de novo (sem aparecer)."""
+    try:
+        rodando = subprocess.run(["docker", "ps", "--format", "{{.Names}}"], capture_output=True, text=True, timeout=20).stdout.split()
+        if "uptime-kuma" not in rodando:
+            return
+        cfg = subprocess.run(["docker", "exec", "uptime-kuma", "cat", "/app/data/db-config.json"], capture_output=True, text=True, timeout=20).stdout
+        tipo = (json.loads(cfg).get("type") or "") if cfg.strip().startswith("{") else ""
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return
+    if tipo != "sqlite":
+        print(f"Uptime Kuma: o banco dele é '{tipo or 'desconhecido'}' e a ferramenta de troca de senha só é confiável com sqlite; troque pelo painel (Configurações, Segurança).")
+        return
+    if input("Aplicar a mesma senha no Uptime Kuma (status)? Você vai digitá-la de novo, sem aparecer. [S/n] ").strip().lower() in ("n", "nao", "não"):
+        return
+    r = subprocess.run(["docker", "exec", "-it", "uptime-kuma", "npm", "run", "reset-password"])
+    if r.returncode != 0:
+        print("Uptime Kuma: a troca não foi concluída. A senha dos serviços Heimdall já foi gravada.")
+
+
 def definir_acesso(modo: str) -> None:
     """Senha e código de 6 dígitos de todos os serviços Heimdall com login (Cloud, Notas e News). modo: tudo, senha ou codigo."""
     pares = {}
@@ -1215,6 +1235,8 @@ def definir_acesso(modo: str) -> None:
     print("\nA senha e o código valem para o Heimdall Cloud, o Heimdall Notas e o Heimdall News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
     if modo in ("tudo", "senha"):
         aplicar_no_webui(s1)
+        aplicar_no_kuma()
+        print("n8n (flows): troque pelo painel, em Configurações, Pessoal, Alterar senha (o n8n exige maiúscula e número, e no máximo 64 caracteres). Dozzle, SearXNG, Qdrant, Open Terminal e o agente não têm senha de login: usam chaves aleatórias, que não devem ser trocadas por esta.")
 
 
 def definir_senha(so_codigo: bool) -> None:   # mantido por compatibilidade

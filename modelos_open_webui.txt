@@ -1,0 +1,39 @@
+MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos)
+
+Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos):
+  Servidor A: ID banco-pessoal, nome "Meus Dados (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
+  Servidor B: ID internet, nome "Internet e Utilidades", http://host.docker.internal:8001/mcp
+  Servidor C: ID mac-admin, nome "Mac e Memória (administrador)", http://host.docker.internal:8000/mcp, acesso só do administrador,
+              com a lista de funções permitidas (filtro): memory_save, memory_search, memory_forget, rag_temas, rag_search
+
+1. Meus Dados
+   Base: qwen3-vl-instruct
+   Prompt: prompt_chat_dados.txt
+   Ferramentas: Servidor A (banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp)
+   Chamada de função: Nativa
+
+2. Código
+   Base: deepseek-coder-v2:16b
+   Prompt: prompt_chat_codigo.txt
+   Ferramentas: nenhuma (nos seus testes esse modelo não suporta ferramentas no Ollama)
+   Observação: o contexto dele é de 6144 tokens e ele sai da memória 30 segundos depois do uso.
+
+3. Curiosidades
+   Base: qwen3-vl-instruct (o mesmo do Meus Dados, sem trocar de modelo na memória)
+   Prompt: prompt_chat_curiosidades.txt
+   Ferramentas: Servidor B (search_searxng, calculate_expression, get_system_timestamp, get_hackernews_top_stories,
+                search_reddit_posts, fetch_rss_feed, get_astronomy_apod, get_youtube_transcript, fetch_url)
+   Chamada de função: Nativa
+
+4. Conversas
+   Base: gemma-4-uncensored
+   Prompt: prompt_chat_conversas.txt
+   Ferramentas: nenhuma
+
+5. Documentos e Memória (opcional)
+   Base: qwen3-vl-instruct
+   Prompt: prompt_chat_documentos.txt
+   Ferramentas: Servidor C com o filtro acima (memory_save, memory_search, memory_forget, rag_temas, rag_search)
+   Chamada de função: Nativa
+
+Para copiar um prompt sem digitar: pbcopy < ~/heimdall-ai/NOME_DO_ARQUIVO.txt e colar com Command+V no campo de instrução de sistema.
