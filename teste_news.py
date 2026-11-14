@@ -73,7 +73,7 @@ MATERIA = ("<html><body><nav><p>Menu principal do site com muitos links de naveg
            "<p>Segundo o ministério, a medida começa a valer no mês que vem e deve atingir três milhões de pessoas em todo o país.</p>"
            "<footer><p>Rodapé com texto longo de direitos autorais e termos de uso que também não deve entrar no resumo</p></footer></body></html>")
 LONGO = "Este é um resumo longo que já veio no próprio feed. " * 10   # > 400 caracteres: não precisa abrir a matéria
-SERVIDOR = {"feeds": {}, "pedidos": []}
+SERVIDOR = {"feeds": {}, "pedidos": [], "idiomas": []}
 LLM = {"modo": "ok", "pedidos": [], "chaves": []}
 
 
@@ -83,6 +83,7 @@ class Web(BaseHTTPRequestHandler):
 
     def do_GET(self):  # noqa: N802
         SERVIDOR["pedidos"].append(self.path)
+        SERVIDOR["idiomas"].append(self.headers.get("Accept-Language", ""))
         if self.path.startswith("/materia/"):
             self._resp(200, MATERIA.encode(), "text/html; charset=utf-8")
         elif self.path == "/img.png":
@@ -716,6 +717,12 @@ _buf = _io.StringIO()
 with _cl.redirect_stdout(_buf):
     hn.mostrar_fontes("Fonte PT")
 confere("--fontes com filtro mostra só a fonte pedida e os 3 itens mais novos", "Fonte PT: o feed traz" in _buf.getvalue() and "Fonte EN" not in _buf.getvalue() and _buf.getvalue().count("    20") >= 1, _buf.getvalue()[:300])
+hn.baixar(f"{BASE}/pt.xml")
+confere("por padrão o pedido diz preferir português", SERVIDOR["idiomas"][-1].startswith("pt-BR"))
+hn.baixar(f"{BASE}/pt.xml", lingua="en")
+confere("fonte com lingua en pede o feed em inglês", SERVIDOR["idiomas"][-1] == "en")
+hn.baixar(f"{BASE}/pt.xml", lingua="en;q=0.1, \r\nX-Falso: 1")
+confere("o campo lingua não deixa injetar cabeçalhos", "\n" not in SERVIDOR["idiomas"][-1] and len(SERVIDOR["idiomas"][-1]) <= 10)
 confere("campo renderizar é lido das fontes (padrão desligado)", _c == {"N1": True, "N2": False})
 
 print(f"\n{ok_n} conferências ok, {len(falhas)} falha(s).")

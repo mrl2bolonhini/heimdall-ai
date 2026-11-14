@@ -1,12 +1,12 @@
 {
-  "_ajuda": "Fontes do site de notícias (news). Edite à vontade; o serviço relê este arquivo a cada atualização. Campos: categoria, nome, url (feed RSS ou Atom), idioma (pt ou en; en tem o título traduzido), limite (quantas matérias novas pegar por atualização, padrão 10), ler_materia (true abre a matéria para resumir melhor; padrão true). Para desligar uma fonte sem apagar: \"ativa\": false.",
+  "_ajuda": "Fontes do site de notícias (news). Edite à vontade; o serviço relê este arquivo a cada atualização. Campos: categoria, nome, url (feed RSS ou Atom), idioma (pt ou en; en tem o título traduzido), limite (quantas matérias novas pegar por atualização, padrão 10), ler_materia (true abre a matéria para resumir melhor; padrão true), lingua (idioma pedido ao site, por exemplo en: a AWS só entrega o feed atual em inglês) e renderizar (true lê a matéria com um navegador da Cloudflare). Para desligar uma fonte sem apagar: \"ativa\": false.",
   "fontes": [
     {"categoria": "Tecnologia", "nome": "Tecnoblog", "url": "https://tecnoblog.net/feed/", "idioma": "pt", "limite": 10},
     {"categoria": "Tecnologia", "nome": "Hacker News (populares)", "url": "https://hnrss.org/frontpage?points=200", "idioma": "en", "limite": 8},
     {"categoria": "Inteligência artificial", "nome": "arXiv cs.AI", "url": "https://rss.arxiv.org/rss/cs.AI", "idioma": "en", "limite": 5, "ler_materia": false},
     {"categoria": "Inteligência artificial", "nome": "arXiv cs.LG", "url": "https://rss.arxiv.org/rss/cs.LG", "idioma": "en", "limite": 5, "ler_materia": false},
     {"categoria": "Inteligência artificial", "nome": "OpenAI", "url": "https://openai.com/news/rss.xml", "idioma": "en", "limite": 5},
-    {"categoria": "Dados e AWS", "nome": "AWS novidades", "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/", "idioma": "en", "limite": 8},
+    {"categoria": "Dados e AWS", "nome": "AWS novidades", "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/", "idioma": "en", "limite": 8, "lingua": "en"},
     {"categoria": "Dados e AWS", "nome": "AWS big data", "url": "https://aws.amazon.com/blogs/big-data/feed/", "idioma": "en", "limite": 5},
     {"categoria": "Brasil", "nome": "G1 principais", "url": "https://g1.globo.com/rss/g1/", "idioma": "pt", "limite": 10},
     {"categoria": "Local (São Paulo)", "nome": "G1 São Paulo", "url": "https://g1.globo.com/rss/g1/sao-paulo/", "idioma": "pt", "limite": 8, "ativa": false},

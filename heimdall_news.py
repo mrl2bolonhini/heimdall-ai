@@ -326,11 +326,13 @@ def descomprimir(dados: bytes, codificacao: str, maximo: int) -> bytes:
     return saida[:maximo]
 
 
-def baixar(url: str, maximo: int = 3_000_000, timeout: int = 20, so_html: bool = False, condicional: bool = False):
+def baixar(url: str, maximo: int = 3_000_000, timeout: int = 20, so_html: bool = False, condicional: bool = False, lingua: str = ""):
     """Devolve (bytes, tipo). Com condicional=True devolve (None, '') se o servidor disser que não mudou."""
     checar_url(url)
     cab = {"User-Agent": AGENTE_USUARIO, "Accept": "text/html,application/xhtml+xml,application/xml,application/rss+xml,application/atom+xml;q=0.9,*/*;q=0.5",
            "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.7", "Accept-Encoding": "gzip, deflate"}
+    if lingua:   # algumas fontes (AWS) entregam uma versão traduzida e parada do feed a quem pede português
+        cab["Accept-Language"] = re.sub(r"[^A-Za-z-]", "", lingua)[:10] or "en"
     if condicional and url in _cache_http:
         etag, mod = _cache_http[url]
         if etag:
@@ -601,7 +603,7 @@ def carregar_fontes() -> list:
         saida.append({"categoria": str(f["categoria"])[:60], "nome": str(f["nome"])[:60], "url": str(f["url"]),
                       "idioma": "en" if str(f.get("idioma", "pt")).lower() != "pt" else "pt",
                       "limite": max(1, min(int(f.get("limite", 10) or 10), 50)), "ler_materia": f.get("ler_materia", True) is not False,
-                      "renderizar": f.get("renderizar") is True})
+                      "renderizar": f.get("renderizar") is True, "lingua": str(f.get("lingua", ""))[:10]})
     return saida
 
 
@@ -637,7 +639,7 @@ def coletar_fontes() -> int:
         est = ESTADO["fontes"].setdefault(f["nome"], {"categoria": f["categoria"], "falha_desde": None})
         t0 = time.time()
         try:
-            dados, tipo = baixar(f["url"], condicional=True)
+            dados, tipo = baixar(f["url"], condicional=True, lingua=f.get("lingua", ""))
             if dados is None:
                 est.update(ok=True, quando=iso(ref), itens=est.get("itens", 0), novos=0, erro="", falha_desde=None, sem_mudanca=True)
                 continue
@@ -1244,7 +1246,7 @@ def mostrar_fontes(filtro: str = "") -> None:
             continue
         print(f"Baixando {f['nome']}...", flush=True)
         try:
-            dados, _tipo = baixar(f["url"], timeout=15)
+            dados, _tipo = baixar(f["url"], timeout=15, lingua=f.get("lingua", ""))
             itens = analisar_feed(dados)
         except Exception as ex:  # noqa: BLE001
             print(f"{f['categoria']} | {f['nome']}: FALHOU ({type(ex).__name__}: {str(ex)[:100]})")
