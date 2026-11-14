@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-14 - Histórico do GitOps em nota e troca de senha do Open WebUI
+- O GitOps passou a gravar uma nota em Heimdall-ai/GitOps quando um commit gera Pull Request em rascunho ou trechos descartados: repositório, branch, quantos trechos foram analisados, quais foram descartados e o motivo de cada um, e o que o modelo propôs. Commit sem achados não gera nota. Antes, o motivo dos descartes só existia no aviso do Bark.
+- trocar_senha_webui.sh troca a senha de um usuário do Open WebUI sem recriar o contêiner nem perder conversas ou configurações: faz cópia do volume em backups/, pede a nova senha duas vezes sem mostrá-la, troca só o hash no banco e confere. Não reinicia nada.
+- Para aplicar: ./subir.sh --reiniciar (agente do Mac com a pasta GitOps) e bash instalar_automacoes_avancadas.sh (importa o fluxo).
+
 ## 2026-11-14 - Tarefas de segurança do dolphin
 - O dolphin3-cyber-8b passou a trabalhar sozinho, sem ferramentas: o script coleta os dados no Mac (heimdall_seguranca.py) e o modelo só analisa o texto. Três tarefas agendadas no fluxo "tarefas de segurança do dolphin": logs das últimas 24 horas todo dia às 4h30 (acessos recusados e erros repetidos), commits da semana aos domingos às 5h (segredos, caminhos pessoais, IPs privados, e-mails, arquivos sensíveis) e exposição à rede aos domingos às 5h30 (portas em escuta, contêineres, Tailscale Funnel, firewall), comparada com a semana anterior.
 - Como o modelo é de 8B e inventa achados: cada achado precisa citar um trecho dos dados e o script confere se o trecho existe; o script também define uma gravidade mínima por conta própria; sem evidência confirmada, média ou alta dita só pelo modelo vira baixa; segredos são mascarados e as notas não trazem os dados brutos. O modelo só é chamado quando há o que analisar.
