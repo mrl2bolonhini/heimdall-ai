@@ -9,6 +9,7 @@ Os três usam o mesmo acesso, guardado no .env (a senha só como hash, nunca em 
     python3 heimdall_acesso.py --verificar confere, sem navegador, se a senha digitada e o código do app batem com o .env
 
 Depois de trocar, reinicie para valer: ./subir.sh --reiniciar
+Ao trocar a senha, o script oferece aplicar a mesma no Open WebUI (chat); ele não tem o código de 6 dígitos.
 A senha é digitada sem aparecer na tela. A chave do código aparece uma única vez, para você cadastrar no app Senhas.
 """
 import argparse

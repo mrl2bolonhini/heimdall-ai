@@ -5,6 +5,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-14 - Histórico do GitOps em nota e troca de senha do Open WebUI
 - O GitOps passou a gravar uma nota em Heimdall-ai/GitOps quando um commit gera Pull Request em rascunho ou trechos descartados: repositório, branch, quantos trechos foram analisados, quais foram descartados e o motivo de cada um, e o que o modelo propôs. Commit sem achados não gera nota. Antes, o motivo dos descartes só existia no aviso do Bark.
 - trocar_senha_webui.sh troca a senha de um usuário do Open WebUI sem recriar o contêiner nem perder conversas ou configurações: faz cópia do volume em backups/, pede a nova senha duas vezes sem mostrá-la, troca só o hash no banco e confere. Não reinicia nada.
+- Senha única: python3 heimdall_acesso.py --senha (ou --tudo) agora oferece aplicar a mesma senha no Open WebUI, pelo trocar_senha_webui.sh --stdin. O Open WebUI não tem o código de 6 dígitos e a senha dele não pode passar de 72 bytes (limite do bcrypt).
 - Para aplicar: ./subir.sh --reiniciar (agente do Mac com a pasta GitOps) e bash instalar_automacoes_avancadas.sh (importa o fluxo).
 
 ## 2026-11-14 - Tarefas de segurança do dolphin

@@ -9,6 +9,7 @@
 #   2. mostra os usuários cadastrados e pergunta de quem é a senha (se só houver um, usa esse);
 #   3. pede a nova senha duas vezes, sem mostrar na tela e sem gravá-la em arquivo nem no histórico do terminal;
 #   4. dentro do contêiner, troca só o hash da senha desse usuário no banco do Open WebUI e confere o resultado.
+# Com --stdin (usado pelo heimdall_acesso.py) a nova senha vem pela entrada padrão e não é perguntada de novo.
 # Nada é reiniciado. As sessões já abertas em outros aparelhos continuam valendo até expirarem.
 #
 # Se algo der errado, o próprio script avisa e não altera mais nada. Para voltar à senha antiga, rode o script de novo e informe a antiga.
@@ -16,6 +17,12 @@
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR" || exit 1
 fail() { echo "Erro: $*" >&2; exit 1; }
+
+P1=""; P2=""
+if [ "${1:-}" = "--stdin" ]; then
+    IFS= read -r P1 || fail "não recebi a senha pela entrada padrão."
+    P2="$P1"
+fi
 
 command -v docker > /dev/null 2>&1 || fail "o Docker não foi encontrado."
 docker ps --format '{{.Names}}' | grep -qx open-webui || fail "o contêiner open-webui não está rodando. Suba com: ./subir.sh"
@@ -44,13 +51,15 @@ if [ "$TOTAL" = "1" ]; then
 else
     echo "Usuários cadastrados:"
     printf '%s\n' "$USUARIOS" | nl -w2 -s'. '
-    read -r -p "Digite o número do usuário: " NUM
+    read -r -p "Digite o número do usuário: " NUM < /dev/tty
     [[ "$NUM" =~ ^[0-9]+$ ]] && [ "$NUM" -ge 1 ] && [ "$NUM" -le "$TOTAL" ] || fail "número inválido; nada foi alterado."
     EMAIL="$(printf '%s\n' "$USUARIOS" | sed -n "${NUM}p")"
 fi
 
-read -r -s -p "Nova senha (mínimo 12 caracteres): " P1; echo
-read -r -s -p "Repita a nova senha: " P2; echo
+if [ -z "$P1" ]; then
+    read -r -s -p "Nova senha (mínimo 12 caracteres): " P1 < /dev/tty; echo
+    read -r -s -p "Repita a nova senha: " P2 < /dev/tty; echo
+fi
 [ "$P1" = "$P2" ] || fail "as senhas não são iguais; nada foi alterado."
 [ "${#P1}" -ge 12 ] || fail "a senha tem menos de 12 caracteres; nada foi alterado."
 

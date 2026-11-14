@@ -39,6 +39,7 @@ import os
 import re
 import secrets
 import struct
+import subprocess
 import sys
 import threading
 import time
@@ -1176,6 +1177,21 @@ def mostrar_segredo(segredo: str) -> None:
     print("4. Guarde esta chave só aí. Ela não será mostrada de novo.")
 
 
+def aplicar_no_webui(senha: str) -> None:
+    """Oferece usar a mesma senha no Open WebUI (chat). Conversas e configurações de lá ficam como estão; o Open WebUI não tem o código de 6 dígitos."""
+    script = PROJECT_DIR / "trocar_senha_webui.sh"
+    if not script.is_file():
+        return
+    if len(senha.encode("utf-8")) > 72:
+        print("Open WebUI: a senha passa de 72 bytes (limite do bcrypt), então não apliquei lá. Para valer nos dois, use uma senha menor.")
+        return
+    if input("Aplicar a mesma senha no Open WebUI (chat)? Conversas e configurações são mantidas. [S/n] ").strip().lower() in ("n", "nao", "não"):
+        return
+    r = subprocess.run(["bash", str(script), "--stdin"], input=senha + "\n", text=True)
+    if r.returncode != 0:
+        print("Open WebUI: a troca não foi concluída (veja a mensagem acima). A senha dos serviços Heimdall já foi gravada.")
+
+
 def definir_acesso(modo: str) -> None:
     """Senha e código de 6 dígitos de todos os serviços Heimdall com login (Cloud, Notas e News). modo: tudo, senha ou codigo."""
     pares = {}
@@ -1197,6 +1213,8 @@ def definir_acesso(modo: str) -> None:
     if segredo:
         mostrar_segredo(segredo)
     print("\nA senha e o código valem para o Heimdall Cloud, o Heimdall Notas e o Heimdall News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
+    if modo in ("tudo", "senha"):
+        aplicar_no_webui(s1)
 
 
 def definir_senha(so_codigo: bool) -> None:   # mantido por compatibilidade
