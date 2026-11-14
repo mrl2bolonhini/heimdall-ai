@@ -6,7 +6,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Pelo python3 heimdall_news.py --fontes: o feed do G1 São Paulo estava parado havia 8 anos e o da Agência FAPESP vinha vazio; os dois foram desligados ("ativa": false).
 - Novas fontes: Metrópoles São Paulo e Câmara Municipal de São Paulo (local), Hugging Face (inteligência artificial), Universe Today (astronomia), Revista Pesquisa FAPESP e ScienceDaily (ciência). Os feeds foram conferidos como válidos e recentes.
 - AWS novidades entregava títulos em português parados em 2024: a AWS serve uma versão traduzida e antiga do feed a quem pede português, e o News pedia sempre pt-BR. Nova opção "lingua" por fonte (en para a AWS novidades) escolhe o idioma pedido ao site.
-- Curiosidades: acrescentada Fatos Desconhecidos (endereço provável do feed, ainda não conferido: rode python3 heimdall_news.py --fontes Fatos). O --fontes agora avisa qual fonte está baixando e desiste de cada uma em 15 segundos.
+- Curiosidades: o Fatos Desconhecidos não tem feed (o endereço /feed/ responde 204, sem conteúdo) e foi desligado; entrou Mental Floss (curiosidades em inglês, com título traduzido). O --fontes agora avisa qual fonte está baixando e desiste de cada uma em 15 segundos.
 - O arXiv só publica de segunda a sexta, então aos sábados e domingos seus feeds vêm vazios, e isso é normal.
 - python3 heimdall_news.py --fontes NOME mostra só essa fonte ou categoria, com os 3 itens mais novos e as datas.
 
