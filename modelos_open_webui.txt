@@ -16,7 +16,7 @@ Servidores de ferramentas (Configurações do administrador, Integrações, Serv
    Base: deepseek-coder-v2:16b
    Prompt: prompt_chat_codigo.txt
    Ferramentas: nenhuma (nos seus testes esse modelo não suporta ferramentas no Ollama)
-   Observação: o contexto dele é de 6144 tokens e ele sai da memória 30 segundos depois do uso.
+   Observação: o contexto dele é de 8192 tokens e ele sai da memória 30 segundos depois do uso.
 
 3. Curiosidades
    Base: qwen3-vl-instruct (o mesmo do Meus Dados, sem trocar de modelo na memória)
@@ -37,3 +37,16 @@ Servidores de ferramentas (Configurações do administrador, Integrações, Serv
    Chamada de função: Nativa
 
 Para copiar um prompt sem digitar: pbcopy < ~/heimdall-ai/NOME_DO_ARQUIVO.txt e colar com Command+V no campo de instrução de sistema.
+
+AJUSTES SUGERIDOS EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)
+  Meus Dados: temperatura 0,2 (respostas fiéis aos números).
+  Código: temperatura 0,2.
+  Curiosidades: temperatura 0,4.
+  Conversas: temperatura 0,8.
+  Documentos e Memória: temperatura 0,2.
+  Nos que têm ferramentas, deixe a chamada de função em Nativa. O contexto (8192, o mesmo no Código) e o tempo na memória já vêm do litellm_config.yaml.
+
+MODELOS NOVOS QUE AINDA NÃO TÊM PAPEL NO CHAT
+  llama-3.1-8b: aceita ferramentas e respondeu bem em português. É candidato a substituir o qwen3-vl-instruct no Curiosidades ou no Meus Dados, se ele errar menos ao escolher ferramentas. Compare as mesmas 3 perguntas nos dois antes de trocar. Atenção: usar um segundo modelo de 8B alternando com o qwen3-vl-instruct faz a memória de 16 GB trocar de modelo a cada mudança de chat.
+  dolphin3-cyber-8b: só texto (sem ferramentas). Já trabalha nas tarefas programadas de segurança; no chat só faria sentido para analisar um texto colado.
+  gemma3-4b: usado nos resumos do News; é pequeno e rápido, serve para conversas curtas sem tirar o qwen3-vl-instruct da memória.

@@ -11,6 +11,7 @@ model_list:
       model: ollama_chat/eriktonon/gemma4-uncensored
       api_base: http://localhost:11434
       num_ctx: 8192
+      keep_alive: "2m"   # modelo do chat Conversas: libera a memória pouco depois do uso, como os demais
     model_info:
       supports_function_calling: true
 
@@ -27,7 +28,7 @@ model_list:
     litellm_params:
       model: ollama_chat/deepseek-coder-v2:16b
       api_base: http://localhost:11434
-      num_ctx: 6144   # o GitOps usa trechos pequenos; menos contexto = menos memória
+      num_ctx: 8192   # o GitOps pede respostas de até 3000 tokens; 8192 comporta o trecho, o diff e a resposta
       keep_alive: "30s"   # libera a memória logo depois da análise do GitOps
     model_info:
       supports_function_calling: true
