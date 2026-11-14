@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-14 - Modelos revisados
+- Saíram do LiteLLM e do Ollama o qwen-3.8-uncensored e o bonsai-27b, que não estavam em uso. O agente local de teste (heimdall_agent.py) passou a usar o qwen3-vl:8b-instruct.
+- Entrou o llama-3.1-8b (ollama pull llama3.1:8b): o template do Ollama traz suporte a ferramentas e ele respondeu bem em português.
+- O dolphin3-cyber-8b foi marcado como sem suporte a ferramentas (supports_function_calling: false), porque não chamou ferramentas no teste de 02/11; fica para tarefas só de texto, como revisão de segurança.
+- Para aplicar: reiniciar o LiteLLM e, no Mac, apagar do Ollama os dois modelos que saíram.
+
 ## 2026-11-14 - Fontes do News revisadas
 - Pelo python3 heimdall_news.py --fontes: o feed do G1 São Paulo estava parado havia 8 anos e o da Agência FAPESP vinha vazio; os dois foram desligados ("ativa": false).
 - Novas fontes: Metrópoles São Paulo e Câmara Municipal de São Paulo (local), Hugging Face (inteligência artificial), Universe Today (astronomia), Revista Pesquisa FAPESP e ScienceDaily (ciência). Os feeds foram conferidos como válidos e recentes.

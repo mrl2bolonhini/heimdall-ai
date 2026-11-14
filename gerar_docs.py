@@ -221,13 +221,12 @@ TECNOLOGIAS = [
 ]
 
 MODELOS_NOTAS = {
-    "qwen-3.8-uncensored": ("Uso geral", "Confira a chamada de ferramentas com test_models_tools.py."),
     "gemma-4-uncensored": ("Uso geral", "Confira a chamada de ferramentas com test_models_tools.py."),
-    "dolphin3-cyber-8b": ("Segurança e conversa livre", "Confira a chamada de ferramentas com test_models_tools.py."),
+    "dolphin3-cyber-8b": ("Segurança e conversa livre, só texto", "Não chama ferramentas no Ollama; use para análises de texto, não nos fluxos com MCP."),
     "deepseek-coder-v2:16b": ("Código (usado pelo GitOps)", "O GitOps usa este modelo na etapa de análise de código."),
     "qwen3-vl-instruct": ("Modelo padrão dos fluxos; entende imagens", "Declara suporte a imagens no LiteLLM."),
     "gemma3-4b": ("Modelo pequeno e rápido (3 GB), usado nos resumos do Heimdall News", "No teste com um parágrafo resumiu certo em português; baixe com ollama pull gemma3:4b."),
-    "bonsai-27b": ("Modelo grande, respostas mais elaboradas", "Confira a chamada de ferramentas com test_models_tools.py."),
+    "llama-3.1-8b": ("Uso geral; aceita ferramentas", "Template do Ollama com suporte a ferramentas; respondeu bem em português."),
 }
 
 FLUXO_DESCRICAO = {

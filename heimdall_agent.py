@@ -10,7 +10,7 @@ import tools
 tools = [StructuredTool.from_function(fn) for fn in tools.ALL_TOOLS]
 
 llm = ChatOllama(
-    model="eriktonon/qwen3.8-uncensored:9b",
+    model="qwen3-vl:8b-instruct",
     temperature=0.3,  # temperature=0 pode causar loops em modelos Qwen
     num_ctx=8192,     # o padrão do Ollama é pequeno e trunca as definições das ferramentas
 )
