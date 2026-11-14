@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-14 - Vigia na Cloudflare
+- Aviso por e-mail da Cloudflare quando o túnel heimdall cai, fica degradado ou volta (política de Notificações da conta).
+- Worker heimdall-vigia (cloudflare/vigia.js): de 5 em 5 minutos confere de fora de casa os endereços chat, flows, cloud, notes, news e health. Avisa por e-mail só nas mudanças (cai depois de duas conferências seguidas, volta quando responde), guardando o estado em um KV. Quando o Mac dorme ou perde a rede, é isso que acusa.
+- O destino do e-mail fica na variável ALERTA_PARA do Worker, gravada na própria Cloudflare e nunca no GitHub.
+
 ## 2026-11-13 - Uma sessão só para os quatro serviços
 - Entrar em um dos serviços (Cloud, Notas, News ou Saúde) vale para os outros três: o cookie passou a ser único (heimdall_sessao), válido em *.heimdall-ai.tech, HttpOnly, SameSite=Strict e Secure.
 - A sessão é assinada (HMAC) com uma chave derivada da senha e da chave do código gravadas no .env: não depende da memória de cada serviço, então reiniciar um serviço não derruba a sessão. Trocar a senha ou o código derruba todas; sair em um sai em todos.
