@@ -61,7 +61,7 @@ def testar() -> None:
     token, conta = env.get("CLOUDFLARE_API_TOKEN", ""), env.get("CLOUDFLARE_ACCOUNT_ID", "")
     if not token or not conta:
         sys.exit("Não há chave no .env. Rode python3 cloudflare_chave.py primeiro.")
-    modelo = "@cf/google/gemma-3-12b-it"
+    modelo = "@cf/mistralai/mistral-small-3.1-24b-instruct"
     print("Workers AI (reserva de resumos):", _post(f"/accounts/{conta}/ai/run/{modelo}", token, {"messages": [{"role": "user", "content": "Responda só: ok"}], "max_tokens": 5}))
     print("Browser Run (leitura de páginas):", _post(f"/accounts/{conta}/browser-rendering/content", token, {"url": "https://example.com"}))
 

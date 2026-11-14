@@ -614,7 +614,8 @@ class CloudflareFalsa(BaseHTTPRequestHandler):
         if self.path.endswith("/browser-rendering/content"):
             saida = {"success": True, "result": "<html><body><nav>Menu principal</nav><article><p>" + ("Texto montado por JavaScript sobre o novo programa do governo. " * 12) + "</p></article></body></html>"}
         else:
-            saida = {"success": True, "result": {"response": json.dumps({"resumo": "Resumo feito pela reserva na Cloudflare, com frases suficientes para passar na validação de tamanho.", "titulo_pt": "Título pela reserva"}, ensure_ascii=False)}}
+            _d = {"resumo": "Resumo feito pela reserva na Cloudflare, com frases suficientes para passar na validação de tamanho.", "titulo_pt": "Título pela reserva"}
+            saida = {"success": True, "result": {"response": _d if CF.get("objeto") else json.dumps(_d, ensure_ascii=False)}}
         corpo = json.dumps(saida).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -670,6 +671,12 @@ except Exception as _ex:  # noqa: BLE001
 CF["modo"] = "ok"
 LLM["modo"] = "ok"
 
+CF["objeto"] = True
+LLM["modo"] = "fora"
+r3 = hn.resumir(dict(LINHA))
+confere("reserva que devolve o JSON já como objeto também funciona", r3["resumo"].startswith("Resumo feito pela reserva") and r3["titulo"] == "Título pela reserva", str(r3))
+CF["objeto"] = False
+LLM["modo"] = "ok"
 # --- Browser Rendering ---
 n0 = len(CF["pedidos"])
 txt = hn.ler_materia(f"{BASE}/materia/en2", renderizar=True)

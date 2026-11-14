@@ -121,7 +121,7 @@ PAUSA = os.environ.get("HEIMDALL_NEWS_PAUSA", "").strip()
 CF_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
 CF_CONTA = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
 CF_BASE = "https://api.cloudflare.com/client/v4"
-CF_MODELO = os.environ.get("HEIMDALL_NEWS_RESERVA_MODELO", "@cf/google/gemma-3-12b-it")
+CF_MODELO = os.environ.get("HEIMDALL_NEWS_RESERVA_MODELO", "@cf/mistralai/mistral-small-3.1-24b-instruct")
 RESERVA_LIGADA = os.environ.get("HEIMDALL_NEWS_RESERVA", "1") != "0" and bool(CF_TOKEN and CF_CONTA)
 RESERVA_POR_DIA = _inteiro("HEIMDALL_NEWS_RESERVA_POR_DIA", 60)
 RENDER_POR_DIA = _inteiro("HEIMDALL_NEWS_RENDER_POR_DIA", 20)
@@ -524,7 +524,8 @@ def chamar_llm(usuario: str, max_tokens: int = 500, timeout: int = 300) -> str:
         res = r.get("result", r)
         if isinstance(res, dict) and res.get("choices"):
             return res["choices"][0]["message"]["content"] or ""
-        return (res.get("response") if isinstance(res, dict) else "") or ""
+        texto = res.get("response") if isinstance(res, dict) else ""
+        return texto if isinstance(texto, str) else json.dumps(texto or "", ensure_ascii=False)   # a Cloudflare pode devolver o JSON já como objeto
 
 
 def _chamar_local(usuario: str, max_tokens: int = 500, timeout: int = 300) -> str:
