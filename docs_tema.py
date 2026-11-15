@@ -19,6 +19,7 @@ ACESSOS = {
     "notas": "https://notes.heimdall-ai.tech",
     "news": "https://news.heimdall-ai.tech",
     "saude": "https://health.heimdall-ai.tech",
+    "jogos": "https://games.heimdall-ai.tech",
 }
 H = lambda s: html.escape(str(s), quote=True)
 
@@ -326,6 +327,7 @@ PAGINAS = [
     ("notas.html", "Notas", "Heimdall Notas: ler as notas e ouvir os áudios"),
     ("news.html", "News", "Heimdall News: notícias com resumo de IA e feeds RSS"),
     ("saude.html", "Saúde", "Heimdall Saúde: dados do iPhone e Apple Watch, análises e painel"),
+    ("jogos.html", "Jogos", "Heimdall Jogos: jogos leves para leitor de tela"),
     ("cloud.html", "Cloud", "Painel do emulador de AWS: acesso, segurança e roteiro"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
     ("comando-heimdall.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções"),
@@ -435,6 +437,7 @@ def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
 <li class="porta" style="--cor:#1e88e5"><h3><a href="{ACESSOS['cloud']}">Cloud</a></h3><p>Painel do emulador de AWS: S3, Lambda, Glue e Athena. <a href="cloud.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#ffc107"><h3><a href="{ACESSOS['notas']}">Notas</a></h3><p>Ler as notas de estudo e ouvir os áudios. <a href="notas.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['news']}">News</a></h3><p>Notícias das últimas 24 horas com resumo de IA. <a href="news.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
+<li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['jogos']}">Jogos</a></h3><p>Jogos leves para leitor de tela: forca, senha, jogo da velha, 2048 e mais. <a href="jogos.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#42a5f5"><h3><a href="{ACESSOS['saude']}">Saúde</a></h3><p>Análises dos dados de saúde, só leitura. <a href="saude.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#93d2fa"><h3><a href="{REPO}">Código</a></h3><p>Repositório do projeto no GitHub.</p><p class="quem">Público</p></li>
 </ul></section>

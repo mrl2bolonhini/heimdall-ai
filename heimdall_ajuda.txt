@@ -40,7 +40,7 @@ Exemplos:
   heimdall restart --webui --terminal --n8n
 
 @ stop | Encerra os serviços do Mac
-Encerra o que escuta nas portas 8000 a 8004, 8010 a 8013, 8099 (documento da ajuda) e 9000 (MCP, agente, Cloud, Notas, News, painel de saúde e LiteLLM). Os contêineres do Docker continuam rodando.
+Encerra o que escuta nas portas 8000 a 8004, 8010 a 8014, 8099 (documento da ajuda) e 9000 (MCP, agente, Cloud, Notas, News, painel de saúde e LiteLLM). Os contêineres do Docker continuam rodando.
 Opções:
   -h, --help       mostra esta ajuda
 Exemplos:
@@ -58,7 +58,7 @@ Sem opção mostra as últimas 40 linhas do log da subida atual.
 Opções:
   -l, --list           lista os arquivos de log em logs/
   -c, --clean          apaga os logs antigos que ficavam soltos na pasta do projeto
-  -s, --service NOME   últimas linhas do log de um serviço: mcp, mcp-public, mcp-data, agent, cloud, notes, news, health, terminal, ingest
+  -s, --service NOME   últimas linhas do log de um serviço: mcp, mcp-public, mcp-data, agent, cloud, notes, news, health, games, terminal, ingest
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall logs
@@ -145,6 +145,17 @@ Exemplos:
   heimdall health --anomalies 2026-11-10
   heimdall health -r 60
 
+@ games | Heimdall Jogos, jogos leves para leitor de tela
+Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos são forca, senha (Mastermind), jogo da velha, número secreto, 2048 e a aventura de texto O Farol Apagado; cada jogada é lida em voz alta pela região de anúncio da página. Usa o mesmo login do Cloud.
+Opções:
+  -p, --play JOGO      abre direto um jogo: forca, senha, velha, numero, 2048, aventura
+  -l, --list           lista os jogos
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall games
+  heimdall games --play forca
+  heimdall games -l
+
 @ n8n | Automações do n8n
 Abre o n8n no navegador (porta 5678).
 Opções:
@@ -167,7 +178,7 @@ Exemplos:
   heimdall dozzle
 
 @ urls | Todos os endereços locais
-Lista os endereços de chat, notes, news, cloud, health, n8n, kuma e dozzle, com as portas do seu .env.
+Lista os endereços de chat, notes, news, cloud, health, games, n8n, kuma e dozzle, com as portas do seu .env.
 Opções:
   -h, --help           mostra esta ajuda
 Exemplos:

@@ -196,6 +196,7 @@ SERVICOS = [
     ("Emulador de AWS (Moto ou LocalStack)", "Para testar código de AWS sem custo.", "4566", "start_heimdall.sh (HEIMDALL_AWS_EMULATOR)"),
     ("Heimdall Notas", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Jogos", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048 e a aventura de texto O Farol Apagado. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Saúde", "Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8013", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Cloud", "Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare.", "8010", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
 ]
@@ -258,6 +259,7 @@ SCRIPTS = [
     ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Cloud, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News e pelo Heimdall Notas: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
+    ("heimdall_jogos.py", "Heimdall Jogos (porta 8014): entrega os jogos da pasta jogos/ (JavaScript sem dependências, um arquivo por jogo) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
     ("heimdall_painel_saude.py", "Heimdall Saúde (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Cloud (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
     ("heimdall_voz.py", "Dicionário de pronúncia: troca palavras por uma grafia que a voz do macOS lê certo (por exemplo, Heimdall vira Háimdal), no anúncio falado do subir.sh e no áudio das notas. Aceita --importar arquivo.csv para trazer as pronúncias do VoiceOver."),
     ("pronuncias.txt", "Pronúncias que vêm com o projeto, uma por linha no formato palavra = como falar. As suas ficam em pronuncias.local.txt, que não vai para o GitHub."),
@@ -329,6 +331,7 @@ COMANDOS = [
         ("Heimdall Notas (deve responder ok)", "curl -s http://localhost:8011/saude"),
         ("Heimdall News (deve responder ok)", "curl -s http://localhost:8012/saude"),
         ("Heimdall Saúde, o painel (deve responder ok)", "curl -s http://localhost:8013/saude"),
+        ("Heimdall Jogos (deve responder ok)", "curl -s http://localhost:8014/saude"),
         ("Relatório de saúde da semana, sem gravar", "python3 heimdall_saude.py --semanal"),
         ("Criar ou trocar a chave dos feeds RSS e ver os endereços", "python3 heimdall_news.py --token"),
         ("Ver de novo os endereços dos feeds RSS", "python3 heimdall_news.py --urls"),
@@ -462,7 +465,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="saudecam"><h2 id="saudecam">Dados de saúde e painéis</h2>
 <ol><li>O iPhone e o Apple Watch guardam os dados no app Saúde. O app Health Auto Export manda os números ao n8n por um webhook, em automações agendadas (métricas gerais e frequência cardíaca de hora em hora, o resto uma vez por dia).</li>
 <li>O n8n repassa ao agente do Mac, que grava no banco pessoal (SQLite, só nesta máquina).</li>
-<li>Quatro painéis web leem esse banco e os arquivos do Mac: Cloud (8010), Notas (8011), News (8012) e Saúde (8013). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
+<li>Cinco serviços web leem o banco e os arquivos do Mac: Cloud (8010), Notas (8011), News (8012), Saúde (8013) e Jogos (8014, que não lê nada, só entrega os jogos). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
 <li>Aos domingos, às 9h, o n8n pede o relatório da semana: ele vira nota com áudio e um aviso no Bark sem números.</li></ol></section>
 <section aria-labelledby="cfarq"><h2 id="cfarq">Serviços da Cloudflare</h2>
 <ol><li><strong>Túnel</strong> leva os endereços .heimdall-ai.tech até o Mac, sem abrir portas.</li>
@@ -724,6 +727,33 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Testar sem rede: <code>python3 teste_news.py</code></li>
 <li>Se algo falhar: <code>tail -20 logs/news_debug.log</code> ou <code>./subir.sh --log news</code></li></ul></section>
 """)
+    out["jogos.html"] = pagina("jogos.html", "Jogos", "Heimdall Jogos: jogos leves no navegador, feitos para leitor de tela, atrás do mesmo login dos outros painéis.", """
+<h1>Heimdall Jogos</h1>
+<p>Jogos leves para jogar no navegador, pensados para leitor de tela. Tudo é botão, campo de texto ou lista, e cada jogada é descrita em voz alta por uma região aria-live. O servidor não guarda nada: só entrega as páginas.</p>
+<section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
+<ol><li>No próprio computador: <code>heimdall games</code> (http://localhost:8014), depois de subir o sistema.</li>
+<li>De fora de casa: games.heimdall-ai.tech, pelo túnel Cloudflare (veja Colocar no ar, abaixo).</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, do Notas, do News e do Saúde.</li></ol></section>
+<section aria-labelledby="lista"><h2 id="lista">Os jogos</h2>
+<ul><li><strong>Forca:</strong> palavras em português por categoria, 7 erros; letra ou palavra inteira, sem se importar com acentos.</li>
+<li><strong>Senha (Mastermind):</strong> descubra 4 dígitos de 1 a 6 em até 10 tentativas; a dica diz quantos estão no lugar certo e quantos no lugar errado.</li>
+<li><strong>Jogo da velha:</strong> contra o computador, nos níveis fácil e difícil (no difícil ele não perde).</li>
+<li><strong>Número secreto:</strong> de 1 a 100, com as dicas maior e menor e o intervalo que sobrou.</li>
+<li><strong>2048:</strong> botões ou setas do teclado; cada jogada diz o que se moveu e onde surgiu a peça nova, e há um botão para ler o tabuleiro.</li>
+<li><strong>O Farol Apagado:</strong> aventura de texto com comandos como olhar, ir norte, pegar, usar e inventário.</li></ul>
+<p>Cada jogo está em um arquivo da pasta jogos/, em JavaScript sem dependências. Para abrir um direto: <code>heimdall games --play forca</code>.</p></section>
+<section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
+<ol><li>Atualize e reinicie: <code>heimdall update --restart</code>. O servidor sobe sozinho quando há senha e código no .env.</li>
+<li>Conferir: <code>curl -s http://localhost:8014/saude</code> deve responder ok.</li>
+<li>Para acessar de fora, no painel da Cloudflare (Zero Trust, Redes, Túneis, o seu túnel, Public Hostnames), adicione o nome games.heimdall-ai.tech apontando para o serviço HTTP localhost:8014. O DNS é criado junto.</li>
+<li>Se algo falhar: <code>heimdall logs --service games</code></li></ol></section>
+<section aria-labelledby="mais"><h2 id="mais">Outros jogos</h2>
+<p>O portal também lista jogos que você hospeda à parte, como coleções de quebra-cabeças em Docker. Basta listá-los em HEIMDALL_JOGOS_EXTRAS no .env, no formato Nome|endereço|descrição, separados por ponto e vírgula, e reiniciar. Só endereços http e https são aceitos.</p></section>
+<section aria-labelledby="seg"><h2 id="seg">Segurança</h2>
+<ul><li>Escuta só em 127.0.0.1, com login, limite de tentativas, sessão em cookie HttpOnly e lista de sites permitidos.</li>
+<li>A política de conteúdo só deixa rodar script do próprio site, sem script embutido nem conexões externas. Só os arquivos .js do catálogo são entregues.</li></ul></section>
+""")
+
     out["saude.html"] = pagina("saude.html", "Saúde", "Heimdall Saúde: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.", """
 <h1>Heimdall Saúde</h1>
 <p>O Heimdall Saúde guarda os dados do app Saúde do iPhone e do Apple Watch no banco pessoal do Mac, analisa e mostra em um painel de texto e tabelas feito para leitor de tela. Não é diagnóstico: são números e comparações com a sua própria média.</p>

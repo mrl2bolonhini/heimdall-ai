@@ -2,6 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-15 - Heimdall Jogos: subdomínio de jogos leves para leitor de tela
+- Novo serviço heimdall_jogos.py (porta 8014, games.heimdall-ai.tech): portal com seis jogos que rodam no navegador, feitos para leitor de tela. Tudo é HTML comum (botões, campos e listas) e cada jogada é dita em voz alta por uma região aria-live. O servidor não guarda nada.
+- Jogos: forca (palavras em português por categoria, sem se importar com acentos), senha (Mastermind, 4 dígitos de 1 a 6 em 10 tentativas), jogo da velha contra o computador (fácil e difícil; no difícil ele não perde), número secreto, 2048 (botões ou setas, com descrição de cada jogada e botão para ler o tabuleiro) e a aventura de texto O Farol Apagado. Cada jogo é um arquivo JavaScript da pasta jogos/, sem dependências.
+- Segurança: escuta só em 127.0.0.1, mesmo login do Cloud (senha e código de 6 dígitos), limite de tentativas, sessão em cookie HttpOnly, lista de sites permitidos e política de conteúdo que só deixa rodar script do próprio site (sem script embutido nem conexões externas). Só os arquivos .js do catálogo são entregues.
+- HEIMDALL_JOGOS_EXTRAS no .env lista outros jogos que você hospeda à parte (por exemplo uma coleção de quebra-cabeças em Docker), no formato Nome|endereço|descrição separados por ponto e vírgula; só http e https. O portal mostra esses links junto com os jogos.
+- Sobe com o start_heimdall.sh quando há senha e código no .env, aparece no subir.sh --status e no heimdall: heimdall games, heimdall games --play forca, heimdall games --list e heimdall logs --service games. Página Jogos no site.
+- Novos testes: python3 teste_jogos.py (servidor, login, arquivos servidos, cabeçalhos, e os dois testes abaixo em Node), teste_jogos_logica.js (regras de cada jogo, inclusive que o computador do jogo da velha nunca perde e que a aventura tem caminho até a vitória) e teste_jogos_ui.js (interface com um DOM de mentira).
+- Para aplicar: heimdall update --restart. Para acessar de fora, falta criar o nome games.heimdall-ai.tech no túnel Cloudflare, apontando para localhost:8014 (passo a passo na página Jogos do site).
+
 ## 2026-11-15 - Comando heimdall unificado no zsh
 - Novo heimdall.zsh: um único comando heimdall para todo o ecossistema, todo em inglês e no padrão "heimdall SERVIÇO --opção": o comando é o serviço e tudo o que ele faz vem em opções com dois hífens. heimdall help lista tudo, e a tecla Tab completa comandos e opções.
 - Serviços (sem opção abrem no navegador): chat, notes, news, cloud, health, n8n, kuma, dozzle; urls lista os endereços. Controle: up, restart, stop, status, logs, containers, models, update, docs, test, flows, hook.
