@@ -46,7 +46,7 @@ _heimdall_port() {  # porta de cada serviço (a do .env, se houver)
 
 _heimdall_stop_ports() {
   local p
-  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 9000; do
+  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 8099 9000; do
     lsof -ti:"$p" 2>/dev/null | xargs kill -9 2>/dev/null
   done
 }
@@ -96,10 +96,15 @@ _heimdall_usage() {  # ajuda de um comando só
   printf '%s\n' "$out"
 }
 
-_heimdall_doc() {
-  local f="$HEIMDALL_DIR/docs/comando-heimdall.html"
-  if [ ! -f "$f" ]; then echo "Não achei $f. Rode: heimdall update   (ou: heimdall docs)"; return 1; fi
-  _heimdall_open "Documento do comando heimdall" "file://$f"
+_heimdall_doc() {  # o Safari recusa file:// fora da área permitida; por isso o documento é servido por um servidor local mínimo (porta 8099, só 127.0.0.1)
+  local dir="$HEIMDALL_DIR/docs" porta=8099
+  if [ ! -f "$dir/comando-heimdall.html" ]; then echo "Não achei $dir/comando-heimdall.html. Rode: heimdall update   (ou: heimdall docs)"; return 1; fi
+  if ! nc -z 127.0.0.1 "$porta" > /dev/null 2>&1; then
+    local py; py="$(command -v python3)"
+    ( cd "$dir" && nohup "$py" -m http.server "$porta" --bind 127.0.0.1 > /dev/null 2>&1 & ) > /dev/null 2>&1
+    sleep 1
+  fi
+  _heimdall_open "Documento do comando heimdall" "http://localhost:$porta/comando-heimdall.html"
 }
 
 heimdall() {

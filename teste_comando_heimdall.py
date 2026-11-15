@@ -93,7 +93,7 @@ with tempfile.TemporaryDirectory() as d:
     (Path(d) / "docs").mkdir()
     (Path(d) / "docs" / "comando-heimdall.html").write_text("<html></html>")
     rc, out = bash("heimdall help --doc", d)
-    confere("help --doc abre o documento", "file://" in out and "comando-heimdall.html" in out, out)
+    confere("help --doc abre o documento por http, não por file://", "http://localhost:8099/comando-heimdall.html" in out and "file://" not in out, out)
     rc, out = bash("heimdall help -d", d)
     confere("help -d abre o documento", "comando-heimdall.html" in out, out)
     rc, out = bash("heimdall --doc", d)

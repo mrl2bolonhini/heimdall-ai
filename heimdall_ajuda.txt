@@ -40,7 +40,7 @@ Exemplos:
   heimdall restart --webui --terminal --n8n
 
 @ stop | Encerra os serviços do Mac
-Encerra o que escuta nas portas 8000 a 8004, 8010 a 8013 e 9000 (MCP, agente, Cloud, Notas, News, painel de saúde e LiteLLM). Os contêineres do Docker continuam rodando.
+Encerra o que escuta nas portas 8000 a 8004, 8010 a 8013, 8099 (documento da ajuda) e 9000 (MCP, agente, Cloud, Notas, News, painel de saúde e LiteLLM). Os contêineres do Docker continuam rodando.
 Opções:
   -h, --help       mostra esta ajuda
 Exemplos:
@@ -351,7 +351,7 @@ Exemplos:
 @ help | Ajuda do comando heimdall
 Sem argumentos lista os comandos. Com o nome de um comando mostra só as variações dele, o mesmo que heimdall COMANDO --help.
 Opções:
-  -d, --doc            abre no navegador o documento com todos os comandos e opções explicados (docs/comando-heimdall.html)
+  -d, --doc            abre no navegador o documento com todos os comandos e opções explicados (servido em http://localhost:8099 enquanto o terminal estiver aberto; o servidor sai com heimdall stop)
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall help
