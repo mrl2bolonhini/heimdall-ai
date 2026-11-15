@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-15 - Aviso de fonte dos diários fora do ar com o tempo real
+- O aviso "Fonte dos diários oficiais indisponível há 24 horas" era enviado uma única vez, e o Bark repetia o mesmo texto a cada 2 horas, mesmo com a fonte fora havia dias. Agora o aviso traz a data e a hora em que a fonte parou de responder e o tempo decorrido (por exemplo, "sem resposta desde 10/11/2026 às 19:05, há 5 dias").
+- O aviso é refeito às 24 horas, aos 3 dias, aos 7 dias e a cada 7 dias, cada um como um novo item da triagem com o tempo atualizado; avisos de marcos anteriores podem ser dispensados.
+- A mensagem diz o que de fato acontece: tentativas a cada 2 horas nos primeiros 3 dias e depois uma vez por dia, na consulta das 9h40, e que não dá para saber se houve publicações enquanto a fonte estava fora. Para o fluxo atualizado valer, rode bash instalar_monitor_privacidade.sh.
 ## 2026-11-14 - Histórico do GitOps em nota e troca de senha do Open WebUI
 - O GitOps passou a gravar uma nota em Heimdall-ai/GitOps quando um commit gera Pull Request em rascunho ou trechos descartados: repositório, branch, quantos trechos foram analisados, quais foram descartados e o motivo de cada um, e o que o modelo propôs. Commit sem achados não gera nota. Antes, o motivo dos descartes só existia no aviso do Bark.
 - trocar_senha_webui.sh troca a senha de um usuário do Open WebUI sem recriar o contêiner nem perder conversas ou configurações: faz cópia do volume em backups/, pede a nova senha duas vezes sem mostrá-la, troca só o hash no banco e confere. Não reinicia nada.

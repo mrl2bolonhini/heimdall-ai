@@ -447,7 +447,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li><strong>Pastas privadas são intocáveis.</strong> Notas de pastas marcadas como privadas nunca são lidas, indexadas nem analisadas. Se a verificação falhar, nenhuma nota é entregue.</li>
 <li><strong>O agente só escreve onde deve.</strong> Grava apenas nas pastas do próprio Heimdall e nas pastas de temas de estudo.</li>
 <li><strong>Autenticidade antes de confiança.</strong> O vigia de e-mail só trata como oficial o remetente que o Gmail confirmou, e nunca segue links.</li>
-<li><strong>Falha externa não vira falso &quot;nada novo&quot;.</strong> Quando uma fonte de fora não responde, o fluxo tenta de novo a cada 2 horas, avisa assim que ela volta e, se ela passar de cerca de 24 horas fora do ar, manda um único aviso de indisponibilidade. Nunca finge que não há novidade.</li>
+<li><strong>Falha externa não vira falso &quot;nada novo&quot;.</strong> Quando uma fonte de fora não responde, o fluxo tenta de novo a cada 2 horas, avisa assim que ela volta e, se ela passar de cerca de 24 horas fora do ar, manda um aviso de indisponibilidade com a data em que ela parou de responder, repetido aos 3 dias, aos 7 dias e a cada semana, sempre com o tempo atualizado. Nunca finge que não há novidade.</li>
 <li><strong>Entradas externas são dados, não ordens.</strong> Textos de páginas, e-mails e documentos passados ao modelo são tratados como conteúdo não confiável.</li></ul></section>
 """)
 
