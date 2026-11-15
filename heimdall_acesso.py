@@ -48,7 +48,9 @@ def verificar() -> None:
     if not h or not seg:
         return
     senha = getpass.getpass("Digite a senha como o Senhas a preenche (não aparece na tela): ")
-    print("A senha digitada confere com a gravada:", "SIM" if nuvem.confere_senha(senha[:200], h) else "NÃO")
+    if not nuvem.confere_senha(senha[:200], h):
+        print("A senha digitada não confere com a gravada no .env.")
+        return
     if senha != senha.strip():
         print("Atenção: a senha digitada tem espaço no começo ou no fim.")
     chave = nuvem._chave_totp(seg)
