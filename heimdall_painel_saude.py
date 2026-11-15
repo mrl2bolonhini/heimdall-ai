@@ -78,7 +78,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 .botao{display:inline-block;padding:.7rem 1.2rem;border:2px solid currentColor;border-radius:.5rem;font-weight:700;text-decoration:none}
 """
 
-SECOES = [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"),
+SECOES = [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"), ("/anomalias", "Anomalias"),
           ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/dados", "Estado dos dados")]
 
 
@@ -175,9 +175,22 @@ def estado_atualizacao(q: dict) -> tuple:
             'se o iPhone está desbloqueado e se o aplicativo tem permissão de ler a Saúde. <a href="/dados">Voltar</a></p>'), 0
 
 
+def _resumo_anomalias() -> str:
+    """Na visão geral: só os achados mais fortes, com o caminho para a página completa."""
+    try:
+        import heimdall_anomalias as anomalias
+        r = anomalias.analisar()
+        itens = [c["texto"] for c in r["combos"]] + [a["texto"] for a in r["achados"] if a["nivel"] == "forte"][:3]
+        if not itens:
+            return ""
+        return secao("Fora do seu normal", "\n".join(i + "." for i in itens) + "\nVeja a página Anomalias para o detalhe.")
+    except Exception:  # noqa: BLE001 - a visão geral não pode quebrar por isso
+        return ""
+
+
 def pg_inicio(q: dict) -> tuple:
     dias = dias_de(q, 90)
-    corpo = bloco_atualizar(q) + secao("Hoje", saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
+    corpo = bloco_atualizar(q) + _resumo_anomalias() + secao("Hoje", saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
              or "<p>Ainda não há dados suficientes para comparar os últimos 7 dias. Veja o estado dos dados.</p>")
     corpo += seletor("/", dias, 90) + secao(f"Tendências ({dias} dias)", saude.relatorio_tendencias(dias).split("\n", 1)[-1])
     corpo += AVISO_HTML
@@ -186,6 +199,11 @@ def pg_inicio(q: dict) -> tuple:
 
 def pg_hoje(q: dict) -> tuple:
     return "Hoje", texto_html(saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + '<p><a href="/dados">Ver o estado dos dados</a></p>' + AVISO_HTML
+
+
+def pg_anomalias(q: dict) -> tuple:
+    import heimdall_anomalias as anomalias
+    return "Anomalias", texto_html(anomalias.relatorio()) + AVISO_HTML
 
 
 def pg_semana(q: dict) -> tuple:
@@ -285,6 +303,7 @@ ROTAS = {
     "/": pg_inicio,
     "/hoje": pg_hoje,
     "/semana": pg_semana,
+    "/anomalias": pg_anomalias,
     "/sono": lambda q: pg_relatorio("Sono", "/sono", saude.relatorio_sono, 90, q, "Poucos dados de sono neste período."),
     "/atividade": lambda q: pg_relatorio("Atividade", "/atividade", saude.relatorio_atividade, 90, q, "Poucos dados de atividade neste período."),
     "/recuperacao": lambda q: pg_relatorio("Recuperação", "/recuperacao", lambda d: saude.relatorio_recuperacao(max(d, 30)), 180, q,

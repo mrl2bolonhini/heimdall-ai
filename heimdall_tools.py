@@ -955,15 +955,16 @@ def relatorio_saude(dias: int = 30) -> str:
 
 
 def analise_saude(tema: str = "agora", dias: int = 90) -> str:
-    """Análise de saúde do dia a dia, sem depender de treinos registrados. tema: hoje (o que já chegou de hoje), agora (últimos 7 dias contra a média dos 90 anteriores), tendencias, sono, atividade (passos, minutos de exercício, picos de esforço) ou recuperacao (o que acompanha a HRV e o pulso em repouso)."""
+    """Análise de saúde do dia a dia, sem depender de treinos registrados. tema: hoje (o que já chegou de hoje), agora (últimos 7 dias contra a média dos 90 anteriores), tendencias, sono, atividade (passos, minutos de exercício, picos de esforço) recuperacao (o que acompanha a HRV e o pulso em repouso) ou anomalias (cada medida contra o seu normal dos 30 dias, sequências, tendência de 7 dias e cruzamento de sinais)."""
     tema = (tema or "agora").strip().lower().replace("ê", "e").replace("ç", "c").replace("ã", "a")
     try:
         m = _saude_mod()
         d = _limitar(dias, padrao=90)
         f = {"hoje": lambda: m.relatorio_hoje(), "agora": lambda: m.relatorio_estado_atual(), "tendencias": lambda: m.relatorio_tendencias(d), "sono": lambda: m.relatorio_sono(d),
-             "atividade": lambda: m.relatorio_atividade(d), "recuperacao": lambda: m.relatorio_recuperacao(max(d, 30))}.get(tema)
+             "atividade": lambda: m.relatorio_atividade(d), "recuperacao": lambda: m.relatorio_recuperacao(max(d, 30)),
+             "anomalias": lambda: __import__("heimdall_anomalias").relatorio()}.get(tema)
         if not f:
-            return "Tema desconhecido. Use: hoje, agora, tendencias, sono, atividade ou recuperacao."
+            return "Tema desconhecido. Use: hoje, agora, tendencias, sono, atividade, recuperacao ou anomalias."
         return _BANCO_AVISO + "\n" + (f() or "Poucos dados no banco para esta análise.")
     except Exception as e:  # noqa: BLE001
         return f"Não consegui fazer a análise: {e}"

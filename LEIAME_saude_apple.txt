@@ -71,3 +71,9 @@ SINAIS VITAIS, APNEIA E TEMPERATURA DO PULSO
 4. Frequência cardíaca da madrugada: o Heimdall compara a média entre 0h e 7h com o seu normal dos últimos 14 dias. Se ficar pelo menos 10 bpm acima (e bem fora da variação habitual), abre um item na triagem. A página Hoje do painel mostra a comparação. Para isso a automação precisa enviar a frequência cardíaca (heart rate) agrupada por hora.
 5. Oxigênio mínimo: além da média do dia, o Heimdall guarda a menor leitura de oxigênio (spo2_min). Até 92 por cento aparece como relevante no resumo; até 90 por cento abre um item na triagem; até 88 por cento abre um item crítico. A leitura no pulso pode errar por movimento ou ajuste do relógio, mas uma queda abaixo de 91 por cento, sobretudo com outros sinais, vale conversar com um médico.
 
+Anomalias em todas as medidas
+1. python3 heimdall_anomalias.py mostra o que saiu do seu normal (mediana dos últimos 30 dias). Também está na página Anomalias do painel e no chat (analise_saude, tema anomalias).
+2. O monitor compara pulso, variabilidade, respiração, oxigênio, sono, distúrbios respiratórios, temperatura, caminhada, atividade e qualquer medida nova que o Health Auto Export mande. Mudança pequena não conta, e melhora aparece como positiva.
+3. Ele avisa dias seguidos fora do normal e mudança lenta na média de 7 dias, e cruza os sinais (estresse ou infecção; sono e respiração). Cruzamento ou duas medidas muito fora do normal abrem um item de triagem por dia.
+4. Medidas com menos de 10 dias de histórico ou sem dado recente aparecem no rodapé como não comparadas. Quanto mais medidas a automação enviar, mais o monitor enxerga.
+5. Não é diagnóstico. Sintomas como falta de ar, dor no peito, palpitação ou tontura pedem atendimento, não esta página.

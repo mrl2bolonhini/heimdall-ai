@@ -2,6 +2,17 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-15 - Anomalias: cada medida de saúde comparada com o seu normal, em todos os dados
+- Novo módulo heimdall_anomalias.py. Para cada medida guardada (pulso em repouso, variabilidade, respiração, oxigênio média e mínimo, sono total, profundo e REM, distúrbios respiratórios, temperatura do pulso, caminhada, VO2 máximo, passos, energia, exercício, horas em pé, andares, luz do dia, peso e qualquer medida nova que o Health Auto Export mande) ele compara o último dia com o seu normal dos 30 dias anteriores, usando mediana e desvio robusto, para um dia atípico no histórico não distorcer o normal.
+- Cada medida tem a sua variação mínima: mudança pequena em valor absoluto não conta. Há um sentido bom e um ruim (variabilidade maior que o normal é positiva, menor é alerta). Mudança absoluta grande conta mesmo quando o seu normal é muito variável.
+- Também aponta há quantos dias seguidos a medida está fora do normal e uma mudança lenta (média dos últimos 7 dias fora do normal mesmo que o último dia, sozinho, pareça normal). Medidas do dia inteiro (passos, energia etc.) são avaliadas no último dia completo, nunca no dia de hoje pela metade.
+- Frequência cardíaca hora a hora: a madrugada (0h às 7h) e as horas já medidas de hoje são comparadas com as mesmas horas dos 14 dias anteriores.
+- Cruzamento de sinais: pulso alto, variabilidade baixa, respiração mais rápida, oxigênio baixo, sono curto e temperatura alta, três ou mais juntos, geram um aviso de padrão de estresse, infecção ou má recuperação. Distúrbios respiratórios altos com oxigênio baixo (ou com sono curto e pulso alto na madrugada) geram um aviso de padrão compatível com o que se investiga na apneia do sono. Nada disso é diagnóstico.
+- Onde aparece: nova página Anomalias do painel de saúde, um bloco "Fora do seu normal" na visão geral, a ferramenta de chat analise_saude com tema anomalias, python3 heimdall_anomalias.py [AAAA-MM-DD] no terminal e um item de triagem (alto) por dia quando há um padrão combinado ou pelo menos duas medidas muito fora do normal, aberto pelo agente a cada envio do Health Auto Export, sem duplicar.
+- Medidas sem histórico suficiente (menos de 10 dias) ou sem dado recente aparecem no rodapé como não comparadas, para você saber o que o monitor não está vendo.
+- Novo teste: python3 teste_anomalias.py.
+- Para aplicar: ./subir.sh --reiniciar (agente, painel e MCP). Nenhum fluxo do n8n mudou.
+
 ## 2026-11-15 - Resumo de saúde refeito quando o sono chega, aviso no estilo Sinais Vitais e frequência cardíaca da madrugada
 - O resumo das 5h50 saía antes de o iPhone sincronizar o sono da noite. Agora, se saiu sem o sono, o fluxo refaz o resumo uma única vez assim que chegam o sono e pelo menos um sinal da noite (pulso, variabilidade, respiração ou oxigênio). A nota do dia é atualizada, e o aviso vai ao próximo grupo (8h ou 10h) ou, depois das 10h, na hora e sem som.
 - Novo aviso no estilo do app Sinais Vitais da Apple: quando duas ou mais medidas da noite (pulso em repouso, respiração no sono, oxigênio, temperatura do pulso, duração do sono) ficam fora do seu intervalo típico dos últimos 30 dias, para mais ou para menos, o resumo destaca isso e abre um item na triagem (alto). Mudança pequena em valor absoluto não conta.

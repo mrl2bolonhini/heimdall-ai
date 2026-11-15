@@ -1027,6 +1027,14 @@ class Handler(BaseHTTPRequestHandler):
                         r["triagem"] = r.get("triagem", 0) + 1
                 except Exception as e:  # noqa: BLE001 - os dados já foram gravados; a triagem é um aviso a mais
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} alerta de frequência cardíaca falhou: {str(e)[:120]}\n")
+                try:   # anomalias em todas as medidas e cruzamentos de sinais: um item de triagem consolidado por dia
+                    import heimdall_anomalias as anomalias
+                    alerta = anomalias.alerta()
+                    if alerta:
+                        triagem.criar(alerta, osascript_travado)
+                        r["triagem"] = r.get("triagem", 0) + 1
+                except Exception as e:  # noqa: BLE001 - os dados já foram gravados; a triagem é um aviso a mais
+                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} alerta de anomalias falhou: {str(e)[:120]}\n")
                 return self._json(200, r)
             if u.path == "/banco/gravar":
                 return self._json(200, banco.gravar(str(dado.get("tabela", "")), dado.get("registros", [])))
