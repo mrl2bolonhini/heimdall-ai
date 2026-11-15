@@ -71,5 +71,8 @@ for i in range(1, 15):
 grava(HOJE, [72, 83, 86, 88, 74, 87, 93])
 txt = hs.relatorio_hoje()
 confere("página Hoje mostra a madrugada comparada com o normal", "Frequência cardíaca na madrugada" in txt and "acima" in txt, txt[:700])
+hs._upsert("saude_diaria", "dia, metrica", [{"dia": HOJE, "metrica": "spo2_min", "valor": 89.0, "unidade": "%"}])
+txt = hs.relatorio_hoje()
+confere("página Hoje mostra o oxigênio mínimo e avisa quando fica abaixo de 91", "menor leitura de hoje: 89" in txt and "Abaixo de 91" in txt, txt[:800])
 print("Tudo certo." if not falhas else f"{falhas} falha(s).")
 sys.exit(1 if falhas else 0)

@@ -149,6 +149,34 @@ P = {"ymd": "2026-11-14", "rel": ["Oxigênio no sangue: hoje 89 %, média de 30 
 r = rodar(TRI, {}, anterior=P)
 confere("oxigênio muito baixo continua 'crítico'", r["saida"][0]["json"]["nivel"] == "critico", r["saida"])
 
+# oxigênio mínimo: guardar a menor leitura do dia e alertar
+GD = codigo("Guardar dados")
+def lote(leituras, extra=None):
+    pts = [dict({"date": f"2026-11-14 0{3 + i}:00:00 -0300", "qty": q}, **(extra or {})) for i, q in enumerate(leituras)]
+    return {"headers": {"x-heimdall-saude": "__SAUDE_TOKEN__"}, "body": {"data": {"metrics": [{"name": "blood_oxygen_saturation", "units": "%", "data": pts}]}}}
+r = rodar(GD, {}, entrada=lote([97, 89, 96]))
+reg = {x["metrica"]: x["valor"] for x in r["saida"][0]["json"]["registros"]}
+confere("Guardar dados grava a média e o mínimo do oxigênio", reg.get("spo2") == 94 and reg.get("spo2_min") == 89, reg)
+r2 = rodar(GD, r["sd"], entrada=lote([95, 94]))
+confere("um envio posterior mais alto não apaga o mínimo do dia", r2["sd"]["saude"]["dias"]["2026-11-14"]["spo2_min"] == 89, r2["sd"]["saude"]["dias"]["2026-11-14"])
+r3 = rodar(GD, r2["sd"], entrada=lote([93], {"Min": 86, "Avg": 93}))
+confere("um envio agrupado com Min usa o Min", r3["sd"]["saude"]["dias"]["2026-11-14"]["spo2_min"] == 86, r3["sd"]["saude"]["dias"]["2026-11-14"])
+r4 = rodar(GD, {}, entrada=lote([0.97, 0.9]))
+confere("fração (0 a 1) vira porcentagem no mínimo", {x["metrica"]: x["valor"] for x in r4["saida"][0]["json"]["registros"]}.get("spo2_min") == 90, r4["saida"][0]["json"]["registros"])
+
+for minimo, esperado in ((87, "Oxigênio no sangue: menor leitura de hoje 87"), (89, "SpO2 mínimo (menor leitura do dia) 89"), (92, "[relevante]"), (95, None)):
+    e = estado(dict(MANHA, spo2_min=minimo))
+    rel = rodar(codigo("Preparar"), e)["saida"][0]["json"]["rel"]
+    if esperado:
+        ok = any(esperado in x for x in rel)
+    else:
+        ok = not any("SpO2 mínimo" in x or "menor leitura" in x for x in rel)
+    confere(f"oxigênio mínimo de {minimo} % {'gera' if esperado else 'não gera'} item relevante", ok, rel)
+P = {"ymd": "2026-11-14", "rel": ["SpO2 mínimo (menor leitura do dia) 89 %, abaixo de 91 % [MUITO RELEVANTE]"]}
+confere("mínimo de 89 % vira item 'alto'", rodar(TRI, {}, anterior=P)["saida"][0]["json"]["nivel"] == "alto", "")
+P = {"ymd": "2026-11-14", "rel": ["Oxigênio no sangue: menor leitura de hoje 87 % [MUITO RELEVANTE]"]}
+confere("mínimo de 87 % vira item 'crítico'", rodar(TRI, {}, anterior=P)["saida"][0]["json"]["nivel"] == "critico", "")
+
 # ligações
 lig = FLUXO["connections"]
 alvos = [x["node"] for x in lig["Guardar dados"]["main"][0]]

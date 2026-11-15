@@ -1211,7 +1211,7 @@ def relatorio_cruzado(dias: int = 30) -> str:
 # ----------------------------------------------------------------------------------------
 _DIAS_SEMANA = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"]
 _NOMES = {"fc_repouso": ("Pulso em repouso", "bpm", 0), "hrv": ("Variabilidade (HRV)", "ms", 0), "resp": ("Respiração no sono", "rpm", 1),
-          "spo2": ("Oxigênio no sangue", "por cento", 1), "sono_total": ("Sono", "min", 0), "passos": ("Passos", "", 0), "energia": ("Energia ativa", "kcal", 0),
+          "spo2": ("Oxigênio no sangue", "por cento", 1), "spo2_min": ("Oxigênio mínimo", "por cento", 1), "sono_total": ("Sono", "min", 0), "passos": ("Passos", "", 0), "energia": ("Energia ativa", "kcal", 0),
           "x:vo2_max": ("VO2 máx", "mL/min·kg", 1), "x:walking_heart_rate_average": ("Frequência ao caminhar", "bpm", 0),
           "x:apple_exercise_time": ("Minutos de exercício", "min", 0)}
 
@@ -1302,6 +1302,9 @@ def relatorio_hoje() -> str:
             med = statistics.median(tipico)
             t += f"; o seu dia típico (mediana de 30 dias) é {_fmt_v(m, med)}" + (", e o dia ainda não acabou" if acumula else "")
         linhas.append(t + ".")
+    omin = _serie("spo2_min", de).get(hoje)
+    if omin is not None:
+        linhas.append(f"Oxigênio no sangue, menor leitura de hoje: {_fmt_v('spo2_min', omin)}" + (". Abaixo de 91 por cento merece atenção; a leitura no pulso pode errar, mas vale conversar com um médico se se repetir." if omin <= 90 else "."))
     horas = _ler("SELECT hora, fc_min, fc_media, fc_max FROM fc_hora WHERE dia = ? ORDER BY hora", (hoje,))
     if horas:
         linhas.append(f"Frequência cardíaca de hoje: {len(horas)} hora(s) com leitura, mínima de {_num(min(h['fc_min'] for h in horas if h['fc_min']))} bpm, "
