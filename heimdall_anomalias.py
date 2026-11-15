@@ -242,7 +242,9 @@ def relatorio(hoje: str = None) -> str:
     if outros:
         linhas.append("Um pouco fora do seu normal:")
         linhas += [a["texto"] + "." for a in outros]
-    if not r["achados"]:
+    if not r["achados"] and not r["analisadas"]:
+        linhas.append("Ainda não há medidas com histórico suficiente (pelo menos 10 dias) para comparar com o seu normal.")
+    elif not r["achados"]:
         linhas.append("Nenhuma medida saiu do seu normal.")
     if r["positivos"]:
         linhas.append("Melhor que o seu normal:")

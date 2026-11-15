@@ -25,6 +25,7 @@ def confere(nome, ok, detalhe=""):
 
 
 hs._garantir_banco()
+confere("banco vazio não diz que está tudo normal", "histórico suficiente" in an.relatorio() and "Nenhuma medida saiu" not in an.relatorio(), an.relatorio())
 HOJE = datetime.now().strftime("%Y-%m-%d")
 
 

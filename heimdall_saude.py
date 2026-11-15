@@ -1601,6 +1601,7 @@ def main() -> int:
     ap.add_argument("--semanal", action="store_true", help="mostra o relatório da semana (o agente o grava nas Notas e avisa pelo Bark aos domingos)")
     ap.add_argument("--hoje", action="store_true", help="o que já chegou de hoje (ou o aviso de que nada chegou)")
     ap.add_argument("--agora", action="store_true", help="os últimos 7 dias contra a sua média dos 90 dias anteriores")
+    ap.add_argument("--anomalias", nargs="?", const="", metavar="AAAA-MM-DD", help="o que saiu do seu normal (cada medida contra os 30 dias anteriores)")
     a = ap.parse_args()
     if a.importar:
         print("Importando (um export grande pode levar vários minutos)...")
@@ -1640,6 +1641,9 @@ def main() -> int:
         print(relatorio_hoje())
     elif a.agora:
         print(relatorio_estado_atual() or "Poucos dados recentes para comparar.")
+    elif a.anomalias is not None:
+        import heimdall_anomalias
+        print(heimdall_anomalias.relatorio(a.anomalias or None))
     elif a.relatorio is not None:
         print(relatorio_geral(a.relatorio))
     else:

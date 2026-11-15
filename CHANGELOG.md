@@ -3,9 +3,12 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-15 - Comando heimdall unificado no zsh
-- Novo heimdall.zsh: um único comando heimdall para todo o ecossistema. Ligar e desligar (up, reiniciar, parar, status, log), abrir no navegador (chat, notes, news, cloud, painel, n8n, kuma, dozzle, urls), saúde (heimdall saude --hoje, heimdall anomalias), dados e rotinas (triagem, banco, backup, email, acesso, senha-webui, voz, modelos, diagnostico, mcp) e manutenção (atualizar, fluxos, docs, teste). heimdall ajuda lista tudo, e a tecla Tab completa os comandos.
-- A função antiga tinha um caso padrão antes dos casos do Gemini, que por isso nunca eram alcançados. As versões antigas continuam em heimdall claude|gemini up|reload|down|status.
-- instalar_comando_heimdall.sh faz cópia do .zshrc, remove a função antiga e liga o heimdall.zsh. Daí em diante o comando se atualiza com o git pull (heimdall atualizar).
+- Novo heimdall.zsh: um único comando heimdall para todo o ecossistema, com os serviços em inglês: up, restart, stop, status, logs, chat, notes, news, cloud, health, n8n, kuma, dozzle, urls, flows, update, docs e test. heimdall help lista tudo, e a tecla Tab completa comandos e argumentos.
+- heimdall health abre o painel de saúde (heimdall health anomalias abre uma página); com argumentos que começam por dois hífens roda o relatório no terminal: heimdall health --hoje, --agora, --semanal, --anomalias, --sono, --fc, --importar e os demais. python3 heimdall_saude.py ganhou a opção --anomalias.
+- Cobre também triagem, banco, backup, email, acesso, webui-password, voz, ouvir, ingest, env, cloudflare-key, import-n8n-health, clean-mirrors, clean-private, move-notes, mcp, diagnostico, hook, brand, containers e models. heimdall test all roda todos os testes.
+- As ações antigas claude e gemini foram removidas, junto com a dependência do LaunchAgent e das pastas claude_version e gemini_version.
+- instalar_comando_heimdall.sh faz cópia do .zshrc, remove a função antiga e liga o heimdall.zsh. Daí em diante o comando se atualiza com o git pull (heimdall update).
+- A página de anomalias, com o banco sem histórico suficiente, agora diz isso em vez de dizer que nada saiu do normal.
 
 ## 2026-11-15 - Anomalias: cada medida de saúde comparada com o seu normal, em todos os dados
 - Novo módulo heimdall_anomalias.py. Para cada medida guardada (pulso em repouso, variabilidade, respiração, oxigênio média e mínimo, sono total, profundo e REM, distúrbios respiratórios, temperatura do pulso, caminhada, VO2 máximo, passos, energia, exercício, horas em pé, andares, luz do dia, peso e qualquer medida nova que o Health Auto Export mande) ele compara o último dia com o seu normal dos 30 dias anteriores, usando mediana e desvio robusto, para um dia atípico no histórico não distorcer o normal.
