@@ -45,6 +45,10 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Novo teste: python3 teste_saude_fluxo.py roda os nós de código do fluxo com Node.
 - Para aplicar: ./subir.sh --reiniciar (agente com o alerta de frequência cardíaca) e bash instalar_automacoes_avancadas.sh (importa o fluxo).
 
+## 2026-11-15 - heimdall news com as opções de fontes e feeds
+- heimdall news --sources [NOME] mostra o que cada feed entrega agora (quantos itens e a idade deles), heimdall news --queue a fila de resumos, heimdall news --now atualiza na hora, e --token, --urls, --copy e --opml cuidam dos feeds RSS. Todas têm a forma curta de uma letra (-s, -q, -n, -t, -u, -c, -o) e completam com Tab. Sem opção, o comando continua abrindo o site.
+- heimdall update atualiza a branch em que você está (git pull --ff-only), então vale tanto para a main quanto para a develop. A instrução do roteiro da Cloud passou a usar a branch atual em vez de fixar a main.
+
 ## 2026-11-15 - Anomalias de saúde: dado errado não vira alerta, e o aviso só repete quando algo muda
 - Energia em repouso chegava em kJ do Health Auto Export e era lida como kcal (8.425 "kcal" por dia, quando eram cerca de 2.000 kcal). O banco agora converte kJ para kcal ao gravar e corrige o que já estava gravado.
 - O total do dia de passos, energia e demais medidas somadas era trocado pelo do último envio. Com o envio de hora em hora, o dia passava a valer só as últimas horas (por isso 384 kJ, 264 passos). O fluxo de saúde agora guarda cada hora recebida e soma todas, sem duplicar reenvios; uma exportação diária completa prevalece sobre horas parciais. Para reconstruir os dias já afetados (12 a 15/11), rode de novo o atalho "Exportar dados de saúde".

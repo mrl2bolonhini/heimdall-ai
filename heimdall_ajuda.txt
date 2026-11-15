@@ -106,11 +106,20 @@ Exemplos:
   heimdall notes --move-old --run
 
 @ news | Heimdall News, notícias com resumo de IA
-Abre o site de notícias das últimas 24 horas (porta 8012).
+Sem opção, abre o site de notícias das últimas 24 horas (porta 8012). Com opção, cuida dos feeds RSS, das fontes e da atualização.
 Opções:
+  -s, --sources        baixa cada feed agora e mostra quantos itens ele traz e a idade deles; aceita um nome de fonte ou categoria para ver só esse
+  -q, --queue          mostra quantas notícias esperam resumo de IA
+  -n, --now            faz uma atualização agora e sai, sem esperar os 30 minutos
+  -t, --token          gera ou troca a chave dos feeds RSS e mostra os endereços
+  -u, --urls           mostra os endereços dos feeds
+  -c, --copy           copia o endereço de um feed (geral, opml ou categoria) para a área de transferência
+  -o, --opml           grava um arquivo OPML com todos os feeds, para importar no app de feeds
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall news
+  heimdall news --sources Curiosidades
+  heimdall news --now
 
 @ cloud | Heimdall Cloud, o painel da AWS local
 Abre o painel do emulador de AWS (porta 8010).

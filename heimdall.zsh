@@ -57,6 +57,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     logs) printf '%s\n' "-l=--list" "-c=--clean" "-s=--service" ;;
     containers) printf '%s\n' "-a=--all" ;;
     chat) printf '%s\n' "-d=--diagnose" "-p=--password" ;;
+    news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" ;;
@@ -170,7 +171,14 @@ heimdall() {
         --move-old) shift; _heimdall_tr "--run=--executar" "$@"; _heimdall_py mover_notas_antigas.py "${_HA[@]}" ;;
         *) echo "Use: heimdall notes [--clean-mirrors] [--clean-private] [--move-old [--run]]"; return 1 ;;
       esac ;;
-    news) _heimdall_open "Heimdall News" "http://localhost:$(_heimdall_port HEIMDALL_NEWS_PORT 8012)" ;;
+    news)
+      case "$1" in
+        "") _heimdall_open "Heimdall News" "http://localhost:$(_heimdall_port HEIMDALL_NEWS_PORT 8012)" ;;
+        *) _heimdall_tr "--copy=--copiar
+--sources=--fontes
+--queue=--fila
+--now=--uma-vez" "$@"; _heimdall_py heimdall_news.py "${_HA[@]}" ;;
+      esac ;;
     cloud) _heimdall_open "Heimdall Cloud" "http://localhost:$(_heimdall_port HEIMDALL_CLOUD_PORT 8010)" ;;
     health)
       case "$1" in
@@ -313,6 +321,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
       logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent cloud notes news health games terminal ingest; else compadd -- --list --clean --service; fi ;;
       chat) compadd -- --diagnose --password ;;
+      news) compadd -- --token --urls --copy --opml --sources --queue --now ;;
       notes) compadd -- --clean-mirrors --clean-private --move-old --run ;;
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary data
