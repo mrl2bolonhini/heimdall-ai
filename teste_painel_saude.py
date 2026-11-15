@@ -64,8 +64,10 @@ class Sem303(urllib.request.HTTPRedirectHandler):
 abre = urllib.request.build_opener(Sem303).open
 
 
-def pedir(caminho, cookie="", host=None, dados=None):
+def pedir(caminho, cookie="", host=None, dados=None, ua=None):
     cab = {}
+    if ua:
+        cab["User-Agent"] = ua
     if cookie:
         cab["Cookie"] = cookie
     if host:
@@ -110,6 +112,35 @@ st, corpo, _ = pedir("/sair", ck, dados=b"csrf=errado")
 confere("sair sem token CSRF é recusado", st == 403, st)
 st, corpo, cab = pedir("/sair", ck, dados=("csrf=" + sess["csrf"]).encode())
 confere("sair encerra a sessão", st == 303 and "Max-Age=0" in cab.get("Set-Cookie", "") and pedir("/", ck)[0] == 303, (st, cab))
+
+# botão "Atualizar dados agora": só no iPhone, aponta para o atalho e volta para /dados
+import time as _t
+IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1"
+token, _ = hc.nova_sessao()
+ck2 = f"{ps.COOKIE}={token}"
+st, corpo, _ = pedir("/", ck2, ua=IPHONE)
+confere("iPhone vê o botão com o atalho e o retorno para /dados", "shortcuts://x-callback-url/run-shortcut?name=Exportar%20dados%20de%20sa%C3%BAde" in corpo
+        and "Atualizar dados agora" in corpo and "x-success=http%3A%2F%2F127.0.0.1%3A" in corpo, corpo[:600])
+st, corpo, _ = pedir("/", ck2)
+confere("fora do iPhone não há botão, só o aviso", "shortcuts://" not in corpo and "abra este painel no iPhone" in corpo, corpo[:300])
+st, corpo, _ = pedir("/?_iphone=1&_base=http://malicioso.test", ck2)
+confere("parâmetros internos não podem ser forjados pela consulta", "shortcuts://" not in corpo and "malicioso" not in corpo, corpo[:300])
+st, corpo, _ = pedir("/", ck2, ua=IPHONE, host="localhost:9<x>")
+confere("Host estranho não vira HTML nem endereço de retorno", st in (200, 421) and "<x>" not in corpo, (st, corpo[:200]))
+st, corpo, _ = pedir(f"/dados?atualizado={int(_t.time()) - 3600}", ck2)
+confere("pedido antigo com gravação mais nova: dados atualizados, sem recarga", "Dados atualizados" in corpo and 'http-equiv="refresh"' not in corpo, corpo[:400])
+st, corpo, _ = pedir(f"/dados?atualizado={int(_t.time()) + 30}", ck2)
+confere("aguardando: recarga única e link para conferir", "Aguardando os dados" in corpo and 'content="20;url=/dados?atualizado=' in corpo and "v=1" in corpo and "Conferir de novo" in corpo, corpo[:500])
+st, corpo, _ = pedir(f"/dados?atualizado={int(_t.time()) + 30}&v=1", ck2)
+confere("depois da recarga não recarrega mais", "Aguardando os dados" in corpo and 'http-equiv="refresh"' not in corpo, corpo[:300])
+st, corpo, _ = pedir("/dados?atualizado=abc%3Cscript%3E", ck2)
+confere("valor inválido de atualizado é ignorado", st == 200 and "<script>" not in corpo and "Aguardando" not in corpo and "Dados atualizados" not in corpo, corpo[:200])
+con = sqlite3.connect(banco.DB_PATH)
+con.execute("UPDATE saude_diaria SET atualizado = '2020-01-01T00:00:00-03:00'")
+con.commit()
+con.close()
+st, corpo, _ = pedir(f"/dados?atualizado={int(_t.time()) - 300}", ck2)
+confere("passou o prazo sem gravação nova: alerta", "nenhum dado novo foi gravado" in corpo and 'role="alert"' in corpo and 'http-equiv="refresh"' not in corpo, corpo[:500])
 
 # estado atrasado: dado mais antigo que 2 dias aparece como alerta
 con = sqlite3.connect(banco.DB_PATH)

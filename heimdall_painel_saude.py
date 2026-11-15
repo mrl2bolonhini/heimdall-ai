@@ -27,7 +27,7 @@ from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 PROJECT_DIR = Path(__file__).resolve().parent
 
@@ -75,6 +75,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 .rel p{margin:.35rem 0}.aviso{border:1px solid var(--linha);padding:.7rem;margin-top:1.5rem;color:var(--suave)}
 .periodos ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1rem}
 .atras{color:var(--erro);font-weight:700}
+.botao{display:inline-block;padding:.7rem 1.2rem;border:2px solid currentColor;border-radius:.5rem;font-weight:700;text-decoration:none}
 """
 
 SECOES = [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"),
@@ -126,9 +127,57 @@ def dias_de(q: dict, padrao: int) -> int:
 # ----------------------------------------------------------------------------------------
 # Páginas
 # ----------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------
+# Botão "Atualizar dados agora" (só no iPhone): abre o atalho que dispara as automações do Health Auto Export
+# ----------------------------------------------------------------------------------------
+ATALHO = os.environ.get("HEIMDALL_SAUDE_ATALHO", "Exportar dados de saúde")
+ESPERA_DADOS = 120      # segundos esperando o dado chegar depois que o atalho voltou
+RECONFERE_EM = 20       # uma única conferência automática; depois, só pelo link
+
+
+def ultima_gravacao():
+    """Momento da última gravação na tabela diária (com fuso), ou None."""
+    r = saude._ler("SELECT MAX(atualizado) AS a FROM saude_diaria")[0]["a"]
+    try:
+        return datetime.fromisoformat(r).astimezone() if r else None   # sem fuso na gravação: assume o horário local
+    except ValueError:
+        return None
+
+
+def bloco_atualizar(q: dict) -> str:
+    if not q.get("_iphone"):
+        return "<p>Para pedir uma atualização dos dados agora, abra este painel no iPhone.</p>"
+    base = q["_base"][0]
+    volta = f"{base}/dados?atualizado={int(time.time())}"
+    url = (f"shortcuts://x-callback-url/run-shortcut?name={quote(ATALHO)}&x-success={quote(volta, safe='')}"
+           f"&x-cancel={quote(base + '/dados', safe='')}&x-error={quote(base + '/dados', safe='')}")
+    return (f'<p><a class="botao" href="{e(url)}">Atualizar dados agora</a></p>'
+            f'<p>Abre o app Atalhos e roda "{e(ATALHO)}". Ao terminar, volta para o Estado dos dados e confere se os números chegaram. Deixe o iPhone desbloqueado.</p>')
+
+
+def estado_atualizacao(q: dict) -> tuple:
+    """Resultado do último pedido de atualização: (html, segundos para conferir de novo ou 0)."""
+    t = (q.get("atualizado") or [""])[0]
+    if not t.isdigit():
+        return "", 0
+    pedido = datetime.fromtimestamp(int(t)).astimezone()
+    ult = ultima_gravacao()
+    if ult and ult >= pedido:
+        return (f'<p class="ok" role="status">Dados atualizados. Última gravação às {ult.astimezone().strftime("%H:%M")}. '
+                '<a href="/">Ver a visão geral</a> ou <a href="/hoje">ver hoje</a>.</p>'), 0
+    espera = time.time() - int(t)
+    if espera < ESPERA_DADOS:
+        deNovo = f"/dados?atualizado={e(t)}&v=1"
+        conf = f"Esta página confere de novo sozinha em {RECONFERE_EM} segundos. " if "v" not in q else ""
+        return (f'<p role="status">Atalho executado. Aguardando os dados chegarem. {conf}<a href="{deNovo}">Conferir de novo</a>.</p>',
+                RECONFERE_EM if "v" not in q else 0)
+    return (f'<p class="atras" role="alert">Passaram-se {int(espera // 60)} minuto(s) e nenhum dado novo foi gravado. Confira se o Health Auto Export abriu as automações, '
+            'se o iPhone está desbloqueado e se o aplicativo tem permissão de ler a Saúde. <a href="/dados">Voltar</a></p>'), 0
+
+
 def pg_inicio(q: dict) -> tuple:
     dias = dias_de(q, 90)
-    corpo = secao("Hoje", saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
+    corpo = bloco_atualizar(q) + secao("Hoje", saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
              or "<p>Ainda não há dados suficientes para comparar os últimos 7 dias. Veja o estado dos dados.</p>")
     corpo += seletor("/", dias, 90) + secao(f"Tendências ({dias} dias)", saude.relatorio_tendencias(dias).split("\n", 1)[-1])
     corpo += AVISO_HTML
@@ -227,7 +276,9 @@ def pg_dados(q: dict) -> tuple:
         intro += '<p class="ok">As métricas principais estão chegando em dia.</p>'
     tabela = ('<table><caption>Último dia com dado por tipo</caption><thead><tr><th scope="col">Tipo</th><th scope="col">Último dia</th><th scope="col">Dias ou registros</th>'
               '<th scope="col">Primeiro dia</th><th scope="col">Situação</th></tr></thead><tbody>' + "".join(corpo_t) + "</tbody></table>")
-    return "Estado dos dados", intro + tabela
+    aviso, recarga = estado_atualizacao(q)
+    marca = f"<!--recarregar:{recarga}-->" if recarga else ""
+    return "Estado dos dados", marca + aviso + bloco_atualizar(q) + intro + tabela
 
 
 ROTAS = {
@@ -246,14 +297,14 @@ ROTAS = {
 }
 
 
-def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "") -> bytes:
+def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarregar: str = "") -> bytes:
     nav = ""
     if sess:
         itens = "".join(f'<li><a href="{e(r)}"' + (' aria-current="page"' if r == atual else "") + f">{e(n)}</a></li>" for r, n in SECOES)
         nav = ('<nav aria-label="Principal"><ul>' + itens + '<li><form class="linha" method="post" action="/sair">'
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Saúde</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Heimdall Saúde</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
             f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Saúde", nav)}'
             f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main></body></html>').encode("utf-8")
 
@@ -333,6 +384,13 @@ class Painel(BaseHTTPRequestHandler):
             return
         url = urlparse(self.path)
         rota, q = url.path, parse_qs(url.query)
+        for k in ("_iphone", "_base"):
+            q.pop(k, None)
+        ua = (self.headers.get("User-Agent") or "")
+        if "iPhone" in ua or "iPad" in ua:
+            q["_iphone"] = ["1"]
+        bruto = self.headers.get("Host") or host
+        q["_base"] = [("https" if self._https() else "http") + "://" + (bruto if re.fullmatch(r"[A-Za-z0-9.-]+(:\d{1,5})?", bruto) else host)]
         if rota == "/saude":
             self._enviar(200, b"ok", "text/plain; charset=utf-8")
             return
@@ -362,7 +420,12 @@ class Painel(BaseHTTPRequestHandler):
                 self._enviar(404, pagina("Não encontrei", '<p>Esta página não existe.</p><p><a href="/">Voltar à visão geral</a></p>', sess))
                 return
             titulo, corpo = funcao(q)
-            self._enviar(200, pagina(titulo, corpo, sess, rota))
+            recarregar = ""
+            m = re.match(r"<!--recarregar:(\d+)-->", corpo)
+            if m:
+                corpo = corpo[m.end():]
+                recarregar = f'<meta http-equiv="refresh" content="{int(m.group(1))};url=/dados?atualizado={int((q.get("atualizado") or ["0"])[0])}&v=1">'
+            self._enviar(200, pagina(titulo, corpo, sess, rota, recarregar))
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))
