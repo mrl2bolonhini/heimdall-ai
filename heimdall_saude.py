@@ -1253,6 +1253,34 @@ def _correlacao(xs: list, ys: list):
         return None
 
 
+def _fc_madrugada(dia: str, dias_base: int = 14) -> dict:
+    """Média da frequência cardíaca na madrugada (0h às 6h59) do dia e o seu normal nos dias anteriores (só dias com pelo menos 4 horas de leitura)."""
+    de = (datetime.strptime(dia, "%Y-%m-%d") - timedelta(days=dias_base)).strftime("%Y-%m-%d")
+    por_dia: dict = {}
+    for r in _ler("SELECT dia, fc_media, leituras FROM fc_hora WHERE dia >= ? AND dia <= ? AND hora <= 6 AND fc_media IS NOT NULL", (de, dia)):
+        por_dia.setdefault(r["dia"], []).append((r["fc_media"], r["leituras"] or 1))
+    medias = {d: sum(v * n for v, n in rs) / sum(n for _, n in rs) for d, rs in por_dia.items() if len(rs) >= 4}
+    base = [v for d, v in medias.items() if d < dia]
+    return {"dia": dia, "hoje": medias.get(dia), "normal": statistics.fmean(base) if base else None,
+            "sd": statistics.pstdev(base) if len(base) >= 2 else None, "n_dias": len(base)}
+
+
+def alerta_fc(dia: str = None):
+    """Frequência cardíaca da madrugada bem acima do seu normal (pelo menos 10 bpm e 2,5 desvios): devolve o item de triagem, senão None.
+    Não é diagnóstico; o pulso em repouso do dia pode nem existir ainda, e é por isso que olhamos a madrugada hora a hora."""
+    dia = dia or datetime.now().strftime("%Y-%m-%d")
+    m = _fc_madrugada(dia)
+    if m["hoje"] is None or m["normal"] is None or m["n_dias"] < 7:
+        return None
+    dif = m["hoje"] - m["normal"]
+    if dif < 10 or dif / max(m["sd"] or 0, 2.0) < 2.5:
+        return None
+    return {"id": f"fc_madrugada|{dia}", "titulo": "Frequência cardíaca alta na madrugada", "nivel": "alto", "fonte": "saude",
+            "resumo": (f"Na madrugada de {_br(dia)} (0h às 7h) a sua frequência cardíaca média foi {_num(m['hoje'])} bpm, {_num(dif)} bpm acima do seu normal de "
+                       f"{_num(m['normal'])} bpm nos últimos {m['n_dias']} dias. Não é diagnóstico: se houver febre, falta de ar, palpitação, tontura ou dor no peito, "
+                       "procure atendimento. Detalhes na página Hoje do painel de saúde.")}
+
+
 @_em_portugues
 def relatorio_hoje() -> str:
     """O que já chegou de hoje, comparado com o seu dia típico; se nada chegou, diz isso e quando foi o último dado."""
@@ -1278,6 +1306,11 @@ def relatorio_hoje() -> str:
     if horas:
         linhas.append(f"Frequência cardíaca de hoje: {len(horas)} hora(s) com leitura, mínima de {_num(min(h['fc_min'] for h in horas if h['fc_min']))} bpm, "
                       f"máxima de {_num(max(h['fc_max'] for h in horas if h['fc_max']))} bpm; a última leitura chegou na faixa das {horas[-1]['hora']}h.")
+        fm = _fc_madrugada(hoje)
+        if fm["hoje"] is not None and fm["normal"] is not None and fm["n_dias"] >= 7:
+            dif = fm["hoje"] - fm["normal"]
+            linhas.append(f"Frequência cardíaca na madrugada (0h às 7h): média de {_num(fm['hoje'])} bpm; o seu normal nos últimos {fm['n_dias']} dias é {_num(fm['normal'])} bpm"
+                          + (f", {_num(abs(dif))} bpm {'acima' if dif > 0 else 'abaixo'}." if abs(dif) >= 3 else ", sem diferença importante."))
     else:
         faltam.append("frequência cardíaca por hora")
     for t in _ler("SELECT tipo, inicio, duracao_min, distancia_km FROM treinos WHERE dia = ? ORDER BY inicio", (hoje,)):
