@@ -60,3 +60,12 @@ No iPhone, o botão "Atualizar dados agora" (Visão geral e Estado dos dados) ab
 2. O botão só aparece com o painel aberto no iPhone. Deixe o iPhone desbloqueado.
 3. A conferência olha a tabela diária. Automações que só enviam treinos ou ECG não mudam essa tabela.
 
+RESUMO DA MANHÃ E DADOS QUE CHEGAM TARDE
+O resumo sai às 5h50 com o que o iPhone já enviou. Se o sono da noite ainda não tinha chegado, o fluxo refaz o resumo uma única vez quando ele chegar (sono mais pelo menos um sinal da noite), atualiza a nota e avisa no grupo de 8h ou 10h, ou na hora e sem som se for depois das 10h.
+Para os dados chegarem cedo, crie no iPhone uma automação no app Atalhos: Automação, Nova automação, Alarme, "É parado", e como ação "Executar Atalho" com o "Exportar dados de saúde". Desligue "Perguntar antes de executar" para ela rodar sozinha quando você parar o despertador.
+
+SINAIS VITAIS, APNEIA E TEMPERATURA DO PULSO
+1. O aviso do app Sinais Vitais e o aviso de possível apneia do sono são notificações da Apple. Elas não saem pelo Health Auto Export, então o Heimdall não as vê. O que ele vê são os números por trás: pulso em repouso, respiração no sono, oxigênio, sono e distúrbios respiratórios (x:breathing_disturbances).
+2. Quando duas ou mais dessas medidas saem do seu intervalo típico ao mesmo tempo, o resumo traz uma linha "Vários sinais vitais fora do seu intervalo típico..." e abre um item de triagem. Isso não é diagnóstico. Um aviso de apneia da Apple vale uma conversa com um médico.
+3. A temperatura do pulso no sono só chega se o relógio a medir (Apple Watch Series 8 ou mais novo, ou Ultra) e se a automação do Health Auto Export incluir "Apple Sleeping Wrist Temperature". Para conferir se o relógio mede, abra o app Saúde, Navegar, Medidas do corpo, e procure Temperatura do pulso. Se existir lá, ligue a métrica no Health Auto Export; o Heimdall a guarda sozinho como x:apple_sleeping_wrist_temperature.
+

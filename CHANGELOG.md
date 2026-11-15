@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-15 - Resumo de saúde refeito quando o sono chega e aviso no estilo Sinais Vitais
+- O resumo das 5h50 saía antes de o iPhone sincronizar o sono da noite. Agora, se saiu sem o sono, o fluxo refaz o resumo uma única vez assim que chegam o sono e pelo menos um sinal da noite (pulso, variabilidade, respiração ou oxigênio). A nota do dia é atualizada, e o aviso vai ao próximo grupo (8h ou 10h) ou, depois das 10h, na hora e sem som.
+- Novo aviso no estilo do app Sinais Vitais da Apple: quando duas ou mais medidas da noite (pulso em repouso, respiração no sono, oxigênio, temperatura do pulso, duração do sono) ficam fora do seu intervalo típico dos últimos 30 dias, para mais ou para menos, o resumo destaca isso e abre um item na triagem (alto). Mudança pequena em valor absoluto não conta.
+- Temperatura do pulso e distúrbios respiratórios do sono já eram aceitos: basta o Health Auto Export enviá-los. O aviso de sinais vitais ou de apneia da Apple em si é uma notificação do iPhone e não é exportado.
+- Novo teste: python3 teste_saude_fluxo.py roda os nós de código do fluxo com Node.
+- Para aplicar: bash instalar_automacoes_avancadas.sh (importa o fluxo).
+
 ## 2026-11-14 - Histórico do GitOps em nota e troca de senha do Open WebUI
 - O GitOps passou a gravar uma nota em Heimdall-ai/GitOps quando um commit gera Pull Request em rascunho ou trechos descartados: repositório, branch, quantos trechos foram analisados, quais foram descartados e o motivo de cada um, e o que o modelo propôs. Commit sem achados não gera nota. Antes, o motivo dos descartes só existia no aviso do Bark.
 - trocar_senha_webui.sh troca a senha de um usuário do Open WebUI sem recriar o contêiner nem perder conversas ou configurações: faz cópia do volume em backups/, pede a nova senha duas vezes sem mostrá-la, troca só o hash no banco e confere. Não reinicia nada.
