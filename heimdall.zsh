@@ -51,55 +51,55 @@ _heimdall_stop_ports() {
   done
 }
 
-_heimdall_help() {
-  cat <<'AJUDA'
-Uso: heimdall COMANDO [--opção ...]. O comando é sempre o serviço; o que ele faz vem depois, em opções com dois hífens.
-Sem opção, os serviços com página abrem no navegador. Opções que levam valor: --report 30, --service agent.
+_heimdall_short() {  # opções curtas de cada comando -> opção longa em inglês
+  case "$1" in
+    up|restart) printf '%s\n' "-w=--webui" "-t=--terminal" "-n=--n8n" "-a=--agent" "-i=--ingest" "-d=--docling" "-u=--update" ;;
+    logs) printf '%s\n' "-l=--list" "-c=--clean" "-s=--service" ;;
+    containers) printf '%s\n' "-a=--all" ;;
+    chat) printf '%s\n' "-d=--diagnose" "-p=--password" ;;
+    notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" ;;
+    health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" ;;
+    triage) printf '%s\n' "-c=--complete-tests" ;;
+    db) printf '%s\n' "-s=--sql" ;;
+    backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
+    mail) printf '%s\n' "-t=--test-login" "-s=--simulate" ;;
+    access) printf '%s\n' "-p=--password" "-c=--code" "-a=--all" "-v=--verify" ;;
+    voice) printf '%s\n' "-i=--import" ;;
+    listen) printf '%s\n' "-l=--list" "-n=--latest" ;;
+    ingest) printf '%s\n' "-r=--reset" ;;
+    env) printf '%s\n' "-s=--set" ;;
+    cloudflare) printf '%s\n' "-s=--set" "-t=--test" ;;
+    mcp) printf '%s\n' "-v=--verify" ;;
+    flows) printf '%s\n' "-a=--advanced" "-b=--basic" "-p=--privacy" "-e=--email" ;;
+    hook) printf '%s\n' "-i=--install" "-r=--remove" ;;
+    update) printf '%s\n' "-r=--restart" ;;
+    docs) printf '%s\n' "-b=--brand" ;;
+    test) printf '%s\n' "-l=--list" "-a=--all" "-r=--run" ;;
+    help) printf '%s\n' "-d=--doc" ;;
+  esac
+  printf '%s\n' "-h=--help"
+}
 
-Ligar, desligar e acompanhar
-  up [--webui] [--terminal] [--n8n] [--agent] [--ingest] [--docling] [--update]    sobe tudo (padrão: --webui --terminal)
-  restart [mesmas opções do up]            encerra a subida atual e sobe de novo
-  stop                                     encerra os serviços do Mac (portas 8000 a 8004, 8010 a 8013 e 9000); o Docker fica
-  status                                   confere o que está no ar
-  logs [--list] [--clean] [--service NOME] sem opção, o log da subida atual; NOME: mcp mcp-public mcp-data agent cloud notes news health terminal ingest
-  containers [opções do docker ps]         contêineres do Docker
-  models [opções do ollama list]           modelos do Ollama
+_heimdall_ajuda_arquivo() { echo "$HEIMDALL_DIR/heimdall_ajuda.txt"; }
 
-Serviços (abrem no navegador)
-  chat [--diagnose] [--password]           Open WebUI; --diagnose mostra as últimas chamadas de ferramenta; --password troca a senha
-  notes [--clean-mirrors] [--clean-private] [--move-old [--run]]   Heimdall Notas; as opções são manutenção do Second Brain e das pastas
-  news                                     Heimdall News
-  cloud                                    Heimdall Cloud (AWS local)
-  health [--open PÁGINA]                   painel de saúde; PÁGINA: anomalies today week sleep activity recovery heart workouts events diary data
-  n8n   kuma   dozzle                      automações, Uptime Kuma e logs dos contêineres
-  urls                                     lista todos os endereços
+_heimdall_overview() {  # lista os comandos, um por linha
+  echo "Uso: heimdall COMANDO [--opção ...]. Para as variações de um comando: heimdall COMANDO --help (ou -h)."
+  echo "Todas as opções têm a forma curta de uma letra. Documento completo no navegador: heimdall help --doc"
+  echo
+  awk -F' [|] ' '/^@ /{sub(/^@ /,"",$1); printf "  %-12s %s\n",$1,$2}' "$(_heimdall_ajuda_arquivo)"
+}
 
-Saúde no terminal (health com uma destas opções roda o relatório)
-  health --today | --now | --weekly | --anomalies [AAAA-MM-DD] | --report [dias] | --sleep [dias] | --activity [dias]
-         | --recovery [dias] | --trends [dias] | --workouts [dias] | --ecg [dias] | --fc [dias]
-         | --import ARQUIVO.zip | --import-n8n
+_heimdall_usage() {  # ajuda de um comando só
+  local out
+  out="$(awk -v n="$1" '/^@ /{split($0,a," [|] "); nm=substr(a[1],3); if(nm==n){p=1; print "heimdall " nm " - " a[2]; next} else p=0} p' "$(_heimdall_ajuda_arquivo)")"
+  if [ -z "$out" ]; then echo "Sem ajuda para: $1. Veja os comandos com: heimdall help"; return 1; fi
+  printf '%s\n' "$out"
+}
 
-Dados e rotinas
-  triage [--complete-tests]                estado da triagem de avisos; --complete-tests conclui os lembretes de teste
-  db [--sql "SELECT ..."]                  banco pessoal
-  backup --prepare | --password | --run | --list | --verify | --restore ORIGEM DESTINO     cópia de segurança criptografada
-  mail [--test-login] [--simulate]         e-mail oficial
-  access --password | --code | --all | --verify      senha e código de 6 dígitos de todos os serviços
-  voice [TEXTO] | voice --import ARQUIVO.csv         dicionário de pronúncia
-  listen [--list] [--latest N]             toca os áudios de estudo mais recentes
-  ingest [--reset] [PASTAS]                indexa documentos na base de conhecimento
-  env --set NOME                           grava no .env o que está na área de transferência
-  cloudflare [--set] [--test]              grava ou testa a chave da Cloudflare
-  mcp [--verify]                           verifica o MCP de dados
-
-Instalar e manter
-  flows [--advanced] [--basic] [--privacy] [--email]   instala fluxos no n8n (padrão: --advanced)
-  hook [--install] [--remove] REPOSITÓRIO             liga ou desliga o GitOps num repositório git
-  update [--restart]                       traz as novidades do GitHub (git pull) e diz se precisa reiniciar
-  docs [--brand]                           regenera o site e o README; --brand regenera as imagens da marca
-  test [--list] [--all] [--run NOME]       testes
-  dir   cd                                 mostra a pasta do projeto; entra nela
-AJUDA
+_heimdall_doc() {
+  local f="$HEIMDALL_DIR/docs/comando-heimdall.html"
+  if [ ! -f "$f" ]; then echo "Não achei $f. Rode: heimdall update   (ou: heimdall docs)"; return 1; fi
+  _heimdall_open "Documento do comando heimdall" "file://$f"
 }
 
 heimdall() {
@@ -110,7 +110,21 @@ heimdall() {
   fi
   local a pg
   case "$cmd" in
-    ""|help|-h|--help) _heimdall_help ;;
+    ""|-h|--help) _heimdall_overview; return 0 ;;
+    -d|--doc) _heimdall_doc; return $? ;;
+  esac
+  _heimdall_tr "$(_heimdall_short "$cmd")" "$@"
+  set -- "${_HA[@]}"
+  for a in "$@"; do
+    if [ "$a" = "--help" ]; then _heimdall_usage "$cmd"; return $?; fi
+  done
+  case "$cmd" in
+    help)
+      case "$1" in
+        "") _heimdall_overview ;;
+        --doc) _heimdall_doc ;;
+        *) _heimdall_usage "$1" ;;
+      esac ;;
 
     up) _heimdall_tr "--agent=--agente" "$@"; _heimdall_sh subir.sh "${_HA[@]}" ;;
     restart) _heimdall_tr "--agent=--agente" "$@"; _heimdall_sh subir.sh --reiniciar "${_HA[@]}" ;;
@@ -278,6 +292,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     cmds=(up restart stop status logs containers models chat notes news cloud health n8n kuma dozzle urls triage db backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
+      compadd -- --help --doc
       return
     fi
     case ${words[2]} in
@@ -303,10 +318,12 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       hook) compadd -- --install --remove ;;
       update) compadd -- --restart ;;
       docs) compadd -- --brand ;;
+      help) compadd -- --doc $cmds ;;
       test)
         if [[ ${words[CURRENT-1]} == --run ]]; then compadd -- $(cd "$HEIMDALL_DIR" 2>/dev/null && ls teste_*.py teste_*.sh test_*.py 2>/dev/null | sed 's/^teste_//; s/\.py$//; s/\.sh$//')
         else compadd -- --list --all --run; fi ;;
     esac
+    compadd -- --help
   }
   compdef _heimdall_complete heimdall
 fi

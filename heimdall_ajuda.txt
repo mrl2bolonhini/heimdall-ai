@@ -1,0 +1,359 @@
+# Referência do comando heimdall. Uma seção por comando, no formato:
+#   @ comando | resumo de uma linha
+#   texto livre
+#   Opções:
+#     -x, --longa  <duas ou mais espaços>  o que faz
+#   Exemplos:
+#     heimdall comando --opção
+# É lida pelo heimdall.zsh (heimdall COMANDO --help e heimdall help) e por gerar_docs.py (página Comando heimdall do site e heimdall help --doc).
+# Toda opção aceita também a forma curta de uma letra; -h e --help existem em todos os comandos.
+
+@ up | Sobe todo o ecossistema
+Roda o subir.sh: sobe os serviços, guarda o log da subida e avisa quando tudo estiver no ar. Sem opções sobe com --webui --terminal.
+Opções:
+  -w, --webui      sobe também o Open WebUI (chat, porta 3000)
+  -t, --terminal   sobe o Open Terminal (porta 8002)
+  -n, --n8n        sobe o n8n (automações, porta 5678)
+  -a, --agent      sobe o agente do Mac (ponte do n8n com Notas e Lembretes, porta 8003)
+  -i, --ingest     indexa em knowledge/ só o que mudou antes de subir o LiteLLM
+  -d, --docling    sobe o Docling (leitura de PDFs com OCR, porta 5001)
+  -u, --update     atualiza as imagens Docker (SearXNG, Qdrant e Open WebUI), com backup
+  -h, --help       mostra esta ajuda
+Exemplos:
+  heimdall up
+  heimdall up --webui --terminal --n8n
+  heimdall up -w -t -n -a
+
+@ restart | Encerra a subida atual e sobe de novo
+Faz o mesmo que up, depois de encerrar o que estava em andamento. Aceita as mesmas opções do up.
+Opções:
+  -w, --webui      sobe também o Open WebUI
+  -t, --terminal   sobe o Open Terminal
+  -n, --n8n        sobe o n8n
+  -a, --agent      sobe o agente do Mac
+  -i, --ingest     indexa knowledge/ antes de subir
+  -d, --docling    sobe o Docling
+  -u, --update     atualiza as imagens Docker
+  -h, --help       mostra esta ajuda
+Exemplos:
+  heimdall restart
+  heimdall restart --webui --terminal --n8n
+
+@ stop | Encerra os serviços do Mac
+Encerra o que escuta nas portas 8000 a 8004, 8010 a 8013 e 9000 (MCP, agente, Cloud, Notas, News, painel de saúde e LiteLLM). Os contêineres do Docker continuam rodando.
+Opções:
+  -h, --help       mostra esta ajuda
+Exemplos:
+  heimdall stop
+
+@ status | Confere o que está no ar
+Roda o subir.sh --status: confere cada serviço que deveria estar no ar e diz o que falta.
+Opções:
+  -h, --help       mostra esta ajuda
+Exemplos:
+  heimdall status
+
+@ logs | Logs da subida e de cada serviço
+Sem opção mostra as últimas 40 linhas do log da subida atual.
+Opções:
+  -l, --list           lista os arquivos de log em logs/
+  -c, --clean          apaga os logs antigos que ficavam soltos na pasta do projeto
+  -s, --service NOME   últimas linhas do log de um serviço: mcp, mcp-public, mcp-data, agent, cloud, notes, news, health, terminal, ingest
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall logs
+  heimdall logs --service agent
+  heimdall logs -s news
+
+@ containers | Contêineres do Docker
+Roda docker ps. Qualquer opção do docker ps vale aqui.
+Opções:
+  -a, --all            inclui os contêineres parados (opção do docker ps)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall containers
+  heimdall containers -a
+
+@ models | Modelos do Ollama
+Roda ollama list: os modelos baixados no Mac.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall models
+
+@ chat | Open WebUI, o chat
+Sem opção abre o chat no navegador (porta 3000).
+Opções:
+  -d, --diagnose       mostra o que o servidor de dados e o Open WebUI registraram nas últimas chamadas de ferramenta
+  -p, --password       troca a senha de um usuário do Open WebUI sem perder conversas (aceita --stdin)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall chat
+  heimdall chat --diagnose
+  heimdall chat --password
+
+@ notes | Heimdall Notas, o site das notas de estudo
+Sem opção abre o site de notas e áudios (porta 8011). As opções são manutenção do Second Brain e das pastas do app Notas.
+Opções:
+  -m, --clean-mirrors  limpa o que o Second Brain criou por engano a partir de notas do próprio Heimdall
+  -p, --clean-private  apaga o que o Second Brain guardou de notas que depois foram para uma pasta privada
+  -o, --move-old       conta as notas das pastas antigas; com --run, move-as para as subpastas de Heimdall-ai
+  -r, --run            com --move-old, executa de verdade (sem isto só conta)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall notes
+  heimdall notes --move-old
+  heimdall notes --move-old --run
+
+@ news | Heimdall News, notícias com resumo de IA
+Abre o site de notícias das últimas 24 horas (porta 8012).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall news
+
+@ cloud | Heimdall Cloud, o painel da AWS local
+Abre o painel do emulador de AWS (porta 8010).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall cloud
+
+@ health | Painel de saúde e relatórios no terminal
+Sem opção abre o painel de saúde no navegador (porta 8013). Com --open abre uma página dele. Com qualquer outra opção, roda o relatório no terminal. Nada aqui é diagnóstico.
+Opções:
+  -o, --open PÁGINA    abre uma página do painel: anomalies, today, week, sleep, activity, recovery, heart, workouts, events, diary, data
+  -t, --today          o que já chegou de hoje
+  -n, --now            os últimos 7 dias contra a média dos 90 anteriores
+  -w, --weekly         o relatório da semana
+  -a, --anomalies [AAAA-MM-DD]   o que saiu do seu normal (cada medida contra os 30 dias anteriores)
+  -r, --report [DIAS]  análise geral (padrão 30 dias)
+  -s, --sleep [DIAS]   sono (padrão 90 dias)
+  -A, --activity [DIAS]  atividade: passos, exercício e esforço (padrão 90)
+  -R, --recovery [DIAS]  recuperação: HRV e pulso em repouso (padrão 180)
+  -T, --trends [DIAS]  tendências (padrão 90)
+  -W, --workouts [DIAS]  treinos (padrão 30)
+  -e, --ecg [DIAS]     ECG (padrão 365)
+  -f, --fc [DIAS]      frequência cardíaca (padrão 14)
+  -i, --import ARQUIVO   importa o export.zip do app Saúde (pode repetir sem duplicar)
+  -N, --import-n8n     copia para o banco o histórico de saúde que estava no n8n
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall health
+  heimdall health --open anomalies
+  heimdall health --today
+  heimdall health --anomalies 2026-11-10
+  heimdall health -r 60
+
+@ n8n | Automações do n8n
+Abre o n8n no navegador (porta 5678).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall n8n
+
+@ kuma | Uptime Kuma, o status dos serviços
+Abre o Uptime Kuma no navegador (porta 3001).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall kuma
+
+@ dozzle | Dozzle, os logs dos contêineres
+Abre o Dozzle no navegador (porta 8081).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall dozzle
+
+@ urls | Todos os endereços locais
+Lista os endereços de chat, notes, news, cloud, health, n8n, kuma e dozzle, com as portas do seu .env.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall urls
+
+@ triage | Triagem obrigatória de avisos
+Sem opção mostra o estado da triagem no agente do Mac (lê o token do .env). Os itens são lembretes na lista "Heimdall: Triagem".
+Opções:
+  -c, --complete-tests conclui os lembretes de teste "Teste de triagem"
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall triage
+  heimdall triage --complete-tests
+
+@ db | Banco pessoal
+Sem opção só confere que o banco existe. Com --sql roda um SELECT em conexão somente leitura.
+Opções:
+  -s, --sql "SELECT ..."  roda um SELECT e mostra o resultado em texto
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall db --sql "SELECT dia, valor FROM saude_diaria WHERE metrica='hrv' ORDER BY dia DESC LIMIT 7"
+
+@ backup | Cópia de segurança criptografada do banco
+Tira uma cópia consistente do banco, criptografa (AES-256-GCM) e grava na pasta ou no bucket R2 configurados no .env. Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses.
+Opções:
+  -p, --prepare        cria a senha da cópia e confere os destinos
+  -P, --password       mostra a senha da cópia guardada no .env
+  -r, --run            faz a cópia agora
+  -l, --list           lista as cópias existentes
+  -v, --verify         confere a integridade de cada destino
+  -R, --restore ORIGEM DESTINO   restaura uma cópia
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall backup --run
+  heimdall backup --verify
+  heimdall backup --restore arquivo.enc banco-restaurado.db
+
+@ mail | Vigia do e-mail oficial
+Lê o Gmail em modo somente leitura e separa e-mails verdadeiros de serviços públicos de imitações. Sem opção faz uma verificação.
+Opções:
+  -t, --test-login     só testa o login IMAP
+  -s, --simulate       simula, sem avisar nem gravar
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall mail
+  heimdall mail --test-login
+
+@ access | Senha e código de 6 dígitos
+A mesma senha e o mesmo código servem a Cloud, Notas, News e ao painel de saúde. Depois de trocar, rode heimdall restart.
+Opções:
+  -p, --password       troca só a senha
+  -c, --code           gera só um novo código de 6 dígitos
+  -a, --all            troca a senha e o código
+  -v, --verify         confere, sem navegador, se a senha e o código batem com o .env
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall access --password
+  heimdall access --verify
+
+@ voice | Dicionário de pronúncia
+Sem opção e com um texto, mostra como o texto fica depois das trocas de pronúncia (como "Heimdall" por "Háimdal").
+Opções:
+  -i, --import ARQUIVO.csv   traz as pronúncias do VoiceOver para pronuncias.local.txt
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall voice Heimdall
+  heimdall voice --import pronuncias.csv
+
+@ listen | Áudios de estudo
+Toca no Mac o áudio de estudo mais recente. Para parar: Control+C.
+Opções:
+  -l, --list           só mostra os 10 mais recentes
+  -n, --latest N       toca os N mais recentes, em sequência
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall listen
+  heimdall listen --latest 3
+  heimdall listen --list
+
+@ ingest | Base de conhecimento
+Indexa documentos no Qdrant para a ferramenta rag_search. Sem pastas indexa knowledge/. Precisa do Qdrant e do Ollama no ar.
+Opções:
+  -r, --reset          apaga a coleção e recria (troca de modelo de embedding)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall ingest
+  heimdall ingest ~/Notas ~/Docs
+  heimdall ingest --reset
+
+@ env | Grava um segredo no .env
+Grava no .env o texto que está na área de transferência (copiado com Command+C), sem mostrá-lo na tela.
+Opções:
+  -s, --set NOME       nome da variável (por exemplo HEIMDALL_R2_KEY_ID)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall env --set HEIMDALL_R2_SECRET
+
+@ cloudflare | Chave da Cloudflare
+Grava no .env a chave que liga a reserva de resumos no Workers AI e a leitura de páginas com navegador do News.
+Opções:
+  -s, --set            grava a chave (é o padrão)
+  -t, --test           testa a chave gravada, mostrando a resposta da Cloudflare
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall cloudflare
+  heimdall cloudflare --test
+
+@ mcp | Servidor MCP de dados
+Confere se o servidor MCP de dados (porta 8004) está no ar e se o Open WebUI, no Docker, consegue alcançá-lo.
+Opções:
+  -v, --verify         faz a conferência (é o padrão)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall mcp
+
+@ flows | Instala fluxos no n8n
+Importa fluxos para o n8n, que precisa estar no ar. Sem opção instala as automações avançadas.
+Opções:
+  -a, --advanced       automações avançadas (saúde, GitOps, triagem, resumos): instalar_automacoes_avancadas.sh
+  -b, --basic          fluxos básicos da pasta n8n_flows/ (resumo da AWS, estudo, vigia de versões)
+  -p, --privacy        monitor de privacidade diário
+  -e, --email          vigia de e-mails oficiais
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall flows
+  heimdall flows --privacy
+
+@ hook | GitOps num repositório
+Instala ou remove o gancho pre-push que avisa o n8n a cada git push de um repositório local.
+Opções:
+  -i, --install REPOSITÓRIO   instala o gancho (é o padrão quando só há o caminho)
+  -r, --remove REPOSITÓRIO    remove o gancho
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall hook ~/projetos/meu-repo
+  heimdall hook --remove ~/projetos/meu-repo
+
+@ update | Traz as novidades do GitHub
+Faz git pull --ff-only da branch atual do projeto e diz se precisa reiniciar ou reinstalar fluxos.
+Opções:
+  -r, --restart        reinicia os serviços em seguida
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall update
+  heimdall update --restart
+
+@ docs | Regenera o site e o README
+Roda gerar_docs.py: gera docs/ e as tabelas do README a partir do código.
+Opções:
+  -b, --brand          regenera as imagens da marca (precisa de Playwright)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall docs
+
+@ test | Testes do projeto
+Sem opção lista os testes.
+Opções:
+  -l, --list           lista os testes
+  -a, --all            roda todos os testes teste_*.py e diz quantos falharam
+  -r, --run NOME       roda um teste (heimdall test --run anomalias roda teste_anomalias.py)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall test --list
+  heimdall test --run anomalias
+  heimdall test --all
+
+@ dir | Pasta do projeto
+Mostra o caminho da pasta do projeto (HEIMDALL_DIR).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall dir
+
+@ cd | Entra na pasta do projeto
+Muda a pasta do seu terminal para a do projeto.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall cd
+
+@ help | Ajuda do comando heimdall
+Sem argumentos lista os comandos. Com o nome de um comando mostra só as variações dele, o mesmo que heimdall COMANDO --help.
+Opções:
+  -d, --doc            abre no navegador o documento com todos os comandos e opções explicados (docs/comando-heimdall.html)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall help
+  heimdall help health
+  heimdall help --doc

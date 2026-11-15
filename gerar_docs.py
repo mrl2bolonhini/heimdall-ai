@@ -396,6 +396,55 @@ from docs_tema import (CSS, JS, PAGINAS, REPO, ACESSOS, pagina, comando, tabela,
 # ---------------------------------------------------------------------------------------------------------
 
 
+def ler_ajuda_comando():
+    """Lê heimdall_ajuda.txt: lista de (nome, resumo, descrição, opções [(opção, texto)], exemplos)."""
+    secoes, atual, modo = [], None, ""
+    for linha in (AQUI / "heimdall_ajuda.txt").read_text(encoding="utf-8").splitlines():
+        if linha.startswith("#") or not linha.strip() and atual is None:
+            continue
+        if linha.startswith("@ "):
+            nome, _, resumo = linha[2:].partition(" | ")
+            atual = {"nome": nome.strip(), "resumo": resumo.strip(), "desc": [], "opcoes": [], "exemplos": []}
+            secoes.append(atual)
+            modo = "desc"
+        elif atual is None or not linha.strip():
+            continue
+        elif linha.strip() == "Opções:":
+            modo = "opcoes"
+        elif linha.strip() == "Exemplos:":
+            modo = "exemplos"
+        elif modo == "opcoes":
+            partes = re.split(r"\s{2,}", linha.strip(), maxsplit=1)
+            atual["opcoes"].append((partes[0], partes[1] if len(partes) > 1 else ""))
+        elif modo == "exemplos":
+            atual["exemplos"].append(linha.strip())
+        else:
+            atual["desc"].append(linha.strip())
+    return secoes
+
+
+def pagina_comando_heimdall():
+    secoes = ler_ajuda_comando()
+    indice = "".join(f'<li><a href="#c-{s["nome"]}"><code>heimdall {html.escape(s["nome"])}</code></a>: {html.escape(s["resumo"])}</li>' for s in secoes)
+    corpo = []
+    for s in secoes:
+        ex = "".join(comando(e, f"Exemplo de heimdall {s['nome']}") for e in s["exemplos"])
+        corpo.append(f'<section aria-labelledby="c-{s["nome"]}"><h2 id="c-{s["nome"]}">heimdall {html.escape(s["nome"])}</h2>'
+                     f'<p>{html.escape(s["resumo"])}. {html.escape(" ".join(s["desc"]))}</p>'
+                     + tabela(f"Opções de heimdall {s['nome']}", ["Opção", "O que faz"], [[o, t] for o, t in s["opcoes"]])
+                     + (f"<h3>Exemplos</h3>{ex}" if ex else "") + "</section>")
+    return f"""
+<h1>Comando heimdall</h1>
+<p>O comando <code>heimdall</code> reúne o ecossistema no terminal do Mac, no formato <code>heimdall SERVIÇO --opção</code>: o comando é o serviço e o que ele faz vem em opções. Toda opção tem a forma longa, com dois hífens, e a curta, de uma letra com um hífen (<code>--help</code> e <code>-h</code>). Cada comando mostra só as suas variações com <code>heimdall COMANDO --help</code>. Esta página também abre com <code>heimdall help --doc</code>.</p>
+<section aria-labelledby="instalar"><h2 id="instalar">Instalar</h2>
+<ol><li>Na pasta do projeto: <code>bash instalar_comando_heimdall.sh</code>. Ele faz cópia do ~/.zshrc, remove uma função heimdall antiga e liga o heimdall.zsh do projeto.</li>
+<li>Depois: <code>source ~/.zshrc</code>. A partir daí o comando se atualiza com <code>heimdall update</code>.</li>
+<li>Se o projeto não estiver em ~/heimdall-ai, defina HEIMDALL_DIR no ~/.zshrc antes da linha do source.</li></ol></section>
+<section aria-labelledby="indice"><h2 id="indice">Todos os comandos</h2><ul>{indice}</ul></section>
+{"".join(corpo)}
+"""
+
+
 def gerar_paginas(ferr, modelos, mcp, fluxos):
     out = {}
     n_pub = sum(1 for f in ferr if f["grupo"] == "público")
@@ -545,6 +594,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
         cm += "".join(comando(c, r) for r, c in itens) + "</section>"
     op = "".join("<li>%s</li>" % H(l) for l in ler_opcoes_start())
     pr = "".join("<h3>%s</h3><p>%s</p>" % (H(a), H(b)) for a, b in PROBLEMAS)
+    out["comando-heimdall.html"] = pagina("comando-heimdall.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções, com a forma longa e a curta de cada uma.", pagina_comando_heimdall())
     out["comandos.html"] = pagina("comandos.html", "Comandos", "Comandos para subir, testar, instalar e manter o Heimdall-ai.", f"""
 <h1>Comandos</h1>
 <p>Todos os comandos são executados no Terminal, na pasta do projeto (<code>~/heimdall-ai</code>). Em cada um há um botão para copiar. Se for colar, confira que nada além do comando entrou na linha.</p>

@@ -328,6 +328,7 @@ PAGINAS = [
     ("saude.html", "Saúde", "Heimdall Saúde: dados do iPhone e Apple Watch, análises e painel"),
     ("cloud.html", "Cloud", "Painel do emulador de AWS: acesso, segurança e roteiro"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
+    ("comando-heimdall.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções"),
     ("novidades.html", "Novidades", "Histórico de recursos"),
     ("roadmap.html", "Roadmap", "Próximos recursos"),
     ("marca.html", "Marca", "Logotipo, cores e tipografia"),
