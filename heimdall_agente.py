@@ -1031,7 +1031,10 @@ class Handler(BaseHTTPRequestHandler):
                     import heimdall_anomalias as anomalias
                     alerta = anomalias.alerta()
                     if alerta:
+                        estado_novo = alerta.pop("_estado", None)
                         triagem.criar(alerta, osascript_travado)
+                        if estado_novo:
+                            anomalias.salvar_estado(estado_novo)   # só depois de entrar na triagem: aviso perdido não conta como entregue
                         r["triagem"] = r.get("triagem", 0) + 1
                 except Exception as e:  # noqa: BLE001 - os dados já foram gravados; a triagem é um aviso a mais
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} alerta de anomalias falhou: {str(e)[:120]}\n")

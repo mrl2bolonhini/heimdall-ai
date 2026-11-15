@@ -343,6 +343,8 @@ def gravar(tabela: str, registros: list) -> dict:
         try:
             if not isinstance(r, dict) or any(r.get(k) in (None, "") for k in chave):
                 raise ValueError("falta a chave")
+            if tabela == "saude_diaria" and str(r.get("unidade", "")).strip().lower() in _UNIDADES_KJ:
+                r = dict(r, valor=float(r["valor"]) / KJ_POR_KCAL, unidade="kcal")   # energia chega em kJ do Health Auto Export; o banco guarda sempre kcal
             vals = [_limpa(c, r.get(c, "")) if c != "valor" else _limpa(c, r["valor"]) for c in cols]
             linhas.append(vals + ([_agora()] if carimbo else []))
         except (ValueError, TypeError, KeyError):
@@ -357,6 +359,24 @@ def gravar(tabela: str, registros: list) -> dict:
         finally:
             con.close()
     return {"gravados": len(linhas), "recusados": recusados}
+
+
+KJ_POR_KCAL = 4.184
+_UNIDADES_KJ = ("kj", "kilojoule", "kilojoules")
+
+
+def normalizar_energia() -> int:
+    """Converte para kcal o que ficou gravado em kJ (a energia em repouso chegava em kJ e era lida como kcal). Idempotente: depois da conversão a unidade vira kcal."""
+    if not DB_PATH.exists():
+        return 0
+    with _trava:
+        con = conectar()
+        try:
+            n = con.execute("UPDATE saude_diaria SET valor = valor / ?, unidade = 'kcal' WHERE lower(unidade) IN ('kj', 'kilojoule', 'kilojoules')", (KJ_POR_KCAL,)).rowcount
+            con.commit()
+            return n
+        finally:
+            con.close()
 
 
 def _autorizador(acao, a1, a2, banco, gatilho):

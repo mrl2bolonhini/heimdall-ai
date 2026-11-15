@@ -9,8 +9,11 @@ Para cada métrica guardada em saude_diaria (e para a frequência cardíaca hora
 Nada aqui é diagnóstico. Uso:  python3 heimdall_anomalias.py [AAAA-MM-DD]
 """
 import hashlib
+import json
+import os
 import statistics
 import sys
+import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -52,6 +55,10 @@ METRICAS = {
 IGNORAR = {"sono_cama", "x:heart_rate", "fc_max", "x:physical_effort", "x:apple_stand_time", "x:apple_move_time", "x:stair_speed_up", "x:stair_speed_down"}
 IGNORAR_PREFIXO = ("x:anel_",)
 
+# faixas fisiologicamente possíveis para o valor de um dia: fora delas o problema é do dado (unidade errada, dia incompleto, sensor), não do corpo
+LIMITES = {"x:basal_energy_burned": (800, 4500), "fc_media": (35, 180), "fc_min": (30, 140), "fc_repouso": (30, 130), "spo2": (80, 100), "spo2_min": (60, 100),
+           "x:environmental_audio_exposure": (20, 130), "hrv": (5, 300), "resp": (6, 40), "x:weight_body_mass": (20, 400)}
+
 BASE_DIAS = 30        # janela do "normal"
 BASE_MIN = 10         # dias mínimos de histórico para comparar
 Z_ALERTA = 2.5        # desvios robustos para sair do normal
@@ -87,9 +94,19 @@ def _analisa_metrica(chave: str, hoje: str) -> dict:
     nome, un, sentido, min_abs, min_rel, dia_todo, casas = spec
     de = (datetime.strptime(hoje, "%Y-%m-%d") - timedelta(days=BASE_DIAS + 10)).strftime("%Y-%m-%d")
     serie = hs._serie(chave, de)
+    lim = LIMITES.get(chave)
+    suspeito = None
+    if lim:   # valores impossíveis nunca entram no normal; se o dia mais recente for um deles, o aviso é de dado suspeito, não de saúde
+        fora = {d: v for d, v in serie.items() if not lim[0] <= v <= lim[1]}
+        serie = {d: v for d, v in serie.items() if d not in fora}
+        if fora and max(fora) >= max(serie or {"": ""}):
+            d_ruim = max(fora)
+            suspeito = f"{nome} em {hs._br(d_ruim)} ({hs._num(fora[d_ruim], 0)}{' ' + un if un else ''}), fora do que é possível medir em um dia inteiro"
     # o dia avaliado: o mais recente até hoje (o dia de hoje só vale se a medida não for do dia inteiro)
     limite = hoje if not dia_todo else (datetime.strptime(hoje, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
     dias = sorted(d for d in serie if d <= limite)
+    if suspeito:
+        return {"dado_suspeito": suspeito}
     if not dias:
         return {}
     dia = dias[-1]
@@ -202,11 +219,15 @@ def _combos(f: dict) -> list:
 def analisar(hoje: str = None) -> dict:
     """Devolve {dia, achados, combos, positivos, sem_base, sem_dado_recente, analisadas}."""
     hoje = hoje or datetime.now().strftime("%Y-%m-%d")
+    hs.banco.normalizar_energia()   # energia que chegou em kJ vira kcal antes de qualquer comparação
     chaves = [r["metrica"] for r in hs._ler("SELECT DISTINCT metrica FROM saude_diaria WHERE dia >= ?", ((datetime.strptime(hoje, "%Y-%m-%d") - timedelta(days=BASE_DIAS + 10)).strftime("%Y-%m-%d"),))]
-    achados, positivos, sem_base, sem_recente, analisadas = [], [], [], [], 0
+    achados, positivos, sem_base, sem_recente, analisadas, suspeitos = [], [], [], [], 0, []
     for ch in sorted(chaves):
         r = _analisa_metrica(ch, hoje)
         if not r:
+            continue
+        if "dado_suspeito" in r:
+            suspeitos.append(r["dado_suspeito"])
             continue
         if "sem_base" in r:
             sem_base.append(r["sem_base"])
@@ -225,7 +246,7 @@ def analisar(hoje: str = None) -> dict:
             achados.append(extra)
     achados.sort(key=lambda a: (a["nivel"] != "forte", -abs(a["z"])))
     combos = _combos({a["chave"]: a for a in achados if a["ruim"]})
-    return {"dia": hoje, "achados": achados, "combos": combos, "positivos": positivos, "sem_base": sem_base, "sem_dado_recente": sem_recente, "analisadas": analisadas}
+    return {"dia": hoje, "achados": achados, "combos": combos, "positivos": positivos, "sem_base": sem_base, "sem_dado_recente": sem_recente, "analisadas": analisadas, "suspeitos": suspeitos}
 
 
 def relatorio(hoje: str = None) -> str:
@@ -250,6 +271,8 @@ def relatorio(hoje: str = None) -> str:
         linhas.append("Melhor que o seu normal:")
         linhas += [a["texto"] + "." for a in r["positivos"][:6]]
     rodape = f"Medidas comparadas com o seu normal dos últimos {BASE_DIAS} dias: {r['analisadas']}."
+    if r.get("suspeitos"):
+        rodape += " Dados que parecem incorretos ou incompletos (ignorados, não são alerta de saúde): " + "; ".join(r["suspeitos"]) + "."
     if r["sem_dado_recente"]:
         rodape += " Sem dado recente (não entraram): " + ", ".join(sorted(r["sem_dado_recente"])) + "."
     if r["sem_base"]:
@@ -258,17 +281,131 @@ def relatorio(hoje: str = None) -> str:
     return hs._br("Anomalias de " + hs._br(r["dia"]) + ":\n" + "\n".join(linhas))
 
 
-def alerta(hoje: str = None):
-    """Item de triagem quando há um padrão combinado ou pelo menos duas medidas muito fora do normal (a madrugada sozinha já tem o seu aviso). Senão, None."""
+# ----------------------------------------------------------------------------------------
+# Aviso na triagem: só quando algo MUDA, com a interpretação do modelo local
+# ----------------------------------------------------------------------------------------
+ESTADO = hs.banco.DB_DIR / "anomalias_estado.json"
+LEMBRETE_HORAS = int(os.environ.get("HEIMDALL_ANOMALIAS_LEMBRETE_H", "120"))   # sinal que persiste igual: um lembrete a cada tantas horas, nunca a cada ciclo
+PIORA_Z = 1.0                                                                    # quanto o desvio precisa crescer para contar como piora
+LLM_URL = os.environ.get("HEIMDALL_SAUDE_LLM_URL", os.environ.get("HEIMDALL_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions"))
+LLM_MODELO = os.environ.get("HEIMDALL_SAUDE_MODELO", os.environ.get("HEIMDALL_NEWS_MODELO", "gemma3-4b"))
+_abridor_local = urllib.request.build_opener(urllib.request.ProxyHandler({}))   # só o LiteLLM desta máquina: dado de saúde nunca sai do Mac
+
+
+def _ler_estado() -> dict:
+    try:
+        d = json.loads(ESTADO.read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def salvar_estado(estado: dict) -> None:
+    ESTADO.parent.mkdir(parents=True, exist_ok=True)
+    ESTADO.write_text(json.dumps(estado, ensure_ascii=False), encoding="utf-8")
+
+
+def _agora_iso(agora: datetime = None) -> str:
+    return (agora or datetime.now()).strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def _horas_desde(iso: str, agora: datetime) -> float:
+    try:
+        return (agora - datetime.strptime(iso, "%Y-%m-%dT%H:%M:%S")).total_seconds() / 3600
+    except (TypeError, ValueError):
+        return 1e9
+
+
+def _interpretar(r: dict, fortes: list, antes: dict, mudou: dict) -> dict:
+    """Pede ao modelo local que avalie se o conjunto faz sentido e o que fazer. Devolve {} se o modelo não responder (o aviso sai com o texto simples)."""
+    achados = [a["texto"] for a in fortes] + [c["texto"] for c in r["combos"]]
+    ja_avisado = "; ".join(f"{k} (z {v['z']:.1f})" for k, v in (antes.get("sinais") or {}).items()) or "nada ainda"
+    prompt = (
+        "Você analisa dados de saúde de um adulto vindos do Apple Watch e do iPhone, em português do Brasil. O texto vai para um leitor de tela: frases curtas, sem listas, sem símbolos.\n\n"
+        "TAREFA: avalie se os achados abaixo fazem sentido juntos e se merecem atenção. Pense em duas hipóteses antes de concluir: (a) o corpo realmente mudou; (b) o dado está errado ou incompleto "
+        "(relógio fora do pulso ou sem sincronizar, dia ainda em andamento, unidade trocada, ambiente barulhento). Diga qual é a mais provável e por quê, citando os números.\n"
+        "Não diagnostique, não invente números, não trate variação pequena como perigo. Sugira de duas a três ações concretas e proporcionais (por exemplo conferir se o relógio estava no pulso, "
+        "medir a temperatura, descansar, hidratar, repetir a medida amanhã). Só sugira procurar atendimento se houver combinação clara de sinais ou sintomas relatados.\n"
+        + (f"Condições da pessoa que você deve respeitar: {os.environ['HEIMDALL_SAUDE_CONDICOES']}.\n" if os.environ.get("HEIMDALL_SAUDE_CONDICOES") else "")
+        + "\nACHADOS DE HOJE:\n" + "\n".join(achados)
+        + "\n\nO QUE JÁ FOI AVISADO ANTES: " + ja_avisado
+        + "\nO QUE MUDOU DESDE O ÚLTIMO AVISO: " + (mudou.get("resumo") or "primeiro aviso")
+        + ("\nDADOS SUSPEITOS (ignorados): " + "; ".join(r["suspeitos"]) if r.get("suspeitos") else "")
+        + ("\nSEM DADO RECENTE: " + ", ".join(r["sem_dado_recente"]) if r.get("sem_dado_recente") else "")
+        + '\n\nResponda só com JSON: {"veredito": "atencao" ou "provavel_artefato" ou "inconclusivo", "explicacao": "duas a quatro frases", "acoes": ["...", "..."], "mudou": "uma frase sobre o que mudou em relação ao último aviso"}')
+    corpo = json.dumps({"model": LLM_MODELO, "temperature": 0.2, "max_tokens": 600, "messages": [{"role": "user", "content": prompt}]}).encode()
+    cab = {"Content-Type": "application/json"}
+    if os.environ.get("LITELLM_MASTER_KEY"):
+        cab["Authorization"] = "Bearer " + os.environ["LITELLM_MASTER_KEY"]
+    try:
+        with _abridor_local.open(urllib.request.Request(LLM_URL, data=corpo, headers=cab), timeout=120) as resp:
+            txt = json.loads(resp.read(2_000_000))["choices"][0]["message"]["content"] or ""
+    except Exception:  # noqa: BLE001 - sem modelo, o aviso sai com o texto simples
+        return {}
+    import re
+    txt = re.sub(r"(?is)<think>.*?</think>", "", txt)
+    a, b = txt.find("{"), txt.rfind("}")
+    try:
+        d = json.loads(txt[a:b + 1]) if a >= 0 < b else {}
+    except ValueError:
+        return {}
+    if not isinstance(d, dict) or not str(d.get("explicacao", "")).strip():
+        return {}
+    d["acoes"] = [str(x).strip() for x in (d.get("acoes") or []) if str(x).strip()][:3]
+    return d
+
+
+def alerta(hoje: str = None, agora: datetime = None, interpretar=_interpretar):
+    """Item de triagem quando há um padrão combinado ou pelo menos duas medidas muito fora do normal, e SÓ se algo mudou desde o último aviso:
+    sinal novo, sinal que piorou, ou (a cada LEMBRETE_HORAS) lembrete de que o mesmo quadro continua. O item traz '_estado': quem o grava na
+    triagem chama salvar_estado(item.pop('_estado')) depois que dá certo, para um aviso perdido não ser dado como entregue."""
+    agora = agora or datetime.now()
     r = analisar(hoje)
     fortes = [a for a in r["achados"] if a["nivel"] == "forte" and a["chave"] != "fc_madrugada"]
+    antes = _ler_estado()
     if not r["combos"] and len(fortes) < 2:
+        if antes.get("sinais"):
+            salvar_estado({"sinais": {}, "quando": antes.get("quando", ""), "normalizou": _agora_iso(agora)})   # quadro normalizou: a próxima ocorrência volta a ser novidade
         return None
-    nomes = sorted([a["chave"] for a in fortes] + [c["chave"] for c in r["combos"]])
-    sel = hashlib.sha1("|".join(nomes).encode()).hexdigest()[:8]
-    partes = [c["texto"] for c in r["combos"]] + [a["texto"] for a in fortes[:4]]
-    return {"id": f"anomalias|{r['dia']}|{sel}", "titulo": f"Saúde: {len(fortes) + len(r['combos'])} sinal(is) muito fora do seu normal", "nivel": "alto", "fonte": "saude",
-            "resumo": hs._br(" ".join(p + "." for p in partes))[:850] + " Detalhes na página Anomalias do painel de saúde. Isto não é diagnóstico."}
+    sinais = {a["chave"]: {"z": round(abs(a["z"]), 2), "nome": a["nome"]} for a in fortes}
+    sinais.update({c["chave"]: {"z": 9.0, "nome": c["chave"]} for c in r["combos"]})
+    ant = antes.get("sinais") or {}
+    novos = [k for k in sinais if k not in ant]
+    pioraram = [k for k in sinais if k in ant and sinais[k]["z"] >= ant[k]["z"] + PIORA_Z]
+    horas = _horas_desde(antes.get("quando", ""), agora)
+    if not novos and not pioraram:
+        if horas < LEMBRETE_HORAS:
+            if set(ant) != set(sinais):   # algum sinal saiu e nada entrou: guarda o quadro menor, sem avisar
+                salvar_estado({"sinais": sinais, "quando": antes.get("quando", "")})
+            return None
+        mudou = {"resumo": f"nada de novo: o mesmo quadro continua há {int(horas // 24)} dias"}
+        motivo = "lembrete"
+    else:
+        nomes = {a["chave"]: a["nome"] for a in fortes}
+        partes = ([f"sinal novo: {nomes.get(k, k)}" for k in novos] + [f"piorou: {nomes.get(k, k)}" for k in pioraram])
+        mudou = {"resumo": "; ".join(partes)}
+        motivo = "mudou"
+    interp = interpretar(r, fortes, antes, mudou) if interpretar else {}
+    sel = hashlib.sha1((motivo + "|".join(sorted(sinais)) + _agora_iso(agora)[:13]).encode()).hexdigest()[:8]
+    n = len(fortes) + len(r["combos"])
+    if interp:
+        acoes = " ".join(f"{i}. {a.rstrip('.')}." for i, a in enumerate(interp["acoes"], 1))
+        resumo = (interp["explicacao"].strip() + (" O que mudou: " + str(interp.get("mudou", "")).strip() if str(interp.get("mudou", "")).strip() and motivo == "mudou" else "")
+                  + (" O que fazer: " + acoes if acoes else ""))
+        artefato = interp.get("veredito") == "provavel_artefato"
+        titulo = "Saúde: sinais fora do normal, mas o dado pode estar errado" if artefato else f"Saúde: {n} sinal(is) fora do seu normal merece(m) atenção"
+        nivel = "medio" if artefato else "alto"
+    else:
+        partes_t = [c["texto"] for c in r["combos"]] + [a["texto"] for a in fortes[:4]]
+        resumo = hs._br(" ".join(p + "." for p in partes_t)) + (" (O modelo local não respondeu, por isso sem interpretação.)")
+        titulo = f"Saúde: {n} sinal(is) muito fora do seu normal"
+        nivel = "alto"
+    if motivo == "lembrete":
+        titulo = "Lembrete: " + titulo
+        resumo = f"O mesmo quadro continua há {int(horas // 24)} dias, sem mudança. " + resumo
+    return {"id": f"anomalias|{r['dia']}|{sel}", "titulo": titulo, "nivel": nivel, "fonte": "saude",
+            "resumo": resumo[:850] + " Detalhes na página Anomalias do painel de saúde. Isto não é diagnóstico.",
+            "_estado": {"sinais": sinais, "quando": _agora_iso(agora)}}
 
 
 if __name__ == "__main__":

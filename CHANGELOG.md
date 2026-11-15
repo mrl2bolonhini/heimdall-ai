@@ -45,6 +45,13 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Novo teste: python3 teste_saude_fluxo.py roda os nós de código do fluxo com Node.
 - Para aplicar: ./subir.sh --reiniciar (agente com o alerta de frequência cardíaca) e bash instalar_automacoes_avancadas.sh (importa o fluxo).
 
+## 2026-11-15 - Anomalias de saúde: dado errado não vira alerta, e o aviso só repete quando algo muda
+- Energia em repouso chegava em kJ do Health Auto Export e era lida como kcal (8.425 "kcal" por dia, quando eram cerca de 2.000 kcal). O banco agora converte kJ para kcal ao gravar e corrige o que já estava gravado.
+- O total do dia de passos, energia e demais medidas somadas era trocado pelo do último envio. Com o envio de hora em hora, o dia passava a valer só as últimas horas (por isso 384 kJ, 264 passos). O fluxo de saúde agora guarda cada hora recebida e soma todas, sem duplicar reenvios; uma exportação diária completa prevalece sobre horas parciais. Para reconstruir os dias já afetados (12 a 15/11), rode de novo o atalho "Exportar dados de saúde".
+- Valores impossíveis para um dia inteiro (energia em repouso fora de 800 a 4.500 kcal, frequência fora do possível etc.) ficam fora do normal e do alerta e aparecem no rodapé como dado incorreto.
+- O aviso na triagem só sai quando algo muda: sinal novo ou que piorou. O mesmo quadro não repete; reaparece como lembrete depois de 5 dias (HEIMDALL_ANOMALIAS_LEMBRETE_H). Quando o quadro normaliza e volta, conta como novidade.
+- O texto do aviso agora é interpretado pelo modelo local (HEIMDALL_SAUDE_MODELO): avalia se o corpo mudou ou se o dado parece errado (relógio fora do pulso, dia incompleto, unidade, ruído), diz o que mudou desde o último aviso e sugere duas ou três ações. Sem resposta do modelo, sai o texto simples. Dados de saúde nunca vão para a Cloudflare.
+
 ## 2026-11-15 - Aviso de fonte dos diários fora do ar com o tempo real
 - O aviso "Fonte dos diários oficiais indisponível há 24 horas" era enviado uma única vez, e o Bark repetia o mesmo texto a cada 2 horas, mesmo com a fonte fora havia dias. Agora o aviso traz a data e a hora em que a fonte parou de responder e o tempo decorrido (por exemplo, "sem resposta desde 10/11/2026 às 19:05, há 5 dias").
 - O aviso é refeito às 24 horas, aos 3 dias, aos 7 dias e a cada 7 dias, cada um como um novo item da triagem com o tempo atualizado; avisos de marcos anteriores podem ser dispensados.

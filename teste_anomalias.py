@@ -153,5 +153,67 @@ confere("fc por hora bem acima do normal aparece (madrugada e horas do dia)", "f
 txt = an.relatorio(HOJE)
 confere("relatório em português do Brasil, sem datas ISO", not re.search(r"\d{4}-\d\d-\d\d", txt) and "Isto não é diagnóstico" in txt, txt[:600])
 
+
+# 14. dado impossível não vira alerta de saúde (energia em repouso de 384 num dia inteiro; antes chegava em kJ e era lida como kcal)
+from datetime import datetime as _dt  # noqa: E402
+for i in range(1, 31):
+    grava("x:basal_energy_burned", dia(i), 8400 + (i % 4) * 150, "kJ")      # chega em kJ: o banco converte para kcal
+hs.banco.normalizar_energia()
+con = hs.banco.conectar()
+unid = {r_[0] for r_ in con.execute("SELECT unidade FROM saude_diaria WHERE metrica = 'x:basal_energy_burned'")}
+vals = [r_[0] for r_ in con.execute("SELECT valor FROM saude_diaria WHERE metrica = 'x:basal_energy_burned'")]
+con.close()
+confere("energia em kJ vira kcal (8.400 kJ ~ 2.000 kcal)", unid == {"kcal"} and all(1900 < v < 2300 for v in vals), (unid, vals[:3]))
+grava("x:basal_energy_burned", dia(1), 384 / 4.184, "kcal")
+r = an.analisar(HOJE)
+confere("dia com energia em repouso impossível entra em 'dados suspeitos', não em achados", any("Energia em repouso" in x for x in r["suspeitos"]) and not any(a["chave"] == "x:basal_energy_burned" for a in r["achados"]), (r["suspeitos"], [a["chave"] for a in r["achados"]]))
+grava("x:basal_energy_burned", dia(1), 2000, "kcal")
+
+# 15. aviso só quando algo muda; o modelo interpreta; sem repetir a cada ciclo
+for m, v in NORMAL.items():
+    grava(m, HOJE, v)
+estado = an.ESTADO
+if estado.exists():
+    estado.unlink()
+agora = _dt.now()
+chamadas = []
+
+
+def interprete(r, fortes, antes, mudou):
+    chamadas.append(mudou["resumo"])
+    return {"veredito": "atencao", "explicacao": "O pulso subiu e a variabilidade caiu juntos, o que costuma indicar cansaço ou início de infecção.", "acoes": ["Meça a temperatura hoje.", "Durma mais cedo."], "mudou": "primeiro quadro"}
+
+
+grava("fc_repouso", HOJE, 72)
+grava("hrv", HOJE, 30)
+grava("resp", HOJE, 17.5)
+grava("sono_total", HOJE, 300)
+a1 = an.alerta(HOJE, agora, interprete)
+confere("primeiro quadro: avisa, com a interpretação do modelo e as ações", a1 and "O pulso subiu" in a1["resumo"] and "1. Meça a temperatura hoje." in a1["resumo"] and "_estado" in a1, a1)
+confere("sem confirmar o estado, o aviso se repete (aviso perdido não conta como entregue)", an.alerta(HOJE, agora, interprete) is not None)
+an.salvar_estado(a1.pop("_estado"))
+confere("mesmo quadro no ciclo seguinte: não avisa de novo", an.alerta(HOJE, agora + timedelta(hours=2), interprete) is None)
+confere("mesmo quadro um dia depois: continua quieto", an.alerta(HOJE, agora + timedelta(hours=26), interprete) is None)
+l = an.alerta(HOJE, agora + timedelta(hours=125), interprete)
+confere("depois de 5 dias de quadro igual: um lembrete, dizendo que não mudou", l and l["titulo"].startswith("Lembrete") and "continua há 5 dias" in l["resumo"], l and (l["titulo"], l["resumo"][:120]))
+grava("spo2", HOJE, 91)
+grava("spo2_min", HOJE, 88)
+for i in range(1, 31):
+    grava("spo2_min", dia(i), 94)
+n = an.alerta(HOJE, agora + timedelta(hours=3), interprete)
+confere("sinal novo (oxigênio) avisa de novo e diz o que mudou", n and any("sinal novo" in c for c in chamadas[-1:]), chamadas)
+an.salvar_estado(n.pop("_estado"))
+for m, v in NORMAL.items():
+    grava(m, HOJE, v)
+grava("spo2_min", HOJE, 94)
+confere("quadro normalizou: não avisa", an.alerta(HOJE, agora + timedelta(hours=6), interprete) is None and not an._ler_estado().get("sinais"))
+grava("fc_repouso", HOJE, 72)
+grava("hrv", HOJE, 30)
+grava("resp", HOJE, 17.5)
+grava("sono_total", HOJE, 300)
+confere("se o mesmo quadro voltar depois de normalizar, é novidade", an.alerta(HOJE, agora + timedelta(hours=9), interprete) is not None)
+sem_modelo = an.alerta(HOJE, agora + timedelta(hours=9), lambda *a: {})
+confere("modelo fora do ar: avisa com o texto simples e diz que não houve interpretação", sem_modelo and "sem interpretação" in sem_modelo["resumo"], sem_modelo)
+
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)
