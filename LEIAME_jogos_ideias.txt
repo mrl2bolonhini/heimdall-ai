@@ -31,7 +31,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
 9. Blackjack (vinte e um) [FEITO: Blackjack]
    Contra a banca, com créditos de mentira. Pedir carta, parar, dobrar e dividir; a banca para no 17. Leitura da mão e da carta aberta da banca, e a mesma regra de créditos do caça-níqueis (nunca dinheiro de verdade).
 
-10. Roleta
+10. Roleta [FEITO: Roleta]
    Roleta europeia (0 a 36). Apostas em número, vermelho ou preto, par ou ímpar, dúzias, colunas e metades, com a tabela de pagamentos lida em voz alta. Créditos de mentira.
 
 11. Bacará

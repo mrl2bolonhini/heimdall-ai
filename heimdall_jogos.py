@@ -127,6 +127,11 @@ CATALOGO += [
      ["Chegue mais perto de 21 que a banca, sem passar. Ás vale 11 ou 1; Valete, Dama e Rei valem 10. Blackjack (Ás e carta de 10 nas duas primeiras) paga 3 para 2.",
       "Você aposta créditos de mentira (um número par de 2 a 50), e o jogo lê as suas cartas e a carta aberta da banca. A banca compra até 17 e para em qualquer 17.",
       "Comandos: apostar N (ou repetir), pedir, parar, dobrar, dividir, mao, banca, saldo, tabela, dica. A dica segue a estratégia básica do blackjack."]),
+    ("roleta", "Roleta", "roleta.js", "Roleta com créditos de mentira: aposte em cor, número, dúzia e mais, e mande girar.",
+     ["Você faz uma ou mais apostas e manda girar; o jogo lê onde a bola parou e o que cada aposta rendeu.",
+      "Apostas: vermelho, preto, par, impar, alto, baixo, duzia 1 a 3, coluna 1 a 3 ou um número de 0 a 36, por exemplo apostar 5 vermelho ou apostar 2 no 17.",
+      "Número paga 35 para 1, dúzia e coluna 2 para 1, o resto 1 para 1. Fácil e normal: roleta europeia (um zero). Difícil: americana, com zero e duplo zero.",
+      "Comandos: apostar, girar, apostas, limpar, repetir, tabela, historico, saldo."]),
     ("paciencia", "Paciência", "paciencia.js", "Paciência (Klondike) falada: mova as cartas por comando e ouça a mesa lida coluna por coluna.",
      ["Sete colunas, um monte e quatro bases (uma por naipe). O objetivo é levar as 52 cartas para as bases, de Ás a Rei.",
       "Cartas: valor A, 2 a 10, J, Q ou K e naipe C copas, O ouros, P paus ou E espadas, como 7C ou QE (também vale 7 de copas).",
@@ -141,7 +146,7 @@ CATEGORIAS = [
     ("numeros", "Números e lógica", "Códigos, números e quebra-cabeças de raciocínio.", ["senha", "numero", "sudoku", "2048"]),
     ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "velha", "minas", "gramado"]),
     ("cartas", "Cartas", "Jogos de baralho.", ["paciencia"]),
-    ("cassino", "Cassino", "Jogos de cassino, só com créditos de mentira.", ["cacaniqueis", "blackjack"]),
+    ("cassino", "Cassino", "Jogos de cassino, só com créditos de mentira.", ["cacaniqueis", "blackjack", "roleta"]),
     ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
 ]
 GRUPOS = [(t, ids) for _, t, _, ids in CATEGORIAS]

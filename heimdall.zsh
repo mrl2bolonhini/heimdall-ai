@@ -209,7 +209,7 @@ heimdall() {
       case "$1" in
         "") _heimdall_open "Heimdall Jogos" "http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)" ;;
         --play) _heimdall_open "Jogo $2" "http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)/jogo/$2" ;;
-        --list) echo "forca  senha  velha  numero  2048  cincoletras  sudoku  xadrez  naval  minas  gramado  cacaniqueis  blackjack  paciencia  aventura  relogios  templo  orion  caverna  escolhas" ;;
+        --list) echo "forca  senha  velha  numero  2048  cincoletras  sudoku  xadrez  naval  minas  gramado  cacaniqueis  blackjack  roleta  paciencia  aventura  relogios  templo  orion  caverna  escolhas" ;;
         --extras|--extra) shift; _heimdall_sh instalar_jogos_extras.sh "$@" ;;
         *) echo "Use: heimdall games [--play JOGO] [--list] [--extras --enigma|--playaural|--status|--remover]"; return 1 ;;
       esac ;;
@@ -327,7 +327,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary data
         else compadd -- --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
-      games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- forca senha velha numero 2048 cincoletras sudoku xadrez naval minas gramado cacaniqueis blackjack paciencia aventura relogios templo orion caverna escolhas
+      games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- forca senha velha numero 2048 cincoletras sudoku xadrez naval minas gramado cacaniqueis blackjack roleta paciencia aventura relogios templo orion caverna escolhas
         elif [[ ${words[CURRENT-1]} == --extras || ${words[CURRENT-1]} == --extra ]]; then compadd -- --enigma --playaural --status --remover; else compadd -- --play --list --extras; fi ;;
       triage) compadd -- --complete-tests ;;
       db) compadd -- --sql ;;

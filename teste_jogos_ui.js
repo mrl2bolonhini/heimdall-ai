@@ -129,6 +129,16 @@ t("blackjack: aposta por botão e comando, jogada, leitura, dica e novo jogo", (
   botaoPorTexto(j.jogo, "Dica").fire("click"); assert(/^Dica:/.test(j.an.textContent));
   botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível/.test(j.an.textContent));
 });
+t("roleta: aposta por seleção, por número, girar, leitura e novo jogo", () => {
+  const j = carregar("roleta"), campo = j.id("comando"), form = j.jogo.all("form")[0];
+  assert(/Novo jogo, nível fácil, com 100 créditos/.test(j.an.textContent));
+  j.id("valor").value = "5"; j.id("tipo").value = "vermelho"; botaoPorTexto(j.jogo, "Apostar").fire("click"); assert(/Aposta de 5 em vermelho/.test(j.an.textContent));
+  j.id("numero").value = "17"; botaoPorTexto(j.jogo, "Apostar neste número").fire("click"); assert(/número 17/.test(j.an.textContent));
+  campo.value = "apostas"; form.fire("submit"); assert(/Apostas na mesa/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Girar").fire("click"); assert(/A bola parou no/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Histórico").fire("click"); assert(/Últimos números/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível/.test(j.an.textContent));
+});
 t("xadrez: lance, resposta do computador, consulta, erro e nova partida", () => {
   const j = carregar("xadrez"), campo = j.id("lance"), form = j.jogo.all("form")[0], hist = j.id("historico");
   assert(/Nova partida, nível médio/.test(j.an.textContent));

@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Roleta
+- Novo jogo: Roleta com créditos de mentira. Você faz várias apostas (vermelho, preto, par, impar, alto, baixo, duzia 1 a 3, coluna 1 a 3 ou um número de 0 a 36) e manda girar; o jogo lê onde a bola parou e o resultado de cada aposta. Também há apostas, limpar, repetir, tabela, historico e saldo.
+- Níveis: fácil (100 créditos, roleta europeia), normal (60 créditos, europeia) e difícil (60 créditos, roleta americana com zero e duplo zero, que é mais dura). O teste mede o retorno: cerca de 97% na europeia e 95% na americana.
+- Entra na categoria Cassino. Novo teste: teste_jogos_roleta.js. heimdall games --play roleta, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-16 - Blackjack e categoria Cassino
 - Novo jogo: Blackjack contra a banca, com créditos de mentira. Aposta par de 2 a 50 (apostar N ou repetir), pedir, parar, dobrar, dividir, mao, banca, saldo, tabela e dica. Blackjack natural paga 3 para 2, a banca compra até 17 e para em qualquer 17, e o sapato (4 ou 6 baralhos) é embaralhado de novo quando acaba.
 - Níveis: fácil (100 créditos, dicas à vontade), normal (100 créditos, 5 dicas) e difícil (60 créditos, sem dicas). A dica segue a estratégia básica; o teste mede que, jogando assim, a banca leva só cerca de 1% do apostado.
