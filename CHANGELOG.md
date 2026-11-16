@@ -10,7 +10,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Jogos de terceiros: bash instalar_jogos_extras.sh (ou heimdall games --extras) sobe o Enigma em Docker na porta 8015, só neste Mac, com o segredo de sessão gerado e guardado no .env, e põe o link no portal; --playaural lista só o link do serviço play.ddt.one; --status e --remover. Sem teste com o VoiceOver: o Enigma é em inglês ou espanhol, tem contas próprias e não declara acessibilidade, e o PlayAural é um serviço externo fora do login do Heimdall.
 - heimdall games --play aceita os novos jogos (xadrez, minas, sorte, relogios, templo, orion), com Tab para completar, e --list foi atualizado.
 - Novos testes: teste_jogos_xadrez.js (contagens oficiais de lances, notação, fim de partida, IA), teste_jogos_novos.js (campo minado e caça-níqueis), teste_historias.js (valida os dados, joga a solução de cada aventura nos três níveis, confere dicas, limite de passos, perigos e salvar e carregar), e teste_jogos.py e teste_jogos_ui.js ampliados.
-- Para aplicar: heimdall update --restart. Para os jogos de terceiros: heimdall games --extras --enigma (precisa do Docker Desktop aberto).
+- Para aplicar: heimdall update --restart. Para os jogos de terceiros: heimdall games --extras --enigma (precisa do Docker Desktop aberto; a imagem do Enigma é só amd64, então no Mac com chip Apple roda por emulação, com --platform linux/amd64).
 
 ## 2026-11-15 - Heimdall Jogos: subdomínio de jogos leves para leitor de tela
 - Novo serviço heimdall_jogos.py (porta 8014, games.heimdall-ai.tech): portal com seis jogos que rodam no navegador, feitos para leitor de tela. Tudo é HTML comum (botões, campos e listas) e cada jogada é dita em voz alta por uma região aria-live. O servidor não guarda nada.

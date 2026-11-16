@@ -19,6 +19,8 @@ cd "$PROJECT_DIR" || exit 1
 ENV_FILE="${HEIMDALL_ENV_FILE:-.env}"
 CONTEINER="heimdall-enigma"
 IMAGEM="boopboopboop/enigma:latest"
+# A imagem do Enigma só existe para processador Intel/AMD (amd64); no Mac com chip Apple o Docker Desktop a executa por emulação (mais lenta, mas funciona).
+PLATAFORMA="${ENIGMA_PLATFORM:-linux/amd64}"
 PORTA="${ENIGMA_PORT:-8015}"
 VOLUME="heimdall-enigma-data"
 ENIGMA_ITEM="Enigma|http://localhost:${PORTA}|Quebra-cabeças de palavras, números e lógica (de terceiros, em inglês ou espanhol, com conta própria)"
@@ -75,10 +77,10 @@ case "${1:-}" in
         fi
         docker rm -f "$CONTEINER" >/dev/null 2>&1
         echo "Baixando e iniciando o Enigma (a primeira vez demora)..."
-        docker run -d --name "$CONTEINER" --restart unless-stopped \
+        docker run -d --platform "$PLATAFORMA" --name "$CONTEINER" --restart unless-stopped \
             -p "127.0.0.1:${PORTA}:3000" \
             -e SESSION_SECRET="$SEGREDO" -e FRONTEND_URL="http://localhost:${PORTA}" \
-            -v "${VOLUME}:/app/data" "$IMAGEM" >/dev/null || fail "o Docker não conseguiu iniciar o Enigma. Veja: docker logs $CONTEINER"
+            -v "${VOLUME}:/app/data" "$IMAGEM" >/dev/null || fail "o Docker não conseguiu iniciar o Enigma. Se a mensagem falou de plataforma ou emulação, abra o Docker Desktop, Settings, General, e ligue a opção de usar o Rosetta para emulação x86/amd64; depois rode de novo. Detalhes: docker logs $CONTEINER"
         extras_ajustar adicionar Enigma "$ENIGMA_ITEM"
         echo "Pronto. O Enigma deve responder em http://localhost:${PORTA} em alguns segundos (crie uma conta própria na primeira vez)."
         echo "Ele aparece no portal de jogos depois de: heimdall update --restart   (ou reiniciar o serviço de jogos)."
