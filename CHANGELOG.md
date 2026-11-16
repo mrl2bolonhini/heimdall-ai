@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Bacará
+- Novo jogo: Bacará (punto banco) com créditos de mentira. Você aposta no jogador, na banca ou no empate (apostar 10 banca, repetir); o jogo dá as cartas, aplica sozinho as regras da terceira carta (conferidas por teste contra a tabela completa) e lê cada passo. Também há tabela, historico, saldo e dica.
+- Pagamentos: jogador e banca 1 para 1 (a banca que vence com sete em três cartas só devolve a aposta), empate 8 para 1, e no empate as apostas nos outros lados voltam. Retorno medido no teste: cerca de 99% no jogador e na banca, 86% no empate.
+- Níveis: fácil (100 créditos, dicas à vontade), normal (100 créditos, 3 dicas) e difícil (60 créditos, sem dicas). Entra na categoria Cassino. Novo teste: teste_jogos_bacara.js. heimdall games --play bacara, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-16 - Roleta
 - Novo jogo: Roleta com créditos de mentira. Você faz várias apostas (vermelho, preto, par, impar, alto, baixo, duzia 1 a 3, coluna 1 a 3 ou um número de 0 a 36) e manda girar; o jogo lê onde a bola parou e o resultado de cada aposta. Também há apostas, limpar, repetir, tabela, historico e saldo.
 - Níveis: fácil (100 créditos, roleta europeia), normal (60 créditos, europeia) e difícil (60 créditos, roleta americana com zero e duplo zero, que é mais dura). O teste mede o retorno: cerca de 97% na europeia e 95% na americana.

@@ -34,7 +34,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
 10. Roleta [FEITO: Roleta]
    Roleta europeia (0 a 36). Apostas em número, vermelho ou preto, par ou ímpar, dúzias, colunas e metades, com a tabela de pagamentos lida em voz alta. Créditos de mentira.
 
-11. Bacará
+11. Bacará [FEITO: Bacará]
    Apostas no jogador, na banca ou no empate, com as regras de terceira carta aplicadas pelo próprio jogo e o resultado lido passo a passo. Créditos de mentira.
 
 12. Poker (Texas hold'em)
