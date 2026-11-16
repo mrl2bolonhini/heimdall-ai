@@ -3,7 +3,7 @@ Lista combinada em 2026-11-15, em ordem de prioridade. Ficaram de fora, por deci
 Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em Node, interface só com botões, campos e lista, e voz pela região aria-live.
 
 1. Batalha naval contra o computador
-   Coordenadas faladas (B7, tiro em D4), frota em tabuleiro 10 por 10, comandos para ler o que já foi atirado, linha e coluna. Níveis: o computador atira ao acaso (fácil) ou caça em volta dos acertos (difícil).
+   [FEITO em 2026-11-15] Coordenadas faladas (B7, tiro em D4), frota em tabuleiro 10 por 10, comandos para ler o que já foi atirado, linha e coluna. Níveis: o computador atira ao acaso (fácil) ou caça em volta dos acertos (difícil).
 
 2. Wordle em português
    Palavra de 5 letras, 6 tentativas, resposta lida por letra (certa, no lugar errado, ausente). Sem acento na digitação. Lista de palavras própria, em português.

@@ -115,4 +115,15 @@ const store = {}; global.localStorage = { getItem: k => (k in store ? store[k] :
   botaoPorTexto(j.jogo, "Recomeçar").fire("click"); botaoPorTexto(j.jogo, "Carregar").fire("click"); assert(/Partida carregada/.test(j.an.textContent));
   campo.value = "dançar"; form.fire("submit"); assert(/Não entendi/.test(j.an.textContent));
 }));
+t("batalha naval: frota, tiro, resposta do computador, erro e nova partida", () => {
+  const j = carregar("naval"), campo = j.id("tiro"), form = j.jogo.all("form")[0], hist = j.id("historico");
+  assert(/Nova batalha, nível normal/.test(hist.textContent));
+  campo.value = "frota"; form.fire("submit"); assert(/Sua frota: porta-aviões/.test(j.an.textContent));
+  campo.value = "b7"; form.fire("submit"); assert(/Você atirou em B7/.test(j.an.textContent) && /O computador atirou/.test(j.an.textContent));
+  campo.value = "b7"; form.fire("submit"); assert(/já atirou em B7/.test(j.an.textContent));
+  campo.value = "zz"; form.fire("submit"); assert(/Não entendi/.test(j.an.textContent));
+  assert(j.id("visual").attrs["aria-hidden"] === "true" && /Seus tiros/.test(j.id("visual").textContent) && /Sua frota/.test(j.id("visual").textContent));
+  campo.value = "desistir"; form.fire("submit"); assert(campo.disabled);
+  botaoPorTexto(j.jogo, "Nova partida").fire("click"); assert(!campo.disabled && hist.children.length === 1);
+});
 console.log(`${ok} testes de interface passaram`); process.exit(falhas ? 1 : 0);

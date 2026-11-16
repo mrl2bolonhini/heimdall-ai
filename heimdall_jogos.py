@@ -3,7 +3,7 @@
 
 Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta jogos/; o que acontece na partida
 é dito em voz alta por uma região aria-live. Nada é gravado: o servidor só entrega as páginas.
-Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, xadrez, campo minado, caça-níqueis e aventuras de texto
+Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, xadrez, batalha naval, campo minado, caça-níqueis e aventuras de texto
 (O Farol Apagado, A Mansão dos Relógios, O Templo Submerso, Estação Orion; as três últimas com níveis de dificuldade).
 
 Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outros painéis):
@@ -89,13 +89,17 @@ CATALOGO += [
      ["Escreva o lance: e4, Cf3, Cxe5, O-O (roque), e8=D (promoção) ou de casa para casa, como e2 e4. As letras das peças são R rei, D dama, T torre, B bispo e C cavalo.",
       "Para consultar o tabuleiro: tabuleiro, linha 4, coluna e, casa e4, pecas, lances, historico, material, ultimo, dica, desfazer e desistir. Digite ajuda para ver tudo.",
       "Cada lance seu e a resposta do computador são lidos em voz alta, com a notação e uma frase falada."]),
+    ("naval", "Batalha naval", "naval.js", "Afunde a frota do computador antes que ele afunde a sua, em três níveis.",
+     ["O tabuleiro tem colunas de A a J e linhas de 1 a 10. Para atirar, diga a casa: B7, ou tiro b7. As duas frotas (porta-aviões, encouraçado, cruzador, submarino e destróier) são sorteadas.",
+      "Para consultar: frota (onde estão os seus navios), tiros, inimigo (tiros do computador), restantes (navios inimigos), linha 3, coluna c, resumo, ultimo e dica.",
+      "Níveis: fácil (o computador atira ao acaso), normal (caça em volta dos acertos) e difícil (calcula onde os navios restantes mais cabem)."]),
     ("minas", "Campo minado", "minas.js", "Abra as casas sem pisar numa mina, com três tamanhos de campo.",
      ["O campo é uma tabela de botões; cada botão diz a linha, a coluna e o que há nele. Abra com Enter ou use o campo de comando.",
       "Comandos: abrir 3 4, marcar 3 4, ler 3 4, linha 3, coluna 4, tudo e resumo. A primeira jogada nunca é uma mina.",
       "Um número diz quantas minas há nas oito casas ao redor."]),
-    ("cacaniqueis", "Caça-níqueis", "cacaniqueis.js", "Um painel de três dígitos e um botão Girar: trinca ou sequência dá prêmio, o resto perde a aposta.",
+    ("cacaniqueis", "Caça-níqueis", "cacaniqueis.js", "Um painel de três dígitos e um botão Girar: trinca, sequência ou par dão prêmio; o resto perde a aposta.",
      ["Você começa com créditos de mentira (sem dinheiro de verdade) e escolhe apostar 1, 2 ou 5 por rodada.",
-      "Três dígitos iguais pagam muito; uma sequência, como 1 2 3 ou 9 0 1, paga menos; qualquer outra coisa perde a aposta.",
+      "Três dígitos iguais pagam muito; uma sequência, como 1 2 3 ou 9 0 1, paga menos; dois iguais (um par) pagam um prêmio pequeno e comum; qualquer outra coisa perde a aposta. Cerca de três em cada dez rodadas pagam algo.",
       "O botão Ver os prêmios lê a tabela, e Ler o saldo diz como você está."]),
     ("relogios", "A Mansão dos Relógios", "hist_relogios.js", "Aventura de mistério: descubra o que houve com o relojoeiro Heitor.",
      ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, falar com ALGUÉM, digitar CÓDIGO no cofre e ajuda.", *NIVEIS_TXT]),
@@ -105,7 +109,7 @@ CATALOGO += [
      ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, falar com ZEL, digitar CÓDIGO e ajuda.", *NIVEIS_TXT]),
 ]
 GRUPOS = [("Jogos clássicos", ["forca", "senha", "velha", "numero", "2048"]),
-          ("Tabuleiro e sorte", ["xadrez", "minas", "cacaniqueis"]),
+          ("Tabuleiro e sorte", ["xadrez", "naval", "minas", "cacaniqueis"]),
           ("Aventuras de texto", ["aventura", "relogios", "templo", "orion"])]
 # Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.
 HISTORIAS = {"relogios", "templo", "orion"}
