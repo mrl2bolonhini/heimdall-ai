@@ -179,6 +179,37 @@ t("arqueiro: teste de som, iniciar, controles em texto (sem áudio no navegador)
   botaoPorTexto(j.jogo, "Pontos").fire("click"); assert(/Pontos: 0/.test(j.an.textContent));
   botaoPorTexto(j.jogo, "Parar").fire("click"); assert(/Partida pausada/.test(j.an.textContent));
 });
+t("arqueiro: teste de som toca os três sons em ordem e só depois fala a explicação", () => {
+  const sons = []; let ultimaPan = null;
+  global.AudioContext = function () {
+    this.currentTime = 0; this.destination = {};
+    this.createOscillator = () => ({ type: "", frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {}, start() { sons.push({ pan: ultimaPan, falou: /ouviu três sons/.test(j.an.textContent) }); }, stop() {} });
+    this.createGain = () => ({ gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} });
+    this.createStereoPanner = () => { const o = { pan: { set value(v) { ultimaPan = v; } }, connect() {} }; return o; };
+  };
+  global.clearTimeout = () => {};
+  const j = carregar("arqueiro");
+  botaoPorTexto(j.jogo, "Testar o som").fire("click");
+  delete global.AudioContext;
+  assert.deepEqual(sons.map(x => x.pan), [-1, 0, 1], "esquerda, meio, direita, nessa ordem");
+  assert(sons.every(x => !x.falou), "nenhuma explicação falada enquanto os sons tocam");
+  assert(/Você ouviu três sons: o primeiro só no fone esquerdo/.test(j.an.textContent), "explicação falada depois do último som");
+});
+t("arqueiro: setas e espaço valem em qualquer lugar da página durante a partida, mas não em seletor, botão nem outro campo", () => {
+  const j = carregar("arqueiro"), campo = j.id("teclas"), erro = () => { throw new Error("não deveria agir aqui"); };
+  const tecla = (key, tagName, alvo) => doc.listeners.keydown.forEach(f => f({ key, target: alvo || { tagName }, preventDefault: tagName === "OK" ? () => {} : erro }));
+  const ok = (key, tagName, alvo) => doc.listeners.keydown.forEach(f => f({ key, target: alvo || { tagName }, preventDefault() {} }));
+  tecla("ArrowLeft", "BODY");  // partida parada e foco fora do campo: não age
+  assert(!/Mira à esquerda/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Iniciar").fire("click");
+  ok("ArrowLeft", "BODY"); assert(/Mira à esquerda/.test(j.an.textContent), "seta com a partida rodando, foco no corpo da página");
+  ok("ArrowRight", "BUTTON"); ok("ArrowRight", "DIV");
+  ok(" ", "BODY");
+  tecla("ArrowLeft", "SELECT"); tecla("ArrowLeft", "INPUT"); tecla(" ", "BUTTON");  // seletor, outro campo e espaço em botão: ignorados
+  ok("ArrowLeft", "INPUT", campo);  // no campo do jogo vale sempre
+  botaoPorTexto(j.jogo, "Parar").fire("click");
+  const antes = j.an.textContent; tecla("ArrowLeft", "BODY"); assert.equal(j.an.textContent, antes, "parada, fora do campo, não age");
+});
 t("xadrez: lance, resposta do computador, consulta, erro e nova partida", () => {
   const j = carregar("xadrez"), campo = j.id("lance"), form = j.jogo.all("form")[0], hist = j.id("historico");
   assert(/Nova partida, nível médio/.test(j.an.textContent));

@@ -126,7 +126,8 @@
     var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { acao(x[1]); }); return b;
   }));
   var testeSom = H.el("button", { type: "button", texto: "Testar o som" });
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, iniciarBtn, pararBtn, testeSom, H.el("label", { "for": "teclas", texto: "Área de jogo (setas e espaço)" }), campoTeclas, teclado].forEach(function (x) { jogo.appendChild(x); });
+  var areaJogo = H.el("div", { role: "application", "aria-label": "Área de jogo do arqueiro. Setas movem a mira e espaço atira" }, [H.el("label", { "for": "teclas", texto: "Área de jogo (setas e espaço)" }), campoTeclas]);
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, iniciarBtn, pararBtn, testeSom, areaJogo, teclado].forEach(function (x) { jogo.appendChild(x); });
   function parar() { if (relogio) { raiz.clearInterval(relogio); relogio = null; } }
   function acao(txt) {
     var r = comando(e, txt); audio();
@@ -147,16 +148,27 @@
   }
   iniciarBtn.addEventListener("click", iniciar);
   pararBtn.addEventListener("click", function () { parar(); H.anunciar("Partida pausada. " + resumo(e) + " Aperte Iniciar para recomeçar do zero."); });
+  var temposTeste = [];
   testeSom.addEventListener("click", function () {
     if (!audio()) { H.anunciar("Seu navegador não oferece áudio estéreo. O jogo funciona em texto: ele diz onde o alvo está."); return; }
-    bip(880, 0.2, -1, "sine", 0.3); setTimeout(function () { bip(880, 0.2, 0, "sine", 0.3); }, 400); setTimeout(function () { bip(880, 0.2, 1, "sine", 0.3); }, 800);
-    H.anunciar("Você deve ouvir três sons: um só no fone esquerdo, um no meio e um só no fone direito.");
+    temposTeste.forEach(function (t) { raiz.clearTimeout(t); }); temposTeste = [];
+    // Os três sons tocam primeiro, com folga entre eles, e a explicação só é falada depois do último: assim o VoiceOver não atropela os sons.
+    bip(880, 0.25, -1, "sine", 0.3);
+    temposTeste.push(setTimeout(function () { bip(880, 0.25, 0, "sine", 0.3); }, 700));
+    temposTeste.push(setTimeout(function () { bip(880, 0.25, 1, "sine", 0.3); }, 1400));
+    temposTeste.push(setTimeout(function () { H.anunciar("Você ouviu três sons: o primeiro só no fone esquerdo, o segundo no meio e o terceiro só no fone direito. Se algum veio do lado errado, confira os fones."); }, 2100));
+  });
+  // Setas e espaço valem no campo do jogo e, com a partida rodando, em qualquer lugar da página (exceto no seletor de nível, nos campos de texto e no espaço sobre botões).
+  document.addEventListener("keydown", function (ev) {
+    var k = ev.key, t = ev.target && ev.target.tagName, noCampo = ev.target === campoTeclas;
+    if (t === "SELECT" || t === "TEXTAREA" || (t === "INPUT" && !noCampo)) return;
+    if (!noCampo && !relogio) return;
+    if (k === "ArrowLeft") { ev.preventDefault(); acao("esquerda"); }
+    else if (k === "ArrowRight") { ev.preventDefault(); acao("direita"); }
+    else if ((k === " " || k === "Spacebar") && (noCampo || (t !== "BUTTON" && t !== "A"))) { ev.preventDefault(); acao("atirar"); }
   });
   campoTeclas.addEventListener("keydown", function (ev) {
-    var k = ev.key;
-    if (k === "ArrowLeft") { ev.preventDefault(); acao("esquerda"); } else if (k === "ArrowRight") { ev.preventDefault(); acao("direita"); }
-    else if (k === " " || k === "Spacebar") { ev.preventDefault(); acao("atirar"); }
-    else if (k === "Enter") { ev.preventDefault(); var v = campoTeclas.value; campoTeclas.value = ""; if (v) acao(v); }
+    if (ev.key === "Enter") { ev.preventDefault(); var v = campoTeclas.value; campoTeclas.value = ""; if (v) acao(v); }
   });
   H.anunciar("Arqueiro de áudio. Use fones de ouvido. Aperte Testar o som para conferir o estéreo e depois Iniciar. Se preferir, o botão Ajuda explica os controles.");
 })(typeof window !== "undefined" ? window : globalThis);
