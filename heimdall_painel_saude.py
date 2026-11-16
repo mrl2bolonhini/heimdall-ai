@@ -453,7 +453,7 @@ class Painel(BaseHTTPRequestHandler):
         if metodo == "GET":
             via_access = nuvem.entrada_por_access(self.headers, "saude")  # aprovado no Cloudflare Access (Microsoft Authenticator), se ligado
             if via_access:
-                self._ir("/", [self._cookie(via_access)])
+                self._enviar(200, nuvem.pagina_continuar(), extra=[self._cookie(via_access)])
                 return
             self._enviar(200, pg_entrar())
             return

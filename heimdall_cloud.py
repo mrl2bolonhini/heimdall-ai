@@ -288,6 +288,17 @@ def entrada_por_access(cabecalhos, servico: str = None):
     return token
 
 
+def pagina_continuar(destino: str = "/") -> bytes:
+    """Página de transição da entrada pelo Cloudflare Access: grava o cookie e só depois segue para o painel.
+    Não dá para responder com redirecionamento (303): o caminho começa em outro site (Microsoft/Cloudflare) e o navegador
+    não envia cookie SameSite=Strict nos redirecionamentos dessa cadeia, o painel nunca via a sessão e entrava em laço.
+    A atualização feita pela própria página (meta refresh) já é uma navegação do mesmo site, e o cookie vai."""
+    d = destino if destino.startswith("/") and not destino.startswith("//") else "/"
+    return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Entrando</title>'
+            f'<meta http-equiv="refresh" content="0;url={d}"></head><body><p>Entrando...</p>'
+            f'<p><a href="{d}">Continuar</a></p></body></html>').encode("utf-8")
+
+
 def cabecalho_cookie(token: str, host: str, https: bool, apagar: bool = False) -> tuple:
     """Set-Cookie da sessão. Em *.heimdall-ai.tech vale para todos os subdomínios; em localhost fica só naquele endereço."""
     v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else SESSAO_SEG}"
@@ -915,7 +926,7 @@ class Painel(BaseHTTPRequestHandler):
         if metodo == "GET":
             via_access = entrada_por_access(self.headers, "cloud")  # aprovado no Cloudflare Access (Microsoft Authenticator), se ligado
             if via_access:
-                self._ir("/", [self._cookie(via_access)])
+                self._enviar(200, pagina_continuar(), extra=[self._cookie(via_access)])
                 return
             self._enviar(200, pg_entrar())
             return
