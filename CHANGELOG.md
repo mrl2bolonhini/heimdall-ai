@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - heimdall env grava as variáveis do Cloudflare Access
+- heimdall env --set agora também aceita HEIMDALL_CFACCESS_EQUIPE, HEIMDALL_CFACCESS_AUD, HEIMDALL_CFACCESS_EMAILS e HEIMDALL_CFACCESS_CONVIDADOS com o valor direto no comando, sem copiar e colar cada um (exemplo: heimdall env --set HEIMDALL_CFACCESS_EQUIPE mrl2-bolonhini). Esses valores não são segredos.
+- Segurança: o valor na linha de comando só vale para essas quatro variáveis, com formato conferido; para os segredos (chaves do R2 e senha da cópia) continua valendo só a área de transferência, e o comando recusa aspas simples e nomes fora da lista.
+- Novas verificações em teste_cfaccess.py. Para aplicar: heimdall update --restart (não precisa de instalador).
+
 ## 2026-11-16 - Acesso por usuário no Cloudflare Access (dono e convidados)
 - Dá para liberar pessoas diferentes em endereços diferentes: HEIMDALL_CFACCESS_EMAILS são os donos (entram em todos os painéis) e HEIMDALL_CFACCESS_CONVIDADOS libera cada convidado só nos serviços que você escolher, no formato ana@exemplo.com=jogos;beto@exemplo.com=jogos+finance. HEIMDALL_CFACCESS_AUD aceita várias tags (uma por aplicativo do Access).
 - A sessão de convidado leva o nome do serviço dentro do token assinado e só vale naquele painel; o cookie do domínio todo não abre os outros. A sessão de dono continua valendo em todos. Cada painel confere isso de novo, mesmo que o Cloudflare deixasse passar por engano.

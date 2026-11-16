@@ -242,6 +242,35 @@ st, _, _ = pedir("/", {"Cookie": ck_ana})
 confere("sessão antiga de convidado vale enquanto durar a sessão (derrubar: trocar a senha ou o código)", st == 200)
 os.environ.pop("HEIMDALL_CFACCESS_CONVIDADOS")
 
+# heimdall env --set grava as variáveis do Access sem a área de transferência e recusa segredos na linha de comando
+import shutil
+import subprocess
+import tempfile
+_t = tempfile.mkdtemp()
+shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), "guardar_no_env.sh"), _t)
+open(os.path.join(_t, ".env"), "w").write("OUTRA='x'\nHEIMDALL_CFACCESS_AUD='velho'\n")
+def _env(*a):
+    return subprocess.run(["bash", os.path.join(_t, "guardar_no_env.sh"), *a], cwd=_t, capture_output=True, text=True)
+r = _env("HEIMDALL_CFACCESS_EQUIPE", "mrl2-bolonhini")
+confere("env grava a equipe do Access", r.returncode == 0 and "gravado" in r.stdout, r.stdout + r.stderr)
+r = _env("HEIMDALL_CFACCESS_AUD", "a1b2,c3d4")
+confere("env grava várias AUDs separadas por vírgula", r.returncode == 0, r.stdout + r.stderr)
+r = _env("HEIMDALL_CFACCESS_EMAILS", "murillo@exemplo.onmicrosoft.com")
+confere("env grava o e-mail do dono", r.returncode == 0, r.stdout + r.stderr)
+_conteudo = open(os.path.join(_t, ".env")).read()
+confere("env substitui o valor antigo e preserva as outras linhas",
+        _conteudo.count("HEIMDALL_CFACCESS_AUD=") == 1 and "HEIMDALL_CFACCESS_AUD='a1b2,c3d4'" in _conteudo and "OUTRA='x'" in _conteudo, _conteudo)
+confere("env deixa o .env só com permissão do dono", oct(os.stat(os.path.join(_t, ".env")).st_mode & 0o777) == "0o600")
+r = _env("HEIMDALL_R2_SECRET", "abc")
+confere("env recusa segredo na linha de comando", r.returncode != 0 and "abc" not in open(os.path.join(_t, ".env")).read())
+r = _env("HEIMDALL_CFACCESS_EQUIPE", "a b; rm -rf /")
+confere("env recusa valor de formato estranho", r.returncode != 0)
+r = _env("HEIMDALL_CFACCESS_EMAILS", "a'b@x.com")
+confere("env recusa aspas simples", r.returncode != 0)
+r = _env("PATH", "x")
+confere("env recusa nome fora da lista", r.returncode != 0)
+shutil.rmtree(_t, ignore_errors=True)
+
 # o login por senha e código segue intacto
 confere("login errado continua sendo recusado", hc.confere_senha("errada", hc.SENHA_HASH) is False)
 

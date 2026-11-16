@@ -289,12 +289,13 @@ Exemplos:
   heimdall ingest --reset
 
 @ env | Grava um segredo no .env
-Grava no .env o texto que está na área de transferência (copiado com Command+C), sem mostrá-lo na tela.
+Grava no .env o texto que está na área de transferência (copiado com Command+C), sem mostrá-lo na tela. Para as variáveis do Cloudflare Access (HEIMDALL_CFACCESS_EQUIPE, _AUD, _EMAILS e _CONVIDADOS), que não são segredos, dá para passar o valor direto no comando; segredos nunca aceitam valor na linha de comando.
 Opções:
-  -s, --set NOME       nome da variável (por exemplo HEIMDALL_R2_KEY_ID)
-  -h, --help           mostra esta ajuda
+  -s, --set NOME [VALOR]   nome da variável (por exemplo HEIMDALL_R2_KEY_ID) e, só para as do Access, o valor
+  -h, --help               mostra esta ajuda
 Exemplos:
   heimdall env --set HEIMDALL_R2_SECRET
+  heimdall env --set HEIMDALL_CFACCESS_EQUIPE mrl2-bolonhini
 
 @ cloudflare | Chave da Cloudflare
 Grava no .env a chave que liga a reserva de resumos no Workers AI e a leitura de páginas com navegador do News.
