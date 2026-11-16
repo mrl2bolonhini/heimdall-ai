@@ -55,6 +55,7 @@ def carregar_env() -> None:
 
 carregar_env()
 
+import financas_arquivos as fa  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
 
@@ -256,14 +257,20 @@ def pg_importar(sess: dict) -> tuple:
     if imp:
         hist = "<h2>Últimas importações</h2>" + tabela("Últimas importações", ["Quando", "Arquivo", "Conta", "Formato", "Novas", "Repetidas"],
                                                          [[e(i["quando"]), e(i["arquivo"]), e(i["conta"]), e(i["formato"]), str(i["novas"]), str(i["repetidas"])] for i in imp], {4, 5})
-    corpo = ('<p>Aceita OFX (a maioria dos bancos oferece em "exportar extrato") e CSV com colunas de data, descrição e valor. '
+    pend = fa.pendentes(DIR_DADOS)
+    if pend:
+        hist += "<h2>Arquivos para revisar</h2>" + tabela("Arquivos para revisar", ["Arquivo", "Motivo"], [[e(n), e(m)] for n, m in pend])
+    corpo = ('<p>Aceita OFX (a maioria dos bancos oferece em "exportar extrato"), CSV com colunas de data, descrição e valor e PDF de extrato ou de fatura. '
+             'O banco e o tipo (conta ou cartão) são identificados pelo conteúdo e pelo nome do arquivo; se você deixar o nome da conta em branco, uso o que eu identificar. '
              'Importar o mesmo arquivo de novo não duplica nada: lançamentos já vistos são pulados.</p>'
              f'<form method="post" action="/importar" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
-             '<label for="arquivo">Arquivo do extrato</label><input id="arquivo" name="arquivo" type="file" accept=".ofx,.csv,.txt" required>'
-             '<label for="conta">Nome da conta ou do cartão (por exemplo: Itaú conta, Nubank cartão)</label><input id="conta" name="conta" type="text" maxlength="60" required>'
+             '<label for="arquivo">Arquivo do extrato ou da fatura</label><input id="arquivo" name="arquivo" type="file" accept=".ofx,.csv,.txt,.pdf" required>'
+             '<label for="conta">Nome da conta ou do cartão (por exemplo: Itaú conta, Nubank cartão). Deixe em branco para eu identificar.</label><input id="conta" name="conta" type="text" maxlength="60">'
              '<label><input type="checkbox" name="inverter" value="1"> Neste CSV os gastos vêm com valor positivo (comum em fatura de cartão)</label>'
+             '<label><input type="checkbox" name="forcar" value="1"> Importar o PDF mesmo que o total do documento não confira com os lançamentos (só depois de revisar)</label>'
              '<button type="submit">Importar</button></form>'
-             '<p class="sub">Dica: extrato de conta e fatura de cartão devem ser importados com nomes de conta diferentes. O pagamento da fatura na conta vira "Pagamento de fatura" e não conta como despesa, porque os gastos já aparecem na fatura.</p>' + hist)
+             '<p class="sub">Dica: extrato de conta e fatura de cartão devem ser importados com nomes de conta diferentes. O pagamento da fatura na conta vira "Pagamento de fatura" e não conta como despesa, porque os gastos já aparecem na fatura. '
+             'Você também pode soltar os arquivos na pasta de entrada (heimdall finance --folder): o Heimdall importa sozinho o que conferir e separa o que deixar dúvida.</p>' + hist)
     return "Importar extrato", corpo
 
 
@@ -434,8 +441,9 @@ class Finance(BaseHTTPRequestHandler):
                 raise fn.ErroFinance("Escolha o arquivo do extrato.")
             if len(arq[1]) > MAX_ENVIO:
                 raise OverflowError
-            r = fn.importar(banco(), arq[1], arq[0], campos.get("conta", ""), campos.get("inverter") == "1")
-            sess["flash"] = ("ok", f"Importado ({r['formato']}): {r['lidas']} lançamentos lidos, {r['novas']} novos e {r['repetidas']} já existentes.")
+            r = fa.importar_arquivo(banco(), arq[1], arq[0], campos.get("conta", ""), campos.get("forcar") == "1",
+                                    True if campos.get("inverter") == "1" else None)
+            sess["flash"] = ("ok", f"Importado ({r['formato']}) na conta {r['conta']}: {r['lidas']} lançamentos lidos, {r['novas']} novos e {r['repetidas']} já existentes.")
             self._ir("/")
             return
         m = re.fullmatch(r"/transacao/(\d{1,9})", rota)
@@ -492,10 +500,24 @@ class Finance(BaseHTTPRequestHandler):
         self._ir("/", [self._cookie(token)])
 
 
+def _vigiar_entrada() -> None:
+    """A cada minuto importa o que foi solto em dados_financas/entrada. Só registra o nome do arquivo, nunca os valores."""
+    fa.preparar_pasta(DIR_DADOS)
+    while True:
+        try:
+            with _trava:
+                for r in fa.processar_entrada(banco(), DIR_DADOS):
+                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} entrada: {r['arquivo']} -> " + (f"{r['conta']} ({r['novas']} novos)" if r["ok"] else "para revisar") + "\n")
+        except Exception as ex:  # noqa: BLE001
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} entrada: erro {type(ex).__name__}\n")
+        time.sleep(60)
+
+
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
         sys.exit("Sem senha e código configurados o Heimdall Finance não sobe. Rode: python3 heimdall_acesso.py --tudo")
     banco()
+    threading.Thread(target=_vigiar_entrada, daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), Finance)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Finance em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))}; dados em {DIR_DADOS})\n")

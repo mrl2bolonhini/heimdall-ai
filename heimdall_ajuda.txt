@@ -168,11 +168,25 @@ Exemplos:
   heimdall games -e --status
 
 @ finance | Heimdall Finance, suas finanças em páginas de texto
-Abre o painel financeiro no navegador (porta 8016; de fora, finance.heimdall-ai.tech). Você importa extratos do banco e da fatura do cartão (OFX ou CSV); o painel classifica os gastos por categoria com regras que você ajusta (ao corrigir uma categoria, a regra nasce sozinha), mostra o resumo do mês com variação sobre o mês anterior, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara. Tudo em tabelas para leitor de tela. Os dados ficam só no Mac, na pasta dados_financas (fora do git), e nunca vão para a Cloudflare nem para modelo de fora. Usa o mesmo login do Cloud.
+Abre o painel financeiro no navegador (porta 8016; de fora, finance.heimdall-ai.tech). Você importa extratos do banco e faturas do cartão em OFX, CSV ou PDF; o painel identifica o banco (Nubank, Itaú, Mercado Pago) e se é conta ou cartão, classifica os gastos por categoria com regras que você ajusta (ao corrigir uma categoria, a regra nasce sozinha), mostra o resumo do mês com variação sobre o mês anterior, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara. Tudo em tabelas para leitor de tela. Os dados ficam só no Mac, na pasta dados_financas (fora do git), e nunca vão para a Cloudflare nem para modelo de fora. Usa o mesmo login do Cloud.
+PDF: o texto é lido e o total do documento (por exemplo "Total da fatura") é conferido com a soma dos lançamentos. Só o que confere é importado sozinho; o resto vai para revisar. A pasta de entrada (dados_financas/entrada) é vigiada a cada minuto: solte lá os arquivos; o que importar vai para importados e o que deixar dúvida vai para revisar, com o motivo.
 Opções:
   -h, --help           mostra esta ajuda
+  -o, --open           abre o painel no navegador (é o padrão sem opções)
+  -f, --folder         abre a pasta de entrada no Finder e lista os arquivos para revisar
+  -i, --inspect ARQ    mostra só a estrutura do arquivo (letras viram x, números viram 9) e copia para a área de transferência; serve para me mostrar o layout do seu banco sem enviar dados
+  -l, --lines N        com --inspect, quantas linhas mostrar (padrão 150)
+  -p, --preview ARQ    mostra o que seria importado, com a conferência do total, sem gravar
+  -m, --import ARQ     importa um arquivo (OFX, CSV ou PDF)
+  -a, --account NOME   com --import, o nome da conta ou do cartão (sem isso, usa o que for identificado)
+  -F, --force          com --import, importa o PDF mesmo que o total não confira (só depois de revisar)
+  -b, --inbox          importa agora o que estiver na pasta de entrada, sem esperar o minuto
 Exemplos:
   heimdall finance
+  heimdall finance --folder
+  heimdall finance --inspect ~/Downloads/fatura.pdf
+  heimdall finance --preview ~/Downloads/fatura.pdf
+  heimdall finance --import ~/Downloads/extrato.ofx --account "Itaú conta"
   heimdall logs --service finance
 
 @ n8n | Automações do n8n

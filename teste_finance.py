@@ -225,6 +225,24 @@ confere("arquivo ruim volta à tela de importar com mensagem", st == 303 and cab
 st, corpo, _ = pedir("/importar", ck)
 confere("a mensagem de erro aparece uma vez", "Não achei o cabeçalho" in corpo and "Não achei o cabeçalho" not in pedir("/importar", ck)[1], corpo[:200])
 
+try:
+    import io as _io
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas as _cv
+    _b = _io.BytesIO()
+    _c = _cv.Canvas(_b, pagesize=A4)
+    for _i, _l in enumerate(["Fatura do cartão Nubank", "Vencimento 10/12/2026", "03 NOV   Loja Teste   R$ 80,00", "Total da fatura R$ 80,00"]):
+        _c.drawString(40, 800 - 14 * _i, _l)
+    _c.save()
+    corpo_m, tipo_m = multipart({"csrf": csrf, "conta": ""}, ("fatura-nubank.pdf", _b.getvalue()))
+    st, _, cab = pedir("/importar", ck, dados=corpo_m, tipo=tipo_m)
+    confere("importar PDF pelo formulário, sem nome de conta, usa a conta identificada", st == 303 and cab.get("Location") == "/", (st, cab))
+    confere("a conta identificada foi gravada", fn.conectar(os.path.join(TMP, "financas.db")).execute("SELECT COUNT(*) FROM transacoes WHERE conta='Nubank cartão'").fetchone()[0] == 1)
+    st, corpo, _ = pedir("/importar", ck)
+    confere("a tela de importar aceita PDF e avisa da pasta de entrada", ".pdf" in corpo and "pasta de entrada" in corpo)
+except ImportError:
+    pass
+
 st, corpo, _ = pedir("/?mes=2026-01", ck)
 confere("resumo do mês mostra totais e tabela com legenda", st == 200 and "R$ 8.000,00" in corpo and "R$ 419,20" in corpo and "<caption>Gastos por categoria em janeiro de 2026</caption>" in corpo and 'scope="col"' in corpo, corpo[:500])
 confere("aviso de lançamentos sem categoria não aparece quando não há", "sem categoria neste mês" not in corpo)

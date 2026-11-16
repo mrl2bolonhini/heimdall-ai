@@ -196,9 +196,9 @@ def parse_ofx(texto: str) -> list:
 
 
 _COL = {
-    "data": ("data", "date", "dt", "data lancamento", "data do lancamento", "data da compra", "data movimento", "data transacao"),
+    "data": ("data", "date", "release_date", "dt", "data lancamento", "data do lancamento", "data da compra", "data movimento", "data transacao"),
     "desc": ("descricao", "historico", "lancamento", "title", "estabelecimento", "memo", "detalhes", "descricao do lancamento", "titulo", "name"),
-    "valor": ("valor", "amount", "value", "valor r$", "valor rs", "quantia", "valor da transacao"),
+    "valor": ("valor", "amount", "transaction_net_amount", "value", "valor r$", "valor rs", "quantia", "valor da transacao"),
     "debito": ("debito", "saida", "saidas", "valor debito"),
     "credito": ("credito", "entrada", "entradas", "valor credito"),
     "tipo": ("tipo", "tipo de lancamento", "d/c", "dc"),
@@ -273,6 +273,14 @@ def importar(con, dados: bytes, arquivo: str, conta: str, inverter: bool = False
     if not conta:
         raise ErroFinance("Diga a que conta ou cartão o extrato pertence (por exemplo: Itaú conta ou Nubank cartão).")
     formato, itens = ler_extrato(dados, inverter)
+    return importar_itens(con, itens, formato, arquivo, conta, agora)
+
+
+def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, agora: str = None) -> dict:
+    """Grava lançamentos já lidos (de OFX, CSV ou PDF), pulando os que já existem."""
+    conta = (conta or "").strip()[:60]
+    if not conta:
+        raise ErroFinance("Diga a que conta ou cartão o extrato pertence (por exemplo: Itaú conta ou Nubank cartão).")
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     regras = _regras(con)
     vistos = defaultdict(int)
@@ -295,7 +303,7 @@ def importar(con, dados: bytes, arquivo: str, conta: str, inverter: bool = False
             novas += 1
         else:
             repetidas += 1
-    con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES(?,?,?,?,?,?)", (arquivo[:120], conta, agora, formato, novas, repetidas))
+    con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES(?,?,?,?,?,?)", ((arquivo or "")[:120], conta, agora, formato, novas, repetidas))
     con.commit()
     return {"formato": formato, "lidas": len(itens), "novas": novas, "repetidas": repetidas}
 
