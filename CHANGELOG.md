@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Poker Texas hold'em
+- Novo jogo: Poker Texas hold'em, você contra o computador (mano a mano), com fichas de mentira. Duas cartas só suas, flop, turn e river, quatro rodadas de apostas, e vale a melhor mão de cinco entre as sete. O jogo lê as cartas, a mesa, o nome da sua mão e cada jogada do computador. Comandos: continuar, pagar, passar, apostar N, tudo, desistir, mao, fichas, tabela, dica, resumo.
+- As cegas começam em 5 e 10 e dobram a cada 6 mãos; a partida termina quando alguém fica sem fichas. O computador decide pela chance de ganhar (simulada) e pelo preço de pagar. Níveis: fácil (300 fichas, adversário que paga muito e aposta pouco, dicas à vontade), normal (200, adversário médio, 5 dicas) e difícil (200, adversário que aposta com força e blefa, sem dicas). O teste confere que o difícil vence a maioria das partidas contra o normal.
+- Entra na categoria Cartas. Novo teste: teste_jogos_poker.js (inclui partidas inteiras com conferência de fichas). heimdall games --play poker, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-16 - Poker caribenho
 - Novo jogo: Poker caribenho (Caribbean Stud) contra a banca, com créditos de mentira. Você aposta o ante, recebe cinco cartas abertas (o jogo lê a sua mão por nome) e decide entre aumentar (mais duas vezes o ante) e desistir. A banca mostra uma carta e só joga com Ás e Rei ou melhor; o aumento paga de 1 para 1 (par) a 100 para 1 (royal flush). Sem prêmio acumulado.
 - A dica simula as mãos possíveis da banca e diz se vale a pena aumentar. O teste mede que, jogando assim, a casa leva cerca de 5% do ante, como na teoria.

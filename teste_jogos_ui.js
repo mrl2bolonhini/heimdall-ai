@@ -157,6 +157,17 @@ t("poker caribenho: ante, leitura, decisão, dica e novo jogo", () => {
   campo.value = "desistir"; form.fire("submit"); assert(/desistiu/.test(j.an.textContent));
   botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível/.test(j.an.textContent));
 });
+t("poker: continuar, leitura, decisão, dica, fichas e novo jogo", () => {
+  const j = carregar("poker"), campo = j.id("comando"), form = j.jogo.all("form")[0];
+  assert(/Novo jogo, nível fácil: cada um começa com 300 fichas/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Continuar").fire("click"); assert(/Mão 1\./.test(j.an.textContent) && /Suas cartas:/.test(j.an.textContent) && /Sua vez/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Ler a mão e a mesa").fire("click"); assert(/Suas cartas:/.test(j.an.textContent) && /Pote:/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Dica").fire("click"); assert(/^Dica:/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Ler as fichas").fire("click"); assert(/Suas fichas:/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Desistir").fire("click"); assert(/desiste/.test(j.an.textContent) && /ganhou o pote/.test(j.an.textContent));
+  campo.value = "tabela"; form.fire("submit"); assert(/royal flush/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível/.test(j.an.textContent));
+});
 t("xadrez: lance, resposta do computador, consulta, erro e nova partida", () => {
   const j = carregar("xadrez"), campo = j.id("lance"), form = j.jogo.all("form")[0], hist = j.id("historico");
   assert(/Nova partida, nível médio/.test(j.an.textContent));

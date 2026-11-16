@@ -37,7 +37,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
 11. Bacará [FEITO: Bacará]
    Apostas no jogador, na banca ou no empate, com as regras de terceira carta aplicadas pelo próprio jogo e o resultado lido passo a passo. Créditos de mentira.
 
-12. Poker (Texas hold'em)
+12. Poker (Texas hold'em) [FEITO: Poker Texas hold'em]
    Contra o computador, com fichas de mentira. Cartas da mesa e da mão lidas por comando; o computador usa força da mão e posição para decidir. É o mais trabalhoso desta leva (apostas, blefe, vários níveis).
 
 13. Poker Caribenho [FEITO: Poker caribenho]

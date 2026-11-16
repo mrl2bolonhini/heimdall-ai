@@ -71,7 +71,7 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 token, sess = hc.nova_sessao()
 ck = f"{hc.COOKIE}={token}"
 st, corpo, cab = pedir("/", ck)
-confere("início lista as categorias com link e contagem", st == 200 and len(hj.CATALOGO) == 23 and len(hj.CATEGORIAS) == 6 and all(f"/categoria/{c[0]}" in corpo and c[1] in corpo for c in hj.CATEGORIAS), (st, corpo[:300]))
+confere("início lista as categorias com link e contagem", st == 200 and len(hj.CATALOGO) == 24 and len(hj.CATEGORIAS) == 6 and all(f"/categoria/{c[0]}" in corpo and c[1] in corpo for c in hj.CATEGORIAS), (st, corpo[:300]))
 for c in hj.CATEGORIAS:
     st_c, corpo_c, _ = pedir(f"/categoria/{c[0]}", ck)
     confere(f"categoria {c[0]} lista os seus jogos", st_c == 200 and all(f"/jogo/{i}" in corpo_c for i in c[3]), (st_c, corpo_c[:200]))
@@ -85,7 +85,7 @@ confere("a página é pt-BR com link de pular e título", 'lang="pt-BR"' in corp
 
 for jid, titulo, arq, resumo, como in hj.CATALOGO:
     st, corpo, _ = pedir(f"/jogo/{jid}", ck)
-    ok = (st == 200 and f"<h1>{titulo}</h1>" in corpo and 'id="jogo"' in corpo and 'role="status"' in corpo and 'aria-live="polite"' in corpo
+    ok = (st == 200 and f"<h1>{hj.e(titulo)}</h1>" in corpo and 'id="jogo"' in corpo and 'role="status"' in corpo and 'aria-live="polite"' in corpo
           and '<script src="/js/base.js" defer>' in corpo and f'<script src="/js/{arq}" defer>' in corpo and "Como jogar" in corpo)
     if jid in hj.HISTORIAS:
         ok = ok and f'data-historia="{jid}"' in corpo and corpo.index(f"/js/{arq}") < corpo.index("/js/motor.js")
