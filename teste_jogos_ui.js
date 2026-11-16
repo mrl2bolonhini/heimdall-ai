@@ -213,7 +213,7 @@ t("sons de apoio: o classificador escolhe sons só para jogadas, e nunca para co
   assert.equal(cue("Empate. Aposta devolvida.", "parar").pop(), "empate");
 });
 t("sons de apoio: regras por jogo (acerto, erro, tiro, fusão, vitória) e botão Sons em todos", () => {
-  const nomes = ["forca", "senha", "numero", "velha", "cincoletras", "sudoku", "naval", "xadrez", "minas", "gramado", "sonar", "aventura", "escolhas", "g2048"];
+  const nomes = ["forca", "senha", "numero", "velha", "cincoletras", "sudoku", "naval", "xadrez", "minas", "gramado", "sonar", "labirinto", "aventura", "escolhas", "g2048"];
   nomes.forEach(n => { const j = carregar(n); assert(botaoPorTexto(j.jogo, "Sons: ligados. Aperte para desligar"), "botão Sons em " + n); });
   const c = global.Heimdall.som.cueJogo;
   assert.equal(c("forca", "A letra A aparece 2 vezes."), "acerto");
@@ -233,6 +233,7 @@ t("sons de apoio: regras por jogo (acerto, erro, tiro, fusão, vitória) e botã
   assert.equal(c("sudoku", "Não dá: o 5 já está na linha."), "erro");
   assert.equal(c("sudoku", "Colocado 5 na linha 1, coluna 1."), "toque");
   assert.equal(c("historia", "Não entendi. Digite ajuda."), "erro");
+  assert.equal(c("labirinto", "Parede ao norte. Passagens: sul."), "batida"); assert.equal(c("labirinto", "Você foi 2 casas ao leste."), "passo"); assert.equal(c("labirinto", "Você chegou à saída! Foram 20 passos."), "grande");
 });
 t("sonar: botões, teclas, ping com eco falado depois do som e carga", () => {
   const log = [], esperas = []; audioFalso(log);
@@ -248,6 +249,23 @@ t("sonar: botões, teclas, ping com eco falado depois do som e carga", () => {
   botaoPorTexto(j.jogo, "Placar").fire("click"); assert(/Cargas restantes: 5/.test(j.an.textContent));
   const campo = j.id("comando"), form = j.jogo.all("form")[0]; campo.value = "oeste 2"; form.fire("submit"); assert(/2 casas ao oeste/.test(j.an.textContent));
   botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível fácil/.test(j.an.textContent));
+  delete global.AudioContext; global.setTimeout = st;
+});
+t("labirinto: botões, setas, parede com batida, farol com eco falado depois e chegada à saída", () => {
+  const log = [], esperas = []; audioFalso(log);
+  const st = global.setTimeout; global.setTimeout = (f, ms) => { esperas.push(ms); f(); };
+  const j = carregar("labirinto"); assert(/Novo labirinto, nível fácil, de 6 por 6/.test(j.an.textContent));
+  const tecla = (key, tagName) => doc.listeners.keydown.forEach(f => f({ key, target: { tagName: tagName || "BODY" }, preventDefault() {} }));
+  tecla("ArrowUp"); assert(/Parede ao norte/.test(j.an.textContent), "seta contra a parede");
+  esperas.length = 0; log.length = 0; botaoPorTexto(j.jogo, "Farol").fire("click");
+  assert(/Farol: a saída está a cerca de/.test(j.an.textContent) && /sudeste/.test(j.an.textContent)); assert(esperas.some(ms => ms >= 300), "fala só depois do eco"); assert(log.includes("tom"));
+  botaoPorTexto(j.jogo, "Dica").fire("click"); const dir = (j.an.textContent.match(/começa indo ao (\w+)/) || [])[1]; assert(dir, "dica diz a direção");
+  tecla({ norte: "ArrowUp", sul: "ArrowDown", leste: "ArrowRight", oeste: "ArrowLeft" }[dir]); assert(/Você foi 1 casa ao/.test(j.an.textContent), j.an.textContent);
+  botaoPorTexto(j.jogo, "Resumo").fire("click"); assert(/Passos: 1/.test(j.an.textContent));
+  const campo = j.id("comando"), form = j.jogo.all("form")[0];
+  for (let i = 0; i < 400 && !/Você chegou à saída/.test(j.an.textContent); i++) { botaoPorTexto(j.jogo, "Dica").fire("click"); const d = (j.an.textContent.match(/começa indo ao (\w+)/) || [])[1]; campo.value = d; form.fire("submit"); }
+  assert(/Você chegou à saída!/.test(j.an.textContent), "chegou à saída"); assert(campo.disabled, "campo travado no fim");
+  botaoPorTexto(j.jogo, "Novo labirinto").fire("click"); assert(!campo.disabled && /Novo labirinto/.test(j.an.textContent));
   delete global.AudioContext; global.setTimeout = st;
 });
 t("sons de apoio: caça-níqueis toca os rolos e o resultado", () => {

@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Novo jogo: Labirinto
+- Labirinto sorteado, na categoria Ação: você começa no canto de cima à esquerda e acha a saída no canto de baixo à direita, andando com norte, sul, leste e oeste (leste 3 anda até três casas; correr leste segue o corredor até uma bifurcação, um beco ou a saída). Cada labirinto tem um único caminho certo.
+- Três níveis: fácil (6 por 6, descreve as passagens a cada passo, farol e dicas à vontade), normal (9 por 9, descreve só cruzamentos, curvas e becos, farol 8 vezes e 4 dicas) e difícil (12 por 12, só fala o que você pedir com olhar, farol 3 vezes e 1 dica).
+- O farol diz a direção e a distância em linha reta até a saída (os corredores dão voltas); a dica diz o primeiro passo do caminho mais curto. No fim, o jogo compara os seus passos com o caminho mais curto.
+- O som é a camada de acessibilidade: passos ao andar, uma batida grave na parede e o farol ecoando do lado da saída, mais demorado quanto mais longe e mais agudo ao norte, com a fala vindo depois. As setas andam.
+- Novos testes: teste_jogos_labirinto.js (lógica) e o teste de interface do Labirinto em teste_jogos_ui.js. Para aplicar: heimdall update --restart (não precisa de instalador).
+
 ## 2026-11-16 - Novo jogo: Sonar
 - Sonar é um caça-submarinos por turnos, na categoria Tabuleiro e estratégia. Você comanda um navio num mar quadriculado (norte, sul, leste e oeste) e manda pings de sonar: o eco diz a que distância e em que direção (oito sentidos) está o submarino mais próximo, só de modo aproximado. Pingando de lugares diferentes você cruza as pistas e acha onde ele está; então lança uma carga de profundidade na casa exata.
 - Três níveis: fácil (mar de 8 por 8, 1 submarino, 20 pings, 6 cargas), normal (10 por 10, 2 submarinos) e difícil (12 por 12, 3 submarinos que se movem a cada ping). Os pings e as cargas são limitados; acabar com as cargas antes de afundar todos os submarinos é derrota.

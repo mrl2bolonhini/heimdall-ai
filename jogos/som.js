@@ -69,6 +69,7 @@
     explosao: function (c) { ruido(c, 0.4, 0, 0.5, 300); tom(c, 110, 0.5, 0, "sawtooth", 0.25, 35); return 600; },
     terra: function (c) { ruido(c, 0.05, 0, 0.2, 1500); return 100; },
     bandeira: function (c) { tom(c, 1200, 0.04, 0, "square", 0.1); tom(c, 900, 0.05, 0.05, "square", 0.1); return 140; },
+    batida: function (c) { ruido(c, 0.08, 0, 0.4, 250); tom(c, 90, 0.12, 0, "triangle", 0.3, 60); return 180; },
     passo: function (c) { ruido(c, 0.05, 0, 0.22, 600); return 100; }
   };
 
@@ -108,7 +109,7 @@
     if (/crash!|boom|pisou numa mina/.test(m)) return "explosao";
     if (/voce perdeu|a palavra era|acabaram as tentativas|toda a sua frota afundou|o computador ganhou|nao ha mais jogadas|fim de jogo|computador venceu|vitoria do computador/.test(m)) return "perdeu";
     if (/deu velha|empate/.test(m)) return "empate";
-    if (/voce ganhou|ganhou!|vitoria!|acertou a senha|acertou a palavra|acertou! o numero|voce acertou|parabens|cortou todo o gramado|abriu todas as casas seguras|voce chegou ao 2048|xeque-mate! vitoria das brancas|sudoku completo/.test(m)) return "grande";
+    if (/voce ganhou|ganhou!|vitoria!|acertou a senha|acertou a palavra|acertou! o numero|voce acertou|parabens|cortou todo o gramado|abriu todas as casas seguras|voce chegou ao 2048|xeque-mate! vitoria das brancas|sudoku completo|voce chegou a saida/.test(m)) return "grande";
     return null;
   }
   var REGRAS = {
@@ -123,6 +124,7 @@
     minas: function (m) { return /bandeira (colocada|marcada|posta)|marcou/.test(m) ? "bandeira" : /abriu|casa .* tem|zero minas|sem minas|aberta/.test(m) ? "terra" : null; },
     gramado: function (m) { return /sensor apitou/.test(m) ? "alerta" : /bandeira/.test(m) && /marc|pos/.test(m) ? "bandeira" : /^(cortou|andou|moveu|voce andou|voce cortou|chegou)/.test(m) ? "passo" : null; },
     g2048: function (m) { return /^moveu/.test(m) ? (/somando/.test(m) ? "fusao" : "mover") : /nada se moveu/.test(m) ? "erro" : null; },
+    labirinto: function (m) { return /^parede/.test(m) ? "batida" : /^voce foi/.test(m) ? "passo" : null; },
     sonar: function (m) { return /^voce foi/.test(m) ? "passo" : null; },
     historia: function () { return null; }
   };
