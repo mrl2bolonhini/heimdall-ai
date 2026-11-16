@@ -213,7 +213,7 @@ t("sons de apoio: o classificador escolhe sons só para jogadas, e nunca para co
   assert.equal(cue("Empate. Aposta devolvida.", "parar").pop(), "empate");
 });
 t("sons de apoio: regras por jogo (acerto, erro, tiro, fusão, vitória) e botão Sons em todos", () => {
-  const nomes = ["forca", "senha", "numero", "velha", "cincoletras", "sudoku", "naval", "xadrez", "minas", "gramado", "aventura", "escolhas", "g2048"];
+  const nomes = ["forca", "senha", "numero", "velha", "cincoletras", "sudoku", "naval", "xadrez", "minas", "gramado", "sonar", "aventura", "escolhas", "g2048"];
   nomes.forEach(n => { const j = carregar(n); assert(botaoPorTexto(j.jogo, "Sons: ligados. Aperte para desligar"), "botão Sons em " + n); });
   const c = global.Heimdall.som.cueJogo;
   assert.equal(c("forca", "A letra A aparece 2 vezes."), "acerto");
@@ -233,6 +233,22 @@ t("sons de apoio: regras por jogo (acerto, erro, tiro, fusão, vitória) e botã
   assert.equal(c("sudoku", "Não dá: o 5 já está na linha."), "erro");
   assert.equal(c("sudoku", "Colocado 5 na linha 1, coluna 1."), "toque");
   assert.equal(c("historia", "Não entendi. Digite ajuda."), "erro");
+});
+t("sonar: botões, teclas, ping com eco falado depois do som e carga", () => {
+  const log = [], esperas = []; audioFalso(log);
+  const st = global.setTimeout; global.setTimeout = (f, ms) => { esperas.push(ms); f(); };
+  const j = carregar("sonar"); assert(/Novo jogo, nível fácil: mar de 8 por 8/.test(j.an.textContent));
+  const tecla = (key, tagName) => doc.listeners.keydown.forEach(f => f({ key, target: { tagName: tagName || "BODY" }, preventDefault() {}, metaKey: false }));
+  tecla("ArrowRight"); assert(/Você foi 1 casa ao leste/.test(j.an.textContent), "seta move o navio");
+  esperas.length = 0; log.length = 0; botaoPorTexto(j.jogo, "Ping do sonar").fire("click");
+  assert(/Eco: o submarino mais próximo/.test(j.an.textContent)); assert(esperas.some(ms => ms >= 300), "o eco fala só depois do som"); assert(log.includes("tom"), "tocou o eco");
+  tecla("P"); assert(/Pings restantes: 18/.test(j.an.textContent), "a tecla P pinga");
+  tecla("p", "INPUT"); assert(/Pings restantes: 18/.test(j.an.textContent), "P digitado em outro campo não pinga");
+  botaoPorTexto(j.jogo, "Lançar carga").fire("click"); assert(/carga explodiu|Boom/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Placar").fire("click"); assert(/Cargas restantes: 5/.test(j.an.textContent));
+  const campo = j.id("comando"), form = j.jogo.all("form")[0]; campo.value = "oeste 2"; form.fire("submit"); assert(/2 casas ao oeste/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível fácil/.test(j.an.textContent));
+  delete global.AudioContext; global.setTimeout = st;
 });
 t("sons de apoio: caça-níqueis toca os rolos e o resultado", () => {
   const log = []; audioFalso(log);

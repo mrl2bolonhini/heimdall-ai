@@ -123,6 +123,7 @@
     minas: function (m) { return /bandeira (colocada|marcada|posta)|marcou/.test(m) ? "bandeira" : /abriu|casa .* tem|zero minas|sem minas|aberta/.test(m) ? "terra" : null; },
     gramado: function (m) { return /sensor apitou/.test(m) ? "alerta" : /bandeira/.test(m) && /marc|pos/.test(m) ? "bandeira" : /^(cortou|andou|moveu|voce andou|voce cortou|chegou)/.test(m) ? "passo" : null; },
     g2048: function (m) { return /^moveu/.test(m) ? (/somando/.test(m) ? "fusao" : "mover") : /nada se moveu/.test(m) ? "erro" : null; },
+    sonar: function (m) { return /^voce foi/.test(m) ? "passo" : null; },
     historia: function () { return null; }
   };
   function cueJogo(id, msg) {
@@ -136,6 +137,27 @@
   function dizer(id, msg, fala) {
     var c = cueJogo(id, msg), t = fala === undefined ? msg : fala;
     if (c) anunciar(c, t); else H.anunciar(t);
+  }
+  // Eco de sonar: um estalo de saída e, depois de um atraso proporcional à distância, o eco vindo do lado do alvo (pan por dx), mais agudo ao norte (dy > 0).
+  // dx é positivo para leste e dy positivo para norte. Devolve a duração total em milissegundos.
+  function eco(dx, dy, dist, alcance) {
+    if (!ligado) return 0;
+    var c = audio(); if (!c) return 0;
+    var d = Math.max(dist || 0, 0.0001), atraso = 0.2 + 1.3 * Math.min(1, (dist || 0) / (alcance || 1)), pan = Math.max(-1, Math.min(1, dx / d)), freq = 700 + 300 * Math.max(-1, Math.min(1, dy / d));
+    tom(c, 300, 0.05, 0, "square", 0.08);
+    try {
+      var t0 = c.currentTime + atraso, o = c.createOscillator(), g = c.createGain(), pn = c.createStereoPanner ? c.createStereoPanner() : null;
+      o.type = "sine"; o.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
+      o.connect(g); if (pn) { pn.pan.value = pan; g.connect(pn); pn.connect(c.destination); } else g.connect(c.destination);
+      o.start(t0); o.stop(t0 + 0.4);
+    } catch (x) { /* sem som */ }
+    return Math.round((atraso + 0.4) * 1000);
+  }
+  // Fala depois de uma duração em milissegundos (0 fala já).
+  function falarApos(ms, texto) {
+    if (!ms) { H.anunciar(texto); return; }
+    raiz.setTimeout(function () { H.anunciar(texto); }, ms + 120);
   }
   // Toca o som e só depois fala o texto.
   function anunciar(nomes, texto) {
@@ -153,6 +175,6 @@
     });
     rotulo(); if (jogo) jogo.appendChild(b); return b;
   }
-  H.som = { cueJogo: cueJogo, dizer: dizer, cue: cue, tocar: tocar, anunciar: anunciar, botao: botao, ligado: function () { return ligado; } };
+  H.som = { eco: eco, falarApos: falarApos, cueJogo: cueJogo, dizer: dizer, cue: cue, tocar: tocar, anunciar: anunciar, botao: botao, ligado: function () { return ligado; } };
   if (typeof module !== "undefined") module.exports = H.som;
 })(typeof window !== "undefined" ? window : globalThis);

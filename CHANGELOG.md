@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Novo jogo: Sonar
+- Sonar é um caça-submarinos por turnos, na categoria Tabuleiro e estratégia. Você comanda um navio num mar quadriculado (norte, sul, leste e oeste) e manda pings de sonar: o eco diz a que distância e em que direção (oito sentidos) está o submarino mais próximo, só de modo aproximado. Pingando de lugares diferentes você cruza as pistas e acha onde ele está; então lança uma carga de profundidade na casa exata.
+- Três níveis: fácil (mar de 8 por 8, 1 submarino, 20 pings, 6 cargas), normal (10 por 10, 2 submarinos) e difícil (12 por 12, 3 submarinos que se movem a cada ping). Os pings e as cargas são limitados; acabar com as cargas antes de afundar todos os submarinos é derrota.
+- O som é a camada de acessibilidade: o eco demora mais quanto mais longe está o alvo, vem do lado da direção e é mais agudo quando o alvo está ao norte; a fala só vem depois do eco. Atalhos: setas movem, P pinga e L lança (também há botões e comandos digitados).
+- Novos testes: teste_jogos_sonar.js (lógica) e o teste de interface do Sonar em teste_jogos_ui.js. Para aplicar: heimdall update --restart (não precisa de instalador).
+
 ## 2026-11-16 - Sons de apoio em todos os jogos e categoria Ação
 - Os sons de apoio chegaram aos demais jogos: Forca (acerto e erro de letra), Senha, Número secreto (som que sobe quando o número é maior e que desce quando é menor), Cinco letras, Jogo da velha, Sudoku, 2048 (deslizar e fundir peças), Xadrez (peça, captura e xeque), Batalha naval (água, tiro e afundou), Campo minado, Gramado (passos, bandeira, sensor e explosão) e as aventuras (som de recusa e de desfecho). Todos ganharam o botão Sons para ligar e desligar, e a escolha fica gravada no navegador.
 - A fala sempre espera o som terminar. Descrições longas, consultas e dicas não tocam nada: só acontecimentos claros e recusas.
