@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Blackjack e categoria Cassino
+- Novo jogo: Blackjack contra a banca, com créditos de mentira. Aposta par de 2 a 50 (apostar N ou repetir), pedir, parar, dobrar, dividir, mao, banca, saldo, tabela e dica. Blackjack natural paga 3 para 2, a banca compra até 17 e para em qualquer 17, e o sapato (4 ou 6 baralhos) é embaralhado de novo quando acaba.
+- Níveis: fácil (100 créditos, dicas à vontade), normal (100 créditos, 5 dicas) e difícil (60 créditos, sem dicas). A dica segue a estratégia básica; o teste mede que, jogando assim, a banca leva só cerca de 1% do apostado.
+- A categoria "Sorte" do portal passou a se chamar "Cassino" (caça-níqueis e blackjack).
+- Novo teste: teste_jogos_blackjack.js. heimdall games --play blackjack, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-16 - Paciência (Klondike) falada
 - Novo jogo: Paciência, com sete colunas, monte, descarte e quatro bases. Cartas escritas como 7C, QE ou "7 de copas". Comandos: comprar, mover CARTA para COLUNA (leva as cartas abertas em cima junto), mover descarte para COLUNA, subir CARTA/descarte/coluna N, mesa, coluna N, descarte, bases, dica, desfazer e resumo.
 - Níveis: fácil (compra 1, dicas à vontade), normal (compra 1, 3 dicas) e difícil (compra 3, sem dicas e sem desfazer). A dica prefere subir para a base, depois virar uma carta fechada, e só então comprar.
