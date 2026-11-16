@@ -3,7 +3,8 @@
 
 Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta jogos/; o que acontece na partida
 é dito em voz alta por uma região aria-live. Nada é gravado: o servidor só entrega as páginas.
-Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048 e uma aventura de texto.
+Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, xadrez, campo minado, painel da sorte e aventuras de texto
+(O Farol Apagado, A Mansão dos Relógios, O Templo Submerso, Estação Orion; as três últimas com níveis de dificuldade).
 
 Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
@@ -66,6 +67,8 @@ HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_JOGOS_HOSTS", "g
 COOKIE = nuvem.COOKIE
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 
+NIVEIS_TXT = ["Níveis: fácil (dicas à vontade e sem limite de passos), normal (3 dicas e limite de passos folgado) e difícil (sem dicas, limite apertado e enigmas a mais). Troque o nível e use Recomeçar.",
+              "Digite salvar para guardar a partida neste navegador e carregar para continuar depois. Digite objetivo, mapa, dica ou tempo quando precisar."]
 # id, título, arquivo, resumo, como jogar (uma frase por item)
 CATALOGO = [
     ("forca", "Forca", "forca.js", "Descubra a palavra letra por letra, com 7 erros permitidos.",
@@ -81,8 +84,37 @@ CATALOGO = [
     ("aventura", "O Farol Apagado", "aventura.js", "Aventura de texto: acenda a lâmpada do farol da ilha.",
      ["Digite comandos como olhar, ir norte, pegar lanterna, usar chave, inventário e ajuda.", "Dica: explore a casa do guarda antes de ir ao farol."]),
 ]
+CATALOGO += [
+    ("xadrez", "Xadrez", "xadrez.js", "Xadrez completo contra o computador, em três níveis, jogado por texto.",
+     ["Escreva o lance: e4, Cf3, Cxe5, O-O (roque), e8=D (promoção) ou de casa para casa, como e2 e4. As letras das peças são R rei, D dama, T torre, B bispo e C cavalo.",
+      "Para consultar o tabuleiro: tabuleiro, linha 4, coluna e, casa e4, pecas, lances, historico, material, ultimo, dica, desfazer e desistir. Digite ajuda para ver tudo.",
+      "Cada lance seu e a resposta do computador são lidos em voz alta, com a notação e uma frase falada."]),
+    ("minas", "Campo minado", "minas.js", "Abra as casas sem pisar numa mina, com três tamanhos de campo.",
+     ["O campo é uma tabela de botões; cada botão diz a linha, a coluna e o que há nele. Abra com Enter ou use o campo de comando.",
+      "Comandos: abrir 3 4, marcar 3 4, ler 3 4, linha 3, coluna 4, tudo e resumo. A primeira jogada nunca é uma mina.",
+      "Um número diz quantas minas há nas oito casas ao redor."]),
+    ("sorte", "Painel da sorte", "sorte.js", "Um painel de três dígitos e um botão: trinca ou sequência dá prêmio, o resto perde a aposta.",
+     ["Você começa com créditos de mentira (sem dinheiro de verdade) e escolhe apostar 1, 2 ou 5 por rodada.",
+      "Três dígitos iguais pagam muito; uma sequência, como 1 2 3 ou 9 0 1, paga menos; qualquer outra coisa perde a aposta.",
+      "O botão Ver os prêmios lê a tabela, e Ler o saldo diz como você está."]),
+    ("relogios", "A Mansão dos Relógios", "hist_relogios.js", "Aventura de mistério: descubra o que houve com o relojoeiro Heitor.",
+     ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, falar com ALGUÉM, digitar CÓDIGO no cofre e ajuda.", *NIVEIS_TXT]),
+    ("templo", "O Templo Submerso", "hist_templo.js", "Aventura de exploração: recupere o Amuleto do Sol antes que a maré suba.",
+     ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, digitar RESPOSTA no guardião e ajuda.", *NIVEIS_TXT]),
+    ("orion", "Estação Orion", "hist_orion.js", "Ficção científica: religue a energia e peça socorro antes que o oxigênio acabe.",
+     ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, falar com ZEL, digitar CÓDIGO e ajuda.", *NIVEIS_TXT]),
+]
+GRUPOS = [("Jogos clássicos", ["forca", "senha", "velha", "numero", "2048"]),
+          ("Tabuleiro e sorte", ["xadrez", "minas", "sorte"]),
+          ("Aventuras de texto", ["aventura", "relogios", "templo", "orion"])]
+# Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.
+HISTORIAS = {"relogios", "templo", "orion"}
 POR_ID = {j[0]: j for j in CATALOGO}
-ARQUIVOS_OK = {"base.js"} | {j[2] for j in CATALOGO}
+ARQUIVOS_OK = {"base.js", "motor.js"} | {j[2] for j in CATALOGO}
+
+
+def scripts_do_jogo(jid: str) -> list:
+    return ["base.js", POR_ID[jid][2], "motor.js"] if jid in HISTORIAS else ["base.js", POR_ID[jid][2]]
 
 
 def extras() -> list:
@@ -97,7 +129,7 @@ def extras() -> list:
 
 CSS = nuvem.CSS + """
 body{font-size:19px;line-height:1.7;max-width:50rem}
-main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3rem;font-size:1.25em}
+main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3rem;font-size:1.25em}h3{line-height:1.3;margin:1rem 0 .2rem;font-size:1.1em}
 .lista-jogos{list-style:none;padding:0}.lista-jogos li{margin:.8rem 0}
 #anuncio{border:1px solid var(--linha);padding:.7rem;margin:1rem 0;min-height:2.4rem}
 #jogo input[type=text]{font-size:1.1em;padding:.5rem;margin:.3rem 0;max-width:22rem;width:100%}
@@ -119,14 +151,17 @@ def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scr
 
 
 def pg_inicio() -> tuple:
-    itens = "".join(f'<li><h2><a href="/jogo/{e(j[0])}">{e(j[1])}</a></h2><p>{e(j[3])}</p></li>' for j in CATALOGO)
+    itens = ""
+    for titulo_grupo, ids in GRUPOS:
+        itens += f"<h2>{e(titulo_grupo)}</h2>" + '<ul class="lista-jogos">' + "".join(
+            f'<li><h3><a href="/jogo/{e(i)}">{e(POR_ID[i][1])}</a></h3><p>{e(POR_ID[i][3])}</p></li>' for i in ids) + "</ul>"
     ex = extras()
     outros = ""
     if ex:
         outros = ("<h2>Outros jogos hospedados aqui</h2><ul class=\"lista-jogos\">"
                   + "".join(f'<li><a href="{e(u)}">{e(n)}</a>' + (f": {e(d)}" if d else "") + "</li>" for n, u, d in ex) + "</ul>")
     corpo = ("<p>Jogos leves para jogar no navegador, feitos para leitor de tela: tudo é botão, campo de texto ou lista, e cada jogada é lida em voz alta. "
-             "Nada é guardado no servidor.</p>" f'<ul class="lista-jogos">{itens}</ul>{outros}')
+             "Nada é guardado no servidor.</p>" f"{itens}{outros}")
     return "Jogos", corpo, []
 
 
@@ -135,11 +170,12 @@ def pg_jogo(jid: str):
     if not j:
         return None
     como = "".join(f"<li>{e(t)}</li>" for t in j[4])
+    dado = f' data-historia="{e(jid)}"' if jid in HISTORIAS else ""
     corpo = (f'<p>{e(j[3])}</p><h2>Como jogar</h2><ol>{como}</ol><h2>Jogo</h2>'
              '<noscript><p class="erro">Este jogo precisa de JavaScript ligado no navegador.</p></noscript>'
-             '<div id="jogo"></div><div id="anuncio" role="status" aria-live="polite" aria-atomic="true"></div>'
+             f'<div id="jogo"{dado}></div><div id="anuncio" role="status" aria-live="polite" aria-atomic="true"></div>'
              '<p><a href="/">Voltar para todos os jogos</a></p>')
-    return j[1], corpo, ["base.js", j[2]]
+    return j[1], corpo, scripts_do_jogo(jid)
 
 
 def pg_entrar(erro: str = "") -> bytes:

@@ -20,10 +20,11 @@ class El {
 let reg = {};
 const doc = { activeElement: { tagName: "BODY" }, body: {}, createElement: (t) => new El(t), getElementById: (i) => reg[i] || null, listeners: {}, addEventListener(tp, f) { (this.listeners[tp] = this.listeners[tp] || []).push(f); } };
 global.document = doc; global.window = global; global.setTimeout = (f) => f();
-function carregar(nome) {
+function carregar(nome, historia) {
   reg = {}; doc.listeners = {};
   const jogo = new El("div"); jogo.setAttribute("id", "jogo"); const an = new El("div"); an.setAttribute("id", "anuncio");
-  ["base.js", nome + ".js"].forEach(f => { const p = path.join(__dirname, "jogos", f); delete require.cache[require.resolve(p)]; require(p); });
+  if (historia) jogo.setAttribute("data-historia", historia);
+  (historia ? ["base.js", nome + ".js", "motor.js"] : ["base.js", nome + ".js"]).forEach(f => { const p = path.join(__dirname, "jogos", f); delete require.cache[require.resolve(p)]; require(p); });
   return { jogo, an, id: (i) => reg[i] };
 }
 const botaoPorTexto = (jogo, txt) => jogo.all("button").filter(b => b.textContent === txt)[0];
@@ -73,4 +74,45 @@ t("aventura: história, comando e recomeço", () => {
   assert(/^> pegar fósforos/.test(hist.children[0].textContent));
   botaoPorTexto(j.jogo, "Recomeçar").fire("click"); assert.equal(hist.children.length, 1);
 });
+t("sorte: gira, lê saldo, prêmios e nova partida", () => {
+  const j = carregar("sorte"); assert(/Painel da sorte/.test(j.an.textContent) && /30 créditos/.test(j.an.textContent));
+  j.id("aposta").value = "1"; botaoPorTexto(j.jogo, "Girar").fire("click"); assert(/Saiu:/.test(j.an.textContent) && /Saldo:/.test(j.an.textContent));
+  assert(/^\[ \d \| \d \| \d \]$/.test(j.id("painel").textContent) && j.id("painel").attrs["aria-hidden"] === "true");
+  botaoPorTexto(j.jogo, "Ver os prêmios").fire("click"); assert(/trinca|iguais/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Ler o saldo").fire("click"); assert(/Rodadas: 1/.test(j.an.textContent));
+  for (let i = 0; i < 200 && !j.id("girar").disabled; i++) botaoPorTexto(j.jogo, "Girar").fire("click");
+  botaoPorTexto(j.jogo, "Nova partida").fire("click"); assert(/Nova partida com 30/.test(j.an.textContent) && !j.id("girar").disabled);
+});
+t("campo minado: grade de botões com rótulo, comando e novo jogo", () => {
+  const j = carregar("minas"), grade = j.id("grade"), campo = j.id("comando"), form = j.jogo.all("form")[0];
+  const bs = grade.all("button"); assert(bs.length > 20 && /linha 1, coluna 1, fechada/.test(bs[0].getAttribute("aria-label")));
+  bs[0].fire("click"); assert(/aberta|vazia|Você|casas/i.test(j.an.textContent));
+  campo.value = "resumo"; form.fire("submit"); assert(/mina/i.test(j.an.textContent));
+  campo.value = "marcar 5 5"; form.fire("submit"); assert(/marc/i.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Modo da grade: abrir").fire("click"); assert(/marcar/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível/.test(j.an.textContent));
+});
+t("xadrez: lance, resposta do computador, consulta, erro e nova partida", () => {
+  const j = carregar("xadrez"), campo = j.id("lance"), form = j.jogo.all("form")[0], hist = j.id("historico");
+  assert(/Nova partida, nível médio/.test(j.an.textContent));
+  campo.value = "e4"; form.fire("submit"); assert(/Você jogou/.test(j.an.textContent) && /O computador jogou/.test(j.an.textContent));
+  campo.value = "linha 1"; form.fire("submit"); assert(/Linha 1:/.test(j.an.textContent));
+  campo.value = "e9"; form.fire("submit"); assert(/Não entendi|não é permitido/.test(j.an.textContent));
+  campo.value = "desfazer"; form.fire("submit"); assert(/Desfeito/.test(j.an.textContent));
+  assert(/pre/.test(j.id("visual").tag) && j.id("visual").attrs["aria-hidden"] === "true" && /a b c d e f g h/.test(j.id("visual").textContent));
+  campo.value = "desistir"; form.fire("submit"); assert(campo.disabled);
+  botaoPorTexto(j.jogo, "Nova partida").fire("click"); assert(!campo.disabled && hist.children.length === 1);
+});
+const store = {}; global.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } };
+["relogios", "templo", "orion"].forEach(id => t(`aventura ${id}: níveis, comando, dica, salvar e carregar`, () => {
+  const j = carregar("hist_" + id, id), campo = j.id("comando"), form = j.jogo.all("form")[0], hist = j.id("historico");
+  assert(/Objetivo:/.test(hist.textContent) && /Nível normal/.test(hist.textContent));
+  j.id("nivel").value = "dificil"; botaoPorTexto(j.jogo, "Recomeçar").fire("click"); assert(/Nível difícil: sem dicas/.test(hist.children[0].textContent));
+  campo.value = "dica"; form.fire("submit"); assert(/não há dicas/.test(j.an.textContent));
+  j.id("nivel").value = "facil"; botaoPorTexto(j.jogo, "Recomeçar").fire("click"); assert(/dicas à vontade/.test(hist.children[0].textContent));
+  campo.value = "dica"; form.fire("submit"); assert(/Dica:/.test(j.an.textContent));
+  campo.value = "ir norte"; form.fire("submit"); campo.value = "salvar"; form.fire("submit"); assert(/salva/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Recomeçar").fire("click"); botaoPorTexto(j.jogo, "Carregar").fire("click"); assert(/Partida carregada/.test(j.an.textContent));
+  campo.value = "dançar"; form.fire("submit"); assert(/Não entendi/.test(j.an.textContent));
+}));
 console.log(`${ok} testes de interface passaram`); process.exit(falhas ? 1 : 0);

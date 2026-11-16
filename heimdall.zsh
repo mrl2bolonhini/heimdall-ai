@@ -60,7 +60,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" ;;
-    games) printf '%s\n' "-p=--play" "-l=--list" ;;
+    games) printf '%s\n' "-p=--play" "-l=--list" "-e=--extras" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
     backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
@@ -209,8 +209,9 @@ heimdall() {
       case "$1" in
         "") _heimdall_open "Heimdall Jogos" "http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)" ;;
         --play) _heimdall_open "Jogo $2" "http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)/jogo/$2" ;;
-        --list) echo "forca  senha  velha  numero  2048  aventura" ;;
-        *) echo "Use: heimdall games [--play JOGO] [--list]"; return 1 ;;
+        --list) echo "forca  senha  velha  numero  2048  xadrez  minas  sorte  aventura  relogios  templo  orion" ;;
+        --extras) shift; _heimdall_sh instalar_jogos_extras.sh "$@" ;;
+        *) echo "Use: heimdall games [--play JOGO] [--list] [--extras --enigma|--playaural|--status|--remover]"; return 1 ;;
       esac ;;
     n8n) _heimdall_open "n8n" "http://localhost:5678" ;;
     kuma) _heimdall_open "Uptime Kuma" "http://localhost:3001" ;;
@@ -326,7 +327,8 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary data
         else compadd -- --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
-      games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- forca senha velha numero 2048 aventura; else compadd -- --play --list; fi ;;
+      games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- forca senha velha numero 2048 xadrez minas sorte aventura relogios templo orion
+        elif [[ ${words[CURRENT-1]} == --extras ]]; then compadd -- --enigma --playaural --status --remover; else compadd -- --play --list --extras; fi ;;
       triage) compadd -- --complete-tests ;;
       db) compadd -- --sql ;;
       backup) compadd -- --prepare --password --run --list --verify --restore ;;

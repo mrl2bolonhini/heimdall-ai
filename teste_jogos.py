@@ -71,7 +71,8 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 token, sess = hc.nova_sessao()
 ck = f"{hc.COOKIE}={token}"
 st, corpo, cab = pedir("/", ck)
-confere("início lista os 6 jogos", st == 200 and all(f"/jogo/{j[0]}" in corpo for j in hj.CATALOGO) and len(hj.CATALOGO) == 6, (st, corpo[:300]))
+confere("início lista os 12 jogos em 3 grupos", st == 200 and all(f"/jogo/{j[0]}" in corpo for j in hj.CATALOGO) and len(hj.CATALOGO) == 12 and all(g in corpo for g, _ in hj.GRUPOS), (st, corpo[:300]))
+confere("todo jogo está em um grupo", sorted(i for _, ids in hj.GRUPOS for i in ids) == sorted(j[0] for j in hj.CATALOGO))
 csp = cab.get("Content-Security-Policy", "")
 confere("política de conteúdo só deixa script do próprio site", "script-src 'self'" in csp and "default-src 'none'" in csp and "connect-src 'none'" in csp, csp)
 confere("sem script embutido no HTML", "<script>" not in corpo and "onclick" not in corpo.lower())
@@ -82,12 +83,18 @@ for jid, titulo, arq, resumo, como in hj.CATALOGO:
     st, corpo, _ = pedir(f"/jogo/{jid}", ck)
     ok = (st == 200 and f"<h1>{titulo}</h1>" in corpo and 'id="jogo"' in corpo and 'role="status"' in corpo and 'aria-live="polite"' in corpo
           and '<script src="/js/base.js" defer>' in corpo and f'<script src="/js/{arq}" defer>' in corpo and "Como jogar" in corpo)
+    if jid in hj.HISTORIAS:
+        ok = ok and f'data-historia="{jid}"' in corpo and corpo.index(f"/js/{arq}") < corpo.index("/js/motor.js")
+    else:
+        ok = ok and "data-historia" not in corpo
     confere(f"página do jogo {jid}", ok, (st, corpo[:300]))
     st, js, cab = pedir(f"/js/{arq}", ck)
     confere(f"arquivo {arq} é servido como JavaScript", st == 200 and "javascript" in cab.get("Content-Type", "") and len(js) > 500, (st, cab.get("Content-Type")))
 
 st, _, _ = pedir("/js/base.js", ck)
 confere("base.js é servido", st == 200)
+st, js, cab = pedir("/js/motor.js", ck)
+confere("motor.js é servido", st == 200 and "javascript" in cab.get("Content-Type", "") and "HeimdallMotor" in js)
 for ruim in ("/js/../.env", "/js/..%2F.env", "/js/heimdall_jogos.py", "/js/teste.js", "/js/", "/jogo/../x", "/jogo/nao-existe", "/jogo/FORCA"):
     st, corpo, _ = pedir(ruim, ck)
     confere(f"recusa {ruim}", st in (404, 400) and "HEIMDALL" not in corpo and "SENHA_HASH" not in corpo, (st, corpo[:100]))

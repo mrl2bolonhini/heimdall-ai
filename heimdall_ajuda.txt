@@ -155,15 +155,18 @@ Exemplos:
   heimdall health -r 60
 
 @ games | Heimdall Jogos, jogos leves para leitor de tela
-Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos são forca, senha (Mastermind), jogo da velha, número secreto, 2048 e a aventura de texto O Farol Apagado; cada jogada é lida em voz alta pela região de anúncio da página. Usa o mesmo login do Cloud.
+Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). São doze jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, xadrez contra o computador, campo minado, o painel da sorte (créditos de mentira) e quatro aventuras de texto: O Farol Apagado, A Mansão dos Relógios, O Templo Submerso e Estação Orion (as três últimas com níveis fácil, normal e difícil, dicas, limite de passos, salvar e carregar); cada jogada é lida em voz alta pela região de anúncio da página. Usa o mesmo login do Cloud. Jogos de terceiros (Enigma, PlayAural) entram no portal por --extras.
 Opções:
-  -p, --play JOGO      abre direto um jogo: forca, senha, velha, numero, 2048, aventura
+  -p, --play JOGO      abre direto um jogo: forca, senha, velha, numero, 2048, xadrez, minas, sorte, aventura, relogios, templo, orion
+  -e, --extras OPÇÃO   jogos de terceiros no portal: --enigma (sobe em Docker, porta 8015), --playaural (só o link), --status, --remover
   -l, --list           lista os jogos
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall games
   heimdall games --play forca
   heimdall games -l
+  heimdall games --play xadrez
+  heimdall games -e --status
 
 @ n8n | Automações do n8n
 Abre o n8n no navegador (porta 5678).

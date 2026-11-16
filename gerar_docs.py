@@ -196,7 +196,7 @@ SERVICOS = [
     ("Emulador de AWS (Moto ou LocalStack)", "Para testar código de AWS sem custo.", "4566", "start_heimdall.sh (HEIMDALL_AWS_EMULATOR)"),
     ("Heimdall Notas", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
-    ("Heimdall Jogos", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048 e a aventura de texto O Farol Apagado. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Jogos", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, xadrez, campo minado, painel da sorte e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Saúde", "Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8013", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Cloud", "Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare.", "8010", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
 ]
@@ -259,7 +259,7 @@ SCRIPTS = [
     ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Cloud, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News e pelo Heimdall Notas: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
-    ("heimdall_jogos.py", "Heimdall Jogos (porta 8014): entrega os jogos da pasta jogos/ (JavaScript sem dependências, um arquivo por jogo) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
+    ("heimdall_jogos.py", "Heimdall Jogos (porta 8014): entrega os jogos da pasta jogos/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
     ("heimdall_painel_saude.py", "Heimdall Saúde (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Cloud (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
     ("heimdall_voz.py", "Dicionário de pronúncia: troca palavras por uma grafia que a voz do macOS lê certo (por exemplo, Heimdall vira Háimdal), no anúncio falado do subir.sh e no áudio das notas. Aceita --importar arquivo.csv para trazer as pronúncias do VoiceOver."),
     ("pronuncias.txt", "Pronúncias que vêm com o projeto, uma por linha no formato palavra = como falar. As suas ficam em pronuncias.local.txt, que não vai para o GitHub."),
@@ -342,6 +342,8 @@ COMANDOS = [
         ("Teste do painel do emulador de AWS (sem rede)", "python3 teste_cloud.py"),
         ("Teste do Heimdall Notas (sem rede)", "python3 teste_notas.py"),
         ("Teste do Heimdall News (sem rede)", "python3 teste_news.py"),
+        ("Teste do Heimdall Jogos (servidor, regras e interface)", "python3 teste_jogos.py"),
+        ("Teste do xadrez, das aventuras e dos jogos novos (Node)", "node teste_jogos_xadrez.js && node teste_historias.js && node teste_jogos_novos.js"),
         ("Teste do painel de saúde (sem rede)", "python3 teste_painel_saude.py"),
         ("Listar notas com título que parece cortado", "python3 heimdall_notas.py --titulos-suspeitos"),
         ("Teste dos trechos de livros do estudo (sem rede, precisa do Node)", "python3 teste_trechos.py"),
@@ -357,6 +359,7 @@ COMANDOS = [
         ("Fluxos básicos (AWS, versões, saúde do Mac, disponibilidade)", "bash instalar_fluxos_n8n.sh"),
         ("Fluxos avançados (GitOps, digest, Second Brain, estudo)", "bash instalar_automacoes_avancadas.sh"),
         ("Monitor de privacidade e diários oficiais", "bash instalar_monitor_privacidade.sh"),
+        ("Jogos de terceiros no portal (Enigma em Docker, link do PlayAural)", "bash instalar_jogos_extras.sh --enigma"),
         ("Mudar o que o monitor procura", "bash instalar_monitor_privacidade.sh --reconfigurar"),
         ("Vigia de e-mail de serviços públicos", "bash instalar_email_oficial.sh"),
         ("Conferir Querido Diário e Diário da Justiça", "python3 teste_diario_justica.py"),
@@ -735,20 +738,36 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>De fora de casa: games.heimdall-ai.tech, pelo túnel Cloudflare (veja Colocar no ar, abaixo).</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, do Notas, do News e do Saúde.</li></ol></section>
 <section aria-labelledby="lista"><h2 id="lista">Os jogos</h2>
+<h3>Clássicos</h3>
 <ul><li><strong>Forca:</strong> palavras em português por categoria, 7 erros; letra ou palavra inteira, sem se importar com acentos.</li>
 <li><strong>Senha (Mastermind):</strong> descubra 4 dígitos de 1 a 6 em até 10 tentativas; a dica diz quantos estão no lugar certo e quantos no lugar errado.</li>
 <li><strong>Jogo da velha:</strong> contra o computador, nos níveis fácil e difícil (no difícil ele não perde).</li>
 <li><strong>Número secreto:</strong> de 1 a 100, com as dicas maior e menor e o intervalo que sobrou.</li>
-<li><strong>2048:</strong> botões ou setas do teclado; cada jogada diz o que se moveu e onde surgiu a peça nova, e há um botão para ler o tabuleiro.</li>
-<li><strong>O Farol Apagado:</strong> aventura de texto com comandos como olhar, ir norte, pegar, usar e inventário.</li></ul>
-<p>Cada jogo está em um arquivo da pasta jogos/, em JavaScript sem dependências. Para abrir um direto: <code>heimdall games --play forca</code>.</p></section>
+<li><strong>2048:</strong> botões ou setas do teclado; cada jogada diz o que se moveu e onde surgiu a peça nova, e há um botão para ler o tabuleiro.</li></ul>
+<h3>Tabuleiro e sorte</h3>
+<ul><li><strong>Xadrez:</strong> partida completa contra o computador, com roque, en passant, promoção, xeque, mate, afogamento, repetição, regra dos cinquenta lances e material insuficiente. Você escreve o lance (e4, Cf3, Cxe5, O-O, e8=D ou de casa para casa, como e2 e4); as letras das peças são R rei, D dama, T torre, B bispo e C cavalo. Três níveis (fácil, médio e difícil), jogar de brancas ou de pretas, dica e desfazer. Para consultar: tabuleiro, linha 4, coluna e, casa e4, pecas, lances, historico, material e ultimo. O motor de regras foi conferido contra as contagens oficiais de lances (perft) de quatro posições de referência.</li>
+<li><strong>Campo minado:</strong> três tamanhos (fácil 6 por 6 com 5 minas, médio 9 por 9 com 10 e difícil 12 por 12 com 25). O campo é uma tabela de botões, cada um com o rótulo da linha, da coluna e do estado; também dá para jogar por comando: abrir 3 4, marcar 3 4, ler 3 4, linha 3, coluna 4, tudo e resumo. A primeira jogada nunca é uma mina.</li>
+<li><strong>Painel da sorte:</strong> um painel de três dígitos de 0 a 9 e um botão Girar. Três dígitos iguais (trinca) pagam 25 vezes a aposta; uma sequência de três, subindo ou descendo, como 1 2 3, 3 2 1, 9 0 1 ou 1 0 9, paga 10 vezes; qualquer outra combinação perde a aposta. Você começa com 30 créditos de mentira (nunca dinheiro de verdade) e aposta 1, 2 ou 5 por rodada. Os números ficam no começo de jogos/sorte.js, se quiser mudar.</li></ul>
+<h3>Aventuras de texto</h3>
+<ul><li><strong>O Farol Apagado:</strong> a aventura curta de introdução, com comandos como olhar, ir norte, pegar, usar e inventário.</li>
+<li><strong>A Mansão dos Relógios:</strong> mistério. O relojoeiro Heitor sumiu; é preciso achar chaves, uma engrenagem, um código de cofre e a passagem secreta atrás do grande relógio. Tem uma governanta para conversar.</li>
+<li><strong>O Templo Submerso:</strong> exploração contra a maré. Acender uma tocha, refletir o sol com um espelho, descer um poço com corda e vencer o enigma do guardião para trazer o Amuleto do Sol.</li>
+<li><strong>Estação Orion:</strong> ficção científica. Sem energia e com o ar acabando, religue o reator, converse com o robô ZEL e envie o pedido de socorro.</li></ul>
+<p>As três últimas rodam no mesmo motor (jogos/motor.js) e têm três níveis, que você escolhe antes de recomeçar: <strong>fácil</strong> (dicas à vontade e sem limite de passos), <strong>normal</strong> (3 dicas e limite de passos folgado) e <strong>difícil</strong> (sem dicas, limite apertado, enigmas a mais e perigos que acabam a partida, como andar no escuro). Comandos: olhar, ir norte/sul/leste/oeste/subir/descer, pegar, largar, examinar, usar ITEM, usar ITEM em ALGO, dar ITEM a ALGUÉM, falar com ALGUÉM, digitar CÓDIGO em ALGO, empurrar, puxar, girar, abrir, inventário, objetivo, mapa, dica, tempo, salvar, carregar e recomeçar. Salvar guarda a partida só neste navegador.</p>
+<p>Cada jogo está em um arquivo da pasta jogos/, em JavaScript sem dependências. As histórias do motor são só dados (jogos/hist_*.js), então dá para criar a sua copiando uma delas; o teste teste_historias.js confere as referências e joga a solução em cada nível. Para abrir um jogo direto: <code>heimdall games --play xadrez</code>.</p></section>
+<section aria-labelledby="terceiros"><h2 id="terceiros">Jogos de terceiros (opcional)</h2>
+<p>Alguns projetos de outras pessoas podem aparecer no portal, em "Outros jogos hospedados aqui". Nada disso foi testado com o VoiceOver, e eles não têm o login do Heimdall, então vale conhecer os limites de cada um.</p>
+<ol><li><strong>Enigma</strong> (<code>heimdall games --extras --enigma</code>): coleção de quebra-cabeças de palavras, números e lógica, como Sudoku, Kakuro e anagramas. Sobe em Docker, só neste Mac (porta 8015), com conta própria. A interface é em inglês ou espanhol, a licença é de uso pessoal e não declara acessibilidade: teste antes de contar com ele. Precisa do Docker Desktop aberto. O segredo de sessão é gerado e guardado só no .env.</li>
+<li><strong>PlayAural</strong> (<code>heimdall games --extras --playaural</code>): plataforma de jogos de áudio feita para leitor de tela, em play.ddt.one. É um serviço de terceiros na internet: o instalador só põe o link no portal, e o que você digitar lá vai para esse serviço. Hospedar uma cópia sua exigiria o PlayPalace (código aberto, Python 3.13 ou mais novo), o que não está montado aqui.</li>
+<li><strong>Outros (Parchment, para aventuras de texto de outros autores):</strong> player de ficção interativa de código aberto que roda no navegador. Não está incluído; se quiser, dá para servir os arquivos como mais um jogo hospedado e listá-lo em HEIMDALL_JOGOS_EXTRAS.</li></ol>
+<p><code>heimdall games --extras --status</code> mostra o que está listado, e <code>heimdall games --extras --remover</code> tira tudo do portal e para o contêiner (os dados do Enigma ficam no volume do Docker). Depois de mudar a lista, reinicie o serviço de jogos.</p></section>
 <section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
 <ol><li>Atualize e reinicie: <code>heimdall update --restart</code>. O servidor sobe sozinho quando há senha e código no .env.</li>
 <li>Conferir: <code>curl -s http://localhost:8014/saude</code> deve responder ok.</li>
 <li>Para acessar de fora, no painel da Cloudflare (Zero Trust, Redes, Túneis, o seu túnel, Public Hostnames), adicione o nome games.heimdall-ai.tech apontando para o serviço HTTP localhost:8014. O DNS é criado junto.</li>
 <li>Se algo falhar: <code>heimdall logs --service games</code></li></ol></section>
 <section aria-labelledby="mais"><h2 id="mais">Outros jogos</h2>
-<p>O portal também lista jogos que você hospeda à parte, como coleções de quebra-cabeças em Docker. Basta listá-los em HEIMDALL_JOGOS_EXTRAS no .env, no formato Nome|endereço|descrição, separados por ponto e vírgula, e reiniciar. Só endereços http e https são aceitos.</p></section>
+<p>O portal também lista jogos que você hospeda à parte. O comando <code>heimdall games --extras</code> cuida disso para o Enigma e o PlayAural; para outros, liste-os em HEIMDALL_JOGOS_EXTRAS no .env, no formato Nome|endereço|descrição, separados por ponto e vírgula, e reinicie. Só endereços http e https são aceitos.</p></section>
 <section aria-labelledby="seg"><h2 id="seg">Segurança</h2>
 <ul><li>Escuta só em 127.0.0.1, com login, limite de tentativas, sessão em cookie HttpOnly e lista de sites permitidos.</li>
 <li>A política de conteúdo só deixa rodar script do próprio site, sem script embutido nem conexões externas. Só os arquivos .js do catálogo são entregues.</li></ul></section>
