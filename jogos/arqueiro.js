@@ -64,7 +64,7 @@
     }
     e.erros++; if (a.tipo === "passaro") e.pontos -= 0;
     var dist = a.pos - e.mira;
-    return { msg: "Errou: o alvo estava " + plural(Math.abs(dist), "passo", "passos") + " " + (dist < 0 ? "à esquerda" : "à direita") + " da mira." + (e.flechas > 0 ? " Você ainda tem uma flecha." : ""), tipo: "erro", pos: e.mira };
+    return { msg: "Errou: o alvo estava " + plural(Math.abs(dist), "passo", "passos") + " " + (dist < 0 ? "à esquerda" : "à direita") + " da mira." + (e.flechas > 0 ? " Você ainda tem uma flecha." : ""), tipo: "erro", pos: e.mira, dist: dist };
   }
   function resultado(e) {
     var nota = e.pontos >= 24 ? "Excelente!" : e.pontos >= 15 ? "Muito bom." : e.pontos >= 6 ? "Bom começo." : "Treine mais, e use a dica de posição.";
@@ -121,28 +121,52 @@
   }
   var campoTeclas = H.el("input", { id: "teclas", type: "text", autocomplete: "off", spellcheck: "false", "aria-label": "Área de jogo: setas movem a mira e espaço atira. Também dá para digitar comandos e apertar Enter" });
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { var n = NIVEIS[k]; return H.el("option", { value: k, texto: n.nome.charAt(0).toUpperCase() + n.nome.slice(1) + (k === "facil" ? ": devagar e com tolerância de um passo" : k === "normal" ? ": ritmo médio, mira exata" : ": rápido, com corvos que não se deve atingir") }); }));
+  var FALA_PADRAO = { facil: "completa", normal: "curta", dificil: "nenhuma" };
+  var falaSel = H.el("select", { id: "fala" }, [["completa", "Completa: descreve tudo"], ["curta", "Curta: frases enxutas"], ["nenhuma", "Nenhuma: só os sons e o resultado final"]].map(function (o) { return H.el("option", { value: o[0], texto: o[1] }); }));
+  falaSel.value = FALA_PADRAO.facil;
+  nivelSel.addEventListener("change", function () { falaSel.value = FALA_PADRAO[nivelSel.value] || "completa"; });
+  // Filtra a fala conforme a narração escolhida. v descreve o que aconteceu; sem v (dicas, posição, ajuda, pontos) a fala é sempre completa, pois foi pedida.
+  function dizer(msg, v) {
+    if (!msg) return;
+    var m = falaSel.value;
+    if (m === "completa" || !v || semAudio) { H.anunciar(msg); return; }
+    var t = v.tipo, c = "";
+    if (t === "fim") c = m === "curta" ? "Fim. " + e.pontos + " pontos, " + e.acertos + " acertos." : msg;
+    else if (m === "curta") {
+      if (t === "novo") c = (v.alvo === "corvo" ? "Corvo, não atire. " : "Pássaro, ") + (v.pos < CENTRO ? "esquerda." : "direita.");
+      else if (t === "fugiu") c = /corvo/.test(msg) ? "Corvo passou." : "Escapou.";
+      else if (t === "acerto") c = "Acertou! Mais 3.";
+      else if (t === "corvo") c = "Corvo! Menos 2.";
+      else if (t === "erro") c = "Errou, " + Math.abs(v.dist) + (v.dist < 0 ? " à esquerda." : " à direita.");
+      else if (t === "vazio") c = /flechas/.test(msg) ? "Sem flechas." : "Sem alvo.";
+      else if (t === "alinhado") c = "Alinhado.";
+      else if (v.limite) c = "Limite.";
+      else c = msg;
+    }
+    if (c) H.anunciar(c);
+  }
   var iniciarBtn = H.el("button", { type: "button", texto: "Iniciar" }), pararBtn = H.el("button", { type: "button", texto: "Parar" });
   var teclado = H.el("div", { role: "group", "aria-label": "Controles" }, [["Esquerda", "esquerda"], ["Direita", "direita"], ["Atirar", "atirar"], ["Onde estou", "posicao"], ["Pontos", "pontos"], ["Ajuda", "ajuda"]].map(function (x) {
     var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { acao(x[1]); }); return b;
   }));
   var testeSom = H.el("button", { type: "button", texto: "Testar o som" });
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, iniciarBtn, pararBtn, testeSom, H.el("label", { "for": "teclas", texto: "Área de jogo (setas e espaço)" }), campoTeclas, teclado].forEach(function (x) { jogo.appendChild(x); });
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, H.el("label", { "for": "fala", texto: "Narração" }), falaSel, iniciarBtn, pararBtn, testeSom, H.el("label", { "for": "teclas", texto: "Área de jogo (setas e espaço)" }), campoTeclas, teclado].forEach(function (x) { jogo.appendChild(x); });
   function parar() { if (relogio) { raiz.clearInterval(relogio); relogio = null; } }
   function acao(txt) {
     var r = comando(e, txt); audio();
-    if (txt === "esquerda" || txt === "direita") { if (!r.limite) bip(1320, 0.07, pan(e.mira), "triangle", 0.2); else bip(220, 0.08, pan(e.mira), "square", 0.1); if (e.alvo && e.mira === e.alvo.pos && !r.limite) r.msg = "Mira alinhada com o alvo."; else if (!r.limite && !semAudio) r.msg = ""; }
+    if (txt === "esquerda" || txt === "direita") { if (!r.limite) bip(1320, 0.07, pan(e.mira), "triangle", 0.2); else bip(220, 0.08, pan(e.mira), "square", 0.1); if (e.alvo && e.mira === e.alvo.pos && !r.limite) { r.msg = "Mira alinhada com o alvo."; r.tipo = "alinhado"; } else if (!r.limite && !semAudio) r.msg = ""; }
     if (txt === "atirar") { var t = r.tipo; if (t === "acerto") { bip(600, 0.12, pan(r.pos), "square", 0.25, 1200); setTimeout(function () { bip(900, 0.15, pan(r.pos), "sine", 0.25); }, 110); } else if (t === "erro" || t === "corvo") bip(180, 0.25, pan(r.pos), "sawtooth", 0.25, 90); else bip(500, 0.08, pan(r.pos), "square", 0.1, 300); }
-    if (r.msg) H.anunciar(r.msg);
+    dizer(r.msg, r);
   }
   function passo() {
     var evs = tick(e); som(evs);
-    evs.forEach(function (v) { if (v.msg) H.anunciar(v.msg); });
+    evs.forEach(function (v) { dizer(v.msg, v); });
     if (semAudio && e.alvo) H.anunciar("Alvo " + lado(e.alvo.pos) + ".");
     if (e.fim) parar();
   }
   function iniciar() {
     parar(); e = novo(nivelSel.value); audio();
-    H.anunciar("Partida iniciada, nível " + e.nome + ", " + ALVOS + " alvos. " + (semAudio ? "Seu navegador não tem áudio estéreo, então vou dizer onde o alvo está. " : "Use fones de ouvido para o estéreo. ") + "A mira começa no centro. Setas movem a mira e espaço atira.");
+    if (falaSel.value !== "completa" && !semAudio) H.anunciar(falaSel.value === "curta" ? "Nível " + e.nome + ", " + ALVOS + " alvos." : "Começou."); else H.anunciar("Partida iniciada, nível " + e.nome + ", " + ALVOS + " alvos. " + (semAudio ? "Seu navegador não tem áudio estéreo, então vou dizer onde o alvo está. " : "Use fones de ouvido para o estéreo. ") + "A mira começa no centro. Setas movem a mira e espaço atira.");
     relogio = raiz.setInterval(passo, NIVEIS[e.nivel].tick); campoTeclas.focus();
   }
   iniciarBtn.addEventListener("click", iniciar);

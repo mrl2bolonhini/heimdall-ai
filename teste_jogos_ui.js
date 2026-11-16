@@ -195,6 +195,23 @@ t("arqueiro: teste de som toca os três sons em ordem e só depois fala a explic
   assert(sons.every(x => !x.falou), "nenhuma explicação falada enquanto os sons tocam");
   assert(/Você ouviu três sons: o primeiro só no fone esquerdo/.test(j.an.textContent), "explicação falada depois do último som");
 });
+t("arqueiro: narração completa, curta ou nenhuma, com padrão por nível", () => {
+  global.AudioContext = function () {
+    this.currentTime = 0; this.state = "running"; this.destination = {};
+    this.createOscillator = () => ({ type: "", frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {}, start() {}, stop() {} });
+    this.createGain = () => ({ gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} });
+    this.createStereoPanner = () => ({ pan: { value: 0 }, connect() {} });
+  };
+  const j = carregar("arqueiro"), fala = j.id("fala"), nivel = j.id("nivel");
+  assert.equal(fala.value, "completa", "fácil começa com narração completa");
+  nivel.value = "normal"; (nivel.listeners.change || []).forEach(f => f()); assert.equal(fala.value, "curta");
+  nivel.value = "dificil"; (nivel.listeners.change || []).forEach(f => f()); assert.equal(fala.value, "nenhuma");
+  const rodar = (modo) => { fala.value = modo; botaoPorTexto(j.jogo, "Iniciar").fire("click"); const ini = j.an.textContent; botaoPorTexto(j.jogo, "Atirar").fire("click"); const tiro = j.an.textContent; botaoPorTexto(j.jogo, "Parar").fire("click"); return { ini, tiro }; };
+  const c = rodar("completa"); assert(/Partida iniciada/.test(c.ini) && /Não há alvo no céu agora/.test(c.tiro));
+  const k = rodar("curta"); assert.equal(k.tiro, "Sem alvo."); assert(/alvos\.$/.test(k.ini) && k.ini.length < 40, "início curto");
+  const n = rodar("nenhuma"); assert.equal(n.ini, "Começou."); assert.equal(n.tiro, "Começou.", "sem aviso: a fala não muda");
+  delete global.AudioContext;
+});
 t("arqueiro: setas e espaço valem em qualquer lugar da página durante a partida, mas não em seletor, botão nem outro campo", () => {
   const j = carregar("arqueiro"), campo = j.id("teclas"), erro = () => { throw new Error("não deveria agir aqui"); };
   const tecla = (key, tagName, alvo) => doc.listeners.keydown.forEach(f => f({ key, target: alvo || { tagName }, preventDefault: tagName === "OK" ? () => {} : erro }));

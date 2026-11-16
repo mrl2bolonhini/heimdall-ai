@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Arqueiro de áudio: narração completa, curta ou nenhuma
+- Novo seletor "Narração" no jogo. Completa descreve tudo, como antes. Curta usa frases enxutas ("Pássaro, esquerda.", "Acertou! Mais 3.", "Errou, 6 à direita.", "Escapou."). Nenhuma deixa só os sons, o aviso de início ("Começou.") e o resultado final.
+- O padrão acompanha o nível: fácil com narração completa, normal com curta e difícil com nenhuma. Dá para trocar a narração à vontade, antes de iniciar.
+- Dicas pedidas por você (Onde estou, Pontos, Ajuda) e a pausa continuam sempre completas. Sem áudio no navegador, a narração fica completa, porque a fala é o único jeito de saber onde está o alvo.
+- Novo teste em teste_jogos_ui.js. Para aplicar: heimdall update --restart (não precisa de instalador).
+
 ## 2026-11-16 - Arqueiro de áudio: teste de som em sequência e setas que funcionam
 - O botão Testar o som agora toca os três sons (só esquerda, meio, só direita) um de cada vez, com folga entre eles, e só depois do último o VoiceOver lê a explicação. Antes a fala atropelava os sons. Clicar de novo reinicia o teste sem sobrepor.
 - As setas e o espaço passaram a valer em qualquer lugar da página enquanto a partida está rodando (antes só valiam com o foco dentro do campo de texto, e o VoiceOver costuma reter as setas fora dele). Continuam ignoradas no seletor de nível e em outros campos de texto, e o espaço não dispara tiro quando o foco está num botão. No campo do jogo, Enter ainda envia comandos digitados.
