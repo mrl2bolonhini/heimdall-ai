@@ -205,11 +205,15 @@ t("arqueiro: narração completa, curta ou nenhuma, com padrão por nível", () 
   const j = carregar("arqueiro"), fala = j.id("fala"), nivel = j.id("nivel");
   assert.equal(fala.value, "completa", "fácil começa com narração completa");
   nivel.value = "normal"; (nivel.listeners.change || []).forEach(f => f()); assert.equal(fala.value, "curta");
-  nivel.value = "dificil"; (nivel.listeners.change || []).forEach(f => f()); assert.equal(fala.value, "nenhuma");
+  nivel.value = "dificil"; (nivel.listeners.change || []).forEach(f => f()); assert.equal(fala.value, "minima");
   const rodar = (modo) => { fala.value = modo; botaoPorTexto(j.jogo, "Iniciar").fire("click"); const ini = j.an.textContent; botaoPorTexto(j.jogo, "Atirar").fire("click"); const tiro = j.an.textContent; botaoPorTexto(j.jogo, "Parar").fire("click"); return { ini, tiro }; };
   const c = rodar("completa"); assert(/Partida iniciada/.test(c.ini) && /Não há alvo no céu agora/.test(c.tiro));
   const k = rodar("curta"); assert.equal(k.tiro, "Sem alvo."); assert(/alvos\.$/.test(k.ini) && k.ini.length < 40, "início curto");
-  const n = rodar("nenhuma"); assert.equal(n.ini, "Começou."); assert.equal(n.tiro, "Começou.", "sem aviso: a fala não muda");
+  const n = rodar("minima"); assert.equal(n.ini, "Começou."); assert.equal(n.tiro, "Sem alvo.", "mínima: só o essencial");
+  const campo = j.id("teclas"), rot = () => campo.attrs["aria-label"];
+  fala.value = "minima"; (fala.listeners.change || []).forEach(f => f()); assert.equal(rot(), "Área de jogo.");
+  fala.value = "curta"; (fala.listeners.change || []).forEach(f => f()); assert(/^Área de jogo\. Setas movem a mira, espaço atira\.$/.test(rot()));
+  fala.value = "completa"; (fala.listeners.change || []).forEach(f => f()); assert(/Também dá para digitar comandos e apertar Enter/.test(rot()));
   delete global.AudioContext;
 });
 t("arqueiro: setas e espaço valem em qualquer lugar da página durante a partida, mas não em seletor, botão nem outro campo", () => {

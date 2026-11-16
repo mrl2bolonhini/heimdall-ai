@@ -3,8 +3,9 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-16 - Arqueiro de áudio: narração completa, curta ou nenhuma
-- Novo seletor "Narração" no jogo. Completa descreve tudo, como antes. Curta usa frases enxutas ("Pássaro, esquerda.", "Acertou! Mais 3.", "Errou, 6 à direita.", "Escapou."). Nenhuma deixa só os sons, o aviso de início ("Começou.") e o resultado final.
-- O padrão acompanha o nível: fácil com narração completa, normal com curta e difícil com nenhuma. Dá para trocar a narração à vontade, antes de iniciar.
+- Novo seletor "Narração" no jogo. Completa descreve tudo, como antes. Curta usa frases enxutas ("Pássaro, esquerda.", "Acertou! Mais 3.", "Errou, 6 à direita.", "Escapou."). Mínima fala só o essencial: "3 de 10." quando entra um alvo, "Acertou.", "Errou.", "Escapou.", "Corvo." e o resultado final.
+- O padrão acompanha o nível: fácil com narração completa, normal com curta e difícil com mínima. Dá para trocar a narração à vontade, antes de iniciar.
+- O rótulo do campo do jogo, que o VoiceOver lê toda vez que o foco entra nele, também segue a narração: completa lê a explicação toda (setas, espaço, comandos e Enter), curta lê "Área de jogo. Setas movem a mira, espaço atira." e mínima lê só "Área de jogo.".
 - Dicas pedidas por você (Onde estou, Pontos, Ajuda) e a pausa continuam sempre completas. Sem áudio no navegador, a narração fica completa, porque a fala é o único jeito de saber onde está o alvo.
 - Novo teste em teste_jogos_ui.js. Para aplicar: heimdall update --restart (não precisa de instalador).
 

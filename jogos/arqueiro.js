@@ -121,17 +121,24 @@
   }
   var campoTeclas = H.el("input", { id: "teclas", type: "text", autocomplete: "off", spellcheck: "false", "aria-label": "Área de jogo: setas movem a mira e espaço atira. Também dá para digitar comandos e apertar Enter" });
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { var n = NIVEIS[k]; return H.el("option", { value: k, texto: n.nome.charAt(0).toUpperCase() + n.nome.slice(1) + (k === "facil" ? ": devagar e com tolerância de um passo" : k === "normal" ? ": ritmo médio, mira exata" : ": rápido, com corvos que não se deve atingir") }); }));
-  var FALA_PADRAO = { facil: "completa", normal: "curta", dificil: "nenhuma" };
-  var falaSel = H.el("select", { id: "fala" }, [["completa", "Completa: descreve tudo"], ["curta", "Curta: frases enxutas"], ["nenhuma", "Nenhuma: só os sons e o resultado final"]].map(function (o) { return H.el("option", { value: o[0], texto: o[1] }); }));
+  var FALA_PADRAO = { facil: "completa", normal: "curta", dificil: "minima" };
+  var falaSel = H.el("select", { id: "fala" }, [["completa", "Completa: descreve tudo"], ["curta", "Curta: frases enxutas"], ["minima", "Mínima: só o essencial, como acertou, errou e 1 de 10"]].map(function (o) { return H.el("option", { value: o[0], texto: o[1] }); }));
+  var ROTULO_CAMPO = {
+    completa: "Área de jogo: setas movem a mira e espaço atira. Também dá para digitar comandos e apertar Enter",
+    curta: "Área de jogo. Setas movem a mira, espaço atira.",
+    minima: "Área de jogo."
+  };
+  function ajustarRotulo() { campoTeclas.setAttribute("aria-label", ROTULO_CAMPO[falaSel.value] || ROTULO_CAMPO.completa); }
   falaSel.value = FALA_PADRAO.facil;
-  nivelSel.addEventListener("change", function () { falaSel.value = FALA_PADRAO[nivelSel.value] || "completa"; });
+  nivelSel.addEventListener("change", function () { falaSel.value = FALA_PADRAO[nivelSel.value] || "completa"; ajustarRotulo(); });
+  falaSel.addEventListener("change", ajustarRotulo);
   // Filtra a fala conforme a narração escolhida. v descreve o que aconteceu; sem v (dicas, posição, ajuda, pontos) a fala é sempre completa, pois foi pedida.
   function dizer(msg, v) {
     if (!msg) return;
     var m = falaSel.value;
     if (m === "completa" || !v || semAudio) { H.anunciar(msg); return; }
     var t = v.tipo, c = "";
-    if (t === "fim") c = m === "curta" ? "Fim. " + e.pontos + " pontos, " + e.acertos + " acertos." : msg;
+    if (t === "fim") c = m === "curta" ? "Fim. " + e.pontos + " pontos, " + e.acertos + " acertos." : "Fim. " + e.pontos + " pontos.";
     else if (m === "curta") {
       if (t === "novo") c = (v.alvo === "corvo" ? "Corvo, não atire. " : "Pássaro, ") + (v.pos < CENTRO ? "esquerda." : "direita.");
       else if (t === "fugiu") c = /corvo/.test(msg) ? "Corvo passou." : "Escapou.";
@@ -142,6 +149,13 @@
       else if (t === "alinhado") c = "Alinhado.";
       else if (v.limite) c = "Limite.";
       else c = msg;
+    } else {
+      if (t === "novo") c = (v.alvo === "corvo" ? "Corvo, " : "") + e.lancados + " de " + ALVOS + ".";
+      else if (t === "fugiu") c = "Escapou.";
+      else if (t === "acerto") c = "Acertou.";
+      else if (t === "corvo") c = "Corvo.";
+      else if (t === "erro") c = "Errou.";
+      else if (t === "vazio") c = "Sem alvo.";
     }
     if (c) H.anunciar(c);
   }
