@@ -196,6 +196,52 @@ os.environ.pop("HEIMDALL_CFACCESS_AUD")
 st, _, cab = pedir("/entrar", {cfa.CABECALHO: jwt()})
 confere("desligando a configuração, o token deixa de valer", st == 200 and "Set-Cookie" not in cab, (st, cab))
 
+# --- convidados e escopo por serviço ---
+os.environ["HEIMDALL_CFACCESS_AUD"] = AUD + ",aud-do-app-games"
+os.environ["HEIMDALL_CFACCESS_CONVIDADOS"] = "ana@exemplo.test=jogos;beto@exemplo.test=jogos+finance;ruim@exemplo.test=Jogos Ruim!;sem-igual"
+cfg = cfa.config()
+confere("convidados lidos do .env, com vários serviços e lixo ignorado", cfg["convidados"] == {"ana@exemplo.test": {"jogos"}, "beto@exemplo.test": {"jogos", "finance"}}, cfg["convidados"])
+confere("duas AUDs separadas por vírgula", cfg["auds"] == {AUD, "aud-do-app-games"})
+confere("token de outra AUD da lista também vale", cfa.verificar_jwt(jwt({"aud": ["aud-do-app-games"]}), time.time()) == EMAIL)
+ana = jwt({"email": "ana@exemplo.test"})
+confere("convidado entra no serviço liberado", cfa.verificar_jwt(ana, servico="jogos") == "ana@exemplo.test")
+confere("convidado NÃO entra em outro serviço", cfa.verificar_jwt(ana, servico="cloud") is None and cfa.verificar_jwt(ana, servico="finance") is None and cfa.verificar_jwt(ana) is None)
+confere("convidado com dois serviços entra nos dois", cfa.verificar_jwt(jwt({"email": "beto@exemplo.test"}), servico="finance") == "beto@exemplo.test")
+confere("dono entra em qualquer serviço", all(cfa.verificar_jwt(jwt(), servico=s) == EMAIL for s in ("cloud", "notas", "news", "saude", "jogos", "finance")))
+confere("papéis", cfa.papel(EMAIL, "cloud") == "dono" and cfa.papel("ana@exemplo.test", "jogos") == "convidado" and cfa.papel("ana@exemplo.test", "cloud") is None)
+
+# sessões com escopo
+tk_dono, _ = hc.nova_sessao()
+tk_ana, s_ana = hc.nova_sessao("jogos")
+confere("sessão de dono vale em todo serviço e sem serviço", all(hc.sessao_valida(tk_dono, s) for s in ("cloud", "jogos", "finance", None)))
+confere("sessão de convidado vale só no serviço dela", s_ana is not None and hc.sessao_valida(tk_ana, "jogos") and not hc.sessao_valida(tk_ana, "cloud") and not hc.sessao_valida(tk_ana, "finance") and not hc.sessao_valida(tk_ana))
+p = tk_ana.split(".")
+trocado = ".".join([p[0], p[1], "finance~" + p[2].split("~", 1)[1], p[3]])
+confere("trocar o escopo do token invalida a assinatura", hc.sessao_valida(trocado, "finance") is None)
+confere("o escopo do token é lido do próprio token", hc._escopo_do_token(tk_ana) == "jogos" and hc._escopo_do_token(tk_dono) == "*")
+try:
+    hc.nova_sessao("Jogos; x")
+    confere("escopo inválido é recusado", False)
+except ValueError:
+    confere("escopo inválido é recusado", True)
+
+# HTTP: convidado no painel de jogos e dono no mesmo painel
+os.environ["HEIMDALL_CFACCESS_AUD"] = AUD
+cfa._cache.update(chaves={}, quando=0.0, tentou=0.0, equipe="")
+st, _, cab = pedir("/entrar", {cfa.CABECALHO: jwt({"email": "ana@exemplo.test"})})
+ck_ana = cab.get("Set-Cookie", "").split(";")[0]
+confere("convidado liberado para jogos recebe sessão no painel de jogos", st == 303 and ck_ana.startswith(hc.COOKIE + "="), (st, cab))
+st, corpo, _ = pedir("/", {"Cookie": ck_ana})
+confere("e com ela abre os jogos", st == 200 and "<h1>Jogos</h1>" in corpo)
+st, _, cab = pedir("/entrar", {cfa.CABECALHO: jwt({"email": "beto@exemplo.test"})})
+confere("convidado de dois serviços também entra em jogos", st == 303 and cab.get("Set-Cookie"))
+os.environ["HEIMDALL_CFACCESS_CONVIDADOS"] = "ana@exemplo.test=finance"
+st, _, cab = pedir("/entrar", {cfa.CABECALHO: jwt({"email": "ana@exemplo.test"})})
+confere("convidado liberado só para outro serviço não entra em jogos", st == 200 and "Set-Cookie" not in cab, (st, cab))
+st, _, _ = pedir("/", {"Cookie": ck_ana})
+confere("sessão antiga de convidado vale enquanto durar a sessão (derrubar: trocar a senha ou o código)", st == 200)
+os.environ.pop("HEIMDALL_CFACCESS_CONVIDADOS")
+
 # o login por senha e código segue intacto
 confere("login errado continua sendo recusado", hc.confere_senha("errada", hc.SENHA_HASH) is False)
 

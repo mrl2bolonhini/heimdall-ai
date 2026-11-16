@@ -382,7 +382,7 @@ class Painel(BaseHTTPRequestHandler):
             return None, None
         m = c.get(COOKIE)
         token = m.value if m else ""
-        return token, nuvem.sessao_valida(token)
+        return token, nuvem.sessao_valida(token, "saude")
 
     def _cookie(self, token: str, apagar: bool = False) -> tuple:
         return nuvem.cabecalho_cookie(token, self.headers.get("Host", ""), self._https(), apagar)
@@ -451,7 +451,7 @@ class Painel(BaseHTTPRequestHandler):
 
     def _entrar(self, metodo: str) -> None:
         if metodo == "GET":
-            via_access = nuvem.entrada_por_access(self.headers)  # aprovado no Cloudflare Access (Microsoft Authenticator), se ligado
+            via_access = nuvem.entrada_por_access(self.headers, "saude")  # aprovado no Cloudflare Access (Microsoft Authenticator), se ligado
             if via_access:
                 self._ir("/", [self._cookie(via_access)])
                 return

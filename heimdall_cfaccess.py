@@ -10,8 +10,14 @@ e, estando tudo certo, abrem a sessão sem pedir senha nem código de 6 dígitos
 Fica DESLIGADO até você preencher três valores no .env:
 
     HEIMDALL_CFACCESS_EQUIPE   nome da equipe no Cloudflare Zero Trust (a parte antes de .cloudflareaccess.com)
-    HEIMDALL_CFACCESS_AUD      "AUD tag" do aplicativo do Access (um texto comprido de letras e números)
-    HEIMDALL_CFACCESS_EMAILS   e-mails aceitos, separados por vírgula (o do usuário que você criou na Microsoft)
+    HEIMDALL_CFACCESS_AUD      "AUD tag" do aplicativo do Access; com mais de um aplicativo, separe as tags por vírgula
+    HEIMDALL_CFACCESS_EMAILS   e-mails de dono (entram em todos os painéis), separados por vírgula
+
+Opcional, para outras pessoas com acesso só a alguns painéis (use os nomes cloud, notas, news, saude, jogos, finance):
+
+    HEIMDALL_CFACCESS_CONVIDADOS   ana@exemplo.com=jogos;beto@exemplo.com=jogos+finance
+
+Mesmo que o Cloudflare deixe um convidado passar por engano em outro nome, o painel confere de novo e recusa.
 
 Acesso pelo Tailscale ou por localhost não passa pelo Cloudflare: nesses, continua valendo senha e código de 6 dígitos.
 
@@ -45,15 +51,24 @@ def config() -> dict:
     equipe = os.environ.get("HEIMDALL_CFACCESS_EQUIPE", "").strip().lower()
     if equipe.endswith(".cloudflareaccess.com"):
         equipe = equipe[: -len(".cloudflareaccess.com")]
-    aud = os.environ.get("HEIMDALL_CFACCESS_AUD", "").strip()
-    emails = {e.strip().lower() for e in os.environ.get("HEIMDALL_CFACCESS_EMAILS", "").split(",") if e.strip()}
-    return {"equipe": equipe, "aud": aud, "emails": emails}
+    auds = {a.strip() for a in os.environ.get("HEIMDALL_CFACCESS_AUD", "").split(",") if a.strip()}
+    donos = {e.strip().lower() for e in os.environ.get("HEIMDALL_CFACCESS_EMAILS", "").split(",") if e.strip()}
+    convidados = {}
+    for item in os.environ.get("HEIMDALL_CFACCESS_CONVIDADOS", "").split(";"):
+        if "=" not in item:
+            continue
+        email, servicos = item.split("=", 1)
+        email = email.strip().lower()
+        sv = {s.strip().lower() for s in servicos.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", s.strip().lower())}
+        if email and sv:
+            convidados[email] = sv
+    return {"equipe": equipe, "auds": auds, "donos": donos, "convidados": convidados}
 
 
 def ativo() -> bool:
-    """Só liga com os três valores e com a equipe em formato válido (vai para um endereço de internet)."""
+    """Só liga com equipe, pelo menos uma AUD e pelo menos um e-mail (dono ou convidado); a equipe vai para um endereço de internet."""
     c = config()
-    return bool(c["equipe"] and c["aud"] and c["emails"] and re.fullmatch(r"[a-z0-9][a-z0-9-]{0,62}", c["equipe"]))
+    return bool(c["equipe"] and c["auds"] and (c["donos"] or c["convidados"]) and re.fullmatch(r"[a-z0-9][a-z0-9-]{0,62}", c["equipe"]))
 
 
 def _b64(s: str) -> bytes:
@@ -103,8 +118,8 @@ def _assinatura_confere(n: int, e: int, assinada: bytes, assinatura: bytes) -> b
     return hmac.compare_digest(em, esperado)
 
 
-def verificar_jwt(token: str, agora: float = None, buscar=None):
-    """E-mail do usuário se o token do Access é legítimo e é de quem pode entrar; senão None."""
+def _validar(token: str, agora: float = None, buscar=None):
+    """E-mail do token se a assinatura e as claims (emissor, aplicativo, validade) conferem; não olha quem é quem."""
     if not ativo():
         return None
     c = config()
@@ -120,7 +135,7 @@ def verificar_jwt(token: str, agora: float = None, buscar=None):
         if corpo.get("iss") != f"https://{c['equipe']}.cloudflareaccess.com":
             return None
         aud = corpo.get("aud")
-        if c["aud"] not in (aud if isinstance(aud, list) else [aud]):
+        if not c["auds"].intersection(aud if isinstance(aud, list) else [aud]):
             return None
         exp = corpo.get("exp")
         if not isinstance(exp, (int, float)) or agora > exp + TOLERANCIA:
@@ -128,22 +143,47 @@ def verificar_jwt(token: str, agora: float = None, buscar=None):
         nbf = corpo.get("nbf")
         if isinstance(nbf, (int, float)) and agora < nbf - TOLERANCIA:
             return None
-        email = str(corpo.get("email", "")).strip().lower()
-        return email if email in c["emails"] else None
+        return str(corpo.get("email", "")).strip().lower() or None
     except Exception:  # noqa: BLE001 (token malformado: recusa)
         return None
 
 
-def email_do_pedido(cabecalhos) -> str:
+def papel(email: str, servico: str = None):
+    """"dono" (entra em todos os painéis), "convidado" (só nos serviços liberados para ele) ou None."""
+    c = config()
+    if email in c["donos"]:
+        return "dono"
+    if servico and servico in c["convidados"].get(email, ()):
+        return "convidado"
+    return None
+
+
+def verificar_jwt(token: str, agora: float = None, buscar=None, servico: str = None):
+    """E-mail do usuário se o token do Access é legítimo e esse usuário pode entrar neste serviço; senão None."""
+    email = _validar(token, agora, buscar)
+    return email if email and papel(email, servico) else None
+
+
+def identificar(cabecalhos, servico: str = None) -> tuple:
+    """(e-mail, papel) do pedido, ou (None, None). cabecalhos: o self.headers do servidor HTTP."""
+    if not ativo():
+        return None, None
+    email = _validar(cabecalhos.get(CABECALHO, ""))
+    p = papel(email, servico) if email else None
+    return (email, p) if p else (None, None)
+
+
+def email_do_pedido(cabecalhos, servico: str = None) -> str:
     """cabecalhos: o self.headers do servidor HTTP (ou qualquer objeto com .get)."""
-    return verificar_jwt(cabecalhos.get(CABECALHO, "")) if ativo() else None
+    return identificar(cabecalhos, servico)[0]
 
 
 def _status() -> None:
     c = config()
     print("Equipe:", c["equipe"] or "(vazio)")
-    print("AUD tag:", ("preenchida (%d caracteres)" % len(c["aud"])) if c["aud"] else "(vazio)")
-    print("E-mails aceitos:", len(c["emails"]))
+    print("AUD tags (uma por aplicativo do Access):", len(c["auds"]) or "(vazio)")
+    print("E-mails de dono (entram em todos os painéis):", len(c["donos"]))
+    print("Convidados (só nos serviços liberados):", ", ".join(f"{e.split('@')[0]}@... em {'+'.join(sorted(s))}" for e, s in c["convidados"].items()) or "nenhum")
     print("Entrada pelo Cloudflare Access:", "LIGADA" if ativo() else "desligada (faltam valores no .env)")
     if not ativo():
         return

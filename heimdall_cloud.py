@@ -209,8 +209,14 @@ def _assinar(texto: str) -> str:
 _revogadas = {}  # assinaturas de sessões encerradas neste processo (o cookie também é apagado no navegador)
 
 
+def _escopo_do_token(token: str) -> str:
+    """"*" (vale em todos os painéis) ou o nome de um serviço. O escopo vai dentro do sorteio, então a assinatura o protege."""
+    partes = (token or "").split(".")
+    return partes[2].split("~", 1)[0] if len(partes) == 4 and "~" in partes[2] else "*"
+
+
 def _dados_da_sessao(token: str, agora: float):
-    """Valida um token assinado (v1.validade.sorteio.assinatura). Devolve a validade ou None."""
+    """Valida um token assinado (v1.validade.escopo~sorteio.assinatura). Devolve a validade ou None."""
     partes = (token or "").split(".")
     if len(partes) != 4 or partes[0] != "v1" or not SENHA_HASH or not TOTP_SEGREDO:
         return None
@@ -225,19 +231,26 @@ def _dados_da_sessao(token: str, agora: float):
     return ate
 
 
-def nova_sessao() -> tuple:
-    """Sessão assinada, sem estado no servidor: qualquer um dos quatro serviços a reconhece (o cookie vale para o domínio todo)."""
+def nova_sessao(escopo: str = "*") -> tuple:
+    """Sessão assinada, sem estado no servidor. Com escopo "*" (você) qualquer serviço a reconhece, pois o cookie vale para o domínio todo;
+    com o nome de um serviço (um convidado do Cloudflare Access) só aquele serviço a aceita."""
+    if escopo != "*" and not re.fullmatch(r"[a-z0-9]{1,20}", escopo):
+        raise ValueError("escopo inválido")
     agora = time.time()
     ate = int(agora + SESSAO_SEG)
-    base = f"v1.{ate}.{secrets.token_urlsafe(12)}"
+    base = f"v1.{ate}.{escopo}~{secrets.token_urlsafe(12)}" if escopo != "*" else f"v1.{ate}.{secrets.token_urlsafe(12)}"
     token = f"{base}.{_assinar(base)}"
-    return token, sessao_valida(token)
+    return token, sessao_valida(token, escopo if escopo != "*" else None)
 
 
-def sessao_valida(token: str):
+def sessao_valida(token: str, servico: str = None):
+    """Sessão do token, ou None. Token com escopo de um serviço só vale quando o serviço pedido é esse mesmo."""
     agora = time.time()
     ate = _dados_da_sessao(token, agora)
     if ate is None:
+        return None
+    escopo = _escopo_do_token(token)
+    if escopo != "*" and escopo != servico:
         return None
     with _lock:
         for t in [t for t, s in _sessoes.items() if agora > s["ate"]]:
@@ -259,18 +272,19 @@ def encerrar_sessao(token: str) -> None:
             _revogadas[partes[3]] = True
 
 
-def entrada_por_access(cabecalhos):
+def entrada_por_access(cabecalhos, servico: str = None):
     """Sessão nova se o pedido trouxe um token válido do Cloudflare Access (aprovado no Microsoft Authenticator); senão None.
+    Dono: sessão de todos os painéis. Convidado: sessão só do serviço liberado para ele.
     Desligado por padrão: só vale com HEIMDALL_CFACCESS_EQUIPE, _AUD e _EMAILS no .env (ver heimdall_cfaccess.py)."""
     try:
         import heimdall_cfaccess as cfa
-        email = cfa.email_do_pedido(cabecalhos)
+        email, papel = cfa.identificar(cabecalhos, servico)
     except Exception:  # noqa: BLE001
         return None
     if not email:
         return None
-    token, _ = nova_sessao()
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} login aceito pelo Cloudflare Access ({email})\n")
+    token, _ = nova_sessao("*" if papel == "dono" else servico)
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} login aceito pelo Cloudflare Access ({email}, {papel})\n")
     return token
 
 
@@ -835,7 +849,7 @@ class Painel(BaseHTTPRequestHandler):
             return None, None
         m = c.get(COOKIE)
         token = m.value if m else ""
-        return token, sessao_valida(token)
+        return token, sessao_valida(token, "cloud")
 
     def _corpo(self, limite: int) -> bytes:
         try:
@@ -899,7 +913,7 @@ class Painel(BaseHTTPRequestHandler):
     # --- entrar / sair ---
     def _entrar(self, metodo: str) -> None:
         if metodo == "GET":
-            via_access = entrada_por_access(self.headers)  # aprovado no Cloudflare Access (Microsoft Authenticator), se ligado
+            via_access = entrada_por_access(self.headers, "cloud")  # aprovado no Cloudflare Access (Microsoft Authenticator), se ligado
             if via_access:
                 self._ir("/", [self._cookie(via_access)])
                 return
