@@ -126,8 +126,7 @@
     var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { acao(x[1]); }); return b;
   }));
   var testeSom = H.el("button", { type: "button", texto: "Testar o som" });
-  var areaJogo = H.el("div", { role: "application", "aria-label": "Área de jogo do arqueiro. Setas movem a mira e espaço atira" }, [H.el("label", { "for": "teclas", texto: "Área de jogo (setas e espaço)" }), campoTeclas]);
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, iniciarBtn, pararBtn, testeSom, areaJogo, teclado].forEach(function (x) { jogo.appendChild(x); });
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, iniciarBtn, pararBtn, testeSom, H.el("label", { "for": "teclas", texto: "Área de jogo (setas e espaço)" }), campoTeclas, teclado].forEach(function (x) { jogo.appendChild(x); });
   function parar() { if (relogio) { raiz.clearInterval(relogio); relogio = null; } }
   function acao(txt) {
     var r = comando(e, txt); audio();
@@ -150,14 +149,21 @@
   pararBtn.addEventListener("click", function () { parar(); H.anunciar("Partida pausada. " + resumo(e) + " Aperte Iniciar para recomeçar do zero."); });
   var temposTeste = [];
   testeSom.addEventListener("click", function () {
-    if (!audio()) { H.anunciar("Seu navegador não oferece áudio estéreo. O jogo funciona em texto: ele diz onde o alvo está."); return; }
-    if (ctx && ctx.state !== "running") H.anunciar("O áudio do navegador está " + ctx.state + ". Se não ouvir nada, toque em Testar o som outra vez e confira o volume e a saída de áudio.");
+    var c = audio();
+    if (!c) { H.anunciar("Seu navegador não oferece áudio estéreo. O jogo funciona em texto: ele diz onde o alvo está."); return; }
     temposTeste.forEach(function (t) { raiz.clearTimeout(t); }); temposTeste = [];
     // Os três sons tocam primeiro, com folga entre eles, e a explicação só é falada depois do último: assim o VoiceOver não atropela os sons.
-    bip(880, 0.25, -1, "sine", 0.3);
-    temposTeste.push(setTimeout(function () { bip(880, 0.25, 0, "sine", 0.3); }, 700));
-    temposTeste.push(setTimeout(function () { bip(880, 0.25, 1, "sine", 0.3); }, 1400));
-    temposTeste.push(setTimeout(function () { H.anunciar("Você ouviu três sons: o primeiro só no fone esquerdo, o segundo no meio e o terceiro só no fone direito. Se algum veio do lado errado, confira os fones."); }, 2100));
+    function tocar() {
+      bip(880, 0.25, -1, "sine", 0.3);
+      temposTeste.push(setTimeout(function () { bip(880, 0.25, 0, "sine", 0.3); }, 700));
+      temposTeste.push(setTimeout(function () { bip(880, 0.25, 1, "sine", 0.3); }, 1400));
+      temposTeste.push(setTimeout(function () { H.anunciar("Você ouviu três sons: o primeiro só no fone esquerdo, o segundo no meio e o terceiro só no fone direito. Se algum veio do lado errado, confira os fones."); }, 2100));
+    }
+    if (c.state === "suspended" && c.resume) {
+      var feito = false, ir = function () { if (!feito) { feito = true; tocar(); } };
+      try { var pr = c.resume(); if (pr && pr.then) pr.then(ir, ir); else ir(); } catch (x) { ir(); }
+      temposTeste.push(setTimeout(ir, 500));
+    } else tocar();
   });
   // Setas e espaço valem no campo do jogo e, com a partida rodando, em qualquer lugar da página (exceto no seletor de nível, nos campos de texto e no espaço sobre botões).
   document.addEventListener("keydown", function (ev) {

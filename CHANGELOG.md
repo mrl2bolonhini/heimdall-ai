@@ -5,8 +5,8 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-16 - Arqueiro de áudio: teste de som em sequência e setas que funcionam
 - O botão Testar o som agora toca os três sons (só esquerda, meio, só direita) um de cada vez, com folga entre eles, e só depois do último o VoiceOver lê a explicação. Antes a fala atropelava os sons. Clicar de novo reinicia o teste sem sobrepor.
 - As setas e o espaço passaram a valer em qualquer lugar da página enquanto a partida está rodando (antes só valiam com o foco dentro do campo de texto, e o VoiceOver costuma reter as setas fora dele). Continuam ignoradas no seletor de nível e em outros campos de texto, e o espaço não dispara tiro quando o foco está num botão. No campo do jogo, Enter ainda envia comandos digitados.
-- A área do jogo ganhou role="application" com rótulo, para o VoiceOver deixar as teclas passarem. Dica: se as setas ainda não responderem, desligue a Navegação Rápida (setas esquerda e direita juntas) ou use os botões e comandos.
-- Correção: o áudio do navegador (Safari) pode nascer suspenso e ficar mudo; o jogo agora o retoma antes de tocar e, se ele não estiver rodando, avisa em voz o estado dele.
+- Dica: se as setas ainda não responderem, desligue a Navegação Rápida do VoiceOver (setas esquerda e direita juntas) ou use os botões e comandos. (Testei marcar a área como role="application", mas isso atrapalhou o VoiceOver e foi desfeito.)
+- Correção: o áudio do navegador (Safari) pode nascer suspenso e ficar mudo; o Testar o som agora retoma o áudio e só então toca os três sons.
 - Novos testes em teste_jogos_ui.js. Para aplicar: heimdall update --restart (não precisa de instalador).
 
 ## 2026-11-16 - heimdall env grava as variáveis do Cloudflare Access
