@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Categorias em ordem alfabética e comandos com a grafia correta
+- As categorias da página de jogos agora aparecem em ordem alfabética: Ação, Aventuras de texto, Cartas, Cassino, Números e lógica, Palavras e letras e Tabuleiro e estratégia.
+- Os comandos mostrados nas ajudas, nos rótulos dos campos, nas mensagens e nas páginas de documentação agora usam a grafia correta: lançar, posição, histórico, dúzia, ímpar, peças e último. As formas sem acento (lancar, posicao, historico e assim por diante) continuam funcionando como alternativa, e as acentuadas também são aceitas quando você digita.
+- Na roleta, a aposta em ímpar agora é falada com acento.
+- Para aplicar: heimdall update --restart (não precisa de instalador).
+
 ## 2026-11-16 - Novo jogo: Labirinto
 - Labirinto sorteado, na categoria Ação: você começa no canto de cima à esquerda e acha a saída no canto de baixo à direita, andando com norte, sul, leste e oeste (leste 3 anda até três casas; correr leste segue o corredor até uma bifurcação, um beco ou a saída). Cada labirinto tem um único caminho certo.
 - Três níveis: fácil (6 por 6, descreve as passagens a cada passo, farol e dicas à vontade), normal (9 por 9, descreve só cruzamentos, curvas e becos, farol 8 vezes e 4 dicas) e difícil (12 por 12, só fala o que você pedir com olhar, farol 3 vezes e 1 dica).

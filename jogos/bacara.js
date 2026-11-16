@@ -87,7 +87,7 @@
     if (NIVEIS[e.nivel].dicas < 100) e.dicas--;
     return { msg: "Dica: no bacará você não decide nada depois de apostar, só escolhe o lado. Pelas regras, a banca vence um pouco mais que o jogador, e esta versão só devolve a aposta quando a banca vence com sete em três cartas: perda média de cerca de 1% na banca e de 1,2% no jogador. O empate paga 8 para 1, mas dá cerca de 14% de vantagem à casa, então é a pior aposta." + (NIVEIS[e.nivel].dicas < 100 ? " Dicas restantes: " + e.dicas + "." : "") };
   }
-  function ajuda() { return "Comandos: apostar VALOR LADO, com o lado jogador, banca ou empate (por exemplo, apostar 10 banca); repetir, para repetir a última aposta no mesmo lado; tabela; historico; saldo; dica; resumo."; }
+  function ajuda() { return "Comandos: apostar VALOR LADO, com o lado jogador, banca ou empate (por exemplo, apostar 10 banca); repetir, para repetir a última aposta no mesmo lado; tabela; histórico; saldo; dica; resumo."; }
   function norm(t) { return String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
   function comando(e, texto) {
     var t = norm(texto), p = t.split(" ").filter(Boolean), v = p[0] || "";
@@ -116,7 +116,7 @@
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = novo("facil");
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { var n = NIVEIS[k]; return H.el("option", { value: k, texto: n.nome.charAt(0).toUpperCase() + n.nome.slice(1) + ": " + n.inicio + " créditos" + (k === "facil" ? ", dicas à vontade" : k === "normal" ? ", 3 dicas" : ", sem dicas") }); }));
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
-  var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (apostar 10 banca, repetir, tabela, historico, saldo, dica, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
+  var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (apostar 10 banca, repetir, tabela, histórico, saldo, dica, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
   var valorSel = H.el("select", { id: "valor" }, [1, 2, 5, 10, 20, 50].map(function (n) { return H.el("option", { value: String(n), texto: n + (n === 1 ? " crédito" : " créditos") }); }));
   var lados = H.el("div", { role: "group", "aria-label": "Apostar" }, [["Apostar no jogador", "jogador"], ["Apostar na banca", "banca"], ["Apostar no empate", "empate"]].map(function (x) {
     var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + x[1]).msg, "apostar " + valorSel.value + " " + x[1]); }); return b;

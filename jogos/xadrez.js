@@ -347,7 +347,7 @@
   }
   function ajuda() {
     return "Digite o lance de um destes jeitos: e4 (peão), Cf3 (cavalo), Cxe5 (captura), exd5 (peão captura), O-O (roque pequeno), O-O-O (roque grande), e8=D (promove a dama), ou de casa para casa: e2 e4. " +
-      "As letras das peças são R rei, D dama, T torre, B bispo, C cavalo. Para consultar: tabuleiro, pecas, linha 4, coluna e, casa e4, lances, historico, material, ultimo, dica, desfazer, desistir.";
+      "As letras das peças são R rei, D dama, T torre, B bispo, C cavalo. Para consultar: tabuleiro, peças, linha 4, coluna e, casa e4, lances, histórico, material, último, dica, desfazer, desistir.";
   }
   function dica(g) {
     var m = escolher(g.e, "dificil", function () { return 0; }); return m ? "Sugestão: " + falar(g.e, m) + " (" + san(g.e, m) + ")." : "Não há lances.";

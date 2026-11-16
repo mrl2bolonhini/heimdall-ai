@@ -148,7 +148,7 @@
     return "Você tem " + meus + (meus === 1 ? " navio" : " navios") + " e o inimigo tem " + deles + ". Você atirou " + e.ele.tiros.filter(Boolean).length + " vezes.";
   }
   function ajuda() {
-    return "Para atirar, diga a casa: B7, ou tiro b7. Colunas de A a J, linhas de 1 a 10. Para consultar: linha 3, coluna c, tiros, inimigo (tiros do computador), frota (a sua frota), restantes (navios inimigos), resumo, ultimo, dica, desistir.";
+    return "Para atirar, diga a casa: B7, ou tiro b7. Colunas de A a J, linhas de 1 a 10. Para consultar: linha 3, coluna c, tiros, inimigo (tiros do computador), frota (a sua frota), restantes (navios inimigos), resumo, último, dica, desistir.";
   }
 
   function comando(e, texto) {

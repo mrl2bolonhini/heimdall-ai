@@ -28,7 +28,7 @@
     return { nivel: k, nome: n.nome, duplo: n.duplo, saldo: n.inicio, inicio: n.inicio, maximo: n.inicio, apostas: [], anteriores: [], hist: [], rodadas: 0, fim: false, rnd: rnd || sorteio };
   }
   function nomeAposta(a) {
-    return { numero: "número " + nomeNum(a.alvo), cor: a.alvo, par: a.alvo, alto: a.alvo === "alto" ? "alto (19 a 36)" : "baixo (1 a 18)", duzia: "dúzia " + a.alvo + (a.alvo === 1 ? " (1 a 12)" : a.alvo === 2 ? " (13 a 24)" : " (25 a 36)"), coluna: "coluna " + a.alvo }[a.tipo];
+    return { numero: "número " + nomeNum(a.alvo), cor: a.alvo, par: a.alvo === "impar" ? "ímpar" : a.alvo, alto: a.alvo === "alto" ? "alto (19 a 36)" : "baixo (1 a 18)", duzia: "dúzia " + a.alvo + (a.alvo === 1 ? " (1 a 12)" : a.alvo === 2 ? " (13 a 24)" : " (25 a 36)"), coluna: "coluna " + a.alvo }[a.tipo];
   }
   function ganhou(a, n) {
     if (n === 0 || n === DUPLO) return a.tipo === "numero" && a.alvo === n;
@@ -96,7 +96,7 @@
   }
   function resumo(e) { return "Nível " + e.nome + (e.duplo ? ", roleta americana" : ", roleta europeia") + ". Saldo: " + plural(e.saldo, "crédito", "créditos") + ", o maior foi " + e.maximo + ". Rodadas: " + e.rodadas + "."; }
   function ajuda() {
-    return "Comandos: apostar VALOR TIPO, com os tipos vermelho, preto, par, impar, alto, baixo, duzia 1 a 3, coluna 1 a 3 ou um número (por exemplo: apostar 5 vermelho; apostar 2 no 17; apostar 10 duzia 2; apostar 1 zero); girar; apostas; limpar; repetir; tabela; historico; saldo; resumo.";
+    return "Comandos: apostar VALOR TIPO, com os tipos vermelho, preto, par, ímpar, alto, baixo, dúzia 1 a 3, coluna 1 a 3 ou um número (por exemplo: apostar 5 vermelho; apostar 2 no 17; apostar 10 dúzia 2; apostar 1 zero); girar; apostas; limpar; repetir; tabela; histórico; saldo; resumo.";
   }
   function norm(t) { return String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
   function comando(e, texto) {
@@ -136,7 +136,7 @@
   var SOM = H.som; // sons de apoio: ficha ao apostar, bola ao girar, e um som de resultado antes da fala
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { var n = NIVEIS[k]; return H.el("option", { value: k, texto: n.nome.charAt(0).toUpperCase() + n.nome.slice(1) + ": " + n.inicio + " créditos, roleta " + (n.duplo ? "americana (com duplo zero)" : "europeia") }); }));
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
-  var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (apostar 5 vermelho, apostar 2 no 17, girar, apostas, limpar, repetir, tabela, historico, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
+  var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (apostar 5 vermelho, apostar 2 no 17, girar, apostas, limpar, repetir, tabela, histórico, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
   var valorSel = H.el("select", { id: "valor" }, [1, 2, 5, 10, 20].map(function (n) { return H.el("option", { value: String(n), texto: n + (n === 1 ? " crédito" : " créditos") }); }));
   var tipoSel = H.el("select", { id: "tipo" }, [["vermelho", "Vermelho"], ["preto", "Preto"], ["par", "Par"], ["impar", "Ímpar"], ["alto", "Alto (19 a 36)"], ["baixo", "Baixo (1 a 18)"], ["duzia 1", "Primeira dúzia"], ["duzia 2", "Segunda dúzia"], ["duzia 3", "Terceira dúzia"], ["coluna 1", "Coluna 1"], ["coluna 2", "Coluna 2"], ["coluna 3", "Coluna 3"], ["zero", "Zero"]].map(function (x) { return H.el("option", { value: x[0], texto: x[1] }); }));
   var numCampo = H.el("input", { id: "numero", type: "number", min: "0", max: "36", inputmode: "numeric" });

@@ -89,12 +89,12 @@
     return s;
   }
   function ajuda() {
-    return "Comandos: norte, sul, leste, oeste (ou n, s, l, o), e com um número anda várias casas, por exemplo leste 3. ping manda o sonar, que diz a que distância e em que direção está o submarino mais próximo, só de modo aproximado. lancar solta uma carga de profundidade na casa onde você está, e só acerta se o submarino estiver exatamente ali. onde diz a sua posição, resumo diz o placar. Para achar um submarino, pingue de lugares diferentes e cruze as direções. No som, o eco demora mais quando o alvo está longe, vem do lado onde ele está e é mais agudo quando ele está ao norte. Atalhos de teclado: setas movem, a letra P pinga e a letra L lança.";
+    return "Comandos: norte, sul, leste, oeste (ou n, s, l, o), e com um número anda várias casas, por exemplo leste 3. ping manda o sonar, que diz a que distância e em que direção está o submarino mais próximo, só de modo aproximado. lançar solta uma carga de profundidade na casa onde você está, e só acerta se o submarino estiver exatamente ali. onde diz a sua posição, resumo diz o placar. Para achar um submarino, pingue de lugares diferentes e cruze as direções. No som, o eco demora mais quando o alvo está longe, vem do lado onde ele está e é mais agudo quando ele está ao norte. Atalhos de teclado: setas movem, a letra P pinga e a letra L lança.";
   }
   function norm(t) { return String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
   function comando(e, texto) {
     var t = norm(texto), p = t.split(" ").filter(Boolean), v = p[0] || "";
-    if (!t) return { msg: "Digite um comando. Experimente: leste, ping, lancar ou ajuda." };
+    if (!t) return { msg: "Digite um comando. Experimente: leste, ping, lançar ou ajuda." };
     if (v === "ir" || v === "andar" || v === "mover") { p.shift(); v = p[0] || ""; }
     var d = DIR[v] ? v : ABREV[v];
     if (d) return mover(e, d, Number((p[1] || "").replace(/\D/g, "")) || 1);
@@ -115,7 +115,7 @@
   if (H.som) H.som.botao(jogo);
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { var n = NIVEIS[k]; return H.el("option", { value: k, texto: n.nome.charAt(0).toUpperCase() + n.nome.slice(1) + ": mar de " + n.l + " por " + n.c + ", " + plural(n.subs, "submarino", "submarinos") + (n.move ? ", que se movem" : "") }); }));
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
-  var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (norte, sul, leste, oeste, leste 3, ping, lancar, onde, resumo, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
+  var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (norte, sul, leste, oeste, leste 3, ping, lançar, onde, resumo, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
   function btn(txt, cmd) { var b = H.el("button", { type: "button", texto: txt }); b.addEventListener("click", function () { agir(cmd); }); return b; }
   var mover4 = H.el("div", { role: "group", "aria-label": "Mover o navio" }, [btn("Norte", "norte"), btn("Sul", "sul"), btn("Leste", "leste"), btn("Oeste", "oeste")]);
   var acoes = H.el("div", { role: "group", "aria-label": "Ações" }, [btn("Ping do sonar", "ping"), btn("Lançar carga", "lancar"), btn("Onde estou", "onde"), btn("Placar", "resumo"), btn("Ajuda", "ajuda")]);

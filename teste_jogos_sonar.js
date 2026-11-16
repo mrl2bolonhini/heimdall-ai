@@ -52,4 +52,8 @@ t("sonar: comandos em português, com atalhos, e recusas", () => {
   assert(/Eco/.test(S.comando(e, "sonar").msg)); assert(/Você está na linha/.test(S.comando(e, "onde").msg)); assert(/Submarinos afundados: 0 de 1/.test(S.comando(e, "resumo").msg));
   assert(/Comandos:/.test(S.comando(e, "ajuda").msg)); assert(/Não entendi/.test(S.comando(e, "xyz").msg)); assert(/Digite um comando/.test(S.comando(e, "").msg));
 });
+t("sonar: a ajuda mostra a grafia correta (lançar, posição) e as formas com e sem acento funcionam", () => {
+  const e = com([[1, 1]]); const aj = S.comando(e, "ajuda").msg; assert(/lançar/.test(aj) && /posição|onde/.test(aj)); assert(!/\blancar\b/.test(aj), "sem a forma errada na ajuda");
+  assert(/carga explodiu/.test(S.comando(e, "lançar").msg)); assert(/carga explodiu/.test(S.comando(e, "lancar").msg)); assert(/Você está na linha/.test(S.comando(e, "posição").msg));
+});
 console.log(ok + " testes do sonar passaram");

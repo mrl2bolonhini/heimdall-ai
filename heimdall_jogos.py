@@ -18,6 +18,7 @@ Variáveis opcionais no .env: HEIMDALL_JOGOS_PORT (8014), HEIMDALL_JOGOS_HOST (1
 HEIMDALL_JOGOS_HOSTS (games.heimdall-ai.tech,localhost,127.0.0.1) e HEIMDALL_JOGOS_EXTRAS: outros jogos que você hospeda
 (por exemplo Enigma), no formato "Nome|http://localhost:8015|descrição;Outro|https://exemplo.test|descrição".
 """
+import unicodedata
 import html
 import os
 import re
@@ -95,16 +96,16 @@ CATALOGO += [
       "Níveis: fácil (40 números dados, o jogo avisa na hora se o número não é o certo, dicas à vontade), normal (32, 3 dicas, e verificar aponta os erros) e difícil (26, sem dicas). Números repetidos em linha, coluna ou quadrante são sempre recusados."]),
     ("xadrez", "Xadrez", "xadrez.js", "Xadrez completo contra o computador, em três níveis, jogado por texto.",
      ["Escreva o lance: e4, Cf3, Cxe5, O-O (roque), e8=D (promoção) ou de casa para casa, como e2 e4. As letras das peças são R rei, D dama, T torre, B bispo e C cavalo.",
-      "Para consultar o tabuleiro: tabuleiro, linha 4, coluna e, casa e4, pecas, lances, historico, material, ultimo, dica, desfazer e desistir. Digite ajuda para ver tudo.",
+      "Para consultar o tabuleiro: tabuleiro, linha 4, coluna e, casa e4, peças, lances, histórico, material, último, dica, desfazer e desistir. Digite ajuda para ver tudo.",
       "Cada lance seu e a resposta do computador são lidos em voz alta, com a notação e uma frase falada."]),
     ("naval", "Batalha naval", "naval.js", "Afunde a frota do computador antes que ele afunde a sua, em três níveis.",
      ["O tabuleiro tem colunas de A a J e linhas de 1 a 10. Para atirar, diga a casa: B7, ou tiro b7. As duas frotas (porta-aviões, encouraçado, cruzador, submarino e destróier) são sorteadas.",
-      "Para consultar: frota (onde estão os seus navios), tiros, inimigo (tiros do computador), restantes (navios inimigos), linha 3, coluna c, resumo, ultimo e dica.",
+      "Para consultar: frota (onde estão os seus navios), tiros, inimigo (tiros do computador), restantes (navios inimigos), linha 3, coluna c, resumo, último e dica.",
       "Níveis: fácil (o computador atira ao acaso), normal (caça em volta dos acertos) e difícil (calcula onde os navios restantes mais cabem)."]),
     ("sonar", "Sonar", "sonar.js", "Caça-submarinos: mande pings de sonar, cruze as direções do eco e lance cargas de profundidade.",
      ["Você comanda um navio num mar quadriculado e anda com norte, sul, leste e oeste (leste 3 anda até três casas).",
       "O comando ping manda o sonar: o eco diz a que distância e em que direção está o submarino mais próximo, só de modo aproximado. Pingando de lugares diferentes você cruza as pistas e descobre onde ele está.",
-      "O comando lancar solta uma carga de profundidade na casa onde você está, e só acerta se o submarino estiver exatamente ali. Os pings e as cargas são limitados; no nível difícil os submarinos se movem.",
+      "O comando lançar solta uma carga de profundidade na casa onde você está, e só acerta se o submarino estiver exatamente ali. Os pings e as cargas são limitados; no nível difícil os submarinos se movem.",
       "No som, o eco demora mais quando o alvo está longe, vem do lado dele e é mais agudo quando ele está ao norte. Atalhos: setas movem, P pinga e L lança."]),
     ("labirinto", "Labirinto", "labirinto.js", "Ache a saída de um labirinto sorteado, ouvindo as passagens de cada lugar e usando o farol quando se perder.",
      ["Você começa no canto de cima à esquerda e a saída fica no canto de baixo à direita. Ande com norte, sul, leste e oeste (leste 3 anda até três casas; correr leste segue pelo corredor até uma bifurcação).",
@@ -139,14 +140,14 @@ CATALOGO += [
       "Comandos: apostar N (ou repetir), pedir, parar, dobrar, dividir, mao, banca, saldo, tabela, dica. A dica segue a estratégia básica do blackjack."]),
     ("roleta", "Roleta", "roleta.js", "Roleta com créditos de mentira: aposte em cor, número, dúzia e mais, e mande girar.",
      ["Você faz uma ou mais apostas e manda girar; o jogo lê onde a bola parou e o que cada aposta rendeu.",
-      "Apostas: vermelho, preto, par, impar, alto, baixo, duzia 1 a 3, coluna 1 a 3 ou um número de 0 a 36, por exemplo apostar 5 vermelho ou apostar 2 no 17.",
+      "Apostas: vermelho, preto, par, ímpar, alto, baixo, dúzia 1 a 3, coluna 1 a 3 ou um número de 0 a 36, por exemplo apostar 5 vermelho ou apostar 2 no 17.",
       "Número paga 35 para 1, dúzia e coluna 2 para 1, o resto 1 para 1. Fácil e normal: roleta europeia (um zero). Difícil: americana, com zero e duplo zero.",
-      "Comandos: apostar, girar, apostas, limpar, repetir, tabela, historico, saldo."]),
+      "Comandos: apostar, girar, apostas, limpar, repetir, tabela, histórico, saldo."]),
     ("bacara", "Bacará", "bacara.js", "Bacará com créditos de mentira: aposte no jogador, na banca ou no empate; o jogo dá as cartas e lê tudo.",
      ["Você escolhe o lado (jogador, banca ou empate) e o valor; o jogo dá as cartas, aplica as regras da terceira carta e lê cada passo.",
       "Valores: Ás vale 1, de 2 a 9 valem o número, 10 e figuras valem 0, e a mão vale a soma, ficando só o último dígito. Vence quem chega mais perto de 9.",
       "Jogador e banca pagam 1 para 1 (se a banca vencer com três cartas somando 7, a aposta só é devolvida). Empate paga 8 para 1, e nele as apostas nos outros lados são devolvidas.",
-      "Comandos: apostar 10 banca, repetir, tabela, historico, saldo, dica."]),
+      "Comandos: apostar 10 banca, repetir, tabela, histórico, saldo, dica."]),
     ("caribenho", "Poker caribenho", "caribenho.js", "Poker contra a banca, com créditos de mentira: aposte o ante, veja as suas cinco cartas e decida entre aumentar e desistir.",
      ["Você aposta o ante e recebe cinco cartas abertas; a banca recebe cinco e mostra só uma. Depois você decide: desistir (perde o ante) ou aumentar (paga mais duas vezes o ante).",
       "A banca só joga com Ás e Rei ou melhor. Se não jogar, o ante paga 1 para 1 e o aumento volta. Se jogar, vence a melhor mão: o ante paga 1 para 1 e o aumento paga pela sua mão (par 1 para 1, dois pares 2, trinca 3, sequência 4, flush 5, full house 7, quadra 20, straight flush 50, royal flush 100).",
@@ -157,7 +158,7 @@ CATALOGO += [
       "As cegas começam em 5 e 10 e dobram a cada 6 mãos; a partida termina quando alguém fica sem fichas. O computador decide pela chance de ganhar e pelo preço de pagar: no fácil ele paga muito e aposta pouco, no difícil aposta com força e às vezes blefa."]),
     ("arqueiro", "Arqueiro de áudio", "arqueiro.js", "Jogo de som em estéreo: ouça onde o pássaro pia, mova a mira e atire. Use fones de ouvido.",
      ["Pássaros cruzam o céu, da esquerda para a direita ou ao contrário, e piam a cada passo no lado onde estão. Você move a mira com as setas (cada passo faz um ping no lado da mira) e atira com a barra de espaço.",
-      "Quando o ping da mira e o pio soam no mesmo ponto do estéreo, atire. Também há botões e comandos: esquerda, direita, atirar, posicao, pontos, ajuda.",
+      "Quando o ping da mira e o pio soam no mesmo ponto do estéreo, atire. Também há botões e comandos: esquerda, direita, atirar, posição, pontos, ajuda.",
       "São 10 alvos. Fácil: devagar, com tolerância de um passo e duas flechas. Normal: ritmo médio e mira exata. Difícil: rápido, com corvos de som grave que não se deve atingir. Sem áudio no navegador, o jogo diz em texto onde o alvo está.",
       "Aperte Testar o som antes de começar: você deve ouvir um som só no fone esquerdo, um no meio e um só no direito."]),
     ("paciencia", "Paciência", "paciencia.js", "Paciência (Klondike) falada: mova as cartas por comando e ouça a mesa lida coluna por coluna.",
@@ -178,6 +179,8 @@ CATEGORIAS = [
     ("cassino", "Cassino", "Jogos de cassino, só com créditos de mentira.", ["cacaniqueis", "blackjack", "roleta", "bacara", "caribenho"]),
     ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
 ]
+# As categorias aparecem em ordem alfabética (sem diferenciar acentos).
+CATEGORIAS.sort(key=lambda c: unicodedata.normalize("NFD", c[1]).encode("ascii", "ignore").decode().lower())
 GRUPOS = [(t, ids) for _, t, _, ids in CATEGORIAS]
 POR_CATEGORIA = {c[0]: c for c in CATEGORIAS}
 POR_CATEGORIA["audio"] = POR_CATEGORIA["acao"]  # endereço antigo da categoria, para quem guardou o link

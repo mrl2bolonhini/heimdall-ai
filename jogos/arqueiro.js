@@ -78,7 +78,7 @@
   }
   function resumo(e) { return "Nível " + e.nome + ". Alvo " + Math.min(e.lancados, ALVOS) + " de " + ALVOS + ". Pontos: " + e.pontos + ", acertos " + e.acertos + ", fugas " + e.fugas + ", tiros errados " + e.erros + "."; }
   function ajuda() {
-    return "Controles: seta esquerda e seta direita movem a mira, e a barra de espaço atira. Também funcionam os botões e os comandos esquerda, direita, atirar, posicao, pontos e parar. O pássaro pia a cada passo no lado onde está, e a mira faz um ping no lado dela quando você a move: quando os dois soam no mesmo ponto, atire. Pássaro acertado dá 3 pontos; no nível difícil, corvos (som grave) tiram 2.";
+    return "Controles: seta esquerda e seta direita movem a mira, e a barra de espaço atira. Também funcionam os botões e os comandos esquerda, direita, atirar, posição, pontos e parar. O pássaro pia a cada passo no lado onde está, e a mira faz um ping no lado dela quando você a move: quando os dois soam no mesmo ponto, atire. Pássaro acertado dá 3 pontos; no nível difícil, corvos (som grave) tiram 2.";
   }
   function norm(t) { return String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
   function comando(e, texto) {
