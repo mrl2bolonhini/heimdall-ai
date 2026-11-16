@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Paciência (Klondike) falada
+- Novo jogo: Paciência, com sete colunas, monte, descarte e quatro bases. Cartas escritas como 7C, QE ou "7 de copas". Comandos: comprar, mover CARTA para COLUNA (leva as cartas abertas em cima junto), mover descarte para COLUNA, subir CARTA/descarte/coluna N, mesa, coluna N, descarte, bases, dica, desfazer e resumo.
+- Níveis: fácil (compra 1, dicas à vontade), normal (compra 1, 3 dicas) e difícil (compra 3, sem dicas e sem desfazer). A dica prefere subir para a base, depois virar uma carta fechada, e só então comprar.
+- Nova categoria no portal: Cartas. Novo teste: teste_jogos_paciencia.js (inclui um robô que joga 60 partidas). heimdall games --play paciencia, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-16 - A Travessia das Três Provas (aventura de escolhas com lógica)
 - Nova aventura de escolhas numeradas, com três problemas de lógica: a travessia do rio (raposa, galinha e milho), as três portas com frases (só uma é verdadeira) e os dois guardas (um diz a verdade, o outro mente). Você responde com o número da escolha, ou com os botões.
 - Níveis: fácil (o jogo avisa antes de um erro e não castiga, dicas à vontade), normal (3 vidas, 3 dicas) e difícil (1 vida, sem dicas). A dica do rio calcula o melhor próximo passo; cada erro explica por que a escolha não servia.

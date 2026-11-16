@@ -123,6 +123,11 @@ CATALOGO += [
      ["Você lê a cena e responde com o número da escolha, por exemplo 1.",
       "Três provas de lógica: levar uma raposa, uma galinha e o milho para o outro lado do rio; achar a porta certa quando só uma frase é verdadeira; descobrir qual guarda diz a verdade.",
       "Fácil: o jogo avisa antes de um erro, sem perder nada, e há dicas à vontade. Normal: 3 vidas e 3 dicas. Difícil: 1 vida e sem dicas. repetir lê a cena de novo."]),
+    ("paciencia", "Paciência", "paciencia.js", "Paciência (Klondike) falada: mova as cartas por comando e ouça a mesa lida coluna por coluna.",
+     ["Sete colunas, um monte e quatro bases (uma por naipe). O objetivo é levar as 52 cartas para as bases, de Ás a Rei.",
+      "Cartas: valor A, 2 a 10, J, Q ou K e naipe C copas, O ouros, P paus ou E espadas, como 7C ou QE (também vale 7 de copas).",
+      "Comandos: comprar; mover 7C para 4 (leva as cartas abertas em cima dela junto); mover descarte para 3; subir 7C, subir descarte ou subir coluna 2; mesa, coluna N, descarte, bases; dica; desfazer.",
+      "Fácil: compra 1, dicas à vontade. Normal: compra 1, 3 dicas. Difícil: compra 3 cartas por vez, sem dicas e sem desfazer."]),
     ("caverna", "A Caverna dos Ecos", "hist_caverna.js", "Aventura guiada pelo som: ache a saída de uma caverna escura ouvindo o vento, a água e os ecos.",
      ["Digite comandos como escutar, olhar, ir norte, pegar ITEM, usar ITEM em ALGO e ajuda. O comando escutar diz o que você ouve onde está, e o som mostra o caminho; onde diz onde você está.", *NIVEIS_TXT]),
 ]
@@ -131,6 +136,7 @@ CATEGORIAS = [
     ("palavras", "Palavras e letras", "Adivinhar palavras.", ["forca", "cincoletras"]),
     ("numeros", "Números e lógica", "Códigos, números e quebra-cabeças de raciocínio.", ["senha", "numero", "sudoku", "2048"]),
     ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "velha", "minas", "gramado"]),
+    ("cartas", "Cartas", "Jogos de baralho.", ["paciencia"]),
     ("sorte", "Sorte", "Jogos de sorte, com créditos de mentira.", ["cacaniqueis"]),
     ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
 ]

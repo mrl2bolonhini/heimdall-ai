@@ -22,11 +22,28 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
 6. Aventura de escolhas com um problema de lógica por trás [FEITO: A Travessia das Três Provas]
    Uma história em que as escolhas escondem um problema (como achar o menor caminho entre vários lugares). Roda no motor de aventuras, com dicas por nível.
 
-7. Paciência (Klondike) falada
+7. Paciência (Klondike) falada [FEITO: Paciência]
    Pilhas lidas por comando (ler pilha 3, mover 3 para 5, comprar). Desfazer e dica. É a mais trabalhosa das cartas.
 
 8. Jogos de áudio puro (estilo Audio Invaders e Audio Archer)
    Som estéreo e fones, com o áudio do navegador. É a etapa maior e a mais incerta: falta saber como o VoiceOver se comporta com som e leitura ao mesmo tempo. Fica por último.
+
+9. Blackjack (vinte e um)
+   Contra a banca, com créditos de mentira. Pedir carta, parar, dobrar e dividir; a banca para no 17. Leitura da mão e da carta aberta da banca, e a mesma regra de créditos do caça-níqueis (nunca dinheiro de verdade).
+
+10. Roleta
+   Roleta europeia (0 a 36). Apostas em número, vermelho ou preto, par ou ímpar, dúzias, colunas e metades, com a tabela de pagamentos lida em voz alta. Créditos de mentira.
+
+11. Bacará
+   Apostas no jogador, na banca ou no empate, com as regras de terceira carta aplicadas pelo próprio jogo e o resultado lido passo a passo. Créditos de mentira.
+
+12. Poker (Texas hold'em)
+   Contra o computador, com fichas de mentira. Cartas da mesa e da mão lidas por comando; o computador usa força da mão e posição para decidir. É o mais trabalhoso desta leva (apostas, blefe, vários níveis).
+
+13. Poker Caribenho
+   Contra a banca, com cinco cartas e uma aposta de bônus; o jogo lê a mão e a carta aberta da banca e diz quando dá para pagar a aposta dobrada. Créditos de mentira.
+
+Ordem sugerida para os jogos de cassino: blackjack, roleta, bacará, poker caribenho e, por último, o poker. Todos são só de entretenimento, com créditos de mentira, e ficam na categoria Sorte (o poker, em Cartas).
 
 Observações
 - Jogos de terceiros do boletim Audiogames.net não foram testados e não têm licença aberta confirmada. Por isso a ideia é fazer versões nossas, nunca copiar.
