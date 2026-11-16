@@ -197,6 +197,7 @@ SERVICOS = [
     ("Heimdall Notas", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Jogos", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Finance", "Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (dados_financas, fora do git); nada vai para a internet. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8016", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Saúde", "Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8013", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Cloud", "Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare.", "8010", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
 ]
@@ -261,6 +262,8 @@ SCRIPTS = [
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News e pelo Heimdall Notas: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
     ("heimdall_jogos.py", "Heimdall Jogos (porta 8014): entrega os jogos da pasta jogos/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
+    ("heimdall_finance.py", "Heimdall Finance (porta 8016): painel web das finanças (resumo do mês, transações, tendências, importação, regras) atrás do mesmo login do Cloud, com CSRF em todo envio e política de conteúdo sem script. Endereço de fora: finance.heimdall-ai.tech."),
+    ("financas_nucleo.py", "Núcleo do Heimdall Finance: banco SQLite local, leitura de extratos OFX e CSV (formatos e valores brasileiros), deduplicação, categorias por regras (as suas vencem as padrão) e relatórios de resumo e tendências. Sem internet."),
     ("heimdall_painel_saude.py", "Heimdall Saúde (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Cloud (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
     ("heimdall_voz.py", "Dicionário de pronúncia: troca palavras por uma grafia que a voz do macOS lê certo (por exemplo, Heimdall vira Háimdal), no anúncio falado do subir.sh e no áudio das notas. Aceita --importar arquivo.csv para trazer as pronúncias do VoiceOver."),
     ("pronuncias.txt", "Pronúncias que vêm com o projeto, uma por linha no formato palavra = como falar. As suas ficam em pronuncias.local.txt, que não vai para o GitHub."),
@@ -334,6 +337,7 @@ COMANDOS = [
         ("Heimdall News (deve responder ok)", "curl -s http://localhost:8012/saude"),
         ("Heimdall Saúde, o painel (deve responder ok)", "curl -s http://localhost:8013/saude"),
         ("Heimdall Jogos (deve responder ok)", "curl -s http://localhost:8014/saude"),
+        ("Heimdall Finance (deve responder ok)", "curl -s http://localhost:8016/saude"),
         ("Relatório de saúde da semana, sem gravar", "python3 heimdall_saude.py --semanal"),
         ("Criar ou trocar a chave dos feeds RSS e ver os endereços", "python3 heimdall_news.py --token"),
         ("Ver de novo os endereços dos feeds RSS", "python3 heimdall_news.py --urls"),
@@ -345,6 +349,7 @@ COMANDOS = [
         ("Teste do Heimdall Notas (sem rede)", "python3 teste_notas.py"),
         ("Teste do Heimdall News (sem rede)", "python3 teste_news.py"),
         ("Teste do Heimdall Jogos (servidor, regras e interface)", "python3 teste_jogos.py"),
+        ("Teste do Heimdall Finance (extratos, categorias, relatórios e servidor)", "python3 teste_finance.py"),
         ("Teste do xadrez, da batalha naval, das aventuras e dos jogos novos (Node)", "node teste_jogos_xadrez.js && node teste_jogos_naval.js && node teste_jogos_cincoletras.js && node teste_jogos_sudoku.js && node teste_historias.js && node teste_jogos_novos.js"),
         ("Teste do painel de saúde (sem rede)", "python3 teste_painel_saude.py"),
         ("Listar notas com título que parece cortado", "python3 heimdall_notas.py --titulos-suspeitos"),
@@ -470,7 +475,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="saudecam"><h2 id="saudecam">Dados de saúde e painéis</h2>
 <ol><li>O iPhone e o Apple Watch guardam os dados no app Saúde. O app Health Auto Export manda os números ao n8n por um webhook, em automações agendadas (métricas gerais e frequência cardíaca de hora em hora, o resto uma vez por dia).</li>
 <li>O n8n repassa ao agente do Mac, que grava no banco pessoal (SQLite, só nesta máquina).</li>
-<li>Cinco serviços web leem o banco e os arquivos do Mac: Cloud (8010), Notas (8011), News (8012), Saúde (8013) e Jogos (8014, que não lê nada, só entrega os jogos). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
+<li>Seis serviços web leem o banco e os arquivos do Mac: Cloud (8010), Notas (8011), News (8012), Saúde (8013) e Jogos (8014, que não lê nada, só entrega os jogos) e Finance (8016, com banco próprio só das suas finanças). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
 <li>Aos domingos, às 9h, o n8n pede o relatório da semana: ele vira nota com áudio e um aviso no Bark sem números.</li></ol></section>
 <section aria-labelledby="cfarq"><h2 id="cfarq">Serviços da Cloudflare</h2>
 <ol><li><strong>Túnel</strong> leva os endereços .heimdall-ai.tech até o Mac, sem abrir portas.</li>
@@ -787,6 +792,31 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="seg"><h2 id="seg">Segurança</h2>
 <ul><li>Escuta só em 127.0.0.1, com login, limite de tentativas, sessão em cookie HttpOnly e lista de sites permitidos.</li>
 <li>A política de conteúdo só deixa rodar script do próprio site, sem script embutido nem conexões externas. Só os arquivos .js do catálogo são entregues.</li></ul></section>
+""")
+
+    out["finance.html"] = pagina("finance.html", "Finance", "Heimdall Finance: extratos do banco e do cartão importados, gastos por categoria, tendências e alertas, em páginas de texto para leitor de tela.", """
+<h1>Heimdall Finance</h1>
+<p>Suas finanças em páginas de texto e tabelas, feitas para leitor de tela. Você importa os extratos do banco e as faturas do cartão; o painel classifica os gastos por categoria, mostra o resumo do mês, compara com o mês anterior, lista os maiores gastos e avisa quando uma categoria dispara. Nada é lido de bancos por conta própria: os dados entram por arquivo.</p>
+<section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
+<ol><li>No próprio computador: <code>heimdall finance</code> (http://localhost:8016), depois de subir o sistema.</li>
+<li>De fora de casa: finance.heimdall-ai.tech, pelo túnel Cloudflare.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, ou a aprovação no Microsoft Authenticator, se você ligar o Cloudflare Access.</li></ol></section>
+<section aria-labelledby="usar"><h2 id="usar">Como usar</h2>
+<ol><li><strong>Importar:</strong> na página Importar extrato, escolha o arquivo (OFX, que a maioria dos bancos oferece em "exportar extrato", ou CSV com colunas de data, descrição e valor), dê um nome à conta (por exemplo Itaú conta ou Nubank cartão) e importe. Importar o mesmo arquivo de novo não duplica nada. Em CSV de cartão em que os gastos vêm positivos, marque a opção de inverter.</li>
+<li><strong>Classificar:</strong> as regras padrão cuidam do óbvio (mercado, transporte, assinaturas, saúde, salário...). O resumo avisa quantos lançamentos ficaram sem categoria, e a lista deles traz um campo de categoria em cada linha. Ao corrigir, a regra nasce sozinha e vale para os lançamentos parecidos e para as próximas importações. Suas regras vencem as padrão, e o que você categoriza à mão nunca é mudado por regra.</li>
+<li><strong>Resumo do mês:</strong> receitas, despesas, saldo, gastos por categoria com a variação sobre o mês anterior e os dez maiores gastos.</li>
+<li><strong>Tendências:</strong> receitas, despesas e saldo mês a mês, o gasto por categoria em cada mês e alertas quando uma categoria passa de 30% da média dos três meses anteriores.</li>
+<li><strong>Fora das somas:</strong> pagamento de fatura, investimentos e transferências entre suas contas não contam como despesa nem receita, para não somar duas vezes.</li>
+<li><strong>Exportar:</strong> a página Transações baixa tudo em CSV.</li></ol></section>
+<section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
+<ol><li>Atualize e reinicie: <code>heimdall update --restart</code>. O servidor sobe sozinho quando há senha e código no .env, e não precisa de instalador.</li>
+<li>Conferir: <code>curl -s http://localhost:8016/saude</code> deve responder ok.</li>
+<li>De fora de casa, o nome finance.heimdall-ai.tech já existe no túnel (aponta para localhost:8016, com o DNS), então responde assim que o serviço estiver no ar.</li>
+<li>Se algo falhar: <code>heimdall logs --service finance</code></li></ol></section>
+<section aria-labelledby="seg"><h2 id="seg">Privacidade e segurança</h2>
+<ul><li>Os dados ficam em um banco SQLite na pasta dados_financas do projeto (permissão só do seu usuário), fora do git e fora dos backups da nuvem. Nada é enviado para a internet, para a Cloudflare ou para modelo de fora.</li>
+<li>Escuta só em 127.0.0.1, com login, limite de tentativas, sessão em cookie HttpOnly, token CSRF em todo envio de formulário e lista de sites permitidos.</li>
+<li>A política de conteúdo não permite nenhum script: as páginas são HTML puro.</li></ul></section>
 """)
 
     out["saude.html"] = pagina("saude.html", "Saúde", "Heimdall Saúde: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.", """

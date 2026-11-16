@@ -46,7 +46,7 @@ _heimdall_port() {  # porta de cada serviço (a do .env, se houver)
 
 _heimdall_stop_ports() {
   local p
-  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 8014 8099 9000; do
+  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 8014 8016 8099 9000; do
     lsof -ti:"$p" 2>/dev/null | xargs kill -9 2>/dev/null
   done
 }
@@ -148,7 +148,7 @@ heimdall() {
         --service)
           case "$2" in
             agent) a=agente ;; notes) a=notas ;; health) a=saude_painel ;; games) a=jogos ;; terminal) a=open_terminal ;;
-            mcp-public) a=mcp_public ;; mcp-data) a=mcp_dados ;; *) a="$2" ;;
+            finance) a=finance ;; mcp-public) a=mcp_public ;; mcp-data) a=mcp_dados ;; *) a="$2" ;;
           esac
           _heimdall_sh subir.sh --log "$a" ;;
         *) echo "Use: heimdall logs [--list] [--clean] [--service NOME]"; return 1 ;;
@@ -213,6 +213,7 @@ heimdall() {
         --extras|--extra) shift; _heimdall_sh instalar_jogos_extras.sh "$@" ;;
         *) echo "Use: heimdall games [--play JOGO] [--list] [--extras --enigma|--playaural|--status|--remover]"; return 1 ;;
       esac ;;
+    finance) _heimdall_open "Heimdall Finance" "http://localhost:$(_heimdall_port HEIMDALL_FINANCE_PORT 8016)" ;;
     n8n) _heimdall_open "n8n" "http://localhost:5678" ;;
     kuma) _heimdall_open "Uptime Kuma" "http://localhost:3001" ;;
     dozzle) _heimdall_open "Dozzle (logs)" "http://localhost:8081" ;;
@@ -223,6 +224,7 @@ heimdall() {
       echo "cloud: http://localhost:$(_heimdall_port HEIMDALL_CLOUD_PORT 8010)"
       echo "health: http://localhost:$(_heimdall_port HEIMDALL_SAUDE_PAINEL_PORT 8013)"
       echo "games: http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)"
+      echo "finance: http://localhost:$(_heimdall_port HEIMDALL_FINANCE_PORT 8016)"
       echo "n8n: http://localhost:5678"
       echo "kuma: http://localhost:3001"
       echo "dozzle: http://localhost:8081" ;;
@@ -312,7 +314,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health games n8n kuma dozzle urls triage db backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health games finance n8n kuma dozzle urls triage db backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -320,7 +322,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     fi
     case ${words[2]} in
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
-      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent cloud notes news health games terminal ingest; else compadd -- --list --clean --service; fi ;;
+      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent cloud notes news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
       chat) compadd -- --diagnose --password ;;
       news) compadd -- --token --urls --copy --opml --sources --queue --now ;;
       notes) compadd -- --clean-mirrors --clean-private --move-old --run ;;

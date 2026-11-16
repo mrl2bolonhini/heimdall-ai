@@ -2,6 +2,14 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Heimdall Finance (finance.heimdall-ai.tech)
+- Novo painel de finanças, no mesmo padrão dos outros (mesmo login, só em 127.0.0.1, porta 8016, CSRF em todo envio, sem script nas páginas). Você importa extratos do banco e faturas do cartão em OFX ou CSV (formatos e valores brasileiros, CSV com linhas antes do cabeçalho, inversão de sinal para fatura de cartão); importar o mesmo arquivo de novo não duplica nada.
+- Categorias por regras: já vêm regras para mercado, restaurantes, transporte, contas, saúde, assinaturas, educação, lazer, compras, tarifas, salário e outros. Ao corrigir a categoria de um lançamento, a regra nasce sozinha e vale para os parecidos e para as próximas importações; as suas regras vencem as padrão, e o que você categoriza à mão nunca é alterado.
+- Páginas: resumo do mês (receitas, despesas, saldo, gasto por categoria com variação sobre o mês anterior, dez maiores gastos), transações com filtro e busca, tendências mês a mês com alertas de categoria que dispara, importar extrato, regras. Tabelas com legenda e cabeçalhos para leitor de tela. Pagamento de fatura, investimentos e transferências entre contas ficam fora das somas.
+- Privacidade: banco SQLite em dados_financas/ (fora do git, permissão só sua). Nada vai para a internet, para a Cloudflare ou para modelo de fora.
+- Novos: heimdall finance, heimdall logs --service finance, teste_finance.py (73 verificações), financas_nucleo.py e heimdall_finance.py. Ainda não lê os bancos sozinho: a ligação com o Open Finance (MeuPluggy) vem depois, só se a conta de desenvolvedor da Pluggy continuar gratuita.
+- Para aplicar: heimdall update --restart (não precisa de instalador). O nome finance.heimdall-ai.tech já foi criado no túnel Cloudflare (apontando para localhost:8016, com o DNS), então de fora ele passa a responder depois da atualização.
+
 ## 2026-11-16 - Entrada por aprovação no Microsoft Authenticator (Cloudflare Access)
 - Novo módulo heimdall_cfaccess.py: os cinco painéis (Cloud, Notas, News, Saúde e Jogos) passam a aceitar a aprovação do Cloudflare Access, que usa o Microsoft Entra ID. Você aprova por notificação no Microsoft Authenticator (digitando no celular o número mostrado na tela) e entra sem senha nem código de 6 dígitos.
 - Os painéis conferem a assinatura RS256 do documento do Cloudflare sem biblioteca de fora e checam emissor, aplicativo (AUD), validade e e-mail permitido. Os certificados são guardados por 1 hora e buscados de novo quando a chave gira.

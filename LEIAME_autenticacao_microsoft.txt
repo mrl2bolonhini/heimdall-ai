@@ -30,7 +30,11 @@ Use sua conta pessoal, nunca a do Itaú.
 
 PARTE B. CLOUDFLARE
 -------------------
-Você já usa o Cloudflare Zero Trust (o túnel está nele), então já tem um nome de equipe. Ele está em Zero Trust, Configurações, Nome da equipe e domínio. O endereço é nomedaequipe.cloudflareaccess.com. A parte antes de ".cloudflareaccess.com" é o que vai no .env.
+B0. Habilitar o Zero Trust (verificado pela API em 16/11: o Access ainda NÃO está habilitado na sua conta)
+O túnel já existe e está saudável, mas o Access (parte do Zero Trust) responde "not enabled". Isso se resolve no painel, porque exige aceitar termos e escolher o plano:
+1. Entre em dash.cloudflare.com, abra Zero Trust (no menu lateral) e siga o cadastro: escolha um nome de equipe (por exemplo heimdall) e o plano Free, que cobre até 50 usuários. O Cloudflare pode pedir um método de pagamento mesmo no plano gratuito; se pedir, é você quem informa.
+2. O nome da equipe vira nomedaequipe.cloudflareaccess.com. A parte antes de ".cloudflareaccess.com" é o que vai no .env.
+3. Me avise quando terminar. Com o Access ativo, eu consigo criar o aplicativo e a política pelo MCP da Cloudflare (aplicativo com os nomes cloud, notes, news, health, games e finance, política só para o seu e-mail da Microsoft, e o desvio do feed RSS), e você só confere. A parte do provedor Microsoft (ID, segredo e diretório) continua com você, porque o segredo nunca deve passar por mim.
 
 B1. Registrar o aplicativo na Microsoft (para o Cloudflare poder usar o login dela)
 1. No Entra (entra.microsoft.com): Aplicativos, Registros de aplicativo, Novo registro. Nome: Heimdall Access. Tipo de conta: somente este diretório. URI de redirecionamento, plataforma Web: https://NOMEDAEQUIPE.cloudflareaccess.com/cdn-cgi/access/callback (troque NOMEDAEQUIPE).
@@ -43,7 +47,7 @@ B2. Ligar a Microsoft no Cloudflare
 2. CONFIRMAR: o Cloudflare usa o e-mail do usuário. Se o teste mostrar e-mail vazio ou estranho, preencha o campo "E-mail" no perfil do usuário heimdall (Entra, Usuários, heimdall, Editar propriedades, Informações de contato) ou crie uma claim de e-mail em Configuração de token do aplicativo, como a documentação do Cloudflare descreve.
 
 B3. Proteger os endereços
-1. Zero Trust, Controles de acesso, Aplicativos, Adicionar aplicativo, Autohospedado. Crie UM aplicativo com vários nomes de host públicos: cloud, notes, news, health e games, todos em .heimdall-ai.tech (confira os nomes reais no seu túnel). Um aplicativo só significa uma só AUD tag para todos.
+1. Zero Trust, Controles de acesso, Aplicativos, Adicionar aplicativo, Autohospedado. Crie UM aplicativo com vários nomes de host públicos: cloud, notes, news, health, games e finance, todos em .heimdall-ai.tech (são os que estão no seu túnel; chat, status e flows têm login próprio e ficam de fora por enquanto). Um aplicativo só significa uma só AUD tag para todos.
 2. Política: ação Permitir; regra: e-mail igual ao endereço do usuário heimdall. Em "Métodos de login" deixe só o Azure AD (desmarque o PIN por e-mail, senão ele vira uma porta alternativa).
 3. Salve e copie a AUD tag (Editar aplicativo, Configurações adicionais).
 

@@ -31,3 +31,6 @@ pronuncias.local.txt
 # Exportação do app Saúde (tem nome e data de nascimento)
 export.zip
 apple_health_export/
+
+# Dados financeiros do Heimdall Finance (nunca vão para o git)
+dados_financas/

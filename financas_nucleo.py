@@ -1,0 +1,459 @@
+#!/usr/bin/env python3
+"""Núcleo do Heimdall Finance: banco SQLite local, leitura de extratos OFX e CSV, categorias por regras e relatórios.
+
+Nada aqui usa internet: os extratos entram por arquivo e o banco fica só no seu Mac (pasta dados_financas, fora do git).
+Valores são guardados em centavos (inteiros); gasto é negativo, entrada é positiva.
+"""
+import csv
+import hashlib
+import io
+import re
+import sqlite3
+import unicodedata
+from collections import defaultdict
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
+
+SEM_CATEGORIA = "Sem categoria"
+# nome, tipo: gasto, renda ou neutra (neutra fica fora de receitas e despesas: pagamento de fatura, investimentos, entre contas)
+CATEGORIAS_PADRAO = [
+    ("Mercado", "gasto"), ("Restaurantes", "gasto"), ("Transporte", "gasto"), ("Moradia e contas", "gasto"), ("Saúde", "gasto"),
+    ("Assinaturas", "gasto"), ("Educação", "gasto"), ("Lazer e viagens", "gasto"), ("Compras", "gasto"), ("Impostos e tarifas", "gasto"),
+    ("Transferências", "gasto"), ("Saques", "gasto"), ("Outros gastos", "gasto"),
+    ("Salário", "renda"), ("Outras receitas", "renda"),
+    ("Pagamento de fatura", "neutra"), ("Investimentos", "neutra"), ("Entre minhas contas", "neutra"),
+    (SEM_CATEGORIA, "gasto"),
+]
+# palavra ou trecho (já sem acento e em minúsculas) -> categoria
+REGRAS_PADRAO = [
+    ("supermercado", "Mercado"), ("mercado ", "Mercado"), ("atacadao", "Mercado"), ("carrefour", "Mercado"), ("pao de acucar", "Mercado"),
+    ("assai", "Mercado"), ("hortifruti", "Mercado"), ("sacolao", "Mercado"), ("dia supermercados", "Mercado"),
+    ("restaurante", "Restaurantes"), ("lanchonete", "Restaurantes"), ("padaria", "Restaurantes"), ("ifood", "Restaurantes"), ("rappi", "Restaurantes"),
+    ("mcdonald", "Restaurantes"), ("burger", "Restaurantes"), ("pizz", "Restaurantes"), ("cafeteria", "Restaurantes"), ("starbucks", "Restaurantes"),
+    ("uber", "Transporte"), ("cabify", "Transporte"), ("99app", "Transporte"), ("99 pop", "Transporte"), ("posto ", "Transporte"), ("ipiranga", "Transporte"),
+    ("combustivel", "Transporte"), ("estacionamento", "Transporte"), ("sem parar", "Transporte"), ("conectcar", "Transporte"), ("bilhete unico", "Transporte"),
+    ("aluguel", "Moradia e contas"), ("condominio", "Moradia e contas"), ("iptu", "Moradia e contas"), ("enel", "Moradia e contas"),
+    ("sabesp", "Moradia e contas"), ("comgas", "Moradia e contas"), ("energia eletrica", "Moradia e contas"), ("vivo", "Moradia e contas"),
+    ("claro", "Moradia e contas"), ("tim ", "Moradia e contas"), ("internet", "Moradia e contas"),
+    ("farmacia", "Saúde"), ("drogaria", "Saúde"), ("drogasil", "Saúde"), ("droga raia", "Saúde"), ("pague menos", "Saúde"), ("unimed", "Saúde"),
+    ("amil", "Saúde"), ("hospital", "Saúde"), ("clinica", "Saúde"), ("laboratorio", "Saúde"), ("fleury", "Saúde"),
+    ("netflix", "Assinaturas"), ("spotify", "Assinaturas"), ("amazon prime", "Assinaturas"), ("disney", "Assinaturas"), ("youtube", "Assinaturas"),
+    ("icloud", "Assinaturas"), ("apple.com/bill", "Assinaturas"), ("google one", "Assinaturas"), ("globoplay", "Assinaturas"), ("deezer", "Assinaturas"),
+    ("openai", "Assinaturas"), ("anthropic", "Assinaturas"), ("claude.ai", "Assinaturas"),
+    ("faculdade", "Educação"), ("escola", "Educação"), ("udemy", "Educação"), ("alura", "Educação"), ("coursera", "Educação"), ("curso", "Educação"),
+    ("cinema", "Lazer e viagens"), ("ingresso", "Lazer e viagens"), ("steam", "Lazer e viagens"), ("playstation", "Lazer e viagens"),
+    ("airbnb", "Lazer e viagens"), ("booking", "Lazer e viagens"), ("decolar", "Lazer e viagens"), ("hotel", "Lazer e viagens"),
+    ("mercado livre", "Compras"), ("mercadolivre", "Compras"), ("magalu", "Compras"), ("americanas", "Compras"), ("shopee", "Compras"),
+    ("shein", "Compras"), ("aliexpress", "Compras"), ("amazon", "Compras"), ("renner", "Compras"),
+    ("iof", "Impostos e tarifas"), ("tarifa", "Impostos e tarifas"), ("anuidade", "Impostos e tarifas"), ("juros", "Impostos e tarifas"),
+    ("multa", "Impostos e tarifas"), ("darf", "Impostos e tarifas"), ("imposto", "Impostos e tarifas"),
+    ("saque", "Saques"),
+    ("salario", "Salário"), ("folha de pagamento", "Salário"), ("proventos", "Salário"), ("pro labore", "Salário"),
+    ("pagamento de fatura", "Pagamento de fatura"), ("pagamento fatura", "Pagamento de fatura"), ("pgto fatura", "Pagamento de fatura"),
+    ("pag fatura", "Pagamento de fatura"), ("fatura cartao", "Pagamento de fatura"),
+    ("aplicacao", "Investimentos"), ("resgate", "Investimentos"), ("tesouro direto", "Investimentos"), ("cdb", "Investimentos"),
+    ("xp investimentos", "Investimentos"), ("rico investimentos", "Investimentos"), ("corretora", "Investimentos"),
+    ("transferencia", "Transferências"), ("pix", "Transferências"), ("ted ", "Transferências"),
+]
+_PREFIXOS_IGNORADOS = {"compra", "debito", "credito", "pix", "transferencia", "transf", "pagamento", "pag", "pgto", "cartao", "em", "de", "no", "na", "a", "o",
+                       "recebido", "enviado", "enviada", "recebida", "via", "ted", "doc", "para", "por", "com", "do", "da", "dos", "das"}
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS transacoes(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, conta TEXT NOT NULL, data TEXT NOT NULL, valor INTEGER NOT NULL,
+  descricao TEXT NOT NULL, desc_norm TEXT NOT NULL, categoria TEXT NOT NULL DEFAULT 'Sem categoria',
+  manual INTEGER NOT NULL DEFAULT 0, hash TEXT NOT NULL UNIQUE, importado_em TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_tr_data ON transacoes(data);
+CREATE TABLE IF NOT EXISTS regras(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, padrao TEXT NOT NULL, categoria TEXT NOT NULL, origem TEXT NOT NULL, UNIQUE(padrao, origem));
+CREATE TABLE IF NOT EXISTS categorias(nome TEXT PRIMARY KEY, tipo TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS importacoes(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, arquivo TEXT, conta TEXT, quando TEXT, formato TEXT, novas INTEGER, repetidas INTEGER);
+"""
+
+
+class ErroFinance(Exception):
+    """Erro com mensagem própria para o usuário."""
+
+
+def norm(s: str) -> str:
+    s = unicodedata.normalize("NFD", str(s or "").lower())
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9./& ]+", " ", s)).strip()
+
+
+def brl(centavos: int, sinal: bool = False) -> str:
+    v = abs(int(centavos))
+    texto = f"R$ {v // 100:,}".replace(",", ".") + f",{v % 100:02d}"
+    if centavos < 0:
+        return "-" + texto
+    return ("+" + texto) if sinal and centavos > 0 else texto
+
+
+def data_br(iso: str) -> str:
+    try:
+        return datetime.strptime(iso, "%Y-%m-%d").strftime("%d/%m/%Y")
+    except ValueError:
+        return iso
+
+
+# --------------------------------------------------------------------------------------------
+# Banco
+# --------------------------------------------------------------------------------------------
+def conectar(caminho) -> sqlite3.Connection:
+    con = sqlite3.connect(str(caminho), check_same_thread=False, timeout=15)
+    con.row_factory = sqlite3.Row
+    con.executescript(SCHEMA)
+    for nome, tipo in CATEGORIAS_PADRAO:
+        con.execute("INSERT OR IGNORE INTO categorias(nome, tipo) VALUES(?, ?)", (nome, tipo))
+    for padrao, cat in REGRAS_PADRAO:
+        con.execute("INSERT OR IGNORE INTO regras(padrao, categoria, origem) VALUES(?, ?, 'padrao')", (norm(padrao) if not padrao.endswith(" ") else norm(padrao) + " ", cat))
+    con.commit()
+    return con
+
+
+def tipos(con) -> dict:
+    return {r["nome"]: r["tipo"] for r in con.execute("SELECT nome, tipo FROM categorias")}
+
+
+def categorizar(con, desc_norm: str, regras: list = None) -> str:
+    """Primeiro as regras suas (a mais longa vence), depois as padrão."""
+    if regras is None:
+        regras = _regras(con)
+    alvo = " " + desc_norm + " "
+    for padrao, cat in regras:
+        if " " + padrao in alvo:  # o trecho começa em início de palavra ("amil" não casa com "familia")
+            return cat
+    return SEM_CATEGORIA
+
+
+def _regras(con) -> list:
+    lin = con.execute("SELECT padrao, categoria, origem FROM regras").fetchall()
+    return [(r["padrao"], r["categoria"]) for r in sorted(lin, key=lambda r: (r["origem"] != "usuario", -len(r["padrao"])))]
+
+
+# --------------------------------------------------------------------------------------------
+# Leitura de valores e datas
+# --------------------------------------------------------------------------------------------
+def parse_valor(texto) -> int:
+    s = re.sub(r"[Rr]\$|\s", "", str(texto or ""))
+    neg = s.startswith("-") or (s.startswith("(") and s.endswith(")")) or s.endswith("-")
+    s = s.strip("()-+")
+    if not s:
+        raise ValueError("valor vazio")
+    if "," in s and "." in s:
+        dec = "," if s.rfind(",") > s.rfind(".") else "."
+        s = s.replace("." if dec == "," else ",", "").replace(dec, ".")
+    elif "," in s:
+        s = s.replace(",", ".") if len(s.split(",")[-1]) <= 2 or s.count(",") == 1 else s.replace(",", "")
+    elif s.count(".") > 1:
+        s = s.replace(".", "")
+    elif "." in s and len(s.split(".")[-1]) == 3 and len(s.split(".")[0]) <= 3 and s.split(".")[0] != "0":
+        s = s.replace(".", "")  # 1.234 = mil duzentos e trinta e quatro
+    try:
+        v = int((Decimal(s) * 100).to_integral_value())
+    except InvalidOperation as ex:
+        raise ValueError(f"valor inválido: {texto}") from ex
+    return -v if neg else v
+
+
+def parse_data(texto) -> str:
+    s = str(texto or "").strip()[:19]
+    for fmt in ("%d/%m/%Y", "%d/%m/%y", "%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    if re.fullmatch(r"\d{8}.*", s):
+        return datetime.strptime(s[:8], "%Y%m%d").strftime("%Y-%m-%d")
+    raise ValueError(f"data inválida: {texto}")
+
+
+# --------------------------------------------------------------------------------------------
+# Leitores de arquivo
+# --------------------------------------------------------------------------------------------
+def decodificar(dados: bytes) -> str:
+    for cod in ("utf-8-sig", "cp1252", "latin-1"):
+        try:
+            return dados.decode(cod)
+        except UnicodeDecodeError:
+            continue
+    return dados.decode("utf-8", "replace")
+
+
+def parse_ofx(texto: str) -> list:
+    saida = []
+    for bloco in re.split(r"<STMTTRN>", texto, flags=re.I)[1:]:
+        bloco = re.split(r"</STMTTRN>|</BANKTRANLIST>|</CCSTMTTRNRS>", bloco, flags=re.I)[0]
+        campos = {m.group(1).upper(): m.group(2).strip() for m in re.finditer(r"<(\w+)>([^<\r\n]*)", bloco)}
+        if "DTPOSTED" not in campos or "TRNAMT" not in campos:
+            continue
+        partes = [campos.get("NAME", ""), campos.get("MEMO", "")]
+        desc = " - ".join(dict.fromkeys(p for p in partes if p)) or "(sem descrição)"
+        saida.append({"data": parse_data(campos["DTPOSTED"]), "valor": parse_valor(campos["TRNAMT"]),
+                      "descricao": desc, "fitid": campos.get("FITID", "")})
+    return saida
+
+
+_COL = {
+    "data": ("data", "date", "dt", "data lancamento", "data do lancamento", "data da compra", "data movimento", "data transacao"),
+    "desc": ("descricao", "historico", "lancamento", "title", "estabelecimento", "memo", "detalhes", "descricao do lancamento", "titulo", "name"),
+    "valor": ("valor", "amount", "value", "valor r$", "valor rs", "quantia", "valor da transacao"),
+    "debito": ("debito", "saida", "saidas", "valor debito"),
+    "credito": ("credito", "entrada", "entradas", "valor credito"),
+    "tipo": ("tipo", "tipo de lancamento", "d/c", "dc"),
+    "id": ("identificador", "id", "codigo", "documento", "numero documento"),
+}
+
+
+def _acha(cabecalho: list, chave: str):
+    nomes = [norm(c) for c in cabecalho]
+    for cand in _COL[chave]:
+        if cand in nomes:
+            return nomes.index(cand)
+    return None
+
+
+def parse_csv(texto: str, inverter: bool = False) -> list:
+    linhas = texto.splitlines()
+    amostra = "\n".join(linhas[:40])
+    delim = ";" if amostra.count(";") > amostra.count(",") else ("\t" if amostra.count("\t") > amostra.count(",") else ",")
+    tabela = list(csv.reader(io.StringIO(texto), delimiter=delim))
+    ini = None
+    for i, lin in enumerate(tabela[:40]):
+        if _acha(lin, "data") is not None and (_acha(lin, "valor") is not None or _acha(lin, "debito") is not None or _acha(lin, "credito") is not None):
+            ini = i
+            break
+    if ini is None:
+        raise ErroFinance("Não achei o cabeçalho do CSV. Ele precisa ter colunas de data e de valor (por exemplo: Data, Descrição, Valor).")
+    cab = tabela[ini]
+    ci = {k: _acha(cab, k) for k in _COL}
+    saida = []
+    for lin in tabela[ini + 1:]:
+        if not any(c.strip() for c in lin):
+            continue
+        try:
+            def pega(k):
+                return lin[ci[k]].strip() if ci[k] is not None and ci[k] < len(lin) else ""
+            data = parse_data(pega("data"))
+            if ci["valor"] is not None and pega("valor"):
+                v = parse_valor(pega("valor"))
+            else:
+                d, c = pega("debito"), pega("credito")
+                v = (parse_valor(c) if c else 0) - (abs(parse_valor(d)) if d else 0)
+            t = norm(pega("tipo"))
+            if t and ci["valor"] is not None and v > 0 and t in ("d", "debito", "saida"):
+                v = -v
+            if inverter:
+                v = -v
+            saida.append({"data": data, "valor": v, "descricao": pega("desc") or "(sem descrição)", "fitid": pega("id")})
+        except (ValueError, IndexError):
+            continue  # linha de total, rodapé ou lixo
+    if not saida:
+        raise ErroFinance("O CSV tem cabeçalho, mas nenhuma linha com data e valor que eu consiga ler.")
+    return saida
+
+
+def ler_extrato(dados: bytes, inverter: bool = False) -> tuple:
+    """(formato, lista de lançamentos)."""
+    texto = decodificar(dados)
+    if re.search(r"<OFX>|OFXHEADER", texto[:4000], flags=re.I):
+        itens = parse_ofx(texto)
+        if not itens:
+            raise ErroFinance("O arquivo OFX não tem lançamentos que eu consiga ler.")
+        return "OFX", itens
+    return "CSV", parse_csv(texto, inverter)
+
+
+# --------------------------------------------------------------------------------------------
+# Importação
+# --------------------------------------------------------------------------------------------
+def importar(con, dados: bytes, arquivo: str, conta: str, inverter: bool = False, agora: str = None) -> dict:
+    conta = (conta or "").strip()[:60]
+    if not conta:
+        raise ErroFinance("Diga a que conta ou cartão o extrato pertence (por exemplo: Itaú conta ou Nubank cartão).")
+    formato, itens = ler_extrato(dados, inverter)
+    agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    regras = _regras(con)
+    vistos = defaultdict(int)
+    novas = repetidas = 0
+    for it in itens:
+        dn = norm(it["descricao"])
+        if it.get("fitid"):
+            chave = f"{conta}|fitid|{it['fitid']}|{it['data']}|{it['valor']}"
+        else:
+            base = f"{conta}|{it['data']}|{it['valor']}|{dn}"
+            vistos[base] += 1  # dois lançamentos iguais no mesmo dia continuam sendo dois
+            chave = f"{base}|{vistos[base]}"
+        h = hashlib.sha1(chave.encode("utf-8")).hexdigest()
+        cat = categorizar(con, dn, regras)
+        if cat == SEM_CATEGORIA and it["valor"] > 0:
+            cat = "Outras receitas"
+        cur = con.execute("INSERT OR IGNORE INTO transacoes(conta, data, valor, descricao, desc_norm, categoria, hash, importado_em) VALUES(?,?,?,?,?,?,?,?)",
+                          (conta, it["data"], it["valor"], it["descricao"][:200], dn[:200], cat, h, agora))
+        if cur.rowcount:
+            novas += 1
+        else:
+            repetidas += 1
+    con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES(?,?,?,?,?,?)", (arquivo[:120], conta, agora, formato, novas, repetidas))
+    con.commit()
+    return {"formato": formato, "lidas": len(itens), "novas": novas, "repetidas": repetidas}
+
+
+# --------------------------------------------------------------------------------------------
+# Categorias e regras
+# --------------------------------------------------------------------------------------------
+def padrao_da_descricao(desc_norm: str) -> str:
+    """Trecho que identifica o estabelecimento: as duas primeiras palavras úteis (sem números nem palavras de transação)."""
+    p = [w for w in desc_norm.split() if w not in _PREFIXOS_IGNORADOS and len(w) >= 3 and not re.fullmatch(r"[\d./&-]+", w)]
+    return " ".join(p[:2])
+
+
+def definir_categoria(con, tid: int, categoria: str, criar_regra: bool = True) -> int:
+    """Muda a categoria de um lançamento. Com criar_regra, lançamentos parecidos (não mexidos por você) vão junto. Devolve quantos mudaram."""
+    if categoria not in tipos(con):
+        raise ErroFinance("Categoria desconhecida.")
+    r = con.execute("SELECT desc_norm FROM transacoes WHERE id=?", (tid,)).fetchone()
+    if not r:
+        raise ErroFinance("Lançamento não encontrado.")
+    con.execute("UPDATE transacoes SET categoria=?, manual=1 WHERE id=?", (categoria, tid))
+    n = 1
+    padrao = padrao_da_descricao(r["desc_norm"]) if criar_regra else ""
+    if padrao:
+        con.execute("INSERT INTO regras(padrao, categoria, origem) VALUES(?,?, 'usuario') ON CONFLICT(padrao, origem) DO UPDATE SET categoria=excluded.categoria", (padrao, categoria))
+        cur = con.execute("UPDATE transacoes SET categoria=? WHERE manual=0 AND id<>? AND (' ' || desc_norm || ' ') LIKE ?", (categoria, tid, f"% {padrao}%"))
+        n += cur.rowcount
+    con.commit()
+    return n
+
+
+def adicionar_regra(con, padrao: str, categoria: str) -> int:
+    p = norm(padrao)
+    if len(p) < 3:
+        raise ErroFinance("O trecho da regra precisa ter pelo menos 3 letras.")
+    if categoria not in tipos(con):
+        raise ErroFinance("Categoria desconhecida.")
+    con.execute("INSERT INTO regras(padrao, categoria, origem) VALUES(?,?, 'usuario') ON CONFLICT(padrao, origem) DO UPDATE SET categoria=excluded.categoria", (p, categoria))
+    cur = con.execute("UPDATE transacoes SET categoria=? WHERE manual=0 AND (' ' || desc_norm || ' ') LIKE ?", (categoria, f"% {p}%"))
+    con.commit()
+    return cur.rowcount
+
+
+def apagar_regra(con, rid: int) -> bool:
+    cur = con.execute("DELETE FROM regras WHERE id=? AND origem='usuario'", (rid,))
+    con.commit()
+    return bool(cur.rowcount)
+
+
+def reaplicar_regras(con) -> int:
+    """Passa as regras de novo nos lançamentos que você não categorizou à mão."""
+    regras = _regras(con)
+    n = 0
+    for r in con.execute("SELECT id, desc_norm, valor, categoria FROM transacoes WHERE manual=0").fetchall():
+        cat = categorizar(con, r["desc_norm"], regras)
+        if cat == SEM_CATEGORIA and r["valor"] > 0:
+            cat = "Outras receitas"
+        if cat != r["categoria"]:
+            con.execute("UPDATE transacoes SET categoria=? WHERE id=?", (cat, r["id"]))
+            n += 1
+    con.commit()
+    return n
+
+
+# --------------------------------------------------------------------------------------------
+# Relatórios
+# --------------------------------------------------------------------------------------------
+def meses(con) -> list:
+    return [r[0] for r in con.execute("SELECT DISTINCT substr(data,1,7) m FROM transacoes ORDER BY m DESC")]
+
+
+def mes_anterior(mes: str) -> str:
+    a, m = int(mes[:4]), int(mes[5:7])
+    return f"{a - 1}-12" if m == 1 else f"{a}-{m - 1:02d}"
+
+
+def nome_mes(mes: str) -> str:
+    nomes = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+    return f"{nomes[int(mes[5:7]) - 1]} de {mes[:4]}"
+
+
+def _gastos_por_categoria(con, mes: str, tp: dict) -> dict:
+    out = defaultdict(int)
+    for r in con.execute("SELECT categoria, SUM(-valor) t FROM transacoes WHERE substr(data,1,7)=? AND valor<0 GROUP BY categoria", (mes,)):
+        if tp.get(r["categoria"], "gasto") != "neutra":
+            out[r["categoria"]] = r["t"]
+    return out
+
+
+def resumo_mes(con, mes: str) -> dict:
+    tp = tipos(con)
+    gastos = _gastos_por_categoria(con, mes, tp)
+    antes = _gastos_por_categoria(con, mes_anterior(mes), tp)
+    despesas = sum(gastos.values())
+    receitas = sum(r["valor"] for r in con.execute("SELECT categoria, valor FROM transacoes WHERE substr(data,1,7)=? AND valor>0", (mes,)) if tp.get(r["categoria"], "renda") != "neutra")
+    neutros = sum(abs(r["valor"]) for r in con.execute("SELECT categoria, valor FROM transacoes WHERE substr(data,1,7)=?", (mes,)) if tp.get(r["categoria"]) == "neutra")
+    cats = []
+    for c, t in sorted(gastos.items(), key=lambda x: -x[1]):
+        a = antes.get(c, 0)
+        cats.append({"categoria": c, "total": t, "pct": round(100 * t / despesas, 1) if despesas else 0.0, "anterior": a,
+                     "variacao": (round(100 * (t - a) / a) if a else None)})
+    maiores = [dict(r) for r in con.execute(
+        "SELECT id, data, descricao, valor, categoria, conta FROM transacoes WHERE substr(data,1,7)=? AND valor<0 ORDER BY valor ASC LIMIT 40", (mes,)) if tp.get(r["categoria"], "gasto") != "neutra"][:10]
+    n_sem = con.execute("SELECT COUNT(*) FROM transacoes WHERE substr(data,1,7)=? AND categoria=?", (mes, SEM_CATEGORIA)).fetchone()[0]
+    return {"mes": mes, "receitas": receitas, "despesas": despesas, "saldo": receitas - despesas, "neutros": neutros,
+            "categorias": cats, "maiores": maiores, "sem_categoria": n_sem, "despesas_anterior": sum(antes.values())}
+
+
+def tendencias(con, quantos: int = 12) -> dict:
+    tp = tipos(con)
+    ms = sorted(meses(con))[-quantos:]
+    por_mes = {m: _gastos_por_categoria(con, m, tp) for m in ms}
+    rec = {m: sum(r["valor"] for r in con.execute("SELECT categoria, valor FROM transacoes WHERE substr(data,1,7)=? AND valor>0", (m,)) if tp.get(r["categoria"], "renda") != "neutra") for m in ms}
+    tot_cat = defaultdict(int)
+    for m in ms:
+        for c, v in por_mes[m].items():
+            tot_cat[c] += v
+    principais = [c for c, _ in sorted(tot_cat.items(), key=lambda x: -x[1])]
+    linhas = []
+    for m in ms:
+        d = sum(por_mes[m].values())
+        linhas.append({"mes": m, "receitas": rec[m], "despesas": d, "saldo": rec[m] - d, "cats": por_mes[m]})
+    alertas = []
+    if len(ms) >= 2:
+        atual = ms[-1]
+        prev = ms[-4:-1] if len(ms) >= 4 else ms[:-1]
+        for c in principais:
+            media = sum(por_mes[p].get(c, 0) for p in prev) / len(prev)
+            v = por_mes[atual].get(c, 0)
+            if media > 0 and v > 1.3 * media and v - media >= 5000:
+                alertas.append(f"{c} em {nome_mes(atual)}: {brl(v)}, {round(100 * (v - media) / media)}% acima da média dos {len(prev)} mês(es) anterior(es) ({brl(int(media))}).")
+            elif media == 0 and v >= 20000:
+                alertas.append(f"{c} em {nome_mes(atual)}: {brl(v)}, categoria que não tinha gasto nos meses anteriores.")
+    media_desp = (sum(l["despesas"] for l in linhas) / len(linhas)) if linhas else 0
+    return {"meses": ms, "linhas": linhas, "categorias": principais, "alertas": alertas, "media_despesas": int(media_desp)}
+
+
+def listar(con, mes: str = "", cat: str = "", q: str = "", limite: int = 100, deslocar: int = 0) -> tuple:
+    where, args = ["1=1"], []
+    if re.fullmatch(r"\d{4}-\d{2}", mes or ""):
+        where.append("substr(data,1,7)=?")
+        args.append(mes)
+    if cat:
+        where.append("categoria=?")
+        args.append(cat)
+    if q:
+        where.append("desc_norm LIKE ?")
+        args.append("%" + norm(q) + "%")
+    cond = " AND ".join(where)
+    total = con.execute(f"SELECT COUNT(*) FROM transacoes WHERE {cond}", args).fetchone()[0]
+    linhas = [dict(r) for r in con.execute(f"SELECT * FROM transacoes WHERE {cond} ORDER BY data DESC, id DESC LIMIT ? OFFSET ?", args + [limite, deslocar])]
+    return total, linhas
+
+
+def exportar_csv(con) -> str:
+    saida = io.StringIO()
+    w = csv.writer(saida, delimiter=";")
+    w.writerow(["data", "conta", "descricao", "valor", "categoria"])
+    for r in con.execute("SELECT data, conta, descricao, valor, categoria FROM transacoes ORDER BY data, id"):
+        w.writerow([r["data"], r["conta"], r["descricao"], f"{r['valor'] / 100:.2f}".replace(".", ","), r["categoria"]])
+    return saida.getvalue()

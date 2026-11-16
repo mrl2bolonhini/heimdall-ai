@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finance · Heimdall-ai</title>
+<meta name="description" content="Heimdall Finance: extratos do banco e do cartão importados, gastos por categoria, tendências e alertas, em páginas de texto para leitor de tela.">
+<meta name="theme-color" content="#080d1f">
+<link rel="canonical" href="https://heimdall-ai.tech/finance.html">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Heimdall-ai">
+<meta property="og:title" content="Finance · Heimdall-ai">
+<meta property="og:description" content="Heimdall Finance: extratos do banco e do cartão importados, gastos por categoria, tendências e alertas, em páginas de texto para leitor de tela.">
+<meta property="og:url" content="https://heimdall-ai.tech/finance.html">
+<meta property="og:image" content="https://heimdall-ai.tech/og.png">
+<meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
+<meta name="twitter:card" content="summary_large_image">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<header class="top"><div class="wrap"><div class="barra">
+<a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<span class="gap"></span>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="notas.html">Notas</a></li><li><a href="news.html">News</a></li><li><a href="saude.html">Saúde</a></li><li><a href="jogos.html">Jogos</a></li><li><a href="finance.html" aria-current="page">Finance</a></li><li><a href="cloud.html">Cloud</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="comando-heimdall.html">Comando heimdall</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li></ul></nav>
+<div class="ferram"><button type="button" id="tema">Tema escuro</button></div>
+</div></div></header>
+<main id="conteudo" tabindex="-1"><div class="wrap">
+<div class="doc"><div>
+<h1>Heimdall Finance</h1>
+<p>Suas finanças em páginas de texto e tabelas, feitas para leitor de tela. Você importa os extratos do banco e as faturas do cartão; o painel classifica os gastos por categoria, mostra o resumo do mês, compara com o mês anterior, lista os maiores gastos e avisa quando uma categoria dispara. Nada é lido de bancos por conta própria: os dados entram por arquivo.</p>
+<section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
+<ol><li>No próprio computador: <code>heimdall finance</code> (http://localhost:8016), depois de subir o sistema.</li>
+<li>De fora de casa: finance.heimdall-ai.tech, pelo túnel Cloudflare.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, ou a aprovação no Microsoft Authenticator, se você ligar o Cloudflare Access.</li></ol></section>
+<section aria-labelledby="usar"><h2 id="usar">Como usar</h2>
+<ol><li><strong>Importar:</strong> na página Importar extrato, escolha o arquivo (OFX, que a maioria dos bancos oferece em "exportar extrato", ou CSV com colunas de data, descrição e valor), dê um nome à conta (por exemplo Itaú conta ou Nubank cartão) e importe. Importar o mesmo arquivo de novo não duplica nada. Em CSV de cartão em que os gastos vêm positivos, marque a opção de inverter.</li>
+<li><strong>Classificar:</strong> as regras padrão cuidam do óbvio (mercado, transporte, assinaturas, saúde, salário...). O resumo avisa quantos lançamentos ficaram sem categoria, e a lista deles traz um campo de categoria em cada linha. Ao corrigir, a regra nasce sozinha e vale para os lançamentos parecidos e para as próximas importações. Suas regras vencem as padrão, e o que você categoriza à mão nunca é mudado por regra.</li>
+<li><strong>Resumo do mês:</strong> receitas, despesas, saldo, gastos por categoria com a variação sobre o mês anterior e os dez maiores gastos.</li>
+<li><strong>Tendências:</strong> receitas, despesas e saldo mês a mês, o gasto por categoria em cada mês e alertas quando uma categoria passa de 30% da média dos três meses anteriores.</li>
+<li><strong>Fora das somas:</strong> pagamento de fatura, investimentos e transferências entre suas contas não contam como despesa nem receita, para não somar duas vezes.</li>
+<li><strong>Exportar:</strong> a página Transações baixa tudo em CSV.</li></ol></section>
+<section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
+<ol><li>Atualize e reinicie: <code>heimdall update --restart</code>. O servidor sobe sozinho quando há senha e código no .env, e não precisa de instalador.</li>
+<li>Conferir: <code>curl -s http://localhost:8016/saude</code> deve responder ok.</li>
+<li>De fora de casa, o nome finance.heimdall-ai.tech já existe no túnel (aponta para localhost:8016, com o DNS), então responde assim que o serviço estiver no ar.</li>
+<li>Se algo falhar: <code>heimdall logs --service finance</code></li></ol></section>
+<section aria-labelledby="seg"><h2 id="seg">Privacidade e segurança</h2>
+<ul><li>Os dados ficam em um banco SQLite na pasta dados_financas do projeto (permissão só do seu usuário), fora do git e fora dos backups da nuvem. Nada é enviado para a internet, para a Cloudflare ou para modelo de fora.</li>
+<li>Escuta só em 127.0.0.1, com login, limite de tentativas, sessão em cookie HttpOnly, token CSRF em todo envio de formulário e lista de sites permitidos.</li>
+<li>A política de conteúdo não permite nenhum script: as páginas são HTML puro.</li></ul></section>
+</div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#abrir">Como abrir</a></li><li><a href="#usar">Como usar</a></li><li><a href="#no-ar">Colocar no ar</a></li><li><a href="#seg">Privacidade e segurança</a></li></ul></nav></aside></div>
+</div></main>
+<footer><div class="wrap"><div class="linha">
+<div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
+<div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:suporte@heimdall-ai.tech">suporte@heimdall-ai.tech</a></li><li><a href="https://www.linkedin.com/in/murillobolonhinicita">LinkedIn de Murillo Bolonhini Cita</a></li></ul></div>
+<ul aria-label="Links do rodapé"><li><a href="https://github.com/mrl2bolonhini/heimdall-ai">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
+</div></div></footer>
+<p id="aviso" class="sr" role="status" aria-live="polite"></p>
+<script src="heimdall.js" defer></script>
+</body>
+</html>

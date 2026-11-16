@@ -58,7 +58,7 @@ Sem opção mostra as últimas 40 linhas do log da subida atual.
 Opções:
   -l, --list           lista os arquivos de log em logs/
   -c, --clean          apaga os logs antigos que ficavam soltos na pasta do projeto
-  -s, --service NOME   últimas linhas do log de um serviço: mcp, mcp-public, mcp-data, agent, cloud, notes, news, health, games, terminal, ingest
+  -s, --service NOME   últimas linhas do log de um serviço: mcp, mcp-public, mcp-data, agent, cloud, notes, news, health, games, finance, terminal, ingest
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall logs
@@ -168,6 +168,14 @@ Exemplos:
   heimdall games --play xadrez
   heimdall games -e --status
 
+@ finance | Heimdall Finance, suas finanças em páginas de texto
+Abre o painel financeiro no navegador (porta 8016; de fora, finance.heimdall-ai.tech). Você importa extratos do banco e da fatura do cartão (OFX ou CSV); o painel classifica os gastos por categoria com regras que você ajusta (ao corrigir uma categoria, a regra nasce sozinha), mostra o resumo do mês com variação sobre o mês anterior, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara. Tudo em tabelas para leitor de tela. Os dados ficam só no Mac, na pasta dados_financas (fora do git), e nunca vão para a Cloudflare nem para modelo de fora. Usa o mesmo login do Cloud.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall finance
+  heimdall logs --service finance
+
 @ n8n | Automações do n8n
 Abre o n8n no navegador (porta 5678).
 Opções:
@@ -190,7 +198,7 @@ Exemplos:
   heimdall dozzle
 
 @ urls | Todos os endereços locais
-Lista os endereços de chat, notes, news, cloud, health, games, n8n, kuma e dozzle, com as portas do seu .env.
+Lista os endereços de chat, notes, news, cloud, health, games, finance, n8n, kuma e dozzle, com as portas do seu .env.
 Opções:
   -h, --help           mostra esta ajuda
 Exemplos:
