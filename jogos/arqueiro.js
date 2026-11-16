@@ -100,8 +100,8 @@
   // ---- Som (Web Audio). Sem áudio, o jogo avisa e fala as posições em texto. ----
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = novo("facil"), relogio = null, ctx = null, semAudio = false;
   function audio() {
-    if (ctx || semAudio) return ctx;
-    try { var AC = raiz.AudioContext || raiz.webkitAudioContext; if (!AC) { semAudio = true; return null; } ctx = new AC(); } catch (x) { semAudio = true; ctx = null; }
+    if (ctx || semAudio) { if (ctx && ctx.state === "suspended" && ctx.resume) { try { ctx.resume(); } catch (x) { /* segue */ } } return ctx; }
+    try { var AC = raiz.AudioContext || raiz.webkitAudioContext; if (!AC) { semAudio = true; return null; } ctx = new AC(); if (ctx.state === "suspended" && ctx.resume) ctx.resume(); } catch (x) { semAudio = true; ctx = null; }
     return ctx;
   }
   function bip(freq, dur, p, tipo, vol, sweep) {
@@ -151,6 +151,7 @@
   var temposTeste = [];
   testeSom.addEventListener("click", function () {
     if (!audio()) { H.anunciar("Seu navegador não oferece áudio estéreo. O jogo funciona em texto: ele diz onde o alvo está."); return; }
+    if (ctx && ctx.state !== "running") H.anunciar("O áudio do navegador está " + ctx.state + ". Se não ouvir nada, toque em Testar o som outra vez e confira o volume e a saída de áudio.");
     temposTeste.forEach(function (t) { raiz.clearTimeout(t); }); temposTeste = [];
     // Os três sons tocam primeiro, com folga entre eles, e a explicação só é falada depois do último: assim o VoiceOver não atropela os sons.
     bip(880, 0.25, -1, "sine", 0.3);
