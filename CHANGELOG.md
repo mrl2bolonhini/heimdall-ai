@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Sons de apoio nos jogos de cassino e de cartas
+- Novo módulo de sons (jogos/som.js), pensado como recurso de acessibilidade e não como atrativo: um som curto marca cada acontecimento e a fala só começa depois que o som termina, para o VoiceOver não atropelar.
+- Roleta: ficha ao apostar, a bola correndo e parando ao girar, e um som de resultado (ganhou, grande, empate ou perdeu). Caça-níqueis: os três rolos parando e o som do prêmio ou da perda.
+- Blackjack, Bacará, Poker caribenho, Poker Texas hold'em e Paciência: ficha nas apostas, carta ou cartas ao dar e comprar, e sons de ganhou, perdeu, empate, estouro e grande. Comandos de consulta (saldo, apostas, ajuda, histórico) nunca tocam som, e uma recusa ("Não entendi", "Aposta inválida") toca um som curto de erro.
+- Cada um desses jogos ganhou o botão "Sons: ligados. Aperte para desligar", que liga e desliga tudo. A escolha fica gravada no navegador. Sem áudio no navegador, nada muda: o jogo continua falado.
+- Novos testes em teste_jogos_ui.js. Para aplicar: heimdall update --restart (não precisa de instalador).
+
 ## 2026-11-16 - Arqueiro de áudio: narração completa, curta ou nenhuma
 - Novo seletor "Narração" no jogo. Completa descreve tudo, como antes. Curta usa frases enxutas ("Pássaro, esquerda.", "Acertou! Mais 3.", "Errou, 6 à direita.", "Escapou."). Mínima fala só o essencial: "3 de 10." quando entra um alvo, "Acertou.", "Errou.", "Escapou.", "Corvo." e o resultado final.
 - O padrão acompanha o nível: fácil com narração completa, normal com curta e difícil com mínima. Dá para trocar a narração à vontade, antes de iniciar.

@@ -204,17 +204,17 @@
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
   var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (apostar 10, pedir, parar, dobrar, dividir, mao, banca, saldo, tabela, dica, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
   var atalhos = H.el("div", { role: "group", "aria-label": "Jogadas" }, [["Pedir", "pedir"], ["Parar", "parar"], ["Dobrar", "dobrar"], ["Dividir", "dividir"], ["Ler a mão", "mao"], ["Ler o saldo", "saldo"], ["Dica", "dica"]].map(function (x) {
-    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg); }); return b;
+    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg, x[1]); }); return b;
   }));
   var apostaSel = H.el("select", { id: "aposta" }, [2, 4, 10, 20, 50].map(function (n) { return H.el("option", { value: String(n), texto: n + " créditos" }); }));
   var apostarBtn = H.el("button", { type: "button", texto: "Apostar" });
   var repetirBtn = H.el("button", { type: "button", texto: "Repetir a aposta" });
   var novoBtn = H.el("button", { type: "button", texto: "Novo jogo" });
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.el("label", { "for": "aposta", texto: "Valor da aposta" }), apostaSel, apostarBtn, repetirBtn, form, atalhos].forEach(function (x) { jogo.appendChild(x); });
-  function falar(m) { H.anunciar(m); campo.disabled = e.fim; }
-  apostarBtn.addEventListener("click", function () { falar(comando(e, "apostar " + apostaSel.value).msg); });
-  repetirBtn.addEventListener("click", function () { falar(comando(e, "repetir").msg); });
-  form.addEventListener("submit", function (ev) { ev.preventDefault(); var r = comando(e, campo.value); campo.value = ""; falar(r.msg); if (!e.fim) campo.focus(); });
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.som ? H.som.botao() : H.el("span"), H.el("label", { "for": "aposta", texto: "Valor da aposta" }), apostaSel, apostarBtn, repetirBtn, form, atalhos].forEach(function (x) { jogo.appendChild(x); });
+  function falar(m, cmd) { var c = H.som && H.som.cue(m, cmd); if (c) H.som.anunciar(c, m); else H.anunciar(m); campo.disabled = e.fim; }
+  apostarBtn.addEventListener("click", function () { falar(comando(e, "apostar " + apostaSel.value).msg, "apostar " + apostaSel.value); });
+  repetirBtn.addEventListener("click", function () { falar(comando(e, "repetir").msg, "repetir"); });
+  form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
   function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos de mentira. Escolha o valor e aperte Apostar, ou digite apostar 10. Dica: o comando ajuda lista tudo."); }
   novoBtn.addEventListener("click", comecar);
   comecar();

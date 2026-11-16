@@ -24,7 +24,7 @@ function carregar(nome, historia) {
   reg = {}; doc.listeners = {};
   const jogo = new El("div"); jogo.setAttribute("id", "jogo"); const an = new El("div"); an.setAttribute("id", "anuncio");
   if (historia) jogo.setAttribute("data-historia", historia);
-  (historia ? ["base.js", nome + ".js", "motor.js"] : ["base.js", nome + ".js"]).forEach(f => { const p = path.join(__dirname, "jogos", f); delete require.cache[require.resolve(p)]; require(p); });
+  (historia ? ["base.js", "som.js", nome + ".js", "motor.js"] : ["base.js", "som.js", nome + ".js"]).forEach(f => { const p = path.join(__dirname, "jogos", f); delete require.cache[require.resolve(p)]; require(p); });
   return { jogo, an, id: (i) => reg[i] };
 }
 const botaoPorTexto = (jogo, txt) => jogo.all("button").filter(b => b.textContent === txt)[0];
@@ -178,6 +178,45 @@ t("arqueiro: teste de som, iniciar, controles em texto (sem áudio no navegador)
   botaoPorTexto(j.jogo, "Atirar").fire("click"); assert(/Não há alvo/.test(j.an.textContent));
   botaoPorTexto(j.jogo, "Pontos").fire("click"); assert(/Pontos: 0/.test(j.an.textContent));
   botaoPorTexto(j.jogo, "Parar").fire("click"); assert(/Partida pausada/.test(j.an.textContent));
+});
+function audioFalso(log) {
+  global.AudioContext = function () {
+    this.currentTime = 0; this.state = "running"; this.destination = {}; this.sampleRate = 8000;
+    this.createOscillator = () => ({ type: "", frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {}, start() { log.push("tom"); }, stop() {} });
+    this.createGain = () => ({ gain: { value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} });
+    this.createBuffer = (c, n) => ({ getChannelData: () => new Float32Array(n) });
+    this.createBufferSource = () => ({ connect() {}, start() { log.push("ruido"); } });
+    this.createBiquadFilter = () => ({ frequency: {}, connect() {} });
+  };
+}
+t("sons de apoio: roleta tem o botão Sons, gira com som e fala só depois, e o botão desliga", () => {
+  const log = [], esperas = []; audioFalso(log);
+  const st = global.setTimeout; global.setTimeout = (f, ms) => { esperas.push(ms); f(); };
+  const j = carregar("roleta"), campo = j.id("comando"), form = j.jogo.all("form")[0];
+  const sons = botaoPorTexto(j.jogo, "Sons: ligados. Aperte para desligar"); assert(sons, "botão Sons");
+  campo.value = "apostar 5 vermelho"; form.fire("submit"); assert(log.includes("tom"), "ficha ao apostar");
+  log.length = 0; esperas.length = 0; campo.value = "girar"; form.fire("submit");
+  assert(log.includes("tom"), "bola e resultado tocam"); assert(esperas.some(ms => ms >= 2000), "a fala espera os sons terminarem");
+  assert(/A bola parou/.test(j.an.textContent));
+  sons.fire("click"); assert(/desligados/.test(sons.textContent) && /Sons desligados/.test(j.an.textContent));
+  log.length = 0; campo.value = "apostar 1 preto"; form.fire("submit"); assert.equal(log.length, 0, "desligado: sem som");
+  sons.fire("click");  // religa, deixa o estado limpo
+  delete global.AudioContext; global.setTimeout = st;
+});
+t("sons de apoio: o classificador escolhe sons só para jogadas, e nunca para consulta ou fala de erro", () => {
+  const j = carregar("blackjack"), cue = global.Heimdall.som.cue;
+  assert.deepEqual(cue("Aposta de 4. Suas cartas: 10 de espadas, Dama de ouros: 20.", "apostar 4"), ["ficha", "cartas"]);
+  assert.deepEqual(cue("Você recebeu Valete de copas. Passou de 21 e estourou.", "pedir"), ["carta", "estourou"]);
+  assert.equal(cue("Saldo: 96 créditos. Você ganhou muito.", "saldo"), null, "consulta não toca som");
+  assert.equal(cue("Não há rodada em andamento.", "pedir"), "erro");
+  assert.equal(cue("A bola parou no 17. Você lucrou 5.", "girar").pop(), "ganhou");
+  assert.equal(cue("Empate. Aposta devolvida.", "parar").pop(), "empate");
+});
+t("sons de apoio: caça-níqueis toca os rolos e o resultado", () => {
+  const log = []; audioFalso(log);
+  const j = carregar("cacaniqueis"); j.id("aposta").value = "1"; botaoPorTexto(j.jogo, "Girar").fire("click");
+  assert(log.length > 3, "rolos e resultado"); assert(/Saiu:/.test(j.an.textContent));
+  delete global.AudioContext;
 });
 t("arqueiro: teste de som toca os três sons em ordem e só depois fala a explicação", () => {
   const sons = []; let ultimaPan = null;

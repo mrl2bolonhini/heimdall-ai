@@ -119,15 +119,15 @@
   var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (apostar 10 banca, repetir, tabela, historico, saldo, dica, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
   var valorSel = H.el("select", { id: "valor" }, [1, 2, 5, 10, 20, 50].map(function (n) { return H.el("option", { value: String(n), texto: n + (n === 1 ? " crédito" : " créditos") }); }));
   var lados = H.el("div", { role: "group", "aria-label": "Apostar" }, [["Apostar no jogador", "jogador"], ["Apostar na banca", "banca"], ["Apostar no empate", "empate"]].map(function (x) {
-    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + x[1]).msg); }); return b;
+    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + x[1]).msg, "apostar " + valorSel.value + " " + x[1]); }); return b;
   }));
   var extras = H.el("div", { role: "group", "aria-label": "Consultas" }, [["Repetir a aposta", "repetir"], ["Ler o saldo", "saldo"], ["Histórico", "historico"], ["Tabela de pagamentos", "tabela"], ["Dica", "dica"]].map(function (x) {
-    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg); }); return b;
+    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg, x[1]); }); return b;
   }));
   var novoBtn = H.el("button", { type: "button", texto: "Novo jogo" });
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.el("label", { "for": "valor", texto: "Valor da aposta" }), valorSel, lados, extras, form].forEach(function (x) { jogo.appendChild(x); });
-  function falar(m) { H.anunciar(m); campo.disabled = e.fim; }
-  form.addEventListener("submit", function (ev) { ev.preventDefault(); var r = comando(e, campo.value); campo.value = ""; falar(r.msg); if (!e.fim) campo.focus(); });
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.som ? H.som.botao() : H.el("span"), H.el("label", { "for": "valor", texto: "Valor da aposta" }), valorSel, lados, extras, form].forEach(function (x) { jogo.appendChild(x); });
+  function falar(m, cmd) { var c = H.som && H.som.cue(m, cmd); if (c) H.som.anunciar(c, m); else H.anunciar(m); campo.disabled = e.fim; }
+  form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
   function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos de mentira. Escolha o valor e o lado: jogador, banca ou empate. O jogo dá as cartas e lê tudo. Exemplo: apostar 10 banca."); }
   novoBtn.addEventListener("click", comecar);
   comecar();

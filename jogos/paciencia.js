@@ -194,12 +194,12 @@
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
   var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (comprar, mover 7C para 4, subir descarte, mesa, dica, desfazer, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
   var atalhos = H.el("div", { role: "group", "aria-label": "Atalhos" }, [["Comprar", "comprar"], ["Ler a mesa", "mesa"], ["Ler o descarte", "descarte"], ["Ler as bases", "bases"], ["Dica", "dica"], ["Desfazer", "desfazer"]].map(function (x) {
-    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg); }); return b;
+    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg, x[1]); }); return b;
   }));
   var novoBtn = H.el("button", { type: "button", texto: "Novo jogo" });
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, form, atalhos].forEach(function (x) { jogo.appendChild(x); });
-  function falar(m) { H.anunciar(m); campo.disabled = !!e.fim; }
-  form.addEventListener("submit", function (ev) { ev.preventDefault(); var r = comando(e, campo.value); campo.value = ""; falar(r.msg); if (!e.fim) campo.focus(); });
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.som ? H.som.botao() : H.el("span"), form, atalhos].forEach(function (x) { jogo.appendChild(x); });
+  function falar(m, cmd) { var c = H.som && H.som.cue(m, cmd); if (c) H.som.anunciar(c, m); else H.anunciar(m); campo.disabled = !!e.fim; }
+  form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
   function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", compra " + e.compra + ". Sete colunas, com 1 a 7 cartas cada; só a de cima de cada coluna está aberta. " + lerMesa(e)); }
   novoBtn.addEventListener("click", comecar);
   comecar();

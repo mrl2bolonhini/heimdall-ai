@@ -166,13 +166,13 @@
   var anteSel = H.el("select", { id: "ante" }, [1, 2, 5, 10, 25].map(function (n) { return H.el("option", { value: String(n), texto: n + (n === 1 ? " crédito" : " créditos") }); }));
   var anteBtn = H.el("button", { type: "button", texto: "Apostar o ante" });
   var botoes = H.el("div", { role: "group", "aria-label": "Jogadas" }, [["Aumentar", "aumentar"], ["Desistir", "desistir"], ["Ler a mão", "mao"], ["Ler a banca", "banca"], ["Repetir o ante", "repetir"], ["Ler o saldo", "saldo"], ["Tabela de pagamentos", "tabela"], ["Dica", "dica"]].map(function (x) {
-    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg); }); return b;
+    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg, x[1]); }); return b;
   }));
   var novoBtn = H.el("button", { type: "button", texto: "Novo jogo" });
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.el("label", { "for": "ante", texto: "Valor do ante" }), anteSel, anteBtn, botoes, form].forEach(function (x) { jogo.appendChild(x); });
-  function falar(m) { H.anunciar(m); campo.disabled = e.fim; }
-  anteBtn.addEventListener("click", function () { falar(comando(e, "apostar " + anteSel.value).msg); });
-  form.addEventListener("submit", function (ev) { ev.preventDefault(); var r = comando(e, campo.value); campo.value = ""; falar(r.msg); if (!e.fim) campo.focus(); });
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.som ? H.som.botao() : H.el("span"), H.el("label", { "for": "ante", texto: "Valor do ante" }), anteSel, anteBtn, botoes, form].forEach(function (x) { jogo.appendChild(x); });
+  function falar(m, cmd) { var c = H.som && H.som.cue(m, cmd); if (c) H.som.anunciar(c, m); else H.anunciar(m); campo.disabled = e.fim; }
+  anteBtn.addEventListener("click", function () { falar(comando(e, "apostar " + anteSel.value).msg, "apostar " + anteSel.value); });
+  form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
   function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos de mentira. Aposte o ante, por exemplo apostar 5, e depois decida entre aumentar e desistir. O comando ajuda lista tudo."); }
   novoBtn.addEventListener("click", comecar);
   comecar();

@@ -173,11 +173,11 @@ POR_CATEGORIA = {c[0]: c for c in CATEGORIAS}
 # Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.
 HISTORIAS = {"relogios", "templo", "orion", "caverna"}
 POR_ID = {j[0]: j for j in CATALOGO}
-ARQUIVOS_OK = {"base.js", "motor.js"} | {j[2] for j in CATALOGO}
+ARQUIVOS_OK = {"base.js", "som.js", "motor.js"} | {j[2] for j in CATALOGO}
 
 
 def scripts_do_jogo(jid: str) -> list:
-    return ["base.js", POR_ID[jid][2], "motor.js"] if jid in HISTORIAS else ["base.js", POR_ID[jid][2]]
+    return ["base.js", "som.js", POR_ID[jid][2], "motor.js"] if jid in HISTORIAS else ["base.js", "som.js", POR_ID[jid][2]]
 
 
 def extras() -> list:

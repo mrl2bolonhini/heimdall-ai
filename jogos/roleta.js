@@ -85,7 +85,7 @@
     if (e.saldo > e.maximo) e.maximo = e.saldo;
     var res = paga > apostado ? "Você lucrou " + (paga - apostado) + "." : paga === apostado ? "Você ficou no zero a zero." : "Você perdeu " + (apostado - paga) + " nesta rodada.";
     var fim = ""; if (e.saldo < 1) { e.fim = true; fim = " Os créditos acabaram. Fim de jogo."; }
-    return { msg: "A bola parou no " + descNum(n) + ". " + partes.join("; ") + ". " + res + " Saldo: " + plural(e.saldo, "crédito", "créditos") + "." + fim, numero: n };
+    return { msg: "A bola parou no " + descNum(n) + ". " + partes.join("; ") + ". " + res + " Saldo: " + plural(e.saldo, "crédito", "créditos") + "." + fim, numero: n, lucro: paga - apostado };
   }
   function tabela(e) {
     return "Pagamentos, por crédito apostado: número, 35 para 1; dúzia e coluna, 2 para 1; vermelho, preto, par, ímpar, alto e baixo, 1 para 1. Zero" + (e.duplo ? " e duplo zero são verdes e" : " é verde e") + " só pagam para quem apostou neles. Dúzias: 1 a 12, 13 a 24, 25 a 36. Colunas: a 1 tem 1, 4, 7 até 34; a 2 tem 2, 5, 8 até 35; a 3 tem 3, 6, 9 até 36. Alto é de 19 a 36 e baixo de 1 a 18. Chance de acertar: número " + (e.duplo ? "1 em 38" : "1 em 37") + ", dúzia ou coluna " + (e.duplo ? "12 em 38" : "12 em 37") + ", e cor, paridade ou alto/baixo " + (e.duplo ? "18 em 38" : "18 em 37") + ".";
@@ -133,6 +133,7 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = novo("facil");
+  var SOM = H.som; // sons de apoio: ficha ao apostar, bola ao girar, e um som de resultado antes da fala
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { var n = NIVEIS[k]; return H.el("option", { value: k, texto: n.nome.charAt(0).toUpperCase() + n.nome.slice(1) + ": " + n.inicio + " créditos, roleta " + (n.duplo ? "americana (com duplo zero)" : "europeia") }); }));
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
   var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (apostar 5 vermelho, apostar 2 no 17, girar, apostas, limpar, repetir, tabela, historico, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
@@ -142,15 +143,22 @@
   var apBtn = H.el("button", { type: "button", texto: "Apostar" });
   var numBtn = H.el("button", { type: "button", texto: "Apostar neste número" });
   var botoes = H.el("div", { role: "group", "aria-label": "Mesa" }, [["Girar", "girar"], ["Ler as apostas", "apostas"], ["Limpar as apostas", "limpar"], ["Repetir as apostas", "repetir"], ["Ler o saldo", "saldo"], ["Histórico", "historico"], ["Tabela de pagamentos", "tabela"]].map(function (x) {
-    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg); }); return b;
+    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]), x[1]); }); return b;
   }));
   var novoBtn = H.el("button", { type: "button", texto: "Novo jogo" });
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.el("label", { "for": "valor", texto: "Valor" }), valorSel, H.el("label", { "for": "tipo", texto: "Tipo de aposta" }), tipoSel, apBtn,
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, SOM ? SOM.botao() : H.el("span"), H.el("label", { "for": "valor", texto: "Valor" }), valorSel, H.el("label", { "for": "tipo", texto: "Tipo de aposta" }), tipoSel, apBtn,
     H.el("label", { "for": "numero", texto: "Número para apostar, de 0 a 36" }), numCampo, numBtn, botoes, form].forEach(function (x) { jogo.appendChild(x); });
-  function falar(m) { H.anunciar(m); campo.disabled = e.fim; }
-  apBtn.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + tipoSel.value).msg); });
-  numBtn.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + (numCampo.value === "" ? "x" : numCampo.value)).msg); });
-  form.addEventListener("submit", function (ev) { ev.preventDefault(); var r = comando(e, campo.value); campo.value = ""; falar(r.msg); if (!e.fim) campo.focus(); });
+  function falar(r, cmd) {
+    var cues = null;
+    if (r.erro) cues = "erro";
+    else if (r.numero !== undefined) cues = ["giro", r.lucro > 0 ? (r.lucro >= 10 ? "grande" : "ganhou") : r.lucro === 0 ? "empate" : "perdeu"];
+    else if (/^apost/.test(cmd || "")) cues = "ficha";
+    if (SOM && cues) SOM.anunciar(cues, r.msg); else H.anunciar(r.msg);
+    campo.disabled = e.fim;
+  }
+  apBtn.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + tipoSel.value), "apostar"); });
+  numBtn.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + (numCampo.value === "" ? "x" : numCampo.value)), "apostar"); });
+  form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r, cmd); if (!e.fim) campo.focus(); });
   function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos de mentira, roleta " + (e.duplo ? "americana, com zero e duplo zero" : "europeia, de 0 a 36") + ". Faça suas apostas e depois gire. Exemplo: apostar 5 vermelho. O comando ajuda lista tudo."); }
   novoBtn.addEventListener("click", comecar);
   comecar();

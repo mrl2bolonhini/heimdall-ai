@@ -67,13 +67,14 @@
   var ler = H.el("button", { type: "button", texto: "Ler o saldo" });
   var premios = H.el("button", { type: "button", texto: "Ver os prêmios" });
   var novoBtn = H.el("button", { type: "button", texto: "Nova partida" });
-  [painel, H.el("label", { "for": "aposta", texto: "Aposta por rodada" }), sel, girarBtn, saldo, ler, premios, novoBtn].forEach(function (x) { jogo.appendChild(x); });
+  [painel, H.som ? H.som.botao() : H.el("span"), H.el("label", { "for": "aposta", texto: "Aposta por rodada" }), sel, girarBtn, saldo, ler, premios, novoBtn].forEach(function (x) { jogo.appendChild(x); });
   function atualizar() { saldo.textContent = "Saldo: " + e.creditos + " créditos."; girarBtn.disabled = e.fim; }
   girarBtn.addEventListener("click", function () {
     var r = girar(e, Number(sel.value));
     if (r.erro) { H.anunciar(r.erro); return; }
     painel.textContent = "[ " + r.digitos.join(" | ") + " ]";
-    atualizar(); H.anunciar(r.msg);
+    atualizar();
+    if (H.som) H.som.anunciar(["rolos", r.tipo === "trinca" ? "grande" : r.premio > 0 ? "ganhou" : "perdeu"], r.msg); else H.anunciar(r.msg);
     if (e.fim) novoBtn.focus();
   });
   ler.addEventListener("click", function () { H.anunciar(resumo(e)); });

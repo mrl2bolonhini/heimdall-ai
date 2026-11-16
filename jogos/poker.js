@@ -273,13 +273,13 @@
   var valorCampo = H.el("input", { id: "valor", type: "number", min: "1", inputmode: "numeric" });
   var apBtn = H.el("button", { type: "button", texto: "Apostar este valor" });
   var botoes = H.el("div", { role: "group", "aria-label": "Jogadas" }, [["Continuar", "continuar"], ["Pagar", "pagar"], ["Passar", "passar"], ["Desistir", "desistir"], ["Tudo", "tudo"], ["Ler a mão e a mesa", "mao"], ["Ler as fichas", "fichas"], ["Tabela das mãos", "tabela"], ["Dica", "dica"]].map(function (x) {
-    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg); }); return b;
+    var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { falar(comando(e, x[1]).msg, x[1]); }); return b;
   }));
   var novoBtn = H.el("button", { type: "button", texto: "Novo jogo" });
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, botoes, H.el("label", { "for": "valor", texto: "Valor total da aposta nesta rodada" }), valorCampo, apBtn, form].forEach(function (x) { jogo.appendChild(x); });
-  function falar(m) { H.anunciar(m); campo.disabled = !!e.fim; }
-  apBtn.addEventListener("click", function () { falar(comando(e, "apostar " + (valorCampo.value || "x")).msg); });
-  form.addEventListener("submit", function (ev) { ev.preventDefault(); var r = comando(e, campo.value); campo.value = ""; falar(r.msg); if (!e.fim) campo.focus(); });
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.som ? H.som.botao() : H.el("span"), botoes, H.el("label", { "for": "valor", texto: "Valor total da aposta nesta rodada" }), valorCampo, apBtn, form].forEach(function (x) { jogo.appendChild(x); });
+  function falar(m, cmd) { var c = H.som && H.som.cue(m, cmd); if (c) H.som.anunciar(c, m); else H.anunciar(m); campo.disabled = !!e.fim; }
+  apBtn.addEventListener("click", function () { falar(comando(e, "apostar " + (valorCampo.value || "x")).msg, "apostar " + (valorCampo.value || "x")); });
+  form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
   function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ": cada um começa com " + e.fichas[0] + " fichas de mentira, mano a mano contra o computador. As cegas começam em 5 e 10 e dobram a cada 6 mãos. Diga continuar para dar as cartas. O comando ajuda lista tudo."); }
   novoBtn.addEventListener("click", comecar);
   comecar();
