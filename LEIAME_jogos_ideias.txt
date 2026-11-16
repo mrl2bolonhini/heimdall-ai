@@ -16,7 +16,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
 4. Aventura de caverna por áudio (inspirada no Echo Cave) [FEITO: A Caverna dos Ecos]
    Movimento com setas ou comandos, modo escuta (ficar parado revela sons e marcos), ler posição, mapa e inventário. Roda no motor de aventuras, com os três níveis.
 
-5. Campo minado de gramado (inspirado no Lawnsweeper)
+5. Campo minado de gramado (inspirado no Lawnsweeper) [FEITO: Gramado]
    Variação do campo minado com tema e regras próprias, usando a mesma grade de botões com rótulo de linha e coluna.
 
 6. Aventura de escolhas com um problema de lógica por trás

@@ -92,6 +92,16 @@ t("campo minado: grade de botões com rótulo, comando e novo jogo", () => {
   botaoPorTexto(j.jogo, "Modo da grade: abrir").fire("click"); assert(/marcar/.test(j.an.textContent));
   botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível/.test(j.an.textContent));
 });
+t("gramado: comandos, botões de direção, consultas e novo jogo", () => {
+  const j = carregar("gramado"), campo = j.id("comando"), form = j.jogo.all("form")[0];
+  assert(/Novo jogo, nível fácil/.test(j.an.textContent));
+  campo.value = "onde"; form.fire("submit"); assert(/linha 1, coluna 1/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Norte").fire("click"); assert(/Fim do gramado/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Sensor").fire("click"); assert(/norte: borda/.test(j.an.textContent));
+  campo.value = "leste"; form.fire("submit"); assert(/Cortou|sensor apitou/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Ler o mapa").fire("click"); assert(/Linha 1\./.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível/.test(j.an.textContent));
+});
 t("xadrez: lance, resposta do computador, consulta, erro e nova partida", () => {
   const j = carregar("xadrez"), campo = j.id("lance"), form = j.jogo.all("form")[0], hist = j.id("historico");
   assert(/Nova partida, nível médio/.test(j.an.textContent));

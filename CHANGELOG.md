@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-15 - Gramado (campo minado por movimento)
+- Novo jogo: Gramado. Em vez de digitar linha e coluna, você conduz um cortador de grama com norte, sul, leste e oeste (leste 3 anda várias casas e para quando há aviso). Cada casa cortada diz quantos formigueiros há ao redor. Níveis: fácil 6 por 6 com 5 formigueiros (o sensor apita antes de você pisar e dicas à vontade), normal 8 por 8 com 10 (3 dicas) e difícil 10 por 10 com 20 (sem dicas).
+- O gramado é gerado de modo que todas as casas seguras sejam alcançáveis, e a dica só afirma o que é certo pelos números já descobertos.
+- Entra na categoria Tabuleiro e estratégia. Novo teste: teste_jogos_gramado.js. heimdall games --play gramado, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-15 - A Caverna dos Ecos e jogos por categoria
 - Nova aventura, A Caverna dos Ecos: guiada pelo som. O comando escutar (e ouvir) diz o que você ouve onde está, e isso mostra o caminho; onde diz o lugar e as saídas. Três níveis: no difícil há um enigma de ritmo na parede, é preciso montar uma corda com gancho e entrar no salão sem luz é perigoso.
 - O motor de aventuras ganhou os comandos escutar e onde (campo "escuta" nas salas); não contam como passo.

@@ -115,6 +115,10 @@ CATALOGO += [
      ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, digitar RESPOSTA no guardião e ajuda.", *NIVEIS_TXT]),
     ("orion", "Estação Orion", "hist_orion.js", "Ficção científica: religue a energia e peça socorro antes que o oxigênio acabe.",
      ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, falar com ZEL, digitar CÓDIGO e ajuda.", *NIVEIS_TXT]),
+    ("gramado", "Gramado", "gramado.js", "Campo minado por movimento: conduza um cortador de grama e evite os formigueiros, guiado pelo sensor.",
+     ["Você está no canto do gramado e anda com norte, sul, leste e oeste (leste 3 anda até três casas).",
+      "Cada casa cortada diz quantos formigueiros há nas casas ao redor, inclusive nas diagonais; a caminhada de vários passos para quando há aviso.",
+      "Pise num formigueiro e perde (no nível fácil o sensor apita e protege você). marcar DIREÇÃO põe bandeira, sensor lê as quatro direções, mapa lê tudo e dica ajuda nos níveis fácil e normal."]),
     ("caverna", "A Caverna dos Ecos", "hist_caverna.js", "Aventura guiada pelo som: ache a saída de uma caverna escura ouvindo o vento, a água e os ecos.",
      ["Digite comandos como escutar, olhar, ir norte, pegar ITEM, usar ITEM em ALGO e ajuda. O comando escutar diz o que você ouve onde está, e o som mostra o caminho; onde diz onde você está.", *NIVEIS_TXT]),
 ]
@@ -122,7 +126,7 @@ CATALOGO += [
 CATEGORIAS = [
     ("palavras", "Palavras e letras", "Adivinhar palavras.", ["forca", "cincoletras"]),
     ("numeros", "Números e lógica", "Códigos, números e quebra-cabeças de raciocínio.", ["senha", "numero", "sudoku", "2048"]),
-    ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "velha", "minas"]),
+    ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "velha", "minas", "gramado"]),
     ("sorte", "Sorte", "Jogos de sorte, com créditos de mentira.", ["cacaniqueis"]),
     ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna"]),
 ]

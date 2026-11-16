@@ -71,7 +71,7 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 token, sess = hc.nova_sessao()
 ck = f"{hc.COOKIE}={token}"
 st, corpo, cab = pedir("/", ck)
-confere("início lista as categorias com link e contagem", st == 200 and len(hj.CATALOGO) == 16 and len(hj.CATEGORIAS) == 5 and all(f"/categoria/{c[0]}" in corpo and c[1] in corpo for c in hj.CATEGORIAS), (st, corpo[:300]))
+confere("início lista as categorias com link e contagem", st == 200 and len(hj.CATALOGO) == 17 and len(hj.CATEGORIAS) == 5 and all(f"/categoria/{c[0]}" in corpo and c[1] in corpo for c in hj.CATEGORIAS), (st, corpo[:300]))
 for c in hj.CATEGORIAS:
     st_c, corpo_c, _ = pedir(f"/categoria/{c[0]}", ck)
     confere(f"categoria {c[0]} lista os seus jogos", st_c == 200 and all(f"/jogo/{i}" in corpo_c for i in c[3]), (st_c, corpo_c[:200]))
