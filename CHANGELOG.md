@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Entrada por aprovação no Microsoft Authenticator (Cloudflare Access)
+- Novo módulo heimdall_cfaccess.py: os cinco painéis (Cloud, Notas, News, Saúde e Jogos) passam a aceitar a aprovação do Cloudflare Access, que usa o Microsoft Entra ID. Você aprova por notificação no Microsoft Authenticator (digitando no celular o número mostrado na tela) e entra sem senha nem código de 6 dígitos.
+- Os painéis conferem a assinatura RS256 do documento do Cloudflare sem biblioteca de fora e checam emissor, aplicativo (AUD), validade e e-mail permitido. Os certificados são guardados por 1 hora e buscados de novo quando a chave gira.
+- Fica desligado até você preencher HEIMDALL_CFACCESS_EQUIPE, HEIMDALL_CFACCESS_AUD e HEIMDALL_CFACCESS_EMAILS no .env. Senha e código de 6 dígitos continuam valendo como reserva e no acesso por localhost ou Tailscale. python3 heimdall_cfaccess.py --status confere a configuração.
+- Novo teste: teste_cfaccess.py (chaves de teste, token adulterado, expirado, de outro aplicativo ou de e-mail não permitido, cache e fluxo HTTP). Passo a passo para criar a conta Microsoft e configurar o Cloudflare: LEIAME_autenticacao_microsoft.txt.
+- Para aplicar: heimdall update --restart. Nada muda até você configurar o .env e o Cloudflare.
+
 ## 2026-11-16 - Arqueiro de áudio (primeiro jogo de som)
 - Novo jogo: Arqueiro de áudio, guiado pelo som em estéreo (use fones de ouvido). Pássaros cruzam o céu em nove pontos e piam a cada passo no lado onde estão; você move a mira com as setas (cada passo faz um ping no lado da mira) e atira com a barra de espaço. Também há botões e comandos de texto. São 10 alvos, nos níveis fácil (devagar, tolerância de um passo, duas flechas), normal (mira exata) e difícil (rápido, rumo que muda e corvos que não se deve atingir).
 - O botão "Testar o som" toca três sons (só esquerda, meio, só direita) para conferir o estéreo. Sem áudio no navegador, o jogo diz em texto onde o alvo está.

@@ -1,0 +1,71 @@
+ENTRAR NOS PAINÉIS COM APROVAÇÃO POR NOTIFICAÇÃO NO MICROSOFT AUTHENTICATOR
+==========================================================================
+
+O que você vai ter no fim: ao abrir cloud, notas, news, saúde ou jogos .heimdall-ai.tech, o navegador vai ao login da Microsoft, o Authenticator no iPhone recebe uma notificação, você digita no celular o número que aparece na tela do navegador e entra. Sem senha do painel e sem código de 6 dígitos.
+
+Como funciona por baixo: o Cloudflare Access fica na frente dos endereços públicos, usa a Microsoft (Entra ID) para identificar você e entrega aos painéis um documento assinado. O módulo heimdall_cfaccess.py confere a assinatura e abre a sessão. O código está pronto e testado, mas desligado: nada muda até você fazer os passos abaixo e preencher o .env.
+
+O que continua igual: pelo localhost e pelo Tailscale o pedido não passa pelo Cloudflare, então ali continuam valendo senha e código de 6 dígitos. Você pode cadastrar a chave do código de 6 dígitos também no Microsoft Authenticator ("outra conta"), para aposentar o app da Apple. A chave está no .env; para mostrá-la no terminal sem copiar de arquivo, rode: grep '^HEIMDALL_CLOUD_TOTP_SEGREDO=' "$HEIMDALL_DIR/.env" | cut -d= -f2 | tr -d "'\"" . No Authenticator, use Adicionar conta, Outra conta, e a opção de digitar a chave manualmente. Antes de apagar do app da Apple, confira com python3 heimdall_acesso.py --verificar que os códigos batem.
+
+Aviso de honestidade: eu não consegui testar nada disto com a Microsoft nem com o Cloudflare, nem o VoiceOver com o Authenticator. Os pontos que dependem disso estão marcados com "CONFIRMAR".
+
+PARTE A. CONTA MICROSOFT (ENTRA ID GRATUITO)
+--------------------------------------------
+Use sua conta pessoal, nunca a do Itaú.
+
+1. Reúna: uma conta Microsoft pessoal (outlook, hotmail ou live), um número de telefone e um cartão que não seja pré-pago. A Microsoft faz uma autorização temporária de 1 dólar para verificar a identidade e depois devolve. Quem faz essa parte é você; eu não digito dados de cartão nem senhas.
+2. Crie a conta gratuita do Azure em azure.microsoft.com/free. Ela já vem com um diretório do Entra ID, com domínio no formato nome.onmicrosoft.com. Não mude para pagamento por uso. O que você precisa é só do diretório, que no plano gratuito inclui o MFA pelos "padrões de segurança" (security defaults).
+   CONFIRMAR: quem já usou o Azure antes com a mesma conta pode ser barrado no cadastro; nesse caso o diretório antigo ainda serve. Também confirme que o diretório continua funcionando depois dos 30 dias do teste do Azure.
+3. Abra entra.microsoft.com e entre. Vá em Identidade, Usuários, Todos os usuários, Novo usuário, Criar novo usuário. Crie um usuário só para isso, por exemplo "heimdall", com uma senha inicial forte. O endereço dele será heimdall@nome.onmicrosoft.com. Anote esse endereço: será o e-mail permitido.
+4. Dê a esse usuário a função "Administrador de usuários" (User Administrator). Motivo: pelos padrões de segurança, quem tem função de administrador faz MFA em todo login; os outros usuários só são cobrados quando a Microsoft julga necessário, e você quer a notificação sempre.
+   CONFIRMAR: no fim, entre numa janela privativa e veja se a notificação é pedida em todo login. Se não for, troque a função.
+5. Confira os padrões de segurança: Identidade, Visão geral, Propriedades, Gerenciar padrões de segurança, ativado. Em diretórios novos costumam vir ligados.
+6. Registre o Authenticator para o usuário "heimdall". Faça isto NO PRÓPRIO iPhone, em um navegador, para não depender de ler QR code:
+   a. Instale o Microsoft Authenticator pela App Store, se ainda não tiver.
+   b. No Safari do iPhone, abra myaccount.microsoft.com e entre como heimdall@nome.onmicrosoft.com. A Microsoft vai pedir para configurar o MFA.
+   c. Quando aparecer a tela do QR code, procure o link "Parear sua conta com o aplicativo clicando neste link" (em inglês, "Pair your account to the app by clicking this link"). Tocá-lo abre o Authenticator e cadastra a conta sem ler imagem. Se esse link não aparecer, use a opção "Não consigo digitalizar a imagem", que mostra um código e um endereço para digitar no app.
+   d. Os padrões de segurança só aceitam o registro pela opção de notificação do Authenticator. É essa que você quer.
+   CONFIRMAR: quão bem o VoiceOver lê o aplicativo na tela do número. Se tiver dificuldade, me diga o que o VoiceOver anuncia e eu procuro alternativas.
+7. Teste a notificação: em outro navegador, abra myaccount.microsoft.com, entre como heimdall; o navegador mostrará um número de dois dígitos; no iPhone, abra a notificação, digite o número e aprove.
+
+PARTE B. CLOUDFLARE
+-------------------
+Você já usa o Cloudflare Zero Trust (o túnel está nele), então já tem um nome de equipe. Ele está em Zero Trust, Configurações, Nome da equipe e domínio. O endereço é nomedaequipe.cloudflareaccess.com. A parte antes de ".cloudflareaccess.com" é o que vai no .env.
+
+B1. Registrar o aplicativo na Microsoft (para o Cloudflare poder usar o login dela)
+1. No Entra (entra.microsoft.com): Aplicativos, Registros de aplicativo, Novo registro. Nome: Heimdall Access. Tipo de conta: somente este diretório. URI de redirecionamento, plataforma Web: https://NOMEDAEQUIPE.cloudflareaccess.com/cdn-cgi/access/callback (troque NOMEDAEQUIPE).
+2. Na página do aplicativo, anote o ID do aplicativo (cliente) e o ID do diretório (locatário). Não são segredos.
+3. Certificados e segredos, Novo segredo do cliente, com a validade mais longa disponível. O valor só aparece uma vez: copie na hora para a próxima etapa. Anote a data de expiração; quando ele vence, ninguém consegue entrar pelo Access. Se um dia isso acontecer, ainda dá para entrar com senha e código de 6 dígitos pelo localhost ou pelo Tailscale.
+4. Permissões de API, Adicionar permissão, Microsoft Graph, permissões delegadas: email, offline_access, openid, profile, User.Read, Directory.Read.All e GroupMember.Read.All. Depois, "Conceder consentimento do administrador". Esse é o conjunto que a documentação do Cloudflare testou; permissões menores talvez bastem, mas não testei.
+
+B2. Ligar a Microsoft no Cloudflare
+1. Zero Trust, Integrações, Provedores de identidade, Adicionar novo, Azure AD. Informe o ID do aplicativo, o segredo e o ID do diretório. Salve e use o botão Testar.
+2. CONFIRMAR: o Cloudflare usa o e-mail do usuário. Se o teste mostrar e-mail vazio ou estranho, preencha o campo "E-mail" no perfil do usuário heimdall (Entra, Usuários, heimdall, Editar propriedades, Informações de contato) ou crie uma claim de e-mail em Configuração de token do aplicativo, como a documentação do Cloudflare descreve.
+
+B3. Proteger os endereços
+1. Zero Trust, Controles de acesso, Aplicativos, Adicionar aplicativo, Autohospedado. Crie UM aplicativo com vários nomes de host públicos: cloud, notes, news, health e games, todos em .heimdall-ai.tech (confira os nomes reais no seu túnel). Um aplicativo só significa uma só AUD tag para todos.
+2. Política: ação Permitir; regra: e-mail igual ao endereço do usuário heimdall. Em "Métodos de login" deixe só o Azure AD (desmarque o PIN por e-mail, senão ele vira uma porta alternativa).
+3. Salve e copie a AUD tag (Editar aplicativo, Configurações adicionais).
+
+ATENÇÃO, O QUE NÃO PODE FICAR ATRÁS DO ACCESS
+- Os feeds RSS do News (endereço /rss/CHAVE/...): os apps de feed não fazem login. Crie, no mesmo aplicativo ou em outro, uma regra de desvio (Bypass) só para o caminho news.heimdall-ai.tech/rss/*. A proteção ali continua sendo a chave secreta no endereço.
+- Qualquer endereço de webhook (a caixa de entrada da saúde e o que o Health Auto Export usa): ficam em outro nome de host, fora da lista acima. Não os inclua.
+- Se algo parar de abrir depois de ligar o Access, o primeiro suspeito é um nome de host que não deveria estar na lista.
+
+PARTE C. LIGAR NO HEIMDALL
+--------------------------
+1. Gravar os três valores no .env, sem colar nada em arquivo à mão:
+     heimdall env --set HEIMDALL_CFACCESS_EQUIPE
+     heimdall env --set HEIMDALL_CFACCESS_AUD
+     heimdall env --set HEIMDALL_CFACCESS_EMAILS
+   (a equipe é só o nome, o AUD é a tag copiada, e os e-mails são o do usuário heimdall; vários separados por vírgula).
+2. Conferir: python3 heimdall_cfaccess.py --status
+   Deve dizer "LIGADA" e "ok, 1 chave(s)" nos certificados do Cloudflare.
+3. Reiniciar: heimdall update --restart (ou ./subir.sh --reiniciar). Isto não exige instalador.
+4. Teste: abra games.heimdall-ai.tech. Deve ir ao login da Microsoft, mandar a notificação e entrar direto nos jogos. Se o --status disser que está desligada ou se o login cair na tela de senha e código, a reserva continua funcionando.
+5. Sobre "Sair": com o Access ligado, o botão Sair do painel encerra a sessão do painel, mas o Access ainda reconhece você e entra de novo sozinho. Para sair de verdade, abra NOMEDAEQUIPE.cloudflareaccess.com/cdn-cgi/access/logout.
+
+DEPOIS QUE FUNCIONAR
+- O app da Apple já pode deixar de ser usado para esses painéis; mas só apague a chave de lá depois de ter o código de 6 dígitos no Microsoft Authenticator e de ter testado o acesso pelo Tailscale.
+- Anote a data de expiração do segredo do aplicativo na Microsoft.
+- Os painéis Cloud, Notas, News e Saúde são os que têm dados mais sensíveis; vale testar um de cada vez.

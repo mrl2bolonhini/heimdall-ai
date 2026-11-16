@@ -259,6 +259,21 @@ def encerrar_sessao(token: str) -> None:
             _revogadas[partes[3]] = True
 
 
+def entrada_por_access(cabecalhos):
+    """Sessão nova se o pedido trouxe um token válido do Cloudflare Access (aprovado no Microsoft Authenticator); senão None.
+    Desligado por padrão: só vale com HEIMDALL_CFACCESS_EQUIPE, _AUD e _EMAILS no .env (ver heimdall_cfaccess.py)."""
+    try:
+        import heimdall_cfaccess as cfa
+        email = cfa.email_do_pedido(cabecalhos)
+    except Exception:  # noqa: BLE001
+        return None
+    if not email:
+        return None
+    token, _ = nova_sessao()
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} login aceito pelo Cloudflare Access ({email})\n")
+    return token
+
+
 def cabecalho_cookie(token: str, host: str, https: bool, apagar: bool = False) -> tuple:
     """Set-Cookie da sessão. Em *.heimdall-ai.tech vale para todos os subdomínios; em localhost fica só naquele endereço."""
     v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else SESSAO_SEG}"
@@ -884,6 +899,10 @@ class Painel(BaseHTTPRequestHandler):
     # --- entrar / sair ---
     def _entrar(self, metodo: str) -> None:
         if metodo == "GET":
+            via_access = entrada_por_access(self.headers)  # aprovado no Cloudflare Access (Microsoft Authenticator), se ligado
+            if via_access:
+                self._ir("/", [self._cookie(via_access)])
+                return
             self._enviar(200, pg_entrar())
             return
         ip = self._ip()
