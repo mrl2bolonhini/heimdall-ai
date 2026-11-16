@@ -25,7 +25,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
 7. Paciência (Klondike) falada [FEITO: Paciência]
    Pilhas lidas por comando (ler pilha 3, mover 3 para 5, comprar). Desfazer e dica. É a mais trabalhosa das cartas.
 
-8. Jogos de áudio puro (estilo Audio Invaders e Audio Archer)
+8. Jogos de áudio puro (estilo Audio Invaders e Audio Archer) [PRIMEIRO FEITO: Arqueiro de áudio; os próximos dependem de você testar o som e o VoiceOver]
    Som estéreo e fones, com o áudio do navegador. É a etapa maior e a mais incerta: falta saber como o VoiceOver se comporta com som e leitura ao mesmo tempo. Fica por último.
 
 9. Blackjack (vinte e um) [FEITO: Blackjack]

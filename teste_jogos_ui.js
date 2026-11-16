@@ -168,6 +168,17 @@ t("poker: continuar, leitura, decisão, dica, fichas e novo jogo", () => {
   campo.value = "tabela"; form.fire("submit"); assert(/royal flush/.test(j.an.textContent));
   botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(/Novo jogo, nível/.test(j.an.textContent));
 });
+t("arqueiro: teste de som, iniciar, controles em texto (sem áudio no navegador), parar", () => {
+  const j = carregar("arqueiro");
+  assert(/Arqueiro de áudio/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Testar o som").fire("click"); assert(/não oferece áudio estéreo/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Iniciar").fire("click"); assert(/Partida iniciada, nível fácil, 10 alvos/.test(j.an.textContent) && /vou dizer onde o alvo está/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Esquerda").fire("click"); assert(/Mira à esquerda/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Onde estou").fire("click"); assert(/Sua mira está 1 passo à esquerda do centro/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Atirar").fire("click"); assert(/Não há alvo/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Pontos").fire("click"); assert(/Pontos: 0/.test(j.an.textContent));
+  botaoPorTexto(j.jogo, "Parar").fire("click"); assert(/Partida pausada/.test(j.an.textContent));
+});
 t("xadrez: lance, resposta do computador, consulta, erro e nova partida", () => {
   const j = carregar("xadrez"), campo = j.id("lance"), form = j.jogo.all("form")[0], hist = j.id("historico");
   assert(/Nova partida, nível médio/.test(j.an.textContent));

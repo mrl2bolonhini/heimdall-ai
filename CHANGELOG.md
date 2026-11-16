@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Arqueiro de áudio (primeiro jogo de som)
+- Novo jogo: Arqueiro de áudio, guiado pelo som em estéreo (use fones de ouvido). Pássaros cruzam o céu em nove pontos e piam a cada passo no lado onde estão; você move a mira com as setas (cada passo faz um ping no lado da mira) e atira com a barra de espaço. Também há botões e comandos de texto. São 10 alvos, nos níveis fácil (devagar, tolerância de um passo, duas flechas), normal (mira exata) e difícil (rápido, rumo que muda e corvos que não se deve atingir).
+- O botão "Testar o som" toca três sons (só esquerda, meio, só direita) para conferir o estéreo. Sem áudio no navegador, o jogo diz em texto onde o alvo está.
+- Nova categoria no portal: Jogos de áudio. Novo teste: teste_jogos_arqueiro.js (testa a lógica; o som e o VoiceOver não foram testados, e é preciso experimentar). heimdall games --play arqueiro, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-16 - Poker Texas hold'em
 - Novo jogo: Poker Texas hold'em, você contra o computador (mano a mano), com fichas de mentira. Duas cartas só suas, flop, turn e river, quatro rodadas de apostas, e vale a melhor mão de cinco entre as sete. O jogo lê as cartas, a mesa, o nome da sua mão e cada jogada do computador. Comandos: continuar, pagar, passar, apostar N, tudo, desistir, mao, fichas, tabela, dica, resumo.
 - As cegas começam em 5 e 10 e dobram a cada 6 mãos; a partida termina quando alguém fica sem fichas. O computador decide pela chance de ganhar (simulada) e pelo preço de pagar. Níveis: fácil (300 fichas, adversário que paga muito e aposta pouco, dicas à vontade), normal (200, adversário médio, 5 dicas) e difícil (200, adversário que aposta com força e blefa, sem dicas). O teste confere que o difícil vence a maioria das partidas contra o normal.
