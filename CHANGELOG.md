@@ -5,6 +5,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-16 - heimdall env grava as variáveis do Cloudflare Access
 - heimdall env --set agora também aceita HEIMDALL_CFACCESS_EQUIPE, HEIMDALL_CFACCESS_AUD, HEIMDALL_CFACCESS_EMAILS e HEIMDALL_CFACCESS_CONVIDADOS com o valor direto no comando, sem copiar e colar cada um (exemplo: heimdall env --set HEIMDALL_CFACCESS_EQUIPE mrl2-bolonhini). Esses valores não são segredos.
 - Segurança: o valor na linha de comando só vale para essas quatro variáveis, com formato conferido; para os segredos (chaves do R2 e senha da cópia) continua valendo só a área de transferência, e o comando recusa aspas simples e nomes fora da lista.
+- python3 heimdall_cfaccess.py --status e --verificar passaram a ler as variáveis do Access direto do .env quando rodados no Terminal (antes mostravam tudo vazio, porque só os serviços carregam o .env).
 - Novas verificações em teste_cfaccess.py. Para aplicar: heimdall update --restart (não precisa de instalador).
 
 ## 2026-11-16 - Acesso por usuário no Cloudflare Access (dono e convidados)

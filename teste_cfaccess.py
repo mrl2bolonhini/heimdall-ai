@@ -271,6 +271,16 @@ r = _env("PATH", "x")
 confere("env recusa nome fora da lista", r.returncode != 0)
 shutil.rmtree(_t, ignore_errors=True)
 
+# o comando de conferência no Terminal lê o .env sozinho (só as variáveis do Access) e não sobrescreve o ambiente
+_d = tempfile.mkdtemp()
+shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), "heimdall_cfaccess.py"), _d)
+open(os.path.join(_d, ".env"), "w").write("SEGREDO='nao-deve-sair'\nHEIMDALL_CFACCESS_EQUIPE='minha-equipe'\nHEIMDALL_CFACCESS_AUD='aud1,aud2'\nHEIMDALL_CFACCESS_EMAILS='dono@exemplo.test'\n")
+_env_limpo = {k: v for k, v in os.environ.items() if not k.startswith("HEIMDALL_CFACCESS_")}
+r = subprocess.run([sys.executable, "-I", os.path.join(_d, "heimdall_cfaccess.py"), "--status"], cwd=_d, env=_env_limpo, capture_output=True, text=True)
+confere("--status no Terminal lê o .env", "Equipe: minha-equipe" in r.stdout and "E-mails de dono (entram em todos os painéis): 1" in r.stdout, r.stdout + r.stderr)
+confere("--status não imprime segredos nem valores", "nao-deve-sair" not in r.stdout and "dono@exemplo.test" not in r.stdout and "aud1" not in r.stdout)
+shutil.rmtree(_d, ignore_errors=True)
+
 # o login por senha e código segue intacto
 confere("login errado continua sendo recusado", hc.confere_senha("errada", hc.SENHA_HASH) is False)
 

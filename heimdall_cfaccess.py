@@ -178,7 +178,21 @@ def email_do_pedido(cabecalhos, servico: str = None) -> str:
     return identificar(cabecalhos, servico)[0]
 
 
+def _carregar_env() -> None:
+    """Quando rodado no Terminal (que não carrega o .env), lê só as variáveis HEIMDALL_CFACCESS_* do .env ao lado deste arquivo."""
+    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    try:
+        with open(caminho, encoding="utf-8") as f:
+            for linha in f:
+                nome, sep, valor = linha.strip().partition("=")
+                if sep and nome.startswith("HEIMDALL_CFACCESS_") and nome not in os.environ:
+                    os.environ[nome] = valor.strip().strip("'\"")
+    except OSError:
+        pass
+
+
 def _status() -> None:
+    _carregar_env()
     c = config()
     print("Equipe:", c["equipe"] or "(vazio)")
     print("AUD tags (uma por aplicativo do Access):", len(c["auds"]) or "(vazio)")
@@ -195,6 +209,7 @@ def _status() -> None:
 
 
 def _verificar() -> None:
+    _carregar_env()
     if not ativo():
         print("Desligado: preencha HEIMDALL_CFACCESS_EQUIPE, _AUD e _EMAILS no .env.")
         return
