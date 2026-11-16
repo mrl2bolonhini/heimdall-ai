@@ -1,0 +1,32 @@
+Heimdall Jogos: ideias para os próximos jogos
+Lista combinada em 2026-11-15, em ordem de prioridade. Ficaram de fora, por decisão sua, a forca em dupla e o treino de digitação por áudio.
+Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em Node, interface só com botões, campos e lista, e voz pela região aria-live.
+
+1. Batalha naval contra o computador
+   Coordenadas faladas (B7, tiro em D4), frota em tabuleiro 10 por 10, comandos para ler o que já foi atirado, linha e coluna. Níveis: o computador atira ao acaso (fácil) ou caça em volta dos acertos (difícil).
+
+2. Wordle em português
+   Palavra de 5 letras, 6 tentativas, resposta lida por letra (certa, no lugar errado, ausente). Sem acento na digitação. Lista de palavras própria, em português.
+
+3. Sudoku por comandos
+   Níveis fácil, médio e difícil, com tabuleiro gerado e validado. Comandos: colocar 5 em 3 4, apagar, ler linha, coluna, quadrante, quais números faltam, dica e verificar.
+
+4. Aventura de caverna por áudio (inspirada no Echo Cave)
+   Movimento com setas ou comandos, modo escuta (ficar parado revela sons e marcos), ler posição, mapa e inventário. Roda no motor de aventuras, com os três níveis.
+
+5. Campo minado de gramado (inspirado no Lawnsweeper)
+   Variação do campo minado com tema e regras próprias, usando a mesma grade de botões com rótulo de linha e coluna.
+
+6. Aventura de escolhas com um problema de lógica por trás
+   Uma história em que as escolhas escondem um problema (como achar o menor caminho entre vários lugares). Roda no motor de aventuras, com dicas por nível.
+
+7. Paciência (Klondike) falada
+   Pilhas lidas por comando (ler pilha 3, mover 3 para 5, comprar). Desfazer e dica. É a mais trabalhosa das cartas.
+
+8. Jogos de áudio puro (estilo Audio Invaders e Audio Archer)
+   Som estéreo e fones, com o áudio do navegador. É a etapa maior e a mais incerta: falta saber como o VoiceOver se comporta com som e leitura ao mesmo tempo. Fica por último.
+
+Observações
+- Jogos de terceiros do boletim Audiogames.net não foram testados e não têm licença aberta confirmada. Por isso a ideia é fazer versões nossas, nunca copiar.
+- Ao concluir cada jogo, atualizar: heimdall_jogos.py (catálogo e grupo), heimdall.zsh e heimdall_ajuda.txt (lista e Tab), gerar_docs.py (página Jogos), README, CHANGELOG e os testes.
+- Depois de cada um: testar na develop, e só avançar a main com o seu aval.
