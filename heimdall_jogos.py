@@ -115,12 +115,21 @@ CATALOGO += [
      ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, digitar RESPOSTA no guardião e ajuda.", *NIVEIS_TXT]),
     ("orion", "Estação Orion", "hist_orion.js", "Ficção científica: religue a energia e peça socorro antes que o oxigênio acabe.",
      ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, falar com ZEL, digitar CÓDIGO e ajuda.", *NIVEIS_TXT]),
+    ("caverna", "A Caverna dos Ecos", "hist_caverna.js", "Aventura guiada pelo som: ache a saída de uma caverna escura ouvindo o vento, a água e os ecos.",
+     ["Digite comandos como escutar, olhar, ir norte, pegar ITEM, usar ITEM em ALGO e ajuda. O comando escutar diz o que você ouve onde está, e o som mostra o caminho; onde diz onde você está.", *NIVEIS_TXT]),
 ]
-GRUPOS = [("Jogos clássicos", ["forca", "senha", "velha", "numero", "2048", "cincoletras", "sudoku"]),
-          ("Tabuleiro e sorte", ["xadrez", "naval", "minas", "cacaniqueis"]),
-          ("Aventuras de texto", ["aventura", "relogios", "templo", "orion"])]
+# Categorias: (id, título, descrição, jogos). A página inicial lista as categorias e cada uma tem a sua página com os jogos.
+CATEGORIAS = [
+    ("palavras", "Palavras e letras", "Adivinhar palavras.", ["forca", "cincoletras"]),
+    ("numeros", "Números e lógica", "Códigos, números e quebra-cabeças de raciocínio.", ["senha", "numero", "sudoku", "2048"]),
+    ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "velha", "minas"]),
+    ("sorte", "Sorte", "Jogos de sorte, com créditos de mentira.", ["cacaniqueis"]),
+    ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna"]),
+]
+GRUPOS = [(t, ids) for _, t, _, ids in CATEGORIAS]
+POR_CATEGORIA = {c[0]: c for c in CATEGORIAS}
 # Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.
-HISTORIAS = {"relogios", "templo", "orion"}
+HISTORIAS = {"relogios", "templo", "orion", "caverna"}
 POR_ID = {j[0]: j for j in CATALOGO}
 ARQUIVOS_OK = {"base.js", "motor.js"} | {j[2] for j in CATALOGO}
 
@@ -153,7 +162,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scripts: list = None) -> bytes:
     nav = ""
     if sess:
-        nav = ('<nav aria-label="Principal"><ul><li><a href="/">Todos os jogos</a></li><li><form class="linha" method="post" action="/sair">'
+        nav = ('<nav aria-label="Principal"><ul><li><a href="/">Categorias</a></li><li><form class="linha" method="post" action="/sair">'
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
     js = "".join(f'<script src="/js/{e(s)}" defer></script>' for s in (scripts or []))
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -163,10 +172,9 @@ def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scr
 
 
 def pg_inicio() -> tuple:
-    itens = ""
-    for titulo_grupo, ids in GRUPOS:
-        itens += f"<h2>{e(titulo_grupo)}</h2>" + '<ul class="lista-jogos">' + "".join(
-            f'<li><h3><a href="/jogo/{e(i)}">{e(POR_ID[i][1])}</a></h3><p>{e(POR_ID[i][3])}</p></li>' for i in ids) + "</ul>"
+    itens = '<h2>Categorias</h2><ul class="lista-jogos">' + "".join(
+        f'<li><h3><a href="/categoria/{e(cid)}">{e(t)}</a></h3><p>{e(d)} {len(ids)} {"jogo" if len(ids) == 1 else "jogos"}: '
+        + ", ".join(e(POR_ID[i][1]) for i in ids) + ".</p></li>" for cid, t, d, ids in CATEGORIAS) + "</ul>"
     ex = extras()
     outros = ""
     if ex:
@@ -175,6 +183,16 @@ def pg_inicio() -> tuple:
     corpo = ("<p>Jogos leves para jogar no navegador, feitos para leitor de tela: tudo é botão, campo de texto ou lista, e cada jogada é lida em voz alta. "
              "Nada é guardado no servidor.</p>" f"{itens}{outros}")
     return "Jogos", corpo, []
+
+
+def pg_categoria(cid: str):
+    c = POR_CATEGORIA.get(cid)
+    if not c:
+        return None
+    _, titulo, desc, ids = c
+    lista = '<ul class="lista-jogos">' + "".join(
+        f'<li><h2><a href="/jogo/{e(i)}">{e(POR_ID[i][1])}</a></h2><p>{e(POR_ID[i][3])}</p></li>' for i in ids) + "</ul>"
+    return titulo, f'<p>{e(desc)}</p>{lista}<p><a href="/">Voltar às categorias</a></p>', []
 
 
 def pg_jogo(jid: str):
@@ -298,6 +316,14 @@ class Jogos(BaseHTTPRequestHandler):
             if rota == "/":
                 titulo, corpo, scripts = pg_inicio()
                 self._enviar(200, pagina(titulo, corpo, sess, scripts=scripts))
+                return
+            mc = re.fullmatch(r"/categoria/([a-z0-9]+)", rota)
+            if mc:
+                rc = pg_categoria(mc.group(1))
+                if not rc:
+                    self._enviar(404, pagina("Não encontrei", '<p>Esta categoria não existe.</p><p><a href="/">Ver as categorias</a></p>', sess))
+                    return
+                self._enviar(200, pagina(rc[0], rc[1], sess, scripts=rc[2]))
                 return
             m = re.fullmatch(r"/jogo/([a-z0-9]+)", rota)
             r = pg_jogo(m.group(1)) if m else None

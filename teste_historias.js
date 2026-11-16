@@ -2,7 +2,7 @@
 "use strict";
 var M = require("./jogos/motor.js"), n = 0, falhas = 0;
 function ok(c, m) { n++; if (!c) { falhas++; console.log("FALHOU: " + m); } else console.log("ok: " + m); }
-var ids = process.argv.slice(2).length ? process.argv.slice(2) : ["relogios", "templo", "orion"];
+var ids = process.argv.slice(2).length ? process.argv.slice(2) : ["relogios", "templo", "orion", "caverna"];
 var fs = require("fs");
 
 ids.forEach(function (id) {

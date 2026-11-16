@@ -71,8 +71,12 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 token, sess = hc.nova_sessao()
 ck = f"{hc.COOKIE}={token}"
 st, corpo, cab = pedir("/", ck)
-confere("início lista os 15 jogos em 3 grupos", st == 200 and all(f"/jogo/{j[0]}" in corpo for j in hj.CATALOGO) and len(hj.CATALOGO) == 15 and all(g in corpo for g, _ in hj.GRUPOS), (st, corpo[:300]))
-confere("todo jogo está em um grupo", sorted(i for _, ids in hj.GRUPOS for i in ids) == sorted(j[0] for j in hj.CATALOGO))
+confere("início lista as categorias com link e contagem", st == 200 and len(hj.CATALOGO) == 16 and len(hj.CATEGORIAS) == 5 and all(f"/categoria/{c[0]}" in corpo and c[1] in corpo for c in hj.CATEGORIAS), (st, corpo[:300]))
+for c in hj.CATEGORIAS:
+    st_c, corpo_c, _ = pedir(f"/categoria/{c[0]}", ck)
+    confere(f"categoria {c[0]} lista os seus jogos", st_c == 200 and all(f"/jogo/{i}" in corpo_c for i in c[3]), (st_c, corpo_c[:200]))
+confere("categoria inexistente dá 404", pedir("/categoria/nada", ck)[0] == 404)
+confere("todo jogo está em uma só categoria", sorted(i for _, ids in hj.GRUPOS for i in ids) == sorted(j[0] for j in hj.CATALOGO))
 csp = cab.get("Content-Security-Policy", "")
 confere("política de conteúdo só deixa script do próprio site", "script-src 'self'" in csp and "default-src 'none'" in csp and "connect-src 'none'" in csp, csp)
 confere("sem script embutido no HTML", "<script>" not in corpo and "onclick" not in corpo.lower())

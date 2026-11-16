@@ -135,11 +135,11 @@
     return achou ? { msg: falha } : null;
   }
 
-  var CONSULTAS = { olhar: 1, ver: 1, inventario: 1, i: 1, inv: 1, ajuda: 1, h: 1, dica: 1, pista: 1, mapa: 1, objetivo: 1, tempo: 1, examinar: 1, exame: 1, x: 1 };
+  var CONSULTAS = { escutar: 1, ouvir: 1, onde: 1, olhar: 1, ver: 1, inventario: 1, i: 1, inv: 1, ajuda: 1, h: 1, dica: 1, pista: 1, mapa: 1, objetivo: 1, tempo: 1, examinar: 1, exame: 1, x: 1 };
 
   function ajuda(e) {
     return "Comandos: olhar; ir norte, sul, leste, oeste, subir, descer (ou n, s, l, o); pegar ITEM; largar ITEM; examinar ALGO; usar ITEM; usar ITEM em ALGO; dar ITEM a ALGUÉM; falar com ALGUÉM; digitar CÓDIGO em ALGO; " +
-      "empurrar, puxar, girar, abrir, acender ALGO; inventário; objetivo; mapa; dica; tempo; salvar; carregar; recomeçar.";
+      "empurrar, puxar, girar, abrir, acender ALGO; escutar; onde; inventário; objetivo; mapa; dica; tempo; salvar; carregar; recomeçar.";
   }
   function dica(h, e) {
     if (e.nivel === "dificil") return "No nível difícil não há dicas.";
@@ -181,6 +181,11 @@
     if (v === "ajuda" || v === "h" || v === "?") return ok(ajuda(e));
     if ((v === "olhar" || v === "ver") && !resto) return ok(descrever(h, e));
     if (v === "objetivo") return ok("Objetivo: " + h.objetivo);
+    if (v === "onde") return ok("Você está em " + s.nome + ". Saídas: " + saidasVisiveis(h, e).join(", ") + ".");
+    if (v === "escutar" || v === "ouvir") {
+      var som = (s.escuta || []).filter(function (x) { return ativo(x, e) && cond(e, x.se); }).map(function (x) { return x.msg; });
+      return ok(som.length ? "Você escuta: " + som.join(" ") : "Você só ouve o seu próprio silêncio e a sua respiração.");
+    }
     if (v === "dica" || v === "pista") return ok(dica(h, e));
     if (v === "tempo") return ok(tempo(h, e));
     if (v === "mapa") {
@@ -341,6 +346,7 @@
       (s.itens || []).forEach(function (i) { itemOk(i, on); });
       (s.aoEntrar || []).forEach(function (r) { condicao(r.se, on); efeito(r, on); });
       (s.extras || []).forEach(function (r) { condicao(r.se, on); });
+      (s.escuta || []).forEach(function (r) { condicao(r.se, on); });
       condicao(s.escuro, on);
       Object.keys(s.cenario || {}).forEach(function (c) { (s.cenario[c].exame || []).forEach(function (r) { condicao(r.se, on + " cenário " + c); efeito(r, on + " cenário " + c); }); });
       (s.npcs || []).forEach(function (n) { (n.falas || []).forEach(function (r) { condicao(r.se, on + " npc " + n.id); efeito(r, on + " npc " + n.id); }); });

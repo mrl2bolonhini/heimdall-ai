@@ -104,7 +104,7 @@ t("xadrez: lance, resposta do computador, consulta, erro e nova partida", () => 
   botaoPorTexto(j.jogo, "Nova partida").fire("click"); assert(!campo.disabled && hist.children.length === 1);
 });
 const store = {}; global.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } };
-["relogios", "templo", "orion"].forEach(id => t(`aventura ${id}: níveis, comando, dica, salvar e carregar`, () => {
+["relogios", "templo", "orion", "caverna"].forEach(id => t(`aventura ${id}: níveis, comando, dica, salvar e carregar`, () => {
   const j = carregar("hist_" + id, id), campo = j.id("comando"), form = j.jogo.all("form")[0], hist = j.id("historico");
   assert(/Objetivo:/.test(hist.textContent) && /Nível normal/.test(hist.textContent));
   j.id("nivel").value = "dificil"; botaoPorTexto(j.jogo, "Recomeçar").fire("click"); assert(/Nível difícil: sem dicas/.test(hist.children[0].textContent));
