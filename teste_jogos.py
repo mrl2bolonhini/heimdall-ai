@@ -71,7 +71,7 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 token, sess = hc.nova_sessao()
 ck = f"{hc.COOKIE}={token}"
 st, corpo, cab = pedir("/", ck)
-confere("início lista os 14 jogos em 3 grupos", st == 200 and all(f"/jogo/{j[0]}" in corpo for j in hj.CATALOGO) and len(hj.CATALOGO) == 14 and all(g in corpo for g, _ in hj.GRUPOS), (st, corpo[:300]))
+confere("início lista os 15 jogos em 3 grupos", st == 200 and all(f"/jogo/{j[0]}" in corpo for j in hj.CATALOGO) and len(hj.CATALOGO) == 15 and all(g in corpo for g, _ in hj.GRUPOS), (st, corpo[:300]))
 confere("todo jogo está em um grupo", sorted(i for _, ids in hj.GRUPOS for i in ids) == sorted(j[0] for j in hj.CATALOGO))
 csp = cab.get("Content-Security-Policy", "")
 confere("política de conteúdo só deixa script do próprio site", "script-src 'self'" in csp and "default-src 'none'" in csp and "connect-src 'none'" in csp, csp)

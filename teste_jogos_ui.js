@@ -135,4 +135,15 @@ t("cinco letras: palpite, erro, comandos e nova palavra", () => {
   campo.value = "desistir"; form.fire("submit"); assert(/A palavra era/.test(j.an.textContent) && campo.disabled);
   botaoPorTexto(j.jogo, "Nova palavra").fire("click"); assert(!campo.disabled && hist.children.length === 1);
 });
+t("sudoku: leitura, jogada, recusa e novo jogo", () => {
+  const j = carregar("sudoku"), campo = j.id("comando"), form = j.jogo.all("form")[0], hist = j.id("historico");
+  assert(/Novo sudoku, nível normal, com 32 números dados/.test(hist.textContent));
+  campo.value = "linha 1"; form.fire("submit"); assert(/Linha 1, da coluna 1 à 9/.test(j.an.textContent));
+  campo.value = "colocar 5 em 10 1"; form.fire("submit"); assert(/Use números de 1 a 9/.test(j.an.textContent));
+  campo.value = "quadrante 5"; form.fire("submit"); assert(/Quadrante 5/.test(j.an.textContent));
+  campo.value = "dica"; form.fire("submit"); assert(/Dica: na linha/.test(j.an.textContent));
+  assert(j.id("visual").attrs["aria-hidden"] === "true" && /------\+-------\+------/.test(j.id("visual").textContent));
+  campo.value = "desistir"; form.fire("submit"); assert(campo.disabled);
+  botaoPorTexto(j.jogo, "Novo jogo").fire("click"); assert(!campo.disabled && hist.children.length === 1);
+});
 console.log(`${ok} testes de interface passaram`); process.exit(falhas ? 1 : 0);

@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-15 - Sudoku por comandos
+- Novo jogo: sudoku por comandos, com o tabuleiro gerado na hora e solução sempre única (conferida por contagem de soluções). Você coloca com "colocar 5 em 3 4" (valor, linha, coluna) e ouve: linha, coluna, quadrante, casa (com os números que podem entrar), tabuleiro, quais números faltam e casas vazias. Também apagar, desfazer, verificar, dica, resumo e desistir. Números repetidos em linha, coluna ou quadrante são recusados na hora, dizendo onde já existe.
+- Níveis: fácil (40 números dados, o jogo avisa na hora se o número não é o certo, dicas à vontade), normal (32 dados, 3 dicas, e verificar aponta os erros) e difícil (26 dados, sem dicas e sem conferência).
+- Novo teste: teste_jogos_sudoku.js. heimdall games --play sudoku, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-15 - Cinco letras (Wordle em português)
 - Novo jogo: Cinco letras, no estilo Wordle. Palavra secreta de 5 letras em português, sorteada de uma lista de mais de 400 palavras comuns. Você digita um palpite (acentos não importam; qualquer combinação de 5 letras vale) e a resposta é lida letra por letra: lugar certo, em outro lugar ou não tem, com a regra correta para letras repetidas. Comandos: tentativas, pistas, letras, dica e desistir.
 - Níveis: fácil (8 tentativas e dicas à vontade), normal (6 tentativas e uma dica) e difícil (6 tentativas, sem dicas, e cada palpite precisa reaproveitar o que já foi descoberto).

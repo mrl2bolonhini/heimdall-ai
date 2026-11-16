@@ -10,6 +10,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
    Palavra de 5 letras, 6 tentativas, resposta lida por letra (certa, no lugar errado, ausente). Sem acento na digitação. Lista de palavras própria, em português.
 
 3. Sudoku por comandos
+   [FEITO em 2026-11-15]
    Níveis fácil, médio e difícil, com tabuleiro gerado e validado. Comandos: colocar 5 em 3 4, apagar, ler linha, coluna, quadrante, quais números faltam, dica e verificar.
 
 4. Aventura de caverna por áudio (inspirada no Echo Cave)
