@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Jogos em ordem alfabética e fim dos jogos de terceiros sem português
+- Dentro de cada categoria, os jogos agora aparecem em ordem alfabética (sem diferenciar acentos e ignorando o artigo inicial: A Caverna dos Ecos fica no C). A documentação do site segue a mesma ordem, agora organizada por categoria, e heimdall games --list mostra o título de cada jogo e o comando para abri-lo, em ordem alfabética (a lista antiga nem tinha o Sonar e o Labirinto).
+- Retirados o Enigma e o PlayAural, que não têm versão em português: some o instalador instalar_jogos_extras.sh, a opção heimdall games --extras e a sua ajuda. A regra agora é: jogos de terceiros só entram se tiverem versão em português ou permitirem tradução. O mecanismo HEIMDALL_JOGOS_EXTRAS continua existindo para listar um jogo que atenda a esse critério.
+- Se você chegou a instalar o Enigma em Docker: o contêiner se chama heimdall-enigma, e docker stop heimdall-enigma e docker rm heimdall-enigma o removem.
+- Novo teste em teste_jogos.py para a ordem dos jogos. Para aplicar: heimdall update --restart (não precisa de instalador); abra um terminal novo (ou rode source ~/.zshrc) para o comando heimdall carregar a lista nova.
+
 ## 2026-11-16 - Categorias em ordem alfabética e comandos com a grafia correta
 - As categorias da página de jogos agora aparecem em ordem alfabética: Ação, Aventuras de texto, Cartas, Cassino, Números e lógica, Palavras e letras e Tabuleiro e estratégia.
 - Os comandos mostrados nas ajudas, nos rótulos dos campos, nas mensagens e nas páginas de documentação agora usam a grafia correta: lançar, posição, histórico, dúzia, ímpar, peças e último. As formas sem acento (lancar, posicao, historico e assim por diante) continuam funcionando como alternativa, e as acentuadas também são aceitas quando você digita.

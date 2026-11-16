@@ -60,7 +60,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" ;;
-    games) printf '%s\n' "-p=--play" "-l=--list" "-e=--extras" ;;
+    games) printf '%s\n' "-p=--play" "-l=--list" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
     backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
@@ -209,9 +209,8 @@ heimdall() {
       case "$1" in
         "") _heimdall_open "Heimdall Jogos" "http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)" ;;
         --play) _heimdall_open "Jogo $2" "http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)/jogo/$2" ;;
-        --list) echo "forca  senha  velha  numero  2048  cincoletras  sudoku  xadrez  naval  minas  gramado  cacaniqueis  blackjack  roleta  bacara  caribenho  paciencia  poker  arqueiro  aventura  relogios  templo  orion  caverna  escolhas" ;;
-        --extras|--extra) shift; _heimdall_sh instalar_jogos_extras.sh "$@" ;;
-        *) echo "Use: heimdall games [--play JOGO] [--list] [--extras --enigma|--playaural|--status|--remover]"; return 1 ;;
+        --list) printf '%s\n' "2048 (heimdall games --play 2048)" "Arqueiro de áudio (heimdall games --play arqueiro)" "Bacará (heimdall games --play bacara)" "Batalha naval (heimdall games --play naval)" "Blackjack (heimdall games --play blackjack)" "Caça-níqueis (heimdall games --play cacaniqueis)" "Campo minado (heimdall games --play minas)" "A Caverna dos Ecos (heimdall games --play caverna)" "Cinco letras (heimdall games --play cincoletras)" "Estação Orion (heimdall games --play orion)" "O Farol Apagado (heimdall games --play aventura)" "Forca (heimdall games --play forca)" "Gramado (heimdall games --play gramado)" "Jogo da velha (heimdall games --play velha)" "Labirinto (heimdall games --play labirinto)" "A Mansão dos Relógios (heimdall games --play relogios)" "Número secreto (heimdall games --play numero)" "Paciência (heimdall games --play paciencia)" "Poker caribenho (heimdall games --play caribenho)" "Poker Texas hold'em (heimdall games --play poker)" "Roleta (heimdall games --play roleta)" "Senha (heimdall games --play senha)" "Sonar (heimdall games --play sonar)" "Sudoku (heimdall games --play sudoku)" "O Templo Submerso (heimdall games --play templo)" "A Travessia das Três Provas (heimdall games --play escolhas)" "Xadrez (heimdall games --play xadrez)" ;;
+        *) echo "Use: heimdall games [--play JOGO] [--list]"; return 1 ;;
       esac ;;
     finance) _heimdall_open "Heimdall Finance" "http://localhost:$(_heimdall_port HEIMDALL_FINANCE_PORT 8016)" ;;
     n8n) _heimdall_open "n8n" "http://localhost:5678" ;;
@@ -329,8 +328,8 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary data
         else compadd -- --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
-      games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- forca senha velha numero 2048 cincoletras sudoku xadrez naval minas gramado cacaniqueis blackjack roleta bacara caribenho paciencia poker arqueiro aventura relogios templo orion caverna escolhas
-        elif [[ ${words[CURRENT-1]} == --extras || ${words[CURRENT-1]} == --extra ]]; then compadd -- --enigma --playaural --status --remover; else compadd -- --play --list --extras; fi ;;
+      games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas xadrez
+        else compadd -- --play --list; fi ;;
       triage) compadd -- --complete-tests ;;
       db) compadd -- --sql ;;
       backup) compadd -- --prepare --password --run --list --verify --restore ;;

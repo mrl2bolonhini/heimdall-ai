@@ -16,7 +16,7 @@ Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outr
 
 Variáveis opcionais no .env: HEIMDALL_JOGOS_PORT (8014), HEIMDALL_JOGOS_HOST (127.0.0.1),
 HEIMDALL_JOGOS_HOSTS (games.heimdall-ai.tech,localhost,127.0.0.1) e HEIMDALL_JOGOS_EXTRAS: outros jogos que você hospeda
-(por exemplo Enigma), no formato "Nome|http://localhost:8015|descrição;Outro|https://exemplo.test|descrição".
+(só os que tenham versão em português ou permitam tradução), no formato "Nome|http://localhost:8015|descrição;Outro|https://exemplo.test|descrição".
 """
 import unicodedata
 import html
@@ -179,14 +179,22 @@ CATEGORIAS = [
     ("cassino", "Cassino", "Jogos de cassino, só com créditos de mentira.", ["cacaniqueis", "blackjack", "roleta", "bacara", "caribenho"]),
     ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
 ]
-# As categorias aparecem em ordem alfabética (sem diferenciar acentos).
-CATEGORIAS.sort(key=lambda c: unicodedata.normalize("NFD", c[1]).encode("ascii", "ignore").decode().lower())
+def _chave(t: str) -> str:
+    """Chave de ordem alfabética: sem acentos, sem maiúsculas e sem o artigo inicial (A, O, As, Os)."""
+    t = unicodedata.normalize("NFD", t).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"^(a|o|as|os) ", "", t)
+
+
+# As categorias e, dentro delas, os jogos aparecem em ordem alfabética.
+CATEGORIAS.sort(key=lambda c: _chave(c[1]))
 GRUPOS = [(t, ids) for _, t, _, ids in CATEGORIAS]
 POR_CATEGORIA = {c[0]: c for c in CATEGORIAS}
 POR_CATEGORIA["audio"] = POR_CATEGORIA["acao"]  # endereço antigo da categoria, para quem guardou o link
 # Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.
 HISTORIAS = {"relogios", "templo", "orion", "caverna"}
 POR_ID = {j[0]: j for j in CATALOGO}
+for _c in CATEGORIAS:
+    _c[3].sort(key=lambda i: _chave(POR_ID[i][1]))
 ARQUIVOS_OK = {"base.js", "som.js", "motor.js"} | {j[2] for j in CATALOGO}
 
 

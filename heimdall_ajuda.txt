@@ -155,10 +155,9 @@ Exemplos:
   heimdall health -r 60
 
 @ games | Heimdall Jogos, jogos leves para leitor de tela
-Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). São quinze jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras (estilo Wordle em português), sudoku por comandos, xadrez contra o computador, batalha naval, campo minado, o caça-níqueis (créditos de mentira) e quatro aventuras de texto: O Farol Apagado, A Mansão dos Relógios, O Templo Submerso e Estação Orion (as três últimas com níveis fácil, normal e difícil, dicas, limite de passos, salvar e carregar); cada jogada é lida em voz alta pela região de anúncio da página. Usa o mesmo login do Cloud. Jogos de terceiros (Enigma, PlayAural) entram no portal por --extras.
+Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos ficam em categorias, em ordem alfabética, e dentro delas também em ordem alfabética: Ação (arqueiro de áudio e labirinto), Aventuras de texto (cinco histórias e a Travessia das Três Provas), Cartas (paciência e poker), Cassino (bacará, blackjack, caça-níqueis, poker caribenho e roleta), Números e lógica (2048, número secreto, senha e sudoku), Palavras e letras (cinco letras e forca) e Tabuleiro e estratégia (batalha naval, campo minado, gramado, jogo da velha, sonar e xadrez). Os jogos de terceiros só entram se tiverem versão em português ou permitirem tradução.
 Opções:
-  -p, --play JOGO      abre direto um jogo: forca, senha, velha, numero, 2048, cincoletras, sudoku, xadrez, naval, minas, gramado, cacaniqueis, blackjack, roleta, bacara, caribenho, paciencia, poker, arqueiro, aventura, relogios, templo, orion, caverna, escolhas
-  -e, --extras OPÇÃO   jogos de terceiros no portal: --enigma (sobe em Docker, porta 8015), --playaural (só o link), --status, --remover
+  -p, --play JOGO      abre direto um jogo: 2048, arqueiro, bacara, naval, blackjack, cacaniqueis, minas, caverna, cincoletras, orion, aventura, forca, gramado, velha, labirinto, relogios, numero, paciencia, caribenho, poker, roleta, senha, sonar, sudoku, templo, escolhas, xadrez
   -l, --list           lista os jogos
   -h, --help           mostra esta ajuda
 Exemplos:

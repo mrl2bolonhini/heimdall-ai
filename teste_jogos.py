@@ -75,6 +75,7 @@ confere("início lista as categorias com link e contagem", st == 200 and len(hj.
 for c in hj.CATEGORIAS:
     st_c, corpo_c, _ = pedir(f"/categoria/{c[0]}", ck)
     confere(f"categoria {c[0]} lista os seus jogos", st_c == 200 and all(f"/jogo/{i}" in corpo_c for i in c[3]), (st_c, corpo_c[:200]))
+confere("jogos de cada categoria em ordem alfabética", all([hj.POR_ID[i][1] for i in c[3]] == sorted((hj.POR_ID[i][1] for i in c[3]), key=hj._chave) for c in hj.CATEGORIAS))
 confere("categorias em ordem alfabética", [c[1] for c in hj.CATEGORIAS] == sorted((c[1] for c in hj.CATEGORIAS), key=lambda t: __import__("unicodedata").normalize("NFD", t).encode("ascii", "ignore").decode().lower()), [c[1] for c in hj.CATEGORIAS])
 confere("categoria inexistente dá 404", pedir("/categoria/nada", ck)[0] == 404)
 confere("todo jogo está em uma só categoria", sorted(i for _, ids in hj.GRUPOS for i in ids) == sorted(j[0] for j in hj.CATALOGO))
@@ -113,9 +114,9 @@ st, _, _ = pedir("/", ck)
 confere("depois de sair a sessão não vale", st == 303, st)
 
 # jogos extras do .env
-os.environ["HEIMDALL_JOGOS_EXTRAS"] = "Enigma|http://localhost:8015|Quebra-cabeças;Mal|javascript:alert(1)|x;Outro|https://exemplo.test/jogo|"
+os.environ["HEIMDALL_JOGOS_EXTRAS"] = "Terceiro|http://localhost:8015|Quebra-cabeças;Mal|javascript:alert(1)|x;Outro|https://exemplo.test/jogo|"
 ex = hj.extras()
-confere("extras aceitam só http e https", [x[0] for x in ex] == ["Enigma", "Outro"], ex)
+confere("extras aceitam só http e https", [x[0] for x in ex] == ["Terceiro", "Outro"], ex)
 token2, _ = hc.nova_sessao()
 st, corpo, _ = pedir("/", f"{hc.COOKIE}={token2}")
 confere("extras aparecem no início, sem o endereço perigoso", 'href="http://localhost:8015"' in corpo and "javascript:" not in corpo, corpo[-500:])
