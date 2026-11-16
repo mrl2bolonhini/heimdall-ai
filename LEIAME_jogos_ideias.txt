@@ -6,6 +6,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
    [FEITO em 2026-11-15] Coordenadas faladas (B7, tiro em D4), frota em tabuleiro 10 por 10, comandos para ler o que já foi atirado, linha e coluna. Níveis: o computador atira ao acaso (fácil) ou caça em volta dos acertos (difícil).
 
 2. Wordle em português
+   [FEITO em 2026-11-15, jogo "Cinco letras"]
    Palavra de 5 letras, 6 tentativas, resposta lida por letra (certa, no lugar errado, ausente). Sem acento na digitação. Lista de palavras própria, em português.
 
 3. Sudoku por comandos

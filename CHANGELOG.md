@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-15 - Cinco letras (Wordle em português)
+- Novo jogo: Cinco letras, no estilo Wordle. Palavra secreta de 5 letras em português, sorteada de uma lista de mais de 400 palavras comuns. Você digita um palpite (acentos não importam; qualquer combinação de 5 letras vale) e a resposta é lida letra por letra: lugar certo, em outro lugar ou não tem, com a regra correta para letras repetidas. Comandos: tentativas, pistas, letras, dica e desistir.
+- Níveis: fácil (8 tentativas e dicas à vontade), normal (6 tentativas e uma dica) e difícil (6 tentativas, sem dicas, e cada palpite precisa reaproveitar o que já foi descoberto).
+- Novo teste: teste_jogos_cincoletras.js. heimdall games --play cincoletras, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-15 - Batalha naval e caça-níqueis mais generoso
 - Novo jogo: batalha naval contra o computador (tabuleiro 10 por 10, frota clássica de 5 navios sorteada para os dois lados). Você atira dizendo a casa (B7 ou tiro b7) e ouve o resultado (água, acertou, afundou) e a resposta do computador. Comandos para ler: frota, tiros, inimigo, restantes, linha 3, coluna c, resumo, ultimo e dica. Três níveis: fácil (ao acaso, uns 96 tiros em média), normal (caça em volta dos acertos, uns 53) e difícil (calcula onde os navios restantes mais cabem, uns 44).
 - Caça-níqueis: além da trinca (25 vezes) e da sequência (10 vezes), agora dois números iguais (um par) pagam 2 vezes. Cerca de 3 em cada 10 rodadas pagam algo, e o retorno médio fica perto de 99%, para o jogo não ser tão seco.

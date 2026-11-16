@@ -3,7 +3,7 @@
 
 Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta jogos/; o que acontece na partida
 é dito em voz alta por uma região aria-live. Nada é gravado: o servidor só entrega as páginas.
-Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, xadrez, batalha naval, campo minado, caça-níqueis e aventuras de texto
+Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, xadrez, batalha naval, campo minado, caça-níqueis e aventuras de texto
 (O Farol Apagado, A Mansão dos Relógios, O Templo Submerso, Estação Orion; as três últimas com níveis de dificuldade).
 
 Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outros painéis):
@@ -85,6 +85,10 @@ CATALOGO = [
      ["Digite comandos como olhar, ir norte, pegar lanterna, usar chave, inventário e ajuda.", "Dica: explore a casa do guarda antes de ir ao farol."]),
 ]
 CATALOGO += [
+    ("cincoletras", "Cinco letras", "cincoletras.js", "Descubra a palavra secreta de 5 letras, estilo Wordle, em português.",
+     ["Digite uma palavra de 5 letras e confirme com Enter; acentos não importam. Qualquer combinação de 5 letras vale como palpite.",
+      "Depois de cada palpite você ouve, letra por letra, se ela está no lugar certo, em outro lugar ou não tem.",
+      "Comandos: tentativas, pistas (o que já se sabe), letras (as não testadas), dica e desistir. Níveis: fácil (8 tentativas e dicas), normal (6 e uma dica) e difícil (6, sem dicas, e você precisa reaproveitar as letras descobertas)."]),
     ("xadrez", "Xadrez", "xadrez.js", "Xadrez completo contra o computador, em três níveis, jogado por texto.",
      ["Escreva o lance: e4, Cf3, Cxe5, O-O (roque), e8=D (promoção) ou de casa para casa, como e2 e4. As letras das peças são R rei, D dama, T torre, B bispo e C cavalo.",
       "Para consultar o tabuleiro: tabuleiro, linha 4, coluna e, casa e4, pecas, lances, historico, material, ultimo, dica, desfazer e desistir. Digite ajuda para ver tudo.",
@@ -108,7 +112,7 @@ CATALOGO += [
     ("orion", "Estação Orion", "hist_orion.js", "Ficção científica: religue a energia e peça socorro antes que o oxigênio acabe.",
      ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, falar com ZEL, digitar CÓDIGO e ajuda.", *NIVEIS_TXT]),
 ]
-GRUPOS = [("Jogos clássicos", ["forca", "senha", "velha", "numero", "2048"]),
+GRUPOS = [("Jogos clássicos", ["forca", "senha", "velha", "numero", "2048", "cincoletras"]),
           ("Tabuleiro e sorte", ["xadrez", "naval", "minas", "cacaniqueis"]),
           ("Aventuras de texto", ["aventura", "relogios", "templo", "orion"])]
 # Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.

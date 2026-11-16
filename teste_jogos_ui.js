@@ -126,4 +126,13 @@ t("batalha naval: frota, tiro, resposta do computador, erro e nova partida", () 
   campo.value = "desistir"; form.fire("submit"); assert(campo.disabled);
   botaoPorTexto(j.jogo, "Nova partida").fire("click"); assert(!campo.disabled && hist.children.length === 1);
 });
+t("cinco letras: palpite, erro, comandos e nova palavra", () => {
+  const j = carregar("cincoletras"), campo = j.id("palpite"), form = j.jogo.all("form")[0], hist = j.id("historico");
+  assert(/Nova palavra de 5 letras, nível normal/.test(hist.textContent));
+  campo.value = "festa"; form.fire("submit"); assert(/Tentativa 1 de 6, FESTA: F: /.test(j.an.textContent));
+  campo.value = "casa"; form.fire("submit"); assert(/exatamente 5 letras/.test(j.an.textContent));
+  campo.value = "pistas"; form.fire("submit"); assert(/Lugares conhecidos/.test(j.an.textContent));
+  campo.value = "desistir"; form.fire("submit"); assert(/A palavra era/.test(j.an.textContent) && campo.disabled);
+  botaoPorTexto(j.jogo, "Nova palavra").fire("click"); assert(!campo.disabled && hist.children.length === 1);
+});
 console.log(`${ok} testes de interface passaram`); process.exit(falhas ? 1 : 0);
