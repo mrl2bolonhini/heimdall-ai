@@ -137,6 +137,10 @@ CATALOGO += [
       "Valores: Ás vale 1, de 2 a 9 valem o número, 10 e figuras valem 0, e a mão vale a soma, ficando só o último dígito. Vence quem chega mais perto de 9.",
       "Jogador e banca pagam 1 para 1 (se a banca vencer com três cartas somando 7, a aposta só é devolvida). Empate paga 8 para 1, e nele as apostas nos outros lados são devolvidas.",
       "Comandos: apostar 10 banca, repetir, tabela, historico, saldo, dica."]),
+    ("caribenho", "Poker caribenho", "caribenho.js", "Poker contra a banca, com créditos de mentira: aposte o ante, veja as suas cinco cartas e decida entre aumentar e desistir.",
+     ["Você aposta o ante e recebe cinco cartas abertas; a banca recebe cinco e mostra só uma. Depois você decide: desistir (perde o ante) ou aumentar (paga mais duas vezes o ante).",
+      "A banca só joga com Ás e Rei ou melhor. Se não jogar, o ante paga 1 para 1 e o aumento volta. Se jogar, vence a melhor mão: o ante paga 1 para 1 e o aumento paga pela sua mão (par 1 para 1, dois pares 2, trinca 3, sequência 4, flush 5, full house 7, quadra 20, straight flush 50, royal flush 100).",
+      "Comandos: apostar N (ante de 1 a 25) ou repetir, aumentar, desistir, mao, banca, saldo, tabela, dica. A dica simula as mãos possíveis da banca e diz se vale a pena aumentar."]),
     ("paciencia", "Paciência", "paciencia.js", "Paciência (Klondike) falada: mova as cartas por comando e ouça a mesa lida coluna por coluna.",
      ["Sete colunas, um monte e quatro bases (uma por naipe). O objetivo é levar as 52 cartas para as bases, de Ás a Rei.",
       "Cartas: valor A, 2 a 10, J, Q ou K e naipe C copas, O ouros, P paus ou E espadas, como 7C ou QE (também vale 7 de copas).",
@@ -151,7 +155,7 @@ CATEGORIAS = [
     ("numeros", "Números e lógica", "Códigos, números e quebra-cabeças de raciocínio.", ["senha", "numero", "sudoku", "2048"]),
     ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "velha", "minas", "gramado"]),
     ("cartas", "Cartas", "Jogos de baralho.", ["paciencia"]),
-    ("cassino", "Cassino", "Jogos de cassino, só com créditos de mentira.", ["cacaniqueis", "blackjack", "roleta", "bacara"]),
+    ("cassino", "Cassino", "Jogos de cassino, só com créditos de mentira.", ["cacaniqueis", "blackjack", "roleta", "bacara", "caribenho"]),
     ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
 ]
 GRUPOS = [(t, ids) for _, t, _, ids in CATEGORIAS]

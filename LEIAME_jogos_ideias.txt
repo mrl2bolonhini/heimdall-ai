@@ -40,7 +40,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
 12. Poker (Texas hold'em)
    Contra o computador, com fichas de mentira. Cartas da mesa e da mão lidas por comando; o computador usa força da mão e posição para decidir. É o mais trabalhoso desta leva (apostas, blefe, vários níveis).
 
-13. Poker Caribenho
+13. Poker Caribenho [FEITO: Poker caribenho]
    Contra a banca, com cinco cartas e uma aposta de bônus; o jogo lê a mão e a carta aberta da banca e diz quando dá para pagar a aposta dobrada. Créditos de mentira.
 
 Ordem sugerida para os jogos de cassino: blackjack, roleta, bacará, poker caribenho e, por último, o poker. Todos são só de entretenimento, com créditos de mentira, e ficam na categoria Cassino (o poker, em Cartas).
