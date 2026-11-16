@@ -212,6 +212,28 @@ t("sons de apoio: o classificador escolhe sons só para jogadas, e nunca para co
   assert.equal(cue("A bola parou no 17. Você lucrou 5.", "girar").pop(), "ganhou");
   assert.equal(cue("Empate. Aposta devolvida.", "parar").pop(), "empate");
 });
+t("sons de apoio: regras por jogo (acerto, erro, tiro, fusão, vitória) e botão Sons em todos", () => {
+  const nomes = ["forca", "senha", "numero", "velha", "cincoletras", "sudoku", "naval", "xadrez", "minas", "gramado", "aventura", "escolhas", "g2048"];
+  nomes.forEach(n => { const j = carregar(n); assert(botaoPorTexto(j.jogo, "Sons: ligados. Aperte para desligar"), "botão Sons em " + n); });
+  const c = global.Heimdall.som.cueJogo;
+  assert.equal(c("forca", "A letra A aparece 2 vezes."), "acerto");
+  assert.equal(c("forca", "A letra X não existe. Restam 4 erros."), "erro");
+  assert.equal(c("numero", "O número é maior que 50. Ele está entre 51 e 100."), "sobe");
+  assert.equal(c("numero", "O número é menor que 50."), "desce");
+  assert.equal(c("naval", "B7: acertou e afundou um submarino."), "afundou");
+  assert.equal(c("naval", "B7: acertou. Águas dele: C3: água."), "tiro");
+  assert.equal(c("naval", "B7: água."), "agua");
+  assert.equal(c("g2048", "Moveu para esquerda, somando 8 pontos. Surgiu 2."), "fusao");
+  assert.equal(c("g2048", "Nada se moveu para cima."), "erro");
+  assert.deepEqual(c("g2048", "Moveu para cima. Você chegou ao 2048! Pontos: 1."), ["mover", "grande"]);
+  assert.deepEqual(c("velha", "Você jogou em 5. Você ganhou!"), ["toque", "grande"]);
+  assert.equal(c("gramado", "Crash! O cortador caiu num formigueiro."), "explosao");
+  assert.equal(c("gramado", "Você está na linha 1, coluna 2 de um gramado."), null, "consulta sem som");
+  assert.equal(c("minas", "A casa da linha 1, coluna 1 já está aberta: vazia."), "erro");
+  assert.equal(c("sudoku", "Não dá: o 5 já está na linha."), "erro");
+  assert.equal(c("sudoku", "Colocado 5 na linha 1, coluna 1."), "toque");
+  assert.equal(c("historia", "Não entendi. Digite ajuda."), "erro");
+});
 t("sons de apoio: caça-níqueis toca os rolos e o resultado", () => {
   const log = []; audioFalso(log);
   const j = carregar("cacaniqueis"); j.id("aposta").value = "1"; botaoPorTexto(j.jogo, "Girar").fire("click");

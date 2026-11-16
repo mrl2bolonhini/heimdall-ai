@@ -163,13 +163,14 @@ CATEGORIAS = [
     ("palavras", "Palavras e letras", "Adivinhar palavras.", ["forca", "cincoletras"]),
     ("numeros", "Números e lógica", "Códigos, números e quebra-cabeças de raciocínio.", ["senha", "numero", "sudoku", "2048"]),
     ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "velha", "minas", "gramado"]),
-    ("audio", "Jogos de áudio", "Jogos guiados pelo som, melhor com fones de ouvido.", ["arqueiro"]),
+    ("acao", "Ação", "Jogos de reflexo e movimento. O som ajuda a jogar: melhor com fones de ouvido.", ["arqueiro"]),
     ("cartas", "Cartas", "Jogos de baralho.", ["paciencia", "poker"]),
     ("cassino", "Cassino", "Jogos de cassino, só com créditos de mentira.", ["cacaniqueis", "blackjack", "roleta", "bacara", "caribenho"]),
     ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
 ]
 GRUPOS = [(t, ids) for _, t, _, ids in CATEGORIAS]
 POR_CATEGORIA = {c[0]: c for c in CATEGORIAS}
+POR_CATEGORIA["audio"] = POR_CATEGORIA["acao"]  # endereço antigo da categoria, para quem guardou o link
 # Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.
 HISTORIAS = {"relogios", "templo", "orion", "caverna"}
 POR_ID = {j[0]: j for j in CATALOGO}

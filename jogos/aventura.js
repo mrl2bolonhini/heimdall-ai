@@ -109,12 +109,14 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = novo();
+  function D(m, f) { if (H.som) H.som.dizer("historia", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var saida = H.el("ol", { id: "historico", "aria-label": "Histórico da aventura" });
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
   var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "O que você faz? (digite ajuda para ver os comandos)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
   var reiniciar = H.el("button", { type: "button", texto: "Recomeçar" });
   [form, saida, reiniciar].forEach(function (x) { jogo.appendChild(x); });
-  function escrever(msg, voz) { saida.insertBefore(H.el("li", { texto: msg }), saida.firstChild); if (voz !== false) H.anunciar(msg); }
+  function escrever(msg, voz) { saida.insertBefore(H.el("li", { texto: msg }), saida.firstChild); if (voz !== false) D(msg); }
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
     var c = campo.value; campo.value = "";

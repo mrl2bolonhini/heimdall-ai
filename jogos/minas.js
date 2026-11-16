@@ -151,6 +151,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = novo("facil"), modo = "abrir", botoes = [];
+  function D(m, f) { if (H.som) H.som.dizer("minas", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { return H.el("option", { value: k, texto: NIVEIS[k].nome.charAt(0).toUpperCase() + NIVEIS[k].nome.slice(1) + ": " + NIVEIS[k].l + " por " + NIVEIS[k].c + ", " + NIVEIS[k].m + " minas" }); }));
   var novoBtn = H.el("button", { type: "button", texto: "Novo jogo" });
   var modoBtn = H.el("button", { type: "button", id: "modo", texto: "Modo da grade: abrir" });
@@ -184,7 +186,7 @@
   }
   function jogar(acao, r, c) {
     var res = acao === "abrir" ? abrir(e, r, c) : marcar(e, r, c);
-    atualizar(); H.anunciar(res.msg);
+    atualizar(); D(res.msg);
   }
   function comecar() {
     e = novo(nivelSel.value); modo = "abrir"; modoBtn.textContent = "Modo da grade: abrir"; desenhar();
@@ -192,7 +194,7 @@
   }
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var r = comando(e, campo.value); campo.value = ""; atualizar(); H.anunciar(r.msg); campo.focus();
+    var r = comando(e, campo.value); campo.value = ""; atualizar(); D(r.msg); campo.focus();
   });
   modoBtn.addEventListener("click", function () { modo = modo === "abrir" ? "marcar" : "abrir"; modoBtn.textContent = "Modo da grade: " + modo; H.anunciar("Agora, tocar em uma casa da grade vai " + modo + " a casa."); });
   novoBtn.addEventListener("click", comecar);

@@ -10,6 +10,8 @@
   if (typeof module !== "undefined") module.exports = api;
   if (typeof document === "undefined") return;
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), secreto, tentativas, min, max;
+  function D(m, f) { if (H.som) H.som.dizer("numero", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var info = H.el("p", { id: "info" });
   var campo = H.el("input", { id: "palpite", type: "text", inputmode: "numeric", autocomplete: "off", maxlength: "3" });
   var form = H.el("form", {}, [H.el("label", { "for": "palpite", texto: "Seu palpite, de 1 a 100" }), campo, H.el("button", { type: "submit", texto: "Tentar" })]);
@@ -23,7 +25,7 @@
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
     var n = ler(campo.value); campo.value = "";
-    if (n === null) { H.anunciar("Digite um número inteiro de 1 a 100."); return; }
+    if (n === null) { D("Digite um número inteiro de 1 a 100."); return; }
     tentativas++;
     var d = dica(secreto, n), msg;
     if (d === "certo") { msg = "Acertou! O número era " + secreto + ", em " + tentativas + (tentativas === 1 ? " tentativa." : " tentativas."); campo.disabled = true; novo.focus(); }
@@ -32,7 +34,7 @@
       msg = "O número é " + d + " que " + n + ". Ele está entre " + min + " e " + max + ". Tentativa " + tentativas + ".";
       campo.focus();
     }
-    info.textContent = msg; H.anunciar(msg);
+    info.textContent = msg; D(msg);
   });
   novo.addEventListener("click", function () { comecar(); campo.focus(); });
   comecar();

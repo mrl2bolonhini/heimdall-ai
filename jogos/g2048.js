@@ -39,6 +39,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), tab, pontos, venceu;
+  function D(m, f) { if (H.som) H.som.dizer("g2048", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var info = H.el("p", { id: "info" }), quadro = H.el("ul", { id: "quadro", "aria-label": "Tabuleiro" });
   var barra = H.el("div", { role: "group", "aria-label": "Mover as peças" });
   [["esquerda", "Esquerda"], ["direita", "Direita"], ["cima", "Cima"], ["baixo", "Baixo"]].forEach(function (d) {
@@ -54,7 +56,7 @@
   }
   function jogada(dir) {
     var r = mover(tab, dir);
-    if (!r.moveu) { H.anunciar("Nada se moveu para " + dir + "."); return; }
+    if (!r.moveu) { D("Nada se moveu para " + dir + "."); return; }
     tab = r.tab; pontos += r.pontos;
     var s = surgir(tab), msg = "Moveu para " + dir + (r.pontos ? ", somando " + r.pontos + " pontos" : "") + ". ";
     if (s) msg += "Surgiu " + s.valor + " na linha " + (s.linha + 1) + ", coluna " + (s.coluna + 1) + ". ";
@@ -62,7 +64,7 @@
     pintar();
     if (acabou(tab)) msg += "Não há mais jogadas. Fim de jogo com " + pontos + " pontos.";
     else msg += "Pontos: " + pontos + ".";
-    H.anunciar(msg);
+    D(msg);
   }
   function comecar() { tab = vazio(); pontos = 0; venceu = false; surgir(tab); surgir(tab); pintar(); H.anunciar("Nova partida. " + ler(tab)); }
   ler_b.addEventListener("click", function () { H.anunciar(ler(tab) + " Pontos: " + pontos + "."); });

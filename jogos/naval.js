@@ -192,6 +192,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = null;
+  function D(m, f) { if (H.som) H.som.dizer("naval", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var selNivel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { return H.el("option", { value: k, texto: NIVEIS[k].charAt(0).toUpperCase() + NIVEIS[k].slice(1) }); }));
   selNivel.value = "normal";
   var novoBtn = H.el("button", { type: "button", texto: "Nova partida" });
@@ -200,7 +202,7 @@
   var historia = H.el("ol", { id: "historico", "aria-label": "Histórico da partida" });
   var visual = H.el("pre", { id: "visual", "aria-hidden": "true" });
   [H.el("label", { "for": "nivel", texto: "Nível do computador (vale ao começar uma nova partida)" }), selNivel, novoBtn, form, historia, visual].forEach(function (x) { jogo.appendChild(x); });
-  function escrever(m) { historia.insertBefore(H.el("li", { texto: m }), historia.firstChild); H.anunciar(m); }
+  function escrever(m) { historia.insertBefore(H.el("li", { texto: m }), historia.firstChild); D(m); }
   function atualizar() { visual.textContent = "Seus tiros\n" + desenho(e.ele, false) + "\n\nSua frota\n" + desenho(e.eu, true); }
   function comecar() {
     e = novo(selNivel.value); historia.textContent = ""; campo.disabled = false; atualizar();

@@ -184,6 +184,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = novo("facil");
+  function D(m, f) { if (H.som) H.som.dizer("gramado", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { return H.el("option", { value: k, texto: NIVEIS[k].nome.charAt(0).toUpperCase() + NIVEIS[k].nome.slice(1) + ": " + NIVEIS[k].l + " por " + NIVEIS[k].c + ", " + NIVEIS[k].m + " formigueiros" }); }));
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
   var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Comando (norte, sul, leste, oeste, leste 3, marcar leste, sensor, mapa, dica, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
@@ -195,7 +197,7 @@
   }));
   var novoBtn = H.el("button", { type: "button", texto: "Novo jogo" });
   [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, form, botoes, extras].forEach(function (x) { jogo.appendChild(x); });
-  function falar(m) { H.anunciar(m); campo.disabled = !!e.fim; }
+  function falar(m) { D(m); campo.disabled = !!e.fim; }
   function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ": gramado de " + e.l + " por " + e.c + " com " + e.m + " formigueiros. Você está no canto da linha 1, coluna 1, que já está cortada. O gramado fica ao sul e a leste. Ande com leste, sul e os outros comandos; ajuda lista tudo."); }
   form.addEventListener("submit", function (ev) { ev.preventDefault(); var r = comando(e, campo.value); campo.value = ""; falar(r.msg); if (!e.fim) campo.focus(); });
   novoBtn.addEventListener("click", comecar);

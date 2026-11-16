@@ -380,6 +380,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), id = jogo.getAttribute("data-historia"), hist = raiz.Heimdall.historias && raiz.Heimdall.historias[id], e = null, chave = "heimdall-aventura-" + id;
+  function D(m, f) { if (H.som) H.som.dizer("historia", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   if (!hist) { jogo.textContent = "Esta aventura não foi encontrada."; return; }
   preparar(hist);
   var selNivel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { return H.el("option", { value: k, texto: NIVEIS[k].charAt(0).toUpperCase() + NIVEIS[k].slice(1) }); }));
@@ -391,7 +393,7 @@
   var bSalvar = H.el("button", { type: "button", texto: "Salvar" });
   var bCarregar = H.el("button", { type: "button", texto: "Carregar" });
   [H.el("label", { "for": "nivel", texto: "Nível (vale ao recomeçar)" }), selNivel, form, bReiniciar, bSalvar, bCarregar, saida].forEach(function (x) { jogo.appendChild(x); });
-  function escrever(m) { saida.insertBefore(H.el("li", { texto: m }), saida.firstChild); H.anunciar(m); }
+  function escrever(m) { saida.insertBefore(H.el("li", { texto: m }), saida.firstChild); D(m); }
   function salvar() {
     try { localStorage.setItem(chave, exportar(e)); return "Partida salva neste navegador."; } catch (x) { return "Não consegui salvar neste navegador."; }
   }

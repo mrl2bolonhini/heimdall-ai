@@ -27,6 +27,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), secreto, historico;
+  function D(m, f) { if (H.som) H.som.dizer("senha", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var info = H.el("p", { id: "info" }), lista = H.el("ol", { id: "historico", "aria-label": "Tentativas anteriores" });
   var campo = H.el("input", { id: "palpite", type: "text", inputmode: "numeric", autocomplete: "off", maxlength: "4" });
   var form = H.el("form", {}, [H.el("label", { "for": "palpite", texto: "Seu palpite: 4 dígitos, cada um de 1 a 6" }), campo, H.el("button", { type: "submit", texto: "Tentar" })]);
@@ -40,7 +42,7 @@
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
     var p = ler(campo.value);
-    if (!p) { H.anunciar("Digite exatamente 4 dígitos, cada um de 1 a 6."); return; }
+    if (!p) { D("Digite exatamente 4 dígitos, cada um de 1 a 6."); return; }
     var r = avaliar(secreto, p); historico.push(p);
     lista.appendChild(H.el("li", { texto: p.join(" ") + ": " + frase(r) }));
     campo.value = "";
@@ -48,7 +50,7 @@
     if (r.certos === TAM) { campo.disabled = true; msg += " Você precisou de " + historico.length + " tentativas."; novo.focus(); }
     else if (historico.length >= MAX) { campo.disabled = true; msg += " Acabaram as tentativas. A senha era " + secreto.join(" ") + "."; novo.focus(); }
     else { info.textContent = "Tentativa " + (historico.length + 1) + " de " + MAX + "."; msg += " Tentativa " + (historico.length + 1) + " de " + MAX + "."; campo.focus(); }
-    H.anunciar(msg);
+    D(msg);
   });
   novo.addEventListener("click", function () { comecar(); campo.focus(); });
   comecar();

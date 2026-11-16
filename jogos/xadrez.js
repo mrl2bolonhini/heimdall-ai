@@ -378,6 +378,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), g = null;
+  function D(m, f) { if (H.som) H.som.dizer("xadrez", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { return H.el("option", { value: k, texto: NIVEIS[k].nome.charAt(0).toUpperCase() + NIVEIS[k].nome.slice(1) }); }));
   var corSel = H.el("select", { id: "cor" }, [H.el("option", { value: "w", texto: "Brancas (você começa)" }), H.el("option", { value: "b", texto: "Pretas (o computador começa)" })]);
   var novoBtn = H.el("button", { type: "button", texto: "Nova partida" });
@@ -386,7 +388,7 @@
   var historia = H.el("ol", { id: "historico", "aria-label": "Histórico da partida" });
   var visual = H.el("pre", { id: "visual", "aria-hidden": "true" });
   [H.el("label", { "for": "nivel", texto: "Nível do computador" }), nivelSel, H.el("label", { "for": "cor", texto: "Sua cor" }), corSel, novoBtn, form, historia, visual].forEach(function (x) { jogo.appendChild(x); });
-  function escrever(msg) { historia.insertBefore(H.el("li", { texto: msg }), historia.firstChild); H.anunciar(msg); }
+  function escrever(msg) { historia.insertBefore(H.el("li", { texto: msg }), historia.firstChild); D(msg); }
   function atualizar() { visual.textContent = desenho(g.e); }
   function comecar() {
     g = novaPartida(nivelSel.value, corSel.value); historia.textContent = ""; campo.disabled = false;

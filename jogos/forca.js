@@ -56,6 +56,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, estado = sorteia(), jogo = document.getElementById("jogo");
+  function D(m, f) { if (H.som) H.som.dizer("forca", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var palavra = H.el("p", { id: "palavra", "aria-live": "off" }), info = H.el("p", { id: "info" }), usadas = H.el("p", { id: "usadas" });
   var campo = H.el("input", { id: "tentativa", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", maxlength: "30" });
   var rotulo = H.el("label", { "for": "tentativa", texto: "Uma letra, ou a palavra inteira" });
@@ -76,7 +78,7 @@
     var r = tentar(estado, campo.value);
     campo.value = "";
     atualizar();
-    H.anunciar(r.msg + " " + palavra.textContent);
+    D(r.msg, r.msg + " " + palavra.textContent);
     if (estado.fim) novo.focus(); else campo.focus();
   });
   novo.addEventListener("click", function () {

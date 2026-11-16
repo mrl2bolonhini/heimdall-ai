@@ -34,6 +34,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), tab, dificil = true, botoes = [];
+  function D(m, f) { if (H.som) H.som.dizer("velha", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var info = H.el("p", { id: "info" });
   var nivel = H.el("button", { type: "button", id: "nivel" });
   var novo = H.el("button", { type: "button", texto: "Nova partida" });
@@ -66,7 +68,7 @@
     if (!v) { var c = dificil ? jogadaDificil(tab) : jogadaFacil(tab); tab[c] = "O"; msg += " O computador jogou em " + nome(c) + "."; v = vencedor(tab); }
     pintar();
     if (v) { msg += " " + fim(v); novo.focus(); } else { var livre = botoes.filter(function (b) { return !b.disabled; })[0]; msg += " Sua vez."; if (document.activeElement === document.body) livre.focus(); }
-    info.textContent = msg; H.anunciar(msg + " " + estado());
+    info.textContent = msg; D(msg, msg + " " + estado());
   }
   function estado() {
     var l = ["X", "O"].map(function (j) { return j + " em: " + (tab.map(function (v, k) { return v === j ? nome(k) : null; }).filter(Boolean).join("; ") || "nenhuma casa"); });

@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - Sons de apoio em todos os jogos e categoria Ação
+- Os sons de apoio chegaram aos demais jogos: Forca (acerto e erro de letra), Senha, Número secreto (som que sobe quando o número é maior e que desce quando é menor), Cinco letras, Jogo da velha, Sudoku, 2048 (deslizar e fundir peças), Xadrez (peça, captura e xeque), Batalha naval (água, tiro e afundou), Campo minado, Gramado (passos, bandeira, sensor e explosão) e as aventuras (som de recusa e de desfecho). Todos ganharam o botão Sons para ligar e desligar, e a escolha fica gravada no navegador.
+- A fala sempre espera o som terminar. Descrições longas, consultas e dicas não tocam nada: só acontecimentos claros e recusas.
+- A categoria "Jogos de áudio" virou "Ação", já que o som deixou de ser o objetivo e passou a ser o recurso. O endereço antigo /categoria/audio continua abrindo a mesma página.
+- Novos testes em teste_jogos_ui.js. Para aplicar: heimdall update --restart (não precisa de instalador).
+
 ## 2026-11-16 - Sons de apoio nos jogos de cassino e de cartas
 - Novo módulo de sons (jogos/som.js), pensado como recurso de acessibilidade e não como atrativo: um som curto marca cada acontecimento e a fala só começa depois que o som termina, para o VoiceOver não atropelar.
 - Roleta: ficha ao apostar, a bola correndo e parando ao girar, e um som de resultado (ganhou, grande, empate ou perdeu). Caça-níqueis: os três rolos parando e o som do prêmio ou da perda.

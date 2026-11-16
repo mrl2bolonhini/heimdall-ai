@@ -54,7 +54,22 @@
     estourou: function (c) { tom(c, 400, 0.4, 0, "sawtooth", 0.14, 120); return 480; },
     empate: function (c) { tom(c, 440, 0.12, 0, "sine", 0.2); tom(c, 440, 0.12, 0.17, "sine", 0.2); return 400; },
     erro: function (c) { tom(c, 150, 0.12, 0, "square", 0.1); return 180; },
-    ping: function (c) { tom(c, 1000, 0.1, 0, "sine", 0.2); return 160; }
+    ping: function (c) { tom(c, 1000, 0.1, 0, "sine", 0.2); return 160; },
+    toque: function (c) { tom(c, 520, 0.05, 0, "triangle", 0.2); return 110; },
+    acerto: function (c) { tom(c, 660, 0.07, 0, "sine", 0.2); tom(c, 990, 0.1, 0.07, "sine", 0.2); return 220; },
+    sobe: function (c) { tom(c, 400, 0.16, 0, "sine", 0.18, 800); return 220; },
+    desce: function (c) { tom(c, 800, 0.16, 0, "sine", 0.18, 400); return 220; },
+    mover: function (c) { ruido(c, 0.09, 0, 0.18, 900); return 150; },
+    fusao: function (c) { ruido(c, 0.07, 0, 0.18, 900); tom(c, 880, 0.08, 0.06, "triangle", 0.2); tom(c, 1320, 0.1, 0.13, "triangle", 0.2); return 300; },
+    captura: function (c) { ruido(c, 0.06, 0, 0.3, 1200); tom(c, 200, 0.12, 0, "triangle", 0.25); return 200; },
+    alerta: function (c) { tom(c, 880, 0.08, 0, "square", 0.12); tom(c, 880, 0.08, 0.14, "square", 0.12); return 300; },
+    agua: function (c) { ruido(c, 0.25, 0, 0.2, 700); return 300; },
+    tiro: function (c) { ruido(c, 0.18, 0, 0.35, 500); tom(c, 140, 0.2, 0, "triangle", 0.3, 60); return 300; },
+    afundou: function (c) { ruido(c, 0.18, 0, 0.35, 500); tom(c, 160, 0.5, 0, "triangle", 0.3, 40); return 600; },
+    explosao: function (c) { ruido(c, 0.4, 0, 0.5, 300); tom(c, 110, 0.5, 0, "sawtooth", 0.25, 35); return 600; },
+    terra: function (c) { ruido(c, 0.05, 0, 0.2, 1500); return 100; },
+    bandeira: function (c) { tom(c, 1200, 0.04, 0, "square", 0.1); tom(c, 900, 0.05, 0.05, "square", 0.1); return 140; },
+    passo: function (c) { ruido(c, 0.05, 0, 0.22, 600); return 100; }
   };
 
   // Toca um som, ou vários em sequência, e devolve a duração total em milissegundos (0 se os sons estiverem desligados ou o navegador não tiver áudio).
@@ -87,6 +102,41 @@
     else if (/voce ganhou|voce lucrou|voce venceu|lucrou|ganhou a mao|recebe/.test(m)) lista.push("ganhou");
     return lista.length ? lista : null;
   }
+  // Regras por jogo: a partir do texto falado, escolhem o som. Só entram acontecimentos claros; descrições longas não tocam nada.
+  var RECUSA_JOGO = /^(nao entendi|use uma letra|voce ja tentou|digite|casa invalida|jogada invalida|lance invalido|lance ilegal|nao e possivel|nao pode|nao posso|esta ocupada|ocupada|nao ha caminho|fora d[oa]|ja foi|ja atirou|essa casa|comando|nao conheco|nao sei|voce nao|nao tem como|invalido|nao existe|nao da)/;
+  function desfecho(m) {
+    if (/crash!|boom|pisou numa mina/.test(m)) return "explosao";
+    if (/voce perdeu|a palavra era|acabaram as tentativas|toda a sua frota afundou|o computador ganhou|nao ha mais jogadas|fim de jogo|computador venceu|vitoria do computador/.test(m)) return "perdeu";
+    if (/deu velha|empate/.test(m)) return "empate";
+    if (/voce ganhou|ganhou!|vitoria!|acertou a senha|acertou a palavra|acertou! o numero|voce acertou|parabens|cortou todo o gramado|abriu todas as casas seguras|voce chegou ao 2048|xeque-mate! vitoria das brancas|sudoku completo/.test(m)) return "grande";
+    return null;
+  }
+  var REGRAS = {
+    forca: function (m) { return /aparece \d/.test(m) ? "acerto" : /nao existe|a palavra nao e/.test(m) ? "erro" : null; },
+    senha: function (m) { var k = m.match(/(\d) digitos? no lugar certo/); return k ? (Number(k[1]) > 0 ? "acerto" : "toque") : null; },
+    numero: function (m) { return /e maior que/.test(m) ? "sobe" : /e menor que/.test(m) ? "desce" : null; },
+    cincoletras: function (m) { return /^tentativa \d/.test(m) ? "toque" : null; },
+    velha: function (m) { return /voce jogou/.test(m) ? "toque" : null; },
+    sudoku: function (m) { return /errado|errados/.test(m) ? "erro" : /^(colocado|apagado|colocou|apagou)/.test(m) ? "toque" : null; },
+    xadrez: function (m) { return /xeque/.test(m) ? "alerta" : /captura|capturou|x[a-h]/.test(m) && /jogou|lance/.test(m) ? "captura" : /voce jogou|computador jogou|jogou/.test(m) ? "toque" : null; },
+    naval: function (m) { var i = m.search(/acertou e afundou|: acertou|: agua|afundou/); if (i < 0) return null; var t = m.slice(i); return /^(: acertou e afundou|afundou)/.test(t) ? "afundou" : /^: acertou/.test(t) ? "tiro" : "agua"; },
+    minas: function (m) { return /bandeira (colocada|marcada|posta)|marcou/.test(m) ? "bandeira" : /abriu|casa .* tem|zero minas|sem minas|aberta/.test(m) ? "terra" : null; },
+    gramado: function (m) { return /sensor apitou/.test(m) ? "alerta" : /bandeira/.test(m) && /marc|pos/.test(m) ? "bandeira" : /^(cortou|andou|moveu|voce andou|voce cortou|chegou)/.test(m) ? "passo" : null; },
+    g2048: function (m) { return /^moveu/.test(m) ? (/somando/.test(m) ? "fusao" : "mover") : /nada se moveu/.test(m) ? "erro" : null; },
+    historia: function () { return null; }
+  };
+  function cueJogo(id, msg) {
+    var m = sem(msg).replace(/^> .*? - /, "").replace(/^> .*? — /, "").trim();
+    if (RECUSA.test(m) || RECUSA_JOGO.test(m) || /ja esta aberta|nao pode ser marcada|desmarque antes|o palpite precisa|nao esta na lista|palavra desconhecida|nao cabe nessa|nao pode mudar|use numeros de 1 a 9/.test(m)) return "erro";
+    var d = desfecho(m), f = REGRAS[id], r = f ? f(m) : null;
+    if (d) return r && r !== "erro" && d === "grande" ? [r, d] : d;
+    return r;
+  }
+  // Fala com som: cue pelo jogo e pelo texto, e a fala (que pode ser outra, mais longa) vem depois.
+  function dizer(id, msg, fala) {
+    var c = cueJogo(id, msg), t = fala === undefined ? msg : fala;
+    if (c) anunciar(c, t); else H.anunciar(t);
+  }
   // Toca o som e só depois fala o texto.
   function anunciar(nomes, texto) {
     var d = nomes ? tocar(nomes) : 0;
@@ -103,6 +153,6 @@
     });
     rotulo(); if (jogo) jogo.appendChild(b); return b;
   }
-  H.som = { cue: cue, tocar: tocar, anunciar: anunciar, botao: botao, ligado: function () { return ligado; } };
+  H.som = { cueJogo: cueJogo, dizer: dizer, cue: cue, tocar: tocar, anunciar: anunciar, botao: botao, ligado: function () { return ligado; } };
   if (typeof module !== "undefined") module.exports = H.som;
 })(typeof window !== "undefined" ? window : globalThis);

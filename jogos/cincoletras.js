@@ -135,6 +135,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = null;
+  function D(m, f) { if (H.som) H.som.dizer("cincoletras", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var selNivel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { return H.el("option", { value: k, texto: NIVEIS[k].nome.charAt(0).toUpperCase() + NIVEIS[k].nome.slice(1) + ": " + NIVEIS[k].tent + " tentativas" }); }));
   selNivel.value = "normal";
   var novoBtn = H.el("button", { type: "button", texto: "Nova palavra" });
@@ -142,7 +144,7 @@
   var form = H.el("form", {}, [H.el("label", { "for": "palpite", texto: "Seu palpite de 5 letras, ou um comando (ajuda mostra tudo)" }), campo, H.el("button", { type: "submit", texto: "Tentar" })]);
   var historia = H.el("ol", { id: "historico", "aria-label": "Tentativas" });
   [H.el("label", { "for": "nivel", texto: "Nível (vale ao começar uma nova palavra)" }), selNivel, novoBtn, form, historia].forEach(function (x) { jogo.appendChild(x); });
-  function escrever(m) { historia.insertBefore(H.el("li", { texto: m }), historia.firstChild); H.anunciar(m); }
+  function escrever(m) { historia.insertBefore(H.el("li", { texto: m }), historia.firstChild); D(m); }
   function comecar() {
     e = novo(selNivel.value); historia.textContent = ""; campo.disabled = false;
     escrever("Nova palavra de 5 letras, nível " + e.cfg.nome + ", com " + e.cfg.tent + " tentativas." + (e.cfg.rigido ? " Neste nível você precisa reaproveitar as letras já descobertas." : "") + " Digite seu primeiro palpite, ou ajuda.");

@@ -161,6 +161,8 @@
   if (typeof document === "undefined") return;
 
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = novo("facil");
+  function D(m, f) { if (H.som) H.som.dizer("historia", m, f); else H.anunciar(f === undefined ? m : f); }
+  if (H.som) H.som.botao(jogo);
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { return H.el("option", { value: k, texto: NIVEIS[k].nome.charAt(0).toUpperCase() + NIVEIS[k].nome.slice(1) + (k === "facil" ? ": sem perder vidas e com dicas" : k === "normal" ? ": 3 vidas e 3 dicas" : ": 1 vida e sem dicas") }); }));
   var campo = H.el("input", { id: "comando", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", inputmode: "numeric" });
   var form = H.el("form", {}, [H.el("label", { "for": "comando", texto: "Número da escolha (ou repetir, dica, resumo, ajuda)" }), campo, H.el("button", { type: "submit", texto: "Enviar" })]);
@@ -175,7 +177,7 @@
     });
     campo.disabled = !!e.fim;
   }
-  function agir(t) { var r = comando(e, t); campo.value = ""; desenhar(); H.anunciar(r.msg); if (!e.fim) campo.focus(); }
+  function agir(t) { var r = comando(e, t); campo.value = ""; desenhar(); D(r.msg); if (!e.fim) campo.focus(); }
   form.addEventListener("submit", function (ev) { ev.preventDefault(); agir(campo.value); });
   novoBtn.addEventListener("click", comecar);
   function comecar() { e = novo(nivelSel.value); desenhar(); H.anunciar("Novo jogo, nível " + e.nome + ". " + cena(e)); }
