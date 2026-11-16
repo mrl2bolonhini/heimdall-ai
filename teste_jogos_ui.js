@@ -74,8 +74,8 @@ t("aventura: história, comando e recomeço", () => {
   assert(/^> pegar fósforos/.test(hist.children[0].textContent));
   botaoPorTexto(j.jogo, "Recomeçar").fire("click"); assert.equal(hist.children.length, 1);
 });
-t("sorte: gira, lê saldo, prêmios e nova partida", () => {
-  const j = carregar("sorte"); assert(/Painel da sorte/.test(j.an.textContent) && /30 créditos/.test(j.an.textContent));
+t("caça-níqueis: gira, lê saldo, prêmios e nova partida", () => {
+  const j = carregar("cacaniqueis"); assert(/Caça-níqueis/.test(j.an.textContent) && /30 créditos/.test(j.an.textContent));
   j.id("aposta").value = "1"; botaoPorTexto(j.jogo, "Girar").fire("click"); assert(/Saiu:/.test(j.an.textContent) && /Saldo:/.test(j.an.textContent));
   assert(/^\[ \d \| \d \| \d \]$/.test(j.id("painel").textContent) && j.id("painel").attrs["aria-hidden"] === "true");
   botaoPorTexto(j.jogo, "Ver os prêmios").fire("click"); assert(/trinca|iguais/.test(j.an.textContent));

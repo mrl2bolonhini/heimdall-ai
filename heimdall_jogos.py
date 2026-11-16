@@ -3,7 +3,7 @@
 
 Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta jogos/; o que acontece na partida
 é dito em voz alta por uma região aria-live. Nada é gravado: o servidor só entrega as páginas.
-Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, xadrez, campo minado, painel da sorte e aventuras de texto
+Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, xadrez, campo minado, caça-níqueis e aventuras de texto
 (O Farol Apagado, A Mansão dos Relógios, O Templo Submerso, Estação Orion; as três últimas com níveis de dificuldade).
 
 Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outros painéis):
@@ -93,7 +93,7 @@ CATALOGO += [
      ["O campo é uma tabela de botões; cada botão diz a linha, a coluna e o que há nele. Abra com Enter ou use o campo de comando.",
       "Comandos: abrir 3 4, marcar 3 4, ler 3 4, linha 3, coluna 4, tudo e resumo. A primeira jogada nunca é uma mina.",
       "Um número diz quantas minas há nas oito casas ao redor."]),
-    ("sorte", "Painel da sorte", "sorte.js", "Um painel de três dígitos e um botão: trinca ou sequência dá prêmio, o resto perde a aposta.",
+    ("cacaniqueis", "Caça-níqueis", "cacaniqueis.js", "Um painel de três dígitos e um botão Girar: trinca ou sequência dá prêmio, o resto perde a aposta.",
      ["Você começa com créditos de mentira (sem dinheiro de verdade) e escolhe apostar 1, 2 ou 5 por rodada.",
       "Três dígitos iguais pagam muito; uma sequência, como 1 2 3 ou 9 0 1, paga menos; qualquer outra coisa perde a aposta.",
       "O botão Ver os prêmios lê a tabela, e Ler o saldo diz como você está."]),
@@ -105,7 +105,7 @@ CATALOGO += [
      ["Digite comandos como olhar, ir norte, pegar ITEM, usar ITEM em ALGO, falar com ZEL, digitar CÓDIGO e ajuda.", *NIVEIS_TXT]),
 ]
 GRUPOS = [("Jogos clássicos", ["forca", "senha", "velha", "numero", "2048"]),
-          ("Tabuleiro e sorte", ["xadrez", "minas", "sorte"]),
+          ("Tabuleiro e sorte", ["xadrez", "minas", "cacaniqueis"]),
           ("Aventuras de texto", ["aventura", "relogios", "templo", "orion"])]
 # Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.
 HISTORIAS = {"relogios", "templo", "orion"}

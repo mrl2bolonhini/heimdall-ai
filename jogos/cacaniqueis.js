@@ -1,4 +1,4 @@
-// Painel da sorte: três dígitos de 0 a 9 são sorteados a cada rodada, como nos painéis de aparelhos de som antigos.
+// Caça-níqueis: um painel de três dígitos de 0 a 9 e um botão Girar, como nos painéis de aparelhos de som antigos.
 // Três iguais (trinca) ou uma sequência (123, 321, 901, 109...) dão prêmio; qualquer outra coisa perde a aposta. Créditos de mentira, sem dinheiro de verdade.
 (function (raiz) {
   "use strict";
@@ -76,5 +76,5 @@
   premios.addEventListener("click", function () { H.anunciar(tabela()); });
   novoBtn.addEventListener("click", function () { e = novo(); painel.textContent = "[ - | - | - ]"; atualizar(); H.anunciar("Nova partida com " + INICIO + " créditos. " + tabela()); girarBtn.focus(); });
   atualizar();
-  H.anunciar("Painel da sorte. Você tem " + INICIO + " créditos. Escolha a aposta e use o botão Girar. " + tabela());
+  H.anunciar("Caça-níqueis. Você tem " + INICIO + " créditos. Escolha a aposta e use o botão Girar. " + tabela());
 })(typeof window !== "undefined" ? window : globalThis);
