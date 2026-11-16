@@ -19,7 +19,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em jogos/, lógica testada em N
 5. Campo minado de gramado (inspirado no Lawnsweeper) [FEITO: Gramado]
    Variação do campo minado com tema e regras próprias, usando a mesma grade de botões com rótulo de linha e coluna.
 
-6. Aventura de escolhas com um problema de lógica por trás
+6. Aventura de escolhas com um problema de lógica por trás [FEITO: A Travessia das Três Provas]
    Uma história em que as escolhas escondem um problema (como achar o menor caminho entre vários lugares). Roda no motor de aventuras, com dicas por nível.
 
 7. Paciência (Klondike) falada

@@ -119,6 +119,10 @@ CATALOGO += [
      ["Você está no canto do gramado e anda com norte, sul, leste e oeste (leste 3 anda até três casas).",
       "Cada casa cortada diz quantos formigueiros há nas casas ao redor, inclusive nas diagonais; a caminhada de vários passos para quando há aviso.",
       "Pise num formigueiro e perde (no nível fácil o sensor apita e protege você). marcar DIREÇÃO põe bandeira, sensor lê as quatro direções, mapa lê tudo e dica ajuda nos níveis fácil e normal."]),
+    ("escolhas", "A Travessia das Três Provas", "escolhas.js", "Aventura de escolhas numeradas com três problemas de lógica: o rio, as portas e os guardas.",
+     ["Você lê a cena e responde com o número da escolha, por exemplo 1.",
+      "Três provas de lógica: levar uma raposa, uma galinha e o milho para o outro lado do rio; achar a porta certa quando só uma frase é verdadeira; descobrir qual guarda diz a verdade.",
+      "Fácil: o jogo avisa antes de um erro, sem perder nada, e há dicas à vontade. Normal: 3 vidas e 3 dicas. Difícil: 1 vida e sem dicas. repetir lê a cena de novo."]),
     ("caverna", "A Caverna dos Ecos", "hist_caverna.js", "Aventura guiada pelo som: ache a saída de uma caverna escura ouvindo o vento, a água e os ecos.",
      ["Digite comandos como escutar, olhar, ir norte, pegar ITEM, usar ITEM em ALGO e ajuda. O comando escutar diz o que você ouve onde está, e o som mostra o caminho; onde diz onde você está.", *NIVEIS_TXT]),
 ]
@@ -128,7 +132,7 @@ CATEGORIAS = [
     ("numeros", "Números e lógica", "Códigos, números e quebra-cabeças de raciocínio.", ["senha", "numero", "sudoku", "2048"]),
     ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "velha", "minas", "gramado"]),
     ("sorte", "Sorte", "Jogos de sorte, com créditos de mentira.", ["cacaniqueis"]),
-    ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna"]),
+    ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
 ]
 GRUPOS = [(t, ids) for _, t, _, ids in CATEGORIAS]
 POR_CATEGORIA = {c[0]: c for c in CATEGORIAS}

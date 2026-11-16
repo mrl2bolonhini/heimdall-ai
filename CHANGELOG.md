@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-16 - A Travessia das Três Provas (aventura de escolhas com lógica)
+- Nova aventura de escolhas numeradas, com três problemas de lógica: a travessia do rio (raposa, galinha e milho), as três portas com frases (só uma é verdadeira) e os dois guardas (um diz a verdade, o outro mente). Você responde com o número da escolha, ou com os botões.
+- Níveis: fácil (o jogo avisa antes de um erro e não castiga, dicas à vontade), normal (3 vidas, 3 dicas) e difícil (1 vida, sem dicas). A dica do rio calcula o melhor próximo passo; cada erro explica por que a escolha não servia.
+- Entra na categoria Aventuras de texto. Novo teste: teste_jogos_escolhas.js. heimdall games --play escolhas, Tab, ajuda e site atualizados.
+- Para aplicar: heimdall update --restart.
+
 ## 2026-11-15 - Gramado (campo minado por movimento)
 - Novo jogo: Gramado. Em vez de digitar linha e coluna, você conduz um cortador de grama com norte, sul, leste e oeste (leste 3 anda várias casas e para quando há aviso). Cada casa cortada diz quantos formigueiros há ao redor. Níveis: fácil 6 por 6 com 5 formigueiros (o sensor apita antes de você pisar e dicas à vontade), normal 8 por 8 com 10 (3 dicas) e difícil 10 por 10 com 20 (sem dicas).
 - O gramado é gerado de modo que todas as casas seguras sejam alcançáveis, e a dica só afirma o que é certo pelos números já descobertos.
