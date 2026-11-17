@@ -242,7 +242,7 @@ Opções:
 Exemplos:
   heimdall db --sql "SELECT dia, valor FROM saude_diaria WHERE metrica='hrv' ORDER BY dia DESC LIMIT 7"
 
-@ perf | Diagnóstico de desempenho do Mac (por que está lento)
+@ doctor | Diagnóstico de desempenho do Mac (por que está lento)
 Sem opção confere tudo e termina com uma conclusão em linguagem simples. Só lê informações do sistema e mostra o nome do programa, nunca linhas de comando.
 Opções:
   -m, --memory         memória, troca em disco (swap) e quem mais usa memória
@@ -254,9 +254,9 @@ Opções:
   -t, --top N          quantos programas listar nos mais usados (padrão 8)
   -h, --help           mostra esta ajuda
 Exemplos:
-  heimdall perf
-  heimdall perf --memory --top 15
-  heimdall perf --ollama
+  heimdall doctor
+  heimdall doctor --memory --top 15
+  heimdall doctor --ollama
 
 @ backup | Cópia de segurança criptografada do banco
 Tira uma cópia consistente do banco, criptografa (AES-256-GCM) e grava na pasta ou no bucket R2 configurados no .env. Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses.

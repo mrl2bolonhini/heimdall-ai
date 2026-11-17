@@ -82,7 +82,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
-    perf) printf '%s\n' "-m=--memory" "-c=--cpu" "-d=--disk" "-k=--docker" "-o=--ollama" "-s=--services" "-t=--top" ;;
+    doctor) printf '%s\n' "-m=--memory" "-c=--cpu" "-d=--disk" "-k=--docker" "-o=--ollama" "-s=--services" "-t=--top" ;;
     backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
     mail) printf '%s\n' "-t=--test-login" "-s=--simulate" ;;
     access) printf '%s\n' "-p=--password" "-c=--code" "-a=--all" "-v=--verify" ;;
@@ -275,7 +275,7 @@ heimdall() {
     triage)
       if [ "$1" = "--complete-tests" ]; then _heimdall_sh concluir_testes_triagem.sh; else _heimdall_sh consultar_triagem.sh "$@"; fi ;;
     db) _heimdall_py heimdall_banco.py "$@" ;;
-    perf)
+    doctor)
       _heimdall_tr "--memory=--memoria
 --disk=--disco
 --services=--servicos
@@ -368,7 +368,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health games finance n8n kuma dozzle urls triage db perf backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health games finance n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -388,7 +388,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       cloud) compadd -- --local ;;
       triage) compadd -- --complete-tests ;;
       db) compadd -- --sql ;;
-      perf) compadd -- --memory --cpu --disk --docker --ollama --services --top ;;
+      doctor) compadd -- --memory --cpu --disk --docker --ollama --services --top ;;
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
       mail) compadd -- --test-login --simulate ;;
       access) compadd -- --password --code --all --verify ;;

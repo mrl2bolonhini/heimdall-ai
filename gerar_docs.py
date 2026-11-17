@@ -262,7 +262,7 @@ SCRIPTS = [
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
     ("heimdall_design.py", "Heimdall Design: o padrão de interface igual em todos os sites (link lê, botão age): botão de ação como formulário GET, com nome acessível, e o CSS compartilhado."),
     ("CLAUDE.md", "Regras do repositório: toda atualização de interface segue o Heimdall Design."),
-    ("diagnostico.py", "Diagnóstico de desempenho do Mac (heimdall perf): memória, troca em disco, processador, disco, Docker, Ollama e serviços."),
+    ("diagnostico.py", "Diagnóstico de desempenho do Mac (heimdall doctor): memória, troca em disco, processador, disco, Docker, Ollama e serviços."),
     ("teste_diagnostico.py", "Teste do diagnóstico: análise dos textos do macOS sem depender do Mac."),
     ("teste_design.py", "Teste do Heimdall Design: falha se um link de painel tiver texto de ação, se algum contraste de cor ficar abaixo do mínimo, se o foco for removido ou houver cor solta fora do Heimdall Design."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News, Notas e Finance: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diagnóstico de desempenho do Mac (heimdall perf): memória, processador, disco, Docker, Ollama e serviços do Heimdall.
+"""Diagnóstico de desempenho do Mac (heimdall doctor): memória, processador, disco, Docker, Ollama e serviços do Heimdall.
 
 Só lê informações do sistema (vm_stat, ps, df, docker stats, ollama ps...). Não mostra linhas de comando nem argumentos de processo,
 só o nome do programa ou do script, para nada sensível aparecer. Cada parte falha em silêncio quando o comando não existe.
