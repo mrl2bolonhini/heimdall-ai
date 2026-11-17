@@ -103,6 +103,7 @@ table{border-collapse:collapse;width:100%;margin:.6rem 0}caption{text-align:left
 th,td{border:1px solid var(--linha);padding:.4rem .6rem;text-align:left;vertical-align:top}td.n,th.n{text-align:right;white-space:nowrap}
 input[type=text],input[type=search],input[type=file],select{font-size:1em;padding:.5rem;margin:.3rem 0;max-width:28rem;width:100%}
 button{margin:.3rem .3rem .3rem 0;padding:.5rem 1rem;font-size:1em}
+form.acao{display:inline;margin:0}
 .aviso{border:1px solid var(--linha);padding:.7rem;margin:1rem 0}.ok{border-left:6px solid #2e7d32}
 form.linha{display:inline}.sub{color:inherit;opacity:.85}
 """
@@ -147,13 +148,19 @@ def seletor_mes(atual: str, rota: str = "/", extra: str = "") -> str:
             '<button type="submit">Ver</button></form>')
 
 
+def botao(rota: str, rotulo: str, params: dict = None, nome_acessivel: str = "") -> str:
+    """Ação como botão (um link leva a outra página; um botão faz algo). Usa um formulário GET para funcionar sem JavaScript."""
+    ocultos = "".join(f'<input type="hidden" name="{e(k)}" value="{e(v)}">' for k, v in (params or {}).items() if v not in (None, ""))
+    rot = f' aria-label="{e(nome_acessivel)}"' if nome_acessivel else ""
+    return f'<form class="acao" method="get" action="{e(rota)}">{ocultos}<button type="submit"{rot}>{e(rotulo)}</button></form>'
+
+
 def seletor_visao(visao: str, rota: str, mes: str = "") -> str:
     """Troca entre a visão por compra (competência) e a visão por saída de caixa, mantendo o mês."""
-    base = f"{rota}?" + (f"mes={e(mes)}&amp;" if mes else "")
     outra = "caixa" if visao != "caixa" else "competencia"
     atual = "por saída de caixa: conta o que saiu das suas contas, inclusive o pagamento da fatura, e as compras do cartão ficam de fora" if visao == "caixa" else "por compra: o gasto conta no dia da compra, e o pagamento da fatura fica de fora para não contar duas vezes"
     troca = "Ver por compra (competência)" if visao == "caixa" else "Ver por saída de caixa"
-    return f'<p>Visão {e(atual)}. <a href="{base}visao={outra}">{troca}</a>.</p>'
+    return f'<p>Visão {e(atual)}.</p>' + botao(rota, troca, {"mes": mes, "visao": outra})
 
 
 def opcoes_categoria(sel: str = "", incluir_todas: bool = False) -> str:
@@ -168,7 +175,7 @@ def pg_resumo(mes: str, visao: str = "") -> tuple:
     ms = fn.meses(banco())
     if not ms:
         return "Resumo", ('<p>Ainda não há lançamentos. Comece importando o extrato do seu banco ou o da fatura do cartão (OFX ou CSV).</p>'
-                          '<p><a href="/importar">Importar extrato</a></p>')
+                          + botao("/importar", "Importar extrato"))
     if mes not in ms:
         mes = ms[0]
     r = fn.resumo_mes(banco(), mes, visao)
@@ -182,14 +189,14 @@ def pg_resumo(mes: str, visao: str = "") -> tuple:
         texto = ("investimentos, transferências entre suas contas e faturas de terceiros" if visao == "caixa" else "pagamento de fatura, investimentos, transferências entre suas contas e faturas de terceiros")
         corpo.append(f'<p class="sub">Ficaram fora das somas {e(fn.brl(r["neutros"]))} em {texto}, para não contar duas vezes.</p>')
     if r["sem_fatura"] and visao != "caixa":
-        itens = "".join(f'<li>{e(fn.data_br(p["data"]))}, {e(p["descricao"])}, {e(fn.brl(p["valor"]))} (conta {e(p["conta"])}). <a href="/transacao/{p["id"]}">Alterar categoria</a></li>' for p in r["sem_fatura"])
+        itens = "".join(f'<li>{e(fn.data_br(p["data"]))}, {e(p["descricao"])}, {e(fn.brl(p["valor"]))} (conta {e(p["conta"])}). ' + botao(f"/transacao/{p['id']}", "Alterar categoria", None, f"Alterar categoria de {p['descricao'][:40]}") + '</li>' for p in r["sem_fatura"])
         corpo.append('<div class="aviso" role="status"><h2>Faturas pagas sem fatura importada</h2>'
                      f'<p>{len(r["sem_fatura"])} pagamento(s) de fatura deste mês não têm fatura importada que os explique. Entraram nas despesas como "{e(fn.SEM_FATURA)}", para você não perder o gasto. '
                      f'Se a fatura for de outra pessoa, mude a categoria do pagamento para "{e(fn.TERCEIROS)}" e ele sai das somas.</p><ul>{itens}</ul>'
                      '<p><a href="/transacoes?produto=fatura_sem">Ver todos os pagamentos sem fatura importada</a></p></div>')
     if r["sem_categoria"]:
         corpo.append(f'<div class="aviso" role="status">{r["sem_categoria"]} lançamento(s) sem categoria neste mês. '
-                     f'<a href="/transacoes?mes={e(mes)}&amp;cat={e(fn.SEM_CATEGORIA)}">Classificar agora</a></div>')
+                     + botao("/transacoes", "Classificar agora", {"mes": mes, "cat": fn.SEM_CATEGORIA}) + '</div>')
     linhas = []
     for c in r["categorias"]:
         var = "sem gasto no mês anterior" if c["variacao"] is None else (f'{c["variacao"]:+d}%' if c["variacao"] else "igual")
@@ -228,7 +235,7 @@ def pg_transacoes(q: dict, sess: dict) -> tuple:
                     f'<input type="hidden" name="volta" value="{e(mes)}"><label for="c{t["id"]}">Categoria de {e(t["descricao"][:40])}</label>'
                     f'<select id="c{t["id"]}" name="categoria">{opcoes_categoria()}</select><button type="submit">Salvar</button></form>')
         else:
-            acao = f'<a href="/transacao/{t["id"]}">Alterar categoria</a>'
+            acao = botao(f"/transacao/{t['id']}", "Alterar categoria", None, f"Alterar categoria de {t['descricao'][:40]}")
         rows.append([e(fn.data_br(t["data"])), e(t["descricao"]), e(fn.brl(t["valor"], True)), e(t["categoria"]) + (" (manual)" if t["manual"] else ""), e(t["conta"]), e(fn.PRODUTOS.get(t["produto"], "")), acao])
     corpo = [filtro, f"<p>{total} lançamento(s) encontrado(s). Entradas: {e(fn.brl(soma['entradas']))}. Saídas: {e(fn.brl(soma['saidas']))}. Saldo do filtro: {e(fn.brl(soma['liquido'], True))}.</p>"]
     if rows:
@@ -240,7 +247,7 @@ def pg_transacoes(q: dict, sess: dict) -> tuple:
     if (pg + 1) * POR_PAGINA < total:
         nav.append(f'<a href="/transacoes?{qs}&amp;pg={pg + 1}">Próxima página</a>')
     corpo.append(f'<p>{" | ".join(nav)}</p>' if nav else "")
-    corpo.append('<p><a href="/exportar.csv">Baixar tudo em CSV</a></p>')
+    corpo.append(botao("/exportar.csv", "Baixar tudo em CSV"))
     return "Transações", "".join(corpo)
 
 
@@ -263,7 +270,7 @@ def pg_tendencias(visao: str = "") -> tuple:
     visao = visao if visao in fn.VISOES else "competencia"
     t = fn.tendencias(banco(), 12, visao)
     if not t["meses"]:
-        return "Tendências", '<p>Importe pelo menos um extrato para ver a evolução.</p><p><a href="/importar">Importar extrato</a></p>'
+        return "Tendências", '<p>Importe pelo menos um extrato para ver a evolução.</p>' + botao("/importar", "Importar extrato")
     corpo = [seletor_visao(visao, "/tendencias")]
     if t["alertas"]:
         corpo.append('<div class="aviso" role="status"><h2>Atenção</h2><ul>' + "".join(f"<li>{e(a)}</li>" for a in t["alertas"]) + "</ul></div>")
