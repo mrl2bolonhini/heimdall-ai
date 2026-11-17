@@ -53,6 +53,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 PROJECT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(PROJECT_DIR))
+import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 
 
 def carregar_env() -> None:
@@ -296,7 +298,7 @@ def pagina_continuar(destino: str = "/") -> bytes:
     d = destino if destino.startswith("/") and not destino.startswith("//") else "/"
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Entrando</title>'
             f'<meta http-equiv="refresh" content="0;url={d}"></head><body><p>Entrando...</p>'
-            f'<p><a href="{d}">Continuar</a></p></body></html>').encode("utf-8")
+            f'{design.botao(d, "Continuar")}</body></html>').encode("utf-8")
 
 
 def cabecalho_cookie(token: str, host: str, https: bool, apagar: bool = False) -> tuple:
@@ -374,7 +376,7 @@ def como_json(obj) -> str:
 # ----------------------------------------------------------------------------------------
 e = html.escape
 
-CSS = """
+CSS = design.CSS + """
 :root{color-scheme:light dark;--fundo:#f3f6fc;--superficie:#fff;--texto:#0c1530;--suave:#46557a;--linha:#7a87a6;--acento:#0a58ad;--erro:#a30000;--ok:#0a6b2d;--ouro:#ffc107;--sclera:#fff;--pupila:#0c1530}
 @media (prefers-color-scheme:dark){:root{--fundo:#080d1f;--superficie:#111a38;--texto:#e9effc;--suave:#a6b4d6;--linha:#6877a0;--acento:#86c5ff;--erro:#ff9b9b;--ok:#8be0a4;--sclera:#e9effc;--pupila:#080d1f}}
 body{background:var(--fundo);color:var(--texto);font:18px/1.5 system-ui,sans-serif;margin:0;padding:0 1rem 3rem;max-width:60rem;margin-inline:auto}
@@ -504,7 +506,7 @@ def pg_s3_bucket(sess: dict, bucket: str, prefixo: str) -> str:
         if k == prefixo:
             continue
         linhas += (f'<tr><td>{e(k)}</td><td>{o.get("Size", 0)}</td><td>{e(str(o.get("LastModified", ""))[:19])}</td><td>'
-                   f'<a href="/s3/baixar?{urlencode({"bucket": bucket, "chave": k})}">Baixar {e(k)}</a> '
+                   + design.botao("/s3/baixar", "Baixar", {"bucket": bucket, "chave": k}, f"Baixar {k}") +
                    f'<form class="linha" method="post" action="/s3/apagar-objeto">{csrf(sess)}<input type="hidden" name="bucket" value="{e(bucket)}">'
                    f'<input type="hidden" name="chave" value="{e(k)}"><input type="hidden" name="prefixo" value="{e(prefixo)}">'
                    f'<button type="submit">Apagar {e(k)}</button></form></td></tr>')
@@ -736,14 +738,14 @@ def pg_athena(sess: dict, sql: str = "SHOW DATABASES", banco: str = "default", q
         elif est in ("FAILED", "CANCELLED"):
             res = cab + f'<p class="erro" role="alert">{e(motivo or "A consulta não terminou com sucesso.")}</p>'
         else:
-            res = cab + f'<p>Ainda executando. <a href="/athena/resultado?{urlencode({"id": qid})}">Atualizar este resultado</a></p>'
+            res = cab + '<p>Ainda executando.</p>' + design.botao("/athena/resultado", "Atualizar este resultado", {"id": qid})
     hist = ""
     try:
         ids = a.list_query_executions(MaxResults=10).get("QueryExecutionIds", [])
         if ids:
             itens = a.batch_get_query_execution(QueryExecutionIds=ids).get("QueryExecutions", [])
             lin = "".join(f'<tr><td>{e(i["Status"]["State"])}</td><td>{e(i.get("Query", "")[:100])}</td>'
-                          f'<td><a href="/athena/resultado?{urlencode({"id": i["QueryExecutionId"]})}">Ver resultado</a></td></tr>' for i in itens)
+                          f'<td>{design.botao("/athena/resultado", "Ver resultado", {"id": i["QueryExecutionId"]}, "Ver resultado da consulta " + i.get("Query", "")[:40])}</td></tr>' for i in itens)
             hist = (f'<h2>Últimas consultas</h2><table><caption>Últimas {len(itens)} consultas</caption><thead><tr><th scope="col">Situação</th>'
                     f'<th scope="col">Consulta</th><th scope="col">Ação</th></tr></thead><tbody>{lin}</tbody></table>')
     except Exception:  # noqa: BLE001

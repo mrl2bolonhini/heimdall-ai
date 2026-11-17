@@ -57,6 +57,7 @@ def carregar_env() -> None:
 
 carregar_env()
 
+import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
 
 HOST = os.environ.get("HEIMDALL_JOGOS_HOST", "127.0.0.1")
@@ -385,14 +386,14 @@ class Jogos(BaseHTTPRequestHandler):
             if mc:
                 rc = pg_categoria(mc.group(1))
                 if not rc:
-                    self._enviar(404, pagina("Não encontrei", '<p>Esta categoria não existe.</p><p><a href="/">Ver as categorias</a></p>', sess))
+                    self._enviar(404, pagina("Não encontrei", '<p>Esta categoria não existe.</p>' + design.botao("/", "Ver as categorias"), sess))
                     return
                 self._enviar(200, pagina(rc[0], rc[1], sess, scripts=rc[2]))
                 return
             m = re.fullmatch(r"/jogo/([a-z0-9]+)", rota)
             r = pg_jogo(m.group(1)) if m else None
             if not r:
-                self._enviar(404, pagina("Não encontrei", '<p>Este jogo não existe.</p><p><a href="/">Ver todos os jogos</a></p>', sess))
+                self._enviar(404, pagina("Não encontrei", '<p>Este jogo não existe.</p>' + design.botao("/", "Ver todos os jogos"), sess))
                 return
             self._enviar(200, pagina(r[0], r[1], sess, scripts=r[2]))
         except Exception as ex:  # noqa: BLE001

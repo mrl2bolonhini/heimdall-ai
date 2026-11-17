@@ -86,6 +86,7 @@ carregar_env()
 
 import heimdall_banco as banco  # noqa: E402  (o banco pessoal)
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
 
 
@@ -924,7 +925,7 @@ def pg_inicio(cat_slug: str = "", pagina_n: int = 1) -> tuple:
     por_slug = {slug(c): c for c, _ in cats}
     categoria = por_slug.get(cat_slug, "")
     if cat_slug and not categoria:
-        return "Não encontrei", '<p>Esta categoria não existe.</p><p><a href="/">Ver todas as notícias</a></p>', 404
+        return "Não encontrei", '<p>Esta categoria não existe.</p>' + design.botao("/", "Ver todas as notícias"), 404
     itens, total, pg, paginas = noticias_24h(categoria, pagina_n)
     st = estatisticas()
     ultima = local(ESTADO["ultima"], "%H:%M") if ESTADO["ultima"] else ""

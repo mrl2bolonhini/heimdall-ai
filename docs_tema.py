@@ -336,6 +336,7 @@ PAGINAS = [
     ("novidades.html", "Novidades", "Histórico de recursos"),
     ("roadmap.html", "Roadmap", "Próximos recursos"),
     ("marca.html", "Marca", "Logotipo, cores e tipografia"),
+    ("design.html", "Design", "Heimdall Design: o padrão de interface igual em todos os sites"),
 ]
 SITE = "https://" + DOMINIO + "/"
 

@@ -260,7 +260,9 @@ SCRIPTS = [
     ("heimdall_cfaccess.py", "Entrada pelo Cloudflare Access com Microsoft Entra ID: a aprovação chega como notificação no Microsoft Authenticator e os painéis abrem a sessão sem senha nem código de 6 dígitos. Confere a assinatura do Cloudflare só com a biblioteca padrão. Desligado até haver HEIMDALL_CFACCESS_EQUIPE, _AUD e _EMAILS no .env; --status confere a configuração. Passo a passo em LEIAME_autenticacao_microsoft.txt."),
     ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Cloud, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
-    ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News e pelo Heimdall Notas: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
+    ("heimdall_design.py", "Heimdall Design: o padrão de interface igual em todos os sites (link lê, botão age): botão de ação como formulário GET, com nome acessível, e o CSS compartilhado."),
+    ("teste_design.py", "Teste do Heimdall Design: falha se um link de algum painel tiver texto de ação (Baixar, Atualizar, Alterar, Ver..., Próxima...)."),
+    ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News, Notas e Finance: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
     ("heimdall_jogos.py", "Heimdall Jogos (porta 8014): entrega os jogos da pasta jogos/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
     ("heimdall_finance.py", "Heimdall Finance (porta 8016): painel web das finanças (resumo do mês, transações, tendências, importação, regras) atrás do mesmo login do Cloud, com CSRF em todo envio e política de conteúdo sem script. Endereço de fora: finance.heimdall-ai.tech."),
     ("financas_nucleo.py", "Núcleo do Heimdall Finance: banco SQLite local, leitura de extratos OFX e CSV (formatos e valores brasileiros), deduplicação, categorias por regras (as suas vencem as padrão) e relatórios de resumo e tendências. Sem internet."),
@@ -353,6 +355,7 @@ COMANDOS = [
         ("Teste do Heimdall Jogos (servidor, regras e interface)", "python3 teste_jogos.py"),
         ("Teste do Heimdall Finance (extratos, categorias, relatórios e servidor)", "python3 teste_finance.py"),
         ("Teste dos arquivos do Finance (PDF, inspeção anônima, pasta de entrada)", "python3 teste_finance_arquivos.py"),
+        ("Teste do Heimdall Design (nenhuma ação é link)", "python3 teste_design.py"),
         ("Teste do xadrez, da batalha naval, das aventuras e dos jogos novos (Node)", "node teste_jogos_xadrez.js && node teste_jogos_naval.js && node teste_jogos_cincoletras.js && node teste_jogos_sudoku.js && node teste_historias.js && node teste_jogos_novos.js"),
         ("Teste do painel de saúde (sem rede)", "python3 teste_painel_saude.py"),
         ("Listar notas com título que parece cortado", "python3 heimdall_notas.py --titulos-suspeitos"),
@@ -466,6 +469,29 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
     n_mac = len(ferr) - n_pub
     out["index.html"] = pagina("index.html", "Heimdall-ai", "Heimdall-ai: assistente de Inteligência Artificial que roda no próprio computador, com ferramentas, documentos e automações. Documentação do projeto.",
                                corpo_inicio(len(modelos), len(ferr), n_pub, n_mac, len(mcp), len(fluxos)), home=True)
+    out["design.html"] = pagina("design.html", "Design", "Heimdall Design: o padrão de interface dos sites do Heimdall, feito para leitor de tela e teclado: link lê, botão age.", """
+<h1>Heimdall Design</h1>
+<p>O padrão de interface é o mesmo em todos os sites do Heimdall (Cloud, Notas, News, Saúde, Jogos e Finance), para você nunca ter de adivinhar como algo funciona. Ele foi pensado para leitor de tela e teclado. O código compartilhado está em <code>heimdall_design.py</code> e <code>heimdall_paginacao.py</code>, e o teste <code>teste_design.py</code> impede que uma ação volte a ser link.</p>
+<section aria-labelledby="regra"><h2 id="regra">Link lê, botão age</h2>
+<ol><li><strong>Link</strong> leva a outro lugar para ler: o menu, "Voltar", o nome de um item em lista ou tabela (um bucket, uma nota, um jogo, uma categoria), "Leia mais" e os links dentro de um texto.</li>
+<li><strong>Botão</strong> faz uma ação ou comando, mesmo quando o resultado é abrir outra página: baixar, atualizar, continuar, confirmar, alterar, classificar, importar, trocar a visão ou o período, paginar, "Ver todos..." e "Ver resultado".</li>
+<li>Uma ação que só consulta é um formulário com um botão. Funciona sem JavaScript e o leitor de tela anuncia como botão.</li>
+<li>Botões repetidos numa lista levam o nome do item para o leitor de tela diferenciar, por exemplo "Alterar categoria de Mercado".</li>
+<li>A opção escolhida num grupo de botões é marcada com aria-current.</li>
+<li>Exceção única: quando o destino é um esquema de aplicativo (por exemplo, o app Atalhos do iPhone), o botão é um link com role="button", porque um formulário não abre esse tipo de endereço de forma confiável.</li></ol></section>
+<section aria-labelledby="pag"><h2 id="pag">Paginação</h2>
+<p>Sempre em botões, num só formulário: Página anterior, os números das páginas (a atual marcada e dita "atual"), Próxima página e Última página. Quem usa: News, Notas e Finance.</p></section>
+<section aria-labelledby="estrutura"><h2 id="estrutura">Estrutura de toda página</h2>
+<ul><li>Primeiro um link "Pular para o conteúdo", depois o menu principal numa região com nome ("Principal").</li>
+<li>Um só título principal por página, com os subtítulos em ordem.</li>
+<li>Tabelas sempre com legenda (caption) e cabeçalhos de coluna (scope="col").</li>
+<li>Campos de formulário sempre com rótulo; avisos e erros com role="status" ou role="alert".</li>
+<li>Claro e escuro automáticos, com contraste alto e foco bem visível.</li></ul></section>
+<section aria-labelledby="novo"><h2 id="novo">Ao criar uma página nova</h2>
+<ol><li>Importe <code>heimdall_design</code> e use <code>design.botao(rota, rótulo, parâmetros)</code> para qualquer ação de consulta.</li>
+<li>Use <code>heimdall_paginacao</code> para listas longas.</li>
+<li>Rode <code>heimdall test --run design</code>. Se alguma ação ainda for link, o teste mostra a linha.</li></ol></section>
+""")
     out["marca.html"] = pagina("marca.html", "Marca", "Logotipo, cores e tipografia do Heimdall-ai.", corpo_marca())
 
     # ---- arquitetura

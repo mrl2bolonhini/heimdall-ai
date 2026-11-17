@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design · Heimdall-ai</title>
+<meta name="description" content="Heimdall Design: o padrão de interface dos sites do Heimdall, feito para leitor de tela e teclado: link lê, botão age.">
+<meta name="theme-color" content="#080d1f">
+<link rel="canonical" href="https://heimdall-ai.tech/design.html">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Heimdall-ai">
+<meta property="og:title" content="Design · Heimdall-ai">
+<meta property="og:description" content="Heimdall Design: o padrão de interface dos sites do Heimdall, feito para leitor de tela e teclado: link lê, botão age.">
+<meta property="og:url" content="https://heimdall-ai.tech/design.html">
+<meta property="og:image" content="https://heimdall-ai.tech/og.png">
+<meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
+<meta name="twitter:card" content="summary_large_image">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#conteudo">Ir para o conteúdo</a>
+<header class="top"><div class="wrap"><div class="barra">
+<a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<span class="gap"></span>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="notas.html">Notas</a></li><li><a href="news.html">News</a></li><li><a href="saude.html">Saúde</a></li><li><a href="jogos.html">Jogos</a></li><li><a href="finance.html">Finance</a></li><li><a href="cloud.html">Cloud</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="comando-heimdall.html">Comando heimdall</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="design.html" aria-current="page">Design</a></li></ul></nav>
+<div class="ferram"><button type="button" id="tema">Tema escuro</button></div>
+</div></div></header>
+<main id="conteudo" tabindex="-1"><div class="wrap">
+<div class="doc"><div>
+<h1>Heimdall Design</h1>
+<p>O padrão de interface é o mesmo em todos os sites do Heimdall (Cloud, Notas, News, Saúde, Jogos e Finance), para você nunca ter de adivinhar como algo funciona. Ele foi pensado para leitor de tela e teclado. O código compartilhado está em <code>heimdall_design.py</code> e <code>heimdall_paginacao.py</code>, e o teste <code>teste_design.py</code> impede que uma ação volte a ser link.</p>
+<section aria-labelledby="regra"><h2 id="regra">Link lê, botão age</h2>
+<ol><li><strong>Link</strong> leva a outro lugar para ler: o menu, "Voltar", o nome de um item em lista ou tabela (um bucket, uma nota, um jogo, uma categoria), "Leia mais" e os links dentro de um texto.</li>
+<li><strong>Botão</strong> faz uma ação ou comando, mesmo quando o resultado é abrir outra página: baixar, atualizar, continuar, confirmar, alterar, classificar, importar, trocar a visão ou o período, paginar, "Ver todos..." e "Ver resultado".</li>
+<li>Uma ação que só consulta é um formulário com um botão. Funciona sem JavaScript e o leitor de tela anuncia como botão.</li>
+<li>Botões repetidos numa lista levam o nome do item para o leitor de tela diferenciar, por exemplo "Alterar categoria de Mercado".</li>
+<li>A opção escolhida num grupo de botões é marcada com aria-current.</li>
+<li>Exceção única: quando o destino é um esquema de aplicativo (por exemplo, o app Atalhos do iPhone), o botão é um link com role="button", porque um formulário não abre esse tipo de endereço de forma confiável.</li></ol></section>
+<section aria-labelledby="pag"><h2 id="pag">Paginação</h2>
+<p>Sempre em botões, num só formulário: Página anterior, os números das páginas (a atual marcada e dita "atual"), Próxima página e Última página. Quem usa: News, Notas e Finance.</p></section>
+<section aria-labelledby="estrutura"><h2 id="estrutura">Estrutura de toda página</h2>
+<ul><li>Primeiro um link "Pular para o conteúdo", depois o menu principal numa região com nome ("Principal").</li>
+<li>Um só título principal por página, com os subtítulos em ordem.</li>
+<li>Tabelas sempre com legenda (caption) e cabeçalhos de coluna (scope="col").</li>
+<li>Campos de formulário sempre com rótulo; avisos e erros com role="status" ou role="alert".</li>
+<li>Claro e escuro automáticos, com contraste alto e foco bem visível.</li></ul></section>
+<section aria-labelledby="novo"><h2 id="novo">Ao criar uma página nova</h2>
+<ol><li>Importe <code>heimdall_design</code> e use <code>design.botao(rota, rótulo, parâmetros)</code> para qualquer ação de consulta.</li>
+<li>Use <code>heimdall_paginacao</code> para listas longas.</li>
+<li>Rode <code>heimdall test --run design</code>. Se alguma ação ainda for link, o teste mostra a linha.</li></ol></section>
+</div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#regra">Link lê, botão age</a></li><li><a href="#pag">Paginação</a></li><li><a href="#estrutura">Estrutura de toda página</a></li><li><a href="#novo">Ao criar uma página nova</a></li></ul></nav></aside></div>
+</div></main>
+<footer><div class="wrap"><div class="linha">
+<div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
+<p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
+<div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:suporte@heimdall-ai.tech">suporte@heimdall-ai.tech</a></li><li><a href="https://www.linkedin.com/in/murillobolonhinicita">LinkedIn de Murillo Bolonhini Cita</a></li></ul></div>
+<ul aria-label="Links do rodapé"><li><a href="https://github.com/mrl2bolonhini/heimdall-ai">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
+</div></div></footer>
+<p id="aviso" class="sr" role="status" aria-live="polite"></p>
+<script src="heimdall.js" defer></script>
+</body>
+</html>

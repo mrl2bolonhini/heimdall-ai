@@ -56,6 +56,7 @@ def carregar_env() -> None:
 carregar_env()
 
 import heimdall_banco as banco  # noqa: E402
+import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
 import heimdall_saude as saude  # noqa: E402  (as análises)
 
@@ -112,7 +113,7 @@ def seletor(rota: str, dias: int, padrao: int) -> str:
         if d == dias:
             itens.append(f'<li><strong aria-current="true">{d} dias (selecionado)</strong></li>')
         else:
-            itens.append(f'<li><a href="{e(rota)}?dias={d}">{d} dias</a></li>')
+            itens.append(f'<li>{design.botao(rota, f"{d} dias", {"dias": d})}</li>')
     return f'<nav class="periodos" aria-label="Período"><ul>{"".join(itens)}</ul></nav>'
 
 
@@ -151,7 +152,7 @@ def bloco_atualizar(q: dict) -> str:
     volta = f"{base}/dados?atualizado={int(time.time())}"
     url = (f"shortcuts://x-callback-url/run-shortcut?name={quote(ATALHO)}&x-success={quote(volta, safe='')}"
            f"&x-cancel={quote(base + '/dados', safe='')}&x-error={quote(base + '/dados', safe='')}")
-    return (f'<p><a class="botao" href="{e(url)}">Atualizar dados agora</a></p>'
+    return (f'<p><a class="botao" role="button" href="{e(url)}">Atualizar dados agora</a></p>'
             f'<p>Abre o app Atalhos e roda "{e(ATALHO)}". Ao terminar, volta para o Estado dos dados e confere se os números chegaram. Deixe o iPhone desbloqueado.</p>')
 
 
@@ -163,13 +164,13 @@ def estado_atualizacao(q: dict) -> tuple:
     pedido = datetime.fromtimestamp(int(t)).astimezone()
     ult = ultima_gravacao()
     if ult and ult >= pedido:
-        return (f'<p class="ok" role="status">Dados atualizados. Última gravação às {ult.astimezone().strftime("%H:%M")}. '
-                '<a href="/">Ver a visão geral</a> ou <a href="/hoje">ver hoje</a>.</p>'), 0
+        return (f'<p class="ok" role="status">Dados atualizados. Última gravação às {ult.astimezone().strftime("%H:%M")}.</p>'
+                + design.botao("/", "Ver a visão geral") + design.botao("/hoje", "Ver hoje")), 0
     espera = time.time() - int(t)
     if espera < ESPERA_DADOS:
         deNovo = f"/dados?atualizado={e(t)}&v=1"
         conf = f"Esta página confere de novo sozinha em {RECONFERE_EM} segundos. " if "v" not in q else ""
-        return (f'<p role="status">Atalho executado. Aguardando os dados chegarem. {conf}<a href="{deNovo}">Conferir de novo</a>.</p>',
+        return (f'<p role="status">Atalho executado. Aguardando os dados chegarem. {conf}</p>' + design.botao("/dados", "Conferir de novo", {"atualizado": t, "v": "1"}),
                 RECONFERE_EM if "v" not in q else 0)
     return (f'<p class="atras" role="alert">Passaram-se {int(espera // 60)} minuto(s) e nenhum dado novo foi gravado. Confira se o Health Auto Export abriu as automações, '
             'se o iPhone está desbloqueado e se o aplicativo tem permissão de ler a Saúde. <a href="/dados">Voltar</a></p>'), 0
@@ -198,7 +199,7 @@ def pg_inicio(q: dict) -> tuple:
 
 
 def pg_hoje(q: dict) -> tuple:
-    return "Hoje", texto_html(saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + '<p><a href="/dados">Ver o estado dos dados</a></p>' + AVISO_HTML
+    return "Hoje", texto_html(saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + design.botao("/dados", "Ver o estado dos dados") + AVISO_HTML
 
 
 def pg_anomalias(q: dict) -> tuple:

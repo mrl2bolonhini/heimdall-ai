@@ -72,6 +72,7 @@ for _k in [k for k in os.environ if k.startswith("HEIMDALL_BIBLIOTECA_")]:  # id
     os.environ.setdefault("HEIMDALL_NOTAS_" + _k[len("HEIMDALL_BIBLIOTECA_"):], os.environ[_k])
 
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
 
 HOST = os.environ.get("HEIMDALL_NOTAS_HOST", "127.0.0.1")
@@ -588,10 +589,10 @@ def pg_nota(chave: str, p: Path) -> tuple:
         i = lista.index(p.name)
         nav = []
         if i + 1 < len(lista):  # mais antiga
-            nav.append(f'<a href="/nota?p={quote(chave)}&amp;n={quote(lista[i + 1])}" rel="prev">Nota anterior</a>')
+            nav.append(design.botao("/nota", "Nota anterior", {"p": chave, "n": lista[i + 1]}))
         if i > 0:
-            nav.append(f'<a href="/nota?p={quote(chave)}&amp;n={quote(lista[i - 1])}" rel="next">Próxima nota</a>')
-        nav.append(f'<a href="/tema?t={quote(chave)}">Todas as notas do tema</a>')
+            nav.append(design.botao("/nota", "Próxima nota", {"p": chave, "n": lista[i - 1]}))
+        nav.append(design.botao("/tema", "Todas as notas do tema", {"t": chave}))
         partes.append('<nav class="ant-prox" aria-label="Entre as notas">' + "".join(nav) + "</nav>")
     return titulo, "".join(partes), bool(a)
 
@@ -609,7 +610,7 @@ def pg_doc(chave: str, rel: str, p: Path) -> tuple:
         corpo = f'<article aria-label="Texto do documento"><pre>{e(md)}</pre></article>'
     else:
         corpo = f'<article aria-label="Texto do documento">{markdown_html(corpo_md, t)}</article>'
-    return t, voltar + corpo + f'<p><a href="/arquivo?t={quote(chave)}&amp;c={quote(rel)}&amp;baixar=1">Baixar o arquivo original</a></p>', False
+    return t, voltar + corpo + design.botao("/arquivo", "Baixar o arquivo original", {"t": chave, "c": rel, "baixar": "1"}), False
 
 
 def busca(q: str) -> list:
