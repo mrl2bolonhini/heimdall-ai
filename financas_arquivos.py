@@ -170,12 +170,18 @@ def detectar(texto: str, nome: str = "") -> tuple:
             i = base.find(c)
             if i >= 0 and (pos_min is None or i < pos_min):
                 banco, pos_min = b, i
-    cartao = bool(re.search(r"\bfatura\b|total da fatura|limite (total|disponivel)|fechamento da fatura|vencimento da fatura|\bcreditcard\b|<ccstmtrs>", base)) or \
-        bool(re.match(r"\s*date\s*,\s*category\s*,\s*title\s*,\s*amount", texto[:200], re.I))
-    conta = bool(re.search(r"\bextrato\b|saldo anterior|saldo do dia|<bankmsgsrsv1>|<stmtrs>|release_date|transaction_net_amount", base))
-    if cartao and not (conta and not re.search(r"\bfatura\b", base)):
+    forte_cartao = len(re.findall(r"total (da|desta) fatura|limite total de credito|limite disponivel|fechamento da fatura|vencimento da fatura|pagamento minimo|proximo fechamento|\bcreditcard\b|<ccstmtrs>", base))
+    forte_cartao += 3 if re.match(r"\s*date\s*,\s*category\s*,\s*title\s*,\s*amount", texto[:200], re.I) else 0
+    forte_conta = len(re.findall(r"saldo do dia|saldo anterior|extrato conta|extrato de conta|extrato da conta|conta corrente|<bankmsgsrsv1>|<stmtrs>|release_date|transaction_net_amount", base))
+    fraco_conta = bool(re.search(r"\bextrato\b", base))
+    fraco_cartao = bool(re.search(r"\bfatura\b", base))
+    if forte_cartao > forte_conta:
         tipo = "cartão"
-    elif conta:
+    elif forte_conta > forte_cartao:
+        tipo = "conta"
+    elif fraco_cartao and not fraco_conta:
+        tipo = "cartão"
+    elif fraco_conta:
         tipo = "conta"
     else:
         tipo = ""
@@ -256,12 +262,31 @@ def _segmentos(linha: str) -> list:
     return saida
 
 
+def _conferir_saldos(eventos: list):
+    """Extrato de conta: entre duas linhas de saldo, a soma dos lançamentos tem de explicar a diferença dos saldos.
+    Serve para extrato em ordem cronológica (saldo novo = saldo anterior + lançamentos) e na ordem inversa.
+    Devolve (confere, pares, batem) ou None quando há menos de duas linhas de saldo."""
+    saldos = [k for k, (tipo, _) in enumerate(eventos) if tipo == "s"]
+    if len(saldos) < 2:
+        return None
+    asc = desc = pares = 0
+    for a, b in zip(saldos, saldos[1:]):
+        soma = sum(v for tipo, v in eventos[a + 1:b] if tipo == "t")
+        va, vb = eventos[a][1], eventos[b][1]
+        pares += 1
+        asc += (vb == va + soma)
+        desc += (va == vb + soma)
+    batem = max(asc, desc)
+    return batem == pares, pares, batem
+
+
 def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
     """(itens, info). Cada item: data, valor (centavos; gasto negativo), descricao. info: tipo, soma, totais, confere."""
     ano_base, ref = _anos_do_documento(texto)
     cartao = tipo == "cartão"
     itens = []
     totais = []
+    eventos = []  # ("t", valor) para cada lançamento e ("s", saldo) para cada linha de saldo, na ordem do documento
     for ln in texto.splitlines():
         linha = ln.strip()
         if not linha:
@@ -270,6 +295,11 @@ def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
             totais += [abs(_centavos(v.group(0))) for v in _RE_VALOR.finditer(linha)]
         for seg, m in _segmentos(linha):
             resto = seg[m.end():]
+            if not cartao and re.match(r"\s*saldo\s+(do\s+dia|anterior|final|parcial)\b", resto, re.I):
+                vsal = list(_RE_VALOR.finditer(resto))
+                if vsal:
+                    eventos.append(("s", _centavos(vsal[-1].group(0))))
+                continue
             if _IGNORAR.search(resto):
                 continue
             vs = list(_RE_VALOR.finditer(resto))
@@ -287,13 +317,18 @@ def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
             if cartao:
                 v = -v  # na fatura a compra vem positiva e o crédito (estorno, pagamento) vem negativo
             itens.append({"data": data, "valor": v, "descricao": desc[:200], "fitid": ""})
+            eventos.append(("t", v))
     soma = sum(i["valor"] for i in itens)
     gastos = sum(-i["valor"] for i in itens if i["valor"] < 0)
     liquido = abs(soma)
     confere = None
-    if totais and itens:
+    saldos = _conferir_saldos(eventos)
+    if saldos is not None:
+        confere = saldos[0]
+    elif totais and itens:
         confere = any(t in (liquido, gastos) for t in totais)
-    return itens, {"tipo": tipo, "soma": soma, "gastos": gastos, "totais": sorted(set(totais))[:6], "confere": confere}
+    return itens, {"tipo": tipo, "soma": soma, "gastos": gastos, "totais": sorted(set(totais))[:6], "confere": confere,
+                   "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2]}}
 
 
 def ler_pdf(dados: bytes, nome: str = "") -> tuple:
@@ -340,7 +375,12 @@ def resumo_texto(a: dict) -> str:
               f"Gastos {fn.brl(gastos)}; entradas {fn.brl(entradas)}."]
     if a["formato"] == "PDF":
         tot = a["info"].get("totais") or []
-        if a["confere"] is True:
+        sal = a["info"].get("saldos")
+        if sal and a["confere"] is True:
+            linhas.append(f"Conferência: os {sal['pares']} saldos do dia batem com a soma dos lançamentos entre eles.")
+        elif sal:
+            linhas.append(f"Conferência: NÃO bateu. Dos {sal['pares']} saldos do dia, só {sal['batem']} fecham com os lançamentos. Confira antes de importar.")
+        elif a["confere"] is True:
             linhas.append("Conferência: o total do documento bate com a soma dos lançamentos.")
         elif a["confere"] is False:
             linhas.append("Conferência: NÃO bateu. Totais citados no documento: " + ", ".join(fn.brl(t) for t in tot) + ". Confira antes de importar.")

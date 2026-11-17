@@ -105,6 +105,45 @@ confere("duas colunas: valores e sinais certos", [i["valor"] for i in itens] == 
 confere("duas colunas: o total dos lançamentos confere", info["confere"] is True, info)
 confere("parcela '03/10' antes do valor não abre uma compra nova", len(itens) == 5)
 
+# ---- extrato do Itaú em PDF: data, lançamento, valor e saldo só nas linhas "SALDO DO DIA"
+EXTRATO = """Itaú  agência: 1234   conta: 12345-6
+saldo em conta    Limite da Conta utilizado    Limite da Conta disponível    Limite da Conta total *
+extrato conta / lançamentos
+período de visualização: 01/10/2026 até 31/10/2026    emitido em: 01/11/2026   10:00:00
+data    lançamentos    valor (R$)    saldo (R$)
+01/10/2026    SALDO DO DIA    1.000,00
+02/10/2026    PIX TRANSF FULANO02/10    -100,00
+02/10/2026    SISPAG EXEMPLO    300,00
+02/10/2026    SALDO DO DIA    1.200,00
+03/10/2026    FATURA ITAU UNICLASS 10/2026    -500,00
+03/10/2026    IOF    -2,00
+03/10/2026    SALDO DO DIA    698,00
+"""
+confere("extrato com 'fatura itau' na lista continua sendo conta", fa.detectar(EXTRATO, "extrato.pdf") == ("Itaú", "conta"), fa.detectar(EXTRATO, "extrato.pdf"))
+itens, info = fa.ler_pdf_texto(EXTRATO, "conta")
+confere("extrato: lê só os lançamentos, sem saldos", [i["valor"] for i in itens] == [-10000, 30000, -50000, -200], [i["valor"] for i in itens])
+confere("extrato: os saldos do dia conferem com os lançamentos", info["confere"] is True and info["saldos"] == {"pares": 2, "batem": 2}, info)
+itens, info = fa.ler_pdf_texto(EXTRATO.replace("-100,00", "-101,00"), "conta")
+confere("extrato: um lançamento lido errado é pego pelo saldo", info["confere"] is False and info["saldos"]["batem"] == 1, info)
+ORDEM_INVERSA = """03/10/2026    SALDO DO DIA    698,00
+03/10/2026    IOF    -2,00
+03/10/2026    FATURA ITAU UNICLASS 10/2026    -500,00
+02/10/2026    SALDO DO DIA    1.200,00
+02/10/2026    SISPAG EXEMPLO    300,00
+02/10/2026    PIX TRANSF FULANO02/10    -100,00
+01/10/2026    SALDO DO DIA    1.000,00
+"""
+itens, info = fa.ler_pdf_texto(ORDEM_INVERSA, "conta")
+confere("extrato em ordem inversa também confere", info["confere"] is True, info)
+FATURA_ITAU = """Itaú  Cartão 1234.XXXX.XXXX.5678
+Resumo da fatura em R$
+Total desta fatura 305,50    Limite total de crédito: R$ 20.000,00
+Pagamento mínimo: R$ 50,00
+"""
+confere("fatura Itaú é cartão", fa.detectar(FATURA_ITAU, "fatura.pdf") == ("Itaú", "cartão"), fa.detectar(FATURA_ITAU, "fatura.pdf"))
+con_x = fn.conectar(Path(tempfile.mkdtemp(prefix="finance_cat_")) / "c.db")
+confere("'FATURA ITAU UNICLASS' é pagamento de fatura (fora das despesas)", fn.categorizar(con_x, fn.norm("FATURA ITAU UNICLASS 10/2026"), fn._regras(con_x)) == "Pagamento de fatura")
+
 # ---- PDF de verdade
 try:
     pdf = pdf_de(FATURA)

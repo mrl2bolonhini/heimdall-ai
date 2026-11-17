@@ -8,8 +8,10 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Pasta de entrada vigiada (dados_financas/entrada): solte os arquivos lá e, a cada minuto, o que conferir é importado (vai para importados/) e o que deixar dúvida vai para revisar/ com um .motivo.txt. A página Importar lista os arquivos para revisar.
 - Novos comandos: heimdall finance --folder (abre a pasta), --inspect ARQUIVO (mostra só a estrutura do arquivo, com letras trocadas por x e números por 9, e copia para a área de transferência, para mostrar o layout do seu banco sem expor dados), --preview ARQUIVO (mostra o que seria importado, sem gravar), --import ARQUIVO [--account NOME] [--force] e --inbox (importa a pasta agora).
 - O leitor entende fatura com as compras em duas colunas lado a lado (uma data, uma descrição e um valor por coluna), sem confundir a parcela "03/10" com uma data nova.
+- Extrato de conta em PDF (como o do Itaú, com o saldo só nas linhas "SALDO DO DIA"): a conferência usa os saldos. Entre dois saldos do dia, a soma dos lançamentos tem de explicar a diferença; se um lançamento for lido errado, o saldo acusa. Funciona em ordem cronológica e inversa.
+- O tipo (conta ou cartão) agora pesa sinais fortes ("Total desta fatura", "Limite total de crédito", "Saldo do dia") antes da palavra solta "fatura": um extrato que lista o pagamento "FATURA ITAU UNICLASS" não é mais tomado por fatura. Esse pagamento é categorizado como Pagamento de fatura, e "REND PAGO APLIC" como Investimentos.
 - Aviso honesto: o leitor de PDF é genérico e foi testado com documentos inventados. O layout real de cada banco ainda precisa ser conferido; rode --inspect em um arquivo de cada tipo (conta e cartão, nos três bancos) para ajustar. Os arquivos reais nunca precisam sair do Mac.
-- Novos: financas_arquivos.py, financas_cli.py e teste_finance_arquivos.py (48 verificações); teste_finance.py ganhou o envio de PDF pelo formulário.
+- Novos: financas_arquivos.py, financas_cli.py e teste_finance_arquivos.py (55 verificações); teste_finance.py ganhou o envio de PDF pelo formulário.
 - Para aplicar: heimdall update --restart (não precisa de instalador; o pypdf já está no requirements.txt).
 
 ## 2026-11-16 - Jogos em ordem alfabética e fim dos jogos de terceiros sem português
