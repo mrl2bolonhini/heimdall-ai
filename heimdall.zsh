@@ -310,7 +310,11 @@ heimdall() {
 --remove=--remover" "$@"; _heimdall_sh instalar_hook_gitops.sh "${_HA[@]}" ;;
     update)
       local restart=0 branch
-      [ "$1" = "--restart" ] && restart=1
+      case "$1" in
+        "") ;;
+        --restart|-r) restart=1 ;;
+        *) echo "Opção desconhecida: $1. Use: heimdall update [--restart]"; return 1 ;;
+      esac
       branch="$(git -C "$HEIMDALL_DIR" rev-parse --abbrev-ref HEAD)"
       echo "Atualizando a branch $branch..."
       git -C "$HEIMDALL_DIR" pull --ff-only origin "$branch" || { echo "O pull falhou; veja a mensagem acima."; return 1; }
