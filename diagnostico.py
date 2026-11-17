@@ -183,7 +183,9 @@ def cpu(topo: int, procs: list, achados: list) -> list:
         c1, c5, c15 = os.getloadavg()
         d = lambda x: f"{x:.1f}".replace(".", ",")  # noqa: E731
         out.append(f"Carga média (1, 5 e 15 minutos): {d(c1)}, {d(c5)} e {d(c15)}, para {n} núcleos. Acima do número de núcleos significa fila de trabalho.")
-        if c5 > n:
+        if c5 > n and c1 < n / 2:
+            achados.append(f"Houve um pico de processador nos últimos minutos (carga de {d(c5)} em 5 minutos para {n} núcleos), mas agora já baixou (carga {d(c1)}): costuma ser tarefa de manutenção do sistema depois de reiniciar ou atualizar o Mac.")
+        elif c5 > n:
             achados.append(f"O processador está saturado (carga {d(c5)} para {n} núcleos).")
     except OSError:
         pass
@@ -204,8 +206,10 @@ def cpu(topo: int, procs: list, achados: list) -> list:
         out.append(f"Os {len(ativos)} que mais usam processador agora (100 = um núcleo inteiro):")
         out += [f"  {i}. {a['nome']}: {a['cpu']:.0f}%" for i, a in enumerate(ativos, 1)]
         for a in ativos:
-            if a["nome"] in ("mds_stores", "mds", "mdworker", "mdworker_shared", "photolibraryd", "photoanalysisd") and a["cpu"] > 50:
+            if a["nome"] in ("mds_stores", "mds", "mdworker", "mdworker_shared", "photolibraryd", "photoanalysisd", "corespotlightd") and a["cpu"] > 50:
                 achados.append(f"{a['nome']} (indexação do sistema) está usando bastante processador; costuma passar sozinho depois de alguns minutos.")
+            if a["nome"] in ("ANECompilerService", "ANEServices", "siriknowledged", "intelligenceplatformd") and a["cpu"] > 50:
+                achados.append(f"{a['nome']} (preparação de recursos de inteligência do sistema, como Siri e ditado) está usando bastante processador; é normal logo depois de atualizar o macOS e costuma terminar em minutos ou poucas horas. Se passar de umas 3 horas, rode o doctor de novo e me avise.")
     else:
         out.append("Nenhum programa usando mais de 1% de um núcleo agora.")
     return out
