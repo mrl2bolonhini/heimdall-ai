@@ -188,6 +188,7 @@ Opções:
   -a, --account NOME   com --import, o nome da conta ou do cartão (sem isso, usa o que for identificado)
   -F, --force          com --import, importa o PDF mesmo que o total não confira (só depois de revisar)
   -b, --inbox          importa agora o que estiver na pasta de entrada, sem esperar o minuto
+  -r, --retry          devolve tudo de revisar para a entrada e importa de novo (use depois de uma atualização do leitor); o motivo antigo some
 Exemplos:
   heimdall finance
   heimdall finance --folder

@@ -615,6 +615,24 @@ def concluir_revisao(base: Path, arquivo: Path, agora: str = None) -> None:
     _limpar_motivos(entrada / "revisar")
 
 
+def devolver_para_entrada(base: Path) -> list:
+    """Move os arquivos de revisar/ de volta para entrada/ (sem os .motivo.txt) para serem lidos de novo. Devolve [(nome, movido, aviso)]."""
+    entrada = preparar_pasta(Path(base))
+    revisar = entrada / "revisar"
+    saida = []
+    for arq in sorted(revisar.iterdir()):
+        if not arq.is_file() or arq.name.startswith(".") or arq.name.endswith(".motivo.txt"):
+            continue
+        destino = entrada / arq.name
+        if destino.exists():
+            saida.append((arq.name, False, "já existe um arquivo com esse nome em entrada; deixei em revisar"))
+            continue
+        arq.rename(destino)
+        saida.append((arq.name, True, ""))
+    _limpar_motivos(revisar)
+    return saida
+
+
 def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 1024 * 1024) -> list:
     """Importa o que estiver na pasta entrada/. Sucesso vai para importados/; dúvida vai para revisar/ com um .motivo.txt.
     Arquivo duplicado (mesmo conteúdo já importado, ou nada novo nos lançamentos) não é importado e é apagado.

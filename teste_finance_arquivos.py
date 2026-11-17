@@ -329,6 +329,17 @@ confere("duplicado não deixa registro vazio no histórico", con.execute("SELECT
 (entrada / "revisar" / "x.csv.motivo.txt").write_text("m")
 fa.concluir_revisao(base, entrada / "revisar" / "x.csv")
 confere("revisado: arquivo vai para importados/ e o motivo some", (entrada / "importados" / "x.csv").is_file() and not (entrada / "revisar" / "x.csv.motivo.txt").exists())
+(entrada / "revisar" / "volta.csv").write_bytes(b"x;y\n1;2\n")
+(entrada / "revisar" / "volta.csv.motivo.txt").write_text("m")
+(entrada / "volta.csv").write_bytes(b"outro")
+mv = fa.devolver_para_entrada(base)
+confere("retry não sobrescreve arquivo de mesmo nome na entrada", [m[:2] for m in mv if m[0] == "volta.csv"] == [("volta.csv", False)] and (entrada / "revisar" / "volta.csv").exists() and (entrada / "revisar" / "volta.csv.motivo.txt").exists(), mv)
+(entrada / "volta.csv").unlink()
+mv = fa.devolver_para_entrada(base)
+confere("retry devolve para a entrada e some com o motivo", ("volta.csv", True, "") in mv and (entrada / "volta.csv").exists() and not (entrada / "revisar" / "volta.csv.motivo.txt").exists(), mv)
+(entrada / "volta.csv").unlink()
+if (entrada / "fatura-itau-ruim.pdf").exists():
+    (entrada / "fatura-itau-ruim.pdf").rename(entrada / "revisar" / "fatura-itau-ruim.pdf")
 (entrada / "recente.ofx").write_bytes(ofx.replace(b"A1", b"A2"))
 confere("arquivo recém-copiado espera a próxima rodada", fa.processar_entrada(con, base) == [] and (entrada / "recente.ofx").exists())
 

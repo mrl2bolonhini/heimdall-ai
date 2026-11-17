@@ -78,6 +78,7 @@ def main() -> None:
     g.add_argument("--importar", metavar="ARQUIVO")
     g.add_argument("--entrada", action="store_true")
     g.add_argument("--pasta", action="store_true")
+    g.add_argument("--reprocessar", action="store_true")
     ap.add_argument("--linhas", type=int, default=150)
     ap.add_argument("--conta", default="")
     ap.add_argument("--forcar", action="store_true")
@@ -111,7 +112,13 @@ def main() -> None:
             fa.concluir_revisao(DIR_DADOS, Path(a.importar).expanduser())  # se veio de revisar/, vai para importados/ e o motivo some
             print(r["resumo"])
             print(f"\nImportado na conta '{r['conta']}': {r['novas']} novos, {r['repetidas']} já existentes.")
-        elif a.entrada:
+        elif a.entrada or a.reprocessar:
+            if a.reprocessar:
+                movidos = fa.devolver_para_entrada(DIR_DADOS)
+                if not movidos:
+                    print("Nada em revisar para tentar de novo.")
+                for nome, ok, aviso in movidos:
+                    print(f"Voltou para entrada: {nome}" if ok else f"Não movi {nome}: {aviso}")
             con = _banco()
             res = fa.processar_entrada(con, DIR_DADOS)
             if not res:
