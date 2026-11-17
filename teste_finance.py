@@ -110,6 +110,7 @@ manual_uber = con.execute("SELECT categoria FROM transacoes WHERE descricao='Ube
 confere("regras mexem nos lançamentos que não são manuais", manual_uber == "Lazer e viagens", manual_uber)
 rid = con.execute("SELECT id FROM regras WHERE padrao='uber' AND origem='usuario'").fetchone()[0]
 confere("apagar regra do usuário e reaplicar volta ao padrão", fn.apagar_regra(con, rid) and fn.reaplicar_regras(con) >= 1 and fn.categorizar(con, "uber trip") == "Transporte")
+confere("parcela de fatura parcelada tem categoria própria, de gasto", fn.categorizar(con, fn.norm("Pagamento da fatura de outubro/2026 Parcela 1 de 5")) == "Parcelamento de fatura" and fn.categorizar(con, fn.norm("Pagamento de fatura")) == "Pagamento de fatura")
 pid = con.execute("SELECT id FROM regras WHERE origem='padrao' LIMIT 1").fetchone()[0]
 confere("regra padrão não pode ser apagada", not fn.apagar_regra(con, pid))
 for fun, args in ((fn.definir_categoria, (tid, "Inventada")), (fn.definir_categoria, (999999, "Mercado")), (fn.adicionar_regra, ("ab", "Mercado")), (fn.adicionar_regra, ("abc", "Inventada"))):

@@ -19,7 +19,7 @@ SEM_CATEGORIA = "Sem categoria"
 CATEGORIAS_PADRAO = [
     ("Mercado", "gasto"), ("Restaurantes", "gasto"), ("Transporte", "gasto"), ("Moradia e contas", "gasto"), ("Saúde", "gasto"),
     ("Assinaturas", "gasto"), ("Educação", "gasto"), ("Lazer e viagens", "gasto"), ("Compras", "gasto"), ("Impostos e tarifas", "gasto"),
-    ("Transferências", "gasto"), ("Saques", "gasto"), ("Outros gastos", "gasto"),
+    ("Transferências", "gasto"), ("Saques", "gasto"), ("Outros gastos", "gasto"), ("Parcelamento de fatura", "gasto"),
     ("Salário", "renda"), ("Outras receitas", "renda"),
     ("Pagamento de fatura", "neutra"), ("Fatura de terceiros", "neutra"), ("Investimentos", "neutra"), ("Entre minhas contas", "neutra"),
     (SEM_CATEGORIA, "gasto"),
@@ -47,7 +47,7 @@ REGRAS_PADRAO = [
     ("shein", "Compras"), ("aliexpress", "Compras"), ("amazon", "Compras"), ("renner", "Compras"),
     ("iof", "Impostos e tarifas"), ("tarifa", "Impostos e tarifas"), ("anuidade", "Impostos e tarifas"), ("juros", "Impostos e tarifas"),
     ("multa", "Impostos e tarifas"), ("darf", "Impostos e tarifas"), ("imposto", "Impostos e tarifas"),
-    ("saque", "Saques"),
+    ("saque", "Saques"), ("pagamento da fatura de", "Parcelamento de fatura"),
     ("salario", "Salário"), ("folha de pagamento", "Salário"), ("proventos", "Salário"), ("pro labore", "Salário"),
     ("pagamento de fatura", "Pagamento de fatura"), ("pagamento fatura", "Pagamento de fatura"), ("pgto fatura", "Pagamento de fatura"),
     ("pag fatura", "Pagamento de fatura"), ("fatura cartao", "Pagamento de fatura"),
