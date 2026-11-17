@@ -405,6 +405,40 @@ post("/futuros/remover", {"id": str(_pid)}, ck, csrf)
 confere("remover pagamento futuro", con2.execute("SELECT COUNT(*) FROM previstos").fetchone()[0] == 0)
 post("/futuros/ignorar", {"chave": "recorrente:netflix.com", "ignorar": "1"}, ck, csrf)
 confere("ignorar pela página grava e chave estranha é recusada", con2.execute("SELECT COUNT(*) FROM ignorados").fetchone()[0] == 1 and (post("/futuros/ignorar", {"chave": "qualquer", "ignorar": "1"}, ck, csrf)[0] == 303) and con2.execute("SELECT COUNT(*) FROM ignorados").fetchone()[0] == 1)
+# análise e perguntar (modelo simulado)
+import heimdall_perguntar as _hp
+import time as _tm
+_hp.chamar_local = lambda sistema, usuario, modelo="", max_tokens=700, timeout=240: "Resposta de teste sem números."
+st, _, _ = post("/analise/gerar", {"tipo": "ano"}, ck, csrf)
+confere("análise com tipo inválido não inicia", st == 303 and con2.execute("SELECT COUNT(*) FROM analises").fetchone()[0] == 0)
+confere("análise com CSRF errado é recusada", post("/analise/gerar", {"tipo": "mes"}, ck, "errado")[0] == 403)
+st, _, _ = post("/analise/gerar", {"tipo": "mes"}, ck, csrf)
+for _ in range(100):
+    if con2.execute("SELECT COUNT(*) FROM analises").fetchone()[0]:
+        break
+    _tm.sleep(0.1)
+confere("gerar análise guarda no banco, com texto fixo quando o modelo é curto", st == 303 and con2.execute("SELECT origem FROM analises").fetchone()[0] == "regras")
+st, corpo, _ = pedir("/analise", ck)
+confere("página de análise mostra seções, botões com nome e aviso do Notas", st == 200 and "<h3>Resumo</h3>" in corpo and "<ol>" in corpo and "Analisar a semana" in corpo and "Salvar esta análise no Notas" in corpo and "iCloud" in corpo, corpo[:300])
+post("/analise/notas", {"id": "1"}, ck, csrf)
+st, corpo, _ = pedir("/analise", ck)
+confere("salvar no Notas sem o agente avisa sem derrubar a página", st == 200 and ("Análise salva" in corpo or "Não consegui salvar no Notas" in corpo))
+st, _, _ = post("/perguntar", {"pergunta": "quanto gastei com mercado?"}, ck, csrf)
+for _ in range(100):
+    st2, corpo, _ = pedir("/perguntar", ck)
+    if "Resposta de teste" in corpo:
+        break
+    _tm.sleep(0.1)
+confere("perguntar mostra a resposta do modelo", st == 303 and "Resposta de teste sem números." in corpo and '<label for="pergunta">' in corpo, corpo[:300])
+confere("pergunta vazia é recusada", post("/perguntar", {"pergunta": " "}, ck, csrf)[0] == 303)
+_hp.chamar_local = lambda *a, **k: "Foram R$ 123.456,78."
+post("/perguntar", {"pergunta": "total do mercado em 2025"}, ck, csrf)
+for _ in range(100):
+    st2, corpo, _ = pedir("/perguntar", ck)
+    if "123.456,78" in corpo:
+        break
+    _tm.sleep(0.1)
+confere("pergunta: valor fora dos dados aparece com aviso", "Confira estes valores" in corpo, corpo[-400:])
 # boletos
 st, _, _ = post("/boletos", {"linha": "34191.23454 67890.123457 67890.123457 6 16560000045090", "quem": "Padaria"}, ck, csrf)
 confere("registrar boleto pela página", st == 303 and con2.execute("SELECT COUNT(*) FROM boletos").fetchone()[0] == 1)

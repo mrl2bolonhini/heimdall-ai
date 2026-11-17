@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Finance ganha análise de consultor e o campo Perguntar
+- Nova página Análise: um botão gera a análise da semana ou do mês com o que subiu e baixou, pontos de atenção, onde reduzir gastos e melhores datas de pagamento, sem dica de investimento. Os números são calculados em código; o modelo local só redige o texto e, se citar valor que não está nos dados, a página mostra o texto calculado. Há botão para salvar a análise na pasta Heimdall Finanças do Notas. Nova página Perguntar, com um campo de texto, para perguntas sobre gastos, orçamentos, parcelas, boletos e contas futuras; o modelo local responde com base nos dados e valores fora dos dados aparecem com aviso. O modelo é sempre o local, sem reserva na nuvem (HEIMDALL_PERGUNTAR_MODELO muda o modelo; padrão llama-3.1-8b). O módulo heimdall_perguntar.py pode ser usado por outros sites do Heimdall. O banco ganhou a tabela analises.
+
 ## 2026-11-17 - Boletos aceitam Pix copia e cola
 - O campo da página Boletos e o comando `heimdall finance --bill` agora entendem também o Pix copia e cola (BR Code): o Heimdall confere o dígito de controle final, recusa código cortado ou alterado e guarda valor, quem recebe e cidade. Pix não tem vencimento próprio, então aparece como sem vencimento. Continua sem pagar nada.
 
