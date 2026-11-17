@@ -21,7 +21,7 @@ CATEGORIAS_PADRAO = [
     ("Assinaturas", "gasto"), ("Educação", "gasto"), ("Lazer e viagens", "gasto"), ("Compras", "gasto"), ("Impostos e tarifas", "gasto"),
     ("Transferências", "gasto"), ("Saques", "gasto"), ("Outros gastos", "gasto"),
     ("Salário", "renda"), ("Outras receitas", "renda"),
-    ("Pagamento de fatura", "neutra"), ("Investimentos", "neutra"), ("Entre minhas contas", "neutra"),
+    ("Pagamento de fatura", "neutra"), ("Fatura de terceiros", "neutra"), ("Investimentos", "neutra"), ("Entre minhas contas", "neutra"),
     (SEM_CATEGORIA, "gasto"),
 ]
 # palavra ou trecho (já sem acento e em minúsculas) -> categoria
@@ -105,6 +105,10 @@ def conectar(caminho) -> sqlite3.Connection:
     con = sqlite3.connect(str(caminho), check_same_thread=False, timeout=15)
     con.row_factory = sqlite3.Row
     con.executescript(SCHEMA)
+    if "importacao_id" not in {r["name"] for r in con.execute("PRAGMA table_info(transacoes)")}:
+        con.execute("ALTER TABLE transacoes ADD COLUMN importacao_id INTEGER")
+    # lançamentos importados antes desta coluna existir: liga cada um à importação de mesma conta e mesmo instante
+    con.execute("UPDATE transacoes SET importacao_id = (SELECT MAX(i.id) FROM importacoes i WHERE i.conta = transacoes.conta AND i.quando = transacoes.importado_em) WHERE importacao_id IS NULL")
     for nome, tipo in CATEGORIAS_PADRAO:
         con.execute("INSERT OR IGNORE INTO categorias(nome, tipo) VALUES(?, ?)", (nome, tipo))
     for padrao, cat in REGRAS_PADRAO:
@@ -286,6 +290,7 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
     regras = _regras(con)
     vistos = defaultdict(int)
     novas = repetidas = 0
+    imp_id = con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES(?,?,?,?,0,0)", ((arquivo or "")[:120], conta, agora, formato)).lastrowid
     for it in itens:
         dn = norm(it["descricao"])
         if it.get("fitid"):
@@ -299,13 +304,13 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
         if cat == SEM_CATEGORIA and it["valor"] > 0:
             # cartão de crédito não gera renda: crédito sem regra (pagamento, estorno de encargo) fica fora das receitas
             cat = "Pagamento de fatura" if "cartao" in norm(conta) else "Outras receitas"
-        cur = con.execute("INSERT OR IGNORE INTO transacoes(conta, data, valor, descricao, desc_norm, categoria, hash, importado_em) VALUES(?,?,?,?,?,?,?,?)",
-                          (conta, it["data"], it["valor"], it["descricao"][:200], dn[:200], cat, h, agora))
+        cur = con.execute("INSERT OR IGNORE INTO transacoes(conta, data, valor, descricao, desc_norm, categoria, hash, importado_em, importacao_id) VALUES(?,?,?,?,?,?,?,?,?)",
+                          (conta, it["data"], it["valor"], it["descricao"][:200], dn[:200], cat, h, agora, imp_id))
         if cur.rowcount:
             novas += 1
         else:
             repetidas += 1
-    con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES(?,?,?,?,?,?)", ((arquivo or "")[:120], conta, agora, formato, novas, repetidas))
+    con.execute("UPDATE importacoes SET novas=?, repetidas=? WHERE id=?", (novas, repetidas, imp_id))
     con.commit()
     return {"formato": formato, "lidas": len(itens), "novas": novas, "repetidas": repetidas}
 
@@ -387,38 +392,109 @@ def nome_mes(mes: str) -> str:
     return f"{nomes[int(mes[5:7]) - 1]} de {mes[:4]}"
 
 
-def _gastos_por_categoria(con, mes: str, tp: dict) -> dict:
-    out = defaultdict(int)
-    for r in con.execute("SELECT categoria, SUM(-valor) t FROM transacoes WHERE substr(data,1,7)=? AND valor<0 GROUP BY categoria", (mes,)):
-        if tp.get(r["categoria"], "gasto") != "neutra":
-            out[r["categoria"]] = r["t"]
+FATURA_PAGA = "Pagamento de fatura"
+TERCEIROS = "Fatura de terceiros"
+SEM_FATURA = "Fatura paga sem fatura importada"
+VISOES = {"competencia": "por compra (o gasto conta no dia da compra)", "caixa": "por saída de caixa (conta o que saiu das contas, inclusive o pagamento da fatura)"}
+
+
+def faturas_pagas(con) -> list:
+    """Pagamentos de fatura feitos a partir de contas (não de cartões), cada um com 'conferida': True quando há fatura importada que
+    explica o pagamento (crédito de pagamento de mesmo valor em algum cartão, até 10 dias de diferença, ou total de uma fatura importada)."""
+    creditos = [(r["valor"], r["data"]) for r in con.execute("SELECT valor, data FROM transacoes WHERE valor>0 AND categoria=? AND conta LIKE '%cart_o%'", (FATURA_PAGA,))]
+    totais = set()
+    for r in con.execute("""SELECT SUM(CASE WHEN valor<0 THEN -valor ELSE 0 END) g,
+                                   SUM(CASE WHEN valor>0 AND categoria<>? THEN valor ELSE 0 END) c
+                            FROM transacoes WHERE conta LIKE '%cart_o%' AND importacao_id IS NOT NULL GROUP BY importacao_id""", (FATURA_PAGA,)):
+        totais.add(r["g"])
+        totais.add(r["g"] - r["c"])
+    out = []
+    for p in con.execute("SELECT id, data, descricao, valor, conta, categoria FROM transacoes WHERE valor<0 AND categoria=? AND NOT (conta LIKE '%cart_o%') ORDER BY data, id", (FATURA_PAGA,)):
+        v = -p["valor"]
+        try:
+            d = datetime.strptime(p["data"], "%Y-%m-%d").date()
+        except ValueError:
+            d = None
+        ok = v in totais or any(cv == v and d is not None and abs((datetime.strptime(cd, "%Y-%m-%d").date() - d).days) <= 10 for cv, cd in creditos)
+        out.append({**dict(p), "conferida": ok})
     return out
 
 
-def resumo_mes(con, mes: str) -> dict:
+def sem_fatura(con) -> list:
+    """Pagamentos de fatura para os quais não há fatura importada. Podem ser seus (contam como gasto na visão por compra)
+    ou de outra pessoa (mude a categoria para 'Fatura de terceiros' e saem das somas)."""
+    return [p for p in faturas_pagas(con) if not p["conferida"]]
+
+
+def _gastos_por_categoria(con, mes: str, tp: dict, visao: str = "competencia", semf: list = None) -> dict:
+    out = defaultdict(int)
+    if visao == "caixa":
+        for r in con.execute("SELECT categoria, SUM(-valor) t FROM transacoes WHERE substr(data,1,7)=? AND valor<0 AND NOT (conta LIKE '%cart_o%') GROUP BY categoria", (mes,)):
+            if tp.get(r["categoria"], "gasto") != "neutra" or r["categoria"] == FATURA_PAGA:
+                out[r["categoria"]] = r["t"]
+        return out
+    for r in con.execute("SELECT categoria, SUM(-valor) t FROM transacoes WHERE substr(data,1,7)=? AND valor<0 GROUP BY categoria", (mes,)):
+        if tp.get(r["categoria"], "gasto") != "neutra":
+            out[r["categoria"]] = r["t"]
+    semf = sem_fatura(con) if semf is None else semf
+    extra = sum(-p["valor"] for p in semf if p["data"][:7] == mes)
+    if extra:
+        out[SEM_FATURA] += extra
+    return out
+
+
+def _receitas(con, mes: str, tp: dict, visao: str = "competencia") -> int:
+    filtro = " AND NOT (conta LIKE '%cart_o%')" if visao == "caixa" else ""
+    return sum(r["valor"] for r in con.execute(f"SELECT categoria, valor FROM transacoes WHERE substr(data,1,7)=? AND valor>0{filtro}", (mes,)) if tp.get(r["categoria"], "renda") != "neutra")
+
+
+def resumo_mes(con, mes: str, visao: str = "competencia") -> dict:
+    visao = visao if visao in VISOES else "competencia"
     tp = tipos(con)
-    gastos = _gastos_por_categoria(con, mes, tp)
-    antes = _gastos_por_categoria(con, mes_anterior(mes), tp)
+    semf = sem_fatura(con)
+    gastos = _gastos_por_categoria(con, mes, tp, visao, semf)
+    antes = _gastos_por_categoria(con, mes_anterior(mes), tp, visao, semf)
     despesas = sum(gastos.values())
-    receitas = sum(r["valor"] for r in con.execute("SELECT categoria, valor FROM transacoes WHERE substr(data,1,7)=? AND valor>0", (mes,)) if tp.get(r["categoria"], "renda") != "neutra")
-    neutros = sum(abs(r["valor"]) for r in con.execute("SELECT categoria, valor FROM transacoes WHERE substr(data,1,7)=?", (mes,)) if tp.get(r["categoria"]) == "neutra")
+    receitas = _receitas(con, mes, tp, visao)
+    neutros = 0
+    for r in con.execute("SELECT id, categoria, valor, conta FROM transacoes WHERE substr(data,1,7)=?", (mes,)):
+        if tp.get(r["categoria"]) != "neutra":
+            continue
+        if visao == "caixa" and (r["categoria"] == FATURA_PAGA and r["valor"] < 0 and "cartao" not in norm(r["conta"]) or "cartao" in norm(r["conta"])):
+            continue  # na visão de caixa o pagamento da fatura é gasto, e o cartão nem entra
+        neutros += abs(r["valor"])
+    if visao == "competencia":
+        neutros -= sum(-p["valor"] for p in semf if p["data"][:7] == mes)  # já contados como gasto
     cats = []
     for c, t in sorted(gastos.items(), key=lambda x: -x[1]):
         a = antes.get(c, 0)
         cats.append({"categoria": c, "total": t, "pct": round(100 * t / despesas, 1) if despesas else 0.0, "anterior": a,
                      "variacao": (round(100 * (t - a) / a) if a else None)})
-    maiores = [dict(r) for r in con.execute(
-        "SELECT id, data, descricao, valor, categoria, conta FROM transacoes WHERE substr(data,1,7)=? AND valor<0 ORDER BY valor ASC LIMIT 40", (mes,)) if tp.get(r["categoria"], "gasto") != "neutra"][:10]
+    ids_semf = {p["id"] for p in semf}
+    maiores = []
+    for r in con.execute("SELECT id, data, descricao, valor, categoria, conta FROM transacoes WHERE substr(data,1,7)=? AND valor<0 ORDER BY valor ASC LIMIT 80", (mes,)):
+        neutra = tp.get(r["categoria"], "gasto") == "neutra"
+        if visao == "caixa":
+            conta_cartao = "cartao" in norm(r["conta"])
+            ok = (not conta_cartao) and (not neutra or r["categoria"] == FATURA_PAGA)
+        else:
+            ok = (not neutra) or r["id"] in ids_semf
+        if ok:
+            maiores.append(dict(r))
+    maiores = maiores[:10]
     n_sem = con.execute("SELECT COUNT(*) FROM transacoes WHERE substr(data,1,7)=? AND categoria=?", (mes, SEM_CATEGORIA)).fetchone()[0]
     return {"mes": mes, "receitas": receitas, "despesas": despesas, "saldo": receitas - despesas, "neutros": neutros,
-            "categorias": cats, "maiores": maiores, "sem_categoria": n_sem, "despesas_anterior": sum(antes.values())}
+            "categorias": cats, "maiores": maiores, "sem_categoria": n_sem, "despesas_anterior": sum(antes.values()),
+            "visao": visao, "sem_fatura": [p for p in semf if p["data"][:7] == mes]}
 
 
-def tendencias(con, quantos: int = 12) -> dict:
+def tendencias(con, quantos: int = 12, visao: str = "competencia") -> dict:
+    visao = visao if visao in VISOES else "competencia"
     tp = tipos(con)
     ms = sorted(meses(con))[-quantos:]
-    por_mes = {m: _gastos_por_categoria(con, m, tp) for m in ms}
-    rec = {m: sum(r["valor"] for r in con.execute("SELECT categoria, valor FROM transacoes WHERE substr(data,1,7)=? AND valor>0", (m,)) if tp.get(r["categoria"], "renda") != "neutra") for m in ms}
+    semf = sem_fatura(con)
+    por_mes = {m: _gastos_por_categoria(con, m, tp, visao, semf) for m in ms}
+    rec = {m: _receitas(con, m, tp, visao) for m in ms}
     tot_cat = defaultdict(int)
     for m in ms:
         for c, v in por_mes[m].items():
@@ -440,7 +516,7 @@ def tendencias(con, quantos: int = 12) -> dict:
             elif media == 0 and v >= 20000:
                 alertas.append(f"{c} em {nome_mes(atual)}: {brl(v)}, categoria que não tinha gasto nos meses anteriores.")
     media_desp = (sum(l["despesas"] for l in linhas) / len(linhas)) if linhas else 0
-    return {"meses": ms, "linhas": linhas, "categorias": principais, "alertas": alertas, "media_despesas": int(media_desp)}
+    return {"meses": ms, "linhas": linhas, "categorias": principais, "alertas": alertas, "media_despesas": int(media_desp), "visao": visao}
 
 
 # Produto de cada lançamento, deduzido da categoria, do nome da conta e da descrição (a ordem importa: vale a primeira regra que serve).
@@ -452,6 +528,7 @@ PRODUTOS = {
     "boleto": "Boleto",
     "transferencia": "Outras transferências (TED, DOC e semelhantes)",
     "outros": "Outros",
+    "fatura_sem": "Faturas pagas sem fatura importada",
 }
 _PRODUTO_SQL = """(CASE
   WHEN categoria = 'Entre minhas contas' THEN 'entre_contas'
@@ -463,7 +540,7 @@ _PRODUTO_SQL = """(CASE
   ELSE 'outros' END)"""
 
 
-def _filtro(mes: str = "", cat: str = "", q: str = "", conta: str = "", produto: str = "") -> tuple:
+def _filtro(con, mes: str = "", cat: str = "", q: str = "", conta: str = "", produto: str = "") -> tuple:
     where, args = ["1=1"], []
     if re.fullmatch(r"\d{4}-\d{2}", mes or ""):
         where.append("substr(data,1,7)=?")
@@ -477,14 +554,17 @@ def _filtro(mes: str = "", cat: str = "", q: str = "", conta: str = "", produto:
     if conta:
         where.append("conta=?")
         args.append(conta)
-    if produto in PRODUTOS:
+    if produto == "fatura_sem":
+        ids = [int(p["id"]) for p in sem_fatura(con)]
+        where.append("id IN (" + ",".join(str(i) for i in ids) + ")" if ids else "1=0")
+    elif produto in PRODUTOS:
         where.append(_PRODUTO_SQL + " = ?")
         args.append(produto)
     return " AND ".join(where), args
 
 
 def listar(con, mes: str = "", cat: str = "", q: str = "", limite: int = 100, deslocar: int = 0, conta: str = "", produto: str = "") -> tuple:
-    cond, args = _filtro(mes, cat, q, conta, produto)
+    cond, args = _filtro(con, mes, cat, q, conta, produto)
     total = con.execute(f"SELECT COUNT(*) FROM transacoes WHERE {cond}", args).fetchone()[0]
     linhas = [dict(r) for r in con.execute(f"SELECT *, {_PRODUTO_SQL} AS produto FROM transacoes WHERE {cond} ORDER BY data DESC, id DESC LIMIT ? OFFSET ?", args + [limite, deslocar])]
     return total, linhas
@@ -492,7 +572,7 @@ def listar(con, mes: str = "", cat: str = "", q: str = "", limite: int = 100, de
 
 def somas_listagem(con, mes: str = "", cat: str = "", q: str = "", conta: str = "", produto: str = "") -> dict:
     """Quantidade, entradas e saídas do que o filtro mostra (inclui tudo, também o que fica fora do Resumo por ser neutro)."""
-    cond, args = _filtro(mes, cat, q, conta, produto)
+    cond, args = _filtro(con, mes, cat, q, conta, produto)
     r = con.execute(f"SELECT COUNT(*) n, COALESCE(SUM(CASE WHEN valor>0 THEN valor END),0) ent, COALESCE(SUM(CASE WHEN valor<0 THEN -valor END),0) sai FROM transacoes WHERE {cond}", args).fetchone()
     return {"n": r["n"], "entradas": r["ent"], "saidas": r["sai"], "liquido": r["ent"] - r["sai"]}
 
@@ -501,6 +581,7 @@ def contas_e_produtos(con) -> tuple:
     """([(conta, quantidade)], [(chave do produto, quantidade)]) de tudo o que há no banco, para os filtros."""
     contas = [(r["conta"], r["n"]) for r in con.execute("SELECT conta, COUNT(*) n FROM transacoes GROUP BY conta ORDER BY conta")]
     cont = {r["p"]: r["n"] for r in con.execute(f"SELECT {_PRODUTO_SQL} p, COUNT(*) n FROM transacoes GROUP BY p")}
+    cont["fatura_sem"] = len(sem_fatura(con))
     produtos = [(k, cont[k]) for k in PRODUTOS if cont.get(k)]
     return contas, produtos
 

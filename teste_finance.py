@@ -123,9 +123,25 @@ for fun, args in ((fn.definir_categoria, (tid, "Inventada")), (fn.definir_catego
 confere("meses em ordem do mais recente", fn.meses(con) == ["2026-03", "2026-02", "2026-01"], fn.meses(con))
 j = fn.resumo_mes(con, "2026-01")
 # gastos de janeiro fora a fatura: 250,40 + 45,90 + 89,90 + 33,00 = 419,20 ; fatura (1500) é neutra
-confere("resumo de janeiro: receitas 8.000, despesas 419,20, fatura fora das somas", j["receitas"] == 800000 and j["despesas"] == 41920 and j["neutros"] == 150000, j)
+confere("resumo de janeiro: fatura paga sem fatura importada conta como gasto (R$ 1.500 + 419,20)", j["receitas"] == 800000 and j["despesas"] == 191920 and j["neutros"] == 0 and len(j["sem_fatura"]) == 1, j)
+# visão por compra x visão de caixa e faturas pagas sem fatura importada
+import tempfile as _tf
+_c = fn.conectar(os.path.join(_tf.mkdtemp(), "visoes.db"))
+fn.importar_itens(_c, [{"data": "2026-05-03", "valor": -30000, "descricao": "LOJA A", "fitid": ""}, {"data": "2026-05-04", "valor": -20000, "descricao": "LOJA B", "fitid": ""}], "pdf", "fat.pdf", "Itaú cartão")
+fn.importar_itens(_c, [{"data": "2026-05-20", "valor": -50000, "descricao": "PAGAMENTO FATURA ITAU", "fitid": ""}, {"data": "2026-05-21", "valor": -12345, "descricao": "PAGAMENTO FATURA ITAU UNICLASS", "fitid": ""}, {"data": "2026-05-22", "valor": -1000, "descricao": "PADARIA", "fitid": ""}], "ofx", "e.ofx", "Itaú conta")
+_fp = fn.faturas_pagas(_c)
+confere("pagamento de fatura que bate com o total da fatura importada é conferido; o outro não", [p["conferida"] for p in _fp] == [True, False], _fp)
+_a, _b = fn.resumo_mes(_c, "2026-05", "competencia"), fn.resumo_mes(_c, "2026-05", "caixa")
+confere("visão por compra: compras do cartão + pagamento sem fatura + padaria", _a["despesas"] == 50000 + 12345 + 1000 and _a["neutros"] == 50000, _a)
+confere("visão de caixa: os dois pagamentos de fatura + padaria, sem as compras do cartão", _b["despesas"] == 50000 + 12345 + 1000 and _b["neutros"] == 0 and all("cartao" not in fn.norm(m["conta"]) for m in _b["maiores"]), _b)
+_c.execute("UPDATE transacoes SET categoria=? WHERE descricao LIKE '%UNICLASS%'", (fn.TERCEIROS,))
+confere("fatura de terceiros sai das somas nas duas visões", fn.resumo_mes(_c, "2026-05", "competencia")["despesas"] == 51000 and fn.resumo_mes(_c, "2026-05", "caixa")["despesas"] == 51000 and not fn.sem_fatura(_c))
+fn.importar_itens(_c, [{"data": "2026-06-02", "valor": -77700, "descricao": "PAGAMENTO FATURA NUBANK", "fitid": ""}], "ofx", "e2.ofx", "Itaú conta")
+_antes = len(fn.sem_fatura(_c))
+fn.importar_itens(_c, [{"data": "2026-06-03", "valor": 77700, "descricao": "Pagamento recebido", "fitid": ""}], "ofx", "n.ofx", "Nubank cartão")
+confere("crédito de pagamento no cartão confere o pagamento da conta", _antes == 1 and not fn.sem_fatura(_c), fn.sem_fatura(_c))
 confere("categorias do resumo somam as despesas", sum(c["total"] for c in j["categorias"]) == j["despesas"])
-confere("maiores gastos vêm em ordem e sem a fatura", j["maiores"][0]["descricao"].startswith("SUPERMERCADO") and all("FATURA" not in m["descricao"] for m in j["maiores"]))
+confere("maiores gastos vêm em ordem e trazem a fatura sem fatura importada", j["maiores"][0]["descricao"].startswith("PAGAMENTO FATURA") and j["maiores"][1]["descricao"].startswith("SUPERMERCADO"))
 f = fn.resumo_mes(con, "2026-02")
 mercado = next(c for c in f["categorias"] if c["categoria"] == "Mercado")
 confere("variação sobre o mês anterior: mercado 250,40 -> 310,00 = +24%", mercado["anterior"] == 25040 and mercado["variacao"] == 24, mercado)
@@ -244,7 +260,7 @@ except ImportError:
     pass
 
 st, corpo, _ = pedir("/?mes=2026-01", ck)
-confere("resumo do mês mostra totais e tabela com legenda", st == 200 and "R$ 8.000,00" in corpo and "R$ 419,20" in corpo and "<caption>Gastos por categoria em janeiro de 2026</caption>" in corpo and 'scope="col"' in corpo, corpo[:500])
+confere("resumo do mês mostra totais e tabela com legenda", st == 200 and "R$ 8.000,00" in corpo and "R$ 1.919,20" in corpo and "Faturas pagas sem fatura importada" in corpo and "<caption>Gastos por categoria em janeiro de 2026</caption>" in corpo and 'scope="col"' in corpo, corpo[:500])
 confere("aviso de lançamentos sem categoria não aparece quando não há", "sem categoria neste mês" not in corpo)
 st, corpo, _ = pedir("/transacoes?mes=2026-01&cat=Mercado&q=extra", ck)
 confere("lista de transações filtrada", st == 200 and "SUPERMERCADO EXTRA 123" in corpo and "UBER" not in corpo and "1 lançamento(s)" in corpo, corpo[:300])

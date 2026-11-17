@@ -147,6 +147,15 @@ def seletor_mes(atual: str, rota: str = "/", extra: str = "") -> str:
             '<button type="submit">Ver</button></form>')
 
 
+def seletor_visao(visao: str, rota: str, mes: str = "") -> str:
+    """Troca entre a visão por compra (competência) e a visão por saída de caixa, mantendo o mês."""
+    base = f"{rota}?" + (f"mes={e(mes)}&amp;" if mes else "")
+    outra = "caixa" if visao != "caixa" else "competencia"
+    atual = "por saída de caixa: conta o que saiu das suas contas, inclusive o pagamento da fatura, e as compras do cartão ficam de fora" if visao == "caixa" else "por compra: o gasto conta no dia da compra, e o pagamento da fatura fica de fora para não contar duas vezes"
+    troca = "Ver por compra (competência)" if visao == "caixa" else "Ver por saída de caixa"
+    return f'<p>Visão {e(atual)}. <a href="{base}visao={outra}">{troca}</a>.</p>'
+
+
 def opcoes_categoria(sel: str = "", incluir_todas: bool = False) -> str:
     tp = fn.tipos(banco())
     nomes = sorted(tp, key=lambda n: (n == fn.SEM_CATEGORIA, tp[n] != "gasto", n))
@@ -154,29 +163,38 @@ def opcoes_categoria(sel: str = "", incluir_todas: bool = False) -> str:
     return o + "".join(f'<option value="{e(n)}"{" selected" if n == sel else ""}>{e(n)}{" (não entra nas somas)" if tp[n] == "neutra" else ""}</option>' for n in nomes)
 
 
-def pg_resumo(mes: str) -> tuple:
+def pg_resumo(mes: str, visao: str = "") -> tuple:
+    visao = visao if visao in fn.VISOES else "competencia"
     ms = fn.meses(banco())
     if not ms:
         return "Resumo", ('<p>Ainda não há lançamentos. Comece importando o extrato do seu banco ou o da fatura do cartão (OFX ou CSV).</p>'
                           '<p><a href="/importar">Importar extrato</a></p>')
     if mes not in ms:
         mes = ms[0]
-    r = fn.resumo_mes(banco(), mes)
+    r = fn.resumo_mes(banco(), mes, visao)
     dif = ""
     if r["despesas_anterior"]:
         v = round(100 * (r["despesas"] - r["despesas_anterior"]) / r["despesas_anterior"])
         dif = f' Isso é {abs(v)}% {"a mais" if v > 0 else "a menos"} que em {fn.nome_mes(fn.mes_anterior(mes))} ({fn.brl(r["despesas_anterior"])}).' if v else " Igual ao mês anterior."
-    corpo = [seletor_mes(mes)]
+    corpo = [seletor_mes(mes, "/", f'<input type="hidden" name="visao" value="{e(visao)}">'), seletor_visao(visao, "/", mes)]
     corpo.append(f'<p>Em {e(fn.nome_mes(mes))}: receitas de {e(fn.brl(r["receitas"]))}, despesas de {e(fn.brl(r["despesas"]))} e saldo de {e(fn.brl(r["saldo"], True))}.{e(dif)}</p>')
     if r["neutros"]:
-        corpo.append(f'<p class="sub">Ficaram fora das somas {e(fn.brl(r["neutros"]))} em pagamento de fatura, investimentos e transferências entre suas contas, para não contar duas vezes.</p>')
+        texto = ("investimentos, transferências entre suas contas e faturas de terceiros" if visao == "caixa" else "pagamento de fatura, investimentos, transferências entre suas contas e faturas de terceiros")
+        corpo.append(f'<p class="sub">Ficaram fora das somas {e(fn.brl(r["neutros"]))} em {texto}, para não contar duas vezes.</p>')
+    if r["sem_fatura"] and visao != "caixa":
+        itens = "".join(f'<li>{e(fn.data_br(p["data"]))}, {e(p["descricao"])}, {e(fn.brl(p["valor"]))} (conta {e(p["conta"])}). <a href="/transacao/{p["id"]}">Alterar categoria</a></li>' for p in r["sem_fatura"])
+        corpo.append('<div class="aviso" role="status"><h2>Faturas pagas sem fatura importada</h2>'
+                     f'<p>{len(r["sem_fatura"])} pagamento(s) de fatura deste mês não têm fatura importada que os explique. Entraram nas despesas como "{e(fn.SEM_FATURA)}", para você não perder o gasto. '
+                     f'Se a fatura for de outra pessoa, mude a categoria do pagamento para "{e(fn.TERCEIROS)}" e ele sai das somas.</p><ul>{itens}</ul>'
+                     '<p><a href="/transacoes?produto=fatura_sem">Ver todos os pagamentos sem fatura importada</a></p></div>')
     if r["sem_categoria"]:
         corpo.append(f'<div class="aviso" role="status">{r["sem_categoria"]} lançamento(s) sem categoria neste mês. '
                      f'<a href="/transacoes?mes={e(mes)}&amp;cat={e(fn.SEM_CATEGORIA)}">Classificar agora</a></div>')
     linhas = []
     for c in r["categorias"]:
         var = "sem gasto no mês anterior" if c["variacao"] is None else (f'{c["variacao"]:+d}%' if c["variacao"] else "igual")
-        linhas.append([f'<a href="/transacoes?mes={e(mes)}&amp;cat={e(c["categoria"])}">{e(c["categoria"])}</a>', e(fn.brl(c["total"])), f'{c["pct"]:.1f}%'.replace(".", ","), e(var)])
+        elo = "/transacoes?produto=fatura_sem" if c["categoria"] == fn.SEM_FATURA else f'/transacoes?mes={e(mes)}&amp;cat={e(c["categoria"])}'
+        linhas.append([f'<a href="{elo}">{e(c["categoria"])}</a>', e(fn.brl(c["total"])), f'{c["pct"]:.1f}%'.replace(".", ","), e(var)])
     corpo.append("<h2>Gastos por categoria</h2>" + (tabela(f"Gastos por categoria em {fn.nome_mes(mes)}", ["Categoria", "Total", "Parte das despesas", "Variação sobre o mês anterior"], linhas, {1, 2}) if linhas else "<p>Sem despesas neste mês.</p>"))
     mx = [[e(fn.data_br(m["data"])), e(m["descricao"]), e(m["categoria"]), e(fn.brl(-m["valor"])), e(m["conta"])] for m in r["maiores"]]
     corpo.append("<h2>Maiores gastos</h2>" + (tabela(f"Dez maiores gastos de {fn.nome_mes(mes)}", ["Data", "Descrição", "Categoria", "Valor", "Conta"], mx, {3}) if mx else "<p>Sem despesas neste mês.</p>"))
@@ -235,16 +253,18 @@ def pg_transacao(tid: int, sess: dict):
              f'<label for="categoria">Nova categoria</label><select id="categoria" name="categoria">{opcoes_categoria(r["categoria"])}</select>'
              '<label><input type="checkbox" name="regra" value="1" checked> Criar regra e aplicar aos lançamentos parecidos que você ainda não mexeu</label>'
              '<button type="submit">Salvar</button></form>'
-             f'<p class="sub">Trecho que a regra usaria: {e(fn.padrao_da_descricao(r["desc_norm"]) or "(nenhum, só este lançamento muda)")}</p>'
+             + ('<p class="sub">Atenção: este é um pagamento de fatura. Se você paga faturas de mais de uma pessoa e o texto no extrato é igual para todas, desmarque a opção de criar regra, para não mudar as suas também.</p>' if r["categoria"] == fn.FATURA_PAGA else "")
+             + f'<p class="sub">Trecho que a regra usaria: {e(fn.padrao_da_descricao(r["desc_norm"]) or "(nenhum, só este lançamento muda)")}</p>'
              '<p><a href="/transacoes">Voltar às transações</a></p>')
     return "Alterar categoria", corpo
 
 
-def pg_tendencias() -> tuple:
-    t = fn.tendencias(banco(), 12)
+def pg_tendencias(visao: str = "") -> tuple:
+    visao = visao if visao in fn.VISOES else "competencia"
+    t = fn.tendencias(banco(), 12, visao)
     if not t["meses"]:
         return "Tendências", '<p>Importe pelo menos um extrato para ver a evolução.</p><p><a href="/importar">Importar extrato</a></p>'
-    corpo = []
+    corpo = [seletor_visao(visao, "/tendencias")]
     if t["alertas"]:
         corpo.append('<div class="aviso" role="status"><h2>Atenção</h2><ul>' + "".join(f"<li>{e(a)}</li>" for a in t["alertas"]) + "</ul></div>")
     corpo.append(f'<p>Média de despesas por mês no período: {e(fn.brl(t["media_despesas"]))}.</p>')
@@ -410,11 +430,11 @@ class Finance(BaseHTTPRequestHandler):
 
     def _get(self, rota: str, q: dict, sess: dict) -> None:
         if rota == "/":
-            titulo, corpo = pg_resumo((q.get("mes") or [""])[0])
+            titulo, corpo = pg_resumo((q.get("mes") or [""])[0], (q.get("visao") or [""])[0])
         elif rota == "/transacoes":
             titulo, corpo = pg_transacoes(q, sess)
         elif rota == "/tendencias":
-            titulo, corpo = pg_tendencias()
+            titulo, corpo = pg_tendencias((q.get("visao") or [""])[0])
         elif rota == "/importar":
             titulo, corpo = pg_importar(sess)
         elif rota == "/regras":
