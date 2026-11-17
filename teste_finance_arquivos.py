@@ -277,6 +277,10 @@ confere("CSV de cartão do Nubank inverte o sinal sozinho", tot and tot["valor"]
 _txt = "Itaú extrato conta\nperíodo de visualização: 01/10/2026 até 03/10/2026\n03/10/2026   JUROS LIMITE DA CONTA   -10,00\n03/10/2026   SALDO DO DIA   -60,00\n02/10/2026   PIX ENVIADO FULANO   -50,00\n02/10/2026   SALDO DO DIA   -50,00\n01/10/2026   SALDO DO DIA   0,00\n"
 _it, _inf = fa.ler_pdf_texto(_txt, "conta")
 confere("juros do limite da conta entra e o saldo confere", len(_it) == 2 and _inf["confere"] is True, _inf)
+_deslocado = ("Itaú extrato conta\nperíodo de visualização: 01/10/2026 até 04/10/2026\n04/10/2026   PIX A   -10,00\n04/10/2026   SALDO DO DIA   -110,00\n"
+              "03/10/2026   PIX C   -47,00\n03/10/2026   SALDO DO DIA   -100,00\n03/10/2026   PIX B   -53,00\n02/10/2026   SALDO DO DIA   0,00\n01/10/2026   SALDO DO DIA   0,00\n")
+_it3, _inf3 = fa.ler_pdf_texto(_deslocado, "conta")
+confere("lançamento do outro lado da linha de saldo (diferenças que se anulam) é aceito", _inf3["confere"] is True and _inf3["saldos"]["explicadas"] == 2, _inf3["saldos"])
 _it2, _inf2 = fa.ler_pdf_texto(_txt.replace("-60,00", "-99,00"), "conta")
 confere("saldo que não bate aparece nas divergências", _inf2["confere"] is False and _inf2["saldos"]["divergencias"], _inf2["saldos"])
 # ---- pasta vigiada

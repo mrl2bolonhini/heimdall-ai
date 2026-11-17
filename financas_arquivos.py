@@ -314,9 +314,28 @@ def _conferir_saldos(eventos: list):
                 nt = sum(1 for tipo, _ in eventos[(saldos[n - 1] + 1 if (modo == 3 and n > 0) else (0 if modo == 3 else a + 1)):(a if modo == 3 else b)] if tipo == "t")
                 dif[modo].append((n + 1, alvo - esperado, nt))
     pares = len(saldos) - 1
-    batem = max(o1, o2, o3)
-    melhor = {o1: 1, o2: 2, o3: 3}[batem]
-    return batem == pares, pares, batem, {"cronologico": o1, "inverso_saldo_antes": o2, "inverso_saldo_depois": o3}, dif[melhor]
+    # Um lançamento impresso do outro lado de uma linha de saldo (quebra de página, ordem do leitor) deixa pares vizinhos
+    # com diferenças que se anulam. Um trecho seguido de pares divergentes cuja soma é zero está explicado: os saldos das pontas fecham.
+    restantes = {}
+    explicadas = {}
+    for modo in (1, 2, 3):
+        pend, ok = list(dif[modo]), set()
+        i = 0
+        while i < len(pend):
+            soma, j = 0, i
+            while j < len(pend) and (j == i or pend[j][0] == pend[j - 1][0] + 1):
+                soma += pend[j][1]
+                if soma == 0:
+                    ok.update(range(i, j + 1))
+                    break
+                j += 1
+            i += 1
+        restantes[modo] = [d for k, d in enumerate(pend) if k not in ok]
+        explicadas[modo] = len(ok)
+    bat = {m: pares - len(restantes[m]) for m in (1, 2, 3)}
+    melhor = max((1, 2, 3), key=lambda m: bat[m])
+    batem = bat[melhor]
+    return batem == pares, pares, batem, {"cronologico": bat[1], "inverso_saldo_antes": bat[2], "inverso_saldo_depois": bat[3]}, restantes[melhor], explicadas[melhor]
 
 
 def _reparar_espacos(linha: str) -> str:
@@ -426,7 +445,7 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
     elif totais and itens:
         confere = any(t in (liquido, gastos, compras) for t in totais)
     return itens, {"tipo": tipo, "soma": soma, "gastos": gastos, "totais": sorted(set(totais))[:12], "confere": confere, "descartadas": descartadas,
-                   "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2], "orientacoes": saldos[3], "divergencias": saldos[4]}}
+                   "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2], "orientacoes": saldos[3], "divergencias": saldos[4], "explicadas": saldos[5]}}
 
 
 def explicar(dados: bytes, nome: str, max_linhas: int = 400) -> str:
@@ -443,6 +462,8 @@ def explicar(dados: bytes, nome: str, max_linhas: int = 400) -> str:
     if sal:
         o = sal["orientacoes"]
         saida.append(f"saldos: {sal['pares']} pares; cronológico {o['cronologico']}; inverso com saldo no começo do dia {o['inverso_saldo_antes']}; inverso com saldo no fim do dia {o['inverso_saldo_depois']}")
+        if sal.get("explicadas"):
+            saida.append(f"  {sal['explicadas']} par(es) divergente(s) se anulam entre vizinhos (lançamento impresso do outro lado da linha de saldo): aceitos")
         for n, d, nt in (sal.get("divergencias") or [])[:20]:
             saida.append(f"  par de saldos {n} não bate: diferença R$ {fn.brl(d)}, {nt} lançamento(s) no dia")
     saida.append("totais citados no documento (R$): " + (", ".join(fn.brl(x) for x in info["totais"]) or "nenhum") + f"; gastos lidos {fn.brl(info['gastos'])}; soma {fn.brl(info['soma'])}")
