@@ -181,5 +181,15 @@ chamado = []
 fe.executar(cd, {}, Path(tempfile.mkdtemp()) / "s.json", lambda cfg, dias=7: chamado.append(dias) or [], dias=30)
 confere("executar repassa o período à busca", chamado == [30])
 
+# --- ajustes após o primeiro uso real ---
+confere("sinal: lista de formas de pagamento ('pagamento com cartão') não esconde o boleto", fb.sinal_pagamento("Formas de pagamento: pagamento com cartão, Pix ou boleto.") == "")
+confere("sinal: 'será cobrado no seu cartão' vale", "cartão" in fb.sinal_pagamento("O valor será cobrado no seu cartão final 1234."))
+confere("consulta: exclui Uber e promoções", "-from:uber.com" in fe.consulta(7) and "-category:promotions" in fe.consulta(7))
+dg = {}
+fe.processar(fn.conectar(Path(tempfile.mkdtemp()) / "g.db"), [msg("Uber <a@uber.com>", "Sua viagem", "Veja o recibo: https://uber.com/r/1 Obrigado por viajar.", "<g1@x>"), msg("Vivo <a@vivo.com.br>", "Fatura", "Código: " + BONITA[:-1] + "1", "<g2@x>")], {}, None, dg)
+mg = {a: m for _, a, m in dg["descartes"]}
+confere("diagnóstico: e-mail com link mas sem fala de cobrança não é chamado de 'link para o boleto'", "link" not in mg["Sua viagem"] and "não traz" in mg["Sua viagem"], mg)
+confere("diagnóstico: número que não confere diz o erro e a contagem, sem mostrar os dígitos", "47 dígitos" in mg["Fatura"] and "verificador" in mg["Fatura"] and BONITA[:10].replace(".", "") not in mg["Fatura"], mg)
+
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)

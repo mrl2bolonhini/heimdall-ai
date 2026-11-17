@@ -306,6 +306,24 @@ def achar_linhas(texto: str, hoje: date = None) -> list:
     return achadas
 
 
+def diagnosticar_numeros(texto: str, hoje: date = None) -> list:
+    """Para o diagnóstico do e-mail: números compridos que parecem boleto mas não valeram, com o motivo. Nunca devolve os dígitos, só a contagem e o erro."""
+    saida = []
+    for m in re.finditer(r"\d[\d.\s-]{40,70}\d", texto or ""):
+        d = so_digitos(m.group(0))
+        if len(d) in (44, 47, 48):
+            try:
+                interpretar(d, hoje)
+            except ERRO as e:
+                saida.append(f"número de {len(d)} dígitos que não vale como boleto: {e}")
+        elif len(d) > 48:
+            if not any(True for _ in achar_linhas(m.group(0), hoje)):
+                saida.append(f"sequência de {len(d)} dígitos seguidos, sem nenhum trecho de 44, 47 ou 48 dígitos com verificadores corretos")
+        else:
+            saida.append(f"número de {len(d)} dígitos (boleto tem 44, 47 ou 48)")
+    return saida
+
+
 def beneficiario_do_texto(texto: str) -> str:
     """Melhor esforço: o nome que vem depois de Beneficiário (ou Cedente). Vazio se não achar."""
     linhas = [l.strip() for l in (texto or "").splitlines()]
@@ -369,7 +387,7 @@ def dono_do_texto(texto: str, nomes: list) -> str:
 # Frases de e-mail que dizem que o boleto não precisa ser pago à mão. Cada uma precisa vir sem negação por perto (não tem, cadastre, adira...).
 _SINAIS_PAGAMENTO = [
     ("débito automático", re.compile(r"d[eé]bito autom[aá]tico|debitad[oa] automaticamente|ser[aá] debitad[oa]|d[eé]bito em conta|pagamento autom[aá]tico|d[eé]bito agendado", re.I)),
-    ("cartão", re.compile(r"(cobrad[oa]|lan[cç]ad[oa]|debitad[oa]) (no|em) (seu )?cart[aã]o|pagamento (via|no|com|pelo) cart[aã]o|cart[aã]o de cr[eé]dito (final|terminado)", re.I)),
+    ("cartão", re.compile(r"(cobrad[oa]|lan[cç]ad[oa]|debitad[oa]) (no|em) (seu )?cart[aã]o|(ser[aá]|foi|ser[aá] feito|foi feito) (cobrad[oa]|debitad[oa]|lan[cç]ad[oa]) .{0,30}cart[aã]o|pago (no|com o|com seu) cart[aã]o", re.I)),
     ("já pago", re.compile(r"j[aá] (foi |est[aá] )?pag[oa]|pagamento (foi )?(confirmado|realizado|identificado|recebido)|obrigad[oa] pelo pagamento|n[aã]o [eé] necess[aá]rio pagar|n[aã]o precisa pagar|comprovante de pagamento|recibo de pagamento", re.I)),
 ]
 _NEGACAO = re.compile(r"\b(n[aã]o|sem|cadastre|cadastrar|ades[aã]o|adira|aderir|ative|ativar|contrate|caso|se voc[eê]|quem n[aã]o|evite|programe|programar|saiba como|como)\b", re.I)

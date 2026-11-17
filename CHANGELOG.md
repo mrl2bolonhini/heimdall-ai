@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Leitura de e-mail afinada pelo primeiro uso
+- A busca passou a excluir e-mails da Uber e das abas Promoções e Social do Gmail, que lotavam o limite, e o limite subiu para 150 mensagens. O diagnóstico agrupa os descartes por remetente e motivo, com a quantidade e exemplos de assunto, e diz com precisão por que um número parecido com boleto não valeu: a contagem de dígitos e qual verificador falhou, sem mostrar os dígitos. E-mail que só tem link mas não fala de cobrança deixou de ser descrito como link para o boleto. A frase de cartão ficou mais estrita: lista de formas de pagamento ("pague com cartão, Pix ou boleto") não marca mais o boleto como já programado; só vale "será cobrado no seu cartão" e parecidos.
+
 ## 2026-11-17 - Código de barras de 44 dígitos
 - O Heimdall agora aceita também o código de barras do boleto, os 44 números sem a formatação da linha digitável, digitado ou colado à mão e encontrado em e-mails e PDFs. Ele converte para a linha digitável (47 ou 48 dígitos), confere o dígito verificador geral e registra do mesmo jeito; se o mesmo boleto aparecer nas duas formas, entra uma vez só. Para não confundir com chave de nota fiscal (também 44 dígitos), na leitura de textos só vale se começar com 8 ou com um código de banco conhecido.
 

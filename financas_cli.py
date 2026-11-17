@@ -150,8 +150,12 @@ def main() -> None:
                   + (f"; o limite é de {femail.LIMITE} por rodada, então pode haver mais antigas" if diag.get("total", 0) >= femail.LIMITE else "") + ".")
             if not res:
                 print("Nenhum boleto ou Pix com dígitos corretos nelas.")
+            grupos = {}
             for dom, assunto, motivo in diag.get("descartes", []):
-                print(f"Descartado: e-mail de {dom} ({assunto}): {motivo}.")
+                grupos.setdefault((dom, motivo), []).append(assunto)
+            for (dom, motivo), assuntos in sorted(grupos.items(), key=lambda kv: -len(kv[1])):
+                exemplo = "; ".join(dict.fromkeys(assuntos[:3]))
+                print(f"Descartado: {len(assuntos)} e-mail(s) de {dom} (por exemplo: {exemplo}): {motivo}.")
             for r in res:
                 print(f"E-mail de {r['remetente']} ({r['assunto']}): {r['novos']} novo(s), {r['repetidos']} já registrado(s)." + (f" ATENÇÃO: {r['aviso']}" if r["aviso"] else "") + (f" Já programado: {r['motivo']}." if r.get("motivo") else ""))
             print("\nSó li os e-mails (nada foi marcado, movido ou apagado) e nada foi pago.")

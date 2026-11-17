@@ -25,7 +25,7 @@ import heimdall_email_oficial as eo
 AQUI = Path(__file__).resolve().parent
 MAX_PDF = 8 * 1024 * 1024
 DIAS = 7
-LIMITE = 80  # mensagens mais recentes que passam no filtro, por rodada
+LIMITE = 150  # mensagens mais recentes que passam no filtro, por rodada
 MAX_DIAS = 365
 # Termos que fazem o Gmail separar a mensagem. É só a primeira peneira: o que decide é achar linha digitável ou Pix com dígitos corretos no texto ou no PDF.
 # Palavras genéricas (conta, cobrança, vencimento) só valem acompanhadas de um verbo ou termo de pagamento, para não trazer a caixa inteira.
@@ -36,7 +36,7 @@ TERMOS = ('filename:pdf OR boleto OR fatura OR mensalidade OR "linha digitavel" 
 
 
 def consulta(dias: int = DIAS) -> str:
-    return "newer_than:%dd (%s)" % (max(1, min(int(dias), MAX_DIAS)), TERMOS)
+    return "newer_than:%dd -from:uber.com -category:promotions -category:social (%s)" % (max(1, min(int(dias), MAX_DIAS)), TERMOS)
 AVISO_ORIGEM = "Remetente não autenticado: pode ser boleto falso. Confira o nome do beneficiário e o valor no app do seu banco antes de pagar."
 
 
@@ -112,8 +112,9 @@ def motivo_descarte(msg, corpo: str, pdfs: list) -> str:
     """Por que um e-mail que passou na busca não rendeu boleto: ajuda a entender o que fazer."""
     n_pdf = sum(1 for p in msg.iter_attachments() if p.get_content_type() == "application/pdf" or (p.get_filename() or "").lower().endswith(".pdf"))
     todo = corpo + "\n" + "\n".join(pdfs)
-    if re.search(r"\d[\d.\s-]{40,70}\d", todo):
-        return "achei um número do tamanho de uma linha digitável, mas os dígitos não conferem (cortado no meio, com erro ou adulterado)"
+    nums = fb.diagnosticar_numeros(todo)
+    if nums:
+        return "achei número parecido com boleto, mas os dígitos não conferem: " + nums[0]
     if "000201" in todo:
         return "achei um código parecido com Pix copia e cola, mas ele não confere (incompleto ou adulterado)"
     if n_pdf and not any(p.strip() for p in pdfs):
@@ -126,8 +127,8 @@ def motivo_descarte(msg, corpo: str, pdfs: list) -> str:
                     links = True
             except Exception:  # noqa: BLE001
                 pass
-    if links:
-        return "só traz link para o boleto (links nunca são abertos); abra o e-mail e copie a linha digitável para o Finance"
+    if links and re.search(r"boleto|fatura|pagar|pague|vencimento|vence|cobran[cç]a", corpo, re.I):
+        return "fala de cobrança e só traz link (links nunca são abertos); abra o e-mail e copie a linha digitável para o Finance"
     return "não traz linha digitável nem Pix no texto, e não há PDF com boleto"
 
 
