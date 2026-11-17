@@ -343,6 +343,20 @@ Total para próximas faturas   210,00
 _it2, _inf2 = _fa.ler_pdf_texto(prox, "cartão")
 confere("seção de próximas faturas é descartada quando o total só bate sem ela", len(_it2) == 3 and _inf2["confere"] is True and _inf2["descartadas"] == 2, (_it2, _inf2))
 
+# porcentagem ao lado de compra não vira valor; IOF internacional sem data entra
+pct = """Fatura do cartão Itaú
+Vencimento: 20/11/2026   Fechamento: 10/11/2026
+05/10   MERCADO EXEMPLO   50,00   Juros do rotativo   9,99%
+06/10   COMPRA EXTERIOR   100,00
+Total de IOF em R$   3,50
+Total dos lançamentos atuais   R$ 153,50
+Compras parceladas - próximas faturas
+08/09   MOVEIS TESTE 03/10   120,00
+Total para próximas faturas   120,00
+"""
+_it3, _inf3 = _fa.ler_pdf_texto(pct, "cartão")
+confere("porcentagem não é valor e IOF sem data entra na soma", [i["valor"] for i in _it3[:3]] == [-5000, -10000, -350] and _inf3["confere"] is True and _inf3["descartadas"] == 1, (_it3, _inf3))
+
 print()
 print("FALHAS: " + str(falhas))
 sys.exit(1 if falhas else 0)

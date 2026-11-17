@@ -201,7 +201,7 @@ def nome_da_conta(banco: str, tipo: str) -> str:
 # --------------------------------------------------------------------------------------------
 # Leitor genérico de PDF
 # --------------------------------------------------------------------------------------------
-_VALOR = r"-?\s?(?:R\$\s?)?-?\d{1,3}(?:\.\d{3})*,\d{2}\s?-?(?:\s?[CD]\b)?"
+_VALOR = r"-?\s?(?:R\$\s?)?-?\d{1,3}(?:\.\d{3})*,\d{2}(?!\s?%)\s?-?(?:\s?[CD]\b)?"  # porcentagem (9,99%) não é valor em reais
 _RE_VALOR = re.compile(_VALOR)
 _MESES = {"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6, "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12}
 _RE_DATA = re.compile(r"^\s*(?:(\d{2})/(\d{2})(?:/(\d{4}|\d{2}))?|(\d{1,2})\s+(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*\.?(?:\s+(?:de\s+)?(\d{4}))?)\b", re.I)
@@ -343,6 +343,15 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
         elif registro is not None and not re.search(r"\d", linha) and 3 <= len(linha) <= 70:
             marcas.append(f"TÍTULO depois de {len(itens)} lançamentos")
         segs = _segmentos(linha)
+        if cartao and not segs:
+            # IOF de compra internacional: cobrança real da fatura que vem sem data ("... IOF em R$ 7,47")
+            miof = re.search(r"\biof\b\s+em\s+r\$\s*(" + _VALOR + r")\s*$", linha, re.I)
+            if miof and itens:
+                viof = _centavos(miof.group(1))
+                if viof > 0:
+                    itens.append({"data": itens[-1]["data"], "valor": -viof, "descricao": "IOF compra internacional", "fitid": ""})
+                    eventos.append(("t", -viof))
+                    marcas.append("LANÇAMENTO gasto (IOF sem data)")
         if not segs and registro is not None and (_RE_VALOR.search(linha) or re.search(r"\d{2}/\d{2}|\b\d{1,2}\s+(?:de\s+)?(?:jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b", linha, re.I)):
             marcas.append("SEM DATA NO INÍCIO")
         for seg, m in segs:
