@@ -319,8 +319,9 @@ def diagnosticar_numeros(texto: str, hoje: date = None) -> list:
         elif len(d) > 48:
             if not any(True for _ in achar_linhas(m.group(0), hoje)):
                 saida.append(f"sequência de {len(d)} dígitos seguidos, sem nenhum trecho de 44, 47 ou 48 dígitos com verificadores corretos")
-        else:
+        elif len(d) >= 40:
             saida.append(f"número de {len(d)} dígitos (boleto tem 44, 47 ou 48)")
+        # menos que isso é telefone, data, protocolo ou valor: não interessa
     return saida
 
 

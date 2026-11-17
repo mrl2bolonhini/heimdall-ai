@@ -119,16 +119,22 @@ def motivo_descarte(msg, corpo: str, pdfs: list) -> str:
         return "achei um código parecido com Pix copia e cola, mas ele não confere (incompleto ou adulterado)"
     if n_pdf and not any(p.strip() for p in pdfs):
         return "tem PDF anexo, mas sem texto legível (provavelmente imagem escaneada) ou grande demais (acima de 8 MB)"
-    links = False
+    hosts = []
     for parte in msg.walk():
         if parte.get_content_maintype() == "text":
             try:
-                if re.search(r"https?://", parte.get_content()):
-                    links = True
+                for h in re.findall(r"https?://([A-Za-z0-9.-]+)", parte.get_content()):
+                    h = h.lower().rstrip(".")
+                    if h not in hosts:
+                        hosts.append(h)
             except Exception:  # noqa: BLE001
                 pass
-    if links and re.search(r"boleto|fatura|pagar|pague|vencimento|vence|cobran[cç]a", corpo, re.I):
-        return "fala de cobrança e só traz link (links nunca são abertos); abra o e-mail e copie a linha digitável para o Finance"
+    if hosts and re.search(r"boleto|fatura|pagar|pague|vencimento|vence|cobran[cç]a", corpo, re.I):
+        dom = (eo.dominio_do_remetente(eo.decodificar(msg.get("From"))) or "").lower()
+        raiz = ".".join(dom.split(".")[-3:]) if dom.endswith(".com.br") else ".".join(dom.split(".")[-2:])
+        proprio = [h for h in hosts if raiz and (h == raiz or h.endswith("." + raiz))]
+        onde = ("links no domínio do próprio remetente (" + ", ".join(proprio[:3]) + ")" if proprio else "nenhum link no domínio do remetente") + (f"; outros endereços: {', '.join([h for h in hosts if h not in proprio][:3])}" if len(hosts) > len(proprio) else "")
+        return f"fala de cobrança e só traz link ({onde}); links nunca são abertos, então abra o e-mail e copie a linha digitável para o Finance"
     return "não traz linha digitável nem Pix no texto, e não há PDF com boleto"
 
 

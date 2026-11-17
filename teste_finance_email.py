@@ -191,5 +191,14 @@ mg = {a: m for _, a, m in dg["descartes"]}
 confere("diagnóstico: e-mail com link mas sem fala de cobrança não é chamado de 'link para o boleto'", "link" not in mg["Sua viagem"] and "não traz" in mg["Sua viagem"], mg)
 confere("diagnóstico: número que não confere diz o erro e a contagem, sem mostrar os dígitos", "47 dígitos" in mg["Fatura"] and "verificador" in mg["Fatura"] and BONITA[:10].replace(".", "") not in mg["Fatura"], mg)
 
+# --- diagnóstico: números curtos não contam; links mostram só o domínio ---
+dh = {}
+fe.processar(fn.conectar(Path(tempfile.mkdtemp()) / "h2.db"), [
+    msg("Vivo <a@vivo.com.br>", "Sua fatura chegou", "Sua fatura vence dia 10. Cliente 1234567 telefone 11 99999 8888 data 10 11 2026", "<h1@x>"),
+    msg("Nubank <a@nubank.com.br>", "Novo boleto", "Boleto emitido: https://app.nubank.com.br/x/SEGREDO123 e https://click.rastreio.com/abc", "<h2@x>")], {}, None, dh)
+mh = {a: m for _, a, m in dh["descartes"]}
+confere("diagnóstico: número curto (cliente, telefone) não vira 'dígitos não conferem'", "não conferem" not in mh["Sua fatura chegou"], mh)
+confere("diagnóstico: link mostra domínio do remetente e outros, sem o caminho nem o código", "app.nubank.com.br" in mh["Novo boleto"] and "click.rastreio.com" in mh["Novo boleto"] and "SEGREDO123" not in mh["Novo boleto"], mh)
+
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)
