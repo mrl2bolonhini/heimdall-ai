@@ -328,6 +328,37 @@ confere("limite inválido pela página não grava", post("/orcamentos", {"catego
 confere("orçamento com CSRF errado é recusado", post("/orcamentos", {"categoria": "Outros gastos", "limite": "5"}, ck, "errado")[0] == 403)
 st, _, _ = post("/orcamentos/remover", {"categoria": "Outros gastos", "mes": "2025-03"}, ck, csrf)
 confere("remover limite", st == 303 and con2.execute("SELECT COUNT(*) FROM orcamentos").fetchone()[0] == 0)
+# contas recorrentes
+import tempfile as _tr
+_r = fn.conectar(os.path.join(_tr.mkdtemp(), "recorrentes.db"))
+_it = []
+for _m in ("2026-06", "2026-07", "2026-08", "2026-09", "2026-10"):
+    _it.append({"data": f"{_m}-05", "valor": -150000, "descricao": f"PIX ALUGUEL IMOBILIARIA {_m[5:]}", "fitid": ""})
+    _it.append({"data": f"{_m}-12", "valor": -3990, "descricao": "NETFLIX.COM", "fitid": ""})
+    _it.append({"data": f"{_m}-28", "valor": 500000, "descricao": "SALARIO EMPRESA XYZ", "fitid": ""})
+    _it.append({"data": f"{_m}-03", "valor": -2000, "descricao": "UBER TRIP", "fitid": ""})
+    _it.append({"data": f"{_m}-17", "valor": -2500, "descricao": "UBER TRIP", "fitid": ""})
+_it.append({"data": "2026-08-20", "valor": -88000, "descricao": "LOJA UNICA COMPRA", "fitid": ""})
+_it.append({"data": "2026-04-10", "valor": -5000, "descricao": "ACADEMIA ANTIGA", "fitid": ""})
+_it.append({"data": "2026-05-10", "valor": -5000, "descricao": "ACADEMIA ANTIGA", "fitid": ""})
+fn.importar_itens(_r, _it, "ofx", "rec.ofx", "Itaú conta")
+_rec = fn.recorrentes(_r, "2026-10-20")
+_nomes = {s["chave"]: s for s in _rec["series"]}
+confere("recorrentes: aluguel, assinatura e salário são achados", all(k in _nomes for k in ("pix aluguel imobiliaria", "netflix.com", "salario empresa xyz")), list(_nomes))
+confere("recorrentes: uso frequente (duas vezes por mês) e compra única não entram", "uber trip" not in _nomes and not any("loja" in k for k in _nomes))
+confere("recorrentes: valores e sinais", _nomes["pix aluguel imobiliaria"]["valor"] == -150000 and _nomes["salario empresa xyz"]["valor"] == 500000 and _nomes["salario empresa xyz"]["entrada"])
+confere("recorrentes: série que parou há mais de dois meses fica encerrada", _nomes["academia antiga"]["situacao"] == "encerrada")
+confere("recorrentes: o que já veio no mês aparece como chegou", _nomes["netflix.com"]["situacao"] == "chegou")
+confere("recorrentes: totais mensais não contam as encerradas", _rec["gasto_mensal"] == 153990 and _rec["renda_mensal"] == 500000, _rec)
+_atr = fn.recorrentes(_r, "2026-11-20")
+_futuro = {s["chave"]: s["situacao"] for s in _atr["series"]}
+confere("recorrentes: passou do dia habitual e não veio é atrasada", _futuro["netflix.com"] == "atrasada" and _futuro["pix aluguel imobiliaria"] == "atrasada", _futuro)
+_cedo = {s["chave"]: s["situacao"] for s in fn.recorrentes(_r, "2026-11-02")["series"]}
+confere("recorrentes: antes do dia habitual é por vir", _cedo["pix aluguel imobiliaria"] == "por_vir" and _cedo["netflix.com"] == "por_vir", _cedo)
+_v = fn.conectar(os.path.join(_tr.mkdtemp(), "vazio.db"))
+confere("recorrentes: sem histórico não acha nada", fn.recorrentes(_v, "2026-10-20")["series"] == [])
+st, corpo, _ = pedir("/recorrentes", ck)
+confere("página de recorrentes abre e usa tabelas com legenda", st == 200 and ("<caption>" in corpo or "Ainda não achei" in corpo), corpo[:200])
 rid = con2.execute("SELECT id FROM regras WHERE padrao='academia forma'").fetchone()[0]
 post("/regras/apagar", {"id": str(rid)}, ck, csrf)
 confere("apagar regra", con2.execute("SELECT COUNT(*) FROM regras WHERE padrao='academia forma'").fetchone()[0] == 0)

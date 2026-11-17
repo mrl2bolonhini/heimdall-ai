@@ -110,7 +110,7 @@ form.linha{display:inline}.sub{color:inherit;opacity:.85}
 td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/regras", "Regras")]
+NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/regras", "Regras")]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -345,6 +345,32 @@ def pg_orcamentos(q: dict, sess: dict) -> tuple:
     return "Orçamentos", "".join(corpo)
 
 
+def pg_recorrentes() -> tuple:
+    r = fn.recorrentes(banco())
+    if not r["series"]:
+        return "Contas recorrentes", ("<p>Ainda não achei lançamentos que se repetem todo mês. É preciso ter pelo menos 3 meses de histórico "
+                                      "(ou 2 meses seguidos com o mesmo valor) para uma conta aparecer aqui. Importe mais extratos e faturas.</p>"
+                                      + design.botao("/importar", "Importar extrato"))
+    corpo = [(f'<p>Achei {len([s for s in r["series"] if s["situacao"] != "encerrada"])} lançamento(s) que se repetem todo mês. Em média, saem {e(fn.brl(r["gasto_mensal"]))} '
+              f'e entram {e(fn.brl(r["renda_mensal"]))} por mês nessas séries. Elas são deduzidas do seu histórico, não são cadastradas: o dia e o valor são os típicos.</p>')]
+    titulos = {"atrasada": ("Esperadas neste mês e ainda não apareceram", "Passou do dia habitual e o lançamento não está no histórico. Pode estar atrasada ou o extrato mais recente ainda não foi importado."),
+               "por_vir": ("Ainda por vir neste mês", "Estão dentro do prazo habitual."),
+               "chegou": ("Já apareceram neste mês", ""), "encerrada": ("Possivelmente encerradas", "Não aparecem há mais de dois meses.")}
+    for sit in ("atrasada", "por_vir", "chegou", "encerrada"):
+        lista = [s for s in r["series"] if s["situacao"] == sit]
+        if not lista:
+            continue
+        linhas = []
+        for s in lista:
+            nome = e(s["descricao"]) + (" (parcelada)" if s["parcelada"] else "") + (" (entrada)" if s["entrada"] else "")
+            valor = fn.brl(abs(s["valor"])) + ("" if s["fixo"] else " (varia)")
+            linhas.append([nome, e(s["categoria"]), e(valor), f'dia {s["dia"]}', f'{s["n"]} meses, último em {e(fn.nome_mes(s["ultimo"]))}'])
+        t, aviso = titulos[sit]
+        corpo.append(f"<h2>{e(t)}</h2>" + (f'<p class="sub">{e(aviso)}</p>' if aviso else "")
+                     + tabela(t, ["Descrição", "Categoria", "Valor típico", "Dia típico", "Visto em"], linhas, {2}))
+    return "Contas recorrentes", "".join(corpo)
+
+
 def pg_regras(sess: dict) -> tuple:
     rs = banco().execute("SELECT * FROM regras ORDER BY (origem='usuario') DESC, categoria, padrao").fetchall()
     meu = [[e(r["padrao"]), e(r["categoria"]),
@@ -483,6 +509,8 @@ class Finance(BaseHTTPRequestHandler):
             titulo, corpo = pg_importar(sess)
         elif rota == "/orcamentos":
             titulo, corpo = pg_orcamentos(q, sess)
+        elif rota == "/recorrentes":
+            titulo, corpo = pg_recorrentes()
         elif rota == "/regras":
             titulo, corpo = pg_regras(sess)
         elif rota == "/exportar.csv":

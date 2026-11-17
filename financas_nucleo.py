@@ -502,6 +502,82 @@ def resumo_mes(con, mes: str, visao: str = "competencia") -> dict:
             "visao": visao, "sem_fatura": [p for p in semf if p["data"][:7] == mes]}
 
 
+def _chave_recorrente(desc_norm: str) -> str:
+    """Parte fixa da descrição: sem números (datas, parcelas, códigos) e só as primeiras palavras."""
+    s = re.sub(r"\d+", " ", desc_norm)
+    s = re.sub(r"\b(parcela|parc|de|em|da|do)\b", " ", s)
+    return " ".join([t for t in s.split() if len(t) >= 2][:4])
+
+
+def _mediana(valores: list):
+    v = sorted(valores)
+    n = len(v)
+    return v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) // 2
+
+
+def _indice_mes(mes: str) -> int:
+    return int(mes[:4]) * 12 + int(mes[5:7])
+
+
+def recorrentes(con, hoje=None) -> dict:
+    """Lançamentos que se repetem todo mês (aluguel, assinaturas, salário...), achados pelo histórico.
+    Uma série vale se aparece uma vez por mês em pelo menos 3 meses (ou em 2 meses seguidos com valor igual), sem faltar mais que um mês no meio,
+    com valor que varia até 25% e dia que varia até 7 dias. Devolve as séries e a situação de cada uma no mês de `hoje`."""
+    hoje = hoje or date.today()
+    if isinstance(hoje, str):
+        hoje = date.fromisoformat(hoje)
+    mes_ref = f"{hoje.year}-{hoje.month:02d}"
+    tp = tipos(con)
+    grupos = defaultdict(lambda: defaultdict(list))
+    for r in con.execute("SELECT data, valor, descricao, desc_norm, categoria, conta FROM transacoes WHERE valor<>0 ORDER BY data"):
+        if tp.get(r["categoria"]) == "neutra":
+            continue
+        chave = _chave_recorrente(r["desc_norm"])
+        if len(chave) < 3:
+            continue
+        grupos[(chave, r["valor"] > 0)][r["data"][:7]].append(r)
+    series = []
+    for (chave, entrada), por_mes in grupos.items():
+        unicos = sorted(m for m, l in por_mes.items() if len(l) == 1)
+        if len(unicos) < 2 or len(unicos) < 0.7 * len(por_mes):
+            continue
+        idx = [_indice_mes(m) for m in unicos]
+        span = idx[-1] - idx[0] + 1
+        if len(unicos) < 0.6 * span or span - len(unicos) > 1 and len(unicos) < 3:
+            continue
+        linhas = [por_mes[m][0] for m in unicos]
+        valores = [abs(x["valor"]) for x in linhas]
+        dias = [int(x["data"][8:10]) for x in linhas]
+        med = _mediana(valores)
+        if len(unicos) == 2:
+            if span != 2 or valores[0] != valores[1]:
+                continue
+        elif med == 0 or (max(valores) - min(valores)) > 0.25 * med:
+            continue
+        if max(dias) - min(dias) > 7:
+            continue
+        ult = linhas[-1]
+        series.append({"chave": chave, "descricao": ult["descricao"], "categoria": ult["categoria"], "conta": ult["conta"], "entrada": entrada,
+                       "valor": med if entrada else -med, "dia": _mediana(dias), "meses": unicos, "n": len(unicos), "ultimo": unicos[-1],
+                       "fixo": len(set(valores)) == 1, "parcelada": bool(re.search(r"parcela|\d+ ?/ ?\d+", ult["desc_norm"]))})
+    for s in series:
+        distancia = _indice_mes(mes_ref) - _indice_mes(s["ultimo"])
+        if mes_ref in s["meses"]:
+            s["situacao"] = "chegou"
+        elif distancia > 2:
+            s["situacao"] = "encerrada"
+        elif distancia <= 0:
+            s["situacao"] = "chegou"
+        elif hoje.day <= s["dia"] + 3 and distancia == 1:
+            s["situacao"] = "por_vir"
+        else:
+            s["situacao"] = "atrasada"
+    series.sort(key=lambda s: (s["entrada"], s["dia"], s["chave"]))
+    ativas = [s for s in series if s["situacao"] != "encerrada"]
+    return {"mes": mes_ref, "series": series,
+            "gasto_mensal": -sum(s["valor"] for s in ativas if not s["entrada"]), "renda_mensal": sum(s["valor"] for s in ativas if s["entrada"])}
+
+
 PERTO_DO_LIMITE = 80  # % do limite a partir do qual o orçamento mostra aviso
 
 

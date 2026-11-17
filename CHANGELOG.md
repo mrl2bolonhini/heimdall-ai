@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Finance acha as contas recorrentes
+- Nova página Contas recorrentes no Finance: o Heimdall procura no histórico os lançamentos que se repetem todo mês, como aluguel, assinaturas e salário, e mostra valor e dia típicos. A tabela fica dividida em esperadas neste mês e ainda não apareceram (passou do dia habitual), ainda por vir, já apareceram e possivelmente encerradas (sem aparecer há mais de dois meses). Uma conta só vale se aparece uma vez por mês em pelo menos 3 meses, ou em 2 meses seguidos com o mesmo valor, com valor variando até 25% e dia até 7 dias. Nada é cadastrado e nada sai do Mac.
+
 ## 2026-11-17 - Finance ganha orçamentos mensais
 - Nova página Orçamentos no Finance: você define um limite mensal em reais para cada categoria de gasto e vê, mês a mês, o gasto, quanto falta ou quanto passou e a situação em palavras (dentro do limite, perto do limite a partir de 80% e estourado). Os gastos seguem a visão escolhida, por compra ou por saída de caixa. Cada categoria tem botões Salvar limite e Remover limite com o nome da categoria, e o Resumo avisa quando há orçamento estourado ou perto do limite, com um botão para a página. Não vale para categorias neutras (pagamento de fatura, investimentos) nem para Sem categoria. O banco ganhou a tabela orcamentos.
 
