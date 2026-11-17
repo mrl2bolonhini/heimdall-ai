@@ -292,7 +292,7 @@ Total da fatura de novembro   R$ 521,09
 Total   R$ 301,76
 Vencimento: 15/12/2026
 Movimentações na fatura
-05/12   Débito para quitar a fatura   R$ 101,94
+05/12   Débito para pagar sua fatura   R$ 101,94
 05/12   Crédito por parcelamento da fatura   R$ 419,15
 05/12   Pagamento da fatura de outubro/2026   Parcela 1 de 5   R$ 98,73
 06/12   Juros de mora   R$ 1,05
@@ -303,7 +303,7 @@ Movimentações na fatura
 Total   R$ 176,42
 """
 _itm, _infm = fa.ler_pdf_texto(_mp, "cartão")
-confere("Mercado Pago: cabeçalho só com valores e a liquidação da fatura anterior não são lançamentos", len(_itm) == 6 and not any(("10.000" in i["descricao"] or "Débito para quitar" in i["descricao"] or "parcelamento da fatura" in i["descricao"]) for i in _itm), [i["descricao"] for i in _itm])
+confere("Mercado Pago: cabeçalho só com valores e a liquidação da fatura anterior não são lançamentos", len(_itm) == 6 and not any(("10.000" in i["descricao"] or "Débito para" in i["descricao"] or "parcelamento da fatura" in i["descricao"]) for i in _itm), [i["descricao"] for i in _itm])
 confere("Mercado Pago: a soma confere com o total da fatura", _infm["confere"] is True and _infm["soma"] == -30176, _infm)
 _it_cr, _ = fa.ler_pdf_texto("Nubank\nVencimento: 10/12/2026\n05/12   Crédito de teste   R$ 10,00\n06/12   Loja   R$ 30,00\nTotal da fatura   R$ 20,00\n", "cartão")
 confere("cartão: lançamento que começa com Crédito, com valor positivo, é crédito", any(i["valor"] > 0 for i in _it_cr) and sum(i["valor"] for i in _it_cr) == -2000, _it_cr)
