@@ -352,7 +352,7 @@ Exemplos:
   heimdall hook --remove ~/projetos/meu-repo
 
 @ update | Traz as novidades do GitHub
-Faz git pull --ff-only da branch atual do projeto e diz se precisa reiniciar ou reinstalar fluxos.
+Faz git pull --ff-only da branch atual do projeto e diz se precisa reiniciar ou reinstalar fluxos. Depois recarrega os comandos do heimdall no próprio terminal, então não precisa dar source de novo.
 Opções:
   -r, --restart        reinicia os serviços em seguida
   -h, --help           mostra esta ajuda

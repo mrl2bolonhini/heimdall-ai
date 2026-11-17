@@ -327,6 +327,22 @@ _it, _inf = _fa.ler_pdf_texto(quebrado, "cartão")
 confere("espaços soltos em datas e valores são reparados", len(_it) == 3 and abs(_inf["gastos"] - 30550) == 0 and _inf["confere"] is True, (_it, _inf))
 confere("parcela 03/10 e colunas não são coladas", _fa._reparar_espacos("03/10 120,00") == "03/10 120,00" and _fa._reparar_espacos("x   99,99   99/99") == "x   99,99   99/99")
 
+# fatura com seção final de parcelas das próximas faturas
+prox = """Fatura do cartão Itaú
+Vencimento: 20/11/2026   Fechamento: 10/11/2026
+Total dos lançamentos atuais   R$ 305,50
+05/10   MERCADO EXEMPLO   50,00
+06/10   PADARIA TESTE   55,50
+07/10   LOJA GRANDE   200,00
+Total dos lançamentos no cartão   305,50
+Compras parceladas - próximas faturas
+08/09   MOVEIS TESTE 03/10   120,00
+09/09   CELULAR TESTE 04/12   90,00
+Total para próximas faturas   210,00
+"""
+_it2, _inf2 = _fa.ler_pdf_texto(prox, "cartão")
+confere("seção de próximas faturas é descartada quando o total só bate sem ela", len(_it2) == 3 and _inf2["confere"] is True and _inf2["descartadas"] == 2, (_it2, _inf2))
+
 print()
 print("FALHAS: " + str(falhas))
 sys.exit(1 if falhas else 0)

@@ -287,6 +287,7 @@ heimdall() {
       branch="$(git -C "$HEIMDALL_DIR" rev-parse --abbrev-ref HEAD)"
       echo "Atualizando a branch $branch..."
       git -C "$HEIMDALL_DIR" pull --ff-only origin "$branch" || { echo "O pull falhou; veja a mensagem acima."; return 1; }
+      source "$HEIMDALL_DIR/heimdall.zsh" && echo "Comandos do heimdall recarregados neste terminal."
       if [ "$restart" = 1 ]; then
         _heimdall_sh subir.sh --reiniciar
       else

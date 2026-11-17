@@ -375,9 +375,24 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
             marcas.append("LANÇAMENTO " + ("crédito" if v > 0 else "gasto"))
         if registro is not None and marcas:
             registro.append((linha, marcas))
-    soma = sum(i["valor"] for i in itens)
-    gastos = sum(-i["valor"] for i in itens if i["valor"] < 0)
-    compras = sum(-i["valor"] for i in itens if i["valor"] < 0 and not _ENCARGO.search(fn.norm(i["descricao"])))
+    def _somas(lista):
+        s = sum(i["valor"] for i in lista)
+        g = sum(-i["valor"] for i in lista if i["valor"] < 0)
+        c = sum(-i["valor"] for i in lista if i["valor"] < 0 and not _ENCARGO.search(fn.norm(i["descricao"])))
+        return s, g, c
+    descartadas = 0
+    if cartao and totais and itens:
+        # Fatura com seção final de parcelas das próximas faturas: se todos os lançamentos não fecham com nenhum total,
+        # procura o maior começo da lista (na ordem do documento) cuja soma bate com um total citado e descarta o resto.
+        s0, g0, c0 = _somas(itens)
+        if not any(t in (abs(s0), g0, c0) for t in totais):
+            for k in range(len(itens) - 1, 2, -1):
+                s, g, c = _somas(itens[:k])
+                if any(t >= 5000 and t in (abs(s), g, c) for t in totais):
+                    descartadas = len(itens) - k
+                    itens = itens[:k]
+                    break
+    soma, gastos, compras = _somas(itens)
     liquido = abs(soma)
     confere = None
     saldos = _conferir_saldos(eventos)
@@ -385,7 +400,7 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
         confere = saldos[0]
     elif totais and itens:
         confere = any(t in (liquido, gastos, compras) for t in totais)
-    return itens, {"tipo": tipo, "soma": soma, "gastos": gastos, "totais": sorted(set(totais))[:6], "confere": confere,
+    return itens, {"tipo": tipo, "soma": soma, "gastos": gastos, "totais": sorted(set(totais))[:12], "confere": confere, "descartadas": descartadas,
                    "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2], "orientacoes": saldos[3]}}
 
 
@@ -462,7 +477,7 @@ def resumo_texto(a: dict) -> str:
         elif sal:
             linhas.append(f"Conferência: NÃO bateu. Dos {sal['pares']} saldos do dia, só {sal['batem']} fecham com os lançamentos. Confira antes de importar.")
         elif a["confere"] is True:
-            linhas.append("Conferência: o total do documento bate com a soma dos lançamentos.")
+            linhas.append("Conferência: o total do documento bate com a soma dos lançamentos." + (f" Ignorei {a['info']['descartadas']} lançamentos do fim do documento (parcelas das próximas faturas), que não fazem parte desta fatura." if a["info"].get("descartadas") else ""))
         elif a["confere"] is False:
             linhas.append("Conferência: NÃO bateu. Totais citados no documento: " + ", ".join(fn.brl(t) for t in tot) + ". Confira antes de importar.")
         else:
