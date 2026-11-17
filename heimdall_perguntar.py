@@ -82,14 +82,14 @@ _tarefas: dict = {}
 _trava = threading.Lock()
 
 
-def iniciar(dono: str, rotulo: str, funcao) -> str:
-    """Roda funcao() em outra thread. O resultado fica em estado(dono, id). Uma tarefa por dono de cada vez."""
+def iniciar(dono: str, rotulo: str, funcao, info: str = "") -> str:
+    """Roda funcao() em outra thread. Uma tarefa por dono e rótulo de cada vez; info é o texto que a tela mostra enquanto espera (a pergunta, por exemplo)."""
     with _trava:
         for t in _tarefas.values():
-            if t["dono"] == dono and t["estado"] == "pensando":
+            if t["dono"] == dono and t["rotulo"] == rotulo and t["estado"] == "pensando":
                 return t["id"]
         tid = uuid.uuid4().hex[:12]
-        _tarefas[tid] = {"id": tid, "dono": dono, "rotulo": rotulo, "estado": "pensando", "resultado": None, "erro": "", "inicio": time.time()}
+        _tarefas[tid] = {"id": tid, "dono": dono, "rotulo": rotulo, "estado": "pensando", "resultado": None, "erro": "", "inicio": time.time(), "info": info}
         for k in [k for k, v in _tarefas.items() if time.time() - v["inicio"] > 3600]:
             _tarefas.pop(k, None)
 
@@ -104,6 +104,13 @@ def iniciar(dono: str, rotulo: str, funcao) -> str:
 
     threading.Thread(target=rodar, daemon=True).start()
     return tid
+
+
+def em_andamento(dono: str, rotulo: str) -> list:
+    """Tarefas do dono ainda pensando ou que deram erro, da mais recente para a mais antiga (as prontas ficam guardadas por quem chamou)."""
+    with _trava:
+        lista = [dict(t) for t in _tarefas.values() if t["dono"] == dono and t["rotulo"] == rotulo and t["estado"] in ("pensando", "erro")]
+    return sorted(lista, key=lambda t: -t["inicio"])
 
 
 def ultima(dono: str, rotulo: str = ""):

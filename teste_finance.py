@@ -409,6 +409,8 @@ confere("ignorar pela página grava e chave estranha é recusada", con2.execute(
 import heimdall_perguntar as _hp
 import time as _tm
 _hp.chamar_local = lambda sistema, usuario, modelo="", max_tokens=700, timeout=240: "Resposta de teste sem números."
+st, corpo, _ = pedir("/analise", ck)
+confere("análise: semana e mês já vêm prontos, calculados pelas regras, com botões para gerar nova", st == 200 and "Análise da semana" in corpo and "Análise do mês" in corpo and "calculada agora, pelas regras" in corpo and "Gerar nova análise da semana" in corpo and "Gerar nova análise do mês" in corpo, corpo[:300])
 st, _, _ = post("/analise/gerar", {"tipo": "ano"}, ck, csrf)
 confere("análise com tipo inválido não inicia", st == 303 and con2.execute("SELECT COUNT(*) FROM analises").fetchone()[0] == 0)
 confere("análise com CSRF errado é recusada", post("/analise/gerar", {"tipo": "mes"}, ck, "errado")[0] == 403)
@@ -419,22 +421,40 @@ for _ in range(100):
     _tm.sleep(0.1)
 confere("gerar análise guarda no banco, com texto fixo quando o modelo é curto", st == 303 and con2.execute("SELECT origem FROM analises").fetchone()[0] == "regras")
 st, corpo, _ = pedir("/analise", ck)
-confere("página de análise mostra seções, botões com nome e aviso do Notas", st == 200 and "<h3>Resumo</h3>" in corpo and "<ol>" in corpo and "Analisar a semana" in corpo and "Salvar esta análise no Notas" in corpo and "iCloud" in corpo, corpo[:300])
+confere("página de análise mostra a análise salva do mês, a da semana calculada e o botão do Notas", st == 200 and "<h3>Resumo</h3>" in corpo and "<ol>" in corpo and "Gerada em" in corpo and "Salvar a análise do mês no Notas" in corpo and "iCloud" in corpo, corpo[:300])
 post("/analise/notas", {"id": "1"}, ck, csrf)
 st, corpo, _ = pedir("/analise", ck)
 confere("salvar no Notas sem o agente avisa sem derrubar a página", st == 200 and ("Análise salva" in corpo or "Não consegui salvar no Notas" in corpo))
-st, _, _ = post("/perguntar", {"pergunta": "quanto gastei com mercado?"}, ck, csrf)
+# campo Perguntar no fim de toda página
+for _rota in ("/", "/transacoes", "/tendencias", "/orcamentos", "/analise", "/futuros", "/boletos", "/recorrentes", "/regras", "/importar"):
+    st, corpo, _ = pedir(_rota, ck)
+    confere(f"campo Perguntar no fim de {_rota}", st == 200 and '<label for="pergunta">' in corpo and corpo.rfind('id="perguntar-t"') > corpo.rfind("</table>") and corpo.endswith("</section></main></body></html>"), corpo[-300:])
+st, _, cab = pedir("/perguntar", ck)
+confere("/perguntar não é mais página: volta ao resumo", st in (200, 303) and (st == 200 or cab.get("Location") == "/"))
+_hp.chamar_local = lambda *a, **k: "Primeira resposta."
+st, _, cab = post("/perguntar", {"pergunta": "quanto gastei com mercado?", "volta": "/orcamentos?mes=2025-03"}, ck, csrf)
+confere("pergunta volta para a mesma página, com o mês", st == 303 and cab.get("Location") == "/orcamentos?mes=2025-03", cab)
 for _ in range(100):
-    st2, corpo, _ = pedir("/perguntar", ck)
-    if "Resposta de teste" in corpo:
+    st2, corpo, _ = pedir("/orcamentos?mes=2025-03", ck)
+    if "Primeira resposta." in corpo:
         break
     _tm.sleep(0.1)
-confere("perguntar mostra a resposta do modelo", st == 303 and "Resposta de teste sem números." in corpo and '<label for="pergunta">' in corpo, corpo[:300])
-confere("pergunta vazia é recusada", post("/perguntar", {"pergunta": " "}, ck, csrf)[0] == 303)
-_hp.chamar_local = lambda *a, **k: "Foram R$ 123.456,78."
-post("/perguntar", {"pergunta": "total do mercado em 2025"}, ck, csrf)
+confere("a resposta aparece no fim da página, abaixo do campo", "Primeira resposta." in corpo and corpo.index('id="pergunta"') < corpo.index("Primeira resposta."), corpo[-500:])
+_hp.chamar_local = lambda *a, **k: "Segunda resposta."
+post("/perguntar", {"pergunta": "e de restaurantes?", "volta": "/tendencias"}, ck, csrf)
 for _ in range(100):
-    st2, corpo, _ = pedir("/perguntar", ck)
+    st2, corpo, _ = pedir("/regras", ck)
+    if "Segunda resposta." in corpo:
+        break
+    _tm.sleep(0.1)
+confere("respostas em ordem decrescente e visíveis em qualquer página", "Segunda resposta." in corpo and corpo.index("Segunda resposta.") < corpo.index("Primeira resposta."), corpo[-700:])
+confere("pergunta com volta maliciosa vai para o resumo", post("/perguntar", {"pergunta": "teste", "volta": "https://evil.example/x"}, ck, csrf)[2].get("Location") == "/" and post("/perguntar", {"pergunta": "teste", "volta": "//evil.example"}, ck, csrf)[2].get("Location") == "/")
+confere("pergunta vazia é recusada", post("/perguntar", {"pergunta": " "}, ck, csrf)[0] == 303)
+confere("pergunta com CSRF errado é recusada", post("/perguntar", {"pergunta": "x"}, ck, "errado")[0] == 403)
+_hp.chamar_local = lambda *a, **k: "Foram R$ 123.456,78."
+post("/perguntar", {"pergunta": "total do mercado em 2025", "volta": "/"}, ck, csrf)
+for _ in range(100):
+    st2, corpo, _ = pedir("/", ck)
     if "123.456,78" in corpo:
         break
     _tm.sleep(0.1)

@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Perguntar em todas as páginas e análises já prontas
+- O Perguntar deixou de ser uma página: virou um campo no fim de toda página do Finance, com as respostas logo abaixo, da mais recente para a mais antiga. Assim dá para ver um dado, ficar curioso e perguntar na mesma tela; o mês que estava na página entra no contexto. As dez últimas respostas ficam guardadas (tabela perguntas). A página Análise agora já traz a análise da semana e a do mês: a última gerada ou, se não houver, uma calculada na hora pelas regras, cada uma com um botão para gerar uma nova com os dados de agora.
+
 ## 2026-11-17 - Boletos por pessoa
 - A página Boletos ganhou a seção Pessoas: cadastre as pessoas cujos boletos você paga (por exemplo, a noiva e a filha), só o nome, nunca CPF. Cada boleto tem uma pessoa, escolhida ao registrar, trocada depois pelo botão Mudar pessoa ou achada sozinha pelo nome no campo Pagador do PDF. A página e o comando `heimdall finance --bills` somam o que está em aberto por pessoa, e o comando `heimdall finance --bill ... --person NOME` registra já com a pessoa. Os pagamentos futuros e o chat também mostram de quem é cada boleto. O banco ganhou a tabela pessoas e a coluna dono em boletos.
 

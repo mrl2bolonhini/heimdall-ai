@@ -190,7 +190,7 @@ def com_modelo(f: dict, modelo: str = "") -> dict:
     return {"texto": r["texto"], "origem": "modelo local", "avisos": []}
 
 
-def contexto_pergunta(con, pergunta: str, hoje=None) -> str:
+def contexto_pergunta(con, pergunta: str, hoje=None, mes_pagina: str = "") -> str:
     """Contexto para o campo Perguntar: resumo dos dois últimos meses, orçamentos, futuros, boletos, recorrentes e lançamentos que casam com palavras da pergunta."""
     import re
     import financas_boletos as fb
@@ -200,6 +200,8 @@ def contexto_pergunta(con, pergunta: str, hoje=None) -> str:
         raise fn.ErroFinance("O Finance ainda não tem lançamentos. Importe um extrato primeiro.")
     nomes = {"janeiro": 1, "fevereiro": 2, "marco": 3, "março": 3, "abril": 4, "maio": 5, "junho": 6, "julho": 7, "agosto": 8, "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12}
     pedidos = [ms[0], fn.mes_anterior(ms[0])]
+    if mes_pagina in ms and mes_pagina not in pedidos:
+        pedidos.insert(0, mes_pagina)  # o mês que o usuário está olhando na página entra primeiro
     for palavra in re.findall(r"[a-zçã]+", pergunta.lower()):
         if palavra in nomes:
             cand = [m for m in ms if int(m[5:7]) == nomes[palavra]]

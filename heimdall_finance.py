@@ -113,13 +113,18 @@ form.linha{display:inline}.sub{color:inherit;opacity:.85}
 td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/perguntar", "Perguntar"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras")]
+NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras")]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
     nav = ""
     flash = ""
+    perguntar_html = ""
     if sess:
+        try:
+            perguntar_html = _bloco_perguntar(sess)
+        except Exception:  # noqa: BLE001  (a página nunca deixa de abrir por causa do campo Perguntar)
+            perguntar_html = ""
         itens = "".join(f'<li><a href="{u}">{e(t)}</a></li>' for u, t in NAV)
         nav = (f'<nav aria-label="Principal"><ul>{itens}<li><form class="linha" method="post" action="/sair">'
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
@@ -130,7 +135,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Finance</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
             f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Finance", nav)}'
-            f'<main id="principal"><h1>{e(titulo)}</h1>{flash}{corpo}</main></body></html>').encode("utf-8")
+            f'<main id="principal"><h1>{e(titulo)}</h1>{flash}{corpo}{perguntar_html}</main></body></html>').encode("utf-8")
 
 
 def tabela(legenda: str, cabecalhos: list, linhas: list, numericas: set = None) -> str:
@@ -392,56 +397,89 @@ def _gerar_analise(tipo: str) -> int:
 
 
 def pg_analise(sess: dict) -> tuple:
+    """A semana e o mês já vêm prontos: a última análise salva ou, se não houver, a calculada agora pelas regras. Os botões geram uma nova com os dados de agora."""
     csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
-    corpo = ['<p>Uma análise no estilo de consultor, só com redução de gastos, datas de pagamento, o que subiu e baixou e pontos de atenção, sem dica de investimento. '
-             'Os números são calculados pelo Heimdall; o modelo local só redige o texto, e se ele citar um valor que não está nos dados, mostro o texto calculado. Nada sai do Mac.</p>',
-             f'<form class="lim" method="post" action="/analise/gerar">{csrf}<input type="hidden" name="tipo" value="semana"><button type="submit">Analisar a semana</button></form>'
-             f'<form class="lim" method="post" action="/analise/gerar">{csrf}<input type="hidden" name="tipo" value="mes"><button type="submit">Analisar o mês</button></form>']
-    t = perguntar.ultima(sess["csrf"], "analise")
-    if t and t["estado"] == "pensando":
-        corpo.append('<p role="status">O modelo local está escrevendo a análise. Pode levar alguns minutos. Quando achar que acabou, use o botão abaixo.</p>'
-                     + design.botao("/analise", "Ver a análise"))
-    elif t and t["estado"] == "erro":
-        corpo.append(f'<p class="erro" role="alert">Não consegui gerar a análise: {e(t["erro"])}</p>')
-    ult = banco().execute("SELECT * FROM analises ORDER BY id DESC LIMIT 1").fetchone()
-    if ult:
-        quem = "da semana" if ult["tipo"] == "semana" else f'de {fn.nome_mes(ult["mes"])}'
-        corpo.append(f'<h2>Última análise {e(quem)}</h2><p class="sub">Gerada em {e(ult["gerado_em"])}. Texto feito por {e(ult["origem"])}.</p>')
-        if ult["avisos"]:
-            corpo.append(f'<p role="status">{e(ult["avisos"])}</p>')
-        corpo.append(_texto_em_html(ult["texto"]))
-        corpo.append(f'<form class="lim" method="post" action="/analise/notas">{csrf}<input type="hidden" name="id" value="{ult["id"]}">'
-                     '<button type="submit">Salvar esta análise no Notas</button></form>'
-                     '<p class="sub">O Notas pode sincronizar com o iCloud. Só salve se aceitar que esta análise vá para lá.</p>')
-        antigas = banco().execute("SELECT id, tipo, mes, gerado_em FROM analises ORDER BY id DESC LIMIT 11 OFFSET 1").fetchall()
-        if antigas:
-            corpo.append("<h2>Análises anteriores</h2>" + tabela("Análises anteriores", ["Tipo", "Período", "Gerada em"],
-                         [["Semana" if a["tipo"] == "semana" else "Mês", e(fn.nome_mes(a["mes"])), e(a["gerado_em"])] for a in antigas]))
-    else:
-        corpo.append("<p>Ainda não há análise gerada. Use um dos botões acima.</p>")
+    corpo = ['<p>Análise no estilo de consultor, só com redução de gastos, datas de pagamento, o que subiu e baixou e pontos de atenção, sem dica de investimento. '
+             'Os números são calculados pelo Heimdall; o modelo local só redige o texto, e se ele citar um valor que não está nos dados, vale o texto calculado. Nada sai do Mac. '
+             'O botão de cada análise gera uma nova com os dados que o Finance tem até agora.</p>']
+    pendentes = {t["info"] for t in perguntar.em_andamento(sess["csrf"], "analise") if t["estado"] == "pensando"}
+    for t in perguntar.em_andamento(sess["csrf"], "analise"):
+        if t["estado"] == "erro":
+            corpo.append(f'<p class="erro" role="alert">Não consegui gerar a análise {"da semana" if t["info"] == "semana" else "do mês"}: {e(t["erro"])}</p>')
+    for tipo, titulo in (("semana", "Análise da semana"), ("mes", "Análise do mês")):
+        corpo.append(f'<section aria-labelledby="a-{tipo}"><h2 id="a-{tipo}">{titulo}</h2>')
+        ult = banco().execute("SELECT * FROM analises WHERE tipo=? ORDER BY id DESC LIMIT 1", (tipo,)).fetchone()
+        if tipo in pendentes:
+            corpo.append('<p role="status">O modelo local está escrevendo uma nova análise. Pode levar alguns minutos; use o botão abaixo para conferir.</p>'
+                         + design.botao("/analise", "Ver a análise"))
+        if ult:
+            corpo.append(f'<p class="sub">Gerada em {e(ult["gerado_em"])}, com os dados até então. Texto feito por {e(ult["origem"])}.</p>')
+            if ult["avisos"]:
+                corpo.append(f'<p role="status">{e(ult["avisos"])}</p>')
+            corpo.append(_texto_em_html(ult["texto"]))
+            corpo.append(f'<form class="lim" method="post" action="/analise/notas">{csrf}<input type="hidden" name="id" value="{ult["id"]}">'
+                         f'<button type="submit" aria-label="Salvar a {titulo.lower()} no Notas">Salvar no Notas</button></form>')
+        else:
+            try:
+                f = fanal.fatos(banco(), tipo)
+                corpo.append('<p class="sub">Ainda não há análise gerada com o modelo. Esta foi calculada agora, pelas regras, com os dados atuais.</p>' + _texto_em_html(fanal.texto_fixo(f)))
+            except fn.ErroFinance as ex:
+                corpo.append(f"<p>{e(str(ex))}</p>")
+        corpo.append(f'<form class="lim" method="post" action="/analise/gerar">{csrf}<input type="hidden" name="tipo" value="{tipo}">'
+                     f'<button type="submit">Gerar nova {titulo.lower()}</button></form></section>')
+    corpo.append('<p class="sub">O botão Salvar no Notas grava na pasta Heimdall Finanças. O Notas pode sincronizar com o iCloud: só salve se aceitar que a análise vá para lá.</p>')
     return "Análise", "".join(corpo)
 
 
-def pg_perguntar(sess: dict) -> tuple:
-    csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
-    corpo = ['<p>Pergunte em português sobre os seus gastos, orçamentos, parcelas, boletos e contas futuras, por exemplo: quanto gastei com mercado em outubro? O Heimdall junta os dados '
-             'relevantes e o modelo local responde só com base neles. Nada sai do Mac e nada é alterado.</p>',
-             f'<form method="post" action="/perguntar">{csrf}<p><label for="pergunta">Sua pergunta</label><br>'
-             '<input type="text" id="pergunta" name="pergunta" autocomplete="off" maxlength="300" required></p>'
-             '<button type="submit">Perguntar</button></form>']
-    t = perguntar.ultima(sess["csrf"], "pergunta")
-    if t:
+_ROTAS_VOLTA = {u for u, _ in NAV} | {"/transacoes"}
 
-        if t["estado"] == "pensando":
-            corpo.append('<p role="status">O modelo local está pensando. Quando achar que acabou, use o botão abaixo.</p>' + design.botao("/perguntar", "Ver a resposta"))
-        elif t["estado"] == "erro":
-            corpo.append(f'<p class="erro" role="alert">Não consegui responder: {e(t["erro"])}</p>')
-        else:
-            r = t["resultado"]
-            corpo.append(f'<h2>Resposta</h2><p class="sub">Para a pergunta: {e(r["pergunta"])}</p>' + _texto_em_html(r["texto"]))
-            for a in r["avisos"]:
-                corpo.append(f'<p role="status">{e(a)}</p>')
-    return "Perguntar", "".join(corpo)
+
+def _volta_valida(v: str) -> str:
+    """Caminho da própria página para voltar depois de perguntar: só rotas conhecidas, com consulta simples; senão, o resumo."""
+    m = re.fullmatch(r"(/[a-z]*)(\?[A-Za-z0-9=&%._-]{0,200})?", v or "")
+    return v if m and m.group(1) in _ROTAS_VOLTA else "/"
+
+
+def _bloco_perguntar(sess: dict) -> str:
+    """Campo Perguntar no fim de toda página, com as respostas logo abaixo, da mais recente para a mais antiga."""
+    atual = _volta_valida(sess.get("atual", "/"))
+    mes = (parse_qs(urlparse(atual).query).get("mes") or [""])[0]
+    csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
+    h = ('<section aria-labelledby="perguntar-t" class="perguntar"><h2 id="perguntar-t">Perguntar sobre os seus dados</h2>'
+         '<p class="sub">Pergunte em português, por exemplo: quanto gastei com mercado neste mês? O modelo local responde só com base nos seus dados, que não saem do Mac. '
+         'A resposta aparece logo abaixo, a mais recente primeiro.</p>'
+         f'<form method="post" action="/perguntar">{csrf}<input type="hidden" name="volta" value="{e(atual)}"><input type="hidden" name="mes" value="{e(mes)}">'
+         '<p><label for="pergunta">Sua pergunta</label><br><input type="text" id="pergunta" name="pergunta" autocomplete="off" maxlength="300" required></p>'
+         '<button type="submit">Perguntar</button></form>')
+    pend = perguntar.em_andamento(sess["csrf"], "pergunta")
+    if any(t["estado"] == "pensando" for t in pend):
+        h += '<p role="status">O modelo local está pensando. Quando achar que acabou, use o botão abaixo.</p>' + design.botao(atual.split("?")[0], "Atualizar respostas", {k: v[0] for k, v in parse_qs(urlparse(atual).query).items()})
+    for t in pend:
+        if t["estado"] == "erro":
+            h += f'<p class="erro" role="alert">Não consegui responder a pergunta "{e(t["info"])}": {e(t["erro"])}</p>'
+    try:
+        linhas = banco().execute("SELECT * FROM perguntas ORDER BY id DESC LIMIT 10").fetchall()
+    except Exception:  # noqa: BLE001
+        linhas = []
+    if linhas:
+        h += "<h3>Respostas, da mais recente para a mais antiga</h3>"
+        for r in linhas:
+            h += (f'<article><h4>{e(r["pergunta"])}</h4><p class="sub">Perguntado em {e(r["quando"])}.</p>' + _texto_em_html(r["resposta"])
+                  + (f'<p role="status">{e(r["avisos"])}</p>' if r["avisos"] else "") + "</article>")
+    return h + "</section>"
+
+
+def _responder_e_guardar(ctx: str, pergunta: str, pagina_: str) -> int:
+    """Em segundo plano: pergunta ao modelo local e guarda a resposta no banco, para aparecer no fim de qualquer página."""
+    r = perguntar.responder(ctx, pergunta)
+    con = fn.conectar(DIR_DADOS / "financas.db")
+    try:
+        cur = con.execute("INSERT INTO perguntas(quando, pagina, pergunta, resposta, avisos) VALUES(?,?,?,?,?)",
+                          (time.strftime("%Y-%m-%d %H:%M:%S"), pagina_, pergunta, r["texto"], " ".join(r["avisos"])))
+        con.commit()
+        return cur.lastrowid
+    finally:
+        con.close()
 
 
 def _token_agente() -> str:
@@ -721,6 +759,7 @@ class Finance(BaseHTTPRequestHandler):
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))
 
     def _get(self, rota: str, q: dict, sess: dict) -> None:
+        sess["atual"] = self.path
         if rota == "/":
             titulo, corpo = pg_resumo((q.get("mes") or [""])[0], (q.get("visao") or [""])[0])
         elif rota == "/transacoes":
@@ -734,7 +773,8 @@ class Finance(BaseHTTPRequestHandler):
         elif rota == "/analise":
             titulo, corpo = pg_analise(sess)
         elif rota == "/perguntar":
-            titulo, corpo = pg_perguntar(sess)
+            self._ir("/")
+            return
         elif rota == "/futuros":
             titulo, corpo = pg_futuros(sess)
         elif rota == "/boletos":
@@ -803,7 +843,7 @@ class Finance(BaseHTTPRequestHandler):
             if tipo not in ("semana", "mes"):
                 raise fn.ErroFinance("Escolha analisar a semana ou o mês.")
             fanal.fatos(banco(), tipo)  # falha logo, com mensagem clara, se não houver lançamentos
-            perguntar.iniciar(sess["csrf"], "analise", lambda: _gerar_analise(tipo))
+            perguntar.iniciar(sess["csrf"], "analise" , lambda: _gerar_analise(tipo), tipo)
             sess["flash"] = ("ok", "Comecei a análise. O modelo local pode levar alguns minutos; use Ver a análise para conferir.")
             self._ir("/analise")
             return
@@ -822,10 +862,12 @@ class Finance(BaseHTTPRequestHandler):
             q_ = " ".join(campos.get("pergunta", "").split())[:300]
             if len(q_) < 3:
                 raise fn.ErroFinance("Digite a pergunta.")
-            ctx = fanal.contexto_pergunta(banco(), q_)
-            perguntar.iniciar(sess["csrf"], "pergunta", lambda: {**perguntar.responder(ctx, q_), "pergunta": q_})
-            sess["flash"] = ("ok", "Pergunta enviada ao modelo local. Use Ver a resposta para conferir.")
-            self._ir("/perguntar")
+            volta = _volta_valida(campos.get("volta", "/"))
+            mes_p = campos.get("mes", "") if re.fullmatch(r"\d{4}-\d{2}", campos.get("mes", "")) else ""
+            ctx = fanal.contexto_pergunta(banco(), q_, None, mes_p)
+            perguntar.iniciar(sess["csrf"], "pergunta", lambda: _responder_e_guardar(ctx, q_, volta), q_)
+            sess["flash"] = ("ok", "Pergunta enviada ao modelo local. A resposta aparece no fim da página; use Atualizar respostas para conferir.")
+            self._ir(volta)
             return
         if rota == "/futuros":
             fn.adicionar_previsto(banco(), campos.get("descricao", ""), campos.get("valor", ""), campos.get("dia", ""), campos.get("inicio", ""), campos.get("fim", ""), campos.get("tipo") == "entrada")
