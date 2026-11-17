@@ -337,6 +337,11 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
         marcas = []
         if re.search(r"\btotal\b", linha, re.I):
             totais += [abs(_centavos(v.group(0))) for v in _RE_VALOR.finditer(linha)]
+            if registro is not None:
+                acum_g = sum(-i["valor"] for i in itens if i["valor"] < 0)
+                marcas.append(f"TOTAL {', '.join(fn.brl(abs(_centavos(v.group(0)))) for v in _RE_VALOR.finditer(linha))} depois de {len(itens)} lançamentos (acumulado: gastos {fn.brl(acum_g)}, líquido {fn.brl(sum(i['valor'] for i in itens))})")
+        elif registro is not None and not re.search(r"\d", linha) and 3 <= len(linha) <= 70:
+            marcas.append(f"TÍTULO depois de {len(itens)} lançamentos")
         segs = _segmentos(linha)
         if not segs and registro is not None and (_RE_VALOR.search(linha) or re.search(r"\d{2}/\d{2}|\b\d{1,2}\s+(?:de\s+)?(?:jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b", linha, re.I)):
             marcas.append("SEM DATA NO INÍCIO")
