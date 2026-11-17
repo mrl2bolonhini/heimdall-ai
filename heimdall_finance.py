@@ -58,6 +58,7 @@ carregar_env()
 import financas_arquivos as fa  # noqa: E402
 import financas_analise as fanal  # noqa: E402
 import financas_boletos as fb  # noqa: E402
+import financas_email as femail  # noqa: E402
 import heimdall_perguntar as perguntar  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
@@ -593,6 +594,10 @@ def pg_boletos(sess: dict) -> tuple:
         sit = estados[b["estado"]]
         if b["dias"] is not None and b["estado"] != "pago":
             sit += f' ({"há " + str(-b["dias"]) + " dia(s)" if b["dias"] < 0 else "em " + str(b["dias"]) + " dia(s)"})' if b["dias"] != 0 else ""
+        if b["aviso"]:
+            sit += f". Atenção: {b['aviso']}"
+        if (b["arquivo"] or "").startswith("e-mail"):
+            sit += f". Origem: {b['arquivo']}"
         oculto = f'{csrf}<input type="hidden" name="id" value="{b["id"]}">'
         acoes = (f'<form class="lim" method="post" action="/boletos/situacao">{oculto}<input type="hidden" name="pago" value="{0 if b["estado"] == "pago" else 1}">'
                  f'<button type="submit" aria-label="{"Reabrir" if b["estado"] == "pago" else "Marcar como pago"}: boleto de {e(quem)}">{"Reabrir" if b["estado"] == "pago" else "Marcar como pago"}</button></form>'
@@ -890,7 +895,7 @@ class Finance(BaseHTTPRequestHandler):
             self._ir("/futuros")
             return
         if rota == "/boletos":
-            b = fb.interpretar(campos.get("linha", ""))
+            b = fb.completar_pix(fb.interpretar(campos.get("linha", "")))
             idb, novo = fb.registrar(banco(), b, campos.get("quem", ""), "", None, campos.get("dono", "") if campos.get("dono", "") in fb.pessoas(banco()) else "")
             sess["flash"] = ("ok", ("Boleto registrado: " if novo else "Esse boleto já estava registrado: ") + fb.frase({**b, "beneficiario": campos.get("quem", "").strip() or b.get("beneficiario", "")}) + ".")
             self._ir("/boletos")
@@ -980,11 +985,42 @@ def _vigiar_entrada() -> None:
         time.sleep(60)
 
 
+def _vigiar_email() -> None:
+    """A cada 15 minutos lê o Gmail (somente leitura) atrás de boletos e Pix. Só roda com a senha de e-mail no .env; HEIMDALL_FINANCE_EMAIL=0 desliga."""
+    if os.environ.get("HEIMDALL_FINANCE_EMAIL", "1") == "0":
+        return
+    cfg = femail.credenciais()
+    if not cfg:
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} e-mail: sem senha de e-mail no .env; leitura de boletos por e-mail desligada\n")
+        return
+    while True:
+        try:
+            msgs = femail.buscar(cfg)  # rede fora da trava
+            with _trava:
+                estado_arq = DIR_DADOS / "email_estado.json"
+                try:
+                    estado = __import__("json").loads(estado_arq.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    estado = {}
+                res = femail.processar(banco(), msgs, estado)
+                try:
+                    estado_arq.write_text(__import__("json").dumps(estado), encoding="utf-8")
+                    estado_arq.chmod(0o600)
+                except OSError:
+                    pass
+            for r in res:
+                sys.stderr.write(f"{time.strftime('%H:%M:%S')} e-mail: boleto de {r['remetente']}: {r['novos']} novo(s)" + (" (remetente não autenticado)" if r["aviso"] else "") + "\n")
+        except Exception as ex:  # noqa: BLE001
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} e-mail: erro {type(ex).__name__}\n")
+        time.sleep(900)
+
+
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
         sys.exit("Sem senha e código configurados o Heimdall Finance não sobe. Rode: python3 heimdall_acesso.py --tudo")
     banco()
     threading.Thread(target=_vigiar_entrada, daemon=True).start()
+    threading.Thread(target=_vigiar_email, daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), Finance)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Finance em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))}; dados em {DIR_DADOS})\n")

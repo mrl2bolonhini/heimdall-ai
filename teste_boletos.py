@@ -152,6 +152,47 @@ confere("mudar a pessoa do boleto", fb.listar(_p, hoje)[0]["dono"] == "Ana Souza
 fb.remover_pessoa(_p, "Ana Souza Lima")
 confere("remover pessoa deixa o boleto sem pessoa", fb.listar(_p, hoje)[0]["dono"] is None)
 
+# --- Pix dinâmico (sem rede: o servidor é simulado) ----------------------------------------
+import base64  # noqa: E402
+import json  # noqa: E402
+
+_corpo_d = _t("00", "01") + _t("01", "12") + _t("26", _t("00", "br.gov.bcb.pix") + _t("25", "pix.exemplo.com.br/qr/v2/abc123")) + _t("52", "0000") + _t("53", "986") + _t("58", "BR") + _t("59", "LOJA DO ZE") + _t("60", "SAO PAULO") + _t("62", _t("05", "***")) + "6304"
+PIXD = _corpo_d + _crc(_corpo_d)
+pd = fb.interpretar(PIXD, hoje)
+confere("pix dinâmico: lê o endereço e não tem valor no código", pd["url"] == "pix.exemplo.com.br/qr/v2/abc123" and pd["valor"] is None and pd["beneficiario"] == "LOJA DO ZE", pd)
+confere("pix estático não tem endereço e não consulta nada", fb.interpretar(PIX, hoje)["url"] == "" and fb.completar_pix(fb.interpretar(PIX, hoje)) == fb.interpretar(PIX, hoje))
+for ruim in ("http://pix.exemplo.com.br/x", "https://127.0.0.1/x", "https://10.0.0.5/x", "https://user:senha@pix.exemplo.com.br/x", "https://pix.exemplo.com.br:8443/x", "localhost/x", "https://[::1]/x"):
+    try:
+        fb._url_segura(ruim)
+        confere(f"pix dinâmico: endereço recusado {ruim}", False)
+    except fn.ErroFinance:
+        confere(f"pix dinâmico: endereço recusado {ruim}", True)
+_payload = base64.urlsafe_b64encode(json.dumps({"calendario": {"dataDeVencimento": "2026-12-20"}, "valor": {"original": "89.90"}, "recebedor": {"nome": "LOJA DO ZE LTDA"}}).encode()).decode().rstrip("=")
+_jws = "eyJhbGciOiJSUzI1NiJ9." + _payload + ".assinatura"
+_orig = fb._url_segura
+fb._url_segura = lambda u: ("pix.exemplo.com.br", "203.0.113.10", "/qr/v2/abc123")
+pc = fb.completar_pix(pd, baixar=lambda h, i, c: _jws.encode())
+confere("pix dinâmico: completa valor, vencimento e recebedor e avisa que a assinatura não foi verificada", pc["valor"] == 8990 and pc["vencimento"] == "2026-12-20" and pc["beneficiario"] == "LOJA DO ZE LTDA" and "sem verificar a assinatura" in pc["aviso"], pc)
+pj = fb.completar_pix(pd, baixar=lambda h, i, c: json.dumps({"valor": {"original": "10.00"}}).encode())
+confere("pix dinâmico: JSON direto também é aceito", pj["valor"] == 1000)
+pe = fb.completar_pix(pd, baixar=lambda h, i, c: b"lixo")
+confere("pix dinâmico: resposta que não entendo deixa os dados como estavam, com aviso", pe["valor"] is None and "Confira no app" in pe["aviso"], pe)
+
+
+def _cai(h, i, c):
+    raise OSError("sem rede")
+
+
+confere("pix dinâmico: servidor fora do ar não derruba", "não respondeu" in fb.completar_pix(pd, baixar=_cai)["aviso"])
+fb._url_segura = _orig
+confere("pix dinâmico: sem rede, o endereço não resolve e o aviso explica", "Confira no app" in fb.completar_pix(pd, baixar=_cai).get("aviso", ""))
+_cd = fn.conectar(Path(tempfile.mkdtemp()) / "pd.db")
+fb.registrar(_cd, pc)
+_l = fb.listar(_cd, hoje)[0]
+confere("pix dinâmico registrado guarda valor, vencimento e o aviso", _l["valor"] == 8990 and _l["vencimento"] == "2026-12-20" and "sem verificar" in _l["aviso"], _l)
+src = (AQUI / "financas_email.py").read_text(encoding="utf-8")
+confere("e-mail nunca consulta Pix dinâmico", "completar_pix" not in src and "_baixar" not in src)
+
 # --- achar no texto de um PDF -------------------------------------------------------------
 texto = f"""Recibo do Pagador
 Beneficiário

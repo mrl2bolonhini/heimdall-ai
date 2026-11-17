@@ -4,6 +4,7 @@
 O Heimdall nunca paga nada: ele só lê o código, confere os dígitos verificadores e guarda o boleto como conta a pagar no banco local.
 Nada aqui usa internet; o banco SQLite fica só no Mac.
 """
+import json
 import re
 from datetime import date, datetime, timedelta
 
@@ -92,8 +93,112 @@ def interpretar_pix(texto: str) -> dict:
             valor = int(round(float(c["54"]) * 100)) or None
         except ValueError:
             valor = None
+    url = ""
+    for i in range(26, 52):
+        if str(i) in c:
+            try:
+                sub = _tlv(c[str(i)])
+            except ERRO:
+                continue
+            if sub.get("00", "").lower() == "br.gov.bcb.pix" and sub.get("25"):
+                url = sub["25"].strip()
     return {"tipo": "pix", "linha": cod, "banco": "", "codigo_banco": "", "valor": valor, "vencimento": None, "segmento": "", "beneficiario": (c.get("59") or "").strip(),
-            "cidade": (c.get("60") or "").strip()}
+            "cidade": (c.get("60") or "").strip(), "url": url}
+
+
+def _url_segura(url: str):
+    """(host, ip) se a URL do Pix dinâmico é https para um servidor público; senão levanta ErroFinance. Nunca segue para rede local, nem com porta, usuário ou IP direto."""
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+    bruta = url if re.match(r"(?i)https?://", url) else "https://" + url
+    p = urlparse(bruta)
+    if p.scheme.lower() != "https" or not p.hostname or p.username or p.password or (p.port not in (None, 443)):
+        raise ERRO("O endereço do Pix dinâmico não é um https comum; não vou abrir.")
+    host = p.hostname.lower().rstrip(".")
+    try:
+        ipaddress.ip_address(host)
+        raise ERRO("O endereço do Pix dinâmico é um número de IP direto; não vou abrir.")
+    except ValueError:
+        pass
+    try:
+        infos = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+    except OSError as ex:
+        raise ERRO("Não consegui resolver o endereço do Pix dinâmico.") from ex
+    ips = {i[4][0] for i in infos}
+    if not ips or any(not ipaddress.ip_address(x).is_global for x in ips):
+        raise ERRO("O endereço do Pix dinâmico aponta para a rede local ou para um endereço não público; não vou abrir.")
+    return host, sorted(ips)[0], (p.path or "/") + (("?" + p.query) if p.query else "")
+
+
+def _baixar(host: str, ip: str, caminho: str, timeout: int = 8, maximo: int = 30000) -> bytes:
+    """GET simples em https, conectando no IP já verificado, sem seguir redirecionamento, lendo no máximo `maximo` bytes. Não envia nenhum dado seu."""
+    import socket
+    import ssl
+    ctx = ssl.create_default_context()
+    with socket.create_connection((ip, 443), timeout=timeout) as s, ctx.wrap_socket(s, server_hostname=host) as t:
+        t.settimeout(timeout)
+        t.sendall(f"GET {caminho} HTTP/1.1\r\nHost: {host}\r\nAccept: application/json, application/jose, text/plain\r\nUser-Agent: Heimdall-Finance\r\nConnection: close\r\n\r\n".encode("ascii", "ignore"))
+        dados = b""
+        while len(dados) < maximo + 4000:
+            parte = t.recv(8192)
+            if not parte:
+                break
+            dados += parte
+    cab, _, corpo = dados.partition(b"\r\n\r\n")
+    if not cab.startswith(b"HTTP/1.1 200") and not cab.startswith(b"HTTP/1.0 200"):
+        raise ERRO("O servidor do Pix dinâmico não devolveu os dados (resposta " + cab.split(b"\r\n")[0].decode("ascii", "ignore")[:40] + ").")
+    if b"chunked" in cab.lower():
+        raise ERRO("O servidor do Pix dinâmico respondeu num formato que não leio.")
+    return corpo[:maximo]
+
+
+def ler_payload_pix(corpo: bytes) -> dict:
+    """Payload do Pix dinâmico: um JWS compacto (cabeçalho.payload.assinatura, em base64url) ou JSON direto. A assinatura NÃO é verificada."""
+    import base64
+    texto = corpo.decode("utf-8", "replace").strip()
+    try:
+        if texto.startswith("{"):
+            return json.loads(texto)
+        partes = texto.split(".")
+        if len(partes) != 3:
+            raise ValueError
+        return json.loads(base64.urlsafe_b64decode(partes[1] + "=" * (-len(partes[1]) % 4)))
+    except (ValueError, TypeError) as ex:
+        raise ERRO("Não entendi a resposta do servidor do Pix dinâmico.") from ex
+
+
+def completar_pix(dados: dict, baixar=_baixar) -> dict:
+    """Para Pix dinâmico (código com endereço, sem valor), consulta o servidor do banco do recebedor e completa valor, vencimento e quem recebe.
+    Só roda a pedido seu (página, comando), nunca para código vindo de e-mail. A assinatura do banco não é verificada, então vira aviso. Se falhar, devolve os dados como estavam."""
+    if dados.get("tipo") != "pix" or not dados.get("url"):
+        return dados
+    novo = dict(dados)
+    try:
+        host, ip, caminho = _url_segura(dados["url"])
+        d = ler_payload_pix(baixar(host, ip, caminho))
+    except ERRO as ex:
+        novo["aviso"] = f"Pix dinâmico: não consegui consultar o valor ({ex}). Confira no app do seu banco."
+        return novo
+    except OSError as ex:
+        novo["aviso"] = f"Pix dinâmico: o servidor não respondeu ({type(ex).__name__}). Confira no app do seu banco."
+        return novo
+    try:
+        valor = d.get("valor", {}).get("original") or d.get("valor", {}).get("final")
+        if valor:
+            novo["valor"] = int(round(float(valor) * 100)) or None
+    except (ValueError, TypeError, AttributeError):
+        pass
+    cal = d.get("calendario", {}) if isinstance(d.get("calendario"), dict) else {}
+    venc = cal.get("dataDeVencimento") or cal.get("vencimento")
+    if isinstance(venc, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", venc):
+        novo["vencimento"] = venc
+    rec = d.get("recebedor", {}) if isinstance(d.get("recebedor"), dict) else {}
+    nome = rec.get("nomeFantasia") or rec.get("nome")
+    if isinstance(nome, str) and nome.strip():
+        novo["beneficiario"] = nome.strip()[:80]
+    novo["aviso"] = "Valor, vencimento e recebedor lidos do servidor do banco do recebedor, sem verificar a assinatura. Confira no app do seu banco antes de pagar."
+    return novo
 
 
 def interpretar(texto: str, hoje: date = None) -> dict:
@@ -235,14 +340,14 @@ def dono_do_texto(texto: str, nomes: list) -> str:
     return achadas[0] if len(achadas) == 1 else ""
 
 
-def registrar(con, dados: dict, beneficiario: str = "", arquivo: str = "", agora: str = None, dono: str = "") -> tuple:
+def registrar(con, dados: dict, beneficiario: str = "", arquivo: str = "", agora: str = None, dono: str = "", aviso: str = "") -> tuple:
     """Guarda o boleto como conta a pagar. Devolve (id, novo). A mesma linha digitável não entra duas vezes."""
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ja = con.execute("SELECT id FROM boletos WHERE linha=?", (dados["linha"],)).fetchone()
     if ja:
         return ja["id"], False
-    cur = con.execute("INSERT INTO boletos(linha, valor, vencimento, banco, beneficiario, tipo, segmento, arquivo, situacao, criado_em, dono) VALUES(?,?,?,?,?,?,?,?,'aberto',?,?)",
-                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or dados.get("beneficiario") or "").strip(), dados["tipo"], dados["segmento"], arquivo, agora, (dono or "").strip() or None))
+    cur = con.execute("INSERT INTO boletos(linha, valor, vencimento, banco, beneficiario, tipo, segmento, arquivo, situacao, criado_em, dono, aviso) VALUES(?,?,?,?,?,?,?,?,'aberto',?,?,?)",
+                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or dados.get("beneficiario") or "").strip(), dados["tipo"], dados["segmento"], arquivo, agora, (dono or "").strip() or None, aviso or dados.get("aviso") or None))
     con.commit()
     return cur.lastrowid, True
 

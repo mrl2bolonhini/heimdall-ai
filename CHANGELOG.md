@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Boletos por e-mail e Pix dinâmico
+- O painel do Finance passou a ler o Gmail a cada 15 minutos (somente leitura, com a senha de aplicativo que o monitor de e-mails oficiais já usa) e registra os boletos e Pix do corpo e dos PDFs anexados dos últimos 7 dias, com a pessoa achada pelo campo Pagador. Links nunca são abertos e só vale linha digitável com dígitos corretos. Como boleto falso por e-mail é golpe comum, o remetente é conferido pela autenticação (DMARC/DKIM) que o Gmail registrou: se não passar, o boleto entra com o aviso de possível golpe, mostrado na página. Comando novo `heimdall finance --read-email` para rodar na hora; HEIMDALL_FINANCE_EMAIL=0 desliga a leitura automática.
+- Pix dinâmico (código com endereço e sem valor): a pedido seu, pela página ou pelo comando, o Heimdall consulta o servidor do banco do recebedor e completa valor, vencimento e quem recebe. Só abre https público (nunca IP direto, porta, usuário ou rede local), não segue redirecionamentos, não envia nenhum dado seu e avisa que a assinatura não foi verificada. Nunca é feito para código vindo de e-mail. O banco ganhou a coluna aviso em boletos.
+
 ## 2026-11-17 - Perguntar em todas as páginas e análises já prontas
 - O Perguntar deixou de ser uma página: virou um campo no fim de toda página do Finance, com as respostas logo abaixo, da mais recente para a mais antiga. Assim dá para ver um dado, ficar curioso e perguntar na mesma tela; o mês que estava na página entra no contexto. As dez últimas respostas ficam guardadas (tabela perguntas). A página Análise agora já traz a análise da semana e a do mês: a última gerada ou, se não houver, uma calculada na hora pelas regras, cada uma com um botão para gerar uma nova com os dados de agora.
 

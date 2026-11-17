@@ -82,6 +82,7 @@ def main() -> None:
     g.add_argument("--reprocessar", action="store_true")
     g.add_argument("--boleto", metavar="LINHA_OU_PDF")
     g.add_argument("--boletos", action="store_true")
+    g.add_argument("--ler-email", dest="ler_email", action="store_true")
     ap.add_argument("--valores", action="store_true")
     ap.add_argument("--linhas", type=int, default=150)
     ap.add_argument("--conta", default="")
@@ -128,7 +129,7 @@ def main() -> None:
                     sys.exit("Não achei uma linha digitável válida nesse arquivo. Se o código estiver impresso, rode de novo passando só os números entre aspas.")
                 beneficiario, arquivo = fb.beneficiario_do_texto(texto), p.name
             else:
-                achadas = [fb.interpretar(a.boleto)]
+                achadas = [fb.completar_pix(fb.interpretar(a.boleto))]
             for b in achadas:
                 dono = a.pessoa or (fb.dono_do_texto(texto, fb.pessoas(con)) if p.is_file() else "")
                 if a.pessoa and a.pessoa not in fb.pessoas(con):
@@ -136,6 +137,17 @@ def main() -> None:
                 idb, novo = fb.registrar(con, b, beneficiario, arquivo, None, dono)
                 print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario or b.get("beneficiario", ""), "dono": dono}))
             print("\nO Heimdall não paga nada: só guarda a conta a pagar. Veja em heimdall finance, página Boletos, ou com heimdall finance --bills.")
+        elif a.ler_email:
+            import financas_email as femail
+            cfg = femail.credenciais()
+            if not cfg:
+                sys.exit("Não achei a senha de aplicativo do Gmail no .env (HEIMDALL_EMAIL_USUARIO e HEIMDALL_EMAIL_SENHA_APP). Instale o monitor de e-mails oficiais primeiro: heimdall privacy --email.")
+            res = femail.executar(_banco(), cfg, DIR_DADOS / "email_estado.json")
+            if not res:
+                print(f"Nenhum boleto ou Pix novo nos e-mails dos últimos {femail.DIAS} dias.")
+            for r in res:
+                print(f"E-mail de {r['remetente']} ({r['assunto']}): {r['novos']} novo(s), {r['repetidos']} já registrado(s)." + (f" ATENÇÃO: {r['aviso']}" if r["aviso"] else ""))
+            print("\nSó li os e-mails (nada foi marcado, movido ou apagado) e nada foi pago.")
         elif a.boletos:
             con = _banco()
             lista = fb.listar(con)

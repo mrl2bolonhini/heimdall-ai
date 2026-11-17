@@ -121,6 +121,8 @@ def conectar(caminho) -> sqlite3.Connection:
         con.execute("ALTER TABLE importacoes ADD COLUMN hash_arquivo TEXT")
     if "dono" not in {r["name"] for r in con.execute("PRAGMA table_info(boletos)")}:
         con.execute("ALTER TABLE boletos ADD COLUMN dono TEXT")
+    if "aviso" not in {r["name"] for r in con.execute("PRAGMA table_info(boletos)")}:
+        con.execute("ALTER TABLE boletos ADD COLUMN aviso TEXT")
     if "importacao_id" not in {r["name"] for r in con.execute("PRAGMA table_info(transacoes)")}:
         con.execute("ALTER TABLE transacoes ADD COLUMN importacao_id INTEGER")
     # lançamentos importados antes desta coluna existir: liga cada um à importação de mesma conta e mesmo instante

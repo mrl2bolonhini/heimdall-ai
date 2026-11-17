@@ -469,6 +469,10 @@ confere("página de boletos tem campo com rótulo, tabela com legenda e botões 
 st, _, _ = post("/boletos/pessoa", {"nome": "Maria Souza"}, ck, csrf)
 confere("cadastrar pessoa pela página", st == 303 and con2.execute("SELECT COUNT(*) FROM pessoas").fetchone()[0] == 1)
 _idb = con2.execute("SELECT id FROM boletos").fetchone()[0]
+con2.execute("UPDATE boletos SET aviso='Remetente não autenticado: teste', arquivo='e-mail de golpe.biz: x' WHERE id=?", (_idb,))
+con2.commit()
+st, corpo, _ = pedir("/boletos", ck)
+confere("boleto com aviso mostra Atenção e a origem do e-mail", "Atenção: Remetente não autenticado: teste" in corpo and "Origem: e-mail de golpe.biz" in corpo)
 post("/boletos/dono", {"id": str(_idb), "dono": "Maria Souza"}, ck, csrf)
 st, corpo, _ = pedir("/boletos", ck)
 confere("boleto mostra a pessoa e o total por pessoa", con2.execute("SELECT dono FROM boletos").fetchone()[0] == "Maria Souza" and "Total em aberto por pessoa: Maria Souza R$ 450,90" in corpo and "Mudar a pessoa do boleto de Padaria" in corpo, corpo[-600:])
