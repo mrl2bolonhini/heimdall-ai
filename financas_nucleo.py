@@ -51,7 +51,7 @@ REGRAS_PADRAO = [
     ("salario", "Salário"), ("folha de pagamento", "Salário"), ("proventos", "Salário"), ("pro labore", "Salário"),
     ("pagamento de fatura", "Pagamento de fatura"), ("pagamento fatura", "Pagamento de fatura"), ("pgto fatura", "Pagamento de fatura"),
     ("pag fatura", "Pagamento de fatura"), ("fatura cartao", "Pagamento de fatura"),
-    ("fatura itau", "Pagamento de fatura"), ("fatura nubank", "Pagamento de fatura"), ("fatura mercado", "Pagamento de fatura"), ("rend pago aplic", "Investimentos"),
+    ("pagamento recebido", "Pagamento de fatura"), ("pagamento efetuado", "Pagamento de fatura"), ("fatura itau", "Pagamento de fatura"), ("fatura nubank", "Pagamento de fatura"), ("fatura mercado", "Pagamento de fatura"), ("rend pago aplic", "Investimentos"),
     ("aplicacao", "Investimentos"), ("resgate", "Investimentos"), ("tesouro direto", "Investimentos"), ("cdb", "Investimentos"),
     ("xp investimentos", "Investimentos"), ("rico investimentos", "Investimentos"), ("corretora", "Investimentos"),
     ("transferencia", "Transferências"), ("pix", "Transferências"), ("ted ", "Transferências"),

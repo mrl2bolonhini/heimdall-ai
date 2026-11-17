@@ -80,8 +80,8 @@ CSV_CARTAO = ("date,category,title,amount\n2026-02-04,restaurante,Restaurante do
               "2026-02-15,compras,Loja Sem Regra,899.00\n2026-02-20,pagamento,Pagamento recebido,-1500.00\n").encode("utf-8")
 r = fn.importar(con, CSV_CARTAO, "cartao.csv", "Nubank cartão", inverter=True)
 confere("CSV de cartão com valores positivos e inverter: gastos viram negativos", r["novas"] == 4 and con.execute("SELECT valor FROM transacoes WHERE descricao='Loja Sem Regra'").fetchone()[0] == -89900, r)
-confere("entrada sem regra vira Outras receitas; gasto sem regra fica Sem categoria",
-        con.execute("SELECT categoria FROM transacoes WHERE descricao='Pagamento recebido'").fetchone()[0] == "Outras receitas"
+confere("'Pagamento recebido' na fatura é pagamento de fatura (não conta como receita); gasto sem regra fica Sem categoria",
+        con.execute("SELECT categoria FROM transacoes WHERE descricao='Pagamento recebido'").fetchone()[0] == "Pagamento de fatura"
         and con.execute("SELECT categoria FROM transacoes WHERE descricao='Loja Sem Regra'").fetchone()[0] == fn.SEM_CATEGORIA)
 
 for ruim, esperado in ((b"nada util aqui\nlinha 2", "cabeçalho"), (b"", "cabeçalho"), (b"Data;Valor\nabc;xyz", "nenhuma linha")):

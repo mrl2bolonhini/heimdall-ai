@@ -144,6 +144,57 @@ confere("fatura Itaú é cartão", fa.detectar(FATURA_ITAU, "fatura.pdf") == ("I
 con_x = fn.conectar(Path(tempfile.mkdtemp(prefix="finance_cat_")) / "c.db")
 confere("'FATURA ITAU UNICLASS' é pagamento de fatura (fora das despesas)", fn.categorizar(con_x, fn.norm("FATURA ITAU UNICLASS 10/2026"), fn._regras(con_x)) == "Pagamento de fatura")
 
+# ---- fatura do Nubank em OFX (cartão: compra negativa, pagamento recebido positivo)
+NU_OFX = """OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+<OFX>
+<SIGNONMSGSRSV1><SONRS><FI>
+<ORG>NU PAGAMENTOS S.A.</ORG>
+<FID>260</FID>
+</FI></SONRS></SIGNONMSGSRSV1>
+<CREDITCARDMSGSRSV1>
+<CCSTMTTRNRS>
+<CCSTMTRS>
+<CURDEF>BRL</CURDEF>
+<CCACCTFROM>
+<ACCTID>abc1d234-e5f6-7890-1abc-de23fg456hi7</ACCTID>
+</CCACCTFROM>
+<BANKTRANLIST>
+<STMTTRN>
+<TRNTYPE>CREDIT</TRNTYPE>
+<DTPOSTED>20261005000000[-3:GMT]</DTPOSTED>
+<TRNAMT>350.00</TRNAMT>
+<FITID>6abc12d3-4567-89e0-12ab-c3d45efgh678</FITID>
+<MEMO>Pagamento recebido</MEMO>
+</STMTTRN>
+<STMTTRN>
+<TRNTYPE>DEBIT</TRNTYPE>
+<DTPOSTED>20261006000000[-3:GMT]</DTPOSTED>
+<TRNAMT>-120.50</TRNAMT>
+<FITID>6abcde12-3a4b-5c6d-7a8b-9cde012fgh34</FITID>
+<MEMO>Padaria Exemplo</MEMO>
+</STMTTRN>
+</BANKTRANLIST>
+</CCSTMTRS>
+</CCSTMTTRNRS>
+</CREDITCARDMSGSRSV1>
+</OFX>
+""".encode()
+a = fa.analisar(NU_OFX, "Nubank_2026-11-01.ofx")
+confere("OFX de fatura do Nubank: banco, tipo e conta identificados", (a["banco"], a["tipo"], a["conta"]) == ("Nubank", "cartão", "Nubank cartão"), (a["banco"], a["tipo"], a["conta"]))
+confere("OFX de fatura do Nubank: o sinal do arquivo é respeitado (compra negativa, pagamento positivo)", [i["valor"] for i in a["itens"]] == [35000, -12050], [i["valor"] for i in a["itens"]])
+ins = fa.inspecionar(NU_OFX, "x.ofx")
+confere("inspeção de OFX mantém as tags de fechamento e mascara o conteúdo", "</CODE>" in ins or "</TRNAMT>" in ins or "<MEMO>Xxxxxxxxx xxxxxxxx</MEMO>" in ins, ins[-400:])
+confere("inspeção de OFX não vaza nome de loja, identificador nem valor", "Padaria" not in ins and "abc1d234" not in ins and "120" not in ins and "350" not in ins, ins)
+con_nu = fn.conectar(Path(tempfile.mkdtemp(prefix="finance_nu_")) / "n.db")
+r = fa.importar_arquivo(con_nu, NU_OFX, "Nubank_2026-11-01.ofx")
+confere("importa o OFX do Nubank na conta detectada", r["novas"] == 2 and r["conta"] == "Nubank cartão", r)
+cat = con_nu.execute("SELECT categoria FROM transacoes WHERE descricao='Pagamento recebido'").fetchone()
+confere("'Pagamento recebido' na fatura não vira receita", cat and cat["categoria"] == "Pagamento de fatura", cat and cat["categoria"])
+r2 = fa.importar_arquivo(con_nu, NU_OFX, "Nubank_2026-11-01.ofx")
+confere("importar o mesmo OFX de novo não duplica", r2["novas"] == 0 and r2["repetidas"] == 2, r2)
+
 # ---- PDF de verdade
 try:
     pdf = pdf_de(FATURA)

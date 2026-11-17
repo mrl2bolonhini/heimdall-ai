@@ -137,7 +137,7 @@ def inspecionar(dados: bytes, nome: str, max_linhas: int = 150) -> str:
         tipo = "OFX" if re.search(r"<OFX>|OFXHEADER", base[:4000], flags=re.I) else "CSV ou texto"
         if tipo == "OFX":
             # no OFX os rótulos são tags; mascara só o conteúdo depois de cada tag
-            base = "\n".join(re.sub(r"(<\w+>)(.*)", lambda m: m.group(1) + mascarar_linha(m.group(2)), ln) for ln in base.splitlines())
+            base = "\n".join(re.sub(r"(<\w+>)([^<]*)", lambda m: m.group(1) + mascarar_linha(m.group(2)), ln) for ln in base.splitlines())
             return f"Estrutura anônima ({tipo})\n" + mascarar_ofx_curto(base, max_linhas)
     return f"Estrutura anônima ({tipo})\n" + mascarar(base, max_linhas)
 
@@ -170,9 +170,12 @@ def detectar(texto: str, nome: str = "") -> tuple:
             i = base.find(c)
             if i >= 0 and (pos_min is None or i < pos_min):
                 banco, pos_min = b, i
-    forte_cartao = len(re.findall(r"total (da|desta) fatura|limite total de credito|limite disponivel|fechamento da fatura|vencimento da fatura|pagamento minimo|proximo fechamento|\bcreditcard\b|<ccstmtrs>", base))
+    bruto = texto[:6000].lower()
+    forte_cartao = 3 * len(re.findall(r"<ccstmtrs>|<creditcardmsgsrsv1>", bruto))
+    forte_conta = 3 * len(re.findall(r"<stmtrs>|<bankmsgsrsv1>", bruto))
+    forte_cartao += len(re.findall(r"total (da|desta) fatura|limite total de credito|limite disponivel|fechamento da fatura|vencimento da fatura|pagamento minimo|proximo fechamento|\bcreditcard\b", base))
     forte_cartao += 3 if re.match(r"\s*date\s*,\s*category\s*,\s*title\s*,\s*amount", texto[:200], re.I) else 0
-    forte_conta = len(re.findall(r"saldo do dia|saldo anterior|extrato conta|extrato de conta|extrato da conta|conta corrente|<bankmsgsrsv1>|<stmtrs>|release_date|transaction_net_amount", base))
+    forte_conta += len(re.findall(r"saldo do dia|saldo anterior|extrato conta|extrato de conta|extrato da conta|conta corrente|release_date|transaction_net_amount", base))
     fraco_conta = bool(re.search(r"\bextrato\b", base))
     fraco_cartao = bool(re.search(r"\bfatura\b", base))
     if forte_cartao > forte_conta:
