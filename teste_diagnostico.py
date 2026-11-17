@@ -30,6 +30,7 @@ confere("ps agrega por aplicativo", ag["Foo"]["n"] == 2 and ag["Foo"]["mem"] == 
 confere("ollama ps lista os modelos", d.parse_ollama_ps("NAME ID SIZE PROCESSOR UNTIL\nllama3:8b  abc  5.0 GB  100% GPU  4 minutes from now\n") == ["llama3:8b | abc | 5.0 GB | 100% GPU | 4 minutes from now"])
 dk = d.parse_docker_stats("n8n|3.2%|512MiB / 4GiB\nqdrant|0.1%|1.5GiB / 4GiB\n")
 confere("docker stats: nome, cpu e memória", dk[0] == {"nome": "n8n", "cpu": "3.2%", "mem": "512MiB"} and d._mem_texto_para_bytes("1.5GiB") == 1.5 * 1024 ** 3, dk)
+confere("tempo ligado a partir do boottime", abs(d.parse_boottime("{ sec = 1000, usec = 5 } Mon", 1000 + 3 * 86400) - 3) < 1e-9)
 achados = []
 d.disco(achados)
 confere("o diagnóstico completo roda sem erro mesmo sem os comandos do Mac", d.main(["--topo", "3"]) == 0)

@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 GB = 1024 ** 3
 SERVICOS = {8000: "MCP busca", 8001: "MCP arquivos", 8002: "Open Terminal", 8003: "agente do Mac", 8004: "MCP banco", 8010: "Cloud", 8011: "Notas",
@@ -93,6 +94,14 @@ def parse_ps(texto: str, comandos: dict = None) -> list:
     return list(agreg.values())
 
 
+def parse_boottime(texto: str, agora: float = None):
+    """'{ sec = 1731000000, usec = 0 } ...' -> dias ligado, ou None."""
+    m = re.search(r"sec\s*=\s*(\d+)", texto or "")
+    if not m:
+        return None
+    return ((agora if agora is not None else time.time()) - int(m.group(1))) / 86400
+
+
 def parse_ollama_ps(texto: str) -> list:
     linhas = [l for l in (texto or "").splitlines() if l.strip()]
     return [re.sub(r"\s{2,}", " | ", l.strip()) for l in linhas[1:]]
@@ -137,6 +146,11 @@ def memoria(topo: int, procs: list, achados: list) -> list:
     if mp:
         m = re.search(r"free percentage:\s*(\d+)%", mp)
         livre_pct = int(m.group(1)) if m else None
+    dias = parse_boottime(run(["sysctl", "-n", "kern.boottime"]) or "")
+    if dias is not None:
+        out.append(f"Ligado há {dias:.0f} dias sem reiniciar." if dias >= 1 else "Ligado há menos de um dia.")
+        if dias > 14:
+            achados.append(f"O Mac está ligado há {dias:.0f} dias sem reiniciar; reiniciar libera memória e troca acumuladas.")
     if total and vm:
         t = int(total.strip())
         fixa, comp = vm.get("pages wired down", 0), vm.get("pages occupied by compressor", 0)
@@ -151,7 +165,10 @@ def memoria(topo: int, procs: list, achados: list) -> list:
     if swap:
         out.append(f"Troca em disco (swap): {gb(swap.get('used', 0))} usados de {gb(swap.get('total', 0))}. Troca alta deixa o Mac lento.")
         if swap.get("used", 0) > 2 * GB:
-            achados.append(f"O Mac está usando {gb(swap['used'])} de troca em disco, sinal de falta de memória.")
+            if livre_pct is not None and livre_pct >= 50:
+                achados.append(f"A troca em disco está em {gb(swap['used'])}, mas hoje há memória sobrando ({livre_pct}% livre): é resíduo de um momento em que a memória apertou (por exemplo, um modelo grande no Ollama) e o macOS não devolve a troca sozinho. Para zerar: reinicie o Mac.")
+            else:
+                achados.append(f"O Mac está usando {gb(swap['used'])} de troca em disco, sinal de falta de memória: feche programas pesados ou descarregue modelos do Ollama (ollama stop NOME).")
     grandes = sorted(procs, key=lambda a: a["mem"], reverse=True)[:topo]
     if grandes:
         out.append(f"Os {len(grandes)} que mais usam memória:")
