@@ -207,6 +207,7 @@ _RE_VALOR = re.compile(_VALOR)
 _MESES = {"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6, "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12}
 _RE_DATA = re.compile(r"^\s*(?:(\d{2})/(\d{2})(?:/(\d{4}|\d{2}))?|(\d{1,2})\s+(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*\.?(?:\s+(?:de\s+)?(\d{4}))?)\b", re.I)
 _ENCARGO = re.compile(r"\b(juros|multa|iof|encargos?|tarifa|anuidade)\b")
+_PARCELAMENTO_ANTERIOR = re.compile(r"\s*(d[eé]bito para quitar|cr[eé]dito por parcelamento)\b", re.I)  # liquidação da fatura anterior parcelada (Mercado Pago)
 _CREDITO_NO_NOME = re.compile(r"\s*(cr[eé]dito|estorno|reembolso|devolu[cç][aã]o|cashback)\b", re.I)
 _IGNORAR = re.compile(r"\b(saldo|total|subtotal|limite|vencimento|fechamento|pagamento minimo|encargos|resumo|proxima fatura|valor da fatura)\b", re.I)
 
@@ -412,6 +413,9 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
                 data = _data_da_linha(m, ano_base, ref)
             except ValueError:
                 marcas.append("DATA INVÁLIDA")
+                continue
+            if cartao and _PARCELAMENTO_ANTERIOR.match(desc):
+                marcas.append("IGNORADO (parcelamento da fatura anterior)")  # "Débito para quitar" + "Crédito por parcelamento" somam o total da fatura ANTERIOR, que já foi lançada
                 continue
             if cartao:
                 v = -v  # na fatura a compra vem positiva e o crédito (estorno, pagamento) vem negativo
