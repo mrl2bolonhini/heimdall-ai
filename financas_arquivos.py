@@ -451,7 +451,7 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
                    "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2], "orientacoes": saldos[3], "divergencias": saldos[4], "explicadas": saldos[5]}}
 
 
-def explicar(dados: bytes, nome: str, max_linhas: int = 400) -> str:
+def explicar(dados: bytes, nome: str, max_linhas: int = 400, valores: bool = False) -> str:
     """Diagnóstico anônimo do leitor de PDF: cada linha com data ou valor, mascarada, com o que o leitor fez com ela."""
     texto = texto_do_pdf(dados)
     banco, tipo = detectar(texto, nome)
@@ -472,7 +472,10 @@ def explicar(dados: bytes, nome: str, max_linhas: int = 400) -> str:
     saida.append("totais citados no documento (R$): " + (", ".join(fn.brl(x) for x in info["totais"]) or "nenhum") + f"; gastos lidos {fn.brl(info['gastos'])}; soma {fn.brl(info['soma'])}")
     saida.append("---")
     for linha, marcas in registro[:max_linhas]:
-        saida.append(" | ".join(marcas) + " :: " + re.sub(r" {3,}", "   ", mascarar_linha(linha))[:160])
+        extra = ""
+        if valores and any(m.startswith("LANÇAMENTO") for m in marcas):  # só os valores em reais das linhas lidas como lançamento, nunca o texto
+            extra = "  => valores: " + " ; ".join(v.group(0).strip() for v in _RE_VALOR.finditer(linha))
+        saida.append(" | ".join(marcas) + " :: " + re.sub(r" {3,}", "   ", mascarar_linha(linha))[:160] + extra)
     if len(registro) > max_linhas:
         saida.append(f"... (mais {len(registro) - max_linhas} linhas; use --lines N)")
     return "\n".join(saida)

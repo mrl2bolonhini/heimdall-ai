@@ -188,6 +188,7 @@ Opções:
   -a, --account NOME   com --import, o nome da conta ou do cartão (sem isso, usa o que for identificado)
   -F, --force          com --import, importa o PDF mesmo que o total não confira (só depois de revisar)
   -b, --inbox          importa agora o que estiver na pasta de entrada, sem esperar o minuto
+  -v, --values         com --explain, mostra também os valores em reais das linhas lidas como lançamento (a descrição continua mascarada); use quando o total não confere e for preciso achar qual lançamento tem o sinal errado
   -r, --retry          devolve tudo de revisar para a entrada e importa de novo (use depois de uma atualização do leitor); o motivo antigo some
 Exemplos:
   heimdall finance

@@ -79,7 +79,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" "-L=--local" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
-    finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-L=--local" ;;
+    finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
     doctor) printf '%s\n' "-m=--memory" "-c=--cpu" "-d=--disk" "-k=--docker" "-o=--ollama" "-s=--services" "-t=--top" ;;
@@ -252,6 +252,7 @@ heimdall() {
 --import=--importar
 --inbox=--entrada
 --retry=--reprocessar
+--values=--valores
 --lines=--linhas
 --account=--conta
 --force=--forcar" "$@"
@@ -392,7 +393,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
       mail) compadd -- --test-login --simulate ;;
       access) compadd -- --password --code --all --verify ;;
-      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --folder --lines --account --force ;;
+      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --values --folder --lines --account --force ;;
       voice) compadd -- --import ;;
       listen) compadd -- --list --latest ;;
       ingest) compadd -- --reset ;;

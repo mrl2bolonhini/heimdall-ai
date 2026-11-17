@@ -79,6 +79,7 @@ def main() -> None:
     g.add_argument("--entrada", action="store_true")
     g.add_argument("--pasta", action="store_true")
     g.add_argument("--reprocessar", action="store_true")
+    ap.add_argument("--valores", action="store_true")
     ap.add_argument("--linhas", type=int, default=150)
     ap.add_argument("--conta", default="")
     ap.add_argument("--forcar", action="store_true")
@@ -93,7 +94,7 @@ def main() -> None:
                 print("\nCopiado para a área de transferência. Cole na conversa com Command+V. Nenhuma letra ou número real foi mantido.")
         elif a.explicar:
             dados, nome = _ler(a.explicar)
-            texto = fa.explicar(dados, nome, max(20, a.linhas if a.linhas != 150 else 400))
+            texto = fa.explicar(dados, nome, max(20, a.linhas if a.linhas != 150 else 400), a.valores)
             print(texto)
             if _copiar(texto):
                 print("\nCopiado para a área de transferência. Cole na conversa com Command+V. Nenhuma letra ou número real foi mantido.")
