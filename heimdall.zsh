@@ -38,6 +38,23 @@ _heimdall_open() {  # $1 = nome, $2 = endereço
   open "$2" 2>/dev/null || echo "Abra o endereço acima no navegador."
 }
 
+_heimdall_web() {  # $1 nome, $2 chave (CLOUD, NOTAS, NEWS, SAUDE_PAINEL, JOGOS, FINANCE), $3 porta padrão, $4 subdomínio padrão, $5 caminho opcional
+  # Abre o endereço público (passa pelo Cloudflare Access, com o Authenticator) ou, com --local, o endereço deste Mac (senha e código de 6 dígitos).
+  local nome="$1" chave="$2" padrao="$3" sub="$4" caminho="$5" porta host lista h
+  porta="$(_heimdall_port "HEIMDALL_${chave}_PORT" "$padrao")"
+  if [ "${_HLOCAL:-0}" = 1 ]; then
+    _heimdall_open "$nome (local)" "http://localhost:$porta$caminho"; return
+  fi
+  [ -f "$HEIMDALL_DIR/.env" ] && lista="$(grep -E "^HEIMDALL_${chave}_HOSTS=" "$HEIMDALL_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
+  for h in ${(s:,:)lista}; do
+    h="${h// /}"
+    case "$h" in ""|localhost|127.*|*.ts.net|[0-9]*) ;; *) host="$h"; break ;; esac
+  done
+  [ -z "$host" ] && host="$sub.heimdall-ai.tech"
+  echo "(Sem internet ou sem passar pelo Cloudflare: use --local, ou -L, para abrir o endereço deste Mac.)"
+  _heimdall_open "$nome" "https://$host$caminho"
+}
+
 _heimdall_port() {  # porta de cada serviço (a do .env, se houver)
   local v
   [ -f "$HEIMDALL_DIR/.env" ] && v="$(grep -E "^$1=" "$HEIMDALL_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
@@ -56,12 +73,13 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     up|restart) printf '%s\n' "-w=--webui" "-t=--terminal" "-n=--n8n" "-a=--agent" "-i=--ingest" "-d=--docling" "-u=--update" ;;
     logs) printf '%s\n' "-l=--list" "-c=--clean" "-s=--service" ;;
     containers) printf '%s\n' "-a=--all" ;;
+    cloud) printf '%s\n' "-L=--local" ;;
     chat) printf '%s\n' "-d=--diagnose" "-p=--password" ;;
-    news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  ;;
-    notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" ;;
-    health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" ;;
-    games) printf '%s\n' "-p=--play" "-l=--list" ;;
-    finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" ;;
+    news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  "-L=--local" ;;
+    notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
+    health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" "-L=--local" ;;
+    games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
+    finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
     backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
@@ -126,6 +144,15 @@ heimdall() {
   for a in "$@"; do
     if [ "$a" = "--help" ]; then _heimdall_usage "$cmd"; return $?; fi
   done
+  _HLOCAL=0
+  case "$cmd" in
+    cloud|notes|news|health|games|finance)
+      local _x _n=()
+      for _x in "$@"; do
+        if [ "$_x" = "--local" ]; then _HLOCAL=1; else _n+=("$_x"); fi
+      done
+      set -- "${_n[@]}" ;;
+  esac
   case "$cmd" in
     help)
       case "$1" in
@@ -166,7 +193,7 @@ heimdall() {
       esac ;;
     notes)
       case "$1" in
-        "") _heimdall_open "Heimdall Notas" "http://localhost:$(_heimdall_port HEIMDALL_NOTAS_PORT 8011)" ;;
+        "") _heimdall_web "Heimdall Notas" NOTAS 8011 notes ;;
         --clean-mirrors) shift; _heimdall_py limpar_espelhos.py "$@" ;;
         --clean-private) shift; _heimdall_py limpar_privadas.py "$@" ;;
         --move-old) shift; _heimdall_tr "--run=--executar" "$@"; _heimdall_py mover_notas_antigas.py "${_HA[@]}" ;;
@@ -174,23 +201,23 @@ heimdall() {
       esac ;;
     news)
       case "$1" in
-        "") _heimdall_open "Heimdall News" "http://localhost:$(_heimdall_port HEIMDALL_NEWS_PORT 8012)" ;;
+        "") _heimdall_web "Heimdall News" NEWS 8012 news ;;
         *) _heimdall_tr "--copy=--copiar
 --sources=--fontes
 --queue=--fila
 --now=--uma-vez" "$@"; _heimdall_py heimdall_news.py "${_HA[@]}" ;;
       esac ;;
-    cloud) _heimdall_open "Heimdall Cloud" "http://localhost:$(_heimdall_port HEIMDALL_CLOUD_PORT 8010)" ;;
+    cloud) _heimdall_web "Heimdall Cloud" CLOUD 8010 cloud ;;
     health)
       case "$1" in
-        "") _heimdall_open "Painel de saúde" "http://localhost:$(_heimdall_port HEIMDALL_SAUDE_PAINEL_PORT 8013)" ;;
+        "") _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health ;;
         --open)
           case "$2" in
             anomalies) pg=anomalias ;; today) pg=hoje ;; week) pg=semana ;; sleep) pg=sono ;; activity) pg=atividade ;;
             recovery) pg=recuperacao ;; heart) pg=coracao ;; workouts) pg=treinos ;; events) pg=eventos ;; diary) pg=diario ;; data) pg=dados ;;
             "") pg="" ;; *) pg="$2" ;;
           esac
-          _heimdall_open "Painel de saúde" "http://localhost:$(_heimdall_port HEIMDALL_SAUDE_PAINEL_PORT 8013)${pg:+/$pg}" ;;
+          _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health "${pg:+/$pg}" ;;
         --import-n8n) _heimdall_py importar_saude_n8n.py ;;
         *)
           _heimdall_tr "--today=--hoje
@@ -208,14 +235,14 @@ heimdall() {
       esac ;;
     games)
       case "$1" in
-        "") _heimdall_open "Heimdall Jogos" "http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)" ;;
-        --play) _heimdall_open "Jogo $2" "http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)/jogo/$2" ;;
+        "") _heimdall_web "Heimdall Jogos" JOGOS 8014 games ;;
+        --play) _heimdall_web "Jogo $2" JOGOS 8014 games "/jogo/$2" ;;
         --list) printf '%s\n' "2048 (heimdall games --play 2048)" "Arqueiro de áudio (heimdall games --play arqueiro)" "Bacará (heimdall games --play bacara)" "Batalha naval (heimdall games --play naval)" "Blackjack (heimdall games --play blackjack)" "Caça-níqueis (heimdall games --play cacaniqueis)" "Campo minado (heimdall games --play minas)" "A Caverna dos Ecos (heimdall games --play caverna)" "Cinco letras (heimdall games --play cincoletras)" "Estação Orion (heimdall games --play orion)" "O Farol Apagado (heimdall games --play aventura)" "Forca (heimdall games --play forca)" "Gramado (heimdall games --play gramado)" "Jogo da velha (heimdall games --play velha)" "Labirinto (heimdall games --play labirinto)" "A Mansão dos Relógios (heimdall games --play relogios)" "Número secreto (heimdall games --play numero)" "Paciência (heimdall games --play paciencia)" "Poker caribenho (heimdall games --play caribenho)" "Poker Texas hold'em (heimdall games --play poker)" "Roleta (heimdall games --play roleta)" "Senha (heimdall games --play senha)" "Sonar (heimdall games --play sonar)" "Sudoku (heimdall games --play sudoku)" "O Templo Submerso (heimdall games --play templo)" "A Travessia das Três Provas (heimdall games --play escolhas)" "Xadrez (heimdall games --play xadrez)" ;;
         *) echo "Use: heimdall games [--play JOGO] [--list]"; return 1 ;;
       esac ;;
     finance)
       case "$1" in
-        ""|--open) _heimdall_open "Heimdall Finance" "http://localhost:$(_heimdall_port HEIMDALL_FINANCE_PORT 8016)" ;;
+        ""|--open) _heimdall_web "Heimdall Finance" FINANCE 8016 finance ;;
         --folder) _heimdall_py financas_cli.py --pasta --abrir ;;
         *)
           _heimdall_tr "--inspect=--inspecionar
@@ -339,19 +366,20 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
       logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent cloud notes news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
       chat) compadd -- --diagnose --password ;;
-      news) compadd -- --token --urls --copy --opml --sources --queue --now ;;
-      notes) compadd -- --clean-mirrors --clean-private --move-old --run ;;
+      news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
+      notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary data
-        else compadd -- --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
+        else compadd -- --local --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
       games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas xadrez
-        else compadd -- --play --list; fi ;;
+        else compadd -- --local --play --list; fi ;;
+      cloud) compadd -- --local ;;
       triage) compadd -- --complete-tests ;;
       db) compadd -- --sql ;;
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
       mail) compadd -- --test-login --simulate ;;
       access) compadd -- --password --code --all --verify ;;
-      finance) compadd -- --open --inspect --explain --preview --import --inbox --folder --lines --account --force ;;
+      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --folder --lines --account --force ;;
       voice) compadd -- --import ;;
       listen) compadd -- --list --latest ;;
       ingest) compadd -- --reset ;;

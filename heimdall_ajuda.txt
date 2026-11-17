@@ -95,6 +95,7 @@ Exemplos:
 @ notes | Heimdall Notas, o site das notas de estudo
 Sem opção abre o site de notas e áudios (porta 8011). As opções são manutenção do Second Brain e das pastas do app Notas.
 Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
   -m, --clean-mirrors  limpa o que o Second Brain criou por engano a partir de notas do próprio Heimdall
   -p, --clean-private  apaga o que o Second Brain guardou de notas que depois foram para uma pasta privada
   -o, --move-old       conta as notas das pastas antigas; com --run, move-as para as subpastas de Heimdall-ai
@@ -108,6 +109,7 @@ Exemplos:
 @ news | Heimdall News, notícias com resumo de IA
 Sem opção, abre o site de notícias das últimas 24 horas (porta 8012). Com opção, cuida dos feeds RSS, das fontes e da atualização.
 Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
   -s, --sources        baixa cada feed agora e mostra quantos itens ele traz e a idade deles; aceita um nome de fonte ou categoria para ver só esse
   -q, --queue          mostra quantas notícias esperam resumo de IA
   -n, --now            faz uma atualização agora e sai, sem esperar os 30 minutos
@@ -124,6 +126,7 @@ Exemplos:
 @ cloud | Heimdall Cloud, o painel da AWS local
 Abre o painel do emulador de AWS (porta 8010).
 Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall cloud
@@ -131,6 +134,7 @@ Exemplos:
 @ health | Painel de saúde e relatórios no terminal
 Sem opção abre o painel de saúde no navegador (porta 8013). Com --open abre uma página dele. Com qualquer outra opção, roda o relatório no terminal. Nada aqui é diagnóstico.
 Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
   -o, --open PÁGINA    abre uma página do painel: anomalies, today, week, sleep, activity, recovery, heart, workouts, events, diary, data
   -t, --today          o que já chegou de hoje
   -n, --now            os últimos 7 dias contra a média dos 90 anteriores
@@ -157,6 +161,7 @@ Exemplos:
 @ games | Heimdall Jogos, jogos leves para leitor de tela
 Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos ficam em categorias, em ordem alfabética, e dentro delas também em ordem alfabética: Ação (arqueiro de áudio e labirinto), Aventuras de texto (cinco histórias e a Travessia das Três Provas), Cartas (paciência e poker), Cassino (bacará, blackjack, caça-níqueis, poker caribenho e roleta), Números e lógica (2048, número secreto, senha e sudoku), Palavras e letras (cinco letras e forca) e Tabuleiro e estratégia (batalha naval, campo minado, gramado, jogo da velha, sonar e xadrez). Os jogos de terceiros só entram se tiverem versão em português ou permitirem tradução.
 Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
   -p, --play JOGO      abre direto um jogo: 2048, arqueiro, bacara, naval, blackjack, cacaniqueis, minas, caverna, cincoletras, orion, aventura, forca, gramado, velha, labirinto, relogios, numero, paciencia, caribenho, poker, roleta, senha, sonar, sudoku, templo, escolhas, xadrez
   -l, --list           lista os jogos
   -h, --help           mostra esta ajuda
@@ -171,6 +176,7 @@ Exemplos:
 Abre o painel financeiro no navegador (porta 8016; de fora, finance.heimdall-ai.tech). Você importa extratos do banco e faturas do cartão em OFX, CSV ou PDF; o painel identifica o banco (Nubank, Itaú, Mercado Pago) e se é conta ou cartão, classifica os gastos por categoria com regras que você ajusta (ao corrigir uma categoria, a regra nasce sozinha), mostra o resumo do mês com variação sobre o mês anterior, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara. Tudo em tabelas para leitor de tela. Os dados ficam só no Mac, na pasta dados_financas (fora do git), e nunca vão para a Cloudflare nem para modelo de fora. Usa o mesmo login do Cloud.
 PDF: o texto é lido e o total do documento (por exemplo "Total da fatura") é conferido com a soma dos lançamentos. Só o que confere é importado sozinho; o resto vai para revisar. A pasta de entrada (dados_financas/entrada) é vigiada a cada minuto: solte lá os arquivos; o que importar vai para importados e o que deixar dúvida vai para revisar, com o motivo.
 Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
   -h, --help           mostra esta ajuda
   -o, --open           abre o painel no navegador (é o padrão sem opções)
   -f, --folder         abre a pasta de entrada no Finder e lista os arquivos para revisar
