@@ -195,6 +195,43 @@ confere("'Pagamento recebido' na fatura não vira receita", cat and cat["categor
 r2 = fa.importar_arquivo(con_nu, NU_OFX, "Nubank_2026-11-01.ofx")
 confere("importar o mesmo OFX de novo não duplica", r2["novas"] == 0 and r2["repetidas"] == 2, r2)
 
+# ---- fatura do Nubank em PDF: "dd MES", final do cartão "•••• 1234", menos tipográfico, encargos e vencimento em janeiro
+NU_PDF = """Olá, Fulano.
+Esta é a sua fatura de dezembro, no valor de
+R$ 235,90
+Data de vencimento: 10 JAN 2027
+Limite total do cartão de crédito: R$ 10.000,00
+RESUMO DA FATURA ATUAL
+    Fatura anterior    R$ 100,00
+    Pagamento recebido    −R$ 100,00
+    Total de compras de todos os cartões, 12 DEZ a 12 JAN    R$ 220,00
+    Outros lançamentos    R$ 15,90
+    Total a pagar    R$ 235,90
+    Pagamento mínimo para não entrar em atraso    R$ 30,00
+TRANSAÇÕES DE 12 DEZ A 12 JAN
+    Fulano de Tal    R$ 220,00
+    28 DEZ    •••• 1234   Loja*Exemplo - Parcela 2/10    R$ 120,00
+    05 JAN    •••• 1234   Padaria Teste    R$ 100,00
+    Pagamentos e Financiamentos    -R$ 105,00
+    20 DEZ    Pagamento em 20 DEZ    −R$ 100,00
+    21 DEZ    Crédito de atraso    −R$ 5,00
+    22 DEZ    Saldo em atraso    R$ 100,00
+    23 DEZ    Multa de atraso    R$ 2,00
+    23 DEZ    IOF de atraso    R$ 3,90
+    23 DEZ    Juros de atraso    R$ 10,00
+"""
+itens, info = fa.ler_pdf_texto(NU_PDF, "cartão")
+confere("Nubank PDF: lê compras, pagamentos e encargos, sem o saldo em atraso", [i["valor"] for i in itens] == [-12000, -10000, 10000, 500, -200, -390, -1000], [i["valor"] for i in itens])
+confere("Nubank PDF: descrição sem o final do cartão", itens[0]["descricao"] == "Loja*Exemplo - Parcela 2/10", itens[0])
+confere("Nubank PDF: compra de dezembro numa fatura de janeiro fica em 2026", itens[0]["data"] == "2026-12-28" and itens[1]["data"] == "2027-01-05", [i["data"] for i in itens[:2]])
+confere("Nubank PDF: o 'Total de compras' confere mesmo com encargos na fatura", info["confere"] is True, info)
+confere("Nubank PDF: detectado como cartão do Nubank", fa.detectar(NU_PDF + "\nO Nubank é uma instituição", "fatura.pdf") == ("Nubank", "cartão"), fa.detectar(NU_PDF + "\nO Nubank é uma instituição", "fatura.pdf"))
+con_np = fn.conectar(Path(tempfile.mkdtemp(prefix="finance_np_")) / "n.db")
+r = fn.importar_itens(con_np, itens, "PDF", "fatura.pdf", "Nubank cartão")
+cats = {x["descricao"]: x["categoria"] for x in con_np.execute("SELECT descricao, categoria FROM transacoes")}
+confere("Nubank PDF: pagamento e crédito de atraso não viram receita", cats["Pagamento em 20 DEZ"] == "Pagamento de fatura" and cats["Crédito de atraso"] == "Pagamento de fatura", cats)
+confere("Nubank PDF: multa, IOF e juros são tarifas", cats["Multa de atraso"] == "Impostos e tarifas" and cats["IOF de atraso"] == "Impostos e tarifas", cats)
+
 # ---- PDF de verdade
 try:
     pdf = pdf_de(FATURA)

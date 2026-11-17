@@ -51,7 +51,7 @@ REGRAS_PADRAO = [
     ("salario", "Salário"), ("folha de pagamento", "Salário"), ("proventos", "Salário"), ("pro labore", "Salário"),
     ("pagamento de fatura", "Pagamento de fatura"), ("pagamento fatura", "Pagamento de fatura"), ("pgto fatura", "Pagamento de fatura"),
     ("pag fatura", "Pagamento de fatura"), ("fatura cartao", "Pagamento de fatura"),
-    ("pagamento recebido", "Pagamento de fatura"), ("pagamento efetuado", "Pagamento de fatura"), ("fatura itau", "Pagamento de fatura"), ("fatura nubank", "Pagamento de fatura"), ("fatura mercado", "Pagamento de fatura"), ("rend pago aplic", "Investimentos"),
+    ("pagamento recebido", "Pagamento de fatura"), ("pagamento em ", "Pagamento de fatura"), ("pagamento efetuado", "Pagamento de fatura"), ("fatura itau", "Pagamento de fatura"), ("fatura nubank", "Pagamento de fatura"), ("fatura mercado", "Pagamento de fatura"), ("rend pago aplic", "Investimentos"),
     ("aplicacao", "Investimentos"), ("resgate", "Investimentos"), ("tesouro direto", "Investimentos"), ("cdb", "Investimentos"),
     ("xp investimentos", "Investimentos"), ("rico investimentos", "Investimentos"), ("corretora", "Investimentos"),
     ("transferencia", "Transferências"), ("pix", "Transferências"), ("ted ", "Transferências"),
@@ -297,7 +297,8 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
         h = hashlib.sha1(chave.encode("utf-8")).hexdigest()
         cat = categorizar(con, dn, regras)
         if cat == SEM_CATEGORIA and it["valor"] > 0:
-            cat = "Outras receitas"
+            # cartão de crédito não gera renda: crédito sem regra (pagamento, estorno de encargo) fica fora das receitas
+            cat = "Pagamento de fatura" if "cartao" in norm(conta) else "Outras receitas"
         cur = con.execute("INSERT OR IGNORE INTO transacoes(conta, data, valor, descricao, desc_norm, categoria, hash, importado_em) VALUES(?,?,?,?,?,?,?,?)",
                           (conta, it["data"], it["valor"], it["descricao"][:200], dn[:200], cat, h, agora))
         if cur.rowcount:

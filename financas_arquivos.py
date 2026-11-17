@@ -173,7 +173,7 @@ def detectar(texto: str, nome: str = "") -> tuple:
     bruto = texto[:6000].lower()
     forte_cartao = 3 * len(re.findall(r"<ccstmtrs>|<creditcardmsgsrsv1>", bruto))
     forte_conta = 3 * len(re.findall(r"<stmtrs>|<bankmsgsrsv1>", bruto))
-    forte_cartao += len(re.findall(r"total (da|desta) fatura|limite total de credito|limite disponivel|fechamento da fatura|vencimento da fatura|pagamento minimo|proximo fechamento|\bcreditcard\b", base))
+    forte_cartao += len(re.findall(r"total (da|desta) fatura|limite total (de credito|do cartao)|limite disponivel|fechamento da (proxima )?fatura|vencimento da fatura|pagamento minimo|proximo fechamento|resumo da fatura|fatura anterior|total a pagar|\bcreditcard\b", base))
     forte_cartao += 3 if re.match(r"\s*date\s*,\s*category\s*,\s*title\s*,\s*amount", texto[:200], re.I) else 0
     forte_conta += len(re.findall(r"saldo do dia|saldo anterior|extrato conta|extrato de conta|extrato da conta|conta corrente|release_date|transaction_net_amount", base))
     fraco_conta = bool(re.search(r"\bextrato\b", base))
@@ -202,6 +202,7 @@ _VALOR = r"-?\s?(?:R\$\s?)?-?\d{1,3}(?:\.\d{3})*,\d{2}\s?-?(?:\s?[CD]\b)?"
 _RE_VALOR = re.compile(_VALOR)
 _MESES = {"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6, "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12}
 _RE_DATA = re.compile(r"^\s*(?:(\d{2})/(\d{2})(?:/(\d{4}|\d{2}))?|(\d{1,2})\s+(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*\.?(?:\s+(?:de\s+)?(\d{4}))?)\b", re.I)
+_ENCARGO = re.compile(r"\b(juros|multa|iof|encargos?|tarifa|anuidade)\b")
 _IGNORAR = re.compile(r"\b(saldo|total|subtotal|limite|vencimento|fechamento|pagamento minimo|encargos|resumo|proxima fatura|valor da fatura)\b", re.I)
 
 
@@ -223,6 +224,11 @@ def _anos_do_documento(texto: str) -> tuple:
             datas.append(date(int(a), int(m), int(d)))
         except ValueError:
             pass
+    for d, mes, a in re.findall(r"\b(\d{1,2})\s+(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*\.?\s+(?:de\s+)?(20\d{2})\b", texto, flags=re.I):
+        try:
+            datas.append(date(int(a), _MESES[mes.lower()], int(d)))
+        except ValueError:
+            pass
     return base, (max(datas) if datas else None)
 
 
@@ -235,10 +241,20 @@ def _data_da_linha(m, ano_base: int, ref) -> str:
         a = int(ano)
         a = a + 2000 if a < 100 else a
         return date(a, mes, dia).strftime("%Y-%m-%d")
-    d = date(ano_base, mes, dia)
-    if ref and d > ref + timedelta(days=31):
-        d = date(ano_base - 1, mes, dia)
-    return d.strftime("%Y-%m-%d")
+    if not ref:
+        return date(ano_base, mes, dia).strftime("%Y-%m-%d")
+    # sem ano na linha: o ano que deixa a data mais perto do vencimento ou fechamento do documento, sem passar dele em mais de 31 dias
+    candidatas = []
+    for a in (ano_base - 1, ano_base, ano_base + 1):
+        try:
+            d = date(a, mes, dia)
+        except ValueError:
+            continue
+        if d <= ref + timedelta(days=31):
+            candidatas.append(d)
+    if not candidatas:
+        return date(ano_base, mes, dia).strftime("%Y-%m-%d")
+    return max(candidatas).strftime("%Y-%m-%d")
 
 
 # Em várias faturas as compras vêm em duas colunas lado a lado: "03/11 LOJA A 10,00    05/11 LOJA B 20,00".
@@ -285,6 +301,7 @@ def _conferir_saldos(eventos: list):
 
 def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
     """(itens, info). Cada item: data, valor (centavos; gasto negativo), descricao. info: tipo, soma, totais, confere."""
+    texto = texto.replace("\u2212", "-")  # o sinal de menos tipográfico (−) que alguns bancos usam
     ano_base, ref = _anos_do_documento(texto)
     cartao = tipo == "cartão"
     itens = []
@@ -311,6 +328,7 @@ def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
             escolhido = vs[-1] if (cartao or len(vs) == 1) else vs[0]  # em extrato de conta o último valor costuma ser o saldo
             v = _centavos(escolhido.group(0))
             desc = re.sub(r"\s{2,}", " ", resto[:escolhido.start()]).strip(" -|.")
+            desc = re.sub(r"^[•·*.]{2,}\s*\d{4}\s+", "", desc)  # "•••• 1234" é o final do cartão, não faz parte da descrição
             if not desc:
                 continue
             try:
@@ -323,13 +341,14 @@ def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
             eventos.append(("t", v))
     soma = sum(i["valor"] for i in itens)
     gastos = sum(-i["valor"] for i in itens if i["valor"] < 0)
+    compras = sum(-i["valor"] for i in itens if i["valor"] < 0 and not _ENCARGO.search(fn.norm(i["descricao"])))
     liquido = abs(soma)
     confere = None
     saldos = _conferir_saldos(eventos)
     if saldos is not None:
         confere = saldos[0]
     elif totais and itens:
-        confere = any(t in (liquido, gastos) for t in totais)
+        confere = any(t in (liquido, gastos, compras) for t in totais)
     return itens, {"tipo": tipo, "soma": soma, "gastos": gastos, "totais": sorted(set(totais))[:6], "confere": confere,
                    "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2]}}
 
