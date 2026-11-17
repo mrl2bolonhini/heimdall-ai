@@ -87,6 +87,7 @@ def main() -> None:
     ap.add_argument("--linhas", type=int, default=150)
     ap.add_argument("--conta", default="")
     ap.add_argument("--pessoa", default="")
+    ap.add_argument("--dias", type=int, default=None)
     ap.add_argument("--forcar", action="store_true")
     ap.add_argument("--abrir", action="store_true")
     a = ap.parse_args()
@@ -142,9 +143,15 @@ def main() -> None:
             cfg = femail.credenciais()
             if not cfg:
                 sys.exit("Não achei a senha de aplicativo do Gmail no .env (HEIMDALL_EMAIL_USUARIO e HEIMDALL_EMAIL_SENHA_APP). Instale o monitor de e-mails oficiais primeiro: heimdall privacy --email.")
-            res = femail.executar(_banco(), cfg, DIR_DADOS / "email_estado.json")
+            dias = max(1, min(a.dias or femail.DIAS, femail.MAX_DIAS))
+            diag = {}
+            res = femail.executar(_banco(), cfg, DIR_DADOS / "email_estado.json", dias=dias, diag=diag, ignorar_vistos=True)
+            print(f"A busca no Gmail (só Caixa de entrada, últimos {dias} dias) trouxe {diag.get('total', 0)} mensagem(ns) com termos de cobrança"
+                  + (f"; o limite é de {femail.LIMITE} por rodada, então pode haver mais antigas" if diag.get("total", 0) >= femail.LIMITE else "") + ".")
             if not res:
-                print(f"Nenhum boleto ou Pix novo nos e-mails dos últimos {femail.DIAS} dias.")
+                print("Nenhum boleto ou Pix com dígitos corretos nelas.")
+            for dom, assunto, motivo in diag.get("descartes", []):
+                print(f"Descartado: e-mail de {dom} ({assunto}): {motivo}.")
             for r in res:
                 print(f"E-mail de {r['remetente']} ({r['assunto']}): {r['novos']} novo(s), {r['repetidos']} já registrado(s)." + (f" ATENÇÃO: {r['aviso']}" if r["aviso"] else "") + (f" Já programado: {r['motivo']}." if r.get("motivo") else ""))
             print("\nSó li os e-mails (nada foi marcado, movido ou apagado) e nada foi pago.")

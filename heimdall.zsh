@@ -259,7 +259,8 @@ heimdall() {
 --bill=--boleto
 --bills=--boletos
 --person=--pessoa
---read-email=--ler-email" "$@"
+--read-email=--ler-email
+--days=--dias" "$@"
           _heimdall_py financas_cli.py "${_HA[@]}" ;;
       esac ;;
     n8n) _heimdall_open "n8n" "http://localhost:5678" ;;
@@ -397,7 +398,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
       mail) compadd -- --test-login --simulate ;;
       access) compadd -- --password --code --all --verify ;;
-      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --values --folder --lines --account --force --bill --bills --person --read-email ;;
+      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --values --folder --lines --account --force --bill --bills --person --read-email --days ;;
       voice) compadd -- --import ;;
       listen) compadd -- --list --latest ;;
       ingest) compadd -- --reset ;;

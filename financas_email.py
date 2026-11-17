@@ -25,7 +25,18 @@ import heimdall_email_oficial as eo
 AQUI = Path(__file__).resolve().parent
 MAX_PDF = 8 * 1024 * 1024
 DIAS = 7
-CONSULTA = ('newer_than:%dd (filename:pdf OR boleto OR "linha digitavel" OR "pix copia e cola" OR "copia e cola" OR "codigo de barras" OR "chave pix")' % DIAS)
+LIMITE = 80  # mensagens mais recentes que passam no filtro, por rodada
+MAX_DIAS = 365
+# Termos que fazem o Gmail separar a mensagem. É só a primeira peneira: o que decide é achar linha digitável ou Pix com dígitos corretos no texto ou no PDF.
+# Palavras genéricas (conta, cobrança, vencimento) só valem acompanhadas de um verbo ou termo de pagamento, para não trazer a caixa inteira.
+TERMOS = ('filename:pdf OR boleto OR fatura OR mensalidade OR "linha digitavel" OR "codigo de barras" OR "pix copia e cola" OR "copia e cola" OR "chave pix" OR "qr code pix" '
+          'OR "segunda via" OR "2a via" OR "2 via" OR "nota de cobranca" OR "aviso de cobranca" OR "aviso de vencimento" OR "data de vencimento" OR "vence em" OR "vence dia" '
+          'OR "valor a pagar" OR "total a pagar" OR "pague ate" OR "para pagar" OR "pagamento pendente" OR "pagamento em aberto" '
+          'OR (conta (vencimento OR pagar OR pagamento OR vence)) OR (cobranca (vencimento OR pagar OR pagamento OR vence)) OR (pix (pagar OR pagamento OR vencimento OR valor))')
+
+
+def consulta(dias: int = DIAS) -> str:
+    return "newer_than:%dd (%s)" % (max(1, min(int(dias), MAX_DIAS)), TERMOS)
 AVISO_ORIGEM = "Remetente não autenticado: pode ser boleto falso. Confira o nome do beneficiário e o valor no app do seu banco antes de pagar."
 
 
@@ -36,7 +47,7 @@ def credenciais(env_path: Path = None) -> dict:
     return {"HEIMDALL_EMAIL_USUARIO": cfg["HEIMDALL_EMAIL_USUARIO"], "HEIMDALL_EMAIL_SENHA_APP": cfg["HEIMDALL_EMAIL_SENHA_APP"]}
 
 
-def buscar(cfg: dict) -> list:
+def buscar(cfg: dict, dias: int = DIAS) -> list:
     """Mensagens recentes da caixa de entrada que parecem trazer boleto ou Pix. Retorna objetos de e-mail."""
     imap = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=60)
     achadas = []
@@ -44,10 +55,10 @@ def buscar(cfg: dict) -> list:
         imap.login(cfg["HEIMDALL_EMAIL_USUARIO"], cfg["HEIMDALL_EMAIL_SENHA_APP"].replace(" ", ""))
         if imap.select("INBOX", readonly=True)[0] != "OK":
             return []
-        tipo, dados = imap.uid("SEARCH", None, "X-GM-RAW", '"%s"' % CONSULTA.replace('"', '\\"'))
+        tipo, dados = imap.uid("SEARCH", None, "X-GM-RAW", '"%s"' % consulta(dias).replace('"', '\\"'))
         if tipo != "OK" or not dados or not dados[0]:
             return []
-        for uid in dados[0].split()[-40:]:
+        for uid in dados[0].split()[-LIMITE:]:
             tipo, partes = imap.uid("FETCH", uid, "(BODY.PEEK[])")
             if tipo == "OK" and partes and isinstance(partes[0], tuple):
                 achadas.append(email.message_from_bytes(partes[0][1], policy=email.policy.default))
@@ -97,17 +108,47 @@ def _textos_pdf(msg) -> list:
     return saida
 
 
-def processar(con, msgs: list, estado: dict, agora: str = None) -> list:
-    """Registra os boletos e Pix achados. estado['ids'] guarda os e-mails já lidos. Devolve [{assunto, remetente, novos, repetidos, aviso}]."""
+def motivo_descarte(msg, corpo: str, pdfs: list) -> str:
+    """Por que um e-mail que passou na busca não rendeu boleto: ajuda a entender o que fazer."""
+    n_pdf = sum(1 for p in msg.iter_attachments() if p.get_content_type() == "application/pdf" or (p.get_filename() or "").lower().endswith(".pdf"))
+    todo = corpo + "\n" + "\n".join(pdfs)
+    if re.search(r"\d[\d.\s-]{40,70}\d", todo):
+        return "achei um número do tamanho de uma linha digitável, mas os dígitos não conferem (cortado no meio, com erro ou adulterado)"
+    if "000201" in todo:
+        return "achei um código parecido com Pix copia e cola, mas ele não confere (incompleto ou adulterado)"
+    if n_pdf and not any(p.strip() for p in pdfs):
+        return "tem PDF anexo, mas sem texto legível (provavelmente imagem escaneada) ou grande demais (acima de 8 MB)"
+    links = False
+    for parte in msg.walk():
+        if parte.get_content_maintype() == "text":
+            try:
+                if re.search(r"https?://", parte.get_content()):
+                    links = True
+            except Exception:  # noqa: BLE001
+                pass
+    if links:
+        return "só traz link para o boleto (links nunca são abertos); abra o e-mail e copie a linha digitável para o Finance"
+    return "não traz linha digitável nem Pix no texto, e não há PDF com boleto"
+
+
+def processar(con, msgs: list, estado: dict, agora: str = None, diag: dict = None, ignorar_vistos: bool = False) -> list:
+    """Registra os boletos e Pix achados. estado['ids'] guarda os e-mails já lidos. Devolve [{assunto, remetente, novos, repetidos, aviso}].
+    Com diag (um dicionário), anota quantas mensagens vieram da busca e por que cada uma foi descartada. Com ignorar_vistos, relê também as já lidas."""
     vistos = estado.setdefault("ids", [])
     resultado = []
+    if diag is not None:
+        diag["total"] = len(msgs)
+        diag.setdefault("descartes", [])
     for msg in msgs:
         mid = (msg.get("Message-ID") or "").strip()
-        if mid and mid in vistos:
+        if mid and mid in vistos and not ignorar_vistos:
+            if diag is not None:
+                diag["descartes"].append((eo.dominio_do_remetente(eo.decodificar(msg.get("From"))) or "remetente desconhecido", eo.decodificar(msg.get("Subject"))[:80], "já lido em rodada anterior"))
             continue
         de = eo.decodificar(msg.get("From"))
         assunto = eo.decodificar(msg.get("Subject"))[:80]
-        textos = [_texto_corpo(msg)] + _textos_pdf(msg)
+        pdfs = _textos_pdf(msg)
+        textos = [_texto_corpo(msg)] + pdfs
         todo = "\n".join(textos)
         achados = []
         for t in textos:
@@ -118,6 +159,8 @@ def processar(con, msgs: list, estado: dict, agora: str = None) -> list:
             vistos.append(mid)
             del vistos[:-500]
         if not achados:
+            if diag is not None:
+                diag["descartes"].append((eo.dominio_do_remetente(de) or "remetente desconhecido", assunto, motivo_descarte(msg, textos[0], pdfs)))
             continue
         au = eo.autenticacao(msg)
         confiavel = au.get("dmarc") == "pass" or (au.get("dkim") == "pass" and au.get("spf") == "pass")
@@ -133,12 +176,12 @@ def processar(con, msgs: list, estado: dict, agora: str = None) -> list:
     return resultado
 
 
-def executar(con, cfg: dict, estado_arq: Path, buscar_fn=buscar) -> list:
+def executar(con, cfg: dict, estado_arq: Path, buscar_fn=buscar, dias: int = DIAS, diag: dict = None, ignorar_vistos: bool = False) -> list:
     try:
         estado = json.loads(Path(estado_arq).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         estado = {}
-    r = processar(con, buscar_fn(cfg), estado)
+    r = processar(con, buscar_fn(cfg) if dias == DIAS else buscar_fn(cfg, dias), estado, None, diag, ignorar_vistos)
     try:
         Path(estado_arq).write_text(json.dumps(estado), encoding="utf-8")
         Path(estado_arq).chmod(0o600)

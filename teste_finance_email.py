@@ -150,5 +150,36 @@ fb.conciliar(c4, date.fromisoformat(v4))
 b4 = fb.listar(c4, incluir_pagos=True)[0]
 confere("conta recorrente de mesmo nome e valor parecido vira provável débito automático", b4["estado"] == "programado" and "Provável" in b4["motivo"], b4)
 
+# --- diagnóstico e busca ampliada ---
+q = fe.consulta(30)
+confere("consulta: período em dias e termos novos (fatura, mensalidade, segunda via)", q.startswith("newer_than:30d") and "fatura" in q and "mensalidade" in q and '"segunda via"' in q, q[:120])
+confere("consulta: 'conta' só vale com termo de pagamento", "(conta (vencimento OR pagar" in q and " OR conta OR" not in q)
+confere("consulta: período limitado a 1..365", fe.consulta(9999).startswith("newer_than:365d") and fe.consulta(0).startswith("newer_than:1d"))
+cd = fn.conectar(Path(tempfile.mkdtemp()) / "d.db")
+diag = {}
+ms = [
+    msg("Banco <a@banco.com>", "Sua fatura", "Veja sua fatura: https://banco.com/fatura/123", "<d1@x>"),
+    msg("Loja <a@loja.com>", "Promoção", "Aproveite as ofertas da semana.", "<d2@x>"),
+    msg("Escola <a@escola.com>", "Boleto adulterado", f"Linha: {BONITA[:-1]}1", "<d3@x>"),
+    msg("Escola <a@escola.com>", "Boleto bom", f"Linha: {BONITA}", "<d4@x>"),
+    msg("Gráfica <a@grafica.com>", "Segunda via", "Segue em anexo.", "<d5@x>", pdf=b"%PDF-1.4 nada"),
+]
+rd = fe.processar(cd, ms, {"ids": ["<d2@x>"]}, "2026-11-17 10:00:00", diag)
+mot = {a: m for _, a, m in diag["descartes"]}
+confere("diagnóstico: total de mensagens da busca", diag["total"] == 5)
+confere("diagnóstico: só link", "link" in mot["Sua fatura"], mot)
+confere("diagnóstico: já lido", "já lido" in mot["Promoção"], mot)
+confere("diagnóstico: dígitos que não conferem", "não conferem" in mot["Boleto adulterado"], mot)
+confere("diagnóstico: PDF sem texto", "PDF" in mot["Segunda via"], mot)
+confere("diagnóstico: o boleto bom foi registrado e não aparece como descartado", len(rd) == 1 and "Boleto bom" not in mot)
+rd2 = fe.processar(cd, ms[1:2], {"ids": ["<d2@x>"]}, None, {}, True)
+confere("ignorar_vistos relê mensagem já lida", True)
+d2 = {}
+fe.processar(cd, ms[1:2], {"ids": ["<d2@x>"]}, None, d2, True)
+confere("ignorar_vistos: a mensagem lida volta a ser analisada (motivo real, não 'já lido')", "já lido" not in d2["descartes"][0][2], d2)
+chamado = []
+fe.executar(cd, {}, Path(tempfile.mkdtemp()) / "s.json", lambda cfg, dias=7: chamado.append(dias) or [], dias=30)
+confere("executar repassa o período à busca", chamado == [30])
+
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)
