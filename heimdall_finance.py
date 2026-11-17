@@ -573,7 +573,7 @@ def pg_boletos(sess: dict) -> tuple:
     corpo = ['<p>Aqui ficam os boletos como contas a pagar. O Heimdall lê a linha digitável, confere os dígitos verificadores e mostra valor e vencimento. '
              'Ele nunca paga nada: o pagamento é sempre com você, no app do banco. PDF de boleto solto na pasta de entrada também é registrado.</p>',
              '<h2>Registrar um boleto</h2>'
-             f'<form method="post" action="/boletos">{csrf}<p><label for="linha">Linha digitável (47 ou 48 números, pontos e espaços podem ficar) ou Pix copia e cola</label><br>'
+             f'<form method="post" action="/boletos">{csrf}<p><label for="linha">Linha digitável (47 ou 48 números), código de barras (44 números) ou Pix copia e cola; pontos e espaços podem ficar</label><br>'
              '<input type="text" id="linha" name="linha" autocomplete="off" required></p>'
              '<p><label for="quem">Quem recebe (opcional)</label><br><input type="text" id="quem" name="quem" autocomplete="off"></p>'
              f'<p><label for="dono">De quem é este boleto</label><br><select id="dono" name="dono">{_opcoes_pessoas("")}</select></p>'

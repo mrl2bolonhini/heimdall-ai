@@ -211,7 +211,24 @@ def interpretar(texto: str, hoje: date = None) -> dict:
         return _bancario(d, hoje)
     if len(d) == 48 and d[0] == "8":
         return _convenio(d, hoje)
-    raise ERRO(f"A linha digitável tem {len(d)} dígitos; o boleto bancário tem 47 e a conta de consumo ou tributo tem 48 (começa com 8). Confira se copiou o código inteiro.")
+    if len(d) == 44:
+        return interpretar(de_barras(d), hoje)
+    raise ERRO(f"O código tem {len(d)} dígitos; o boleto bancário tem 47 na linha digitável (ou 44 no código de barras) e a conta de consumo ou tributo tem 48 (ou 44 no código de barras, começando com 8). Confira se copiou o código inteiro.")
+
+
+def de_barras(d: str) -> str:
+    """Converte o código de barras de 44 dígitos na linha digitável (47 ou 48). A conferência dos dígitos verificadores acontece depois, em interpretar."""
+    if len(d) != 44 or not d.isdigit():
+        raise ERRO("O código de barras tem 44 dígitos.")
+    if d[0] == "8":
+        if d[2] not in "6789":
+            raise ERRO("O terceiro dígito de um código de barras de conta de consumo ou tributo deveria ser 6, 7, 8 ou 9, e não é: o código parece errado.")
+        calc = _mod10 if d[2] in "67" else _mod11_convenio
+        return "".join(d[i:i + 11] + str(calc(d[i:i + 11])) for i in range(0, 44, 11))
+    if d[3] != "9":
+        raise ERRO("O quarto dígito de um código de barras de boleto bancário deveria ser 9 (real), e não é: o código parece errado.")
+    c1, c2, c3 = d[0:4] + d[19:24], d[24:34], d[34:44]
+    return c1 + str(_mod10(c1)) + c2 + str(_mod10(c2)) + c3 + str(_mod10(c3)) + d[4] + d[5:19]
 
 
 def _bancario(d: str, hoje: date) -> dict:
@@ -258,6 +275,15 @@ def achar_linhas(texto: str, hoje: date = None) -> list:
     achadas, vistas = [], set()
     for m in re.finditer(r"\d[\d.\s-]{40,70}\d", texto or ""):
         d = so_digitos(m.group(0))
+        if len(d) == 44 and (d[0] == "8" or d[0:3] in BANCOS):  # código de barras solto; só com banco conhecido ou 8 no início, para não confundir com chave de nota fiscal
+            try:
+                r = interpretar(d, hoje)
+            except ERRO:
+                r = None
+            if r and r["linha"] not in vistas:
+                vistas.add(r["linha"])
+                achadas.append(r)
+            continue
         for tam in (47, 48):
             for ini in range(0, max(0, len(d) - tam) + 1):
                 trecho = d[ini:ini + tam]

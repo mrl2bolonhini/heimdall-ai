@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Código de barras de 44 dígitos
+- O Heimdall agora aceita também o código de barras do boleto, os 44 números sem a formatação da linha digitável, digitado ou colado à mão e encontrado em e-mails e PDFs. Ele converte para a linha digitável (47 ou 48 dígitos), confere o dígito verificador geral e registra do mesmo jeito; se o mesmo boleto aparecer nas duas formas, entra uma vez só. Para não confundir com chave de nota fiscal (também 44 dígitos), na leitura de textos só vale se começar com 8 ou com um código de banco conhecido.
+
 ## 2026-11-17 - Busca de e-mail mais larga e com diagnóstico
 - `heimdall finance --read-email --days N` (até 365) lê os últimos N dias em vez de 7. A busca no Gmail passou a procurar também fatura, mensalidade, segunda via, nota ou aviso de cobrança, data de vencimento, valor ou total a pagar e Pix com termo de pagamento; palavras genéricas como conta e cobrança só valem junto de vencimento, pagar, pagamento ou vence, para não trazer a caixa inteira. O filtro continua sendo só a primeira peneira: só vira boleto o que tiver linha digitável ou Pix com dígitos corretos. O limite subiu para as 80 mensagens mais recentes. O comando manual agora diz quantas mensagens a busca trouxe e por que cada uma foi descartada (só link, PDF escaneado, dígitos que não conferem, sem código) e relê também as já lidas. Continua lendo só a Caixa de entrada.
 

@@ -222,5 +222,27 @@ fb.definir_situacao(con, i1, True)
 confere("marcar como pago tira da lista aberta e volta com incluir_pagos", len(fb.listar(con, hoje)) == 2 and len(fb.listar(con, hoje, True)) == 3)
 confere("remover apaga", fb.remover(con, i1) and len(fb.listar(con, hoje, True)) == 2)
 
+# --- código de barras de 44 dígitos ---
+def barras_banco(l):
+    return l[0:4] + l[32:47] + l[4:9] + l[10:20] + l[21:31]
+
+
+def barras_convenio(l):
+    return "".join(l[i:i + 11] for i in range(0, 48, 12))
+
+
+LBB = "34191234546789012345767890123457616560000045090"
+confere("código de barras bancário de 44 dígitos vira a mesma linha digitável", fb.interpretar(barras_banco(LBB))["linha"] == LBB and fb.interpretar(" ".join(barras_banco(LBB)[i:i + 11] for i in range(0, 44, 11)))["valor"] == 45090)
+try:
+    fb.interpretar(barras_banco(LBB)[:-1] + ("0" if barras_banco(LBB)[-1] != "0" else "1"))
+    confere("código de barras bancário adulterado levanta erro", False)
+except fn.ErroFinance:
+    confere("código de barras bancário adulterado levanta erro", True)
+for l, nome in ((C, "convênio mod10"), (C8, "convênio mod11")):
+    r44 = fb.interpretar(barras_convenio(l))
+    confere(f"código de barras de 44 dígitos ({nome}) vira a mesma linha digitável", r44["linha"] == l and r44["valor"] == fb.interpretar(l)["valor"], r44)
+confere("achar_linhas acha código de barras solto no texto e não duplica com a linha digitável do mesmo boleto", len(fb.achar_linhas(f"Código de barras: {barras_banco(LBB)}\nLinha: {LBB}")) == 1)
+confere("chave de nota fiscal de 44 dígitos não vira boleto", fb.achar_linhas("Chave de acesso: 35260112345678000190550010000012341000012345") == [])
+
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)
