@@ -40,7 +40,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | LiteLLM Proxy | 9000 | Ponto único de acesso (API compatível com a da OpenAI) aos modelos; também expõe os servidores MCP. |
 | Servidor MCP do Mac (admin) | 8000 | Ferramentas que mexem no Mac: arquivos, métricas, memória e documentos. |
 | Servidor MCP público | 8001 | Ferramentas seguras para convidados: web, cálculo, feeds, transcrições. |
-| Servidor MCP de dados | 8004 | Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain), para o Open WebUI. Escuta só em 127.0.0.1. |
+| Servidor MCP de dados | 8004 | Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain) e as de consulta do Finance, para o Open WebUI. Escuta só em 127.0.0.1. |
 | SearXNG | 8080 | Mecanismo de busca na web que não rastreia quem pesquisa. |
 | Qdrant | 6333 | Base vetorial: busca por significado nos documentos e nas notas. |
 | Open WebUI | 3000 | Interface de chat usada pelos convidados e pelo dono. |
@@ -158,6 +158,11 @@ Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta
 | `frequencia_cardiaca_resumo` | Mac (8000) | `dias=14` | Frequência cardíaca nos últimos dias: pulso em repouso, variabilidade (HRV), mínima de madrugada, hora do dia mais alta, maior pico, recuperação, VO2 máx e avisos do relógio. |
 | `relatorio_saude` | Mac (8000) | `dias=30` | Relatório completo de saúde do Apple Saúde: treinos e carga, cruzamento do treino com pulso em repouso e variabilidade, frequência cardíaca, ECG, sintomas, humor e medicamentos. |
 | `analise_saude` | Mac (8000) | `tema='agora', dias=90` | Análise de saúde do dia a dia, sem depender de treinos registrados. |
+| `financas_resumo` | dados (8004) | `mes='', visao='competencia'` | Resumo do mês no Finance do usuário: receitas, despesas, saldo, gasto por categoria (com variação sobre o mês anterior) e os maiores gastos. |
+| `financas_transacoes` | dados (8004) | `busca='', mes='', categoria='', limite=20` | Procura lançamentos no Finance do usuário. |
+| `financas_orcamentos` | dados (8004) | `mes='', visao='competencia'` | Orçamentos mensais do Finance do usuário: para cada categoria com limite, quanto gastou, quanto falta ou passou e a situação (dentro, perto do limite, estourado). |
+| `financas_recorrentes` | dados (8004) | `` | Contas que se repetem todo mês no Finance do usuário (aluguel, assinaturas, salário), deduzidas do histórico, com valor e dia típicos e a situação neste mês: já chegou, por vir, atrasada ou possivelmente encerrada. |
+| `financas_boletos` | dados (8004) | `` | Boletos em aberto registrados no Finance do usuário (contas a pagar), com valor, vencimento e situação: vencido, vence hoje ou a vencer. |
 <!-- /AUTO:FERRAMENTAS -->
 
 Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e docstring claro, acrescente-a a `PUBLIC_TOOLS` ou `MAC_TOOLS`, reinicie, rode `test_mcp.py` e `gerar_docs.py`. Ferramentas públicas são seguras para convidados; as do Mac acessam arquivos e memória e são só do administrador.

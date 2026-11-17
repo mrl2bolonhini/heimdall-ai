@@ -38,11 +38,13 @@ def ler_ferramentas():
     for n in arvore.body:
         if isinstance(n, ast.Assign) and isinstance(n.value, ast.List):
             for t in n.targets:
-                if getattr(t, "id", "") in ("PUBLIC_TOOLS", "MAC_TOOLS"):
+                if getattr(t, "id", "") in ("PUBLIC_TOOLS", "MAC_TOOLS", "DADOS_TOOLS"):
                     grupos[t.id] = [e.id for e in n.value.elts if isinstance(e, ast.Name)]
     saida = []
-    for grupo, rotulo in (("PUBLIC_TOOLS", "público"), ("MAC_TOOLS", "mac")):
+    for grupo, rotulo in (("PUBLIC_TOOLS", "público"), ("MAC_TOOLS", "mac"), ("DADOS_TOOLS", "dados")):
         for nome in grupos.get(grupo, []):
+            if grupo == "DADOS_TOOLS" and any(nome in grupos.get(g, []) for g in ("PUBLIC_TOOLS", "MAC_TOOLS")):
+                continue  # já listada no grupo onde nasceu; aqui só entram as exclusivas do chat
             f = funcs.get(nome)
             if not f:
                 continue
@@ -183,7 +185,7 @@ SERVICOS = [
     ("LiteLLM Proxy", "Ponto único de acesso (API compatível com a da OpenAI) aos modelos; também expõe os servidores MCP.", "9000", "start_heimdall.sh"),
     ("Servidor MCP do Mac (admin)", "Ferramentas que mexem no Mac: arquivos, métricas, memória e documentos.", "8000", "start_heimdall.sh"),
     ("Servidor MCP público", "Ferramentas seguras para convidados: web, cálculo, feeds, transcrições.", "8001", "start_heimdall.sh"),
-    ("Servidor MCP de dados", "Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain), para o Open WebUI. Escuta só em 127.0.0.1.", "8004", "start_heimdall.sh"),
+    ("Servidor MCP de dados", "Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain) e as de consulta do Finance, para o Open WebUI. Escuta só em 127.0.0.1.", "8004", "start_heimdall.sh"),
     ("SearXNG", "Mecanismo de busca na web que não rastreia quem pesquisa.", "8080", "start_heimdall.sh (Docker)"),
     ("Qdrant", "Base vetorial: busca por significado nos documentos e nas notas.", "6333", "start_heimdall.sh (Docker)"),
     ("Open WebUI", "Interface de chat usada pelos convidados e pelo dono.", "3000", "--webui ou HEIMDALL_WEBUI=1"),
@@ -265,6 +267,7 @@ SCRIPTS = [
     ("diagnostico.py", "Diagnóstico de desempenho do Mac (heimdall doctor): memória, troca em disco, processador, disco, Docker, Ollama e serviços."),
     ("financas_boletos.py", "Leitor de boletos: linha digitável de 47 e 48 números, dígitos verificadores, vencimento e contas a pagar no banco local."),
     ("teste_boletos.py", "Teste do leitor de boletos, com linhas inventadas montadas por contas independentes."),
+    ("teste_finance_chat.py", "Teste das ferramentas do Finance no chat: leitura, filtros, conexão somente leitura, desligar e banco ausente."),
     ("teste_diagnostico.py", "Teste do diagnóstico: análise dos textos do macOS sem depender do Mac."),
     ("teste_design.py", "Teste do Heimdall Design: falha se um link de painel tiver texto de ação, se algum contraste de cor ficar abaixo do mínimo, se o foco for removido ou houver cor solta fora do Heimdall Design."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News, Notas e Finance: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
@@ -363,6 +366,7 @@ COMANDOS = [
         ("Teste do Heimdall Design (nenhuma ação é link)", "python3 teste_design.py"),
         ("Teste do diagnóstico de desempenho", "python3 teste_diagnostico.py"),
         ("Teste do leitor de boletos", "python3 teste_boletos.py"),
+        ("Teste das ferramentas do Finance no chat", "python3 teste_finance_chat.py"),
         ("Teste do xadrez, da batalha naval, das aventuras e dos jogos novos (Node)", "node teste_jogos_xadrez.js && node teste_jogos_naval.js && node teste_jogos_cincoletras.js && node teste_jogos_sudoku.js && node teste_historias.js && node teste_jogos_novos.js"),
         ("Teste do painel de saúde (sem rede)", "python3 teste_painel_saude.py"),
         ("Listar notas com título que parece cortado", "python3 heimdall_notas.py --titulos-suspeitos"),
@@ -629,7 +633,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
     for k, v in mcp.items():
         srv.append(("<code>%s</code>" % H(k), H(nomes_srv.get(k, "")), H(v.get("url") or ("%s %s" % (v.get("command", ""), "(stdio)"))), H(v.get("transport", ""))))
     blocos = ""
-    for grupo, titulo_g, desc in (("público", "Ferramentas públicas", "Seguras para convidados. Servidas na porta 8001."), ("mac", "Ferramentas do Mac (administrador)", "Acessam arquivos, métricas e memória do computador. Servidas na porta 8000; só para o dono.")):
+    for grupo, titulo_g, desc in (("público", "Ferramentas públicas", "Seguras para convidados. Servidas na porta 8001."), ("mac", "Ferramentas do Mac (administrador)", "Acessam arquivos, métricas e memória do computador. Servidas na porta 8000; só para o dono."), ("dados", "Ferramentas só do chat de dados", "Só consultam, em modo somente leitura, o banco do Finance. Servidas na porta 8004, só em 127.0.0.1. HEIMDALL_FINANCE_CHAT=0 no .env desliga.")):
         blocos += '<section aria-labelledby="g-%s"><h2 id="g-%s">%s</h2><p>%s</p>' % (grupo, grupo, H(titulo_g), H(desc))
         for f in [x for x in ferr if x["grupo"] == grupo]:
             blocos += '<h3><code>%s</code></h3><p><code>%s(%s)</code></p><p>%s</p>' % (H(f["nome"]), H(f["nome"]), H(", ".join(f["params"])), H(f["doc"]))
@@ -959,7 +963,7 @@ def md_tabelas(ferr, modelos, mcp, fluxos):
     t["MODELOS"] = "| Nome no LiteLLM | Modelo no Ollama | Uso | Observações |\n|---|---|---|---|\n" + "\n".join(
         "| `%s` | `%s` | %s | %s |" % (m["model_name"], (m.get("litellm_params") or {}).get("model", ""), *MODELOS_NOTAS.get(m["model_name"], ("", ""))) for m in modelos)
     t["FERRAMENTAS"] = "| Ferramenta | Grupo | Parâmetros | O que faz |\n|---|---|---|---|\n" + "\n".join(
-        "| `%s` | %s | `%s` | %s |" % (f["nome"], "público (8001)" if f["grupo"] == "público" else "Mac (8000)", ", ".join(f["params"]), f["doc"].split(". ")[0].rstrip(".") + ".") for f in ferr)
+        "| `%s` | %s | `%s` | %s |" % (f["nome"], {"público": "público (8001)", "dados": "dados (8004)"}.get(f["grupo"], "Mac (8000)"), ", ".join(f["params"]), f["doc"].split(". ")[0].rstrip(".") + ".") for f in ferr)
     t["FLUXOS"] = "| Fluxo | Quando | O que faz |\n|---|---|---|\n" + "\n".join(
         "| %s | %s | %s |" % (f["nome"], f["quando"], FLUXO_DESCRICAO.get(f["id"], "(descrição pendente)")) for f in fluxos)
     t["SERVICOS"] = "| Serviço | Porta | Função |\n|---|---|---|\n" + "\n".join("| %s | %s | %s |" % (n, p, f) for n, f, p, c in SERVICOS)

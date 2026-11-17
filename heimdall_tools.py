@@ -1006,6 +1006,160 @@ def banco_buscar(termo: str, tabela: str = "", limite: int = 5) -> str:
 #   memória nem documentos do Mac. (Gastam a rede e as chaves de API do Mac.)
 # MAC_TOOLS: acessam arquivos, métricas, modelos, memória e documentos pessoais.
 #   Ficam restritas ao administrador.
+# --- Finance no chat (somente leitura) -------------------------------------------------------
+# Lê o banco do Heimdall Finance em modo somente leitura (sqlite mode=ro): nada é gravado, nenhum boleto é pago e nenhum extrato é importado.
+# Os modelos do chat são todos locais (Ollama), então os valores não saem do Mac. HEIMDALL_FINANCE_CHAT=0 desliga estas ferramentas.
+def _financas_ro():
+    import sqlite3
+
+    import financas_nucleo as fn
+
+    if os.environ.get("HEIMDALL_FINANCE_CHAT", "1") == "0":
+        raise PermissionError("as ferramentas do Finance no chat estão desligadas (HEIMDALL_FINANCE_CHAT=0 no .env)")
+    pasta = os.environ.get("HEIMDALL_FINANCE_DIR", "")
+    if not pasta:
+        try:
+            for ln in (Path(__file__).resolve().parent / ".env").read_text(encoding="utf-8").splitlines():
+                if ln.startswith("HEIMDALL_FINANCE_DIR="):
+                    pasta = ln.split("=", 1)[1].strip().strip('"').strip("'")
+        except OSError:
+            pass
+    caminho = Path(pasta or (Path(__file__).resolve().parent / "dados_financas")) / "financas.db"
+    if not caminho.is_file():
+        raise FileNotFoundError("ainda não há banco do Finance: importe um extrato primeiro")
+    con = sqlite3.connect(f"file:{caminho}?mode=ro", uri=True, timeout=10)
+    con.row_factory = sqlite3.Row
+    return con, fn
+
+
+def _mes_valido(con, fn, mes: str) -> str:
+    ms = fn.meses(con)
+    if not ms:
+        raise FileNotFoundError("o Finance ainda não tem lançamentos")
+    mes = (mes or "").strip()
+    if not mes:
+        return ms[0]
+    if not re.fullmatch(r"\d{4}-\d{2}", mes) or mes not in ms:
+        raise ValueError(f"não há lançamentos em '{mes}'. Meses com dados: {', '.join(ms[:12])}")
+    return mes
+
+
+def financas_resumo(mes: str = "", visao: str = "competencia") -> str:
+    """Resumo do mês no Finance do usuário: receitas, despesas, saldo, gasto por categoria (com variação sobre o mês anterior) e os maiores gastos.
+    mes: AAAA-MM (vazio = o mês mais recente com dados). visao: 'competencia' (por compra, padrão) ou 'caixa' (por saída das contas)."""
+    try:
+        con, fn = _financas_ro()
+        try:
+            mes = _mes_valido(con, fn, mes)
+            r = fn.resumo_mes(con, mes, visao)
+        finally:
+            con.close()
+    except (PermissionError, FileNotFoundError, ValueError) as e:
+        return f"Finance: {e}."
+    linhas = [f"Mês {fn.nome_mes(mes)} (visão {r['visao']}): receitas {fn.brl(r['receitas'])}, despesas {fn.brl(r['despesas'])}, saldo {fn.brl(r['saldo'], True)}. "
+              f"Despesas do mês anterior: {fn.brl(r['despesas_anterior'])}."]
+    if r["sem_categoria"]:
+        linhas.append(f"{r['sem_categoria']} lançamento(s) ainda sem categoria.")
+    linhas.append("Gasto por categoria:")
+    for c in r["categorias"]:
+        var = "" if c["variacao"] is None else f", {c['variacao']:+d}% sobre o mês anterior"
+        linhas.append(f"- {c['categoria']}: {fn.brl(c['total'])} ({c['pct']}%{var})")
+    linhas.append("Maiores gastos:")
+    for m in r["maiores"]:
+        linhas.append(f"- {fn.data_br(m['data'])}: {m['descricao'][:60]}, {fn.brl(-m['valor'])} ({m['categoria']})")
+    return _BANCO_AVISO + "\n" + "\n".join(linhas)
+
+
+def financas_transacoes(busca: str = "", mes: str = "", categoria: str = "", limite: int = 20) -> str:
+    """Procura lançamentos no Finance do usuário. busca: trecho da descrição (sem se preocupar com acento); mes: AAAA-MM (vazio = todos);
+    categoria: nome exato, como Mercado ou Assinaturas (vazio = todas). Devolve os mais recentes primeiro, com o total de entradas e saídas do filtro.
+    limite: de 1 a 50."""
+    try:
+        con, fn = _financas_ro()
+        try:
+            if (mes or "").strip():
+                mes = _mes_valido(con, fn, mes)
+            limite = max(1, min(int(limite), 50))
+            total, linhas = fn.listar(con, (mes or "").strip(), (categoria or "").strip(), (busca or "").strip(), limite)
+            soma = fn.somas_listagem(con, (mes or "").strip(), (categoria or "").strip(), (busca or "").strip())
+        finally:
+            con.close()
+    except (PermissionError, FileNotFoundError, ValueError) as e:
+        return f"Finance: {e}."
+    if not total:
+        return "Nenhum lançamento encontrado com esse filtro."
+    saida = [f"{total} lançamento(s) no filtro; mostrando {len(linhas)}. Totais do filtro: {json.dumps(soma, ensure_ascii=False)}"]
+    for t in linhas:
+        saida.append(f"{fn.data_br(t['data'])} | {fn.brl(t['valor'], True)} | {t['descricao'][:70]} | {t['categoria']} | {t['conta']}")
+    return _BANCO_AVISO + "\n" + "\n".join(saida)
+
+
+def financas_orcamentos(mes: str = "", visao: str = "competencia") -> str:
+    """Orçamentos mensais do Finance do usuário: para cada categoria com limite, quanto gastou, quanto falta ou passou e a situação (dentro, perto do limite, estourado).
+    mes: AAAA-MM (vazio = o mês mais recente). visao: 'competencia' ou 'caixa'."""
+    try:
+        con, fn = _financas_ro()
+        try:
+            mes = _mes_valido(con, fn, mes)
+            o = fn.orcamentos(con, mes, visao)
+        finally:
+            con.close()
+    except (PermissionError, FileNotFoundError, ValueError) as e:
+        return f"Finance: {e}."
+    com = [x for x in o["linhas"] if x["limite"] is not None]
+    if not com:
+        return f"Não há nenhum limite definido (página Orçamentos do Finance). Em {fn.nome_mes(mes)} os gastos somam {fn.brl(o['total_gasto'])}."
+    saida = [f"Orçamentos de {fn.nome_mes(mes)}: {o['estourados']} estourado(s), {o['perto']} perto do limite, {o['dentro']} dentro."]
+    for x in com:
+        resto = f"faltam {fn.brl(x['restante'])}" if x["restante"] >= 0 else f"passou {fn.brl(-x['restante'])}"
+        saida.append(f"- {x['categoria']}: limite {fn.brl(x['limite'])}, gasto {fn.brl(x['gasto'])}, {resto}, {x['estado']} ({x['pct']}%)")
+    return _BANCO_AVISO + "\n" + "\n".join(saida)
+
+
+def financas_recorrentes() -> str:
+    """Contas que se repetem todo mês no Finance do usuário (aluguel, assinaturas, salário), deduzidas do histórico, com valor e dia típicos
+    e a situação neste mês: já chegou, por vir, atrasada ou possivelmente encerrada."""
+    try:
+        con, fn = _financas_ro()
+        try:
+            r = fn.recorrentes(con)
+        finally:
+            con.close()
+    except (PermissionError, FileNotFoundError, ValueError) as e:
+        return f"Finance: {e}."
+    if not r["series"]:
+        return "Ainda não há contas recorrentes identificadas (é preciso pelo menos 3 meses de histórico)."
+    nomes = {"chegou": "já apareceu neste mês", "por_vir": "ainda por vir", "atrasada": "passou do dia habitual e não apareceu", "encerrada": "possivelmente encerrada"}
+    saida = [f"Saem cerca de {fn.brl(r['gasto_mensal'])} e entram cerca de {fn.brl(r['renda_mensal'])} por mês nessas séries."]
+    for s in r["series"]:
+        saida.append(f"- {s['descricao'][:50]}: {fn.brl(abs(s['valor']))}{'' if s['fixo'] else ' (varia)'}, {'entrada' if s['entrada'] else 'gasto'}, dia {s['dia']}, {nomes[s['situacao']]}")
+    return _BANCO_AVISO + "\n" + "\n".join(saida)
+
+
+def financas_boletos() -> str:
+    """Boletos em aberto registrados no Finance do usuário (contas a pagar), com valor, vencimento e situação: vencido, vence hoje ou a vencer.
+    Só consulta; nada é pago por aqui."""
+    try:
+        con, fn = _financas_ro()
+        try:
+            import financas_boletos as fb
+
+            lista = fb.listar(con)
+        finally:
+            con.close()
+    except (PermissionError, FileNotFoundError, ValueError) as e:
+        return f"Finance: {e}."
+    except Exception as e:  # noqa: BLE001  (banco antigo, sem a tabela boletos)
+        return f"Finance: não consegui ler os boletos ({type(e).__name__})."
+    if not lista:
+        return "Nenhum boleto em aberto."
+    saida = [f"{len(lista)} boleto(s) em aberto:"]
+    for b in lista:
+        quando = {"vencido": f"vencido há {-(b['dias'] or 0)} dia(s)", "vence hoje": "vence hoje", "a vencer": f"vence em {b['dias']} dia(s)"}.get(b["estado"], "sem vencimento no código")
+        saida.append(f"- {fb.frase(b)} ({quando})")
+    return _BANCO_AVISO + "\n" + "\n".join(saida)
+
+
 PUBLIC_TOOLS = [
     search_searxng,
     calculate_expression,
@@ -1053,6 +1207,11 @@ DADOS_TOOLS = [
     frequencia_cardiaca_resumo,
     relatorio_saude,
     analise_saude,
+    financas_resumo,
+    financas_transacoes,
+    financas_orcamentos,
+    financas_recorrentes,
+    financas_boletos,
     get_system_timestamp,
 ]
 
