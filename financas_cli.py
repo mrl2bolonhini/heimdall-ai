@@ -108,6 +108,7 @@ def main() -> None:
             dados, nome = _ler(a.importar)
             con = _banco()
             r = fa.importar_arquivo(con, dados, nome, a.conta, a.forcar)
+            fa.concluir_revisao(DIR_DADOS, Path(a.importar).expanduser())  # se veio de revisar/, vai para importados/ e o motivo some
             print(r["resumo"])
             print(f"\nImportado na conta '{r['conta']}': {r['novas']} novos, {r['repetidas']} já existentes.")
         elif a.entrada:
@@ -116,12 +117,17 @@ def main() -> None:
             if not res:
                 print(f"Nada novo em {DIR_DADOS / 'entrada'}.")
             for r in res:
-                if r["ok"]:
+                if r.get("limpeza"):
+                    print(f"Limpei {r['limpeza']} arquivo(s) de motivo de itens que já saíram de revisar.")
+                elif r.get("duplicado"):
+                    print(f"Duplicado: {r['arquivo']}: {r['motivo']}")
+                elif r["ok"]:
                     print(f"Importado: {r['arquivo']} -> {r['conta']}: {r['novas']} novos, {r['repetidas']} já existentes.")
                 else:
                     print(f"Para revisar: {r['arquivo']}: {r['motivo']}")
         else:
             pasta = fa.preparar_pasta(DIR_DADOS)
+            fa._limpar_motivos(pasta / "revisar")
             print(f"Pasta de entrada: {pasta}")
             for nome, motivo in fa.pendentes(DIR_DADOS):
                 print(f"Para revisar: {nome}: {motivo}")

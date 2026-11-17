@@ -105,6 +105,8 @@ def conectar(caminho) -> sqlite3.Connection:
     con = sqlite3.connect(str(caminho), check_same_thread=False, timeout=15)
     con.row_factory = sqlite3.Row
     con.executescript(SCHEMA)
+    if "hash_arquivo" not in {r["name"] for r in con.execute("PRAGMA table_info(importacoes)")}:
+        con.execute("ALTER TABLE importacoes ADD COLUMN hash_arquivo TEXT")
     if "importacao_id" not in {r["name"] for r in con.execute("PRAGMA table_info(transacoes)")}:
         con.execute("ALTER TABLE transacoes ADD COLUMN importacao_id INTEGER")
     # lançamentos importados antes desta coluna existir: liga cada um à importação de mesma conta e mesmo instante
@@ -281,7 +283,18 @@ def importar(con, dados: bytes, arquivo: str, conta: str, inverter: bool = False
     return importar_itens(con, itens, formato, arquivo, conta, agora)
 
 
-def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, agora: str = None) -> dict:
+def arquivo_ja_importado(con, hash_arquivo: str) -> bool:
+    """True se um arquivo com exatamente o mesmo conteúdo já foi importado."""
+    return bool(hash_arquivo) and con.execute("SELECT 1 FROM importacoes WHERE hash_arquivo=? LIMIT 1", (hash_arquivo,)).fetchone() is not None
+
+
+def apagar_importacao_vazia(con, importacao_id: int) -> None:
+    """Remove do histórico uma importação que não trouxe nada novo (arquivo duplicado)."""
+    con.execute("DELETE FROM importacoes WHERE id=? AND novas=0", (importacao_id,))
+    con.commit()
+
+
+def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, agora: str = None, hash_arquivo: str = "") -> dict:
     """Grava lançamentos já lidos (de OFX, CSV ou PDF), pulando os que já existem."""
     conta = (conta or "").strip()[:60]
     if not conta:
@@ -290,7 +303,7 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
     regras = _regras(con)
     vistos = defaultdict(int)
     novas = repetidas = 0
-    imp_id = con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES(?,?,?,?,0,0)", ((arquivo or "")[:120], conta, agora, formato)).lastrowid
+    imp_id = con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas, hash_arquivo) VALUES(?,?,?,?,0,0,?)", ((arquivo or "")[:120], conta, agora, formato, hash_arquivo or None)).lastrowid
     for it in itens:
         dn = norm(it["descricao"])
         if it.get("fitid"):
@@ -312,7 +325,7 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
             repetidas += 1
     con.execute("UPDATE importacoes SET novas=?, repetidas=? WHERE id=?", (novas, repetidas, imp_id))
     con.commit()
-    return {"formato": formato, "lidas": len(itens), "novas": novas, "repetidas": repetidas}
+    return {"formato": formato, "lidas": len(itens), "novas": novas, "repetidas": repetidas, "importacao_id": imp_id}
 
 
 # --------------------------------------------------------------------------------------------

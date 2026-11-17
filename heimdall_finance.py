@@ -527,7 +527,7 @@ def _vigiar_entrada() -> None:
         try:
             with _trava:
                 for r in fa.processar_entrada(banco(), DIR_DADOS):
-                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} entrada: {r['arquivo']} -> " + (f"{r['conta']} ({r['novas']} novos)" if r["ok"] else "para revisar") + "\n")
+                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} entrada: {r['arquivo']} -> " + ("duplicado apagado" if r.get("duplicado") else "motivos antigos limpos" if r.get("limpeza") else f"{r['conta']} ({r['novas']} novos)" if r["ok"] else "para revisar") + "\n")
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} entrada: erro {type(ex).__name__}\n")
         time.sleep(60)

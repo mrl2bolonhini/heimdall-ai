@@ -12,6 +12,7 @@ Inspeção anônima (heimdall finance --inspect ARQUIVO): mostra só a estrutura
 por x e todos os números por 9, menos um vocabulário de rótulos de extrato (data, valor, total, fatura...). Serve para
 me mostrar o layout do seu banco sem que nenhum nome, valor ou número de conta saia do seu Mac.
 """
+import hashlib
 import io
 import re
 import shutil
@@ -508,14 +509,14 @@ def importar_arquivo(con, dados: bytes, nome: str, conta: str = "", forcar: bool
     if a["formato"] == "PDF" and a["confere"] is not True and not forcar:
         raise ERRO("O PDF foi lido, mas o total não conferiu com os lançamentos. " + resumo_texto(a).replace("\n", " ") +
                    " Para importar mesmo assim, confirme que revisou.")
-    r = _gravar(con, a, nome, conta, agora)
+    r = _gravar(con, a, nome, conta, agora, hashlib.sha256(dados).hexdigest())
     r["conta"] = conta
     r["resumo"] = resumo_texto(a)
     return r
 
 
-def _gravar(con, a: dict, nome: str, conta: str, agora: str = None) -> dict:
-    return fn.importar_itens(con, a["itens"], a["formato"], nome, conta, agora)
+def _gravar(con, a: dict, nome: str, conta: str, agora: str = None, hash_arquivo: str = "") -> dict:
+    return fn.importar_itens(con, a["itens"], a["formato"], nome, conta, agora, hash_arquivo)
 
 
 # --------------------------------------------------------------------------------------------
@@ -540,11 +541,58 @@ def _mover(origem: Path, destino_dir: Path, agora: str) -> Path:
     return destino
 
 
-def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 1024 * 1024) -> list:
-    """Importa o que estiver na pasta entrada/. Sucesso vai para importados/, dúvida vai para revisar/ com um .motivo.txt."""
+def _motivo_de(arq: Path) -> Path:
+    return arq.with_name(arq.name + ".motivo.txt")
+
+
+def _limpar_motivos(revisar: Path) -> int:
+    """Apaga os .motivo.txt cujo arquivo já saiu de revisar/ (foi revisado, importado ou apagado)."""
+    n = 0
+    if not revisar.is_dir():
+        return 0
+    for m in sorted(revisar.glob("*.motivo.txt")):
+        if not (revisar / m.name[: -len(".motivo.txt")]).exists():
+            try:
+                m.unlink()
+                n += 1
+            except OSError:
+                pass
+    return n
+
+
+def _ja_em_revisar(revisar: Path, h: str, ignorar: Path) -> bool:
+    """True se já há em revisar/ um arquivo com exatamente o mesmo conteúdo."""
+    for outro in revisar.iterdir():
+        if outro.is_file() and outro != ignorar and not outro.name.endswith(".motivo.txt") and not outro.name.startswith("."):
+            try:
+                if hashlib.sha256(outro.read_bytes()).hexdigest() == h:
+                    return True
+            except OSError:
+                pass
+    return False
+
+
+def concluir_revisao(base: Path, arquivo: Path, agora: str = None) -> None:
+    """Chamado quando um arquivo de revisar/ foi de fato revisado e importado: vai para importados/ e o motivo é apagado."""
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     entrada = preparar_pasta(Path(base))
+    arquivo = Path(arquivo)
+    if arquivo.is_file() and arquivo.parent.resolve() == (entrada / "revisar").resolve():
+        _mover(arquivo, entrada / "importados", agora)
+    _limpar_motivos(entrada / "revisar")
+
+
+def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 1024 * 1024) -> list:
+    """Importa o que estiver na pasta entrada/. Sucesso vai para importados/; dúvida vai para revisar/ com um .motivo.txt.
+    Arquivo duplicado (mesmo conteúdo já importado, ou nada novo nos lançamentos) não é importado e é apagado.
+    Os .motivo.txt de arquivos que já saíram de revisar/ são apagados."""
+    agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    entrada = preparar_pasta(Path(base))
+    revisar = entrada / "revisar"
     resultados = []
+    limpos = _limpar_motivos(revisar)
+    if limpos:
+        resultados.append({"arquivo": f"{limpos} motivo(s) antigo(s)", "ok": True, "limpeza": limpos, "conta": "", "novas": 0, "repetidas": 0, "lidas": 0})
     for arq in sorted(entrada.iterdir()):
         if not arq.is_file() or arq.name.startswith(".") or arq.suffix.lower() not in EXT_OK:
             continue
@@ -554,13 +602,32 @@ def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 
             if datetime.now().timestamp() - arq.stat().st_mtime < 3:
                 continue  # ainda sendo copiado
             dados = arq.read_bytes()
+            h = hashlib.sha256(dados).hexdigest()
+            if fn.arquivo_ja_importado(con, h):
+                arq.unlink()
+                _limpar_motivos(revisar)
+                resultados.append({"arquivo": arq.name, "ok": True, "duplicado": True, "conta": "", "novas": 0, "repetidas": 0, "lidas": 0,
+                                   "motivo": "Já importado antes (conteúdo idêntico): apaguei esta cópia."})
+                continue
+            if _ja_em_revisar(revisar, h, arq):
+                arq.unlink()
+                resultados.append({"arquivo": arq.name, "ok": True, "duplicado": True, "conta": "", "novas": 0, "repetidas": 0, "lidas": 0,
+                                   "motivo": "Mesmo conteúdo de um arquivo que já espera revisão: apaguei esta cópia."})
+                continue
             r = importar_arquivo(con, dados, arq.name, agora=agora)
+            if r["lidas"] > 0 and r["novas"] == 0:
+                fn.apagar_importacao_vazia(con, r["importacao_id"])
+                arq.unlink()
+                _limpar_motivos(revisar)
+                resultados.append({"arquivo": arq.name, "ok": True, "duplicado": True, "conta": r["conta"], "novas": 0, "repetidas": r["repetidas"], "lidas": r["lidas"],
+                                   "motivo": "Todos os lançamentos já estavam importados: não importei de novo e apaguei esta cópia."})
+                continue
             _mover(arq, entrada / "importados", agora)
+            _limpar_motivos(revisar)
             resultados.append({"arquivo": arq.name, "ok": True, "conta": r["conta"], "novas": r["novas"], "repetidas": r["repetidas"], "lidas": r["lidas"]})
         except ERRO as ex:
-            destino = _mover(arq, entrada / "revisar", agora)
-            motivo = destino.with_name(destino.name + ".motivo.txt")
-            motivo.write_text(f"{agora}\n{ex}\n", encoding="utf-8")
+            destino = _mover(arq, revisar, agora)
+            _motivo_de(destino).write_text(f"{agora}\n{ex}\n", encoding="utf-8")
             resultados.append({"arquivo": arq.name, "ok": False, "motivo": str(ex)})
         except OSError as ex:
             resultados.append({"arquivo": arq.name, "ok": False, "motivo": f"Não consegui ler o arquivo ({type(ex).__name__})."})

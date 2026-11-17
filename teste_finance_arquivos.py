@@ -274,6 +274,8 @@ tot = con.execute("SELECT valor FROM transacoes WHERE conta='Nubank cartão' AND
 confere("CSV de cartão do Nubank inverte o sinal sozinho", tot and tot["valor"] == -3000, tot and tot["valor"])
 
 # ---- pasta vigiada
+con.execute("UPDATE importacoes SET hash_arquivo=NULL")  # o "forçar" acima já gravou o mesmo PDF; aqui começa do zero
+con.commit()
 base = tmp / "dados"
 entrada = fa.preparar_pasta(base)
 confere("cria entrada, importados e revisar", all((entrada / s).is_dir() for s in ("importados", "revisar")))
@@ -295,6 +297,28 @@ if pdf_ok:
     confere("PDF que não confere vai para revisar", not nomes["fatura-itau-ruim.pdf"]["ok"] and (entrada / "revisar" / "fatura-itau-ruim.pdf").is_file(), nomes.get("fatura-itau-ruim.pdf"))
 confere("arquivo oculto e extensão desconhecida ficam quietos", ".oculto.csv" not in nomes and "nota.docx" not in nomes and (entrada / ".oculto.csv").exists())
 confere("a lista de pendentes traz o motivo", any(n == "misterio.csv" and m for n, m in fa.pendentes(base)), fa.pendentes(base))
+# duplicados e limpeza de motivos
+(entrada / "copia do extrato.ofx").write_bytes(ofx)
+(entrada / "misterio.csv").write_bytes(b"coluna1;coluna2\n1;2\n")
+os.utime(entrada / "copia do extrato.ofx", (time.time() - 60,) * 2)
+os.utime(entrada / "misterio.csv", (time.time() - 60,) * 2)
+res2 = fa.processar_entrada(con, base)
+n2 = {r["arquivo"]: r for r in res2}
+confere("cópia idêntica de arquivo já importado não é importada e é apagada", n2["copia do extrato.ofx"].get("duplicado") and not (entrada / "copia do extrato.ofx").exists(), n2)
+confere("cópia de arquivo que já espera revisão é apagada e o original fica", n2["misterio.csv"].get("duplicado") and not (entrada / "misterio.csv").exists() and (entrada / "revisar" / "misterio.csv").is_file(), n2)
+(entrada / "revisar" / "misterio.csv").unlink()
+fa.processar_entrada(con, base)
+confere("motivo órfão em revisar/ é apagado", not (entrada / "revisar" / "misterio.csv.motivo.txt").exists())
+ofx2 = ofx.replace(b"OFXHEADER:100", b"OFXHEADER:100 ")
+(entrada / "itau mesmo conteudo outro byte.ofx").write_bytes(ofx2)
+os.utime(entrada / "itau mesmo conteudo outro byte.ofx", (time.time() - 60,) * 2)
+n3 = {r["arquivo"]: r for r in fa.processar_entrada(con, base)}
+confere("arquivo com bytes diferentes mas só lançamentos repetidos não importa e é apagado", n3["itau mesmo conteudo outro byte.ofx"].get("duplicado") and not (entrada / "itau mesmo conteudo outro byte.ofx").exists(), n3)
+confere("duplicado não deixa registro vazio no histórico", con.execute("SELECT COUNT(*) FROM importacoes WHERE novas=0 AND arquivo LIKE 'itau mesmo%'").fetchone()[0] == 0)
+(entrada / "revisar" / "x.csv").write_bytes(b"a")
+(entrada / "revisar" / "x.csv.motivo.txt").write_text("m")
+fa.concluir_revisao(base, entrada / "revisar" / "x.csv")
+confere("revisado: arquivo vai para importados/ e o motivo some", (entrada / "importados" / "x.csv").is_file() and not (entrada / "revisar" / "x.csv.motivo.txt").exists())
 (entrada / "recente.ofx").write_bytes(ofx.replace(b"A1", b"A2"))
 confere("arquivo recém-copiado espera a próxima rodada", fa.processar_entrada(con, base) == [] and (entrada / "recente.ofx").exists())
 
