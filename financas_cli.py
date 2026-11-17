@@ -2,6 +2,7 @@
 """Comandos de terminal do Heimdall Finance para arquivos (heimdall finance --inspect, --preview, --import, --inbox, --folder).
 
     python3 financas_cli.py --inspecionar ARQUIVO [--linhas N]   mostra só a estrutura (letras viram x, números viram 9) e copia para a área de transferência
+    python3 financas_cli.py --explicar ARQUIVO [--linhas N]       mostra, linha por linha e de forma anônima, o que o leitor de PDF fez com cada linha
     python3 financas_cli.py --prever ARQUIVO                      mostra o que seria importado, sem gravar
     python3 financas_cli.py --importar ARQUIVO [--conta NOME] [--forcar]
     python3 financas_cli.py --entrada                             importa o que estiver na pasta de entrada
@@ -72,6 +73,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Arquivos do Heimdall Finance")
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--inspecionar", metavar="ARQUIVO")
+    g.add_argument("--explicar", metavar="ARQUIVO")
     g.add_argument("--prever", metavar="ARQUIVO")
     g.add_argument("--importar", metavar="ARQUIVO")
     g.add_argument("--entrada", action="store_true")
@@ -85,6 +87,12 @@ def main() -> None:
         if a.inspecionar:
             dados, nome = _ler(a.inspecionar)
             texto = fa.inspecionar(dados, nome, max(10, a.linhas))
+            print(texto)
+            if _copiar(texto):
+                print("\nCopiado para a área de transferência. Cole na conversa com Command+V. Nenhuma letra ou número real foi mantido.")
+        elif a.explicar:
+            dados, nome = _ler(a.explicar)
+            texto = fa.explicar(dados, nome, max(20, a.linhas if a.linhas != 150 else 400))
             print(texto)
             if _copiar(texto):
                 print("\nCopiado para a área de transferência. Cole na conversa com Command+V. Nenhuma letra ou número real foi mantido.")

@@ -61,7 +61,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" ;;
-    finance) printf '%s\n' "-o=--open" "-i=--inspect" "-p=--preview" "-m=--import" "-b=--inbox" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" ;;
+    finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
     backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
@@ -219,6 +219,7 @@ heimdall() {
         --folder) _heimdall_py financas_cli.py --pasta --abrir ;;
         *)
           _heimdall_tr "--inspect=--inspecionar
+--explain=--explicar
 --preview=--prever
 --import=--importar
 --inbox=--entrada
@@ -349,7 +350,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
       mail) compadd -- --test-login --simulate ;;
       access) compadd -- --password --code --all --verify ;;
-      finance) compadd -- --open --inspect --preview --import --inbox --folder --lines --account --force ;;
+      finance) compadd -- --open --inspect --explain --preview --import --inbox --folder --lines --account --force ;;
       voice) compadd -- --import ;;
       listen) compadd -- --list --latest ;;
       ingest) compadd -- --reset ;;

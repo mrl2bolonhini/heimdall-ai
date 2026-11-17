@@ -282,24 +282,32 @@ def _segmentos(linha: str) -> list:
 
 
 def _conferir_saldos(eventos: list):
-    """Extrato de conta: entre duas linhas de saldo, a soma dos lançamentos tem de explicar a diferença dos saldos.
-    Serve para extrato em ordem cronológica (saldo novo = saldo anterior + lançamentos) e na ordem inversa.
-    Devolve (confere, pares, batem) ou None quando há menos de duas linhas de saldo."""
+    """Extrato de conta: os saldos do dia têm de ser explicados pelos lançamentos. Tenta três jeitos de montar o documento:
+    1. cronológico, ou saldo aberto no começo de cada dia: saldo novo = saldo anterior + lançamentos entre as duas linhas;
+    2. do mais novo para o mais antigo, saldo no começo do dia: saldo anterior = saldo novo + lançamentos entre as duas linhas;
+    3. do mais novo para o mais antigo, saldo no fim do dia: saldo da linha = saldo da linha seguinte + lançamentos do dia dela (antes dela).
+    Devolve (confere, pares, batem, detalhe) ou None quando há menos de duas linhas de saldo."""
     saldos = [k for k, (tipo, _) in enumerate(eventos) if tipo == "s"]
     if len(saldos) < 2:
         return None
-    asc = desc = pares = 0
-    for a, b in zip(saldos, saldos[1:]):
-        soma = sum(v for tipo, v in eventos[a + 1:b] if tipo == "t")
+    antes = []  # soma dos lançamentos desde a linha de saldo anterior (ou o começo) até esta
+    ini = 0
+    for k in saldos:
+        antes.append(sum(v for tipo, v in eventos[ini:k] if tipo == "t"))
+        ini = k + 1
+    o1 = o2 = o3 = 0
+    for n, (a, b) in enumerate(zip(saldos, saldos[1:])):
+        entre = antes[n + 1]
         va, vb = eventos[a][1], eventos[b][1]
-        pares += 1
-        asc += (vb == va + soma)
-        desc += (va == vb + soma)
-    batem = max(asc, desc)
-    return batem == pares, pares, batem
+        o1 += (vb == va + entre)
+        o2 += (va == vb + entre)
+        o3 += (va == vb + antes[n])
+    pares = len(saldos) - 1
+    batem = max(o1, o2, o3)
+    return batem == pares, pares, batem, {"cronologico": o1, "inverso_saldo_antes": o2, "inverso_saldo_depois": o3}
 
 
-def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
+def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
     """(itens, info). Cada item: data, valor (centavos; gasto negativo), descricao. info: tipo, soma, totais, confere."""
     texto = texto.replace("\u2212", "-")  # o sinal de menos tipográfico (−) que alguns bancos usam
     ano_base, ref = _anos_do_documento(texto)
@@ -311,34 +319,47 @@ def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
         linha = ln.strip()
         if not linha:
             continue
+        marcas = []
         if re.search(r"\btotal\b", linha, re.I):
             totais += [abs(_centavos(v.group(0))) for v in _RE_VALOR.finditer(linha)]
-        for seg, m in _segmentos(linha):
+        segs = _segmentos(linha)
+        if not segs and registro is not None and (_RE_VALOR.search(linha) or re.search(r"\d{2}/\d{2}|\b\d{1,2}\s+(?:de\s+)?(?:jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b", linha, re.I)):
+            marcas.append("SEM DATA NO INÍCIO")
+        for seg, m in segs:
             resto = seg[m.end():]
             if not cartao and re.match(r"\s*saldo\s+(do\s+dia|anterior|final|parcial)\b", resto, re.I):
                 vsal = list(_RE_VALOR.finditer(resto))
                 if vsal:
                     eventos.append(("s", _centavos(vsal[-1].group(0))))
+                    marcas.append("SALDO")
                 continue
-            if _IGNORAR.search(resto):
+            ign = _IGNORAR.search(resto)
+            if ign:
+                marcas.append("IGNORADO (palavra: " + ign.group(0).lower() + ")")
                 continue
             vs = list(_RE_VALOR.finditer(resto))
             if not vs:
+                marcas.append("SEM VALOR")
                 continue
             escolhido = vs[-1] if (cartao or len(vs) == 1) else vs[0]  # em extrato de conta o último valor costuma ser o saldo
             v = _centavos(escolhido.group(0))
             desc = re.sub(r"\s{2,}", " ", resto[:escolhido.start()]).strip(" -|.")
             desc = re.sub(r"^[•·*.]{2,}\s*\d{4}\s+", "", desc)  # "•••• 1234" é o final do cartão, não faz parte da descrição
             if not desc:
+                marcas.append("SEM DESCRIÇÃO")
                 continue
             try:
                 data = _data_da_linha(m, ano_base, ref)
             except ValueError:
+                marcas.append("DATA INVÁLIDA")
                 continue
             if cartao:
                 v = -v  # na fatura a compra vem positiva e o crédito (estorno, pagamento) vem negativo
             itens.append({"data": data, "valor": v, "descricao": desc[:200], "fitid": ""})
             eventos.append(("t", v))
+            marcas.append("LANÇAMENTO " + ("crédito" if v > 0 else "gasto"))
+        if registro is not None and marcas:
+            registro.append((linha, marcas))
     soma = sum(i["valor"] for i in itens)
     gastos = sum(-i["valor"] for i in itens if i["valor"] < 0)
     compras = sum(-i["valor"] for i in itens if i["valor"] < 0 and not _ENCARGO.search(fn.norm(i["descricao"])))
@@ -350,7 +371,29 @@ def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
     elif totais and itens:
         confere = any(t in (liquido, gastos, compras) for t in totais)
     return itens, {"tipo": tipo, "soma": soma, "gastos": gastos, "totais": sorted(set(totais))[:6], "confere": confere,
-                   "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2]}}
+                   "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2], "orientacoes": saldos[3]}}
+
+
+def explicar(dados: bytes, nome: str, max_linhas: int = 400) -> str:
+    """Diagnóstico anônimo do leitor de PDF: cada linha com data ou valor, mascarada, com o que o leitor fez com ela."""
+    texto = texto_do_pdf(dados)
+    banco, tipo = detectar(texto, nome)
+    registro = []
+    itens, info = ler_pdf_texto(texto, tipo, registro)
+    cont = Counter(m.split(" (")[0] for _, marcas in registro for m in marcas)
+    saida = [f"Diagnóstico anônimo do leitor (letras viram x, números viram 9)", f"banco: {banco or '?'}; tipo: {tipo or '?'}; lançamentos lidos: {len(itens)}"]
+    saida.append("contagem: " + "; ".join(f"{k} {v}" for k, v in sorted(cont.items())))
+    sal = info.get("saldos")
+    if sal:
+        o = sal["orientacoes"]
+        saida.append(f"saldos: {sal['pares']} pares; cronológico {o['cronologico']}; inverso com saldo no começo do dia {o['inverso_saldo_antes']}; inverso com saldo no fim do dia {o['inverso_saldo_depois']}")
+    saida.append("totais citados no documento (R$): " + (", ".join(fn.brl(x) for x in info["totais"]) or "nenhum") + f"; gastos lidos {fn.brl(info['gastos'])}; soma {fn.brl(info['soma'])}")
+    saida.append("---")
+    for linha, marcas in registro[:max_linhas]:
+        saida.append(" | ".join(marcas) + " :: " + re.sub(r" {3,}", "   ", mascarar_linha(linha))[:160])
+    if len(registro) > max_linhas:
+        saida.append(f"... (mais {len(registro) - max_linhas} linhas; use --lines N)")
+    return "\n".join(saida)
 
 
 def ler_pdf(dados: bytes, nome: str = "") -> tuple:

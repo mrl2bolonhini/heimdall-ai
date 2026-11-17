@@ -175,6 +175,7 @@ Opções:
   -o, --open           abre o painel no navegador (é o padrão sem opções)
   -f, --folder         abre a pasta de entrada no Finder e lista os arquivos para revisar
   -i, --inspect ARQ    mostra só a estrutura do arquivo (letras viram x, números viram 9) e copia para a área de transferência; serve para me mostrar o layout do seu banco sem enviar dados
+  -x, --explain ARQ    diagnóstico anônimo de PDF: mostra, linha por linha, o que o leitor fez (lançamento, saldo, ignorada, sem data) e quantos saldos fecham em cada jeito de conferir; copia para a área de transferência
   -l, --lines N        com --inspect, quantas linhas mostrar (padrão 150)
   -p, --preview ARQ    mostra o que seria importado, com a conferência do total, sem gravar
   -m, --import ARQ     importa um arquivo (OFX, CSV ou PDF)
