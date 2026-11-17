@@ -232,6 +232,30 @@ def _data_da_linha(m, ano_base: int, ref) -> str:
     return d.strftime("%Y-%m-%d")
 
 
+# Em várias faturas as compras vêm em duas colunas lado a lado: "03/11 LOJA A 10,00    05/11 LOJA B 20,00".
+# Um dd/mm no meio da linha só abre uma nova compra se vier depois de um vão de colunas (2+ espaços) e seguido de texto; "03/10 120,00" é parcela, não data.
+_RE_INICIO_MEIO = re.compile(r"(?<=\s\s)\d{2}/\d{2}(?![\d/])(?=\s+(?!-?\d{1,3}(?:\.\d{3})*,\d{2}(?![\d,]))\S)")
+
+
+def _segmentos(linha: str) -> list:
+    """Trechos da linha que começam com uma data: [(texto_do_trecho, casamento_da_data)]."""
+    inicios = []
+    m0 = _RE_DATA.match(linha)
+    if m0:
+        inicios.append(m0.start())
+    for m in _RE_INICIO_MEIO.finditer(linha):
+        if not inicios or m.start() > inicios[0]:
+            inicios.append(m.start())
+    saida = []
+    for k, ini in enumerate(inicios):
+        fim = inicios[k + 1] if k + 1 < len(inicios) else len(linha)
+        seg = linha[ini:fim].rstrip()
+        m = _RE_DATA.match(seg)
+        if m:
+            saida.append((seg, m))
+    return saida
+
+
 def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
     """(itens, info). Cada item: data, valor (centavos; gasto negativo), descricao. info: tipo, soma, totais, confere."""
     ano_base, ref = _anos_do_documento(texto)
@@ -242,30 +266,27 @@ def ler_pdf_texto(texto: str, tipo: str = "") -> tuple:
         linha = ln.strip()
         if not linha:
             continue
-        valores = list(_RE_VALOR.finditer(linha))
-        if re.search(r"\btotal\b", linha, re.I) and valores:
-            totais += [abs(_centavos(v.group(0))) for v in valores]
-        m = _RE_DATA.match(linha)
-        if not m or not valores:
-            continue
-        resto = linha[m.end():]
-        if _IGNORAR.search(resto):
-            continue
-        vs = list(_RE_VALOR.finditer(resto))
-        if not vs:
-            continue
-        escolhido = vs[-1] if (cartao or len(vs) == 1) else vs[0]  # em extrato de conta o último valor costuma ser o saldo
-        v = _centavos(escolhido.group(0))
-        desc = re.sub(r"\s{2,}", " ", resto[:escolhido.start()]).strip(" -|.")
-        if not desc:
-            continue
-        try:
-            data = _data_da_linha(m, ano_base, ref)
-        except ValueError:
-            continue
-        if cartao:
-            v = -v  # na fatura a compra vem positiva e o crédito (estorno, pagamento) vem negativo
-        itens.append({"data": data, "valor": v, "descricao": desc[:200], "fitid": ""})
+        if re.search(r"\btotal\b", linha, re.I):
+            totais += [abs(_centavos(v.group(0))) for v in _RE_VALOR.finditer(linha)]
+        for seg, m in _segmentos(linha):
+            resto = seg[m.end():]
+            if _IGNORAR.search(resto):
+                continue
+            vs = list(_RE_VALOR.finditer(resto))
+            if not vs:
+                continue
+            escolhido = vs[-1] if (cartao or len(vs) == 1) else vs[0]  # em extrato de conta o último valor costuma ser o saldo
+            v = _centavos(escolhido.group(0))
+            desc = re.sub(r"\s{2,}", " ", resto[:escolhido.start()]).strip(" -|.")
+            if not desc:
+                continue
+            try:
+                data = _data_da_linha(m, ano_base, ref)
+            except ValueError:
+                continue
+            if cartao:
+                v = -v  # na fatura a compra vem positiva e o crédito (estorno, pagamento) vem negativo
+            itens.append({"data": data, "valor": v, "descricao": desc[:200], "fitid": ""})
     soma = sum(i["valor"] for i in itens)
     gastos = sum(-i["valor"] for i in itens if i["valor"] < 0)
     liquido = abs(soma)

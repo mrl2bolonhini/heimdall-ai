@@ -7,8 +7,9 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - O banco (Nubank, Itaú, Mercado Pago) e o tipo (conta ou cartão) são identificados pelo conteúdo e pelo nome do arquivo, e a conta sugerida (por exemplo "Nubank cartão") é usada quando você deixa o nome em branco. O CSV de fatura do Nubank (date, category, title, amount) é reconhecido e tem o sinal invertido sozinho.
 - Pasta de entrada vigiada (dados_financas/entrada): solte os arquivos lá e, a cada minuto, o que conferir é importado (vai para importados/) e o que deixar dúvida vai para revisar/ com um .motivo.txt. A página Importar lista os arquivos para revisar.
 - Novos comandos: heimdall finance --folder (abre a pasta), --inspect ARQUIVO (mostra só a estrutura do arquivo, com letras trocadas por x e números por 9, e copia para a área de transferência, para mostrar o layout do seu banco sem expor dados), --preview ARQUIVO (mostra o que seria importado, sem gravar), --import ARQUIVO [--account NOME] [--force] e --inbox (importa a pasta agora).
+- O leitor entende fatura com as compras em duas colunas lado a lado (uma data, uma descrição e um valor por coluna), sem confundir a parcela "03/10" com uma data nova.
 - Aviso honesto: o leitor de PDF é genérico e foi testado com documentos inventados. O layout real de cada banco ainda precisa ser conferido; rode --inspect em um arquivo de cada tipo (conta e cartão, nos três bancos) para ajustar. Os arquivos reais nunca precisam sair do Mac.
-- Novos: financas_arquivos.py, financas_cli.py e teste_finance_arquivos.py (44 verificações); teste_finance.py ganhou o envio de PDF pelo formulário.
+- Novos: financas_arquivos.py, financas_cli.py e teste_finance_arquivos.py (48 verificações); teste_finance.py ganhou o envio de PDF pelo formulário.
 - Para aplicar: heimdall update --restart (não precisa de instalador; o pypdf já está no requirements.txt).
 
 ## 2026-11-16 - Jogos em ordem alfabética e fim dos jogos de terceiros sem português

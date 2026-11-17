@@ -89,6 +89,22 @@ confere("compra de dezembro em fatura de janeiro fica no ano anterior", itens[0]
 itens, _ = fa.ler_pdf_texto("Parcela 02/05 Loja 99,00\n03/11/2026 Loja parcela 02/05 50,00", "cartão")
 confere("'02/05' dentro da descrição não vira data", len(itens) == 1 and itens[0]["valor"] == -5000, itens)
 
+# ---- fatura com compras em duas colunas (layout comum de fatura de cartão)
+DUAS = """Fatura do cartão Itaú
+Vencimento:10/12/2026
+DATA ESTABELECIMENTO VALOR EM R$   DATA ESTABELECIMENTO VALOR EM R$
+03/11 PAGAMENTO EFETUADO -100,00   05/11 MERCADO EXEMPLO 50,00
+ALIMENTACAO SAO PAULO              LAZER SAO PAULO
+06/11 LOJA PARCELADA 03/10 120,00   08/11 PADARIA TESTE 30,50
+Xx xx xx xx  09/11 FARMACIA TESTE 25,00
+Total dos lançamentos atuais 225,50
+"""
+itens, info = fa.ler_pdf_texto(DUAS, "cartão")
+confere("duas colunas: lê as cinco compras, uma por coluna", [i["descricao"] for i in itens] == ["PAGAMENTO EFETUADO", "MERCADO EXEMPLO", "LOJA PARCELADA 03/10", "PADARIA TESTE", "FARMACIA TESTE"], [i["descricao"] for i in itens])
+confere("duas colunas: valores e sinais certos", [i["valor"] for i in itens] == [10000, -5000, -12000, -3050, -2500], [i["valor"] for i in itens])
+confere("duas colunas: o total dos lançamentos confere", info["confere"] is True, info)
+confere("parcela '03/10' antes do valor não abre uma compra nova", len(itens) == 5)
+
 # ---- PDF de verdade
 try:
     pdf = pdf_de(FATURA)
