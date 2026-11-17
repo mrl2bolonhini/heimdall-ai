@@ -677,7 +677,7 @@ def _tentar_boleto(con, arq: Path, dados: bytes, agora: str):
     for b in achadas:
         novos += 1 if fb.registrar(con, b, quem, arq.name, agora)[1] else 0
     return {"arquivo": arq.name, "ok": True, "boleto": True, "conta": "", "novas": novos, "repetidas": len(achadas) - novos, "lidas": len(achadas),
-            "motivo": " | ".join(fb.frase({**b, "beneficiario": quem}) for b in achadas)}
+            "motivo": " | ".join(fb.frase({**b, "beneficiario": quem or b.get("beneficiario", "")}) for b in achadas)}
 
 
 def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 1024 * 1024) -> list:

@@ -97,6 +97,36 @@ try:
 except fn.ErroFinance:
     confere("convênio: número trocado é recusado", True)
 
+# --- Pix copia e cola ---------------------------------------------------------------------
+def _t(i, v):
+    return f"{i}{len(v):02d}{v}"
+
+
+_corpo = _t("00", "01") + _t("26", _t("00", "br.gov.bcb.pix") + _t("01", "fulano@exemplo.com")) + _t("52", "0000") + _t("53", "986") + _t("54", "123.45") + _t("58", "BR") + _t("59", "MARIA SILVA") + _t("60", "SAO PAULO") + _t("62", _t("05", "***")) + "6304"
+def _crc(s):
+    c = 0xFFFF
+    for b in s.encode():
+        c ^= b << 8
+        for _ in range(8):
+            c = ((c << 1) ^ 0x1021) & 0xFFFF if c & 0x8000 else (c << 1) & 0xFFFF
+    return f"{c:04X}"
+
+
+PIX = _corpo + _crc(_corpo)
+px = fb.interpretar(PIX, hoje)
+confere("pix: valor, quem recebe e cidade", px["tipo"] == "pix" and px["valor"] == 12345 and px["beneficiario"] == "MARIA SILVA" and px["cidade"] == "SAO PAULO", px)
+confere("pix: aceita quebra de linha no fim e acha dentro de texto", fb.interpretar(PIX + "\n", hoje)["linha"] == PIX and len(fb.achar_linhas("Pague:\n" + PIX + "\nobrigado", hoje)) == 1)
+for ruim, rot in ((PIX[:-1] + ("0" if PIX[-1] != "0" else "1"), "CRC errado"), (PIX[:60], "cortado"), (PIX.replace("123.45", "123.46"), "valor adulterado")):
+    try:
+        fb.interpretar(ruim, hoje)
+        confere(f"pix: {rot} é recusado", False)
+    except fn.ErroFinance:
+        confere(f"pix: {rot} é recusado", True)
+_c = fn.conectar(Path(tempfile.mkdtemp()) / "pix.db")
+_i, _n = fb.registrar(_c, px)
+confere("pix: registra com o nome de quem recebe e lista como sem vencimento", _n and fb.listar(_c, hoje)[0]["beneficiario"] == "MARIA SILVA" and fb.listar(_c, hoje)[0]["estado"] == "sem vencimento")
+confere("pix: frase em português simples", fb.frase(fb.listar(_c, hoje)[0]) == "MARIA SILVA: R$ 123,45, sem vencimento no código", fb.frase(fb.listar(_c, hoje)[0]))
+
 # --- achar no texto de um PDF -------------------------------------------------------------
 texto = f"""Recibo do Pagador
 Beneficiário

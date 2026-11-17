@@ -60,9 +60,47 @@ def so_digitos(texto: str) -> str:
     return re.sub(r"\D", "", texto or "")
 
 
+def _crc16(texto: str) -> str:
+    crc = 0xFFFF
+    for b in texto.encode("ascii", "ignore"):
+        crc ^= b << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if crc & 0x8000 else (crc << 1) & 0xFFFF
+    return f"{crc:04X}"
+
+
+def _tlv(texto: str) -> dict:
+    campos, i = {}, 0
+    while i + 4 <= len(texto):
+        tam = texto[i + 2:i + 4]
+        if not tam.isdigit() or i + 4 + int(tam) > len(texto):
+            raise ERRO("O código Pix está cortado ou malformado. Copie o Pix copia e cola inteiro.")
+        campos[texto[i:i + 2]] = texto[i + 4:i + 4 + int(tam)]
+        i += 4 + int(tam)
+    return campos
+
+
+def interpretar_pix(texto: str) -> dict:
+    """Pix copia e cola (BR Code): confere o CRC e lê valor, quem recebe e a cidade. Não tem vencimento próprio (Pix com vencimento vem por link do banco)."""
+    cod = re.sub(r"[\r\n]+", "", (texto or "").strip())  # espaços dentro do nome do recebedor contam no CRC, então ficam
+    if len(cod) < 30 or cod[-8:-4] != "6304" or _crc16(cod[:-4]) != cod[-4:].upper():
+        raise ERRO("O código Pix não confere (o dígito de controle final está errado ou o código está cortado). Copie o Pix copia e cola inteiro.")
+    c = _tlv(cod)
+    valor = None
+    if c.get("54"):
+        try:
+            valor = int(round(float(c["54"]) * 100)) or None
+        except ValueError:
+            valor = None
+    return {"tipo": "pix", "linha": cod, "banco": "", "codigo_banco": "", "valor": valor, "vencimento": None, "segmento": "", "beneficiario": (c.get("59") or "").strip(),
+            "cidade": (c.get("60") or "").strip()}
+
+
 def interpretar(texto: str, hoje: date = None) -> dict:
-    """Lê uma linha digitável. Levanta ErroFinance se faltar dígito ou se algum dígito verificador não bater."""
+    """Lê uma linha digitável (ou um Pix copia e cola). Levanta ErroFinance se faltar dígito ou se algum dígito verificador não bater."""
     hoje = hoje or date.today()
+    if (texto or "").strip().startswith("000201"):
+        return interpretar_pix(texto)
     d = so_digitos(texto)
     if len(d) == 47:
         return _bancario(d, hoje)
@@ -126,6 +164,14 @@ def achar_linhas(texto: str, hoje: date = None) -> list:
                     continue
                 vistas.add(trecho)
                 achadas.append(r)
+    for palavra in re.findall(r"000201[^\r\n]{30,}", texto or ""):
+        try:
+            r = interpretar_pix(palavra.strip())
+        except ERRO:
+            continue
+        if r["linha"] not in vistas:
+            vistas.add(r["linha"])
+            achadas.append(r)
     return achadas
 
 
@@ -152,7 +198,7 @@ def registrar(con, dados: dict, beneficiario: str = "", arquivo: str = "", agora
     if ja:
         return ja["id"], False
     cur = con.execute("INSERT INTO boletos(linha, valor, vencimento, banco, beneficiario, tipo, segmento, arquivo, situacao, criado_em) VALUES(?,?,?,?,?,?,?,?,'aberto',?)",
-                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or "").strip(), dados["tipo"], dados["segmento"], arquivo, agora))
+                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or dados.get("beneficiario") or "").strip(), dados["tipo"], dados["segmento"], arquivo, agora))
     con.commit()
     return cur.lastrowid, True
 
@@ -193,5 +239,5 @@ def frase(b: dict) -> str:
     """Uma linha em português simples para o terminal."""
     quem = b.get("beneficiario") or b.get("banco") or b.get("segmento") or "sem identificação"
     valor = fn.brl(b["valor"]) if b.get("valor") else "valor em aberto (o pagador define)"
-    venc = fn.data_br(b["vencimento"]) if b.get("vencimento") else "sem vencimento no código"
-    return f"{quem}: {valor}, vencimento {venc}"
+    venc = ("vencimento " + fn.data_br(b["vencimento"])) if b.get("vencimento") else "sem vencimento no código"
+    return f"{quem}: {valor}, {venc}"

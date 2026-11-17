@@ -130,7 +130,7 @@ def main() -> None:
                 achadas = [fb.interpretar(a.boleto)]
             for b in achadas:
                 idb, novo = fb.registrar(con, b, beneficiario, arquivo)
-                print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario}))
+                print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario or b.get("beneficiario", "")}))
             print("\nO Heimdall não paga nada: só guarda a conta a pagar. Veja em heimdall finance, página Boletos, ou com heimdall finance --bills.")
         elif a.boletos:
             con = _banco()

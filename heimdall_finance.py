@@ -401,8 +401,8 @@ def pg_boletos(sess: dict) -> tuple:
     corpo = ['<p>Aqui ficam os boletos como contas a pagar. O Heimdall lê a linha digitável, confere os dígitos verificadores e mostra valor e vencimento. '
              'Ele nunca paga nada: o pagamento é sempre com você, no app do banco. PDF de boleto solto na pasta de entrada também é registrado.</p>',
              '<h2>Registrar um boleto</h2>'
-             f'<form method="post" action="/boletos">{csrf}<p><label for="linha">Linha digitável, com 47 ou 48 números (pontos e espaços podem ficar)</label><br>'
-             '<input type="text" id="linha" name="linha" inputmode="numeric" autocomplete="off" required></p>'
+             f'<form method="post" action="/boletos">{csrf}<p><label for="linha">Linha digitável (47 ou 48 números, pontos e espaços podem ficar) ou Pix copia e cola</label><br>'
+             '<input type="text" id="linha" name="linha" autocomplete="off" required></p>'
              '<p><label for="quem">Quem recebe (opcional)</label><br><input type="text" id="quem" name="quem" autocomplete="off"></p>'
              '<button type="submit">Registrar boleto</button></form>']
     lista = fb.listar(banco(), incluir_pagos=True)
@@ -678,7 +678,7 @@ class Finance(BaseHTTPRequestHandler):
         if rota == "/boletos":
             b = fb.interpretar(campos.get("linha", ""))
             idb, novo = fb.registrar(banco(), b, campos.get("quem", ""))
-            sess["flash"] = ("ok", ("Boleto registrado: " if novo else "Esse boleto já estava registrado: ") + fb.frase({**b, "beneficiario": campos.get("quem", "").strip()}) + ".")
+            sess["flash"] = ("ok", ("Boleto registrado: " if novo else "Esse boleto já estava registrado: ") + fb.frase({**b, "beneficiario": campos.get("quem", "").strip() or b.get("beneficiario", "")}) + ".")
             self._ir("/boletos")
             return
         if rota in ("/boletos/situacao", "/boletos/remover"):
