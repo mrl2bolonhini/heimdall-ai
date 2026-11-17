@@ -509,6 +509,23 @@ def pg_futuros(sess: dict) -> tuple:
     return "Pagamentos futuros", "".join(corpo)
 
 
+def _bloco_pessoas(csrf: str) -> str:
+    nomes = fb.pessoas(banco())
+    html_ = ('<h2>Pessoas</h2><p>Cadastre as pessoas cujos boletos você paga, por exemplo sua noiva e sua filha, para agrupar os boletos e somar o que está em aberto de cada uma. '
+             'Só o nome: o Heimdall não guarda CPF. Ao ler um PDF, ele procura o nome no campo Pagador.</p>'
+             f'<form method="post" action="/boletos/pessoa">{csrf}<p><label for="npessoa">Nome da pessoa</label><br><input type="text" id="npessoa" name="nome" autocomplete="off" required></p>'
+             '<button type="submit">Adicionar pessoa</button></form>')
+    if nomes:
+        linhas = [[e(n), f'<form class="lim" method="post" action="/boletos/pessoa/remover">{csrf}<input type="hidden" name="nome" value="{e(n)}">'
+                         f'<button type="submit" aria-label="Remover pessoa: {e(n)}">Remover</button></form>'] for n in nomes]
+        html_ += tabela("Pessoas cadastradas", ["Nome", "Ação"], linhas)
+    return html_
+
+
+def _opcoes_pessoas(atual: str) -> str:
+    return '<option value="">Sem pessoa</option>' + "".join(f'<option value="{e(n)}"{" selected" if n == atual else ""}>{e(n)}</option>' for n in fb.pessoas(banco()))
+
+
 def pg_boletos(sess: dict) -> tuple:
     csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
     corpo = ['<p>Aqui ficam os boletos como contas a pagar. O Heimdall lê a linha digitável, confere os dígitos verificadores e mostra valor e vencimento. '
@@ -517,11 +534,18 @@ def pg_boletos(sess: dict) -> tuple:
              f'<form method="post" action="/boletos">{csrf}<p><label for="linha">Linha digitável (47 ou 48 números, pontos e espaços podem ficar) ou Pix copia e cola</label><br>'
              '<input type="text" id="linha" name="linha" autocomplete="off" required></p>'
              '<p><label for="quem">Quem recebe (opcional)</label><br><input type="text" id="quem" name="quem" autocomplete="off"></p>'
+             f'<p><label for="dono">De quem é este boleto</label><br><select id="dono" name="dono">{_opcoes_pessoas("")}</select></p>'
              '<button type="submit">Registrar boleto</button></form>']
     lista = fb.listar(banco(), incluir_pagos=True)
     if not lista:
         corpo.append("<p>Nenhum boleto registrado ainda.</p>")
-        return "Boletos", "".join(corpo)
+        return "Boletos", "".join(corpo) + _bloco_pessoas(csrf)
+    totais = {}
+    for b in lista:
+        if b["estado"] != "pago":
+            totais[b["dono"] or "Sem pessoa"] = totais.get(b["dono"] or "Sem pessoa", 0) + (b["valor"] or 0)
+    if totais and (len(totais) > 1 or "Sem pessoa" not in totais):
+        corpo.append("<p>Total em aberto por pessoa: " + "; ".join(f"{e(k)} {e(fn.brl(v))}" for k, v in sorted(totais.items())) + ".</p>")
     estados = {"vencido": "Vencido", "vence hoje": "Vence hoje", "a vencer": "A vencer", "sem vencimento": "Sem vencimento no código", "pago": "Pago"}
     linhas = []
     for b in lista:
@@ -535,10 +559,12 @@ def pg_boletos(sess: dict) -> tuple:
         acoes = (f'<form class="lim" method="post" action="/boletos/situacao">{oculto}<input type="hidden" name="pago" value="{0 if b["estado"] == "pago" else 1}">'
                  f'<button type="submit" aria-label="{"Reabrir" if b["estado"] == "pago" else "Marcar como pago"}: boleto de {e(quem)}">{"Reabrir" if b["estado"] == "pago" else "Marcar como pago"}</button></form>'
                  f'<form class="lim" method="post" action="/boletos/remover">{oculto}<button type="submit" aria-label="Remover boleto de {e(quem)}">Remover</button></form>')
-        linhas.append([e(quem), e(valor), e(venc), e(sit), acoes])
-    corpo.append("<h2>Boletos</h2>" + tabela("Boletos registrados, do vencimento mais próximo ao mais distante", ["Quem recebe", "Valor", "Vencimento", "Situação", "Ações"], linhas, {1}))
+        pessoa = (f'<form class="lim" method="post" action="/boletos/dono">{oculto}'
+                  f'<select name="dono" aria-label="Pessoa do boleto de {e(quem)}">{_opcoes_pessoas(b["dono"] or "")}</select><button type="submit" aria-label="Mudar a pessoa do boleto de {e(quem)}">Mudar pessoa</button></form>')
+        linhas.append([e(quem), pessoa, e(valor), e(venc), e(sit), acoes])
+    corpo.append("<h2>Boletos</h2>" + tabela("Boletos registrados, do vencimento mais próximo ao mais distante", ["Quem recebe", "Pessoa", "Valor", "Vencimento", "Situação", "Ações"], linhas, {2}))
     corpo.append('<p class="sub">Marcar como pago é só uma anotação sua; não envia nada ao banco.</p>')
-    return "Boletos", "".join(corpo)
+    return "Boletos", "".join(corpo) + _bloco_pessoas(csrf)
 
 
 def pg_recorrentes() -> tuple:
@@ -823,8 +849,25 @@ class Finance(BaseHTTPRequestHandler):
             return
         if rota == "/boletos":
             b = fb.interpretar(campos.get("linha", ""))
-            idb, novo = fb.registrar(banco(), b, campos.get("quem", ""))
+            idb, novo = fb.registrar(banco(), b, campos.get("quem", ""), "", None, campos.get("dono", "") if campos.get("dono", "") in fb.pessoas(banco()) else "")
             sess["flash"] = ("ok", ("Boleto registrado: " if novo else "Esse boleto já estava registrado: ") + fb.frase({**b, "beneficiario": campos.get("quem", "").strip() or b.get("beneficiario", "")}) + ".")
+            self._ir("/boletos")
+            return
+        if rota == "/boletos/pessoa":
+            nome = fb.adicionar_pessoa(banco(), campos.get("nome", ""))
+            sess["flash"] = ("ok", f"Pessoa cadastrada: {nome}.")
+            self._ir("/boletos")
+            return
+        if rota == "/boletos/pessoa/remover":
+            sess["flash"] = ("ok", "Pessoa removida; os boletos dela ficaram sem pessoa." if fb.remover_pessoa(banco(), campos.get("nome", "")) else "Não achei essa pessoa.")
+            self._ir("/boletos")
+            return
+        if rota == "/boletos/dono":
+            try:
+                ok = fb.definir_dono(banco(), int(campos.get("id", "0")), campos.get("dono", ""))
+            except ValueError:
+                ok = False
+            sess["flash"] = ("ok", "Pessoa do boleto atualizada." if ok else "Não achei esse boleto.")
             self._ir("/boletos")
             return
         if rota in ("/boletos/situacao", "/boletos/remover"):

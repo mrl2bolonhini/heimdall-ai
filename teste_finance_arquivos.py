@@ -459,6 +459,12 @@ if pdf_ok:
     _l = _fb.listar(_con)
     confere("boleto da pasta guarda valor e beneficiário", len(_l) == 1 and _l[0]["valor"] == 45090 and _l[0]["beneficiario"] == "PADARIA DOIS IRMAOS LTDA", _l)
     confere("boleto não cria lançamento no extrato", _con.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 0)
+    _fb.adicionar_pessoa(_con, "Maria Souza Lima")
+    _outra = "34191234546789012345767890123457616560000099990"
+    try:
+        _ob = _fb.interpretar(_outra)
+    except fn.ErroFinance:
+        _ob = None
     _env = dict(os.environ, HEIMDALL_FINANCE_DIR=str(tmp / "clib"))
     p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boleto", "34191234546789012345767890123457616560000045090"], capture_output=True, text=True, env=_env, timeout=60)
     confere("--boleto com a linha registra e avisa que não paga", p.returncode == 0 and "Registrado" in p.stdout and "R$ 450,90" in p.stdout and "não paga nada" in p.stdout, p.stdout[:300] + p.stderr[:200])
@@ -468,6 +474,11 @@ if pdf_ok:
     confere("--boleto com número errado recusa", p.returncode != 0 and "não confere" in (p.stdout + p.stderr), p.stdout[:200] + p.stderr[:300])
     p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boletos"], capture_output=True, text=True, env=_env, timeout=60)
     confere("--boletos lista", p.returncode == 0 and "R$ 450,90" in p.stdout, p.stdout[:300])
+    pix_cli = "00020126400014br.gov.bcb.pix0118fulano@exemplo.com5204000053039865406123.455802BR5911MARIA SILVA6009SAO PAULO62070503***6304757B"
+    p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boleto", pix_cli, "--pessoa", "Ana Souza"], capture_output=True, text=True, env=_env, timeout=60)
+    confere("--boleto com --pessoa cadastra a pessoa e mostra de quem é", p.returncode == 0 and "(de Ana Souza)" in p.stdout and "R$ 123,45" in p.stdout, p.stdout[:300] + p.stderr[:200])
+    p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boletos"], capture_output=True, text=True, env=_env, timeout=60)
+    confere("--boletos mostra o total por pessoa", "Total em aberto por pessoa" in p.stdout and "Ana Souza R$ 123,45" in p.stdout, p.stdout[:400])
 
 print()
 print("FALHAS: " + str(falhas))

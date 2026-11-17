@@ -127,6 +127,31 @@ _i, _n = fb.registrar(_c, px)
 confere("pix: registra com o nome de quem recebe e lista como sem vencimento", _n and fb.listar(_c, hoje)[0]["beneficiario"] == "MARIA SILVA" and fb.listar(_c, hoje)[0]["estado"] == "sem vencimento")
 confere("pix: frase em português simples", fb.frase(fb.listar(_c, hoje)[0]) == "MARIA SILVA: R$ 123,45, sem vencimento no código", fb.frase(fb.listar(_c, hoje)[0]))
 
+# --- pessoas -------------------------------------------------------------------------------
+_p = fn.conectar(Path(tempfile.mkdtemp()) / "pessoas.db")
+fb.adicionar_pessoa(_p, "Maria Souza Lima")
+fb.adicionar_pessoa(_p, "Ana Souza Lima")
+for ruim in ("", "A", "123.456.789-09"):
+    try:
+        fb.adicionar_pessoa(_p, ruim)
+        confere(f"pessoa inválida recusada: {ruim!r}", False)
+    except fn.ErroFinance:
+        confere(f"pessoa inválida recusada: {ruim!r}", True)
+_txt = "Beneficiário\nESCOLA ALEGRIA\nPagador\nMARIA SOUZA LIMA   CPF xxx\nVencimento 10/12/2026\n"
+confere("PDF: acha a pessoa pelo nome no campo Pagador", fb.dono_do_texto(_txt, fb.pessoas(_p)) == "Maria Souza Lima")
+confere("PDF: dois nomes parecidos não geram palpite", fb.dono_do_texto("Pagador\nSOUZA LIMA", fb.pessoas(_p)) == "" and fb.dono_do_texto("sem pagador", fb.pessoas(_p)) == "")
+_i, _ = fb.registrar(_p, r, "PADARIA", "", None, "Maria Souza Lima")
+confere("boleto guarda a pessoa e a frase mostra de quem é", fb.listar(_p, hoje)[0]["dono"] == "Maria Souza Lima" and "(de Maria Souza Lima)" in fb.frase(fb.listar(_p, hoje)[0]))
+try:
+    fb.definir_dono(_p, _i, "Fulana Desconhecida")
+    confere("mudar para pessoa não cadastrada é recusado", False)
+except fn.ErroFinance:
+    confere("mudar para pessoa não cadastrada é recusado", True)
+fb.definir_dono(_p, _i, "Ana Souza Lima")
+confere("mudar a pessoa do boleto", fb.listar(_p, hoje)[0]["dono"] == "Ana Souza Lima")
+fb.remover_pessoa(_p, "Ana Souza Lima")
+confere("remover pessoa deixa o boleto sem pessoa", fb.listar(_p, hoje)[0]["dono"] is None)
+
 # --- achar no texto de um PDF -------------------------------------------------------------
 texto = f"""Recibo do Pagador
 Beneficiário

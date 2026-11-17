@@ -85,6 +85,7 @@ def main() -> None:
     ap.add_argument("--valores", action="store_true")
     ap.add_argument("--linhas", type=int, default=150)
     ap.add_argument("--conta", default="")
+    ap.add_argument("--pessoa", default="")
     ap.add_argument("--forcar", action="store_true")
     ap.add_argument("--abrir", action="store_true")
     a = ap.parse_args()
@@ -129,8 +130,11 @@ def main() -> None:
             else:
                 achadas = [fb.interpretar(a.boleto)]
             for b in achadas:
-                idb, novo = fb.registrar(con, b, beneficiario, arquivo)
-                print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario or b.get("beneficiario", "")}))
+                dono = a.pessoa or (fb.dono_do_texto(texto, fb.pessoas(con)) if p.is_file() else "")
+                if a.pessoa and a.pessoa not in fb.pessoas(con):
+                    fb.adicionar_pessoa(con, a.pessoa)
+                idb, novo = fb.registrar(con, b, beneficiario, arquivo, None, dono)
+                print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario or b.get("beneficiario", ""), "dono": dono}))
             print("\nO Heimdall não paga nada: só guarda a conta a pagar. Veja em heimdall finance, página Boletos, ou com heimdall finance --bills.")
         elif a.boletos:
             con = _banco()
@@ -138,8 +142,14 @@ def main() -> None:
             if not lista:
                 print("Nenhum boleto em aberto.")
             for b in lista:
-                quando = {"vencido": f"vencido há {-b['dias']} dia(s)", "vence hoje": "vence hoje", "a vencer": f"vence em {b['dias']} dia(s)"}.get(b["estado"], "sem vencimento")
+                dias = b["dias"] or 0
+                quando = {"vencido": f"vencido há {-dias} dia(s)", "vence hoje": "vence hoje", "a vencer": f"vence em {dias} dia(s)"}.get(b["estado"], "sem vencimento")
                 print(f"{b['id']}. {fb.frase(b)} ({quando})")
+            tot = {}
+            for b in lista:
+                tot[b["dono"] or "sem pessoa"] = tot.get(b["dono"] or "sem pessoa", 0) + (b["valor"] or 0)
+            if len(tot) > 1 or (tot and "sem pessoa" not in tot):
+                print("\nTotal em aberto por pessoa: " + "; ".join(f"{k} {fn.brl(v)}" for k, v in sorted(tot.items())) + ".")
         elif a.entrada or a.reprocessar:
             if a.reprocessar:
                 movidos = fa.devolver_para_entrada(DIR_DADOS)

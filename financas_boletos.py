@@ -191,14 +191,58 @@ def beneficiario_do_texto(texto: str) -> str:
 # --------------------------------------------------------------------------------------------
 # Banco local
 # --------------------------------------------------------------------------------------------
-def registrar(con, dados: dict, beneficiario: str = "", arquivo: str = "", agora: str = None) -> tuple:
+def pessoas(con) -> list:
+    return [r["nome"] for r in con.execute("SELECT nome FROM pessoas ORDER BY nome")]
+
+
+def adicionar_pessoa(con, nome: str) -> str:
+    nome = " ".join((nome or "").split())[:60]
+    if len(nome) < 2:
+        raise ERRO("Digite o nome da pessoa (por exemplo, Maria Silva).")
+    if re.search(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}", nome):
+        raise ERRO("Digite só o nome. O Heimdall não guarda CPF.")
+    con.execute("INSERT OR IGNORE INTO pessoas(nome) VALUES(?)", (nome,))
+    con.commit()
+    return nome
+
+
+def remover_pessoa(con, nome: str) -> bool:
+    cur = con.execute("DELETE FROM pessoas WHERE nome=?", (nome,))
+    con.execute("UPDATE boletos SET dono=NULL WHERE dono=?", (nome,))
+    con.commit()
+    return cur.rowcount > 0
+
+
+def definir_dono(con, id_boleto: int, nome: str) -> bool:
+    nome = (nome or "").strip()
+    if nome and nome not in pessoas(con):
+        raise ERRO("Essa pessoa não está cadastrada. Adicione o nome primeiro.")
+    cur = con.execute("UPDATE boletos SET dono=? WHERE id=?", (nome or None, int(id_boleto)))
+    con.commit()
+    return cur.rowcount > 0
+
+
+def dono_do_texto(texto: str, nomes: list) -> str:
+    """Se o PDF diz quem é o pagador (Pagador, Sacado) e o nome bate com uma pessoa cadastrada, devolve essa pessoa; senão, vazio."""
+    base = fn.norm(texto)
+    m = re.search(r"\b(pagador|sacado)\b", base)
+    trecho = base[m.start():m.start() + 250] if m else ""
+    achadas = []
+    for n in nomes:
+        toks = [t for t in fn.norm(n).split() if len(t) >= 2]
+        if toks and all(t in trecho for t in (toks[0], toks[-1])):
+            achadas.append(n)
+    return achadas[0] if len(achadas) == 1 else ""
+
+
+def registrar(con, dados: dict, beneficiario: str = "", arquivo: str = "", agora: str = None, dono: str = "") -> tuple:
     """Guarda o boleto como conta a pagar. Devolve (id, novo). A mesma linha digitável não entra duas vezes."""
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ja = con.execute("SELECT id FROM boletos WHERE linha=?", (dados["linha"],)).fetchone()
     if ja:
         return ja["id"], False
-    cur = con.execute("INSERT INTO boletos(linha, valor, vencimento, banco, beneficiario, tipo, segmento, arquivo, situacao, criado_em) VALUES(?,?,?,?,?,?,?,?,'aberto',?)",
-                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or dados.get("beneficiario") or "").strip(), dados["tipo"], dados["segmento"], arquivo, agora))
+    cur = con.execute("INSERT INTO boletos(linha, valor, vencimento, banco, beneficiario, tipo, segmento, arquivo, situacao, criado_em, dono) VALUES(?,?,?,?,?,?,?,?,'aberto',?,?)",
+                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or dados.get("beneficiario") or "").strip(), dados["tipo"], dados["segmento"], arquivo, agora, (dono or "").strip() or None))
     con.commit()
     return cur.lastrowid, True
 
@@ -238,6 +282,8 @@ def remover(con, id_boleto: int) -> bool:
 def frase(b: dict) -> str:
     """Uma linha em português simples para o terminal."""
     quem = b.get("beneficiario") or b.get("banco") or b.get("segmento") or "sem identificação"
+    if b.get("dono"):
+        quem += f" (de {b['dono']})"
     valor = fn.brl(b["valor"]) if b.get("valor") else "valor em aberto (o pagador define)"
     venc = ("vencimento " + fn.data_br(b["vencimento"])) if b.get("vencimento") else "sem vencimento no código"
     return f"{quem}: {valor}, {venc}"

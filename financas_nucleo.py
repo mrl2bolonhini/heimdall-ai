@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS orcamentos(categoria TEXT PRIMARY KEY, limite INTEGER
 CREATE TABLE IF NOT EXISTS previstos(
   id INTEGER PRIMARY KEY AUTOINCREMENT, descricao TEXT NOT NULL, valor INTEGER NOT NULL, dia INTEGER NOT NULL, inicio TEXT NOT NULL, fim TEXT);
 CREATE TABLE IF NOT EXISTS ignorados(chave TEXT PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS pessoas(nome TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS analises(
   id INTEGER PRIMARY KEY AUTOINCREMENT, tipo TEXT NOT NULL, mes TEXT, gerado_em TEXT NOT NULL, origem TEXT NOT NULL, texto TEXT NOT NULL, avisos TEXT);
 CREATE TABLE IF NOT EXISTS boletos(
@@ -116,6 +117,8 @@ def conectar(caminho) -> sqlite3.Connection:
     con.executescript(SCHEMA)
     if "hash_arquivo" not in {r["name"] for r in con.execute("PRAGMA table_info(importacoes)")}:
         con.execute("ALTER TABLE importacoes ADD COLUMN hash_arquivo TEXT")
+    if "dono" not in {r["name"] for r in con.execute("PRAGMA table_info(boletos)")}:
+        con.execute("ALTER TABLE boletos ADD COLUMN dono TEXT")
     if "importacao_id" not in {r["name"] for r in con.execute("PRAGMA table_info(transacoes)")}:
         con.execute("ALTER TABLE transacoes ADD COLUMN importacao_id INTEGER")
     # lançamentos importados antes desta coluna existir: liga cada um à importação de mesma conta e mesmo instante
@@ -723,7 +726,7 @@ def futuros(con, n_meses: int = 6, hoje=None) -> dict:
         m = b["vencimento"][:7]
         m = mes_ref if m < mes_ref else m  # vencido entra no mês atual
         if m in itens:
-            itens[m].append({"origem": "boleto", "data": b["vencimento"], "descricao": "Boleto: " + (b["beneficiario"] or b["banco"] or b["segmento"] or "sem identificação"),
+            itens[m].append({"origem": "boleto", "data": b["vencimento"], "descricao": "Boleto" + (f" de {b['dono']}" if b["dono"] else "") + ": " + (b["beneficiario"] or b["banco"] or b["segmento"] or "sem identificação"),
                              "valor": -(b["valor"] or 0), "id": b["id"], "categoria": ""})
     meses_saida = []
     for m in alvo:

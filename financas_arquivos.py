@@ -675,7 +675,7 @@ def _tentar_boleto(con, arq: Path, dados: bytes, agora: str):
     quem = fb.beneficiario_do_texto(texto)
     novos = 0
     for b in achadas:
-        novos += 1 if fb.registrar(con, b, quem, arq.name, agora)[1] else 0
+        novos += 1 if fb.registrar(con, b, quem, arq.name, agora, fb.dono_do_texto(texto, fb.pessoas(con)))[1] else 0
     return {"arquivo": arq.name, "ok": True, "boleto": True, "conta": "", "novas": novos, "repetidas": len(achadas) - novos, "lidas": len(achadas),
             "motivo": " | ".join(fb.frase({**b, "beneficiario": quem or b.get("beneficiario", "")}) for b in achadas)}
 
