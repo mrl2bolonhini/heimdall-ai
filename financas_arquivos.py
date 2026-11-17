@@ -207,6 +207,7 @@ _RE_VALOR = re.compile(_VALOR)
 _MESES = {"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6, "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12}
 _RE_DATA = re.compile(r"^\s*(?:(\d{2})/(\d{2})(?:/(\d{4}|\d{2}))?|(\d{1,2})\s+(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*\.?(?:\s+(?:de\s+)?(\d{4}))?)\b", re.I)
 _ENCARGO = re.compile(r"\b(juros|multa|iof|encargos?|tarifa|anuidade)\b")
+_CREDITO_NO_NOME = re.compile(r"\s*(cr[eé]dito|estorno|reembolso|devolu[cç][aã]o|cashback)\b", re.I)
 _IGNORAR = re.compile(r"\b(saldo|total|subtotal|limite|vencimento|fechamento|pagamento minimo|encargos|resumo|proxima fatura|valor da fatura)\b", re.I)
 
 
@@ -404,8 +405,8 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
             v = _centavos(escolhido.group(0))
             desc = re.sub(r"\s{2,}", " ", resto[:escolhido.start()]).strip(" -|.")
             desc = re.sub(r"^[•·*.]{2,}\s*\d{4}\s+", "", desc)  # "•••• 1234" é o final do cartão, não faz parte da descrição
-            if not desc:
-                marcas.append("SEM DESCRIÇÃO")
+            if not desc or not re.search(r"[A-Za-zÀ-ÿ]{2,}", _RE_VALOR.sub("", desc)):
+                marcas.append("SEM DESCRIÇÃO")  # só valores (ex.: "Vence em 99/99, limite R$ x, saque R$ y") não é lançamento
                 continue
             try:
                 data = _data_da_linha(m, ano_base, ref)
@@ -414,6 +415,8 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
                 continue
             if cartao:
                 v = -v  # na fatura a compra vem positiva e o crédito (estorno, pagamento) vem negativo
+                if v < 0 and _CREDITO_NO_NOME.match(desc):
+                    v = -v  # há bancos (Mercado Pago) que mostram o crédito com valor positivo e a palavra no nome: "Crédito por parcelamento da fatura"
             itens.append({"data": data, "valor": v, "descricao": desc[:200], "fitid": ""})
             eventos.append(("t", v))
             marcas.append("LANÇAMENTO " + ("crédito" if v > 0 else "gasto"))
