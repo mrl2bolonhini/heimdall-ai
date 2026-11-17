@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Testa financas_pluggy.py com uma API simulada (nenhuma chamada de rede): autenticação, contas, paginação por cursor, sinais, duplicidade e avisos."""
+import sys
+import tempfile
+from datetime import date
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import financas_nucleo as fn  # noqa: E402
+import financas_pluggy as fp  # noqa: E402
+
+falhas = 0
+
+
+def confere(nome, ok, detalhe=""):
+    global falhas
+    print(("ok   " if ok else "FALHOU ") + nome)
+    if not ok:
+        falhas += 1
+        if detalhe:
+            print("     " + str(detalhe)[:500])
+
+
+U = "11111111-2222-3333-4444-555555555555"
+CONTA_CC, CONTA_CARTAO = "aaaaaaaa-0000-0000-0000-000000000001", "aaaaaaaa-0000-0000-0000-000000000002"
+chamadas = []
+
+
+def api(metodo, caminho, params=None, corpo=None, chave=""):
+    chamadas.append((metodo, caminho, dict(params or {}), chave))
+    if caminho == "/auth":
+        if (corpo or {}).get("clientSecret") != "segredo-correto-123456":
+            raise fp.ErroPluggy("O Pluggy respondeu com erro 401.")
+        return {"apiKey": "CHAVE-TESTE"}
+    assert chave == "CHAVE-TESTE", "chamada sem chave"
+    assert metodo == "GET", "só leitura"
+    if caminho == f"/items/{U}":
+        return {"status": "UPDATED", "consentExpiresAt": "2026-12-01T00:00:00.000Z"}
+    if caminho == "/accounts":
+        assert params["itemId"] == U
+        return {"page": 1, "totalPages": 1, "results": [
+            {"id": CONTA_CC, "type": "BANK", "subtype": "CHECKING_ACCOUNT", "name": "Conta Corrente", "marketingName": "Itaú Personnalité", "number": "1234-5"},
+            {"id": CONTA_CARTAO, "type": "CREDIT", "subtype": "CREDIT_CARD", "name": "Cartão", "marketingName": "Nubank", "number": "9876"}]}
+    if caminho == "/v2/transactions":
+        if params["accountId"] == CONTA_CC:
+            if "after" not in params:
+                return {"results": [
+                    {"id": "t1", "date": "2026-11-10T00:00:00.000Z", "amount": -212.45, "type": "DEBIT", "status": "POSTED", "description": "PAGTO BOLETO ESCOLA"},
+                    {"id": "t2", "date": "2026-11-11T00:00:00.000Z", "amount": 2482.26, "type": "CREDIT", "status": "POSTED", "description": "SALARIO EMPRESA"}],
+                    "next": "after=CURSOR1"}
+            assert params["after"] == "CURSOR1" and params["dateFrom"] and params["accountId"] == CONTA_CC
+            return {"results": [
+                {"id": "t3", "date": "2026-11-12", "amount": 99.9, "type": "DEBIT", "status": "POSTED", "description": "DEBITO COM SINAL POSITIVO"},
+                {"id": "t4", "date": "2026-11-20", "amount": -50, "type": "DEBIT", "status": "PENDING", "description": "AGENDADO"}], "next": None}
+        return {"results": [
+            {"id": "c1", "date": "2026-11-05", "amount": 159.2, "type": "CREDIT", "status": "POSTED", "description": "LOJA XYZ"},
+            {"id": "c2", "date": "2026-11-06", "amount": -500.0, "type": "DEBIT", "status": "POSTED", "description": "PAGAMENTO RECEBIDO"},
+            {"id": "c3", "date": "2026-11-07", "amount": 30.0, "status": "PENDING", "description": "COMPRA NA FATURA ABERTA"}], "next": None}
+    raise AssertionError(caminho)
+
+
+cfg = {"id": "cid", "segredo": "segredo-correto-123456", "itens": [U]}
+d = Path(tempfile.mkdtemp())
+con = fn.conectar(d / "p.db")
+# conta já importada por extrato: o Heimdall deve reaproveitar o nome e começar depois da última data dela
+fn.importar_itens(con, [{"data": "2026-11-09", "valor": -1000, "descricao": "ANTIGO"}], "ofx", "x.ofx", "Itaú conta")
+cli = fp.Cliente(cfg, api)
+hoje = date(2026, 11, 17)
+r = fp.executar(con, cfg, d / "estado.json", None, hoje, cli)
+por_conta = {c["conta"]: c for c in r["contas"]}
+confere("conta de extrato do mesmo banco é reaproveitada (sem duplicar o nome)", "Itaú conta" in por_conta, list(por_conta))
+confere("cartão sem conta anterior ganha nome Pluggy com tipo", any(n.startswith("Pluggy: Nubank") for n in por_conta), list(por_conta))
+confere("começa no dia seguinte à última data já importada", por_conta["Itaú conta"]["desde"] == "2026-11-10", por_conta["Itaú conta"])
+cc = con.execute("SELECT data, valor, descricao FROM transacoes WHERE conta='Itaú conta' AND descricao<>'ANTIGO' ORDER BY data").fetchall()
+confere("conta corrente: débito negativo, crédito positivo, tipo manda mesmo com sinal trocado", [(x["data"], x["valor"]) for x in cc] == [("2026-11-10", -21245), ("2026-11-11", 248226), ("2026-11-12", -9990)], [(x["data"], x["valor"]) for x in cc])
+confere("conta corrente: transação PENDING (agendada) fica de fora", not any(x["descricao"] == "AGENDADO" for x in cc))
+cartao = [x for n in por_conta if n.startswith("Pluggy") for x in con.execute("SELECT data, valor, descricao FROM transacoes WHERE conta=? ORDER BY data", (n,))]
+confere("cartão: compra vira saída, pagamento vira crédito, compra pendente na fatura aberta entra", [(x["data"], x["valor"]) for x in cartao] == [("2026-11-05", -15920), ("2026-11-06", 50000), ("2026-11-07", -3000)], [(x["data"], x["valor"]) for x in cartao])
+confere("paginação por cursor: segunda página lida com o cursor", any(c[2].get("after") == "CURSOR1" for c in chamadas))
+confere("só leituras: nenhuma chamada além de POST /auth e GETs", all(c[0] == "GET" or c[1] == "/auth" for c in chamadas))
+confere("a chave da API é reaproveitada (uma só autenticação)", sum(1 for c in chamadas if c[1] == "/auth") == 1)
+confere("aviso de consentimento perto de vencer", any("expira" in a and "01/12/2026" in a for a in r["avisos"]), r["avisos"])
+# segunda rodada: repete sem duplicar
+r2 = fp.executar(con, cfg, d / "estado.json", None, hoje, fp.Cliente(cfg, api))
+confere("segunda rodada relê a sobreposição e não duplica", all(c["novas"] == 0 for c in r2["contas"]) and sum(c["repetidas"] for c in r2["contas"]) > 0, r2["contas"])
+confere("o estado guarda as contas e a hora, sem chave de API nem segredo", "CHAVE-TESTE" not in (d / "estado.json").read_text(encoding="utf-8") and "segredo-correto-123456" not in (d / "estado.json").read_text(encoding="utf-8"))
+# nomear
+est = fp.ler_estado(d / "estado.json")
+fp.definir_nome(est, CONTA_CARTAO, "Nubank cartão")
+fp.gravar_estado(d / "estado.json", est)
+confere("nomear troca o nome e recomeça a contagem de datas", fp.ler_estado(d / "estado.json")["contas"][CONTA_CARTAO]["nome"] == "Nubank cartão" and "ultimo" not in fp.ler_estado(d / "estado.json")["contas"][CONTA_CARTAO])
+lista = fp.listar_contas(cfg, fp.ler_estado(d / "estado.json"), con, fp.Cliente(cfg, api))
+confere("listar mostra tipo, final e nome no Finance", len(lista) == 2 and lista[1]["nome"] == "Nubank cartão" and lista[0]["final"] == "12345"[-4:] and lista[1]["tipo"] == "cartão de crédito", lista)
+# credencial errada
+try:
+    fp.Cliente({**cfg, "segredo": "errado"}, api).chave()
+    confere("credencial errada dá mensagem clara", False)
+except fp.ErroPluggy as ex:
+    confere("credencial errada dá mensagem clara, sem o segredo", "recusou" in str(ex) and "errado" not in str(ex), str(ex))
+# --desde
+r3 = fp.executar(con, cfg, d / "e2.json", date(2026, 11, 1), hoje, fp.Cliente(cfg, api))
+confere("--desde força o início", all(c["desde"] == "2026-11-01" for c in r3["contas"]), r3["contas"])
+# autorização expirada
+def api_exp(metodo, caminho, params=None, corpo=None, chave=""):
+    if caminho.startswith("/items/"):
+        return {"status": "LOGIN_ERROR", "error": {"code": "USER_AUTHORIZATION_EXPIRED"}}
+    return api(metodo, caminho, params, corpo, chave)
+r4 = fp.executar(con, cfg, d / "e3.json", None, hoje, fp.Cliente(cfg, api_exp))
+confere("autorização expirada gera aviso para renovar", any("expirou" in a for a in r4["avisos"]), r4["avisos"])
+# item indisponível (Meu Pluggy não libera /items): segue sem aviso
+def api_sem_item(metodo, caminho, params=None, corpo=None, chave=""):
+    if caminho.startswith("/items/"):
+        raise fp.ErroPluggy("O Pluggy respondeu com erro 403.")
+    return api(metodo, caminho, params, corpo, chave)
+r5 = fp.executar(con, cfg, d / "e4.json", None, hoje, fp.Cliente(cfg, api_sem_item))
+confere("item indisponível não derruba a sincronização", len(r5["contas"]) == 2 and r5["avisos"] == [])
+# .env
+env = d / ".env"
+env.write_text("OUTRA=1\nHEIMDALL_PLUGGY_CLIENT_ID=velho\n", encoding="utf-8")
+msg = fp.guardar_chave("id", U, env)
+confere("guardar chave troca a linha antiga e não imprime o valor", f"HEIMDALL_PLUGGY_CLIENT_ID={U}" in env.read_text() and "velho" not in env.read_text() and U not in msg and "OUTRA=1" in env.read_text(), msg)
+fp.guardar_chave("segredo", "segredo-correto-123456", env)
+fp.guardar_chave("itens", f"{U}, 99999999-2222-3333-4444-555555555555", env)
+c = fp.credenciais(env)
+confere("credenciais lidas do .env com vários itens", c["id"] == U and c["segredo"] == "segredo-correto-123456" and len(c["itens"]) == 2, c)
+confere("o .env fica com permissão 600", oct(env.stat().st_mode)[-3:] == "600")
+for qual, v in (("id", "isto não é uuid"), ("itens", "abc"), ("segredo", "curto"), ("id", U + "\noutra")):
+    try:
+        fp.guardar_chave(qual, v, env)
+        confere(f"valor inválido recusado ({qual})", False)
+    except fp.ErroPluggy:
+        confere(f"valor inválido recusado ({qual})", True)
+confere("sem as três chaves, não há credenciais", fp.credenciais(d / "nao-existe.env") == {})
+fonte = Path(fp.__file__).read_text(encoding="utf-8")
+confere("o módulo só chama api.pluggy.ai, sem redirecionar, e não escreve em banco algum", 'BASE = "https://api.pluggy.ai"' in fonte and "_SemRedirecionar" in fonte and '"PATCH"' not in fonte and '"PUT"' not in fonte and '"DELETE"' not in fonte)
+
+print("\nFALHAS:", falhas)
+sys.exit(1 if falhas else 0)

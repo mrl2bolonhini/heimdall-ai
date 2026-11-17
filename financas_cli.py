@@ -16,6 +16,7 @@ import os
 import shutil
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -70,6 +71,16 @@ def _copiar(texto: str) -> bool:
         return False
 
 
+def _colar() -> str:
+    exe = shutil.which("pbpaste")
+    if not exe:
+        sys.exit("Não achei o pbpaste (só existe no Mac). Rode este comando no Mac.")
+    try:
+        return subprocess.run([exe], capture_output=True, timeout=10, check=True).stdout.decode("utf-8", "replace").strip()
+    except (OSError, subprocess.SubprocessError):
+        sys.exit("Não consegui ler a área de transferência.")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Arquivos do Heimdall Finance")
     g = ap.add_mutually_exclusive_group(required=True)
@@ -83,11 +94,16 @@ def main() -> None:
     g.add_argument("--boleto", metavar="LINHA_OU_PDF")
     g.add_argument("--boletos", action="store_true")
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
+    g.add_argument("--sincronizar", action="store_true")
+    g.add_argument("--guardar-pluggy", dest="guardar_pluggy", choices=["id", "segredo", "itens"])
     ap.add_argument("--valores", action="store_true")
     ap.add_argument("--linhas", type=int, default=150)
     ap.add_argument("--conta", default="")
     ap.add_argument("--pessoa", default="")
     ap.add_argument("--dias", type=int, default=None)
+    ap.add_argument("--desde", default="")
+    ap.add_argument("--listar", action="store_true")
+    ap.add_argument("--nomear", action="append", default=[])
     ap.add_argument("--forcar", action="store_true")
     ap.add_argument("--abrir", action="store_true")
     a = ap.parse_args()
@@ -138,6 +154,48 @@ def main() -> None:
                 idb, novo = fb.registrar(con, b, beneficiario, arquivo, None, dono)
                 print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario or b.get("beneficiario", ""), "dono": dono}))
             print("\nO Heimdall não paga nada: só guarda a conta a pagar. Veja em heimdall finance, página Boletos, ou com heimdall finance --bills.")
+        elif a.guardar_pluggy:
+            import financas_pluggy as fpl
+            print(fpl.guardar_chave(a.guardar_pluggy, _colar()))
+            if a.guardar_pluggy == "segredo" and shutil.which("pbcopy"):
+                subprocess.run(["pbcopy"], input=b"", timeout=10)
+                print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
+        elif a.sincronizar:
+            import financas_pluggy as fpl
+            cfg = fpl.credenciais()
+            if not cfg:
+                sys.exit("Faltam chaves do Pluggy no .env. Guarde as três, copiando cada uma antes: heimdall finance --guardar-pluggy id; depois segredo; depois itens.")
+            con = _banco()
+            arq = DIR_DADOS / "pluggy_estado.json"
+            estado = fpl.ler_estado(arq)
+            if a.listar or a.nomear:
+                contas = fpl.listar_contas(cfg, estado, con)
+                for par in a.nomear:
+                    n, _, nome = par.partition("=")
+                    if not n.strip().isdigit() or not 1 <= int(n) <= len(contas):
+                        sys.exit(f"Use --nomear NÚMERO=NOME, com o número da lista (1 a {len(contas)}). Exemplo: --nomear 2=\"Itaú conta\"")
+                    fpl.definir_nome(estado, contas[int(n) - 1]["id"], nome)
+                    contas[int(n) - 1]["nome"] = nome.strip()[:60]
+                    print(f"Conta {n} passa a se chamar {nome.strip()[:60]} no Finance.")
+                fpl.gravar_estado(arq, estado)
+                for i, c in enumerate(contas, 1):
+                    print(f"{i}. {c['tipo']} {c['rotulo']}" + (f", final {c['final']}" if c["final"] else "") + f". No Finance: {c['nome']}.")
+                print("\nPara trocar o nome: heimdall finance --sincronizar --nomear 2=\"Itaú conta\" (use o nome de uma conta já importada por extrato para não duplicar).")
+            else:
+                desde = None
+                if a.desde:
+                    try:
+                        desde = date.fromisoformat(a.desde)
+                    except ValueError:
+                        sys.exit("Use a data no formato AAAA-MM-DD, por exemplo 2026-01-01.")
+                r = fpl.executar(con, cfg, arq, desde)
+                for c in r["contas"]:
+                    print(f"{c['conta']}: {c['novas']} nova(s), {c['repetidas']} repetida(s), a partir de {fn.data_br(c['desde'])}.")
+                if not r["contas"]:
+                    print("Nenhuma conta encontrada nos bancos conectados.")
+                for av in r["avisos"]:
+                    print(f"ATENÇÃO: {av}")
+                print("\nSó li as contas e transações (nada foi movido nem pago). O Meu Pluggy atualiza a cada 24 horas.")
         elif a.ler_email:
             import financas_email as femail
             cfg = femail.credenciais()

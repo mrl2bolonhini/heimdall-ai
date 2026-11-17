@@ -59,6 +59,7 @@ import financas_arquivos as fa  # noqa: E402
 import financas_analise as fanal  # noqa: E402
 import financas_boletos as fb  # noqa: E402
 import financas_email as femail  # noqa: E402
+import financas_pluggy as fpl  # noqa: E402
 import heimdall_perguntar as perguntar  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
@@ -204,6 +205,8 @@ def pg_resumo(mes: str, visao: str = "") -> tuple:
         vencidos = len([b for b in urgentes if b["dias"] < 0])
         corpo.append(f'<p role="status">Boletos: {vencidos} vencido(s) e {len(urgentes) - vencidos} vencendo em até 7 dias, somando '
                      f'{e(fn.brl(sum(b["valor"] or 0 for b in urgentes)))}. ' + design.botao("/boletos", "Ver boletos") + "</p>")
+    for a in fpl.ler_estado(DIR_DADOS / "pluggy_estado.json").get("avisos", []):
+        corpo.append(f'<div class="aviso" role="status">{e(a)} ' + design.botao("/importar", "Ver conexão com os bancos") + "</div>")
     progr = [b for b in fb.listar(banco(), incluir_pagos=True) if b["estado"] == "programado"]
     if progr:
         corpo.append(f'<p class="sub">{len(progr)} boleto(s) já estão programados em débito automático ou cartão e ficaram fora das contas a pagar. ' + design.botao("/boletos", "Ver boletos") + "</p>")
@@ -319,7 +322,75 @@ def pg_importar(sess: dict) -> tuple:
              '<button type="submit">Importar</button></form>'
              '<p class="sub">Dica: extrato de conta e fatura de cartão devem ser importados com nomes de conta diferentes. O pagamento da fatura na conta vira "Pagamento de fatura" e não conta como despesa, porque os gastos já aparecem na fatura. '
              'Você também pode soltar os arquivos na pasta de entrada (heimdall finance --folder): o Heimdall importa sozinho o que conferir e separa o que deixar dúvida.</p>' + hist)
-    return "Importar extrato", corpo
+    return "Importar extrato", corpo + _bloco_pluggy(sess)
+
+
+def _bloco_pluggy(sess: dict) -> str:
+    """Conexão com os bancos pelo Meu Pluggy: situação da última sincronização e botão para sincronizar agora."""
+    cfg = fpl.credenciais()
+    if not cfg:
+        return ('<h2>Conexão automática com os bancos</h2><p>Ainda não está ligada. Com o plano pessoal gratuito do Meu Pluggy, o Heimdall baixa sozinho as contas e transações dos bancos que você autorizar '
+                '(somente leitura; os dados passam pelos servidores do Pluggy). No terminal: heimdall finance --guardar-pluggy id, depois segredo, depois itens, copiando cada valor antes.</p>')
+    est = fpl.ler_estado(DIR_DADOS / "pluggy_estado.json")
+    corpo = ['<h2>Conexão automática com os bancos</h2>']
+    for a in est.get("avisos", []):
+        corpo.append(f'<div class="aviso" role="status">{e(a)}</div>')
+    if est.get("ultima"):
+        corpo.append(f'<p>Última sincronização: {e(est["ultima"])}.</p>')
+        corpo.append(tabela("Contas sincronizadas na última rodada", ["Conta", "Novas", "Repetidas", "A partir de"],
+                            [[e(c["conta"]), str(c["novas"]), str(c["repetidas"]), e(fn.data_br(c["desde"]))] for c in est.get("resumo", [])], {1, 2}))
+    else:
+        corpo.append("<p>Ainda não sincronizou. O painel repete a sincronização a cada 6 horas; o Meu Pluggy atualiza os dados a cada 24 horas.</p>")
+    if est.get("erro"):
+        corpo.append(f'<div class="aviso" role="alert">Falha na última tentativa: {e(est["erro"])}</div>')
+    corpo.append(f'<form method="post" action="/sincronizar"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sincronizar agora</button></form>')
+    return "".join(corpo)
+
+
+_pluggy_rodando = threading.Event()
+
+
+def _sincronizar_pluggy() -> None:
+    """Uma rodada: rede fora da trava, gravação dentro dela. Guarda o erro (sem dados) no estado para a página mostrar."""
+    if _pluggy_rodando.is_set():
+        return
+    cfg = fpl.credenciais()
+    if not cfg:
+        return
+    _pluggy_rodando.set()
+    arq = DIR_DADOS / "pluggy_estado.json"
+    try:
+        with _trava:
+            estado = fpl.ler_estado(arq)
+            con = banco()
+        try:
+            coleta = fpl.coletar(cfg, estado, con)
+        except fn.ErroFinance as ex:
+            with _trava:
+                estado = fpl.ler_estado(arq)
+                estado["erro"] = str(ex)[:200]
+                fpl.gravar_estado(arq, estado)
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} pluggy: {str(ex)[:120]}\n")
+            return
+        with _trava:
+            estado.pop("erro", None)
+            r = fpl.gravar(banco(), coleta, estado)
+            fpl.gravar_estado(arq, estado)
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} pluggy: " + "; ".join(f"{c['conta']} {c['novas']} novas" for c in r["contas"]) + "\n")
+    except Exception as ex:  # noqa: BLE001
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} pluggy: erro {type(ex).__name__}\n")
+    finally:
+        _pluggy_rodando.clear()
+
+
+def _vigiar_pluggy() -> None:
+    """A cada 6 horas baixa as transações dos bancos conectados no Meu Pluggy. Só roda com as três chaves no .env; HEIMDALL_FINANCE_PLUGGY=0 desliga."""
+    if os.environ.get("HEIMDALL_FINANCE_PLUGGY", "1") == "0" or not fpl.credenciais():
+        return
+    time.sleep(30)
+    while True:
+        _sincronizar_pluggy()
+        time.sleep(6 * 3600)
 
 
 def pg_orcamentos(q: dict, sess: dict) -> tuple:
@@ -769,7 +840,7 @@ class Finance(BaseHTTPRequestHandler):
         except fn.ErroFinance as ex:
             if sess:
                 sess["flash"] = ("erro", str(ex))
-            self._ir("/importar" if rota == "/importar" else "/regras" if rota.startswith("/regras") else "/orcamentos" if rota.startswith("/orcamentos") else "/boletos" if rota.startswith("/boletos") else "/futuros" if rota.startswith("/futuros") else "/analise" if rota.startswith("/analise") else "/perguntar" if rota.startswith("/perguntar") else "/transacoes")
+            self._ir("/importar" if rota in ("/importar", "/sincronizar") else "/regras" if rota.startswith("/regras") else "/orcamentos" if rota.startswith("/orcamentos") else "/boletos" if rota.startswith("/boletos") else "/futuros" if rota.startswith("/futuros") else "/analise" if rota.startswith("/analise") else "/perguntar" if rota.startswith("/perguntar") else "/transacoes")
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))
@@ -853,6 +924,16 @@ class Finance(BaseHTTPRequestHandler):
             else:
                 sess["flash"] = ("ok", f"Limite de {cat} removido." if fn.remover_orcamento(banco(), cat) else f"{cat} não tinha limite.")
             self._ir(volta)
+            return
+        if rota == "/sincronizar":
+            if not fpl.credenciais():
+                raise fn.ErroFinance("A conexão com o Pluggy não está configurada.")
+            if _pluggy_rodando.is_set():
+                sess["flash"] = ("ok", "Já existe uma sincronização em andamento. Volte a esta página em um minuto.")
+            else:
+                threading.Thread(target=_sincronizar_pluggy, daemon=True).start()
+                sess["flash"] = ("ok", "Comecei a sincronizar com os bancos. Pode levar um minuto; recarregue esta página para ver o resultado.")
+            self._ir("/importar")
             return
         if rota == "/analise/gerar":
             tipo = campos.get("tipo", "")
@@ -1032,6 +1113,7 @@ def main() -> None:
     banco()
     threading.Thread(target=_vigiar_entrada, daemon=True).start()
     threading.Thread(target=_vigiar_email, daemon=True).start()
+    threading.Thread(target=_vigiar_pluggy, daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), Finance)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Finance em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))}; dados em {DIR_DADOS})\n")
