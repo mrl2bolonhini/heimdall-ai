@@ -573,6 +573,10 @@ def importar_arquivo(con, dados: bytes, nome: str, conta: str = "", forcar: bool
         raise ERRO("O PDF foi lido, mas o total não conferiu com os lançamentos. " + resumo_texto(a).replace("\n", " ") +
                    " Para importar mesmo assim, confirme que revisou.")
     r = _gravar(con, a, nome, conta, agora, hashlib.sha256(dados).hexdigest())
+    try:
+        fb.conciliar(con)  # lançamentos novos podem mostrar que um boleto em aberto já foi pago
+    except Exception:  # noqa: BLE001
+        pass
     r["conta"] = conta
     r["resumo"] = resumo_texto(a)
     return r

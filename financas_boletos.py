@@ -340,15 +340,82 @@ def dono_do_texto(texto: str, nomes: list) -> str:
     return achadas[0] if len(achadas) == 1 else ""
 
 
-def registrar(con, dados: dict, beneficiario: str = "", arquivo: str = "", agora: str = None, dono: str = "", aviso: str = "") -> tuple:
-    """Guarda o boleto como conta a pagar. Devolve (id, novo). A mesma linha digitável não entra duas vezes."""
+# Frases de e-mail que dizem que o boleto não precisa ser pago à mão. Cada uma precisa vir sem negação por perto (não tem, cadastre, adira...).
+_SINAIS_PAGAMENTO = [
+    ("débito automático", re.compile(r"d[eé]bito autom[aá]tico|debitad[oa] automaticamente|ser[aá] debitad[oa]|d[eé]bito em conta|pagamento autom[aá]tico|d[eé]bito agendado", re.I)),
+    ("cartão", re.compile(r"(cobrad[oa]|lan[cç]ad[oa]|debitad[oa]) (no|em) (seu )?cart[aã]o|pagamento (via|no|com|pelo) cart[aã]o|cart[aã]o de cr[eé]dito (final|terminado)", re.I)),
+    ("já pago", re.compile(r"j[aá] (foi |est[aá] )?pag[oa]|pagamento (foi )?(confirmado|realizado|identificado|recebido)|obrigad[oa] pelo pagamento|n[aã]o [eé] necess[aá]rio pagar|n[aã]o precisa pagar|comprovante de pagamento|recibo de pagamento", re.I)),
+]
+_NEGACAO = re.compile(r"\b(n[aã]o|sem|cadastre|cadastrar|ades[aã]o|adira|aderir|ative|ativar|contrate|caso|se voc[eê]|quem n[aã]o|evite|programe|programar|saiba como|como)\b", re.I)
+
+
+def sinal_pagamento(texto: str) -> str:
+    """Se o texto do e-mail diz que o pagamento já está programado ou feito, devolve o motivo em português; senão, vazio. Frases com negação por perto não contam."""
+    base = re.sub(r"\s+", " ", texto or "")
+    for nome, rx in _SINAIS_PAGAMENTO:
+        for m in rx.finditer(base):
+            antes = base[max(0, m.start() - 45):m.start()]
+            depois = base[m.end():m.end() + 25]
+            if _NEGACAO.search(antes) or re.match(r"\s*(n[aã]o|ainda n[aã]o)\b", depois, re.I):
+                continue
+            return {"débito automático": "O e-mail diz que o pagamento será por débito automático", "cartão": "O e-mail diz que a cobrança é feita no cartão",
+                    "já pago": "O e-mail diz que o pagamento já foi feito ou não é preciso pagar"}[nome]
+    return ""
+
+
+def _tokens(texto: str) -> set:
+    return {t for t in fn.norm(texto).split() if len(t) >= 4 and t not in {"ltda", "boleto", "pagamento", "banco", "conta", "pagto", "debito", "automatico", "cartao"}}
+
+
+def conciliar(con, hoje: date = None) -> int:
+    """Bate os boletos em aberto com o histórico do Finance. Devolve quantos mudaram.
+    1. Lançamento de saída com o mesmo valor, perto do vencimento e com nome parecido (ou palavra de boleto na descrição): o boleto está pago.
+    2. Conta recorrente de mesmo nome e valor parecido: provável débito automático (ou cobrança no cartão, se a série é de cartão).
+    O que você mexeu à mão (marcar como pago, É para pagar mesmo) nunca é alterado."""
+    hoje = hoje or date.today()
+    mudou = 0
+    series = None
+    for b in con.execute("SELECT * FROM boletos WHERE situacao='aberto' AND manual=0 AND valor IS NOT NULL"):
+        toks = _tokens(b["beneficiario"] or "")
+        venc = date.fromisoformat(b["vencimento"]) if b["vencimento"] else None
+        ini = ((venc or hoje) - timedelta(days=10)).isoformat()
+        fim = ((venc or hoje) + timedelta(days=10)).isoformat()
+        achado = None
+        for t in con.execute("SELECT data, valor, descricao, desc_norm, conta FROM transacoes WHERE valor=? AND data>=? AND data<=? ORDER BY data", (-b["valor"], ini, fim)):
+            if (toks and toks & _tokens(t["descricao"])) or re.search(r"\b(boleto|pagto|pag|deb aut|debito aut)\b", t["desc_norm"]):
+                achado = t
+                break
+        if achado:
+            con.execute("UPDATE boletos SET situacao='pago', motivo=? WHERE id=?", (f"Pago: lançamento de {fn.data_br(achado['data'])} de {fn.brl(b['valor'])} em {achado['conta']} no histórico do Finance", b["id"]))
+            mudou += 1
+            continue
+        if toks:
+            if series is None:
+                series = fn.recorrentes(con, hoje)["series"]
+            for s in series:
+                if s["entrada"] or s["situacao"] == "encerrada" or not (toks & _tokens(s["descricao"])):
+                    continue
+                if abs(abs(s["valor"]) - b["valor"]) <= 0.15 * b["valor"]:
+                    onde = "cobrança no cartão" if "cartao" in fn.norm(s["conta"]) else "débito automático"
+                    con.execute("UPDATE boletos SET situacao='programado', motivo=? WHERE id=?",
+                                (f"Provável {onde}: {s['descricao'][:40]} já sai da conta todo mês, perto de {fn.brl(abs(s['valor']))}", b["id"]))
+                    mudou += 1
+                    break
+    con.commit()
+    return mudou
+
+
+def registrar(con, dados: dict, beneficiario: str = "", arquivo: str = "", agora: str = None, dono: str = "", aviso: str = "", motivo: str = "") -> tuple:
+    """Guarda o boleto como conta a pagar. Devolve (id, novo). A mesma linha digitável não entra duas vezes.
+    Com motivo (o e-mail diz que é débito automático, cartão ou já pago), entra como programado, fora da lista de contas a pagar."""
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ja = con.execute("SELECT id FROM boletos WHERE linha=?", (dados["linha"],)).fetchone()
     if ja:
         return ja["id"], False
-    cur = con.execute("INSERT INTO boletos(linha, valor, vencimento, banco, beneficiario, tipo, segmento, arquivo, situacao, criado_em, dono, aviso) VALUES(?,?,?,?,?,?,?,?,'aberto',?,?,?)",
-                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or dados.get("beneficiario") or "").strip(), dados["tipo"], dados["segmento"], arquivo, agora, (dono or "").strip() or None, aviso or dados.get("aviso") or None))
+    cur = con.execute("INSERT INTO boletos(linha, valor, vencimento, banco, beneficiario, tipo, segmento, arquivo, situacao, criado_em, dono, aviso, motivo) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or dados.get("beneficiario") or "").strip(), dados["tipo"], dados["segmento"], arquivo, "programado" if motivo else "aberto", agora, (dono or "").strip() or None, aviso or dados.get("aviso") or None, motivo or None))
     con.commit()
+    conciliar(con)
     return cur.lastrowid, True
 
 
@@ -361,19 +428,22 @@ def listar(con, hoje: date = None, incluir_pagos: bool = False) -> list:
         b["dias"] = None
         if b["situacao"] == "pago":
             b["estado"] = "pago"
+        elif b["situacao"] == "programado":
+            b["estado"] = "programado"
         elif not b["vencimento"]:
             b["estado"] = "sem vencimento"
         else:
             dias = (date.fromisoformat(b["vencimento"]) - hoje).days
             b["dias"] = dias
             b["estado"] = "vencido" if dias < 0 else "vence hoje" if dias == 0 else "a vencer"
-        if b["estado"] != "pago" or incluir_pagos:
+        if b["estado"] not in ("pago", "programado") or incluir_pagos:
             saida.append(b)
     return saida
 
 
 def definir_situacao(con, id_boleto: int, pago: bool) -> bool:
-    cur = con.execute("UPDATE boletos SET situacao=? WHERE id=?", ("pago" if pago else "aberto", int(id_boleto)))
+    """Marcar como pago ou reabrir é decisão sua: o boleto fica travado e o Heimdall não muda mais a situação dele sozinho."""
+    cur = con.execute("UPDATE boletos SET situacao=?, motivo=NULL, manual=1 WHERE id=?", ("pago" if pago else "aberto", int(id_boleto)))
     con.commit()
     return cur.rowcount > 0
 

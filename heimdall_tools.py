@@ -1153,7 +1153,7 @@ def financas_boletos() -> str:
         return f"Finance: não consegui ler os boletos ({type(e).__name__})."
     if not lista:
         return "Nenhum boleto em aberto."
-    saida = [f"{len(lista)} boleto(s) em aberto:"]
+    saida = [f"{len(lista)} boleto(s) em aberto (boletos já programados em débito automático ou cartão, ou já pagos no histórico, não entram aqui):"]
     for b in lista:
         quando = {"vencido": f"vencido há {-(b['dias'] or 0)} dia(s)", "vence hoje": "vence hoje", "a vencer": f"vence em {b['dias']} dia(s)"}.get(b["estado"], "sem vencimento no código")
         saida.append(f"- {fb.frase(b)} ({quando})")

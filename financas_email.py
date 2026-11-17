@@ -125,10 +125,11 @@ def processar(con, msgs: list, estado: dict, agora: str = None) -> list:
         quem = fb.beneficiario_do_texto(todo)
         dono = fb.dono_do_texto(todo, fb.pessoas(con))
         novos = 0
+        motivo = fb.sinal_pagamento(_texto_corpo(msg)) if confiavel else ""  # só confia na frase de pagamento se o remetente for autêntico
         for b in achados:
-            novo = fb.registrar(con, b, quem or b.get("beneficiario", ""), f"e-mail de {dom}: {assunto}", agora, dono, "" if confiavel else AVISO_ORIGEM)[1]
+            novo = fb.registrar(con, b, quem or b.get("beneficiario", ""), f"e-mail de {dom}: {assunto}", agora, dono, "" if confiavel else AVISO_ORIGEM, motivo)[1]
             novos += 1 if novo else 0
-        resultado.append({"assunto": assunto, "remetente": dom, "novos": novos, "repetidos": len(achados) - novos, "aviso": "" if confiavel else AVISO_ORIGEM})
+        resultado.append({"assunto": assunto, "remetente": dom, "novos": novos, "repetidos": len(achados) - novos, "aviso": "" if confiavel else AVISO_ORIGEM, "motivo": motivo})
     return resultado
 
 

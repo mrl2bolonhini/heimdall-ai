@@ -204,6 +204,9 @@ def pg_resumo(mes: str, visao: str = "") -> tuple:
         vencidos = len([b for b in urgentes if b["dias"] < 0])
         corpo.append(f'<p role="status">Boletos: {vencidos} vencido(s) e {len(urgentes) - vencidos} vencendo em até 7 dias, somando '
                      f'{e(fn.brl(sum(b["valor"] or 0 for b in urgentes)))}. ' + design.botao("/boletos", "Ver boletos") + "</p>")
+    progr = [b for b in fb.listar(banco(), incluir_pagos=True) if b["estado"] == "programado"]
+    if progr:
+        corpo.append(f'<p class="sub">{len(progr)} boleto(s) já estão programados em débito automático ou cartão e ficaram fora das contas a pagar. ' + design.botao("/boletos", "Ver boletos") + "</p>")
     if r["neutros"]:
         texto = ("investimentos, transferências entre suas contas e faturas de terceiros" if visao == "caixa" else "pagamento de fatura, investimentos, transferências entre suas contas e faturas de terceiros")
         corpo.append(f'<p class="sub">Ficaram fora das somas {e(fn.brl(r["neutros"]))} em {texto}, para não contar duas vezes.</p>')
@@ -575,32 +578,40 @@ def pg_boletos(sess: dict) -> tuple:
              '<p><label for="quem">Quem recebe (opcional)</label><br><input type="text" id="quem" name="quem" autocomplete="off"></p>'
              f'<p><label for="dono">De quem é este boleto</label><br><select id="dono" name="dono">{_opcoes_pessoas("")}</select></p>'
              '<button type="submit">Registrar boleto</button></form>']
+    try:
+        fb.conciliar(banco())  # o histórico pode ter mudado desde a última visita
+    except Exception:  # noqa: BLE001
+        pass
     lista = fb.listar(banco(), incluir_pagos=True)
     if not lista:
         corpo.append("<p>Nenhum boleto registrado ainda.</p>")
         return "Boletos", "".join(corpo) + _bloco_pessoas(csrf)
     totais = {}
     for b in lista:
-        if b["estado"] != "pago":
+        if b["estado"] not in ("pago", "programado"):
             totais[b["dono"] or "Sem pessoa"] = totais.get(b["dono"] or "Sem pessoa", 0) + (b["valor"] or 0)
     if totais and (len(totais) > 1 or "Sem pessoa" not in totais):
         corpo.append("<p>Total em aberto por pessoa: " + "; ".join(f"{e(k)} {e(fn.brl(v))}" for k, v in sorted(totais.items())) + ".</p>")
-    estados = {"vencido": "Vencido", "vence hoje": "Vence hoje", "a vencer": "A vencer", "sem vencimento": "Sem vencimento no código", "pago": "Pago"}
+    estados = {"vencido": "Vencido", "vence hoje": "Vence hoje", "a vencer": "A vencer", "sem vencimento": "Sem vencimento no código", "pago": "Pago", "programado": "Já programado"}
     linhas = []
     for b in lista:
         quem = b["beneficiario"] or b["banco"] or b["segmento"] or "Sem identificação"
         valor = fn.brl(b["valor"]) if b["valor"] else "Em aberto (o pagador define)"
         venc = fn.data_br(b["vencimento"]) if b["vencimento"] else "Sem vencimento"
         sit = estados[b["estado"]]
-        if b["dias"] is not None and b["estado"] != "pago":
+        if b["dias"] is not None and b["estado"] not in ("pago", "programado"):
             sit += f' ({"há " + str(-b["dias"]) + " dia(s)" if b["dias"] < 0 else "em " + str(b["dias"]) + " dia(s)"})' if b["dias"] != 0 else ""
+        if b.get("motivo"):
+            sit += f". {b['motivo']}"
         if b["aviso"]:
             sit += f". Atenção: {b['aviso']}"
         if (b["arquivo"] or "").startswith("e-mail"):
             sit += f". Origem: {b['arquivo']}"
         oculto = f'{csrf}<input type="hidden" name="id" value="{b["id"]}">'
-        acoes = (f'<form class="lim" method="post" action="/boletos/situacao">{oculto}<input type="hidden" name="pago" value="{0 if b["estado"] == "pago" else 1}">'
-                 f'<button type="submit" aria-label="{"Reabrir" if b["estado"] == "pago" else "Marcar como pago"}: boleto de {e(quem)}">{"Reabrir" if b["estado"] == "pago" else "Marcar como pago"}</button></form>'
+        fechado = b["estado"] in ("pago", "programado")
+        rotulo = "É para pagar mesmo" if b["estado"] == "programado" else ("Reabrir" if b["estado"] == "pago" else "Marcar como pago")
+        acoes = (f'<form class="lim" method="post" action="/boletos/situacao">{oculto}<input type="hidden" name="pago" value="{0 if fechado else 1}">'
+                 f'<button type="submit" aria-label="{rotulo}: boleto de {e(quem)}">{rotulo}</button></form>'
                  f'<form class="lim" method="post" action="/boletos/remover">{oculto}<button type="submit" aria-label="Remover boleto de {e(quem)}">Remover</button></form>')
         pessoa = (f'<form class="lim" method="post" action="/boletos/dono">{oculto}'
                   f'<select name="dono" aria-label="Pessoa do boleto de {e(quem)}">{_opcoes_pessoas(b["dono"] or "")}</select><button type="submit" aria-label="Mudar a pessoa do boleto de {e(quem)}">Mudar pessoa</button></form>')

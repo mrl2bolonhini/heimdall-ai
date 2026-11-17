@@ -146,13 +146,18 @@ def main() -> None:
             if not res:
                 print(f"Nenhum boleto ou Pix novo nos e-mails dos últimos {femail.DIAS} dias.")
             for r in res:
-                print(f"E-mail de {r['remetente']} ({r['assunto']}): {r['novos']} novo(s), {r['repetidos']} já registrado(s)." + (f" ATENÇÃO: {r['aviso']}" if r["aviso"] else ""))
+                print(f"E-mail de {r['remetente']} ({r['assunto']}): {r['novos']} novo(s), {r['repetidos']} já registrado(s)." + (f" ATENÇÃO: {r['aviso']}" if r["aviso"] else "") + (f" Já programado: {r['motivo']}." if r.get("motivo") else ""))
             print("\nSó li os e-mails (nada foi marcado, movido ou apagado) e nada foi pago.")
         elif a.boletos:
             con = _banco()
             lista = fb.listar(con)
             if not lista:
                 print("Nenhum boleto em aberto.")
+            prog = [b for b in fb.listar(con, incluir_pagos=True) if b["estado"] == "programado"]
+            if prog:
+                print(f"{len(prog)} boleto(s) já programado(s) em débito automático ou cartão ficaram de fora:")
+                for b in prog:
+                    print(f"  {fb.frase(b)}. {b['motivo']}")
             for b in lista:
                 dias = b["dias"] or 0
                 quando = {"vencido": f"vencido há {-dias} dia(s)", "vence hoje": "vence hoje", "a vencer": f"vence em {dias} dia(s)"}.get(b["estado"], "sem vencimento")

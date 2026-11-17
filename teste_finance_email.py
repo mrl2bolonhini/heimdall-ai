@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Testa financas_email.py: boletos e Pix em e-mails (corpo e PDF anexo), autenticação do remetente, e-mails repetidos e ruído. Sem rede: as mensagens são montadas aqui."""
 import io
+from datetime import date
 import sys
 import tempfile
 from email.message import EmailMessage
@@ -108,6 +109,46 @@ confere("credenciais: só as duas chaves do e-mail, lidas do .env", set(c) == {"
 est = d / "estado.json"
 r3 = fe.executar(fn.conectar(d / "x.db"), c, est, lambda cfg: [msgs[0]])
 confere("executar guarda o estado em arquivo e devolve o resumo", r3 and est.exists() and "<a1@x>" in est.read_text(encoding="utf-8"))
+
+# --- boletos já programados ou pagos ---
+confere("sinal: débito automático no e-mail", "débito automático" in fb.sinal_pagamento("Sua fatura será debitada automaticamente na data de vencimento."), fb.sinal_pagamento("Sua fatura será debitada automaticamente"))
+confere("sinal: cobrança no cartão", "cartão" in fb.sinal_pagamento("O valor foi cobrado no seu cartão de crédito final 1234."))
+confere("sinal: já pago", "já foi feito" in fb.sinal_pagamento("Pagamento confirmado. Obrigado pelo pagamento!"))
+confere("sinal: negação não conta (cadastre o débito automático)", fb.sinal_pagamento("Cadastre o débito automático e não esqueça de pagar o boleto.") == "")
+confere("sinal: 'não tem débito automático' não conta", fb.sinal_pagamento("Você não tem débito automático cadastrado. Pague o boleto abaixo.") == "")
+confere("sinal: e-mail comum sem frases não dispara", fb.sinal_pagamento("Segue o boleto de dezembro. Vencimento dia 10.") == "")
+c2 = fn.conectar(Path(tempfile.mkdtemp()) / "p.db")
+res2 = fe.processar(c2, [msg("Escola <c@escola.com.br>", "Mensalidade", f"Pagamento por débito automático em conta.\n{BONITA}", "<p1@x>")], {}, "2026-11-17 10:00:00")
+l2 = fb.listar(c2, incluir_pagos=True)
+confere("e-mail autêntico com débito automático: boleto entra como programado, fora das contas a pagar", len(l2) == 1 and l2[0]["estado"] == "programado" and "débito automático" in l2[0]["motivo"] and fb.listar(c2) == [], l2)
+res3 = fe.processar(fn.conectar(Path(tempfile.mkdtemp()) / "q.db"), [msg("Golpe <x@falso.biz>", "Mensalidade", f"Pagamento por débito automático.\n{BONITA}", "<p2@x>", auth="dmarc=fail dkim=none spf=fail")], {}, "2026-11-17 10:00:00")
+confere("remetente falso dizendo 'débito automático' não esconde o boleto", res3[0]["motivo"] == "")
+bid = l2[0]["id"]
+fb.definir_situacao(c2, bid, False)
+fb.conciliar(c2)
+confere("É para pagar mesmo: volta a aberto e não é mais mexido", fb.listar(c2)[0]["id"] == bid and fb.listar(c2)[0]["situacao"] == "aberto")
+# histórico
+c3 = fn.conectar(Path(tempfile.mkdtemp()) / "h.db")
+fb.registrar(c3, fb.interpretar(LB), "Escola Alegria", "", "2026-11-17 10:00:00")
+venc = fb.listar(c3, incluir_pagos=True)[0]["vencimento"]
+fn.importar_itens(c3, [{"data": venc, "valor": -45090, "descricao": "PAGTO BOLETO ESCOLA ALEGRIA"}], "csv", "x.csv", "Itaú conta")
+fb.conciliar(c3)
+b3 = fb.listar(c3, incluir_pagos=True)[0]
+confere("lançamento do mesmo valor no histórico marca o boleto como pago", b3["estado"] == "pago" and "histórico" in b3["motivo"], b3)
+c4 = fn.conectar(Path(tempfile.mkdtemp()) / "r.db")
+fb.registrar(c4, fb.interpretar(LB), "Escola Alegria", "", "2026-11-17 10:00:00")
+v4 = fb.listar(c4, incluir_pagos=True)[0]["vencimento"]
+y, m, _ = (int(x) for x in v4.split("-"))
+itens = []
+for k in (1, 2, 3):
+    mm = m - k
+    yy = y + (mm - 1) // 12
+    mm = (mm - 1) % 12 + 1
+    itens.append({"data": f"{yy}-{mm:02d}-10", "valor": -45000, "descricao": "ESCOLA ALEGRIA MENSALIDADE"})
+fn.importar_itens(c4, itens, "csv", "y.csv", "Itaú conta")
+fb.conciliar(c4, date.fromisoformat(v4))
+b4 = fb.listar(c4, incluir_pagos=True)[0]
+confere("conta recorrente de mesmo nome e valor parecido vira provável débito automático", b4["estado"] == "programado" and "Provável" in b4["motivo"], b4)
 
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)
