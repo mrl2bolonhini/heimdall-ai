@@ -273,6 +273,12 @@ r = fa.importar_arquivo(con, csv_nu, "nubank-fatura.csv")
 tot = con.execute("SELECT valor FROM transacoes WHERE conta='Nubank cartão' AND descricao='Padaria Esquina'").fetchone()
 confere("CSV de cartão do Nubank inverte o sinal sozinho", tot and tot["valor"] == -3000, tot and tot["valor"])
 
+# ---- extrato de conta com "JUROS LIMITE DA CONTA" (lançamento real, não cabeçalho)
+_txt = "Itaú extrato conta\nperíodo de visualização: 01/10/2026 até 03/10/2026\n03/10/2026   JUROS LIMITE DA CONTA   -10,00\n03/10/2026   SALDO DO DIA   -60,00\n02/10/2026   PIX ENVIADO FULANO   -50,00\n02/10/2026   SALDO DO DIA   -50,00\n01/10/2026   SALDO DO DIA   0,00\n"
+_it, _inf = fa.ler_pdf_texto(_txt, "conta")
+confere("juros do limite da conta entra e o saldo confere", len(_it) == 2 and _inf["confere"] is True, _inf)
+_it2, _inf2 = fa.ler_pdf_texto(_txt.replace("-60,00", "-99,00"), "conta")
+confere("saldo que não bate aparece nas divergências", _inf2["confere"] is False and _inf2["saldos"]["divergencias"], _inf2["saldos"])
 # ---- pasta vigiada
 con.execute("UPDATE importacoes SET hash_arquivo=NULL")  # o "forçar" acima já gravou o mesmo PDF; aqui começa do zero
 con.commit()
