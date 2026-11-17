@@ -443,7 +443,27 @@ def tendencias(con, quantos: int = 12) -> dict:
     return {"meses": ms, "linhas": linhas, "categorias": principais, "alertas": alertas, "media_despesas": int(media_desp)}
 
 
-def listar(con, mes: str = "", cat: str = "", q: str = "", limite: int = 100, deslocar: int = 0) -> tuple:
+# Produto de cada lançamento, deduzido da categoria, do nome da conta e da descrição (a ordem importa: vale a primeira regra que serve).
+PRODUTOS = {
+    "entre_contas": "Entre minhas contas",
+    "fatura": "Pagamento de fatura",
+    "cartao": "Cartão (compras e créditos da fatura)",
+    "pix": "Pix",
+    "boleto": "Boleto",
+    "transferencia": "Outras transferências (TED, DOC e semelhantes)",
+    "outros": "Outros",
+}
+_PRODUTO_SQL = """(CASE
+  WHEN categoria = 'Entre minhas contas' THEN 'entre_contas'
+  WHEN categoria = 'Pagamento de fatura' THEN 'fatura'
+  WHEN conta LIKE '%cart_o%' THEN 'cartao'
+  WHEN desc_norm LIKE '%pix%' THEN 'pix'
+  WHEN desc_norm LIKE '%boleto%' OR desc_norm LIKE '%pagto titulo%' OR desc_norm LIKE '%pagamento de titulo%' THEN 'boleto'
+  WHEN desc_norm LIKE '%transf%' OR (' ' || desc_norm || ' ') LIKE '% ted %' OR (' ' || desc_norm || ' ') LIKE '% doc %' THEN 'transferencia'
+  ELSE 'outros' END)"""
+
+
+def _filtro(mes: str = "", cat: str = "", q: str = "", conta: str = "", produto: str = "") -> tuple:
     where, args = ["1=1"], []
     if re.fullmatch(r"\d{4}-\d{2}", mes or ""):
         where.append("substr(data,1,7)=?")
@@ -454,10 +474,35 @@ def listar(con, mes: str = "", cat: str = "", q: str = "", limite: int = 100, de
     if q:
         where.append("desc_norm LIKE ?")
         args.append("%" + norm(q) + "%")
-    cond = " AND ".join(where)
+    if conta:
+        where.append("conta=?")
+        args.append(conta)
+    if produto in PRODUTOS:
+        where.append(_PRODUTO_SQL + " = ?")
+        args.append(produto)
+    return " AND ".join(where), args
+
+
+def listar(con, mes: str = "", cat: str = "", q: str = "", limite: int = 100, deslocar: int = 0, conta: str = "", produto: str = "") -> tuple:
+    cond, args = _filtro(mes, cat, q, conta, produto)
     total = con.execute(f"SELECT COUNT(*) FROM transacoes WHERE {cond}", args).fetchone()[0]
-    linhas = [dict(r) for r in con.execute(f"SELECT * FROM transacoes WHERE {cond} ORDER BY data DESC, id DESC LIMIT ? OFFSET ?", args + [limite, deslocar])]
+    linhas = [dict(r) for r in con.execute(f"SELECT *, {_PRODUTO_SQL} AS produto FROM transacoes WHERE {cond} ORDER BY data DESC, id DESC LIMIT ? OFFSET ?", args + [limite, deslocar])]
     return total, linhas
+
+
+def somas_listagem(con, mes: str = "", cat: str = "", q: str = "", conta: str = "", produto: str = "") -> dict:
+    """Quantidade, entradas e saídas do que o filtro mostra (inclui tudo, também o que fica fora do Resumo por ser neutro)."""
+    cond, args = _filtro(mes, cat, q, conta, produto)
+    r = con.execute(f"SELECT COUNT(*) n, COALESCE(SUM(CASE WHEN valor>0 THEN valor END),0) ent, COALESCE(SUM(CASE WHEN valor<0 THEN -valor END),0) sai FROM transacoes WHERE {cond}", args).fetchone()
+    return {"n": r["n"], "entradas": r["ent"], "saidas": r["sai"], "liquido": r["ent"] - r["sai"]}
+
+
+def contas_e_produtos(con) -> tuple:
+    """([(conta, quantidade)], [(chave do produto, quantidade)]) de tudo o que há no banco, para os filtros."""
+    contas = [(r["conta"], r["n"]) for r in con.execute("SELECT conta, COUNT(*) n FROM transacoes GROUP BY conta ORDER BY conta")]
+    cont = {r["p"]: r["n"] for r in con.execute(f"SELECT {_PRODUTO_SQL} p, COUNT(*) n FROM transacoes GROUP BY p")}
+    produtos = [(k, cont[k]) for k in PRODUTOS if cont.get(k)]
+    return contas, produtos
 
 
 def exportar_csv(con) -> str:

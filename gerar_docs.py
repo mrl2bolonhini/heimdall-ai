@@ -817,6 +817,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li><strong>Resumo do mês:</strong> receitas, despesas, saldo, gastos por categoria com a variação sobre o mês anterior e os dez maiores gastos.</li>
 <li><strong>Tendências:</strong> receitas, despesas e saldo mês a mês, o gasto por categoria em cada mês e alertas quando uma categoria passa de 30% da média dos três meses anteriores.</li>
 <li><strong>Fora das somas:</strong> pagamento de fatura, investimentos e transferências entre suas contas não contam como despesa nem receita, para não somar duas vezes.</li>
+<li><strong>Filtros em Transações:</strong> por mês, categoria, conta (por exemplo Itaú cartão, Nubank cartão, Mercado Pago), produto (cartão, Pix, boleto, outras transferências, entre minhas contas, pagamento de fatura, outros) e texto da descrição. Cada opção mostra quantos lançamentos tem, e acima da lista aparecem as entradas, as saídas e o saldo do filtro, para conferir com o extrato.</li>
 <li><strong>Exportar:</strong> a página Transações baixa tudo em CSV.</li></ol></section>
 <section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
 <ol><li>Atualize e reinicie: <code>heimdall update --restart</code>. O servidor sobe sozinho quando há senha e código no .env, e não precisa de instalador.</li>

@@ -185,14 +185,21 @@ def pg_resumo(mes: str) -> tuple:
 
 def pg_transacoes(q: dict, sess: dict) -> tuple:
     mes, cat, busca = (q.get("mes") or [""])[0], (q.get("cat") or [""])[0], (q.get("q") or [""])[0][:80]
+    conta, produto = (q.get("conta") or [""])[0][:80], (q.get("produto") or [""])[0][:20]
     try:
         pg = max(0, int((q.get("pg") or ["0"])[0]))
     except ValueError:
         pg = 0
-    total, linhas = fn.listar(banco(), mes, cat, busca, POR_PAGINA, pg * POR_PAGINA)
+    total, linhas = fn.listar(banco(), mes, cat, busca, POR_PAGINA, pg * POR_PAGINA, conta, produto)
+    soma = fn.somas_listagem(banco(), mes, cat, busca, conta, produto)
+    contas, produtos = fn.contas_e_produtos(banco())
+    opconta = '<option value="">Todas</option>' + "".join(f'<option value="{e(c)}"{" selected" if c == conta else ""}>{e(c)} ({n})</option>' for c, n in contas)
+    opprod = '<option value="">Todos</option>' + "".join(f'<option value="{e(k)}"{" selected" if k == produto else ""}>{e(fn.PRODUTOS[k])} ({n})</option>' for k, n in produtos)
     ms = fn.meses(banco())
     opmes = '<option value="">Todos</option>' + "".join(f'<option value="{e(m)}"{" selected" if m == mes else ""}>{e(fn.nome_mes(m))}</option>' for m in ms)
     filtro = ('<form method="get" action="/transacoes"><label for="mes">Mês</label><select id="mes" name="mes">' + opmes + '</select>'
+              f'<label for="conta">Conta (banco e tipo)</label><select id="conta" name="conta">{opconta}</select>'
+              f'<label for="produto">Produto</label><select id="produto" name="produto">{opprod}</select>'
               f'<label for="cat">Categoria</label><select id="cat" name="cat">{opcoes_categoria(cat, True)}</select>'
               f'<label for="q">Buscar na descrição</label><input id="q" name="q" type="search" value="{e(busca)}"><button type="submit">Filtrar</button></form>')
     inline = cat == fn.SEM_CATEGORIA
@@ -204,11 +211,11 @@ def pg_transacoes(q: dict, sess: dict) -> tuple:
                     f'<select id="c{t["id"]}" name="categoria">{opcoes_categoria()}</select><button type="submit">Salvar</button></form>')
         else:
             acao = f'<a href="/transacao/{t["id"]}">Alterar categoria</a>'
-        rows.append([e(fn.data_br(t["data"])), e(t["descricao"]), e(fn.brl(t["valor"], True)), e(t["categoria"]) + (" (manual)" if t["manual"] else ""), e(t["conta"]), acao])
-    corpo = [filtro, f"<p>{total} lançamento(s) encontrado(s).</p>"]
+        rows.append([e(fn.data_br(t["data"])), e(t["descricao"]), e(fn.brl(t["valor"], True)), e(t["categoria"]) + (" (manual)" if t["manual"] else ""), e(t["conta"]), e(fn.PRODUTOS.get(t["produto"], "")), acao])
+    corpo = [filtro, f"<p>{total} lançamento(s) encontrado(s). Entradas: {e(fn.brl(soma['entradas']))}. Saídas: {e(fn.brl(soma['saidas']))}. Saldo do filtro: {e(fn.brl(soma['liquido'], True))}.</p>"]
     if rows:
-        corpo.append(tabela("Lançamentos", ["Data", "Descrição", "Valor", "Categoria", "Conta", "Ação"], rows, {2}))
-    qs = f"mes={e(mes)}&amp;cat={e(cat)}&amp;q={e(busca)}"
+        corpo.append(tabela("Lançamentos", ["Data", "Descrição", "Valor", "Categoria", "Conta", "Produto", "Ação"], rows, {2}))
+    qs = f"mes={e(mes)}&amp;cat={e(cat)}&amp;q={e(busca)}&amp;conta={e(conta)}&amp;produto={e(produto)}"
     nav = []
     if pg > 0:
         nav.append(f'<a href="/transacoes?{qs}&amp;pg={pg - 1}">Página anterior</a>')
