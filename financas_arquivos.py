@@ -307,6 +307,18 @@ def _conferir_saldos(eventos: list):
     return batem == pares, pares, batem, {"cronologico": o1, "inverso_saldo_antes": o2, "inverso_saldo_depois": o3}
 
 
+def _reparar_espacos(linha: str) -> str:
+    """Alguns leitores de PDF (pypdf) soltam espaços no meio de datas e valores: '99/9 9', '99/ 99', '99 ,99', '99, 99', '9.9 99,99'.
+    Só junta quando o espaço é único e a forma resultante é de data ou de valor; colunas separadas por vários espaços não são tocadas."""
+    linha = re.sub(r"(?<!\d)(\d{1,2}) ?/ ?(\d{1,2})(?!\d)", r"\1/\2", linha)       # 99 /99, 99/ 99
+    linha = re.sub(r"(?<!\d)(\d{2}/\d) (\d)(?![\d/])", r"\1\2", linha)            # 99/9 9 (mês partido)
+    linha = re.sub(r"(\d) ?, ?(\d)", r"\1,\2", linha)                              # 99 ,99 e 99, 99
+    linha = re.sub(r"(,\d) (\d)(?!\d)", r"\1\2", linha)                            # 99,9 9 (centavos partidos)
+    linha = re.sub(r"(\.\d{1,2}) (\d{1,3},\d{2})", r"\1\2", linha)                # 9.9 99,99 e 9.99 9,99 (milhar partido)
+    linha = re.sub(r"(?<=\s{3})(-?\d{1,2}) (\d{1,2},\d{2})(?!\d)", r"\1\2", linha)   # 99 9,99 sozinho na coluna do valor
+    return linha
+
+
 def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
     """(itens, info). Cada item: data, valor (centavos; gasto negativo), descricao. info: tipo, soma, totais, confere."""
     texto = texto.replace("\u2212", "-")  # o sinal de menos tipográfico (−) que alguns bancos usam
@@ -316,7 +328,7 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
     totais = []
     eventos = []  # ("t", valor) para cada lançamento e ("s", saldo) para cada linha de saldo, na ordem do documento
     for ln in texto.splitlines():
-        linha = ln.strip()
+        linha = _reparar_espacos(ln).strip()
         if not linha:
             continue
         marcas = []

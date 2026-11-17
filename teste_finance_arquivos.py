@@ -315,6 +315,18 @@ confere("--pasta mostra o caminho da entrada", p.returncode == 0 and "entrada" i
 p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--inspecionar", str(tmp / "nao_existe.pdf")], capture_output=True, text=True, env=env, timeout=60)
 confere("arquivo que não existe dá mensagem clara", p.returncode != 0 and "Não achei o arquivo" in p.stderr, p.stderr)
 
+# espaços soltos no meio de datas e valores (pypdf)
+import financas_arquivos as _fa
+quebrado = """Fatura do cartão Itaú
+Vencimento: 20/11/2026   Total desta fatura   305,50
+05/1 1   MERCADO EXEMPLO   50 ,00   06/ 11   PADARIA TESTE   30, 50
+08 /11   LOJA GRANDE   2 25,00
+Limite total de crédito   R$ 20.0 00,00
+"""
+_it, _inf = _fa.ler_pdf_texto(quebrado, "cartão")
+confere("espaços soltos em datas e valores são reparados", len(_it) == 3 and abs(_inf["gastos"] - 30550) == 0 and _inf["confere"] is True, (_it, _inf))
+confere("parcela 03/10 e colunas não são coladas", _fa._reparar_espacos("03/10 120,00") == "03/10 120,00" and _fa._reparar_espacos("x   99,99   99/99") == "x   99,99   99/99")
+
 print()
 print("FALHAS: " + str(falhas))
 sys.exit(1 if falhas else 0)
