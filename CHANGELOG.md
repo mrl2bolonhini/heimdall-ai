@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Finance mostra os pagamentos futuros
+- Nova página Pagamentos futuros no Finance: os próximos seis meses com o que ainda vai sair e entrar. O leitor passou a reconhecer parcelamentos nas faturas e extratos (parcela 3 de 10, Parc 03/10 e, só em cartão, 03/10 no fim da descrição), calcula quantas faltam e em que mês cai cada uma. Entram também as contas recorrentes detectadas, os pagamentos que você cadastra (descrição, valor, dia, mês inicial e final opcional, saída ou entrada) e os boletos em aberto, com total de saídas e entradas por mês. Cada item detectado tem o botão Ignorar. O chat ganhou a ferramenta financas_futuros. O banco ganhou as tabelas previstos e ignorados.
+
 ## 2026-11-17 - O chat consulta o Finance
 - Cinco ferramentas novas no chat de dados (somente leitura): financas_resumo (receitas, despesas, saldo, categorias e maiores gastos de um mês), financas_transacoes (busca por trecho, mês e categoria), financas_orcamentos (limites e situação), financas_recorrentes e financas_boletos. Dá para perguntar, por exemplo, quanto gastei com mercado em outubro, quais assinaturas tenho ou que boletos vencem esta semana. As ferramentas abrem o banco do Finance em modo somente leitura, então não gravam, não importam e não pagam nada, e só existem no grupo de dados (127.0.0.1:8004), nunca no público dos convidados. Todos os modelos do chat são locais (Ollama), então os valores não saem do Mac. Para desligar, HEIMDALL_FINANCE_CHAT=0 no .env e reiniciar.
 

@@ -163,6 +163,7 @@ Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta
 | `financas_orcamentos` | dados (8004) | `mes='', visao='competencia'` | Orçamentos mensais do Finance do usuário: para cada categoria com limite, quanto gastou, quanto falta ou passou e a situação (dentro, perto do limite, estourado). |
 | `financas_recorrentes` | dados (8004) | `` | Contas que se repetem todo mês no Finance do usuário (aluguel, assinaturas, salário), deduzidas do histórico, com valor e dia típicos e a situação neste mês: já chegou, por vir, atrasada ou possivelmente encerrada. |
 | `financas_boletos` | dados (8004) | `` | Boletos em aberto registrados no Finance do usuário (contas a pagar), com valor, vencimento e situação: vencido, vence hoje ou a vencer. |
+| `financas_futuros` | dados (8004) | `meses=6` | Pagamentos e entradas previstos nos próximos meses no Finance do usuário: parcelas que faltam, contas recorrentes, previstos cadastrados e boletos em aberto, com o total de saídas e entradas de cada mês. |
 <!-- /AUTO:FERRAMENTAS -->
 
 Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e docstring claro, acrescente-a a `PUBLIC_TOOLS` ou `MAC_TOOLS`, reinicie, rode `test_mcp.py` e `gerar_docs.py`. Ferramentas públicas são seguras para convidados; as do Mac acessam arquivos e memória e são só do administrador.

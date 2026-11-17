@@ -111,7 +111,7 @@ form.linha{display:inline}.sub{color:inherit;opacity:.85}
 td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/boletos", "Boletos"), ("/regras", "Regras")]
+NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras")]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -352,6 +352,50 @@ def pg_orcamentos(q: dict, sess: dict) -> tuple:
     return "Orçamentos", "".join(corpo)
 
 
+def pg_futuros(sess: dict) -> tuple:
+    csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
+    f = fn.futuros(banco())
+    corpo = ['<p>O que ainda vai sair ou entrar nos próximos meses: parcelas que faltam (lidas das faturas e extratos), contas recorrentes detectadas, '
+             'pagamentos que você mesmo cadastrou e boletos em aberto. Boleto vencido entra no mês atual. Se algo detectado estiver errado, use Ignorar.</p>']
+    origem = {"parcela": "Parcela", "recorrente": "Recorrente", "manual": "Cadastrado por você", "boleto": "Boleto"}
+    for mes in f["meses"]:
+        t = f'Saídas previstas {fn.brl(mes["saidas"])}, entradas previstas {fn.brl(mes["entradas"])}'
+        if not mes["itens"]:
+            corpo.append(f'<h2>{e(fn.nome_mes(mes["mes"]))}</h2><p>Nada previsto.</p>')
+            continue
+        linhas = []
+        for x in mes["itens"]:
+            if x["origem"] in ("parcela", "recorrente"):
+                acao = (f'<form class="lim" method="post" action="/futuros/ignorar">{csrf}<input type="hidden" name="chave" value="{e(x["chave"])}"><input type="hidden" name="ignorar" value="1">'
+                        f'<button type="submit" aria-label="Ignorar: {e(x["descricao"])}">Ignorar</button></form>')
+            elif x["origem"] == "manual":
+                acao = (f'<form class="lim" method="post" action="/futuros/remover">{csrf}<input type="hidden" name="id" value="{x["id"]}">'
+                        f'<button type="submit" aria-label="Remover: {e(x["descricao"])}">Remover</button></form>')
+            else:
+                acao = design.botao("/boletos", "Ver boletos")
+            linhas.append([e(fn.data_br(x["data"])), e(x["descricao"]), e(origem[x["origem"]]), e(fn.brl(x["valor"], True)), acao])
+        corpo.append(f'<h2>{e(fn.nome_mes(mes["mes"]))}</h2><p>{e(t)}.</p>' + tabela(f'Previsto para {fn.nome_mes(mes["mes"])}', ["Dia", "Descrição", "Origem", "Valor", "Ação"], linhas, {3}))
+    corpo.append('<h2>Cadastrar um pagamento ou entrada</h2><p>Para o que não aparece nos extratos, como um aluguel pago por fora. Deixe o mês final vazio se não tiver fim.</p>'
+                 f'<form method="post" action="/futuros">{csrf}'
+                 '<p><label for="fdesc">Descrição</label><br><input type="text" id="fdesc" name="descricao" required></p>'
+                 '<p><label for="fval">Valor em reais</label><br><input type="text" id="fval" name="valor" inputmode="decimal" required></p>'
+                 '<p><label for="fdia">Dia do mês, de 1 a 31</label><br><input type="text" id="fdia" name="dia" inputmode="numeric" required></p>'
+                 '<p><label for="fini">Mês inicial, AAAA-MM (vazio = este mês)</label><br><input type="text" id="fini" name="inicio"></p>'
+                 '<p><label for="ffim">Mês final, AAAA-MM (opcional)</label><br><input type="text" id="ffim" name="fim"></p>'
+                 '<p><label for="ftipo">Tipo</label><br><select id="ftipo" name="tipo"><option value="saida">Saída</option><option value="entrada">Entrada</option></select></p>'
+                 '<button type="submit">Cadastrar</button></form>')
+    ign = [r["chave"] for r in banco().execute("SELECT chave FROM ignorados ORDER BY chave")]
+    if ign:
+        linhas = []
+        for c in ign:
+            nome = c.split(":", 1)[1].rsplit(":", 2)[0] if c.startswith("parcela:") else c.split(":", 1)[1]
+            linhas.append([e(("Parcela: " if c.startswith("parcela:") else "Recorrente: ") + nome),
+                           f'<form class="lim" method="post" action="/futuros/ignorar">{csrf}<input type="hidden" name="chave" value="{e(c)}"><input type="hidden" name="ignorar" value="0">'
+                           f'<button type="submit" aria-label="Voltar a considerar: {e(nome)}">Voltar a considerar</button></form>'])
+        corpo.append("<h2>Ignorados</h2>" + tabela("Itens que você mandou ignorar", ["Item", "Ação"], linhas))
+    return "Pagamentos futuros", "".join(corpo)
+
+
 def pg_boletos(sess: dict) -> tuple:
     csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
     corpo = ['<p>Aqui ficam os boletos como contas a pagar. O Heimdall lê a linha digitável, confere os dígitos verificadores e mostra valor e vencimento. '
@@ -532,7 +576,7 @@ class Finance(BaseHTTPRequestHandler):
         except fn.ErroFinance as ex:
             if sess:
                 sess["flash"] = ("erro", str(ex))
-            self._ir("/importar" if rota == "/importar" else "/regras" if rota.startswith("/regras") else "/orcamentos" if rota.startswith("/orcamentos") else "/boletos" if rota.startswith("/boletos") else "/transacoes")
+            self._ir("/importar" if rota == "/importar" else "/regras" if rota.startswith("/regras") else "/orcamentos" if rota.startswith("/orcamentos") else "/boletos" if rota.startswith("/boletos") else "/futuros" if rota.startswith("/futuros") else "/transacoes")
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))
@@ -548,6 +592,8 @@ class Finance(BaseHTTPRequestHandler):
             titulo, corpo = pg_importar(sess)
         elif rota == "/orcamentos":
             titulo, corpo = pg_orcamentos(q, sess)
+        elif rota == "/futuros":
+            titulo, corpo = pg_futuros(sess)
         elif rota == "/boletos":
             titulo, corpo = pg_boletos(sess)
         elif rota == "/recorrentes":
@@ -608,6 +654,26 @@ class Finance(BaseHTTPRequestHandler):
             else:
                 sess["flash"] = ("ok", f"Limite de {cat} removido." if fn.remover_orcamento(banco(), cat) else f"{cat} não tinha limite.")
             self._ir(volta)
+            return
+        if rota == "/futuros":
+            fn.adicionar_previsto(banco(), campos.get("descricao", ""), campos.get("valor", ""), campos.get("dia", ""), campos.get("inicio", ""), campos.get("fim", ""), campos.get("tipo") == "entrada")
+            sess["flash"] = ("ok", "Cadastrado em pagamentos futuros.")
+            self._ir("/futuros")
+            return
+        if rota == "/futuros/remover":
+            try:
+                ok = fn.remover_previsto(banco(), int(campos.get("id", "0")))
+            except ValueError:
+                ok = False
+            sess["flash"] = ("ok", "Removido." if ok else "Não achei esse item.")
+            self._ir("/futuros")
+            return
+        if rota == "/futuros/ignorar":
+            chave = campos.get("chave", "")
+            if re.fullmatch(r"(parcela|recorrente):[^\s].{0,150}", chave):
+                fn.ignorar_detectado(banco(), chave, campos.get("ignorar") == "1")
+                sess["flash"] = ("ok", "Ignorado: não entra mais nas previsões." if campos.get("ignorar") == "1" else "Voltou a entrar nas previsões.")
+            self._ir("/futuros")
             return
         if rota == "/boletos":
             b = fb.interpretar(campos.get("linha", ""))

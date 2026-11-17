@@ -69,6 +69,9 @@ CREATE TABLE IF NOT EXISTS regras(
   id INTEGER PRIMARY KEY AUTOINCREMENT, padrao TEXT NOT NULL, categoria TEXT NOT NULL, origem TEXT NOT NULL, UNIQUE(padrao, origem));
 CREATE TABLE IF NOT EXISTS categorias(nome TEXT PRIMARY KEY, tipo TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS orcamentos(categoria TEXT PRIMARY KEY, limite INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS previstos(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, descricao TEXT NOT NULL, valor INTEGER NOT NULL, dia INTEGER NOT NULL, inicio TEXT NOT NULL, fim TEXT);
+CREATE TABLE IF NOT EXISTS ignorados(chave TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS boletos(
   id INTEGER PRIMARY KEY AUTOINCREMENT, linha TEXT UNIQUE NOT NULL, valor INTEGER, vencimento TEXT, banco TEXT, beneficiario TEXT, tipo TEXT, segmento TEXT,
   arquivo TEXT, situacao TEXT NOT NULL DEFAULT 'aberto', criado_em TEXT);
@@ -579,6 +582,152 @@ def recorrentes(con, hoje=None) -> dict:
     ativas = [s for s in series if s["situacao"] != "encerrada"]
     return {"mes": mes_ref, "series": series,
             "gasto_mensal": -sum(s["valor"] for s in ativas if not s["entrada"]), "renda_mensal": sum(s["valor"] for s in ativas if s["entrada"])}
+
+
+_PARCELA_TEXTO = re.compile(r"parc(?:ela)?\.?\s*(\d{1,2})\s*(?:/|de)\s*(\d{1,2})\b")
+_PARCELA_FIM = re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})$")
+
+
+def _parcela_da_descricao(desc_norm: str, conta: str):
+    """(parcela atual, total, descrição sem a parcela) ou None. Aceita 'parcela 3 de 10', 'parc 03/10' e, só em cartão, '... 03/10' no fim."""
+    m = _PARCELA_TEXTO.search(desc_norm)
+    if not m and "cartao" in norm(conta):
+        m = _PARCELA_FIM.search(desc_norm.strip())
+    if not m:
+        return None
+    a, t = int(m.group(1)), int(m.group(2))
+    if not (2 <= t <= 60 and 1 <= a <= t):
+        return None
+    return a, t, (desc_norm[:m.start()] + " " + desc_norm[m.end():]).strip()
+
+
+def _soma_meses(mes: str, k: int) -> str:
+    i = _indice_mes(mes) - 1 + k
+    return f"{i // 12}-{i % 12 + 1:02d}"
+
+
+def parcelamentos(con, hoje=None) -> list:
+    """Parcelamentos achados nos extratos e faturas (parcela X de Y): valor, quantas já saíram, quantas faltam e o mês de cada parcela que falta."""
+    hoje = hoje or date.today()
+    if isinstance(hoje, str):
+        hoje = date.fromisoformat(hoje)
+    mes_ref = f"{hoje.year}-{hoje.month:02d}"
+    ign = {r["chave"] for r in con.execute("SELECT chave FROM ignorados")}
+    grupos = {}
+    for r in con.execute("SELECT data, valor, descricao, desc_norm, categoria, conta FROM transacoes WHERE valor<0 ORDER BY data"):
+        p = _parcela_da_descricao(r["desc_norm"], r["conta"])
+        if not p:
+            continue
+        a, t, base = p
+        chave = f"parcela:{_chave_recorrente(base)}:{t}:{abs(r['valor'])}"
+        if len(_chave_recorrente(base)) < 3:
+            continue
+        g = grupos.setdefault(chave, {"chave": chave, "base": _chave_recorrente(base), "descricao": re.sub(r"\s*parc\w*\.?\s*\d+\s*(?:/|de)\s*\d+", "", r["descricao"], flags=re.I).strip() or r["descricao"],
+                                      "total": t, "valor": r["valor"], "conta": r["conta"], "categoria": r["categoria"], "maior": 0, "ultimo_mes": "", "dia": 1})
+        if a >= g["maior"]:
+            g["maior"], g["ultimo_mes"], g["dia"] = a, r["data"][:7], int(r["data"][8:10])
+    saida = []
+    for g in grupos.values():
+        falta = g["total"] - g["maior"]
+        g["faltam"] = falta
+        g["ignorado"] = g["chave"] in ign
+        g["proximas"] = [{"mes": _soma_meses(g["ultimo_mes"], k), "numero": g["maior"] + k} for k in range(1, falta + 1)
+                         if _soma_meses(g["ultimo_mes"], k) >= mes_ref]
+        saida.append(g)
+    saida.sort(key=lambda g: (g["ignorado"], g["descricao"]))
+    return saida
+
+
+def adicionar_previsto(con, descricao: str, texto_valor: str, dia, inicio: str = "", fim: str = "", entrada: bool = False) -> int:
+    descricao = (descricao or "").strip()
+    if not descricao:
+        raise ErroFinance("Diga o que é este pagamento.")
+    try:
+        v = abs(parse_valor(texto_valor))
+    except (ValueError, TypeError):
+        v = 0
+    if v == 0:
+        raise ErroFinance("Valor inválido. Digite em reais, por exemplo 1500,00.")
+    try:
+        dia = int(dia)
+    except (TypeError, ValueError):
+        raise ErroFinance("Dia do mês inválido: use de 1 a 31.")
+    if not 1 <= dia <= 31:
+        raise ErroFinance("Dia do mês inválido: use de 1 a 31.")
+    inicio = (inicio or "").strip() or date.today().strftime("%Y-%m")
+    fim = (fim or "").strip()
+    for m in (inicio, fim):
+        if m and not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", m):
+            raise ErroFinance("Mês inválido: use o formato AAAA-MM, por exemplo 2026-12.")
+    if fim and fim < inicio:
+        raise ErroFinance("O mês final não pode ser antes do inicial.")
+    cur = con.execute("INSERT INTO previstos(descricao, valor, dia, inicio, fim) VALUES(?,?,?,?,?)", (descricao[:80], v if entrada else -v, dia, inicio, fim or None))
+    con.commit()
+    return cur.lastrowid
+
+
+def remover_previsto(con, id_previsto: int) -> bool:
+    cur = con.execute("DELETE FROM previstos WHERE id=?", (int(id_previsto),))
+    con.commit()
+    return cur.rowcount > 0
+
+
+def ignorar_detectado(con, chave: str, ignorar: bool = True) -> None:
+    if ignorar:
+        con.execute("INSERT OR IGNORE INTO ignorados(chave) VALUES(?)", (chave,))
+    else:
+        con.execute("DELETE FROM ignorados WHERE chave=?", (chave,))
+    con.commit()
+
+
+def _dia_no_mes(mes: str, dia: int) -> str:
+    import calendar
+    ano, m = int(mes[:4]), int(mes[5:7])
+    return f"{mes}-{min(dia, calendar.monthrange(ano, m)[1]):02d}"
+
+
+def futuros(con, n_meses: int = 6, hoje=None) -> dict:
+    """Pagamentos e entradas previstos nos próximos meses: parcelas que faltam, contas recorrentes detectadas, previstos digitados e boletos em aberto.
+    Devolve {"meses": [{"mes", "itens": [...], "saidas", "entradas"}], ...}. Cada item tem origem (parcela, recorrente, manual, boleto), data, descricao e valor (negativo = saída)."""
+    hoje = hoje or date.today()
+    if isinstance(hoje, str):
+        hoje = date.fromisoformat(hoje)
+    mes_ref = f"{hoje.year}-{hoje.month:02d}"
+    alvo = [_soma_meses(mes_ref, k) for k in range(n_meses)]
+    ign = {r["chave"] for r in con.execute("SELECT chave FROM ignorados")}
+    itens = {m: [] for m in alvo}
+    parcs = parcelamentos(con, hoje)
+    chaves_parcela = {p["base"] for p in parcs}
+    for p in parcs:
+        if p["ignorado"]:
+            continue
+        for q in p["proximas"]:
+            if q["mes"] in itens:
+                itens[q["mes"]].append({"origem": "parcela", "data": _dia_no_mes(q["mes"], p["dia"]), "descricao": f"{p['descricao']} (parcela {q['numero']} de {p['total']})",
+                                        "valor": p["valor"], "chave": p["chave"], "categoria": p["categoria"]})
+    for s in recorrentes(con, hoje)["series"]:
+        chave = "recorrente:" + s["chave"]
+        if s["situacao"] == "encerrada" or chave in ign or s["parcelada"] or s["chave"] in chaves_parcela:
+            continue
+        for m in alvo:
+            if m == mes_ref and s["situacao"] == "chegou":
+                continue
+            itens[m].append({"origem": "recorrente", "data": _dia_no_mes(m, s["dia"]), "descricao": s["descricao"], "valor": s["valor"], "chave": chave, "categoria": s["categoria"]})
+    for r in con.execute("SELECT * FROM previstos ORDER BY id"):
+        for m in alvo:
+            if m >= r["inicio"] and (not r["fim"] or m <= r["fim"]):
+                itens[m].append({"origem": "manual", "data": _dia_no_mes(m, r["dia"]), "descricao": r["descricao"], "valor": r["valor"], "id": r["id"], "categoria": ""})
+    for b in con.execute("SELECT * FROM boletos WHERE situacao='aberto' AND vencimento IS NOT NULL"):
+        m = b["vencimento"][:7]
+        m = mes_ref if m < mes_ref else m  # vencido entra no mês atual
+        if m in itens:
+            itens[m].append({"origem": "boleto", "data": b["vencimento"], "descricao": "Boleto: " + (b["beneficiario"] or b["banco"] or b["segmento"] or "sem identificação"),
+                             "valor": -(b["valor"] or 0), "id": b["id"], "categoria": ""})
+    meses_saida = []
+    for m in alvo:
+        lista = sorted(itens[m], key=lambda x: (x["data"], x["descricao"]))
+        meses_saida.append({"mes": m, "itens": lista, "saidas": -sum(x["valor"] for x in lista if x["valor"] < 0), "entradas": sum(x["valor"] for x in lista if x["valor"] > 0)})
+    return {"hoje": hoje.isoformat(), "meses": meses_saida}
 
 
 PERTO_DO_LIMITE = 80  # % do limite a partir do qual o orçamento mostra aviso

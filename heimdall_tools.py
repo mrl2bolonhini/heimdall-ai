@@ -1160,6 +1160,25 @@ def financas_boletos() -> str:
     return _BANCO_AVISO + "\n" + "\n".join(saida)
 
 
+def financas_futuros(meses: int = 6) -> str:
+    """Pagamentos e entradas previstos nos próximos meses no Finance do usuário: parcelas que faltam, contas recorrentes, previstos cadastrados e boletos em aberto,
+    com o total de saídas e entradas de cada mês. meses: de 1 a 12."""
+    try:
+        con, fn = _financas_ro()
+        try:
+            f = fn.futuros(con, max(1, min(int(meses), 12)))
+        finally:
+            con.close()
+    except (PermissionError, FileNotFoundError, ValueError) as e:
+        return f"Finance: {e}."
+    saida = []
+    for m in f["meses"]:
+        saida.append(f"{fn.nome_mes(m['mes'])}: saídas previstas {fn.brl(m['saidas'])}, entradas previstas {fn.brl(m['entradas'])}.")
+        for x in m["itens"]:
+            saida.append(f"- dia {x['data'][8:10]}: {x['descricao'][:60]}, {fn.brl(x['valor'], True)} ({x['origem']})")
+    return _BANCO_AVISO + "\n" + "\n".join(saida)
+
+
 PUBLIC_TOOLS = [
     search_searxng,
     calculate_expression,
@@ -1212,6 +1231,7 @@ DADOS_TOOLS = [
     financas_orcamentos,
     financas_recorrentes,
     financas_boletos,
+    financas_futuros,
     get_system_timestamp,
 ]
 

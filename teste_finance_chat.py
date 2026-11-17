@@ -57,6 +57,8 @@ o = ht.financas_orcamentos("2026-10")
 confere("orçamentos: limite, gasto e situação", "Mercado: limite R$ 300,00, gasto R$ 450,00" in o and "estourado" in o, o)
 rec = ht.financas_recorrentes()
 confere("recorrentes: acha aluguel e salário", "ALUGUEL" in rec.upper() and "SALARIO" in rec.upper(), rec)
+fu = ht.financas_futuros(3)
+confere("futuros: devolve meses com totais", "saídas previstas" in fu, fu)
 b = ht.financas_boletos()
 confere("boletos: lista o boleto e não paga nada", "PADARIA DOIS IRMAOS: R$ 450,90" in b, b)
 

@@ -2,6 +2,7 @@
 """Testa o Heimdall Finance: leitura de OFX e CSV, deduplicação, categorias e regras, relatórios, login e páginas.
 Usa um banco temporário; nada toca a internet."""
 import os
+from datetime import date
 import sys
 import tempfile
 import threading
@@ -359,6 +360,51 @@ _v = fn.conectar(os.path.join(_tr.mkdtemp(), "vazio.db"))
 confere("recorrentes: sem histórico não acha nada", fn.recorrentes(_v, "2026-10-20")["series"] == [])
 st, corpo, _ = pedir("/recorrentes", ck)
 confere("página de recorrentes abre e usa tabelas com legenda", st == 200 and ("<caption>" in corpo or "Ainda não achei" in corpo), corpo[:200])
+# pagamentos futuros: parcelas, recorrentes, cadastrados e boletos
+_f = fn.conectar(os.path.join(_tr.mkdtemp(), "futuros.db"))
+_fi = [{"data": "2026-09-10", "valor": -12000, "descricao": "LOJA XPTO 02/10", "fitid": ""},
+       {"data": "2026-10-10", "valor": -12000, "descricao": "LOJA XPTO 03/10", "fitid": ""},
+       {"data": "2026-10-12", "valor": -9990, "descricao": "MAGALU - Parcela 2/3", "fitid": ""},
+       {"data": "2026-10-14", "valor": -5000, "descricao": "COMPRA 15/11", "fitid": ""}]
+fn.importar_itens(_f, _fi, "pdf", "fat.pdf", "Itaú cartão")
+fn.importar_itens(_f, [{"data": "2026-10-20", "valor": -7000, "descricao": "PIX 05/10", "fitid": ""}], "ofx", "x.ofx", "Itaú conta")
+_ps = {p["base"]: p for p in fn.parcelamentos(_f, "2026-11-05")}
+confere("parcelas: acha as duas compras parceladas e ignora data e PIX", set(_ps) == {"loja xpto", "magalu"}, list(_ps))
+confere("parcelas: quantas faltam e em que meses", _ps["loja xpto"]["faltam"] == 7 and _ps["loja xpto"]["proximas"][0] == {"mes": "2026-11", "numero": 4} and _ps["loja xpto"]["proximas"][-1]["mes"] == "2027-05", _ps["loja xpto"])
+confere("parcelas: a última parcela (3 de 3) não deixa nada a prever", _ps["magalu"]["faltam"] == 1 and len(_ps["magalu"]["proximas"]) == 1 and _ps["magalu"]["proximas"][0]["mes"] == "2026-11")
+fn.adicionar_previsto(_f, "Aluguel por fora", "1.200,00", 8, "2026-11", "2027-01")
+fn.adicionar_previsto(_f, "Freela", "500", 20, "2026-12", "2026-12", True)
+_fb2 = __import__("financas_boletos")
+_fb2.registrar(_f, _fb2.interpretar("34191234546789012345767890123457616560000045090", date(2026, 11, 5)), "PADARIA")
+_fu = fn.futuros(_f, 4, "2026-11-05")
+_m = {x["mes"]: x for x in _fu["meses"]}
+confere("futuros: quatro meses a partir do atual", list(_m) == ["2026-11", "2026-12", "2027-01", "2027-02"])
+confere("futuros: parcelas, cadastrados e boletos entram no mês certo", {x["origem"] for x in _m["2026-11"]["itens"]} >= {"parcela", "manual"})
+confere("futuros: o boleto entra no mês do vencimento", any(x["origem"] == "boleto" for x in _m["2026-12"]["itens"]))
+confere("futuros: o aluguel cadastrado acaba em janeiro", sum(1 for x in _m["2027-02"]["itens"] if x["origem"] == "manual") == 0 and sum(1 for x in _m["2027-01"]["itens"] if x["origem"] == "manual") == 1)
+confere("futuros: entrada cadastrada soma como entrada", _m["2026-12"]["entradas"] == 50000)
+confere("futuros: total de saídas de novembro soma parcelas e aluguel", _m["2026-11"]["saidas"] >= 12000 + 9990 + 120000, _m["2026-11"]["saidas"])
+_ch = next(x["chave"] for x in _m["2026-11"]["itens"] if x["origem"] == "parcela" and "XPTO" in x["descricao"])
+fn.ignorar_detectado(_f, _ch)
+confere("futuros: ignorar tira a parcela das previsões", not any("XPTO" in x["descricao"] for mm in fn.futuros(_f, 4, "2026-11-05")["meses"] for x in mm["itens"]))
+fn.ignorar_detectado(_f, _ch, False)
+confere("futuros: voltar a considerar traz de volta", any("XPTO" in x["descricao"] for x in fn.futuros(_f, 4, "2026-11-05")["meses"][0]["itens"]))
+for _args in (("", "10", 5), ("X", "abc", 5), ("X", "10", 40), ("X", "10", 5, "2026-13"), ("X", "10", 5, "2026-05", "2026-01")):
+    try:
+        fn.adicionar_previsto(_f, *_args)
+        confere(f"cadastro inválido recusado {_args}", False)
+    except fn.ErroFinance:
+        confere(f"cadastro inválido recusado {_args}", True)
+st, _, _ = post("/futuros", {"descricao": "Escola", "valor": "800,00", "dia": "10", "inicio": "2026-12", "tipo": "saida"}, ck, csrf)
+confere("cadastrar pagamento futuro pela página", st == 303 and con2.execute("SELECT COUNT(*) FROM previstos").fetchone()[0] == 1)
+st, corpo, _ = pedir("/futuros", ck)
+confere("página de pagamentos futuros: tabelas com legenda, campos com rótulo e botões com nome", st == 200 and "<caption>" in corpo and '<label for="fdesc">' in corpo and "Remover: Escola" in corpo, corpo[:300])
+_pid = con2.execute("SELECT id FROM previstos").fetchone()[0]
+confere("futuros: CSRF errado é recusado", post("/futuros/remover", {"id": str(_pid)}, ck, "errado")[0] == 403)
+post("/futuros/remover", {"id": str(_pid)}, ck, csrf)
+confere("remover pagamento futuro", con2.execute("SELECT COUNT(*) FROM previstos").fetchone()[0] == 0)
+post("/futuros/ignorar", {"chave": "recorrente:netflix.com", "ignorar": "1"}, ck, csrf)
+confere("ignorar pela página grava e chave estranha é recusada", con2.execute("SELECT COUNT(*) FROM ignorados").fetchone()[0] == 1 and (post("/futuros/ignorar", {"chave": "qualquer", "ignorar": "1"}, ck, csrf)[0] == 303) and con2.execute("SELECT COUNT(*) FROM ignorados").fetchone()[0] == 1)
 # boletos
 st, _, _ = post("/boletos", {"linha": "34191.23454 67890.123457 67890.123457 6 16560000045090", "quem": "Padaria"}, ck, csrf)
 confere("registrar boleto pela página", st == 303 and con2.execute("SELECT COUNT(*) FROM boletos").fetchone()[0] == 1)
