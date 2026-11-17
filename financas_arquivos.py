@@ -21,6 +21,7 @@ from collections import Counter
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import financas_boletos as fb
 import financas_nucleo as fn
 
 ERRO = fn.ErroFinance
@@ -662,6 +663,23 @@ def devolver_para_entrada(base: Path) -> list:
     return saida
 
 
+def _tentar_boleto(con, arq: Path, dados: bytes, agora: str):
+    """PDF que não é extrato nem fatura mas traz uma linha digitável válida é um boleto: vira conta a pagar. Nada é pago."""
+    try:
+        texto = texto_do_pdf(dados)
+    except ERRO:
+        return None
+    achadas = fb.achar_linhas(texto)
+    if not achadas:
+        return None
+    quem = fb.beneficiario_do_texto(texto)
+    novos = 0
+    for b in achadas:
+        novos += 1 if fb.registrar(con, b, quem, arq.name, agora)[1] else 0
+    return {"arquivo": arq.name, "ok": True, "boleto": True, "conta": "", "novas": novos, "repetidas": len(achadas) - novos, "lidas": len(achadas),
+            "motivo": " | ".join(fb.frase({**b, "beneficiario": quem}) for b in achadas)}
+
+
 def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 1024 * 1024) -> list:
     """Importa o que estiver na pasta entrada/. Sucesso vai para importados/; dúvida vai para revisar/ com um .motivo.txt.
     Arquivo duplicado (mesmo conteúdo já importado, ou nada novo nos lançamentos) não é importado e é apagado.
@@ -706,6 +724,12 @@ def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 
             _limpar_motivos(revisar)
             resultados.append({"arquivo": arq.name, "ok": True, "conta": r["conta"], "novas": r["novas"], "repetidas": r["repetidas"], "lidas": r["lidas"]})
         except ERRO as ex:
+            boleto = _tentar_boleto(con, arq, dados, agora) if arq.suffix.lower() == ".pdf" else None
+            if boleto:
+                _mover(arq, entrada / "importados", agora)
+                _limpar_motivos(revisar)
+                resultados.append(boleto)
+                continue
             destino = _mover(arq, revisar, agora)
             _motivo_de(destino).write_text(f"{agora}\n{ex}\n", encoding="utf-8")
             resultados.append({"arquivo": arq.name, "ok": False, "motivo": str(ex)})

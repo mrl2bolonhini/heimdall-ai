@@ -189,12 +189,16 @@ Opções:
   -F, --force          com --import, importa o PDF mesmo que o total não confira (só depois de revisar)
   -b, --inbox          importa agora o que estiver na pasta de entrada, sem esperar o minuto
   -v, --values         com --explain, mostra também os valores em reais das linhas lidas como lançamento (a descrição continua mascarada); use quando o total não confere e for preciso achar qual lançamento tem o sinal errado
+  -B, --bill ARQ|LINHA lê um boleto (PDF ou a linha digitável entre aspas), confere os dígitos e guarda como conta a pagar; nunca paga nada. PDF de boleto solto na pasta de entrada também é registrado
+  -D, --bills          lista os boletos em aberto, com valor e vencimento
   -r, --retry          devolve tudo de revisar para a entrada e importa de novo (use depois de uma atualização do leitor); o motivo antigo some
 Exemplos:
   heimdall finance
   heimdall finance --folder
   heimdall finance --inspect ~/Downloads/fatura.pdf
   heimdall finance --preview ~/Downloads/fatura.pdf
+  heimdall finance --bill ~/Downloads/boleto.pdf
+  heimdall finance --bills
   heimdall finance --import ~/Downloads/extrato.ofx --account "Itaú conta"
   heimdall logs --service finance
 

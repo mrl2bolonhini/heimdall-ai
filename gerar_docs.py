@@ -263,6 +263,8 @@ SCRIPTS = [
     ("heimdall_design.py", "Heimdall Design: o padrão de interface igual em todos os sites (link lê, botão age): botão de ação como formulário GET, com nome acessível, e o CSS compartilhado."),
     ("CLAUDE.md", "Regras do repositório: toda atualização de interface segue o Heimdall Design."),
     ("diagnostico.py", "Diagnóstico de desempenho do Mac (heimdall doctor): memória, troca em disco, processador, disco, Docker, Ollama e serviços."),
+    ("financas_boletos.py", "Leitor de boletos: linha digitável de 47 e 48 números, dígitos verificadores, vencimento e contas a pagar no banco local."),
+    ("teste_boletos.py", "Teste do leitor de boletos, com linhas inventadas montadas por contas independentes."),
     ("teste_diagnostico.py", "Teste do diagnóstico: análise dos textos do macOS sem depender do Mac."),
     ("teste_design.py", "Teste do Heimdall Design: falha se um link de painel tiver texto de ação, se algum contraste de cor ficar abaixo do mínimo, se o foco for removido ou houver cor solta fora do Heimdall Design."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News, Notas e Finance: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
@@ -360,6 +362,7 @@ COMANDOS = [
         ("Teste dos arquivos do Finance (PDF, inspeção anônima, pasta de entrada)", "python3 teste_finance_arquivos.py"),
         ("Teste do Heimdall Design (nenhuma ação é link)", "python3 teste_design.py"),
         ("Teste do diagnóstico de desempenho", "python3 teste_diagnostico.py"),
+        ("Teste do leitor de boletos", "python3 teste_boletos.py"),
         ("Teste do xadrez, da batalha naval, das aventuras e dos jogos novos (Node)", "node teste_jogos_xadrez.js && node teste_jogos_naval.js && node teste_jogos_cincoletras.js && node teste_jogos_sudoku.js && node teste_historias.js && node teste_jogos_novos.js"),
         ("Teste do painel de saúde (sem rede)", "python3 teste_painel_saude.py"),
         ("Listar notas com título que parece cortado", "python3 heimdall_notas.py --titulos-suspeitos"),
@@ -887,6 +890,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li><strong>Faturas pagas sem fatura importada:</strong> o pagamento de fatura que nenhuma fatura importada explica entra nas despesas, para você não perder o gasto, e aparece listado no Resumo. Se a fatura for de outra pessoa, mude a categoria do pagamento para "Fatura de terceiros" e ele sai das somas. Um pagamento é considerado explicado quando há um crédito de pagamento do mesmo valor em algum cartão (até 10 dias de diferença) ou quando o valor é igual ao total de uma fatura importada.</li>
 <li><strong>Orçamentos:</strong> a página Orçamentos guarda um limite mensal por categoria de gasto. Mostra gasto, quanto falta ou quanto passou e a situação (dentro do limite, perto do limite a partir de 80% e estourado), seguindo a visão escolhida. O Resumo avisa dos orçamentos estourados ou perto do limite.</li>
 <li><strong>Contas recorrentes:</strong> a página Contas recorrentes acha, pelo histórico, o que se repete todo mês (aluguel, assinaturas, salário), com valor e dia típicos. Separa o que ainda vem neste mês, o que já apareceu, o que passou do dia habitual sem aparecer (atrasada, ou extrato ainda não importado) e o que parou há mais de dois meses. Nada é cadastrado: é deduzido dos lançamentos importados e só vale com pelo menos 3 meses, ou 2 meses seguidos com o mesmo valor.</li>
+<li><strong>Boletos:</strong> a página Boletos lê a linha digitável (47 números do boleto bancário ou 48 de conta de consumo e tributo), confere os dígitos verificadores e guarda valor, vencimento e quem recebe como conta a pagar, com a situação em palavras (vencido, vence hoje, a vencer). PDF de boleto solto na pasta de entrada também é registrado, e o Resumo avisa dos boletos vencidos ou que vencem em até 7 dias. Marcar como pago é só uma anotação: o Heimdall nunca paga nada. Pela linha de comando: heimdall finance --bill e --bills.</li>
 <li><strong>Filtros em Transações:</strong> por mês, categoria, conta (por exemplo Itaú cartão, Nubank cartão, Mercado Pago), produto (cartão, Pix, boleto, outras transferências, entre minhas contas, pagamento de fatura, outros) e texto da descrição. Cada opção mostra quantos lançamentos tem, e acima da lista aparecem as entradas, as saídas e o saldo do filtro, para conferir com o extrato.</li>
 <li><strong>Exportar:</strong> a página Transações baixa tudo em CSV.</li></ol></section>
 <section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>

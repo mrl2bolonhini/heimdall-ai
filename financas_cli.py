@@ -36,7 +36,8 @@ def _env_dir() -> str:
     return ""
 
 
-import financas_arquivos as fa  # noqa: E402
+import financas_arquivos as fa
+import financas_boletos as fb  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
 
 DIR_DADOS = Path(_env_dir() or (AQUI / "dados_financas"))
@@ -79,6 +80,8 @@ def main() -> None:
     g.add_argument("--entrada", action="store_true")
     g.add_argument("--pasta", action="store_true")
     g.add_argument("--reprocessar", action="store_true")
+    g.add_argument("--boleto", metavar="LINHA_OU_PDF")
+    g.add_argument("--boletos", action="store_true")
     ap.add_argument("--valores", action="store_true")
     ap.add_argument("--linhas", type=int, default=150)
     ap.add_argument("--conta", default="")
@@ -113,6 +116,30 @@ def main() -> None:
             fa.concluir_revisao(DIR_DADOS, Path(a.importar).expanduser())  # se veio de revisar/, vai para importados/ e o motivo some
             print(r["resumo"])
             print(f"\nImportado na conta '{r['conta']}': {r['novas']} novos, {r['repetidas']} já existentes.")
+        elif a.boleto:
+            con = _banco()
+            p = Path(a.boleto).expanduser()
+            beneficiario, arquivo = "", ""
+            if p.is_file():
+                texto = fa.texto_do_pdf(p.read_bytes()) if p.suffix.lower() == ".pdf" else p.read_text(encoding="utf-8", errors="replace")
+                achadas = fb.achar_linhas(texto)
+                if not achadas:
+                    sys.exit("Não achei uma linha digitável válida nesse arquivo. Se o código estiver impresso, rode de novo passando só os números entre aspas.")
+                beneficiario, arquivo = fb.beneficiario_do_texto(texto), p.name
+            else:
+                achadas = [fb.interpretar(a.boleto)]
+            for b in achadas:
+                idb, novo = fb.registrar(con, b, beneficiario, arquivo)
+                print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario}))
+            print("\nO Heimdall não paga nada: só guarda a conta a pagar. Veja em heimdall finance, página Boletos, ou com heimdall finance --bills.")
+        elif a.boletos:
+            con = _banco()
+            lista = fb.listar(con)
+            if not lista:
+                print("Nenhum boleto em aberto.")
+            for b in lista:
+                quando = {"vencido": f"vencido há {-b['dias']} dia(s)", "vence hoje": "vence hoje", "a vencer": f"vence em {b['dias']} dia(s)"}.get(b["estado"], "sem vencimento")
+                print(f"{b['id']}. {fb.frase(b)} ({quando})")
         elif a.entrada or a.reprocessar:
             if a.reprocessar:
                 movidos = fa.devolver_para_entrada(DIR_DADOS)
@@ -127,6 +154,8 @@ def main() -> None:
             for r in res:
                 if r.get("limpeza"):
                     print(f"Limpei {r['limpeza']} arquivo(s) de motivo de itens que já saíram de revisar.")
+                elif r.get("boleto"):
+                    print(f"Boleto: {r['arquivo']}: {r['novas']} novo(s) registrado(s) como conta a pagar. {r['motivo']}")
                 elif r.get("duplicado"):
                     print(f"Duplicado: {r['arquivo']}: {r['motivo']}")
                 elif r["ok"]:

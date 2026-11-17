@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""Leitor de boletos do Heimdall Finance: linha digitável (47 dígitos de boleto bancário ou 48 de conta de consumo/tributo) -> valor, vencimento e banco.
+
+O Heimdall nunca paga nada: ele só lê o código, confere os dígitos verificadores e guarda o boleto como conta a pagar no banco local.
+Nada aqui usa internet; o banco SQLite fica só no Mac.
+"""
+import re
+from datetime import date, datetime, timedelta
+
+import financas_nucleo as fn
+
+ERRO = fn.ErroFinance
+BASE_ANTIGA = date(1997, 10, 7)   # fator de vencimento 0
+BASE_NOVA = date(2025, 2, 22)     # o fator voltou a 1000 nesta data
+BANCOS = {"001": "Banco do Brasil", "033": "Santander", "041": "Banrisul", "070": "BRB", "077": "Inter", "104": "Caixa", "136": "Unicred",
+          "212": "Banco Original", "218": "BS2", "237": "Bradesco", "260": "Nubank", "290": "PagBank", "318": "BMG", "323": "Mercado Pago",
+          "336": "C6 Bank", "341": "Itaú", "380": "PicPay", "389": "Mercantil", "422": "Safra", "748": "Sicredi", "756": "Sicoob", "655": "Votorantim"}
+SEGMENTOS = {"1": "prefeitura", "2": "saneamento", "3": "energia elétrica e gás", "4": "telecomunicações", "5": "órgão governamental",
+             "6": "carnê", "7": "multa de trânsito", "9": "uso exclusivo do banco"}
+
+
+def _mod10(digitos: str) -> int:
+    soma, peso = 0, 2
+    for c in reversed(digitos):
+        p = int(c) * peso
+        soma += p // 10 + p % 10
+        peso = 1 if peso == 2 else 2
+    return (10 - soma % 10) % 10
+
+
+def _mod11_banco(digitos: str) -> int:
+    soma, peso = 0, 2
+    for c in reversed(digitos):
+        soma += int(c) * peso
+        peso = 2 if peso == 9 else peso + 1
+    dv = 11 - soma % 11
+    return 1 if dv in (0, 10, 11) else dv
+
+
+def _mod11_convenio(digitos: str) -> int:
+    soma, peso = 0, 2
+    for c in reversed(digitos):
+        soma += int(c) * peso
+        peso = 2 if peso == 9 else peso + 1
+    resto = soma % 11
+    return 0 if resto in (0, 1) else 11 - resto
+
+
+def _vencimento(fator: int, hoje: date):
+    """O fator reiniciou em 22/02/2025. Entre as duas leituras possíveis, vale a mais próxima de hoje."""
+    if fator == 0:
+        return None
+    candidatas = [BASE_ANTIGA + timedelta(days=fator)]
+    if fator >= 1000:
+        candidatas.append(BASE_NOVA + timedelta(days=fator - 1000))
+    return min(candidatas, key=lambda d: abs((d - hoje).days))
+
+
+def so_digitos(texto: str) -> str:
+    return re.sub(r"\D", "", texto or "")
+
+
+def interpretar(texto: str, hoje: date = None) -> dict:
+    """Lê uma linha digitável. Levanta ErroFinance se faltar dígito ou se algum dígito verificador não bater."""
+    hoje = hoje or date.today()
+    d = so_digitos(texto)
+    if len(d) == 47:
+        return _bancario(d, hoje)
+    if len(d) == 48 and d[0] == "8":
+        return _convenio(d, hoje)
+    raise ERRO(f"A linha digitável tem {len(d)} dígitos; o boleto bancário tem 47 e a conta de consumo ou tributo tem 48 (começa com 8). Confira se copiou o código inteiro.")
+
+
+def _bancario(d: str, hoje: date) -> dict:
+    campos = [d[0:10], d[10:21], d[21:32]]
+    for i, c in enumerate(campos, 1):
+        if _mod10(c[:-1]) != int(c[-1]):
+            raise ERRO(f"O dígito verificador do campo {i} da linha digitável não confere. Algum número foi digitado ou copiado errado.")
+    barras = d[0:4] + d[32:47] + d[4:9] + d[10:20] + d[21:31]
+    if _mod11_banco(barras[:4] + barras[5:]) != int(barras[4]) or barras[4] != d[32]:
+        raise ERRO("O dígito verificador geral da linha digitável não confere. Algum número foi digitado ou copiado errado.")
+    fator, valor = int(d[33:37]), int(d[37:47])
+    venc = _vencimento(fator, hoje)
+    return {"tipo": "bancário", "linha": d, "banco": BANCOS.get(d[0:3], f"banco {d[0:3]}"), "codigo_banco": d[0:3],
+            "valor": valor or None, "vencimento": venc.isoformat() if venc else None, "segmento": ""}
+
+
+def _convenio(d: str, hoje: date) -> dict:
+    ident = d[2]
+    if ident not in "6789":
+        raise ERRO("O terceiro dígito de uma linha de 48 dígitos deveria ser 6, 7, 8 ou 9, e não é: o código parece errado.")
+    calc = _mod10 if ident in "67" else _mod11_convenio
+    blocos = [d[i:i + 12] for i in range(0, 48, 12)]
+    for i, b in enumerate(blocos, 1):
+        if calc(b[:-1]) != int(b[-1]):
+            raise ERRO(f"O dígito verificador do bloco {i} da linha digitável não confere. Algum número foi digitado ou copiado errado.")
+    barras = "".join(b[:-1] for b in blocos)
+    if calc(barras[:3] + barras[4:]) != int(barras[3]):
+        raise ERRO("O dígito verificador geral da linha digitável não confere. Algum número foi digitado ou copiado errado.")
+    valor = int(barras[4:15]) if ident in "68" else None  # 7 e 9 são valor em outra referência (quantidade de moeda)
+    venc = None
+    livre = barras[19:]
+    m = re.search(r"(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])", livre)
+    if m and ident in "68":
+        try:
+            venc = date(int(m.group(1)), int(m.group(2)), int(m.group(3))).isoformat()
+        except ValueError:
+            venc = None
+    return {"tipo": "consumo ou tributo", "linha": d, "banco": "", "codigo_banco": "", "valor": valor or None, "vencimento": venc,
+            "segmento": SEGMENTOS.get(d[1], "")}
+
+
+def achar_linhas(texto: str, hoje: date = None) -> list:
+    """Procura linhas digitáveis válidas num texto (por exemplo, o texto extraído de um PDF de boleto). Devolve interpretações, sem repetir."""
+    achadas, vistas = [], set()
+    for m in re.finditer(r"\d[\d.\s-]{40,70}\d", texto or ""):
+        d = so_digitos(m.group(0))
+        for tam in (47, 48):
+            for ini in range(0, max(0, len(d) - tam) + 1):
+                trecho = d[ini:ini + tam]
+                if len(trecho) != tam or trecho in vistas:
+                    continue
+                try:
+                    r = interpretar(trecho, hoje)
+                except ERRO:
+                    continue
+                vistas.add(trecho)
+                achadas.append(r)
+    return achadas
+
+
+def beneficiario_do_texto(texto: str) -> str:
+    """Melhor esforço: o nome que vem depois de Beneficiário (ou Cedente). Vazio se não achar."""
+    linhas = [l.strip() for l in (texto or "").splitlines()]
+    for i, l in enumerate(linhas):
+        if re.match(r"^(benefici[aá]rio|cedente)\b", l, re.I):
+            resto = re.sub(r"^(benefici[aá]rio|cedente)\s*(final)?\s*[:\-]?\s*", "", l, flags=re.I)
+            nome = resto if len(re.sub(r"[^A-Za-zÀ-ÿ]", "", resto)) >= 3 else next((x for x in linhas[i + 1:i + 4] if x and len(re.sub(r"[^A-Za-zÀ-ÿ]", "", x)) >= 3), "")
+            nome = re.split(r"\s{2,}|\bCNPJ\b|\bCPF\b|\d{2}\.\d{3}\.\d{3}", nome)[0].strip(" -:")
+            if nome:
+                return nome[:80]
+    return ""
+
+
+# --------------------------------------------------------------------------------------------
+# Banco local
+# --------------------------------------------------------------------------------------------
+def registrar(con, dados: dict, beneficiario: str = "", arquivo: str = "", agora: str = None) -> tuple:
+    """Guarda o boleto como conta a pagar. Devolve (id, novo). A mesma linha digitável não entra duas vezes."""
+    agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ja = con.execute("SELECT id FROM boletos WHERE linha=?", (dados["linha"],)).fetchone()
+    if ja:
+        return ja["id"], False
+    cur = con.execute("INSERT INTO boletos(linha, valor, vencimento, banco, beneficiario, tipo, segmento, arquivo, situacao, criado_em) VALUES(?,?,?,?,?,?,?,?,'aberto',?)",
+                      (dados["linha"], dados["valor"], dados["vencimento"], dados["banco"], (beneficiario or "").strip(), dados["tipo"], dados["segmento"], arquivo, agora))
+    con.commit()
+    return cur.lastrowid, True
+
+
+def listar(con, hoje: date = None, incluir_pagos: bool = False) -> list:
+    """Boletos com a situação em palavras: vencido, vence hoje, vence em N dias, sem vencimento, pago."""
+    hoje = hoje or date.today()
+    saida = []
+    for r in con.execute("SELECT * FROM boletos ORDER BY CASE WHEN vencimento IS NULL THEN 1 ELSE 0 END, vencimento, id"):
+        b = dict(r)
+        b["dias"] = None
+        if b["situacao"] == "pago":
+            b["estado"] = "pago"
+        elif not b["vencimento"]:
+            b["estado"] = "sem vencimento"
+        else:
+            dias = (date.fromisoformat(b["vencimento"]) - hoje).days
+            b["dias"] = dias
+            b["estado"] = "vencido" if dias < 0 else "vence hoje" if dias == 0 else "a vencer"
+        if b["estado"] != "pago" or incluir_pagos:
+            saida.append(b)
+    return saida
+
+
+def definir_situacao(con, id_boleto: int, pago: bool) -> bool:
+    cur = con.execute("UPDATE boletos SET situacao=? WHERE id=?", ("pago" if pago else "aberto", int(id_boleto)))
+    con.commit()
+    return cur.rowcount > 0
+
+
+def remover(con, id_boleto: int) -> bool:
+    cur = con.execute("DELETE FROM boletos WHERE id=?", (int(id_boleto),))
+    con.commit()
+    return cur.rowcount > 0
+
+
+def frase(b: dict) -> str:
+    """Uma linha em português simples para o terminal."""
+    quem = b.get("beneficiario") or b.get("banco") or b.get("segmento") or "sem identificação"
+    valor = fn.brl(b["valor"]) if b.get("valor") else "valor em aberto (o pagador define)"
+    venc = fn.data_br(b["vencimento"]) if b.get("vencimento") else "sem vencimento no código"
+    return f"{quem}: {valor}, vencimento {venc}"

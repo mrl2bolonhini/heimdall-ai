@@ -445,6 +445,30 @@ Total para próximas faturas   120,00
 _it3, _inf3 = _fa.ler_pdf_texto(pct, "cartão")
 confere("porcentagem não é valor e IOF sem data entra na soma", [i["valor"] for i in _it3[:3]] == [-5000, -10000, -350] and _inf3["confere"] is True and _inf3["descartadas"] == 1, (_it3, _inf3))
 
+# ---- boleto em PDF solto na pasta de entrada vira conta a pagar
+if pdf_ok:
+    import financas_boletos as _fb
+    _bol = "Recibo do Pagador\nBeneficiário\nPADARIA DOIS IRMAOS LTDA   CNPJ 12.345.678/0001-90\nValor do documento 450,90\n34191.23454 67890.123457 67890.123457 6 16560000045090\n"
+    _base = tmp / "boleto"
+    _ent = fa.preparar_pasta(_base)
+    (_ent / "boleto padaria.pdf").write_bytes(pdf_de(_bol))
+    os.utime(_ent / "boleto padaria.pdf", (time.time() - 60, time.time() - 60))
+    _con = fn.conectar(tmp / "boleto.db")
+    _res = fa.processar_entrada(_con, _base)
+    confere("PDF de boleto na pasta vira conta a pagar e vai para importados", len(_res) == 1 and _res[0].get("boleto") and _res[0]["novas"] == 1 and (_ent / "importados" / "boleto padaria.pdf").exists(), _res)
+    _l = _fb.listar(_con)
+    confere("boleto da pasta guarda valor e beneficiário", len(_l) == 1 and _l[0]["valor"] == 45090 and _l[0]["beneficiario"] == "PADARIA DOIS IRMAOS LTDA", _l)
+    confere("boleto não cria lançamento no extrato", _con.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 0)
+    _env = dict(os.environ, HEIMDALL_FINANCE_DIR=str(tmp / "clib"))
+    p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boleto", "34191234546789012345767890123457616560000045090"], capture_output=True, text=True, env=_env, timeout=60)
+    confere("--boleto com a linha registra e avisa que não paga", p.returncode == 0 and "Registrado" in p.stdout and "R$ 450,90" in p.stdout and "não paga nada" in p.stdout, p.stdout[:300] + p.stderr[:200])
+    p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boleto", "34191234546789012345767890123457616560000045090"], capture_output=True, text=True, env=_env, timeout=60)
+    confere("--boleto repetido não duplica", "Já estava registrado" in p.stdout, p.stdout[:300])
+    p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boleto", "34191234546789012345767890123457616560000045091"], capture_output=True, text=True, env=_env, timeout=60)
+    confere("--boleto com número errado recusa", p.returncode != 0 and "não confere" in (p.stdout + p.stderr), p.stdout[:200] + p.stderr[:300])
+    p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boletos"], capture_output=True, text=True, env=_env, timeout=60)
+    confere("--boletos lista", p.returncode == 0 and "R$ 450,90" in p.stdout, p.stdout[:300])
+
 print()
 print("FALHAS: " + str(falhas))
 sys.exit(1 if falhas else 0)

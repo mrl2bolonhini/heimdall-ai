@@ -69,6 +69,9 @@ CREATE TABLE IF NOT EXISTS regras(
   id INTEGER PRIMARY KEY AUTOINCREMENT, padrao TEXT NOT NULL, categoria TEXT NOT NULL, origem TEXT NOT NULL, UNIQUE(padrao, origem));
 CREATE TABLE IF NOT EXISTS categorias(nome TEXT PRIMARY KEY, tipo TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS orcamentos(categoria TEXT PRIMARY KEY, limite INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS boletos(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, linha TEXT UNIQUE NOT NULL, valor INTEGER, vencimento TEXT, banco TEXT, beneficiario TEXT, tipo TEXT, segmento TEXT,
+  arquivo TEXT, situacao TEXT NOT NULL DEFAULT 'aberto', criado_em TEXT);
 CREATE TABLE IF NOT EXISTS importacoes(
   id INTEGER PRIMARY KEY AUTOINCREMENT, arquivo TEXT, conta TEXT, quando TEXT, formato TEXT, novas INTEGER, repetidas INTEGER);
 """

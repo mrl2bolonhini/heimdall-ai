@@ -56,6 +56,7 @@ def carregar_env() -> None:
 carregar_env()
 
 import financas_arquivos as fa  # noqa: E402
+import financas_boletos as fb  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
@@ -110,7 +111,7 @@ form.linha{display:inline}.sub{color:inherit;opacity:.85}
 td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/regras", "Regras")]
+NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/boletos", "Boletos"), ("/regras", "Regras")]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -189,6 +190,12 @@ def pg_resumo(mes: str, visao: str = "") -> tuple:
             partes.append(f'{orc["perto"]} perto do limite')
         corpo.append(f'<p>Orçamentos de {e(fn.nome_mes(mes))}: ' + (", ".join(partes) if partes else "todos dentro do limite") + ". "
                      + design.botao("/orcamentos", "Ver orçamentos", {"mes": mes, "visao": visao}) + "</p>")
+    abertos = fb.listar(banco())
+    urgentes = [b for b in abertos if b["dias"] is not None and b["dias"] <= 7]
+    if urgentes:
+        vencidos = len([b for b in urgentes if b["dias"] < 0])
+        corpo.append(f'<p role="status">Boletos: {vencidos} vencido(s) e {len(urgentes) - vencidos} vencendo em até 7 dias, somando '
+                     f'{e(fn.brl(sum(b["valor"] or 0 for b in urgentes)))}. ' + design.botao("/boletos", "Ver boletos") + "</p>")
     if r["neutros"]:
         texto = ("investimentos, transferências entre suas contas e faturas de terceiros" if visao == "caixa" else "pagamento de fatura, investimentos, transferências entre suas contas e faturas de terceiros")
         corpo.append(f'<p class="sub">Ficaram fora das somas {e(fn.brl(r["neutros"]))} em {texto}, para não contar duas vezes.</p>')
@@ -345,6 +352,38 @@ def pg_orcamentos(q: dict, sess: dict) -> tuple:
     return "Orçamentos", "".join(corpo)
 
 
+def pg_boletos(sess: dict) -> tuple:
+    csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
+    corpo = ['<p>Aqui ficam os boletos como contas a pagar. O Heimdall lê a linha digitável, confere os dígitos verificadores e mostra valor e vencimento. '
+             'Ele nunca paga nada: o pagamento é sempre com você, no app do banco. PDF de boleto solto na pasta de entrada também é registrado.</p>',
+             '<h2>Registrar um boleto</h2>'
+             f'<form method="post" action="/boletos">{csrf}<p><label for="linha">Linha digitável, com 47 ou 48 números (pontos e espaços podem ficar)</label><br>'
+             '<input type="text" id="linha" name="linha" inputmode="numeric" autocomplete="off" required></p>'
+             '<p><label for="quem">Quem recebe (opcional)</label><br><input type="text" id="quem" name="quem" autocomplete="off"></p>'
+             '<button type="submit">Registrar boleto</button></form>']
+    lista = fb.listar(banco(), incluir_pagos=True)
+    if not lista:
+        corpo.append("<p>Nenhum boleto registrado ainda.</p>")
+        return "Boletos", "".join(corpo)
+    estados = {"vencido": "Vencido", "vence hoje": "Vence hoje", "a vencer": "A vencer", "sem vencimento": "Sem vencimento no código", "pago": "Pago"}
+    linhas = []
+    for b in lista:
+        quem = b["beneficiario"] or b["banco"] or b["segmento"] or "Sem identificação"
+        valor = fn.brl(b["valor"]) if b["valor"] else "Em aberto (o pagador define)"
+        venc = fn.data_br(b["vencimento"]) if b["vencimento"] else "Sem vencimento"
+        sit = estados[b["estado"]]
+        if b["dias"] is not None and b["estado"] != "pago":
+            sit += f' ({"há " + str(-b["dias"]) + " dia(s)" if b["dias"] < 0 else "em " + str(b["dias"]) + " dia(s)"})' if b["dias"] != 0 else ""
+        oculto = f'{csrf}<input type="hidden" name="id" value="{b["id"]}">'
+        acoes = (f'<form class="lim" method="post" action="/boletos/situacao">{oculto}<input type="hidden" name="pago" value="{0 if b["estado"] == "pago" else 1}">'
+                 f'<button type="submit" aria-label="{"Reabrir" if b["estado"] == "pago" else "Marcar como pago"}: boleto de {e(quem)}">{"Reabrir" if b["estado"] == "pago" else "Marcar como pago"}</button></form>'
+                 f'<form class="lim" method="post" action="/boletos/remover">{oculto}<button type="submit" aria-label="Remover boleto de {e(quem)}">Remover</button></form>')
+        linhas.append([e(quem), e(valor), e(venc), e(sit), acoes])
+    corpo.append("<h2>Boletos</h2>" + tabela("Boletos registrados, do vencimento mais próximo ao mais distante", ["Quem recebe", "Valor", "Vencimento", "Situação", "Ações"], linhas, {1}))
+    corpo.append('<p class="sub">Marcar como pago é só uma anotação sua; não envia nada ao banco.</p>')
+    return "Boletos", "".join(corpo)
+
+
 def pg_recorrentes() -> tuple:
     r = fn.recorrentes(banco())
     if not r["series"]:
@@ -493,7 +532,7 @@ class Finance(BaseHTTPRequestHandler):
         except fn.ErroFinance as ex:
             if sess:
                 sess["flash"] = ("erro", str(ex))
-            self._ir("/importar" if rota == "/importar" else "/regras" if rota.startswith("/regras") else "/orcamentos" if rota.startswith("/orcamentos") else "/transacoes")
+            self._ir("/importar" if rota == "/importar" else "/regras" if rota.startswith("/regras") else "/orcamentos" if rota.startswith("/orcamentos") else "/boletos" if rota.startswith("/boletos") else "/transacoes")
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))
@@ -509,6 +548,8 @@ class Finance(BaseHTTPRequestHandler):
             titulo, corpo = pg_importar(sess)
         elif rota == "/orcamentos":
             titulo, corpo = pg_orcamentos(q, sess)
+        elif rota == "/boletos":
+            titulo, corpo = pg_boletos(sess)
         elif rota == "/recorrentes":
             titulo, corpo = pg_recorrentes()
         elif rota == "/regras":
@@ -567,6 +608,24 @@ class Finance(BaseHTTPRequestHandler):
             else:
                 sess["flash"] = ("ok", f"Limite de {cat} removido." if fn.remover_orcamento(banco(), cat) else f"{cat} não tinha limite.")
             self._ir(volta)
+            return
+        if rota == "/boletos":
+            b = fb.interpretar(campos.get("linha", ""))
+            idb, novo = fb.registrar(banco(), b, campos.get("quem", ""))
+            sess["flash"] = ("ok", ("Boleto registrado: " if novo else "Esse boleto já estava registrado: ") + fb.frase({**b, "beneficiario": campos.get("quem", "").strip()}) + ".")
+            self._ir("/boletos")
+            return
+        if rota in ("/boletos/situacao", "/boletos/remover"):
+            try:
+                idb = int(campos.get("id", "0"))
+            except ValueError:
+                idb = 0
+            if rota == "/boletos/remover":
+                sess["flash"] = ("ok", "Boleto removido." if fb.remover(banco(), idb) else "Não achei esse boleto.")
+            else:
+                pago = campos.get("pago") == "1"
+                sess["flash"] = ("ok", ("Boleto marcado como pago." if pago else "Boleto reaberto.") if fb.definir_situacao(banco(), idb, pago) else "Não achei esse boleto.")
+            self._ir("/boletos")
             return
         if rota == "/regras":
             n = fn.adicionar_regra(banco(), campos.get("padrao", ""), campos.get("categoria", ""))

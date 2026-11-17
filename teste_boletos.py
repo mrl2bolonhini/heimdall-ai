@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Testa financas_boletos.py: linha digitável bancária (47) e de convênio (48), dígitos verificadores, vencimento, PDF e banco local.
+As linhas são montadas aqui com contas independentes do leitor e são inventadas."""
+import sys
+import tempfile
+from datetime import date
+from pathlib import Path
+
+AQUI = Path(__file__).resolve().parent
+sys.path.insert(0, str(AQUI))
+import financas_boletos as fb  # noqa: E402
+import financas_nucleo as fn  # noqa: E402
+
+falhas = 0
+
+
+def confere(nome, ok, detalhe=""):
+    global falhas
+    print(("ok   " if ok else "FALHOU ") + nome)
+    if not ok:
+        falhas += 1
+        if detalhe:
+            print("     " + str(detalhe)[:400])
+
+
+def dv10(s):
+    t = 0
+    for i, c in enumerate(reversed(s)):
+        p = int(c) * (2 if i % 2 == 0 else 1)
+        t += p - 9 if p > 9 else p
+    return str((10 - t % 10) % 10)
+
+
+def dv11(s, convenio=False):
+    t = sum(int(c) * (2 + i % 8) for i, c in enumerate(reversed(s)))
+    if convenio:
+        r = t % 11
+        return "0" if r in (0, 1) else str(11 - r)
+    d = 11 - t % 11
+    return "1" if d in (0, 10, 11) else str(d)
+
+
+def linha_bancaria(banco, fator, valor, livre):
+    sem = banco + "9" + f"{fator:04d}" + f"{valor:010d}" + livre
+    dg = dv11(sem)
+    c1 = banco + "9" + livre[:5]
+    c2 = livre[5:15]
+    c3 = livre[15:25]
+    return c1 + dv10(c1) + c2 + dv10(c2) + c3 + dv10(c3) + dg + f"{fator:04d}" + f"{valor:010d}"
+
+
+def linha_convenio(ident, segmento, valor11, livre):
+    corpo = "8" + segmento + ident + valor11 + livre  # 43 dígitos sem o DV geral
+    assert len(corpo) == 43, len(corpo)
+    calc = (lambda s: dv10(s)) if ident in "67" else (lambda s: dv11(s, True))
+    dg = calc(corpo)
+    barras = corpo[:3] + dg + corpo[3:]
+    return "".join(barras[i:i + 11] + calc(barras[i:i + 11]) for i in range(0, 44, 11))
+
+
+# --- bancário -----------------------------------------------------------------------------
+hoje = date(2026, 11, 17)
+fator = 1000 + (date(2026, 11, 30) - date(2025, 2, 22)).days
+L = linha_bancaria("341", fator, 123456, "1234567890123456789012345")
+r = fb.interpretar(L, hoje)
+confere("bancário: valor, vencimento e banco", r["valor"] == 123456 and r["vencimento"] == "2026-11-30" and r["banco"] == "Itaú", r)
+bonita = f"{L[0:5]}.{L[5:10]} {L[10:15]}.{L[15:21]} {L[21:26]}.{L[26:32]} {L[32]} {L[33:]}"
+confere("bancário: aceita pontos e espaços", fb.interpretar(bonita, hoje)["linha"] == L)
+for pos, rotulo in ((3, "campo 1"), (14, "campo 2"), (25, "campo 3"), (40, "dígito geral/valor")):
+    errada = L[:pos] + str((int(L[pos]) + 1) % 10) + L[pos + 1:]
+    try:
+        fb.interpretar(errada, hoje)
+        confere(f"bancário: número trocado ({rotulo}) é recusado", False)
+    except fn.ErroFinance:
+        confere(f"bancário: número trocado ({rotulo}) é recusado", True)
+try:
+    fb.interpretar(L[:-1], hoje)
+    confere("bancário: faltando dígito é recusado", False)
+except fn.ErroFinance as ex:
+    confere("bancário: faltando dígito é recusado com a contagem", "46 dígitos" in str(ex), ex)
+antigo = linha_bancaria("001", 5000, 0, "0000000000000000000000001")
+a = fb.interpretar(antigo, date(2011, 6, 1))
+confere("bancário: fator antigo dá data de 2011 e valor zero vira em aberto", a["vencimento"] == (date(1997, 10, 7).fromordinal(date(1997, 10, 7).toordinal() + 5000)).isoformat() and a["valor"] is None, a)
+sem = fb.interpretar(linha_bancaria("237", 0, 5000, "1111111111111111111111111"), hoje)
+confere("bancário: fator zero é sem vencimento", sem["vencimento"] is None and sem["valor"] == 5000 and sem["banco"] == "Bradesco")
+
+# --- convênio -----------------------------------------------------------------------------
+C = linha_convenio("6", "3", "00000012345", "00000000" + "20261205" + "1234567" + "000000")
+cr = fb.interpretar(C, hoje)
+confere("convênio mod10: valor, segmento e vencimento no código", cr["valor"] == 12345 and cr["vencimento"] == "2026-12-05" and cr["segmento"] == "energia elétrica e gás" and cr["tipo"] == "consumo ou tributo", cr)
+C8 = linha_convenio("8", "2", "00000009990", "11111111" + "2222222" + "3333333" + "4444444")
+c8 = fb.interpretar(C8, hoje)
+confere("convênio mod11: valor e segmento", c8["valor"] == 9990 and c8["segmento"] == "saneamento", c8)
+try:
+    fb.interpretar(C8[:20] + str((int(C8[20]) + 1) % 10) + C8[21:], hoje)
+    confere("convênio: número trocado é recusado", False)
+except fn.ErroFinance:
+    confere("convênio: número trocado é recusado", True)
+
+# --- achar no texto de um PDF -------------------------------------------------------------
+texto = f"""Recibo do Pagador
+Beneficiário
+PADARIA DOIS IRMAOS LTDA   CNPJ 12.345.678/0001-90
+Vencimento 30/11/2026   Valor do documento 1.234,56
+{bonita}
+Autenticação mecânica
+Protocolo 12345678901234567890123456789012345678901234567890
+"""
+ach = fb.achar_linhas(texto, hoje)
+confere("texto: acha uma linha válida e ignora números soltos", len(ach) == 1 and ach[0]["linha"] == L, ach)
+confere("texto: acha o beneficiário", fb.beneficiario_do_texto(texto) == "PADARIA DOIS IRMAOS LTDA", fb.beneficiario_do_texto(texto))
+confere("texto: sem boleto não acha nada", fb.achar_linhas("Fatura do cartão\nTotal 301,76\n", hoje) == [])
+
+# --- banco local --------------------------------------------------------------------------
+con = fn.conectar(Path(tempfile.mkdtemp()) / "b.db")
+i1, novo1 = fb.registrar(con, r, "PADARIA", "a.pdf")
+i2, novo2 = fb.registrar(con, r, "PADARIA", "a.pdf")
+confere("registrar: a mesma linha não entra duas vezes", novo1 and not novo2 and i1 == i2)
+fb.registrar(con, fb.interpretar(linha_bancaria("341", 1000 + (date(2026, 11, 10) - date(2025, 2, 22)).days, 5000, "9999999999999999999999999"), hoje), "ACADEMIA")
+fb.registrar(con, c8, "")
+lst = fb.listar(con, hoje)
+confere("listar: vencido primeiro, depois a vencer, sem vencimento por último", [b["estado"] for b in lst] == ["vencido", "a vencer", "sem vencimento"], [(b["beneficiario"], b["estado"]) for b in lst])
+confere("listar: dias até o vencimento", lst[1]["dias"] == 13 and lst[0]["dias"] == -7)
+confere("frase em português simples", "PADARIA: R$ 1.234,56, vencimento 30/11/2026" == fb.frase(lst[1]), fb.frase(lst[1]))
+fb.definir_situacao(con, i1, True)
+confere("marcar como pago tira da lista aberta e volta com incluir_pagos", len(fb.listar(con, hoje)) == 2 and len(fb.listar(con, hoje, True)) == 3)
+confere("remover apaga", fb.remover(con, i1) and len(fb.listar(con, hoje, True)) == 2)
+
+print("\nFALHAS:", falhas)
+sys.exit(1 if falhas else 0)

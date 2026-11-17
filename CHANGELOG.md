@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Finance lê boletos e guarda como contas a pagar
+- Nova página Boletos no Finance e novos comandos `heimdall finance --bill` (aceita um PDF de boleto ou a linha digitável entre aspas) e `heimdall finance --bills` (lista os em aberto). O leitor entende a linha digitável de 47 números (boleto bancário) e de 48 números (conta de consumo e tributo), confere todos os dígitos verificadores e recusa o código se algum número estiver errado. Guarda valor, vencimento (inclusive depois da virada do fator de vencimento em fevereiro de 2025), banco ou segmento e quem recebe, quando o PDF diz. PDF de boleto solto na pasta de entrada é registrado sozinho em vez de ir para revisar. A página mostra vencido, vence hoje ou a vencer, com botões Marcar como pago e Remover, e o Resumo avisa dos boletos vencidos ou que vencem em até 7 dias. O Heimdall nunca paga nada: marcar como pago é só uma anotação. O banco ganhou a tabela boletos e nada sai do Mac.
+
 ## 2026-11-17 - Finance acha as contas recorrentes
 - Nova página Contas recorrentes no Finance: o Heimdall procura no histórico os lançamentos que se repetem todo mês, como aluguel, assinaturas e salário, e mostra valor e dia típicos. A tabela fica dividida em esperadas neste mês e ainda não apareceram (passou do dia habitual), ainda por vir, já apareceram e possivelmente encerradas (sem aparecer há mais de dois meses). Uma conta só vale se aparece uma vez por mês em pelo menos 3 meses, ou em 2 meses seguidos com o mesmo valor, com valor variando até 25% e dia até 7 dias. Nada é cadastrado e nada sai do Mac.
 
