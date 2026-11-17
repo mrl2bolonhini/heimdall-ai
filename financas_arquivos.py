@@ -355,10 +355,12 @@ def _reparar_espacos(linha: str) -> str:
 def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
     """(itens, info). Cada item: data, valor (centavos; gasto negativo), descricao. info: tipo, soma, totais, confere."""
     texto = texto.replace("\u2212", "-")  # o sinal de menos tipográfico (−) que alguns bancos usam
+    texto = re.sub(r"(?m)^(\s*)(\d{2})-(\d{2})-(\d{4})(?=\s)", r"\1\2/\3/\4", texto)  # 99-99-9999 no começo da linha (Mercado Pago) vira 99/99/9999
     ano_base, ref = _anos_do_documento(texto)
     cartao = tipo == "cartão"
     itens = []
     totais = []
+    saldo_da_linha = {}  # posição do lançamento em eventos -> saldo mostrado na mesma linha (Mercado Pago: data, descrição, número, valor, saldo)
     eventos = []  # ("t", valor) para cada lançamento e ("s", saldo) para cada linha de saldo, na ordem do documento
     for ln in texto.splitlines():
         linha = _reparar_espacos(ln).strip()
@@ -406,6 +408,11 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
             v = _centavos(escolhido.group(0))
             desc = re.sub(r"\s{2,}", " ", resto[:escolhido.start()]).strip(" -|.")
             desc = re.sub(r"^[•·*.]{2,}\s*\d{4}\s+", "", desc)  # "•••• 1234" é o final do cartão, não faz parte da descrição
+            fid = ""
+            mid = re.search(r"(?<!\d)\d{10,}(?!\d)", desc)  # número da operação do banco (Mercado Pago): serve de identificador, não de descrição
+            if mid:
+                fid = mid.group(0)
+                desc = re.sub(r"\s{2,}", " ", desc.replace(fid, " ")).strip(" -|.")
             if not desc or not re.search(r"[A-Za-zÀ-ÿ]{2,}", _RE_VALOR.sub("", desc)):
                 marcas.append("SEM DESCRIÇÃO")  # só valores (ex.: "Vence em 99/99, limite R$ x, saque R$ y") não é lançamento
                 continue
@@ -421,8 +428,10 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
                 v = -v  # na fatura a compra vem positiva e o crédito (estorno, pagamento) vem negativo
                 if v < 0 and _CREDITO_NO_NOME.match(desc):
                     v = -v  # há bancos (Mercado Pago) que mostram o crédito com valor positivo e a palavra no nome: "Crédito por parcelamento da fatura"
-            itens.append({"data": data, "valor": v, "descricao": desc[:200], "fitid": ""})
+            itens.append({"data": data, "valor": v, "descricao": desc[:200], "fitid": fid})
             eventos.append(("t", v))
+            if not cartao and len(vs) >= 2:
+                saldo_da_linha[len(eventos) - 1] = _centavos(vs[-1].group(0))
             marcas.append("LANÇAMENTO " + ("crédito" if v > 0 else "gasto"))
         if registro is not None and marcas:
             registro.append((linha, marcas))
@@ -447,6 +456,16 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
     liquido = abs(soma)
     confere = None
     saldos = _conferir_saldos(eventos)
+    if saldos is None and len(saldo_da_linha) >= 3:
+        # extrato com o saldo na mesma linha de cada lançamento: só vale se a sequência de saldos fechar
+        ev2 = []
+        for k, e in enumerate(eventos):
+            ev2.append(e)
+            if k in saldo_da_linha:
+                ev2.append(("s", saldo_da_linha[k]))
+        alt = _conferir_saldos(ev2)
+        if alt is not None and alt[0]:
+            saldos = alt
     if saldos is not None:
         confere = saldos[0]
     elif totais and itens:

@@ -308,6 +308,24 @@ confere("Mercado Pago: a soma confere com o total da fatura", _infm["confere"] i
 _it_cr, _ = fa.ler_pdf_texto("Nubank\nVencimento: 10/12/2026\n05/12   Crédito de teste   R$ 10,00\n06/12   Loja   R$ 30,00\nTotal da fatura   R$ 20,00\n", "cartão")
 confere("cartão: lançamento que começa com Crédito, com valor positivo, é crédito", any(i["valor"] > 0 for i in _it_cr) and sum(i["valor"] for i in _it_cr) == -2000, _it_cr)
 
+# ---- extrato de conta do Mercado Pago (data com traços, número da operação e saldo na mesma linha)
+_mpc = """EXTRATO DE CONTA
+Mercado Pago
+Entradas: R$ 150,00
+Saldo inicial: R$ 100,00   Saldo final: R$ 204,10
+Saídas: R$ 45,90
+DETALHE DOS MOVIMENTOS
+03-11-2026   Rendimentos   1234567890123   R$ 4,00   R$ 104,00
+04-11-2026   Transferência Pix enviada Fulano   1234567890124   R$ -45,90   R$ 58,10
+05-11-2026   Transferência Pix recebida Beltrano   1234567890125   R$ 146,00   R$ 204,10
+Mercado Pago Instituição de Pagamento
+"""
+_itc, _infc = fa.ler_pdf_texto(_mpc, "conta")
+confere("Mercado Pago conta: lê data com traços, valor e identificador da operação", len(_itc) == 3 and _itc[1]["valor"] == -4590 and _itc[1]["fitid"] == "1234567890124" and "1234567890124" not in _itc[1]["descricao"] and _itc[0]["data"] == "2026-11-03", _itc)
+confere("Mercado Pago conta: a sequência de saldos confere", _infc["confere"] is True, _infc["saldos"])
+_itc2, _infc2 = fa.ler_pdf_texto(_mpc.replace("R$ -45,90", "R$ -44,90"), "conta")
+confere("Mercado Pago conta: valor que não fecha com os saldos barra a importação", _infc2["confere"] is not True, _infc2)
+
 # ---- pasta vigiada
 con.execute("UPDATE importacoes SET hash_arquivo=NULL")  # o "forçar" acima já gravou o mesmo PDF; aqui começa do zero
 con.commit()
