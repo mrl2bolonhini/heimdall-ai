@@ -261,7 +261,8 @@ SCRIPTS = [
     ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Cloud, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
     ("heimdall_design.py", "Heimdall Design: o padrão de interface igual em todos os sites (link lê, botão age): botão de ação como formulário GET, com nome acessível, e o CSS compartilhado."),
-    ("teste_design.py", "Teste do Heimdall Design: falha se um link de algum painel tiver texto de ação (Baixar, Atualizar, Alterar, Ver..., Próxima...)."),
+    ("CLAUDE.md", "Regras do repositório: toda atualização de interface segue o Heimdall Design."),
+    ("teste_design.py", "Teste do Heimdall Design: falha se um link de painel tiver texto de ação, se algum contraste de cor ficar abaixo do mínimo, se o foco for removido ou houver cor solta fora do Heimdall Design."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News, Notas e Finance: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
     ("heimdall_jogos.py", "Heimdall Jogos (porta 8014): entrega os jogos da pasta jogos/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
     ("heimdall_finance.py", "Heimdall Finance (porta 8016): painel web das finanças (resumo do mês, transações, tendências, importação, regras) atrás do mesmo login do Cloud, com CSRF em todo envio e política de conteúdo sem script. Endereço de fora: finance.heimdall-ai.tech."),
@@ -469,28 +470,64 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
     n_mac = len(ferr) - n_pub
     out["index.html"] = pagina("index.html", "Heimdall-ai", "Heimdall-ai: assistente de Inteligência Artificial que roda no próprio computador, com ferramentas, documentos e automações. Documentação do projeto.",
                                corpo_inicio(len(modelos), len(ferr), n_pub, n_mac, len(mcp), len(fluxos)), home=True)
-    out["design.html"] = pagina("design.html", "Design", "Heimdall Design: o padrão de interface dos sites do Heimdall, feito para leitor de tela e teclado: link lê, botão age.", """
+    import heimdall_design as _d
+    _linhas_cor = "".join(
+        f"<tr><th scope=\"row\">{H(k)}</th><td>{H(_d.PAPEL_DAS_CORES[k])}</td><td><code>{_d.CORES_CLARO[k]}</code></td><td><code>{_d.CORES_ESCURO[k]}</code></td></tr>" for k in _d.CORES_CLARO)
+    _linhas_ctr = "".join(
+        f"<tr><th scope=\"row\">{H(a)} sobre {H(b)}</th><td>{_d.contraste(_d.CORES_CLARO[a], _d.CORES_CLARO[b]):.1f} para 1</td><td>{_d.contraste(_d.CORES_ESCURO[a], _d.CORES_ESCURO[b]):.1f} para 1</td><td>{str(m).replace('.', ',')} para 1</td></tr>" for a, b, m in _d.PARES_DE_CONTRASTE)
+    out["design.html"] = pagina("design.html", "Design", "Heimdall Design: cores, tipografia, componentes, acessibilidade e o passo a passo para criar páginas dos sites do Heimdall.", f"""
 <h1>Heimdall Design</h1>
-<p>O padrão de interface é o mesmo em todos os sites do Heimdall (Cloud, Notas, News, Saúde, Jogos e Finance), para você nunca ter de adivinhar como algo funciona. Ele foi pensado para leitor de tela e teclado. O código compartilhado está em <code>heimdall_design.py</code> e <code>heimdall_paginacao.py</code>, e o teste <code>teste_design.py</code> impede que uma ação volte a ser link.</p>
-<section aria-labelledby="regra"><h2 id="regra">Link lê, botão age</h2>
+<p>O Heimdall Design é a única fonte de tudo que é aparência e comportamento de interface nos sites do Heimdall (Cloud, Notas, News, Saúde, Jogos e Finance): cores, tipografia, medidas, componentes, acessibilidade e tom do texto. Ele foi pensado para leitor de tela e teclado. <strong>Toda página nova e toda mudança numa página existente segue esta página.</strong> O código está em <code>heimdall_design.py</code> (cores, tipografia, CSS e botão) e <code>heimdall_paginacao.py</code> (paginação); o teste <code>teste_design.py</code> confere as regras que dá para conferir sozinho; e o arquivo <code>CLAUDE.md</code> do repositório obriga a seguir o padrão em cada atualização.</p>
+<section aria-labelledby="regra"><h2 id="regra">1. Link lê, botão age</h2>
 <ol><li><strong>Link</strong> leva a outro lugar para ler: o menu, "Voltar", o nome de um item em lista ou tabela (um bucket, uma nota, um jogo, uma categoria), "Leia mais" e os links dentro de um texto.</li>
 <li><strong>Botão</strong> faz uma ação ou comando, mesmo quando o resultado é abrir outra página: baixar, atualizar, continuar, confirmar, alterar, classificar, importar, trocar a visão ou o período, paginar, "Ver todos..." e "Ver resultado".</li>
-<li>Uma ação que só consulta é um formulário com um botão. Funciona sem JavaScript e o leitor de tela anuncia como botão.</li>
+<li>Uma ação que só consulta é um formulário GET com um botão (<code>design.botao(rota, rótulo, parâmetros, nome_acessível, atual)</code>). Funciona sem JavaScript e o leitor de tela anuncia como botão. Ações que mudam dados são formulários POST com token csrf.</li>
 <li>Botões repetidos numa lista levam o nome do item para o leitor de tela diferenciar, por exemplo "Alterar categoria de Mercado".</li>
 <li>A opção escolhida num grupo de botões é marcada com aria-current.</li>
 <li>Exceção única: quando o destino é um esquema de aplicativo (por exemplo, o app Atalhos do iPhone), o botão é um link com role="button", porque um formulário não abre esse tipo de endereço de forma confiável.</li></ol></section>
-<section aria-labelledby="pag"><h2 id="pag">Paginação</h2>
-<p>Sempre em botões, num só formulário: Página anterior, os números das páginas (a atual marcada e dita "atual"), Próxima página e Última página. Quem usa: News, Notas e Finance.</p></section>
-<section aria-labelledby="estrutura"><h2 id="estrutura">Estrutura de toda página</h2>
-<ul><li>Primeiro um link "Pular para o conteúdo", depois o menu principal numa região com nome ("Principal").</li>
-<li>Um só título principal por página, com os subtítulos em ordem.</li>
-<li>Tabelas sempre com legenda (caption) e cabeçalhos de coluna (scope="col").</li>
-<li>Campos de formulário sempre com rótulo; avisos e erros com role="status" ou role="alert".</li>
-<li>Claro e escuro automáticos, com contraste alto e foco bem visível.</li></ul></section>
-<section aria-labelledby="novo"><h2 id="novo">Ao criar uma página nova</h2>
-<ol><li>Importe <code>heimdall_design</code> e use <code>design.botao(rota, rótulo, parâmetros)</code> para qualquer ação de consulta.</li>
-<li>Use <code>heimdall_paginacao</code> para listas longas.</li>
-<li>Rode <code>heimdall test --run design</code>. Se alguma ação ainda for link, o teste mostra a linha.</li></ol></section>
+<section aria-labelledby="cores"><h2 id="cores">2. Cores</h2>
+<p>As cores seguem o sistema: claro de dia, escuro à noite, sem o usuário precisar escolher. Use sempre as variáveis (<code>var(--texto)</code>), nunca um código de cor solto numa página. Cor nunca diz algo sozinha: erro e sucesso sempre vêm com texto ("Erro: ...", "Concluído").</p>
+<table><caption>Variáveis de cor</caption><thead><tr><th scope="col">Variável</th><th scope="col">Para que serve</th><th scope="col">Claro</th><th scope="col">Escuro</th></tr></thead><tbody>{_linhas_cor}</tbody></table>
+<table><caption>Contraste medido (padrão WCAG)</caption><thead><tr><th scope="col">Par</th><th scope="col">Claro</th><th scope="col">Escuro</th><th scope="col">Mínimo exigido</th></tr></thead><tbody>{_linhas_ctr}</tbody></table>
+<p>Se mudar uma cor em <code>heimdall_design.py</code>, o teste recalcula estes números e falha se algum ficar abaixo do mínimo; esta tabela é gerada dos mesmos valores.</p></section>
+<section aria-labelledby="tipo"><h2 id="tipo">3. Tipografia e medidas</h2>
+<ul><li>Texto do corpo: fonte do sistema, {_d.TAMANHO_BASE_PX} px, entrelinha 1,5. Nunca menos que isso no texto corrido; textos pequenos só em notas e legendas, nunca abaixo de 0,85 em relação ao corpo.</li>
+<li>Títulos e nome da marca: fonte com serifa ({H(_d.FONTE_TITULO.split(",")[0].strip('"'))} e alternativas).</li>
+<li>Código e saídas de comando: fonte monoespaçada, com quebra de linha (nada de rolagem horizontal obrigatória).</li>
+<li>Largura do conteúdo: até 60 rem, centralizado, com margem lateral de 1 rem; o texto quebra e nunca estoura a tela do iPhone.</li>
+<li>Alvos de clique e toque: altura mínima de {_d.ALTURA_MINIMA_ALVO} (cerca de 44 px) em botões de paginação e botões de ação.</li>
+<li>Foco do teclado: contorno de 3 px na cor de destaque, com recuo de 2 px, sempre visível. Nunca remover o contorno do foco.</li></ul></section>
+<section aria-labelledby="comp"><h2 id="comp">4. Componentes</h2>
+<ul><li><strong>Cabeçalho de marca:</strong> o símbolo (decorativo, escondido do leitor de tela) mais o nome do serviço, o menu e a faixa de seis cores. Peças em <code>heimdall_cloud.cabecalho</code> e <code>SIMBOLO</code>.</li>
+<li><strong>Menu:</strong> lista de links numa região <code>nav</code> com nome ("Principal"); a página atual leva aria-current="page" e fica em negrito com sublinhado dourado.</li>
+<li><strong>Tabela:</strong> sempre com <code>caption</code>, <code>th scope="col"</code> (e <code>scope="row"</code> quando a primeira célula nomeia a linha). Quando há muitas colunas, prefira lista com rótulos a tabela.</li>
+<li><strong>Formulário:</strong> cada campo com <code>label</code> ligado por for/id, um campo por linha, autocomplete correto, botão de envio com verbo claro ("Entrar", "Importar extrato").</li>
+<li><strong>Avisos:</strong> sucesso com <code>role="status"</code> e classe ok; erro com <code>role="alert"</code> e classe erro. A mensagem diz o que aconteceu e o que fazer.</li>
+<li><strong>Paginação:</strong> botões num só formulário: Página anterior, números (a atual com aria-current), Próxima página e Última página, mais um resumo "Mostrando X a Y de Z". Quem usa: News, Notas e Finance.</li>
+<li><strong>Bloco de código/saída:</strong> elemento <code>pre</code> com borda e fundo de superfície.</li></ul></section>
+<section aria-labelledby="acess"><h2 id="acess">5. Acessibilidade: lista de conferência</h2>
+<ol><li>Documento com <code>lang="pt-BR"</code>, <code>title</code> próprio e o nome do serviço, e meta viewport.</li>
+<li>Primeiro elemento: link "Pular para o conteúdo"; o conteúdo principal em <code>main id="principal"</code>.</li>
+<li>Um só <code>h1</code> por página e subtítulos em ordem, sem pular nível.</li>
+<li>Todo link e botão tem nome que faz sentido fora de contexto; ícones e imagens decorativas ficam escondidos do leitor de tela (aria-hidden) e imagens informativas levam texto alternativo.</li>
+<li>Tudo funciona só com o teclado, na ordem natural da página, sem armadilha de foco.</li>
+<li>Mudanças de estado e resultados de ações aparecem em região com <code>role="status"</code> ou <code>role="alert"</code>.</li>
+<li>Nada depende de JavaScript para o essencial; nada depende só de cor, som ou posição.</li>
+<li>Animações respeitam <code>prefers-reduced-motion</code> (sem movimento, ou só quando o usuário pedir).</li>
+<li>Áudio sempre com texto equivalente ao lado.</li>
+<li>Teste final no VoiceOver: ler a página de cima a baixo, navegar por títulos, por links e por botões, e executar a ação principal.</li></ol></section>
+<section aria-labelledby="tom"><h2 id="tom">6. Texto e tom</h2>
+<ul><li>Português do Brasil, frases curtas, na segunda pessoa ("você"), sem jargão; termos técnicos entre aspas ou explicados na primeira vez.</li>
+<li>Rótulos de botão começam com verbo no infinitivo ("Baixar tudo em CSV", "Alterar categoria de X").</li>
+<li>Mensagem de erro: o que houve, por que, o que fazer agora. Nunca só um código.</li>
+<li>Dados de saúde e finanças aparecem só nas páginas protegidas e nunca vão em avisos, notificações ou endereços (URL).</li></ul></section>
+<section aria-labelledby="novo"><h2 id="novo">7. Ao criar ou mudar uma página</h2>
+<ol><li>Importe <code>heimdall_design</code> e use o <code>CSS</code> dele (por <code>heimdall_cloud.CSS</code>). Não escreva cor, tamanho de fonte nem foco por conta própria: use as variáveis.</li>
+<li>Use <code>design.botao</code> para qualquer ação de consulta e <code>heimdall_paginacao</code> para listas longas.</li>
+<li>Monte a página pela estrutura padrão (<code>heimdall_cloud.pagina</code> e <code>cabecalho</code>).</li>
+<li>Passe pela lista de acessibilidade da seção 5.</li>
+<li>Rode <code>heimdall test --run design</code> e o teste do serviço mexido.</li>
+<li>Se precisar de algo que o Heimdall Design ainda não tem (uma cor, um componente), acrescente aqui primeiro, no <code>heimdall_design.py</code>, e documente nesta página, em vez de criar um estilo só naquele site.</li></ol></section>
 """)
     out["marca.html"] = pagina("marca.html", "Marca", "Logotipo, cores e tipografia do Heimdall-ai.", corpo_marca())
 

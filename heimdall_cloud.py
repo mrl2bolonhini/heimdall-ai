@@ -376,23 +376,7 @@ def como_json(obj) -> str:
 # ----------------------------------------------------------------------------------------
 e = html.escape
 
-CSS = design.CSS + """
-:root{color-scheme:light dark;--fundo:#f3f6fc;--superficie:#fff;--texto:#0c1530;--suave:#46557a;--linha:#7a87a6;--acento:#0a58ad;--erro:#a30000;--ok:#0a6b2d;--ouro:#ffc107;--sclera:#fff;--pupila:#0c1530}
-@media (prefers-color-scheme:dark){:root{--fundo:#080d1f;--superficie:#111a38;--texto:#e9effc;--suave:#a6b4d6;--linha:#6877a0;--acento:#86c5ff;--erro:#ff9b9b;--ok:#8be0a4;--sclera:#e9effc;--pupila:#080d1f}}
-body{background:var(--fundo);color:var(--texto);font:18px/1.5 system-ui,sans-serif;margin:0;padding:0 1rem 3rem;max-width:60rem;margin-inline:auto}
-a{color:var(--acento)}a:focus,button:focus,input:focus,select:focus,textarea:focus{outline:3px solid var(--acento);outline-offset:2px}
-.pular{position:absolute;left:-999px}.pular:focus{left:0;background:var(--fundo);padding:.5rem}
-header{margin-bottom:1rem}header::after{content:"";display:block;height:3px;background:linear-gradient(90deg,#bfe3fb 0 16.66%,#93d2fa 0 33.33%,#42a5f5 0 50%,#26c6da 0 66.66%,#1e88e5 0 83.33%,#ffc107 0)}
-.marca{display:flex;align-items:center;gap:.7rem;margin:.6rem 0 .2rem}.marca svg{width:3.4rem;height:auto;flex:none}.marca strong{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:1.3em}
-nav ul{list-style:none;display:flex;gap:1.25rem;flex-wrap:wrap;padding:0}nav a[aria-current=page]{font-weight:700;border-bottom:3px solid var(--ouro)}
-table{border-collapse:collapse;width:100%;margin:.5rem 0 1.5rem}th,td{border:1px solid var(--linha);padding:.4rem .6rem;text-align:left;vertical-align:top}
-caption{text-align:left;font-weight:700;padding:.25rem 0}label{display:block;font-weight:700;margin-top:.8rem}
-input[type=text],input[type=password],input[type=file],select,textarea{width:100%;box-sizing:border-box;font:inherit;padding:.4rem;background:var(--superficie);color:var(--texto);border:1px solid var(--linha)}
-textarea{min-height:9rem;font-family:ui-monospace,Menlo,monospace}button{font:inherit;padding:.45rem .9rem;margin-top:.8rem;cursor:pointer}
-pre{white-space:pre-wrap;word-break:break-word;border:1px solid var(--linha);background:var(--superficie);padding:.7rem;overflow:auto}
-.ok{color:var(--ok);font-weight:700}.erro{color:var(--erro);font-weight:700}form.linha{display:inline}form.linha button{margin:0}
-.nota{color:var(--suave)}
-"""
+CSS = design.CSS  # tudo de aparência mora no heimdall_design.py
 
 # ----------------------------------------------------------------------------------------
 # Marca (a mesma do site heimdall-ai.tech: ponte de seis faixas com um olho dourado). Todos os sites com login usam estas peças.

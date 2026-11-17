@@ -56,6 +56,26 @@ import heimdall_paginacao as pag  # noqa: E402
 confere("paginação é toda de botões", "<a " not in pag.html_paginacao("/x", 2, 5, {}, "") and "<button" in pag.html_paginacao("/x", 2, 5, {}, ""))
 confere("o pacote de CSS do Heimdall Design chega aos painéis (via heimdall_cloud)", "form.acao" in __import__("heimdall_cloud").CSS)
 
+# ---- cores, tipografia e foco: fonte única em heimdall_design.py
+for tema, cores in (("claro", design.CORES_CLARO), ("escuro", design.CORES_ESCURO)):
+    ruins = [f"{a} sobre {b}: {design.contraste(cores[a], cores[b]):.2f} < {m}" for a, b, m in design.PARES_DE_CONTRASTE if design.contraste(cores[a], cores[b]) < m]
+    confere(f"tema {tema}: todo contraste atinge o mínimo", not ruins, "; ".join(ruins))
+confere("claro e escuro definem as mesmas variáveis", set(design.CORES_CLARO) == set(design.CORES_ESCURO) == set(design.PAPEL_DAS_CORES))
+confere("o CSS traz os dois temas, o foco visível e o salto para o conteúdo", "prefers-color-scheme:dark" in design.CSS and "outline:3px" in design.CSS and ".pular" in design.CSS)
+confere("o corpo do texto tem 18 px ou mais", design.TAMANHO_BASE_PX >= 18 and "font:18px/1.5" in design.CSS)
+confere("a paginação usa o alvo mínimo de toque", design.ALTURA_MINIMA_ALVO in open(AQUI / "heimdall_paginacao.py", encoding="utf-8").read())
+arqs = PAINEIS + ["heimdall_paginacao.py", "heimdall_design.py"]
+for nome in arqs:
+    src = (AQUI / nome).read_text(encoding="utf-8")
+    confere(f"{nome}: não remove o contorno do foco", not re.search(r"outline\s*:\s*(none|0)\b", src))
+for nome in PAINEIS:
+    src = (AQUI / nome).read_text(encoding="utf-8")
+    soltas = [m for m in re.findall(r"(?<![\w&])#[0-9a-fA-F]{6}\b", src) if True]
+    confere(f"{nome}: sem cor solta fora do Heimdall Design (use var(--...))", not soltas or nome == "heimdall_cloud.py", soltas[:5])  # o Cloud guarda o desenho da marca
+    confere(f"{nome}: páginas em pt-BR e com viewport", "pt-BR" in src and "viewport" in src, "")
+claude_md = (AQUI / "CLAUDE.md")
+confere("CLAUDE.md manda seguir o Heimdall Design em toda atualização", claude_md.is_file() and "Heimdall Design" in claude_md.read_text(encoding="utf-8"))
+
 print()
 print("FALHAS: " + str(falhas))
 sys.exit(1 if falhas else 0)

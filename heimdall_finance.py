@@ -105,7 +105,7 @@ table{border-collapse:collapse;width:100%;margin:.6rem 0}caption{text-align:left
 th,td{border:1px solid var(--linha);padding:.4rem .6rem;text-align:left;vertical-align:top}td.n,th.n{text-align:right;white-space:nowrap}
 input[type=text],input[type=search],input[type=file],select{font-size:1em;padding:.5rem;margin:.3rem 0;max-width:28rem;width:100%}
 button{margin:.3rem .3rem .3rem 0;padding:.5rem 1rem;font-size:1em}
-.aviso{border:1px solid var(--linha);padding:.7rem;margin:1rem 0}.ok{border-left:6px solid #2e7d32}
+.aviso{border:1px solid var(--linha);padding:.7rem;margin:1rem 0}.ok{border-left:6px solid var(--ok)}
 form.linha{display:inline}.sub{color:inherit;opacity:.85}
 """
 

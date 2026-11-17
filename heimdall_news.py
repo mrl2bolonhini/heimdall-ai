@@ -862,7 +862,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:0 0 .3rem;fon
 .lista a{font-weight:700}.meta{color:var(--suave);font-size:.9em;display:block;margin-top:.2rem}
 .ia{margin:.2rem 0 .5rem}.cats ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1rem}
 .so-leitor{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.falha{color:var(--erro,#b00020);font-weight:700}
+.falha{color:var(--erro);font-weight:700}
 """
 
 
