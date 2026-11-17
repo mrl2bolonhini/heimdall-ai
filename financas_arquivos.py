@@ -300,15 +300,23 @@ def _conferir_saldos(eventos: list):
         antes.append(sum(v for tipo, v in eventos[ini:k] if tipo == "t"))
         ini = k + 1
     o1 = o2 = o3 = 0
+    dif = {1: [], 2: [], 3: []}
     for n, (a, b) in enumerate(zip(saldos, saldos[1:])):
         entre = antes[n + 1]
         va, vb = eventos[a][1], eventos[b][1]
-        o1 += (vb == va + entre)
-        o2 += (va == vb + entre)
-        o3 += (va == vb + antes[n])
+        for modo, esperado in ((1, va + entre), (2, vb + entre), (3, vb + antes[n])):
+            alvo = vb if modo == 1 else va
+            if alvo == esperado:
+                if modo == 1: o1 += 1
+                elif modo == 2: o2 += 1
+                else: o3 += 1
+            else:
+                nt = sum(1 for tipo, _ in eventos[(saldos[n - 1] + 1 if (modo == 3 and n > 0) else (0 if modo == 3 else a + 1)):(a if modo == 3 else b)] if tipo == "t")
+                dif[modo].append((n + 1, alvo - esperado, nt))
     pares = len(saldos) - 1
     batem = max(o1, o2, o3)
-    return batem == pares, pares, batem, {"cronologico": o1, "inverso_saldo_antes": o2, "inverso_saldo_depois": o3}
+    melhor = {o1: 1, o2: 2, o3: 3}[batem]
+    return batem == pares, pares, batem, {"cronologico": o1, "inverso_saldo_antes": o2, "inverso_saldo_depois": o3}, dif[melhor]
 
 
 def _reparar_espacos(linha: str) -> str:
@@ -364,6 +372,8 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
                     marcas.append("SALDO")
                 continue
             ign = _IGNORAR.search(resto)
+            if ign and not cartao and ign.group(0).lower() in ("limite", "encargos") and _ENCARGO.search(resto.lower()):
+                ign = None  # "JUROS LIMITE DA CONTA" é lançamento de verdade e mexe no saldo
             if ign:
                 marcas.append("IGNORADO (palavra: " + ign.group(0).lower() + ")")
                 continue
@@ -416,7 +426,7 @@ def ler_pdf_texto(texto: str, tipo: str = "", registro: list = None) -> tuple:
     elif totais and itens:
         confere = any(t in (liquido, gastos, compras) for t in totais)
     return itens, {"tipo": tipo, "soma": soma, "gastos": gastos, "totais": sorted(set(totais))[:12], "confere": confere, "descartadas": descartadas,
-                   "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2], "orientacoes": saldos[3]}}
+                   "saldos": None if saldos is None else {"pares": saldos[1], "batem": saldos[2], "orientacoes": saldos[3], "divergencias": saldos[4]}}
 
 
 def explicar(dados: bytes, nome: str, max_linhas: int = 400) -> str:
@@ -433,6 +443,8 @@ def explicar(dados: bytes, nome: str, max_linhas: int = 400) -> str:
     if sal:
         o = sal["orientacoes"]
         saida.append(f"saldos: {sal['pares']} pares; cronológico {o['cronologico']}; inverso com saldo no começo do dia {o['inverso_saldo_antes']}; inverso com saldo no fim do dia {o['inverso_saldo_depois']}")
+        for n, d, nt in (sal.get("divergencias") or [])[:20]:
+            saida.append(f"  par de saldos {n} não bate: diferença R$ {fn.brl(d)}, {nt} lançamento(s) no dia")
     saida.append("totais citados no documento (R$): " + (", ".join(fn.brl(x) for x in info["totais"]) or "nenhum") + f"; gastos lidos {fn.brl(info['gastos'])}; soma {fn.brl(info['soma'])}")
     saida.append("---")
     for linha, marcas in registro[:max_linhas]:
