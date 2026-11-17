@@ -78,6 +78,9 @@ def texto_do_pdf(dados: bytes) -> str:
 # --------------------------------------------------------------------------------------------
 # Rótulos de extrato que continuam legíveis na inspeção. Nenhum é dado pessoal.
 VOCABULARIO = set("""
+parceladas parcelados parcelamento proximas próximas proxima próxima futuras futuros demais atuais previstos produtos servicos serviços
+titular adicional cartoes cartões nacionais internacionais exterior outros rotativo financiamento refinanciamento taxa taxas mensal anual
+cet encargo estornos creditos créditos debitos débitos pagamentos
 data datas descricao descrição historico histórico lancamento lançamento lancamentos lançamentos valor valores saldo total subtotal
 fatura faturas extrato conta cartao cartão credito crédito debito débito pagamento pagamentos compra compras parcela parcelas
 parcelado vencimento fechamento limite disponivel disponível minimo mínimo encargos juros multa iof anuidade tarifa tarifas
@@ -393,7 +396,8 @@ def explicar(dados: bytes, nome: str, max_linhas: int = 400) -> str:
     registro = []
     itens, info = ler_pdf_texto(texto, tipo, registro)
     cont = Counter(m.split(" (")[0] for _, marcas in registro for m in marcas)
-    saida = [f"Diagnóstico anônimo do leitor (letras viram x, números viram 9)", f"banco: {banco or '?'}; tipo: {tipo or '?'}; lançamentos lidos: {len(itens)}"]
+    leitor = "pdftotext" if shutil.which("pdftotext") else "pypdf"
+    saida = [f"Diagnóstico anônimo do leitor (letras viram x, números viram 9)", f"leitor de texto: {leitor}; banco: {banco or '?'}; tipo: {tipo or '?'}; lançamentos lidos: {len(itens)}"]
     saida.append("contagem: " + "; ".join(f"{k} {v}" for k, v in sorted(cont.items())))
     sal = info.get("saldos")
     if sal:
