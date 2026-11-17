@@ -107,9 +107,10 @@ input[type=text],input[type=search],input[type=file],select{font-size:1em;paddin
 button{margin:.3rem .3rem .3rem 0;padding:.5rem 1rem;font-size:1em}
 .aviso{border:1px solid var(--linha);padding:.7rem;margin:1rem 0}.ok{border-left:6px solid var(--ok)}
 form.linha{display:inline}.sub{color:inherit;opacity:.85}
+td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/regras", "Regras")]
+NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/regras", "Regras")]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -179,6 +180,15 @@ def pg_resumo(mes: str, visao: str = "") -> tuple:
         dif = f' Isso é {abs(v)}% {"a mais" if v > 0 else "a menos"} que em {fn.nome_mes(fn.mes_anterior(mes))} ({fn.brl(r["despesas_anterior"])}).' if v else " Igual ao mês anterior."
     corpo = [seletor_mes(mes, "/", f'<input type="hidden" name="visao" value="{e(visao)}">'), seletor_visao(visao, "/", mes)]
     corpo.append(f'<p>Em {e(fn.nome_mes(mes))}: receitas de {e(fn.brl(r["receitas"]))}, despesas de {e(fn.brl(r["despesas"]))} e saldo de {e(fn.brl(r["saldo"], True))}.{e(dif)}</p>')
+    orc = fn.orcamentos(banco(), mes, visao)
+    if orc["com_limite"]:
+        partes = []
+        if orc["estourados"]:
+            partes.append(f'{orc["estourados"]} estourado(s)')
+        if orc["perto"]:
+            partes.append(f'{orc["perto"]} perto do limite')
+        corpo.append(f'<p>Orçamentos de {e(fn.nome_mes(mes))}: ' + (", ".join(partes) if partes else "todos dentro do limite") + ". "
+                     + design.botao("/orcamentos", "Ver orçamentos", {"mes": mes, "visao": visao}) + "</p>")
     if r["neutros"]:
         texto = ("investimentos, transferências entre suas contas e faturas de terceiros" if visao == "caixa" else "pagamento de fatura, investimentos, transferências entre suas contas e faturas de terceiros")
         corpo.append(f'<p class="sub">Ficaram fora das somas {e(fn.brl(r["neutros"]))} em {texto}, para não contar duas vezes.</p>')
@@ -292,6 +302,47 @@ def pg_importar(sess: dict) -> tuple:
              '<p class="sub">Dica: extrato de conta e fatura de cartão devem ser importados com nomes de conta diferentes. O pagamento da fatura na conta vira "Pagamento de fatura" e não conta como despesa, porque os gastos já aparecem na fatura. '
              'Você também pode soltar os arquivos na pasta de entrada (heimdall finance --folder): o Heimdall importa sozinho o que conferir e separa o que deixar dúvida.</p>' + hist)
     return "Importar extrato", corpo
+
+
+def pg_orcamentos(q: dict, sess: dict) -> tuple:
+    visao = (q.get("visao") or [""])[0]
+    visao = visao if visao in fn.VISOES else "competencia"
+    ms = fn.meses(banco())
+    if not ms:
+        return "Orçamentos", "<p>Ainda não há lançamentos. Importe um extrato primeiro.</p>" + design.botao("/importar", "Importar extrato")
+    mes = (q.get("mes") or [""])[0]
+    if mes not in ms:
+        mes = ms[0]
+    o = fn.orcamentos(banco(), mes, visao)
+    corpo = [seletor_mes(mes, "/orcamentos", f'<input type="hidden" name="visao" value="{e(visao)}">'), seletor_visao(visao, "/orcamentos", mes),
+             "<p>Um orçamento é o limite de gasto por mês numa categoria. Quando o gasto chega a 80% do limite a situação vira \"perto do limite\", e quando passa dele, \"estourado\". "
+             "Os gastos seguem a visão escolhida acima. Para tirar o limite de uma categoria, use o botão Remover limite.</p>"]
+    if o["com_limite"]:
+        corpo.append(f'<p>Em {e(fn.nome_mes(mes))}: {o["com_limite"]} categoria(s) com limite, somando {e(fn.brl(o["total_limite"]))} de limite e {e(fn.brl(o["total_gasto"]))} gastos. '
+                     f'{o["estourados"]} estourada(s), {o["perto"]} perto do limite e {o["dentro"]} dentro do limite.</p>')
+    else:
+        corpo.append("<p>Você ainda não definiu nenhum limite. Digite um valor em reais em qualquer categoria abaixo e salve.</p>")
+    linhas = []
+    nomes_estado = {"dentro": "Dentro do limite", "perto": "Perto do limite", "estourado": "Estourado"}
+    for x in o["linhas"]:
+        cat = x["categoria"]
+        elo = f'<a href="/transacoes?mes={e(mes)}&amp;cat={e(cat)}">{e(cat)}</a>'
+        oculto = (f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><input type="hidden" name="categoria" value="{e(cat)}">'
+                  f'<input type="hidden" name="mes" value="{e(mes)}"><input type="hidden" name="visao" value="{e(visao)}">')
+        valor = "" if x["limite"] is None else f'{x["limite"] // 100},{x["limite"] % 100:02d}'
+        form = (f'<form class="lim" method="post" action="/orcamentos">{oculto}'
+                f'<input type="text" name="limite" inputmode="decimal" value="{e(valor)}" aria-label="Limite mensal de {e(cat)}, em reais" required>'
+                f'<button type="submit" aria-label="Salvar limite de {e(cat)}">Salvar limite</button></form>')
+        if x["limite"] is not None:
+            form += (f'<form class="lim" method="post" action="/orcamentos/remover">{oculto}'
+                     f'<button type="submit" aria-label="Remover limite de {e(cat)}">Remover limite</button></form>')
+        if x["limite"] is None:
+            linhas.append([elo, "Sem limite", e(fn.brl(x["gasto"])), "", "", form])
+        else:
+            resto = f'Faltam {fn.brl(x["restante"])}' if x["restante"] >= 0 else f'Passou {fn.brl(-x["restante"])}'
+            linhas.append([elo, e(fn.brl(x["limite"])), e(fn.brl(x["gasto"])), e(resto), e(f'{nomes_estado[x["estado"]]} ({x["pct"]}%)'), form])
+    corpo.append("<h2>Categorias</h2>" + tabela(f"Orçamento de {fn.nome_mes(mes)} por categoria", ["Categoria", "Limite", "Gasto", "Restante", "Situação", "Alterar"], linhas, {1, 2}))
+    return "Orçamentos", "".join(corpo)
 
 
 def pg_regras(sess: dict) -> tuple:
@@ -416,7 +467,7 @@ class Finance(BaseHTTPRequestHandler):
         except fn.ErroFinance as ex:
             if sess:
                 sess["flash"] = ("erro", str(ex))
-            self._ir("/importar" if rota == "/importar" else "/regras" if rota.startswith("/regras") else "/transacoes")
+            self._ir("/importar" if rota == "/importar" else "/regras" if rota.startswith("/regras") else "/orcamentos" if rota.startswith("/orcamentos") else "/transacoes")
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))
@@ -430,6 +481,8 @@ class Finance(BaseHTTPRequestHandler):
             titulo, corpo = pg_tendencias((q.get("visao") or [""])[0])
         elif rota == "/importar":
             titulo, corpo = pg_importar(sess)
+        elif rota == "/orcamentos":
+            titulo, corpo = pg_orcamentos(q, sess)
         elif rota == "/regras":
             titulo, corpo = pg_regras(sess)
         elif rota == "/exportar.csv":
@@ -476,6 +529,16 @@ class Finance(BaseHTTPRequestHandler):
                 self._ir("/transacoes?cat=Sem%20categoria" + (f"&mes={mes}" if mes else ""))
             else:
                 self._ir("/transacoes")
+            return
+        if rota in ("/orcamentos", "/orcamentos/remover"):
+            cat = campos.get("categoria", "")
+            volta = "/orcamentos?" + "&".join(f"{k}={campos[k]}" for k in ("mes", "visao") if re.fullmatch(r"[0-9a-z-]{1,10}", campos.get(k, "")))
+            if rota == "/orcamentos":
+                v = fn.definir_orcamento(banco(), cat, campos.get("limite", ""))
+                sess["flash"] = ("ok", f"Limite de {cat} salvo: {fn.brl(v)} por mês.")
+            else:
+                sess["flash"] = ("ok", f"Limite de {cat} removido." if fn.remover_orcamento(banco(), cat) else f"{cat} não tinha limite.")
+            self._ir(volta)
             return
         if rota == "/regras":
             n = fn.adicionar_regra(banco(), campos.get("padrao", ""), campos.get("categoria", ""))

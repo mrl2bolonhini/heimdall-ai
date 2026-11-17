@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Finance ganha orçamentos mensais
+- Nova página Orçamentos no Finance: você define um limite mensal em reais para cada categoria de gasto e vê, mês a mês, o gasto, quanto falta ou quanto passou e a situação em palavras (dentro do limite, perto do limite a partir de 80% e estourado). Os gastos seguem a visão escolhida, por compra ou por saída de caixa. Cada categoria tem botões Salvar limite e Remover limite com o nome da categoria, e o Resumo avisa quando há orçamento estourado ou perto do limite, com um botão para a página. Não vale para categorias neutras (pagamento de fatura, investimentos) nem para Sem categoria. O banco ganhou a tabela orcamentos.
+
 ## 2026-11-16 - Finance lê PDF, identifica o banco e vigia uma pasta de entrada
 - Novo comando `heimdall doctor` para descobrir por que o Mac está lento: memória e troca em disco (swap), carga do processador, calor, Time Machine, quem mais usa memória e processador, espaço em disco, Docker, modelos carregados no Ollama e memória de cada serviço do Heimdall, terminando com uma conclusão em linguagem simples. Opções: --memory, --cpu, --disk, --docker, --ollama, --services e --top. Só lê o sistema e mostra nomes de programas, nunca linhas de comando.
 - Finance: nova categoria de gasto Parcelamento de fatura, aplicada sozinha às parcelas do tipo Pagamento da fatura de outubro, parcela 1 de 5. Assim a parcela não se mistura com Outros gastos e, quando a fatura parcelada for importada, basta passar a categoria para neutra (Pagamento de fatura) para não contar duas vezes. Juros, multa e IOF do parcelamento continuam em Impostos e tarifas.

@@ -304,6 +304,30 @@ st, _, cab = post("/regras", {"padrao": "academia forma", "categoria": "Saúde"}
 confere("adicionar regra", st == 303 and con2.execute("SELECT categoria FROM regras WHERE padrao='academia forma'").fetchone()[0] == "Saúde")
 st, corpo, _ = pedir("/regras", ck)
 confere("página de regras lista as suas e as padrão", st == 200 and "academia forma" in corpo and "Regras padrão" in corpo)
+# ---- orçamentos
+_g = next(x for x in fn.orcamentos(con2, "2025-03")["linhas"] if x["categoria"] == "Outros gastos")["gasto"]
+confere("orçamento: sem limite a categoria aparece sem situação", _g > 0 and next(x for x in fn.orcamentos(con2, "2025-03")["linhas"] if x["categoria"] == "Outros gastos")["estado"] is None)
+for _lim, _est in ((_g * 2, "dentro"), (_g * 100 // 85 + 1, "perto"), (_g, "perto"), (_g - 1, "estourado")):
+    fn.definir_orcamento(con2, "Outros gastos", f"{_lim // 100},{_lim % 100:02d}")
+    _x = next(x for x in fn.orcamentos(con2, "2025-03")["linhas"] if x["categoria"] == "Outros gastos")
+    confere(f"orçamento: limite {_lim} com gasto {_g} fica {_est}", _x["estado"] == _est, _x)
+for _cat, _val in (("Outros gastos", "abc"), ("Outros gastos", "0"), ("Outros gastos", "-5"), ("Pagamento de fatura", "100"), ("Inventada", "100"), (fn.SEM_CATEGORIA, "100")):
+    try:
+        fn.definir_orcamento(con2, _cat, _val)
+        confere(f"orçamento recusa {_cat} / {_val}", False)
+    except fn.ErroFinance:
+        confere(f"orçamento recusa {_cat} / {_val}", True)
+st, _, cab = post("/orcamentos", {"categoria": "Outros gastos", "limite": "10,00", "mes": "2025-03", "visao": "competencia"}, ck, csrf)
+confere("salvar limite pela página volta à página", st == 303 and cab.get("Location", "").startswith("/orcamentos?mes=2025-03"), cab)
+confere("limite gravado em centavos", con2.execute("SELECT limite FROM orcamentos WHERE categoria='Outros gastos'").fetchone()[0] == 1000)
+st, corpo, _ = pedir("/orcamentos?mes=2025-03", ck)
+confere("página de orçamentos mostra situação, tabela com legenda e botões com nome", st == 200 and "Estourado" in corpo and "<caption>" in corpo and 'aria-label="Salvar limite de Outros gastos"' in corpo and 'aria-label="Remover limite de Outros gastos"' in corpo and 'scope="col"' in corpo, corpo[:300])
+st, corpo, _ = pedir("/?mes=2025-03", ck)
+confere("o Resumo avisa dos orçamentos estourados", "Orçamentos de" in corpo and "estourado(s)" in corpo and "Ver orçamentos" in corpo)
+confere("limite inválido pela página não grava", post("/orcamentos", {"categoria": "Outros gastos", "limite": "abc"}, ck, csrf)[0] == 303 and con2.execute("SELECT limite FROM orcamentos WHERE categoria='Outros gastos'").fetchone()[0] == 1000)
+confere("orçamento com CSRF errado é recusado", post("/orcamentos", {"categoria": "Outros gastos", "limite": "5"}, ck, "errado")[0] == 403)
+st, _, _ = post("/orcamentos/remover", {"categoria": "Outros gastos", "mes": "2025-03"}, ck, csrf)
+confere("remover limite", st == 303 and con2.execute("SELECT COUNT(*) FROM orcamentos").fetchone()[0] == 0)
 rid = con2.execute("SELECT id FROM regras WHERE padrao='academia forma'").fetchone()[0]
 post("/regras/apagar", {"id": str(rid)}, ck, csrf)
 confere("apagar regra", con2.execute("SELECT COUNT(*) FROM regras WHERE padrao='academia forma'").fetchone()[0] == 0)

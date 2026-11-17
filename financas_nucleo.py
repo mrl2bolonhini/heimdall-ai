@@ -68,6 +68,7 @@ CREATE INDEX IF NOT EXISTS ix_tr_data ON transacoes(data);
 CREATE TABLE IF NOT EXISTS regras(
   id INTEGER PRIMARY KEY AUTOINCREMENT, padrao TEXT NOT NULL, categoria TEXT NOT NULL, origem TEXT NOT NULL, UNIQUE(padrao, origem));
 CREATE TABLE IF NOT EXISTS categorias(nome TEXT PRIMARY KEY, tipo TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS orcamentos(categoria TEXT PRIMARY KEY, limite INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS importacoes(
   id INTEGER PRIMARY KEY AUTOINCREMENT, arquivo TEXT, conta TEXT, quando TEXT, formato TEXT, novas INTEGER, repetidas INTEGER);
 """
@@ -499,6 +500,55 @@ def resumo_mes(con, mes: str, visao: str = "competencia") -> dict:
     return {"mes": mes, "receitas": receitas, "despesas": despesas, "saldo": receitas - despesas, "neutros": neutros,
             "categorias": cats, "maiores": maiores, "sem_categoria": n_sem, "despesas_anterior": sum(antes.values()),
             "visao": visao, "sem_fatura": [p for p in semf if p["data"][:7] == mes]}
+
+
+PERTO_DO_LIMITE = 80  # % do limite a partir do qual o orçamento mostra aviso
+
+
+def definir_orcamento(con, categoria: str, texto_valor: str) -> int:
+    """Grava (ou troca) o limite mensal de uma categoria de gasto. Devolve o limite em centavos."""
+    if tipos(con).get(categoria) != "gasto" or categoria == SEM_CATEGORIA:
+        raise ErroFinance("Só dá para pôr limite em categoria de gasto.")
+    try:
+        v = parse_valor(texto_valor)
+    except ValueError as ex:
+        raise ErroFinance("Digite o limite em reais, por exemplo 800 ou 1.250,50.") from ex
+    if v <= 0:
+        raise ErroFinance("O limite precisa ser maior que zero.")
+    con.execute("INSERT INTO orcamentos(categoria, limite) VALUES(?, ?) ON CONFLICT(categoria) DO UPDATE SET limite=excluded.limite", (categoria, v))
+    con.commit()
+    return v
+
+
+def remover_orcamento(con, categoria: str) -> bool:
+    n = con.execute("DELETE FROM orcamentos WHERE categoria=?", (categoria,)).rowcount
+    con.commit()
+    return n > 0
+
+
+def orcamentos(con, mes: str, visao: str = "competencia") -> dict:
+    """Limite, gasto e situação de cada categoria de gasto no mês. Situação: dentro, perto (80% ou mais do limite) ou estourado (passou do limite)."""
+    visao = visao if visao in VISOES else "competencia"
+    tp = tipos(con)
+    gastos = _gastos_por_categoria(con, mes, tp, visao)
+    lim = {r["categoria"]: r["limite"] for r in con.execute("SELECT categoria, limite FROM orcamentos")}
+    linhas = []
+    for cat, tipo in tp.items():
+        if tipo != "gasto" or cat == SEM_CATEGORIA:
+            continue
+        g, limite = gastos.get(cat, 0), lim.get(cat)
+        if limite is None:
+            linhas.append({"categoria": cat, "limite": None, "gasto": g, "restante": None, "pct": None, "estado": None})
+            continue
+        pct = round(100 * g / limite)
+        estado = "estourado" if g > limite else "perto" if 100 * g >= PERTO_DO_LIMITE * limite else "dentro"
+        linhas.append({"categoria": cat, "limite": limite, "gasto": g, "restante": limite - g, "pct": pct, "estado": estado})
+    linhas.sort(key=lambda x: (x["limite"] is None, -(x["pct"] or 0), -x["gasto"], x["categoria"]))
+    com = [x for x in linhas if x["limite"] is not None]
+    return {"mes": mes, "visao": visao, "linhas": linhas,
+            "estourados": sum(1 for x in com if x["estado"] == "estourado"), "perto": sum(1 for x in com if x["estado"] == "perto"),
+            "dentro": sum(1 for x in com if x["estado"] == "dentro"), "com_limite": len(com),
+            "total_limite": sum(x["limite"] for x in com), "total_gasto": sum(x["gasto"] for x in com)}
 
 
 def tendencias(con, quantos: int = 12, visao: str = "competencia") -> dict:
