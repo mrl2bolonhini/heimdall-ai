@@ -95,6 +95,7 @@ def main() -> None:
     g.add_argument("--boletos", action="store_true")
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
     g.add_argument("--sincronizar", action="store_true")
+    g.add_argument("--fechamento", action="append")
     g.add_argument("--saldo", action="store_true")
     g.add_argument("--ultimos", action="store_true")
     g.add_argument("--resumo", action="store_true")
@@ -172,6 +173,20 @@ def main() -> None:
             if a.guardar_pluggy == "segredo" and shutil.which("pbcopy"):
                 subprocess.run(["pbcopy"], input=b"", timeout=10)
                 print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
+        elif a.fechamento:
+            import financas_pluggy as fpl
+            arq = DIR_DADOS / "pluggy_estado.json"
+            estado = fpl.ler_estado(arq)
+            for par in a.fechamento:
+                trecho, _, dia = par.partition("=")
+                if not dia.strip().isdigit():
+                    sys.exit("Use --fechamento PEDAÇO_DO_NOME=DIA, por exemplo: --fechamento itau=27")
+                try:
+                    nome = fpl.definir_fechamento(estado, trecho, int(dia))
+                except fpl.ErroPluggy as ex:
+                    sys.exit(str(ex))
+                print(f"O cartão {nome} fecha a fatura no dia {int(dia)}.")
+            fpl.gravar_estado(arq, estado)
         elif a.saldo or a.ultimos or a.resumo:
             import financas_consulta as fc
             import financas_pluggy as fpl
@@ -179,7 +194,7 @@ def main() -> None:
                 sys.exit("Use o mês no formato AAAA-MM, por exemplo 2026-11.")
             try:
                 if a.saldo:
-                    print(fc.texto_saldos(fpl.ler_estado(DIR_DADOS / "pluggy_estado.json")))
+                    print(fc.texto_saldos(fpl.ler_estado(DIR_DADOS / "pluggy_estado.json"), _banco()))
                 elif a.ultimos:
                     print(fc.texto_ultimos(_banco(), a.conta, a.mes, a.buscar, a.categoria, a.limite))
                 else:

@@ -197,6 +197,7 @@ Opções:
   --since AAAA-MM-DD   com --sync, busca desde essa data (o Meu Pluggy guarda até 12 meses). Sem isso, começa no dia seguinte ao último extrato importado da conta, ou 90 dias atrás
   --list               com --sync, mostra as contas dos bancos e o nome de cada uma no Finance
   --name N=NOME        com --sync, dá o nome N da lista a uma conta
+  --closing NOME=DIA   guarda o dia de fechamento da fatura de um cartão (por exemplo itau=27); com ele, --balance calcula a fatura em aberto pelas compras do ciclo
   --balance            mostra o saldo de cada conta e a fatura de cada cartão na última leitura do banco, com os totais
   --latest             mostra os últimos lançamentos (use --limit N, --account PEDAÇO_DO_NOME, --month AAAA-MM, --search TEXTO, --category NOME)
   --summary            resumo do mês (entradas, gastos, onde mais gastou, maiores gastos); use --month AAAA-MM para outro mês

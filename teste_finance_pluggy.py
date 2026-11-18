@@ -204,6 +204,22 @@ pf = fp._proxima_fatura([{"dueDate": "2026-11-05T00:00:00.000Z", "totalAmount": 
 confere("próxima fatura é a que vence daqui para a frente", pf == {"fatura_vence": "2026-12-05", "fatura_valor": 123456, "fatura_aberta": True}, pf)
 txt3 = fc.texto_saldos({"contas": {"b": {"nome": "Itaú cartão de crédito", "tipo": "CREDIT", "saldo": 1206031, "credito": {**dc, **pf}}}})
 confere("saldos mostram a fatura a vencer", "fatura a vencer de R$ 1.234,56, vence em 05/12/2026" in txt3, txt3)
+# fatura em aberto calculada pelo fechamento
+con11 = fn.conectar(d / "f.db")
+fn.importar_itens(con11, [{"data": "2026-10-20", "valor": -10000, "descricao": "ANTES", "fitid": "a"}, {"data": "2026-10-28", "valor": -20000, "descricao": "COMPRA 1", "fitid": "b"},
+                          {"data": "2026-11-10", "valor": -30000, "descricao": "COMPRA 2", "fitid": "c"}, {"data": "2026-11-12", "valor": 99000, "descricao": "PAGAMENTO RECEBIDO", "fitid": "d"},
+                          {"data": "2026-11-15", "valor": 5000, "descricao": "ESTORNO LOJA", "fitid": "e"}], "pluggy", "Meu Pluggy", "Itaú cartão de crédito")
+v, ini = fc.fatura_calculada(con11, "Itaú cartão de crédito", 27, date(2026, 11, 18))
+confere("fatura calculada: compras desde o dia seguinte ao fechamento, sem pagamento, com estorno", v == 45000 and ini == date(2026, 10, 28), (v, ini))
+est5 = {"contas": {"x": {"nome": "Itaú cartão de crédito", "tipo": "CREDIT", "saldo": 1000}, "y": {"nome": "Nubank cartão de crédito", "tipo": "CREDIT", "saldo": 1}}}
+confere("definir fechamento acha o cartão por pedaço do nome", fp.definir_fechamento(est5, "itau", 27) == "Itaú cartão de crédito" and est5["contas"]["x"]["fechamento"] == 27)
+try:
+    fp.definir_fechamento(est5, "cartao", 3)
+    confere("nome ambíguo dá erro", False)
+except fp.ErroPluggy:
+    confere("nome ambíguo dá erro", True)
+txt4 = fc.texto_saldos(est5, con11, date(2026, 11, 18))
+confere("saldos mostram a fatura em aberto calculada", "fatura em aberto de R$ 450,00" in txt4 and "fechamento dia 27" in txt4, txt4)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

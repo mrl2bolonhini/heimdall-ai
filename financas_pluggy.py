@@ -470,7 +470,7 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
     for p in coleta["pacotes"]:
         r = fn.importar_itens(con, p["itens"], "pluggy", "Meu Pluggy", p["nome"], agora)
         resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"], "recebidas": p.get("recebidas", len(p["itens"]))})
-        guardados[p["id"]] = {"nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo"), "credito": p.get("credito")}
+        guardados[p["id"]] = {**{k: v for k, v in guardados.get(p["id"], {}).items() if k == "fechamento"}, "nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo"), "credito": p.get("credito")}
     estado["avisos"] = coleta["avisos"]
     estado["ultima"] = (agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     estado["resumo"] = resumo
@@ -527,6 +527,19 @@ def definir_nome(estado: dict, id_conta: str, nome: str) -> None:
         raise ErroPluggy("Diga o nome da conta, por exemplo: Itaú conta.")
     estado.setdefault("contas", {}).setdefault(id_conta, {})["nome"] = nome
     estado["contas"][id_conta].pop("ultimo", None)  # recomeça a contagem de datas para o novo nome
+
+
+def definir_fechamento(estado: dict, trecho: str, dia: int) -> str:
+    """Guarda o dia de fechamento da fatura de um cartão (achado por um pedaço do nome). Devolve o nome do cartão."""
+    if not 1 <= int(dia) <= 31:
+        raise ErroPluggy("O dia de fechamento deve ficar entre 1 e 31.")
+    alvo = fn.norm(trecho)
+    cartoes = [g for g in estado.get("contas", {}).values() if (g.get("tipo") or "").upper() == "CREDIT" and g.get("nome")]
+    achados = [g for g in cartoes if alvo and alvo in fn.norm(g["nome"])]
+    if len(achados) != 1:
+        raise ErroPluggy("Cartões: " + "; ".join(g["nome"] for g in cartoes) + ". Escreva um pedaço do nome que combine com um só, por exemplo: itau=27")
+    achados[0]["fechamento"] = int(dia)
+    return achados[0]["nome"]
 
 
 def simular(con, cfg: dict, estado_arq: Path, desde: date, hoje: date = None, cliente: Cliente = None) -> list:

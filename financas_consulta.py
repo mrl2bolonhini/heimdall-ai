@@ -2,7 +2,8 @@
 Só lê o banco local e o estado da última sincronização; nada vai para a internet. Texto corrido e listas numeradas, bom para leitor de tela."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
+import calendar
 
 import financas_nucleo as fn
 
@@ -28,7 +29,30 @@ def resolver_conta(con, trecho: str) -> str:
     raise ValueError("Mais de uma conta combina: " + "; ".join(achadas) + ". Escreva um pedaço maior do nome.")
 
 
-def texto_saldos(estado: dict) -> str:
+def _ultimo_fechamento(hoje: date, dia: int) -> date:
+    """Data do último fechamento (dia do mês, ajustado ao fim de meses curtos) anterior a hoje."""
+    def em(ano, mes):
+        return date(ano, mes, min(dia, calendar.monthrange(ano, mes)[1]))
+    f = em(hoje.year, hoje.month)
+    if f >= hoje:
+        ano, mes = (hoje.year - 1, 12) if hoje.month == 1 else (hoje.year, hoje.month - 1)
+        f = em(ano, mes)
+    return f
+
+
+def fatura_calculada(con, conta: str, dia: int, hoje: date = None) -> tuple:
+    """Fatura em aberto estimada pelas compras do cartão desde o dia seguinte ao último fechamento. Devolve (centavos, início)."""
+    hoje = hoje or date.today()
+    inicio = _ultimo_fechamento(hoje, dia) + timedelta(days=1)
+    total = 0
+    for r in con.execute("SELECT valor, desc_norm, categoria FROM transacoes WHERE conta=? AND data>=? AND data<=?", (conta, inicio.isoformat(), hoje.isoformat())):
+        if r["valor"] > 0 and any(p in r["desc_norm"] for p in ("pagamento", "pgto", "pag fatura", "fatura")):
+            continue  # pagamento da fatura anterior não reduz a fatura nova
+        total += -r["valor"]
+    return total, inicio
+
+
+def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
     contas = [g for g in (estado.get("contas") or {}).values() if g.get("nome")]
     if not contas:
         return "Ainda não há saldos: rode antes heimdall finance --sync."
@@ -59,6 +83,9 @@ def texto_saldos(estado: dict) -> str:
             if "fatura_valor" in cr:
                 fat = (f"fatura a vencer de {_real(cr['fatura_valor'])}, vence em {fn.data_br(cr['fatura_vence'])}; " if cr.get("fatura_aberta")
                        else f"última fatura de {_real(cr['fatura_valor'])}, venceu em {fn.data_br(cr['fatura_vence'])}; ")
+            if con is not None and g.get("fechamento"):
+                v, ini = fatura_calculada(con, g["nome"], int(g["fechamento"]), hoje)
+                fat = f"fatura em aberto de {_real(v)} (calculada pelas compras desde {fn.data_br(ini.isoformat())}, fechamento dia {g['fechamento']}); " + ("" if not fat else "além disso, " + fat)
             linhas.append(f"{i}. {g['nome']}: {fat}usado do limite (saldo devedor total, com parcelas futuras) de {_real(s)}" + (" (" + ", ".join(extra) + ")" if extra else "") + ".")
         else:
             disponivel += s
@@ -66,6 +93,7 @@ def texto_saldos(estado: dict) -> str:
     quando = estado.get("ultima") or ""
     saida = ["Saldos das contas, na última leitura do banco" + (f" ({fn.data_br(quando[:10])} às {quando[11:16]})" if quando else "") + ":"] + linhas
     saida.append(f"Total nas contas: {_real(disponivel)}. Total usado dos limites dos cartões: {_real(devido)}. Diferença: {_real(disponivel - devido)}.")
+    saida.append("O banco só atualiza limite, disponível e faturas a cada 24 horas pelo Meu Pluggy; se você mudou algo agora há pouco, esses valores podem estar defasados.")
     if sem:
         saida.append(f"{sem} conta(s) sem saldo informado; rode heimdall finance --sync para atualizar.")
     return "\n".join(saida)
