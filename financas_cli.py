@@ -95,6 +95,7 @@ def main() -> None:
     g.add_argument("--boletos", action="store_true")
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
     g.add_argument("--sincronizar", action="store_true")
+    g.add_argument("--refazer-pelo-pluggy", dest="refazer", action="store_true")
     g.add_argument("--deduplicar", action="store_true")
     g.add_argument("--padronizar-nomes", dest="padronizar_nomes", action="store_true")
     g.add_argument("--renomear-conta", dest="renomear_conta", action="append")
@@ -164,6 +165,25 @@ def main() -> None:
             if a.guardar_pluggy == "segredo" and shutil.which("pbcopy"):
                 subprocess.run(["pbcopy"], input=b"", timeout=10)
                 print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
+        elif a.refazer:
+            import financas_pluggy as fpl
+            cfg = fpl.credenciais()
+            if not cfg:
+                sys.exit("Faltam chaves do Pluggy no .env.")
+            con = _banco()
+            desde = date.fromisoformat(a.desde) if a.desde else date(2024, 1, 1)
+            try:
+                r = fpl.refazer_pelo_pluggy(con, cfg, DIR_DADOS / "pluggy_estado.json", desde, DIR_DADOS / "backups", aplicar=a.forcar)
+            except fpl.ErroPluggy as ex:
+                sys.exit(str(ex))
+            for c in r["contas"]:
+                print(f"{c['conta']}: {c['lancamentos']} lançamento(s), {c['alterados'] or 0} com categoria escolhida por você.")
+            if not a.forcar:
+                print("Nada foi apagado. Para apagar esses lançamentos e ler tudo de novo pelo Pluggy, rode: heimdall finance --redo-from-pluggy --force")
+            else:
+                print(f"Cópia do banco guardada em: {r['backup']}")
+                for c in r["sincronizado"]["contas"]:
+                    print(f"{c['conta']}: {c['novas']} lançamento(s) lido(s) desde {fn.data_br(c['desde'])}.")
         elif a.deduplicar:
             con = _banco()
             ex = []

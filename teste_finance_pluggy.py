@@ -172,6 +172,14 @@ fn.repetidos_entre_fontes(con8, True)
 confere("limpeza apaga a 01/03 do Pluggy e mantém a 03/03", [r[0] for r in con8.execute("SELECT descricao FROM transacoes ORDER BY id")] == ["PG *O RDEM ROSA 01/03", "PG *ORDEM ROSACRUZ03/03"], [r[0] for r in con8.execute("SELECT descricao FROM transacoes")])
 sim = fp.simular(con, cfg, d / "sim.json", date(2026, 1, 1), hoje, fp.Cliente(cfg, api))
 confere("simular devolve datas por conta e não grava", sim and all("primeira" in x for x in sim) and not (d / "sim.json").exists(), sim)
+con9 = fn.conectar(d / "z.db")
+fn.importar_itens(con9, [{"data": "2026-01-02", "valor": -100, "descricao": "ANTIGO EXTRATO"}], "ofx", "x.ofx", "Itaú conta corrente")
+estz = d / "z.json"
+r11 = fp.executar(con9, cfg, estz, None, hoje, fp.Cliente(cfg, api))
+seco = fp.refazer_pelo_pluggy(con9, cfg, estz, date(2026, 1, 1), d / "bk", False, hoje, fp.Cliente(cfg, api))
+confere("refazer sem aplicar só conta e não apaga", seco["contas"] and not (d / "bk").exists() and con9.execute("SELECT COUNT(*) FROM transacoes WHERE descricao='ANTIGO EXTRATO'").fetchone()[0] == 1, seco)
+real = fp.refazer_pelo_pluggy(con9, cfg, estz, date(2026, 1, 1), d / "bk", True, hoje, fp.Cliente(cfg, api))
+confere("refazer cria cópia do banco, apaga o extrato e relê pelo Pluggy", Path(real["backup"]).exists() and con9.execute("SELECT COUNT(*) FROM transacoes WHERE descricao='ANTIGO EXTRATO'").fetchone()[0] == 0 and sum(c["novas"] for c in real["sincronizado"]["contas"]) > 0, real)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

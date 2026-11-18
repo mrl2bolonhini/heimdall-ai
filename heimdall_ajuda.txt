@@ -198,6 +198,7 @@ Opções:
   --list               com --sync, mostra as contas dos bancos e o nome de cada uma no Finance
   --name N=NOME        com --sync, dá o nome N da lista a uma conta
   --simulate           com --sync e --since, só mostra até onde o Pluggy devolve histórico de cada conta, sem gravar nada
+  --redo-from-pluggy   mostra e, com --force, apaga os lançamentos das contas do Pluggy (inclusive de extrato) depois de copiar o banco, e relê tudo pelo Pluggy desde --since (padrão 2024-01-01)
   --dedupe             mostra (e, com --force, apaga) lançamentos do Pluggy que repetem extrato ou fatura já importados (mesma conta, dia e valor)
   --standardize-names  renomeia sozinho, com o histórico, as contas do Pluggy para o padrão (Banco conta corrente, Banco cartão de crédito), sem digitar nomes
   --rename-account "ATUAL=NOVO"  troca o nome de uma conta já importada por extrato, com todo o histórico (faça antes da primeira sincronização)

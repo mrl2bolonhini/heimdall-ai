@@ -490,6 +490,41 @@ def simular(con, cfg: dict, estado_arq: Path, desde: date, hoje: date = None, cl
     return saida
 
 
+def refazer_pelo_pluggy(con, cfg: dict, estado_arq: Path, desde: date, pasta_backup: Path, aplicar: bool = False, hoje: date = None, cliente: Cliente = None) -> dict:
+    """Apaga os lançamentos das contas conectadas ao Pluggy (inclusive os de extrato) e relê tudo pelo Pluggy desde `desde`.
+    Antes copia o banco inteiro para `pasta_backup`. Sem `aplicar`, só conta o que seria apagado."""
+    import sqlite3
+    estado = ler_estado(estado_arq)
+    nomes = sorted({g["nome"] for g in estado.get("contas", {}).values() if g.get("nome")})
+    if not nomes:
+        raise ErroPluggy("Ainda não há contas do Pluggy guardadas; rode antes: heimdall finance --sincronizar")
+    marcas = ",".join("?" * len(nomes))
+    resumo = [{"conta": r["conta"], "lancamentos": r["n"], "alterados": r["m"]} for r in con.execute(
+        f"SELECT conta, COUNT(*) AS n, SUM(manual) AS m FROM transacoes WHERE conta IN ({marcas}) GROUP BY conta ORDER BY conta", nomes)]
+    saida = {"contas": resumo, "backup": "", "sincronizado": None}
+    if not aplicar:
+        return saida
+    pasta_backup.mkdir(parents=True, exist_ok=True)
+    destino = pasta_backup / f"financas-antes-do-pluggy-{datetime.now().strftime('%Y%m%d-%H%M%S')}.db"
+    bak = sqlite3.connect(str(destino))
+    con.backup(bak)
+    bak.close()
+    try:
+        destino.chmod(0o600)
+    except OSError:
+        pass
+    saida["backup"] = str(destino)
+    con.execute(f"DELETE FROM transacoes WHERE conta IN ({marcas})", nomes)
+    con.execute(f"DELETE FROM importacoes WHERE conta IN ({marcas})", nomes)
+    con.execute(f"DELETE FROM deduplicados WHERE conta IN ({marcas})", nomes)
+    con.commit()
+    for g in estado.get("contas", {}).values():
+        g.pop("ultimo", None)
+    gravar_estado(estado_arq, estado)
+    saida["sincronizado"] = executar(con, cfg, estado_arq, desde, hoje, cliente)
+    return saida
+
+
 def executar(con, cfg: dict, estado_arq: Path, desde: date = None, hoje: date = None, cliente: Cliente = None) -> dict:
     estado = ler_estado(estado_arq)
     coleta = coletar(cfg, estado, con, desde, hoje, cliente)
