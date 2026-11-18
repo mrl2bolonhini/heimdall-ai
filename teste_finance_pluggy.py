@@ -107,6 +107,17 @@ nm3 = fp.resolver_nomes(con, {"contas": {}}, [{"id": "k1", "itemId": "I", "type"
 confere("cartão sem nome de banco herda o banco da conta do mesmo item", nm3["k2"] == "Nubank cartão de crédito", nm3)
 nm2 = fp.resolver_nomes(con, {"contas": {"a2": {"nome": "Itaú conta"}}}, dup)
 confere("nome já guardado tem prioridade e ninguém mais o toma", nm2["a2"] == "Itaú conta" and list(nm2.values()).count("Itaú conta") == 1, nm2)
+# renomear depois de já ter sincronizado não duplica na releitura
+con2 = fn.conectar(d / "r.db")
+its = [{"data": "2026-11-10", "valor": -500, "descricao": "PIX X", "fitid": "t1"}, {"data": "2026-11-11", "valor": -700, "descricao": "LOJA", "fitid": "t2"}, {"data": "2026-11-11", "valor": -100, "descricao": "SEM ID"}]
+fn.importar_itens(con2, its, "pluggy", "Meu Pluggy", "Itaú conta")
+est2 = {"contas": {"z": {"nome": "Itaú conta", "ultimo": "2026-11-11"}}}
+fp.renomear_conta_finance(con2, "Itaú conta", "Itaú conta corrente", est2)
+confere("renomear atualiza o nome guardado e mantém a data", est2["contas"]["z"]["nome"] == "Itaú conta corrente" and est2["contas"]["z"]["ultimo"] == "2026-11-11")
+r5 = fn.importar_itens(con2, its, "pluggy", "Meu Pluggy", "Itaú conta corrente")
+confere("depois de renomear, reler os mesmos lançamentos não duplica", r5["novas"] == 0 and r5["repetidas"] == 3, r5)
+r6 = fn.importar_itens(con2, its + [{"data": "2026-11-12", "valor": -1, "descricao": "NOVO", "fitid": "t3"}], "pluggy", "Meu Pluggy", "Itaú conta corrente")
+confere("lançamento novo continua entrando", r6["novas"] == 1, r6)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

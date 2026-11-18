@@ -307,7 +307,7 @@ def conta_existente(con, conta: dict, nome: str) -> str:
     return ""
 
 
-def renomear_conta_finance(con, antigo: str, novo: str) -> int:
+def renomear_conta_finance(con, antigo: str, novo: str, estado: dict = None) -> int:
     """Troca o nome de uma conta já importada (histórico incluso). Devolve quantos lançamentos mudaram."""
     antigo, novo = (antigo or "").strip(), (novo or "").strip()[:60]
     if not antigo or not novo:
@@ -318,7 +318,11 @@ def renomear_conta_finance(con, antigo: str, novo: str) -> int:
         raise ErroPluggy(f"Já existe uma conta chamada \"{novo}\"; escolha outro nome.")
     n = con.execute("UPDATE transacoes SET conta=? WHERE conta=?", (novo, antigo)).rowcount
     con.execute("UPDATE importacoes SET conta=? WHERE conta=?", (novo, antigo))
+    con.execute("INSERT OR IGNORE INTO renomeacoes(antigo, novo, quando) VALUES(?,?,?)", (antigo, novo, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
     con.commit()
+    for g in (estado or {}).get("contas", {}).values():  # contas do Pluggy que usavam o nome antigo passam a usar o novo, sem recomeçar a contagem de datas
+        if g.get("nome") == antigo:
+            g["nome"] = novo
     return n
 
 
@@ -432,8 +436,11 @@ def listar_contas(cfg: dict, estado: dict, con, cliente: Cliente = None) -> list
     saida = []
     for c in todas:
         saldo = c.get("balance")
+        existente = conta_existente(con, c, nomes[c["id"]])
+        if existente in nomes.values():  # o nome é de outra conta da lista (ex.: Itaú conta corrente), não é um extrato à parte
+            existente = ""
         saida.append({"id": c["id"], "tipo": "cartão de crédito" if (c.get("type") or "").upper() == "CREDIT" else "conta", "final": _final(c), "nome": nomes[c["id"]],
-                      "rotulo": _rotulo(c), "existente": conta_existente(con, c, nomes[c["id"]]), "subtipo": SUBTIPOS.get((c.get("subtype") or "").upper(), (c.get("subtype") or "").lower()),
+                      "rotulo": _rotulo(c), "existente": existente, "subtipo": SUBTIPOS.get((c.get("subtype") or "").upper(), (c.get("subtype") or "").lower()),
                       "saldo": saldo if isinstance(saldo, (int, float)) else None})
     return saida
 

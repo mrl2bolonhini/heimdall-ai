@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS boletos(
   arquivo TEXT, situacao TEXT NOT NULL DEFAULT 'aberto', criado_em TEXT);
 CREATE TABLE IF NOT EXISTS importacoes(
   id INTEGER PRIMARY KEY AUTOINCREMENT, arquivo TEXT, conta TEXT, quando TEXT, formato TEXT, novas INTEGER, repetidas INTEGER);
+CREATE TABLE IF NOT EXISTS renomeacoes(antigo TEXT NOT NULL, novo TEXT NOT NULL, quando TEXT, PRIMARY KEY(antigo, novo));
 """
 
 
@@ -314,6 +315,19 @@ def apagar_importacao_vazia(con, importacao_id: int) -> None:
     con.commit()
 
 
+def nomes_antigos(con, conta: str) -> list:
+    """Nomes que a conta já teve (renomeada com --rename-account). Os lançamentos antigos guardam o código gerado com o nome da época;
+    por isso a importação também confere o código com esses nomes, para não duplicar depois de uma troca de nome."""
+    achados, fila = [], [conta]
+    while fila:
+        atual = fila.pop()
+        for (a,) in con.execute("SELECT antigo FROM renomeacoes WHERE novo=?", (atual,)):
+            if a not in achados and a != conta:
+                achados.append(a)
+                fila.append(a)
+    return achados
+
+
 def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, agora: str = None, hash_arquivo: str = "") -> dict:
     """Grava lançamentos já lidos (de OFX, CSV ou PDF), pulando os que já existem."""
     conta = (conta or "").strip()[:60]
@@ -323,6 +337,7 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
     regras = _regras(con)
     vistos = defaultdict(int)
     novas = repetidas = 0
+    antigos = nomes_antigos(con, conta)
     imp_id = con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas, hash_arquivo) VALUES(?,?,?,?,0,0,?)", ((arquivo or "")[:120], conta, agora, formato, hash_arquivo or None)).lastrowid
     for it in itens:
         dn = norm(it["descricao"])
@@ -333,6 +348,11 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
             vistos[base] += 1  # dois lançamentos iguais no mesmo dia continuam sendo dois
             chave = f"{base}|{vistos[base]}"
         h = hashlib.sha1(chave.encode("utf-8")).hexdigest()
+        if antigos:
+            alternativas = [hashlib.sha1((a + chave[len(conta):]).encode("utf-8")).hexdigest() for a in antigos]
+            if con.execute("SELECT 1 FROM transacoes WHERE hash IN (%s) LIMIT 1" % ",".join("?" * len(alternativas)), alternativas).fetchone():
+                repetidas += 1
+                continue
         cat = categorizar(con, dn, regras)
         if cat == SEM_CATEGORIA and it["valor"] > 0:
             # cartão de crédito não gera renda: crédito sem regra (pagamento, estorno de encargo) fica fora das receitas

@@ -172,8 +172,9 @@ def main() -> None:
             if a.renomear_conta:
                 for par in a.renomear_conta:
                     antigo, _, novo = par.partition("=")
-                    n = fpl.renomear_conta_finance(con, antigo, novo)
+                    n = fpl.renomear_conta_finance(con, antigo, novo, estado)
                     print(f"A conta \"{antigo.strip()}\" passou a se chamar \"{novo.strip()[:60]}\" no Finance ({n} lançamentos).")
+                fpl.gravar_estado(arq, estado)
             if a.listar or a.nomear:
                 contas = fpl.listar_contas(cfg, estado, con)
                 for par in a.nomear:
