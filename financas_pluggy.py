@@ -529,16 +529,25 @@ def definir_nome(estado: dict, id_conta: str, nome: str) -> None:
     estado["contas"][id_conta].pop("ultimo", None)  # recomeça a contagem de datas para o novo nome
 
 
-def definir_fechamento(estado: dict, trecho: str, dia: int) -> str:
-    """Guarda o dia de fechamento da fatura de um cartão (achado por um pedaço do nome). Devolve o nome do cartão."""
-    if not 1 <= int(dia) <= 31:
-        raise ErroPluggy("O dia de fechamento deve ficar entre 1 e 31.")
+def definir_fechamento(estado: dict, trecho: str, regra) -> str:
+    """Guarda quando fecha a fatura de um cartão (achado por um pedaço do nome). `regra` é "27" (dia fixo do mês) ou "1:7"
+    (vence no dia 1 e fecha 7 dias antes). Devolve o nome do cartão."""
+    texto = str(regra).strip()
+    m = re.fullmatch(r"(\d{1,2}):(\d{1,2})", texto)
+    if m:
+        cfg = {"vence": int(m.group(1)), "antes": int(m.group(2))}
+        if not (1 <= cfg["vence"] <= 31 and 1 <= cfg["antes"] <= 20):
+            raise ErroPluggy("Use VENCIMENTO:DIAS_ANTES com o dia do vencimento entre 1 e 31 e de 1 a 20 dias antes, por exemplo: itau=1:7")
+    elif texto.isdigit() and 1 <= int(texto) <= 31:
+        cfg = {"dia": int(texto)}
+    else:
+        raise ErroPluggy("Use um dia do mês (itau=27) ou o vencimento e quantos dias antes fecha (itau=1:7).")
     alvo = fn.norm(trecho)
     cartoes = [g for g in estado.get("contas", {}).values() if (g.get("tipo") or "").upper() == "CREDIT" and g.get("nome")]
     achados = [g for g in cartoes if alvo and alvo in fn.norm(g["nome"])]
     if len(achados) != 1:
-        raise ErroPluggy("Cartões: " + "; ".join(g["nome"] for g in cartoes) + ". Escreva um pedaço do nome que combine com um só, por exemplo: itau=27")
-    achados[0]["fechamento"] = int(dia)
+        raise ErroPluggy("Cartões: " + "; ".join(g["nome"] for g in cartoes) + ". Escreva um pedaço do nome que combine com um só, por exemplo: itau=1:7")
+    achados[0]["fechamento"] = cfg
     return achados[0]["nome"]
 
 

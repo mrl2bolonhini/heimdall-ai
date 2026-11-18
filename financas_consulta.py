@@ -29,21 +29,28 @@ def resolver_conta(con, trecho: str) -> str:
     raise ValueError("Mais de uma conta combina: " + "; ".join(achadas) + ". Escreva um pedaço maior do nome.")
 
 
-def _ultimo_fechamento(hoje: date, dia: int) -> date:
-    """Data do último fechamento (dia do mês, ajustado ao fim de meses curtos) anterior a hoje."""
-    def em(ano, mes):
+def _ultimo_fechamento(hoje: date, regra) -> date:
+    """Data do último fechamento até hoje. `regra` é um dia fixo do mês (int ou {"dia": 27}) ou {"vence": 1, "antes": 7} (fecha N dias antes do vencimento)."""
+    if isinstance(regra, int):
+        regra = {"dia": regra}
+
+    def em(ano, mes, dia):
         return date(ano, mes, min(dia, calendar.monthrange(ano, mes)[1]))
-    f = em(hoje.year, hoje.month)
-    if f >= hoje:
-        ano, mes = (hoje.year - 1, 12) if hoje.month == 1 else (hoje.year, hoje.month - 1)
-        f = em(ano, mes)
-    return f
+    candidatas = []
+    for desloc in (-2, -1, 0, 1):
+        mes0 = hoje.month - 1 + desloc
+        ano, mes = hoje.year + mes0 // 12, mes0 % 12 + 1
+        if "dia" in regra:
+            candidatas.append(em(ano, mes, regra["dia"]))
+        else:
+            candidatas.append(em(ano, mes, regra["vence"]) - timedelta(days=regra["antes"]))
+    return max(c for c in candidatas if c <= hoje)
 
 
-def fatura_calculada(con, conta: str, dia: int, hoje: date = None) -> tuple:
+def fatura_calculada(con, conta: str, regra, hoje: date = None) -> tuple:
     """Fatura em aberto estimada pelas compras do cartão desde o dia seguinte ao último fechamento. Devolve (centavos, início)."""
     hoje = hoje or date.today()
-    inicio = _ultimo_fechamento(hoje, dia) + timedelta(days=1)
+    inicio = _ultimo_fechamento(hoje, regra) + timedelta(days=1)
     total = 0
     for r in con.execute("SELECT valor, desc_norm, categoria FROM transacoes WHERE conta=? AND data>=? AND data<=?", (conta, inicio.isoformat(), hoje.isoformat())):
         if r["valor"] > 0 and any(p in r["desc_norm"] for p in ("pagamento", "pgto", "pag fatura", "fatura")):
@@ -84,8 +91,8 @@ def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
                 fat = (f"fatura a vencer de {_real(cr['fatura_valor'])}, vence em {fn.data_br(cr['fatura_vence'])}; " if cr.get("fatura_aberta")
                        else f"última fatura de {_real(cr['fatura_valor'])}, venceu em {fn.data_br(cr['fatura_vence'])}; ")
             if con is not None and g.get("fechamento"):
-                v, ini = fatura_calculada(con, g["nome"], int(g["fechamento"]), hoje)
-                fat = f"fatura em aberto de {_real(v)} (calculada pelas compras desde {fn.data_br(ini.isoformat())}, fechamento dia {g['fechamento']}); " + ("" if not fat else "além disso, " + fat)
+                v, ini = fatura_calculada(con, g["nome"], g["fechamento"], hoje)
+                fat = f"fatura em aberto de {_real(v)} (calculada pelas compras desde {fn.data_br(ini.isoformat())}); " + ("" if not fat else "além disso, " + fat)
             linhas.append(f"{i}. {g['nome']}: {fat}usado do limite (saldo devedor total, com parcelas futuras) de {_real(s)}" + (" (" + ", ".join(extra) + ")" if extra else "") + ".")
         else:
             disponivel += s

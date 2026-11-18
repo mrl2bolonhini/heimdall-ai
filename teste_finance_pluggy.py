@@ -209,17 +209,19 @@ con11 = fn.conectar(d / "f.db")
 fn.importar_itens(con11, [{"data": "2026-10-20", "valor": -10000, "descricao": "ANTES", "fitid": "a"}, {"data": "2026-10-28", "valor": -20000, "descricao": "COMPRA 1", "fitid": "b"},
                           {"data": "2026-11-10", "valor": -30000, "descricao": "COMPRA 2", "fitid": "c"}, {"data": "2026-11-12", "valor": 99000, "descricao": "PAGAMENTO RECEBIDO", "fitid": "d"},
                           {"data": "2026-11-15", "valor": 5000, "descricao": "ESTORNO LOJA", "fitid": "e"}], "pluggy", "Meu Pluggy", "Itaú cartão de crédito")
-v, ini = fc.fatura_calculada(con11, "Itaú cartão de crédito", 27, date(2026, 11, 18))
+v, ini = fc.fatura_calculada(con11, "Itaú cartão de crédito", {"dia": 27}, date(2026, 11, 18))
 confere("fatura calculada: compras desde o dia seguinte ao fechamento, sem pagamento, com estorno", v == 45000 and ini == date(2026, 10, 28), (v, ini))
 est5 = {"contas": {"x": {"nome": "Itaú cartão de crédito", "tipo": "CREDIT", "saldo": 1000}, "y": {"nome": "Nubank cartão de crédito", "tipo": "CREDIT", "saldo": 1}}}
-confere("definir fechamento acha o cartão por pedaço do nome", fp.definir_fechamento(est5, "itau", 27) == "Itaú cartão de crédito" and est5["contas"]["x"]["fechamento"] == 27)
+confere("definir fechamento acha o cartão por pedaço do nome", fp.definir_fechamento(est5, "itau", "1:7") == "Itaú cartão de crédito" and est5["contas"]["x"]["fechamento"] == {"vence": 1, "antes": 7})
 try:
     fp.definir_fechamento(est5, "cartao", 3)
     confere("nome ambíguo dá erro", False)
 except fp.ErroPluggy:
     confere("nome ambíguo dá erro", True)
 txt4 = fc.texto_saldos(est5, con11, date(2026, 11, 18))
-confere("saldos mostram a fatura em aberto calculada", "fatura em aberto de R$ 450,00" in txt4 and "fechamento dia 27" in txt4, txt4)
+fe = fc._ultimo_fechamento
+confere("vence dia 1 e fecha 7 dias antes: 18/11 → 25/10... depende do mês; 24/11 e 02/12 → 24/11", fe(date(2026, 11, 18), {"vence": 1, "antes": 7}) == date(2026, 10, 25) and fe(date(2026, 11, 24), {"vence": 1, "antes": 7}) == date(2026, 11, 24) and fe(date(2026, 12, 2), {"vence": 1, "antes": 7}) == date(2026, 11, 24), [fe(date(2026, 11, 18), {"vence": 1, "antes": 7}), fe(date(2026, 11, 24), {"vence": 1, "antes": 7}), fe(date(2026, 12, 2), {"vence": 1, "antes": 7})])
+confere("saldos mostram a fatura em aberto calculada", "fatura em aberto de R$ 450,00" in txt4, txt4)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

@@ -178,14 +178,12 @@ def main() -> None:
             arq = DIR_DADOS / "pluggy_estado.json"
             estado = fpl.ler_estado(arq)
             for par in a.fechamento:
-                trecho, _, dia = par.partition("=")
-                if not dia.strip().isdigit():
-                    sys.exit("Use --fechamento PEDAÇO_DO_NOME=DIA, por exemplo: --fechamento itau=27")
+                trecho, _, regra = par.partition("=")
                 try:
-                    nome = fpl.definir_fechamento(estado, trecho, int(dia))
+                    nome = fpl.definir_fechamento(estado, trecho, regra)
                 except fpl.ErroPluggy as ex:
                     sys.exit(str(ex))
-                print(f"O cartão {nome} fecha a fatura no dia {int(dia)}.")
+                print(f"Guardei o fechamento do cartão {nome}: {regra.strip()}.")
             fpl.gravar_estado(arq, estado)
         elif a.saldo or a.ultimos or a.resumo:
             import financas_consulta as fc
