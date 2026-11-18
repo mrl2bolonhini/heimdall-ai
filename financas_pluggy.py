@@ -406,8 +406,9 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
             ult = con_leitura.execute("SELECT MAX(data) AS d FROM transacoes WHERE conta=?", (nome,)).fetchone()["d"]
             ini = date.fromisoformat(ult) + timedelta(days=1) if ult else hoje - timedelta(days=JANELA_INICIAL)
         ini = min(ini, hoje)
-        itens = para_itens(c, cli.transacoes(c["id"], ini, hoje))
-        pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat()})
+        recebidas = cli.transacoes(c["id"], ini, hoje)
+        itens = para_itens(c, recebidas)
+        pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat(), "recebidas": len(recebidas)})
     return {"pacotes": pacotes, "avisos": avisos}
 
 
@@ -418,7 +419,7 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
     guardados = estado.setdefault("contas", {})
     for p in coleta["pacotes"]:
         r = fn.importar_itens(con, p["itens"], "pluggy", "Meu Pluggy", p["nome"], agora)
-        resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"]})
+        resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"], "recebidas": p.get("recebidas", len(p["itens"]))})
         guardados[p["id"]] = {"nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"]}
     estado["avisos"] = coleta["avisos"]
     estado["ultima"] = (agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

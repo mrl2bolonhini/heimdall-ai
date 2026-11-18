@@ -315,6 +315,45 @@ def apagar_importacao_vazia(con, importacao_id: int) -> None:
     con.commit()
 
 
+def _contagens_por_origem(con, conta: str, data: str, valor: int) -> tuple:
+    """Quantos lançamentos da conta, no dia e valor, vieram de extrato/fatura e quantos do Pluggy."""
+    e = p = 0
+    for r in con.execute("SELECT COALESCE(i.formato,'') AS f, COUNT(*) AS n FROM transacoes t LEFT JOIN importacoes i ON i.id=t.importacao_id WHERE t.conta=? AND t.data=? AND t.valor=? GROUP BY f", (conta, data, valor)):
+        if r["f"] == "pluggy":
+            p += r["n"]
+        else:
+            e += r["n"]
+    return e, p
+
+
+def _ja_veio_de_extrato(con, conta: str, data: str, valor: int) -> bool:
+    e, p = _contagens_por_origem(con, conta, data, valor)
+    return p < e
+
+
+def repetidos_entre_fontes(con, aplicar: bool = False) -> dict:
+    """Lançamentos do Pluggy que repetem um de extrato/fatura (mesma conta, dia e valor). Com aplicar, apaga o do Pluggy (nunca o que você mexeu).
+    Devolve {conta: quantidade}."""
+    achados = {}
+    grupos = con.execute("""SELECT t.conta, t.data, t.valor FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id
+                            WHERE i.formato='pluggy' GROUP BY t.conta, t.data, t.valor""").fetchall()
+    for g in grupos:
+        e, p = _contagens_por_origem(con, g["conta"], g["data"], g["valor"])
+        if not e or not p:
+            continue
+        ids = [r["id"] for r in con.execute("SELECT t.id FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=? AND t.manual=0 ORDER BY t.id DESC", (g["conta"], g["data"], g["valor"]))]
+        n = min(e, len(ids))
+        if n <= 0:
+            continue
+        achados[g["conta"]] = achados.get(g["conta"], 0) + n
+        if aplicar:
+            for i in ids[:n]:
+                con.execute("DELETE FROM transacoes WHERE id=?", (i,))
+    if aplicar:
+        con.commit()
+    return achados
+
+
 def nomes_antigos(con, conta: str) -> list:
     """Nomes que a conta já teve (renomeada com --rename-account). Os lançamentos antigos guardam o código gerado com o nome da época;
     por isso a importação também confere o código com esses nomes, para não duplicar depois de uma troca de nome."""
@@ -353,6 +392,9 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
             if con.execute("SELECT 1 FROM transacoes WHERE hash IN (%s) LIMIT 1" % ",".join("?" * len(alternativas)), alternativas).fetchone():
                 repetidas += 1
                 continue
+        if formato == "pluggy" and _ja_veio_de_extrato(con, conta, it["data"], it["valor"]):
+            repetidas += 1  # o mesmo lançamento (conta, dia e valor) já veio de extrato ou fatura importados; não conta de novo
+            continue
         cat = categorizar(con, dn, regras)
         if cat == SEM_CATEGORIA and it["valor"] > 0:
             # cartão de crédito não gera renda: crédito sem regra (pagamento, estorno de encargo) fica fora das receitas

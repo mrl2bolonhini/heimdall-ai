@@ -125,6 +125,18 @@ est3 = {"contas": {CONTA_CARTAO: {"nome": "Pluggy: platinum cartão", "ultimo": 
 feitos = fp.padronizar_nomes(con3, est3, cfg, fp.Cliente(cfg, api))
 confere("padronizar renomeia com histórico e atualiza o estado", feitos and feitos[0][1] == "Nubank cartão de crédito" and feitos[0][2] == 1 and est3["contas"][CONTA_CARTAO]["nome"] == "Nubank cartão de crédito", feitos)
 confere("padronizar de novo não faz nada", fp.padronizar_nomes(con3, est3, cfg, fp.Cliente(cfg, api)) == [])
+# Pluggy não repete o que já veio de extrato, e dá para limpar o que já repetiu
+con4 = fn.conectar(d / "u.db")
+fn.importar_itens(con4, [{"data": "2026-10-01", "valor": -1000, "descricao": "MERCADO", "fitid": "o1"}, {"data": "2026-10-02", "valor": -500, "descricao": "CAFE"}], "ofx", "x.ofx", "Itaú conta corrente")
+pl = [{"data": "2026-10-01", "valor": -1000, "descricao": "MERCADO XYZ", "fitid": "p1"}, {"data": "2026-10-03", "valor": -700, "descricao": "NOVO", "fitid": "p2"}]
+r7 = fn.importar_itens(con4, pl, "pluggy", "Meu Pluggy", "Itaú conta corrente")
+confere("Pluggy pula lançamento que já veio de extrato e grava o novo", r7["novas"] == 1 and r7["repetidas"] == 1, r7)
+con4.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES('p','Itaú conta corrente','x','pluggy',1,0)")
+iid = con4.execute("SELECT MAX(id) FROM importacoes").fetchone()[0]
+con4.execute("INSERT INTO transacoes(conta,data,valor,descricao,desc_norm,categoria,hash,importado_em,importacao_id) VALUES('Itaú conta corrente','2026-10-02',-500,'CAFE X','cafe x','Outros','h-dup','x',?)", (iid,))
+con4.commit()
+confere("dedupe só mostra sem apagar", fn.repetidos_entre_fontes(con4) == {"Itaú conta corrente": 1} and con4.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 4)
+confere("dedupe com aplicar apaga o do Pluggy e mantém o de extrato", fn.repetidos_entre_fontes(con4, True) == {"Itaú conta corrente": 1} and con4.execute("SELECT COUNT(*) FROM transacoes WHERE descricao='CAFE'").fetchone()[0] == 1 and con4.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 3)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

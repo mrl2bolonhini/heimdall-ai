@@ -95,6 +95,7 @@ def main() -> None:
     g.add_argument("--boletos", action="store_true")
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
     g.add_argument("--sincronizar", action="store_true")
+    g.add_argument("--deduplicar", action="store_true")
     g.add_argument("--padronizar-nomes", dest="padronizar_nomes", action="store_true")
     g.add_argument("--renomear-conta", dest="renomear_conta", action="append")
     g.add_argument("--guardar-pluggy", dest="guardar_pluggy", choices=["id", "segredo", "itens"])
@@ -162,6 +163,17 @@ def main() -> None:
             if a.guardar_pluggy == "segredo" and shutil.which("pbcopy"):
                 subprocess.run(["pbcopy"], input=b"", timeout=10)
                 print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
+        elif a.deduplicar:
+            con = _banco()
+            achados = fn.repetidos_entre_fontes(con, aplicar=a.forcar)
+            for conta, n in sorted(achados.items()):
+                print(f"{conta}: {n} lançamento(s) do Pluggy repetem lançamentos de extrato (mesmo dia e valor).")
+            if not achados:
+                print("Nenhum lançamento do Pluggy repete extrato ou fatura.")
+            elif a.forcar:
+                print(f"Apaguei {sum(achados.values())} lançamento(s) do Pluggy repetidos; os de extrato ficam. Rode de novo para conferir.")
+            else:
+                print("Nada foi apagado. Para apagar os do Pluggy repetidos, rode: heimdall finance --dedupe --force")
         elif a.padronizar_nomes:
             import financas_pluggy as fpl
             cfg = fpl.credenciais()
@@ -222,7 +234,7 @@ def main() -> None:
                         sys.exit("Use a data no formato AAAA-MM-DD, por exemplo 2026-01-01.")
                 r = fpl.executar(con, cfg, arq, desde)
                 for c in r["contas"]:
-                    print(f"{c['conta']}: {c['novas']} nova(s), {c['repetidas']} repetida(s), a partir de {fn.data_br(c['desde'])}.")
+                    print(f"{c['conta']}: {c['novas']} nova(s), {c['repetidas']} repetida(s), a partir de {fn.data_br(c['desde'])} (o Pluggy devolveu {c.get('recebidas', 0)}).")
                 if not r["contas"]:
                     print("Nenhuma conta encontrada nos bancos conectados.")
                 for av in r["avisos"]:
