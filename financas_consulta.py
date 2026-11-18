@@ -49,8 +49,6 @@ def texto_saldos(estado: dict) -> str:
                 extra.append(f"limite de {_real(cr['limite'])}")
             if "disponivel" in cr:
                 extra.append(f"disponível {_real(cr['disponivel'])}")
-            if "limite" in cr and "disponivel" in cr:
-                extra.append(f"usado {_real(cr['limite'] - cr['disponivel'])}")
             if cr.get("fecha"):
                 extra.append(f"fatura fecha em {fn.data_br(cr['fecha'])}")
             if cr.get("vence") and "fatura_valor" not in cr:
@@ -61,13 +59,13 @@ def texto_saldos(estado: dict) -> str:
             if "fatura_valor" in cr:
                 fat = (f"fatura a vencer de {_real(cr['fatura_valor'])}, vence em {fn.data_br(cr['fatura_vence'])}; " if cr.get("fatura_aberta")
                        else f"última fatura de {_real(cr['fatura_valor'])}, venceu em {fn.data_br(cr['fatura_vence'])}; ")
-            linhas.append(f"{i}. {g['nome']}: {fat}saldo devedor informado pelo banco de {_real(s)}" + (" (" + ", ".join(extra) + ")" if extra else "") + ".")
+            linhas.append(f"{i}. {g['nome']}: {fat}usado do limite (saldo devedor total, com parcelas futuras) de {_real(s)}" + (" (" + ", ".join(extra) + ")" if extra else "") + ".")
         else:
             disponivel += s
             linhas.append(f"{i}. {g['nome']}: saldo de {_real(s)}.")
     quando = estado.get("ultima") or ""
     saida = ["Saldos das contas, na última leitura do banco" + (f" ({fn.data_br(quando[:10])} às {quando[11:16]})" if quando else "") + ":"] + linhas
-    saida.append(f"Total nas contas: {_real(disponivel)}. Total do saldo devedor nos cartões: {_real(devido)}. Diferença: {_real(disponivel - devido)}.")
+    saida.append(f"Total nas contas: {_real(disponivel)}. Total usado dos limites dos cartões: {_real(devido)}. Diferença: {_real(disponivel - devido)}.")
     if sem:
         saida.append(f"{sem} conta(s) sem saldo informado; rode heimdall finance --sync para atualizar.")
     return "\n".join(saida)
