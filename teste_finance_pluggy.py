@@ -269,6 +269,15 @@ ss = fp.lancamentos_sem_fatura(trs2)
 confere("sem fatura: soma o que não tem fatura, com a compra atrasada e sem o pagamento", ss == {"valor": 15000, "n": 2, "desde": "2026-10-22"}, ss)
 ss_velho = fp.lancamentos_sem_fatura(trs2 + [{"amount": 2399.7, "date": "2026-05-28", "description": "IPHONE PENDENTE ANTIGA", "creditCardMetadata": {}}], date(2026, 11, 18))
 confere("sem fatura: pendência antiga presa (resíduo de compra parcelada) não conta", ss_velho["valor"] == 15000 and ss_velho["n"] == 2, ss_velho)
+fat_mp = [{"id": f"B{i}", "dueDate": f"2026-0{i}-14", "totalAmount": v} for i, v in enumerate([176.42, 176.42, 176.42, 562.74, 301.76], 1)]
+trs_mp = [{"amount": 98.73, "date": "2026-10-20", "description": "Parcela da fatura", "creditCardMetadata": {"billId": "B5"}},
+          {"amount": 26.61, "date": "2026-11-10", "description": "Juros", "creditCardMetadata": {"billId": "B5"}},
+          {"amount": -301.76, "date": "2026-11-16", "description": "Pagamento recebido", "creditCardMetadata": {"billId": "B5"}}]
+confere("valor fixo de fatura que o banco não lista (Mercado Pago) é detectado", fp.valor_recorrente(trs_mp, fat_mp) == {"valor": 17642, "n": 4}, fp.residuos_das_faturas(trs_mp, fat_mp))
+fat_var = [{"id": f"V{i}", "dueDate": f"2026-0{i}-14", "totalAmount": v} for i, v in enumerate([100.0, 220.0, 310.0, 450.0, 500.0], 1)]
+confere("totais diferentes e sem lançamentos: nenhum valor fixo repetido", fp.valor_recorrente([], fat_var) is None)
+fd = fc.fatura_detalhada(con12, cartao12, {"vence": 1, "antes": 7}, date(2026, 11, 18), [], {"valor": 9873 - 9873, "n": 0, "desde": "2026-11-10"}, {"valor": 17642, "n": 4})
+confere("fatura estimada soma o valor fixo", fd["total"] == 17642 and fd["recorrente"]["n"] == 4, fd)
 confere("banco que não liga transações a faturas: não usa a regra", fp.lancamentos_sem_fatura([{"amount": 1.0, "date": "2026-11-01", "description": "X"}]) is None)
 det2 = fc.fatura_detalhada(con12, cartao12, {"vence": 1, "antes": 7}, date(2026, 11, 18), pa, ss)
 confere("fatura estimada usa o que está sem fatura mais as parcelas", det2["total"] == 15000 + esperado and det2["inicio"] == date(2026, 10, 22), det2)

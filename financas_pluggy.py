@@ -293,6 +293,40 @@ def _proxima_fatura(faturas: list, hoje: date) -> dict:
     return {"fatura_vence": venc, "fatura_valor": valor, "fatura_aberta": bool(futuras)}
 
 
+def residuos_das_faturas(transacoes: list, faturas: list) -> list:
+    """Para cada fatura fechada: total informado menos a soma dos lançamentos positivos ligados a ela (centavos). [(vencimento, total, residuo)], da mais antiga à mais recente."""
+    saida = []
+    for f in faturas:
+        try:
+            venc, total = str(f.get("dueDate") or "")[:10], _centavos(f["totalAmount"])
+        except Exception:  # noqa: BLE001
+            continue
+        if not f.get("id") or not venc:
+            continue
+        soma = 0
+        for t in transacoes:
+            if ((t.get("creditCardMetadata") or {}).get("billId") or t.get("billId")) == f["id"] and t.get("amount") is not None:
+                try:
+                    v = _centavos(t["amount"])
+                except Exception:  # noqa: BLE001
+                    continue
+                if v > 0:
+                    soma += v
+        saida.append((venc, total, total - soma))
+    return sorted(saida)
+
+
+def valor_recorrente(transacoes: list, faturas: list):
+    """Valor fixo que entra em toda fatura sem aparecer como transação (ex.: Mercado Pago, R$ 176,42). Vale quando a última fatura fechada tem esse resíduo
+    e ele se repete em pelo menos outras 3 faturas. Devolve {"valor", "n"} (centavos) ou None."""
+    res = residuos_das_faturas(transacoes, faturas)
+    if len(res) < 4 or res[-1][2] <= 0:
+        return None
+    alvo = res[-1][2]
+    n = sum(1 for r in res if abs(r[2] - alvo) <= 1)
+    return {"valor": alvo, "n": n} if n >= 4 else None
+
+
 def parcelas_da_fatura_aberta(transacoes: list, faturas: list) -> list:
     """Parcelas de compras antigas que caem na fatura em aberto. O banco só lista uma parcela depois que ela entra numa fatura fechada (com a data da
     compra e o código da fatura); então a próxima parcela de cada compra, com o mesmo valor, cai na fatura em aberto quando a parcela atual
@@ -525,6 +559,9 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
             if faturas:
                 longas = cli.transacoes(c["id"], hoje - timedelta(days=PARCELADOS_DIAS), hoje)
                 credito["parcelas_abertas"] = parcelas_da_fatura_aberta(longas, faturas)
+                rec = valor_recorrente(longas, faturas)
+                if rec:
+                    credito["recorrente"] = rec
                 sem = lancamentos_sem_fatura(longas, hoje)
                 if sem is not None:
                     credito["sem_fatura"] = sem
@@ -656,6 +693,11 @@ def diagnosticar_cartao(cfg: dict, estado: dict, trecho: str, hoje: date = None,
     saida.append(f"Parceladas ({len(parceladas)}), da mais recente para a mais antiga:")
     for n, t in enumerate(parceladas[:60], 1):
         saida.append(linha(t, n))
+    saida.append("Resíduo por fatura (total informado menos lançamentos positivos ligados a ela):")
+    for venc, total, resid in residuos_das_faturas(trs, faturas):
+        saida.append(f"fatura de {venc}: total {total / 100:.2f}, resíduo {resid / 100:.2f}.")
+    _rec = valor_recorrente(trs, faturas)
+    saida.append(f"Valor recorrente detectado: {_rec['valor'] / 100:.2f}, em {_rec['n']} faturas." if _rec else "Nenhum valor recorrente detectado.")
     def _sem_fatura(t):
         m = t.get("creditCardMetadata") or {}
         d = fn.norm(str(t.get("description") or ""))
