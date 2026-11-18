@@ -567,18 +567,27 @@ def diagnosticar_cartao(cfg: dict, estado: dict, trecho: str, hoje: date = None,
     for f in sorted(faturas, key=lambda x: str(x.get("dueDate") or "")):
         ids[f.get("id")] = f"fatura {len(ids) + 1}"
         saida.append(f"{ids[f.get('id')]}: vence em {str(f.get('dueDate') or '')[:10]}, total {f.get('totalAmount')}, mínimo {f.get('minimumPaymentAmount')}.")
-    trs = cli.transacoes(cid, hoje - timedelta(days=dias), hoje)
-    saida.append(f"Transações dos últimos {dias} dias: {len(trs)}.")
-    for n, t in enumerate(sorted(trs, key=lambda x: str(x.get("date") or ""), reverse=True)[:80], 1):
+    trs = cli.transacoes(cid, hoje - timedelta(days=max(dias, 240)), hoje)
+    saida.append(f"Transações dos últimos {max(dias, 240)} dias: {len(trs)}.")
+
+    def linha(t, ordem):
         m = t.get("creditCardMetadata") or {}
-        partes = [str(t.get("date") or "")[:10], f"valor {t.get('amount')}", f"tipo {t.get('type')}", f"situação {t.get('status')}", str(t.get("description") or "")[:40]]
+        partes = [str(t.get("date") or "")[:10], f"valor {t.get('amount')}", f"situação {t.get('status')}", str(t.get("description") or "")[:40]]
         if m.get("installmentNumber"):
             partes.append(f"parcela {m.get('installmentNumber')}/{m.get('totalInstallments')}")
         if m.get("purchaseDate"):
             partes.append(f"compra em {str(m['purchaseDate'])[:10]}")
         bid = m.get("billId") or t.get("billId")
-        partes.append(ids.get(bid, "sem fatura") if bid else "sem fatura")
-        saida.append(f"{n}. " + ", ".join(partes) + ".")
+        partes.append(ids.get(bid, "fatura desconhecida") if bid else "sem fatura")
+        return f"{ordem}. " + ", ".join(partes) + "."
+    ordenadas = sorted(trs, key=lambda x: str(x.get("date") or ""), reverse=True)
+    parceladas = [t for t in ordenadas if ((t.get("creditCardMetadata") or {}).get("installmentNumber") or 0) >= 1 or re.search(r"\d{2}/\d{2}\s*$", str(t.get("description") or ""))]
+    saida.append(f"Parceladas ({len(parceladas)}), da mais recente para a mais antiga:")
+    for n, t in enumerate(parceladas[:60], 1):
+        saida.append(linha(t, n))
+    saida.append("Últimas 12 transações em geral:")
+    for n, t in enumerate(ordenadas[:12], 1):
+        saida.append(linha(t, n))
     return saida
 
 
