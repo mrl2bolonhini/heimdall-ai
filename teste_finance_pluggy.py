@@ -170,6 +170,8 @@ for k, ds in (("a", "PG *ORDEM ROSACRUZ01/03"), ("b", "PG *ORDEM ROSACRUZ03/03")
 con8.commit()
 fn.repetidos_entre_fontes(con8, True)
 confere("limpeza apaga a 01/03 do Pluggy e mantém a 03/03", [r[0] for r in con8.execute("SELECT descricao FROM transacoes ORDER BY id")] == ["PG *O RDEM ROSA 01/03", "PG *ORDEM ROSACRUZ03/03"], [r[0] for r in con8.execute("SELECT descricao FROM transacoes")])
+sim = fp.simular(con, cfg, d / "sim.json", date(2026, 1, 1), hoje, fp.Cliente(cfg, api))
+confere("simular devolve datas por conta e não grava", sim and all("primeira" in x for x in sim) and not (d / "sim.json").exists(), sim)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

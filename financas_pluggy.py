@@ -479,6 +479,17 @@ def definir_nome(estado: dict, id_conta: str, nome: str) -> None:
     estado["contas"][id_conta].pop("ultimo", None)  # recomeça a contagem de datas para o novo nome
 
 
+def simular(con, cfg: dict, estado_arq: Path, desde: date, hoje: date = None, cliente: Cliente = None) -> list:
+    """Só olha até onde o Pluggy devolve histórico: lê as contas e devolve, por conta, quantos lançamentos vieram e o dia mais antigo e o mais recente. Não grava nada."""
+    estado = ler_estado(estado_arq)
+    coleta = coletar(cfg, estado, con, desde, hoje, cliente)
+    saida = []
+    for p in coleta["pacotes"]:
+        datas = sorted(i["data"] for i in p["itens"])
+        saida.append({"conta": p["nome"], "recebidas": p.get("recebidas", 0), "validas": len(p["itens"]), "primeira": datas[0] if datas else "", "ultima": datas[-1] if datas else ""})
+    return saida
+
+
 def executar(con, cfg: dict, estado_arq: Path, desde: date = None, hoje: date = None, cliente: Cliente = None) -> dict:
     estado = ler_estado(estado_arq)
     coleta = coletar(cfg, estado, con, desde, hoje, cliente)

@@ -7,6 +7,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Cartão sem nome de banco (como "platinum") herda o banco da conta do mesmo item, então o cartão do Nubank sai como "Nubank cartão de crédito".
 - `heimdall finance --sync --list` mostra também o tipo (corrente, poupança) e o saldo, e avisa quando já existe no Finance uma conta importada por extrato do mesmo banco com outro nome.
 - A sincronização do Pluggy não grava mais um lançamento que já veio de extrato ou fatura (mesma conta, dia e valor), e `heimdall finance --dedupe` mostra (com exemplos), e com `--force` apaga, os do Pluggy já gravados que repetem um de extrato (nunca os que você mexeu). O pareamento usa a descrição parecida e a parcela (01/03 e 03/03 são compras diferentes), e só depois a quantidade. A saída da sincronização diz quantos lançamentos o Pluggy devolveu por conta.
+- Novo `heimdall finance --sync --since DATA --simulate` mostra, por conta, quantos lançamentos o Pluggy devolve e de que dia a que dia, comparado com o mais antigo que o Finance já tem, sem gravar nada.
 - Novo `heimdall finance --standardize-names` renomeia sozinho as contas do Pluggy para o padrão, sem digitar nenhum nome (útil quando as aspas do terminal atrapalham).
 - Novo `heimdall finance --rename-account "ATUAL=NOVO"` (pode repetir) troca o nome de uma conta já importada, com todo o histórico. O Heimdall lembra os nomes antigos e a conta do Pluggy passa a usar o nome novo sem recomeçar as datas, então reler os mesmos lançamentos depois da troca não duplica nada.
 

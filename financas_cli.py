@@ -108,6 +108,7 @@ def main() -> None:
     ap.add_argument("--listar", action="store_true")
     ap.add_argument("--nomear", action="append", default=[])
     ap.add_argument("--forcar", action="store_true")
+    ap.add_argument("--simular", action="store_true")
     ap.add_argument("--abrir", action="store_true")
     a = ap.parse_args()
     try:
@@ -236,6 +237,14 @@ def main() -> None:
                         desde = date.fromisoformat(a.desde)
                     except ValueError:
                         sys.exit("Use a data no formato AAAA-MM-DD, por exemplo 2026-01-01.")
+                if a.simular:
+                    if not desde:
+                        sys.exit("Use com a data de início, por exemplo: heimdall finance --sincronizar --simular --desde 2024-01-01")
+                    for r in fpl.simular(con, cfg, arq, desde):
+                        antigo = con.execute("SELECT MIN(data) AS d FROM transacoes WHERE conta=?", (r["conta"],)).fetchone()["d"]
+                        print(f"{r['conta']}: o Pluggy devolveu {r['recebidas']} lançamento(s), de {fn.data_br(r['primeira']) if r['primeira'] else 'nenhum'} a {fn.data_br(r['ultima']) if r['ultima'] else 'nenhum'}. No Finance hoje o mais antigo é {fn.data_br(antigo) if antigo else 'nenhum'}.")
+                    print("\nNada foi gravado: foi só uma simulação.")
+                    return
                 r = fpl.executar(con, cfg, arq, desde)
                 for c in r["contas"]:
                     print(f"{c['conta']}: {c['novas']} nova(s), {c['repetidas']} repetida(s), a partir de {fn.data_br(c['desde'])} (o Pluggy devolveu {c.get('recebidas', 0)}).")

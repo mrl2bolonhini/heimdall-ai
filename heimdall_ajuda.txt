@@ -197,6 +197,7 @@ Opções:
   --since AAAA-MM-DD   com --sync, busca desde essa data (o Meu Pluggy guarda até 12 meses). Sem isso, começa no dia seguinte ao último extrato importado da conta, ou 90 dias atrás
   --list               com --sync, mostra as contas dos bancos e o nome de cada uma no Finance
   --name N=NOME        com --sync, dá o nome N da lista a uma conta
+  --simulate           com --sync e --since, só mostra até onde o Pluggy devolve histórico de cada conta, sem gravar nada
   --dedupe             mostra (e, com --force, apaga) lançamentos do Pluggy que repetem extrato ou fatura já importados (mesma conta, dia e valor)
   --standardize-names  renomeia sozinho, com o histórico, as contas do Pluggy para o padrão (Banco conta corrente, Banco cartão de crédito), sem digitar nomes
   --rename-account "ATUAL=NOVO"  troca o nome de uma conta já importada por extrato, com todo o histórico (faça antes da primeira sincronização)
