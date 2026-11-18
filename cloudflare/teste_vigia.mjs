@@ -5,7 +5,8 @@ import path from "node:path";
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vigia-"));
 const fonte = fs.readFileSync(new URL("./vigia.js", import.meta.url), "utf8").replace('import { EmailMessage } from "cloudflare:email";', "class EmailMessage { constructor(...a) { this.a = a; } }");
 fs.writeFileSync(path.join(dir, "vigia.mjs"), fonte);
-const { rodar } = await import(path.join(dir, "vigia.mjs"));
+const { default: vigia } = await import(path.join(dir, "vigia.mjs"));
+const rodar = async (env) => { let p; await vigia.scheduled(null, env, { waitUntil: (x) => { p = x; } }); await p; };   // pelo agendamento, como a Cloudflare chama
 let falhas = 0;
 const confere = (n, ok) => { console.log((ok ? "OK    " : "FALHA ") + n); if (!ok) falhas++; };
 class KV { constructor() { this.m = new Map(); this.gravacoes = 0; }

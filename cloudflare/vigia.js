@@ -69,7 +69,6 @@ async function rodar(env) {
   return agora;
 }
 
-export { rodar };
 export default {
   async scheduled(evento, env, ctx) { ctx.waitUntil(rodar(env)); },
   // Abrir o endereço do Worker mostra só o último estado (sem dados sensíveis); ?avisar=teste não existe de propósito.
