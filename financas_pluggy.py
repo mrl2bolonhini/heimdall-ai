@@ -72,6 +72,12 @@ def guardar_chave(qual: str, valor: str, env_path: Path = None) -> str:
     if qual not in CHAVES:
         raise ErroPluggy("Escolha id, segredo ou itens.")
     valor = (valor or "").strip().strip("\"'")
+    if qual == "itens" and "item=" in valor:
+        # endereço da página Demo do Dashboard (…/applications/ID-DA-APLICAÇÃO/demo?item=ID-DO-ITEM): vale só o id do item
+        achado = urllib.parse.parse_qs(urllib.parse.urlparse(valor).query).get("item") or []
+        if not achado:
+            raise ErroPluggy("Não achei o id do item no endereço copiado. Copie o endereço da página depois de abrir o item.")
+        valor = achado[0]
     if "\n" in valor or "\r" in valor or " " in valor.replace(", ", ","):
         raise ErroPluggy("O que está na área de transferência não parece a chave: tem espaços ou várias linhas. Copie só o valor e tente de novo.")
     if qual == "itens":
