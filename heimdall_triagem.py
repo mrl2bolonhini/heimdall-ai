@@ -8,7 +8,7 @@ avisar pelo Bark enquanto o lembrete estiver pendente. Você age no próprio lem
     mudar o horário        = adiar (o aviso espera até esse horário)
 
 Regras de insistência (constantes abaixo):
-    - Aviso a cada 2 horas, das 7h às 21h (fuso de São Paulo). À noite não toca.
+    - Aviso a cada 4 horas (2 horas se houver item crítico), das 7h às 21h (fuso de São Paulo), num só aviso que lista todos os pendentes. À noite não toca.
     - Prioridade "baixa" no lembrete: o aviso passa a cada 8 horas.
     - Itens CRÍTICOS furam o modo silencioso (Bark nível "critical"). O primeiro aviso de um item crítico sai na hora,
       a qualquer hora; as repetições respeitam o horário das 7h às 21h.
@@ -38,7 +38,8 @@ except Exception:  # noqa: BLE001 - sem tzdata, usa o horário de Brasília sem 
 
 NOME_LISTA = "Heimdall: Triagem"
 HORA_INICIO, HORA_FIM = 7, 21
-INTERVALO = timedelta(hours=2)
+INTERVALO = timedelta(hours=2)          # itens críticos
+INTERVALO_COMUM = timedelta(hours=4)    # itens comuns (prioridade alta ou média)
 INTERVALO_BAIXA = timedelta(hours=8)
 ESCALA_JUSTICA = timedelta(hours=24)
 ADIAR_MIN = 1800            # vencimento a mais de 30 min no futuro conta como adiamento
@@ -286,7 +287,7 @@ def deve_avisar(row: dict, prioridade: str, agora: datetime) -> tuple:
     dentro = HORA_INICIO <= agora.astimezone(FUSO).hour < HORA_FIM
     if not row.get("ultimo_aviso"):
         return (critico or dentro), critico
-    intervalo = INTERVALO_BAIXA if prioridade == "baixa" else INTERVALO
+    intervalo = INTERVALO_BAIXA if prioridade == "baixa" else (INTERVALO if critico else INTERVALO_COMUM)
     return (dentro and agora - _dt(row["ultimo_aviso"]) >= intervalo), critico
 
 
@@ -298,6 +299,23 @@ def montar_aviso(row: dict, critico: bool, pendentes: int, sem_lembrete: bool = 
     else:
         corpo = (corpo + "\n" if corpo else "") + "Abra o app Lembretes, lista " + NOME_LISTA + ". " + INSTRUCAO
     p = {"title": (("CRÍTICO: " if critico else "Triagem: ") + row["titulo"])[:100], "body": corpo[:900], "group": "triagem",
+         "level": "critical" if critico else "timeSensitive", "badge": pendentes}
+    if critico:
+        p["volume"] = 7
+    return p
+
+
+def montar_aviso_agrupado(itens: list, critico: bool, pendentes: int) -> dict:
+    """Um só aviso para vários itens pendentes (em vez de um aviso por item). `itens` é [(row, sem_lembrete)]."""
+    linhas = [f"{n}. {row['titulo'][:90]}" for n, (row, _) in enumerate(itens[:8], 1)]
+    if len(itens) > 8:
+        linhas.append(f"... e mais {len(itens) - 8}.")
+    corpo = "\n".join(linhas)
+    if any(sem for _, sem in itens):
+        corpo += "\nAlguns lembretes ainda não foram criados no app Lembretes (autorização pendente no Mac); o aviso continua até isso ser resolvido."
+    else:
+        corpo += "\nAbra o app Lembretes, lista " + NOME_LISTA + ". " + INSTRUCAO
+    p = {"title": ("CRÍTICO: " if critico else "Triagem: ") + f"{len(itens)} itens pendentes", "body": corpo[:900], "group": "triagem",
          "level": "critical" if critico else "timeSensitive", "badge": pendentes}
     if critico:
         p["volume"] = 7
@@ -369,6 +387,7 @@ def ciclo(osa, enviar=enviar_bark, agora: datetime = None) -> dict:
                 sem_acesso = True
     # 2. lê as suas decisões e decide quem recebe aviso
     a_avisar = []
+    ativos = []  # pendentes que não estão adiados: entram juntos no aviso agrupado
     for tid, row in linhas.items():
         if row["estado"] != "pendente":
             continue
@@ -383,6 +402,7 @@ def ciclo(osa, enviar=enviar_bark, agora: datetime = None) -> dict:
             res["pendentes"] += 1
             if row["adiado_ate"] and _dt(row["adiado_ate"]) > agora:
                 continue
+            ativos.append((tid, row, True))
             avisar, critico = deve_avisar(row, row["prioridade_usuario"], agora)
             if avisar:
                 a_avisar.append((tid, row, critico, True))
@@ -407,13 +427,23 @@ def ciclo(osa, enviar=enviar_bark, agora: datetime = None) -> dict:
             continue
         if row["adiado_ate"]:
             _atualizar(tid, adiado_ate="")
+        ativos.append((tid, row, False))
         avisar, critico = deve_avisar(row, txt if txt != "nenhuma" else row["prioridade_usuario"], agora)
         if avisar:
             a_avisar.append((tid, row, critico, False))
-    for tid, row, critico, sem_lembrete in a_avisar:
-        if enviar(montar_aviso(row, critico, res["pendentes"], sem_lembrete)):
-            _atualizar(tid, avisos=int(row["avisos"] or 0) + 1, ultimo_aviso=_iso(agora))
-            res["avisados"].append({"id": tid, "titulo": row["titulo"], "critico": critico})
+    if a_avisar:
+        critico = any(c for _, _, c, _ in a_avisar)
+        if len(ativos) <= 1:
+            tid, row, critico, sem_lembrete = a_avisar[0]
+            membros = [(tid, row, critico)]
+            payload = montar_aviso(row, critico, res["pendentes"], sem_lembrete)
+        else:  # vários pendentes: um só aviso, que reinicia a contagem de todos os listados
+            membros = [(tid, row, critico) for tid, row, _ in ativos]
+            payload = montar_aviso_agrupado([(row, sem) for _, row, sem in ativos], critico, res["pendentes"])
+        if enviar(payload):
+            for tid, row, crit in membros:
+                _atualizar(tid, avisos=int(row["avisos"] or 0) + 1, ultimo_aviso=_iso(agora))
+                res["avisados"].append({"id": tid, "titulo": row["titulo"], "critico": crit})
         else:
             res["falhas_aviso"] += 1
     return res

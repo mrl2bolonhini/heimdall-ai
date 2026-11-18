@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-18 - Menos avisos da triagem
+- A triagem agora manda um só aviso por rodada, listando todos os itens pendentes, em vez de um aviso por item. Com um único pendente, o aviso continua individual.
+- Itens comuns (prioridade alta ou média) repetem a cada 4 horas, em vez de 2; itens críticos continuam a cada 2 horas e furam o modo silencioso, e o aviso de um grupo com crítico sai como crítico. Itens de prioridade baixa seguem a cada 8 horas. Um aviso reinicia a contagem de todos os itens listados nele. Continua sem tocar das 21h às 7h, exceto o primeiro aviso de um item crítico.
+
 ## 2026-11-18 - Consultas do Finance no terminal
 - `heimdall finance --balance` diz o saldo de cada conta e a fatura em aberto de cada cartão na última leitura do banco, com o total nas contas, o total devido nos cartões e a diferença.
 - Para cartão, o valor que o banco informa é o saldo devedor, que pode incluir parcelas futuras e não é a fatura do mês. Por isso `--balance` mostra o valor do cartão como "usado do limite" (conferido com o Itaú Black: 12.060,31 em uso, fatura aberta de 5.360,92), também pede ao banco as faturas do cartão (rota /bills, quando disponível) e mostra a fatura a vencer e a data de vencimento, e mostra "saldo devedor informado pelo banco" e, quando o banco informa, o limite, o disponível, quanto está usado, o fechamento, o vencimento e o pagamento mínimo.
