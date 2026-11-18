@@ -96,6 +96,7 @@ def main() -> None:
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
     g.add_argument("--sincronizar", action="store_true")
     g.add_argument("--fechamento", action="append")
+    g.add_argument("--diagnosticar-cartao", dest="diag_cartao", metavar="NOME")
     g.add_argument("--saldo", action="store_true")
     g.add_argument("--ultimos", action="store_true")
     g.add_argument("--resumo", action="store_true")
@@ -173,6 +174,16 @@ def main() -> None:
             if a.guardar_pluggy == "segredo" and shutil.which("pbcopy"):
                 subprocess.run(["pbcopy"], input=b"", timeout=10)
                 print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
+        elif a.diag_cartao:
+            import financas_pluggy as fpl
+            cfg = fpl.credenciais()
+            if not cfg:
+                sys.exit("Faltam chaves do Pluggy no .env.")
+            try:
+                for linha in fpl.diagnosticar_cartao(cfg, fpl.ler_estado(DIR_DADOS / "pluggy_estado.json"), a.diag_cartao):
+                    print(linha)
+            except fpl.ErroPluggy as ex:
+                sys.exit(str(ex))
         elif a.fechamento:
             import financas_pluggy as fpl
             arq = DIR_DADOS / "pluggy_estado.json"

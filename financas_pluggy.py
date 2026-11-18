@@ -551,6 +551,37 @@ def definir_fechamento(estado: dict, trecho: str, regra) -> str:
     return achados[0]["nome"]
 
 
+def diagnosticar_cartao(cfg: dict, estado: dict, trecho: str, hoje: date = None, dias: int = 75, cliente: Cliente = None) -> list:
+    """Mostra como o Pluggy devolve as transações e as faturas de UM cartão (data, valor, situação, parcela, data da compra, fatura), para
+    entender parcelados e a fatura em aberto. Só leitura; não mostra ids nem chaves."""
+    hoje = hoje or date.today()
+    alvo = fn.norm(trecho)
+    achados = [(i, g) for i, g in estado.get("contas", {}).items() if (g.get("tipo") or "").upper() == "CREDIT" and alvo and alvo in fn.norm(g.get("nome") or "")]
+    if len(achados) != 1:
+        raise ErroPluggy("Cartões: " + "; ".join(g["nome"] for g in estado.get("contas", {}).values() if (g.get("tipo") or "").upper() == "CREDIT") + ". Escreva um pedaço do nome que combine com um só.")
+    cid, g = achados[0]
+    cli = cliente or Cliente(cfg)
+    faturas = cli.faturas(cid)
+    ids = {}
+    saida = [f"Cartão {g['nome']}. Faturas informadas pelo banco: {len(faturas)}."]
+    for f in sorted(faturas, key=lambda x: str(x.get("dueDate") or "")):
+        ids[f.get("id")] = f"fatura {len(ids) + 1}"
+        saida.append(f"{ids[f.get('id')]}: vence em {str(f.get('dueDate') or '')[:10]}, total {f.get('totalAmount')}, mínimo {f.get('minimumPaymentAmount')}.")
+    trs = cli.transacoes(cid, hoje - timedelta(days=dias), hoje)
+    saida.append(f"Transações dos últimos {dias} dias: {len(trs)}.")
+    for n, t in enumerate(sorted(trs, key=lambda x: str(x.get("date") or ""), reverse=True)[:80], 1):
+        m = t.get("creditCardMetadata") or {}
+        partes = [str(t.get("date") or "")[:10], f"valor {t.get('amount')}", f"tipo {t.get('type')}", f"situação {t.get('status')}", str(t.get("description") or "")[:40]]
+        if m.get("installmentNumber"):
+            partes.append(f"parcela {m.get('installmentNumber')}/{m.get('totalInstallments')}")
+        if m.get("purchaseDate"):
+            partes.append(f"compra em {str(m['purchaseDate'])[:10]}")
+        bid = m.get("billId") or t.get("billId")
+        partes.append(ids.get(bid, "sem fatura") if bid else "sem fatura")
+        saida.append(f"{n}. " + ", ".join(partes) + ".")
+    return saida
+
+
 def simular(con, cfg: dict, estado_arq: Path, desde: date, hoje: date = None, cliente: Cliente = None) -> list:
     """Só olha até onde o Pluggy devolve histórico: lê as contas e devolve, por conta, quantos lançamentos vieram e o dia mais antigo e o mais recente. Não grava nada."""
     estado = ler_estado(estado_arq)

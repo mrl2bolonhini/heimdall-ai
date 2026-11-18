@@ -272,6 +272,7 @@ heimdall() {
 --simulate=--simular
 --redo-from-pluggy=--refazer-pelo-pluggy
 --closing=--fechamento
+--diagnose-card=--diagnosticar-cartao
 --balance=--saldo
 --latest=--ultimos
 --summary=--resumo
@@ -423,7 +424,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
       mail) compadd -- --test-login --simulate ;;
       access) compadd -- --password --code --all --verify ;;
-      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --values --folder --lines --account --force --bill --bills --person --read-email --days --sync --save-pluggy --since --list --name --rename-account --standardize-names --dedupe --simulate --redo-from-pluggy --closing --balance --latest --summary --month --search --category --limit ;;
+      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --values --folder --lines --account --force --bill --bills --person --read-email --days --sync --save-pluggy --since --list --name --rename-account --standardize-names --dedupe --simulate --redo-from-pluggy --diagnose-card --closing --balance --latest --summary --month --search --category --limit ;;
       voice) compadd -- --import ;;
       listen) compadd -- --list --latest ;;
       ingest) compadd -- --reset ;;

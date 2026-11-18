@@ -222,6 +222,9 @@ txt4 = fc.texto_saldos(est5, con11, date(2026, 11, 18))
 fe = fc._ultimo_fechamento
 confere("vence dia 1 e fecha 7 dias antes: 18/11 → 25/10... depende do mês; 24/11 e 02/12 → 24/11", fe(date(2026, 11, 18), {"vence": 1, "antes": 7}) == date(2026, 10, 25) and fe(date(2026, 11, 24), {"vence": 1, "antes": 7}) == date(2026, 11, 24) and fe(date(2026, 12, 2), {"vence": 1, "antes": 7}) == date(2026, 11, 24), [fe(date(2026, 11, 18), {"vence": 1, "antes": 7}), fe(date(2026, 11, 24), {"vence": 1, "antes": 7}), fe(date(2026, 12, 2), {"vence": 1, "antes": 7})])
 confere("saldos mostram a fatura em aberto calculada", "fatura em aberto de R$ 450,00" in txt4, txt4)
+est6 = {"contas": {CONTA_CARTAO: {"nome": "Nubank cartão de crédito", "tipo": "CREDIT"}}}
+dg = fp.diagnosticar_cartao(cfg, est6, "nubank", hoje, 60, fp.Cliente(cfg, api))
+confere("diagnóstico do cartão lista faturas e transações sem ids", dg[0].startswith("Cartão Nubank") and any("LOJA XYZ" in l for l in dg) and not any("CHAVE-TESTE" in l for l in dg), dg)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()
