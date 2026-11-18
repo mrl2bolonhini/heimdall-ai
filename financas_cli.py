@@ -169,8 +169,9 @@ def main() -> None:
             achados = fn.repetidos_entre_fontes(con, aplicar=a.forcar, exemplos=ex)
             for conta, n in sorted(achados.items()):
                 print(f"{conta}: {n} lançamento(s) do Pluggy repetem lançamentos de extrato (mesmo dia e valor).")
-            for conta, data, valor, desc, cat in ex:
-                print(f"  Não apago porque você alterou: {conta}, {fn.data_br(data)}, {abs(valor) / 100:.2f}".replace(".", ",") + f", {desc}, categoria {cat}.")
+            if not a.forcar:
+                for conta, data, valor, ext, pl, e, p in ex[:12]:
+                    print(f"  {conta}, {fn.data_br(data)}, {abs(valor) / 100:.2f}".replace(".", ",") + f": extrato {e} ({'; '.join(ext)[:70]}) e Pluggy {p} ({'; '.join(pl)[:70]}).")
             if not achados:
                 print("Nenhum lançamento do Pluggy repete extrato ou fatura.")
             elif a.forcar:

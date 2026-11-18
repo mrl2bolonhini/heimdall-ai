@@ -137,6 +137,25 @@ con4.execute("INSERT INTO transacoes(conta,data,valor,descricao,desc_norm,catego
 con4.commit()
 confere("dedupe só mostra sem apagar", fn.repetidos_entre_fontes(con4) == {"Itaú conta corrente": 1} and con4.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 4)
 confere("dedupe com aplicar apaga o do Pluggy e mantém o de extrato", fn.repetidos_entre_fontes(con4, True) == {"Itaú conta corrente": 1} and con4.execute("SELECT COUNT(*) FROM transacoes WHERE descricao='CAFE'").fetchone()[0] == 1 and con4.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 3)
+# duas compras iguais no mesmo dia, só uma no extrato: entra uma, e a limpeza não apaga a legítima numa segunda rodada
+con5 = fn.conectar(d / "v.db")
+fn.importar_itens(con5, [{"data": "2026-10-05", "valor": -900, "descricao": "PADARIA", "fitid": "e1"}], "ofx", "x.ofx", "Itaú cartão de crédito")
+dois = [{"data": "2026-10-05", "valor": -900, "descricao": "PADARIA", "fitid": "w1"}, {"data": "2026-10-05", "valor": -900, "descricao": "PADARIA", "fitid": "w2"}]
+r8 = fn.importar_itens(con5, dois, "pluggy", "Meu Pluggy", "Itaú cartão de crédito")
+confere("duas iguais no Pluggy e uma no extrato: entra só uma", r8["novas"] == 1 and r8["repetidas"] == 1, r8)
+r9 = fn.importar_itens(con5, dois, "pluggy", "Meu Pluggy", "Itaú cartão de crédito")
+confere("reler não muda nada", r9["novas"] == 0, r9)
+con6 = fn.conectar(d / "w.db")
+fn.importar_itens(con6, [{"data": "2026-10-05", "valor": -900, "descricao": "PADARIA", "fitid": "e1"}], "ofx", "x.ofx", "Itaú cartão de crédito")
+con6.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES('p','Itaú cartão de crédito','x','pluggy',2,0)")
+iid6 = con6.execute("SELECT MAX(id) FROM importacoes").fetchone()[0]
+for k in ("a", "b"):
+    con6.execute("INSERT INTO transacoes(conta,data,valor,descricao,desc_norm,categoria,hash,importado_em,importacao_id) VALUES('Itaú cartão de crédito','2026-10-05',-900,'PADARIA','padaria','Outros',?,'x',?)", ("h" + k, iid6))
+con6.commit()
+fn.repetidos_entre_fontes(con6, True)
+confere("primeira limpeza apaga uma", con6.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 2)
+fn.repetidos_entre_fontes(con6, True)
+confere("segunda limpeza não apaga a legítima", con6.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 2 and fn.repetidos_entre_fontes(con6) == {})
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

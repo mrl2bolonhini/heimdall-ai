@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS boletos(
   arquivo TEXT, situacao TEXT NOT NULL DEFAULT 'aberto', criado_em TEXT);
 CREATE TABLE IF NOT EXISTS importacoes(
   id INTEGER PRIMARY KEY AUTOINCREMENT, arquivo TEXT, conta TEXT, quando TEXT, formato TEXT, novas INTEGER, repetidas INTEGER);
+CREATE TABLE IF NOT EXISTS deduplicados(conta TEXT NOT NULL, data TEXT NOT NULL, valor INTEGER NOT NULL, PRIMARY KEY(conta, data, valor));
 CREATE TABLE IF NOT EXISTS renomeacoes(antigo TEXT NOT NULL, novo TEXT NOT NULL, quando TEXT, PRIMARY KEY(antigo, novo));
 """
 
@@ -326,32 +327,32 @@ def _contagens_por_origem(con, conta: str, data: str, valor: int) -> tuple:
     return e, p
 
 
-def _ja_veio_de_extrato(con, conta: str, data: str, valor: int) -> bool:
-    e, p = _contagens_por_origem(con, conta, data, valor)
-    return p < e
-
-
 def repetidos_entre_fontes(con, aplicar: bool = False, exemplos: list = None) -> dict:
-    """Lançamentos do Pluggy que repetem um de extrato/fatura (mesma conta, dia e valor). Com aplicar, apaga o do Pluggy (nunca o que você mexeu).
-    Devolve {conta: quantidade}."""
+    """Lançamentos do Pluggy que repetem um de extrato/fatura (mesma conta, dia e valor). Com aplicar, apaga o do Pluggy (nunca o que você mexeu)
+    e guarda o grupo como já conferido, para uma segunda rodada não apagar um lançamento legítimo. Devolve {conta: quantidade}."""
     achados = {}
+    feitos = {(r["conta"], r["data"], r["valor"]) for r in con.execute("SELECT conta, data, valor FROM deduplicados")}
     grupos = con.execute("""SELECT t.conta, t.data, t.valor FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id
                             WHERE i.formato='pluggy' GROUP BY t.conta, t.data, t.valor""").fetchall()
     for g in grupos:
+        if (g["conta"], g["data"], g["valor"]) in feitos:
+            continue
         e, p = _contagens_por_origem(con, g["conta"], g["data"], g["valor"])
         if not e or not p:
             continue
         ids = [r["id"] for r in con.execute("SELECT t.id FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=? AND t.manual=0 ORDER BY t.id DESC", (g["conta"], g["data"], g["valor"]))]
         n = min(e, len(ids))
-        if exemplos is not None and n < min(e, p):  # sobrou do Pluggy que não dá para apagar (você alterou o lançamento)
-            for r in con.execute("SELECT t.data, t.valor, t.descricao, t.categoria FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=? AND t.manual=1", (g["conta"], g["data"], g["valor"])):
-                exemplos.append((g["conta"], r["data"], r["valor"], r["descricao"], r["categoria"]))
+        if exemplos is not None:
+            pl = [r["descricao"] for r in con.execute("SELECT t.descricao FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=?", (g["conta"], g["data"], g["valor"]))]
+            ex = [r["descricao"] for r in con.execute("SELECT t.descricao FROM transacoes t LEFT JOIN importacoes i ON i.id=t.importacao_id WHERE COALESCE(i.formato,'')<>'pluggy' AND t.conta=? AND t.data=? AND t.valor=?", (g["conta"], g["data"], g["valor"]))]
+            exemplos.append((g["conta"], g["data"], g["valor"], ex, pl, e, p))
         if n <= 0:
             continue
         achados[g["conta"]] = achados.get(g["conta"], 0) + n
         if aplicar:
             for i in ids[:n]:
                 con.execute("DELETE FROM transacoes WHERE id=?", (i,))
+            con.execute("INSERT OR IGNORE INTO deduplicados(conta, data, valor) VALUES(?,?,?)", (g["conta"], g["data"], g["valor"]))
     if aplicar:
         con.commit()
     return achados
@@ -378,6 +379,7 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     regras = _regras(con)
     vistos = defaultdict(int)
+    vistos_pl = defaultdict(int)
     novas = repetidas = 0
     antigos = nomes_antigos(con, conta)
     imp_id = con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas, hash_arquivo) VALUES(?,?,?,?,0,0,?)", ((arquivo or "")[:120], conta, agora, formato, hash_arquivo or None)).lastrowid
@@ -395,9 +397,12 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
             if con.execute("SELECT 1 FROM transacoes WHERE hash IN (%s) LIMIT 1" % ",".join("?" * len(alternativas)), alternativas).fetchone():
                 repetidas += 1
                 continue
-        if formato == "pluggy" and _ja_veio_de_extrato(con, conta, it["data"], it["valor"]):
-            repetidas += 1  # o mesmo lançamento (conta, dia e valor) já veio de extrato ou fatura importados; não conta de novo
-            continue
+        if formato == "pluggy":
+            k = (it["data"], it["valor"])
+            vistos_pl[k] += 1
+            if vistos_pl[k] <= _contagens_por_origem(con, conta, it["data"], it["valor"])[0]:
+                repetidas += 1  # o mesmo lançamento (conta, dia e valor) já veio de extrato ou fatura importados; não conta de novo
+                continue
         cat = categorizar(con, dn, regras)
         if cat == SEM_CATEGORIA and it["valor"] > 0:
             # cartão de crédito não gera renda: crédito sem regra (pagamento, estorno de encargo) fica fora das receitas
