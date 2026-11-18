@@ -30,7 +30,8 @@ MAX_RESPOSTA = 8 * 1024 * 1024
 JANELA_INICIAL = 90   # dias buscados na primeira vez, se não houver extrato importado da mesma conta
 SOBREPOSICAO = 7      # dias relidos a cada rodada; o id da transação evita duplicar
 MAX_PAGINAS = 200
-AVISO_DIAS = 30       # avisa quando o consentimento de um banco vence em até tantos dias
+AVISO_DIAS = 30
+PARCELADOS_DIAS = 240  # até onde olhar para achar parcelas que caem na fatura em aberto       # avisa quando o consentimento de um banco vence em até tantos dias
 
 
 class ErroPluggy(fn.ErroFinance):
@@ -292,6 +293,40 @@ def _proxima_fatura(faturas: list, hoje: date) -> dict:
     return {"fatura_vence": venc, "fatura_valor": valor, "fatura_aberta": bool(futuras)}
 
 
+def parcelas_da_fatura_aberta(transacoes: list, faturas: list) -> list:
+    """Parcelas de compras antigas que caem na fatura em aberto. O banco só lista uma parcela depois que ela entra numa fatura fechada (com a data da
+    compra e o código da fatura); então a próxima parcela de cada compra, com o mesmo valor, cai na fatura em aberto quando a parcela atual
+    pertence à última fatura fechada. Devolve [{"descricao", "valor" (centavos), "parcela", "total"}]."""
+    ultima = None
+    for f in faturas:
+        venc = str(f.get("dueDate") or "")[:10]
+        if venc and f.get("id") and (ultima is None or venc > ultima[0]):
+            ultima = (venc, f["id"])
+    if not ultima:
+        return []
+    existentes = set()
+    for t in transacoes:
+        m = t.get("creditCardMetadata") or {}
+        if m.get("installmentNumber"):
+            existentes.add((str(m.get("purchaseDate") or "")[:10], m.get("totalInstallments"), int(m["installmentNumber"]), abs(round(float(t.get("amount") or 0) * 100))))
+    saida = []
+    for t in transacoes:
+        m = t.get("creditCardMetadata") or {}
+        try:
+            k, n = int(m.get("installmentNumber") or 0), int(m.get("totalInstallments") or 0)
+        except (TypeError, ValueError):
+            continue
+        if not (1 <= k < n) or (m.get("billId") or t.get("billId")) != ultima[1] or t.get("amount") is None:
+            continue
+        valor = abs(_centavos(t["amount"]))
+        chave = (str(m.get("purchaseDate") or "")[:10], m.get("totalInstallments"), k + 1)
+        if any(e[:3] == chave and abs(e[3] - valor) <= max(5, valor // 50) for e in existentes):
+            continue  # a próxima parcela já aparece na lista
+        desc = re.sub(r"\s*\d{1,2}/\d{1,2}\s*$", "", str(t.get("description") or "")).strip()[:40]
+        saida.append({"descricao": desc, "valor": valor, "parcela": k + 1, "total": n})
+    return saida
+
+
 def _final(conta: dict) -> str:
     n = re.sub(r"\D", "", str(conta.get("number") or ""))
     return n[-4:] if n else ""
@@ -456,7 +491,10 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
         recebidas = cli.transacoes(c["id"], ini, hoje)
         credito = _dados_cartao(c)
         if (c.get("type") or "").upper() == "CREDIT":
-            credito.update(_proxima_fatura(cli.faturas(c["id"]), hoje))
+            faturas = cli.faturas(c["id"])
+            credito.update(_proxima_fatura(faturas, hoje))
+            if faturas:
+                credito["parcelas_abertas"] = parcelas_da_fatura_aberta(cli.transacoes(c["id"], hoje - timedelta(days=PARCELADOS_DIAS), hoje), faturas)
         itens = para_itens(c, recebidas)
         pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat(), "recebidas": len(recebidas), "saldo": _saldo_centavos(c), "credito": credito})
     return {"pacotes": pacotes, "avisos": avisos}

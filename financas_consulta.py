@@ -47,16 +47,23 @@ def _ultimo_fechamento(hoje: date, regra) -> date:
     return max(c for c in candidatas if c <= hoje)
 
 
-def fatura_calculada(con, conta: str, regra, hoje: date = None) -> tuple:
-    """Fatura em aberto estimada pelas compras do cartão desde o dia seguinte ao último fechamento. Devolve (centavos, início)."""
+def fatura_detalhada(con, conta: str, regra, hoje: date = None, parcelas: list = None) -> dict:
+    """Fatura em aberto estimada: compras do ciclo (desde o dia seguinte ao último fechamento) mais as parcelas de compras antigas que caem nela.
+    `parcelas` vem da última sincronização ([{"descricao", "valor", "parcela", "total"}]); sem ela, só as compras do ciclo."""
     hoje = hoje or date.today()
     inicio = _ultimo_fechamento(hoje, regra) + timedelta(days=1)
-    total = 0
+    compras = 0
     for r in con.execute("SELECT valor, desc_norm, categoria FROM transacoes WHERE conta=? AND data>=? AND data<=?", (conta, inicio.isoformat(), hoje.isoformat())):
         if r["valor"] > 0 and any(p in r["desc_norm"] for p in ("pagamento", "pgto", "pag fatura", "fatura")):
             continue  # pagamento da fatura anterior não reduz a fatura nova
-        total += -r["valor"]
-    return total, inicio
+        compras += -r["valor"]
+    return {"total": compras + sum(p["valor"] for p in (parcelas or [])), "compras": compras, "parcelas": parcelas, "inicio": inicio}
+
+
+def fatura_calculada(con, conta: str, regra, hoje: date = None, parcelas: list = None) -> tuple:
+    """(centavos, início do ciclo) da fatura em aberto estimada."""
+    d = fatura_detalhada(con, conta, regra, hoje, parcelas)
+    return d["total"], d["inicio"]
 
 
 def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
@@ -91,8 +98,14 @@ def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
                 fat = (f"fatura a vencer de {_real(cr['fatura_valor'])}, vence em {fn.data_br(cr['fatura_vence'])}; " if cr.get("fatura_aberta")
                        else f"última fatura de {_real(cr['fatura_valor'])}, venceu em {fn.data_br(cr['fatura_vence'])}; ")
             if con is not None and g.get("fechamento"):
-                v, ini = fatura_calculada(con, g["nome"], g["fechamento"], hoje)
-                fat = f"fatura em aberto de {_real(v)} (calculada pelas compras desde {fn.data_br(ini.isoformat())}); " + ("" if not fat else "além disso, " + fat)
+                d = fatura_detalhada(con, g["nome"], g["fechamento"], hoje, cr.get("parcelas_abertas"))
+                if d["parcelas"] is None:
+                    parc = "; as parcelas de compras antigas ainda não foram lidas, rode heimdall finance --sync"
+                elif d["parcelas"]:
+                    parc = f", mais {len(d['parcelas'])} parcela(s) de compras antigas: {_real(sum(p['valor'] for p in d['parcelas']))}"
+                else:
+                    parc = ", sem parcelas de compras antigas"
+                fat = f"fatura em aberto estimada em {_real(d['total'])} (compras desde {fn.data_br(d['inicio'].isoformat())}: {_real(d['compras'])}{parc}); " + ("" if not fat else "além disso, " + fat)
             linhas.append(f"{i}. {g['nome']}: {fat}usado do limite (saldo devedor total, com parcelas futuras) de {_real(s)}" + (" (" + ", ".join(extra) + ")" if extra else "") + ".")
         else:
             disponivel += s

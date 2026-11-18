@@ -218,13 +218,35 @@ try:
     confere("nome ambíguo dá erro", False)
 except fp.ErroPluggy:
     confere("nome ambíguo dá erro", True)
+est5["contas"]["x"]["credito"] = {"parcelas_abertas": []}
 txt4 = fc.texto_saldos(est5, con11, date(2026, 11, 18))
 fe = fc._ultimo_fechamento
 confere("vence dia 1 e fecha 7 dias antes: 18/11 → 25/10... depende do mês; 24/11 e 02/12 → 24/11", fe(date(2026, 11, 18), {"vence": 1, "antes": 7}) == date(2026, 10, 25) and fe(date(2026, 11, 24), {"vence": 1, "antes": 7}) == date(2026, 11, 24) and fe(date(2026, 12, 2), {"vence": 1, "antes": 7}) == date(2026, 11, 24), [fe(date(2026, 11, 18), {"vence": 1, "antes": 7}), fe(date(2026, 11, 24), {"vence": 1, "antes": 7}), fe(date(2026, 12, 2), {"vence": 1, "antes": 7})])
-confere("saldos mostram a fatura em aberto calculada", "fatura em aberto de R$ 450,00" in txt4, txt4)
+confere("saldos mostram a fatura em aberto calculada", "fatura em aberto estimada em R$ 450,00" in txt4, txt4)
 est6 = {"contas": {CONTA_CARTAO: {"nome": "Nubank cartão de crédito", "tipo": "CREDIT"}}}
 dg = fp.diagnosticar_cartao(cfg, est6, "nubank", hoje, 60, fp.Cliente(cfg, api))
 confere("diagnóstico do cartão lista faturas e transações sem ids", dg[0].startswith("Cartão Nubank") and any("LOJA XYZ" in l for l in dg) and not any("CHAVE-TESTE" in l for l in dg), dg)
+# parcelas de compras antigas que caem na fatura em aberto (dados reais do Itaú Black, simplificados)
+def _t(k, n, compra, valor, bill, desc, tipo="DEBIT"):
+    return {"amount": valor, "date": compra, "description": f"{desc}{k:02d}/{n:02d}", "creditCardMetadata": {"installmentNumber": k, "totalInstallments": n, "purchaseDate": compra, "billId": bill}}
+fats = [{"id": "F11", "dueDate": "2026-10-01", "totalAmount": 3699.28}, {"id": "F12", "dueDate": "2026-11-03", "totalAmount": 5287.68}]
+trs = [_t(1, 2, "2026-10-17", 383.34, "F12", "LOCALIZA RAC ACTAT"), _t(1, 6, "2026-10-14", 88.75, "F12", "BELEZA NATURAL - T"), _t(2, 3, "2026-08-24", 35.65, "F12", "Hero*Centro Cultur"),
+       _t(1, 3, "2026-08-24", 35.65, "F11", "Hero*Centro Cultur"), _t(3, 4, "2026-08-21", 84.46, "F12", "MERCADOLIVRE*GIOIA"), _t(3, 4, "2026-08-21", 25.19, "F12", "MERCADOLIVRE*GIOIA"),
+       _t(5, 21, "2026-05-28", 211.89, "F12", "IPHONE PRA SEMPRES"), _t(4, 21, "2026-05-28", 211.89, "F11", "IPHONE PRA SEMPRES"), _t(2, 2, "2026-10-11", 592.5, "F12", "WANDERSON JUNIO VI"),
+       _t(3, 3, "2026-08-05", 93.0, "F12", "PG *ORDEM ROSACRUZ"), _t(1, 2, "2026-11-16", 155.52, None, "HONO FARMA LTDASAO")]
+pa = fp.parcelas_da_fatura_aberta(trs, fats)
+esperado = 38334 + 8875 + 3565 + 8446 + 2519 + 21189
+confere("parcelas da fatura aberta: só as da última fatura fechada que ainda têm parcelas a pagar", sum(p["valor"] for p in pa) == esperado and len(pa) == 6, pa)
+confere("compra nova pendente (sem fatura) e compra já quitada não entram", not any("HONO" in p["descricao"] or "WANDERSON" in p["descricao"] or "ROSACRUZ" in p["descricao"] for p in pa), pa)
+con12 = fn.conectar(d / "p12.db")
+cartao12 = "Itaú cartão de crédito"
+fn.importar_itens(con12, [{"data": "2026-11-16", "valor": -15552, "descricao": "HONO FARMA LTDASAO01/02", "fitid": "h"}, {"data": "2026-11-05", "valor": -1398, "descricao": "DL *UberRidesSao PauloBRA", "fitid": "u"},
+                          {"data": "2026-10-17", "valor": -38334, "descricao": "LOCALIZA RAC ACTAT01/02", "fitid": "l"}], "pluggy", "Meu Pluggy", cartao12)
+det = fc.fatura_detalhada(con12, cartao12, {"vence": 1, "antes": 7}, date(2026, 11, 18), pa)
+confere("compras do ciclo: só o que tem data desde 26/10", det["compras"] == 15552 + 1398, det)
+confere("total = compras do ciclo + parcelas antigas", det["total"] == 15552 + 1398 + esperado, det)
+sem_pa = fc.texto_saldos({"contas": {"x": {"nome": cartao12, "tipo": "CREDIT", "saldo": 1, "fechamento": {"vence": 1, "antes": 7}, "credito": {}}}}, con12, date(2026, 11, 18))
+confere("sem parcelas lidas, o texto avisa para sincronizar", "ainda não foram lidas" in sem_pa, sem_pa)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()
