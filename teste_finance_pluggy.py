@@ -156,6 +156,20 @@ fn.repetidos_entre_fontes(con6, True)
 confere("primeira limpeza apaga uma", con6.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 2)
 fn.repetidos_entre_fontes(con6, True)
 confere("segunda limpeza não apaga a legítima", con6.execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 2 and fn.repetidos_entre_fontes(con6) == {})
+# parcelas: extrato 01/03; Pluggy 01/03 e 03/03 no mesmo dia e valor. Só a 01/03 do Pluggy repete.
+con7 = fn.conectar(d / "x.db")
+fn.importar_itens(con7, [{"data": "2026-08-05", "valor": -9300, "descricao": "PG *O RDEM ROSA 01/03"}], "ofx", "x.ofx", "Itaú cartão de crédito")
+r10 = fn.importar_itens(con7, [{"data": "2026-08-05", "valor": -9300, "descricao": "PG *ORDEM ROSACRUZ03/03", "fitid": "z3"}, {"data": "2026-08-05", "valor": -9300, "descricao": "PG *ORDEM ROSACRUZ01/03", "fitid": "z1"}], "pluggy", "Meu Pluggy", "Itaú cartão de crédito")
+confere("importação pareia pela descrição e parcela: entra a 03/03, pula a 01/03", r10["novas"] == 1 and con7.execute("SELECT COUNT(*) FROM transacoes WHERE descricao LIKE '%03/03'").fetchone()[0] == 1, r10)
+con8 = fn.conectar(d / "y.db")
+fn.importar_itens(con8, [{"data": "2026-08-05", "valor": -9300, "descricao": "PG *O RDEM ROSA 01/03"}], "ofx", "x.ofx", "Itaú cartão de crédito")
+con8.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas) VALUES('p','Itaú cartão de crédito','x','pluggy',2,0)")
+iid8 = con8.execute("SELECT MAX(id) FROM importacoes").fetchone()[0]
+for k, ds in (("a", "PG *ORDEM ROSACRUZ01/03"), ("b", "PG *ORDEM ROSACRUZ03/03")):
+    con8.execute("INSERT INTO transacoes(conta,data,valor,descricao,desc_norm,categoria,hash,importado_em,importacao_id) VALUES('Itaú cartão de crédito','2026-08-05',-9300,?,?,'Outros',?,'x',?)", (ds, ds.lower(), "g" + k, iid8))
+con8.commit()
+fn.repetidos_entre_fontes(con8, True)
+confere("limpeza apaga a 01/03 do Pluggy e mantém a 03/03", [r[0] for r in con8.execute("SELECT descricao FROM transacoes ORDER BY id")] == ["PG *O RDEM ROSA 01/03", "PG *ORDEM ROSACRUZ03/03"], [r[0] for r in con8.execute("SELECT descricao FROM transacoes")])
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

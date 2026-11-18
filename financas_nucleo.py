@@ -316,6 +316,47 @@ def apagar_importacao_vazia(con, importacao_id: int) -> None:
     con.commit()
 
 
+def _parcela(desc: str):
+    m = re.search(r"(?<!\d)(\d{1,2})\s*/\s*(\d{1,2})(?!\d)", desc or "")
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
+def _semelhanca(a: str, b: str) -> float:
+    import difflib
+    a, b = re.sub(r"[^a-z0-9/]", "", norm(a)), re.sub(r"[^a-z0-9/]", "", norm(b))
+    return difflib.SequenceMatcher(None, a, b).ratio() if a and b else 0.0
+
+
+def parear_repetidos(desc_extrato: list, desc_pluggy: list) -> list:
+    """Dos lançamentos do Pluggy (mesma conta, dia e valor), quais repetem os do extrato. Devolve os índices de desc_pluggy.
+    Primeiro pareia pela descrição parecida; o que sobrar pareia pela quantidade. Parcelas diferentes (01/03 e 03/03) nunca são a mesma compra."""
+    livres = list(range(len(desc_extrato)))
+    achados = []
+
+    def compat(i, j):
+        pe, pp = _parcela(desc_extrato[i]), _parcela(desc_pluggy[j])
+        return not (pe and pp and pe != pp)
+    for fase in (0.6, 0.0):
+        for j in range(len(desc_pluggy)):
+            if j in achados:
+                continue
+            melhor, nota = None, -1.0
+            for i in livres:
+                if not compat(i, j):
+                    continue
+                n = _semelhanca(desc_extrato[i], desc_pluggy[j])
+                if n >= fase and n > nota:
+                    melhor, nota = i, n
+            if melhor is not None:
+                livres.remove(melhor)
+                achados.append(j)
+    return sorted(achados)
+
+
+def _descricoes_extrato(con, conta: str, data: str, valor: int) -> list:
+    return [r["descricao"] for r in con.execute("SELECT t.descricao FROM transacoes t LEFT JOIN importacoes i ON i.id=t.importacao_id WHERE COALESCE(i.formato,'')<>'pluggy' AND t.conta=? AND t.data=? AND t.valor=? ORDER BY t.id", (conta, data, valor))]
+
+
 def _contagens_por_origem(con, conta: str, data: str, valor: int) -> tuple:
     """Quantos lançamentos da conta, no dia e valor, vieram de extrato/fatura e quantos do Pluggy."""
     e = p = 0
@@ -340,8 +381,10 @@ def repetidos_entre_fontes(con, aplicar: bool = False, exemplos: list = None) ->
         e, p = _contagens_por_origem(con, g["conta"], g["data"], g["valor"])
         if not e or not p:
             continue
-        ids = [r["id"] for r in con.execute("SELECT t.id FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=? AND t.manual=0 ORDER BY t.id DESC", (g["conta"], g["data"], g["valor"]))]
-        n = min(e, len(ids))
+        linhas = con.execute("SELECT t.id, t.descricao FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=? AND t.manual=0 ORDER BY t.id", (g["conta"], g["data"], g["valor"])).fetchall()
+        pares = parear_repetidos(_descricoes_extrato(con, g["conta"], g["data"], g["valor"]), [r["descricao"] for r in linhas])
+        ids = [linhas[j]["id"] for j in pares]
+        n = len(ids)
         if exemplos is not None:
             pl = [r["descricao"] for r in con.execute("SELECT t.descricao FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=?", (g["conta"], g["data"], g["valor"]))]
             ex = [r["descricao"] for r in con.execute("SELECT t.descricao FROM transacoes t LEFT JOIN importacoes i ON i.id=t.importacao_id WHERE COALESCE(i.formato,'')<>'pluggy' AND t.conta=? AND t.data=? AND t.valor=?", (g["conta"], g["data"], g["valor"]))]
@@ -350,7 +393,7 @@ def repetidos_entre_fontes(con, aplicar: bool = False, exemplos: list = None) ->
             continue
         achados[g["conta"]] = achados.get(g["conta"], 0) + n
         if aplicar:
-            for i in ids[:n]:
+            for i in ids:
                 con.execute("DELETE FROM transacoes WHERE id=?", (i,))
             con.execute("INSERT OR IGNORE INTO deduplicados(conta, data, valor) VALUES(?,?,?)", (g["conta"], g["data"], g["valor"]))
     if aplicar:
@@ -379,12 +422,23 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     regras = _regras(con)
     vistos = defaultdict(int)
-    vistos_pl = defaultdict(int)
     novas = repetidas = 0
+    pular = set()
+    if formato == "pluggy":  # lançamentos que já vieram de extrato ou fatura (mesma conta, dia e valor), pareados pela descrição
+        por_chave = defaultdict(list)
+        for n, it in enumerate(itens):
+            por_chave[(it["data"], it["valor"])].append(n)
+        for (dt, vl), idx in por_chave.items():
+            ext = _descricoes_extrato(con, conta, dt, vl)
+            if ext:
+                pular |= {idx[j] for j in parear_repetidos(ext, [itens[n]["descricao"] for n in idx])}
     antigos = nomes_antigos(con, conta)
     imp_id = con.execute("INSERT INTO importacoes(arquivo, conta, quando, formato, novas, repetidas, hash_arquivo) VALUES(?,?,?,?,0,0,?)", ((arquivo or "")[:120], conta, agora, formato, hash_arquivo or None)).lastrowid
-    for it in itens:
+    for pos, it in enumerate(itens):
         dn = norm(it["descricao"])
+        if pos in pular:
+            repetidas += 1  # o mesmo lançamento (conta, dia e valor) já veio de extrato ou fatura importados; não conta de novo
+            continue
         if it.get("fitid"):
             chave = f"{conta}|fitid|{it['fitid']}|{it['data']}|{it['valor']}"
         else:
@@ -396,12 +450,6 @@ def importar_itens(con, itens: list, formato: str, arquivo: str, conta: str, ago
             alternativas = [hashlib.sha1((a + chave[len(conta):]).encode("utf-8")).hexdigest() for a in antigos]
             if con.execute("SELECT 1 FROM transacoes WHERE hash IN (%s) LIMIT 1" % ",".join("?" * len(alternativas)), alternativas).fetchone():
                 repetidas += 1
-                continue
-        if formato == "pluggy":
-            k = (it["data"], it["valor"])
-            vistos_pl[k] += 1
-            if vistos_pl[k] <= _contagens_por_origem(con, conta, it["data"], it["valor"])[0]:
-                repetidas += 1  # o mesmo lançamento (conta, dia e valor) já veio de extrato ou fatura importados; não conta de novo
                 continue
         cat = categorizar(con, dn, regras)
         if cat == SEM_CATEGORIA and it["valor"] > 0:
