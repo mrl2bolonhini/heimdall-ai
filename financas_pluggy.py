@@ -327,6 +327,30 @@ def parcelas_da_fatura_aberta(transacoes: list, faturas: list) -> list:
     return saida
 
 
+def lancamentos_sem_fatura(transacoes: list):
+    """O que o cartão já lançou e ainda não entrou em nenhuma fatura fechada (compras do ciclo e as que o banco demorou a lançar), sem os pagamentos.
+    None quando o banco não liga as transações às faturas (nenhuma tem código de fatura), pois aí "sem fatura" não quer dizer nada."""
+    def bill(t):
+        return (t.get("creditCardMetadata") or {}).get("billId") or t.get("billId")
+    if not any(bill(t) for t in transacoes):
+        return None
+    total, n, desde = 0, 0, ""
+    for t in transacoes:
+        if bill(t) or t.get("amount") is None:
+            continue
+        desc = fn.norm(str(t.get("description") or ""))
+        if any(p in desc for p in ("pagamento", "pgto", "pag fatura", "fatura")):
+            continue
+        try:
+            total += _centavos(t["amount"])
+        except Exception:  # noqa: BLE001
+            continue
+        n += 1
+        d = str(t.get("date") or "")[:10]
+        desde = min(desde, d) if desde else d
+    return {"valor": total, "n": n, "desde": desde}
+
+
 def _final(conta: dict) -> str:
     n = re.sub(r"\D", "", str(conta.get("number") or ""))
     return n[-4:] if n else ""
@@ -494,7 +518,11 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
             faturas = cli.faturas(c["id"])
             credito.update(_proxima_fatura(faturas, hoje))
             if faturas:
-                credito["parcelas_abertas"] = parcelas_da_fatura_aberta(cli.transacoes(c["id"], hoje - timedelta(days=PARCELADOS_DIAS), hoje), faturas)
+                longas = cli.transacoes(c["id"], hoje - timedelta(days=PARCELADOS_DIAS), hoje)
+                credito["parcelas_abertas"] = parcelas_da_fatura_aberta(longas, faturas)
+                sem = lancamentos_sem_fatura(longas)
+                if sem is not None:
+                    credito["sem_fatura"] = sem
         itens = para_itens(c, recebidas)
         pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat(), "recebidas": len(recebidas), "saldo": _saldo_centavos(c), "credito": credito})
     return {"pacotes": pacotes, "avisos": avisos}

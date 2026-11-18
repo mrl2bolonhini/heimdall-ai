@@ -260,6 +260,16 @@ r13 = fp.executar(con13, cfg, d / "p13.json", None, hoje, fp.Cliente(cfg, api_pa
 cart = [c for c in r13["contas"] if c["parcelas"] is not None]
 confere("sincronização lê as parcelas da fatura aberta e informa no resumo", len(cart) == 1 and len(cart[0]["parcelas"]) == 1 and cart[0]["parcelas"][0]["parcela"] == 6 and cart[0]["parcelas"][0]["valor"] == 21189, r13["contas"])
 confere("o estado guarda as parcelas para o --balance", fp.ler_estado(d / "p13.json")["contas"][CONTA_CARTAO]["credito"]["parcelas_abertas"][0]["valor"] == 21189)
+# lançamentos sem fatura (inclui compras antigas que o banco demorou a lançar) e pagamentos fora
+trs2 = [{"amount": 100.0, "date": "2026-10-22", "description": "COMPRA ATRASADA", "creditCardMetadata": {}},
+        {"amount": 50.0, "date": "2026-11-10", "description": "UBER", "creditCardMetadata": {}},
+        {"amount": -5287.68, "date": "2026-11-03", "description": "PAGAMENTO DEBITO AUTOMATICO", "creditCardMetadata": {}},
+        {"amount": 999.0, "date": "2026-09-10", "description": "JA NA FATURA", "creditCardMetadata": {"billId": "F11"}}]
+ss = fp.lancamentos_sem_fatura(trs2)
+confere("sem fatura: soma o que não tem fatura, com a compra atrasada e sem o pagamento", ss == {"valor": 15000, "n": 2, "desde": "2026-10-22"}, ss)
+confere("banco que não liga transações a faturas: não usa a regra", fp.lancamentos_sem_fatura([{"amount": 1.0, "date": "2026-11-01", "description": "X"}]) is None)
+det2 = fc.fatura_detalhada(con12, cartao12, {"vence": 1, "antes": 7}, date(2026, 11, 18), pa, ss)
+confere("fatura estimada usa o que está sem fatura mais as parcelas", det2["total"] == 15000 + esperado and det2["inicio"] == date(2026, 10, 22), det2)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()
