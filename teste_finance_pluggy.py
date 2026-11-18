@@ -278,6 +278,22 @@ fat_var = [{"id": f"V{i}", "dueDate": f"2026-0{i}-14", "totalAmount": v} for i, 
 confere("totais diferentes e sem lançamentos: nenhum valor fixo repetido", fp.valor_recorrente([], fat_var) is None)
 fd = fc.fatura_detalhada(con12, cartao12, {"vence": 1, "antes": 7}, date(2026, 11, 18), [], {"valor": 9873 - 9873, "n": 0, "desde": "2026-11-10"}, {"valor": 17642, "n": 4})
 confere("fatura estimada soma o valor fixo", fd["total"] == 17642 and fd["recorrente"]["n"] == 4, fd)
+est_pf = {"contas": {"c1": {"nome": "Mercado Pago cartão de crédito", "tipo": "CREDIT", "fechamento": {"dia": 9}}}}
+msg = fp.definir_parcela_fixa(est_pf, "mercado", "176,42:14/21", date(2026, 11, 18))
+pf = est_pf["contas"]["c1"]["parcelas_fixas"]
+confere("parcela fixa cadastrada", pf[0]["valor"] == 17642 and pf[0]["atual"] == 14 and pf[0]["total"] == 21, msg)
+confere("parcela fixa: 14 agora, 15 no ciclo seguinte, 21 em junho de 2027 e nenhuma depois",
+        [fc.parcelas_fixas_da_fatura(pf, d, {"dia": 9}) and fc.parcelas_fixas_da_fatura(pf, d, {"dia": 9})[0]["parcela"] for d in (date(2026, 11, 18), date(2026, 12, 12), date(2027, 6, 12))] == [14, 15, 21]
+        and fc.parcelas_fixas_da_fatura(pf, date(2027, 7, 12), {"dia": 9}) == [])
+fd2 = fc.fatura_detalhada(con12, cartao12, {"dia": 9}, date(2026, 11, 18), [{"valor": 9873, "parcela": 1, "total": 8, "descricao": "x"}], {"valor": 0, "n": 0, "desde": "2026-11-10"}, {"valor": 17642, "n": 4}, fc.parcelas_fixas_da_fatura(pf, date(2026, 11, 18), {"dia": 9}))
+confere("fatura estimada: parcela cadastrada tem prioridade sobre a detecção automática e não soma duas vezes", fd2["total"] == 9873 + 17642, fd2)
+for ruim in ("abc", "176,42:30/21", "0:1/2"):
+    try:
+        fp.definir_parcela_fixa(est_pf, "mercado", ruim, date(2026, 11, 18)); ok_pf = False
+    except fp.ErroPluggy:
+        ok_pf = True
+    confere(f"parcela fixa inválida recusada: {ruim}", ok_pf)
+confere("parcela fixa remove", "removi" in fp.definir_parcela_fixa(est_pf, "mercado", "remover").lower() or "parcelas_fixas" not in est_pf["contas"]["c1"])
 confere("banco que não liga transações a faturas: não usa a regra", fp.lancamentos_sem_fatura([{"amount": 1.0, "date": "2026-11-01", "description": "X"}]) is None)
 det2 = fc.fatura_detalhada(con12, cartao12, {"vence": 1, "antes": 7}, date(2026, 11, 18), pa, ss)
 confere("fatura estimada usa o que está sem fatura mais as parcelas", det2["total"] == 15000 + esperado and det2["inicio"] == date(2026, 10, 22), det2)

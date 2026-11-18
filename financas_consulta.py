@@ -47,7 +47,23 @@ def _ultimo_fechamento(hoje: date, regra) -> date:
     return max(c for c in candidatas if c <= hoje)
 
 
-def fatura_detalhada(con, conta: str, regra, hoje: date = None, parcelas: list = None, sem_fatura: dict = None, recorrente: dict = None) -> dict:
+def indice_ciclo(hoje: date, regra) -> int:
+    """Número do ciclo da fatura (ano*12+mês do último fechamento); a cada fatura sobe 1."""
+    u = _ultimo_fechamento(hoje, regra)
+    return u.year * 12 + u.month
+
+
+def parcelas_fixas_da_fatura(fixas: list, hoje: date, regra) -> list:
+    """Parcelas cadastradas à mão que o banco não lista e que caem na fatura em aberto hoje. Avançam sozinhas a cada fatura e somem depois da última."""
+    saida = []
+    for f in fixas or []:
+        atual = f["atual"] + indice_ciclo(hoje, regra) - f["ciclo"]
+        if 1 <= atual <= f["total"]:
+            saida.append({"valor": f["valor"], "parcela": atual, "total": f["total"]})
+    return saida
+
+
+def fatura_detalhada(con, conta: str, regra, hoje: date = None, parcelas: list = None, sem_fatura: dict = None, recorrente: dict = None, fixas: list = None) -> dict:
     """Fatura em aberto estimada: compras do ciclo (desde o dia seguinte ao último fechamento) mais as parcelas de compras antigas que caem nela.
     `parcelas` vem da última sincronização ([{"descricao", "valor", "parcela", "total"}]); sem ela, só as compras do ciclo."""
     hoje = hoje or date.today()
@@ -60,8 +76,9 @@ def fatura_detalhada(con, conta: str, regra, hoje: date = None, parcelas: list =
     if sem_fatura is not None:  # o banco liga as transações às faturas: o que está sem fatura é a fatura em aberto
         compras = sem_fatura["valor"]
         inicio = date.fromisoformat(sem_fatura["desde"]) if sem_fatura.get("desde") else inicio
-    fixo = (recorrente or {}).get("valor", 0)
-    return {"total": compras + sum(p["valor"] for p in (parcelas or [])) + fixo, "compras": compras, "parcelas": parcelas, "inicio": inicio, "sem_fatura": sem_fatura is not None, "recorrente": recorrente if fixo else None}
+    fixo = (recorrente or {}).get("valor", 0) if fixas is None else 0  # parcelas cadastradas têm prioridade sobre a detecção automática
+    cad = sum(f["valor"] for f in (fixas or []))
+    return {"total": compras + sum(p["valor"] for p in (parcelas or [])) + fixo + cad, "fixas": fixas, "compras": compras, "parcelas": parcelas, "inicio": inicio, "sem_fatura": sem_fatura is not None, "recorrente": recorrente if fixo else None}
 
 
 def fatura_calculada(con, conta: str, regra, hoje: date = None, parcelas: list = None) -> tuple:
@@ -102,15 +119,19 @@ def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
                 fat = (f"fatura a vencer de {_real(cr['fatura_valor'])}, vence em {fn.data_br(cr['fatura_vence'])}; " if cr.get("fatura_aberta")
                        else f"última fatura de {_real(cr['fatura_valor'])}, venceu em {fn.data_br(cr['fatura_vence'])}; ")
             if con is not None and g.get("fechamento"):
-                d = fatura_detalhada(con, g["nome"], g["fechamento"], hoje, cr.get("parcelas_abertas"), cr.get("sem_fatura"), cr.get("recorrente"))
+                d = fatura_detalhada(con, g["nome"], g["fechamento"], hoje, cr.get("parcelas_abertas"), cr.get("sem_fatura"), cr.get("recorrente"),
+                                    parcelas_fixas_da_fatura(g["parcelas_fixas"], hoje, g["fechamento"]) if g.get("parcelas_fixas") else None)
                 if d["parcelas"] is None:
                     parc = "; as parcelas de compras antigas ainda não foram lidas, rode heimdall finance --sync"
                 elif d["parcelas"]:
                     parc = f", mais {len(d['parcelas'])} parcela(s) de compras antigas: {_real(sum(p['valor'] for p in d['parcelas']))}"
                 else:
                     parc = ", sem parcelas de compras antigas"
-                if d["recorrente"]:
-                    parc += f", mais {_real(d['recorrente']['valor'])} de valor fixo que o banco não lista como lançamento (repetido em {d['recorrente']['n']} faturas)"
+                if d["fixas"]:
+                    parc += ", mais " + " e ".join(f"{_real(f['valor'])} da parcela {f['parcela']} de {f['total']} que o banco não lista" for f in d["fixas"])
+                elif d["recorrente"]:
+                    parc += (f", mais {_real(d['recorrente']['valor'])} de valor fixo que o banco não lista como lançamento (repetido em {d['recorrente']['n']} faturas; "
+                             "para o programa saber quando acaba, rode heimdall finance --parcela-fixa NOME=VALOR:PARCELA/TOTAL)")
                 rotulo = "lançamentos ainda sem fatura, o mais antigo de" if d["sem_fatura"] else "compras desde"
                 fat = f"fatura em aberto estimada em {_real(d['total'])} ({rotulo} {fn.data_br(d['inicio'].isoformat())}: {_real(d['compras'])}{parc}); " + ("" if not fat else "além disso, " + fat)
             linhas.append(f"{i}. {g['nome']}: {fat}usado do limite (saldo devedor total, com parcelas futuras) de {_real(s)}" + (" (" + ", ".join(extra) + ")" if extra else "") + ".")

@@ -96,6 +96,7 @@ def main() -> None:
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
     g.add_argument("--sincronizar", action="store_true")
     g.add_argument("--fechamento", action="append")
+    g.add_argument("--parcela-fixa", dest="parcela_fixa", action="append")
     g.add_argument("--diagnosticar-cartao", dest="diag_cartao", metavar="NOME")
     g.add_argument("--saldo", action="store_true")
     g.add_argument("--ultimos", action="store_true")
@@ -195,6 +196,17 @@ def main() -> None:
                 except fpl.ErroPluggy as ex:
                     sys.exit(str(ex))
                 print(f"Guardei o fechamento do cartão {nome}: {regra.strip()}.")
+            fpl.gravar_estado(arq, estado)
+        elif a.parcela_fixa:
+            import financas_pluggy as fpl
+            arq = DIR_DADOS / "pluggy_estado.json"
+            estado = fpl.ler_estado(arq)
+            for par in a.parcela_fixa:
+                trecho, _, texto = par.replace("“", "").replace("”", "").replace('"', "").partition("=")
+                try:
+                    print(fpl.definir_parcela_fixa(estado, trecho, texto))
+                except fpl.ErroPluggy as ex:
+                    sys.exit(str(ex))
             fpl.gravar_estado(arq, estado)
         elif a.saldo or a.ultimos or a.resumo:
             import financas_consulta as fc

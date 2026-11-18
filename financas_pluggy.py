@@ -578,7 +578,7 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
     for p in coleta["pacotes"]:
         r = fn.importar_itens(con, p["itens"], "pluggy", "Meu Pluggy", p["nome"], agora)
         resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"], "recebidas": p.get("recebidas", len(p["itens"])), "parcelas": (p.get("credito") or {}).get("parcelas_abertas")})
-        guardados[p["id"]] = {**{k: v for k, v in guardados.get(p["id"], {}).items() if k == "fechamento"}, "nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo"), "credito": p.get("credito")}
+        guardados[p["id"]] = {**{k: v for k, v in guardados.get(p["id"], {}).items() if k in ("fechamento", "parcelas_fixas")}, "nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo"), "credito": p.get("credito")}
     estado["avisos"] = coleta["avisos"]
     estado["ultima"] = (agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     estado["resumo"] = resumo
@@ -657,6 +657,37 @@ def definir_fechamento(estado: dict, trecho: str, regra) -> str:
         raise ErroPluggy("Cartões: " + "; ".join(g["nome"] for g in cartoes) + ". Escreva um pedaço do nome que combine com um só, por exemplo: itau=1:7")
     achados[0]["fechamento"] = cfg
     return achados[0]["nome"]
+
+
+def definir_parcela_fixa(estado: dict, trecho: str, texto: str, hoje: date = None) -> str:
+    """Cadastra uma parcela que o banco não lista mas cobra em toda fatura. `texto` é "176,42:14/21" (valor, parcela que cai na fatura em aberto agora
+    e total de parcelas) ou "remover". O programa avança a parcela a cada fatura e para sozinho depois da última. Exige o fechamento do cartão."""
+    hoje = hoje or date.today()
+    import financas_consulta as fc
+    alvo = fn.norm(trecho)
+    cartoes = [g for g in estado.get("contas", {}).values() if (g.get("tipo") or "").upper() == "CREDIT" and g.get("nome")]
+    achados = [g for g in cartoes if alvo and alvo in fn.norm(g["nome"])]
+    if len(achados) != 1:
+        raise ErroPluggy("Cartões: " + "; ".join(g["nome"] for g in cartoes) + ". Escreva um pedaço do nome que combine com um só, por exemplo: mercado=176,42:14/21")
+    g = achados[0]
+    t = str(texto).strip()
+    if fn.norm(t) in ("remover", "0", "apagar"):
+        g.pop("parcelas_fixas", None)
+        return f"Tirei as parcelas fixas do cartão {g['nome']}."
+    m = re.fullmatch(r"R?\$?\s*([\d.]+(?:,\d{1,2})?|\d+\.\d{1,2}):(\d{1,3})/(\d{1,3})", t)
+    if not m:
+        raise ErroPluggy("Use VALOR:PARCELA/TOTAL, por exemplo: mercado=176,42:14/21 (a parcela que cai na fatura em aberto agora). Para tirar: mercado=remover")
+    v = m.group(1)
+    v = v.replace(".", "").replace(",", ".") if "," in v else v
+    valor, atual, total = round(float(v) * 100), int(m.group(2)), int(m.group(3))
+    if valor <= 0 or not (1 <= atual <= total):
+        raise ErroPluggy("O valor deve ser maior que zero e a parcela atual não pode passar do total.")
+    if not g.get("fechamento"):
+        raise ErroPluggy("Cadastre antes o fechamento do cartão, por exemplo: heimdall finance --fechamento mercado=9")
+    lista = [f for f in g.get("parcelas_fixas", []) if f.get("valor") != valor]
+    lista.append({"valor": valor, "atual": atual, "total": total, "ciclo": fc.indice_ciclo(hoje, g["fechamento"])})
+    g["parcelas_fixas"] = lista
+    return f"Guardei no cartão {g['nome']}: parcela de {valor / 100:.2f} que o banco não lista, na parcela {atual} de {total} nesta fatura."
 
 
 def diagnosticar_cartao(cfg: dict, estado: dict, trecho: str, hoje: date = None, dias: int = 75, cliente: Cliente = None) -> list:
