@@ -327,7 +327,10 @@ def parcelas_da_fatura_aberta(transacoes: list, faturas: list) -> list:
     return saida
 
 
-def lancamentos_sem_fatura(transacoes: list):
+SEM_FATURA_DIAS = 45  # pendência mais velha que isso é resíduo (ex.: compra que o banco depois dividiu em parcelas)
+
+
+def lancamentos_sem_fatura(transacoes: list, hoje=None):
     """O que o cartão já lançou e ainda não entrou em nenhuma fatura fechada (compras do ciclo e as que o banco demorou a lançar), sem os pagamentos.
     None quando o banco não liga as transações às faturas (nenhuma tem código de fatura), pois aí "sem fatura" não quer dizer nada."""
     def bill(t):
@@ -340,6 +343,8 @@ def lancamentos_sem_fatura(transacoes: list):
             continue
         desc = fn.norm(str(t.get("description") or ""))
         if any(p in desc for p in ("pagamento", "pgto", "pag fatura", "fatura")):
+            continue
+        if hoje is not None and str(t.get("date") or "")[:10] < (hoje - timedelta(days=SEM_FATURA_DIAS)).isoformat():
             continue
         try:
             total += _centavos(t["amount"])
@@ -520,7 +525,7 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
             if faturas:
                 longas = cli.transacoes(c["id"], hoje - timedelta(days=PARCELADOS_DIAS), hoje)
                 credito["parcelas_abertas"] = parcelas_da_fatura_aberta(longas, faturas)
-                sem = lancamentos_sem_fatura(longas)
+                sem = lancamentos_sem_fatura(longas, hoje)
                 if sem is not None:
                     credito["sem_fatura"] = sem
         itens = para_itens(c, recebidas)

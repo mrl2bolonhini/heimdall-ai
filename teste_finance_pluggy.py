@@ -267,6 +267,8 @@ trs2 = [{"amount": 100.0, "date": "2026-10-22", "description": "COMPRA ATRASADA"
         {"amount": 999.0, "date": "2026-09-10", "description": "JA NA FATURA", "creditCardMetadata": {"billId": "F11"}}]
 ss = fp.lancamentos_sem_fatura(trs2)
 confere("sem fatura: soma o que não tem fatura, com a compra atrasada e sem o pagamento", ss == {"valor": 15000, "n": 2, "desde": "2026-10-22"}, ss)
+ss_velho = fp.lancamentos_sem_fatura(trs2 + [{"amount": 2399.7, "date": "2026-05-28", "description": "IPHONE PENDENTE ANTIGA", "creditCardMetadata": {}}], date(2026, 11, 18))
+confere("sem fatura: pendência antiga presa (resíduo de compra parcelada) não conta", ss_velho["valor"] == 15000 and ss_velho["n"] == 2, ss_velho)
 confere("banco que não liga transações a faturas: não usa a regra", fp.lancamentos_sem_fatura([{"amount": 1.0, "date": "2026-11-01", "description": "X"}]) is None)
 det2 = fc.fatura_detalhada(con12, cartao12, {"vence": 1, "antes": 7}, date(2026, 11, 18), pa, ss)
 confere("fatura estimada usa o que está sem fatura mais as parcelas", det2["total"] == 15000 + esperado and det2["inicio"] == date(2026, 10, 22), det2)
