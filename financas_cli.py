@@ -95,6 +95,7 @@ def main() -> None:
     g.add_argument("--boletos", action="store_true")
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
     g.add_argument("--sincronizar", action="store_true")
+    g.add_argument("--renomear-conta", dest="renomear_conta", action="append")
     g.add_argument("--guardar-pluggy", dest="guardar_pluggy", choices=["id", "segredo", "itens"])
     ap.add_argument("--valores", action="store_true")
     ap.add_argument("--linhas", type=int, default=150)
@@ -104,7 +105,6 @@ def main() -> None:
     ap.add_argument("--desde", default="")
     ap.add_argument("--listar", action="store_true")
     ap.add_argument("--nomear", action="append", default=[])
-    ap.add_argument("--renomear-conta", dest="renomear_conta", action="append", default=[])
     ap.add_argument("--forcar", action="store_true")
     ap.add_argument("--abrir", action="store_true")
     a = ap.parse_args()
@@ -161,6 +161,22 @@ def main() -> None:
             if a.guardar_pluggy == "segredo" and shutil.which("pbcopy"):
                 subprocess.run(["pbcopy"], input=b"", timeout=10)
                 print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
+        elif a.renomear_conta:
+            import financas_pluggy as fpl
+            con = _banco()
+            arq = DIR_DADOS / "pluggy_estado.json"
+            estado = fpl.ler_estado(arq)
+            aspas = "\"'\u201c\u201d\u2018\u2019 "
+            for par in a.renomear_conta:
+                antigo, _, novo = par.partition("=")
+                antigo, novo = antigo.strip(aspas), novo.strip(aspas)
+                try:
+                    n = fpl.renomear_conta_finance(con, antigo, novo, estado)
+                except fpl.ErroPluggy as ex:
+                    print(f"Não renomeei \"{antigo}\": {ex}")
+                    continue
+                print(f"A conta \"{antigo}\" passou a se chamar \"{novo[:60]}\" no Finance ({n} lançamentos).")
+            fpl.gravar_estado(arq, estado)
         elif a.sincronizar:
             import financas_pluggy as fpl
             cfg = fpl.credenciais()
@@ -169,12 +185,6 @@ def main() -> None:
             con = _banco()
             arq = DIR_DADOS / "pluggy_estado.json"
             estado = fpl.ler_estado(arq)
-            if a.renomear_conta:
-                for par in a.renomear_conta:
-                    antigo, _, novo = par.partition("=")
-                    n = fpl.renomear_conta_finance(con, antigo, novo, estado)
-                    print(f"A conta \"{antigo.strip()}\" passou a se chamar \"{novo.strip()[:60]}\" no Finance ({n} lançamentos).")
-                fpl.gravar_estado(arq, estado)
             if a.listar or a.nomear:
                 contas = fpl.listar_contas(cfg, estado, con)
                 for par in a.nomear:
