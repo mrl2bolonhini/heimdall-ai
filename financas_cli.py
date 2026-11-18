@@ -95,6 +95,9 @@ def main() -> None:
     g.add_argument("--boletos", action="store_true")
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
     g.add_argument("--sincronizar", action="store_true")
+    g.add_argument("--saldo", action="store_true")
+    g.add_argument("--ultimos", action="store_true")
+    g.add_argument("--resumo", action="store_true")
     g.add_argument("--refazer-pelo-pluggy", dest="refazer", action="store_true")
     g.add_argument("--deduplicar", action="store_true")
     g.add_argument("--padronizar-nomes", dest="padronizar_nomes", action="store_true")
@@ -110,6 +113,10 @@ def main() -> None:
     ap.add_argument("--nomear", action="append", default=[])
     ap.add_argument("--forcar", action="store_true")
     ap.add_argument("--simular", action="store_true")
+    ap.add_argument("--mes", default="")
+    ap.add_argument("--buscar", default="")
+    ap.add_argument("--categoria", default="")
+    ap.add_argument("--limite", type=int, default=15)
     ap.add_argument("--abrir", action="store_true")
     a = ap.parse_args()
     try:
@@ -165,6 +172,20 @@ def main() -> None:
             if a.guardar_pluggy == "segredo" and shutil.which("pbcopy"):
                 subprocess.run(["pbcopy"], input=b"", timeout=10)
                 print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
+        elif a.saldo or a.ultimos or a.resumo:
+            import financas_consulta as fc
+            import financas_pluggy as fpl
+            if a.mes and not __import__("re").fullmatch(r"\d{4}-\d{2}", a.mes):
+                sys.exit("Use o mês no formato AAAA-MM, por exemplo 2026-11.")
+            try:
+                if a.saldo:
+                    print(fc.texto_saldos(fpl.ler_estado(DIR_DADOS / "pluggy_estado.json")))
+                elif a.ultimos:
+                    print(fc.texto_ultimos(_banco(), a.conta, a.mes, a.buscar, a.categoria, a.limite))
+                else:
+                    print(fc.texto_resumo(_banco(), a.mes))
+            except ValueError as ex:
+                sys.exit(str(ex))
         elif a.refazer:
             import financas_pluggy as fpl
             cfg = fpl.credenciais()

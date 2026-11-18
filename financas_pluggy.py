@@ -245,6 +245,13 @@ def para_itens(conta: dict, transacoes: list) -> list:
     return itens
 
 
+def _saldo_centavos(conta: dict):
+    try:
+        return _centavos(conta["balance"]) if conta.get("balance") is not None else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _final(conta: dict) -> str:
     n = re.sub(r"\D", "", str(conta.get("number") or ""))
     return n[-4:] if n else ""
@@ -408,7 +415,7 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
         ini = min(ini, hoje)
         recebidas = cli.transacoes(c["id"], ini, hoje)
         itens = para_itens(c, recebidas)
-        pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat(), "recebidas": len(recebidas)})
+        pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat(), "recebidas": len(recebidas), "saldo": _saldo_centavos(c)})
     return {"pacotes": pacotes, "avisos": avisos}
 
 
@@ -420,7 +427,7 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
     for p in coleta["pacotes"]:
         r = fn.importar_itens(con, p["itens"], "pluggy", "Meu Pluggy", p["nome"], agora)
         resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"], "recebidas": p.get("recebidas", len(p["itens"]))})
-        guardados[p["id"]] = {"nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"]}
+        guardados[p["id"]] = {"nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo")}
     estado["avisos"] = coleta["avisos"]
     estado["ultima"] = (agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     estado["resumo"] = resumo

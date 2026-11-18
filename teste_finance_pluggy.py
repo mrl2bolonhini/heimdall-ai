@@ -180,6 +180,20 @@ seco = fp.refazer_pelo_pluggy(con9, cfg, estz, date(2026, 1, 1), d / "bk", False
 confere("refazer sem aplicar só conta e não apaga", seco["contas"] and not (d / "bk").exists() and con9.execute("SELECT COUNT(*) FROM transacoes WHERE descricao='ANTIGO EXTRATO'").fetchone()[0] == 1, seco)
 real = fp.refazer_pelo_pluggy(con9, cfg, estz, date(2026, 1, 1), d / "bk", True, hoje, fp.Cliente(cfg, api))
 confere("refazer cria cópia do banco, apaga o extrato e relê pelo Pluggy", Path(real["backup"]).exists() and con9.execute("SELECT COUNT(*) FROM transacoes WHERE descricao='ANTIGO EXTRATO'").fetchone()[0] == 0 and sum(c["novas"] for c in real["sincronizado"]["contas"]) > 0, real)
+import financas_consulta as fc
+con10 = fn.conectar(d / "q.db")
+fn.importar_itens(con10, [{"data": "2026-11-10", "valor": -2500, "descricao": "MERCADO X", "fitid": "1"}, {"data": "2026-11-11", "valor": 300000, "descricao": "SALARIO", "fitid": "2"}], "pluggy", "Meu Pluggy", "Itaú conta corrente")
+confere("consulta: últimos lançamentos aceita pedaço do nome da conta", "R$ 3.000,00" in fc.texto_ultimos(con10, "itau") and "1. 11/11/2026" in fc.texto_ultimos(con10, "itau"))
+try:
+    fc.texto_ultimos(con10, "xyz")
+    confere("conta desconhecida dá erro com a lista", False)
+except ValueError as ex:
+    confere("conta desconhecida dá erro com a lista", "Itaú conta corrente" in str(ex))
+confere("consulta: resumo do mês", "entradas de R$ 3.000,00" in fc.texto_resumo(con10, "2026-11"))
+txt = fc.texto_saldos({"ultima": "2026-11-18 05:00:00", "contas": {"a": {"nome": "Itaú conta corrente", "tipo": "BANK", "saldo": 10000}, "b": {"nome": "Itaú cartão de crédito", "tipo": "CREDIT", "saldo": 4000}}})
+confere("consulta: saldos separam conta e cartão e somam", "saldo de R$ 100,00" in txt and "fatura em aberto de R$ 40,00" in txt and "Diferença: R$ 60,00" in txt, txt)
+r_est = fp.ler_estado(d / "estado.json")
+confere("sincronização guarda o saldo no estado", all("saldo" in g for g in r_est["contas"].values()), r_est["contas"])
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()

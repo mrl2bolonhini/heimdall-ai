@@ -272,6 +272,7 @@ SCRIPTS = [
     ("heimdall_perguntar.py", "Perguntar ao modelo local, reutilizável pelos sites: contexto montado pelo código, resposta só com base nele, conferência dos valores e tarefas em segundo plano. Sem reserva na nuvem."),
     ("teste_finance_analise.py", "Teste da análise e do Perguntar com modelo simulado."),
     ("financas_pluggy.py", "Conexão com os bancos pelo Open Finance, com o plano pessoal gratuito do Meu Pluggy: autenticação e leituras (GET) de contas e transações em /v2/transactions, conversão de sinais (conta corrente pelo tipo, cartão pela fatura), importação sem duplicar, aviso de autorização perto de vencer e gravação das chaves no .env a partir da área de transferência. Nada é movido nem pago; os dados passam pelos servidores do Pluggy."),
+    ("financas_consulta.py", "Consultas do Finance no terminal (heimdall finance --balance, --latest, --summary): saldo de cada conta e fatura de cada cartão, últimos lançamentos com filtros e resumo do mês, em texto corrido e listas numeradas. Só lê o banco local e o saldo guardado na última sincronização."),
     ("teste_finance_pluggy.py", "Testa o sincronizador do Pluggy com uma API simulada: sinais, cursor, duplicidade, nomes de conta, avisos, chaves no .env. Sem rede."),
     ("financas_email.py", "Leitura do Gmail (somente leitura) atrás de boletos e Pix, no corpo e nos PDFs anexados, com conferência da autenticação do remetente. Nunca abre links."),
     ("teste_finance_email.py", "Teste da leitura de boletos por e-mail com mensagens montadas no teste."),

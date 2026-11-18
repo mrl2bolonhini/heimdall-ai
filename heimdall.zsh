@@ -270,7 +270,14 @@ heimdall() {
 --standardize-names=--padronizar-nomes
 --dedupe=--deduplicar
 --simulate=--simular
---redo-from-pluggy=--refazer-pelo-pluggy" "$@"
+--redo-from-pluggy=--refazer-pelo-pluggy
+--balance=--saldo
+--latest=--ultimos
+--summary=--resumo
+--month=--mes
+--search=--buscar
+--category=--categoria
+--limit=--limite" "$@"
           _heimdall_py financas_cli.py "${_HA[@]}" ;;
       esac ;;
     n8n) _heimdall_open "n8n" "http://localhost:5678" ;;
@@ -306,7 +313,14 @@ heimdall() {
 --restore=restaurar" "$@"
       _heimdall_py heimdall_backup.py "${_HA[@]}" ;;
     mail) _heimdall_tr "--test-login=--testar-login
---simulate=--simular" "$@"; _heimdall_py heimdall_email_oficial.py "${_HA[@]}" ;;
+--simulate=--simular
+--balance=--saldo
+--latest=--ultimos
+--summary=--resumo
+--month=--mes
+--search=--buscar
+--category=--categoria
+--limit=--limite" "$@"; _heimdall_py heimdall_email_oficial.py "${_HA[@]}" ;;
     access)
       _heimdall_tr "--password=--senha
 --code=--codigo
@@ -408,7 +422,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
       mail) compadd -- --test-login --simulate ;;
       access) compadd -- --password --code --all --verify ;;
-      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --values --folder --lines --account --force --bill --bills --person --read-email --days --sync --save-pluggy --since --list --name --rename-account --standardize-names --dedupe --simulate --redo-from-pluggy ;;
+      finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --values --folder --lines --account --force --bill --bills --person --read-email --days --sync --save-pluggy --since --list --name --rename-account --standardize-names --dedupe --simulate --redo-from-pluggy --balance --latest --summary --month --search --category --limit ;;
       voice) compadd -- --import ;;
       listen) compadd -- --list --latest ;;
       ingest) compadd -- --reset ;;
