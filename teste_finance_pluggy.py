@@ -103,6 +103,8 @@ dup = [{"id": "a1", "type": "BANK", "subtype": "CHECKING_ACCOUNT", "name": "cont
 nm = fp.resolver_nomes(con, {"contas": {}}, dup)
 confere("contas iguais ganham nomes diferentes", len(set(nm.values())) == 4, nm)
 confere("marca reconhecida vira nome curto (Nu Pagamentos → Nubank cartão de crédito)", nm["a4"].startswith("Nubank cartão de crédito"), nm)
+nm3 = fp.resolver_nomes(con, {"contas": {}}, [{"id": "k1", "itemId": "I", "type": "BANK", "subtype": "CHECKING_ACCOUNT", "name": "conta Nu Pagamentos S.A."}, {"id": "k2", "itemId": "I", "type": "CREDIT", "name": "platinum"}])
+confere("cartão sem nome de banco herda o banco da conta do mesmo item", nm3["k2"] == "Nubank cartão de crédito", nm3)
 nm2 = fp.resolver_nomes(con, {"contas": {"a2": {"nome": "Itaú conta"}}}, dup)
 confere("nome já guardado tem prioridade e ninguém mais o toma", nm2["a2"] == "Itaú conta" and list(nm2.values()).count("Itaú conta") == 1, nm2)
 # credencial errada

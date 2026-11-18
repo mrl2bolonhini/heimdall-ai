@@ -276,12 +276,12 @@ def _tipo_nome(conta: dict) -> str:
     return "conta poupança" if (conta.get("subtype") or "").upper() == "SAVINGS_ACCOUNT" else "conta corrente"
 
 
-def nome_padrao(con, conta: dict, usados: set = None) -> str:
+def nome_padrao(con, conta: dict, usados: set = None, marca_item: str = "") -> str:
     """Nome da conta no Finance: 'Banco conta corrente', 'Banco conta poupança' ou 'Banco cartão de crédito'. Nunca devolve um nome já
     usado por outra conta nesta rodada (`usados`): nesse caso acrescenta o final ou um número. Dá para trocar com --nomear."""
     usados = usados if usados is not None else set()
     rotulo = _rotulo(conta)
-    marca = _marca(rotulo) or rotulo
+    marca = _marca(rotulo) or marca_item or rotulo
     base = f"{marca} {_tipo_nome(conta)}"
     f = _final(conta)
     candidatos = [base] + ([f"{base} final {f}"] if f else [])
@@ -328,6 +328,11 @@ def resolver_nomes(con, estado: dict, contas: list, forcados: dict = None) -> di
     guardados = estado.get("contas", {})
     saida = {}
     usados = set()
+    marcas_item = {}  # cartão sem nome de banco (ex.: 'platinum') herda o banco da conta do mesmo item
+    for c in contas:
+        m = _marca(_rotulo(c))
+        if m and c.get("itemId"):
+            marcas_item[c["itemId"]] = m
     for c in contas:
         n = forcados.get(c["id"]) or guardados.get(c["id"], {}).get("nome")
         if n:
@@ -335,7 +340,7 @@ def resolver_nomes(con, estado: dict, contas: list, forcados: dict = None) -> di
             usados.add(n)
     for c in contas:
         if c["id"] not in saida:
-            saida[c["id"]] = nome_padrao(con, c, usados)
+            saida[c["id"]] = nome_padrao(con, c, usados, marcas_item.get(c.get("itemId") or "", ""))
             usados.add(saida[c["id"]])
     return saida
 
