@@ -331,7 +331,7 @@ def _ja_veio_de_extrato(con, conta: str, data: str, valor: int) -> bool:
     return p < e
 
 
-def repetidos_entre_fontes(con, aplicar: bool = False) -> dict:
+def repetidos_entre_fontes(con, aplicar: bool = False, exemplos: list = None) -> dict:
     """Lançamentos do Pluggy que repetem um de extrato/fatura (mesma conta, dia e valor). Com aplicar, apaga o do Pluggy (nunca o que você mexeu).
     Devolve {conta: quantidade}."""
     achados = {}
@@ -343,6 +343,9 @@ def repetidos_entre_fontes(con, aplicar: bool = False) -> dict:
             continue
         ids = [r["id"] for r in con.execute("SELECT t.id FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=? AND t.manual=0 ORDER BY t.id DESC", (g["conta"], g["data"], g["valor"]))]
         n = min(e, len(ids))
+        if exemplos is not None and n < min(e, p):  # sobrou do Pluggy que não dá para apagar (você alterou o lançamento)
+            for r in con.execute("SELECT t.data, t.valor, t.descricao, t.categoria FROM transacoes t JOIN importacoes i ON i.id=t.importacao_id WHERE i.formato='pluggy' AND t.conta=? AND t.data=? AND t.valor=? AND t.manual=1", (g["conta"], g["data"], g["valor"])):
+                exemplos.append((g["conta"], r["data"], r["valor"], r["descricao"], r["categoria"]))
         if n <= 0:
             continue
         achados[g["conta"]] = achados.get(g["conta"], 0) + n

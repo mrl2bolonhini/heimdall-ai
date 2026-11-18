@@ -165,9 +165,12 @@ def main() -> None:
                 print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
         elif a.deduplicar:
             con = _banco()
-            achados = fn.repetidos_entre_fontes(con, aplicar=a.forcar)
+            ex = []
+            achados = fn.repetidos_entre_fontes(con, aplicar=a.forcar, exemplos=ex)
             for conta, n in sorted(achados.items()):
                 print(f"{conta}: {n} lançamento(s) do Pluggy repetem lançamentos de extrato (mesmo dia e valor).")
+            for conta, data, valor, desc, cat in ex:
+                print(f"  Não apago porque você alterou: {conta}, {fn.data_br(data)}, {abs(valor) / 100:.2f}".replace(".", ",") + f", {desc}, categoria {cat}.")
             if not achados:
                 print("Nenhum lançamento do Pluggy repete extrato ou fatura.")
             elif a.forcar:
