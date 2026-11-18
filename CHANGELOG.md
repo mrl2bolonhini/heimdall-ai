@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-18 - Alertas de saúde com contexto
+- O monitor de anomalias deixou de juntar medidas sem relação. Passos, energia, exercício, caminhada, peso, frequência cardíaca média do dia e ruído agora são contexto: aparecem no relatório, mas nunca viram aviso sozinhos nem em dupla. Antes, duas medidas quaisquer muito fora do normal (frequência média do dia e ruído, por exemplo) abriam um aviso.
+- Só medidas fisiológicas alertam, e só de sistemas diferentes: coração (pulso em repouso, mínimo, madrugada e horas de hoje contam como um), variabilidade, respiração e oxigênio, sono e temperatura. Os cruzamentos de estresse e de sono/respiração também só usam essas medidas.
+- Esforço físico recente explica o desvio: com treino de 40 minutos ou 300 kcal ou mais hoje ou ontem, pulso, variabilidade e respiração alterados saem marcados como "provável efeito de treino forte recente" e não contam para o aviso, a menos que durem 3 dias ou mais. O alerta de pulso alto na madrugada também espera uma segunda noite alta quando houve treino forte.
+- O ruído do ambiente passou a valer pelo nível, não pela mudança: abaixo de 70 dB de média no dia (limite de referência de 24 horas da OMS e da EPA) nunca é achado; acima disso é moderado, e a partir de 75 dB é forte e pode alertar sozinho.
+- O modelo local que interpreta o alerta recebe o contexto (medidas de contexto, esforço recente e as regras acima) para não ligar sinais sem relação.
+
 ## 2026-11-18 - Menos avisos da triagem
 - A triagem agora manda um só aviso por rodada, listando todos os itens pendentes, em vez de um aviso por item. Com um único pendente, o aviso continua individual.
 - Itens comuns (prioridade alta ou média) repetem a cada 4 horas, em vez de 2; itens críticos continuam a cada 2 horas e furam o modo silencioso, e o aviso de um grupo com crítico sai como crítico. Itens de prioridade baixa seguem a cada 8 horas. Um aviso reinicia a contagem de todos os itens listados nele. Continua sem tocar das 21h às 7h, exceto o primeiro aviso de um item crítico.

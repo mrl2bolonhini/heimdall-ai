@@ -215,5 +215,59 @@ confere("se o mesmo quadro voltar depois de normalizar, é novidade", an.alerta(
 sem_modelo = an.alerta(HOJE, agora + timedelta(hours=9), lambda *a: {})
 confere("modelo fora do ar: avisa com o texto simples e diz que não houve interpretação", sem_modelo and "sem interpretação" in sem_modelo["resumo"], sem_modelo)
 
+# 11. contexto: frequência média do dia e ruído do ambiente não dão alerta juntos (medidas sem relação, e o ruído baixo não faz mal)
+for m in ("fc_media", "x:environmental_audio_exposure"):
+    for i in range(1, 31):
+        grava(m, dia(i), (72 if m == "fc_media" else 48) + (i % 4))
+for m, v in NORMAL.items():
+    grava(m, HOJE, v)
+grava("fc_media", dia(1), 108)
+grava("x:environmental_audio_exposure", HOJE, 63)
+r = an.analisar(HOJE)
+confere("frequência média muito alta aparece, mas como contexto", [a for a in r["achados"] if a["chave"] == "fc_media" and a["contexto"]], r["achados"])
+confere("ruído de 63 dB não é achado, mesmo muito acima do seu normal de 48", not [a for a in r["achados"] if a["chave"] == "x:environmental_audio_exposure"], r["achados"])
+confere("frequência média alta + ruído mudado: nenhum alerta", an.alerta(HOJE) is None)
+grava("x:environmental_audio_exposure", HOJE, 66)
+confere("ruído de 66 dB (abaixo de 70) ainda não é achado", not [a for a in an.analisar(HOJE)["achados"] if a["chave"] == "x:environmental_audio_exposure"])
+confere("e frequência média alta com ruído de 66 dB continua sem alerta", an.alerta(HOJE) is None)
+grava("x:environmental_audio_exposure", HOJE, 72)
+a_ruido = [a for a in an.analisar(HOJE)["achados"] if a["chave"] == "x:environmental_audio_exposure"]
+confere("ruído com média de 72 dB passa do limite de 70 e vira achado moderado, citando OMS e EPA", a_ruido and a_ruido[0]["nivel"] == "moderada" and "OMS" in a_ruido[0]["texto"], a_ruido)
+confere("moderado sozinho não gera alerta", an.alerta(HOJE) is None)
+grava("x:environmental_audio_exposure", HOJE, 78)
+a_ruido = [a for a in an.analisar(HOJE)["achados"] if a["chave"] == "x:environmental_audio_exposure"]
+alerta_ruido = an.alerta(HOJE, datetime.now(), lambda *x: {})
+confere("ruído com média de 78 dB é forte e sozinho gera alerta", a_ruido and a_ruido[0]["nivel"] == "forte" and alerta_ruido is not None, a_ruido)
+grava("x:environmental_audio_exposure", HOJE, 48)
+grava("fc_media", dia(1), 74)
+
+# 12. dois sinais do mesmo sistema contam como um; sistemas diferentes alertam; esforço recente explica
+for m, v in NORMAL.items():
+    grava(m, HOJE, v)
+for i in range(1, 31):
+    grava("fc_min", dia(i), 48 + (i % 3))
+grava("fc_repouso", HOJE, 75)
+grava("fc_min", dia(1), 66)   # medida do dia inteiro: vale o último dia completo
+r = an.analisar(HOJE)
+confere("pulso em repouso e pulso mínimo muito altos são dois achados fortes", {a["chave"] for a in r["achados"] if a["nivel"] == "forte"} >= {"fc_repouso", "fc_min"}, r["achados"])
+confere("mas são o mesmo sistema (coração): sem alerta", an.alerta(HOJE, datetime.now(), lambda *x: {}) is None)
+grava("hrv", HOJE, 30)
+confere("pulso alto e variabilidade baixa, sistemas diferentes e sem esforço: alerta", an.alerta(HOJE, datetime.now(), lambda *x: {}) is not None)
+hs._upsert("treinos", "id", [{"id": "teste-corrida", "dia": dia(1), "inicio": dia(1) + "T18:00:00-03:00", "tipo": "Corrida", "duracao_min": 55, "energia_kcal": 620}])
+r = an.analisar(HOJE)
+expl = [a["chave"] for a in r["achados"] if a.get("explicado")]
+confere("com corrida forte ontem, pulso e variabilidade ficam explicados pelo esforço", {"fc_repouso", "hrv"} <= set(expl), r["achados"])
+confere("o texto explica o esforço", any("efeito de treino forte recente" in a["texto"] for a in r["achados"] if a.get("explicado")))
+confere("explicados pelo esforço: sem alerta", an.alerta(HOJE, datetime.now(), lambda *x: {}) is None)
+for i in range(0, 4):   # o desvio dura 4 dias: deixa de ser explicado só pelo treino
+    grava("hrv", dia(i), 30)
+a_hrv = [a for a in an.analisar(HOJE)["achados"] if a["chave"] == "hrv"]
+confere("variabilidade baixa por 4 dias seguidos não é mais explicada pelo treino", a_hrv and not a_hrv[0].get("explicado"), a_hrv)
+for m, v in NORMAL.items():
+    grava(m, HOJE, v)
+grava("spo2", HOJE, 92)
+grava("x:breathing_disturbances", HOJE, 25)
+confere("oxigênio baixo e distúrbios respiratórios continuam alertando apesar do treino", an.alerta(HOJE, datetime.now(), lambda *x: {}) is not None)
+
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)

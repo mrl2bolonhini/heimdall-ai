@@ -1265,6 +1265,20 @@ def _fc_madrugada(dia: str, dias_base: int = 14) -> dict:
             "sd": statistics.pstdev(base) if len(base) >= 2 else None, "n_dias": len(base)}
 
 
+def esforco_recente(dia: str) -> dict:
+    """Treinos fortes (40 minutos ou mais, ou 300 kcal ou mais) no dia e no dia anterior. Esforço assim explica pulso, variabilidade e respiração alterados
+    sem haver doença. Devolve {"hoje": bool, "recente": bool, "texto": frase}."""
+    ontem = (datetime.strptime(dia, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    try:
+        linhas = _ler("SELECT dia, tipo, duracao_min, energia_kcal FROM treinos WHERE dia IN (?, ?)", (ontem, dia))
+    except Exception:  # noqa: BLE001 - sem tabela de treinos ainda
+        linhas = []
+    fortes = [r for r in linhas if (r["duracao_min"] or 0) >= 40 or (r["energia_kcal"] or 0) >= 300]
+    hoje = [r for r in fortes if r["dia"] == dia]
+    partes = [f"{r['tipo']} de {_dur(r['duracao_min'])} {'hoje' if r['dia'] == dia else 'ontem'}" for r in fortes if r["duracao_min"]]
+    return {"hoje": bool(hoje), "recente": bool(fortes), "texto": "treino forte recente (" + "; ".join(partes) + ")" if partes else ("treino forte recente" if fortes else "")}
+
+
 def alerta_fc(dia: str = None):
     """Frequência cardíaca da madrugada bem acima do seu normal (pelo menos 10 bpm e 2,5 desvios): devolve o item de triagem, senão None.
     Não é diagnóstico; o pulso em repouso do dia pode nem existir ainda, e é por isso que olhamos a madrugada hora a hora."""
@@ -1275,6 +1289,11 @@ def alerta_fc(dia: str = None):
     dif = m["hoje"] - m["normal"]
     if dif < 10 or dif / max(m["sd"] or 0, 2.0) < 2.5:
         return None
+    if esforco_recente(dia)["recente"]:   # treino forte hoje ou ontem eleva o pulso da madrugada: só avisa se a noite anterior também já estava alta
+        ontem = (datetime.strptime(dia, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+        mo = _fc_madrugada(ontem)
+        if mo["hoje"] is None or mo["normal"] is None or mo["hoje"] - mo["normal"] < 8:
+            return None
     return {"id": f"fc_madrugada|{dia}", "titulo": "Frequência cardíaca alta na madrugada", "nivel": "alto", "fonte": "saude",
             "resumo": (f"Na madrugada de {_br(dia)} (0h às 7h) a sua frequência cardíaca média foi {_num(m['hoje'])} bpm, {_num(dif)} bpm acima do seu normal de "
                        f"{_num(m['normal'])} bpm nos últimos {m['n_dias']} dias. Não é diagnóstico: se houver febre, falta de ar, palpitação, tontura ou dor no peito, "

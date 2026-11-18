@@ -6,6 +6,7 @@ Para cada métrica guardada em saude_diaria (e para a frequência cardíaca hora
   2. conta há quantos dias seguidos o valor está fora do normal e olha a média dos últimos 7 dias;
   3. cruza os sinais: pulso alto + variabilidade baixa + respiração/oxigênio/sono ruins juntos (corpo sob estresse ou doença) e
      distúrbios respiratórios + oxigênio baixo + sono curto (possível apneia).
+Só medidas fisiológicas de sistemas diferentes alertam (veja SISTEMA); o resto é contexto, o esforço físico recente explica desvios de pulso e variabilidade e o ruído só conta acima de 70 dB.
 Nada aqui é diagnóstico. Uso:  python3 heimdall_anomalias.py [AAAA-MM-DD]
 """
 import hashlib
@@ -58,6 +59,17 @@ IGNORAR_PREFIXO = ("x:anel_",)
 # faixas fisiologicamente possíveis para o valor de um dia: fora delas o problema é do dado (unidade errada, dia incompleto, sensor), não do corpo
 LIMITES = {"x:basal_energy_burned": (800, 4500), "fc_media": (35, 180), "fc_min": (30, 140), "fc_repouso": (30, 130), "spo2": (80, 100), "spo2_min": (60, 100),
            "x:environmental_audio_exposure": (20, 130), "hrv": (5, 300), "resp": (6, 40), "x:weight_body_mass": (20, 400)}
+
+# O que pode alertar. Cada medida pertence a um sistema do corpo; só valem para o alerta medidas FISIOLÓGICAS, e dois sinais do mesmo sistema (pulso em repouso e pulso
+# mínimo, por exemplo) contam como um só. Todo o resto (passos, energia, exercício, ruído, caminhada, peso, frequência média do dia...) é CONTEXTO: aparece no
+# relatório e ajuda a interpretar, mas sozinho ou em dupla nunca vira aviso.
+SISTEMA = {"fc_repouso": "coração", "fc_madrugada": "coração", "fc_min": "coração", "fc_horas": "coração", "hrv": "autonômico",
+           "resp": "respiração", "spo2": "respiração", "spo2_min": "respiração", "x:breathing_disturbances": "respiração",
+           "sono_total": "sono", "sono_profundo": "sono", "sono_rem": "sono", "x:apple_sleeping_wrist_temperature": "temperatura"}
+# esforço físico forte recente explica estes desvios (pulso e respiração mais altos, variabilidade menor), a menos que durem 3 dias ou mais
+EFEITO_ESFORCO = {"fc_repouso", "fc_madrugada", "fc_min", "fc_horas", "hrv", "resp"}
+# exposição que só faz mal acima de um nível: (aviso, forte) em dB, média do dia. 70 dB em 24 h é o limite de referência da OMS e da EPA; abaixo disso nunca é achado.
+EXPOSICAO = {"x:environmental_audio_exposure": (70.0, 75.0)}
 
 BASE_DIAS = 30        # janela do "normal"
 BASE_MIN = 10         # dias mínimos de histórico para comparar
@@ -124,6 +136,15 @@ def _analisa_metrica(chave: str, hoje: str) -> dict:
     rel = abs(dif) / abs(med) if med else 0
     ruim = sentido == 0 or (dif > 0) == (sentido > 0)
     achado = {"chave": chave, "nome": nome, "dia": dia, "valor": v, "normal": med, "z": z, "dif": dif, "ruim": ruim, "sentido": sentido, "seguidos": 0, "tipo": "dia"}
+    if chave in EXPOSICAO:   # vale o nível absoluto, não o desvio do seu normal: ruído que mudou mas está baixo não faz mal
+        aviso, forte = EXPOSICAO[chave]
+        if v < aviso:
+            achado["nivel"] = "normal"
+            return achado
+        achado.update(nivel="forte" if v >= forte else "moderada", ruim=True, tipo="exposicao",
+                      texto=(f"{nome}: média de {_fmt(chave, v, casas, un)} em {hs._br(dia)}, acima de {_fmt(chave, aviso, 0, un)}, o limite de referência para 24 horas de exposição "
+                             "(OMS e EPA); ruído assim por muito tempo pode prejudicar a audição"))
+        return achado
     grande = ruim and min_abs > 0 and abs(dif) >= 2 * min_abs and abs(z) >= 1.5   # mudança absoluta grande, mesmo com um normal bem variável
     if (abs(z) >= Z_ALERTA or grande) and abs(dif) >= min_abs and rel >= min_rel:
         achado["nivel"] = ("forte" if abs(z) >= Z_FORTE else "moderada") if ruim else "positivo"
@@ -244,9 +265,16 @@ def analisar(hoje: str = None) -> dict:
         if extra:
             analisadas += 1
             achados.append(extra)
+    esforco = hs.esforco_recente(hoje)
+    for a in achados:   # contexto: esforço recente explica pulso/variabilidade/respiração; medidas de contexto não alertam
+        if a["chave"] in EFEITO_ESFORCO and a["seguidos"] < 3 and (esforco["hoje"] if a["chave"] == "fc_horas" else esforco["recente"]):
+            a["explicado"] = esforco["texto"]
+            a["texto"] += f" (provável efeito de {esforco['texto']}, não necessariamente um problema)"
+        a["contexto"] = a["chave"] not in SISTEMA and a.get("tipo") != "exposicao"
     achados.sort(key=lambda a: (a["nivel"] != "forte", -abs(a["z"])))
-    combos = _combos({a["chave"]: a for a in achados if a["ruim"]})
-    return {"dia": hoje, "achados": achados, "combos": combos, "positivos": positivos, "sem_base": sem_base, "sem_dado_recente": sem_recente, "analisadas": analisadas, "suspeitos": suspeitos}
+    combos = _combos({a["chave"]: a for a in achados if a["ruim"] and a["chave"] in SISTEMA and not a.get("explicado")})
+    return {"dia": hoje, "achados": achados, "combos": combos, "positivos": positivos, "sem_base": sem_base, "sem_dado_recente": sem_recente, "analisadas": analisadas,
+            "suspeitos": suspeitos, "esforco": esforco}
 
 
 def relatorio(hoje: str = None) -> str:
@@ -327,7 +355,12 @@ def _interpretar(r: dict, fortes: list, antes: dict, mudou: dict) -> dict:
         "Não diagnostique, não invente números, não trate variação pequena como perigo. Sugira de duas a três ações concretas e proporcionais (por exemplo conferir se o relógio estava no pulso, "
         "medir a temperatura, descansar, hidratar, repetir a medida amanhã). Só sugira procurar atendimento se houver combinação clara de sinais ou sintomas relatados.\n"
         + (f"Condições da pessoa que você deve respeitar: {os.environ['HEIMDALL_SAUDE_CONDICOES']}.\n" if os.environ.get("HEIMDALL_SAUDE_CONDICOES") else "")
+        + "Regras de interpretação: esforço físico forte recente explica pulso, respiração e variabilidade alterados; ruído só importa acima de 70 dB de média no dia; "
+          "passos, energia e exercício diferentes do normal são contexto, não problema; nunca ligue dois sinais sem relação fisiológica.\n"
         + "\nACHADOS DE HOJE:\n" + "\n".join(achados)
+        + ("\nCONTEXTO (não são alerta por si): " + "; ".join(a["texto"] for a in r["achados"] if a.get("contexto") or a.get("explicado"))[:700]
+           if any(a.get("contexto") or a.get("explicado") for a in r["achados"]) else "")
+        + ("\nESFORÇO RECENTE: " + r["esforco"]["texto"] if r.get("esforco", {}).get("texto") else "")
         + "\n\nO QUE JÁ FOI AVISADO ANTES: " + ja_avisado
         + "\nO QUE MUDOU DESDE O ÚLTIMO AVISO: " + (mudou.get("resumo") or "primeiro aviso")
         + ("\nDADOS SUSPEITOS (ignorados): " + "; ".join(r["suspeitos"]) if r.get("suspeitos") else "")
@@ -361,9 +394,12 @@ def alerta(hoje: str = None, agora: datetime = None, interpretar=_interpretar):
     triagem chama salvar_estado(item.pop('_estado')) depois que dá certo, para um aviso perdido não ser dado como entregue."""
     agora = agora or datetime.now()
     r = analisar(hoje)
-    fortes = [a for a in r["achados"] if a["nivel"] == "forte" and a["chave"] != "fc_madrugada"]
+    todos_fortes = [a for a in r["achados"] if a["nivel"] == "forte" and a["chave"] != "fc_madrugada"]
+    # só medidas fisiológicas não explicadas por esforço, e só de sistemas diferentes, mais exposição acima do limite (ruído)
+    fortes = [a for a in todos_fortes if (a["chave"] in SISTEMA and not a.get("explicado")) or a.get("tipo") == "exposicao"]
+    sistemas = {SISTEMA[a["chave"]] for a in fortes if a["chave"] in SISTEMA}
     antes = _ler_estado()
-    if not r["combos"] and len(fortes) < 2:
+    if not r["combos"] and len(sistemas) < 2 and not any(a.get("tipo") == "exposicao" for a in fortes):
         if antes.get("sinais"):
             salvar_estado({"sinais": {}, "quando": antes.get("quando", ""), "normalizou": _agora_iso(agora)})   # quadro normalizou: a próxima ocorrência volta a ser novidade
         return None
