@@ -6,6 +6,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Os nomes das contas dos bancos no Finance seguem um padrão: "Itaú conta corrente", "Itaú conta poupança", "Nubank conta corrente", "Mercado Pago conta corrente", e para cartões "Itaú cartão de crédito", "Nubank cartão de crédito" e assim por diante. Trechos entre parênteses como "(pré-pago)" e a palavra "Pluggy" nunca entram no nome. Duas contas nunca ficam com o mesmo nome: se o nome já foi tomado na mesma rodada, o Heimdall acrescenta o final ou um número. Nomes já guardados ou definidos com `--name` têm prioridade.
 - Cartão sem nome de banco (como "platinum") herda o banco da conta do mesmo item, então o cartão do Nubank sai como "Nubank cartão de crédito".
 - `heimdall finance --sync --list` mostra também o tipo (corrente, poupança) e o saldo, e avisa quando já existe no Finance uma conta importada por extrato do mesmo banco com outro nome.
+- Novo `heimdall finance --standardize-names` renomeia sozinho as contas do Pluggy para o padrão, sem digitar nenhum nome (útil quando as aspas do terminal atrapalham).
 - Novo `heimdall finance --rename-account "ATUAL=NOVO"` (pode repetir) troca o nome de uma conta já importada, com todo o histórico. O Heimdall lembra os nomes antigos e a conta do Pluggy passa a usar o nome novo sem recomeçar as datas, então reler os mesmos lançamentos depois da troca não duplica nada.
 
 ## 2026-11-17 - Contas dos bancos baixadas sozinhas pelo Meu Pluggy

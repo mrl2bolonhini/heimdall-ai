@@ -426,6 +426,31 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
     return {"contas": resumo, "avisos": coleta["avisos"]}
 
 
+def padronizar_nomes(con, estado: dict, cfg: dict, cliente: Cliente = None) -> list:
+    """Renomeia, com o histórico, as contas do Pluggy cujo nome guardado não segue o padrão (Banco conta corrente, Banco cartão de crédito...).
+    Não pede digitar nomes. Devolve [(antigo, novo, lançamentos)] e avisos para o que não pôde trocar."""
+    cli = cliente or Cliente(cfg)
+    todas = []
+    for item_id in cfg["itens"]:
+        todas += cli.contas(item_id)
+    padrao = resolver_nomes(con, {"contas": {}}, todas)
+    feitos = []
+    for c in todas:
+        g = estado.get("contas", {}).get(c["id"])
+        atual, novo = (g or {}).get("nome"), padrao[c["id"]]
+        if not atual or atual == novo:
+            continue
+        if not con.execute("SELECT 1 FROM transacoes WHERE conta=? LIMIT 1", (atual,)).fetchone():
+            g["nome"] = novo  # nada importado ainda: só passa a usar o nome novo
+            feitos.append((atual, novo, 0, ""))
+            continue
+        try:
+            feitos.append((atual, novo, renomear_conta_finance(con, atual, novo, estado), ""))
+        except ErroPluggy as ex:
+            feitos.append((atual, novo, 0, str(ex)))
+    return feitos
+
+
 def listar_contas(cfg: dict, estado: dict, con, cliente: Cliente = None) -> list:
     """Contas dos bancos conectados com o nome que cada uma terá no Finance."""
     cli = cliente or Cliente(cfg)

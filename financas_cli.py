@@ -95,6 +95,7 @@ def main() -> None:
     g.add_argument("--boletos", action="store_true")
     g.add_argument("--ler-email", dest="ler_email", action="store_true")
     g.add_argument("--sincronizar", action="store_true")
+    g.add_argument("--padronizar-nomes", dest="padronizar_nomes", action="store_true")
     g.add_argument("--renomear-conta", dest="renomear_conta", action="append")
     g.add_argument("--guardar-pluggy", dest="guardar_pluggy", choices=["id", "segredo", "itens"])
     ap.add_argument("--valores", action="store_true")
@@ -161,6 +162,20 @@ def main() -> None:
             if a.guardar_pluggy == "segredo" and shutil.which("pbcopy"):
                 subprocess.run(["pbcopy"], input=b"", timeout=10)
                 print("A área de transferência foi esvaziada, para o segredo não ficar copiado.")
+        elif a.padronizar_nomes:
+            import financas_pluggy as fpl
+            cfg = fpl.credenciais()
+            if not cfg:
+                sys.exit("Faltam chaves do Pluggy no .env.")
+            con = _banco()
+            arq = DIR_DADOS / "pluggy_estado.json"
+            estado = fpl.ler_estado(arq)
+            feitos = fpl.padronizar_nomes(con, estado, cfg)
+            fpl.gravar_estado(arq, estado)
+            for antigo, novo, n, erro in feitos:
+                print(f"Não renomeei \"{antigo}\": {erro}" if erro else f"\"{antigo}\" passou a se chamar \"{novo}\" ({n} lançamentos).")
+            if not feitos:
+                print("Todos os nomes já seguem o padrão.")
         elif a.renomear_conta:
             import financas_pluggy as fpl
             con = _banco()

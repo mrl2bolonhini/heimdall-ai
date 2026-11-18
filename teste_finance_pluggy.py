@@ -118,6 +118,13 @@ r5 = fn.importar_itens(con2, its, "pluggy", "Meu Pluggy", "Itaú conta corrente"
 confere("depois de renomear, reler os mesmos lançamentos não duplica", r5["novas"] == 0 and r5["repetidas"] == 3, r5)
 r6 = fn.importar_itens(con2, its + [{"data": "2026-11-12", "valor": -1, "descricao": "NOVO", "fitid": "t3"}], "pluggy", "Meu Pluggy", "Itaú conta corrente")
 confere("lançamento novo continua entrando", r6["novas"] == 1, r6)
+# padronizar nomes sozinho
+con3 = fn.conectar(d / "s.db")
+fn.importar_itens(con3, [{"data": "2026-11-10", "valor": -500, "descricao": "A", "fitid": "q1"}], "pluggy", "Meu Pluggy", "Pluggy: platinum cartão")
+est3 = {"contas": {CONTA_CARTAO: {"nome": "Pluggy: platinum cartão", "ultimo": "2026-11-11"}}}
+feitos = fp.padronizar_nomes(con3, est3, cfg, fp.Cliente(cfg, api))
+confere("padronizar renomeia com histórico e atualiza o estado", feitos and feitos[0][1] == "Nubank cartão de crédito" and feitos[0][2] == 1 and est3["contas"][CONTA_CARTAO]["nome"] == "Nubank cartão de crédito", feitos)
+confere("padronizar de novo não faz nada", fp.padronizar_nomes(con3, est3, cfg, fp.Cliente(cfg, api)) == [])
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()
