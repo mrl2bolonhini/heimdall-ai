@@ -289,6 +289,15 @@ store[gc]["feito_em"] = NOW
 res, env = rodar(12, 10)
 ok(len(env) == 1 and env[0]["title"].startswith("Triagem: Boleto") , "com um só pendente volta o aviso individual")
 
+print("== Aviso agrupado: duplicados e detalhe")
+corpo_g = T.montar_aviso_agrupado([({"titulo": "E-mail oficial (urgência alta): Serasa/SPC", "resumo": "Assunto: Sua dívida venceu hoje. Abra o app."}, False)] * 3
+                                  + [({"titulo": "Saúde: 2 sinais", "resumo": "Pulso em repouso e variabilidade fora do normal."}, False)], True, 4)
+ok(corpo_g["title"] == "CRÍTICO: 4 itens pendentes", "o título continua contando todos os itens")
+ok("1. E-mail oficial (urgência alta): Serasa/SPC (x3): Assunto: Sua dívida venceu hoje" in corpo_g["body"] and corpo_g["body"].count("Serasa/SPC") == 1, "títulos repetidos viram uma linha com (x3) e o assunto")
+ok("2. Saúde: 2 sinais: Pulso em repouso" in corpo_g["body"] and "Abra o app Lembretes" in corpo_g["body"], "cada linha traz o começo do resumo e o rodapé fica")
+muitos = T.montar_aviso_agrupado([({"titulo": f"Item {i} " + "x" * 60, "resumo": "detalhe " * 30}, False) for i in range(8)], False, 8)
+ok(len(muitos["body"]) <= 900 and "Abra o app Lembretes" in muitos["body"], "com muitos itens longos, o detalhe encolhe e o rodapé não é cortado")
+
 print("== Crítico no grupo: aviso crítico a cada 2 horas, listando todos")
 store.clear()
 banco_con = banco.conectar(); banco_con.execute("DELETE FROM triagem"); banco_con.commit(); banco_con.close()

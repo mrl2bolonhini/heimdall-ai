@@ -11,6 +11,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 
 ## 2026-11-18 - Menos avisos da triagem
 - A triagem agora manda um só aviso por rodada, listando todos os itens pendentes, em vez de um aviso por item. Com um único pendente, o aviso continua individual.
+- O aviso agrupado traz o começo do resumo de cada item (assunto do e-mail, sinais da saúde) e junta itens com o mesmo título numa linha só, com (x3), para dar para decidir sem abrir o app; o detalhe encolhe se o aviso ficar grande demais.
 - Itens comuns (prioridade alta ou média) repetem a cada 4 horas, em vez de 2; itens críticos continuam a cada 2 horas e furam o modo silencioso, e o aviso de um grupo com crítico sai como crítico. Itens de prioridade baixa seguem a cada 8 horas. Um aviso reinicia a contagem de todos os itens listados nele. Continua sem tocar das 21h às 7h, exceto o primeiro aviso de um item crítico.
 
 ## 2026-11-18 - Consultas do Finance no terminal

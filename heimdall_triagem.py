@@ -306,15 +306,31 @@ def montar_aviso(row: dict, critico: bool, pendentes: int, sem_lembrete: bool = 
 
 
 def montar_aviso_agrupado(itens: list, critico: bool, pendentes: int) -> dict:
-    """Um só aviso para vários itens pendentes (em vez de um aviso por item). `itens` é [(row, sem_lembrete)]."""
-    linhas = [f"{n}. {row['titulo'][:90]}" for n, (row, _) in enumerate(itens[:8], 1)]
-    if len(itens) > 8:
-        linhas.append(f"... e mais {len(itens) - 8}.")
-    corpo = "\n".join(linhas)
-    if any(sem for _, sem in itens):
-        corpo += "\nAlguns lembretes ainda não foram criados no app Lembretes (autorização pendente no Mac); o aviso continua até isso ser resolvido."
-    else:
-        corpo += "\nAbra o app Lembretes, lista " + NOME_LISTA + ". " + INSTRUCAO
+    """Um só aviso para vários itens pendentes (em vez de um aviso por item). `itens` é [(row, sem_lembrete)]. Itens com o mesmo título viram uma linha só
+    ("x3"), e cada linha traz o começo do resumo (assunto do e-mail, sinais da saúde) para dar para decidir sem abrir o app."""
+    grupos: dict = {}
+    for row, _ in itens:
+        g = grupos.setdefault(row["titulo"], {"row": row, "n": 0})
+        g["n"] += 1
+
+    def linhas(detalhe: int) -> list:
+        saida = []
+        for n, (titulo, g) in enumerate(list(grupos.items())[:8], 1):
+            lin = f"{n}. {titulo[:80]}" + (f" (x{g['n']})" if g["n"] > 1 else "")
+            det = " ".join((g["row"].get("resumo") or "").split())
+            if detalhe and det:
+                lin += ": " + det[:detalhe]
+            saida.append(lin)
+        if len(grupos) > 8:
+            saida.append(f"... e mais {len(grupos) - 8}.")
+        return saida
+
+    rodape = ("\nAlguns lembretes ainda não foram criados no app Lembretes (autorização pendente no Mac); o aviso continua até isso ser resolvido."
+              if any(sem for _, sem in itens) else "\nAbra o app Lembretes, lista " + NOME_LISTA + ". " + INSTRUCAO)
+    for detalhe in (90, 50, 0):   # cabe no limite do Bark: tira o detalhe antes de cortar o rodapé
+        corpo = "\n".join(linhas(detalhe)) + rodape
+        if len(corpo) <= 900:
+            break
     p = {"title": ("CRÍTICO: " if critico else "Triagem: ") + f"{len(itens)} itens pendentes", "body": corpo[:900], "group": "triagem",
          "level": "critical" if critico else "timeSensitive", "badge": pendentes}
     if critico:
