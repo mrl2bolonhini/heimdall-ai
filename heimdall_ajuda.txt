@@ -196,7 +196,8 @@ Opções:
   --save-pluggy ID|segredo|itens  grava no .env a chave que você acabou de copiar (Client ID, Client Secret ou o id de um banco conectado; repetir com outro id acrescenta o banco, sem apagar os anteriores; também aceita o endereço da página Demo com ?item=, de onde tira só o id do item), lendo a área de transferência sem mostrar o valor; depois do segredo, esvazia a área de transferência
   --since AAAA-MM-DD   com --sync, busca desde essa data (o Meu Pluggy guarda até 12 meses). Sem isso, começa no dia seguinte ao último extrato importado da conta, ou 90 dias atrás
   --list               com --sync, mostra as contas dos bancos e o nome de cada uma no Finance
-  --name N=NOME        com --sync, dá o nome N da lista a uma conta (use o nome de uma conta já importada por extrato para não duplicar)
+  --name N=NOME        com --sync, dá o nome N da lista a uma conta
+  --rename-account "ATUAL=NOVO"  troca o nome de uma conta já importada por extrato, com todo o histórico (faça antes da primeira sincronização)
   -P, --person NOME    com --bill, de quem é o boleto (por exemplo, a noiva ou a filha); a pessoa é cadastrada na hora. Só o nome, nunca CPF. Sem isso, o Heimdall tenta achar o pagador no PDF
   -r, --retry          devolve tudo de revisar para a entrada e importa de novo (use depois de uma atualização do leitor); o motivo antigo some
 Exemplos:

@@ -3,9 +3,9 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-17 - Nomes das contas do Pluggy sem repetição
-- Duas contas dos bancos nunca ficam com o mesmo nome no Finance: se o nome padrão já foi tomado na mesma rodada, o Heimdall acrescenta o final ou um número. Nomes já guardados ou definidos com `--name` têm prioridade.
-- Bancos conhecidos (Nubank, Itaú, Mercado Pago, entre outros) ganham nome curto como "Nubank cartão", "Itaú conta corrente" ou "Itaú conta poupança", em vez do nome longo do Pluggy, sem o prefixo "Pluggy:" e sem trechos entre parênteses como "(pré-pago)"; se já existe uma conta importada por extrato do mesmo banco, o nome dela continua sendo reaproveitado.
-- `heimdall finance --sync --list` agora mostra também o tipo da conta (corrente, poupança) e o saldo, para distinguir contas parecidas.
+- Os nomes das contas dos bancos no Finance seguem um padrão: "Itaú conta corrente", "Itaú conta poupança", "Nubank conta corrente", "Mercado Pago conta corrente", e para cartões "Itaú cartão de crédito", "Nubank cartão de crédito" e assim por diante. Trechos entre parênteses como "(pré-pago)" e a palavra "Pluggy" nunca entram no nome. Duas contas nunca ficam com o mesmo nome: se o nome já foi tomado na mesma rodada, o Heimdall acrescenta o final ou um número. Nomes já guardados ou definidos com `--name` têm prioridade.
+- `heimdall finance --sync --list` mostra também o tipo (corrente, poupança) e o saldo, e avisa quando já existe no Finance uma conta importada por extrato do mesmo banco com outro nome.
+- Novo `heimdall finance --rename-account "ATUAL=NOVO"` troca o nome de uma conta já importada, com todo o histórico, para a sincronização continuar de onde o extrato parou.
 
 ## 2026-11-17 - Contas dos bancos baixadas sozinhas pelo Meu Pluggy
 - O Finance agora baixa sozinho as contas e transações dos bancos pelo Open Finance, usando o plano pessoal gratuito do Meu Pluggy (até 5 bancos, somente leitura, atualização a cada 24 horas, autorização que vale um ano por banco). Exceção consciente e aceita à regra de que dados de finanças não saem do Mac: os dados passam pelos servidores do Pluggy antes de chegar aqui. Nada é movido nem pago; o módulo só faz a autenticação e leituras (GET).

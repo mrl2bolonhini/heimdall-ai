@@ -66,15 +66,19 @@ con = fn.conectar(d / "p.db")
 fn.importar_itens(con, [{"data": "2026-11-09", "valor": -1000, "descricao": "ANTIGO"}], "ofx", "x.ofx", "Itaú conta")
 cli = fp.Cliente(cfg, api)
 hoje = date(2026, 11, 17)
+aviso = fp.listar_contas(cfg, {}, con, cli)
+confere("lista avisa que já existe conta de extrato com outro nome", aviso[0]["existente"] == "Itaú conta" and aviso[0]["nome"] == "Itaú conta corrente", aviso)
+confere("nenhum nome traz Pluggy", not any("pluggy" in a["nome"].lower() or "pluggy" in a["rotulo"].lower() for a in aviso), aviso)
+confere("renomear conta do Finance leva o histórico", fp.renomear_conta_finance(con, "Itaú conta", "Itaú conta corrente") == 1 and not con.execute("SELECT 1 FROM transacoes WHERE conta='Itaú conta'").fetchone())
 r = fp.executar(con, cfg, d / "estado.json", None, hoje, cli)
 por_conta = {c["conta"]: c for c in r["contas"]}
-confere("conta de extrato do mesmo banco é reaproveitada (sem duplicar o nome)", "Itaú conta" in por_conta, list(por_conta))
-confere("cartão sem conta anterior ganha nome curto com banco e tipo", "Nubank cartão" in por_conta, list(por_conta))
-confere("começa no dia seguinte à última data já importada", por_conta["Itaú conta"]["desde"] == "2026-11-10", por_conta["Itaú conta"])
-cc = con.execute("SELECT data, valor, descricao FROM transacoes WHERE conta='Itaú conta' AND descricao<>'ANTIGO' ORDER BY data").fetchall()
+confere("conta renomeada do extrato é reconhecida pelo nome novo (sem duplicar)", "Itaú conta corrente" in por_conta, list(por_conta))
+confere("cartão sem conta anterior ganha nome curto com banco e tipo", "Nubank cartão de crédito" in por_conta, list(por_conta))
+confere("começa no dia seguinte à última data já importada", por_conta["Itaú conta corrente"]["desde"] == "2026-11-10", por_conta["Itaú conta corrente"])
+cc = con.execute("SELECT data, valor, descricao FROM transacoes WHERE conta='Itaú conta corrente' AND descricao<>'ANTIGO' ORDER BY data").fetchall()
 confere("conta corrente: débito negativo, crédito positivo, tipo manda mesmo com sinal trocado", [(x["data"], x["valor"]) for x in cc] == [("2026-11-10", -21245), ("2026-11-11", 248226), ("2026-11-12", -9990)], [(x["data"], x["valor"]) for x in cc])
 confere("conta corrente: transação PENDING (agendada) fica de fora", not any(x["descricao"] == "AGENDADO" for x in cc))
-cartao = [x for n in por_conta if n == "Nubank cartão" for x in con.execute("SELECT data, valor, descricao FROM transacoes WHERE conta=? ORDER BY data", (n,))]
+cartao = [x for n in por_conta if n == "Nubank cartão de crédito" for x in con.execute("SELECT data, valor, descricao FROM transacoes WHERE conta=? ORDER BY data", (n,))]
 confere("cartão: compra vira saída, pagamento vira crédito, compra pendente na fatura aberta entra", [(x["data"], x["valor"]) for x in cartao] == [("2026-11-05", -15920), ("2026-11-06", 50000), ("2026-11-07", -3000)], [(x["data"], x["valor"]) for x in cartao])
 confere("paginação por cursor: segunda página lida com o cursor", any(c[2].get("after") == "CURSOR1" for c in chamadas))
 confere("só leituras: nenhuma chamada além de POST /auth e GETs", all(c[0] == "GET" or c[1] == "/auth" for c in chamadas))
@@ -98,7 +102,7 @@ dup = [{"id": "a1", "type": "BANK", "subtype": "CHECKING_ACCOUNT", "name": "cont
        {"id": "a4", "type": "CREDIT", "subtype": "CREDIT_CARD", "name": "platinum", "marketingName": "Nu Pagamentos S.A."}]
 nm = fp.resolver_nomes(con, {"contas": {}}, dup)
 confere("contas iguais ganham nomes diferentes", len(set(nm.values())) == 4, nm)
-confere("marca reconhecida vira nome curto (Nu Pagamentos → Nubank cartão)", nm["a4"] == "Nubank cartão" or nm["a4"].startswith("Nubank cartão"), nm)
+confere("marca reconhecida vira nome curto (Nu Pagamentos → Nubank cartão de crédito)", nm["a4"].startswith("Nubank cartão de crédito"), nm)
 nm2 = fp.resolver_nomes(con, {"contas": {"a2": {"nome": "Itaú conta"}}}, dup)
 confere("nome já guardado tem prioridade e ninguém mais o toma", nm2["a2"] == "Itaú conta" and list(nm2.values()).count("Itaú conta") == 1, nm2)
 # credencial errada

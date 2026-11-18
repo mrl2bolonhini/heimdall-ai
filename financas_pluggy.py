@@ -263,34 +263,28 @@ def _marca(rotulo: str) -> str:
     return ""
 
 
+def _rotulo(conta: dict) -> str:
+    r = (conta.get("marketingName") or conta.get("name") or "Conta")
+    r = re.sub(r"\s*\([^)]*\)", "", r)
+    r = re.sub(r"(?i)\bpluggy\b:?", "", r)
+    return re.sub(r"\s+", " ", r).strip() or "Conta"
+
+
+def _tipo_nome(conta: dict) -> str:
+    if (conta.get("type") or "").upper() == "CREDIT":
+        return "cartão de crédito"
+    return "conta poupança" if (conta.get("subtype") or "").upper() == "SAVINGS_ACCOUNT" else "conta corrente"
+
+
 def nome_padrao(con, conta: dict, usados: set = None) -> str:
-    """Nome da conta no Finance. Se já existe uma conta importada por extrato com o mesmo banco e tipo, usa a dela (evita duplicar);
-    senão cria 'Banco conta' (ou 'Banco cartão'). Nunca devolve um nome já usado por outra conta nesta rodada (`usados`):
-    nesse caso acrescenta o tipo (corrente, poupança), o final ou um número. Dá para trocar com --nomear."""
+    """Nome da conta no Finance: 'Banco conta corrente', 'Banco conta poupança' ou 'Banco cartão de crédito'. Nunca devolve um nome já
+    usado por outra conta nesta rodada (`usados`): nesse caso acrescenta o final ou um número. Dá para trocar com --nomear."""
     usados = usados if usados is not None else set()
-    cartao = (conta.get("type") or "").upper() == "CREDIT"
-    rotulo = re.sub(r"\s*\([^)]*\)", "", (conta.get("marketingName") or conta.get("name") or "Conta")).strip() or "Conta"
-    palavras = [w for w in fn.norm(rotulo).split() if len(w) >= 3 and w not in {"conta", "corrente", "cartao", "credito", "pagamentos", "banco", "digital", "poupanca"}]
-    marca = _marca(rotulo)
-    if marca:
-        palavras = [fn.norm(marca).split()[0]] + palavras
-    base = None
-    for (existente,) in con.execute("SELECT DISTINCT conta FROM transacoes WHERE conta NOT LIKE 'Pluggy:%' ORDER BY conta"):
-        ne = fn.norm(existente)
-        if ("cartao" in ne) == cartao and palavras and any(w in ne for w in palavras) and existente not in usados:
-            base = existente
-            break
+    rotulo = _rotulo(conta)
+    marca = _marca(rotulo) or rotulo
+    base = f"{marca} {_tipo_nome(conta)}"
     f = _final(conta)
-    if base is None:
-        sub = SUBTIPOS.get((conta.get("subtype") or "").upper(), "")
-        tipo = "cartão" if cartao else ("conta " + sub if sub in ("corrente", "poupança") else "conta")
-        if marca:
-            base = f"{marca} {tipo}"
-        else:
-            base = rotulo + ("" if ("cart" in fn.norm(rotulo) if cartao else "conta" in fn.norm(rotulo)) else " " + tipo)
-    candidatos = [base]
-    if f:
-        candidatos.append(f"{base} final {f}")
+    candidatos = [base] + ([f"{base} final {f}"] if f else [])
     for c in candidatos:
         if c[:60] not in usados:
             return c[:60]
@@ -298,6 +292,34 @@ def nome_padrao(con, conta: dict, usados: set = None) -> str:
     while f"{candidatos[-1]} {n}"[:60] in usados:
         n += 1
     return f"{candidatos[-1]} {n}"[:60]
+
+
+def conta_existente(con, conta: dict, nome: str) -> str:
+    """Conta já importada por extrato que parece ser a mesma (mesmo banco e tipo) mas tem outro nome; '' se não há."""
+    cartao = (conta.get("type") or "").upper() == "CREDIT"
+    rotulo = _rotulo(conta)
+    marca = _marca(rotulo)
+    palavras = [w for w in fn.norm(marca or rotulo).split() if len(w) >= 3 and w not in {"conta", "corrente", "cartao", "credito", "pagamentos", "banco", "digital", "poupanca"}]
+    for (e,) in con.execute("SELECT DISTINCT conta FROM transacoes ORDER BY conta"):
+        ne = fn.norm(e)
+        if e != nome and ("cartao" in ne) == cartao and palavras and any(w in ne for w in palavras):
+            return e
+    return ""
+
+
+def renomear_conta_finance(con, antigo: str, novo: str) -> int:
+    """Troca o nome de uma conta já importada (histórico incluso). Devolve quantos lançamentos mudaram."""
+    antigo, novo = (antigo or "").strip(), (novo or "").strip()[:60]
+    if not antigo or not novo:
+        raise ErroPluggy("Use --renomear-conta \"NOME ATUAL=NOME NOVO\".")
+    if not con.execute("SELECT 1 FROM transacoes WHERE conta=? LIMIT 1", (antigo,)).fetchone():
+        raise ErroPluggy(f"Não há lançamentos na conta \"{antigo}\".")
+    if con.execute("SELECT 1 FROM transacoes WHERE conta=? LIMIT 1", (novo,)).fetchone():
+        raise ErroPluggy(f"Já existe uma conta chamada \"{novo}\"; escolha outro nome.")
+    n = con.execute("UPDATE transacoes SET conta=? WHERE conta=?", (novo, antigo)).rowcount
+    con.execute("UPDATE importacoes SET conta=? WHERE conta=?", (novo, antigo))
+    con.commit()
+    return n
 
 
 def resolver_nomes(con, estado: dict, contas: list, forcados: dict = None) -> dict:
@@ -406,7 +428,7 @@ def listar_contas(cfg: dict, estado: dict, con, cliente: Cliente = None) -> list
     for c in todas:
         saldo = c.get("balance")
         saida.append({"id": c["id"], "tipo": "cartão de crédito" if (c.get("type") or "").upper() == "CREDIT" else "conta", "final": _final(c), "nome": nomes[c["id"]],
-                      "rotulo": c.get("marketingName") or c.get("name") or "", "subtipo": SUBTIPOS.get((c.get("subtype") or "").upper(), (c.get("subtype") or "").lower()),
+                      "rotulo": _rotulo(c), "existente": conta_existente(con, c, nomes[c["id"]]), "subtipo": SUBTIPOS.get((c.get("subtype") or "").upper(), (c.get("subtype") or "").lower()),
                       "saldo": saldo if isinstance(saldo, (int, float)) else None})
     return saida
 

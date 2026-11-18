@@ -104,6 +104,7 @@ def main() -> None:
     ap.add_argument("--desde", default="")
     ap.add_argument("--listar", action="store_true")
     ap.add_argument("--nomear", action="append", default=[])
+    ap.add_argument("--renomear-conta", dest="renomear_conta", action="append", default=[])
     ap.add_argument("--forcar", action="store_true")
     ap.add_argument("--abrir", action="store_true")
     a = ap.parse_args()
@@ -168,6 +169,11 @@ def main() -> None:
             con = _banco()
             arq = DIR_DADOS / "pluggy_estado.json"
             estado = fpl.ler_estado(arq)
+            if a.renomear_conta:
+                for par in a.renomear_conta:
+                    antigo, _, novo = par.partition("=")
+                    n = fpl.renomear_conta_finance(con, antigo, novo)
+                    print(f"A conta \"{antigo.strip()}\" passou a se chamar \"{novo.strip()[:60]}\" no Finance ({n} lançamentos).")
             if a.listar or a.nomear:
                 contas = fpl.listar_contas(cfg, estado, con)
                 for par in a.nomear:
@@ -179,7 +185,7 @@ def main() -> None:
                     print(f"Conta {n} passa a se chamar {nome.strip()[:60]} no Finance.")
                 fpl.gravar_estado(arq, estado)
                 for i, c in enumerate(contas, 1):
-                    print(f"{i}. {c['tipo']} {c['rotulo']}" + (f", {c['subtipo']}" if c.get("subtipo") else "") + (f", final {c['final']}" if c["final"] else "") + (f", saldo {c['saldo']:.2f}".replace(".", ",") if c.get("saldo") is not None else "") + f". No Finance: {c['nome']}.")
+                    print(f"{i}. {c['tipo']} {c['rotulo']}" + (f", {c['subtipo']}" if c.get("subtipo") else "") + (f", final {c['final']}" if c["final"] else "") + (f", saldo {c['saldo']:.2f}".replace(".", ",") if c.get("saldo") is not None else "") + f". No Finance: {c['nome']}." + (f" Atenção: já existe no Finance a conta \"{c['existente']}\" (de extrato); para manter o histórico, rode antes: heimdall finance --renomear-conta \"{c['existente']}={c['nome']}\"." if c.get("existente") else ""))
                 print("\nPara trocar o nome: heimdall finance --sincronizar --nomear 2=\"Itaú conta\" (use o nome de uma conta já importada por extrato para não duplicar).")
             else:
                 desde = None
