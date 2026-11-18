@@ -293,6 +293,15 @@ try:
 except Exception as ex_sd:  # noqa: BLE001
     texto_sd = f"ERRO {ex_sd!r}"
 confere("--balance sem passar a data de hoje não quebra com parcela fixa", "ERRO" not in texto_sd, texto_sd)
+confere("limite de conta (cheque especial) lido do bankData", fp._dados_conta({"bankData": {"overdraftContractedLimit": 22820.99, "overdraftUsedLimit": 3199.01, "unarrangedOverdraftAmount": 0}})
+        == {"especial_limite": 2282099, "especial_usado": 319901, "especial_fora": 0})
+confere("conta sem bankData não inventa limite", fp._dados_conta({"balance": 1}) == {})
+est_esp = {"ultima": "2026-11-18 10:00:00", "contas": {"c9": {"nome": "Itaú conta corrente", "tipo": "BANK", "saldo": -319901,
+           "credito": {"especial_limite": 2282099, "especial_usado": 319901}}}}
+txt_esp = fc.texto_saldos(est_esp)
+confere("--balance mostra o limite de conta quando o banco informa", "limite de conta contratado de R$ 22.820,99, usado R$ 3.199,01, disponível R$ 19.621,98" in txt_esp, txt_esp)
+est_esp["contas"]["c9"]["credito"] = {}
+confere("--balance sem limite informado fica como antes", "saldo de -R$ 3.199,01." in fc.texto_saldos(est_esp))
 for ruim in ("abc", "176,42:30/21", "0:1/2"):
     try:
         fp.definir_parcela_fixa(est_pf, "mercado", ruim, date(2026, 11, 18)); ok_pf = False

@@ -276,6 +276,19 @@ def _dados_cartao(conta: dict) -> dict:
     return saida
 
 
+def _dados_conta(conta: dict) -> dict:
+    """Limite de conta (cheque especial) que o banco informa em bankData, em centavos; só o que veio. Chaves: especial_limite, especial_usado, especial_fora."""
+    bd = conta.get("bankData") or {}
+    saida = {}
+    for chave, campo in (("especial_limite", "overdraftContractedLimit"), ("especial_usado", "overdraftUsedLimit"), ("especial_fora", "unarrangedOverdraftAmount")):
+        try:
+            if bd.get(campo) is not None:
+                saida[chave] = _centavos(bd[campo])
+        except Exception:  # noqa: BLE001
+            pass
+    return saida
+
+
 def _proxima_fatura(faturas: list, hoje: date) -> dict:
     """A fatura que vence hoje ou depois (a mais próxima); se não houver, a última vencida. Valores em centavos."""
     itens = []
@@ -553,6 +566,8 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
         ini = min(ini, hoje)
         recebidas = cli.transacoes(c["id"], ini, hoje)
         credito = _dados_cartao(c)
+        if (c.get("type") or "").upper() != "CREDIT":
+            credito.update(_dados_conta(c))
         if (c.get("type") or "").upper() == "CREDIT":
             faturas = cli.faturas(c["id"])
             credito.update(_proxima_fatura(faturas, hoje))

@@ -138,7 +138,17 @@ def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
             linhas.append(f"{i}. {g['nome']}: {fat}usado do limite (saldo devedor total, com parcelas futuras) de {_real(s)}" + (" (" + ", ".join(extra) + ")" if extra else "") + ".")
         else:
             disponivel += s
-            linhas.append(f"{i}. {g['nome']}: saldo de {_real(s)}.")
+            cr = g.get("credito") or {}
+            esp = ""
+            if cr.get("especial_limite"):
+                partes = [f"limite de conta contratado de {_real(cr['especial_limite'])}"]
+                if cr.get("especial_usado"):
+                    partes.append(f"usado {_real(cr['especial_usado'])}")
+                    partes.append(f"disponível {_real(max(cr['especial_limite'] - cr['especial_usado'], 0))}")
+                if cr.get("especial_fora"):
+                    partes.append(f"além do limite {_real(cr['especial_fora'])}")
+                esp = " (" + ", ".join(partes) + ")"
+            linhas.append(f"{i}. {g['nome']}: saldo de {_real(s)}{esp}.")
     quando = estado.get("ultima") or ""
     saida = ["Saldos das contas, na última leitura do banco" + (f" ({fn.data_br(quando[:10])} às {quando[11:16]})" if quando else "") + ":"] + linhas
     saida.append(f"Total nas contas: {_real(disponivel)}. Total usado dos limites dos cartões: {_real(devido)}. Diferença: {_real(disponivel - devido)}.")
