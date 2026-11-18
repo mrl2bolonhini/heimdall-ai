@@ -203,7 +203,7 @@ Opções:
   --balance            mostra o saldo de cada conta e a fatura de cada cartão na última leitura do banco, com os totais
   --latest             mostra os últimos lançamentos (use --limit N, --account PEDAÇO_DO_NOME, --month AAAA-MM, --search TEXTO, --category NOME)
   --summary            resumo do mês (entradas, gastos, onde mais gastou, maiores gastos); use --month AAAA-MM para outro mês
-  --now                com --sync, pede ao Pluggy para reler os bancos agora (PATCH /items; não move dinheiro) e espera terminar antes de importar. Experimental: o Pluggy limita a um pedido por hora e pode não aceitar em conexões do Meu Pluggy; se recusar, a leitura segue normal e o motivo é mostrado
+  --now                com --sync, pede ao Pluggy para reler os bancos agora (PATCH /items; não move dinheiro) e espera terminar antes de importar. Experimental (em teste real com Meu Pluggy o Pluggy respondeu erro 400, ou seja, essas conexões não aceitam atualização pela API): o Pluggy limita a um pedido por hora e pode não aceitar em conexões do Meu Pluggy; se recusar, a leitura segue normal e o motivo é mostrado
   --simulate           com --sync e --since, só mostra até onde o Pluggy devolve histórico de cada conta, sem gravar nada
   --redo-from-pluggy   mostra e, com --force, apaga os lançamentos das contas do Pluggy (inclusive de extrato) depois de copiar o banco, e relê tudo pelo Pluggy desde --since (padrão 2024-01-01)
   --dedupe             mostra (e, com --force, apaga) lançamentos do Pluggy que repetem extrato ou fatura já importados (mesma conta, dia e valor)

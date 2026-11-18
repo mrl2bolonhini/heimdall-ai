@@ -546,6 +546,8 @@ def atualizar_itens(cfg: dict, cliente: Cliente = None, espera: int = ESPERA_ATU
             msg = str(ex)
             if "429" in msg:
                 saida.append(f"{quem}: o Pluggy só aceita um pedido de atualização por hora; li o que já estava disponível.")
+            elif "400" in msg:
+                saida.append(f"{quem}: o Pluggy recusou o pedido (erro 400). Em conexões do Meu Pluggy isso costuma indicar que a atualização só acontece pelo próprio Meu Pluggy (a cada 24 horas), não pela API. Li o que já estava disponível.")
             elif "403" in msg or "401" in msg or "404" in msg:
                 saida.append(f"{quem}: o Pluggy não aceitou pedir atualização pela API para esta conexão ({msg.rstrip('.')}); só o Meu Pluggy atualiza (a cada 24 horas) ou pelo próprio app. Li o que já estava disponível.")
             else:

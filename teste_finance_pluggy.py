@@ -311,6 +311,8 @@ def api_att(modo):
         if metodo == "PATCH":
             if modo == "429":
                 raise fp.ErroPluggy("O Pluggy respondeu com erro 429.")
+            if modo == "400":
+                raise fp.ErroPluggy("O Pluggy respondeu com erro 400.")
             if modo == "403":
                 raise fp.ErroPluggy("O Pluggy respondeu com erro 403.")
             return {"status": "UPDATING"}
@@ -324,6 +326,8 @@ confere("atualizar agora: espera o Pluggy terminar e avisa", r_ok == ["Banco 1: 
 confere("atualizar agora: não mostra o código do item", "item-a" not in " ".join(r_ok))
 r_429 = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("429")), 60, dorme.append)
 confere("atualizar agora: limite de um pedido por hora vira frase clara", "uma vez" in r_429[0] or "por hora" in r_429[0], r_429)
+r_400 = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("400")), 60, dorme.append)
+confere("atualizar agora: erro 400 (conexão Meu Pluggy) é explicado sem alarme", "Meu Pluggy" in r_400[0] and "item-a" not in r_400[0], r_400)
 r_403 = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("403")), 60, dorme.append)
 confere("atualizar agora: recusa do Pluggy não derruba a leitura", "não aceitou" in r_403[0] and "item-a" not in r_403[0], r_403)
 r_len = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("lento")), 10, dorme.append)
