@@ -191,6 +191,13 @@ class Cliente:
             pagina += 1
         return saida
 
+    def faturas(self, conta_id: str) -> list:
+        """Faturas do cartão (fechadas e a vencer), se o banco informar; lista vazia quando a rota não está disponível."""
+        try:
+            return self.get("/bills", {"accountId": conta_id, "pageSize": 20}).get("results") or []
+        except ErroPluggy:
+            return []
+
     def item(self, item_id: str) -> dict:
         """Situação do item (consentimento). Em contas Meu Pluggy pode não estar disponível: devolve {} nesse caso."""
         try:
@@ -250,6 +257,39 @@ def _saldo_centavos(conta: dict):
         return _centavos(conta["balance"]) if conta.get("balance") is not None else None
     except Exception:  # noqa: BLE001
         return None
+
+
+def _dados_cartao(conta: dict) -> dict:
+    """Dados do cartão que o banco informa (limite, disponível, fechamento, vencimento, mínimo); só o que veio, valores em centavos."""
+    cd = conta.get("creditData") or {}
+    saida = {}
+    for chave, campo in (("limite", "creditLimit"), ("disponivel", "availableCreditLimit"), ("minimo", "minimumPayment")):
+        try:
+            if cd.get(campo) is not None:
+                saida[chave] = _centavos(cd[campo])
+        except Exception:  # noqa: BLE001
+            pass
+    for chave, campo in (("fecha", "balanceCloseDate"), ("vence", "balanceDueDate")):
+        if cd.get(campo):
+            saida[chave] = str(cd[campo])[:10]
+    return saida
+
+
+def _proxima_fatura(faturas: list, hoje: date) -> dict:
+    """A fatura que vence hoje ou depois (a mais próxima); se não houver, a última vencida. Valores em centavos."""
+    itens = []
+    for f in faturas:
+        try:
+            venc = str(f.get("dueDate") or "")[:10]
+            date.fromisoformat(venc)
+            itens.append((venc, _centavos(f["totalAmount"])))
+        except Exception:  # noqa: BLE001
+            continue
+    if not itens:
+        return {}
+    futuras = sorted(i for i in itens if i[0] >= hoje.isoformat())
+    venc, valor = futuras[0] if futuras else sorted(itens)[-1]
+    return {"fatura_vence": venc, "fatura_valor": valor, "fatura_aberta": bool(futuras)}
 
 
 def _final(conta: dict) -> str:
@@ -414,8 +454,11 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
             ini = date.fromisoformat(ult) + timedelta(days=1) if ult else hoje - timedelta(days=JANELA_INICIAL)
         ini = min(ini, hoje)
         recebidas = cli.transacoes(c["id"], ini, hoje)
+        credito = _dados_cartao(c)
+        if (c.get("type") or "").upper() == "CREDIT":
+            credito.update(_proxima_fatura(cli.faturas(c["id"]), hoje))
         itens = para_itens(c, recebidas)
-        pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat(), "recebidas": len(recebidas), "saldo": _saldo_centavos(c)})
+        pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat(), "recebidas": len(recebidas), "saldo": _saldo_centavos(c), "credito": credito})
     return {"pacotes": pacotes, "avisos": avisos}
 
 
@@ -427,7 +470,7 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
     for p in coleta["pacotes"]:
         r = fn.importar_itens(con, p["itens"], "pluggy", "Meu Pluggy", p["nome"], agora)
         resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"], "recebidas": p.get("recebidas", len(p["itens"]))})
-        guardados[p["id"]] = {"nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo")}
+        guardados[p["id"]] = {"nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo"), "credito": p.get("credito")}
     estado["avisos"] = coleta["avisos"]
     estado["ultima"] = (agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     estado["resumo"] = resumo
