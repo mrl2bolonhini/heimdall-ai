@@ -287,6 +287,12 @@ confere("parcela fixa: 14 agora, 15 no ciclo seguinte, 21 em junho de 2027 e nen
         and fc.parcelas_fixas_da_fatura(pf, date(2027, 7, 12), {"dia": 9}) == [])
 fd2 = fc.fatura_detalhada(con12, cartao12, {"dia": 9}, date(2026, 11, 18), [{"valor": 9873, "parcela": 1, "total": 8, "descricao": "x"}], {"valor": 0, "n": 0, "desde": "2026-11-10"}, {"valor": 17642, "n": 4}, fc.parcelas_fixas_da_fatura(pf, date(2026, 11, 18), {"dia": 9}))
 confere("fatura estimada: parcela cadastrada tem prioridade sobre a detecção automática e não soma duas vezes", fd2["total"] == 9873 + 17642, fd2)
+est_sd = {"ultima": "2026-11-18 10:00:00", "contas": {"c1": {**est_pf["contas"]["c1"], "saldo": 210247, "credito": {"limite": 2056000}, "parcelas_fixas": pf}}}
+try:
+    texto_sd = fc.texto_saldos(est_sd, con12)  # como o terminal chama: sem a data de hoje
+except Exception as ex_sd:  # noqa: BLE001
+    texto_sd = f"ERRO {ex_sd!r}"
+confere("--balance sem passar a data de hoje não quebra com parcela fixa", "ERRO" not in texto_sd, texto_sd)
 for ruim in ("abc", "176,42:30/21", "0:1/2"):
     try:
         fp.definir_parcela_fixa(est_pf, "mercado", ruim, date(2026, 11, 18)); ok_pf = False

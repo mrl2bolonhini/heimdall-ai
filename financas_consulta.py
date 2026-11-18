@@ -88,6 +88,7 @@ def fatura_calculada(con, conta: str, regra, hoje: date = None, parcelas: list =
 
 
 def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
+    hoje = hoje or date.today()
     contas = [g for g in (estado.get("contas") or {}).values() if g.get("nome")]
     if not contas:
         return "Ainda não há saldos: rode antes heimdall finance --sync."
