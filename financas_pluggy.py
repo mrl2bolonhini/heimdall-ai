@@ -31,7 +31,7 @@ JANELA_INICIAL = 90   # dias buscados na primeira vez, se não houver extrato im
 SOBREPOSICAO = 7      # dias relidos a cada rodada; o id da transação evita duplicar
 MAX_PAGINAS = 200
 AVISO_DIAS = 30
-PARCELADOS_DIAS = 240  # até onde olhar para achar parcelas que caem na fatura em aberto       # avisa quando o consentimento de um banco vence em até tantos dias
+PARCELADOS_DIAS = 400  # até onde olhar para achar parcelas que caem na fatura em aberto (o Pluggy entrega cerca de 12 meses)
 
 
 class ErroPluggy(fn.ErroFinance):
@@ -605,8 +605,8 @@ def diagnosticar_cartao(cfg: dict, estado: dict, trecho: str, hoje: date = None,
     for f in sorted(faturas, key=lambda x: str(x.get("dueDate") or "")):
         ids[f.get("id")] = f"fatura {len(ids) + 1}"
         saida.append(f"{ids[f.get('id')]}: vence em {str(f.get('dueDate') or '')[:10]}, total {f.get('totalAmount')}, mínimo {f.get('minimumPaymentAmount')}.")
-    trs = cli.transacoes(cid, hoje - timedelta(days=max(dias, 240)), hoje)
-    saida.append(f"Transações dos últimos {max(dias, 240)} dias: {len(trs)}.")
+    trs = cli.transacoes(cid, hoje - timedelta(days=max(dias, PARCELADOS_DIAS)), hoje)
+    saida.append(f"Transações dos últimos {max(dias, PARCELADOS_DIAS)} dias: {len(trs)}.")
 
     def linha(t, ordem):
         m = t.get("creditCardMetadata") or {}
