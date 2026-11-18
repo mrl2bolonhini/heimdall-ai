@@ -78,7 +78,8 @@ def guardar_chave(qual: str, valor: str, env_path: Path = None) -> str:
         partes = [p.strip() for p in valor.split(",") if p.strip()]
         if not partes or not all(_UUID.match(p) for p in partes):
             raise ErroPluggy("Os ids dos bancos conectados são códigos no formato 8-4-4-4-12 (separados por vírgula, se forem vários). Copie de novo na página Demo, em Itens Conectados.")
-        valor = ",".join(partes)
+        antigos = [x.strip() for x in _ler_env(Path(env_path or AQUI / ".env")).get("HEIMDALL_PLUGGY_ITEMS", "").split(",") if x.strip()]
+        valor = ",".join(dict.fromkeys(antigos + partes))  # cada comando acrescenta os bancos novos; repetir o mesmo não duplica
     elif qual == "id" and not _UUID.match(valor):
         raise ErroPluggy("O Client ID é um código no formato 8-4-4-4-12. Copie de novo no Dashboard do Pluggy, em Aplicações.")
     elif qual == "segredo" and len(valor) < 16:
@@ -101,6 +102,8 @@ def guardar_chave(qual: str, valor: str, env_path: Path = None) -> str:
         caminho.chmod(0o600)
     except OSError:
         pass
+    if qual == "itens":
+        return f"{CHAVES[qual]} gravada no .env: agora são {len(valor.split(','))} banco(s) conectado(s)."
     return f"{CHAVES[qual]} gravada no .env ({len(valor)} caracteres)."
 
 

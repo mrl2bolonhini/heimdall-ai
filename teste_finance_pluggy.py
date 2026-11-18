@@ -121,8 +121,10 @@ msg = fp.guardar_chave("id", U, env)
 confere("guardar chave troca a linha antiga e não imprime o valor", f"HEIMDALL_PLUGGY_CLIENT_ID={U}" in env.read_text() and "velho" not in env.read_text() and U not in msg and "OUTRA=1" in env.read_text(), msg)
 fp.guardar_chave("segredo", "segredo-correto-123456", env)
 fp.guardar_chave("itens", f"{U}, 99999999-2222-3333-4444-555555555555", env)
+fp.guardar_chave("itens", "88888888-2222-3333-4444-555555555555", env)
+fp.guardar_chave("itens", U, env)
 c = fp.credenciais(env)
-confere("credenciais lidas do .env com vários itens", c["id"] == U and c["segredo"] == "segredo-correto-123456" and len(c["itens"]) == 2, c)
+confere("credenciais lidas do .env com vários itens", c["id"] == U and c["segredo"] == "segredo-correto-123456" and len(c["itens"]) == 3, c)
 confere("o .env fica com permissão 600", oct(env.stat().st_mode)[-3:] == "600")
 for qual, v in (("id", "isto não é uuid"), ("itens", "abc"), ("segredo", "curto"), ("id", U + "\noutra")):
     try:
