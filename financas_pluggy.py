@@ -651,6 +651,23 @@ def diagnosticar_cartao(cfg: dict, estado: dict, trecho: str, hoje: date = None,
     saida.append(f"Parceladas ({len(parceladas)}), da mais recente para a mais antiga:")
     for n, t in enumerate(parceladas[:60], 1):
         saida.append(linha(t, n))
+    def _sem_fatura(t):
+        m = t.get("creditCardMetadata") or {}
+        d = fn.norm(str(t.get("description") or ""))
+        return not (m.get("billId") or t.get("billId")) and not any(x in d for x in ("pagamento", "pgto", "pag fatura", "fatura"))
+    limite = hoje - timedelta(days=25)
+    try:
+        import financas_consulta as _fc
+        regra = (estado["contas"][cid].get("fechamento"))
+        if regra:
+            limite = _fc._ultimo_fechamento(hoje, regra)
+    except Exception:  # noqa: BLE001
+        pass
+    velhas = [t for t in ordenadas if _sem_fatura(t) and str(t.get("date") or "")[:10] <= limite.isoformat()]
+    soma = sum(_centavos(t["amount"]) for t in velhas if t.get("amount") is not None)
+    saida.append(f"Sem fatura e com data até o último fechamento ({limite.isoformat()}): {len(velhas)}, somando {soma / 100:.2f}. Isso não devia existir numa fatura aberta.")
+    for n, t in enumerate(velhas[:40], 1):
+        saida.append(linha(t, n))
     saida.append("Últimas 12 transações em geral:")
     for n, t in enumerate(ordenadas[:12], 1):
         saida.append(linha(t, n))
