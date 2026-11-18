@@ -204,7 +204,7 @@ Instalação: `bash instalar_fluxos_n8n.sh` (básicos), `bash instalar_automacoe
 1. Dados pessoais, chaves e identificadores ficam só no Mac. `.env`, `knowledge/`, `qdrant_storage/` e backups nunca são versionados.
 2. Notas de pastas privadas nunca são lidas, indexadas nem analisadas.
 3. O agente do Mac exige token e só grava nas pastas do próprio Heimdall.
-4. O vigia de e-mail é somente leitura, só confia no remetente confirmado pelo Gmail e nunca segue links.
+4. O vigia de e-mail é somente leitura, só confia no remetente confirmado pelo Gmail e nunca segue links. Avisos de serviços sem interesse (Serasa, SPC, Boa Vista, Quod por padrão; HEIMDALL_EMAIL_BAIXA_PRIORIDADE no .env muda a lista) não viram triagem nem lembrete, mas golpe imitando eles continua alertando.
 5. Falhas nunca são silenciosas; fonte indisponível nunca vira "nada novo".
 6. Textos de fontes externas são tratados como dados, não como ordens.
 7. Este repositório pode ser público: o código não traz dados pessoais (caminhos, IPs e e-mail vêm de variáveis ou do `.env`, que nunca é versionado). Antes de publicar, confira o histórico com `git log --all --oneline -- .env` e `git log --all -p | grep -ciE "api_key|token|senha"`.

@@ -17,6 +17,7 @@ const ALVOS = [
   ["News", "https://news.heimdall-ai.tech/saude"],
   ["Saúde", "https://health.heimdall-ai.tech/saude"],
 ];
+const BATIMENTO_MS = 60 * 60 * 1000; // a hora da última conferência é regravada no máximo a cada 1 hora
 const FALHAS_PARA_AVISAR = 2; // duas conferências seguidas (10 min) para não avisar por um soluço
 
 async function conferir(url) {
@@ -57,19 +58,24 @@ async function rodar(env) {
       agora[nome] = { falhas, fora, detalhe: r.detalhe };
     }
   }
-  await env.ESTADO.put("estado", JSON.stringify(agora));
-  await env.ESTADO.put("ultima", new Date().toISOString());
+  // O plano gratuito do KV permite 1.000 gravações por dia. Gravar a cada 5 minutos (duas vezes) gastava 576 por dia: só grava o estado quando muda,
+  // e a hora da última conferência no máximo uma vez por hora.
+  const novo = JSON.stringify(agora);
+  if (novo !== JSON.stringify(antes)) await env.ESTADO.put("estado", novo);
+  const ultima = await env.ESTADO.get("ultima");
+  if (!ultima || Date.now() - Date.parse(ultima) >= BATIMENTO_MS) await env.ESTADO.put("ultima", new Date(Date.now()).toISOString());
   if (caiu.length) await avisar(env, "Heimdall: fora do ar", "Não responderam: " + caiu.join(", ") + ".\nSe forem todos, o Mac provavelmente está dormindo, sem rede ou com o túnel parado.\nNo Mac: ./subir.sh --status");
   if (voltou.length) await avisar(env, "Heimdall: voltou", "Voltaram a responder: " + voltou.join(", ") + ".");
   return agora;
 }
 
+export { rodar };
 export default {
   async scheduled(evento, env, ctx) { ctx.waitUntil(rodar(env)); },
   // Abrir o endereço do Worker mostra só o último estado (sem dados sensíveis); ?avisar=teste não existe de propósito.
   async fetch(req, env) {
     const estado = JSON.parse((await env.ESTADO.get("estado")) || "{}");
     const linhas = Object.entries(estado).map(([n, e]) => `${n}: ${e.fora ? "FORA" : "ok"} (${e.detalhe})`);
-    return new Response(`Heimdall Vigia\nÚltima conferência: ${(await env.ESTADO.get("ultima")) || "nunca"}\n${linhas.join("\n")}\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    return new Response(`Heimdall Vigia\nÚltima conferência registrada (atualiza a cada hora, ou na hora se algo mudar): ${(await env.ESTADO.get("ultima")) || "nunca"}\n${linhas.join("\n")}\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
   },
 };

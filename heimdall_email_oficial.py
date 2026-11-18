@@ -298,6 +298,20 @@ def registrar_banco(cfg, itens, simular=False):
         print("Banco falhou:", e, file=sys.stderr)
 
 
+BAIXA_PRIORIDADE_PADRAO = "serasa,spc,boa vista,quod"
+
+
+def baixa_prioridade(cfg, it) -> bool:
+    """E-mail oficial de um serviço que você marcou como sem interesse (HEIMDALL_EMAIL_BAIXA_PRIORIDADE no .env, separado por vírgula; o padrão cobre
+    Serasa, SPC, Boa Vista e Quod, cujos avisos de "boleto disponível" só mandam entrar no app). Não vira triagem, calendário nem lembrete; continua no
+    registro e no resumo. E-mail suspeito de golpe NUNCA é rebaixado."""
+    if it.get("classe") != "oficial":
+        return False
+    nomes = [n.strip().lower() for n in cfg.get("HEIMDALL_EMAIL_BAIXA_PRIORIDADE", BAIXA_PRIORIDADE_PADRAO).split(",") if n.strip()]
+    alvo = " ".join(str(it.get(k) or "") for k in ("servico", "dominio", "de")).lower()
+    return any(n in alvo for n in nomes)
+
+
 def criar_triagem(cfg, itens, simular=False):
     """Cada e-mail suspeito de golpe ou oficial e urgente vira um lembrete na lista "Heimdall: Triagem" (o agente do Mac
     insiste por Bark até você concluir, reclassificar ou adiar). Não cria nada para e-mails de rotina."""
@@ -308,7 +322,7 @@ def criar_triagem(cfg, itens, simular=False):
             nivel = "alto"
             titulo = "Possível golpe por e-mail: " + (it["servico"] or "serviço público")
             resumo = "De: %s. Assunto: %s. %s Não clique em links, não responda e não informe dados." % (it["de"], it["assunto"][:100], it["motivo"] or "")
-        elif it["classe"] == "oficial" and it.get("urg") in ("alta", "media"):
+        elif it["classe"] == "oficial" and it.get("urg") in ("alta", "media") and not baixa_prioridade(cfg, it):
             nivel = "critico" if it["urg"] == "alta" else "alto"
             titulo = "E-mail oficial (urgência %s): %s" % (it["urg"], it["servico"] or "serviço público")
             resumo = "Assunto: %s.%s Abra o app ou o site oficial por conta própria." % (it["assunto"][:100], (" Prazo: %s." % it["prazo"]) if it.get("prazo") else "")
@@ -324,7 +338,7 @@ def criar_triagem(cfg, itens, simular=False):
 def agendar(cfg, it, r, agora, simular=False):
     """Cria evento no Calendário e lembrete no app Lembretes (calendário e lista "Heimdall") para e-mails OFICIAIS confirmados.
     Devolve uma frase para o relatório, ou "" se nada foi criado."""
-    if it["classe"] != "oficial" or not r or r["urgencia"] not in ("alta", "media"):
+    if it["classe"] != "oficial" or not r or r["urgencia"] not in ("alta", "media") or baixa_prioridade(cfg, it):
         return ""
     hoje = agora.date()
     prazo = None

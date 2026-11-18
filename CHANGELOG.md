@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-18 - Menos gravações no KV e e-mails de serviços sem interesse
+- Vigia da Cloudflare (cloudflare/vigia.js): gravava duas vezes por rodada no KV (576 por dia, 58% do limite gratuito de 1.000; a Cloudflare avisou ao chegar a 50%). Agora grava o estado só quando muda e a hora da última conferência no máximo uma vez por hora (cerca de 24 por dia). O Worker publicado precisa ser atualizado na Cloudflare para valer. Novo teste: node cloudflare/teste_vigia.mjs.
+- E-mails oficiais de Serasa, SPC, Boa Vista e Quod (avisos de boleto disponível, que só mandam entrar no app) não viram mais item de triagem, evento no Calendário nem lembrete, mesmo com urgência alta; continuam no registro e no resumo. A lista muda em HEIMDALL_EMAIL_BAIXA_PRIORIDADE no .env (nomes separados por vírgula; valor em branco desliga). E-mail suspeito de golpe nunca é rebaixado.
+
 ## 2026-11-18 - Alertas de saúde com contexto
 - O monitor de anomalias deixou de juntar medidas sem relação. Passos, energia, exercício, caminhada, peso, frequência cardíaca média do dia e ruído agora são contexto: aparecem no relatório, mas nunca viram aviso sozinhos nem em dupla. Antes, duas medidas quaisquer muito fora do normal (frequência média do dia e ruído, por exemplo) abriam um aviso.
 - Só medidas fisiológicas alertam, e só de sistemas diferentes: coração (pulso em repouso, mínimo, madrugada e horas de hoje contam como um), variabilidade, respiração e oxigênio, sono e temperatura. Os cruzamentos de estresse e de sono/respiração também só usam essas medidas.

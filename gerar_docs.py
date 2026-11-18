@@ -273,6 +273,7 @@ SCRIPTS = [
     ("teste_finance_analise.py", "Teste da análise e do Perguntar com modelo simulado."),
     ("financas_pluggy.py", "Conexão com os bancos pelo Open Finance, com o plano pessoal gratuito do Meu Pluggy: autenticação e leituras (GET) de contas e transações em /v2/transactions, conversão de sinais (conta corrente pelo tipo, cartão pela fatura), importação sem duplicar, aviso de autorização perto de vencer e gravação das chaves no .env a partir da área de transferência. Nada é movido nem pago; os dados passam pelos servidores do Pluggy."),
     ("financas_consulta.py", "Consultas do Finance no terminal (heimdall finance --balance, --latest, --summary): saldo de cada conta e fatura de cada cartão, últimos lançamentos com filtros e resumo do mês, em texto corrido e listas numeradas. Só lê o banco local e o saldo guardado na última sincronização."),
+    ("teste_email_prioridade.py", "Testa o rebaixamento de e-mails oficiais de serviços sem interesse (Serasa, SPC, Boa Vista, Quod): não viram triagem nem lembrete; golpe imitando eles continua alertando."),
     ("teste_finance_pluggy.py", "Testa o sincronizador do Pluggy com uma API simulada: sinais, cursor, duplicidade, nomes de conta, avisos, chaves no .env. Sem rede."),
     ("financas_email.py", "Leitura do Gmail (somente leitura) atrás de boletos e Pix, no corpo e nos PDFs anexados, com conferência da autenticação do remetente. Nunca abre links."),
     ("teste_finance_email.py", "Teste da leitura de boletos por e-mail com mensagens montadas no teste."),
@@ -292,6 +293,7 @@ SCRIPTS = [
     ("teste_saude_dados.py", "Testa as análises de saúde com 200 dias de dados sintéticos, sem tocar no seu banco."),
     ("teste_painel_saude.py", "Testa o painel Heimdall Saúde: login, páginas, segurança e acessibilidade."),
     ("cloudflare/saude_caixa.js", "Worker da Cloudflare na frente do webhook de saúde do n8n (mesmo endereço do Health Auto Export): repassa o envio quando o Mac está no ar e, quando não está, guarda no KV por 7 dias e reenvia de 5 em 5 minutos."),
+    ("cloudflare/teste_vigia.mjs", "Testa o vigia da Cloudflare com KV e rede de mentira, contando as gravações por dia (limite gratuito: 1.000): node cloudflare/teste_vigia.mjs."),
     ("cloudflare/teste_saude_caixa.mjs", "Testa a caixa de entrada da saúde com KV e rede de mentira: node cloudflare/teste_saude_caixa.mjs."),
     ("cloudflare_chave.py", "Grava no .env o token da Cloudflare (pedido sem aparecer na tela) para a reserva de resumos e a leitura de páginas com navegador do News; descobre o número da conta sozinho."),
     ("cloudflare/vigia.js", "Worker da Cloudflare (cron de 5 em 5 minutos) que confere de fora de casa se chat, flows, cloud, notes, news e health respondem e avisa por e-mail quando algo cai ou volta. O destino do aviso fica na variável ALERTA_PARA, só na Cloudflare."),
@@ -343,6 +345,7 @@ COMANDOS = [
         ("Testar a voz", "python3 teste_voz.py"),
         ("Ligar a reserva de resumos e a leitura de páginas do News na Cloudflare (token pedido sem aparecer)", "python3 cloudflare_chave.py"),
         ("Testar a caixa de entrada da saúde (Worker da Cloudflare)", "node cloudflare/teste_saude_caixa.mjs"),
+        ("Testar o vigia da Cloudflare (gravações no KV)", "node cloudflare/teste_vigia.mjs"),
     ]),
     ("Conferir se está no ar", [
         ("Agente do Mac (deve responder ok)", "curl -s http://localhost:8003/saude"),
