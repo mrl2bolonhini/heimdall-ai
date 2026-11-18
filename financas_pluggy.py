@@ -269,7 +269,7 @@ def nome_padrao(con, conta: dict, usados: set = None) -> str:
     nesse caso acrescenta o tipo (corrente, poupança), o final ou um número. Dá para trocar com --nomear."""
     usados = usados if usados is not None else set()
     cartao = (conta.get("type") or "").upper() == "CREDIT"
-    rotulo = (conta.get("marketingName") or conta.get("name") or "Conta").strip()
+    rotulo = re.sub(r"\s*\([^)]*\)", "", (conta.get("marketingName") or conta.get("name") or "Conta")).strip() or "Conta"
     palavras = [w for w in fn.norm(rotulo).split() if len(w) >= 3 and w not in {"conta", "corrente", "cartao", "credito", "pagamentos", "banco", "digital", "poupanca"}]
     marca = _marca(rotulo)
     if marca:
@@ -282,18 +282,15 @@ def nome_padrao(con, conta: dict, usados: set = None) -> str:
             break
     f = _final(conta)
     if base is None:
+        sub = SUBTIPOS.get((conta.get("subtype") or "").upper(), "")
+        tipo = "cartão" if cartao else ("conta " + sub if sub in ("corrente", "poupança") else "conta")
         if marca:
-            base = f"{marca} {'cartão' if cartao else 'conta'}"
+            base = f"{marca} {tipo}"
         else:
-            base = f"Pluggy: {rotulo}" + (" cartão" if cartao and "cart" not in fn.norm(rotulo) else "")
+            base = rotulo + ("" if ("cart" in fn.norm(rotulo) if cartao else "conta" in fn.norm(rotulo)) else " " + tipo)
     candidatos = [base]
-    sub = SUBTIPOS.get((conta.get("subtype") or "").upper(), "")
-    if sub and not cartao:
-        candidatos.append(f"{base} {sub}")
     if f:
         candidatos.append(f"{base} final {f}")
-        if sub and not cartao:
-            candidatos.append(f"{base} {sub} final {f}")
     for c in candidatos:
         if c[:60] not in usados:
             return c[:60]
