@@ -302,6 +302,34 @@ txt_esp = fc.texto_saldos(est_esp)
 confere("--balance mostra o limite de conta quando o banco informa", "limite de conta contratado de R$ 22.820,99, usado R$ 3.199,01, disponível R$ 19.621,98" in txt_esp, txt_esp)
 est_esp["contas"]["c9"]["credito"] = {}
 confere("--balance sem limite informado fica como antes", "saldo de -R$ 3.199,01." in fc.texto_saldos(est_esp))
+# atualização sob demanda (--sync --now)
+def api_att(modo):
+    estado_item = {"n": 0}
+    def f(metodo, caminho, params=None, corpo=None, chave=""):
+        if caminho == "/auth":
+            return {"apiKey": "K"}
+        if metodo == "PATCH":
+            if modo == "429":
+                raise fp.ErroPluggy("O Pluggy respondeu com erro 429.")
+            if modo == "403":
+                raise fp.ErroPluggy("O Pluggy respondeu com erro 403.")
+            return {"status": "UPDATING"}
+        estado_item["n"] += 1
+        return {"status": {"ok": "UPDATED" if estado_item["n"] >= 2 else "UPDATING", "lento": "UPDATING", "acao": "WAITING_USER_INPUT"}[modo]}
+    return f
+cfg_att = {"id": "i", "segredo": "s", "itens": ["item-a"]}
+dorme = []
+r_ok = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("ok")), 60, dorme.append)
+confere("atualizar agora: espera o Pluggy terminar e avisa", r_ok == ["Banco 1: atualizado agora pelo Pluggy."] and len(dorme) >= 1, r_ok)
+confere("atualizar agora: não mostra o código do item", "item-a" not in " ".join(r_ok))
+r_429 = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("429")), 60, dorme.append)
+confere("atualizar agora: limite de um pedido por hora vira frase clara", "uma vez" in r_429[0] or "por hora" in r_429[0], r_429)
+r_403 = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("403")), 60, dorme.append)
+confere("atualizar agora: recusa do Pluggy não derruba a leitura", "não aceitou" in r_403[0] and "item-a" not in r_403[0], r_403)
+r_len = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("lento")), 10, dorme.append)
+confere("atualizar agora: demora além do limite avisa e segue", "ainda estava em andamento" in r_len[0], r_len)
+r_ac = fp.atualizar_itens(cfg_att, fp.Cliente(cfg_att, api_att("acao")), 10, dorme.append)
+confere("atualizar agora: banco pedindo ação do usuário é explicado", "ação sua" in r_ac[0], r_ac)
 for ruim in ("abc", "176,42:30/21", "0:1/2"):
     try:
         fp.definir_parcela_fixa(est_pf, "mercado", ruim, date(2026, 11, 18)); ok_pf = False
@@ -358,7 +386,7 @@ for qual, v in (("id", "isto não é uuid"), ("itens", "abc"), ("segredo", "curt
         confere(f"valor inválido recusado ({qual})", True)
 confere("sem as três chaves, não há credenciais", fp.credenciais(d / "nao-existe.env") == {})
 fonte = Path(fp.__file__).read_text(encoding="utf-8")
-confere("o módulo só chama api.pluggy.ai, sem redirecionar, e não escreve em banco algum", 'BASE = "https://api.pluggy.ai"' in fonte and "_SemRedirecionar" in fonte and '"PATCH"' not in fonte and '"PUT"' not in fonte and '"DELETE"' not in fonte)
+confere("o módulo só chama api.pluggy.ai, sem redirecionar, e não escreve em banco algum (o único PATCH é o pedido de atualização do item)", 'BASE = "https://api.pluggy.ai"' in fonte and "_SemRedirecionar" in fonte and fonte.count('"PATCH"') == 1 and 'f"/items/{item_id}", None, {}' in fonte and '"PUT"' not in fonte and '"DELETE"' not in fonte)
 
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)

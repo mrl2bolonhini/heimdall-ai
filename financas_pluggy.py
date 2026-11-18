@@ -161,7 +161,8 @@ def _com_tentativas(http, *args, **kw):
 
 
 class Cliente:
-    """Só chamadas de leitura (GET) e a de autenticação. A chave da API vale 2 horas e é reaproveitada."""
+    """Só leitura (GET) e a autenticação, com uma única exceção: `atualizar_item`, que pede ao Pluggy para reler o banco (PATCH /items). Isso não move
+    dinheiro nem altera dados no banco; só adianta a atualização que o Pluggy faria sozinho. A chave da API vale 2 horas e é reaproveitada."""
 
     def __init__(self, cfg: dict, http=_http):
         self.cfg, self.http, self._chave, self._ate = cfg, http, "", 0.0
@@ -181,6 +182,10 @@ class Cliente:
 
     def get(self, caminho: str, params: dict = None) -> dict:
         return _com_tentativas(self.http, "GET", caminho, params, None, self.chave())
+
+    def atualizar_item(self, item_id: str) -> dict:
+        """Pede ao Pluggy que releia o banco agora (PATCH /items/ID). Só é chamado por heimdall finance --sync --agora."""
+        return _com_tentativas(self.http, "PATCH", f"/items/{item_id}", None, {}, self.chave())
 
     def contas(self, item_id: str) -> list:
         saida, pagina = [], 1
@@ -523,6 +528,44 @@ def gravar_estado(arq: Path, estado: dict) -> None:
         Path(arq).chmod(0o600)
     except OSError:
         pass
+
+
+ESPERA_ATUALIZACAO = 120  # segundos esperando o Pluggy reler o banco
+
+
+def atualizar_itens(cfg: dict, cliente: Cliente = None, espera: int = ESPERA_ATUALIZACAO, dormir=time.sleep) -> list:
+    """Pede ao Pluggy para reler cada banco agora e espera terminar. Devolve uma frase por banco (sem códigos). Nunca levanta erro: se o Pluggy recusar
+    (limite de um pedido por hora, conexão do Meu Pluggy sem esse recurso, banco que pede ação sua), conta o motivo e a leitura segue com o que já existe."""
+    cli = cliente or Cliente(cfg)
+    saida = []
+    for n, item_id in enumerate(cfg["itens"], 1):
+        quem = f"Banco {n}"
+        try:
+            r = cli.atualizar_item(item_id)
+        except ErroPluggy as ex:
+            msg = str(ex)
+            if "429" in msg:
+                saida.append(f"{quem}: o Pluggy só aceita um pedido de atualização por hora; li o que já estava disponível.")
+            elif "403" in msg or "401" in msg or "404" in msg:
+                saida.append(f"{quem}: o Pluggy não aceitou pedir atualização pela API para esta conexão ({msg.rstrip('.')}); só o Meu Pluggy atualiza (a cada 24 horas) ou pelo próprio app. Li o que já estava disponível.")
+            else:
+                saida.append(f"{quem}: não consegui pedir a atualização ({msg.rstrip('.')}); li o que já estava disponível.")
+            continue
+        status = str((r or {}).get("status") or "").upper()
+        esperado = 0
+        while status in ("UPDATING", "CREATED", "") and esperado < espera:
+            dormir(5)
+            esperado += 5
+            status = str(cli.item(item_id).get("status") or "").upper()
+        if status == "UPDATED":
+            saida.append(f"{quem}: atualizado agora pelo Pluggy.")
+        elif status in ("WAITING_USER_INPUT", "WAITING_USER_ACTION"):
+            saida.append(f"{quem}: o banco pediu uma ação sua (autenticação); abra o Meu Pluggy para concluir. Li o que já estava disponível.")
+        elif status in ("LOGIN_ERROR", "OUTDATED"):
+            saida.append(f"{quem}: o Pluggy não conseguiu atualizar ({status.lower()}); veja a autorização no Meu Pluggy. Li o que já estava disponível.")
+        else:
+            saida.append(f"{quem}: a atualização ainda estava em andamento depois de {espera} segundos; li o que já estava disponível e uma nova leitura mais tarde pode trazer mais.")
+    return saida
 
 
 def _avisos_item(item: dict, hoje: date) -> list:

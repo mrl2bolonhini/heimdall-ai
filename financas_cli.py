@@ -116,6 +116,7 @@ def main() -> None:
     ap.add_argument("--nomear", action="append", default=[])
     ap.add_argument("--forcar", action="store_true")
     ap.add_argument("--simular", action="store_true")
+    ap.add_argument("--agora", action="store_true")
     ap.add_argument("--mes", default="")
     ap.add_argument("--buscar", default="")
     ap.add_argument("--categoria", default="")
@@ -322,6 +323,10 @@ def main() -> None:
                         print(f"{r['conta']}: o Pluggy devolveu {r['recebidas']} lançamento(s), de {fn.data_br(r['primeira']) if r['primeira'] else 'nenhum'} a {fn.data_br(r['ultima']) if r['ultima'] else 'nenhum'}. No Finance hoje o mais antigo é {fn.data_br(antigo) if antigo else 'nenhum'}.")
                     print("\nNada foi gravado: foi só uma simulação.")
                     return
+                if a.agora:
+                    print("Pedindo ao Pluggy para reler os bancos agora (até 2 minutos por banco)...")
+                    for linha in fpl.atualizar_itens(cfg):
+                        print(linha)
                 r = fpl.executar(con, cfg, arq, desde)
                 for c in r["contas"]:
                     print(f"{c['conta']}: {c['novas']} nova(s), {c['repetidas']} repetida(s), a partir de {fn.data_br(c['desde'])} (o Pluggy devolveu {c.get('recebidas', 0)})."
