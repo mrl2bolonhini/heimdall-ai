@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-17 - Nomes das contas do Pluggy sem repetição
+- Duas contas dos bancos nunca ficam com o mesmo nome no Finance: se o nome padrão já foi tomado na mesma rodada, o Heimdall acrescenta o tipo (corrente, poupança), o final ou um número. Nomes já guardados ou definidos com `--name` têm prioridade.
+- Bancos conhecidos (Nubank, Itaú, Mercado Pago, entre outros) ganham nome curto como "Nubank cartão" ou "Nubank conta", em vez do nome longo do Pluggy; se já existe uma conta importada por extrato do mesmo banco, o nome dela continua sendo reaproveitado.
+- `heimdall finance --sync --list` agora mostra também o tipo da conta (corrente, poupança) e o saldo, para distinguir contas parecidas.
+
 ## 2026-11-17 - Contas dos bancos baixadas sozinhas pelo Meu Pluggy
 - O Finance agora baixa sozinho as contas e transações dos bancos pelo Open Finance, usando o plano pessoal gratuito do Meu Pluggy (até 5 bancos, somente leitura, atualização a cada 24 horas, autorização que vale um ano por banco). Exceção consciente e aceita à regra de que dados de finanças não saem do Mac: os dados passam pelos servidores do Pluggy antes de chegar aqui. Nada é movido nem pago; o módulo só faz a autenticação e leituras (GET).
 - `heimdall finance --sync` (-S) sincroniza na hora; o painel repete a cada 6 horas (HEIMDALL_FINANCE_PLUGGY=0 desliga) e a página Importar extrato ganhou a seção Conexão automática com os bancos, com a última rodada, avisos e o botão Sincronizar agora. As chaves (Client ID, Client Secret e ids dos bancos) ficam no .env e são gravadas por `--save-pluggy id|segredo|itens` (para itens, cada execução acrescenta um banco), que lê a área de transferência sem mostrar o valor e a esvazia depois do segredo.

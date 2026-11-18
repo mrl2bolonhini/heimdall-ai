@@ -250,18 +250,75 @@ def _final(conta: dict) -> str:
     return n[-4:] if n else ""
 
 
-def nome_padrao(con, conta: dict) -> str:
+MARCAS = (("nubank", "Nubank"), ("nu pagamentos", "Nubank"), ("itau", "Itaú"), ("mercado pago", "Mercado Pago"), ("mercadopago", "Mercado Pago"),
+          ("bradesco", "Bradesco"), ("santander", "Santander"), ("inter", "Inter"), ("c6", "C6 Bank"), ("caixa", "Caixa"), ("banco do brasil", "Banco do Brasil"))
+SUBTIPOS = {"CHECKING_ACCOUNT": "corrente", "SAVINGS_ACCOUNT": "poupança", "PAYMENT_ACCOUNT": "pagamentos"}
+
+
+def _marca(rotulo: str) -> str:
+    n = " " + fn.norm(rotulo) + " "
+    for chave, nome in MARCAS:
+        if f" {chave} " in n or (len(chave) > 3 and chave in n):
+            return nome
+    return ""
+
+
+def nome_padrao(con, conta: dict, usados: set = None) -> str:
     """Nome da conta no Finance. Se já existe uma conta importada por extrato com o mesmo banco e tipo, usa a dela (evita duplicar);
-    senão cria 'Nome (final 1234)'. Dá para trocar com --nomear."""
+    senão cria 'Banco conta' (ou 'Banco cartão'). Nunca devolve um nome já usado por outra conta nesta rodada (`usados`):
+    nesse caso acrescenta o tipo (corrente, poupança), o final ou um número. Dá para trocar com --nomear."""
+    usados = usados if usados is not None else set()
     cartao = (conta.get("type") or "").upper() == "CREDIT"
     rotulo = (conta.get("marketingName") or conta.get("name") or "Conta").strip()
     palavras = [w for w in fn.norm(rotulo).split() if len(w) >= 3 and w not in {"conta", "corrente", "cartao", "credito", "pagamentos", "banco", "digital", "poupanca"}]
-    for (existente,) in con.execute("SELECT DISTINCT conta FROM transacoes WHERE conta NOT LIKE 'Pluggy:%'"):
+    marca = _marca(rotulo)
+    if marca:
+        palavras = [fn.norm(marca).split()[0]] + palavras
+    base = None
+    for (existente,) in con.execute("SELECT DISTINCT conta FROM transacoes WHERE conta NOT LIKE 'Pluggy:%' ORDER BY conta"):
         ne = fn.norm(existente)
-        if ("cartao" in ne) == cartao and palavras and any(w in ne for w in palavras):
-            return existente
+        if ("cartao" in ne) == cartao and palavras and any(w in ne for w in palavras) and existente not in usados:
+            base = existente
+            break
     f = _final(conta)
-    return (f"Pluggy: {rotulo}" + (f" final {f}" if f else "") + (" cartão" if cartao and "cart" not in fn.norm(rotulo) else ""))[:60]
+    if base is None:
+        if marca:
+            base = f"{marca} {'cartão' if cartao else 'conta'}"
+        else:
+            base = f"Pluggy: {rotulo}" + (" cartão" if cartao and "cart" not in fn.norm(rotulo) else "")
+    candidatos = [base]
+    sub = SUBTIPOS.get((conta.get("subtype") or "").upper(), "")
+    if sub and not cartao:
+        candidatos.append(f"{base} {sub}")
+    if f:
+        candidatos.append(f"{base} final {f}")
+        if sub and not cartao:
+            candidatos.append(f"{base} {sub} final {f}")
+    for c in candidatos:
+        if c[:60] not in usados:
+            return c[:60]
+    n = 2
+    while f"{candidatos[-1]} {n}"[:60] in usados:
+        n += 1
+    return f"{candidatos[-1]} {n}"[:60]
+
+
+def resolver_nomes(con, estado: dict, contas: list, forcados: dict = None) -> dict:
+    """Nome de cada conta (id -> nome): o forçado por --nomear, o já guardado, ou o padrão sem repetir nome dentro da mesma rodada."""
+    forcados = forcados or {}
+    guardados = estado.get("contas", {})
+    saida = {}
+    usados = set()
+    for c in contas:
+        n = forcados.get(c["id"]) or guardados.get(c["id"], {}).get("nome")
+        if n:
+            saida[c["id"]] = n
+            usados.add(n)
+    for c in contas:
+        if c["id"] not in saida:
+            saida[c["id"]] = nome_padrao(con, c, usados)
+            usados.add(saida[c["id"]])
+    return saida
 
 
 # --------------------------------------------------------------------------------------------
@@ -305,22 +362,24 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
     cli = cliente or Cliente(cfg)
     nomes = nomes or {}
     guardados = estado.setdefault("contas", {})
-    pacotes, avisos = [], []
+    pacotes, avisos, todas = [], [], []
     for item_id in cfg["itens"]:
         avisos += _avisos_item(cli.item(item_id), hoje)
-        for c in cli.contas(item_id):
-            g = guardados.get(c["id"], {})
-            nome = nomes.get(c["id"]) or g.get("nome") or nome_padrao(con_leitura, c)
-            if desde:
-                ini = desde
-            elif g.get("ultimo"):
-                ini = date.fromisoformat(g["ultimo"]) - timedelta(days=SOBREPOSICAO)
-            else:
-                ult = con_leitura.execute("SELECT MAX(data) AS d FROM transacoes WHERE conta=?", (nome,)).fetchone()["d"]
-                ini = date.fromisoformat(ult) + timedelta(days=1) if ult else hoje - timedelta(days=JANELA_INICIAL)
-            ini = min(ini, hoje)
-            itens = para_itens(c, cli.transacoes(c["id"], ini, hoje))
-            pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat()})
+        todas += cli.contas(item_id)
+    nomes_finais = resolver_nomes(con_leitura, estado, todas, nomes)
+    for c in todas:
+        g = guardados.get(c["id"], {})
+        nome = nomes_finais[c["id"]]
+        if desde:
+            ini = desde
+        elif g.get("ultimo"):
+            ini = date.fromisoformat(g["ultimo"]) - timedelta(days=SOBREPOSICAO)
+        else:
+            ult = con_leitura.execute("SELECT MAX(data) AS d FROM transacoes WHERE conta=?", (nome,)).fetchone()["d"]
+            ini = date.fromisoformat(ult) + timedelta(days=1) if ult else hoje - timedelta(days=JANELA_INICIAL)
+        ini = min(ini, hoje)
+        itens = para_itens(c, cli.transacoes(c["id"], ini, hoje))
+        pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat()})
     return {"pacotes": pacotes, "avisos": avisos}
 
 
@@ -342,11 +401,16 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
 def listar_contas(cfg: dict, estado: dict, con, cliente: Cliente = None) -> list:
     """Contas dos bancos conectados com o nome que cada uma terá no Finance."""
     cli = cliente or Cliente(cfg)
-    saida = []
+    todas = []
     for item_id in cfg["itens"]:
-        for c in cli.contas(item_id):
-            nome = estado.get("contas", {}).get(c["id"], {}).get("nome") or nome_padrao(con, c)
-            saida.append({"id": c["id"], "tipo": "cartão de crédito" if (c.get("type") or "").upper() == "CREDIT" else "conta", "final": _final(c), "nome": nome, "rotulo": c.get("marketingName") or c.get("name") or ""})
+        todas += cli.contas(item_id)
+    nomes = resolver_nomes(con, estado, todas)
+    saida = []
+    for c in todas:
+        saldo = c.get("balance")
+        saida.append({"id": c["id"], "tipo": "cartão de crédito" if (c.get("type") or "").upper() == "CREDIT" else "conta", "final": _final(c), "nome": nomes[c["id"]],
+                      "rotulo": c.get("marketingName") or c.get("name") or "", "subtipo": SUBTIPOS.get((c.get("subtype") or "").upper(), (c.get("subtype") or "").lower()),
+                      "saldo": saldo if isinstance(saldo, (int, float)) else None})
     return saida
 
 

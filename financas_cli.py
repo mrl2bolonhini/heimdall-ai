@@ -179,7 +179,7 @@ def main() -> None:
                     print(f"Conta {n} passa a se chamar {nome.strip()[:60]} no Finance.")
                 fpl.gravar_estado(arq, estado)
                 for i, c in enumerate(contas, 1):
-                    print(f"{i}. {c['tipo']} {c['rotulo']}" + (f", final {c['final']}" if c["final"] else "") + f". No Finance: {c['nome']}.")
+                    print(f"{i}. {c['tipo']} {c['rotulo']}" + (f", {c['subtipo']}" if c.get("subtipo") else "") + (f", final {c['final']}" if c["final"] else "") + (f", saldo {c['saldo']:.2f}".replace(".", ",") if c.get("saldo") is not None else "") + f". No Finance: {c['nome']}.")
                 print("\nPara trocar o nome: heimdall finance --sincronizar --nomear 2=\"Itaú conta\" (use o nome de uma conta já importada por extrato para não duplicar).")
             else:
                 desde = None
