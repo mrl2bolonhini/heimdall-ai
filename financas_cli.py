@@ -312,7 +312,8 @@ def main() -> None:
                     return
                 r = fpl.executar(con, cfg, arq, desde)
                 for c in r["contas"]:
-                    print(f"{c['conta']}: {c['novas']} nova(s), {c['repetidas']} repetida(s), a partir de {fn.data_br(c['desde'])} (o Pluggy devolveu {c.get('recebidas', 0)}).")
+                    print(f"{c['conta']}: {c['novas']} nova(s), {c['repetidas']} repetida(s), a partir de {fn.data_br(c['desde'])} (o Pluggy devolveu {c.get('recebidas', 0)})."
+                          + (f" Parcelas na fatura em aberto: {len(c['parcelas'])}, {fn.brl(sum(x['valor'] for x in c['parcelas']))}, lendo {fpl.PARCELADOS_DIAS} dias." if c.get("parcelas") is not None else ""))
                 if not r["contas"]:
                     print("Nenhuma conta encontrada nos bancos conectados.")
                 for av in r["avisos"]:

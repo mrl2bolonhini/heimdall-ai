@@ -507,7 +507,7 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
     guardados = estado.setdefault("contas", {})
     for p in coleta["pacotes"]:
         r = fn.importar_itens(con, p["itens"], "pluggy", "Meu Pluggy", p["nome"], agora)
-        resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"], "recebidas": p.get("recebidas", len(p["itens"]))})
+        resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"], "recebidas": p.get("recebidas", len(p["itens"])), "parcelas": (p.get("credito") or {}).get("parcelas_abertas")})
         guardados[p["id"]] = {**{k: v for k, v in guardados.get(p["id"], {}).items() if k == "fechamento"}, "nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo"), "credito": p.get("credito")}
     estado["avisos"] = coleta["avisos"]
     estado["ultima"] = (agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

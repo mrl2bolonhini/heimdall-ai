@@ -247,6 +247,19 @@ confere("compras do ciclo: só o que tem data desde 26/10", det["compras"] == 15
 confere("total = compras do ciclo + parcelas antigas", det["total"] == 15552 + 1398 + esperado, det)
 sem_pa = fc.texto_saldos({"contas": {"x": {"nome": cartao12, "tipo": "CREDIT", "saldo": 1, "fechamento": {"vence": 1, "antes": 7}, "credito": {}}}}, con12, date(2026, 11, 18))
 confere("sem parcelas lidas, o texto avisa para sincronizar", "ainda não foram lidas" in sem_pa, sem_pa)
+def api_parc(metodo, caminho, params=None, corpo=None, chave=""):
+    if caminho == "/bills":
+        return {"results": [{"id": "F1", "dueDate": "2026-11-03", "totalAmount": 100.0}]}
+    r = api(metodo, caminho, params, corpo, chave)
+    if caminho == "/v2/transactions" and params.get("accountId") == CONTA_CARTAO:
+        r = {**r, "results": list(r.get("results") or []) + [{"id": "p1", "date": "2026-05-28", "amount": 211.89, "description": "IPHONE 05/21", "type": "DEBIT",
+                                                              "creditCardMetadata": {"installmentNumber": 5, "totalInstallments": 21, "purchaseDate": "2026-05-28", "billId": "F1"}}]}
+    return r
+con13 = fn.conectar(d / "p13.db")
+r13 = fp.executar(con13, cfg, d / "p13.json", None, hoje, fp.Cliente(cfg, api_parc))
+cart = [c for c in r13["contas"] if c["parcelas"] is not None]
+confere("sincronização lê as parcelas da fatura aberta e informa no resumo", len(cart) == 1 and len(cart[0]["parcelas"]) == 1 and cart[0]["parcelas"][0]["parcela"] == 6 and cart[0]["parcelas"][0]["valor"] == 21189, r13["contas"])
+confere("o estado guarda as parcelas para o --balance", fp.ler_estado(d / "p13.json")["contas"][CONTA_CARTAO]["credito"]["parcelas_abertas"][0]["valor"] == 21189)
 # credencial errada
 try:
     fp.Cliente({**cfg, "segredo": "errado"}, api).chave()
