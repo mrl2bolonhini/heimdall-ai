@@ -187,6 +187,17 @@ Exemplos:
   heimdall labs result vitamina d
   heimdall labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia
 
+@ controls | Heimdall Controls, terminal completo e painel de serviços no navegador
+Abre o painel de administração (porta 8017; de fora, controls.heimdall-ai.tech). O Terminal é um shell completo que roda no Mac com as suas permissões: a pasta e as variáveis continuam de um comando para o outro, programas que perguntam algo recebem a resposta por um campo próprio, há botão para interromper e botões para copiar a última saída ou as últimas N saídas para a área de transferência. Feito para leitor de tela: cada comando é um bloco com título, situação e saída em texto simples, do mais recente para o mais antigo, sem tela de terminal. A página Serviços mostra o que está no ar e tem botões para atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra (Cloudflare Access com o Authenticator, ou senha e código de 6 dígitos) e cada comando fica anotado em logs/controls_audit.log, sem a saída. Programas de tela cheia, como vim e top, não funcionam.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
+  -h, --help           mostra esta ajuda
+  -o, --open [PÁGINA]  abre uma página: terminal ou services
+Exemplos:
+  heimdall controls
+  heimdall controls --open terminal
+  heimdall controls -L
+
 @ games | Heimdall Jogos, jogos leves para leitor de tela
 Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos ficam em categorias, em ordem alfabética, e dentro delas também em ordem alfabética: Ação (arqueiro de áudio e labirinto), Aventuras de texto (cinco histórias e a Travessia das Três Provas), Cartas (paciência e poker), Cassino (bacará, blackjack, caça-níqueis, poker caribenho e roleta), Números e lógica (2048, número secreto, senha e sudoku), Palavras e letras (cinco letras e forca) e Tabuleiro e estratégia (batalha naval, campo minado, gramado, jogo da velha, sonar e xadrez). Os jogos de terceiros só entram se tiverem versão em português ou permitirem tradução.
 Opções:

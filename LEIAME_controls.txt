@@ -1,0 +1,28 @@
+Heimdall Controls: terminal completo e painel de serviços
+
+O que é: um painel em controls.heimdall-ai.tech (e em http://localhost:8017) com o Terminal, que é um shell de verdade no Mac, e a página Serviços. Quem entra manda no Mac, então a entrada tem várias camadas e só o dono passa.
+
+Como usar o Terminal, com o leitor de tela
+1. Abra com heimdall controls --open terminal (ou -L para o endereço local).
+2. O foco começa na página; vá ao campo Comando, digite e aperte Enter. A pasta e as variáveis continuam de um comando para o outro.
+3. Cada comando vira um bloco, do mais recente para o mais antigo: um título (Comando 5: ls), a situação (concluído, erro com código, em execução) e a saída em texto. Navegue por títulos. Ao terminar, o leitor anuncia, sem ler a saída inteira.
+4. Se o programa pergunta algo (sim ou não, senha), use o campo Resposta ao programa. Para parar o que está rodando, Interromper (Ctrl+C).
+5. Copiar: Copiar a última saída, ou escolha quantas últimas saídas no campo numérico e use Copiar as últimas saídas. A caixa Incluir o comando liga ou desliga a linha do comando no texto copiado. Cada bloco também tem o botão Copiar a saída do comando N. Se o navegador não deixar copiar sozinho, o texto aparece num campo já selecionado: Command+C.
+6. Programas de tela cheia (vim, top, less) não funcionam. Use cat, sed, ps e head. Cores e códigos de tela são retirados da saída.
+
+Ligar o endereço público (uma vez)
+1. No Cloudflare Zero Trust, no túnel que você já usa, acrescente o nome público controls.heimdall-ai.tech apontando para http://localhost:8017.
+2. Crie um aplicativo do Access para controls.heimdall-ai.tech com a política de entrada só do seu e-mail (Microsoft Entra, Authenticator). Copie a AUD tag dele.
+3. Acrescente a AUD tag a HEIMDALL_CFACCESS_AUD no .env, separada por vírgula das outras. Sem isso o painel recusa o endereço público (é de propósito).
+4. Reinicie: heimdall update --restart (ou heimdall restart).
+5. Convidados do Access nunca entram no Controls, mesmo que alguém os libere: só o dono.
+
+Camadas de segurança
+1. Escuta só em 127.0.0.1.
+2. Entrada pelo Cloudflare Access ou por senha e código de 6 dígitos.
+3. No endereço público, todo pedido precisa vir de um dono aprovado no Access (HEIMDALL_CONTROLS_EXIGE_ACCESS=0 desliga, não recomendo).
+4. Proteção contra pedido forjado (CSRF e Origin) e script só com nonce.
+5. Cada comando é anotado em logs/controls_audit.log (data, endereço, comando; nunca a saída), arquivo só seu.
+6. Sem senha e código configurados, o painel não sobe.
+
+Se algo falhar: ./subir.sh --log controls, ou heimdall logs --service controls.

@@ -63,7 +63,7 @@ _heimdall_port() {  # porta de cada serviço (a do .env, se houver)
 
 _heimdall_stop_ports() {
   local p
-  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 8014 8016 8099 9000; do
+  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 8014 8016 8017 8099 9000; do
     lsof -ti:"$p" 2>/dev/null | xargs kill -9 2>/dev/null
   done
 }
@@ -78,6 +78,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  "-L=--local" ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" "-L=--local" ;;
+    controls) printf '%s\n' "-o=--open" "-L=--local" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
@@ -147,7 +148,7 @@ heimdall() {
   done
   _HLOCAL=0
   case "$cmd" in
-    cloud|notes|news|health|games|finance)
+    cloud|notes|news|health|games|finance|controls)
       local _x _n=()
       for _x in "$@"; do
         if [ "$_x" = "--local" ]; then _HLOCAL=1; else _n+=("$_x"); fi
@@ -176,7 +177,7 @@ heimdall() {
         --clean) _heimdall_sh subir.sh --limpar ;;
         --service)
           case "$2" in
-            agent) a=agente ;; notes) a=notas ;; health) a=saude_painel ;; games) a=jogos ;; terminal) a=open_terminal ;;
+            agent) a=agente ;; notes) a=notas ;; health) a=saude_painel ;; games) a=jogos ;; terminal) a=open_terminal ;; controls) a=controls_debug ;;
             finance) a=finance ;; mcp-public) a=mcp_public ;; mcp-data) a=mcp_dados ;; *) a="$2" ;;
           esac
           _heimdall_sh subir.sh --log "$a" ;;
@@ -270,6 +271,13 @@ heimdall() {
         --list) printf '%s\n' "2048 (heimdall games --play 2048)" "Arqueiro de áudio (heimdall games --play arqueiro)" "Bacará (heimdall games --play bacara)" "Batalha naval (heimdall games --play naval)" "Blackjack (heimdall games --play blackjack)" "Caça-níqueis (heimdall games --play cacaniqueis)" "Campo minado (heimdall games --play minas)" "A Caverna dos Ecos (heimdall games --play caverna)" "Cinco letras (heimdall games --play cincoletras)" "Estação Orion (heimdall games --play orion)" "O Farol Apagado (heimdall games --play aventura)" "Forca (heimdall games --play forca)" "Gramado (heimdall games --play gramado)" "Jogo da velha (heimdall games --play velha)" "Labirinto (heimdall games --play labirinto)" "A Mansão dos Relógios (heimdall games --play relogios)" "Número secreto (heimdall games --play numero)" "Paciência (heimdall games --play paciencia)" "Poker caribenho (heimdall games --play caribenho)" "Poker Texas hold'em (heimdall games --play poker)" "Roleta (heimdall games --play roleta)" "Senha (heimdall games --play senha)" "Sonar (heimdall games --play sonar)" "Sudoku (heimdall games --play sudoku)" "O Templo Submerso (heimdall games --play templo)" "A Travessia das Três Provas (heimdall games --play escolhas)" "Xadrez (heimdall games --play xadrez)" ;;
         *) echo "Use: heimdall games [--play JOGO] [--list]"; return 1 ;;
       esac ;;
+    controls)
+      case "$1" in
+        ""|--open)
+          case "$2" in terminal) pg=/terminal ;; services) pg=/servicos ;; "") pg="" ;; *) pg="/$2" ;; esac
+          _heimdall_web "Heimdall Controls" CONTROLS 8017 controls "$pg" ;;
+        *) echo "Use: heimdall controls [--open [terminal|services]] [--local]"; return 1 ;;
+      esac ;;
     finance)
       case "$1" in
         ""|--open) _heimdall_web "Heimdall Finance" FINANCE 8016 finance ;;
@@ -324,6 +332,7 @@ heimdall() {
       echo "health: http://localhost:$(_heimdall_port HEIMDALL_SAUDE_PAINEL_PORT 8013)"
       echo "games: http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)"
       echo "finance: http://localhost:$(_heimdall_port HEIMDALL_FINANCE_PORT 8016)"
+      echo "controls: http://localhost:$(_heimdall_port HEIMDALL_CONTROLS_PORT 8017)"
       echo "n8n: http://localhost:5678"
       echo "kuma: http://localhost:3001"
       echo "dozzle: http://localhost:8081" ;;
@@ -432,7 +441,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -447,6 +456,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data
         else compadd -- --local --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
+      controls) if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- terminal services; else compadd -- --open --local; fi ;;
       labs) compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals appointments appointment calendar documents token --open --without --date --time --doctor --specialty --place ;;
       games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas xadrez
         else compadd -- --local --play --list; fi ;;

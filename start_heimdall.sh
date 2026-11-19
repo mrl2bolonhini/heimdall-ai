@@ -47,6 +47,7 @@ CLOUD_PORT="${HEIMDALL_CLOUD_PORT:-8010}"
 NOTAS_PORT="${HEIMDALL_NOTAS_PORT:-8011}"
 NEWS_PORT="${HEIMDALL_NEWS_PORT:-8012}"
 SAUDE_PAINEL_PORT="${HEIMDALL_SAUDE_PAINEL_PORT:-8013}"
+CONTROLS_PORT="${HEIMDALL_CONTROLS_PORT:-8017}"
 JOGOS_PORT="${HEIMDALL_JOGOS_PORT:-8014}"
 FINANCE_PORT="${HEIMDALL_FINANCE_PORT:-8016}"
 LLM_PORT=9000
@@ -123,6 +124,7 @@ lsof -ti:$CLOUD_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NOTAS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NEWS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$SAUDE_PAINEL_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$CONTROLS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$JOGOS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$FINANCE_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LLM_PORT | xargs kill -9 2>/dev/null
@@ -562,6 +564,24 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             fi
         done
         echo "     Heimdall Saúde (painel de saúde) em http://localhost:$SAUDE_PAINEL_PORT"
+    fi
+fi
+
+# --- Heimdall Controls (terminal completo e painel de serviços): mesmo login do Heimdall Cloud ---
+# Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare (controls.heimdall-ai.tech), atrás do Cloudflare Access. Quem entra manda no Mac.
+if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
+    if [ -f heimdall_controls.py ]; then
+        HEIMDALL_CONTROLS_PORT="$CONTROLS_PORT" HEIMDALL_DIR="$(pwd)" "$VENV_PYTHON" heimdall_controls.py > "$(nova_log controls_debug)" 2>&1 &
+        COUNTER=0
+        while ! nc -z localhost $CONTROLS_PORT > /dev/null 2>&1; do
+            sleep 1
+            COUNTER=$((COUNTER+1))
+            if [ $COUNTER -gt 10 ]; then
+                echo "Aviso: o Heimdall Controls não respondeu em 10s. Veja logs/controls_debug.log."
+                break
+            fi
+        done
+        echo "     Heimdall Controls em http://localhost:$CONTROLS_PORT"
     fi
 fi
 

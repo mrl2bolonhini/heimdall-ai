@@ -5,7 +5,7 @@
 #   ./subir.sh --update           sobe com os argumentos que você passar (os mesmos do start_heimdall.sh)
 #   ./subir.sh --status           só confere agora o que está no ar, sem subir nada
 #   ./subir.sh --log              mostra as últimas 40 linhas do log da subida atual
-#   ./subir.sh --log notas        idem, do serviço indicado (mcp, mcp_public, mcp_dados, agente, cloud, notas, news, saude_painel, jogos, finance, open_terminal, ingest)
+#   ./subir.sh --log notas        idem, do serviço indicado (mcp, mcp_public, mcp_dados, agente, cloud, notas, news, saude_painel, jogos, finance, controls, open_terminal, ingest)
 #   ./subir.sh --logs             lista os logs em logs/
 #   ./subir.sh --limpar           apaga os logs antigos que ficavam soltos na pasta do projeto (agora ficam em logs/)
 #   ./subir.sh --reiniciar [args] encerra a subida em andamento e sobe de novo
@@ -90,6 +90,7 @@ montar_lista() {
         LISTA+=("Heimdall Saúde|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
         LISTA+=("Heimdall Jogos|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")
         LISTA+=("Heimdall Finance|http|http://127.0.0.1:${HEIMDALL_FINANCE_PORT:-8016}/saude")
+        LISTA+=("Heimdall Controls|http|http://127.0.0.1:${HEIMDALL_CONTROLS_PORT:-8017}/saude")
     fi
 }
 
