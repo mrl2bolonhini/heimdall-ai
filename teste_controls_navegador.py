@@ -69,7 +69,7 @@ with sync_playwright() as pw:
     estado = lambda: pg.locator("#estado").inner_text()  # noqa: E731
     confere("campo único começa só com o prompt", valor().endswith(" % ") and "\n" not in valor().strip(), valor())
 
-    ta.focus()
+    confere("ao abrir a página o foco já está no terminal, com o cursor no fim", espera(lambda: pg.evaluate("document.activeElement.id") == "terminal") and ta.evaluate("e => e.selectionStart === e.value.length"), pg.evaluate("document.activeElement.id"))
     pg.keyboard.type("echo ola mundo")
     pg.keyboard.press("Enter")
     confere("saída aparece no próprio campo, com o prompt de volta no fim", espera(lambda: "ola mundo\n[concluído, código 0," in valor() and valor().endswith(" % ")), valor())
@@ -80,8 +80,36 @@ with sync_playwright() as pw:
     pg.keyboard.press("Enter")
     espera(lambda: "segundo\n[concluído" in valor())
     confere("segundo comando: o campo mostra só ele (a primeira saída saiu do campo)", "ola mundo" not in valor() and "echo segundo" in valor(), valor())
-    confere("o histórico guarda os dois, em ordem", espera(lambda: pg.locator("#historico").input_value().count("[concluído") == 2) and pg.locator("#historico").input_value().index("ola mundo") < pg.locator("#historico").input_value().index("segundo"), pg.locator("#historico").input_value())
+    confere("o histórico (acima) guarda o comando anterior; o último fica só no terminal", espera(lambda: "ola mundo" in pg.locator("#historico").input_value()) and "segundo" not in pg.locator("#historico").input_value(), pg.locator("#historico").input_value())
     confere("verificação de ortografia desligada nos dois campos", ta.evaluate("e => e.spellcheck === false") and pg.locator("#historico").evaluate("e => e.spellcheck === false"))
+
+    # primeira letra, recarregar e voltar ao campo
+    pg.reload()
+    confere("recarregar a página devolve o foco ao terminal", espera(lambda: pg.evaluate("document.activeElement.id") == "terminal"))
+    pg.keyboard.type("echo xyz")
+    confere("nenhuma letra se perde: a primeira também entra", valor().endswith("echo xyz"), valor()[-30:])
+    pg.keyboard.press("Shift+Tab")
+    confere("Shift+Tab vai ao histórico, que fica acima", pg.evaluate("document.activeElement.id") == "historico")
+    pg.keyboard.press("Tab")
+    confere("voltar ao terminal com Tab deixa o cursor depois da última letra", pg.evaluate("document.activeElement.id") == "terminal" and ta.evaluate("e => e.selectionStart === e.value.length"), ta.evaluate("e => [e.selectionStart, e.value.length]"))
+    ta.evaluate("e => e.setSelectionRange(0, 0)")
+    pg.keyboard.type("Z")
+    confere("com o cursor na saída, a letra digitada vai para o fim (não se perde)", valor().endswith("echo xyzZ"), valor()[-30:])
+    for _ in range(9):
+        pg.keyboard.press("Backspace")
+    # histórico: setas navegam sem perder o foco, e nada se altera
+    ant = pg.locator("#historico").input_value()
+    pg.keyboard.press("Shift+Tab")
+    pg.keyboard.press("ArrowUp")
+    pg.keyboard.press("ArrowUp")
+    pg.keyboard.press("ArrowDown")
+    pg.keyboard.press("Home")
+    pg.keyboard.type("abc")
+    pg.keyboard.press("Backspace")
+    pg.keyboard.press("Delete")
+    confere("histórico: as setas movem o cursor sem perder o foco", pg.evaluate("document.activeElement.id") == "historico")
+    confere("histórico: digitar e apagar não alteram nada", pg.locator("#historico").input_value() == ant, pg.locator("#historico").input_value()[:80])
+    pg.keyboard.press("Tab")
 
     # só a última linha é editável
     ta.evaluate("e => e.setSelectionRange(0, 0)")
@@ -169,7 +197,7 @@ with sync_playwright() as pw:
     pg.keyboard.press("Tab")
     confere("Tab com vários: completa o comum e fala as opções", espera(lambda: valor().endswith("cat alfa") and "2 opções" in estado() and "alfabeto.txt" in estado()), (valor()[-30:], estado()))
     pg.keyboard.press("Tab")
-    espera(lambda: "2 opções" in estado())
+    pg.wait_for_timeout(400)
     confere("Tab que não muda nada ainda fica no campo", pg.evaluate("document.activeElement.id") == "terminal")
     pg.keyboard.press("Tab")
     confere("o Tab seguinte, de novo sem efeito, deixa o foco sair do campo", espera(lambda: pg.evaluate("document.activeElement.id") != "terminal"), pg.evaluate("document.activeElement.id"))

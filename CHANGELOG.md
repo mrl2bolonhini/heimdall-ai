@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: foco no terminal, nenhuma letra perdida, histórico acima
+- O foco vem sempre no campo Terminal: ao abrir a página, ao recarregar e ao voltar para a aba do navegador. O cursor entra sempre depois da última letra, tanto ao focar por Tab quanto automaticamente; só o clique do mouse escolhe outro ponto.
+- A primeira letra digitada não se perde mais. Antes, se o cursor estivesse na saída, a proteção contra editar a saída descartava a letra; agora a letra vai para o fim da linha de digitação (vale também para colar).
+- O histórico passou a ser um campo comum (as setas, Home e End funcionam como em qualquer campo, sem perder o foco), com a edição bloqueada por código e marcado como somente leitura para o leitor de tela. Antes era um campo readonly, que não segura as setas direito. Ele fica logo ACIMA do Terminal e guarda os comandos anteriores ao atual; só é reenviado ao navegador quando muda, e atualizado sem mexer no cursor nem na rolagem.
+- Tab repetido rápido não confunde mais: enquanto a resposta do Tab anterior não chega, o Tab seguinte espera.
+
 ## 2026-11-19 - Controls: o campo mostra só o último comando, e Tab completa
 - O campo do terminal agora mostra só o último comando e a saída dele: a cada comando novo ele recomeça, como depois de um clear. Antes ele acumulava tudo e o leitor de tela lia desde a primeira saída. Os comandos anteriores ficam na seção Histórico, num campo somente leitura, e as cópias (Option+Shift+C, 1 a 9, 0) continuam levando as últimas saídas. Enquanto o comando roda, a saída é acrescentada ao fim do campo em vez de trocar o texto todo.
 - Tab completa comandos (na primeira palavra e depois de ; | &) e nomes de arquivos e pastas a partir da pasta do shell. Com uma só opção completa tudo; com várias, completa o que for igual e o leitor de tela diz as opções. Se o Tab não mudar nada, o Tab seguinte sai do campo (não prende o teclado), e com a linha vazia o Tab é o de sempre.

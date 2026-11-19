@@ -226,20 +226,21 @@ def _texto_do_bloco(sh, b) -> tuple:
     return cab + corpo + (f"[{_situacao(b)}]\n\n" if fim_ else ""), len(cab) + len(corte)
 
 
-def transcricao(sh, completo: bool = True) -> dict:
+def transcricao(sh, com_historico: bool = True) -> dict:
     """O campo do terminal mostra só o ÚLTIMO comando (o leitor de tela lê só a saída dele, como depois de um clear).
-    O histórico de todos os comandos vai num campo à parte, somente leitura. O texto do último comando só cresce no fim."""
+    Os comandos anteriores vão num campo de histórico à parte, que fica logo acima. O texto do último comando só cresce no fim."""
     with sh._lock:
+        n_hist = max(0, len(sh.blocos) - 1)
         if not sh.blocos:
-            return {"texto": "", "inicio_ultima": -1, "ultimo_n": 0, "historico": ""}
+            return {"texto": "", "inicio_ultima": -1, "ultimo_n": 0, "historico": "", "n_hist": 0}
         ultimo, inicio = _texto_do_bloco(sh, sh.blocos[-1])
         hist = ""
-        if completo:
-            partes = [_texto_do_bloco(sh, b)[0] for b in sh.blocos[:-1]] + [ultimo]
+        if com_historico:
+            partes = [_texto_do_bloco(sh, b)[0] for b in sh.blocos[:-1]]
             while len(partes) > 1 and sum(len(t) for t in partes) > MAX_TRANSCRICAO:
                 partes.pop(0)
             hist = "".join(partes)
-        return {"texto": ultimo, "inicio_ultima": inicio, "ultimo_n": sh.blocos[-1].n, "historico": hist}
+        return {"texto": ultimo, "inicio_ultima": inicio, "ultimo_n": sh.blocos[-1].n, "historico": hist, "n_hist": n_hist}
 
 
 def aviso_do_bloco(sh, b) -> str:
@@ -276,11 +277,15 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
     corpo = (
         '<p id="estado" role="status" aria-live="polite"></p>'
         f'<input type="hidden" id="csrf" value="{e(sess["csrf"])}">'
-        '<p>Digite o comando na última linha do campo e aperte Enter. A saída aparece no próprio campo, logo abaixo do comando. '
-        'Se um programa estiver perguntando algo, o que você digitar vai para ele. O campo mostra só o último comando; os anteriores ficam em Histórico, mais abaixo. '
+        '<p>O foco já vem no campo Terminal. Digite o comando na última linha e aperte Enter. A saída aparece no próprio campo, logo abaixo do comando. '
+        'Se um programa estiver perguntando algo, o que você digitar vai para ele. O campo Terminal mostra só o último comando; os anteriores ficam no campo Histórico, logo acima. '
         'Tab completa comandos e nomes de arquivos. Option+Shift+H leva à lista de atalhos.</p>'
+        '<section aria-labelledby="h-hist"><h2 id="h-hist">Histórico</h2>'
+        '<label for="historico">Comandos e saídas anteriores ao atual, do mais antigo ao mais novo (somente leitura)</label>'
+        f'<textarea class="terminal historico" id="historico" aria-readonly="true" inputmode="none" spellcheck="false" data-n="{t["n_hist"]}">{e(hist)}</textarea></section>'
+        '<h2 id="h-term">Linha de comando</h2>'
         '<label for="terminal">Terminal</label>'
-        f'<textarea class="terminal" id="terminal" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}">{e(inicial)}</textarea>'
+        f'<textarea class="terminal" id="terminal" spellcheck="false" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}">{e(inicial)}</textarea>'
         '<section aria-labelledby="h-ac"><h2 id="h-ac">Ações</h2><div class="linha-acoes">'
         '<div><button type="button" id="bt-copiar-ultima">Copiar a última saída (Option+Shift+C)</button></div>'
         '<div><label for="qtd">Quantas últimas saídas</label><input id="qtd" type="number" min="1" max="300" value="3" inputmode="numeric">'
@@ -294,9 +299,6 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<p>Reiniciar o shell fecha o atual e abre outro limpo, na pasta do Heimdall.</p>'
         '<div id="area-copia" hidden><label for="texto-copia">Se o navegador não deixar copiar sozinho, selecione tudo neste campo (Command+A) e copie (Command+C)</label>'
         '<textarea id="texto-copia" readonly></textarea></div></section>'
-        '<section aria-labelledby="h-hist"><h2 id="h-hist">Histórico</h2>'
-        '<label for="historico">Todos os comandos e saídas, do mais antigo ao mais recente (somente leitura)</label>'
-        f'<textarea class="terminal historico" id="historico" readonly spellcheck="false">{e(hist)}</textarea></section>'
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
         '<p>Funcionam em qualquer ponto desta página. Option é a tecla Alt do Mac.</p><ol>'
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
@@ -358,13 +360,23 @@ var ta = document.getElementById('terminal');
 var estado = document.getElementById('estado');
 var base = ta.value;                 // tudo o que o servidor mostra; o que vem depois é o que a pessoa está digitando
 var rodando = false, ultimaVersao = parseInt(ta.dataset.versao || '0', 10), timer = null, vistos = {}, primeira = true;
-var inicioUltima = -1, historico = [], hi = -1, tabParado = false;
+var inicioUltima = -1, historico = [], hi = -1, tabParado = false, apontador = false, pendente = false;
+var hist = document.getElementById('historico'), nHist = parseInt(hist.dataset.n || '0', 10);
 ta.spellcheck = false; ta.setAttribute('autocorrect', 'off'); ta.setAttribute('autocapitalize', 'off');
 function dizer(t){ estado.textContent = ''; setTimeout(function(){ estado.textContent = t; }, 60); }
 function digitado(){ return ta.value.indexOf(base) === 0 ? ta.value.slice(base.length) : ''; }
 function post(url, dados){
   var corpo = new URLSearchParams(dados || {}); corpo.set('csrf', csrf);
   return fetch(url, {method:'POST', credentials:'same-origin', headers:{'X-Heimdall-Ajax':'1','Content-Type':'application/x-www-form-urlencoded'}, body: corpo.toString()}).then(function(r){ return r.json(); });
+}
+function fimDoCampo(){ ta.setSelectionRange(ta.value.length, ta.value.length); }
+// atualiza um campo sem mexer no cursor nem na rolagem de quem está lendo
+function atualizarCampo(el, novo){
+  var antigo = el.value; if (antigo === novo) { return; }
+  var a = el.selectionStart, b = el.selectionEnd, desl = el.scrollTop;
+  if (antigo.length > 0 && novo.indexOf(antigo) === 0) { el.setRangeText(novo.slice(antigo.length), antigo.length, antigo.length, 'preserve'); }
+  else { el.value = novo; }
+  var m = el.value.length; el.setSelectionRange(Math.min(a, m), Math.min(b, m)); el.scrollTop = desl;
 }
 function aplicar(s){
   var novo = s.texto + (s.rodando ? '' : s.prompt);
@@ -376,7 +388,8 @@ function aplicar(s){
     else { var m = ta.value.length; ta.setSelectionRange(Math.min(a, m), Math.min(b, m)); ta.scrollTop = comeco ? desl : ta.scrollHeight; }
     base = novo;
   }
-  if (s.historico !== null && s.historico !== undefined) { var h = document.getElementById('historico'); if (h.value !== s.historico) { h.value = s.historico; } }
+  if (s.historico !== null && s.historico !== undefined) { atualizarCampo(hist, s.historico); }
+  nHist = s.n_hist;
   inicioUltima = s.inicio_ultima; historico = s.comandos || historico; ultimaVersao = s.versao; rodando = s.rodando;
   (s.blocos || []).forEach(function(bl){
     if (!primeira && vistos[bl.n] === 'rodando' && bl.estado !== 'rodando' && bl.aviso) { dizer(bl.aviso); }
@@ -385,7 +398,7 @@ function aplicar(s){
   primeira = false;
 }
 function buscar(){
-  fetch('/terminal/estado?desde=' + ultimaVersao, {credentials:'same-origin', headers:{'X-Heimdall-Ajax':'1'}}).then(function(r){ return r.json(); }).then(function(s){
+  fetch('/terminal/estado?desde=' + ultimaVersao + '&h=' + nHist, {credentials:'same-origin', headers:{'X-Heimdall-Ajax':'1'}}).then(function(r){ return r.json(); }).then(function(s){
     aplicar(s); if (s.rodando) { timer = setTimeout(buscar, 700); } else { timer = null; }
   }).catch(function(){ timer = setTimeout(buscar, 2000); });
 }
@@ -452,32 +465,43 @@ function historicoMover(d){
   dizer(c ? 'Histórico: ' + c : 'Linha vazia.');
 }
 function completar(linha){
+  pendente = true;
   var c = ta.selectionStart - base.length, pre = linha.slice(0, c), pos = linha.slice(c);
   fetch('/terminal/completar?linha=' + encodeURIComponent(pre), {credentials:'same-origin', headers:{'X-Heimdall-Ajax':'1'}}).then(function(r){ return r.json(); }).then(function(r){
+    pendente = false;
     if (digitado() !== linha) { return; }            // a pessoa continuou digitando enquanto a resposta vinha
     var ops = r.opcoes || [], nova = r.palavra_nova === undefined ? pre : pre.slice(0, r.inicio) + r.palavra_nova;
     if (nova !== pre) { ta.value = base + nova + pos; ta.setSelectionRange(base.length + nova.length, base.length + nova.length); tabParado = false; } else { tabParado = true; }
     if (!ops.length) { dizer('Sem opções.'); }
     else if (ops.length === 1) { dizer(ops[0]); }
     else { dizer(ops.length + ' opções: ' + ops.slice(0, 25).join(', ') + (ops.length > 25 ? ' e mais ' + (ops.length - 25) : '') + '.'); }
-  }).catch(function(){ tabParado = true; });
+  }).catch(function(){ pendente = false; tabParado = true; });
 }
-function irAoCampo(){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
-// só a última linha pode ser editada: o resto é a saída e fica protegido
+function irAoCampo(){ ta.focus(); fimDoCampo(); }
+// só a última linha pode ser editada: o resto é a saída e fica protegido. Se o cursor estiver na saída, o que a pessoa digita vai para o fim, sem perder letra
 ta.addEventListener('beforeinput', function(ev){
   var t = ev.inputType || '', a = ta.selectionStart, b = ta.selectionEnd;
-  var apagaParaTras = t.indexOf('Backward') >= 0 && a === b && a <= base.length;
-  if (t === 'historyUndo' || t === 'historyRedo' || a < base.length || apagaParaTras) {
+  if (t === 'historyUndo' || t === 'historyRedo') { ev.preventDefault(); return; }
+  if (a < base.length) {
     ev.preventDefault();
-    if (a < base.length && t.indexOf('delete') !== 0) { ta.setSelectionRange(ta.value.length, ta.value.length); dizer('Só dá para digitar na última linha. O cursor foi para o final.'); }
+    if (t.indexOf('delete') === 0) { return; }
+    var texto = ev.data || (ev.dataTransfer ? ev.dataTransfer.getData('text/plain') : '') || (t === 'insertLineBreak' ? '\n' : '');
+    fimDoCampo();
+    if (texto) { ta.setRangeText(texto, ta.value.length, ta.value.length, 'end'); }
+    return;
   }
+  if (t.indexOf('Backward') >= 0 && a === b && a <= base.length) { ev.preventDefault(); }
 });
+// o histórico é um campo normal (as setas e o cursor funcionam como em qualquer campo), mas nada pode ser alterado nele
+hist.addEventListener('beforeinput', function(ev){ ev.preventDefault(); });
+hist.spellcheck = false;
 ta.addEventListener('keydown', function(ev){
   if (ev.isComposing) { return; }
   if (ev.key !== 'Tab') { tabParado = false; }
   if (ev.key === 'Tab' && !ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey) {
     var linha = digitado();
     if (rodando || !linha.length || ta.selectionStart < base.length) { return; }   // sem nada a completar, o Tab é o de sempre: passa ao próximo item
+    if (pendente) { ev.preventDefault(); return; }                                   // a resposta do Tab anterior ainda não chegou: espera
     if (tabParado) { tabParado = false; return; }                                    // Tab sem efeito duas vezes seguidas: deixa sair do campo
     ev.preventDefault(); completar(linha); return;
   }
@@ -489,7 +513,14 @@ ta.addEventListener('keydown', function(ev){
   }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyL') { ev.preventDefault(); limpar(); }
 });
-ta.addEventListener('focus', function(){ if (ta.selectionStart === 0 && ta.selectionEnd === 0 && base.length > 0) { ta.setSelectionRange(ta.value.length, ta.value.length); } });
+ta.addEventListener('mousedown', function(){ apontador = true; });
+ta.addEventListener('touchstart', function(){ apontador = true; }, {passive: true});
+ta.addEventListener('mouseup', function(){ apontador = false; });
+ta.addEventListener('blur', function(){ apontador = false; });
+// entrar no campo (Tab, foco automático, voltar à aba) sempre deixa o cursor depois da última letra; só o clique do mouse escolhe outro ponto
+ta.addEventListener('focus', function(){ if (!apontador) { fimDoCampo(); setTimeout(function(){ if (!apontador) { fimDoCampo(); } }, 0); } });
+window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
+window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });
 document.addEventListener('keydown', function(ev){
   if (ev.isComposing || !ev.altKey || !ev.shiftKey || ev.ctrlKey || ev.metaKey) { return; }
   var c = ev.code, f = null;
@@ -515,6 +546,7 @@ document.getElementById('bt-inicio').addEventListener('click', irAoInicio);
 document.getElementById('bt-ler').addEventListener('click', lerUltima);
 document.getElementById('bt-limpar').addEventListener('click', limpar);
 document.getElementById('bt-reiniciar').addEventListener('click', reiniciar);
+irAoCampo();
 buscarAgora();
 })();
 """
@@ -768,14 +800,19 @@ class Painel(BaseHTTPRequestHandler):
         with sh._lock:
             mudados = [b for b in sh.blocos if b.versao > desde or b.estado == "rodando"]
             rod = sh.rodando()
-            t = transcricao(sh, completo=not rod)
+            try:
+                h_cliente = int((q.get("h") or ["-1"])[0])
+            except ValueError:
+                h_cliente = -1
+            n_hist = max(0, len(sh.blocos) - 1)
+            t = transcricao(sh, com_historico=(h_cliente != n_hist))
             blocos = []
             for b in mudados:
                 fim_ = b.estado != "rodando"
                 blocos.append({"n": b.n, "estado": b.estado, "codigo": b.codigo, "comando": b.comando,
                                "saida": _saida_exibida(sh, b)[0] if fim_ else "", "aviso": aviso_do_bloco(sh, b) if fim_ else ""})
             dado = {"versao": sh.versao, "rodando": rod, "pasta": sh.pasta, "prompt": prompt_de(sh.pasta),
-                    "texto": t["texto"], "inicio_ultima": t["inicio_ultima"], "historico": None if rod else t["historico"],
+                    "texto": t["texto"], "inicio_ultima": t["inicio_ultima"], "historico": t["historico"] if h_cliente != n_hist else None, "n_hist": n_hist,
                     "comandos": [b.comando for b in sh.blocos][-100:], "blocos": blocos}
         self._json(200, dado)
 

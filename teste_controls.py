@@ -119,8 +119,11 @@ b4 = next(b for b in st["blocos"] if b["n"] == n4)
 s_, pag, _ = req("GET", "/terminal", cookie=token)
 confere("sem códigos de cor; HTML escapado na página", "\x1b" not in b4["saida"] and "verm" in b4["saida"] and "&lt;script&gt;alert(1)" in pag and "<script>alert(1)" not in pag, b4["saida"])
 confere("campo: só o último comando, com prompt, saída e situação", st["texto"].startswith("usr % printf") and "% cd /usr" not in st["texto"] and "% echo $HD_TESTE" not in st["texto"] and st["prompt"] == "usr % " and st["texto"].endswith("\n\n") and st["texto"][st["inicio_ultima"]:].startswith("verm"), st["texto"])
-confere("histórico à parte traz todos os comandos, do mais antigo ao mais novo", st["historico"].index("% cd /usr") < st["historico"].index("usr % echo $HD_TESTE") < st["historico"].index("printf"), st["historico"][-300:])
-confere("a página traz o campo de histórico somente leitura e sem verificação de ortografia", 'id="historico" readonly spellcheck="false"' in pag and 'id="terminal" spellcheck="false"' in pag)
+confere("histórico à parte traz os comandos anteriores ao último, do mais antigo ao mais novo", st["historico"].index("% cd /usr") < st["historico"].index("usr % echo $HD_TESTE") and "printf" not in st["historico"] and st["n_hist"] == 3, st["historico"][-300:])
+st_h = json.loads(req("GET", f"/terminal/estado?desde=0&h={st['n_hist']}", cookie=token, extra={"X-Heimdall-Ajax": "1"})[1])
+confere("histórico só vai quando mudou (h igual: não manda de novo)", st_h["historico"] is None and st_h["n_hist"] == st["n_hist"])
+confere("a página traz o histórico ACIMA do terminal, sem verificação de ortografia e com foco automático no terminal",
+        pag.index('id="historico"') < pag.index('id="terminal"') and 'id="historico" aria-readonly="true"' in pag and "readonly" not in pag.split('id="historico"')[1].split(">")[0].replace("aria-readonly", "") and 'spellcheck="false" autofocus' in pag, pag[pag.index('id="historico"') - 60:pag.index('id="historico"') + 200])
 confere("aviso curto traz a saída; histórico de comandos no JSON", "Saída: verm" in b4["aviso"] and any("printf" in c for c in st["comandos"]), b4["aviso"])
 
 # --- completar com Tab
