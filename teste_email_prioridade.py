@@ -48,5 +48,15 @@ confere("diagnóstico retorna 0 e mostra domínio e motivo", rc == 0 and "serasa
 linhas = []
 eo.diagnosticar({}, buscar=lambda cfg, extras: [], saida=linhas.append)
 confere("diagnóstico sem e-mails avisa", "Nenhum e-mail recente" in "\n".join(linhas), linhas)
+
+# o modelo local não pode chamar de golpe um e-mail que o Gmail autenticou
+import json as _json  # noqa: E402
+fala = {"resumo": "E-mail falso que informa pagamento quitado com a Vivo, golpe de phishing.", "urgencia": "alta", "prazo": "", "prazo_iso": "", "acao": "NÃO clique em nenhum link e ignore o e-mail."}
+eo.post_json = lambda url, dado, cab=None, timeout=0: {"choices": [{"message": {"content": _json.dumps(fala)}}]}
+r = eo.resumir({"LITELLM_MASTER_KEY": "x"}, m, {"assunto": "Confirmação de pagamento!"})
+confere("palpite de golpe do modelo é descartado e a urgência cai", r and "golpe" not in r["acao"].lower() and "phishing" not in r["resumo"].lower() and r["urgencia"] == "baixa", r)
+fala = {"resumo": "Pagamento de R$ 50 confirmado.", "urgencia": "media", "prazo": "", "prazo_iso": "", "acao": "Guarde o comprovante."}
+r = eo.resumir({"LITELLM_MASTER_KEY": "x"}, m, {"assunto": "Confirmação de pagamento!"})
+confere("resumo normal passa intacto", r and r["resumo"].startswith("Pagamento") and r["urgencia"] == "media", r)
 print("Tudo certo." if not falhas else f"{falhas} falha(s).")
 sys.exit(1 if falhas else 0)

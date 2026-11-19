@@ -4,6 +4,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 
 ## 2026-11-18 - Diagnóstico do vigia de e-mail
 - Novo heimdall mail --diagnose (python3 heimdall_email_oficial.py --diagnostico): lista os e-mails recentes de serviços públicos com a classe (oficial, suspeito ou não oficial), remetente, domínio, resultado SPF/DKIM/DMARC do Gmail e o motivo, inclusive os já vistos. A simulação pula os já vistos e por isso podia terminar sem mostrar nada. O diagnóstico não envia nem grava nada e não mostra o corpo.
+- Corrigido: o resumo do modelo local podia chamar de "e-mail falso" ou golpe uma mensagem que o Gmail tinha autenticado (a Serasa avisando pagamento confirmado). Agora o modelo é instruído a só resumir, e se ainda assim falar em golpe, falso ou phishing, o resumo é descartado, a urgência cai para baixa e a ação vira conferir no app oficial. Quem decide se é golpe continua sendo a checagem de domínio e DMARC.
 
 ## 2026-11-18 - Menos gravações no KV e e-mails de serviços sem interesse
 - Vigia da Cloudflare (cloudflare/vigia.js): gravava duas vezes por rodada no KV (576 por dia, 58% do limite gratuito de 1.000; a Cloudflare avisou ao chegar a 50%). Agora grava o estado só quando muda e a hora da última conferência no máximo uma vez por hora (cerca de 24 por dia). O Worker publicado precisa ser atualizado na Cloudflare para valer. Novo teste: node cloudflare/teste_vigia.mjs.
