@@ -11,14 +11,11 @@ O que está sendo montado ou conferido agora.
 ## Em seguida
 O que vem depois de validar o banco.
 - Painel do Second Brain: notas, conexões entre áreas, lacunas de estudo e perguntas sugeridas.
-- Login pelo GitHub: entrar nos painéis com a conta do GitHub, depois de reforçá-la com senha gerada e chave de acesso.
-- Cópia de segurança no Cloudflare R2: o código e o fluxo já existem e gravam em uma pasta (iCloud Drive); falta ativar o R2 no painel da Cloudflare e criar a chave de acesso para ligar o segundo destino.
 
 ## Depois
 Recursos maiores, que dependem dos anteriores.
 - Documentos pesquisáveis: Paperless-ngx em subdomínio próprio, com leitura de texto nos PDFs e etiquetas automáticas.
-- Painéis livres: Metabase ou Grafana sobre o banco, para cruzar saúde, estudos e avisos.
-- Progresso de estudos: temas vistos, lacunas e revisão espaçada, a partir da tabela de estudos.
+- Heimdall Estudos: painel em subdomínio próprio, no mesmo padrão dos outros sites, com ferramentas específicas para estudar. Começa pelo progresso (temas vistos, lacunas e revisão espaçada, a partir da tabela de estudos); as demais ferramentas serão definidas por você ao longo do caminho.
 - Mesa de operações em simulação (trading): tela própria, feita para teclado e leitor de tela, com atalhos para comprar, vender, zerar a posição e cancelar tudo, cotações e carteira. Começa só em simulação (papel), sem enviar ordem nenhuma, com limites de valor por ordem e de perda por dia. Uma IA local acompanha tendências e avisa enquanto você opera; quem decide e confirma cada ordem é você. A execução fica em código com regras fixas, nunca com a IA. Ordens reais só se houver uma corretora com API oficial e depois de testar na simulação.
 - Linha do tempo de privacidade e processos: diários oficiais, menções na internet e e-mails de serviços públicos lado a lado.
 
