@@ -45,10 +45,11 @@ mods, cons = json.loads(atual["modelos_importar.json"]), json.loads(atual["ferra
 ids_con = {c["info"]["id"] for c in cons}
 confere("todo modelo usa uma conexão que existe", all(t.split(":")[-1] in ids_con for x in mods for t in x["meta"].get("toolIds", [])), mods)
 confere("nenhum modelo importado dá acesso a outro usuário", all(not x["access_grants"] for x in mods))
-confere("o arquivo de funções de cada conexão é a lista permitida", all((mc.PASTA_IMPORTAR / ("funcoes_%s.txt" % c["info"]["id"])).read_text(encoding="utf-8").strip() == ",".join(mc.conexao(c["info"]["id"])["funcoes"]) for c in cons))
+confere("o arquivo de funções de cada conexão é a lista permitida", all((mc.PASTA_IMPORTAR / ("funcoes_%s.txt" % c["info"]["id"])).read_text(encoding="utf-8").strip() == ", ".join(mc.conexao(c["info"]["id"])["funcoes"]) for c in cons))
 confere("a conexão importada tem só os campos que o Open WebUI exporta", all(set(c) == {"type", "url", "spec_type", "spec", "path", "auth_type", "key", "info"} for c in cons), cons[0])
 confere("o prompt importado é o do arquivo", all(x["params"]["system"] == (mc.AQUI / m["prompt"]).read_text(encoding="utf-8").strip() for x, m in zip(mods, mc.MODELOS)))
 confere("modelos de dados pessoais não ligam busca na web nem terminal", all(not x["meta"]["capabilities"]["web_search"] and not x["meta"]["capabilities"]["terminal"] for x in mods))
+confere("a lista de funções não tem exclusões nem espaços sobrando", all("!" not in (mc.PASTA_IMPORTAR / ("funcoes_%s.txt" % c["info"]["id"])).read_text(encoding="utf-8") for c in cons))
 confere("ids de modelo únicos e sem espaço", len({x["id"] for x in mods}) == len(mods) and all(" " not in x["id"] for x in mods))
 print("Tudo certo." if not falhas else f"{falhas} falha(s).")
 sys.exit(1 if falhas else 0)

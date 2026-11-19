@@ -1,1 +1,1 @@
-financas_resumo,financas_transacoes,financas_orcamentos,financas_recorrentes,financas_boletos,financas_futuros,get_system_timestamp
+financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp

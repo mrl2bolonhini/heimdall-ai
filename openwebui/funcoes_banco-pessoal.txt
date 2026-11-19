@@ -1,1 +1,1 @@
-banco_resumo,banco_consultar,banco_buscar,saude_historico,get_system_timestamp
+banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp

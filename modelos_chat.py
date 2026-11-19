@@ -132,7 +132,7 @@ def texto_guia():
          "Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.", "",
          "IMPORTAR TUDO DE UMA VEZ (recomendado). Os arquivos estão em ~/heimdall-ai/openwebui/:",
          "  1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas internet, mac-admin e banco-pessoal, para não duplicar. Depois reaplique o acesso do convidado ao internet, se ele usava.",
-         "     O filtro de funções permitidas NÃO vem na importação (o Open WebUI não o exporta nem o importa). Em cada conexão, abra a edição e cole a lista no campo de funções permitidas: copie com pbcopy < ~/heimdall-ai/openwebui/funcoes_ID.txt (troque ID por banco-pessoal, banco-saude, banco-financas, internet ou mac-admin) e cole com Command+V.",
+         "     O filtro de funções permitidas NÃO vem na importação (o Open WebUI não o exporta nem o importa). Em cada conexão, abra a edição e cole a lista no campo Lista de filtros de nomes de funções (formato func1, func2; um nome com ! na frente seria uma exclusão, e aqui só usamos permissões): copie com pbcopy < ~/heimdall-ai/openwebui/funcoes_ID.txt (troque ID por banco-pessoal, banco-saude, banco-financas, internet ou mac-admin) e cole com Command+V.",
          "  2. modelos_importar.json: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.",
          "  3. Confira cada conexão e cada modelo uma vez, com uma pergunta real. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.",
          "Abaixo, o que cada arquivo contém, para conferir ou para criar à mão.", "",
@@ -211,7 +211,7 @@ def exportar_modelos():
 
 def json_importar():
     import json
-    funcoes = {"funcoes_%s.txt" % c["id"]: ",".join(c["funcoes"]) + "\n" for c in CONEXOES}
+    funcoes = {"funcoes_%s.txt" % c["id"]: ", ".join(c["funcoes"]) + "\n" for c in CONEXOES}
     return {**funcoes, "modelos_importar.json": json.dumps(exportar_modelos(), ensure_ascii=False, indent=1) + "\n",
             "ferramentas_importar.json": json.dumps(exportar_conexoes(), ensure_ascii=False, indent=1) + "\n"}
 
