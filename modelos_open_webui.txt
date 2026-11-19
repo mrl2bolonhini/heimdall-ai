@@ -4,6 +4,7 @@ Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. N�
 
 IMPORTAR TUDO DE UMA VEZ (recomendado). Os arquivos estão em ~/heimdall-ai/openwebui/:
   1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas internet, mac-admin e banco-pessoal, para não duplicar. Depois reaplique o acesso do convidado ao internet, se ele usava.
+     O filtro de funções permitidas NÃO vem na importação (o Open WebUI não o exporta nem o importa). Em cada conexão, abra a edição e cole a lista no campo de funções permitidas: copie com pbcopy < ~/heimdall-ai/openwebui/funcoes_ID.txt (troque ID por banco-pessoal, banco-saude, banco-financas, internet ou mac-admin) e cole com Command+V.
   2. modelos_importar.json: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.
   3. Confira cada conexão e cada modelo uma vez, com uma pergunta real. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.
 Abaixo, o que cada arquivo contém, para conferir ou para criar à mão.

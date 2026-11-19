@@ -1,0 +1,1 @@
+saude_historico,analise_saude,frequencia_cardiaca_resumo,ecg_resumo,treinos_resumo,relatorio_saude,banco_consultar,get_system_timestamp

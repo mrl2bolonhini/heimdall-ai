@@ -40,12 +40,13 @@ import json  # noqa: E402
 arq_m = mc.PASTA_IMPORTAR / "modelos_importar.json"
 arq_f = mc.PASTA_IMPORTAR / "ferramentas_importar.json"
 atual = mc.json_importar()
-confere("arquivos de importação em dia (rode python3 gerar_docs.py)", arq_m.exists() and arq_f.exists() and arq_m.read_text(encoding="utf-8") == atual["modelos_importar.json"] and arq_f.read_text(encoding="utf-8") == atual["ferramentas_importar.json"])
+confere("arquivos de importação em dia (rode python3 gerar_docs.py)", all((mc.PASTA_IMPORTAR / n).exists() and (mc.PASTA_IMPORTAR / n).read_text(encoding="utf-8") == c for n, c in atual.items()))
 mods, cons = json.loads(atual["modelos_importar.json"]), json.loads(atual["ferramentas_importar.json"])
 ids_con = {c["info"]["id"] for c in cons}
 confere("todo modelo usa uma conexão que existe", all(t.split(":")[-1] in ids_con for x in mods for t in x["meta"].get("toolIds", [])), mods)
-confere("nenhum modelo nem conexão importada dá acesso a outro usuário", all(not x["access_grants"] for x in mods) and all(not c["config"]["access_grants"] for c in cons))
-confere("o filtro de cada conexão é a lista de funções permitidas", all(c["config"]["function_name_filter_list"] == ",".join(mc.conexao(c["info"]["id"])["funcoes"]) for c in cons))
+confere("nenhum modelo importado dá acesso a outro usuário", all(not x["access_grants"] for x in mods))
+confere("o arquivo de funções de cada conexão é a lista permitida", all((mc.PASTA_IMPORTAR / ("funcoes_%s.txt" % c["info"]["id"])).read_text(encoding="utf-8").strip() == ",".join(mc.conexao(c["info"]["id"])["funcoes"]) for c in cons))
+confere("a conexão importada tem só os campos que o Open WebUI exporta", all(set(c) == {"type", "url", "spec_type", "spec", "path", "auth_type", "key", "info"} for c in cons), cons[0])
 confere("o prompt importado é o do arquivo", all(x["params"]["system"] == (mc.AQUI / m["prompt"]).read_text(encoding="utf-8").strip() for x, m in zip(mods, mc.MODELOS)))
 confere("modelos de dados pessoais não ligam busca na web nem terminal", all(not x["meta"]["capabilities"]["web_search"] and not x["meta"]["capabilities"]["terminal"] for x in mods))
 confere("ids de modelo únicos e sem espaço", len({x["id"] for x in mods}) == len(mods) and all(" " not in x["id"] for x in mods))

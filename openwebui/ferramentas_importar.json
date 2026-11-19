@@ -7,11 +7,6 @@
   "path": "openapi.json",
   "auth_type": "none",
   "key": "",
-  "config": {
-   "enable": true,
-   "function_name_filter_list": "banco_resumo,banco_consultar,banco_buscar,saude_historico,get_system_timestamp",
-   "access_grants": []
-  },
   "info": {
    "id": "banco-pessoal",
    "name": "Meus Dados (banco pessoal)",
@@ -26,11 +21,6 @@
   "path": "openapi.json",
   "auth_type": "none",
   "key": "",
-  "config": {
-   "enable": true,
-   "function_name_filter_list": "saude_historico,analise_saude,frequencia_cardiaca_resumo,ecg_resumo,treinos_resumo,relatorio_saude,banco_consultar,get_system_timestamp",
-   "access_grants": []
-  },
   "info": {
    "id": "banco-saude",
    "name": "Saúde (banco pessoal)",
@@ -45,11 +35,6 @@
   "path": "openapi.json",
   "auth_type": "none",
   "key": "",
-  "config": {
-   "enable": true,
-   "function_name_filter_list": "financas_resumo,financas_transacoes,financas_orcamentos,financas_recorrentes,financas_boletos,financas_futuros,get_system_timestamp",
-   "access_grants": []
-  },
   "info": {
    "id": "banco-financas",
    "name": "Finanças (Finance)",
@@ -64,11 +49,6 @@
   "path": "openapi.json",
   "auth_type": "none",
   "key": "",
-  "config": {
-   "enable": true,
-   "function_name_filter_list": "search_searxng,calculate_expression,get_system_timestamp,get_hackernews_top_stories,search_reddit_posts,fetch_rss_feed,get_astronomy_apod,get_youtube_transcript,fetch_url",
-   "access_grants": []
-  },
   "info": {
    "id": "internet",
    "name": "Internet e Utilidades",
@@ -83,11 +63,6 @@
   "path": "openapi.json",
   "auth_type": "none",
   "key": "",
-  "config": {
-   "enable": true,
-   "function_name_filter_list": "memory_save,memory_search,memory_forget,rag_temas,rag_search",
-   "access_grants": []
-  },
   "info": {
    "id": "mac-admin",
    "name": "Mac e Memória (administrador)",
