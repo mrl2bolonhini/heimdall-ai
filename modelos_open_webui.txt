@@ -18,8 +18,8 @@ Conexão 1: ID banco-pessoal, nome "Meus Dados (banco pessoal)", http://host.doc
   Funções permitidas: banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp
   Filtro a colar (exclui o resto do servidor): !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros
 Conexão 2: ID banco-saude, nome "Saúde (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
-  Funções permitidas: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar, get_system_timestamp
-  Filtro a colar (exclui o resto do servidor): !banco_resumo, !banco_buscar, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros
+  Funções permitidas: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, exames_resumo, exame_historico, analise_exames, exames_pendentes, receitas_encaminhamentos, banco_consultar, get_system_timestamp
+  Filtro a colar (exclui o resto do servidor): !banco_resumo, !banco_buscar, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros
 Conexão 3: ID banco-financas, nome "Finanças (Finance)", http://host.docker.internal:8004/mcp, acesso só do administrador
   Funções permitidas: financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp
   Filtro a colar (exclui o resto do servidor): !banco_resumo, !banco_consultar, !banco_buscar, !saude_historico, !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos
@@ -39,10 +39,10 @@ Conexão 5: ID mac-admin, nome "Mac e Memória (administrador)", http://host.doc
    Temperatura: 0,2
 
 2. Saúde
-   Para: sono, pulso, variabilidade, treinos, ECG, anomalias e relatórios de saúde
+   Para: sono, pulso, variabilidade, treinos, ECG, anomalias, relatórios de saúde, exames de laboratório, receitas e encaminhamentos
    Base: qwen3-vl-instruct
    Prompt: prompt_chat_saude.txt
-   Ferramentas: conexão banco-saude (8 funções: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar, get_system_timestamp)
+   Ferramentas: conexão banco-saude (13 funções: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, exames_resumo, exame_historico, analise_exames, exames_pendentes, receitas_encaminhamentos, banco_consultar, get_system_timestamp)
    Chamada de função: Nativa
    Temperatura: 0,2
 

@@ -133,7 +133,7 @@ Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e 
 | Modelo | Base | Ferramentas (conexão) | Funções | Temperatura |
 |---|---|---|---|---|
 | Meus Dados | `qwen3-vl-instruct` | `banco-pessoal` | `banco_resumo`, `banco_consultar`, `banco_buscar`, `saude_historico`, `get_system_timestamp` | 0,2 |
-| Saúde | `qwen3-vl-instruct` | `banco-saude` | `saude_historico`, `analise_saude`, `frequencia_cardiaca_resumo`, `ecg_resumo`, `treinos_resumo`, `relatorio_saude`, `banco_consultar`, `get_system_timestamp` | 0,2 |
+| Saúde | `qwen3-vl-instruct` | `banco-saude` | `saude_historico`, `analise_saude`, `frequencia_cardiaca_resumo`, `ecg_resumo`, `treinos_resumo`, `relatorio_saude`, `exames_resumo`, `exame_historico`, `analise_exames`, `exames_pendentes`, `receitas_encaminhamentos`, `banco_consultar`, `get_system_timestamp` | 0,2 |
 | Finanças | `qwen3-vl-instruct` | `banco-financas` | `financas_resumo`, `financas_transacoes`, `financas_orcamentos`, `financas_recorrentes`, `financas_boletos`, `financas_futuros`, `get_system_timestamp` | 0,2 |
 | Código | `deepseek-coder-v2:16b` | nenhuma |  | 0,2 |
 | Curiosidades | `qwen3-vl-instruct` | `internet` | `search_searxng`, `calculate_expression`, `get_system_timestamp`, `get_hackernews_top_stories`, `search_reddit_posts`, `fetch_rss_feed`, `get_astronomy_apod`, `get_youtube_transcript`, `fetch_url` | 0,4 |

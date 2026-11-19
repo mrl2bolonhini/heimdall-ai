@@ -1,1 +1,1 @@
-!banco_resumo, !banco_buscar, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros
+!banco_resumo, !banco_buscar, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros

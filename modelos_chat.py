@@ -12,7 +12,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 
-SAUDE = ["saude_historico", "analise_saude", "frequencia_cardiaca_resumo", "ecg_resumo", "treinos_resumo", "relatorio_saude", "banco_consultar", "get_system_timestamp"]
+SAUDE = ["saude_historico", "analise_saude", "frequencia_cardiaca_resumo", "ecg_resumo", "treinos_resumo", "relatorio_saude", "exames_resumo", "exame_historico", "analise_exames", "exames_pendentes", "receitas_encaminhamentos", "banco_consultar", "get_system_timestamp"]
 FINANCAS = ["financas_resumo", "financas_transacoes", "financas_orcamentos", "financas_recorrentes", "financas_boletos", "financas_futuros", "get_system_timestamp"]
 GERAL = ["banco_resumo", "banco_consultar", "banco_buscar", "saude_historico", "get_system_timestamp"]
 INTERNET = ["search_searxng", "calculate_expression", "get_system_timestamp", "get_hackernews_top_stories", "search_reddit_posts", "fetch_rss_feed",
@@ -34,7 +34,7 @@ MODELOS = [
     {"id": "meus-dados", "nome": "Meus Dados", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "banco-pessoal",
      "uso": "diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos, Second Brain e métricas de saúde simples", "nativa": True},
     {"id": "saude", "nome": "Saúde", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "banco-saude",
-     "uso": "sono, pulso, variabilidade, treinos, ECG, anomalias e relatórios de saúde", "nativa": True},
+     "uso": "sono, pulso, variabilidade, treinos, ECG, anomalias, relatórios de saúde, exames de laboratório, receitas e encaminhamentos", "nativa": True},
     {"id": "financas", "nome": "Finanças", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "banco-financas",
      "uso": "gastos, receitas, categorias, orçamentos, assinaturas, parcelas e boletos do Finance (só leitura)", "nativa": True},
     {"id": "codigo", "nome": "Código", "base": "deepseek-coder-v2:16b", "prompt": "prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
