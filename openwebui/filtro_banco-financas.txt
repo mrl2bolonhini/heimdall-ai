@@ -1,0 +1,1 @@
+!banco_resumo, !banco_consultar, !banco_buscar, !saude_historico, !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude

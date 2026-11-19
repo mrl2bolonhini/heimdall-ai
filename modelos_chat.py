@@ -78,6 +78,18 @@ def conexao(cid):
     return next((c for c in CONEXOES if c["id"] == cid), None)
 
 
+def excluidas(c):
+    """Funções do servidor da conexão que ela NÃO deve mostrar: tudo o que o servidor expõe menos as permitidas. Como o servidor é compartilhado,
+    a exclusão explícita não depende de o modelo ou do prompt se comportarem. Uma função nova no servidor aparece aqui na próxima geração
+    (gerar_docs.py --check avisa) e então o filtro precisa ser colado de novo."""
+    grupos, _ = _listas_de_ferramentas()
+    return [f for f in grupos.get(c["grupo"], []) if f not in c["funcoes"]]
+
+
+def filtro_texto(c):
+    return ", ".join("!" + f for f in excluidas(c))
+
+
 def funcoes_do_modelo(m):
     c = conexao(m["conexao"]) if m["conexao"] else None
     return list(c["funcoes"]) if c else []
@@ -132,17 +144,19 @@ def texto_guia():
          "Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.", "",
          "IMPORTAR TUDO DE UMA VEZ (recomendado). Os arquivos estão em ~/heimdall-ai/openwebui/:",
          "  1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas internet, mac-admin e banco-pessoal, para não duplicar. Depois reaplique o acesso do convidado ao internet, se ele usava.",
-         "     O filtro de funções permitidas NÃO vem na importação (o Open WebUI não o exporta nem o importa). Em cada conexão, abra a edição e cole a lista no campo Lista de filtros de nomes de funções (formato func1, func2; um nome com ! na frente seria uma exclusão, e aqui só usamos permissões): copie com pbcopy < ~/heimdall-ai/openwebui/funcoes_ID.txt (troque ID por banco-pessoal, banco-saude, banco-financas, internet ou mac-admin) e cole com Command+V.",
+         "     O filtro NÃO vem na importação (o Open WebUI não o exporta nem o importa). Em cada conexão que tiver o arquivo openwebui/filtro_ID.txt, abra a edição e cole a lista no campo Lista de filtros de nomes de funções: copie com pbcopy < ~/heimdall-ai/openwebui/filtro_ID.txt (troque ID por banco-pessoal, banco-saude, banco-financas ou mac-admin) e cole com Command+V. A conexão internet usa todas as funções e não precisa de filtro.",
+         "     Quando uma função nova entrar no servidor, rode python3 gerar_docs.py e cole o filtro de novo nas conexões que mudarem.",
          "  2. modelos_importar.json: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.",
          "  3. Confira cada conexão e cada modelo uma vez, com uma pergunta real. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.",
          "Abaixo, o que cada arquivo contém, para conferir ou para criar à mão.", "",
          "Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos).",
-         "Cada conexão tem um filtro com a lista de funções permitidas: é ele que deixa cada modelo enxergar só as funções do seu assunto.",
+         "Cada conexão tem um filtro que EXCLUI as funções do servidor que não são do seu assunto (formato !funcao1, !funcao2). Como o servidor é compartilhado, assim a função fica bloqueada de verdade e não depende do modelo se comportar.",
          "As três primeiras apontam para o mesmo servidor, o de dados, e só mudam o filtro.", ""]
     for k, c in enumerate(CONEXOES):
         letra = "Conexão %d" % (k + 1)
         L.append("%s: ID %s, nome \"%s\", %s%s" % (letra, c["id"], c["nome"], c["url"], (", acesso " + c["acesso"]) if c["acesso"] else ""))
-        L.append("  Funções permitidas (filtro): " + ", ".join(c["funcoes"]))
+        L.append("  Funções permitidas: " + ", ".join(c["funcoes"]))
+        L.append("  Filtro a colar (exclui o resto do servidor): " + (filtro_texto(c) or "nenhum, esta conexão usa todas as funções do servidor"))
     L.append("")
     for k, m in enumerate(MODELOS, 1):
         L.append("%d. %s" % (k, m["nome"]))
@@ -181,7 +195,7 @@ def tabela_md():
 
 def exportar_conexoes():
     """Servidores de ferramentas (MCP) no formato de importação do Open WebUI (o mesmo que ele exporta). O filtro de funções NÃO viaja nesse
-    formato: ele é digitado à mão em cada conexão (veja funcoes_<id>.txt)."""
+    formato: ele é digitado à mão em cada conexão (veja filtro_<id>.txt)."""
     saida = []
     for c in CONEXOES:
         saida.append({"type": "mcp", "url": c["url"], "spec_type": "url", "spec": "", "path": "openapi.json", "auth_type": "none", "key": "",
@@ -211,7 +225,7 @@ def exportar_modelos():
 
 def json_importar():
     import json
-    funcoes = {"funcoes_%s.txt" % c["id"]: ", ".join(c["funcoes"]) + "\n" for c in CONEXOES}
+    funcoes = {"filtro_%s.txt" % c["id"]: filtro_texto(c) + "\n" for c in CONEXOES if excluidas(c)}
     return {**funcoes, "modelos_importar.json": json.dumps(exportar_modelos(), ensure_ascii=False, indent=1) + "\n",
             "ferramentas_importar.json": json.dumps(exportar_conexoes(), ensure_ascii=False, indent=1) + "\n"}
 

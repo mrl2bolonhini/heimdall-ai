@@ -1,1 +1,0 @@
-memory_save, memory_search, memory_forget, rag_temas, rag_search

@@ -1,0 +1,1 @@
+!treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros
