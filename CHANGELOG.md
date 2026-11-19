@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: o terminal agora é um campo só, com atalhos de teclado
+- A saída de cada comando aparece no próprio campo do terminal, logo abaixo do comando, como num terminal de verdade, em vez de blocos com títulos e botões mais abaixo na página. O cursor fica na última linha, depois do prompt (nome da pasta e %); Enter executa, Shift+Enter abre nova linha. Só a última linha aceita digitação: o resto é a saída, que dá para ler e copiar.
+- Saiu o campo separado "Resposta ao programa". Quando um programa pergunta algo, o que você digita na última linha vai direto a ele (e não aparece, então serve para senha).
+- Ao terminar um comando, o leitor de tela fala a situação e, se a saída for curta, a própria saída; se for longa, diz quantas linhas tem.
+- Atalhos de teclado: Ctrl+C interrompe (sem programa rodando, apaga a linha), Ctrl+L limpa, Option+Shift+C copia a última saída, Option+Shift+1 a 9 copia as últimas N, Option+Shift+0 copia todas, Option+Shift+U leva o cursor ao início da última saída, Option+Shift+O faz o leitor falar o começo dela, Option+Shift+P e N percorrem o histórico, Option+Shift+R reinicia o shell, Option+Shift+I interrompe, Option+Shift+T volta ao terminal e Option+Shift+H vai à lista de atalhos. Os botões da seção Ações continuam, com o atalho no nome.
+- Novo teste teste_controls_navegador.py, num Chrome de verdade (Playwright): saída no campo, resposta a programa, proteção do histórico contra edição, atalhos, cópia, limpar e reiniciar. Pula se não houver Playwright ou Chrome.
+
 ## 2026-11-19 - Open Terminal só local
 - O Open Terminal (porta 8002) agora escuta apenas em 127.0.0.1, em vez de todas as interfaces. O Open WebUI no Docker continua alcançando-o por host.docker.internal. Se precisar do acesso pelo Tailscale, ponha HEIMDALL_TERMINAL_HOST=0.0.0.0 no .env.
 

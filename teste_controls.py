@@ -79,7 +79,8 @@ confere("convidado não executa comando", s == 401)
 s, corpo, r = req("GET", "/terminal", cookie=token)
 csp = r.getheader("Content-Security-Policy") or ""
 nonce = re.search(r"nonce-([\w-]+)", csp)
-confere("terminal: um só h1, rótulos, região de status e saídas", s == 200 and corpo.count("<h1") == 1 and 'for="comando"' in corpo and 'role="status"' in corpo and 'id="saidas"' in corpo, corpo[:300])
+confere("terminal: um só h1, campo único com rótulo, região de status", s == 200 and corpo.count("<h1") == 1 and 'for="terminal"' in corpo and '<textarea class="terminal" id="terminal"' in corpo and 'role="status"' in corpo, corpo[:300])
+confere("terminal: sem campo separado de resposta; lista de atalhos presente", "Resposta ao programa" not in corpo and 'id="h-atalhos"' in corpo and "Option+Shift+C" in corpo and "Ctrl+C" in corpo and "Ctrl+L" in corpo)
 confere("terminal: script só com nonce, sem manipulador inline", bool(nonce) and f'<script nonce="{nonce.group(1)}">' in corpo and " onclick=" not in corpo and "javascript:" not in corpo)
 confere("terminal: botões de copiar a última e as últimas N", "Copiar a última saída" in corpo and 'id="qtd"' in corpo and 'for="qtd"' in corpo and "Copiar as últimas saídas" in corpo)
 confere("terminal: pular para o conteúdo e lang pt-BR", 'href="#principal"' in corpo and 'lang="pt-BR"' in corpo)
@@ -106,16 +107,19 @@ def exec_(cmd, espera=15):
 # --- terminal persistente
 n1, st = exec_("cd /usr && export HD_TESTE=42 && pwd")
 b1 = next(b for b in st["blocos"] if b["n"] == n1)
-confere("executa e mostra a saída", b1["estado"] == "concluido" and b1["codigo"] == 0 and "/usr" in b1["html"])
+confere("executa e mostra a saída", b1["estado"] == "concluido" and b1["codigo"] == 0 and "/usr" in b1["saida"])
 n2, st = exec_("echo $HD_TESTE; pwd")
 b2 = next(b for b in st["blocos"] if b["n"] == n2)
-confere("pasta e variável continuam entre comandos", "42" in b2["html"] and "/usr" in b2["html"] and st["pasta"] == "/usr", b2["html"])
+confere("pasta e variável continuam entre comandos", "42" in b2["saida"] and "/usr" in b2["saida"] and st["pasta"] == "/usr", b2["saida"])
 n3, st = exec_("echo errado; exit_code_test() { return 3; }; exit_code_test")
 b3 = next(b for b in st["blocos"] if b["n"] == n3)
-confere("código de saída aparece na página e no JSON", b3["codigo"] == 3 and "código 3" in b3["html"], b3["html"])
+confere("código de saída aparece no campo, no aviso e no JSON", b3["codigo"] == 3 and "[erro, código 3," in st["texto"] and "código 3" in b3["aviso"], st["texto"][-200:])
 n4, st = exec_("printf '\\033[31mverm\\033[0m <script>alert(1)</script>\\n'")
 b4 = next(b for b in st["blocos"] if b["n"] == n4)
-confere("sem códigos de cor e com HTML escapado", "\x1b" not in b4["html"] and "&lt;script&gt;" in b4["html"] and "<script>alert" not in b4["html"], b4["html"])
+s_, pag, _ = req("GET", "/terminal", cookie=token)
+confere("sem códigos de cor; HTML escapado na página", "\x1b" not in b4["saida"] and "verm" in b4["saida"] and "&lt;script&gt;alert(1)" in pag and "<script>alert(1)" not in pag, b4["saida"])
+confere("campo: comando com prompt, saída e situação, na ordem", st["texto"].index("% cd /usr") < st["texto"].index("usr % echo $HD_TESTE") and st["prompt"] == "usr % " and st["texto"].endswith("\n\n") and st["inicio_ultima"] > 0 and st["texto"][st["inicio_ultima"]:].startswith("verm"), st["texto"][-300:])
+confere("aviso curto traz a saída; histórico de comandos no JSON", "Saída: verm" in b4["aviso"] and any("printf" in c for c in st["comandos"]), b4["aviso"])
 
 # --- cópia
 s, t, _ = req("GET", "/terminal/texto?ultimos=1", cookie=token)
@@ -126,6 +130,10 @@ s, t, _ = req("GET", f"/terminal/texto?bloco={n2}", cookie=token)
 confere("copiar um bloco específico", "$ echo $HD_TESTE" in t and "42" in t and "verm" not in t, t)
 s, t, _ = req("GET", "/terminal/texto?ultimos=999", cookie=token)
 confere("pedido grande de saídas é limitado, não quebra", s == 200 and "/usr" in t)
+
+n_longo, st_l = exec_("seq 1 40")
+bl = next(b for b in st_l["blocos"] if b["n"] == n_longo)
+confere("aviso de saída longa conta as linhas e cita o atalho", "40 linhas" in bl["aviso"] and "Option+Shift+U" in bl["aviso"], bl["aviso"])
 
 # --- programa que pergunta, e interrupção
 s, corpo, _ = req("POST", "/terminal/executar", {"comando": 'read -p "nome? " x; echo ola $x', "csrf": CSRF}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
@@ -161,7 +169,7 @@ confere("limpar a lista de saídas", s == 200 and not hcx.obter_shell().blocos)
 s, _, _ = req("POST", "/terminal/reiniciar", {"csrf": CSRF}, cookie=token)
 n7, st = exec_("echo ${HD_TESTE:-vazio}")
 b7 = next(b for b in st["blocos"] if b["n"] == n7)
-confere("reiniciar o shell abre um novo e limpo", "vazio" in b7["html"], b7["html"])
+confere("reiniciar o shell abre um novo e limpo", "vazio" in b7["saida"], b7["saida"])
 
 # --- Access exigido em endereço público
 hcx.HOSTS_OK.add("controls.heimdall-ai.tech")

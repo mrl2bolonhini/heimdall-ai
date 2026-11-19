@@ -71,15 +71,14 @@ COOKIE = nuvem.COOKIE
 SERVICO = "controls"
 AUDITORIA = PROJECT_DIR / "logs" / "controls_audit.log"
 MAX_CORPO = 300_000
-MAX_EXIBIDO = 40_000      # caracteres da saída mostrados na página; a cópia traz tudo
+MAX_EXIBIDO = 40_000      # caracteres da saída de UM comando mostrados na tela; a cópia traz tudo
+MAX_TRANSCRICAO = 400_000  # caracteres do campo do terminal no total (os comandos mais antigos saem da tela)
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 
 CSS = nuvem.CSS + """
 body{font-size:19px;line-height:1.6;max-width:56rem}
 main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3rem;font-size:1.25em}h3{font-size:1.05em;margin:.2rem 0}
-.bloco{border:1px solid var(--linha);padding:.7rem;margin:.8rem 0}
-.bloco pre{max-height:28rem}
-.campo-comando{width:100%;font-family:ui-monospace,Menlo,monospace;font-size:1em;padding:.5rem}
+.terminal{height:60vh;min-height:16rem;font-size:1em;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
 .linha-acoes{display:flex;flex-wrap:wrap;gap:.2rem 1rem;align-items:flex-end}
 .linha-acoes form{margin:0}.aviso{border:1px solid var(--linha);padding:.7rem;margin-top:1.5rem;color:var(--suave)}
 .fora{color:var(--erro);font-weight:700}
@@ -124,28 +123,60 @@ def duracao(seg: float) -> str:
     return f"{seg:.1f} s".replace(".", ",") if seg < 60 else f"{int(seg // 60)} min {int(seg % 60)} s"
 
 
-def html_bloco(b, curto: bool = True) -> str:
-    """Um comando e a sua saída, no formato que o leitor de tela percorre bem: título, situação e a saída."""
-    sh = obter_shell()
+def prompt_de(pasta: str) -> str:
+    """O prompt mostrado no campo: só o nome da pasta, como o zsh faz (~ para a pasta pessoal)."""
+    nome = "~" if pasta == str(Path.home()) else (os.path.basename(pasta.rstrip("/")) or "/")
+    return f"{nome} % "
+
+
+def _situacao(b) -> str:
+    if b.estado == "interrompido":
+        return f"interrompido, {duracao(b.duracao())}"
+    if b.estado == "encerrado":
+        return "o shell foi encerrado durante este comando"
+    return (f"concluído, código {b.codigo}" if b.codigo == 0 else f"erro, código {b.codigo}") + f", {duracao(b.duracao())}"
+
+
+def _saida_exibida(sh, b) -> tuple:
+    """(texto da saída para a tela, aviso de corte). A cópia sempre leva o texto inteiro."""
     saida = sh.saida_parcial(b)
-    corte = ""
     if len(saida) > MAX_EXIBIDO:
-        saida = "..." + saida[-MAX_EXIBIDO:]
-        corte = '<p class="aviso">Mostrei só o final da saída. O botão Copiar esta saída leva o texto inteiro.</p>'
-    if b.estado == "rodando":
-        sit = "Em execução" + (", interrompendo" if b.interrompido else "") + f" há {duracao(b.duracao())}."
-    elif b.estado == "interrompido":
-        sit = f"Interrompido após {duracao(b.duracao())}."
-    elif b.estado == "encerrado":
-        sit = "O shell foi encerrado durante este comando."
+        return saida[-MAX_EXIBIDO:], "[começo da saída omitido na tela; copiar leva tudo]\n"
+    return saida, ""
+
+
+def transcricao(sh) -> dict:
+    """Tudo o que o campo do terminal mostra: cada comando com o prompt, a saída e uma linha de situação.
+    Só cresce no fim (menos ao limpar), o que deixa o navegador acrescentar sem mexer no cursor de quem está lendo."""
+    with sh._lock:
+        partes = []
+        for b in sh.blocos:
+            cmd = b.comando if len(b.comando) <= 300 else b.comando[:300] + "..."
+            cab = prompt_de(b.pasta) + cmd + "\n"
+            saida, corte = _saida_exibida(sh, b)
+            corpo = corte + saida
+            fim_ = b.estado != "rodando"
+            if fim_ and corpo and not corpo.endswith("\n"):
+                corpo += "\n"
+            partes.append((cab + corpo + (f"[{_situacao(b)}]\n\n" if fim_ else ""), len(cab) + len(corte), b.n))
+        while len(partes) > 1 and sum(len(t) for t, _, _ in partes) > MAX_TRANSCRICAO:
+            partes.pop(0)
+        texto = "".join(t for t, _, _ in partes)
+        inicio = (len(texto) - len(partes[-1][0]) + partes[-1][1]) if partes else -1
+        return {"texto": texto, "inicio_ultima": inicio, "ultimo_n": partes[-1][2] if partes else 0}
+
+
+def aviso_do_bloco(sh, b) -> str:
+    """O que o leitor de tela fala quando um comando termina: situação e, se for curta, a própria saída."""
+    saida, _ = _saida_exibida(sh, b)
+    linhas = saida.strip().splitlines()
+    if not linhas:
+        resumo = "Sem saída."
+    elif len(saida.strip()) <= 600 and len(linhas) <= 12:
+        resumo = "Saída: " + saida.strip()
     else:
-        sit = ("Concluído com sucesso" if b.codigo == 0 else f"Terminou com erro, código {b.codigo}") + f" em {duracao(b.duracao())}."
-    cmd = b.comando if len(b.comando) <= 300 else b.comando[:300] + "..."
-    vazio = "" if saida.strip() else '<p>Sem saída.</p>'
-    return (f'<article class="bloco" id="bloco-{b.n}" aria-labelledby="titulo-{b.n}" data-n="{b.n}" data-estado="{e(b.estado)}" data-codigo="{"" if b.codigo is None else b.codigo}">'
-            f'<h3 id="titulo-{b.n}">Comando {b.n}: {e(cmd)}</h3><p>{e(sit)} Pasta: {e(b.pasta)}.</p>'
-            + (f'<pre tabindex="0" aria-label="Saída do comando {b.n}">{e(saida)}</pre>' if saida.strip() else vazio) + corte
-            + f'<button type="button" class="copiar-bloco" data-n="{b.n}">Copiar a saída do comando {b.n}</button></article>')
+        resumo = f"Saída com {len(linhas)} linhas. Option+Shift+U leva o cursor ao início dela; Option+Shift+O lê o começo."
+    return f"Comando {b.n} {_situacao(b)}. {resumo}"
 
 
 def pg_inicio(q: dict, sess: dict) -> tuple:
@@ -163,37 +194,38 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
 
 def pg_terminal(q: dict, sess: dict) -> tuple:
     sh = obter_shell()
-    csrf = e(sess["csrf"])
-    blocos = list(reversed(sh.blocos))
-    lista = "".join(html_bloco(b) for b in blocos) or '<p id="vazio">Nenhum comando ainda. Digite um acima.</p>'
+    t = transcricao(sh)
+    inicial = t["texto"] + ("" if sh.rodando() else prompt_de(sh.pasta))
     corpo = (
         '<p id="estado" role="status" aria-live="polite"></p>'
-        f'<p>Pasta atual: <span id="pasta">{e(sh.pasta)}</span>.</p>'
-        '<section aria-labelledby="h-exec"><h2 id="h-exec">Executar um comando</h2>'
-        '<form id="form-exec" method="post" action="/terminal/executar">'
-        f'<input type="hidden" name="csrf" value="{csrf}">'
-        '<label for="comando">Comando</label>'
-        '<input class="campo-comando" id="comando" name="comando" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" required>'
-        '<button type="submit">Executar</button></form></section>'
-        '<section aria-labelledby="h-ctl"><h2 id="h-ctl">Programa em execução</h2><div class="linha-acoes">'
-        '<form id="form-entrada" method="post" action="/terminal/entrada">'
-        f'<input type="hidden" name="csrf" value="{csrf}"><label for="resposta">Resposta ao programa (Enter envia)</label>'
-        '<input id="resposta" name="texto" type="text" autocomplete="off"><button type="submit">Enviar resposta</button></form>'
-        '<form id="form-int" method="post" action="/terminal/interromper">'
-        f'<input type="hidden" name="csrf" value="{csrf}"><button type="submit">Interromper (Ctrl+C)</button></form></div></section>'
-        '<section aria-labelledby="h-cop"><h2 id="h-cop">Copiar para a área de transferência</h2><div class="linha-acoes">'
-        '<div><button type="button" id="copiar-ultima">Copiar a última saída</button></div>'
+        f'<input type="hidden" id="csrf" value="{e(sess["csrf"])}">'
+        '<p>Digite o comando na última linha do campo e aperte Enter. A saída aparece no próprio campo, logo abaixo do comando. '
+        'Se um programa estiver perguntando algo, o que você digitar vai para ele. Option+Shift+H leva à lista de atalhos.</p>'
+        '<label for="terminal">Terminal</label>'
+        f'<textarea class="terminal" id="terminal" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}">{e(inicial)}</textarea>'
+        '<section aria-labelledby="h-ac"><h2 id="h-ac">Ações</h2><div class="linha-acoes">'
+        '<div><button type="button" id="bt-copiar-ultima">Copiar a última saída (Option+Shift+C)</button></div>'
         '<div><label for="qtd">Quantas últimas saídas</label><input id="qtd" type="number" min="1" max="300" value="3" inputmode="numeric">'
-        '<button type="button" id="copiar-n">Copiar as últimas saídas</button></div>'
+        '<button type="button" id="bt-copiar-n">Copiar as últimas saídas</button></div>'
         '<div><label><input type="checkbox" id="com-comando" checked> Incluir o comando</label></div></div>'
+        '<div class="linha-acoes"><button type="button" id="bt-int">Interromper (Ctrl+C)</button>'
+        '<button type="button" id="bt-inicio">Ir ao início da última saída (Option+Shift+U)</button>'
+        '<button type="button" id="bt-ler">Ler o começo da última saída (Option+Shift+O)</button>'
+        '<button type="button" id="bt-limpar">Limpar as saídas (Ctrl+L)</button>'
+        '<button type="button" id="bt-reiniciar">Reiniciar o shell (Option+Shift+R)</button></div>'
+        '<p>Reiniciar o shell fecha o atual e abre outro limpo, na pasta do Heimdall.</p>'
         '<div id="area-copia" hidden><label for="texto-copia">Se o navegador não deixar copiar sozinho, selecione tudo neste campo (Command+A) e copie (Command+C)</label>'
         '<textarea id="texto-copia" readonly></textarea></div></section>'
-        '<section aria-labelledby="h-ger"><h2 id="h-ger">Gerenciar o terminal</h2><div class="linha-acoes">'
-        '<form method="post" action="/terminal/limpar">' f'<input type="hidden" name="csrf" value="{csrf}"><button type="submit">Limpar a lista de saídas</button></form>'
-        '<form method="post" action="/terminal/reiniciar">' f'<input type="hidden" name="csrf" value="{csrf}"><button type="submit">Reiniciar o shell</button></form>'
-        '</div><p>Reiniciar o shell fecha o atual e abre outro limpo, na pasta do Heimdall.</p></section>'
-        f'<section aria-labelledby="h-saidas"><h2 id="h-saidas">Saídas, da mais recente para a mais antiga</h2><div id="saidas" data-versao="{sh.versao}">{lista}</div></section>'
-        '<noscript><p class="aviso">Sem JavaScript os botões de copiar e a atualização automática não funcionam. Use o botão Atualizar a página para ver o resultado.</p></noscript>'
+        '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
+        '<p>Funcionam em qualquer ponto desta página. Option é a tecla Alt do Mac.</p><ol>'
+        '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
+        '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
+        '<li>Option+Shift+C: copia a última saída. Option+Shift+1 até 9: copia as últimas 1 a 9 saídas. Option+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
+        '<li>Option+Shift+U: leva o cursor ao início da última saída; depois leia com VO+A ou desça com a seta. Option+Shift+O: o leitor de tela lê o começo da última saída.</li>'
+        '<li>Option+Shift+P e Option+Shift+N: comando anterior e seguinte do histórico.</li>'
+        '<li>Ctrl+L ou Option+Shift+L: limpa as saídas. Option+Shift+R: reinicia o shell.</li>'
+        '<li>Option+Shift+T: volta ao campo do terminal. Option+Shift+H: vem para esta lista.</li></ol></section>'
+        '<noscript><p class="aviso">Sem JavaScript o terminal não funciona. Use o botão Atualizar a página para ver o resultado.</p></noscript>'
         + design.botao("/terminal", "Atualizar a página"))
     return "Terminal", corpo
 
@@ -239,52 +271,64 @@ ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos}
 SCRIPT = r"""
 (function(){
 'use strict';
-var csrf = document.querySelector('input[name=csrf]').value;
+var csrf = document.getElementById('csrf').value;
+var ta = document.getElementById('terminal');
 var estado = document.getElementById('estado');
-var saidas = document.getElementById('saidas');
-var cmd = document.getElementById('comando');
-var rodando = false, ultimaVersao = parseInt(saidas.dataset.versao || '0', 10), timer = null, vistos = {};
+var base = ta.value;                 // tudo o que o servidor mostra; o que vem depois é o que a pessoa está digitando
+var rodando = false, ultimaVersao = parseInt(ta.dataset.versao || '0', 10), timer = null, vistos = {}, primeira = true;
+var inicioUltima = -1, historico = [], hi = -1;
 function dizer(t){ estado.textContent = ''; setTimeout(function(){ estado.textContent = t; }, 60); }
+function digitado(){ return ta.value.indexOf(base) === 0 ? ta.value.slice(base.length) : ''; }
 function post(url, dados){
   var corpo = new URLSearchParams(dados || {}); corpo.set('csrf', csrf);
   return fetch(url, {method:'POST', credentials:'same-origin', headers:{'X-Heimdall-Ajax':'1','Content-Type':'application/x-www-form-urlencoded'}, body: corpo.toString()}).then(function(r){ return r.json(); });
 }
-function aplicar(estadoServidor){
-  var vazio = document.getElementById('vazio'); if (vazio) vazio.remove();
-  document.getElementById('pasta').textContent = estadoServidor.pasta;
-  (estadoServidor.blocos || []).forEach(function(b){
-    var antigo = document.getElementById('bloco-' + b.n);
-    var t = document.createElement('div'); t.innerHTML = b.html; var novo = t.firstChild;
-    if (antigo) { antigo.replaceWith(novo); } else { saidas.insertBefore(novo, saidas.firstChild); }
-    var anterior = vistos[b.n];
-    if (anterior === 'rodando' && b.estado !== 'rodando') {
-      dizer('Comando ' + b.n + (b.estado === 'interrompido' ? ' interrompido.' : b.codigo === 0 ? ' concluído com sucesso.' : ' terminou com erro, código ' + b.codigo + '.'));
-    }
-    vistos[b.n] = b.estado;
+function aplicar(s){
+  var novo = s.texto + (s.rodando ? '' : s.prompt);
+  if (novo !== base) {
+    var resto = digitado(), a = ta.selectionStart, b = ta.selectionEnd, noFim = a >= base.length, desl = ta.scrollTop;
+    var comeco = novo.indexOf(base) === 0;
+    ta.value = novo + resto;
+    if (noFim) { ta.setSelectionRange(novo.length + (a - base.length), novo.length + (b - base.length)); ta.scrollTop = ta.scrollHeight; }
+    else { var m = ta.value.length; ta.setSelectionRange(Math.min(a, m), Math.min(b, m)); ta.scrollTop = comeco ? desl : ta.scrollHeight; }
+    base = novo;
+  }
+  inicioUltima = s.inicio_ultima; historico = s.comandos || historico; ultimaVersao = s.versao; rodando = s.rodando;
+  (s.blocos || []).forEach(function(bl){
+    if (!primeira && vistos[bl.n] === 'rodando' && bl.estado !== 'rodando' && bl.aviso) { dizer(bl.aviso); }
+    vistos[bl.n] = bl.estado;
   });
-  ultimaVersao = estadoServidor.versao; rodando = estadoServidor.rodando;
+  primeira = false;
 }
 function buscar(){
   fetch('/terminal/estado?desde=' + ultimaVersao, {credentials:'same-origin', headers:{'X-Heimdall-Ajax':'1'}}).then(function(r){ return r.json(); }).then(function(s){
     aplicar(s); if (s.rodando) { timer = setTimeout(buscar, 700); } else { timer = null; }
   }).catch(function(){ timer = setTimeout(buscar, 2000); });
 }
-function iniciarBusca(){ if (!timer) { timer = setTimeout(buscar, 300); } }
-document.getElementById('form-exec').addEventListener('submit', function(ev){
-  ev.preventDefault(); var c = cmd.value; if (!c.trim()) return;
-  post('/terminal/executar', {comando: c}).then(function(r){
-    if (r.erro) { dizer(r.erro); return; }
-    cmd.value = ''; dizer('Executando o comando ' + r.n + '.'); vistos[r.n] = 'rodando'; buscarAgora();
-  });
-});
 function buscarAgora(){ if (timer) { clearTimeout(timer); timer = null; } buscar(); }
-document.getElementById('form-entrada').addEventListener('submit', function(ev){
-  ev.preventDefault(); var campo = document.getElementById('resposta');
-  post('/terminal/entrada', {texto: campo.value}).then(function(r){ if (r.erro) { dizer(r.erro); } else { campo.value = ''; dizer('Resposta enviada.'); iniciarBusca(); } });
-});
-document.getElementById('form-int').addEventListener('submit', function(ev){
-  ev.preventDefault(); post('/terminal/interromper', {}).then(function(r){ dizer(r.ok ? 'Interrompendo.' : 'Nada em execução.'); iniciarBusca(); });
-});
+function enviar(){
+  var t = digitado();
+  if (rodando) {
+    ta.value = base; ta.setSelectionRange(base.length, base.length);
+    post('/terminal/entrada', {texto: t}).then(function(r){
+      if (r.erro) { dizer(r.erro + ' Digite de novo.'); ta.value = base + t; ta.setSelectionRange(ta.value.length, ta.value.length); buscarAgora(); }
+      else { dizer('Resposta enviada.'); buscarAgora(); }
+    });
+    return;
+  }
+  if (!t.trim()) { return; }
+  historico.push(t); hi = -1;
+  ta.value = base; ta.setSelectionRange(base.length, base.length);
+  post('/terminal/executar', {comando: t}).then(function(r){
+    if (r.erro) { dizer(r.erro); ta.value = base + t; ta.setSelectionRange(ta.value.length, ta.value.length); return; }
+    vistos[r.n] = 'rodando'; rodando = true; buscarAgora();
+  });
+}
+function interromper(){
+  post('/terminal/interromper', {}).then(function(r){ dizer(r.ok ? 'Interrompendo.' : 'Nada em execução.'); buscarAgora(); });
+}
+function limpar(){ post('/terminal/limpar', {}).then(function(){ dizer('Saídas limpas.'); buscarAgora(); }); }
+function reiniciar(){ post('/terminal/reiniciar', {}).then(function(r){ dizer(r.erro ? r.erro : 'Shell reiniciado.'); buscarAgora(); }); }
 function copiar(url){
   fetch(url, {credentials:'same-origin'}).then(function(r){ return r.text(); }).then(function(texto){
     if (!texto) { dizer('Não há saída para copiar.'); return; }
@@ -294,22 +338,82 @@ function copiar(url){
       var area = document.getElementById('area-copia'); var campo = document.getElementById('texto-copia');
       area.hidden = false; campo.value = texto; campo.focus(); campo.select();
       try { if (document.execCommand('copy')) { ok(); return; } } catch(e) {}
-      dizer('O navegador não deixou copiar sozinho. O texto está no campo abaixo, já selecionado: use Command+C.');
+      dizer('O navegador não deixou copiar sozinho. O texto está no campo de cópia, já selecionado: use Command+C.');
     };
     if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(texto).then(ok, falha); } else { falha(); }
   });
 }
 function qs(){ return '&comando=' + (document.getElementById('com-comando').checked ? '1' : '0'); }
-document.getElementById('copiar-ultima').addEventListener('click', function(){ copiar('/terminal/texto?ultimos=1' + qs()); });
-document.getElementById('copiar-n').addEventListener('click', function(){
-  var n = parseInt(document.getElementById('qtd').value, 10); if (!(n >= 1)) { n = 1; }
-  copiar('/terminal/texto?ultimos=' + n + qs());
+function copiarUltimas(n){ copiar('/terminal/texto?ultimos=' + n + qs()); }
+function irAoInicio(){
+  if (inicioUltima < 0) { dizer('Ainda não há saída.'); return; }
+  ta.focus(); ta.setSelectionRange(inicioUltima, inicioUltima);
+  var linhas = ta.value.slice(0, inicioUltima).split('\n').length;
+  ta.scrollTop = Math.max(0, (linhas - 2) * parseFloat(getComputedStyle(ta).lineHeight || '24'));
+  dizer('Cursor no início da última saída. Leia com VO+A ou desça com a seta.');
+}
+function lerUltima(){
+  fetch('/terminal/texto?ultimos=1&comando=0', {credentials:'same-origin'}).then(function(r){ return r.text(); }).then(function(t){
+    t = t.trim(); if (!t) { dizer('Não há saída.'); return; }
+    dizer(t.length > 2000 ? t.slice(0, 2000) + ' ... (continua; copie ou use Option+Shift+U para ler tudo)' : t);
+  });
+}
+function historicoMover(d){
+  if (!historico.length) { dizer('O histórico está vazio.'); return; }
+  if (hi === -1) { hi = historico.length; }
+  hi = Math.max(0, Math.min(historico.length, hi + d));
+  var c = hi >= historico.length ? '' : historico[hi];
+  if (hi >= historico.length) { hi = -1; }
+  ta.value = base + c; ta.setSelectionRange(ta.value.length, ta.value.length); ta.focus();
+  dizer(c ? 'Histórico: ' + c : 'Linha vazia.');
+}
+function irAoCampo(){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+// só a última linha pode ser editada: o resto é a saída e fica protegido
+ta.addEventListener('beforeinput', function(ev){
+  var t = ev.inputType || '', a = ta.selectionStart, b = ta.selectionEnd;
+  var apagaParaTras = t.indexOf('Backward') >= 0 && a === b && a <= base.length;
+  if (t === 'historyUndo' || t === 'historyRedo' || a < base.length || apagaParaTras) {
+    ev.preventDefault();
+    if (a < base.length && t.indexOf('delete') !== 0) { ta.setSelectionRange(ta.value.length, ta.value.length); dizer('Só dá para digitar na última linha. O cursor foi para o final.'); }
+  }
 });
-saidas.addEventListener('click', function(ev){
-  var b = ev.target.closest('.copiar-bloco'); if (b) { copiar('/terminal/texto?bloco=' + b.dataset.n + qs()); }
+ta.addEventListener('keydown', function(ev){
+  if (ev.isComposing) { return; }
+  if (ev.key === 'Enter' && !ev.shiftKey && !ev.ctrlKey && !ev.altKey && !ev.metaKey) { ev.preventDefault(); enviar(); return; }
+  if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyC') {
+    ev.preventDefault();
+    if (rodando) { interromper(); } else { ta.value = base; ta.setSelectionRange(base.length, base.length); dizer('Linha apagada.'); }
+    return;
+  }
+  if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyL') { ev.preventDefault(); limpar(); }
 });
-Array.prototype.forEach.call(saidas.querySelectorAll('.bloco'), function(el){ vistos[el.dataset.n] = el.dataset.estado; if (el.dataset.estado === 'rodando') { rodando = true; } });
-if (rodando) { iniciarBusca(); }
+ta.addEventListener('focus', function(){ if (ta.selectionStart === 0 && ta.selectionEnd === 0 && base.length > 0) { ta.setSelectionRange(ta.value.length, ta.value.length); } });
+document.addEventListener('keydown', function(ev){
+  if (ev.isComposing || !ev.altKey || !ev.shiftKey || ev.ctrlKey || ev.metaKey) { return; }
+  var c = ev.code, f = null;
+  if (c === 'KeyC') { f = function(){ copiarUltimas(1); }; }
+  else if (/^Digit[0-9]$/.test(c)) { var n = parseInt(c.slice(5), 10); f = function(){ copiarUltimas(n === 0 ? 300 : n); }; }
+  else if (c === 'KeyU') { f = irAoInicio; }
+  else if (c === 'KeyO') { f = lerUltima; }
+  else if (c === 'KeyP') { f = function(){ historicoMover(-1); }; }
+  else if (c === 'KeyN') { f = function(){ historicoMover(1); }; }
+  else if (c === 'KeyL') { f = limpar; }
+  else if (c === 'KeyR') { f = reiniciar; }
+  else if (c === 'KeyI') { f = interromper; }
+  else if (c === 'KeyT') { f = irAoCampo; }
+  else if (c === 'KeyH') { f = function(){ document.getElementById('h-atalhos').focus(); }; }
+  if (f) { ev.preventDefault(); f(); }
+});
+document.getElementById('bt-copiar-ultima').addEventListener('click', function(){ copiarUltimas(1); });
+document.getElementById('bt-copiar-n').addEventListener('click', function(){
+  var n = parseInt(document.getElementById('qtd').value, 10); if (!(n >= 1)) { n = 1; } copiarUltimas(n);
+});
+document.getElementById('bt-int').addEventListener('click', interromper);
+document.getElementById('bt-inicio').addEventListener('click', irAoInicio);
+document.getElementById('bt-ler').addEventListener('click', lerUltima);
+document.getElementById('bt-limpar').addEventListener('click', limpar);
+document.getElementById('bt-reiniciar').addEventListener('click', reiniciar);
+buscarAgora();
 })();
 """
 
@@ -557,9 +661,15 @@ class Painel(BaseHTTPRequestHandler):
             desde = 0
         with sh._lock:
             mudados = [b for b in sh.blocos if b.versao > desde or b.estado == "rodando"]
-            rod = sh.rodando()
-            dado = {"versao": sh.versao, "rodando": rod, "pasta": sh.pasta,
-                    "blocos": [{"n": b.n, "estado": b.estado, "codigo": b.codigo, "html": html_bloco(b)} for b in mudados]}
+            t = transcricao(sh)
+            blocos = []
+            for b in mudados:
+                fim_ = b.estado != "rodando"
+                blocos.append({"n": b.n, "estado": b.estado, "codigo": b.codigo, "comando": b.comando,
+                               "saida": _saida_exibida(sh, b)[0] if fim_ else "", "aviso": aviso_do_bloco(sh, b) if fim_ else ""})
+            dado = {"versao": sh.versao, "rodando": sh.rodando(), "pasta": sh.pasta, "prompt": prompt_de(sh.pasta),
+                    "texto": t["texto"], "inicio_ultima": t["inicio_ultima"],
+                    "comandos": [b.comando for b in sh.blocos][-100:], "blocos": blocos}
         self._json(200, dado)
 
     def _texto(self, q: dict) -> None:

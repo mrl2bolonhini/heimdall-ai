@@ -4,10 +4,11 @@ O que é: um painel em controls.heimdall-ai.tech (e em http://localhost:8017) co
 
 Como usar o Terminal, com o leitor de tela
 1. Abra com heimdall controls --open terminal (ou -L para o endereço local).
-2. O foco começa na página; vá ao campo Comando, digite e aperte Enter. A pasta e as variáveis continuam de um comando para o outro.
-3. Cada comando vira um bloco, do mais recente para o mais antigo: um título (Comando 5: ls), a situação (concluído, erro com código, em execução) e a saída em texto. Navegue por títulos. Ao terminar, o leitor anuncia, sem ler a saída inteira.
-4. Se o programa pergunta algo (sim ou não, senha), use o campo Resposta ao programa. Para parar o que está rodando, Interromper (Ctrl+C).
-5. Copiar: Copiar a última saída, ou escolha quantas últimas saídas no campo numérico e use Copiar as últimas saídas. A caixa Incluir o comando liga ou desliga a linha do comando no texto copiado. Cada bloco também tem o botão Copiar a saída do comando N. Se o navegador não deixar copiar sozinho, o texto aparece num campo já selecionado: Command+C.
+2. Vá ao campo Terminal (é o primeiro campo da página). O cursor já fica na última linha, depois do prompt (nome da pasta e %). Digite o comando e aperte Enter. Shift+Enter abre uma nova linha dentro do comando. A pasta e as variáveis continuam de um comando para o outro.
+3. A saída aparece no próprio campo, logo abaixo do comando, seguida de uma linha como [concluído, código 0, 0,3 s] e de um prompt novo. Ao terminar, o leitor de tela fala a situação e, se a saída for curta, a própria saída. Se for longa, ele diz quantas linhas tem. Option+Shift+U leva o cursor ao início da última saída: depois leia com VO+A ou desça com a seta. Option+Shift+O faz o leitor falar o começo da última saída.
+4. Se o programa pergunta algo (sim ou não, senha), digite a resposta na mesma linha e aperte Enter: ela vai direto ao programa (não aparece na tela, então serve para senha). Para parar o que está rodando, Ctrl+C. Sem programa rodando, Ctrl+C apaga a linha digitada. Só a última linha aceita digitação; o resto do campo é a saída, que você pode ler e copiar com Command+C.
+5. Copiar para a área de transferência: Option+Shift+C copia a última saída; Option+Shift+1 até 9 copia as últimas 1 a 9; Option+Shift+0 copia todas. Os botões da seção Ações fazem o mesmo, e o campo numérico escolhe quantas. A caixa Incluir o comando liga ou desliga a linha do comando no texto copiado. Se o navegador não deixar copiar sozinho, o texto aparece num campo já selecionado: Command+C.
+   Outros atalhos: Ctrl+L ou Option+Shift+L limpa as saídas; Option+Shift+R reinicia o shell; Option+Shift+I interrompe; Option+Shift+P e Option+Shift+N percorrem o histórico de comandos; Option+Shift+T volta ao campo do terminal; Option+Shift+H vai à lista de atalhos na própria página. Option é a tecla Alt do Mac.
 6. Programas de tela cheia (vim, top, less) não funcionam. Use cat, sed, ps e head. Cores e códigos de tela são retirados da saída.
 
 Ligar o endereço público (uma vez)
