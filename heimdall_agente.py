@@ -20,6 +20,9 @@ Rotas:
     POST /banco/gravar                  {"tabela": "saude_diaria", "registros": [{"dia": "2026-11-10", "metrica": "passos", "valor": 8000}]}
                                         insere ou atualiza pela chave primária (tabelas: saude_diaria, saude_resumos, diarios, analises)
     POST /banco/consultar               {"sql": "SELECT ...", "limite": 200}  só um SELECT, em conexão somente leitura
+    POST /saude/documento               corpo = o arquivo (PDF, JPG, PNG ou HEIC) de um exame, receita ou encaminhamento; cabeçalho X-Heimdall-Nome com o nome.
+                                        Aceita o X-Heimdall-Token ou o código de envio do atalho (X-Heimdall-Upload = HEIMDALL_EXAMES_TOKEN). O arquivo vai para a
+                                        pasta de entrada, é lido no Mac e fica pendente até você confirmar (heimdall_exames.py)
     POST /saude/relatorio-semanal       {}  monta o relatório da semana, grava na pasta Saúde do app Notas (com áudio) e avisa pelo Bark
     POST /triagem/criar                 {"id": "origem estável", "titulo": "...", "resumo": "...", "nivel": "critico|alto|medio", "fonte": "justica"}
                                         cria um lembrete na lista "Heimdall: Triagem" (não duplica) e o registra no banco
@@ -57,9 +60,11 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+import urllib.parse
 
 import heimdall_backup as backup
 import heimdall_banco as banco
+import heimdall_exames as exames
 import heimdall_saude as saude
 import heimdall_seguranca as seguranca
 import heimdall_triagem as triagem
@@ -155,6 +160,8 @@ for _nome in ["Privado"] + os.environ.get("HEIMDALL_NOTAS_PRIVADAS", "").split("
         PRIVADAS.append(_nome)
 MAX_CORPO = 1_000_000
 MAX_CORPO_SAUDE = 64 * 1024 * 1024   # exportações com ECG (milhares de leituras por gravação) são grandes
+MAX_CORPO_DOC = exames.MAX_BYTES + 4096   # um exame, receita ou encaminhamento enviado do iPhone
+TOKEN_UPLOAD = os.environ.get("HEIMDALL_EXAMES_TOKEN", "")   # só serve para /saude/documento
 MAX_TEXTO_NOTA = 20_000
 OSASCRIPT_TIMEOUT = 120
 _lock = threading.Lock()  # o app Notas atende um pedido de cada vez
@@ -991,8 +998,33 @@ class Handler(BaseHTTPRequestHandler):
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {u.path}: {type(e).__name__}: {str(e)[:300]}\n")
             return self._json(500, {"erro": str(e)[:400]})
 
+    def _autorizado_envio(self) -> bool:
+        """O código de envio do atalho do iPhone vale só para /saude/documento; o token do agente também vale."""
+        enviado = self.headers.get("X-Heimdall-Upload", "")
+        return self._autorizado() or (len(TOKEN_UPLOAD) >= 16 and hmac.compare_digest(enviado.encode(), TOKEN_UPLOAD.encode()))
+
+    def _receber_documento(self):
+        try:
+            tam = int(self.headers.get("Content-Length", "0"))
+            if tam <= 0 or tam > MAX_CORPO_DOC:
+                return self._json(413, {"erro": "arquivo ausente ou maior que 25 MB"})
+            dados = self.rfile.read(tam)
+            nome = urllib.parse.unquote(self.headers.get("X-Heimdall-Nome", "documento"))[:120]
+            r = exames.receber(dados, nome)
+            threading.Thread(target=_ler_documentos, daemon=True).start()   # lê já, sem esperar o minuto da vigia
+            return self._json(200, {"ok": True, "arquivo": r["arquivo"], "mensagem": "Recebido. O Heimdall vai ler o documento; você será avisado quando houver o que conferir."})
+        except exames.ErroExames as e:
+            return self._json(400, {"erro": str(e)[:200]})
+        except Exception as e:  # noqa: BLE001
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em /saude/documento: {type(e).__name__}: {str(e)[:200]}\n")
+            return self._json(500, {"erro": "não consegui guardar o arquivo"})
+
     def do_POST(self):
         u = urlparse(self.path)
+        if u.path == "/saude/documento":
+            if not self._autorizado_envio():
+                return self._json(401, {"erro": "token inválido"})
+            return self._receber_documento()
         if not self._autorizado():
             return self._json(401, {"erro": "token inválido"})
         try:
@@ -1115,6 +1147,36 @@ def teste() -> int:
     return 0
 
 
+_trava_docs = threading.Lock()
+
+
+def _ler_documentos() -> None:
+    """Lê a pasta de entrada de documentos clínicos (exames, receitas, encaminhamentos) e avisa pelo Bark, sem nomes nem números."""
+    if not _trava_docs.acquire(blocking=False):
+        return
+    try:
+        rs = exames.processar_entrada()
+        novos = [r for r in rs if r.get("ok") and not r.get("duplicado")]
+        falhos = [r for r in rs if not r.get("ok")]
+        if novos:
+            triagem.enviar_bark({"title": "Saúde: documento para conferir", "group": "saude", "level": "active",
+                                 "body": f"{len(novos)} documento(s) lido(s). Para ouvir o que foi lido: heimdall exames pendentes."})
+        if falhos:
+            triagem.enviar_bark({"title": "Saúde: documento não lido", "group": "saude", "level": "active",
+                                 "body": f"{len(falhos)} documento(s) não puderam ser lidos e estão na pasta revisar, com o motivo."})
+    except Exception as e:  # noqa: BLE001 - a vigia nunca derruba o agente
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} documentos de saúde: {type(e).__name__}: {str(e)[:160]}\n")
+    finally:
+        _trava_docs.release()
+
+
+def _vigiar_documentos() -> None:
+    """A cada minuto lê o que foi solto na pasta de entrada dos documentos de saúde."""
+    while True:
+        _ler_documentos()
+        time.sleep(60)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Agente local do Heimdall para o app Notas")
     ap.add_argument("--teste", action="store_true", help="só confere o acesso ao app Notas e sai")
@@ -1150,6 +1212,8 @@ def main() -> int:
         return 1
     VAULT.mkdir(parents=True, exist_ok=True)
     banco.iniciar()
+    exames.preparar_pasta()
+    threading.Thread(target=_vigiar_documentos, daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Agente do Heimdall em http://{HOST}:{PORT} (cofre: {VAULT})", flush=True)
     try:

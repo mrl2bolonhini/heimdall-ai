@@ -59,6 +59,7 @@ import heimdall_banco as banco  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
 import heimdall_saude as saude  # noqa: E402  (as análises)
+import heimdall_exames as exames  # noqa: E402  (exames, receitas e encaminhamentos já confirmados)
 
 HOST = os.environ.get("HEIMDALL_SAUDE_PAINEL_HOST", "127.0.0.1")
 try:
@@ -80,7 +81,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 """
 
 SECOES = [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"), ("/anomalias", "Anomalias"),
-          ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/dados", "Estado dos dados")]
+          ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/exames", "Exames"), ("/documentos", "Documentos"), ("/dados", "Estado dos dados")]
 
 
 # ----------------------------------------------------------------------------------------
@@ -105,6 +106,9 @@ def secao(titulo: str, texto: str) -> str:
 
 
 AVISO_HTML = f'<p class="aviso">{e(saude.AVISO)} O painel mostra números do seu histórico no app Saúde; ele não substitui consulta nem exame.</p>'
+
+
+AVISO_EXAMES = f'<p class="aviso">{e(exames.AVISO)}</p>'
 
 
 def seletor(rota: str, dias: int, padrao: int) -> str:
@@ -256,6 +260,44 @@ def pg_diario(q: dict) -> tuple:
     return "Diário", seletor("/diario", dias, 30) + tabela + AVISO_HTML
 
 
+def pg_exames(q: dict) -> tuple:
+    """Último resultado de cada exame; com ?exame=nome, o histórico daquele exame. Só leitura."""
+    nome = ((q.get("exame") or [""])[0] or "").strip()[:60]
+    if nome:
+        corpo = texto_html(exames.relatorio_exame(nome)) + design.botao("/exames", "Voltar à lista de exames")
+        return "Exame: " + nome, corpo
+    linhas = exames.ultimos_por_exame()
+    if not linhas:
+        return "Exames", "<p>Ainda não há resultados de exames confirmados. Para enviar um, coloque o PDF na pasta de entrada do Mac ou use o atalho do iPhone.</p>" + AVISO_EXAMES
+    cab = "".join(f'<th scope="col">{c}</th>' for c in ("Exame", "Data", "Resultado", "Referência do laboratório", "Situação", "Histórico"))
+    corpo_t = []
+    for r in linhas:
+        res = f'{r["comparador"]}{r["valor_texto"] or exames._fmt(r["valor"])} {r["unidade"]}'.strip()
+        corpo_t.append(f'<tr><th scope="row">{e(r["nome"])}</th><td>{e(exames._br(r["dia"]))}</td><td>{e(res)}</td><td>{e(r["ref_texto"])}</td>'
+                       f'<td>{e(exames._sinal_pt(r["sinal"]))}</td><td>{design.botao("/exames", "Ver histórico", {"exame": r["nome"]})}</td></tr>')
+    tabela = (f'<table><caption>Último resultado de cada exame ({len(linhas)} exames)</caption><thead><tr>{cab}</tr></thead><tbody>' + "".join(corpo_t) + "</tbody></table>")
+    return "Exames", tabela + secao("Leitura cruzada com o relógio", exames.analise("", 730, com_modelo=False)) + AVISO_EXAMES
+
+
+def pg_documentos(q: dict) -> tuple:
+    """Documentos recebidos, receitas e encaminhamentos. Confirmar ou descartar só pelo terminal."""
+    pend = exames.pendentes()
+    corpo = ""
+    if pend:
+        corpo += (f'<p role="status">{len(pend)} documento(s) aguardam a sua conferência. Para ouvir o que foi lido e confirmar, use no terminal do Mac: '
+                  'heimdall exames pendentes.</p>')
+    docs = exames.listar_documentos()
+    if docs:
+        cab = "".join(f'<th scope="col">{c}</th>' for c in ("Número", "Tipo", "Data", "Situação", "Origem"))
+        linhas = "".join(f'<tr><th scope="row">{d["id"]}</th><td>{e(exames._TIPO_PT.get(d["tipo"], d["tipo"]))}</td><td>{e(exames._br(d["dia"]))}</td>'
+                         f'<td>{e(d["estado"])}</td><td>{e(d["origem"])}</td></tr>' for d in docs)
+        corpo += f'<table><caption>Documentos recebidos ({len(docs)})</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
+    else:
+        corpo += "<p>Nenhum documento recebido ainda.</p>"
+    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos())
+    return "Documentos", corpo + AVISO_EXAMES
+
+
 _METRICAS_ESTADO = [("passos", "Passos"), ("sono_total", "Sono"), ("fc_repouso", "Pulso em repouso"), ("hrv", "HRV"), ("resp", "Respiração no sono"),
                     ("spo2", "Oxigênio no sangue"), ("x:apple_exercise_time", "Minutos de exercício"), ("energia", "Energia ativa"),
                     ("x:walking_heart_rate_average", "Frequência ao caminhar"), ("x:vo2_max", "VO2 máx")]
@@ -313,6 +355,8 @@ ROTAS = {
     "/treinos": pg_treinos,
     "/eventos": lambda q: pg_relatorio("Sintomas, humor e medicamentos", "/eventos", saude.relatorio_eventos, 30, q, "Nenhum sintoma, humor ou medicamento registrado."),
     "/diario": pg_diario,
+    "/exames": pg_exames,
+    "/documentos": pg_documentos,
     "/dados": pg_dados,
 }
 

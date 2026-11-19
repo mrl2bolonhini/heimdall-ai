@@ -135,7 +135,7 @@ Exemplos:
 Sem opção abre o painel de saúde no navegador (porta 8013). Com --open abre uma página dele. Com qualquer outra opção, roda o relatório no terminal. Nada aqui é diagnóstico.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
-  -o, --open PÁGINA    abre uma página do painel: anomalies, today, week, sleep, activity, recovery, heart, workouts, events, diary, data
+  -o, --open PÁGINA    abre uma página do painel: anomalies, today, week, sleep, activity, recovery, heart, workouts, events, diary, labs, documents, data
   -t, --today          o que já chegou de hoje
   -n, --now            os últimos 7 dias contra a média dos 90 anteriores
   -w, --weekly         o relatório da semana
@@ -157,6 +157,31 @@ Exemplos:
   heimdall health --today
   heimdall health --anomalies 2026-11-10
   heimdall health -r 60
+
+@ exames | Exames de laboratório, receitas e encaminhamentos
+Lê PDF e foto de exame, receita e encaminhamento e guarda cada item nas métricas de saúde, depois que você confere. A pasta do Mac é banco/documentos/entrada; o iPhone envia pelo atalho. Nada aqui é diagnóstico.
+Uso: heimdall exames [SUBCOMANDO]
+Opções:
+  -h, --help           mostra esta ajuda
+Subcomandos:
+  resumo (ou sem nada)   o último resultado de cada exame confirmado
+  pendentes              documentos lidos que aguardam a sua conferência
+  ler ID                 conta o que foi lido no documento, item por item, com numeração
+  confirmar ID [--sem 2,5] [--data AAAA-MM-DD]   grava os itens (deixa de fora os números de --sem)
+  descartar ID           joga o documento fora sem gravar nada
+  pasta                  lê agora o que estiver na pasta de entrada
+  importar ARQUIVO...    lê arquivos de qualquer pasta
+  exame NOME             histórico de um exame, com o que o relógio mostrou antes de cada coleta
+  analise [NOME]         leitura cruzada com sono, HRV, pulso e atividade
+  receitas               receitas confirmadas
+  encaminhamentos        encaminhamentos confirmados
+  documentos             lista de tudo que foi recebido
+  token                  gera o código do atalho do iPhone (fica no .env)
+  --open                 abre a página Exames do painel de saúde
+Exemplos:
+  heimdall exames pendentes
+  heimdall exames confirmar 3 --sem 7
+  heimdall exames exame vitamina d
 
 @ games | Heimdall Jogos, jogos leves para leitor de tela
 Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos ficam em categorias, em ordem alfabética, e dentro delas também em ordem alfabética: Ação (arqueiro de áudio e labirinto), Aventuras de texto (cinco histórias e a Travessia das Três Provas), Cartas (paciência e poker), Cassino (bacará, blackjack, caça-níqueis, poker caribenho e roleta), Números e lógica (2048, número secreto, senha e sudoku), Palavras e letras (cinco letras e forca) e Tabuleiro e estratégia (batalha naval, campo minado, gramado, jogo da velha, sonar e xadrez). Os jogos de terceiros só entram se tiverem versão em português ou permitirem tradução.

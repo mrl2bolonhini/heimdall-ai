@@ -234,6 +234,73 @@ CREATE TABLE IF NOT EXISTS saude_eventos (
     atualizado TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_eventos_tipo ON saude_eventos (tipo, dia);
+
+CREATE TABLE IF NOT EXISTS documentos_saude (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hash TEXT NOT NULL UNIQUE,      -- SHA-256 do arquivo: o mesmo documento nunca entra duas vezes
+    tipo TEXT NOT NULL DEFAULT 'outro',     -- exame, receita, encaminhamento, outro
+    arquivo TEXT NOT NULL DEFAULT '',       -- nome original do arquivo
+    dia TEXT NOT NULL DEFAULT '',           -- data do documento (coleta do exame, receita ou encaminhamento)
+    emissor TEXT NOT NULL DEFAULT '',       -- laboratório, clínica ou médico
+    solicitante TEXT NOT NULL DEFAULT '',
+    origem TEXT NOT NULL DEFAULT '',        -- pasta ou iphone
+    estado TEXT NOT NULL DEFAULT 'pendente',        -- pendente (aguarda a sua conferência), confirmado, descartado
+    extraido TEXT NOT NULL DEFAULT '{}',    -- JSON com o que foi lido; só enquanto pendente
+    avisos TEXT NOT NULL DEFAULT '[]',      -- JSON: dúvidas da leitura
+    criado TEXT NOT NULL,
+    atualizado TEXT NOT NULL,
+    confirmado_em TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS ix_documentos_estado ON documentos_saude (estado, dia);
+
+CREATE TABLE IF NOT EXISTS exames_resultados (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documento_id INTEGER NOT NULL,
+    dia TEXT NOT NULL,              -- data da coleta
+    chave TEXT NOT NULL,            -- nome canônico (vitamina_d, hemoglobina...); fora do catálogo vira o nome sem acento
+    nome TEXT NOT NULL,             -- como o Heimdall chama o exame
+    nome_original TEXT NOT NULL DEFAULT '',     -- como aparece no documento
+    grupo TEXT NOT NULL DEFAULT '', -- Hemograma, Vitaminas, Lipídios...
+    valor REAL,
+    valor_texto TEXT NOT NULL DEFAULT '',       -- exatamente como está no documento
+    comparador TEXT NOT NULL DEFAULT '',        -- '<' ou '>' quando o laboratório informa "menor que" ou "maior que"
+    unidade TEXT NOT NULL DEFAULT '',
+    ref_texto TEXT NOT NULL DEFAULT '',         -- referência do laboratório, como está no documento
+    ref_min REAL, ref_max REAL,                 -- só quando a referência tem uma única faixa clara
+    sinal TEXT NOT NULL DEFAULT '', -- abaixo, dentro, acima ou vazio (sem faixa clara para comparar)
+    catalogado INTEGER NOT NULL DEFAULT 0,      -- 1 = o nome está no catálogo do Heimdall
+    fonte TEXT NOT NULL DEFAULT '', -- regra, modelo ou ambos (quem leu a linha)
+    ordem INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (documento_id, chave, ordem)
+);
+CREATE INDEX IF NOT EXISTS ix_exames_chave ON exames_resultados (chave, dia);
+CREATE INDEX IF NOT EXISTS ix_exames_dia ON exames_resultados (dia);
+
+CREATE TABLE IF NOT EXISTS receitas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documento_id INTEGER NOT NULL,
+    dia TEXT NOT NULL DEFAULT '',
+    medicamento TEXT NOT NULL,
+    dose TEXT NOT NULL DEFAULT '',
+    posologia TEXT NOT NULL DEFAULT '',
+    duracao TEXT NOT NULL DEFAULT '',
+    prescritor TEXT NOT NULL DEFAULT '',
+    validade TEXT NOT NULL DEFAULT '',          -- AAAA-MM-DD, quando a receita informa ou dá para calcular
+    UNIQUE (documento_id, medicamento, dose)
+);
+CREATE INDEX IF NOT EXISTS ix_receitas_dia ON receitas (dia);
+
+CREATE TABLE IF NOT EXISTS encaminhamentos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documento_id INTEGER NOT NULL,
+    dia TEXT NOT NULL DEFAULT '',
+    especialidade TEXT NOT NULL,
+    motivo TEXT NOT NULL DEFAULT '',
+    prescritor TEXT NOT NULL DEFAULT '',
+    validade TEXT NOT NULL DEFAULT '',
+    UNIQUE (documento_id, especialidade)
+);
+CREATE INDEX IF NOT EXISTS ix_encaminhamentos_dia ON encaminhamentos (dia);
 """
 
 # tabela -> (colunas graváveis, chave primária). Nada fora desta lista é aceito.
@@ -438,6 +505,12 @@ def resumo() -> dict:
         saida["ecg"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM ecg").fetchone()))
         saida["fc_hora"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM fc_hora").fetchone()))
         saida["saude_eventos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM saude_eventos").fetchone()))
+        saida["documentos_saude"] = dict(zip(("linhas", "pendentes", "ate"), con.execute(
+            "SELECT COUNT(*), COALESCE(SUM(estado = 'pendente'), 0), MAX(dia) FROM documentos_saude").fetchone()))
+        saida["exames_resultados"] = dict(zip(("linhas", "exames", "de", "ate"), con.execute(
+            "SELECT COUNT(*), COUNT(DISTINCT chave), MIN(dia), MAX(dia) FROM exames_resultados").fetchone()))
+        saida["receitas"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM receitas").fetchone()))
+        saida["encaminhamentos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM encaminhamentos").fetchone()))
         return saida
     finally:
         con.close()
@@ -466,6 +539,13 @@ def tabelas_para_modelo() -> str:
         "cada ECG do Apple Watch; classificacao é a da Apple (ritmo sinusal, fibrilação atrial, inconclusivo...); as medidas de batimento são do Heimdall, não diagnóstico.\n"
         "fc_hora(dia, hora, fc_min, fc_media, fc_max, leituras): frequência cardíaca por hora do dia.\n"
         "saude_eventos(id, tipo, dia, inicio, titulo, valor, texto): sintomas, humor (valor de -1 a 1), medicamentos, avisos de frequência cardíaca e ciclo.\n"
+        "documentos_saude(id, tipo, arquivo, dia, emissor, solicitante, origem, estado, avisos): exames, receitas e encaminhamentos enviados pelo usuário; "
+        "estado: pendente (aguarda conferência), confirmado ou descartado. Só os confirmados têm dados nas tabelas abaixo.\n"
+        "exames_resultados(documento_id, dia, chave, nome, nome_original, grupo, valor, valor_texto, comparador, unidade, ref_texto, ref_min, ref_max, sinal, fonte): "
+        "cada resultado de exame de sangue ou laboratório (chave canônica: vitamina_d, hemoglobina, glicemia_jejum...); sinal: abaixo, dentro, acima ou vazio; "
+        "ref_texto é a referência do laboratório como está no documento.\n"
+        "receitas(documento_id, dia, medicamento, dose, posologia, duracao, prescritor, validade): medicamentos das receitas confirmadas.\n"
+        "encaminhamentos(documento_id, dia, especialidade, motivo, prescritor, validade): encaminhamentos médicos confirmados.\n"
         "Dentro do SQL, sem_acento(coluna) devolve o texto em minúsculas e sem acento (use em buscas: WHERE sem_acento(titulo) LIKE '%coracao%')."
     )
 

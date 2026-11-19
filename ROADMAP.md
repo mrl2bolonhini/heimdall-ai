@@ -8,6 +8,8 @@ Os próximos recursos do Heimdall-ai, na ordem em que pretendo fazê-los. São i
 O que está sendo montado ou conferido agora.
 - Perguntas ao banco pelo chat: quatro ferramentas (banco_resumo, banco_consultar, banco_buscar e saude_historico) deixam perguntar em português sobre saúde, diários oficiais, e-mails, estudos, privacidade e Second Brain. Já funcionam pelo terminal; falta ligá-las ao chat, validar com cada modelo local (um modelo já inventou números quando não tinha acesso à ferramenta) e acertar o formato das respostas. O ajuste das ferramentas já está no código: cada função tem seu lugar em modelos_chat.py e há modelos por contexto (Meus Dados, Saúde, Finanças e os demais), cada um com seu prompt, suas funções permitidas e sua temperatura. Falta importar no Open WebUI os arquivos da pasta openwebui (o guia modelos_open_webui.txt explica) e validar cada modelo com perguntas reais.txt, e validar cada um com perguntas reais.
 
+- Exames no relatório da semana e lembrete de documento pendente há dias; glicemia e hipoglicemia: acompanhar quando houver dado de glicose no app Saúde.
+
 ## Depois
 Recursos maiores, que dependem dos anteriores.
 - Documentos pesquisáveis: Paperless-ngx em subdomínio próprio, com leitura de texto nos PDFs e etiquetas automáticas.

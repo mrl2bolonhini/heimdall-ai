@@ -1,0 +1,31 @@
+Exames, receitas e encaminhamentos no Heimdall
+
+O que faz: lê o PDF ou a foto, separa cada item, e só grava nas métricas de saúde depois que você confere. Os originais ficam só no Mac, em banco/documentos/arquivados, com permissão só sua, e não entram no backup do banco.
+
+1. Uma vez, no Mac: instale a leitura de foto e de PDF escaneado, se ainda não tiver: brew install tesseract tesseract-lang poppler
+2. Reinicie o agente para ele passar a vigiar a pasta e aceitar o envio do iPhone: ./subir.sh --reiniciar
+
+Pelo Mac
+1. Coloque o PDF ou a foto na pasta banco/documentos/entrada (dentro da pasta do Heimdall). O agente lê sozinho e avisa no Bark, sem nome nem número.
+2. Para ler na hora: heimdall exames pasta
+3. Ouvir o que foi lido: heimdall exames pendentes, depois heimdall exames ler NÚMERO.
+4. Se estiver certo: heimdall exames confirmar NÚMERO. Se algum item estiver errado, deixe-o de fora: heimdall exames confirmar NÚMERO --sem 2,5. Se o documento não tiver data, acrescente --data AAAA-MM-DD. Para jogar fora: heimdall exames descartar NÚMERO.
+
+Pelo iPhone (atalho na folha de compartilhamento)
+1. No Mac, gere o código só desse envio: heimdall exames token
+2. Exponha o agente na sua rede Tailscale (só dentro dela, nunca pela internet): tailscale serve --bg --https=8443 http://127.0.0.1:8003
+3. Copie o código sem colar à mão: grep '^HEIMDALL_EXAMES_TOKEN=' .env | cut -d= -f2- | tr -d '\n' | pbcopy. Ele chega ao iPhone pela Área de Transferência Universal.
+4. No app Atalhos, crie um atalho novo chamado Enviar para o Heimdall e ative a opção de aparecer na Folha de Compartilhamento, aceitando PDF e Imagens.
+5. Primeira ação: Obter conteúdo da URL, com o endereço https://NOME-DO-MAC.SEU-TAILNET.ts.net:8443/saude/documento, método POST, corpo de requisição Arquivo, e o arquivo é a Entrada do Atalho.
+6. Em cabeçalhos, acrescente X-Heimdall-Upload com o código copiado, e X-Heimdall-Nome com o nome do arquivo (variável Nome da Entrada do Atalho).
+7. Última ação: Mostrar resultado. A resposta diz se o documento foi recebido e quantos itens foram lidos.
+8. Depois, no Mac, confira com heimdall exames pendentes. Nada é gravado antes disso.
+
+Depois de confirmado
+- heimdall exames: o último resultado de cada exame.
+- heimdall exames exame vitamina d: histórico, com o que o relógio mostrou antes de cada coleta.
+- heimdall exames analise: leitura cruzada com sono, HRV, pulso e atividade.
+- No chat, o Heimdall consulta com as ferramentas exames_resumo, exame_historico, analise_exames, exames_pendentes e receitas_encaminhamentos. Confirmar e descartar só existem no terminal.
+- No painel de saúde: páginas Exames e Documentos, somente leitura.
+
+Cuidados: a leitura não é diagnóstico nem interpretação médica. Confira sempre com o documento original e com o seu médico. A relação com o relógio é coincidência no tempo, não causa.

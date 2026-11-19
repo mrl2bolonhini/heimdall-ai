@@ -970,6 +970,57 @@ def analise_saude(tema: str = "agora", dias: int = 90) -> str:
         return f"Não consegui fazer a análise: {e}"
 
 
+def _exames_mod():
+    import heimdall_exames
+
+    return heimdall_exames
+
+
+def exames_resumo(dias: int = 730) -> str:
+    """Resultados dos exames de laboratório (sangue e outros) que o usuário enviou e confirmou: o último valor de cada exame, a situação diante da referência do próprio laboratório
+    (abaixo, dentro, acima ou sem faixa clara) e o valor anterior. Só mostra o que está nos documentos; não interpreta nem diagnostica. dias: de 1 a 3650."""
+    try:
+        return _BANCO_AVISO + "\n" + _exames_mod().relatorio_exames(_limitar(dias, padrao=730))
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui ler os exames: {e}"
+
+
+def exame_historico(exame: str, dias: int = 3650) -> str:
+    """Histórico de um exame de laboratório do usuário (por exemplo vitamina D, TSH, ferritina, glicemia de jejum, hemoglobina): cada resultado com data, unidade e referência do
+    laboratório, mais o que o Apple Watch mostrou nos 30 dias antes de cada coleta (sono, HRV, pulso em repouso, passos, exercício). Isso é coincidência no tempo, não causa."""
+    try:
+        return _BANCO_AVISO + "\n" + _exames_mod().relatorio_exame(str(exame or "")[:60], _limitar(dias, padrao=3650))
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui ler o exame: {e}"
+
+
+def analise_exames(exame: str = "", dias: int = 730) -> str:
+    """Leitura cruzada dos exames de laboratório com os dados do relógio e do iPhone. Sem 'exame', resume tudo o que saiu da referência e o relógio antes da coleta mais recente;
+    com 'exame' (por exemplo vitamina d), mostra a evolução. O modelo local pode comentar, mas só com os números que estão nos dados; nunca diagnostica nem sugere remédio."""
+    try:
+        return _BANCO_AVISO + "\n" + _exames_mod().analise(str(exame or "")[:60], _limitar(dias, padrao=730))
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui fazer a análise dos exames: {e}"
+
+
+def exames_pendentes() -> str:
+    """Documentos de saúde (exames, receitas, encaminhamentos) que o Heimdall já leu e que aguardam a conferência do usuário, item por item. Esta ferramenta só lê: quem confirma
+    ou descarta é o usuário, no terminal (heimdall exames confirmar ID), depois de ouvir o que foi lido. Nunca confirme nada por conta própria."""
+    try:
+        return _BANCO_AVISO + "\n" + _exames_mod().texto_pendentes()
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui ler os documentos pendentes: {e}"
+
+
+def receitas_encaminhamentos() -> str:
+    """Receitas e encaminhamentos médicos confirmados pelo usuário: medicamentos com dose e posologia, especialidades encaminhadas, e a validade quando o documento informa."""
+    try:
+        m = _exames_mod()
+        return _BANCO_AVISO + "\n" + m.relatorio_receitas() + "\n\n" + m.relatorio_encaminhamentos()
+    except Exception as e:  # noqa: BLE001
+        return f"Não consegui ler receitas e encaminhamentos: {e}"
+
+
 def banco_buscar(termo: str, tabela: str = "", limite: int = 5) -> str:
     """Procura um termo (sem diferenciar maiúsculas nem acentos) em todo o banco pessoal do usuário: diários oficiais, e-mails de serviços públicos,
     achados de privacidade, estudos, análises do Second Brain, avisos e resumos de saúde. Devolve as ocorrências mais recentes de cada tabela.
@@ -1212,6 +1263,11 @@ MAC_TOOLS = [
     frequencia_cardiaca_resumo,
     relatorio_saude,
     analise_saude,
+    exames_resumo,
+    exame_historico,
+    analise_exames,
+    exames_pendentes,
+    receitas_encaminhamentos,
 ]
 
 # DADOS_TOOLS: só as ferramentas do banco pessoal, para o Open WebUI. Servidas em 127.0.0.1:8004, sem leitura nem escrita
@@ -1226,6 +1282,11 @@ DADOS_TOOLS = [
     frequencia_cardiaca_resumo,
     relatorio_saude,
     analise_saude,
+    exames_resumo,
+    exame_historico,
+    analise_exames,
+    exames_pendentes,
+    receitas_encaminhamentos,
     financas_resumo,
     financas_transacoes,
     financas_orcamentos,

@@ -215,7 +215,7 @@ heimdall() {
         --open)
           case "$2" in
             anomalies) pg=anomalias ;; today) pg=hoje ;; week) pg=semana ;; sleep) pg=sono ;; activity) pg=atividade ;;
-            recovery) pg=recuperacao ;; heart) pg=coracao ;; workouts) pg=treinos ;; events) pg=eventos ;; diary) pg=diario ;; data) pg=dados ;;
+            recovery) pg=recuperacao ;; heart) pg=coracao ;; workouts) pg=treinos ;; events) pg=eventos ;; diary) pg=diario ;; labs) pg=exames ;; documents) pg=documentos ;; data) pg=dados ;;
             "") pg="" ;; *) pg="$2" ;;
           esac
           _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health "${pg:+/$pg}" ;;
@@ -233,6 +233,25 @@ heimdall() {
 --workouts=--treinos
 --import=--importar" "$@"
           _heimdall_py heimdall_saude.py "${_HA[@]}" ;;
+      esac ;;
+    exames)
+      local _sub="$1"; [ $# -gt 0 ] && shift
+      case "$_sub" in
+        ""|resumo) _heimdall_py heimdall_exames.py --resumo "$@" ;;
+        pendentes) _heimdall_py heimdall_exames.py --pendentes ;;
+        ler) _heimdall_py heimdall_exames.py --ler "$@" ;;
+        confirmar) _heimdall_py heimdall_exames.py --confirmar "$1" "${@:2}" ;;
+        descartar) _heimdall_py heimdall_exames.py --descartar "$@" ;;
+        pasta) _heimdall_py heimdall_exames.py --pasta ;;
+        importar) _heimdall_py heimdall_exames.py --importar "$@" ;;
+        exame) _heimdall_py heimdall_exames.py --exame "$@" ;;
+        analise) _heimdall_py heimdall_exames.py --analise "$@" ;;
+        receitas) _heimdall_py heimdall_exames.py --receitas ;;
+        encaminhamentos) _heimdall_py heimdall_exames.py --encaminhamentos ;;
+        documentos) _heimdall_py heimdall_exames.py --documentos ;;
+        token) _heimdall_py heimdall_exames.py --gerar-token ;;
+        --open) _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health /exames ;;
+        *) echo "Uso: heimdall exames [resumo|pendentes|ler ID|confirmar ID [--sem 2,5] [--data AAAA-MM-DD]|descartar ID|pasta|importar ARQUIVO...|exame NOME|analise [NOME]|receitas|encaminhamentos|documentos|token|--open]"; return 1 ;;
       esac ;;
     games)
       case "$1" in
@@ -403,7 +422,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health games finance n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health exames games finance n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -416,8 +435,9 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
       notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
       health)
-        if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary data
+        if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data
         else compadd -- --local --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
+      exames) compadd -- resumo pendentes ler confirmar descartar pasta importar exame analise receitas encaminhamentos documentos token --open ;;
       games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas xadrez
         else compadd -- --local --play --list; fi ;;
       cloud) compadd -- --local ;;
