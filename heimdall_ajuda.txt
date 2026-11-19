@@ -158,30 +158,34 @@ Exemplos:
   heimdall health --anomalies 2026-11-10
   heimdall health -r 60
 
-@ exames | Exames de laboratório, receitas e encaminhamentos
-Lê PDF e foto de exame, receita e encaminhamento e guarda cada item nas métricas de saúde, depois que você confere. A pasta do Mac é banco/documentos/entrada; o iPhone envia pelo atalho. Nada aqui é diagnóstico.
-Uso: heimdall exames [SUBCOMANDO]
+@ labs | Exames de laboratório, receitas, encaminhamentos e consultas
+Lê PDF e foto de exame, receita, encaminhamento e confirmação de consulta e guarda cada item nas métricas de saúde, depois que você confere. A pasta do Mac é banco/documentos/entrada; o iPhone envia pelo atalho. Consulta e pedido de renovação de receita vão para o Calendário como evento (calendário Heimdall). Nada aqui é diagnóstico.
+Uso: heimdall labs [SUBCOMANDO]
 Opções:
   -h, --help           mostra esta ajuda
 Subcomandos:
-  resumo (ou sem nada)   o último resultado de cada exame confirmado
-  pendentes              documentos lidos que aguardam a sua conferência
-  ler ID                 conta o que foi lido no documento, item por item, com numeração
-  confirmar ID [--sem 2,5] [--data AAAA-MM-DD]   grava os itens (deixa de fora os números de --sem)
-  descartar ID           joga o documento fora sem gravar nada
-  pasta                  lê agora o que estiver na pasta de entrada
-  importar ARQUIVO...    lê arquivos de qualquer pasta
-  exame NOME             histórico de um exame, com o que o relógio mostrou antes de cada coleta
-  analise [NOME]         leitura cruzada com sono, HRV, pulso e atividade
-  receitas               receitas confirmadas
-  encaminhamentos        encaminhamentos confirmados
-  documentos             lista de tudo que foi recebido
-  token                  gera o código do atalho do iPhone (fica no .env)
-  --open                 abre a página Exames do painel de saúde
+  summary (ou sem nada)  o último resultado de cada exame confirmado
+  pending              documentos lidos que aguardam a sua conferência
+  read ID              conta o que foi lido no documento, item por item, com numeração
+  confirm ID [--without 2,5] [--date AAAA-MM-DD]   grava os itens (deixa de fora os números de --without) e leva consultas e renovações ao Calendário
+  discard ID           joga o documento fora sem gravar nada
+  folder               lê agora o que estiver na pasta de entrada
+  import FILE...       lê arquivos de qualquer pasta
+  result NAME          histórico de um exame, com o que o relógio mostrou antes de cada coleta
+  analysis [NAME]      leitura cruzada com sono, HRV, pulso e atividade
+  prescriptions        receitas confirmadas
+  referrals            encaminhamentos confirmados
+  appointments         consultas cadastradas
+  appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NOME] [--specialty NOME] [--place LOCAL]   cadastra uma consulta à mão e a leva ao Calendário
+  calendar             leva ao Calendário o que ainda estiver pendente (se o agente estava fora do ar)
+  documents            lista de tudo que foi recebido
+  token                gera o código do atalho do iPhone (fica no .env)
+  --open               abre a página Exames do painel de saúde
 Exemplos:
-  heimdall exames pendentes
-  heimdall exames confirmar 3 --sem 7
-  heimdall exames exame vitamina d
+  heimdall labs pending
+  heimdall labs confirm 3 --without 7
+  heimdall labs result vitamina d
+  heimdall labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia
 
 @ games | Heimdall Jogos, jogos leves para leitor de tela
 Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos ficam em categorias, em ordem alfabética, e dentro delas também em ordem alfabética: Ação (arqueiro de áudio e labirinto), Aventuras de texto (cinco histórias e a Travessia das Três Provas), Cartas (paciência e poker), Cassino (bacará, blackjack, caça-níqueis, poker caribenho e roleta), Números e lógica (2048, número secreto, senha e sudoku), Palavras e letras (cinco letras e forca) e Tabuleiro e estratégia (batalha naval, campo minado, gramado, jogo da velha, sonar e xadrez). Os jogos de terceiros só entram se tiverem versão em português ou permitirem tradução.

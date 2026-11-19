@@ -8,6 +8,14 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Cloud, Notas, Ne
 - Acessibilidade para leitor de tela (VoiceOver) e teclado: lang pt-BR, pular para o conteúdo, um só h1, tabelas com caption e scope, campos com label, avisos com role status/alert.
 - Rode `python3 teste_design.py` e o teste do serviço alterado antes de enviar.
 
+## Evento ou lembrete (obrigatório em toda aplicação que escreve na agenda)
+- Evento (Calendário, calendário Heimdall) é o que acontece numa data e hora ou tem data fixa: consulta, prazo. Lembrete (app Lembretes) é o que o usuário precisa fazer e marcar como feito.
+- A regra e a tabela de tipos ficam em `heimdall_agenda.py` (DESTINOS). Tipo novo de item na agenda: cadastre-o lá escolhendo evento ou lembrete, e use `agenda.enviar`. Rode `python3 teste_agenda.py`.
+- Evento com dado de saúde leva título genérico ("Consulta médica"); detalhes só com HEIMDALL_AGENDA_DETALHES=1, porque o Calendário pode sincronizar com a nuvem da Apple.
+
+## Comandos do terminal
+- Nomes de comando, subcomando e opção do `heimdall` são em inglês (health, labs, --today, --without); o texto que o usuário lê continua em português. O script Python por trás pode ter opções em português: o heimdall.zsh traduz com `_heimdall_tr`.
+
 ## Outras regras fixas
 - O usuário é cego e usa VoiceOver: respostas em português, texto corrido e listas numeradas simples, sem elementos visuais.
 - Cada recurso novo atualiza gerar_docs.py, README, heimdall_ajuda.txt e CHANGELOG.md.

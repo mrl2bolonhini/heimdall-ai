@@ -234,24 +234,34 @@ heimdall() {
 --import=--importar" "$@"
           _heimdall_py heimdall_saude.py "${_HA[@]}" ;;
       esac ;;
-    exames)
+    labs)
       local _sub="$1"; [ $# -gt 0 ] && shift
+      _heimdall_tr "--without=--sem
+--date=--data
+--time=--hora
+--doctor=--medico
+--specialty=--especialidade
+--place=--local
+--days=--dias" "$@"
       case "$_sub" in
-        ""|resumo) _heimdall_py heimdall_exames.py --resumo "$@" ;;
-        pendentes) _heimdall_py heimdall_exames.py --pendentes ;;
-        ler) _heimdall_py heimdall_exames.py --ler "$@" ;;
-        confirmar) _heimdall_py heimdall_exames.py --confirmar "$1" "${@:2}" ;;
-        descartar) _heimdall_py heimdall_exames.py --descartar "$@" ;;
-        pasta) _heimdall_py heimdall_exames.py --pasta ;;
-        importar) _heimdall_py heimdall_exames.py --importar "$@" ;;
-        exame) _heimdall_py heimdall_exames.py --exame "$@" ;;
-        analise) _heimdall_py heimdall_exames.py --analise "$@" ;;
-        receitas) _heimdall_py heimdall_exames.py --receitas ;;
-        encaminhamentos) _heimdall_py heimdall_exames.py --encaminhamentos ;;
-        documentos) _heimdall_py heimdall_exames.py --documentos ;;
+        ""|summary) _heimdall_py heimdall_exames.py --resumo "${_HA[@]}" ;;
+        pending) _heimdall_py heimdall_exames.py --pendentes ;;
+        read) _heimdall_py heimdall_exames.py --ler "${_HA[@]}" ;;
+        confirm) _heimdall_py heimdall_exames.py --confirmar "${_HA[@]}" ;;
+        discard) _heimdall_py heimdall_exames.py --descartar "${_HA[@]}" ;;
+        folder) _heimdall_py heimdall_exames.py --pasta ;;
+        import) _heimdall_py heimdall_exames.py --importar "${_HA[@]}" ;;
+        result) _heimdall_py heimdall_exames.py --exame "${_HA[@]}" ;;
+        analysis) _heimdall_py heimdall_exames.py --analise "${_HA[@]}" ;;
+        prescriptions) _heimdall_py heimdall_exames.py --receitas ;;
+        referrals) _heimdall_py heimdall_exames.py --encaminhamentos ;;
+        appointments) _heimdall_py heimdall_exames.py --consultas ;;
+        appointment) _heimdall_py heimdall_exames.py --consulta-nova "${_HA[@]}" ;;
+        calendar) _heimdall_py heimdall_exames.py --agenda ;;
+        documents) _heimdall_py heimdall_exames.py --documentos ;;
         token) _heimdall_py heimdall_exames.py --gerar-token ;;
         --open) _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health /exames ;;
-        *) echo "Uso: heimdall exames [resumo|pendentes|ler ID|confirmar ID [--sem 2,5] [--data AAAA-MM-DD]|descartar ID|pasta|importar ARQUIVO...|exame NOME|analise [NOME]|receitas|encaminhamentos|documentos|token|--open]"; return 1 ;;
+        *) echo "Use: heimdall labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
       esac ;;
     games)
       case "$1" in
@@ -422,7 +432,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health exames games finance n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -437,7 +447,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data
         else compadd -- --local --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
-      exames) compadd -- resumo pendentes ler confirmar descartar pasta importar exame analise receitas encaminhamentos documentos token --open ;;
+      labs) compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals appointments appointment calendar documents token --open --without --date --time --doctor --specialty --place ;;
       games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas xadrez
         else compadd -- --local --play --list; fi ;;
       cloud) compadd -- --local ;;

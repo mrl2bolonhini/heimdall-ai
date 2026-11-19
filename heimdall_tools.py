@@ -1005,7 +1005,7 @@ def analise_exames(exame: str = "", dias: int = 730) -> str:
 
 def exames_pendentes() -> str:
     """Documentos de saúde (exames, receitas, encaminhamentos) que o Heimdall já leu e que aguardam a conferência do usuário, item por item. Esta ferramenta só lê: quem confirma
-    ou descarta é o usuário, no terminal (heimdall exames confirmar ID), depois de ouvir o que foi lido. Nunca confirme nada por conta própria."""
+    ou descarta é o usuário, no terminal (heimdall labs confirm ID), depois de ouvir o que foi lido. Nunca confirme nada por conta própria."""
     try:
         return _BANCO_AVISO + "\n" + _exames_mod().texto_pendentes()
     except Exception as e:  # noqa: BLE001
@@ -1013,10 +1013,10 @@ def exames_pendentes() -> str:
 
 
 def receitas_encaminhamentos() -> str:
-    """Receitas e encaminhamentos médicos confirmados pelo usuário: medicamentos com dose e posologia, especialidades encaminhadas, e a validade quando o documento informa."""
+    """Receitas, encaminhamentos e consultas médicas confirmados pelo usuário: medicamentos com dose e posologia, especialidades encaminhadas, validade quando o documento informa e consultas marcadas (que também ficam no Calendário). Só leitura."""
     try:
         m = _exames_mod()
-        return _BANCO_AVISO + "\n" + m.relatorio_receitas() + "\n\n" + m.relatorio_encaminhamentos()
+        return _BANCO_AVISO + "\n" + m.relatorio_receitas() + "\n\n" + m.relatorio_encaminhamentos() + "\n\n" + m.relatorio_consultas()
     except Exception as e:  # noqa: BLE001
         return f"Não consegui ler receitas e encaminhamentos: {e}"
 

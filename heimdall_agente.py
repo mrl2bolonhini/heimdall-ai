@@ -817,6 +817,40 @@ on run argv
     end tell
 end run
 '''
+AS_EVENTO_HORARIO = r'''
+on run argv
+    set tit to item 1 of argv
+    set y to (item 2 of argv) as integer
+    set m to (item 3 of argv) as integer
+    set dd to (item 4 of argv) as integer
+    set hh to (item 5 of argv) as integer
+    set mi to (item 6 of argv) as integer
+    set dur to (item 7 of argv) as integer
+    set notas to item 8 of argv
+    set lugar to item 9 of argv
+    set alarmes to item 10 of argv
+    set nomeCal to item 11 of argv
+    set d to current date
+    set day of d to 1
+    set year of d to y
+    set month of d to m
+    set day of d to dd
+    set time of d to (hh * 3600 + mi * 60)
+    tell application "Calendar"
+        if not (exists calendar nomeCal) then make new calendar with properties {name:nomeCal}
+        set cal to calendar nomeCal
+        if (count of (events of cal whose summary is tit and start date is d)) > 0 then return "ja_existe"
+        set ev to make new event at end of events of cal with properties {summary:tit, start date:d, end date:(d + dur * minutes), description:notas, location:lugar}
+        if alarmes is not "" then
+            set AppleScript's text item delimiters to ","
+            repeat with a in text items of alarmes
+                tell ev to make new display alarm at end of display alarms with properties {trigger interval:(-1 * (a as integer))}
+            end repeat
+        end if
+        return "criado"
+    end tell
+end run
+'''
 AS_LEMBRETE = r'''
 on run argv
     set tit to item 1 of argv
@@ -884,10 +918,23 @@ def _texto_curto(s, limite: int) -> str:
 
 
 def criar_evento(dado: dict) -> dict:
+    """Evento do Calendário (calendário "Heimdall"). Sem "hora" é de dia inteiro; com "hora" (HH:MM) tem início, "duracao_min" e "local".
+    Evento é o que acontece numa data e hora (consulta) ou tem data-limite fixa. O que você precisa fazer e marcar como feito é lembrete (criar_lembrete)."""
     titulo = _texto_curto(dado.get("titulo"), 200)
     if not titulo:
         raise ValueError("título vazio")
     y, m, d = _data(dado.get("data", ""))
+    hora = str(dado.get("hora") or "").strip()
+    if hora:
+        mm = re.fullmatch(r"([01]?\d|2[0-3]):([0-5]\d)", hora)
+        if not mm:
+            raise ValueError("hora inválida (use HH:MM)")
+        dur = max(15, min(int(dado.get("duracao_min", 60)), 720))
+        alarmes = ",".join(str(max(0, min(int(x), 20160)) * 60) for x in (dado.get("alertas_min_antes") or [60, 1440])[:4])
+        with _lock:
+            r = osascript(AS_EVENTO_HORARIO, titulo, y, m, d, str(int(mm.group(1))), str(int(mm.group(2))), str(dur),
+                          _texto_curto(dado.get("notas"), 1000), _texto_curto(dado.get("local"), 200), alarmes, NOME_AGENDA)
+        return {"ok": True, "evento": r}
     antes = max(0, min(int(dado.get("alerta_dias_antes", 1)), 14))
     with _lock:
         r = osascript(AS_EVENTO, titulo, y, m, d, _texto_curto(dado.get("notas"), 1000), str(antes), NOME_AGENDA)
@@ -1160,7 +1207,7 @@ def _ler_documentos() -> None:
         falhos = [r for r in rs if not r.get("ok")]
         if novos:
             triagem.enviar_bark({"title": "Saúde: documento para conferir", "group": "saude", "level": "active",
-                                 "body": f"{len(novos)} documento(s) lido(s). Para ouvir o que foi lido: heimdall exames pendentes."})
+                                 "body": f"{len(novos)} documento(s) lido(s). Para ouvir o que foi lido: heimdall labs pending."})
         if falhos:
             triagem.enviar_bark({"title": "Saúde: documento não lido", "group": "saude", "level": "active",
                                  "body": f"{len(falhos)} documento(s) não puderam ser lidos e estão na pasta revisar, com o motivo."})

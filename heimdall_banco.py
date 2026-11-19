@@ -301,6 +301,28 @@ CREATE TABLE IF NOT EXISTS encaminhamentos (
     UNIQUE (documento_id, especialidade)
 );
 CREATE INDEX IF NOT EXISTS ix_encaminhamentos_dia ON encaminhamentos (dia);
+
+CREATE TABLE IF NOT EXISTS consultas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documento_id INTEGER NOT NULL DEFAULT 0,    -- 0 quando cadastrada à mão
+    dia TEXT NOT NULL,
+    hora TEXT NOT NULL DEFAULT '',              -- HH:MM
+    medico TEXT NOT NULL DEFAULT '',
+    especialidade TEXT NOT NULL DEFAULT '',
+    local TEXT NOT NULL DEFAULT '',
+    UNIQUE (dia, hora, medico, especialidade)
+);
+CREATE INDEX IF NOT EXISTS ix_consultas_dia ON consultas (dia);
+
+CREATE TABLE IF NOT EXISTS agenda_saude (
+    chave TEXT PRIMARY KEY,                     -- tipo|origem|dia: o mesmo item nunca vira dois eventos
+    tipo TEXT NOT NULL,                         -- consulta, renovacao_receita (ver heimdall_agenda.DESTINOS)
+    dia TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'pendente',    -- pendente (ainda não chegou ao Calendário) ou feito
+    detalhe TEXT NOT NULL DEFAULT '',
+    atualizado TEXT NOT NULL
+);
 """
 
 # tabela -> (colunas graváveis, chave primária). Nada fora desta lista é aceito.
@@ -510,6 +532,7 @@ def resumo() -> dict:
         saida["exames_resultados"] = dict(zip(("linhas", "exames", "de", "ate"), con.execute(
             "SELECT COUNT(*), COUNT(DISTINCT chave), MIN(dia), MAX(dia) FROM exames_resultados").fetchone()))
         saida["receitas"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM receitas").fetchone()))
+        saida["consultas"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM consultas").fetchone()))
         saida["encaminhamentos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM encaminhamentos").fetchone()))
         return saida
     finally:
@@ -546,6 +569,7 @@ def tabelas_para_modelo() -> str:
         "ref_texto é a referência do laboratório como está no documento.\n"
         "receitas(documento_id, dia, medicamento, dose, posologia, duracao, prescritor, validade): medicamentos das receitas confirmadas.\n"
         "encaminhamentos(documento_id, dia, especialidade, motivo, prescritor, validade): encaminhamentos médicos confirmados.\n"
+        "consultas(documento_id, dia, hora, medico, especialidade, local): consultas médicas marcadas.\n"
         "Dentro do SQL, sem_acento(coluna) devolve o texto em minúsculas e sem acento (use em buscas: WHERE sem_acento(titulo) LIKE '%coracao%')."
     )
 

@@ -285,7 +285,7 @@ def pg_documentos(q: dict) -> tuple:
     corpo = ""
     if pend:
         corpo += (f'<p role="status">{len(pend)} documento(s) aguardam a sua conferência. Para ouvir o que foi lido e confirmar, use no terminal do Mac: '
-                  'heimdall exames pendentes.</p>')
+                  'heimdall labs pending.</p>')
     docs = exames.listar_documentos()
     if docs:
         cab = "".join(f'<th scope="col">{c}</th>' for c in ("Número", "Tipo", "Data", "Situação", "Origem"))
@@ -294,7 +294,7 @@ def pg_documentos(q: dict) -> tuple:
         corpo += f'<table><caption>Documentos recebidos ({len(docs)})</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
     else:
         corpo += "<p>Nenhum documento recebido ainda.</p>"
-    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos())
+    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + secao("Consultas", exames.relatorio_consultas())
     return "Documentos", corpo + AVISO_EXAMES
 
 

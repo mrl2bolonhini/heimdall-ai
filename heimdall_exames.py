@@ -11,7 +11,7 @@ Como a leitura é confiável:
    descartado e listado como "não consegui confirmar". O modelo nunca calcula nem inventa número.
 3. A situação (abaixo, dentro, acima) só é calculada quando a referência do laboratório tem uma única faixa clara. Faixas por sexo, idade ou
    várias metas ficam sem situação, com o texto original da referência.
-4. Nada entra nas tabelas definitivas sem a sua conferência: o documento fica "pendente" até você confirmar (heimdall exames confirmar ID).
+4. Nada entra nas tabelas definitivas sem a sua conferência: o documento fica "pendente" até você confirmar (heimdall labs confirm ID).
    O texto do documento é tratado como dado, nunca como instrução.
 
 Uso:
@@ -70,6 +70,7 @@ def carregar_env() -> None:
 
 carregar_env()
 import heimdall_banco as banco  # noqa: E402
+import heimdall_agenda as agenda  # noqa: E402  (evento do Calendário ou lembrete: a regra única)
 
 DIR = Path(os.environ.get("HEIMDALL_EXAMES_DIR", str(banco.DB_DIR / "documentos"))).expanduser()
 MAX_BYTES = 25 * 1024 * 1024
@@ -118,14 +119,14 @@ _DATA = re.compile(r"(?<!\d)(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4}|\d{2})(?!\d)")
 _HORA = re.compile(r"(?<!\d)\d{1,2}:\d{2}(?::\d{2})?(?!\d)")
 
 
-def _data_iso(d, m, a) -> str:
+def _data_iso(d, m, a, futuro: bool = False) -> str:
     a = int(a)
     a = a + 2000 if a < 100 else a
     try:
         v = date(a, int(m), int(d))
     except ValueError:
         return ""
-    if v.year < 1990 or v > date.today() + timedelta(days=1):
+    if v.year < 1990 or (not futuro and v > date.today() + timedelta(days=1)) or v.year > 2100:
         return ""
     return v.isoformat()
 
@@ -452,7 +453,8 @@ def classificar(texto: str, n_resultados: int = 0) -> str:
     exame += 3 if n_resultados >= 3 else 0
     receita = sum(p in n for p in ("receita", "uso oral", "uso topico", "via oral", "comprimido", "capsula", "posologia", "tomar", "prescricao", "gotas", "caixa", "uso continuo"))
     enc = sum(p in n for p in ("encaminho", "encaminhamento", "solicito avaliacao", "para avaliacao", "referencia e contrarreferencia", "avaliacao com", "especialista", "parecer"))
-    melhor = max(("exame", exame), ("receita", receita), ("encaminhamento", enc), key=lambda x: x[1])
+    cons = sum(p in n for p in ("consulta", "agendad", "marcad", "horario", "comparec", "confirmacao", "retorno", "antecedencia"))
+    melhor = max(("exame", exame), ("receita", receita), ("encaminhamento", enc), ("consulta", cons), key=lambda x: x[1])
     return melhor[0] if melhor[1] >= 2 else "outro"
 
 
@@ -792,6 +794,39 @@ def extrair_encaminhamentos(texto: str) -> tuple:
     return saida, avisos
 
 
+_HORA = re.compile(r"(?<![\d:/.])([01]?\d|2[0-3])\s*(?::|h)\s*([0-5]\d)?(?![\d])", re.I)
+
+
+def ler_consultas_regra(texto: str) -> tuple:
+    """Consulta marcada: data, hora, médico, especialidade e local, todos tirados do texto por regra. Devolve (lista, avisos)."""
+    avisos, achada = [], None
+    for linha in texto.splitlines():
+        if re.search(r"(?i)nasc|idade|emiss|cpf|protocolo", linha):
+            continue
+        g = _DATA.search(linha)
+        h = _HORA.search(linha[g.end():] if g else linha) if g else None
+        if g and h:
+            iso = _data_iso(*g.groups(), futuro=True)
+            if iso:
+                achada = (iso, f"{int(h.group(1)):02d}:{int(h.group(2) or 0):02d}")
+                break
+    if not achada:
+        for linha in texto.splitlines():
+            g = _DATA.search(linha)
+            if g and not re.search(r"(?i)nasc|idade|emiss|cpf|protocolo", linha) and re.search(r"(?i)consulta|agend|marcad|retorno|comparec", linha):
+                iso = _data_iso(*g.groups(), futuro=True)
+                if iso:
+                    achada = (iso, "")
+                    avisos.append("Achei a data da consulta, mas não o horário; o evento vai no Calendário como dia inteiro.")
+                    break
+    if not achada:
+        return [], ["Não achei data e horário de consulta neste documento."]
+    tn = _norm(texto)
+    esp = next((n for n, pad in ESPECIALIDADES if re.search(pad, tn)), "")
+    m = re.search(r"(?i)(?:local|endere[cç]o|unidade|cl[ií]nica|consult[oó]rio)\s*[:\-]\s*([^\n]{3,120})", texto)
+    return [{"dia": achada[0], "hora": achada[1], "medico": achar_prescritor(texto), "especialidade": esp, "local": _limpo(m.group(1), 120) if m else ""}], avisos
+
+
 def achar_validade(texto: str, dia: str) -> str:
     m = re.search(r"(?i)validade\s*[:\-]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4})", texto)
     if m:
@@ -820,7 +855,7 @@ def extrair(texto: str, ocr: bool = False) -> dict:
     regra, desc = ler_resultados_regra(texto)
     tipo = classificar(texto, len(regra))
     out = {"tipo": tipo, "dia": achar_data(texto), "emissor": "", "solicitante": "", "ocr": ocr,
-           "resultados": [], "receitas": [], "encaminhamentos": [], "descartados": [], "avisos": []}
+           "resultados": [], "receitas": [], "encaminhamentos": [], "consultas": [], "descartados": [], "avisos": []}
     if tipo == "exame":
         resultados, descartados, avisos = extrair_exames(texto)
         out["emissor"], out["solicitante"] = achar_emissor(texto), achar_solicitante(texto)
@@ -843,10 +878,15 @@ def extrair(texto: str, ocr: bool = False) -> dict:
             e["prescritor"], e["validade"] = out["emissor"], v
         if not out["encaminhamentos"]:
             avisos.append("Não identifiquei a especialidade deste encaminhamento.")
+    elif tipo == "consulta":
+        out["consultas"], avisos = ler_consultas_regra(texto)
+        if out["consultas"]:
+            out["dia"] = out["consultas"][0]["dia"]
+        out["emissor"] = achar_prescritor(texto)
     else:
-        avisos.append("Não consegui dizer se é exame, receita ou encaminhamento; guardei o arquivo sem dados.")
+        avisos.append("Não consegui dizer se é exame, receita, encaminhamento ou consulta; guardei o arquivo sem dados.")
     if not out["dia"]:
-        avisos.append("Não achei a data do documento; ao confirmar, informe com --data AAAA-MM-DD.")
+        avisos.append("Não achei a data do documento; ao confirmar, informe com --date AAAA-MM-DD.")
     if ocr:
         avisos.append("O texto veio de reconhecimento de imagem, que pode trocar números: confira cada valor com o documento.")
     out["avisos"] = avisos
@@ -993,7 +1033,7 @@ def receber(dados: bytes, nome: str) -> dict:
 # --------------------------------------------------------------------------------------------
 # Conferência, confirmação e descarte
 # --------------------------------------------------------------------------------------------
-_TIPO_PT = {"exame": "exame de laboratório", "receita": "receita", "encaminhamento": "encaminhamento", "outro": "documento sem tipo identificado"}
+_TIPO_PT = {"consulta": "consulta marcada", "exame": "exame de laboratório", "receita": "receita", "encaminhamento": "encaminhamento", "outro": "documento sem tipo identificado"}
 
 
 def _doc(doc_id: int) -> dict:
@@ -1044,6 +1084,11 @@ def resumo_documento(doc_id: int) -> str:
         for i, r in enumerate(ext.get("receitas", []), 1):
             linhas.append(f"Item {i}. {r['medicamento']}" + (f", {r['dose']}" if r["dose"] else "") + (f". {r['posologia']}" if r["posologia"] else "")
                           + (f". Validade {_br(r['validade'])}" if r.get("validade") else "") + ".")
+    elif d["tipo"] == "consulta":
+        for i, c in enumerate(ext.get("consultas", []), 1):
+            linhas.append(f"Item {i}. Consulta em {_br(c['dia'])}" + (f" às {c['hora']}" if c["hora"] else "") + (f", {c['especialidade']}" if c["especialidade"] else "")
+                          + (f", {c['medico']}" if c["medico"] else "") + (f", em {c['local']}" if c["local"] else "") + ".")
+        linhas.append("Ao confirmar, a consulta vai para o Calendário como evento.")
     elif d["tipo"] == "encaminhamento":
         for i, e in enumerate(ext.get("encaminhamentos", []), 1):
             linhas.append(f"Item {i}. {e['especialidade']}" + (f". Motivo: {e['motivo']}" if e["motivo"] else "") + ".")
@@ -1052,7 +1097,7 @@ def resumo_documento(doc_id: int) -> str:
         linhas += [f"{x['texto']}: {x['motivo']}." for x in ext["descartados"][:15]]
     for a in json.loads(d["avisos"] or "[]"):
         linhas.append("Atenção: " + a)
-    linhas.append(f"Para guardar: heimdall exames confirmar {d['id']} (para deixar itens de fora: --sem 3,5). Para descartar: heimdall exames descartar {d['id']}.")
+    linhas.append(f"Para guardar: heimdall labs confirm {d['id']} (para deixar itens de fora: --without 3,5). Para descartar: heimdall labs discard {d['id']}.")
     return "\n".join(linhas)
 
 
@@ -1072,9 +1117,9 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
     ext = json.loads(d["extraido"] or "{}")
     dia = dia or d["dia"]
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", dia or ""):
-        raise ErroExames("Falta a data do documento. Use: heimdall exames confirmar ID --data AAAA-MM-DD")
+        raise ErroExames("Falta a data do documento. Use: heimdall labs confirm ID --date AAAA-MM-DD")
     sem = set(int(x) for x in (sem or []))
-    chave_lista = {"exame": "resultados", "receita": "receitas", "encaminhamento": "encaminhamentos"}.get(d["tipo"])
+    chave_lista = {"exame": "resultados", "receita": "receitas", "encaminhamento": "encaminhamentos", "consulta": "consultas"}.get(d["tipo"])
     itens = [x for i, x in enumerate(ext.get(chave_lista, []) if chave_lista else [], 1) if i not in sem]
     agora = _agora()
 
@@ -1096,10 +1141,15 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
             for r in itens:
                 con.execute("INSERT OR IGNORE INTO encaminhamentos (documento_id, dia, especialidade, motivo, prescritor, validade) VALUES (?,?,?,?,?,?)",
                             (d["id"], dia, r["especialidade"], r["motivo"], r.get("prescritor", ""), r.get("validade", "")))
+        elif d["tipo"] == "consulta":
+            for r in itens:
+                con.execute("INSERT OR IGNORE INTO consultas (documento_id, dia, hora, medico, especialidade, local) VALUES (?,?,?,?,?,?)",
+                            (d["id"], r["dia"], r["hora"], r["medico"], r["especialidade"], r["local"]))
         con.execute("UPDATE documentos_saude SET estado='confirmado', dia=?, extraido='{}', atualizado=?, confirmado_em=? WHERE id=?", (dia, agora, agora, d["id"]))
 
     _escrever(grava)
-    return {"id": d["id"], "tipo": d["tipo"], "guardados": len(itens), "deixados_de_fora": len(ext.get(chave_lista, []) if chave_lista else []) - len(itens), "dia": dia}
+    ag = sincronizar_agenda() if d["tipo"] in ("receita", "consulta") else {}
+    return {"id": d["id"], "tipo": d["tipo"], "guardados": len(itens), "deixados_de_fora": len(ext.get(chave_lista, []) if chave_lista else []) - len(itens), "dia": dia, "agenda": ag}
 
 
 def descartar(doc_id: int) -> dict:
@@ -1153,7 +1203,7 @@ def relatorio_exames(dias: int = 730) -> str:
     rows = _ler("SELECT r.* FROM exames_resultados r WHERE r.dia >= ? ORDER BY r.dia DESC, r.id", (de,))
     if not rows:
         pend = pendentes()
-        extra = f" Há {len(pend)} documento(s) aguardando conferência: heimdall exames pendentes." if pend else ""
+        extra = f" Há {len(pend)} documento(s) aguardando conferência: heimdall labs pending." if pend else ""
         return "Ainda não há resultados de exames confirmados neste período." + extra
     ultimo, anterior = {}, {}
     for r in rows:
@@ -1233,6 +1283,95 @@ def analise(nome: str = "", dias: int = 730, com_modelo: bool = True) -> str:
             base += f"\nNos 30 dias antes da coleta mais recente ({_br(rec)}), o relógio mostrou: {_rel_texto(janela_relogio(rec))}."
     comentario = _interpretar(base) if com_modelo else ""
     return base + ("\n" + comentario if comentario else "")
+
+
+# --------------------------------------------------------------------------------------------
+# Agenda: consulta e renovação de receita viram EVENTO no Calendário (regra em heimdall_agenda.py)
+# --------------------------------------------------------------------------------------------
+RENOVACAO_DIAS = int(os.environ.get("HEIMDALL_RENOVACAO_DIAS", "7"))      # o evento cai tantos dias antes de a receita vencer
+DETALHES_NA_AGENDA = os.environ.get("HEIMDALL_AGENDA_DETALHES", "0") == "1"  # 0: título genérico; o Calendário pode sincronizar com a nuvem da Apple
+
+
+def _eventos_pendentes(hoje: date) -> list:
+    """Eventos que deveriam existir hoje: consultas futuras e dia do pedido de renovação de cada receita com validade futura."""
+    itens = []
+    for c in _ler("SELECT * FROM consultas WHERE dia >= ? ORDER BY dia, hora", (hoje.isoformat(),)):
+        det = ", ".join(x for x in (c["especialidade"], c["medico"]) if x) if DETALHES_NA_AGENDA else ""
+        itens.append({"chave": f"consulta|{c['id']}|{c['dia']}", "tipo": "consulta", "dia": c["dia"],
+                      "dado": {"titulo": "Consulta médica" + (f": {det}" if det else ""), "data": c["dia"], "hora": c["hora"], "duracao_min": 60,
+                               "local": c["local"] if DETALHES_NA_AGENDA else "", "alertas_min_antes": [60, 1440],
+                               "notas": "Criado pelo Heimdall. Detalhes: heimdall labs appointments."}})
+    por_doc = {}
+    for r in _ler("SELECT * FROM receitas WHERE validade >= ? AND validade != '' ORDER BY validade, id", (hoje.isoformat(),)):
+        por_doc.setdefault((r["documento_id"], r["validade"]), []).append(r)
+    for (doc, val), rs in por_doc.items():
+        quando = max(date.fromisoformat(val) - timedelta(days=RENOVACAO_DIAS), hoje)
+        nomes = ", ".join(r["medicamento"] for r in rs[:3]) + (f" e mais {len(rs) - 3}" if len(rs) > 3 else "") if DETALHES_NA_AGENDA else ""
+        itens.append({"chave": f"renovacao_receita|{doc}|{val}", "tipo": "renovacao_receita", "dia": quando.isoformat(),
+                      "dado": {"titulo": "Pedir renovação de receita" + (f": {nomes}" if nomes else ""), "data": quando.isoformat(),
+                               "notas": f"Criado pelo Heimdall. A receita vence em {_br(val)}. Detalhes: heimdall labs prescriptions.", "alerta_dias_antes": 1}})
+    return itens
+
+
+def sincronizar_agenda(post=None, hoje: date = None) -> dict:
+    """Cria no Calendário o que ainda não foi criado. Pode rodar quantas vezes quiser: cada item tem chave própria e, se o agente do Mac estiver
+    fora do ar, fica pendente até a próxima vez (heimdall labs calendar). Devolve {criados, pendentes, ja_feitos, erro}."""
+    hoje = hoje or date.today()
+    feitos = {r["chave"] for r in _ler("SELECT chave FROM agenda_saude WHERE estado = 'feito'")}
+    res = {"criados": 0, "pendentes": 0, "ja_feitos": 0, "erro": ""}
+    for it in _eventos_pendentes(hoje):
+        if it["chave"] in feitos:
+            res["ja_feitos"] += 1
+            continue
+        ok, msg = agenda.enviar(it["tipo"], it["dado"], post)
+        estado = "feito" if ok else "pendente"
+        _escrever(lambda con, it=it, estado=estado, msg=msg: con.execute(
+            "INSERT INTO agenda_saude (chave, tipo, dia, titulo, estado, detalhe, atualizado) VALUES (?,?,?,?,?,?,?) "
+            "ON CONFLICT(chave) DO UPDATE SET estado = excluded.estado, detalhe = excluded.detalhe, atualizado = excluded.atualizado",
+            (it["chave"], it["tipo"], it["dia"], it["dado"]["titulo"], estado, msg[:200], _agora())))
+        if ok:
+            res["criados"] += 1
+        else:
+            res["pendentes"] += 1
+            res["erro"] = msg
+    return res
+
+
+def texto_agenda(r: dict) -> str:
+    if not (r["criados"] or r["pendentes"] or r["ja_feitos"]):
+        return "Nada para o Calendário (sem consulta futura nem receita com validade futura)."
+    t = f"Calendário: {r['criados']} evento(s) criado(s), {r['ja_feitos']} já estavam lá"
+    if r["pendentes"]:
+        t += f", {r['pendentes']} pendente(s) ({r['erro']}). Quando o agente do Mac estiver no ar, rode: heimdall labs calendar"
+    return t + "."
+
+
+def consulta_nova(dia: str, hora: str = "", medico: str = "", especialidade: str = "", local: str = "") -> dict:
+    """Cadastra à mão uma consulta (sem documento) e a leva ao Calendário."""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", dia or ""):
+        raise ErroExames("Informe a data como AAAA-MM-DD.")
+    try:
+        date.fromisoformat(dia)
+    except ValueError:
+        raise ErroExames("Essa data não existe.") from None
+    if hora and not re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", hora):
+        raise ErroExames("Informe a hora como HH:MM.")
+    hora = f"{int(hora.split(':')[0]):02d}:{hora.split(':')[1]}" if hora else ""
+    _escrever(lambda con: con.execute("INSERT OR IGNORE INTO consultas (documento_id, dia, hora, medico, especialidade, local) VALUES (0,?,?,?,?,?)",
+                                      (dia, hora, _limpo(medico, 60), _limpo(especialidade, 60), _limpo(local, 120))))
+    return sincronizar_agenda()
+
+
+def relatorio_consultas() -> str:
+    rows = _ler("SELECT * FROM consultas ORDER BY dia DESC, hora")
+    if not rows:
+        return "Ainda não há consultas cadastradas."
+    hoje = date.today().isoformat()
+    linhas = [f"{len(rows)} consulta(s):"]
+    for c in rows:
+        t = f"{_br(c['dia'])}" + (f" às {c['hora']}" if c["hora"] else "") + (f", {c['especialidade']}" if c["especialidade"] else "") + (f", {c['medico']}" if c["medico"] else "")
+        linhas.append(t + (" (já passou)" if c["dia"] < hoje else "") + ".")
+    return "\n".join(linhas)
 
 
 def relatorio_receitas() -> str:
@@ -1322,6 +1461,13 @@ def main() -> int:
     ap.add_argument("--exame", nargs="+", metavar="NOME")
     ap.add_argument("--analise", nargs="*", metavar="EXAME")
     ap.add_argument("--receitas", action="store_true")
+    ap.add_argument("--consultas", action="store_true", help="lista as consultas")
+    ap.add_argument("--consulta-nova", action="store_true", help="cadastra uma consulta (use com --data, --hora, --medico, --especialidade, --local)")
+    ap.add_argument("--hora", default="")
+    ap.add_argument("--medico", default="")
+    ap.add_argument("--especialidade", default="")
+    ap.add_argument("--local", default="")
+    ap.add_argument("--agenda", action="store_true", help="leva ao Calendário o que ainda não foi")
     ap.add_argument("--encaminhamentos", action="store_true")
     ap.add_argument("--dias", type=int, default=730)
     ap.add_argument("--documentos", action="store_true", help="lista os documentos recebidos")
@@ -1339,7 +1485,7 @@ def main() -> int:
             if not r:
                 print("Nada novo na pasta.")
             if any(x["ok"] and not x.get("duplicado") for x in r):
-                print("Para ouvir o que foi lido: heimdall exames pendentes")
+                print("Para ouvir o que foi lido: heimdall labs pending")
         elif a.importar:
             for caminho in a.importar:
                 p = Path(caminho).expanduser()
@@ -1359,12 +1505,20 @@ def main() -> int:
         elif a.confirmar:
             r = confirmar(a.confirmar, a.data, [x for x in re.split(r"[,\s]+", a.sem) if x.isdigit()])
             print(f"Documento {r['id']} confirmado em {_br(r['dia'])}: {r['guardados']} item(ns) guardado(s)" + (f", {r['deixados_de_fora']} deixado(s) de fora" if r["deixados_de_fora"] else "") + ".")
+            if r.get("agenda"):
+                print(texto_agenda(r["agenda"]))
         elif a.descartar:
             print(f"Documento {descartar(a.descartar)['id']} descartado.")
         elif a.exame:
             print(relatorio_exame(" ".join(a.exame), a.dias))
         elif a.analise is not None:
             print(analise(" ".join(a.analise), a.dias))
+        elif a.consulta_nova:
+            print(texto_agenda(consulta_nova(a.data, a.hora, a.medico, a.especialidade, a.local)))
+        elif a.agenda:
+            print(texto_agenda(sincronizar_agenda()))
+        elif a.consultas:
+            print(relatorio_consultas())
         elif a.receitas:
             print(relatorio_receitas())
         elif a.encaminhamentos:
