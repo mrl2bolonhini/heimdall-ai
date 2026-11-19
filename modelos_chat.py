@@ -22,30 +22,30 @@ MEMORIA = ["memory_save", "memory_search", "memory_forget", "rag_temas", "rag_se
 # Conexões em Configurações do administrador, Integrações, Servidores de ferramentas externos. Várias conexões podem apontar para o mesmo servidor
 # com filtros diferentes: é o filtro que limita as funções que cada modelo enxerga (um modelo de 8B escolhe melhor entre 7 funções do que entre 16).
 CONEXOES = [
-    {"id": "banco-pessoal", "nome": "Meus Dados (banco pessoal)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
-    {"id": "banco-saude", "nome": "Saúde (banco pessoal)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
-    {"id": "banco-financas", "nome": "Finanças (Finance)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
-    {"id": "internet", "nome": "Internet e Utilidades", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": INTERNET},
-    {"id": "mac-admin", "nome": "Mac e Memória (administrador)", "url": "http://host.docker.internal:8000/mcp", "grupo": "MAC_TOOLS", "acesso": "só do administrador", "funcoes": MEMORIA},
+    {"id": "heimdall-dados", "nome": "Meus Dados (banco pessoal)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
+    {"id": "heimdall-saude", "nome": "Saúde (banco pessoal)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
+    {"id": "heimdall-financas", "nome": "Finanças (Finance)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
+    {"id": "heimdall-publico", "nome": "Internet e Utilidades", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": INTERNET},
+    {"id": "heimdall-privado", "nome": "Mac e Memória (administrador)", "url": "http://host.docker.internal:8000/mcp", "grupo": "MAC_TOOLS", "acesso": "só do administrador", "funcoes": MEMORIA},
 ]
 
 # temperatura: valor sugerido no campo Parâmetros avançados. conexao: id da conexão acima (vazio = sem ferramentas).
 MODELOS = [
-    {"nome": "Meus Dados", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "banco-pessoal",
+    {"id": "meus-dados", "nome": "Meus Dados", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "heimdall-dados",
      "uso": "diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos, Second Brain e métricas de saúde simples", "nativa": True},
-    {"nome": "Saúde", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "banco-saude",
+    {"id": "saude", "nome": "Saúde", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "heimdall-saude",
      "uso": "sono, pulso, variabilidade, treinos, ECG, anomalias e relatórios de saúde", "nativa": True},
-    {"nome": "Finanças", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "banco-financas",
+    {"id": "financas", "nome": "Finanças", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "heimdall-financas",
      "uso": "gastos, receitas, categorias, orçamentos, assinaturas, parcelas e boletos do Finance (só leitura)", "nativa": True},
-    {"nome": "Código", "base": "deepseek-coder-v2:16b", "prompt": "prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
+    {"id": "codigo", "nome": "Código", "base": "deepseek-coder-v2:16b", "prompt": "prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
      "uso": "programação, sem ferramentas", "nativa": False,
      "obs": "nos seus testes esse modelo não suporta ferramentas no Ollama. O contexto dele é de 8192 tokens e ele sai da memória 30 segundos depois do uso."},
-    {"nome": "Curiosidades", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_curiosidades.txt", "temperatura": 0.4, "conexao": "internet",
+    {"id": "curiosidades", "nome": "Curiosidades", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_curiosidades.txt", "temperatura": 0.4, "conexao": "heimdall-publico",
      "uso": "web, notícias, cálculo, transcrições e feeds", "nativa": True,
      "obs": "usa o mesmo modelo do Meus Dados, sem trocar de modelo na memória."},
-    {"nome": "Conversas", "base": "gemma-4-uncensored", "prompt": "prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "",
+    {"id": "conversas", "nome": "Conversas", "base": "gemma-4-uncensored", "prompt": "prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "",
      "uso": "conversa livre, sem ferramentas", "nativa": False},
-    {"nome": "Documentos e Memória", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
+    {"id": "documentos", "nome": "Documentos e Memória", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "heimdall-privado",
      "uso": "livros, notas e documentos do estudo e memória pessoal (opcional)", "nativa": True},
 ]
 
@@ -54,6 +54,11 @@ NOVOS = """MODELOS NOVOS QUE AINDA NÃO TÊM PAPEL NO CHAT
   dolphin3-cyber-8b: só texto (sem ferramentas). Já trabalha nas tarefas programadas de segurança; no chat só faria sentido para analisar um texto colado.
   gemma3-4b: usado nos resumos do News; é pequeno e rápido, serve para conversas curtas sem tirar o qwen3-vl-instruct da memória.
 """
+
+
+# Coleção de conhecimento do Open WebUI usada pelo modelo Documentos e Memória (a que já existe no seu Open WebUI).
+CONHECIMENTO = {"id": "42999e43-33d7-4a5e-bef7-0f2bd58184d7", "name": "heimdall_docs", "type": "collection", "description": "Meus documentos"}
+PASTA_IMPORTAR = AQUI / "openwebui"
 
 
 def _listas_de_ferramentas():
@@ -125,6 +130,11 @@ def problemas():
 def texto_guia():
     L = ["MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos)", "",
          "Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.", "",
+         "IMPORTAR TUDO DE UMA VEZ (recomendado). Os arquivos estão em ~/heimdall-ai/openwebui/:",
+         "  1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas heimdall-publico, heimdall-privado e heimdall-dados, para não duplicar. Depois reaplique o acesso do convidado ao heimdall-publico, se ele usava.",
+         "  2. modelos_importar.json: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.",
+         "  3. Confira cada conexão e cada modelo uma vez, com uma pergunta real. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.",
+         "Abaixo, o que cada arquivo contém, para conferir ou para criar à mão.", "",
          "Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos).",
          "Cada conexão tem um filtro com a lista de funções permitidas: é ele que deixa cada modelo enxergar só as funções do seu assunto.",
          "As três primeiras apontam para o mesmo servidor, o de dados, e só mudam o filtro.", ""]
@@ -168,13 +178,52 @@ def tabela_md():
     return "\n".join(linhas)
 
 
+def exportar_conexoes():
+    """Servidores de ferramentas (MCP) no formato de importação do Open WebUI. Sem acesso para ninguém além do administrador."""
+    saida = []
+    for c in CONEXOES:
+        saida.append({"type": "mcp", "url": c["url"], "spec_type": "url", "spec": "", "path": "openapi.json", "auth_type": "none", "key": "",
+                      "config": {"enable": True, "function_name_filter_list": ",".join(c["funcoes"]), "access_grants": []},
+                      "info": {"id": c["id"], "name": c["nome"], "description": "Funções permitidas: " + ", ".join(c["funcoes"])}})
+    return saida
+
+
+def exportar_modelos():
+    """Modelos no formato de importação do Open WebUI (Workspace, Modelos, Importar). Sem acesso para ninguém além do administrador:
+    quem já tinha acesso aos modelos antigos (por exemplo o convidado) não ganha acesso a estes, que mexem em dados pessoais."""
+    saida = []
+    for m in MODELOS:
+        com_ferr = bool(m["conexao"])
+        meta = {"profile_image_url": None, "background_image_url": None, "description": m["uso"][:1].upper() + m["uso"][1:] + ".",
+                "capabilities": {"file_context": m["nome"] == "Documentos e Memória", "vision": False, "file_upload": False, "web_search": False,
+                                 "image_generation": False, "code_interpreter": False, "terminal": False, "citations": True, "status_updates": True,
+                                 "memory": False, "builtin_tools": False},
+                "knowledge": [CONHECIMENTO] if m["nome"] == "Documentos e Memória" else [], "defaultFeatureIds": []}
+        if com_ferr:
+            meta["toolIds"] = ["server:mcp:" + m["conexao"]]
+        params = {"system": (AQUI / m["prompt"]).read_text(encoding="utf-8").strip(), "temperature": m["temperatura"]}
+        if com_ferr and m["nativa"]:
+            params["function_calling"] = "native"
+        saida.append({"id": m["id"], "base_model_id": m["base"], "name": m["nome"], "params": params, "meta": meta, "access_grants": [], "is_active": True})
+    return saida
+
+
+def json_importar():
+    import json
+    return {"modelos_importar.json": json.dumps(exportar_modelos(), ensure_ascii=False, indent=1) + "\n",
+            "ferramentas_importar.json": json.dumps(exportar_conexoes(), ensure_ascii=False, indent=1) + "\n"}
+
+
 if __name__ == "__main__":
     erros = problemas()
     for e in erros:
         print("PROBLEMA:", e)
     if "--escrever" in sys.argv and not erros:
         (AQUI / "modelos_open_webui.txt").write_text(texto_guia(), encoding="utf-8")
-        print("modelos_open_webui.txt escrito.")
+        PASTA_IMPORTAR.mkdir(exist_ok=True)
+        for nome, conteudo in json_importar().items():
+            (PASTA_IMPORTAR / nome).write_text(conteudo, encoding="utf-8")
+        print("modelos_open_webui.txt e openwebui/*.json escritos.")
     elif "--guia" in sys.argv:
         print(texto_guia())
     sys.exit(1 if erros else 0)

@@ -25,7 +25,7 @@ confere("Finanças só lê: nenhuma função de escrita ou pagamento", all(f.sta
 confere("Código e Conversas ficam sem ferramentas", all(not mc.funcoes_do_modelo(m) for m in mc.MODELOS if m["nome"] in ("Código", "Conversas")))
 txt = (mc.AQUI / "modelos_open_webui.txt").read_text(encoding="utf-8")
 confere("guia modelos_open_webui.txt em dia (rode python3 gerar_docs.py)", txt == mc.texto_guia())
-confere("guia lista as 3 conexões do servidor de dados", all(("ID " + i) in txt for i in ("banco-pessoal", "banco-saude", "banco-financas")))
+confere("guia lista as 3 conexões do servidor de dados", all(("ID " + i) in txt for i in ("heimdall-dados", "heimdall-saude", "heimdall-financas")))
 # o teste pega um erro de verdade: prompt citando função que o modelo não tem
 orig = mc.MODELOS
 try:
@@ -34,5 +34,20 @@ try:
     confere("detecta modelo ligado à conexão errada", any("Saúde" in e for e in mc.problemas()))
 finally:
     mc.MODELOS = orig
+
+# arquivos de importação do Open WebUI
+import json  # noqa: E402
+arq_m = mc.PASTA_IMPORTAR / "modelos_importar.json"
+arq_f = mc.PASTA_IMPORTAR / "ferramentas_importar.json"
+atual = mc.json_importar()
+confere("arquivos de importação em dia (rode python3 gerar_docs.py)", arq_m.exists() and arq_f.exists() and arq_m.read_text(encoding="utf-8") == atual["modelos_importar.json"] and arq_f.read_text(encoding="utf-8") == atual["ferramentas_importar.json"])
+mods, cons = json.loads(atual["modelos_importar.json"]), json.loads(atual["ferramentas_importar.json"])
+ids_con = {c["info"]["id"] for c in cons}
+confere("todo modelo usa uma conexão que existe", all(t.split(":")[-1] in ids_con for x in mods for t in x["meta"].get("toolIds", [])), mods)
+confere("nenhum modelo nem conexão importada dá acesso a outro usuário", all(not x["access_grants"] for x in mods) and all(not c["config"]["access_grants"] for c in cons))
+confere("o filtro de cada conexão é a lista de funções permitidas", all(c["config"]["function_name_filter_list"] == ",".join(mc.conexao(c["info"]["id"])["funcoes"]) for c in cons))
+confere("o prompt importado é o do arquivo", all(x["params"]["system"] == (mc.AQUI / m["prompt"]).read_text(encoding="utf-8").strip() for x, m in zip(mods, mc.MODELOS)))
+confere("modelos de dados pessoais não ligam busca na web nem terminal", all(not x["meta"]["capabilities"]["web_search"] and not x["meta"]["capabilities"]["terminal"] for x in mods))
+confere("ids de modelo únicos e sem espaço", len({x["id"] for x in mods}) == len(mods) and all(" " not in x["id"] for x in mods))
 print("Tudo certo." if not falhas else f"{falhas} falha(s).")
 sys.exit(1 if falhas else 0)

@@ -1,0 +1,97 @@
+[
+ {
+  "type": "mcp",
+  "url": "http://host.docker.internal:8004/mcp",
+  "spec_type": "url",
+  "spec": "",
+  "path": "openapi.json",
+  "auth_type": "none",
+  "key": "",
+  "config": {
+   "enable": true,
+   "function_name_filter_list": "banco_resumo,banco_consultar,banco_buscar,saude_historico,get_system_timestamp",
+   "access_grants": []
+  },
+  "info": {
+   "id": "heimdall-dados",
+   "name": "Meus Dados (banco pessoal)",
+   "description": "Funções permitidas: banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp"
+  }
+ },
+ {
+  "type": "mcp",
+  "url": "http://host.docker.internal:8004/mcp",
+  "spec_type": "url",
+  "spec": "",
+  "path": "openapi.json",
+  "auth_type": "none",
+  "key": "",
+  "config": {
+   "enable": true,
+   "function_name_filter_list": "saude_historico,analise_saude,frequencia_cardiaca_resumo,ecg_resumo,treinos_resumo,relatorio_saude,banco_consultar,get_system_timestamp",
+   "access_grants": []
+  },
+  "info": {
+   "id": "heimdall-saude",
+   "name": "Saúde (banco pessoal)",
+   "description": "Funções permitidas: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar, get_system_timestamp"
+  }
+ },
+ {
+  "type": "mcp",
+  "url": "http://host.docker.internal:8004/mcp",
+  "spec_type": "url",
+  "spec": "",
+  "path": "openapi.json",
+  "auth_type": "none",
+  "key": "",
+  "config": {
+   "enable": true,
+   "function_name_filter_list": "financas_resumo,financas_transacoes,financas_orcamentos,financas_recorrentes,financas_boletos,financas_futuros,get_system_timestamp",
+   "access_grants": []
+  },
+  "info": {
+   "id": "heimdall-financas",
+   "name": "Finanças (Finance)",
+   "description": "Funções permitidas: financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp"
+  }
+ },
+ {
+  "type": "mcp",
+  "url": "http://host.docker.internal:8001/mcp",
+  "spec_type": "url",
+  "spec": "",
+  "path": "openapi.json",
+  "auth_type": "none",
+  "key": "",
+  "config": {
+   "enable": true,
+   "function_name_filter_list": "search_searxng,calculate_expression,get_system_timestamp,get_hackernews_top_stories,search_reddit_posts,fetch_rss_feed,get_astronomy_apod,get_youtube_transcript,fetch_url",
+   "access_grants": []
+  },
+  "info": {
+   "id": "heimdall-publico",
+   "name": "Internet e Utilidades",
+   "description": "Funções permitidas: search_searxng, calculate_expression, get_system_timestamp, get_hackernews_top_stories, search_reddit_posts, fetch_rss_feed, get_astronomy_apod, get_youtube_transcript, fetch_url"
+  }
+ },
+ {
+  "type": "mcp",
+  "url": "http://host.docker.internal:8000/mcp",
+  "spec_type": "url",
+  "spec": "",
+  "path": "openapi.json",
+  "auth_type": "none",
+  "key": "",
+  "config": {
+   "enable": true,
+   "function_name_filter_list": "memory_save,memory_search,memory_forget,rag_temas,rag_search",
+   "access_grants": []
+  },
+  "info": {
+   "id": "heimdall-privado",
+   "name": "Mac e Memória (administrador)",
+   "description": "Funções permitidas: memory_save, memory_search, memory_forget, rag_temas, rag_search"
+  }
+ }
+]
