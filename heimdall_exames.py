@@ -1289,7 +1289,7 @@ def analise(nome: str = "", dias: int = 730, com_modelo: bool = True) -> str:
 # Agenda: consulta e renovação de receita viram EVENTO no Calendário (regra em heimdall_agenda.py)
 # --------------------------------------------------------------------------------------------
 RENOVACAO_DIAS = int(os.environ.get("HEIMDALL_RENOVACAO_DIAS", "7"))      # o evento cai tantos dias antes de a receita vencer
-DETALHES_NA_AGENDA = os.environ.get("HEIMDALL_AGENDA_DETALHES", "0") == "1"  # 0: título genérico; o Calendário pode sincronizar com a nuvem da Apple
+DETALHES_NA_AGENDA = os.environ.get("HEIMDALL_AGENDA_DETALHES", "1") != "0"  # 1 (padrão): título com especialidade e médico, local no evento; 0: título genérico
 
 
 def _eventos_pendentes(hoje: date) -> list:

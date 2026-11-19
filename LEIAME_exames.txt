@@ -26,7 +26,7 @@ Consultas e renovação de receita no Calendário
 2. À mão: heimdall labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia --doctor Nome --place Local
 3. Receita com validade: ao confirmar, cria o evento Pedir renovação de receita, 7 dias antes de vencer.
 4. Se o agente estava fora do ar, rode heimdall labs calendar. Rodar de novo não duplica.
-5. O título do evento é genérico (Consulta médica), porque o Calendário pode sincronizar com a nuvem da Apple. Para incluir especialidade e médico, ponha HEIMDALL_AGENDA_DETALHES=1 no .env e reinicie o agente; é decisão sua.
+5. O evento traz especialidade, médico e local, e a renovação traz o medicamento; o Calendário pode sincronizar com a nuvem da Apple, o que você aceitou. Para voltar ao título genérico (Consulta médica), ponha HEIMDALL_AGENDA_DETALHES=0 no .env e reinicie o agente.
 6. Evento é o que acontece numa data e hora; lembrete é o que você precisa fazer e marcar como feito. Consulta e renovação são eventos.
 
 Depois de confirmado

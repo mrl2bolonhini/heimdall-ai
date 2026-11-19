@@ -94,8 +94,8 @@ conf = ex.confirmar(rr["id"])
 ag.enviar = orig
 confere("ao confirmar, a consulta vai ao Calendário como evento com hora", conf["agenda"]["criados"] == 1 and enviados and enviados[0][0].endswith("/calendario/evento")
         and enviados[0][1]["hora"] == "14:30" and enviados[0][1]["data"] == d1.isoformat(), (conf, enviados))
-confere("título não revela especialidade, médico nem local (o Calendário pode ir para a nuvem)",
-        enviados[0][1]["titulo"] == "Consulta médica" and not enviados[0][1]["local"] and "Carlos" not in str(enviados[0][1]) and "cardio" not in str(enviados[0][1]).lower(), enviados[0][1])
+confere("por padrão o evento traz especialidade, médico e local",
+        "cardio" in enviados[0][1]["titulo"].lower() and "Carlos" in enviados[0][1]["titulo"] and "Flores" in enviados[0][1]["local"], enviados[0][1])
 ag.enviar = lambda tipo, dado, post=None: orig(tipo, dado, falso_ok)
 de_novo = ex.sincronizar_agenda()
 confere("rodar de novo não duplica", de_novo["criados"] == 0 and de_novo["ja_feitos"] == 1 and len(enviados) == 1, de_novo)
@@ -117,7 +117,7 @@ enviados.clear()
 r4 = ex.sincronizar_agenda()
 renov = [e for e in enviados if "renovação" in e[1]["titulo"]]
 confere("receita com validade futura gera evento de renovação antes do vencimento",
-        r4["criados"] == 1 and renov and renov[0][1]["data"] == (validade - timedelta(days=ex.RENOVACAO_DIAS)).isoformat() and "Medicamento" not in renov[0][1]["titulo"], (r4, enviados))
+        r4["criados"] == 1 and renov and renov[0][1]["data"] == (validade - timedelta(days=ex.RENOVACAO_DIAS)).isoformat() and "Medicamento X" in renov[0][1]["titulo"], (r4, enviados))
 ex._escrever(lambda con: con.execute("INSERT INTO receitas (documento_id, dia, medicamento, dose, posologia, validade) VALUES (98, ?, 'Vencida', '', '', ?)",
                                     (hoje.isoformat(), (hoje - timedelta(days=3)).isoformat())))
 enviados.clear()
@@ -125,6 +125,13 @@ r5 = ex.sincronizar_agenda()
 confere("receita já vencida não gera evento", r5["criados"] == 0 and not enviados, r5)
 confere("consulta passada não gera evento", all(e[1]["data"] >= hoje.isoformat() for e in enviados))
 ag.enviar = orig
+
+# --- modo genérico, para quem não quer detalhes na nuvem
+ex.DETALHES_NA_AGENDA = False
+gen = ex._eventos_pendentes(hoje)
+confere("com HEIMDALL_AGENDA_DETALHES=0 o título é genérico e sem local",
+        all("cardio" not in i["dado"]["titulo"].lower() and "Medicamento" not in i["dado"]["titulo"] and not i["dado"].get("local") for i in gen) and gen)
+ex.DETALHES_NA_AGENDA = True
 
 # --- validação do agente (sem rodar AppleScript)
 import heimdall_agente as agente  # noqa: E402
