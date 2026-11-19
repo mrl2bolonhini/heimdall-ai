@@ -10,12 +10,11 @@ O que está sendo montado ou conferido agora.
 
 ## Em seguida
 O que vem depois de validar o banco.
-- Painel do Second Brain: notas, conexões entre áreas, lacunas de estudo e perguntas sugeridas.
 
 ## Depois
 Recursos maiores, que dependem dos anteriores.
 - Documentos pesquisáveis: Paperless-ngx em subdomínio próprio, com leitura de texto nos PDFs e etiquetas automáticas.
-- Heimdall Estudos: painel em subdomínio próprio, no mesmo padrão dos outros sites, com ferramentas específicas para estudar. Começa pelo progresso (temas vistos, lacunas e revisão espaçada, a partir da tabela de estudos); as demais ferramentas serão definidas por você ao longo do caminho.
+- Heimdall Estudos: painel em subdomínio próprio, no mesmo padrão dos outros sites, com ferramentas específicas para estudar. Começa pelo progresso (temas vistos, lacunas e revisão espaçada, a partir da tabela de estudos); as demais ferramentas serão definidas por você ao longo do caminho. O Second Brain entra aqui como uma das ferramentas do painel, em vez de painel separado: notas, conexões entre áreas, lacunas de estudo e perguntas sugeridas.
 - Mesa de operações em simulação (trading): tela própria, feita para teclado e leitor de tela, com atalhos para comprar, vender, zerar a posição e cancelar tudo, cotações e carteira. Começa só em simulação (papel), sem enviar ordem nenhuma, com limites de valor por ordem e de perda por dia. Uma IA local acompanha tendências e avisa enquanto você opera; quem decide e confirma cada ordem é você. A execução fica em código com regras fixas, nunca com a IA. Ordens reais só se houver uma corretora com API oficial e depois de testar na simulação.
 - Linha do tempo de privacidade e processos: diários oficiais, menções na internet e e-mails de serviços públicos lado a lado.
 
