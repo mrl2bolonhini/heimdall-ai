@@ -273,6 +273,10 @@ SCRIPTS = [
     ("teste_finance_analise.py", "Teste da análise e do Perguntar com modelo simulado."),
     ("financas_pluggy.py", "Conexão com os bancos pelo Open Finance, com o plano pessoal gratuito do Meu Pluggy: autenticação e leituras (GET) de contas e transações em /v2/transactions, conversão de sinais (conta corrente pelo tipo, cartão pela fatura), importação sem duplicar, aviso de autorização perto de vencer e gravação das chaves no .env a partir da área de transferência. Nada é movido nem pago; os dados passam pelos servidores do Pluggy."),
     ("financas_consulta.py", "Consultas do Finance no terminal (heimdall finance --balance, --latest, --summary): saldo de cada conta e fatura de cada cartão, últimos lançamentos com filtros e resumo do mês, em texto corrido e listas numeradas. Só lê o banco local e o saldo guardado na última sincronização."),
+    ("modelos_chat.py", "Fonte única dos modelos personalizados do chat (Open WebUI): base, prompt, temperatura e a lista de funções que cada modelo pode usar. Gera o guia modelos_open_webui.txt e a tabela do README."),
+    ("teste_modelos_chat.py", "Confere que cada função citada existe e pertence ao servidor certo, que cada prompt só fala das funções do seu modelo e que o guia está em dia."),
+    ("prompt_chat_saude.txt", "Instrução de sistema do modelo Saúde do chat: como escolher entre as funções de saúde, sem diagnóstico e sem inventar números."),
+    ("prompt_chat_financas.txt", "Instrução de sistema do modelo Finanças do chat: como escolher entre as funções do Finance, só leitura, sem conselho de investimento e sem pagar nada."),
     ("teste_email_prioridade.py", "Testa o rebaixamento de e-mails oficiais de serviços sem interesse (Serasa, SPC, Boa Vista, Quod): não viram triagem nem lembrete; golpe imitando eles continua alertando."),
     ("teste_finance_pluggy.py", "Testa o sincronizador do Pluggy com uma API simulada: sinais, cursor, duplicidade, nomes de conta, avisos, chaves no .env. Sem rede."),
     ("financas_email.py", "Leitura do Gmail (somente leitura) atrás de boletos e Pix, no corpo e nos PDFs anexados, com conferência da autenticação do remetente. Nunca abre links."),
@@ -982,6 +986,8 @@ def md_tabelas(ferr, modelos, mcp, fluxos):
         "| `%s` | `%s` | %s | %s |" % (m["model_name"], (m.get("litellm_params") or {}).get("model", ""), *MODELOS_NOTAS.get(m["model_name"], ("", ""))) for m in modelos)
     t["FERRAMENTAS"] = "| Ferramenta | Grupo | Parâmetros | O que faz |\n|---|---|---|---|\n" + "\n".join(
         "| `%s` | %s | `%s` | %s |" % (f["nome"], {"público": "público (8001)", "dados": "dados (8004)"}.get(f["grupo"], "Mac (8000)"), ", ".join(f["params"]), f["doc"].split(". ")[0].rstrip(".") + ".") for f in ferr)
+    import modelos_chat as mc
+    t["MODELOS_CHAT"] = mc.tabela_md()
     t["FLUXOS"] = "| Fluxo | Quando | O que faz |\n|---|---|---|\n" + "\n".join(
         "| %s | %s | %s |" % (f["nome"], f["quando"], FLUXO_DESCRICAO.get(f["id"], "(descrição pendente)")) for f in fluxos)
     t["SERVICOS"] = "| Serviço | Porta | Função |\n|---|---|---|\n" + "\n".join("| %s | %s | %s |" % (n, p, f) for n, f, p, c in SERVICOS)
@@ -1031,6 +1037,15 @@ def main():
             desatualizado.append("docs/" + nome)
             if not so_checar:
                 arq.write_text(conteudo, encoding="utf-8")
+    import modelos_chat as mc
+    for e in mc.problemas():
+        print("Modelos do chat:", e)
+        desatualizado.append("modelos_chat.py")
+    guia = AQUI / "modelos_open_webui.txt"
+    if not guia.exists() or guia.read_text(encoding="utf-8") != mc.texto_guia():
+        desatualizado.append("modelos_open_webui.txt")
+        if not so_checar:
+            guia.write_text(mc.texto_guia(), encoding="utf-8")
     readme_ok = atualizar_readme(md_tabelas(ferr, modelos, mcp, fluxos), so_checar)
     if not readme_ok:
         desatualizado.append("README.md")

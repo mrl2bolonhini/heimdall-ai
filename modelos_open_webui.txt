@@ -1,45 +1,84 @@
 MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos)
 
-Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos):
-  Servidor A: ID banco-pessoal, nome "Meus Dados (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
-  Servidor B: ID internet, nome "Internet e Utilidades", http://host.docker.internal:8001/mcp
-  Servidor C: ID mac-admin, nome "Mac e Memória (administrador)", http://host.docker.internal:8000/mcp, acesso só do administrador,
-              com a lista de funções permitidas (filtro): memory_save, memory_search, memory_forget, rag_temas, rag_search
+Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.
+
+Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos).
+Cada conexão tem um filtro com a lista de funções permitidas: é ele que deixa cada modelo enxergar só as funções do seu assunto.
+As três primeiras apontam para o mesmo servidor, o de dados, e só mudam o filtro.
+
+Conexão 1: ID banco-pessoal, nome "Meus Dados (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
+  Funções permitidas (filtro): banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp
+Conexão 2: ID banco-saude, nome "Saúde (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
+  Funções permitidas (filtro): saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar, get_system_timestamp
+Conexão 3: ID banco-financas, nome "Finanças (Finance)", http://host.docker.internal:8004/mcp, acesso só do administrador
+  Funções permitidas (filtro): financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp
+Conexão 4: ID internet, nome "Internet e Utilidades", http://host.docker.internal:8001/mcp
+  Funções permitidas (filtro): search_searxng, calculate_expression, get_system_timestamp, get_hackernews_top_stories, search_reddit_posts, fetch_rss_feed, get_astronomy_apod, get_youtube_transcript, fetch_url
+Conexão 5: ID mac-admin, nome "Mac e Memória (administrador)", http://host.docker.internal:8000/mcp, acesso só do administrador
+  Funções permitidas (filtro): memory_save, memory_search, memory_forget, rag_temas, rag_search
 
 1. Meus Dados
+   Para: diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos, Second Brain e métricas de saúde simples
    Base: qwen3-vl-instruct
    Prompt: prompt_chat_dados.txt
-   Ferramentas: Servidor A (banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp)
+   Ferramentas: conexão banco-pessoal (5 funções: banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp)
    Chamada de função: Nativa
+   Temperatura: 0,2
 
-2. Código
+2. Saúde
+   Para: sono, pulso, variabilidade, treinos, ECG, anomalias e relatórios de saúde
+   Base: qwen3-vl-instruct
+   Prompt: prompt_chat_saude.txt
+   Ferramentas: conexão banco-saude (8 funções: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar, get_system_timestamp)
+   Chamada de função: Nativa
+   Temperatura: 0,2
+
+3. Finanças
+   Para: gastos, receitas, categorias, orçamentos, assinaturas, parcelas e boletos do Finance (só leitura)
+   Base: qwen3-vl-instruct
+   Prompt: prompt_chat_financas.txt
+   Ferramentas: conexão banco-financas (7 funções: financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp)
+   Chamada de função: Nativa
+   Temperatura: 0,2
+
+4. Código
+   Para: programação, sem ferramentas
    Base: deepseek-coder-v2:16b
    Prompt: prompt_chat_codigo.txt
-   Ferramentas: nenhuma (nos seus testes esse modelo não suporta ferramentas no Ollama)
-   Observação: o contexto dele é de 8192 tokens e ele sai da memória 30 segundos depois do uso.
+   Ferramentas: nenhuma
+   Temperatura: 0,2
+   Observação: nos seus testes esse modelo não suporta ferramentas no Ollama. O contexto dele é de 8192 tokens e ele sai da memória 30 segundos depois do uso.
 
-3. Curiosidades
-   Base: qwen3-vl-instruct (o mesmo do Meus Dados, sem trocar de modelo na memória)
+5. Curiosidades
+   Para: web, notícias, cálculo, transcrições e feeds
+   Base: qwen3-vl-instruct
    Prompt: prompt_chat_curiosidades.txt
-   Ferramentas: Servidor B (search_searxng, calculate_expression, get_system_timestamp, get_hackernews_top_stories,
-                search_reddit_posts, fetch_rss_feed, get_astronomy_apod, get_youtube_transcript, fetch_url)
+   Ferramentas: conexão internet (9 funções: search_searxng, calculate_expression, get_system_timestamp, get_hackernews_top_stories, search_reddit_posts, fetch_rss_feed, get_astronomy_apod, get_youtube_transcript, fetch_url)
    Chamada de função: Nativa
+   Temperatura: 0,4
+   Observação: usa o mesmo modelo do Meus Dados, sem trocar de modelo na memória.
 
-4. Conversas
+6. Conversas
+   Para: conversa livre, sem ferramentas
    Base: gemma-4-uncensored
    Prompt: prompt_chat_conversas.txt
    Ferramentas: nenhuma
+   Temperatura: 0,8
 
-5. Documentos e Memória (opcional)
+7. Documentos e Memória
+   Para: livros, notas e documentos do estudo e memória pessoal (opcional)
    Base: qwen3-vl-instruct
    Prompt: prompt_chat_documentos.txt
-   Ferramentas: Servidor C com o filtro acima (memory_save, memory_search, memory_forget, rag_temas, rag_search)
+   Ferramentas: conexão mac-admin (5 funções: memory_save, memory_search, memory_forget, rag_temas, rag_search)
    Chamada de função: Nativa
+   Temperatura: 0,2
 
 Para copiar um prompt sem digitar: pbcopy < ~/heimdall-ai/NOME_DO_ARQUIVO.txt e colar com Command+V no campo de instrução de sistema.
 
-AJUSTES SUGERIDOS EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)
-  Meus Dados: temperatura 0,2 (respostas fiéis aos números).
+AJUSTES EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)
+  Meus Dados: temperatura 0,2.
+  Saúde: temperatura 0,2.
+  Finanças: temperatura 0,2.
   Código: temperatura 0,2.
   Curiosidades: temperatura 0,4.
   Conversas: temperatura 0,8.

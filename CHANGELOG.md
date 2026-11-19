@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Modelos do chat por contexto
+- Novo modelos_chat.py: fonte única dos modelos personalizados do Open WebUI, com base, prompt, temperatura e a lista de funções que cada um pode usar. O guia modelos_open_webui.txt e a tabela "Modelos do chat" do README agora são gerados dele por python3 gerar_docs.py.
+- Dois modelos novos: Saúde (saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar e get_system_timestamp) e Finanças (as seis funções financas_* e get_system_timestamp, só leitura), cada um com seu prompt (prompt_chat_saude.txt e prompt_chat_financas.txt). O Meus Dados ficou com o geral: diários, e-mails, estudos, privacidade, avisos, Second Brain e métricas de saúde simples.
+- O guia agora tem três conexões para o mesmo servidor de dados (banco-pessoal, banco-saude e banco-financas), cada uma com um filtro de funções, para o modelo enxergar só as funções do seu assunto. Antes o guia citava 5 das 16 funções do servidor.
+- Novo teste_modelos_chat.py: confere que toda função citada existe e pertence ao servidor certo, que cada prompt só fala das funções do seu modelo, que nenhuma função do servidor de dados ficou sem uso e que o guia está em dia.
+
 ## 2026-11-18 - Diagnóstico do vigia de e-mail
 - Novo heimdall mail --diagnose (python3 heimdall_email_oficial.py --diagnostico): lista os e-mails recentes de serviços públicos com a classe (oficial, suspeito ou não oficial), remetente, domínio, resultado SPF/DKIM/DMARC do Gmail e o motivo, inclusive os já vistos. A simulação pula os já vistos e por isso podia terminar sem mostrar nada. O diagnóstico não envia nem grava nada e não mostra o corpo.
 - Corrigido: o resumo do modelo local podia chamar de "e-mail falso" ou golpe uma mensagem que o Gmail tinha autenticado (a Serasa avisando pagamento confirmado). Agora o modelo é instruído a só resumir, e se ainda assim falar em golpe, falso ou phishing, o resumo é descartado, a urgência cai para baixa e a ação vira conferir no app oficial. Quem decide se é golpe continua sendo a checagem de domínio e DMARC.

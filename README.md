@@ -105,6 +105,7 @@ python3 teste_news.py                    # Heimdall News (sem rede)
 python3 teste_trechos.py                      # trechos de livros do estudo (sem rede)
 bash instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail
 python3 heimdall_email_oficial.py --diagnostico   # como cada e-mail recente foi classificado (inclui os já vistos)
+python3 teste_modelos_chat.py                  # funções por modelo do chat e guia em dia
 python3 teste_email_prioridade.py                 # rebaixamento e diagnóstico do vigia de e-mail
 python3 gerar_docs.py --check                     # documentação em dia
 ```
@@ -123,6 +124,22 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 | `gemma3-4b` | `ollama_chat/gemma3:4b` | Modelo pequeno e rápido (3 GB), usado nos resumos do Heimdall News | No teste com um parágrafo resumiu certo em português; baixe com ollama pull gemma3:4b. |
 | `llama-3.1-8b` | `ollama_chat/llama3.1:8b` | Uso geral; aceita ferramentas | Template do Ollama com suporte a ferramentas; respondeu bem em português. |
 <!-- /AUTO:MODELOS -->
+
+## Modelos do chat
+
+Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e só com as funções do seu assunto (o filtro da conexão de ferramentas limita o que o modelo enxerga). A fonte é `modelos_chat.py`; o passo a passo para criá-los no Open WebUI está em `modelos_open_webui.txt`, gerado por `python3 gerar_docs.py`.
+
+<!-- AUTO:MODELOS_CHAT -->
+| Modelo | Base | Ferramentas (conexão) | Funções | Temperatura |
+|---|---|---|---|---|
+| Meus Dados | `qwen3-vl-instruct` | `banco-pessoal` | `banco_resumo`, `banco_consultar`, `banco_buscar`, `saude_historico`, `get_system_timestamp` | 0,2 |
+| Saúde | `qwen3-vl-instruct` | `banco-saude` | `saude_historico`, `analise_saude`, `frequencia_cardiaca_resumo`, `ecg_resumo`, `treinos_resumo`, `relatorio_saude`, `banco_consultar`, `get_system_timestamp` | 0,2 |
+| Finanças | `qwen3-vl-instruct` | `banco-financas` | `financas_resumo`, `financas_transacoes`, `financas_orcamentos`, `financas_recorrentes`, `financas_boletos`, `financas_futuros`, `get_system_timestamp` | 0,2 |
+| Código | `deepseek-coder-v2:16b` | nenhuma |  | 0,2 |
+| Curiosidades | `qwen3-vl-instruct` | `internet` | `search_searxng`, `calculate_expression`, `get_system_timestamp`, `get_hackernews_top_stories`, `search_reddit_posts`, `fetch_rss_feed`, `get_astronomy_apod`, `get_youtube_transcript`, `fetch_url` | 0,4 |
+| Conversas | `gemma-4-uncensored` | nenhuma |  | 0,8 |
+| Documentos e Memória | `qwen3-vl-instruct` | `mac-admin` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search` | 0,2 |
+<!-- /AUTO:MODELOS_CHAT -->
 
 Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta chamada de ferramentas) e contexto de 8192 tokens. Modelo padrão dos fluxos: `qwen3-vl-instruct` (`HEIMDALL_FLOW_MODEL`). Embeddings: `nomic-embed-text`.
 
