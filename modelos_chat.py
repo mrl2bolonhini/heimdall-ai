@@ -143,10 +143,10 @@ def texto_guia():
     L = ["MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos)", "",
          "Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.", "",
          "IMPORTAR TUDO DE UMA VEZ (recomendado). Os arquivos estão em ~/heimdall-ai/openwebui/:",
-         "  1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas internet, mac-admin e banco-pessoal, para não duplicar. Depois reaplique o acesso do convidado ao internet, se ele usava.",
+         "  1. openwebui/ferramentas/: um arquivo por conexão (banco-pessoal.json, banco-saude.json, banco-financas.json, internet.json e mac-admin.json), porque o Open WebUI importa só a primeira conexão de cada arquivo. Em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar cinco vezes, uma para cada arquivo. Antes, apague as conexões antigas internet, mac-admin e banco-pessoal, para não duplicar. Depois reaplique o acesso do convidado ao internet, se ele usava.",
          "     O filtro NÃO vem na importação (o Open WebUI não o exporta nem o importa). Em cada conexão que tiver o arquivo openwebui/filtro_ID.txt, abra a edição e cole a lista no campo Lista de filtros de nomes de funções: copie com pbcopy < ~/heimdall-ai/openwebui/filtro_ID.txt (troque ID por banco-pessoal, banco-saude, banco-financas ou mac-admin) e cole com Command+V. A conexão internet usa todas as funções e não precisa de filtro.",
          "     Quando uma função nova entrar no servidor, rode python3 gerar_docs.py e cole o filtro de novo nas conexões que mudarem.",
-         "  2. modelos_importar.json: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.",
+         "  2. openwebui/modelos_importar.json (todos os modelos) ou, se só o primeiro entrar, os arquivos da pasta openwebui/modelos/, um por modelo: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.",
          "  3. Confira cada conexão e cada modelo uma vez, com uma pergunta real. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.",
          "Abaixo, o que cada arquivo contém, para conferir ou para criar à mão.", "",
          "Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos).",
@@ -224,10 +224,20 @@ def exportar_modelos():
 
 
 def json_importar():
+    """Todos os arquivos gerados em openwebui/, por caminho relativo. O Open WebUI importa só a primeira conexão de cada arquivo de ferramentas,
+    então há um arquivo por conexão; para os modelos há um arquivo com todos e um por modelo, caso a importação em lote ignore algum."""
     import json
-    funcoes = {"filtro_%s.txt" % c["id"]: filtro_texto(c) + "\n" for c in CONEXOES if excluidas(c)}
-    return {**funcoes, "modelos_importar.json": json.dumps(exportar_modelos(), ensure_ascii=False, indent=1) + "\n",
-            "ferramentas_importar.json": json.dumps(exportar_conexoes(), ensure_ascii=False, indent=1) + "\n"}
+
+    def js(lista):
+        return json.dumps(lista, ensure_ascii=False, indent=1) + "\n"
+    saida = {"filtro_%s.txt" % c["id"]: filtro_texto(c) + "\n" for c in CONEXOES if excluidas(c)}
+    for c in exportar_conexoes():
+        saida["ferramentas/%s.json" % c["info"]["id"]] = js([c])
+    modelos = exportar_modelos()
+    saida["modelos_importar.json"] = js(modelos)
+    for m in modelos:
+        saida["modelos/%s.json" % m["id"]] = js([m])
+    return saida
 
 
 if __name__ == "__main__":
@@ -238,6 +248,7 @@ if __name__ == "__main__":
         (AQUI / "modelos_open_webui.txt").write_text(texto_guia(), encoding="utf-8")
         PASTA_IMPORTAR.mkdir(exist_ok=True)
         for nome, conteudo in json_importar().items():
+            (PASTA_IMPORTAR / nome).parent.mkdir(parents=True, exist_ok=True)
             (PASTA_IMPORTAR / nome).write_text(conteudo, encoding="utf-8")
         print("modelos_open_webui.txt e openwebui/*.json escritos.")
     elif "--guia" in sys.argv:

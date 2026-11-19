@@ -1,0 +1,16 @@
+[
+ {
+  "type": "mcp",
+  "url": "http://host.docker.internal:8000/mcp",
+  "spec_type": "url",
+  "spec": "",
+  "path": "openapi.json",
+  "auth_type": "none",
+  "key": "",
+  "info": {
+   "id": "mac-admin",
+   "name": "Mac e Memória (administrador)",
+   "description": "Memória persistente e documentos pessoais (RAG). Só para o administrador."
+  }
+ }
+]

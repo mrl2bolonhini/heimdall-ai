@@ -38,10 +38,13 @@ finally:
 # arquivos de importação do Open WebUI
 import json  # noqa: E402
 arq_m = mc.PASTA_IMPORTAR / "modelos_importar.json"
-arq_f = mc.PASTA_IMPORTAR / "ferramentas_importar.json"
 atual = mc.json_importar()
 confere("arquivos de importação em dia (rode python3 gerar_docs.py)", all((mc.PASTA_IMPORTAR / n).exists() and (mc.PASTA_IMPORTAR / n).read_text(encoding="utf-8") == c for n, c in atual.items()))
-mods, cons = json.loads(atual["modelos_importar.json"]), json.loads(atual["ferramentas_importar.json"])
+mods = json.loads(atual["modelos_importar.json"])
+arqs_f = sorted(k for k in atual if k.startswith("ferramentas/"))
+confere("um arquivo por conexão, cada um com uma só conexão", len(arqs_f) == len(mc.CONEXOES) and all(len(json.loads(atual[k])) == 1 for k in arqs_f), arqs_f)
+cons = [json.loads(atual[k])[0] for k in arqs_f]
+confere("um arquivo por modelo, igual ao do lote", all(json.loads(atual["modelos/%s.json" % x["id"]]) == [x] for x in mods))
 ids_con = {c["info"]["id"] for c in cons}
 confere("todo modelo usa uma conexão que existe", all(t.split(":")[-1] in ids_con for x in mods for t in x["meta"].get("toolIds", [])), mods)
 confere("nenhum modelo importado dá acesso a outro usuário", all(not x["access_grants"] for x in mods))

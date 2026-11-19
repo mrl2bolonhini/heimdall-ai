@@ -274,8 +274,8 @@ SCRIPTS = [
     ("financas_pluggy.py", "Conexão com os bancos pelo Open Finance, com o plano pessoal gratuito do Meu Pluggy: autenticação e leituras (GET) de contas e transações em /v2/transactions, conversão de sinais (conta corrente pelo tipo, cartão pela fatura), importação sem duplicar, aviso de autorização perto de vencer e gravação das chaves no .env a partir da área de transferência. Nada é movido nem pago; os dados passam pelos servidores do Pluggy."),
     ("financas_consulta.py", "Consultas do Finance no terminal (heimdall finance --balance, --latest, --summary): saldo de cada conta e fatura de cada cartão, últimos lançamentos com filtros e resumo do mês, em texto corrido e listas numeradas. Só lê o banco local e o saldo guardado na última sincronização."),
     ("modelos_chat.py", "Fonte única dos modelos personalizados do chat (Open WebUI): base, prompt, temperatura e a lista de funções que cada modelo pode usar. Gera o guia modelos_open_webui.txt e a tabela do README."),
-    ("openwebui/modelos_importar.json", "Os sete modelos do chat prontos para importar no Open WebUI (Workspace, Modelos, Importar): prompt, temperatura, chamada de função nativa e a conexão de ferramentas de cada um. Gerado por gerar_docs.py; entram só para o administrador."),
-    ("openwebui/ferramentas_importar.json", "As cinco conexões de ferramentas (MCP) prontas para importar no Open WebUI, no mesmo formato que o Open WebUI exporta. O filtro de funções não viaja nele: o filtro de cada conexão (as funções do servidor que ela deve esconder, no formato !funcao) fica em openwebui/filtro_<id>.txt, para copiar com pbcopy e colar à mão."),
+    ("openwebui/modelos_importar.json", "Os sete modelos do chat prontos para importar no Open WebUI (Workspace, Modelos, Importar): prompt, temperatura, chamada de função nativa e a conexão de ferramentas de cada um. Gerado por gerar_docs.py; entram só para o administrador. A pasta openwebui/modelos/ tem os mesmos modelos, um por arquivo."),
+    ("openwebui/ferramentas/", "Uma conexão de ferramentas (MCP) por arquivo, prontas para importar no Open WebUI (ele importa só a primeira de cada arquivo), no mesmo formato que o Open WebUI exporta. O filtro de funções não viaja nele: o filtro de cada conexão (as funções do servidor que ela deve esconder, no formato !funcao) fica em openwebui/filtro_<id>.txt, para copiar com pbcopy e colar à mão."),
     ("teste_modelos_chat.py", "Confere que cada função citada existe e pertence ao servidor certo, que cada prompt só fala das funções do seu modelo e que o guia está em dia."),
     ("prompt_chat_saude.txt", "Instrução de sistema do modelo Saúde do chat: como escolher entre as funções de saúde, sem diagnóstico e sem inventar números."),
     ("prompt_chat_financas.txt", "Instrução de sistema do modelo Finanças do chat: como escolher entre as funções do Finance, só leitura, sem conselho de investimento e sem pagar nada."),
@@ -1051,6 +1051,7 @@ def main():
     (AQUI / "openwebui").mkdir(exist_ok=True)
     for nome, conteudo in mc.json_importar().items():
         arq_j = AQUI / "openwebui" / nome
+        arq_j.parent.mkdir(parents=True, exist_ok=True)
         if not arq_j.exists() or arq_j.read_text(encoding="utf-8") != conteudo:
             desatualizado.append("openwebui/" + nome)
             if not so_checar:
