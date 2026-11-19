@@ -22,30 +22,30 @@ MEMORIA = ["memory_save", "memory_search", "memory_forget", "rag_temas", "rag_se
 # Conexões em Configurações do administrador, Integrações, Servidores de ferramentas externos. Várias conexões podem apontar para o mesmo servidor
 # com filtros diferentes: é o filtro que limita as funções que cada modelo enxerga (um modelo de 8B escolhe melhor entre 7 funções do que entre 16).
 CONEXOES = [
-    {"id": "heimdall-dados", "nome": "Meus Dados (banco pessoal)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
-    {"id": "heimdall-saude", "nome": "Saúde (banco pessoal)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
-    {"id": "heimdall-financas", "nome": "Finanças (Finance)", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
-    {"id": "heimdall-publico", "nome": "Internet e Utilidades", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": INTERNET},
-    {"id": "heimdall-privado", "nome": "Mac e Memória (administrador)", "url": "http://host.docker.internal:8000/mcp", "grupo": "MAC_TOOLS", "acesso": "só do administrador", "funcoes": MEMORIA},
+    {"id": "banco-pessoal", "nome": "Meus Dados (banco pessoal)", "descricao": "Banco pessoal em modo leitura: diários oficiais, e-mails, estudos, privacidade, avisos, Second Brain e métricas de saúde simples. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
+    {"id": "banco-saude", "nome": "Saúde (banco pessoal)", "descricao": "Saúde em modo leitura: histórico por métrica, análises, coração, ECG, treinos e relatório. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
+    {"id": "banco-financas", "nome": "Finanças (Finance)", "descricao": "Finance em modo leitura: resumo do mês, lançamentos, orçamentos, recorrentes, boletos e pagamentos futuros. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
+    {"id": "internet", "nome": "Internet e Utilidades", "descricao": "Pesquisa na web, cálculo, notícias, feeds, transcrições e utilidades públicas.", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": INTERNET},
+    {"id": "mac-admin", "nome": "Mac e Memória (administrador)", "descricao": "Memória persistente e documentos pessoais (RAG). Só para o administrador.", "url": "http://host.docker.internal:8000/mcp", "grupo": "MAC_TOOLS", "acesso": "só do administrador", "funcoes": MEMORIA},
 ]
 
 # temperatura: valor sugerido no campo Parâmetros avançados. conexao: id da conexão acima (vazio = sem ferramentas).
 MODELOS = [
-    {"id": "meus-dados", "nome": "Meus Dados", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "heimdall-dados",
+    {"id": "meus-dados", "nome": "Meus Dados", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "banco-pessoal",
      "uso": "diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos, Second Brain e métricas de saúde simples", "nativa": True},
-    {"id": "saude", "nome": "Saúde", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "heimdall-saude",
+    {"id": "saude", "nome": "Saúde", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "banco-saude",
      "uso": "sono, pulso, variabilidade, treinos, ECG, anomalias e relatórios de saúde", "nativa": True},
-    {"id": "financas", "nome": "Finanças", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "heimdall-financas",
+    {"id": "financas", "nome": "Finanças", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "banco-financas",
      "uso": "gastos, receitas, categorias, orçamentos, assinaturas, parcelas e boletos do Finance (só leitura)", "nativa": True},
     {"id": "codigo", "nome": "Código", "base": "deepseek-coder-v2:16b", "prompt": "prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
      "uso": "programação, sem ferramentas", "nativa": False,
      "obs": "nos seus testes esse modelo não suporta ferramentas no Ollama. O contexto dele é de 8192 tokens e ele sai da memória 30 segundos depois do uso."},
-    {"id": "curiosidades", "nome": "Curiosidades", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_curiosidades.txt", "temperatura": 0.4, "conexao": "heimdall-publico",
+    {"id": "curiosidades", "nome": "Curiosidades", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_curiosidades.txt", "temperatura": 0.4, "conexao": "internet",
      "uso": "web, notícias, cálculo, transcrições e feeds", "nativa": True,
      "obs": "usa o mesmo modelo do Meus Dados, sem trocar de modelo na memória."},
     {"id": "conversas", "nome": "Conversas", "base": "gemma-4-uncensored", "prompt": "prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "",
      "uso": "conversa livre, sem ferramentas", "nativa": False},
-    {"id": "documentos", "nome": "Documentos e Memória", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "heimdall-privado",
+    {"id": "documentos", "nome": "Documentos e Memória", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
      "uso": "livros, notas e documentos do estudo e memória pessoal (opcional)", "nativa": True},
 ]
 
@@ -131,7 +131,7 @@ def texto_guia():
     L = ["MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos)", "",
          "Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.", "",
          "IMPORTAR TUDO DE UMA VEZ (recomendado). Os arquivos estão em ~/heimdall-ai/openwebui/:",
-         "  1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas heimdall-publico, heimdall-privado e heimdall-dados, para não duplicar. Depois reaplique o acesso do convidado ao heimdall-publico, se ele usava.",
+         "  1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas internet, mac-admin e banco-pessoal, para não duplicar. Depois reaplique o acesso do convidado ao internet, se ele usava.",
          "  2. modelos_importar.json: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.",
          "  3. Confira cada conexão e cada modelo uma vez, com uma pergunta real. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.",
          "Abaixo, o que cada arquivo contém, para conferir ou para criar à mão.", "",
@@ -184,7 +184,7 @@ def exportar_conexoes():
     for c in CONEXOES:
         saida.append({"type": "mcp", "url": c["url"], "spec_type": "url", "spec": "", "path": "openapi.json", "auth_type": "none", "key": "",
                       "config": {"enable": True, "function_name_filter_list": ",".join(c["funcoes"]), "access_grants": []},
-                      "info": {"id": c["id"], "name": c["nome"], "description": "Funções permitidas: " + ", ".join(c["funcoes"])}})
+                      "info": {"id": c["id"], "name": c["nome"], "description": c["descricao"]}})
     return saida
 
 

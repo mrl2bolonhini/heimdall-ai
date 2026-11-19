@@ -28,7 +28,7 @@
    "knowledge": [],
    "defaultFeatureIds": [],
    "toolIds": [
-    "server:mcp:heimdall-dados"
+    "server:mcp:banco-pessoal"
    ]
   },
   "access_grants": [],
@@ -63,7 +63,7 @@
    "knowledge": [],
    "defaultFeatureIds": [],
    "toolIds": [
-    "server:mcp:heimdall-saude"
+    "server:mcp:banco-saude"
    ]
   },
   "access_grants": [],
@@ -98,7 +98,7 @@
    "knowledge": [],
    "defaultFeatureIds": [],
    "toolIds": [
-    "server:mcp:heimdall-financas"
+    "server:mcp:banco-financas"
    ]
   },
   "access_grants": [],
@@ -164,7 +164,7 @@
    "knowledge": [],
    "defaultFeatureIds": [],
    "toolIds": [
-    "server:mcp:heimdall-publico"
+    "server:mcp:internet"
    ]
   },
   "access_grants": [],
@@ -237,7 +237,7 @@
    ],
    "defaultFeatureIds": [],
    "toolIds": [
-    "server:mcp:heimdall-privado"
+    "server:mcp:mac-admin"
    ]
   },
   "access_grants": [],

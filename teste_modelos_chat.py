@@ -25,7 +25,7 @@ confere("Finanças só lê: nenhuma função de escrita ou pagamento", all(f.sta
 confere("Código e Conversas ficam sem ferramentas", all(not mc.funcoes_do_modelo(m) for m in mc.MODELOS if m["nome"] in ("Código", "Conversas")))
 txt = (mc.AQUI / "modelos_open_webui.txt").read_text(encoding="utf-8")
 confere("guia modelos_open_webui.txt em dia (rode python3 gerar_docs.py)", txt == mc.texto_guia())
-confere("guia lista as 3 conexões do servidor de dados", all(("ID " + i) in txt for i in ("heimdall-dados", "heimdall-saude", "heimdall-financas")))
+confere("guia lista as 3 conexões do servidor de dados", all(("ID " + i) in txt for i in ("banco-pessoal", "banco-saude", "banco-financas")))
 # o teste pega um erro de verdade: prompt citando função que o modelo não tem
 orig = mc.MODELOS
 try:

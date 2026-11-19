@@ -3,7 +3,7 @@ MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos)
 Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.
 
 IMPORTAR TUDO DE UMA VEZ (recomendado). Os arquivos estão em ~/heimdall-ai/openwebui/:
-  1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas heimdall-publico, heimdall-privado e heimdall-dados, para não duplicar. Depois reaplique o acesso do convidado ao heimdall-publico, se ele usava.
+  1. ferramentas_importar.json: em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar. Antes, apague as conexões antigas internet, mac-admin e banco-pessoal, para não duplicar. Depois reaplique o acesso do convidado ao internet, se ele usava.
   2. modelos_importar.json: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.
   3. Confira cada conexão e cada modelo uma vez, com uma pergunta real. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.
 Abaixo, o que cada arquivo contém, para conferir ou para criar à mão.
@@ -12,22 +12,22 @@ Servidores de ferramentas (Configurações do administrador, Integrações, Serv
 Cada conexão tem um filtro com a lista de funções permitidas: é ele que deixa cada modelo enxergar só as funções do seu assunto.
 As três primeiras apontam para o mesmo servidor, o de dados, e só mudam o filtro.
 
-Conexão 1: ID heimdall-dados, nome "Meus Dados (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
+Conexão 1: ID banco-pessoal, nome "Meus Dados (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
   Funções permitidas (filtro): banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp
-Conexão 2: ID heimdall-saude, nome "Saúde (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
+Conexão 2: ID banco-saude, nome "Saúde (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
   Funções permitidas (filtro): saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar, get_system_timestamp
-Conexão 3: ID heimdall-financas, nome "Finanças (Finance)", http://host.docker.internal:8004/mcp, acesso só do administrador
+Conexão 3: ID banco-financas, nome "Finanças (Finance)", http://host.docker.internal:8004/mcp, acesso só do administrador
   Funções permitidas (filtro): financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp
-Conexão 4: ID heimdall-publico, nome "Internet e Utilidades", http://host.docker.internal:8001/mcp
+Conexão 4: ID internet, nome "Internet e Utilidades", http://host.docker.internal:8001/mcp
   Funções permitidas (filtro): search_searxng, calculate_expression, get_system_timestamp, get_hackernews_top_stories, search_reddit_posts, fetch_rss_feed, get_astronomy_apod, get_youtube_transcript, fetch_url
-Conexão 5: ID heimdall-privado, nome "Mac e Memória (administrador)", http://host.docker.internal:8000/mcp, acesso só do administrador
+Conexão 5: ID mac-admin, nome "Mac e Memória (administrador)", http://host.docker.internal:8000/mcp, acesso só do administrador
   Funções permitidas (filtro): memory_save, memory_search, memory_forget, rag_temas, rag_search
 
 1. Meus Dados
    Para: diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos, Second Brain e métricas de saúde simples
    Base: qwen3-vl-instruct
    Prompt: prompt_chat_dados.txt
-   Ferramentas: conexão heimdall-dados (5 funções: banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp)
+   Ferramentas: conexão banco-pessoal (5 funções: banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp)
    Chamada de função: Nativa
    Temperatura: 0,2
 
@@ -35,7 +35,7 @@ Conexão 5: ID heimdall-privado, nome "Mac e Memória (administrador)", http://h
    Para: sono, pulso, variabilidade, treinos, ECG, anomalias e relatórios de saúde
    Base: qwen3-vl-instruct
    Prompt: prompt_chat_saude.txt
-   Ferramentas: conexão heimdall-saude (8 funções: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar, get_system_timestamp)
+   Ferramentas: conexão banco-saude (8 funções: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, banco_consultar, get_system_timestamp)
    Chamada de função: Nativa
    Temperatura: 0,2
 
@@ -43,7 +43,7 @@ Conexão 5: ID heimdall-privado, nome "Mac e Memória (administrador)", http://h
    Para: gastos, receitas, categorias, orçamentos, assinaturas, parcelas e boletos do Finance (só leitura)
    Base: qwen3-vl-instruct
    Prompt: prompt_chat_financas.txt
-   Ferramentas: conexão heimdall-financas (7 funções: financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp)
+   Ferramentas: conexão banco-financas (7 funções: financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp)
    Chamada de função: Nativa
    Temperatura: 0,2
 
@@ -59,7 +59,7 @@ Conexão 5: ID heimdall-privado, nome "Mac e Memória (administrador)", http://h
    Para: web, notícias, cálculo, transcrições e feeds
    Base: qwen3-vl-instruct
    Prompt: prompt_chat_curiosidades.txt
-   Ferramentas: conexão heimdall-publico (9 funções: search_searxng, calculate_expression, get_system_timestamp, get_hackernews_top_stories, search_reddit_posts, fetch_rss_feed, get_astronomy_apod, get_youtube_transcript, fetch_url)
+   Ferramentas: conexão internet (9 funções: search_searxng, calculate_expression, get_system_timestamp, get_hackernews_top_stories, search_reddit_posts, fetch_rss_feed, get_astronomy_apod, get_youtube_transcript, fetch_url)
    Chamada de função: Nativa
    Temperatura: 0,4
    Observação: usa o mesmo modelo do Meus Dados, sem trocar de modelo na memória.
@@ -75,7 +75,7 @@ Conexão 5: ID heimdall-privado, nome "Mac e Memória (administrador)", http://h
    Para: livros, notas e documentos do estudo e memória pessoal (opcional)
    Base: qwen3-vl-instruct
    Prompt: prompt_chat_documentos.txt
-   Ferramentas: conexão heimdall-privado (5 funções: memory_save, memory_search, memory_forget, rag_temas, rag_search)
+   Ferramentas: conexão mac-admin (5 funções: memory_save, memory_search, memory_forget, rag_temas, rag_search)
    Chamada de função: Nativa
    Temperatura: 0,2
 
