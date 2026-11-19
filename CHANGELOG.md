@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Open Terminal só local
+- O Open Terminal (porta 8002) agora escuta apenas em 127.0.0.1, em vez de todas as interfaces. O Open WebUI no Docker continua alcançando-o por host.docker.internal. Se precisar do acesso pelo Tailscale, ponha HEIMDALL_TERMINAL_HOST=0.0.0.0 no .env.
+
 ## 2026-11-19 - Heimdall Controls: terminal completo e acessível
 - Novo serviço, Heimdall Controls (porta 8017; de fora, controls.heimdall-ai.tech): um terminal de verdade no Mac, aberto no navegador e pensado para leitor de tela. A pasta e as variáveis continuam entre os comandos. Cada comando é um bloco com título, situação (em execução, concluído, erro com código) e a saída em texto simples, da mais recente para a mais antiga, sem cores nem códigos de tela e sem emular a tela do terminal. Programas que perguntam algo recebem a resposta por um campo próprio, e há botão para interromper (Ctrl+C). Programas de tela cheia, como vim e top, não funcionam.
 - Copiar para a área de transferência: botão para a última saída, campo para escolher quantas últimas saídas, caixa para incluir ou não o comando, e um botão em cada bloco. Se o navegador não deixar copiar sozinho, o texto vai para um campo já selecionado.

@@ -628,7 +628,7 @@ if [ "$WANT_TERMINAL" = "1" ]; then
         # A chave vai por variável de ambiente (não por argumento), para não aparecer no "ps".
         # O programa imprime a chave ao iniciar, então o log só pode ser lido por você.
         TERMINAL_LOG="$(nova_log open_terminal)"; chmod 600 "$TERMINAL_LOG"
-        TERMINAL_ARGS=(run --host 0.0.0.0 --port $TERMINAL_PORT)
+        TERMINAL_ARGS=(run --host "${HEIMDALL_TERMINAL_HOST:-127.0.0.1}" --port $TERMINAL_PORT)
         [ -n "$OPEN_TERMINAL_CWD" ] && TERMINAL_ARGS+=(--cwd "$OPEN_TERMINAL_CWD")
         uvx open-terminal "${TERMINAL_ARGS[@]}" >> "$TERMINAL_LOG" 2>&1 &
         TERMINAL_PID=$!
