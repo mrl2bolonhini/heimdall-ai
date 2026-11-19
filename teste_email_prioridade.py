@@ -32,5 +32,21 @@ confere("a lista é configurável no .env", not eo.baixa_prioridade({"HEIMDALL_E
 confere("lista vazia no .env não rebaixa ninguém", not eo.baixa_prioridade({"HEIMDALL_EMAIL_BAIXA_PRIORIDADE": " "}, item()))
 confere("não rebaixa o que não é oficial", not eo.baixa_prioridade({}, item(classe="suspeito")))
 confere("agendar não cria evento nem lembrete para Serasa", eo.agendar({}, item(), {"urgencia": "alta", "prazo_iso": "2026-12-01"}, __import__("datetime").datetime(2026, 11, 18, 10, 0)) == "")
+
+# diagnóstico: mostra também o motivo e a autenticação, sem enviar nada
+from email.message import EmailMessage  # noqa: E402
+m = EmailMessage()
+m["From"] = "Serasa <avisos@serasaconsumidor-exemplo.com>"
+m["Subject"] = "Pagamento confirmado Serasa"
+m["Date"] = "Wed, 18 Nov 2026 12:00:00 -0300"
+m["Message-ID"] = "<d1@x>"
+m["Authentication-Results"] = "mx.google.com; dkim=pass; spf=pass; dmarc=pass header.from=serasaconsumidor-exemplo.com"
+linhas = []
+rc = eo.diagnosticar({}, buscar=lambda cfg, extras: [("INBOX", m)], saida=linhas.append)
+texto = "\n".join(linhas)
+confere("diagnóstico retorna 0 e mostra domínio e motivo", rc == 0 and "serasaconsumidor-exemplo.com" in texto and "Por quê" in texto and "DMARC pass" in texto, texto)
+linhas = []
+eo.diagnosticar({}, buscar=lambda cfg, extras: [], saida=linhas.append)
+confere("diagnóstico sem e-mails avisa", "Nenhum e-mail recente" in "\n".join(linhas), linhas)
 print("Tudo certo." if not falhas else f"{falhas} falha(s).")
 sys.exit(1 if falhas else 0)

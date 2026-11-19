@@ -104,6 +104,8 @@ python3 teste_notas.py                   # Heimdall Notas (sem rede)
 python3 teste_news.py                    # Heimdall News (sem rede)
 python3 teste_trechos.py                      # trechos de livros do estudo (sem rede)
 bash instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail
+python3 heimdall_email_oficial.py --diagnostico   # como cada e-mail recente foi classificado (inclui os já vistos)
+python3 teste_email_prioridade.py                 # rebaixamento e diagnóstico do vigia de e-mail
 python3 gerar_docs.py --check                     # documentação em dia
 ```
 

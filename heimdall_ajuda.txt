@@ -301,11 +301,13 @@ Exemplos:
 Lê o Gmail em modo somente leitura e separa e-mails verdadeiros de serviços públicos de imitações. Sem opção faz uma verificação.
 Opções:
   -t, --test-login     só testa o login IMAP
-  -s, --simulate       simula, sem avisar nem gravar
+  -s, --simulate       simula, sem avisar nem gravar (pula e-mails já vistos; por isso pode não mostrar nada)
+  -d, --diagnose       mostra como cada e-mail recente de serviço público foi classificado, inclusive os já vistos: remetente, domínio, resultado de autenticação do Gmail e motivo. Não envia nem grava nada e não mostra o corpo
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall mail
   heimdall mail --test-login
+  heimdall mail --diagnose
 
 @ access | Senha e código de 6 dígitos
 A mesma senha e o mesmo código servem a Cloud, Notas, News e ao painel de saúde. Depois de trocar, rode heimdall restart.

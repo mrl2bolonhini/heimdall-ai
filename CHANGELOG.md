@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-18 - Diagnóstico do vigia de e-mail
+- Novo heimdall mail --diagnose (python3 heimdall_email_oficial.py --diagnostico): lista os e-mails recentes de serviços públicos com a classe (oficial, suspeito ou não oficial), remetente, domínio, resultado SPF/DKIM/DMARC do Gmail e o motivo, inclusive os já vistos. A simulação pula os já vistos e por isso podia terminar sem mostrar nada. O diagnóstico não envia nem grava nada e não mostra o corpo.
+
 ## 2026-11-18 - Menos gravações no KV e e-mails de serviços sem interesse
 - Vigia da Cloudflare (cloudflare/vigia.js): gravava duas vezes por rodada no KV (576 por dia, 58% do limite gratuito de 1.000; a Cloudflare avisou ao chegar a 50%). Agora grava o estado só quando muda e a hora da última conferência no máximo uma vez por hora (cerca de 24 por dia). O Worker publicado precisa ser atualizado na Cloudflare para valer. Novo teste: node cloudflare/teste_vigia.mjs.
 - E-mails oficiais de Serasa, SPC, Boa Vista e Quod (avisos de boleto disponível, que só mandam entrar no app) não viram mais item de triagem, evento no Calendário nem lembrete, mesmo com urgência alta; continuam no registro e no resumo. A lista muda em HEIMDALL_EMAIL_BAIXA_PRIORIDADE no .env (nomes separados por vírgula; valor em branco desliga). E-mail suspeito de golpe nunca é rebaixado.

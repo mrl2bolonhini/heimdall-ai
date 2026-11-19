@@ -386,6 +386,7 @@ COMANDOS = [
         ("Listar notas com título que parece cortado", "python3 heimdall_notas.py --titulos-suspeitos"),
         ("Teste dos trechos de livros do estudo (sem rede, precisa do Node)", "python3 teste_trechos.py"),
         ("Login e simulação do vigia de e-mail", "bash instalar_email_oficial.sh --testar"),
+        ("Ver como cada e-mail recente foi classificado, inclusive os já vistos", "heimdall mail --diagnose"),
     ]),
     ("Documentos e conhecimento", [
         ("Indexar knowledge/ (incremental)", "python3 ingest_docs.py"),

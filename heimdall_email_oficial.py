@@ -487,6 +487,36 @@ def executar(cfg, simular=False, agora=None, buscar=buscar_mensagens, estado_arq
     return 0
 
 
+def diagnosticar(cfg, buscar=buscar_mensagens, saida=print):
+    """Mostra como cada e-mail recente de serviço público foi classificado, INCLUSIVE os já vistos (a simulação os pula).
+    Não envia nada, não grava nada e não mostra o corpo: só remetente, domínio, resultado do Gmail e motivo."""
+    extras = [d.strip().lower() for d in cfg.get("HEIMDALL_EMAIL_DOMINIOS_EXTRA", "").split(",") if d.strip()]
+    try:
+        msgs = buscar(cfg, extras)
+    except Exception as e:
+        print("Falha: não consegui falar com o Gmail: " + str(e)[:80], file=sys.stderr)
+        return 1
+    n = 0
+    for pasta, msg in msgs:
+        it = classificar(msg, extras)
+        if not it:
+            continue
+        n += 1
+        au = it["auth"]
+        saida("%d. Classe: %s - %s" % (n, it["classe"], it["servico"] or "serviço público"))
+        saida("   De: %s" % it["de"])
+        saida("   Domínio do remetente: %s" % (it["dominio"] or "desconhecido"))
+        saida("   Assunto: %s" % it["assunto"])
+        saida("   Data: %s" % it["data"])
+        saida("   Autenticação do Gmail: DMARC %s, DKIM %s, SPF %s, domínio autenticado %s" % (
+            au["dmarc"] or "ausente", au["dkim"] or "ausente", au["spf"] or "ausente", au["from"] or "ausente"))
+        if it["motivo"]:
+            saida("   Por quê: %s" % it["motivo"])
+    if not n:
+        saida("Nenhum e-mail recente de serviço público encontrado.")
+    return 0
+
+
 def main():
     cfg = ler_env(os.path.join(AQUI, ".env"))
     for k in ("HEIMDALL_EMAIL_USUARIO", "HEIMDALL_EMAIL_SENHA_APP"):
@@ -503,6 +533,8 @@ def main():
         except Exception as e:
             print("Login falhou:", str(e)[:120], file=sys.stderr)
             return 1
+    if "--diagnostico" in sys.argv:
+        return diagnosticar(cfg)
     return executar(cfg, simular="--simular" in sys.argv)
 
 

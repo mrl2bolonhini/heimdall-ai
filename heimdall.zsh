@@ -84,7 +84,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     db) printf '%s\n' "-s=--sql" ;;
     doctor) printf '%s\n' "-m=--memory" "-c=--cpu" "-d=--disk" "-k=--docker" "-o=--ollama" "-s=--services" "-t=--top" ;;
     backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
-    mail) printf '%s\n' "-t=--test-login" "-s=--simulate" ;;
+    mail) printf '%s\n' "-t=--test-login" "-s=--simulate" "-d=--diagnose" ;;
     access) printf '%s\n' "-p=--password" "-c=--code" "-a=--all" "-v=--verify" ;;
     voice) printf '%s\n' "-i=--import" ;;
     listen) printf '%s\n' "-l=--list" "-n=--latest" ;;
@@ -317,6 +317,7 @@ heimdall() {
 --restore=restaurar" "$@"
       _heimdall_py heimdall_backup.py "${_HA[@]}" ;;
     mail) _heimdall_tr "--test-login=--testar-login
+--diagnose=--diagnostico
 --simulate=--simular
 --balance=--saldo
 --latest=--ultimos
@@ -424,7 +425,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       db) compadd -- --sql ;;
       doctor) compadd -- --memory --cpu --disk --docker --ollama --services --top ;;
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
-      mail) compadd -- --test-login --simulate ;;
+      mail) compadd -- --test-login --diagnose --simulate ;;
       access) compadd -- --password --code --all --verify ;;
       finance) compadd -- --local --open --inspect --explain --preview --import --inbox --retry --values --folder --lines --account --force --bill --bills --person --read-email --days --sync --save-pluggy --since --list --name --rename-account --standardize-names --dedupe --simulate --now --redo-from-pluggy --diagnose-card --closing --fixed-installment --balance --latest --summary --month --search --category --limit ;;
       voice) compadd -- --import ;;
