@@ -76,6 +76,13 @@ with sync_playwright() as pw:
     confere("aviso falado traz a saída curta", espera(lambda: "Saída: ola mundo" in estado()), estado())
     confere("o cursor está na linha de digitação", ta.evaluate("e => e.selectionStart === e.value.length"))
 
+    pg.keyboard.type("echo segundo")
+    pg.keyboard.press("Enter")
+    espera(lambda: "segundo\n[concluído" in valor())
+    confere("segundo comando: o campo mostra só ele (a primeira saída saiu do campo)", "ola mundo" not in valor() and "echo segundo" in valor(), valor())
+    confere("o histórico guarda os dois, em ordem", espera(lambda: pg.locator("#historico").input_value().count("[concluído") == 2) and pg.locator("#historico").input_value().index("ola mundo") < pg.locator("#historico").input_value().index("segundo"), pg.locator("#historico").input_value())
+    confere("verificação de ortografia desligada nos dois campos", ta.evaluate("e => e.spellcheck === false") and pg.locator("#historico").evaluate("e => e.spellcheck === false"))
+
     # só a última linha é editável
     ta.evaluate("e => e.setSelectionRange(0, 0)")
     pg.keyboard.type("x")
@@ -149,6 +156,28 @@ with sync_playwright() as pw:
     pg.keyboard.type("echo ${HD_N:-vazio}")
     pg.keyboard.press("Enter")
     confere("Option+Shift+R reinicia o shell (variável some)", espera(lambda: "\nvazio\n" in valor()), valor())
+
+    # Tab: completar
+    pg.keyboard.type("mkdir -p /tmp/hdct && cd /tmp/hdct && touch alfa.txt alfabeto.txt beta.txt")
+    pg.keyboard.press("Enter")
+    espera(lambda: "[concluído" in valor() and valor().endswith("hdct % "))
+    pg.keyboard.type("cat be")
+    pg.keyboard.press("Tab")
+    confere("Tab completa um arquivo único", espera(lambda: valor().endswith("cat beta.txt ")), valor()[-40:])
+    ta.evaluate("e => { e.value = e.value.slice(0, e.value.length - 'cat beta.txt '.length); e.setSelectionRange(e.value.length, e.value.length); }")
+    pg.keyboard.type("cat alf")
+    pg.keyboard.press("Tab")
+    confere("Tab com vários: completa o comum e fala as opções", espera(lambda: valor().endswith("cat alfa") and "2 opções" in estado() and "alfabeto.txt" in estado()), (valor()[-30:], estado()))
+    pg.keyboard.press("Tab")
+    espera(lambda: "2 opções" in estado())
+    confere("Tab que não muda nada ainda fica no campo", pg.evaluate("document.activeElement.id") == "terminal")
+    pg.keyboard.press("Tab")
+    confere("o Tab seguinte, de novo sem efeito, deixa o foco sair do campo", espera(lambda: pg.evaluate("document.activeElement.id") != "terminal"), pg.evaluate("document.activeElement.id"))
+    pg.keyboard.press("Alt+Shift+KeyT")
+    pg.keyboard.press("Control+KeyC")
+    pg.keyboard.press("Tab")
+    confere("Tab com a linha vazia não é capturado (passa ao próximo item)", pg.evaluate("document.activeElement.id") != "terminal")
+    pg.keyboard.press("Alt+Shift+KeyT")
 
     # lista de atalhos
     pg.keyboard.press("Alt+Shift+KeyH")

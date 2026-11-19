@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: o campo mostra só o último comando, e Tab completa
+- O campo do terminal agora mostra só o último comando e a saída dele: a cada comando novo ele recomeça, como depois de um clear. Antes ele acumulava tudo e o leitor de tela lia desde a primeira saída. Os comandos anteriores ficam na seção Histórico, num campo somente leitura, e as cópias (Option+Shift+C, 1 a 9, 0) continuam levando as últimas saídas. Enquanto o comando roda, a saída é acrescentada ao fim do campo em vez de trocar o texto todo.
+- Tab completa comandos (na primeira palavra e depois de ; | &) e nomes de arquivos e pastas a partir da pasta do shell. Com uma só opção completa tudo; com várias, completa o que for igual e o leitor de tela diz as opções. Se o Tab não mudar nada, o Tab seguinte sai do campo (não prende o teclado), e com a linha vazia o Tab é o de sempre.
+- Verificação de ortografia desligada no campo e no histórico (também reforçada por JavaScript). Se o VoiceOver ainda avisar erros, veja o LEIAME_controls.txt.
+
 ## 2026-11-19 - Controls: o terminal agora é um campo só, com atalhos de teclado
 - A saída de cada comando aparece no próprio campo do terminal, logo abaixo do comando, como num terminal de verdade, em vez de blocos com títulos e botões mais abaixo na página. O cursor fica na última linha, depois do prompt (nome da pasta e %); Enter executa, Shift+Enter abre nova linha. Só a última linha aceita digitação: o resto é a saída, que dá para ler e copiar.
 - Saiu o campo separado "Resposta ao programa". Quando um programa pergunta algo, o que você digita na última linha vai direto a ele (e não aparece, então serve para senha).

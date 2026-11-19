@@ -78,11 +78,80 @@ e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 CSS = nuvem.CSS + """
 body{font-size:19px;line-height:1.6;max-width:56rem}
 main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3rem;font-size:1.25em}h3{font-size:1.05em;margin:.2rem 0}
+.terminal.historico{height:16rem}
 .terminal{height:60vh;min-height:16rem;font-size:1em;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
 .linha-acoes{display:flex;flex-wrap:wrap;gap:.2rem 1rem;align-items:flex-end}
 .linha-acoes form{margin:0}.aviso{border:1px solid var(--linha);padding:.7rem;margin-top:1.5rem;color:var(--suave)}
 .fora{color:var(--erro);font-weight:700}
 """
+
+BUILTINS = ["cd", "pwd", "echo", "export", "unset", "alias", "unalias", "source", "type", "which", "where", "history", "jobs", "fg", "bg", "kill",
+            "exit", "read", "set", "setopt", "unsetopt", "typeset", "print", "printf", "test", "true", "false", "eval", "exec", "wait", "umask",
+            "ulimit", "pushd", "popd", "dirs", "rehash", "hash", "command", "builtin", "heimdall"]
+_EXE = {"em": 0.0, "nomes": []}
+
+
+def executaveis() -> list:
+    """Nomes executáveis do PATH (guardados por 30 s: ler o PATH inteiro a cada Tab seria lento)."""
+    if time.time() - _EXE["em"] < 30 and _EXE["nomes"]:
+        return _EXE["nomes"]
+    dirs = (os.environ.get("PATH", "") + ":/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin").split(":")
+    nomes = set()
+    for d in dirs:
+        try:
+            with os.scandir(d) as it:
+                for en in it:
+                    if not en.name.startswith(".") and os.access(en.path, os.X_OK):
+                        nomes.add(en.name)
+        except OSError:
+            continue
+    _EXE["em"], _EXE["nomes"] = time.time(), sorted(nomes)
+    return _EXE["nomes"]
+
+
+_ESCAPAR = re.compile(r"([ \t\\'\"()&;|<>*?$`!#{}\[\]])")
+
+
+def completar(pasta: str, linha: str) -> dict:
+    """Tab: completa a última palavra da linha. Na primeira palavra (ou depois de ; | &), nomes de comandos; nas outras, arquivos e pastas
+    a partir da pasta do shell. Devolve a palavra nova, o ponto onde ela começa e as opções (para o leitor de tela dizer)."""
+    m = re.search(r"(?:\\.|[^\s;|&()<>])*$", linha)
+    palavra, inicio = m.group(0), m.start()
+    antes = linha[:inicio].rstrip()
+    sem_esc = re.sub(r"\\(.)", r"\1", palavra)
+    comando = antes == "" or antes[-1] in ";|&("
+    itens = []                      # (nome, é pasta)
+    if sem_esc == "~":
+        return {"inicio": inicio, "palavra_nova": "~/", "opcoes": ["~/"]}
+    if comando and "/" not in sem_esc and not sem_esc.startswith("."):
+        itens = [(n, False) for n in sorted(set(executaveis()) | set(BUILTINS)) if n.startswith(sem_esc)]
+        resto, d_tipado = sem_esc, ""
+    else:
+        cut = sem_esc.rfind("/")
+        d, resto = (sem_esc[:cut + 1], sem_esc[cut + 1:]) if cut >= 0 else ("", sem_esc)
+        d_tipado = palavra[:palavra.rfind("/") + 1] if "/" in palavra else ""
+        try:
+            with os.scandir(os.path.join(pasta, os.path.expanduser(d) or ".")) as it:
+                for en in it:
+                    if en.name.startswith(resto) and (resto.startswith(".") or not en.name.startswith(".")):
+                        try:
+                            itens.append((en.name, en.is_dir()))
+                        except OSError:
+                            itens.append((en.name, False))
+        except OSError:
+            itens = []
+        itens.sort()
+    itens = itens[:500]
+    if not itens:
+        return {"inicio": inicio, "palavra_nova": palavra, "opcoes": []}
+    nomes = [n for n, _ in itens]
+    if len(itens) == 1:
+        n, eh_dir = itens[0]
+        novo = _ESCAPAR.sub(r"\\\1", n) + ("/" if eh_dir else " ")
+    else:
+        novo = _ESCAPAR.sub(r"\\\1", os.path.commonprefix(nomes))
+    return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
+
 
 SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços")]
 
@@ -145,25 +214,32 @@ def _saida_exibida(sh, b) -> tuple:
     return saida, ""
 
 
-def transcricao(sh) -> dict:
-    """Tudo o que o campo do terminal mostra: cada comando com o prompt, a saída e uma linha de situação.
-    Só cresce no fim (menos ao limpar), o que deixa o navegador acrescentar sem mexer no cursor de quem está lendo."""
+def _texto_do_bloco(sh, b) -> tuple:
+    """(texto do comando com prompt, saída e situação; posição onde a saída começa)."""
+    cmd = b.comando if len(b.comando) <= 300 else b.comando[:300] + "..."
+    cab = prompt_de(b.pasta) + cmd + "\n"
+    saida, corte = _saida_exibida(sh, b)
+    corpo = corte + saida
+    fim_ = b.estado != "rodando"
+    if fim_ and corpo and not corpo.endswith("\n"):
+        corpo += "\n"
+    return cab + corpo + (f"[{_situacao(b)}]\n\n" if fim_ else ""), len(cab) + len(corte)
+
+
+def transcricao(sh, completo: bool = True) -> dict:
+    """O campo do terminal mostra só o ÚLTIMO comando (o leitor de tela lê só a saída dele, como depois de um clear).
+    O histórico de todos os comandos vai num campo à parte, somente leitura. O texto do último comando só cresce no fim."""
     with sh._lock:
-        partes = []
-        for b in sh.blocos:
-            cmd = b.comando if len(b.comando) <= 300 else b.comando[:300] + "..."
-            cab = prompt_de(b.pasta) + cmd + "\n"
-            saida, corte = _saida_exibida(sh, b)
-            corpo = corte + saida
-            fim_ = b.estado != "rodando"
-            if fim_ and corpo and not corpo.endswith("\n"):
-                corpo += "\n"
-            partes.append((cab + corpo + (f"[{_situacao(b)}]\n\n" if fim_ else ""), len(cab) + len(corte), b.n))
-        while len(partes) > 1 and sum(len(t) for t, _, _ in partes) > MAX_TRANSCRICAO:
-            partes.pop(0)
-        texto = "".join(t for t, _, _ in partes)
-        inicio = (len(texto) - len(partes[-1][0]) + partes[-1][1]) if partes else -1
-        return {"texto": texto, "inicio_ultima": inicio, "ultimo_n": partes[-1][2] if partes else 0}
+        if not sh.blocos:
+            return {"texto": "", "inicio_ultima": -1, "ultimo_n": 0, "historico": ""}
+        ultimo, inicio = _texto_do_bloco(sh, sh.blocos[-1])
+        hist = ""
+        if completo:
+            partes = [_texto_do_bloco(sh, b)[0] for b in sh.blocos[:-1]] + [ultimo]
+            while len(partes) > 1 and sum(len(t) for t in partes) > MAX_TRANSCRICAO:
+                partes.pop(0)
+            hist = "".join(partes)
+        return {"texto": ultimo, "inicio_ultima": inicio, "ultimo_n": sh.blocos[-1].n, "historico": hist}
 
 
 def aviso_do_bloco(sh, b) -> str:
@@ -196,11 +272,13 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
     sh = obter_shell()
     t = transcricao(sh)
     inicial = t["texto"] + ("" if sh.rodando() else prompt_de(sh.pasta))
+    hist = t["historico"]
     corpo = (
         '<p id="estado" role="status" aria-live="polite"></p>'
         f'<input type="hidden" id="csrf" value="{e(sess["csrf"])}">'
         '<p>Digite o comando na última linha do campo e aperte Enter. A saída aparece no próprio campo, logo abaixo do comando. '
-        'Se um programa estiver perguntando algo, o que você digitar vai para ele. Option+Shift+H leva à lista de atalhos.</p>'
+        'Se um programa estiver perguntando algo, o que você digitar vai para ele. O campo mostra só o último comando; os anteriores ficam em Histórico, mais abaixo. '
+        'Tab completa comandos e nomes de arquivos. Option+Shift+H leva à lista de atalhos.</p>'
         '<label for="terminal">Terminal</label>'
         f'<textarea class="terminal" id="terminal" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}">{e(inicial)}</textarea>'
         '<section aria-labelledby="h-ac"><h2 id="h-ac">Ações</h2><div class="linha-acoes">'
@@ -216,9 +294,13 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<p>Reiniciar o shell fecha o atual e abre outro limpo, na pasta do Heimdall.</p>'
         '<div id="area-copia" hidden><label for="texto-copia">Se o navegador não deixar copiar sozinho, selecione tudo neste campo (Command+A) e copie (Command+C)</label>'
         '<textarea id="texto-copia" readonly></textarea></div></section>'
+        '<section aria-labelledby="h-hist"><h2 id="h-hist">Histórico</h2>'
+        '<label for="historico">Todos os comandos e saídas, do mais antigo ao mais recente (somente leitura)</label>'
+        f'<textarea class="terminal historico" id="historico" readonly spellcheck="false">{e(hist)}</textarea></section>'
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
         '<p>Funcionam em qualquer ponto desta página. Option é a tecla Alt do Mac.</p><ol>'
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
+        '<li>Tab: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Se nada mudar, o Tab seguinte sai do campo, como de costume. Sem nada digitado, o Tab só passa para o próximo item.</li>'
         '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
         '<li>Option+Shift+C: copia a última saída. Option+Shift+1 até 9: copia as últimas 1 a 9 saídas. Option+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
         '<li>Option+Shift+U: leva o cursor ao início da última saída; depois leia com VO+A ou desça com a seta. Option+Shift+O: o leitor de tela lê o começo da última saída.</li>'
@@ -276,7 +358,8 @@ var ta = document.getElementById('terminal');
 var estado = document.getElementById('estado');
 var base = ta.value;                 // tudo o que o servidor mostra; o que vem depois é o que a pessoa está digitando
 var rodando = false, ultimaVersao = parseInt(ta.dataset.versao || '0', 10), timer = null, vistos = {}, primeira = true;
-var inicioUltima = -1, historico = [], hi = -1;
+var inicioUltima = -1, historico = [], hi = -1, tabParado = false;
+ta.spellcheck = false; ta.setAttribute('autocorrect', 'off'); ta.setAttribute('autocapitalize', 'off');
 function dizer(t){ estado.textContent = ''; setTimeout(function(){ estado.textContent = t; }, 60); }
 function digitado(){ return ta.value.indexOf(base) === 0 ? ta.value.slice(base.length) : ''; }
 function post(url, dados){
@@ -287,12 +370,13 @@ function aplicar(s){
   var novo = s.texto + (s.rodando ? '' : s.prompt);
   if (novo !== base) {
     var resto = digitado(), a = ta.selectionStart, b = ta.selectionEnd, noFim = a >= base.length, desl = ta.scrollTop;
-    var comeco = novo.indexOf(base) === 0;
-    ta.value = novo + resto;
+    var comeco = novo.indexOf(base) === 0 && base.length > 0;
+    if (comeco) { ta.setRangeText(novo.slice(base.length), base.length, base.length, 'preserve'); } else { ta.value = novo + resto; }
     if (noFim) { ta.setSelectionRange(novo.length + (a - base.length), novo.length + (b - base.length)); ta.scrollTop = ta.scrollHeight; }
     else { var m = ta.value.length; ta.setSelectionRange(Math.min(a, m), Math.min(b, m)); ta.scrollTop = comeco ? desl : ta.scrollHeight; }
     base = novo;
   }
+  if (s.historico !== null && s.historico !== undefined) { var h = document.getElementById('historico'); if (h.value !== s.historico) { h.value = s.historico; } }
   inicioUltima = s.inicio_ultima; historico = s.comandos || historico; ultimaVersao = s.versao; rodando = s.rodando;
   (s.blocos || []).forEach(function(bl){
     if (!primeira && vistos[bl.n] === 'rodando' && bl.estado !== 'rodando' && bl.aviso) { dizer(bl.aviso); }
@@ -367,6 +451,17 @@ function historicoMover(d){
   ta.value = base + c; ta.setSelectionRange(ta.value.length, ta.value.length); ta.focus();
   dizer(c ? 'Histórico: ' + c : 'Linha vazia.');
 }
+function completar(linha){
+  var c = ta.selectionStart - base.length, pre = linha.slice(0, c), pos = linha.slice(c);
+  fetch('/terminal/completar?linha=' + encodeURIComponent(pre), {credentials:'same-origin', headers:{'X-Heimdall-Ajax':'1'}}).then(function(r){ return r.json(); }).then(function(r){
+    if (digitado() !== linha) { return; }            // a pessoa continuou digitando enquanto a resposta vinha
+    var ops = r.opcoes || [], nova = r.palavra_nova === undefined ? pre : pre.slice(0, r.inicio) + r.palavra_nova;
+    if (nova !== pre) { ta.value = base + nova + pos; ta.setSelectionRange(base.length + nova.length, base.length + nova.length); tabParado = false; } else { tabParado = true; }
+    if (!ops.length) { dizer('Sem opções.'); }
+    else if (ops.length === 1) { dizer(ops[0]); }
+    else { dizer(ops.length + ' opções: ' + ops.slice(0, 25).join(', ') + (ops.length > 25 ? ' e mais ' + (ops.length - 25) : '') + '.'); }
+  }).catch(function(){ tabParado = true; });
+}
 function irAoCampo(){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
 // só a última linha pode ser editada: o resto é a saída e fica protegido
 ta.addEventListener('beforeinput', function(ev){
@@ -379,6 +474,13 @@ ta.addEventListener('beforeinput', function(ev){
 });
 ta.addEventListener('keydown', function(ev){
   if (ev.isComposing) { return; }
+  if (ev.key !== 'Tab') { tabParado = false; }
+  if (ev.key === 'Tab' && !ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey) {
+    var linha = digitado();
+    if (rodando || !linha.length || ta.selectionStart < base.length) { return; }   // sem nada a completar, o Tab é o de sempre: passa ao próximo item
+    if (tabParado) { tabParado = false; return; }                                    // Tab sem efeito duas vezes seguidas: deixa sair do campo
+    ev.preventDefault(); completar(linha); return;
+  }
   if (ev.key === 'Enter' && !ev.shiftKey && !ev.ctrlKey && !ev.altKey && !ev.metaKey) { ev.preventDefault(); enviar(); return; }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyC') {
     ev.preventDefault();
@@ -568,6 +670,10 @@ class Painel(BaseHTTPRequestHandler):
             if rota == "/terminal/texto":
                 self._texto(q)
                 return
+            if rota == "/terminal/completar":
+                sh = obter_shell()
+                self._json(200, completar(sh.pasta, (q.get("linha") or [""])[0][:4000]) if not sh.rodando() else {"opcoes": []})
+                return
             funcao = ROTAS.get(rota)
             if not funcao:
                 self._enviar(404, pagina("Não encontrei", '<p>Esta página não existe.</p><p><a href="/">Voltar à visão geral</a></p>', sess))
@@ -661,14 +767,15 @@ class Painel(BaseHTTPRequestHandler):
             desde = 0
         with sh._lock:
             mudados = [b for b in sh.blocos if b.versao > desde or b.estado == "rodando"]
-            t = transcricao(sh)
+            rod = sh.rodando()
+            t = transcricao(sh, completo=not rod)
             blocos = []
             for b in mudados:
                 fim_ = b.estado != "rodando"
                 blocos.append({"n": b.n, "estado": b.estado, "codigo": b.codigo, "comando": b.comando,
                                "saida": _saida_exibida(sh, b)[0] if fim_ else "", "aviso": aviso_do_bloco(sh, b) if fim_ else ""})
-            dado = {"versao": sh.versao, "rodando": sh.rodando(), "pasta": sh.pasta, "prompt": prompt_de(sh.pasta),
-                    "texto": t["texto"], "inicio_ultima": t["inicio_ultima"],
+            dado = {"versao": sh.versao, "rodando": rod, "pasta": sh.pasta, "prompt": prompt_de(sh.pasta),
+                    "texto": t["texto"], "inicio_ultima": t["inicio_ultima"], "historico": None if rod else t["historico"],
                     "comandos": [b.comando for b in sh.blocos][-100:], "blocos": blocos}
         self._json(200, dado)
 
