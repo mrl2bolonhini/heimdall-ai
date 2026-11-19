@@ -19,6 +19,7 @@ Recursos maiores, que dependem dos anteriores.
 - Documentos pesquisáveis: Paperless-ngx em subdomínio próprio, com leitura de texto nos PDFs e etiquetas automáticas.
 - Painéis livres: Metabase ou Grafana sobre o banco, para cruzar saúde, estudos e avisos.
 - Progresso de estudos: temas vistos, lacunas e revisão espaçada, a partir da tabela de estudos.
+- Mesa de operações em simulação (trading): tela própria, feita para teclado e leitor de tela, com atalhos para comprar, vender, zerar a posição e cancelar tudo, cotações e carteira. Começa só em simulação (papel), sem enviar ordem nenhuma, com limites de valor por ordem e de perda por dia. Uma IA local acompanha tendências e avisa enquanto você opera; quem decide e confirma cada ordem é você. A execução fica em código com regras fixas, nunca com a IA. Ordens reais só se houver uma corretora com API oficial e depois de testar na simulação.
 - Linha do tempo de privacidade e processos: diários oficiais, menções na internet e e-mails de serviços públicos lado a lado.
 
 ## Ideias em avaliação
