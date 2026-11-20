@@ -20,6 +20,7 @@ except ImportError:
 import heimdall_cloud as hc  # noqa: E402
 import heimdall_controls as hcx  # noqa: E402
 
+hcx.ATRASO_CURSOR_MS = 400
 hcx.AUDITORIA = TMP / "logs" / "controls_audit.log"
 hc.SENHA_HASH = hc.hash_senha("senha-de-teste-forte", iteracoes=100_000)
 hc.TOTP_SEGREDO = "JBSWY3DPEHPK3PXP"
@@ -204,14 +205,20 @@ with sync_playwright() as pw:
     pg.keyboard.press("Alt+Shift+KeyT")
     confere("Option+Shift+T volta ao campo", pg.evaluate("document.activeElement.id") == "terminal")
 
-    # sair do campo e voltar não mexe em nada (sem controle de foco): o cursor fica onde estava e a leitura do nome do campo não é cortada
-    pg.evaluate("(() => { const t = document.getElementById('terminal'); t.setSelectionRange(t.value.length, t.value.length); })()")
+    # voltar ao campo com o cursor no começo (como o Safari faz): nada é mexido na hora; depois do atraso o cursor vai ao fim
+    pg.evaluate("document.getElementById('terminal').setSelectionRange(0, 0)")
     pg.keyboard.press("Tab")
     confere("saiu do campo", espera(lambda: pg.evaluate("document.activeElement.id") != "terminal"))
-    pg.evaluate("window.__sel = []; const t = document.getElementById('terminal'); document.addEventListener('selectionchange', () => window.__sel.push(t.selectionStart));")
     pg.keyboard.press("Shift+Tab")
-    time.sleep(0.8)
-    confere("voltou ao campo com o cursor no fim, sem nenhum ajuste depois de entrar", pg.evaluate("document.activeElement.id") == "terminal" and pg.evaluate("(() => { const t = document.getElementById('terminal'); return t.selectionStart === t.value.length && new Set(window.__sel).size <= 1; })()"), pg.evaluate("window.__sel"))
+    confere("na volta nada é mexido na hora (o nome do campo é lido inteiro)", pg.evaluate("document.activeElement.id") == "terminal" and pg.evaluate("document.getElementById('terminal').selectionStart") == 0)
+    confere("depois do atraso o cursor vai ao fim", espera(lambda: pg.evaluate("(() => { const t = document.getElementById('terminal'); return t.selectionStart === t.value.length; })()"), 3), pg.evaluate("document.getElementById('terminal').selectionStart"))
+    # se a pessoa move o cursor antes do atraso, ele não é tirado do lugar
+    pg.evaluate("document.getElementById('terminal').setSelectionRange(0, 0)")
+    pg.keyboard.press("Tab"); pg.keyboard.press("Shift+Tab")
+    pg.keyboard.press("ArrowRight")
+    time.sleep(hcx.ATRASO_CURSOR_MS / 1000 + 0.6)
+    confere("se você mexeu no cursor antes do atraso, ele não é movido", pg.evaluate("document.getElementById('terminal').selectionStart") < pg.evaluate("document.getElementById('terminal').value.length"))
+    pg.keyboard.press("Alt+Shift+KeyT")
 
     # nomes dos campos e histórico no fim
     confere("os campos se chamam só Histórico e Terminal", pg.evaluate("[document.querySelector('label[for=historico]').textContent, document.querySelector('label[for=terminal]').textContent]") == ["Histórico", "Terminal"])

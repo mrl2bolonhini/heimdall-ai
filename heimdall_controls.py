@@ -72,6 +72,12 @@ SERVICO = "controls"
 AUDITORIA = PROJECT_DIR / "logs" / "controls_audit.log"
 MAX_CORPO = 300_000
 MAX_EXIBIDO = 40_000      # caracteres da saída de UM comando mostrados na tela; a cópia traz tudo
+try:
+    # ao voltar ao campo com o cursor no começo (o Safari faz isso), espera este tempo, em ms, antes de levá-lo ao fim, para o VoiceOver
+    # terminar de ler o nome do campo sem ser cortado. 0 desliga o salto. Aumente se o nome ainda for cortado; diminua se demorar.
+    ATRASO_CURSOR_MS = max(0, int(os.environ.get("HEIMDALL_CONTROLS_ATRASO_CURSOR", "1800")))
+except ValueError:
+    ATRASO_CURSOR_MS = 1800
 MAX_TRANSCRICAO = 400_000  # caracteres do campo do terminal no total (os comandos mais antigos saem da tela)
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 
@@ -294,7 +300,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<div><label for="historico">Histórico</label>'
         f'<textarea class="terminal historico" id="historico" aria-readonly="true" inputmode="none" spellcheck="false" data-n="{t["n_hist"]}">{e(hist)}</textarea></div>'
         '<div><label for="terminal">Terminal</label>'
-        f'<textarea class="terminal" id="terminal" spellcheck="false" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}">{e(inicial)}</textarea></div>'
+        f'<textarea class="terminal" id="terminal" spellcheck="false" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}" data-atraso="{ATRASO_CURSOR_MS}">{e(inicial)}</textarea></div>'
         '<section aria-labelledby="h-ac"><h2 id="h-ac">Ações</h2><div class="linha-acoes">'
         '<div>'+design.botao_js("bt-copiar-ultima","Copiar a última saída (Option+Shift+C)")+'</div>'
         '<div><label for="qtd">Quantas últimas saídas</label><input id="qtd" type="number" min="1" max="300" value="3" inputmode="numeric">'
@@ -539,8 +545,21 @@ ta.addEventListener('keydown', function(ev){
   }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyL') { ev.preventDefault(); limpar(); }
 });
-// Sem controle de foco ao entrar ou sair do campo: o navegador e o VoiceOver leem o nome do campo e a linha do cursor como em qualquer campo.
-// Só o carregamento da página (irAoCampo, mais abaixo) põe o foco e o cursor no fim; digitar com o cursor na saída já manda a letra para o fim (beforeinput).
+// Ao voltar ao campo (Tab, Shift+Tab) o Safari põe o cursor no começo. Nada é mexido na hora, para o VoiceOver ler o nome do campo inteiro;
+// só depois do atraso (data-atraso, em ms) o cursor vai ao fim, e apenas se você ainda não digitou, clicou nem moveu o cursor.
+// Se você digitar antes disso, a letra já vai para o fim (beforeinput). O carregamento da página, a volta à aba e Option+Shift+T põem o cursor no fim antes do foco.
+var atrasoCursor = parseInt(ta.dataset.atraso || '1800', 10), tocou = false, entrada = 0;
+['keydown', 'mousedown', 'touchstart'].forEach(function(n){ ta.addEventListener(n, function(){ tocou = true; }, true); });
+ta.addEventListener('blur', function(){ entrada++; });
+ta.addEventListener('focus', function(){
+  tocou = false; var id = ++entrada;
+  if (!(atrasoCursor > 0)) { return; }
+  setTimeout(function(){
+    if (id !== entrada || tocou || document.activeElement !== ta) { return; }
+    if (ta.selectionStart !== 0 || ta.selectionEnd !== 0) { return; }     // já está no fim ou você escolheu outro ponto: não mexe
+    fimDoCampo();
+  }, atrasoCursor);
+});
 window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
 window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });
 document.addEventListener('keydown', function(ev){
