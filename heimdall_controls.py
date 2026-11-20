@@ -389,26 +389,47 @@ def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: boo
             f'{botoes}</form></li>')
 
 
+CATEGORIAS = {"CLOUD": "Cloud", "CONTROLS": "Controls", "NOTAS": "Notes", "NEWS": "News", "SAUDE": "Health", "JOGOS": "Games", "FINANCE": "Finance", "AGENTE": "Mac Agent",
+              "KUMA": "Uptime Kuma", "MCP": "MCP", "WEBUI": "Open WebUI", "N8N": "n8n", "R2": "Backup na nuvem (R2)", "BACKUP": "Backup na nuvem (R2)", "CFACCESS": "Cloudflare Access",
+              "TRIAGEM": "Triagem", "EMAIL": "Vigia de e-mails", "EMAILS": "Vigia de e-mails", "LITELLM": "LiteLLM", "OLLAMA": "Ollama", "GERAL": "Gerais", "ALERT": "Alertas", "EXAMES": "Exames", "GITOPS": "GitOps", "MONITOR": "Monitoramento", "PERGUNTAR": "Perguntar", "VOZ": "Voz"}
+
+
 def pg_configuracoes(q: dict, sess: dict) -> tuple:
-    """Tudo o que o .env guarda, para ver e mudar; mais as opções que o código aceita e o .env ainda não define."""
+    """Tudo o que o .env guarda, em grupos que abrem e fecham (um por serviço), mais as opções que o código aceita e o .env ainda não define."""
     definidas = config.ler()
     nomes = {d["nome"] for d in definidas}
     codigo = config.opcoes_do_codigo()
     faltam = sorted(n for n in codigo if n not in nomes)
-    linhas_def = "".join(_linha_config(i, d["nome"], d["valor"]) for i, d in enumerate(definidas))
-    linhas_falta = "".join(_linha_config(10000 + i, n, "", codigo[n], False) for i, n in enumerate(faltam))
-    corpo = ("<p>Aqui ficam todas as configurações do Heimdall, as que estão no arquivo .env e as outras opções que o código aceita. Os valores aparecem por inteiro, "
-             "inclusive senhas e chaves: só quem entrou neste painel vê. Salvar grava na hora, mas cada serviço só lê o valor novo quando for reiniciado (aba Serviços) "
-             "ou quando você reiniciar tudo (aba Manutenção). Antes de cada mudança o arquivo é copiado para .env.bak. "
+    contagem: dict = {}
+    for n in [d["nome"] for d in definidas] + faltam:
+        contagem[config.grupo(n)] = contagem.get(config.grupo(n), 0) + 1
+
+    def cat(n: str) -> str:  # grupo de um item só vai para "Outras"
+        g = config.grupo(n)
+        return g if contagem.get(g, 0) > 1 or g in CATEGORIAS else "OUTRAS"
+    grupos: dict = {}
+    for i, d in enumerate(definidas):
+        grupos.setdefault(cat(d["nome"]), {"def": [], "falta": []})["def"].append(_linha_config(i, d["nome"], d["valor"]))
+    for i, n in enumerate(faltam):
+        grupos.setdefault(cat(n), {"def": [], "falta": []})["falta"].append(_linha_config(10000 + i, n, "", codigo[n], False))
+    blocos = []
+    for g in sorted(grupos, key=lambda x: (x in ("OUTRAS",), CATEGORIAS.get(x, x.title()).lower())):
+        d, f = grupos[g]["def"], grupos[g]["falta"]
+        nome = CATEGORIAS.get(g, "Outras" if g == "OUTRAS" else g.title())
+        resumo = f"{nome}: {len(d)} no .env" + (f", {len(f)} opções sem valor" if f else "")
+        interno = ((f"<h3>No .env</h3><ul class=\"chaves\">{''.join(d)}</ul>") if d else "") + ((f"<h3>Opções ainda sem valor</h3><ul class=\"chaves\">{''.join(f)}</ul>") if f else "")
+        blocos.append(f'<details class="grupo"><summary>{e(resumo)}</summary>{interno}</details>')
+    corpo = ("<p>Aqui ficam todas as configurações do Heimdall, as que estão no arquivo .env e as outras opções que o código aceita, em grupos por serviço: abra o grupo para ver as variáveis. "
+             "Os valores aparecem por inteiro, inclusive senhas e chaves: só quem entrou neste painel vê. Salvar grava na hora, mas cada serviço só lê o valor novo quando for reiniciado "
+             "(aba Serviços) ou quando você reiniciar tudo (aba Manutenção). Antes de cada mudança o arquivo é copiado para .env.bak. "
              "Cuidado com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO: se errar, você perde o acesso a este painel.</p>"
-             '<p><label for="filtro-cfg">Filtrar pelo nome</label> <input type="search" id="filtro-cfg" autocomplete="off"></p>'
+             '<p><label for="filtro-cfg">Filtrar pelo nome (abre os grupos que têm o que você procura)</label> <input type="search" id="filtro-cfg" autocomplete="off"></p>'
              '<p id="resultado-config" role="status"></p>'
              f'<div id="configuracoes" data-csrf="{e(sess["csrf"])}">'
-             f'<h2>Definidas no .env ({len(definidas)})</h2><ul class="chaves" id="lista-definidas">{linhas_def}</ul>'
-             f'<h2>Nova variável</h2><form class="linha" data-cfg><label for="nova-nome">Nome</label><input type="text" id="nova-nome" name="nome" autocomplete="off" autocapitalize="characters" spellcheck="false">'
+             '<details class="grupo"><summary>Nova variável</summary><form class="linha" data-cfg><label for="nova-nome">Nome</label><input type="text" id="nova-nome" name="nome" autocomplete="off" autocapitalize="characters" spellcheck="false">'
              '<label for="nova-valor">Valor</label><input type="text" id="nova-valor" name="valor" autocomplete="off" spellcheck="false">'
-             '<button type="submit" name="acao" value="salvar">Adicionar</button></form>'
-             f'<h2>Outras opções do código, ainda sem valor no .env ({len(faltam)})</h2><ul class="chaves" id="lista-faltam">{linhas_falta}</ul></div>')
+             '<button type="submit" name="acao" value="salvar">Adicionar</button></form></details>'
+             + "".join(blocos) + "</div>")
     return "Configurações", corpo
 
 
@@ -718,7 +739,7 @@ document.addEventListener('submit', function(ev){
     .then(function(r){ return r.json(); })
     .then(function(d){
       dizer(d.erro ? d.erro : (d.ok ? d.mensagem : 'Não gravei: ' + d.mensagem));
-      if (d.ok && f.parentNode.parentNode.id !== 'lista-faltam' && f.querySelector('[name=nome][type=text]')) { f.elements['nome'].value = ''; f.elements['valor'].value = ''; }
+      if (d.ok && f.querySelector('input[name=nome][type=text]')) { f.elements['nome'].value = ''; f.elements['valor'].value = ''; }
     })
     .catch(function(){ dizer('Não consegui falar com o painel. Recarregue a página.'); });
 });
@@ -726,6 +747,10 @@ document.addEventListener('input', function(ev){
   if (ev.target.id !== 'filtro-cfg') { return; }
   var q = ev.target.value.trim().toLowerCase(), n = 0;
   document.querySelectorAll('#configuracoes li[data-nome]').forEach(function(li){ var ok = !q || li.getAttribute('data-nome').indexOf(q) >= 0; li.hidden = !ok; if (ok) { n++; } });
+  document.querySelectorAll('#configuracoes details.grupo').forEach(function(d){
+    if (d.querySelector('form[data-cfg] input[name=nome][type=text]')) { return; }  // "Nova variável" fica como está
+    var tem = d.querySelectorAll('li[data-nome]:not([hidden])').length > 0; d.hidden = !tem; d.open = !!q && tem;
+  });
   var r = document.getElementById('resultado-config'); if (r) { r.textContent = n + (n === 1 ? ' variável encontrada.' : ' variáveis encontradas.'); }
 });
 })();
@@ -735,8 +760,10 @@ document.addEventListener('input', function(ev){
 def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash=None) -> bytes:
     nav = conta = ""
     if sess:
-        conta = ('<nav aria-label="Conta" class="conta"><form class="linha" method="post" action="/sair">'
-                 f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></nav>')
+        nome, via = sess.get("_quem") or ("Dono", "senha e código")
+        saida_access = ('<p><a href="/cdn-cgi/access/logout">Sair também do Cloudflare Access</a></p>' if via == "Cloudflare Access" else "")
+        conta = (f'<nav aria-label="Conta"><details class="conta"><summary>Conta: {e(nome)}</summary><p>Conectado como {e(nome)}, entrando por {e(via)}.</p>'
+                 f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>{saida_access}</details></nav>')
         nav = '<nav aria-label="Principal">' + design.abas(SECOES, atual, completas=("/terminal",)) + '</nav>'
         corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
     else:
@@ -818,7 +845,20 @@ class Painel(BaseHTTPRequestHandler):
         # Só o dono (sessão de escopo total): convidado do Access, mesmo liberado em "controls", não entra num terminal.
         if sess and nuvem._escopo_do_token(token) != "*":
             return token, None
+        if sess:
+            sess["_quem"] = self._quem()
         return token, sess
+
+    def _quem(self) -> tuple:
+        """(nome, como entrou). Pelo Cloudflare Access vem o e-mail; pela senha e código não há nome: é o dono do painel."""
+        try:
+            import heimdall_cfaccess as cfa
+            email, papel = cfa.identificar(self.headers, SERVICO)
+            if email and papel == "dono":
+                return email, "Cloudflare Access"
+        except Exception:  # noqa: BLE001
+            pass
+        return "Dono", "senha e código"
 
     def _cookie(self, token: str, apagar: bool = False) -> tuple:
         return nuvem.cabecalho_cookie(token, self.headers.get("Host", ""), self._https(), apagar)
@@ -837,12 +877,14 @@ class Painel(BaseHTTPRequestHandler):
             return False
 
     def _origem_ok(self) -> bool:
+        """Origin ou Referer, o que vier, precisa ser um endereço do painel. Como o painel manda Referrer-Policy: no-referrer, o navegador
+        envia "Origin: null" nos formulários comuns (Sair, Manutenção): "null" não diz nada, então vale o Sec-Fetch-Site (o próprio navegador
+        diz se o pedido veio do mesmo site) e, sem ele, o token de segurança, que continua obrigatório."""
         for cab in ("Origin", "Referer"):
-            v = self.headers.get(cab)
-            if v:
-                h = (urlparse(v).hostname or "").lower()
-                return h in HOSTS_OK
-        return True
+            v = (self.headers.get(cab) or "").strip()
+            if v and v.lower() != "null":
+                return (urlparse(v).hostname or "").lower() in HOSTS_OK
+        return (self.headers.get("Sec-Fetch-Site") or "same-origin").lower() in ("same-origin", "none")
 
     def _corpo(self) -> dict:
         n = min(int(self.headers.get("Content-Length") or 0), MAX_CORPO)

@@ -223,7 +223,7 @@ hcf.ARQUIVO = Path(_tf.mkdtemp()) / ".env"
 hcf.ARQUIVO.write_text("HEIMDALL_TESTE='um'\n", encoding="utf-8")
 s, corpo, _ = req("GET", "/configuracoes", cookie=token)
 confere("configurações: lista o que está no .env, com o valor inteiro, e as opções do código", s == 200 and "HEIMDALL_TESTE" in corpo and 'value="um"' in corpo
-        and "Outras opções do código" in corpo and corpo.count("<h1") == 1 and 'type="search"' in corpo, corpo[:200])
+        and "<details" in corpo and "No .env" in corpo and "Opções ainda sem valor" in corpo and "Controls: " in corpo and corpo.count("<h1") == 1 and 'type="search"' in corpo, corpo[:200])
 confere("configurações: cada campo tem label", corpo.count("<label") >= corpo.count('type="text"') - 1)
 s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "dois", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("salvar grava no .env e diz que vale depois de reiniciar", s == 200 and json.loads(corpo)["ok"] and "HEIMDALL_TESTE='dois'" in hcf.ARQUIVO.read_text() and "reiniciado" in corpo, corpo)
@@ -233,6 +233,23 @@ s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": "errado", "nome": "H
 confere("salvar sem o token de segurança é recusado", s == 403 and "dois" in hcf.ARQUIVO.read_text())
 s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "acao": "remover"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("remover tira do .env", json.loads(corpo)["ok"] and "HEIMDALL_TESTE" not in hcf.ARQUIVO.read_text())
+# Origin "null" (formulário comum com no-referrer), origem de fora e Sec-Fetch-Site
+s, _, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": CSRF}, cookie=token, extra={"Origin": "null"})
+confere("formulário comum com Origin null passa (o token continua valendo)", s == 303)
+s, _, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": CSRF}, cookie=token, extra={"Origin": "https://mal.example"})
+confere("Origin de outro site é recusado", s == 403)
+s, _, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": CSRF}, cookie=token, extra={"Origin": "null", "Sec-Fetch-Site": "cross-site"})
+confere("Origin null vindo de outro site (Sec-Fetch-Site) é recusado", s == 403)
+s, corpo, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": "errado"}, cookie=token, extra={"Origin": "null"})
+confere("Origin null com token errado continua recusado", s == 403)
+s, corpo, _ = req("GET", "/", cookie=token)
+confere("menu Conta mostra o nome de quem entrou e tem o Sair", "<summary>Conta: Dono</summary>" in corpo and 'action="/sair"' in corpo and "senha e código" in corpo)
+tk2, _ = hc.nova_sessao("*")
+csrf2 = hc.sessao_valida(tk2, hcx.SERVICO)["csrf"]
+s, _, r = req("POST", "/sair", {"csrf": csrf2}, cookie=tk2, extra={"Origin": "null"})
+confere("Sair com Origin null encerra a sessão e volta ao login", s == 303 and r.getheader("Location") == "/entrar", str((s, r.getheader("Location"))))
+s, _, _ = req("GET", "/", cookie=tk2)
+confere("depois do Sair a sessão não vale mais", s in (303, 401))
 s, corpo, _ = req("GET", "/manutencao", cookie=token)
 confere("manutenção: botões de ação e um só h1", s == 200 and "Update e restart" in corpo and ">Start<" in corpo and ">Stop<" in corpo and "Exibir log" in corpo and corpo.count("<h1") == 1)
 hsv.parar_tudo = lambda: [("Cloud", True, "parado"), ("News", True, "parado")]

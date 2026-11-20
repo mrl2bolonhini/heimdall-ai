@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Controls: Sair e logs funcionam; menu Conta; Configurações em grupos
+- Corrigido: Sair e o botão Exibir log (e qualquer formulário comum) davam "Pedido recusado: origem não permitida". Como o painel manda Referrer-Policy: no-referrer, o navegador envia Origin: null nos formulários comuns, e a checagem recusava. Agora Origin null não conta como informação: vale o Sec-Fetch-Site (cross-site é recusado) e o token de segurança continua obrigatório. Origin de outro site continua recusado. (Era também a causa provável do erro de token que apareceu no Aplicar.)
+- Controls: o topo agora tem o menu "Conta: nome", que abre e mostra como você entrou (o e-mail do Cloudflare Access ou "Dono", pela senha e código) e o botão Sair, que encerra a sessão. Entrando pelo Access, há também o link para sair do Access.
+- Configurações: as variáveis ficam em grupos que abrem e fecham (<details>), um por serviço ou assunto (Cloud, Controls, Notes, Health, Finance, Cloudflare Access, Backup, Alertas, Vigia, Outras...). Cada grupo mostra o que está no .env e as opções ainda sem valor. O filtro pelo nome abre sozinho os grupos que têm o que você procura e esconde os outros. Nova variável também é um grupo.
+
 ## 2026-11-20 - Controls: aba Configurações (etapa 2, primeira parte)
 - Controls ganhou a aba Configurações (Option+Shift+4; a Manutenção passou a ser a 5). Mostra tudo o que o .env guarda, com o valor inteiro (inclusive senhas e chaves, só depois do login), e permite salvar, remover e adicionar variáveis sem recarregar a página. Lista também as cerca de 100 opções HEIMDALL_* que o código lê e o .env ainda não define, com o valor padrão quando dá para saber. Há um filtro pelo nome.
 - O arquivo é gravado no mesmo formato do guardar_no_env.sh (NOME='valor', permissão 600), sem repetir linhas, e copiado para .env.bak antes de cada mudança. Valor com aspa simples ou quebra de linha é recusado. Mudar um valor só vale para o serviço quando ele for reiniciado.

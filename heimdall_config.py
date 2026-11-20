@@ -174,8 +174,8 @@ def opcoes_do_codigo() -> dict:
 
 
 def grupo(nome: str) -> str:
-    """Agrupa pelo serviço: HEIMDALL_CLOUD_PORTA -> CLOUD. Sem prefixo reconhecido, vai para GERAL."""
+    """Agrupa pelo serviço: HEIMDALL_CLOUD_PORTA -> CLOUD; LITELLM_MASTER_KEY -> LITELLM. Sem prefixo, vai para GERAL."""
     partes = nome.split("_")
-    if nome.startswith("HEIMDALL_") and len(partes) > 2:
-        return partes[1]
-    return "GERAL"
+    if nome.startswith("HEIMDALL_"):
+        return partes[1] if len(partes) > 2 else "GERAL"
+    return partes[0] or "GERAL"
