@@ -369,7 +369,7 @@ var ta = document.getElementById('terminal');
 var estado = document.getElementById('estado');
 var base = ta.value;                 // tudo o que o servidor mostra; o que vem depois é o que a pessoa está digitando
 var rodando = false, ultimaVersao = parseInt(ta.dataset.versao || '0', 10), timer = null, vistos = {}, primeira = true;
-var inicioUltima = -1, historico = [], hi = -1, apontador = false, pendente = false;
+var inicioUltima = -1, historico = [], hi = -1, pendente = false;
 var hist = document.getElementById('historico'), nHist = parseInt(hist.dataset.n || '0', 10);
 ta.spellcheck = false; ta.setAttribute('autocorrect', 'off'); ta.setAttribute('autocapitalize', 'off');
 var alterna = false, enviado = null;
@@ -539,20 +539,8 @@ ta.addEventListener('keydown', function(ev){
   }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyL') { ev.preventDefault(); limpar(); }
 });
-ta.addEventListener('mousedown', function(){ apontador = true; });
-ta.addEventListener('touchstart', function(){ apontador = true; }, {passive: true});
-ta.addEventListener('mouseup', function(){ apontador = false; });
-ta.addEventListener('blur', function(){ apontador = false; });
-// entrar no campo (Tab, foco automático, voltar à aba) sempre deixa o cursor depois da última letra; só o clique do mouse escolhe outro ponto
-// o cursor já fica no fim enquanto o campo não tem o foco (ao sair dele e a cada atualização): assim, ao entrar, nada se mexe e o VoiceOver lê só o nome do campo
-// o Safari guarda a seleção sozinho no instante em que o campo perde o foco e pode desfazer o ajuste feito dentro do próprio blur;
-// por isso o cursor vai para o fim de novo logo depois (0, 60 e 300 ms), só se o campo continua sem foco e sem o mouse. Assim, ao voltar
-// ao campo (Tab, VO+setas, Option+Shift+T), o cursor já está no fim e o VoiceOver lê só o nome do campo, como na primeira entrada
-function cursorNoFimFora(){ if (!apontador && document.activeElement !== ta) { fimDoCampo(); } }
-function agendarFimFora(){ cursorNoFimFora(); [0, 60, 300].forEach(function(ms){ setTimeout(cursorNoFimFora, ms); }); }
-ta.addEventListener('blur', function(){ if (!apontador) { agendarFimFora(); } });
-ta.addEventListener('focusout', function(){ if (!apontador) { agendarFimFora(); } });
-ta.addEventListener('focus', function(){ if (!apontador && ta.selectionStart !== ta.value.length) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 350); } });
+// Sem controle de foco ao entrar ou sair do campo: o navegador e o VoiceOver leem o nome do campo e a linha do cursor como em qualquer campo.
+// Só o carregamento da página (irAoCampo, mais abaixo) põe o foco e o cursor no fim; digitar com o cursor na saída já manda a letra para o fim (beforeinput).
 window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
 window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });
 document.addEventListener('keydown', function(ev){
