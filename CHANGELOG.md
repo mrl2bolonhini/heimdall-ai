@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Notas e Lembretes não abrem mais na tela do Mac; Controls: cursor no fim ao voltar ao campo
+- O agente do Mac passou a abrir o Notas, o Lembretes e o Calendário escondidos e em segundo plano (open -g -j) quando precisa gravar neles, e a fechá-los 20 segundos depois do último uso. Só fecha o app que ele mesmo abriu e nunca um que você já deixou aberto ou que esteja na frente. As janelas deixam de pular na sua frente a cada nota, lembrete ou evento. Vale para todos os fluxos (estudos, digest, saúde, triagem, agenda), porque todos passam pelo mesmo ponto do agente. Novo teste: teste_apps_ocultos.py.
+- Controls: ao sair do campo Terminal e voltar, o VoiceOver relia a linha onde estava o cursor. O Safari guarda a posição do cursor por conta própria no instante em que o campo perde o foco e desfazia o ajuste do blur. Agora o cursor vai para o fim de novo logo depois de sair (0, 60 e 300 ms), então a volta ao campo se comporta como a primeira entrada. Teste novo em teste_controls_navegador.py (roda no Chrome; o comportamento do Safari não é reproduzido lá).
+
 ## 2026-11-19 - Controls: a saída inteira é lida ao fim do comando
 - Ao terminar um comando o leitor de tela fala a situação e a saída inteira, por maior que seja (antes, saídas com mais de 12 linhas só tinham a contagem de linhas). Control interrompe a fala do VoiceOver. Option+Shift+O também lê a última saída inteira.
 

@@ -348,8 +348,93 @@ tell application "Notes" to return (count of notes) as string
 '''
 
 
+# Apps do macOS que o Heimdall usa por AppleScript. Um "tell application" abre o app na sua frente se ele estiver fechado.
+# Por isso o Heimdall abre cada um escondido e em segundo plano (open -g -j), e fecha de novo depois de alguns segundos
+# sem uso, mas SÓ se foi ele que abriu e se você não estiver com o app na frente. Se você já deixou o app aberto, nada muda.
+APPS_ALVO = ("Notes", "Reminders", "Calendar")
+SOSSEGO_APP = 20          # segundos sem uso até fechar um app que o Heimdall abriu
+_apps_lock = threading.RLock()
+_apps_nossos: set[str] = set()                   # apps abertos pelo Heimdall
+_apps_timers: dict[str, threading.Timer] = {}    # fechamento agendado de cada um
+
+
+def _app_rodando(nome: str) -> bool:
+    try:
+        return subprocess.run(["pgrep", "-x", nome], capture_output=True, timeout=10).returncode == 0
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _app_na_frente(nome: str) -> bool:
+    """True se o app está em primeiro plano (você está usando). Em caso de dúvida, diz que não."""
+    try:
+        asn = subprocess.run(["lsappinfo", "front"], capture_output=True, text=True, timeout=10).stdout.strip()
+        if not asn:
+            return False
+        info = subprocess.run(["lsappinfo", "info", "-only", "name", asn], capture_output=True, text=True, timeout=10).stdout
+        return f'"{nome}"' in info
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _fechar_app(nome: str) -> None:
+    with _apps_lock:
+        _apps_timers.pop(nome, None)
+        if nome not in _apps_nossos:
+            return
+        _apps_nossos.discard(nome)
+        if _app_na_frente(nome):
+            return  # você abriu ou está usando: deixa aberto
+        try:
+            subprocess.run(["osascript", "-e", f'tell application "{nome}" to quit'], capture_output=True, timeout=30)
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _apps_do_script(script: str) -> list[str]:
+    return [n for n in APPS_ALVO if f'application "{n}"' in script]
+
+
+def _preparar_apps(script: str) -> list[str]:
+    """Abre escondido os apps que o script usa e que estão fechados. Devolve os apps usados."""
+    usados = _apps_do_script(script)
+    with _apps_lock:
+        for nome in usados:
+            t = _apps_timers.pop(nome, None)
+            if t:
+                t.cancel()  # voltou a ser usado: adia o fechamento
+            if nome in _apps_nossos or _app_rodando(nome):
+                continue  # já aberto (por nós ou por você)
+            try:
+                subprocess.run(["open", "-g", "-j", "-a", nome], capture_output=True, timeout=20)
+            except Exception:  # noqa: BLE001
+                continue
+            for _ in range(60):  # espera até 15 s o app subir
+                if _app_rodando(nome):
+                    _apps_nossos.add(nome)
+                    break
+                time.sleep(0.25)
+    return usados
+
+
+def _agendar_fechamento(usados: list[str]) -> None:
+    with _apps_lock:
+        for nome in usados:
+            if nome not in _apps_nossos:
+                continue
+            t = _apps_timers.pop(nome, None)
+            if t:
+                t.cancel()
+            t = threading.Timer(SOSSEGO_APP, _fechar_app, args=(nome,))
+            t.daemon = True
+            _apps_timers[nome] = t
+            t.start()
+
+
 def osascript(script: str, *args: str, timeout: int = 0) -> str:
-    """Roda um AppleScript (arquivo temporário) com argumentos e devolve a saída."""
+    """Roda um AppleScript (arquivo temporário) com argumentos e devolve a saída.
+    Os apps Notas, Lembretes e Calendário são abertos escondidos (sem aparecer na tela) e fechados depois, se estavam fechados."""
+    usados = _preparar_apps(script)
     with tempfile.NamedTemporaryFile("w", suffix=".applescript", delete=False, encoding="utf-8") as f:
         f.write(script)
         caminho = f.name
@@ -362,6 +447,7 @@ def osascript(script: str, *args: str, timeout: int = 0) -> str:
     except subprocess.TimeoutExpired:
         raise RuntimeError("o macOS não respondeu em %d s (provável pedido de permissão aberto na tela do Mac)" % limite) from None
     finally:
+        _agendar_fechamento(usados)
         try:
             os.unlink(caminho)
         except OSError:

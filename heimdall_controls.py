@@ -545,7 +545,13 @@ ta.addEventListener('mouseup', function(){ apontador = false; });
 ta.addEventListener('blur', function(){ apontador = false; });
 // entrar no campo (Tab, foco automático, voltar à aba) sempre deixa o cursor depois da última letra; só o clique do mouse escolhe outro ponto
 // o cursor já fica no fim enquanto o campo não tem o foco (ao sair dele e a cada atualização): assim, ao entrar, nada se mexe e o VoiceOver lê só o nome do campo
-ta.addEventListener('blur', function(){ if (!apontador) { fimDoCampo(); } });
+// o Safari guarda a seleção sozinho no instante em que o campo perde o foco e pode desfazer o ajuste feito dentro do próprio blur;
+// por isso o cursor vai para o fim de novo logo depois (0, 60 e 300 ms), só se o campo continua sem foco e sem o mouse. Assim, ao voltar
+// ao campo (Tab, VO+setas, Option+Shift+T), o cursor já está no fim e o VoiceOver lê só o nome do campo, como na primeira entrada
+function cursorNoFimFora(){ if (!apontador && document.activeElement !== ta) { fimDoCampo(); } }
+function agendarFimFora(){ cursorNoFimFora(); [0, 60, 300].forEach(function(ms){ setTimeout(cursorNoFimFora, ms); }); }
+ta.addEventListener('blur', function(){ if (!apontador) { agendarFimFora(); } });
+ta.addEventListener('focusout', function(){ if (!apontador) { agendarFimFora(); } });
 ta.addEventListener('focus', function(){ if (!apontador && ta.selectionStart !== ta.value.length) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 350); } });
 window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
 window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });

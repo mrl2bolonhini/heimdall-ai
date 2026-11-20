@@ -204,6 +204,15 @@ with sync_playwright() as pw:
     pg.keyboard.press("Alt+Shift+KeyT")
     confere("Option+Shift+T volta ao campo", pg.evaluate("document.activeElement.id") == "terminal")
 
+    # sair do campo com o cursor no meio da saída e voltar: o cursor tem de ter ido para o fim enquanto o campo estava sem foco
+    pg.evaluate("document.getElementById('terminal').setSelectionRange(3, 3)")
+    pg.keyboard.press("Tab")
+    confere("saiu do campo", espera(lambda: pg.evaluate("document.activeElement.id") != "terminal"))
+    time.sleep(0.5)
+    confere("fora do campo o cursor já fica no fim (a volta não relê a saída)", pg.evaluate("(() => { const t = document.getElementById('terminal'); return t.selectionStart === t.value.length && t.selectionEnd === t.value.length; })()"))
+    pg.keyboard.press("Shift+Tab")
+    confere("voltou ao campo com o cursor no fim", pg.evaluate("document.activeElement.id") == "terminal" and pg.evaluate("document.getElementById('terminal').selectionStart === document.getElementById('terminal').value.length"))
+
     # nomes dos campos e histórico no fim
     confere("os campos se chamam só Histórico e Terminal", pg.evaluate("[document.querySelector('label[for=historico]').textContent, document.querySelector('label[for=terminal]').textContent]") == ["Histórico", "Terminal"])
     pg.keyboard.press("Shift+Tab")
