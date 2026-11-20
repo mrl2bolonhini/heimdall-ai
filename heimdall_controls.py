@@ -345,34 +345,36 @@ ACOES = {
 }
 
 
+def _situacao_servico(sv: dict, ar: bool, off: bool, mon) -> str:
+    partes = [f"porta {sv['porta']}", "no ar" if ar else "fora do ar"]
+    if off:
+        partes.append("desligado de propósito")
+    if mon:
+        partes.append("Kuma: " + mon["status"])
+    return ", ".join(partes)
+
+
 def pg_servicos(q: dict, sess: dict) -> tuple:
-    """Um grupo de botões de rádio (Ligado/Desligado) por serviço. Nada muda até apertar Aplicar."""
-    csrf = e(sess["csrf"])
+    """Uma chave (botão de alternância, role=switch) por serviço: apertar liga ou desliga na hora."""
     mons, erro_kuma = kuma.monitores()
     off = servicos.desligados()
-    grupos = []
-    for s in servicos.catalogo():
-        ar = servicos.no_ar(s)
-        mon = kuma.achar(mons, s["nome"]) if s.get("kuma", True) else None
-        partes = [f"porta {s['porta']}", "no ar" if ar else "fora do ar"]
-        if s["id"] in off:
-            partes.append("desligado de propósito")
-        if mon:
-            partes.append("Kuma: " + mon["status"])
-        sid = s["id"]
-        grupos.append(
-            f'<fieldset class="opcao"><legend>{e(s["nome"])}: {e(", ".join(partes))}</legend>'
-            f'<label for="{sid}-on"><input type="radio" id="{sid}-on" name="s_{sid}" value="on"{" checked" if ar else ""}> Ligado</label>'
-            f'<label for="{sid}-off"><input type="radio" id="{sid}-off" name="s_{sid}" value="off"{"" if ar else " checked"}> Desligado</label></fieldset>')
-    aviso_kuma = (f'<p class="nota">Kuma: {e(erro_kuma)}. A situação mostrada vem da porta de cada serviço.</p>' if erro_kuma else
-                  ('<p class="nota">Kuma consultado. Ao desligar ou ligar, o monitor do serviço no Kuma é pausado ou retomado.</p>'
-                   if os.environ.get("HEIMDALL_KUMA_USUARIO") else
-                   '<p class="nota">Kuma consultado só para leitura. Para pausar e retomar monitores por aqui, ponha HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env.</p>'))
-    corpo = ("<p>Escolha Ligado ou Desligado em cada serviço e aperte Aplicar mudanças no fim da lista. Só os que você mudou são mexidos. "
+    itens = []
+    for sv in servicos.catalogo():
+        ar = servicos.no_ar(sv)
+        mon = kuma.achar(mons, sv["nome"]) if sv.get("kuma", True) else None
+        sid = sv["id"]
+        itens.append(f'<li><button type="button" role="switch" id="sw-{sid}" data-servico="{sid}" aria-checked="{"true" if ar else "false"}" aria-describedby="est-{sid}">{e(sv["nome"])}</button>'
+                     f'<span id="est-{sid}">{"Ligado" if ar else "Desligado"}: {e(_situacao_servico(sv, ar, sid in off, mon))}</span></li>')
+    if erro_kuma:
+        aviso_kuma = f'<p class="nota">Kuma: {e(erro_kuma)}. A situação vem da porta de cada serviço.</p>'
+    elif os.environ.get("HEIMDALL_KUMA_USUARIO"):
+        aviso_kuma = '<p class="nota">Kuma consultado. Ao desligar ou ligar, o monitor do serviço no Kuma é pausado ou retomado.</p>'
+    else:
+        aviso_kuma = '<p class="nota">Kuma consultado só para leitura. Para pausar e retomar monitores por aqui, ponha HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env.</p>'
+    corpo = ("<p>Cada serviço é uma chave: aperte Espaço ou Enter nela para ligar ou desligar, na hora, sem outro botão. Ligar e desligar pode levar alguns segundos. "
              "O que você desliga fica desligado mesmo depois de atualizar e reiniciar. Este painel não aparece na lista: desligá-lo cortaria o seu acesso.</p>"
-             + aviso_kuma
-             + f'<form method="post" action="/servicos/aplicar"><input type="hidden" name="csrf" value="{csrf}">' + "".join(grupos)
-             + '<button type="submit">Aplicar mudanças</button></form>')
+             + aviso_kuma + '<p id="resultado-servicos" role="status"></p>'
+             + f'<ul class="chaves" id="servicos" data-csrf="{e(sess["csrf"])}">' + "".join(itens) + "</ul>")
     return "Serviços", corpo
 
 
@@ -633,10 +635,37 @@ buscarAgora();
 """
 
 
+# Chaves da aba Serviços. Delegado no documento, para continuar valendo quando a aba é trocada sem recarregar a página.
+SCRIPT_SERVICOS = r"""
+(function(){
+var ocupado = false;
+function dizer(t){ var r = document.getElementById('resultado-servicos'); if (r) { r.textContent = ''; setTimeout(function(){ r.textContent = t; }, 50); } }
+document.addEventListener('click', function(ev){
+  var b = ev.target.closest ? ev.target.closest('button[role=switch][data-servico]') : null; if (!b) { return; }
+  ev.preventDefault();
+  if (ocupado || b.getAttribute('aria-disabled') === 'true') { return; }
+  var lista = document.getElementById('servicos'), nome = b.textContent, quer = b.getAttribute('aria-checked') === 'true' ? 'off' : 'on';
+  var est = document.getElementById('est-' + b.getAttribute('data-servico'));
+  ocupado = true; b.setAttribute('aria-disabled', 'true'); dizer((quer === 'on' ? 'Ligando ' : 'Desligando ') + nome + '. Pode levar alguns segundos.');
+  var corpo = new URLSearchParams({csrf: lista.getAttribute('data-csrf'), id: b.getAttribute('data-servico'), estado: quer});
+  fetch('/servicos/alternar', {method: 'POST', credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1', 'Content-Type': 'application/x-www-form-urlencoded'}, body: corpo})
+    .then(function(r){ return r.json().then(function(d){ return {r: r, d: d}; }); })
+    .then(function(x){
+      if (x.d.erro) { dizer(nome + ': ' + x.d.erro); return; }
+      b.setAttribute('aria-checked', x.d.ligado ? 'true' : 'false'); if (est) { est.textContent = x.d.situacao; }
+      dizer(nome + ': ' + x.d.mensagem + ' Agora está ' + (x.d.ligado ? 'ligado' : 'desligado') + '.');
+    })
+    .catch(function(){ dizer(nome + ': não consegui falar com o painel. Recarregue a página.'); })
+    .then(function(){ ocupado = false; b.removeAttribute('aria-disabled'); });
+});
+})();
+"""
+
+
 def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash=None) -> bytes:
     nav = ""
     if sess:
-        nav = ('<nav aria-label="Principal">' + design.abas(SECOES, atual) + '<form class="linha" method="post" action="/sair">'
+        nav = ('<nav aria-label="Principal">' + design.abas(SECOES, atual, completas=("/terminal",)) + '<form class="linha" method="post" action="/sair">'
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></nav>')
         corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
     else:
@@ -648,7 +677,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
         lista = f"<ul>{''.join('<li>' + e(l) + '</li>' for l in linhas)}</ul>" if len(linhas) > 1 else e(linhas[0] if linhas else "")
         aviso = (f'<div class="ok" role="status">{lista}</div>' if tipo == "ok" else f'<div class="erro" role="alert">{lista}</div>')
     corpo = corpo.replace("{aviso}", aviso, 1)
-    todo = (design.SCRIPT_ABAS if sess else "") + script
+    todo = ((design.SCRIPT_ABAS + SCRIPT_SERVICOS) if sess else "") + script
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
@@ -815,11 +844,16 @@ class Painel(BaseHTTPRequestHandler):
     # ---------------------------------------------------------------- ações (POST)
     def _acao(self, rota: str, sess: dict, token: str, ajax: bool) -> None:
         campos = self._corpo()
-        if not self._origem_ok() or not secrets.compare_digest(campos.get("csrf", ""), sess["csrf"]):
+        origem_ok = self._origem_ok()
+        csrf_ok = secrets.compare_digest(campos.get("csrf", ""), sess["csrf"])
+        if not origem_ok or not csrf_ok:
+            motivo = "origem não permitida" if not origem_ok else "token de segurança não confere (a página pode estar velha)"
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} pedido recusado em {rota}: {motivo}; Origin={self.headers.get('Origin')!r} Referer={self.headers.get('Referer')!r} "
+                             f"csrf_enviado={bool(campos.get('csrf'))} campos={sorted(campos)[:6]}\n")
             if ajax:
-                self._json(403, {"erro": "Pedido recusado: token de segurança inválido. Recarregue a página."})
+                self._json(403, {"erro": f"Pedido recusado: {motivo}. Recarregue a página."})
             else:
-                self._enviar(403, pagina("Pedido recusado", "<p>Token de segurança inválido. Volte e tente de novo.</p>", sess))
+                self._enviar(403, pagina("Pedido recusado", f"<p>Pedido recusado: {e(motivo)}. Recarregue a página e tente de novo.</p>", sess))
             return
         ip = self._ip()
         if rota == "/sair":
@@ -853,9 +887,8 @@ class Painel(BaseHTTPRequestHandler):
             elif rota == "/terminal/reiniciar":
                 sh.reiniciar()
                 auditar(ip, "reiniciar o shell")
-            elif rota == "/servicos/aplicar":
-                self._aplicar_servicos(campos, sess, ip)
-                self._ir("/servicos")
+            elif rota == "/servicos/alternar":
+                self._json(200, self._alternar_servico(campos, ip))
                 return
             elif rota == "/manutencao/acao":
                 acao = campos.get("acao", "")
@@ -884,32 +917,25 @@ class Painel(BaseHTTPRequestHandler):
         else:
             self._ir("/terminal")
 
-    def _aplicar_servicos(self, campos: dict, sess: dict, ip: str) -> None:
-        """Liga ou desliga só os serviços cuja escolha difere do estado de agora; pausa ou retoma o monitor no Kuma."""
-        mudar = []
-        for s in servicos.catalogo():
-            quer = campos.get("s_" + s["id"])
-            if quer in ("on", "off") and (quer == "on") != servicos.no_ar(s):
-                mudar.append((s, quer == "on"))
-        if not mudar:
-            sess["flash"] = ("ok", "Nada mudou: os serviços já estão como você escolheu.")
-            return
+    def _alternar_servico(self, campos: dict, ip: str) -> dict:
+        """Liga ou desliga um serviço e pausa ou retoma o monitor dele no Kuma. Devolve o estado de verdade depois da mudança."""
+        sv = servicos.por_id(campos.get("id", ""))
+        if not sv or campos.get("estado") not in ("on", "off"):
+            raise ValueError("serviço desconhecido")
+        ligar = campos["estado"] == "on"
+        ok, msg = servicos.aplicar(sv["id"], ligar)
+        extra = ""
         mons, _ = kuma.monitores()
-
-        def uma(par):
-            s, ligar = par
-            ok, msg = servicos.aplicar(s["id"], ligar)
-            extra = ""
-            mon = kuma.achar(mons, s["nome"]) if s.get("kuma", True) else None
-            if mon and ok:
-                motivo = kuma.pausar_ou_retomar(mon["id"], pausar=not ligar)
-                extra = " Monitor do Kuma " + ("pausado." if not ligar else "retomado.") if not motivo else f" Kuma não mexido: {motivo}."
-            return ("" if ok else "Não deu: ") + msg + extra
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
-            linhas = list(ex.map(uma, mudar))
-        auditar(ip, "serviços: aplicar", ", ".join(f"{s['id']}={'on' if l else 'off'}" for s, l in mudar))
-        sess["flash"] = ("ok", "\n".join(linhas))
+        mon = kuma.achar(mons, sv["nome"]) if sv.get("kuma", True) else None
+        if mon and ok:
+            motivo = kuma.pausar_ou_retomar(mon["id"], pausar=not ligar)
+            extra = (" Monitor do Kuma " + ("retomado." if ligar else "pausado.")) if not motivo else f" Kuma não mexido: {motivo}."
+        auditar(ip, "serviços: " + ("ligar" if ligar else "desligar"), sv["id"] + ("" if ok else " (falhou)"))
+        ar = servicos.no_ar(sv)
+        mons, _ = kuma.monitores()
+        mon = kuma.achar(mons, sv["nome"]) if sv.get("kuma", True) else None
+        sit = ("Ligado" if ar else "Desligado") + ": " + _situacao_servico(sv, ar, sv["id"] in servicos.desligados(), mon)
+        return {"ok": ok, "ligado": ar, "mensagem": ("" if ok else "Não deu. ") + msg + extra, "situacao": sit}
 
     # ---------------------------------------------------------------- leitura do terminal
     def _estado(self, q: dict) -> None:

@@ -20,9 +20,12 @@ def _norm(t: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", str(t).lower()) if unicodedata.category(c) != "Mn")
 
 
+_ABRIR = urllib.request.build_opener(urllib.request.ProxyHandler({})).open  # o Kuma é local: nunca passa por proxy
+
+
 def _get(caminho: str) -> dict:
     req = urllib.request.Request(URL + caminho, headers={"Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=4) as r:
+    with _ABRIR(req, timeout=2.5) as r:
         return json.loads(r.read().decode("utf-8"))
 
 

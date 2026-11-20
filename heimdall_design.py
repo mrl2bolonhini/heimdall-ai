@@ -76,6 +76,10 @@ form.acao{display:inline;margin:0}
 [role=tablist]{display:flex;flex-wrap:wrap;gap:.25rem;margin:.4rem 0 1rem;border-bottom:1px solid var(--linha)}
 [role=tab]{display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;color:var(--texto);text-decoration:none;border:1px solid var(--linha);border-bottom:0;background:var(--superficie)}
 [role=tab][aria-selected=true]{font-weight:700;border-bottom:3px solid var(--ouro);background:var(--fundo)}
+.so-leitor{position:absolute;left:-999px;width:1px;height:1px;overflow:hidden}
+ul.chaves{list-style:none;padding:0}ul.chaves li{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem 1rem;margin:.4rem 0;padding:.4rem .6rem;border:1px solid var(--linha)}
+button[role=switch]{margin:0;min-width:11rem;text-align:left;border:3px solid var(--erro)}button[role=switch][aria-checked=true]{border-color:var(--ok)}
+button[role=switch][aria-disabled=true]{opacity:.6;cursor:progress}
 fieldset.opcao{border:1px solid var(--linha);margin:.6rem 0;padding:.5rem .9rem}fieldset.opcao legend{font-weight:700;padding:0 .3rem}
 fieldset.opcao label{display:inline-block;font-weight:400;margin:.2rem 1.2rem .2rem 0}
 """)
@@ -96,7 +100,7 @@ def botao_js(id_: str, rotulo: str) -> str:
     return f'<button type="button" id="{e(id_)}">{e(rotulo)}</button>'
 
 
-def abas(itens: list, atual: str, rotulo: str = "Seções") -> str:
+def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = ()) -> str:
     """Abas de navegação entre páginas (ARIA tablist). Cada aba é um link: ler/ir é link. As setas movem entre as abas e Option+Shift+número
     abre a aba pelo número (o script `SCRIPT_ABAS` faz isso). `itens` é [(rota, nome)]; `atual` é a rota aberta. O painel é o <div role=tabpanel>
     que `painel_da_aba` devolve em volta do conteúdo."""
@@ -105,8 +109,8 @@ def abas(itens: list, atual: str, rotulo: str = "Seções") -> str:
     for i, (rota, nome) in enumerate(itens, 1):
         sel = rota == atual
         abas_.append(f'<a role="tab" id="aba-{i}" href="{e(rota)}" aria-selected="{"true" if sel else "false"}" tabindex="{0 if sel else -1}" '
-                     f'aria-controls="painel-aba" aria-keyshortcuts="Alt+Shift+{i}">{e(nome)}</a>')
-    return f'<div role="tablist" aria-label="{e(rotulo)}">' + "".join(abas_) + "</div>"
+                     f'aria-controls="painel-aba" aria-keyshortcuts="Alt+Shift+{i}"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
+    return f'<div role="tablist" aria-label="{e(rotulo)}">' + "".join(abas_) + '</div><p id="aviso-abas" class="so-leitor" role="status"></p>'
 
 
 def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
@@ -114,13 +118,35 @@ def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
     return f'<div role="tabpanel" id="painel-aba" aria-labelledby="aba-{i}">{conteudo}</div>'
 
 
-# Setas Esquerda/Direita, Home e End movem o foco entre as abas; Espaço abre a aba em foco (Enter já abre, é link);
-# Option+Shift+1..9 abre a aba pelo número. Exige nonce de script na página.
+# Setas Esquerda/Direita, Home e End movem o foco entre as abas; Enter ou Espaço abre a aba em foco; Option+Shift+1..9 abre pelo número.
+# Abrir uma aba troca só o conteúdo do painel (sem recarregar a página, o foco fica na aba e o leitor de tela ouve "<nome> aberta").
+# Abas marcadas com data-completa (as que têm script próprio, como o Terminal) carregam a página inteira, e só se vai delas ou para elas assim.
+# Exige nonce de script na página.
 SCRIPT_ABAS = r"""
 (function(){
 var lista = document.querySelector('[role=tablist]'); if (!lista) { return; }
 var abas = Array.prototype.slice.call(lista.querySelectorAll('[role=tab]'));
+var aviso = document.getElementById('aviso-abas');
+function atual(){ return lista.querySelector('[aria-selected=true]'); }
 function foco(i){ abas.forEach(function(a, k){ a.tabIndex = (k === i) ? 0 : -1; }); abas[i].focus(); }
+function abrir(a, empurrar){
+  var de = atual(); if (a === de) { return; }
+  if (a.hasAttribute('data-completa') || (de && de.hasAttribute('data-completa'))) { location.href = a.href; return; }
+  fetch(a.href, {credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1'}}).then(function(r){
+    if (!r.ok || /\/entrar/.test(r.url)) { throw new Error('x'); } return r.text();
+  }).then(function(t){
+    var d = new DOMParser().parseFromString(t, 'text/html'), novo = d.getElementById('painel-aba'), velho = document.getElementById('painel-aba');
+    if (!novo || !velho) { throw new Error('x'); }
+    velho.innerHTML = novo.innerHTML; velho.setAttribute('aria-labelledby', a.id);
+    abas.forEach(function(x){ var s = (x === a); x.setAttribute('aria-selected', s ? 'true' : 'false'); x.tabIndex = s ? 0 : -1; });
+    document.title = d.title; if (empurrar) { history.pushState({}, '', a.href); }
+    if (aviso) { aviso.textContent = ''; setTimeout(function(){ aviso.textContent = a.textContent + ' aberta'; }, 50); }
+  }).catch(function(){ location.href = a.href; });
+}
+abas.forEach(function(a){ a.addEventListener('click', function(ev){
+  if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button) { return; } ev.preventDefault(); abrir(a, true);
+}); });
+window.addEventListener('popstate', function(){ location.reload(); });
 lista.addEventListener('keydown', function(ev){
   var i = abas.indexOf(document.activeElement); if (i < 0 || ev.altKey || ev.ctrlKey || ev.metaKey) { return; }
   var k = ev.key;
