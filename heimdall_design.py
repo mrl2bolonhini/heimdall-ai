@@ -69,6 +69,8 @@ textarea{min-height:9rem;font-family:ui-monospace,Menlo,monospace}button{font:in
 pre{white-space:pre-wrap;word-break:break-word;border:1px solid var(--linha);background:var(--superficie);padding:.7rem;overflow:auto}
 .ok{color:var(--ok);font-weight:700}.erro{color:var(--erro);font-weight:700}form.linha{display:inline}form.linha button{margin:0}
 .nota{color:var(--suave)}
+.terminal{height:60vh;min-height:16rem;font-size:1em;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}.terminal.historico{height:16rem}
+.linha-acoes{display:flex;flex-wrap:wrap;gap:.2rem 1rem;align-items:flex-end}.linha-acoes form{margin:0}
 form.acao{display:inline;margin:0}
 .ant-prox form.acao{margin:0}
 """)
@@ -81,3 +83,9 @@ def botao(rota: str, rotulo: str, params: dict = None, nome_acessivel: str = "",
     rot = f' aria-label="{e(nome_acessivel)}"' if nome_acessivel else ""
     marca = ' aria-current="true"' if atual else ""
     return f'<form class="acao" method="get" action="{e(rota)}">{ocultos}<button type="submit"{rot}{marca}>{e(rotulo)}</button></form>'
+
+
+def botao_js(id_: str, rotulo: str) -> str:
+    """Botão que age na própria página, sem navegar (o comportamento vem de um script com nonce que escuta o id). Nunca é link."""
+    e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
+    return f'<button type="button" id="{e(id_)}">{e(rotulo)}</button>'

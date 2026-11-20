@@ -530,6 +530,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <ol><li><strong>Link</strong> leva a outro lugar para ler: o menu, "Voltar", o nome de um item em lista ou tabela (um bucket, uma nota, um jogo, uma categoria), "Leia mais" e os links dentro de um texto.</li>
 <li><strong>Botão</strong> faz uma ação ou comando, mesmo quando o resultado é abrir outra página: baixar, atualizar, continuar, confirmar, alterar, classificar, importar, trocar a visão ou o período, paginar, "Ver todos..." e "Ver resultado".</li>
 <li>Uma ação que só consulta é um formulário GET com um botão (<code>design.botao(rota, rótulo, parâmetros, nome_acessível, atual)</code>). Funciona sem JavaScript e o leitor de tela anuncia como botão. Ações que mudam dados são formulários POST com token csrf.</li>
+<li>Botão que age na própria página, sem navegar (copiar, interromper, limpar), é <code>design.botao_js(id, rótulo)</code>: um <code>button type="button"</code> com id, cujo comportamento vem de um script com nonce. Nunca use link para isso. Foi criado para o Controls.</li>
 <li>Botões repetidos numa lista levam o nome do item para o leitor de tela diferenciar, por exemplo "Alterar categoria de Mercado".</li>
 <li>A opção escolhida num grupo de botões é marcada com aria-current.</li>
 <li>Exceção única: quando o destino é um esquema de aplicativo (por exemplo, o app Atalhos do iPhone), o botão é um link com role="button", porque um formulário não abre esse tipo de endereço de forma confiável.</li></ol></section>
@@ -575,6 +576,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Monte a página pela estrutura padrão (<code>heimdall_cloud.pagina</code> e <code>cabecalho</code>).</li>
 <li>Passe pela lista de acessibilidade da seção 5.</li>
 <li>Rode <code>heimdall test --run design</code> e o teste do serviço mexido.</li>
+<li>Campo de terminal (<code>textarea class="terminal"</code>, e <code>terminal historico</code> para o histórico) e linha de ações (<code>linha-acoes</code>): área de texto monoespaçada que ocupa 60% da altura da tela, quebra linhas longas e mantém a fonte do corpo. Rótulos curtos ("Terminal", "Histórico"), sem títulos extras antes do campo, foco e cursor no fim ao entrar, e avisos falados por uma região role="alert" que se repete mesmo com texto igual. Nasceram no Controls e funcionaram com leitor de tela.</li>
 <li>Se precisar de algo que o Heimdall Design ainda não tem (uma cor, um componente), acrescente aqui primeiro, no <code>heimdall_design.py</code>, e documente nesta página, em vez de criar um estilo só naquele site.</li></ol></section>
 """)
     out["marca.html"] = pagina("marca.html", "Marca", "Logotipo, cores e tipografia do Heimdall-ai.", corpo_marca())

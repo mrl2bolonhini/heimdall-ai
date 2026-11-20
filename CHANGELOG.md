@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: aparência passa a vir do Heimdall Design
+- O CSS do campo de terminal e da linha de ações foi para o heimdall_design.py (valem para qualquer site), e o Controls deixou de definir o tamanho da fonte do corpo e os títulos por conta própria. O botão que age na própria página virou design.botao_js. "Fora do ar" usa a classe padrão de erro. A página de Design descreve os componentes novos.
+
 ## 2026-11-19 - Controls: rótulos curtos, Tab que nunca sai, cd completa pastas, avisos firmes
 - Os campos se chamam apenas Histórico e Terminal (sem frase longa nem título extra). O cursor do Histórico entra sempre no fim e o campo acompanha o fim quando chega comando novo, para ler do mais novo para o mais antigo subindo com a seta.
 - No campo Terminal o Tab é sempre de completar: não sai mais do campo (para sair use Option+Tab ou Shift+Tab). Sem nada digitado ou com programa rodando, ele só avisa. Depois de cd ou pushd completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).

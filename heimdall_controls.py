@@ -76,13 +76,7 @@ MAX_TRANSCRICAO = 400_000  # caracteres do campo do terminal no total (os comand
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 
 CSS = nuvem.CSS + """
-body{font-size:19px;line-height:1.6;max-width:56rem}
-main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3rem;font-size:1.25em}h3{font-size:1.05em;margin:.2rem 0}
-.terminal.historico{height:16rem}
-.terminal{height:60vh;min-height:16rem;font-size:1em;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
-.linha-acoes{display:flex;flex-wrap:wrap;gap:.2rem 1rem;align-items:flex-end}
-.linha-acoes form{margin:0}.aviso{border:1px solid var(--linha);padding:.7rem;margin-top:1.5rem;color:var(--suave)}
-.fora{color:var(--erro);font-weight:700}
+.aviso{border:1px solid var(--linha);padding:.7rem;margin-top:1.5rem;color:var(--suave)}
 """
 
 BUILTINS = ["cd", "pwd", "echo", "export", "unset", "alias", "unalias", "source", "type", "which", "where", "history", "jobs", "fg", "bg", "kill",
@@ -297,15 +291,15 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<div><label for="terminal">Terminal</label>'
         f'<textarea class="terminal" id="terminal" spellcheck="false" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}">{e(inicial)}</textarea></div>'
         '<section aria-labelledby="h-ac"><h2 id="h-ac">Ações</h2><div class="linha-acoes">'
-        '<div><button type="button" id="bt-copiar-ultima">Copiar a última saída (Option+Shift+C)</button></div>'
+        '<div>'+design.botao_js("bt-copiar-ultima","Copiar a última saída (Option+Shift+C)")+'</div>'
         '<div><label for="qtd">Quantas últimas saídas</label><input id="qtd" type="number" min="1" max="300" value="3" inputmode="numeric">'
-        '<button type="button" id="bt-copiar-n">Copiar as últimas saídas</button></div>'
+        ''+design.botao_js("bt-copiar-n","Copiar as últimas saídas")+'</div>'
         '<div><label><input type="checkbox" id="com-comando" checked> Incluir o comando</label></div></div>'
-        '<div class="linha-acoes"><button type="button" id="bt-int">Interromper (Ctrl+C)</button>'
-        '<button type="button" id="bt-inicio">Ir ao início da última saída (Option+Shift+U)</button>'
-        '<button type="button" id="bt-ler">Ler o começo da última saída (Option+Shift+O)</button>'
-        '<button type="button" id="bt-limpar">Limpar as saídas (Ctrl+L)</button>'
-        '<button type="button" id="bt-reiniciar">Reiniciar o shell (Option+Shift+R)</button></div>'
+        '<div class="linha-acoes">'+design.botao_js("bt-int","Interromper (Ctrl+C)")+''
+        ''+design.botao_js("bt-inicio","Ir ao início da última saída (Option+Shift+U)")+''
+        ''+design.botao_js("bt-ler","Ler o começo da última saída (Option+Shift+O)")+''
+        ''+design.botao_js("bt-limpar","Limpar as saídas (Ctrl+L)")+''
+        ''+design.botao_js("bt-reiniciar","Reiniciar o shell (Option+Shift+R)")+'</div>'
         '<p>Reiniciar o shell fecha o atual e abre outro limpo, na pasta do Heimdall.</p>'
         '<div id="area-copia" hidden><label for="texto-copia">Se o navegador não deixar copiar sozinho, selecione tudo neste campo (Command+A) e copie (Command+C)</label>'
         '<textarea id="texto-copia" readonly></textarea></div></section>'
@@ -347,7 +341,7 @@ def _porta_aberta(porta: int) -> bool:
 
 def pg_servicos(q: dict, sess: dict) -> tuple:
     csrf = e(sess["csrf"])
-    linhas = "".join(f'<tr><th scope="row">{e(n)}</th><td>{p}</td><td>' + ("no ar" if _porta_aberta(p) else '<span class="fora">fora do ar</span>') + "</td></tr>" for p, n in SERVICOS)
+    linhas = "".join(f'<tr><th scope="row">{e(n)}</th><td>{p}</td><td>' + ("no ar" if _porta_aberta(p) else '<span class="erro">fora do ar</span>') + "</td></tr>" for p, n in SERVICOS)
     tabela = f'<table><caption>Serviços e portas neste Mac</caption><thead><tr><th scope="col">Serviço</th><th scope="col">Porta</th><th scope="col">Situação</th></tr></thead><tbody>{linhas}</tbody></table>'
     botoes = "".join(f'<li><form method="post" action="/servicos/acao"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="acao" value="{k}">'
                      f'<button type="submit">{e(rot)}</button></form></li>' for k, (rot, _) in ACOES.items())
