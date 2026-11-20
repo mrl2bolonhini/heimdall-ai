@@ -218,7 +218,7 @@ confere("alternar: serviço desconhecido é recusado", s == 409, corpo)
 s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": "errado", "id": "cloud", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("alternar sem o token de segurança é recusado, com o motivo", s == 403 and "token" in corpo, corpo)
 s, corpo, _ = req("GET", "/manutencao", cookie=token)
-confere("manutenção: botões de ação e um só h1", s == 200 and "Update and restart" in corpo and ">Start<" in corpo and ">Stop<" in corpo and "Show log" in corpo and corpo.count("<h1") == 1)
+confere("manutenção: botões de ação e um só h1", s == 200 and "Update e restart" in corpo and ">Start<" in corpo and ">Stop<" in corpo and "Exibir log" in corpo and corpo.count("<h1") == 1)
 hsv.parar_tudo = lambda: [("Cloud", True, "parado"), ("News", True, "parado")]
 hsv.iniciar_tudo = lambda: (True, "subida iniciada")
 s, _, r = req("POST", "/manutencao/acao", {"acao": "stop", "csrf": CSRF}, cookie=token)

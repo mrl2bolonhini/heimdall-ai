@@ -339,10 +339,10 @@ LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data"
 # ação -> (rótulo, comando, o que faz). Só estas viram botão; o texto livre vai pelo terminal. Start e Stop têm código próprio.
 ACOES = {
     "update": ("Update", "heimdall update", "Baixa a versão nova do GitHub sem reiniciar nada. O resultado aparece na aba Terminal."),
-    "update_restart": ("Update and restart", "heimdall update --restart", "Baixa a versão nova e reinicia tudo, inclusive este painel: espere cerca de um minuto e recarregue a página."),
+    "update_restart": ("Update e restart", "heimdall update --restart", "Baixa a versão nova e reinicia tudo, inclusive este painel: espere cerca de um minuto e recarregue a página."),
     "restart": ("Restart", "heimdall restart", "Reinicia todos os serviços, inclusive este painel: espere cerca de um minuto e recarregue a página."),
     "status": ("Status", "heimdall status", "Mostra quais serviços estão no ar."),
-    "doctor": ("Doctor", "heimdall doctor", "Diagnóstico do Mac: memória, disco, Docker e Ollama."),
+    "doctor": ("Diagnóstico", "heimdall doctor", "Diagnóstico do Mac: memória, disco, Docker e Ollama."),
 }
 
 
@@ -391,9 +391,9 @@ def pg_manutencao(q: dict, sess: dict) -> tuple:
     info = "".join(item(k, r, d) for k, (r, _, d) in ACOES.items() if k in ("status", "doctor"))
     opcoes = "".join(f'<option value="{k}">{e(n)}</option>' for k, n in LOGS_OK.items())
     log = ('<form method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="' + csrf + '"><input type="hidden" name="acao" value="log">'
-           '<label for="servico-log">Service log</label><select id="servico-log" name="servico">' + opcoes + '</select><button type="submit">Show log</button></form>')
+           '<label for="servico-log">Log do serviço</label><select id="servico-log" name="servico">' + opcoes + '</select><button type="submit">Exibir log</button></form>')
     corpo = ('<p>Cada botão faz o que o nome diz. Quando o comando roda no terminal, o resultado aparece na aba Terminal.</p>'
-             f'<h2>Heimdall</h2><ul class="acoes">{ciclo}</ul><h2>Information</h2><ul class="acoes">{info}</ul>{log}')
+             f'<h2>Heimdall</h2><ul class="acoes">{ciclo}</ul><h2>Informações</h2><ul class="acoes">{info}</ul>{log}')
     return "Manutenção", corpo
 
 
@@ -670,10 +670,11 @@ document.addEventListener('click', function(ev){
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash=None) -> bytes:
-    nav = ""
+    nav = conta = ""
     if sess:
-        nav = ('<nav aria-label="Principal" class="barra-abas">' + design.abas(SECOES, atual, completas=("/terminal",)) + '<form class="linha" method="post" action="/sair">'
-               f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></nav>')
+        conta = ('<nav aria-label="Conta" class="conta"><form class="linha" method="post" action="/sair">'
+                 f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></nav>')
+        nav = '<nav aria-label="Principal">' + design.abas(SECOES, atual, completas=("/terminal",)) + '</nav>'
         corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
     else:
         corpo = f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}"
@@ -688,7 +689,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Controls", nav)}'
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{conta}{nuvem.cabecalho("Heimdall Controls", nav)}'
             f'<main id="principal">{corpo}</main>{js}</body></html>').encode("utf-8")
 
 
