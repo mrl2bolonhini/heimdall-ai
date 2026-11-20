@@ -47,33 +47,60 @@ def catalogo() -> list:
         {"id": "litellm", "nome": "LiteLLM", "porta": 9000, "tipo": "cmd", "log": "litellm",
          "liga": lit_cmd + ["--config", "litellm_config.yaml", "--host", "0.0.0.0", "--port", "9000"]},
         {"id": "ollama", "nome": "Ollama", "porta": 11434, "tipo": "cmd", "log": "ollama", "liga": ["ollama", "serve"]},
-        {"id": "qdrant", "nome": "Qdrant (base vetorial)", "porta": 6333, "tipo": "docker", "alvo": ["qdrant"]},
-        {"id": "searxng", "nome": "SearXNG (busca)", "porta": 8080, "tipo": "docker", "alvo": ["searxng"]},
-        {"id": "docling", "nome": "Docling (PDFs com OCR)", "porta": 5001, "tipo": "docker", "alvo": ["docling"], "opcional": True},
+        {"id": "qdrant", "nome": "Qdrant", "porta": 6333, "tipo": "docker", "alvo": ["qdrant"]},
+        {"id": "searxng", "nome": "SearXNG", "porta": 8080, "tipo": "docker", "alvo": ["searxng"]},
+        {"id": "docling", "nome": "Docling", "porta": 5001, "tipo": "docker", "alvo": ["docling"], "opcional": True},
         {"id": "mcp", "nome": "MCP Mac", "porta": 8000, "tipo": "py", "script": ["heimdall_mcp.py", "--group", "mac"], "log": "mcp_debug"},
-        {"id": "mcp_public", "nome": "MCP público", "porta": 8001, "tipo": "py", "script": ["heimdall_mcp.py", "--group", "public"], "log": "mcp_public_debug"},
-        {"id": "mcp_dados", "nome": "MCP dados", "porta": 8004, "tipo": "py", "script": ["heimdall_mcp.py", "--group", "dados"], "log": "mcp_dados_debug"},
+        {"id": "mcp_public", "nome": "MCP public", "apelidos": ["mcp publico"], "porta": 8001, "tipo": "py", "script": ["heimdall_mcp.py", "--group", "public"], "log": "mcp_public_debug"},
+        {"id": "mcp_dados", "nome": "MCP data", "apelidos": ["mcp dados"], "porta": 8004, "tipo": "py", "script": ["heimdall_mcp.py", "--group", "dados"], "log": "mcp_dados_debug"},
         {"id": "terminal", "nome": "Open Terminal", "porta": 8002, "tipo": "py", "script": None, "log": "open_terminal"},
-        {"id": "agente", "nome": "Agente do Mac", "porta": _porta("HEIMDALL_AGENTE_PORT", 8003), "tipo": "py", "script": ["heimdall_agente.py"],
+        {"id": "agente", "nome": "Mac Agent", "apelidos": ["agente"], "porta": _porta("HEIMDALL_AGENTE_PORT", 8003), "tipo": "py", "script": ["heimdall_agente.py"],
          "porta_env": "HEIMDALL_AGENTE_PORT", "log": "agente_debug"},
         {"id": "cloud", "nome": "Cloud", "porta": _porta("HEIMDALL_CLOUD_PORT", 8010), "tipo": "py", "script": ["heimdall_cloud.py"],
          "porta_env": "HEIMDALL_CLOUD_PORT", "log": "cloud_debug"},
-        {"id": "notas", "nome": "Notas", "porta": _porta("HEIMDALL_NOTAS_PORT", 8011), "tipo": "py", "script": ["heimdall_notas.py"],
+        {"id": "notas", "nome": "Notes", "apelidos": ["notas"], "porta": _porta("HEIMDALL_NOTAS_PORT", 8011), "tipo": "py", "script": ["heimdall_notas.py"],
          "porta_env": "HEIMDALL_NOTAS_PORT", "log": "notas_debug"},
         {"id": "news", "nome": "News", "porta": _porta("HEIMDALL_NEWS_PORT", 8012), "tipo": "py", "script": ["heimdall_news.py"],
          "porta_env": "HEIMDALL_NEWS_PORT", "log": "news_debug"},
-        {"id": "saude", "nome": "Saúde", "porta": _porta("HEIMDALL_SAUDE_PAINEL_PORT", 8013), "tipo": "py", "script": ["heimdall_painel_saude.py"],
+        {"id": "saude", "nome": "Health", "apelidos": ["saude"], "porta": _porta("HEIMDALL_SAUDE_PAINEL_PORT", 8013), "tipo": "py", "script": ["heimdall_painel_saude.py"],
          "porta_env": "HEIMDALL_SAUDE_PAINEL_PORT", "log": "saude_painel_debug"},
-        {"id": "jogos", "nome": "Jogos", "porta": _porta("HEIMDALL_JOGOS_PORT", 8014), "tipo": "py", "script": ["heimdall_jogos.py"],
+        {"id": "jogos", "nome": "Games", "apelidos": ["jogos"], "porta": _porta("HEIMDALL_JOGOS_PORT", 8014), "tipo": "py", "script": ["heimdall_jogos.py"],
          "porta_env": "HEIMDALL_JOGOS_PORT", "log": "jogos_debug"},
         {"id": "finance", "nome": "Finance", "porta": _porta("HEIMDALL_FINANCE_PORT", 8016), "tipo": "py", "script": ["heimdall_finance.py"],
          "porta_env": "HEIMDALL_FINANCE_PORT", "log": "finance_debug"},
-        {"id": "kuma", "nome": "Uptime Kuma (status)", "porta": 3001, "tipo": "docker", "alvo": ["uptime-kuma"], "kuma": False},
-        {"id": "dozzle", "nome": "Dozzle (logs)", "porta": 8081, "tipo": "docker", "alvo": ["dozzle"]},
-        {"id": "n8n", "nome": "n8n (automações)", "porta": 5678, "tipo": "docker", "alvo": ["n8n"]},
+        {"id": "kuma", "nome": "Uptime Kuma", "porta": 3001, "tipo": "docker", "alvo": ["uptime-kuma"], "kuma": False},
+        {"id": "dozzle", "nome": "Dozzle", "porta": 8081, "tipo": "docker", "alvo": ["dozzle"]},
+        {"id": "n8n", "nome": "n8n", "porta": 5678, "tipo": "docker", "alvo": ["n8n"]},
         {"id": "webui", "nome": "Open WebUI", "porta": 3000, "tipo": "docker", "alvo": ["open-webui"]},
-        {"id": "aws", "nome": "Emulador de AWS", "porta": 4566, "tipo": "docker", "alvo": ["moto", "localstack"]},
+        {"id": "aws", "nome": "AWS Emulator", "apelidos": ["emulador", "aws"], "porta": 4566, "tipo": "docker", "alvo": ["moto", "localstack"]},
     ]
+
+
+def parar_tudo() -> list:
+    """Encerra a subida (start_heimdall.sh) e desliga todos os serviços do catálogo. O Controls fica de pé, para você poder religar (Start).
+    Não marca nada como desligado de propósito: o Start sobe tudo de novo."""
+    _rodar(["pkill", "-f", "start_heimdall.sh"], 8)
+    cat = catalogo()
+    resultados = []
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
+        for sv, (ok, msg) in zip(cat, ex.map(desligar, cat)):
+            resultados.append((sv["nome"], ok, msg))
+    return resultados
+
+
+def iniciar_tudo() -> tuple:
+    """Sobe o Heimdall inteiro como o heimdall up (subir.sh), sem esperar. A saída vai para logs/controls_manutencao.log."""
+    script = PROJECT_DIR / "subir.sh"
+    if not script.exists():
+        return False, "subir.sh não encontrado"
+    try:
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        log = open(LOGS_DIR / "controls_manutencao.log", "ab")
+        subprocess.Popen(["/bin/bash", str(script)], cwd=str(PROJECT_DIR), env=_ambiente(), stdout=log, stderr=log, stdin=subprocess.DEVNULL, start_new_session=True)
+    except OSError as ex:
+        return False, f"não consegui iniciar: {type(ex).__name__}"
+    return True, "subida iniciada"
 
 
 def por_id(sid: str):

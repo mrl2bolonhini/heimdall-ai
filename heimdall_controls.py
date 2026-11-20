@@ -334,14 +334,15 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
     return "Terminal", corpo
 
 
-LOGS_OK = ["mcp", "mcp_public", "mcp_dados", "agente", "cloud", "notas", "news", "saude_painel", "jogos", "finance", "controls", "ingest"]
-# ação -> comando. Só estas viram botão; o texto livre vai pelo terminal.
+LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data", "agente": "Mac Agent", "cloud": "Cloud", "notas": "Notes", "news": "News",
+           "saude_painel": "Health", "jogos": "Games", "finance": "Finance", "controls": "Controls", "ingest": "Ingest"}
+# ação -> (rótulo, comando, o que faz). Só estas viram botão; o texto livre vai pelo terminal. Start e Stop têm código próprio.
 ACOES = {
-    "update": ("Atualizar do GitHub (sem reiniciar)", "heimdall update"),
-    "update_restart": ("Atualizar e reiniciar tudo", "heimdall update --restart"),
-    "restart": ("Reiniciar o Heimdall", "heimdall restart"),
-    "status": ("Ver o estado completo", "heimdall status"),
-    "doctor": ("Diagnóstico", "heimdall doctor"),
+    "update": ("Update", "heimdall update", "Baixa a versão nova do GitHub sem reiniciar nada. O resultado aparece na aba Terminal."),
+    "update_restart": ("Update and restart", "heimdall update --restart", "Baixa a versão nova e reinicia tudo, inclusive este painel: espere cerca de um minuto e recarregue a página."),
+    "restart": ("Restart", "heimdall restart", "Reinicia todos os serviços, inclusive este painel: espere cerca de um minuto e recarregue a página."),
+    "status": ("Status", "heimdall status", "Mostra quais serviços estão no ar."),
+    "doctor": ("Doctor", "heimdall doctor", "Diagnóstico do Mac: memória, disco, Docker e Ollama."),
 }
 
 
@@ -361,7 +362,7 @@ def pg_servicos(q: dict, sess: dict) -> tuple:
     itens = []
     for sv in servicos.catalogo():
         ar = servicos.no_ar(sv)
-        mon = kuma.achar(mons, sv["nome"]) if sv.get("kuma", True) else None
+        mon = kuma.achar(mons, sv["nome"], *sv.get("apelidos", [])) if sv.get("kuma", True) else None
         sid = sv["id"]
         itens.append(f'<li><button type="button" role="switch" id="sw-{sid}" data-servico="{sid}" aria-checked="{"true" if ar else "false"}" aria-describedby="est-{sid}">{e(sv["nome"])}</button>'
                      f'<span id="est-{sid}">{"Ligado" if ar else "Desligado"}: {e(_situacao_servico(sv, ar, sid in off, mon))}</span></li>')
@@ -380,13 +381,19 @@ def pg_servicos(q: dict, sess: dict) -> tuple:
 
 def pg_manutencao(q: dict, sess: dict) -> tuple:
     csrf = e(sess["csrf"])
-    botoes = "".join(f'<li><form method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="acao" value="{k}">'
-                     f'<button type="submit">{e(rot)}</button></form></li>' for k, (rot, _) in ACOES.items())
-    opcoes = "".join(f'<option value="{s}">{e(s)}</option>' for s in LOGS_OK)
+
+    def item(chave, rotulo, descricao):
+        return (f'<li><form class="linha" method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="acao" value="{chave}">'
+                f'<button type="submit" aria-describedby="d-{chave}">{e(rotulo)}</button></form> <span id="d-{chave}">{e(descricao)}</span></li>')
+    ciclo = (item("start", "Start", "Sobe o Heimdall inteiro, como heimdall up. Leva alguns minutos; acompanhe na aba Serviços.")
+             + item("stop", "Stop", "Para todos os serviços, menos este painel, para você poder usar o Start depois. Para o painel também, use heimdall stop no terminal do Mac.")
+             + "".join(item(k, r, d) for k, (r, _, d) in ACOES.items() if k in ("update", "update_restart", "restart")))
+    info = "".join(item(k, r, d) for k, (r, _, d) in ACOES.items() if k in ("status", "doctor"))
+    opcoes = "".join(f'<option value="{k}">{e(n)}</option>' for k, n in LOGS_OK.items())
     log = ('<form method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="' + csrf + '"><input type="hidden" name="acao" value="log">'
-           '<label for="servico-log">Ver o log de</label><select id="servico-log" name="servico">' + opcoes + '</select><button type="submit">Ver o log</button></form>')
-    corpo = ("<p>Cada botão roda o comando no terminal e abre a aba Terminal com o resultado. Reiniciar tudo também reinicia este painel: espere cerca de um minuto "
-             f"e recarregue a página.</p><h2>Ações</h2><ul>{botoes}</ul>{log}")
+           '<label for="servico-log">Service log</label><select id="servico-log" name="servico">' + opcoes + '</select><button type="submit">Show log</button></form>')
+    corpo = ('<p>Cada botão faz o que o nome diz. Quando o comando roda no terminal, o resultado aparece na aba Terminal.</p>'
+             f'<h2>Heimdall</h2><ul class="acoes">{ciclo}</ul><h2>Information</h2><ul class="acoes">{info}</ul>{log}')
     return "Manutenção", corpo
 
 
@@ -665,7 +672,7 @@ document.addEventListener('click', function(ev){
 def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash=None) -> bytes:
     nav = ""
     if sess:
-        nav = ('<nav aria-label="Principal">' + design.abas(SECOES, atual, completas=("/terminal",)) + '<form class="linha" method="post" action="/sair">'
+        nav = ('<nav aria-label="Principal" class="barra-abas">' + design.abas(SECOES, atual, completas=("/terminal",)) + '<form class="linha" method="post" action="/sair">'
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></nav>')
         corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
     else:
@@ -890,6 +897,19 @@ class Painel(BaseHTTPRequestHandler):
             elif rota == "/servicos/alternar":
                 self._json(200, self._alternar_servico(campos, ip))
                 return
+            elif rota == "/manutencao/acao" and campos.get("acao") == "stop":
+                auditar(ip, "manutenção: stop")
+                res = servicos.parar_tudo()
+                falhou = [n for n, ok, _ in res if not ok]
+                sess["flash"] = ("ok" if not falhou else "erro", "Tudo parado, menos este painel. Para subir de novo, aperte Start." if not falhou else "Parei o que deu. Não consegui parar: " + ", ".join(falhou) + ".")
+                self._ir("/manutencao")
+                return
+            elif rota == "/manutencao/acao" and campos.get("acao") == "start":
+                auditar(ip, "manutenção: start")
+                ok, msg = servicos.iniciar_tudo()
+                sess["flash"] = ("ok" if ok else "erro", ("Subida iniciada. Leva alguns minutos: acompanhe na aba Serviços." if ok else msg))
+                self._ir("/manutencao")
+                return
             elif rota == "/manutencao/acao":
                 acao = campos.get("acao", "")
                 if acao == "log" and campos.get("servico") in LOGS_OK:
@@ -926,14 +946,14 @@ class Painel(BaseHTTPRequestHandler):
         ok, msg = servicos.aplicar(sv["id"], ligar)
         extra = ""
         mons, _ = kuma.monitores()
-        mon = kuma.achar(mons, sv["nome"]) if sv.get("kuma", True) else None
+        mon = kuma.achar(mons, sv["nome"], *sv.get("apelidos", [])) if sv.get("kuma", True) else None
         if mon and ok:
             motivo = kuma.pausar_ou_retomar(mon["id"], pausar=not ligar)
             extra = (" Monitor do Kuma " + ("retomado." if ligar else "pausado.")) if not motivo else f" Kuma não mexido: {motivo}."
         auditar(ip, "serviços: " + ("ligar" if ligar else "desligar"), sv["id"] + ("" if ok else " (falhou)"))
         ar = servicos.no_ar(sv)
         mons, _ = kuma.monitores()
-        mon = kuma.achar(mons, sv["nome"]) if sv.get("kuma", True) else None
+        mon = kuma.achar(mons, sv["nome"], *sv.get("apelidos", [])) if sv.get("kuma", True) else None
         sit = ("Ligado" if ar else "Desligado") + ": " + _situacao_servico(sv, ar, sv["id"] in servicos.desligados(), mon)
         return {"ok": ok, "ligado": ar, "mensagem": ("" if ok else "Não deu. ") + msg + extra, "situacao": sit}
 

@@ -571,7 +571,11 @@ fi
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare (controls.heimdall-ai.tech), atrás do Cloudflare Access. Quem entra manda no Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_controls.py ]; then
-        HEIMDALL_CONTROLS_PORT="$CONTROLS_PORT" HEIMDALL_DIR="$(pwd)" "$VENV_PYTHON" heimdall_controls.py > "$(nova_log controls_debug)" 2>&1 &
+        if nc -z localhost $CONTROLS_PORT > /dev/null 2>&1; then
+            echo "     Heimdall Controls já estava no ar (foi ele quem pediu esta subida)."
+        else
+            HEIMDALL_CONTROLS_PORT="$CONTROLS_PORT" HEIMDALL_DIR="$(pwd)" "$VENV_PYTHON" heimdall_controls.py > "$(nova_log controls_debug)" 2>&1 &
+        fi
         COUNTER=0
         while ! nc -z localhost $CONTROLS_PORT > /dev/null 2>&1; do
             sleep 1

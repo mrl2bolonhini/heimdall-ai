@@ -96,8 +96,8 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 hku.URL = f"http://127.0.0.1:{srv.server_port}"
 mons, erro = hku.monitores()
 confere("Kuma: lê os monitores e o último batimento", not erro and [m["status"] for m in mons] == ["no ar", "fora do ar", "desconhecido"], str(mons))
-confere("Kuma: acha o monitor pelo nome do serviço, sem acento nem parênteses", hku.achar(mons, "Cloud")["id"] == 1 and hku.achar(mons, "Notas")["id"] == 2
-        and hku.achar(mons, "Uptime Kuma (status)") is None)
+confere("Kuma: acha o monitor pelo nome do serviço, sem acento nem parênteses", hku.achar(mons, "Cloud")["id"] == 1 and hku.achar(mons, "Notes", "Notas")["id"] == 2
+        and hku.achar(mons, "Uptime Kuma") is None)
 srv.shutdown()
 mons, erro = hku.monitores()
 confere("Kuma fora do ar: devolve lista vazia e o motivo", mons == [] and "Kuma" in erro, erro)

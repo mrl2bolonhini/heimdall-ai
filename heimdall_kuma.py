@@ -46,9 +46,14 @@ def monitores() -> tuple:
     return saida, ""
 
 
-def achar(mons: list, nome_servico: str):
-    alvo = _norm(nome_servico).split(" (")[0].strip()
-    return next((m for m in mons if alvo and alvo in _norm(m["nome"])), None)
+def achar(mons: list, *nomes: str):
+    """Primeiro monitor cujo nome contém um dos nomes dados (o nome do serviço e os apelidos)."""
+    for nome in nomes:
+        alvo = _norm(nome).split(" (")[0].strip()
+        m = next((m for m in mons if alvo and alvo in _norm(m["nome"])), None)
+        if m:
+            return m
+    return None
 
 
 def pausar_ou_retomar(monitor_id: int, pausar: bool) -> str:
