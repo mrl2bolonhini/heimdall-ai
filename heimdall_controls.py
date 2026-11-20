@@ -778,9 +778,9 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     todo = ((design.SCRIPT_ABAS + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'
             f'<a class="pular" href="#principal">Pular para o conteúdo</a>{conta}{nuvem.cabecalho("Heimdall Controls", nav)}'
-            f'<main id="principal">{corpo}</main>{js}</body></html>').encode("utf-8")
+            f'<main id="principal">{corpo}</main>{js}<!--/email_off--></body></html>').encode("utf-8")
 
 
 def pg_entrar(erro: str = "") -> bytes:

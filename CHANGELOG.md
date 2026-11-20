@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Controls: e-mail no menu Conta não vira link do Cloudflare
+- Corrigido: o Cloudflare (proteção de e-mail) trocava o e-mail do menu Conta por um link para /cdn-cgi/l/email-protection, e clicar nele abria uma página de erro do Cloudflare. As páginas do Controls agora vão entre <!--email_off--> e <!--/email_off-->, que o Cloudflare respeita; isso vale também para e-mails que apareçam no terminal e nas Configurações.
+
 ## 2026-11-20 - Controls: Sair e logs funcionam; menu Conta; Configurações em grupos
 - Corrigido: Sair e o botão Exibir log (e qualquer formulário comum) davam "Pedido recusado: origem não permitida". Como o painel manda Referrer-Policy: no-referrer, o navegador envia Origin: null nos formulários comuns, e a checagem recusava. Agora Origin null não conta como informação: vale o Sec-Fetch-Site (cross-site é recusado) e o token de segurança continua obrigatório. Origin de outro site continua recusado. (Era também a causa provável do erro de token que apareceu no Aplicar.)
 - Controls: o topo agora tem o menu "Conta: nome", que abre e mostra como você entrou (o e-mail do Cloudflare Access ou "Dono", pela senha e código) e o botão Sair, que encerra a sessão. Entrando pelo Access, há também o link para sair do Access.

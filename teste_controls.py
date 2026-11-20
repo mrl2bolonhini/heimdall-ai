@@ -250,6 +250,8 @@ s, _, r = req("POST", "/sair", {"csrf": csrf2}, cookie=tk2, extra={"Origin": "nu
 confere("Sair com Origin null encerra a sessão e volta ao login", s == 303 and r.getheader("Location") == "/entrar", str((s, r.getheader("Location"))))
 s, _, _ = req("GET", "/", cookie=tk2)
 confere("depois do Sair a sessão não vale mais", s in (303, 401))
+s, corpo, _ = req("GET", "/", cookie=token)
+confere("páginas marcadas para o Cloudflare não trocar e-mails por link (email_off)", "<!--email_off-->" in corpo and "<!--/email_off-->" in corpo)
 s, corpo, _ = req("GET", "/manutencao", cookie=token)
 confere("manutenção: botões de ação e um só h1", s == 200 and "Update e restart" in corpo and ">Start<" in corpo and ">Stop<" in corpo and "Exibir log" in corpo and corpo.count("<h1") == 1)
 hsv.parar_tudo = lambda: [("Cloud", True, "parado"), ("News", True, "parado")]
