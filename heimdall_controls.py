@@ -212,10 +212,10 @@ def prompt_de(pasta: str) -> str:
 
 def _situacao(b) -> str:
     if b.estado == "interrompido":
-        return f"interrompido, {duracao(b.duracao())}"
+        return f"interrompido em {duracao(b.duracao())}"
     if b.estado == "encerrado":
         return "o shell foi encerrado durante este comando"
-    return (f"concluído, código {b.codigo}" if b.codigo == 0 else f"erro, código {b.codigo}") + f", {duracao(b.duracao())}"
+    return f"concluído em {duracao(b.duracao())}" if b.codigo == 0 else f"código {b.codigo}, em {duracao(b.duracao())}"   # o código só aparece quando é erro
 
 
 def _saida_exibida(sh, b) -> tuple:
@@ -251,7 +251,7 @@ def transcricao(sh, com_historico: bool = True) -> dict:
             partes = [_texto_do_bloco(sh, b)[0] for b in sh.blocos[:-1]]
             while len(partes) > 1 and sum(len(t) for t in partes) > MAX_TRANSCRICAO:
                 partes.pop(0)
-            hist = "".join(partes)
+            hist = "".join(partes).rstrip("\n")        # sem linha em branco sobrando no fim
         return {"texto": ultimo, "inicio_ultima": inicio, "ultimo_n": sh.blocos[-1].n, "historico": hist, "n_hist": n_hist}
 
 
@@ -265,7 +265,8 @@ def aviso_do_bloco(sh, b) -> str:
         resumo = "Saída: " + saida.strip()
     else:
         resumo = f"Saída com {len(linhas)} linhas. Option+Shift+U leva o cursor ao início dela; Option+Shift+O lê o começo."
-    return f"Comando {b.n} {_situacao(b)}. {resumo}"
+    sit = _situacao(b)
+    return f"{sit[0].upper()}{sit[1:]}. {resumo}"
 
 
 def pg_inicio(q: dict, sess: dict) -> tuple:
@@ -402,6 +403,7 @@ function aplicar(s){
     else { var m = ta.value.length; ta.setSelectionRange(Math.min(a, m), Math.min(b, m)); ta.scrollTop = comeco ? desl : ta.scrollHeight; }
     base = novo;
   }
+  if (document.activeElement !== ta) { fimDoCampo(); }
   if (s.historico !== null && s.historico !== undefined) { atualizarCampo(hist, s.historico); }
   nHist = s.n_hist;
   inicioUltima = s.inicio_ultima; historico = s.comandos || historico; ultimaVersao = s.versao; rodando = s.rodando;
@@ -427,7 +429,7 @@ function enviar(){
     });
     return;
   }
-  if (!t.trim()) { return; }
+  if (!t.trim() || enviado !== null) { return; }
   historico.push(t); hi = -1;
   enviado = t;                                           // a linha digitada fica até a saída chegar: o campo muda uma vez só, não duas
   post('/terminal/executar', {comando: t}).then(function(r){
@@ -491,7 +493,7 @@ function completar(linha){
     else { dizer(ops.length + ' opções: ' + ops.slice(0, 25).join(', ') + (ops.length > 25 ? ' e mais ' + (ops.length - 25) : '') + '.'); }
   }).catch(function(){ pendente = false; dizer('Não consegui completar.'); });
 }
-function irAoCampo(){ if (document.activeElement === ta) { fimDoCampo(); } else { ta.focus(); } }
+function irAoCampo(){ fimDoCampo(); if (document.activeElement !== ta) { ta.focus(); } }
 // só a última linha pode ser editada: o resto é a saída e fica protegido. Se o cursor estiver na saída, o que a pessoa digita vai para o fim, sem perder letra
 ta.addEventListener('beforeinput', function(ev){
   var t = ev.inputType || '', a = ta.selectionStart, b = ta.selectionEnd;
@@ -534,7 +536,7 @@ ta.addEventListener('keydown', function(ev){
   if (ev.key === 'Enter' && !ev.shiftKey && !ev.ctrlKey && !ev.altKey && !ev.metaKey) { ev.preventDefault(); enviar(); return; }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyC') {
     ev.preventDefault();
-    if (rodando) { interromper(); } else { ta.value = base; ta.setSelectionRange(base.length, base.length); dizer('Linha apagada.'); }
+    if (rodando || enviado !== null) { interromper(); } else { ta.value = base; ta.setSelectionRange(base.length, base.length); dizer('Linha apagada.'); }
     return;
   }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyL') { ev.preventDefault(); limpar(); }
@@ -544,8 +546,9 @@ ta.addEventListener('touchstart', function(){ apontador = true; }, {passive: tru
 ta.addEventListener('mouseup', function(){ apontador = false; });
 ta.addEventListener('blur', function(){ apontador = false; });
 // entrar no campo (Tab, foco automático, voltar à aba) sempre deixa o cursor depois da última letra; só o clique do mouse escolhe outro ponto
-// o cursor vai ao fim DEPOIS de um instante: mexer nele na hora faz o VoiceOver ler só o caractere ("espaço") e engolir o nome do campo
-ta.addEventListener('focus', function(){ if (!apontador) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 350); } });
+// o cursor já fica no fim enquanto o campo não tem o foco (ao sair dele e a cada atualização): assim, ao entrar, nada se mexe e o VoiceOver lê só o nome do campo
+ta.addEventListener('blur', function(){ if (!apontador) { fimDoCampo(); } });
+ta.addEventListener('focus', function(){ if (!apontador && ta.selectionStart !== ta.value.length) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 350); } });
 window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
 window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });
 document.addEventListener('keydown', function(ev){

@@ -113,7 +113,7 @@ b2 = next(b for b in st["blocos"] if b["n"] == n2)
 confere("pasta e variável continuam entre comandos", "42" in b2["saida"] and "/usr" in b2["saida"] and st["pasta"] == "/usr", b2["saida"])
 n3, st = exec_("echo errado; exit_code_test() { return 3; }; exit_code_test")
 b3 = next(b for b in st["blocos"] if b["n"] == n3)
-confere("código de saída aparece no campo, no aviso e no JSON", b3["codigo"] == 3 and "[erro, código 3," in st["texto"] and "código 3" in b3["aviso"], st["texto"][-200:])
+confere("código de saída aparece no campo, no aviso e no JSON", b3["codigo"] == 3 and "[código 3, em" in st["texto"] and "Código 3" in b3["aviso"], st["texto"][-200:])
 n4, st = exec_("printf '\\033[31mverm\\033[0m <script>alert(1)</script>\\n'")
 b4 = next(b for b in st["blocos"] if b["n"] == n4)
 s_, pag, _ = req("GET", "/terminal", cookie=token)
@@ -152,6 +152,9 @@ confere("Tab: cd só oferece pastas", hcx.completar(str(dc), "cd sub")["palavra_
 if _ant is None: os.environ.pop("HOME")
 else: os.environ["HOME"] = _ant
 confere("duração: número colado no s, sem fração quando zero", [hcx.duracao(x) for x in (0, 0.004, 0.3, 12.3, 37.21, 65.4)] == ["0s", "0s", "0,3s", "12,3s", "37,21s", "1min e 5,4s"], [hcx.duracao(x) for x in (0, 0.004, 0.3, 12.3, 37.21, 65.4)])
+import heimdall_shell as _hs  # noqa: E402
+confere("eco da linha digitada sai da saída; saída parecida fica", _hs._sem_eco("cd ../", "cd ../\nok") == "ok" and _hs._sem_eco("ls", "a\nls") == "a\nls" and _hs._sem_eco("echo oi", "oi") == "oi")
+confere("histórico sem linha em branco no fim", not st["historico"].endswith("\n"), repr(st["historico"][-20:]))
 confere("Tab: nada que combine devolve lista vazia", hcx.completar(str(dc), "cat zzz")["opcoes"] == [])
 confere("Tab: depois de ; volta a completar comando", hcx.completar(str(dc), "ls; ech")["palavra_nova"] == "echo ")
 s_, corpo_, _ = req("GET", "/terminal/completar?linha=" + urllib.parse.quote("ls /us"), cookie=token, extra={"X-Heimdall-Ajax": "1"})

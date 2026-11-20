@@ -45,6 +45,15 @@ def limpar_saida(texto: str) -> str:
     return "\n".join(linhas)
 
 
+def _sem_eco(comando: str, saida: str) -> str:
+    """Alguns shells (zsh com o .zshrc do usuário) devolvem a linha digitada como primeira linha da saída: ela já aparece no cabeçalho, então sai daqui."""
+    if "\n" not in comando.strip() and comando.strip():
+        primeira, _, resto = saida.partition("\n")
+        if primeira.strip() == comando.strip():
+            return resto
+    return saida
+
+
 class Bloco:
     __slots__ = ("n", "comando", "saida", "estado", "codigo", "inicio", "fim", "cortado", "pasta", "versao", "interrompido")
 
@@ -109,10 +118,10 @@ class Shell:
             m = self.marca
             if nome == "zsh":
                 # um gancho no começo guarda o código de saída e outro no fim põe o prompt, para temas do .zshrc não o trocarem
-                prep = (f"unsetopt zle PROMPT_SP PROMPT_CR; setopt PROMPT_SUBST NO_BEEP; PROMPT_EOL_MARK=''; hd_a() {{ __hd=$?; }}; hd_z() {{ PS1=$'\\n@@{m}|${{__hd}}|${{PWD}}|@@\\n'; PS2=''; RPS1=''; RPROMPT=''; }}; "
+                prep = (f"unsetopt zle PROMPT_SP PROMPT_CR; setopt PROMPT_SUBST NO_BEEP; PROMPT_EOL_MARK=''; hd_a() {{ __hd=$?; }}; hd_z() {{ stty -echo 2>/dev/null; PS1=$'\\n@@{m}|${{__hd}}|${{PWD}}|@@\\n'; PS2=''; RPS1=''; RPROMPT=''; }}; "
                         "typeset -ag precmd_functions; precmd_functions=(hd_a ${precmd_functions:#hd_a} hd_z)")
             else:
-                prep = f"PROMPT_COMMAND='__hd=$?'; PS1='\\n@@{m}|${{__hd}}|${{PWD}}|@@\\n'; PS2=''"
+                prep = f"PROMPT_COMMAND='__hd=$?; stty -echo 2>/dev/null'; PS1='\\n@@{m}|${{__hd}}|${{PWD}}|@@\\n'; PS2=''"
             os.write(mestre, (prep + "\n").encode())
         self._esperar_pronto(10)
         if self.inicio:
@@ -306,7 +315,7 @@ class Shell:
     def saida_parcial(self, b: Bloco) -> str:
         """Saída de um bloco ainda rodando, já sem códigos de tela."""
         with self._lock:
-            return limpar_saida(b.saida) if b.estado == "rodando" else b.saida
+            return _sem_eco(b.comando, limpar_saida(b.saida) if b.estado == "rodando" else b.saida)
 
     def texto_para_copiar(self, ultimos: int = 1, com_comando: bool = True, so_bloco: int = 0) -> str:
         """Texto das últimas N saídas (ou de um bloco), do mais antigo para o mais novo, pronto para colar."""

@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: leitura mais limpa ao entrar no campo e ao fim do comando
+- O cursor do Terminal já fica no fim enquanto o campo não tem o foco (ao sair dele e a cada atualização), então ao entrar nada se mexe e o VoiceOver lê só o nome do campo; sem atraso para ajustar.
+- A situação do comando ficou curta: "concluído em 0s". O código só aparece quando é erro ("código 2, em 0,3s"). O aviso falado não conta mais comandos nem diz "comando".
+- A linha digitada não aparece mais duas vezes: o zsh com o .zshrc do usuário devolvia o eco do comando; agora o eco é desligado a cada prompt (stty -echo) e, por garantia, a primeira linha da saída igual ao comando é descartada.
+- O Histórico não termina mais com linha em branco.
+- Enter repetido enquanto o comando ainda está sendo enviado é ignorado, e Ctrl+C nesse intervalo já interrompe.
+
 ## 2026-11-19 - Controls: Tab livre, Ctrl+I completa, o campo muda uma vez só ao executar
 - O Tab deixou de ser capturado: volta a mover o foco pela página como em qualquer lugar. Para completar comandos, arquivos e pastas use só Ctrl+I.
 - Ao apertar Enter, a linha digitada fica no campo até a saída chegar e então o campo troca de texto uma única vez. Antes ele apagava a linha e depois trocava tudo, e o VoiceOver lia um resquício do comando anterior no meio disso.

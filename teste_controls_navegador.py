@@ -72,7 +72,7 @@ with sync_playwright() as pw:
     confere("ao abrir a página o foco já está no terminal, com o cursor no fim", espera(lambda: pg.evaluate("document.activeElement.id") == "terminal") and espera(lambda: ta.evaluate("e => e.selectionStart === e.value.length")), pg.evaluate("document.activeElement.id"))
     pg.keyboard.type("echo ola mundo")
     pg.keyboard.press("Enter")
-    confere("saída aparece no próprio campo, com o prompt de volta no fim", espera(lambda: "ola mundo\n[concluído, código 0," in valor() and valor().endswith("%")), valor())
+    confere("saída aparece no próprio campo, com o prompt de volta no fim", espera(lambda: "ola mundo\n[concluído em " in valor() and valor().endswith("%")), valor())
     confere("aviso falado traz a saída curta", espera(lambda: "Saída: ola mundo" in estado()), estado())
     confere("o cursor está na linha de digitação", ta.evaluate("e => e.selectionStart === e.value.length"))
 
@@ -162,7 +162,7 @@ with sync_playwright() as pw:
     pg.keyboard.press("Enter")
     espera(lambda: ta.evaluate("e => e.value.trimEnd().endsWith('sleep 30')"))
     pg.keyboard.press("Control+KeyC")
-    confere("Ctrl+C interrompe o programa em execução", espera(lambda: "[interrompido" in valor() and valor().endswith("%")) and espera(lambda: "interrompido" in estado()), (valor()[-80:], estado()))
+    confere("Ctrl+C interrompe o programa em execução", espera(lambda: "[interrompido" in valor() and valor().endswith("%")) and espera(lambda: "nterrompido" in estado()), (valor()[-80:], estado()))
 
     # Ctrl+C sem programa apaga a linha
     pg.keyboard.type("lixo")
