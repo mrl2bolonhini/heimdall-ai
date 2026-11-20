@@ -15,7 +15,7 @@ Como usar o Terminal, com o leitor de tela
 
 As abas, com o leitor de tela
 1. As seções são abas: Visão geral, Terminal, Serviços e Manutenção. Com o foco numa aba, setas esquerda e direita, Home e End movem entre elas; Enter ou Espaço abre. Option+Shift+1 a 4 abre cada uma de qualquer ponto da página.
-2. Serviços: cada serviço é um grupo com Ligado e Desligado. Escolha e aperte Aplicar mudanças; só o que você mudou é mexido, e o resultado é lido como aviso. O que você desliga continua desligado depois de heimdall update --restart.
+2. Serviços: cada serviço é uma chave (o VoiceOver diz "chave" e o estado). Espaço ou Enter nela liga ou desliga na hora, sem outro botão, e o resultado é lido como aviso. Abrir uma aba troca só o conteúdo, sem recarregar a página. O que você desliga continua desligado depois de heimdall update --restart.
 3. O Kuma (status.heimdall-ai.tech) é consultado para a situação de cada serviço. Para pausar e retomar o monitor junto, ponha o usuário e a senha dele no .env, sem colar nada na conversa: leia com grep antes de conferir (grep -c HEIMDALL_KUMA_USUARIO ~/heimdall-ai/.env) e instale o pacote com ~/heimdall-ai/venv/bin/pip install python-socketio.
 4. Manutenção: atualizar, atualizar e reiniciar, reiniciar, estado, diagnóstico e logs. O resultado aparece na aba Terminal.
 
