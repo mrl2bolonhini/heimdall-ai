@@ -551,7 +551,7 @@ ta.addEventListener('mouseup', function(){ apontador = false; });
 ta.addEventListener('blur', function(){ apontador = false; });
 // entrar no campo (Tab, foco automático, voltar à aba) sempre deixa o cursor depois da última letra; só o clique do mouse escolhe outro ponto
 // o cursor vai ao fim DEPOIS de um instante: mexer nele na hora faz o VoiceOver ler só o caractere ("espaço") e engolir o nome do campo
-ta.addEventListener('focus', function(){ if (!apontador) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 300); } });
+ta.addEventListener('focus', function(){ if (!apontador) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 350); } });
 window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
 window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });
 document.addEventListener('keydown', function(ev){
