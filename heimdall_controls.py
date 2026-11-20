@@ -339,11 +339,11 @@ LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data"
            "saude_painel": "Health", "jogos": "Games", "finance": "Finance", "controls": "Controls", "ingest": "Ingest"}
 # ação -> (rótulo, comando, o que faz). Só estas viram botão; o texto livre vai pelo terminal. Start e Stop têm código próprio.
 ACOES = {
-    "update": ("Update", "heimdall update", "Baixa a versão nova do GitHub sem reiniciar nada. O resultado aparece na aba Terminal."),
-    "update_restart": ("Update e restart", "heimdall update --restart", "Baixa a versão nova e reinicia tudo, inclusive este painel: espere cerca de um minuto e recarregue a página."),
-    "restart": ("Restart", "heimdall restart", "Reinicia todos os serviços, inclusive este painel: espere cerca de um minuto e recarregue a página."),
-    "status": ("Status", "heimdall status", "Mostra quais serviços estão no ar."),
-    "doctor": ("Diagnóstico", "heimdall doctor", "Diagnóstico do Mac: memória, disco, Docker e Ollama."),
+    "update": ("Update", "heimdall update", "Baixa a versão nova, sem reiniciar."),
+    "update_restart": ("Update e restart", "heimdall update --restart", "Baixa a versão nova e reinicia tudo."),
+    "restart": ("Restart", "heimdall restart", "Reinicia todos os serviços."),
+    "status": ("Status", "heimdall status", "Mostra o que está no ar."),
+    "doctor": ("Diagnóstico", "heimdall doctor", "Verifica memória, disco, Docker e Ollama."),
 }
 
 
@@ -373,8 +373,7 @@ def pg_servicos(q: dict, sess: dict) -> tuple:
         aviso_kuma = '<p class="nota">Kuma consultado. Ao desligar ou ligar, o monitor do serviço no Kuma é pausado ou retomado.</p>'
     else:
         aviso_kuma = '<p class="nota">Kuma consultado só para leitura. Para pausar e retomar monitores por aqui, ponha HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env.</p>'
-    corpo = ("<p>Cada serviço é uma chave: aperte Espaço ou Enter nela para ligar ou desligar, na hora, sem outro botão. Ligar e desligar pode levar alguns segundos. "
-             "O que você desliga fica desligado mesmo depois de atualizar e reiniciar. Este painel não aparece na lista: desligá-lo cortaria o seu acesso.</p>"
+    corpo = ("<p>Cada serviço é uma chave: Espaço ou Enter liga ou desliga na hora. O que você desliga continua desligado depois de atualizar e reiniciar.</p>"
              + aviso_kuma + '<p id="resultado-servicos" role="status"></p>'
              + f'<ul class="chaves" id="servicos" data-csrf="{e(sess["csrf"])}">' + "".join(itens) + "</ul>")
     return "Serviços", corpo
@@ -439,14 +438,14 @@ def pg_manutencao(q: dict, sess: dict) -> tuple:
     def item(chave, rotulo, descricao):
         return (f'<li><form class="linha" method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="acao" value="{chave}">'
                 f'<button type="submit" aria-describedby="d-{chave}">{e(rotulo)}</button></form> <span id="d-{chave}">{e(descricao)}</span></li>')
-    ciclo = (item("start", "Start", "Sobe o Heimdall inteiro, como heimdall up. Leva alguns minutos; acompanhe na aba Serviços.")
-             + item("stop", "Stop", "Para todos os serviços, menos este painel, para você poder usar o Start depois. Para o painel também, use heimdall stop no terminal do Mac.")
+    ciclo = (item("start", "Start", "Sobe todos os serviços.")
+             + item("stop", "Stop", "Para todos os serviços, menos este painel.")
              + "".join(item(k, r, d) for k, (r, _, d) in ACOES.items() if k in ("update", "update_restart", "restart")))
     info = "".join(item(k, r, d) for k, (r, _, d) in ACOES.items() if k in ("status", "doctor"))
     opcoes = "".join(f'<option value="{k}">{e(n)}</option>' for k, n in LOGS_OK.items())
     log = ('<form method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="' + csrf + '"><input type="hidden" name="acao" value="log">'
            '<label for="servico-log">Log do serviço</label><select id="servico-log" name="servico">' + opcoes + '</select><button type="submit">Exibir log</button></form>')
-    corpo = ('<p>Cada botão faz o que o nome diz. Quando o comando roda no terminal, o resultado aparece na aba Terminal.</p>'
+    corpo = ('<p>O resultado dos comandos aparece na aba Terminal. Update e restart e Restart também reiniciam este painel: depois, espere cerca de um minuto e recarregue a página.</p>'
              f'<h2>Heimdall</h2><ul class="acoes">{ciclo}</ul><h2>Informações</h2><ul class="acoes">{info}</ul>{log}')
     return "Manutenção", corpo
 
@@ -1020,7 +1019,7 @@ class Painel(BaseHTTPRequestHandler):
             elif rota == "/manutencao/acao" and campos.get("acao") == "start":
                 auditar(ip, "manutenção: start")
                 ok, msg = servicos.iniciar_tudo()
-                sess["flash"] = ("ok" if ok else "erro", ("Subida iniciada. Leva alguns minutos: acompanhe na aba Serviços." if ok else msg))
+                sess["flash"] = ("ok" if ok else "erro", ("Subida iniciada. Acompanhe na aba Serviços." if ok else msg))
                 self._ir("/manutencao")
                 return
             elif rota == "/manutencao/acao":

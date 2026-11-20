@@ -113,8 +113,9 @@ def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = (
     for i, (rota, nome) in enumerate(itens, 1):
         sel = rota == atual
         abas_.append(f'<a role="tab" id="aba-{i}" href="{e(rota)}" aria-selected="{"true" if sel else "false"}" tabindex="{0 if sel else -1}" '
-                     f'aria-controls="painel-aba" aria-keyshortcuts="Alt+Shift+{i}"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
-    return f'<div role="tablist" aria-label="{e(rotulo)}">' + "".join(abas_) + '</div><p id="aviso-abas" class="so-leitor" role="status"></p>'
+                     f'aria-controls="painel-aba" aria-describedby="atalho-aba-{i}"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
+    dicas = "".join(f'<span id="atalho-aba-{i}" class="so-leitor">Atalho: Option Shift {i}</span>' for i in range(1, len(itens) + 1))
+    return f'<div role="tablist" aria-label="{e(rotulo)}">' + "".join(abas_) + f'</div>{dicas}<p id="aviso-abas" class="so-leitor" role="status"></p>'
 
 
 def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:

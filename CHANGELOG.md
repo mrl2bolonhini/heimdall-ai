@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Controls: textos mais curtos e atalhos em português
+- Controls: o atalho de cada aba agora é dito em português ("Atalho: Option Shift 3", ligado à aba por aria-describedby) em vez de "Alt+Shift+3" (aria-keyshortcuts). Os textos ao lado dos botões da Manutenção e da aba Serviços ficaram curtos ("Para todos os serviços, menos este painel.").
+
 ## 2026-11-20 - Controls: e-mail no menu Conta não vira link do Cloudflare
 - Corrigido: o Cloudflare (proteção de e-mail) trocava o e-mail do menu Conta por um link para /cdn-cgi/l/email-protection, e clicar nele abria uma página de erro do Cloudflare. As páginas do Controls agora vão entre <!--email_off--> e <!--/email_off-->, que o Cloudflare respeita; isso vale também para e-mails que apareçam no terminal e nas Configurações.
 
