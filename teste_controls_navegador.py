@@ -220,6 +220,15 @@ with sync_playwright() as pw:
     confere("se você mexeu no cursor antes do atraso, ele não é movido", pg.evaluate("document.getElementById('terminal').selectionStart") < pg.evaluate("document.getElementById('terminal').value.length"))
     pg.keyboard.press("Alt+Shift+KeyT")
 
+    # histórico: com o cursor no começo, nada se mexe na entrada; depois do atraso vai ao fim
+    pg.keyboard.press("Shift+Tab")
+    confere("histórico: entrou", pg.evaluate("document.activeElement.id") == "historico")
+    pg.evaluate("document.getElementById('historico').setSelectionRange(0, 0)")
+    pg.keyboard.press("Tab"); pg.keyboard.press("Shift+Tab")
+    confere("histórico: depois do atraso o cursor vai ao fim", espera(lambda: pg.evaluate("(() => { const h = document.getElementById('historico'); return document.activeElement === h && h.selectionStart === h.value.length; })()"), 4))
+    pg.keyboard.press("Tab")
+    pg.keyboard.press("Alt+Shift+KeyT")
+
     # nomes dos campos e histórico no fim
     confere("os campos se chamam só Histórico e Terminal", pg.evaluate("[document.querySelector('label[for=historico]').textContent, document.querySelector('label[for=terminal]').textContent]") == ["Histórico", "Terminal"])
     pg.keyboard.press("Shift+Tab")

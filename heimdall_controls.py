@@ -519,8 +519,22 @@ var histApontador = false;
 function histAoFim(){ hist.setSelectionRange(hist.value.length, hist.value.length); hist.scrollTop = hist.scrollHeight; }
 hist.addEventListener('mousedown', function(){ histApontador = true; });
 hist.addEventListener('mouseup', function(){ histApontador = false; });
-hist.addEventListener('blur', function(){ histApontador = false; });
-hist.addEventListener('focus', function(){ if (!histApontador) { histAoFim(); setTimeout(function(){ if (!histApontador) { histAoFim(); } }, 0); } });
+// Sem mexer no cursor na hora em que o campo recebe o foco (isso fazia o VoiceOver ler só o último caractere em vez do nome e da linha):
+// fora do foco o cursor fica sempre no fim, então a entrada normal já cai no fim; se o Safari puser o cursor no começo, ele vai ao fim só
+// depois do atraso (o mesmo do Terminal), e apenas se você ainda não digitou, clicou nem moveu o cursor.
+var atrasoCursor = parseInt(ta.dataset.atraso || '1800', 10), histTocou = false, histEntrada = 0;
+['keydown', 'mousedown', 'touchstart'].forEach(function(n){ hist.addEventListener(n, function(){ histTocou = true; }, true); });
+function histFimFora(){ if (!histApontador && document.activeElement !== hist) { histAoFim(); } }
+hist.addEventListener('blur', function(){ histApontador = false; histEntrada++; histFimFora(); [0, 60, 300].forEach(function(ms){ setTimeout(histFimFora, ms); }); });
+hist.addEventListener('focus', function(){
+  histTocou = false; var id = ++histEntrada;
+  if (!(atrasoCursor > 0)) { return; }
+  setTimeout(function(){
+    if (id !== histEntrada || histTocou || histApontador || document.activeElement !== hist) { return; }
+    if (hist.selectionStart !== 0 || hist.selectionEnd !== 0) { return; }
+    histAoFim();
+  }, atrasoCursor);
+});
 histAoFim();
 function tentarCompletar(){
   var linha = digitado();
@@ -548,7 +562,7 @@ ta.addEventListener('keydown', function(ev){
 // Ao voltar ao campo (Tab, Shift+Tab) o Safari põe o cursor no começo. Nada é mexido na hora, para o VoiceOver ler o nome do campo inteiro;
 // só depois do atraso (data-atraso, em ms) o cursor vai ao fim, e apenas se você ainda não digitou, clicou nem moveu o cursor.
 // Se você digitar antes disso, a letra já vai para o fim (beforeinput). O carregamento da página, a volta à aba e Option+Shift+T põem o cursor no fim antes do foco.
-var atrasoCursor = parseInt(ta.dataset.atraso || '1800', 10), tocou = false, entrada = 0;
+var tocou = false, entrada = 0;
 ['keydown', 'mousedown', 'touchstart'].forEach(function(n){ ta.addEventListener(n, function(){ tocou = true; }, true); });
 ta.addEventListener('blur', function(){ entrada++; });
 ta.addEventListener('focus', function(){
