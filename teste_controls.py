@@ -207,7 +207,7 @@ confere("serviços: uma chave (role=switch) por serviço, com estado e sem botã
         and 'aria-checked="true"' in corpo and 'aria-checked="false"' in corpo and "Kuma: no ar" in corpo and "Aplicar" not in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo)
 confere("serviços: o próprio Controls não é desligável", "Controls" not in "".join(x["nome"] for x in hsv.catalogo()))
 confere("abas: tablist, tab com aria-selected, painel e atalho",
-        'role="tablist"' in corpo and corpo.count('role="tab"') == 4 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Alt+Shift+3" in corpo)
+        'role="tablist"' in corpo and corpo.count('role="tab"') == 5 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Alt+Shift+3" in corpo)
 confere("abas: o Terminal carrega a página inteira (data-completa)", corpo.count(" data-completa>") == 1)
 confere("abas e chaves: os scripts vão com nonce", "ArrowRight" in corpo and "/servicos/alternar" in corpo and "nonce=" in corpo)
 s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": CSRF, "id": "cloud", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
@@ -217,6 +217,22 @@ s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": CSRF, "id": "inventado"
 confere("alternar: serviço desconhecido é recusado", s == 409, corpo)
 s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": "errado", "id": "cloud", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("alternar sem o token de segurança é recusado, com o motivo", s == 403 and "token" in corpo, corpo)
+import heimdall_config as hcf  # noqa: E402
+import tempfile as _tf  # noqa: E402
+hcf.ARQUIVO = Path(_tf.mkdtemp()) / ".env"
+hcf.ARQUIVO.write_text("HEIMDALL_TESTE='um'\n", encoding="utf-8")
+s, corpo, _ = req("GET", "/configuracoes", cookie=token)
+confere("configurações: lista o que está no .env, com o valor inteiro, e as opções do código", s == 200 and "HEIMDALL_TESTE" in corpo and 'value="um"' in corpo
+        and "Outras opções do código" in corpo and corpo.count("<h1") == 1 and 'type="search"' in corpo, corpo[:200])
+confere("configurações: cada campo tem label", corpo.count("<label") >= corpo.count('type="text"') - 1)
+s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "dois", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+confere("salvar grava no .env e diz que vale depois de reiniciar", s == 200 and json.loads(corpo)["ok"] and "HEIMDALL_TESTE='dois'" in hcf.ARQUIVO.read_text() and "reiniciado" in corpo, corpo)
+s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "a'b", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+confere("valor com aspa simples é recusado com o motivo", not json.loads(corpo)["ok"] and "aspa" in corpo and "'a" not in hcf.ARQUIVO.read_text())
+s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": "errado", "nome": "HEIMDALL_TESTE", "valor": "x"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+confere("salvar sem o token de segurança é recusado", s == 403 and "dois" in hcf.ARQUIVO.read_text())
+s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "acao": "remover"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+confere("remover tira do .env", json.loads(corpo)["ok"] and "HEIMDALL_TESTE" not in hcf.ARQUIVO.read_text())
 s, corpo, _ = req("GET", "/manutencao", cookie=token)
 confere("manutenção: botões de ação e um só h1", s == 200 and "Update e restart" in corpo and ">Start<" in corpo and ">Stop<" in corpo and "Exibir log" in corpo and corpo.count("<h1") == 1)
 hsv.parar_tudo = lambda: [("Cloud", True, "parado"), ("News", True, "parado")]

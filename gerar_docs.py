@@ -295,6 +295,8 @@ SCRIPTS = [
     ("heimdall_controls.py", "Heimdall Controls (porta 8017): terminal completo e acessível no navegador e painel de serviços. Só o dono entra; cada comando é anotado em logs/controls_audit.log, sem a saída. Endereço de fora: controls.heimdall-ai.tech."),
     ("heimdall_shell.py", "Shell persistente do Controls num pseudoterminal: a pasta e as variáveis continuam entre comandos, a saída vem limpa de cores e códigos de tela, e cada comando é um bloco com estado e código de saída."),
     ("heimdall_servicos.py", "Catálogo dos serviços do Heimdall e o liga e desliga de cada um (usado pela aba Serviços do Controls); lembra o que foi desligado em .heimdall_desligados.json e um vigia mantém desligado."),
+    ("heimdall_config.py", "Lê, grava e remove valores do .env (NOME='valor', permissão 600, cópia em .env.bak) e lista as opções HEIMDALL_* que o código aceita; usado pela aba Configurações do Controls."),
+    ("teste_config.py", "Testa ler, salvar, remover e o catálogo de opções, num .env de mentira."),
     ("heimdall_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e, com usuário e senha no .env, pausa e retoma o monitor de um serviço."),
     ("teste_servicos.py", "Testa o catálogo, o liga e desliga de verdade de um processo de teste, o vigia e a leitura do Kuma."),
     ("teste_controls.py", "Testa o Heimdall Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade."),

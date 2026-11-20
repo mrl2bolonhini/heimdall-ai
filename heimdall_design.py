@@ -78,6 +78,7 @@ ul.acoes{list-style:none;padding:0}ul.acoes li{margin:.6rem 0}ul.acoes button{ma
 [role=tablist]{display:flex;flex-wrap:wrap;gap:.25rem;margin:.4rem 0 1rem;border-bottom:1px solid var(--linha)}
 [role=tab]{display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;color:var(--texto);text-decoration:none;border:1px solid var(--linha);border-bottom:0;background:var(--superficie)}
 [role=tab][aria-selected=true]{font-weight:700;border-bottom:3px solid var(--ouro);background:var(--fundo)}
+[hidden]{display:none !important}
 .so-leitor{position:absolute;left:-999px;width:1px;height:1px;overflow:hidden}
 ul.chaves{list-style:none;padding:0}ul.chaves li{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem 1rem;margin:.4rem 0;padding:.4rem .6rem;border:1px solid var(--linha)}
 button[role=switch]{margin:0;min-width:11rem;text-align:left;border:3px solid var(--erro)}button[role=switch][aria-checked=true]{border-color:var(--ok)}

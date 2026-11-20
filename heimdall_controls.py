@@ -57,6 +57,7 @@ def carregar_env() -> None:
 carregar_env()
 
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_config as config  # noqa: E402
 import heimdall_design as design  # noqa: E402
 import heimdall_kuma as kuma  # noqa: E402
 import heimdall_servicos as servicos  # noqa: E402
@@ -168,7 +169,7 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/manutencao", "Manutenção")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/configuracoes", "Configurações"), ("/manutencao", "Manutenção")]
 
 _shell = None
 
@@ -283,7 +284,7 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
              "e há botões para copiar a última saída ou as últimas saídas.</li>"
              "<li><a href=\"/servicos\">Serviços</a>: todos os serviços do Heimdall, com Ligado e Desligado em cada um.</li>"
              "<li><a href=\"/manutencao\">Manutenção</a>: atualizar, reiniciar, diagnóstico e logs.</li></ol>"
-             "<p>As seções são abas. Setas esquerda e direita movem entre elas e Option+Shift+1 a 4 abre cada uma.</p>")
+             "<p>As seções são abas. Setas esquerda e direita movem entre elas e Option+Shift+1 a 5 abre cada uma.</p>")
     if sh and sh.vivo():
         corpo += f"<p>O terminal está aberto, na pasta {e(sh.pasta)}.</p>"
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando fica anotado em logs/controls_audit.log, sem a saída. '
@@ -379,6 +380,38 @@ def pg_servicos(q: dict, sess: dict) -> tuple:
     return "Serviços", corpo
 
 
+def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: bool = True) -> str:
+    dica = "" if definida else (f' <span class="nota">Padrão: {e(padrao)}</span>' if padrao else ' <span class="nota">Sem valor padrão fixo no código.</span>')
+    botoes = ('<button type="submit" name="acao" value="salvar">Salvar</button><button type="submit" name="acao" value="remover">Remover</button>' if definida
+              else '<button type="submit" name="acao" value="salvar">Definir</button>')
+    return (f'<li data-nome="{e(nome.lower())}"><form class="linha" data-cfg><input type="hidden" name="nome" value="{e(nome)}">'
+            f'<label for="cfg-{i}">{e(nome)}</label>{dica}<input type="text" id="cfg-{i}" name="valor" value="{e(valor)}" autocomplete="off" autocapitalize="off" spellcheck="false">'
+            f'{botoes}</form></li>')
+
+
+def pg_configuracoes(q: dict, sess: dict) -> tuple:
+    """Tudo o que o .env guarda, para ver e mudar; mais as opções que o código aceita e o .env ainda não define."""
+    definidas = config.ler()
+    nomes = {d["nome"] for d in definidas}
+    codigo = config.opcoes_do_codigo()
+    faltam = sorted(n for n in codigo if n not in nomes)
+    linhas_def = "".join(_linha_config(i, d["nome"], d["valor"]) for i, d in enumerate(definidas))
+    linhas_falta = "".join(_linha_config(10000 + i, n, "", codigo[n], False) for i, n in enumerate(faltam))
+    corpo = ("<p>Aqui ficam todas as configurações do Heimdall, as que estão no arquivo .env e as outras opções que o código aceita. Os valores aparecem por inteiro, "
+             "inclusive senhas e chaves: só quem entrou neste painel vê. Salvar grava na hora, mas cada serviço só lê o valor novo quando for reiniciado (aba Serviços) "
+             "ou quando você reiniciar tudo (aba Manutenção). Antes de cada mudança o arquivo é copiado para .env.bak. "
+             "Cuidado com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO: se errar, você perde o acesso a este painel.</p>"
+             '<p><label for="filtro-cfg">Filtrar pelo nome</label> <input type="search" id="filtro-cfg" autocomplete="off"></p>'
+             '<p id="resultado-config" role="status"></p>'
+             f'<div id="configuracoes" data-csrf="{e(sess["csrf"])}">'
+             f'<h2>Definidas no .env ({len(definidas)})</h2><ul class="chaves" id="lista-definidas">{linhas_def}</ul>'
+             f'<h2>Nova variável</h2><form class="linha" data-cfg><label for="nova-nome">Nome</label><input type="text" id="nova-nome" name="nome" autocomplete="off" autocapitalize="characters" spellcheck="false">'
+             '<label for="nova-valor">Valor</label><input type="text" id="nova-valor" name="valor" autocomplete="off" spellcheck="false">'
+             '<button type="submit" name="acao" value="salvar">Adicionar</button></form>'
+             f'<h2>Outras opções do código, ainda sem valor no .env ({len(faltam)})</h2><ul class="chaves" id="lista-faltam">{linhas_falta}</ul></div>')
+    return "Configurações", corpo
+
+
 def pg_manutencao(q: dict, sess: dict) -> tuple:
     csrf = e(sess["csrf"])
 
@@ -397,7 +430,7 @@ def pg_manutencao(q: dict, sess: dict) -> tuple:
     return "Manutenção", corpo
 
 
-ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/manutencao": pg_manutencao}
+ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/configuracoes": pg_configuracoes, "/manutencao": pg_manutencao}
 
 SCRIPT = r"""
 (function(){
@@ -669,6 +702,36 @@ document.addEventListener('click', function(ev){
 """
 
 
+# Aba Configurações: salvar e remover sem recarregar, e filtro pelo nome. Delegado no documento (vale depois da troca de aba).
+SCRIPT_CONFIG = r"""
+(function(){
+function dizer(t){ var r = document.getElementById('resultado-config'); if (r) { r.textContent = ''; setTimeout(function(){ r.textContent = t; }, 50); } }
+document.addEventListener('submit', function(ev){
+  var f = ev.target; if (!f.hasAttribute || !f.hasAttribute('data-cfg')) { return; }
+  ev.preventDefault();
+  var raiz = document.getElementById('configuracoes'), acao = (ev.submitter && ev.submitter.value) || 'salvar';
+  var nome = f.elements['nome'].value.trim();
+  if (!nome) { dizer('Escreva o nome da variável.'); f.elements['nome'].focus(); return; }
+  var corpo = new URLSearchParams({csrf: raiz.getAttribute('data-csrf'), nome: nome, valor: f.elements['valor'].value, acao: acao});
+  dizer((acao === 'remover' ? 'Removendo ' : 'Salvando ') + nome + '.');
+  fetch('/configuracoes/salvar', {method: 'POST', credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1', 'Content-Type': 'application/x-www-form-urlencoded'}, body: corpo})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      dizer(d.erro ? d.erro : (d.ok ? d.mensagem : 'Não gravei: ' + d.mensagem));
+      if (d.ok && f.parentNode.parentNode.id !== 'lista-faltam' && f.querySelector('[name=nome][type=text]')) { f.elements['nome'].value = ''; f.elements['valor'].value = ''; }
+    })
+    .catch(function(){ dizer('Não consegui falar com o painel. Recarregue a página.'); });
+});
+document.addEventListener('input', function(ev){
+  if (ev.target.id !== 'filtro-cfg') { return; }
+  var q = ev.target.value.trim().toLowerCase(), n = 0;
+  document.querySelectorAll('#configuracoes li[data-nome]').forEach(function(li){ var ok = !q || li.getAttribute('data-nome').indexOf(q) >= 0; li.hidden = !ok; if (ok) { n++; } });
+  var r = document.getElementById('resultado-config'); if (r) { r.textContent = n + (n === 1 ? ' variável encontrada.' : ' variáveis encontradas.'); }
+});
+})();
+"""
+
+
 def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash=None) -> bytes:
     nav = conta = ""
     if sess:
@@ -685,7 +748,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
         lista = f"<ul>{''.join('<li>' + e(l) + '</li>' for l in linhas)}</ul>" if len(linhas) > 1 else e(linhas[0] if linhas else "")
         aviso = (f'<div class="ok" role="status">{lista}</div>' if tipo == "ok" else f'<div class="erro" role="alert">{lista}</div>')
     corpo = corpo.replace("{aviso}", aviso, 1)
-    todo = ((design.SCRIPT_ABAS + SCRIPT_SERVICOS) if sess else "") + script
+    todo = ((design.SCRIPT_ABAS + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
@@ -895,6 +958,13 @@ class Painel(BaseHTTPRequestHandler):
             elif rota == "/terminal/reiniciar":
                 sh.reiniciar()
                 auditar(ip, "reiniciar o shell")
+            elif rota == "/configuracoes/salvar":
+                nome, acao = campos.get("nome", ""), campos.get("acao", "salvar")
+                motivo = config.remover(nome) if acao == "remover" else config.salvar(nome, campos.get("valor", ""))
+                auditar(ip, "configurações: " + ("remover" if acao == "remover" else "salvar"), nome + ("" if not motivo else " (recusado)"))
+                self._json(200, {"ok": not motivo, "mensagem": (motivo or (f"{nome} removida do .env." if acao == "remover" else f"{nome} salva.")
+                           + " Vale quando o serviço que usa for reiniciado.")})
+                return
             elif rota == "/servicos/alternar":
                 self._json(200, self._alternar_servico(campos, ip))
                 return
