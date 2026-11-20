@@ -69,7 +69,7 @@ with sync_playwright() as pw:
     estado = lambda: pg.locator("#estado").inner_text()  # noqa: E731
     confere("campo único começa só com o prompt", valor().endswith(" % ") and "\n" not in valor().strip(), valor())
 
-    confere("ao abrir a página o foco já está no terminal, com o cursor no fim", espera(lambda: pg.evaluate("document.activeElement.id") == "terminal") and ta.evaluate("e => e.selectionStart === e.value.length"), pg.evaluate("document.activeElement.id"))
+    confere("ao abrir a página o foco já está no terminal, com o cursor no fim", espera(lambda: pg.evaluate("document.activeElement.id") == "terminal") and espera(lambda: ta.evaluate("e => e.selectionStart === e.value.length")), pg.evaluate("document.activeElement.id"))
     pg.keyboard.type("echo ola mundo")
     pg.keyboard.press("Enter")
     confere("saída aparece no próprio campo, com o prompt de volta no fim", espera(lambda: "ola mundo\n[concluído, código 0," in valor() and valor().endswith(" % ")), valor())
@@ -137,7 +137,7 @@ with sync_playwright() as pw:
     pos = ta.evaluate("e => e.value.slice(e.selectionStart, e.selectionStart + 6)")
     confere("Option+Shift+U leva o cursor ao início da última saída", pos.startswith("1\n2\n3"), pos)
     pg.keyboard.press("Alt+Shift+KeyT")
-    confere("Option+Shift+T volta à linha de digitação", ta.evaluate("e => e.selectionStart === e.value.length"))
+    confere("Option+Shift+T volta à linha de digitação", espera(lambda: ta.evaluate("e => e.selectionStart === e.value.length")))
 
     # copiar
     pg.keyboard.press("Alt+Shift+KeyC")
@@ -200,6 +200,14 @@ with sync_playwright() as pw:
     pg.wait_for_timeout(400)
     confere("Tab que não muda nada ainda fica no campo", pg.evaluate("document.activeElement.id") == "terminal")
     pg.keyboard.press("Tab")
+    ta.evaluate("e => { e.value = e.value.slice(0, e.value.length - 'cat alfa'.length); e.setSelectionRange(e.value.length, e.value.length); }")
+    pg.keyboard.type("cat be")
+    pg.keyboard.press("Control+KeyI")
+    confere("Ctrl+I completa como o Tab", espera(lambda: valor().endswith("cat beta.txt ")), valor()[-30:])
+    ta.evaluate("e => { e.value = e.value.slice(0, e.value.length - 'cat beta.txt '.length); e.setSelectionRange(e.value.length, e.value.length); }")
+    pg.keyboard.type("cat alf")
+    pg.keyboard.press("Tab")
+    espera(lambda: valor().endswith("cat alfa"))
     confere("Tab sem efeito de novo continua no campo (não sai)", pg.evaluate("document.activeElement.id") == "terminal")
     pg.keyboard.press("Control+KeyC")
     pg.keyboard.press("Tab")

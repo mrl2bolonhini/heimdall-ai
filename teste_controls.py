@@ -151,6 +151,7 @@ confere("Tab: cd heim (sem pasta parecida na atual) completa pela pasta pessoal,
 confere("Tab: cd só oferece pastas", hcx.completar(str(dc), "cd sub")["palavra_nova"] == "sub\\ dir/" and "beta.txt" not in hcx.completar(str(dc), "cd ")["opcoes"])
 if _ant is None: os.environ.pop("HOME")
 else: os.environ["HOME"] = _ant
+confere("duração: número colado no s, sem fração quando zero", [hcx.duracao(x) for x in (0, 0.004, 0.3, 12.3, 37.21, 65.4)] == ["0s", "0s", "0,3s", "12,3s", "37,21s", "1 min 5s"], [hcx.duracao(x) for x in (0, 0.004, 0.3, 12.3, 37.21, 65.4)])
 confere("Tab: nada que combine devolve lista vazia", hcx.completar(str(dc), "cat zzz")["opcoes"] == [])
 confere("Tab: depois de ; volta a completar comando", hcx.completar(str(dc), "ls; ech")["palavra_nova"] == "echo ")
 s_, corpo_, _ = req("GET", "/terminal/completar?linha=" + urllib.parse.quote("ls /us"), cookie=token, extra={"X-Heimdall-Ajax": "1"})
@@ -226,3 +227,4 @@ confere("sair encerra a sessão", s == 303 and "Max-Age=0" in (r.getheader("Set-
 hcx.obter_shell().encerrar()
 print("\n" + ("TUDO OK" if not falhas else f"{falhas} FALHA(S)"))
 sys.exit(1 if falhas else 0)
+

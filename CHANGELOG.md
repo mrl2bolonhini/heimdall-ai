@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: nome do campo, Tab mais firme, duração sem espaço
+- O cursor do Terminal só vai ao fim 0,4 s depois de o campo receber o foco. Mexer nele na hora fazia o VoiceOver ler só o último caractere ("espaço") e engolir o nome "Terminal".
+- O Tab agora é capturado na janela, antes de qualquer outro tratamento, e há uma rede de segurança: se o foco sair do campo logo após um Tab, ele volta e o Tab completa. Ctrl+I faz o mesmo que o Tab (é o Tab do terminal de verdade), para o caso de o leitor de tela não entregar o Tab à página.
+- A duração do comando vem com o número colado no s e sem fração desnecessária: 0s, 0,3s, 12,3s, 37,21s (até duas casas; acima de 1 minuto, "1 min 5s").
+
 ## 2026-11-19 - Controls: aparência passa a vir do Heimdall Design
 - O CSS do campo de terminal e da linha de ações foi para o heimdall_design.py (valem para qualquer site), e o Controls deixou de definir o tamanho da fonte do corpo e os títulos por conta própria. O botão que age na própria página virou design.botao_js. "Fora do ar" usa a classe padrão de erro. A página de Design descreve os componentes novos.
 

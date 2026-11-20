@@ -195,7 +195,10 @@ def auditar(ip: str, acao: str, detalhe: str = "") -> None:
 # ----------------------------------------------------------------------------------------
 def duracao(seg: float) -> str:
     seg = max(0.0, seg)
-    return f"{seg:.1f} s".replace(".", ",") if seg < 60 else f"{int(seg // 60)} min {int(seg % 60)} s"
+    """Número colado no s, para o leitor de tela ler certo: 0s, 12,3s, 37,21s (até duas casas, sem zeros sobrando; inteiro quando não há fração)."""
+    if seg >= 60:
+        return f"{int(seg // 60)} min {int(seg % 60)}s"
+    return (f"{seg:.2f}".rstrip("0").rstrip(".") or "0").replace(".", ",") + "s"
 
 
 def prompt_de(pasta: str) -> str:
@@ -306,7 +309,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
         '<p>Funcionam em qualquer ponto desta página. Option é a tecla Alt do Mac.</p><ol>'
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
-        '<li>Tab: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. No campo, o Tab nunca sai: para sair use Option+Tab ou Shift+Tab. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
+        '<li>Tab: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I faz o mesmo que o Tab (é o Tab do terminal de verdade), caso o leitor de tela não entregue o Tab à página. No campo, o Tab nunca sai: para sair use Option+Tab ou Shift+Tab. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
         '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
         '<li>Option+Shift+C: copia a última saída. Option+Shift+1 até 9: copia as últimas 1 a 9 saídas. Option+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
         '<li>Option+Shift+U: leva o cursor ao início da última saída; depois leia com VO+A ou desça com a seta. Option+Shift+O: o leitor de tela lê o começo da última saída.</li>'
@@ -483,7 +486,7 @@ function completar(linha){
     else { dizer(ops.length + ' opções: ' + ops.slice(0, 25).join(', ') + (ops.length > 25 ? ' e mais ' + (ops.length - 25) : '') + '.'); }
   }).catch(function(){ pendente = false; dizer('Não consegui completar.'); });
 }
-function irAoCampo(){ ta.focus(); fimDoCampo(); }
+function irAoCampo(){ if (document.activeElement === ta) { fimDoCampo(); } else { ta.focus(); } }
 // só a última linha pode ser editada: o resto é a saída e fica protegido. Se o cursor estiver na saída, o que a pessoa digita vai para o fim, sem perder letra
 ta.addEventListener('beforeinput', function(ev){
   var t = ev.inputType || '', a = ta.selectionStart, b = ta.selectionEnd;
@@ -508,17 +511,29 @@ hist.addEventListener('mouseup', function(){ histApontador = false; });
 hist.addEventListener('blur', function(){ histApontador = false; });
 hist.addEventListener('focus', function(){ if (!histApontador) { histAoFim(); setTimeout(function(){ if (!histApontador) { histAoFim(); } }, 0); } });
 histAoFim();
+function tentarCompletar(){
+  var linha = digitado();
+  if (ta.selectionStart < base.length) { fimDoCampo(); }
+  if (rodando) { dizer('Há um programa em execução: o Tab não completa.'); return; }
+  if (!linha.length) { dizer('Nada digitado para completar.'); return; }
+  if (pendente) { return; }                                                          // a resposta do Tab anterior ainda não chegou: espera
+  completar(linha);
+}
+var ultimoTab = 0;
+function ehTab(ev){ return (ev.key === 'Tab' || ev.code === 'Tab' || ev.keyCode === 9) && !ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey; }
+// fase de captura na janela: pega o Tab antes de qualquer outro tratamento. No campo, o Tab é sempre de completar; para sair use Option+Tab ou Shift+Tab.
+// Ctrl+I faz o mesmo (no terminal de verdade Ctrl+I é o Tab), caso o leitor de tela ou o navegador não entregue o Tab à página.
+window.addEventListener('keydown', function(ev){
+  if (ev.isComposing || document.activeElement !== ta) { return; }
+  if (ehTab(ev)) { ultimoTab = Date.now(); ev.preventDefault(); ev.stopPropagation(); tentarCompletar(); return; }
+  if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyI') { ev.preventDefault(); ev.stopPropagation(); tentarCompletar(); }
+}, true);
+// rede de segurança: se o foco saiu do campo logo depois de um Tab (o navegador ignorou o preventDefault), o foco volta e o Tab completa
+ta.addEventListener('blur', function(ev){
+  if (Date.now() - ultimoTab < 300 && !apontador) { ultimoTab = 0; setTimeout(function(){ ta.focus(); }, 0); }
+});
 ta.addEventListener('keydown', function(ev){
   if (ev.isComposing) { return; }
-    if (ev.key === 'Tab' && !ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey) {
-    var linha = digitado();
-    ev.preventDefault();                                                               // no campo, o Tab é sempre de completar; para sair use Option+Tab ou Shift+Tab
-    if (ta.selectionStart < base.length) { fimDoCampo(); }
-    if (rodando) { dizer('Há um programa em execução: o Tab não completa.'); return; }
-    if (!linha.length) { dizer('Nada digitado para completar.'); return; }
-    if (pendente) { return; }                                                          // a resposta do Tab anterior ainda não chegou: espera
-    completar(linha); return;
-  }
   if (ev.key === 'Enter' && !ev.shiftKey && !ev.ctrlKey && !ev.altKey && !ev.metaKey) { ev.preventDefault(); enviar(); return; }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyC') {
     ev.preventDefault();
@@ -532,7 +547,8 @@ ta.addEventListener('touchstart', function(){ apontador = true; }, {passive: tru
 ta.addEventListener('mouseup', function(){ apontador = false; });
 ta.addEventListener('blur', function(){ apontador = false; });
 // entrar no campo (Tab, foco automático, voltar à aba) sempre deixa o cursor depois da última letra; só o clique do mouse escolhe outro ponto
-ta.addEventListener('focus', function(){ if (!apontador) { fimDoCampo(); setTimeout(function(){ if (!apontador) { fimDoCampo(); } }, 0); } });
+// o cursor vai ao fim DEPOIS de um instante: mexer nele na hora faz o VoiceOver ler só o caractere ("espaço") e engolir o nome do campo
+ta.addEventListener('focus', function(){ if (!apontador) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 400); } });
 window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
 window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });
 document.addEventListener('keydown', function(ev){
