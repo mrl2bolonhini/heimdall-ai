@@ -2,6 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Controls vira central de controle (etapa 1: abas e serviços ligados/desligados)
+- Controls: o menu lateral virou abas (Visão geral, Terminal, Serviços, Manutenção), acessíveis ao leitor de tela (tablist/tab/tabpanel). Setas esquerda e direita, Home e End movem entre as abas e Option+Shift+1 a 4 abre cada uma. O componente está no Heimdall Design (design.abas).
+- Controls, aba Serviços: lista os 21 serviços do Heimdall (LiteLLM, Ollama, Qdrant, SearXNG, Docling, os três MCP, Open Terminal, agente, Cloud, Notas, News, Saúde, Jogos, Finance, Kuma, Dozzle, n8n, Open WebUI e emulador de AWS) com Ligado e Desligado em cada um e o botão Aplicar mudanças, que mexe só no que mudou. O que você desliga fica em .heimdall_desligados.json e continua desligado depois de heimdall update --restart (um vigia confere de 30 em 30 s, depois de 3 minutos de subida). Serviço novo: uma linha em CATALOGO no heimdall_servicos.py.
+- Controls lê a situação de cada serviço também no Uptime Kuma (página de status, HEIMDALL_KUMA_URL e HEIMDALL_KUMA_SLUG) e, com HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env e o pacote python-socketio, pausa o monitor ao desligar e o retoma ao ligar (heimdall_kuma.py).
+- As ações de atualizar, reiniciar, diagnóstico e logs foram para a aba Manutenção.
+- Terminal: copiar as últimas N saídas passou de Option+Shift+número para Control+Shift+número (Option+Shift+número agora troca de aba). Option+Shift+C continua copiando a última.
+- start_heimdall.sh: o LiteLLM agora roda em segundo plano e o script espera por ele. Antes, desligar só o LiteLLM encerrava o script e, pelo trap, derrubava MCP, Open Terminal e agente. Depois de o LiteLLM sair, o script fica de pé; heimdall restart e heimdall stop encerram do mesmo jeito.
+- Teste novo: teste_servicos.py; teste_controls.py e teste_controls_navegador.py cobrem as abas e as ações.
+
 ## 2026-11-19 - Notas e Lembretes não abrem mais na tela do Mac; Controls: cursor no fim ao voltar ao campo
 - O agente do Mac passou a abrir o Notas, o Lembretes e o Calendário escondidos e em segundo plano (open -g -j) quando precisa gravar neles, e a fechá-los 20 segundos depois do último uso. Só fecha o app que ele mesmo abriu e nunca um que você já deixou aberto ou que esteja na frente. As janelas deixam de pular na sua frente a cada nota, lembrete ou evento. Vale para todos os fluxos (estudos, digest, saúde, triagem, agenda), porque todos passam pelo mesmo ponto do agente. Novo teste: teste_apps_ocultos.py.
 - Notas e Lembretes: o Heimdall não fecha mais o app depois de usar (fechar e abrir de novo a cada ciclo fazia o app aparecer toda hora); HEIMDALL_APPS_FECHAR=1 no .env volta a fechar depois de 20 s. Cada abertura escondida agora é registrada no log do agente (./subir.sh --log agente), com a operação que a pediu, para achar quem está abrindo o app.

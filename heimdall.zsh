@@ -274,9 +274,9 @@ heimdall() {
     controls)
       case "$1" in
         ""|--open)
-          case "$2" in terminal) pg=/terminal ;; services) pg=/servicos ;; "") pg="" ;; *) pg="/$2" ;; esac
+          case "$2" in terminal) pg=/terminal ;; services) pg=/servicos ;; maintenance) pg=/manutencao ;; "") pg="" ;; *) pg="/$2" ;; esac
           _heimdall_web "Heimdall Controls" CONTROLS 8017 controls "$pg" ;;
-        *) echo "Use: heimdall controls [--open [terminal|services]] [--local]"; return 1 ;;
+        *) echo "Use: heimdall controls [--open [terminal|services|maintenance]] [--local]"; return 1 ;;
       esac ;;
     finance)
       case "$1" in
@@ -456,7 +456,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data
         else compadd -- --local --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
-      controls) if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- terminal services; else compadd -- --open --local; fi ;;
+      controls) if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- terminal services maintenance; else compadd -- --open --local; fi ;;
       labs) compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals appointments appointment calendar documents token --open --without --date --time --doctor --specialty --place ;;
       games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas xadrez
         else compadd -- --local --play --list; fi ;;

@@ -34,3 +34,4 @@ apple_health_export/
 
 # Dados financeiros do Heimdall Finance (nunca vão para o git)
 dados_financas/
+.heimdall_desligados.json

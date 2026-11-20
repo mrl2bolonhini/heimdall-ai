@@ -707,9 +707,17 @@ fi
 # importa o módulo duas vezes e quebrou a leitura do --config.
 echo "[7/7] Subindo o LiteLLM Proxy..."
 LITELLM_BIN="$(dirname "$VENV_PYTHON")/litellm"
+# Em segundo plano, para que desligar o LiteLLM pelo Controls não derrube o script (e, pelo trap, o MCP e o agente junto).
 if [ -x "$LITELLM_BIN" ]; then
-    "$LITELLM_BIN" --config "$CONFIG_FILE" --host 0.0.0.0 --port $LLM_PORT
+    "$LITELLM_BIN" --config "$CONFIG_FILE" --host 0.0.0.0 --port $LLM_PORT &
 else
     echo "Aviso: executável litellm não encontrado no venv; usando o módulo."
-    "$VENV_PYTHON" -m litellm.proxy.proxy_cli --config "$CONFIG_FILE" --host 0.0.0.0 --port $LLM_PORT
+    "$VENV_PYTHON" -m litellm.proxy.proxy_cli --config "$CONFIG_FILE" --host 0.0.0.0 --port $LLM_PORT &
 fi
+LITELLM_PID=$!
+trap 'kill $MCP_PID $MCP_PUBLIC_PID $MCP_DADOS_PID $TERMINAL_PID $AGENTE_PID $LITELLM_PID 2>/dev/null' EXIT INT TERM
+wait $LITELLM_PID
+# Se o LiteLLM saiu (desligado de propósito no Controls, ou caiu), o script continua de pé: os outros serviços seguem no ar.
+# "heimdall restart" e "heimdall stop" encerram este script do mesmo jeito.
+echo "LiteLLM parou. Os demais serviços continuam no ar; religue o LiteLLM pelo Controls ou use: heimdall restart"
+while true; do sleep 30; done

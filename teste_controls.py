@@ -193,12 +193,33 @@ s, corpo, _ = req("POST", "/terminal/interromper", {"csrf": CSRF}, cookie=token,
 hcx.obter_shell().esperar(10)
 confere("interromper (Ctrl+C)", json.loads(corpo)["ok"] and hcx.obter_shell().bloco(n6).estado == "interrompido")
 
-# --- serviços
+# --- serviços (rádios) e manutenção (ações)
+import heimdall_servicos as hsv  # noqa: E402
+import heimdall_kuma as hku  # noqa: E402
+hku.monitores = lambda: ([{"id": 7, "nome": "Cloud (8010)", "status": "no ar"}], "")
+chamadas = []
+hsv.aplicar = lambda sid, lig: (chamadas.append((sid, lig)) or (True, f"{sid} ok"))
+hku.pausar_ou_retomar = lambda mid, pausar: ""
+estado_falso = {"cloud": True, "news": False}
+hsv.no_ar = lambda sv: estado_falso.get(sv["id"], True)
 s, corpo, _ = req("GET", "/servicos", cookie=token)
-confere("serviços: tabela com caption e scope, botões", s == 200 and "<caption>" in corpo and 'scope="col"' in corpo and 'scope="row"' in corpo and "Atualizar e reiniciar tudo" in corpo and corpo.count("<h1") == 1)
-s, _, r = req("POST", "/servicos/acao", {"acao": "inventada", "csrf": CSRF}, cookie=token)
+confere("serviços: um grupo de rádio Ligado/Desligado por serviço, com legenda", s == 200 and corpo.count('type="radio"') == 2 * len(hsv.catalogo()) and "<legend>" in corpo
+        and "Kuma: no ar" in corpo and "Aplicar mudanças" in corpo and corpo.count("<h1") == 1)
+confere("serviços: o próprio Controls não é desligável", "Controls" not in "".join(x["nome"] for x in hsv.catalogo()))
+confere("abas: tablist, tab com aria-selected, painel e atalho",
+        'role="tablist"' in corpo and corpo.count('role="tab"') == 4 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Alt+Shift+3" in corpo)
+confere("abas: o script das abas vai com nonce", "ArrowRight" in corpo and "nonce=" in corpo)
+s, corpo, _ = req("POST", "/servicos/aplicar", {"csrf": CSRF, "s_cloud": "off", "s_news": "on", "s_notas": "on"}, cookie=token)
+confere("aplicar: só mexe no que mudou (cloud desliga, news liga, notas já no ar)", s == 303 and sorted(chamadas) == [("cloud", False), ("news", True)], str(chamadas))
+s, corpo, _ = req("GET", "/servicos", cookie=token)
+confere("aplicar: o resultado aparece como aviso de status", 'role="status"' in corpo and "Monitor do Kuma pausado" in corpo, corpo[:300])
+s, _, _ = req("POST", "/servicos/aplicar", {"csrf": "errado", "s_cloud": "off"}, cookie=token)
+confere("aplicar sem o token de segurança é recusado", s == 403)
+s, corpo, _ = req("GET", "/manutencao", cookie=token)
+confere("manutenção: botões de ação e um só h1", s == 200 and "Atualizar e reiniciar tudo" in corpo and corpo.count("<h1") == 1)
+s, _, r = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": CSRF}, cookie=token)
 confere("ação desconhecida não executa nada", s == 303)
-s, _, r = req("POST", "/servicos/acao", {"acao": "log", "servico": "mcp; rm -rf /", "csrf": CSRF}, cookie=token)
+s, _, r = req("POST", "/manutencao/acao", {"acao": "log", "servico": "mcp; rm -rf /", "csrf": CSRF}, cookie=token)
 confere("serviço do log fora da lista é recusado", s == 303)
 confere("a lista de ações não aceita comando livre", all(c.startswith(("heimdall ", "./subir.sh")) for _, c in hcx.ACOES.values()))
 

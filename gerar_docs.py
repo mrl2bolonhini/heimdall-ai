@@ -294,6 +294,9 @@ SCRIPTS = [
     ("financas_cli.py", "Comandos de terminal do Finance para arquivos: --inspect, --explain, --preview, --import, --inbox e --folder (heimdall finance ...)."),
     ("heimdall_controls.py", "Heimdall Controls (porta 8017): terminal completo e acessível no navegador e painel de serviços. Só o dono entra; cada comando é anotado em logs/controls_audit.log, sem a saída. Endereço de fora: controls.heimdall-ai.tech."),
     ("heimdall_shell.py", "Shell persistente do Controls num pseudoterminal: a pasta e as variáveis continuam entre comandos, a saída vem limpa de cores e códigos de tela, e cada comando é um bloco com estado e código de saída."),
+    ("heimdall_servicos.py", "Catálogo dos serviços do Heimdall e o liga e desliga de cada um (usado pela aba Serviços do Controls); lembra o que foi desligado em .heimdall_desligados.json e um vigia mantém desligado."),
+    ("heimdall_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e, com usuário e senha no .env, pausa e retoma o monitor de um serviço."),
+    ("teste_servicos.py", "Testa o catálogo, o liga e desliga de verdade de um processo de teste, o vigia e a leitura do Kuma."),
     ("teste_controls.py", "Testa o Heimdall Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade."),
     ("teste_controls_navegador.py", "Testa o terminal do Controls num Chrome de verdade (Playwright): saída no próprio campo, resposta a programas, atalhos de teclado. Pula se não houver Playwright ou Chrome."),
     ("heimdall_painel_saude.py", "Heimdall Saúde (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Cloud (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
@@ -580,6 +583,8 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Monte a página pela estrutura padrão (<code>heimdall_cloud.pagina</code> e <code>cabecalho</code>).</li>
 <li>Passe pela lista de acessibilidade da seção 5.</li>
 <li>Rode <code>heimdall test --run design</code> e o teste do serviço mexido.</li>
+<li>Abas de navegação entre páginas (<code>design.abas</code> e <code>design.painel_da_aba</code>, com o <code>design.SCRIPT_ABAS</code> e um script com nonce na página): <code>role="tablist"</code> com um link <code>role="tab"</code> por página, <code>aria-selected</code> na aberta, setas, Home e End movem o foco, Option+Shift+número abre a aba. O conteúdo fica num <code>role="tabpanel"</code> dentro de <code>main</code>.</li>
+<li>Grupo de escolha (<code>fieldset class="opcao"</code>): uma <code>legend</code> com o nome e a situação e botões de rádio com <code>label</code> (Ligado e Desligado, por exemplo).</li>
 <li>Campo de terminal (<code>textarea class="terminal"</code>, e <code>terminal historico</code> para o histórico) e linha de ações (<code>linha-acoes</code>): área de texto monoespaçada que ocupa 60% da altura da tela, quebra linhas longas e mantém a fonte do corpo. Rótulos curtos ("Terminal", "Histórico"), sem títulos extras antes do campo, foco e cursor no fim ao entrar, e avisos falados por uma região role="alert" que se repete mesmo com texto igual. Nasceram no Controls e funcionaram com leitor de tela.</li>
 <li>Se precisar de algo que o Heimdall Design ainda não tem (uma cor, um componente), acrescente aqui primeiro, no <code>heimdall_design.py</code>, e documente nesta página, em vez de criar um estilo só naquele site.</li></ol></section>
 """)

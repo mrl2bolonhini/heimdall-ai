@@ -73,6 +73,11 @@ pre{white-space:pre-wrap;word-break:break-word;border:1px solid var(--linha);bac
 .linha-acoes{display:flex;flex-wrap:wrap;gap:.2rem 1rem;align-items:flex-end}.linha-acoes form{margin:0}
 form.acao{display:inline;margin:0}
 .ant-prox form.acao{margin:0}
+[role=tablist]{display:flex;flex-wrap:wrap;gap:.25rem;margin:.4rem 0 1rem;border-bottom:1px solid var(--linha)}
+[role=tab]{display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;color:var(--texto);text-decoration:none;border:1px solid var(--linha);border-bottom:0;background:var(--superficie)}
+[role=tab][aria-selected=true]{font-weight:700;border-bottom:3px solid var(--ouro);background:var(--fundo)}
+fieldset.opcao{border:1px solid var(--linha);margin:.6rem 0;padding:.5rem .9rem}fieldset.opcao legend{font-weight:700;padding:0 .3rem}
+fieldset.opcao label{display:inline-block;font-weight:400;margin:.2rem 1.2rem .2rem 0}
 """)
 
 
@@ -89,3 +94,48 @@ def botao_js(id_: str, rotulo: str) -> str:
     """Botão que age na própria página, sem navegar (o comportamento vem de um script com nonce que escuta o id). Nunca é link."""
     e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
     return f'<button type="button" id="{e(id_)}">{e(rotulo)}</button>'
+
+
+def abas(itens: list, atual: str, rotulo: str = "Seções") -> str:
+    """Abas de navegação entre páginas (ARIA tablist). Cada aba é um link: ler/ir é link. As setas movem entre as abas e Option+Shift+número
+    abre a aba pelo número (o script `SCRIPT_ABAS` faz isso). `itens` é [(rota, nome)]; `atual` é a rota aberta. O painel é o <div role=tabpanel>
+    que `painel_da_aba` devolve em volta do conteúdo."""
+    e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
+    abas_ = []
+    for i, (rota, nome) in enumerate(itens, 1):
+        sel = rota == atual
+        abas_.append(f'<a role="tab" id="aba-{i}" href="{e(rota)}" aria-selected="{"true" if sel else "false"}" tabindex="{0 if sel else -1}" '
+                     f'aria-controls="painel-aba" aria-keyshortcuts="Alt+Shift+{i}">{e(nome)}</a>')
+    return f'<div role="tablist" aria-label="{e(rotulo)}">' + "".join(abas_) + "</div>"
+
+
+def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
+    i = next((n for n, (r, _) in enumerate(itens, 1) if r == atual), 1)
+    return f'<div role="tabpanel" id="painel-aba" aria-labelledby="aba-{i}">{conteudo}</div>'
+
+
+# Setas Esquerda/Direita, Home e End movem o foco entre as abas; Espaço abre a aba em foco (Enter já abre, é link);
+# Option+Shift+1..9 abre a aba pelo número. Exige nonce de script na página.
+SCRIPT_ABAS = r"""
+(function(){
+var lista = document.querySelector('[role=tablist]'); if (!lista) { return; }
+var abas = Array.prototype.slice.call(lista.querySelectorAll('[role=tab]'));
+function foco(i){ abas.forEach(function(a, k){ a.tabIndex = (k === i) ? 0 : -1; }); abas[i].focus(); }
+lista.addEventListener('keydown', function(ev){
+  var i = abas.indexOf(document.activeElement); if (i < 0 || ev.altKey || ev.ctrlKey || ev.metaKey) { return; }
+  var k = ev.key;
+  if (k === 'ArrowRight') { foco((i + 1) % abas.length); }
+  else if (k === 'ArrowLeft') { foco((i - 1 + abas.length) % abas.length); }
+  else if (k === 'Home') { foco(0); }
+  else if (k === 'End') { foco(abas.length - 1); }
+  else if (k === ' ') { abas[i].click(); }
+  else { return; }
+  ev.preventDefault();
+});
+document.addEventListener('keydown', function(ev){
+  if (ev.isComposing || !ev.altKey || !ev.shiftKey || ev.ctrlKey || ev.metaKey) { return; }
+  var m = /^Digit([1-9])$/.exec(ev.code); if (!m) { return; }
+  var a = abas[parseInt(m[1], 10) - 1]; if (a) { ev.preventDefault(); a.click(); }
+});
+})();
+"""

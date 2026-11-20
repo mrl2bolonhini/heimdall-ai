@@ -15,6 +15,7 @@ Isso é o recurso mais poderoso do Heimdall: quem entra aqui manda no Mac. Por i
 Variáveis opcionais no .env: HEIMDALL_CONTROLS_PORT (8017), HEIMDALL_CONTROLS_HOST (127.0.0.1), HEIMDALL_CONTROLS_HOSTS
 (controls.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_CONTROLS_SHELL (padrão: o seu shell), HEIMDALL_CONTROLS_EXIGE_ACCESS (1).
 """
+import concurrent.futures
 import html
 import json
 import os
@@ -57,6 +58,8 @@ carregar_env()
 
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
 import heimdall_design as design  # noqa: E402
+import heimdall_kuma as kuma  # noqa: E402
+import heimdall_servicos as servicos  # noqa: E402
 import heimdall_shell as hshell  # noqa: E402
 
 HOST = os.environ.get("HEIMDALL_CONTROLS_HOST", "127.0.0.1")
@@ -165,7 +168,7 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/manutencao", "Manutenção")]
 
 _shell = None
 
@@ -278,7 +281,9 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
     corpo = ("<p>Aqui você administra o Heimdall pelo navegador. Tudo roda no seu Mac, com as suas permissões.</p>"
              "<ol><li><a href=\"/terminal\">Terminal</a>: um shell completo. A pasta e as variáveis continuam de um comando para o outro, "
              "e há botões para copiar a última saída ou as últimas saídas.</li>"
-             "<li><a href=\"/servicos\">Serviços</a>: quais estão no ar e botões para atualizar, reiniciar e ver os logs.</li></ol>")
+             "<li><a href=\"/servicos\">Serviços</a>: todos os serviços do Heimdall, com Ligado e Desligado em cada um.</li>"
+             "<li><a href=\"/manutencao\">Manutenção</a>: atualizar, reiniciar, diagnóstico e logs.</li></ol>"
+             "<p>As seções são abas. Setas esquerda e direita movem entre elas e Option+Shift+1 a 4 abre cada uma.</p>")
     if sh and sh.vivo():
         corpo += f"<p>O terminal está aberto, na pasta {e(sh.pasta)}.</p>"
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando fica anotado em logs/controls_audit.log, sem a saída. '
@@ -319,7 +324,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
         '<li>Ctrl+I: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I completa (é o Tab do terminal de verdade). O Tab fica livre para mover o foco pela página. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
         '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
-        '<li>Option+Shift+C: copia a última saída. Option+Shift+1 até 9: copia as últimas 1 a 9 saídas. Option+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
+        '<li>Option+Shift+C: copia a última saída. Control+Shift+1 até 9: copia as últimas 1 a 9 saídas. Control+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
         '<li>Option+Shift+U: leva o cursor ao início da última saída; depois leia com VO+A ou desça com a seta. Option+Shift+O: o leitor de tela lê o começo da última saída.</li>'
         '<li>Option+Shift+P e Option+Shift+N: comando anterior e seguinte do histórico.</li>'
         '<li>Ctrl+L ou Option+Shift+L: limpa as saídas. Option+Shift+R: reinicia o shell.</li>'
@@ -329,8 +334,6 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
     return "Terminal", corpo
 
 
-SERVICOS = [(8000, "MCP Mac"), (8001, "MCP público"), (8002, "Open Terminal"), (8003, "Agente do Mac"), (8004, "MCP dados"), (8010, "Cloud"), (8011, "Notas"),
-            (8012, "News"), (8013, "Saúde"), (8014, "Jogos"), (8016, "Finance"), (9000, "LiteLLM"), (3000, "Open WebUI"), (5678, "n8n"), (11434, "Ollama")]
 LOGS_OK = ["mcp", "mcp_public", "mcp_dados", "agente", "cloud", "notas", "news", "saude_painel", "jogos", "finance", "controls", "ingest"]
 # ação -> comando. Só estas viram botão; o texto livre vai pelo terminal.
 ACOES = {
@@ -342,30 +345,50 @@ ACOES = {
 }
 
 
-def _porta_aberta(porta: int) -> bool:
-    try:
-        with socket.create_connection(("127.0.0.1", porta), timeout=0.4):
-            return True
-    except OSError:
-        return False
-
-
 def pg_servicos(q: dict, sess: dict) -> tuple:
+    """Um grupo de botões de rádio (Ligado/Desligado) por serviço. Nada muda até apertar Aplicar."""
     csrf = e(sess["csrf"])
-    linhas = "".join(f'<tr><th scope="row">{e(n)}</th><td>{p}</td><td>' + ("no ar" if _porta_aberta(p) else '<span class="erro">fora do ar</span>') + "</td></tr>" for p, n in SERVICOS)
-    tabela = f'<table><caption>Serviços e portas neste Mac</caption><thead><tr><th scope="col">Serviço</th><th scope="col">Porta</th><th scope="col">Situação</th></tr></thead><tbody>{linhas}</tbody></table>'
-    botoes = "".join(f'<li><form method="post" action="/servicos/acao"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="acao" value="{k}">'
-                     f'<button type="submit">{e(rot)}</button></form></li>' for k, (rot, _) in ACOES.items())
-    opcoes = "".join(f'<option value="{s}">{e(s)}</option>' for s in LOGS_OK)
-    log = ('<form method="post" action="/servicos/acao"><input type="hidden" name="csrf" value="' + csrf + '"><input type="hidden" name="acao" value="log">'
-           '<label for="servico-log">Ver o log de</label><select id="servico-log" name="servico">' + opcoes + '</select><button type="submit">Ver o log</button></form>')
-    corpo = ("<p>Cada botão roda o comando no terminal e abre a página dele com o resultado. Reiniciar tudo também reinicia este painel: espere cerca de um minuto "
-             "e recarregue a página.</p>"
-             f'<h2>Ações</h2><ul>{botoes}</ul>{log}<h2>Estado</h2>{tabela}')
+    mons, erro_kuma = kuma.monitores()
+    off = servicos.desligados()
+    grupos = []
+    for s in servicos.catalogo():
+        ar = servicos.no_ar(s)
+        mon = kuma.achar(mons, s["nome"]) if s.get("kuma", True) else None
+        partes = [f"porta {s['porta']}", "no ar" if ar else "fora do ar"]
+        if s["id"] in off:
+            partes.append("desligado de propósito")
+        if mon:
+            partes.append("Kuma: " + mon["status"])
+        sid = s["id"]
+        grupos.append(
+            f'<fieldset class="opcao"><legend>{e(s["nome"])}: {e(", ".join(partes))}</legend>'
+            f'<label for="{sid}-on"><input type="radio" id="{sid}-on" name="s_{sid}" value="on"{" checked" if ar else ""}> Ligado</label>'
+            f'<label for="{sid}-off"><input type="radio" id="{sid}-off" name="s_{sid}" value="off"{"" if ar else " checked"}> Desligado</label></fieldset>')
+    aviso_kuma = (f'<p class="nota">Kuma: {e(erro_kuma)}. A situação mostrada vem da porta de cada serviço.</p>' if erro_kuma else
+                  ('<p class="nota">Kuma consultado. Ao desligar ou ligar, o monitor do serviço no Kuma é pausado ou retomado.</p>'
+                   if os.environ.get("HEIMDALL_KUMA_USUARIO") else
+                   '<p class="nota">Kuma consultado só para leitura. Para pausar e retomar monitores por aqui, ponha HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env.</p>'))
+    corpo = ("<p>Escolha Ligado ou Desligado em cada serviço e aperte Aplicar mudanças no fim da lista. Só os que você mudou são mexidos. "
+             "O que você desliga fica desligado mesmo depois de atualizar e reiniciar. Este painel não aparece na lista: desligá-lo cortaria o seu acesso.</p>"
+             + aviso_kuma
+             + f'<form method="post" action="/servicos/aplicar"><input type="hidden" name="csrf" value="{csrf}">' + "".join(grupos)
+             + '<button type="submit">Aplicar mudanças</button></form>')
     return "Serviços", corpo
 
 
-ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos}
+def pg_manutencao(q: dict, sess: dict) -> tuple:
+    csrf = e(sess["csrf"])
+    botoes = "".join(f'<li><form method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="acao" value="{k}">'
+                     f'<button type="submit">{e(rot)}</button></form></li>' for k, (rot, _) in ACOES.items())
+    opcoes = "".join(f'<option value="{s}">{e(s)}</option>' for s in LOGS_OK)
+    log = ('<form method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="' + csrf + '"><input type="hidden" name="acao" value="log">'
+           '<label for="servico-log">Ver o log de</label><select id="servico-log" name="servico">' + opcoes + '</select><button type="submit">Ver o log</button></form>')
+    corpo = ("<p>Cada botão roda o comando no terminal e abre a aba Terminal com o resultado. Reiniciar tudo também reinicia este painel: espere cerca de um minuto "
+             f"e recarregue a página.</p><h2>Ações</h2><ul>{botoes}</ul>{log}")
+    return "Manutenção", corpo
+
+
+ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/manutencao": pg_manutencao}
 
 SCRIPT = r"""
 (function(){
@@ -577,10 +600,13 @@ ta.addEventListener('focus', function(){
 window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
 window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });
 document.addEventListener('keydown', function(ev){
-  if (ev.isComposing || !ev.altKey || !ev.shiftKey || ev.ctrlKey || ev.metaKey) { return; }
+  if (ev.isComposing || !ev.shiftKey || ev.metaKey) { return; }
+  if (ev.ctrlKey && !ev.altKey && /^Digit[0-9]$/.test(ev.code)) {          // Ctrl+Shift+número: copia as últimas N saídas (Option+Shift+número troca de aba)
+    var n = parseInt(ev.code.slice(5), 10); ev.preventDefault(); copiarUltimas(n === 0 ? 300 : n); return;
+  }
+  if (!ev.altKey || ev.ctrlKey) { return; }
   var c = ev.code, f = null;
   if (c === 'KeyC') { f = function(){ copiarUltimas(1); }; }
-  else if (/^Digit[0-9]$/.test(c)) { var n = parseInt(c.slice(5), 10); f = function(){ copiarUltimas(n === 0 ? 300 : n); }; }
   else if (c === 'KeyU') { f = irAoInicio; }
   else if (c === 'KeyO') { f = lerUltima; }
   else if (c === 'KeyP') { f = function(){ historicoMover(-1); }; }
@@ -607,18 +633,27 @@ buscarAgora();
 """
 
 
-def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash: str = "") -> bytes:
+def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash=None) -> bytes:
     nav = ""
     if sess:
-        itens = "".join(f'<li><a href="{e(r)}"' + (' aria-current="page"' if r == atual else "") + f">{e(n)}</a></li>" for r, n in SECOES)
-        nav = ('<nav aria-label="Principal"><ul>' + itens + '<li><form class="linha" method="post" action="/sair">'
-               f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
-    aviso = f'<p class="erro" role="alert">{e(flash)}</p>' if flash else ""
-    js = f'<script nonce="{nonce}">{script}</script>' if script else ""
+        nav = ('<nav aria-label="Principal">' + design.abas(SECOES, atual) + '<form class="linha" method="post" action="/sair">'
+               f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></nav>')
+        corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
+    else:
+        corpo = f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}"
+    aviso = ""
+    if flash:
+        tipo, texto = flash if isinstance(flash, tuple) else ("erro", flash)
+        linhas = [l for l in str(texto).split("\n") if l.strip()]
+        lista = f"<ul>{''.join('<li>' + e(l) + '</li>' for l in linhas)}</ul>" if len(linhas) > 1 else e(linhas[0] if linhas else "")
+        aviso = (f'<div class="ok" role="status">{lista}</div>' if tipo == "ok" else f'<div class="erro" role="alert">{lista}</div>')
+    corpo = corpo.replace("{aviso}", aviso, 1)
+    todo = (design.SCRIPT_ABAS if sess else "") + script
+    js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
             f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Controls", nav)}'
-            f'<main id="principal"><h1>{e(titulo)}</h1>{aviso}{corpo}</main>{js}</body></html>').encode("utf-8")
+            f'<main id="principal">{corpo}</main>{js}</body></html>').encode("utf-8")
 
 
 def pg_entrar(erro: str = "") -> bytes:
@@ -766,10 +801,10 @@ class Painel(BaseHTTPRequestHandler):
                 self._enviar(404, pagina("Não encontrei", '<p>Esta página não existe.</p><p><a href="/">Voltar à visão geral</a></p>', sess))
                 return
             titulo, corpo = funcao(q, sess)
-            nonce = secrets.token_urlsafe(16) if rota == "/terminal" else ""
-            flash = (sess.get("flash") or [None, ""])[1] if sess.get("flash") else ""
+            nonce = secrets.token_urlsafe(16)
+            flash = sess.get("flash") or None
             sess["flash"] = None
-            self._enviar(200, pagina(titulo, corpo, sess, rota, nonce, SCRIPT if nonce else "", flash), nonce=nonce)
+            self._enviar(200, pagina(titulo, corpo, sess, rota, nonce, SCRIPT if rota == "/terminal" else "", flash), nonce=nonce)
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             if ajax:
@@ -791,7 +826,7 @@ class Painel(BaseHTTPRequestHandler):
             nuvem.encerrar_sessao(token)
             self._ir("/entrar", [self._cookie("", apagar=True)])
             return
-        sh = obter_shell() if rota.startswith(("/terminal", "/servicos")) else None
+        sh = obter_shell() if rota.startswith(("/terminal", "/manutencao")) else None
         try:
             if rota == "/terminal/executar":
                 cmd = campos.get("comando", "")
@@ -818,7 +853,11 @@ class Painel(BaseHTTPRequestHandler):
             elif rota == "/terminal/reiniciar":
                 sh.reiniciar()
                 auditar(ip, "reiniciar o shell")
-            elif rota == "/servicos/acao":
+            elif rota == "/servicos/aplicar":
+                self._aplicar_servicos(campos, sess, ip)
+                self._ir("/servicos")
+                return
+            elif rota == "/manutencao/acao":
                 acao = campos.get("acao", "")
                 if acao == "log" and campos.get("servico") in LOGS_OK:
                     cmd = f"./subir.sh --log {campos['servico']}"
@@ -827,7 +866,7 @@ class Painel(BaseHTTPRequestHandler):
                 else:
                     raise ValueError("ação desconhecida")
                 sh.executar(cmd)
-                auditar(ip, "serviços: " + acao, cmd)
+                auditar(ip, "manutenção: " + acao, cmd)
                 self._ir("/terminal")
                 return
             else:
@@ -838,12 +877,39 @@ class Painel(BaseHTTPRequestHandler):
                 self._json(409, {"erro": str(ex)})
                 return
             sess["flash"] = ("erro", str(ex))
-            self._ir("/terminal" if rota.startswith("/terminal") else "/servicos")
+            self._ir("/terminal" if rota.startswith("/terminal") else rota.rsplit("/", 1)[0] or "/")
             return
         if ajax:
             self._json(200, {"ok": True})
         else:
             self._ir("/terminal")
+
+    def _aplicar_servicos(self, campos: dict, sess: dict, ip: str) -> None:
+        """Liga ou desliga só os serviços cuja escolha difere do estado de agora; pausa ou retoma o monitor no Kuma."""
+        mudar = []
+        for s in servicos.catalogo():
+            quer = campos.get("s_" + s["id"])
+            if quer in ("on", "off") and (quer == "on") != servicos.no_ar(s):
+                mudar.append((s, quer == "on"))
+        if not mudar:
+            sess["flash"] = ("ok", "Nada mudou: os serviços já estão como você escolheu.")
+            return
+        mons, _ = kuma.monitores()
+
+        def uma(par):
+            s, ligar = par
+            ok, msg = servicos.aplicar(s["id"], ligar)
+            extra = ""
+            mon = kuma.achar(mons, s["nome"]) if s.get("kuma", True) else None
+            if mon and ok:
+                motivo = kuma.pausar_ou_retomar(mon["id"], pausar=not ligar)
+                extra = " Monitor do Kuma " + ("pausado." if not ligar else "retomado.") if not motivo else f" Kuma não mexido: {motivo}."
+            return ("" if ok else "Não deu: ") + msg + extra
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+            linhas = list(ex.map(uma, mudar))
+        auditar(ip, "serviços: aplicar", ", ".join(f"{s['id']}={'on' if l else 'off'}" for s, l in mudar))
+        sess["flash"] = ("ok", "\n".join(linhas))
 
     # ---------------------------------------------------------------- leitura do terminal
     def _estado(self, q: dict) -> None:
@@ -926,6 +992,7 @@ class Painel(BaseHTTPRequestHandler):
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
         sys.exit("Sem senha e código configurados o Heimdall Controls não sobe. Rode: python3 heimdall_acesso.py --tudo")
+    servicos.iniciar_vigia()
     srv = ThreadingHTTPServer((HOST, PORT), Painel)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Controls em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
