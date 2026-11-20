@@ -224,6 +224,10 @@ hcf.ARQUIVO.write_text("HEIMDALL_TESTE='um'\n", encoding="utf-8")
 s, corpo, _ = req("GET", "/configuracoes", cookie=token)
 confere("configurações: lista o que está no .env, com o valor inteiro, e as opções do código", s == 200 and "HEIMDALL_TESTE" in corpo and 'value="um"' in corpo
         and "<details" in corpo and "No .env" in corpo and "Opções ainda sem valor" in corpo and "Controls: " in corpo and corpo.count("<h1") == 1 and 'type="search"' in corpo, corpo[:200])
+import re as _re
+_tit = _re.findall(r"<summary>([^<]*)</summary>", corpo)
+_nom = [t.split(":")[0] for t in _tit]
+confere("configurações: nenhum grupo repetido e opções com explicação ligada ao campo", len(_nom) == len(set(_nom)) and 'aria-describedby="desc-' in corpo and "Porta em que o serviço escuta" in corpo, str(_nom))
 confere("configurações: cada campo tem label", corpo.count("<label") >= corpo.count('type="text"') - 1)
 s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "dois", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("salvar grava no .env e diz que vale depois de reiniciar", s == 200 and json.loads(corpo)["ok"] and "HEIMDALL_TESTE='dois'" in hcf.ARQUIVO.read_text() and "reiniciado" in corpo, corpo)

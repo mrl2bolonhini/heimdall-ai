@@ -273,6 +273,9 @@ with sync_playwright() as pw:
     pg.evaluate("window.marca = 'mesma'")
     total = pg.locator("#configuracoes li[data-nome]").count()
     confere("grupos começam fechados", pg.locator("details.grupo[open]").count() == 0 and pg.locator("details.grupo").count() >= 5)
+    pg.click("details.grupo >> nth=0 >> summary")
+    pg.keyboard.press("Escape")
+    confere("Esc fecha o grupo aberto e devolve o foco ao resumo", espera(lambda: pg.locator("details.grupo[open]").count() == 0 and pg.evaluate("document.activeElement.tagName") == "SUMMARY"))
     pg.fill("#filtro-cfg", "controls_atraso")
     visiveis = pg.locator("#configuracoes li[data-nome]:visible").count()
     confere("filtro abre o grupo certo, mostra só o que combina e avisa quantas", 0 < visiveis < total and pg.locator("details.grupo[open]").count() >= 1

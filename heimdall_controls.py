@@ -58,6 +58,7 @@ carregar_env()
 
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
 import heimdall_config as config  # noqa: E402
+import heimdall_config_ajuda as ajuda  # noqa: E402
 import heimdall_design as design  # noqa: E402
 import heimdall_kuma as kuma  # noqa: E402
 import heimdall_servicos as servicos  # noqa: E402
@@ -383,13 +384,16 @@ def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: boo
     dica = "" if definida else (f' <span class="nota">Padrão: {e(padrao)}</span>' if padrao else ' <span class="nota">Sem valor padrão fixo no código.</span>')
     botoes = ('<button type="submit" name="acao" value="salvar">Salvar</button><button type="submit" name="acao" value="remover">Remover</button>' if definida
               else '<button type="submit" name="acao" value="salvar">Definir</button>')
+    desc = ajuda.descricao(nome)
+    p_desc = f'<span class="nota" id="desc-{i}">{e(desc)}</span> ' if desc else ""
+    ref = f' aria-describedby="desc-{i}"' if desc else ""
     return (f'<li data-nome="{e(nome.lower())}"><form class="linha" data-cfg><input type="hidden" name="nome" value="{e(nome)}">'
-            f'<label for="cfg-{i}">{e(nome)}</label>{dica}<input type="text" id="cfg-{i}" name="valor" value="{e(valor)}" autocomplete="off" autocapitalize="off" spellcheck="false">'
+            f'<label for="cfg-{i}">{e(nome)}</label> {p_desc}{dica}<input type="text" id="cfg-{i}" name="valor" value="{e(valor)}"{ref} autocomplete="off" autocapitalize="off" spellcheck="false">'
             f'{botoes}</form></li>')
 
 
 CATEGORIAS = {"CLOUD": "Cloud", "CONTROLS": "Controls", "NOTAS": "Notes", "NEWS": "News", "SAUDE": "Health", "JOGOS": "Games", "FINANCE": "Finance", "AGENTE": "Mac Agent",
-              "KUMA": "Uptime Kuma", "MCP": "MCP", "WEBUI": "Open WebUI", "N8N": "n8n", "R2": "Backup na nuvem (R2)", "BACKUP": "Backup na nuvem (R2)", "CFACCESS": "Cloudflare Access",
+              "KUMA": "Uptime Kuma", "MCP": "MCP", "WEBUI": "Open WebUI", "N8N": "n8n", "R2": "Backup na nuvem (R2)", "BACKUP": "Backup na nuvem (R2)", "CFACCESS": "Cloudflare", "CLOUDFLARE": "Cloudflare", "CF": "Cloudflare",
               "TRIAGEM": "Triagem", "EMAIL": "Vigia de e-mails", "EMAILS": "Vigia de e-mails", "LITELLM": "LiteLLM", "OLLAMA": "Ollama", "GERAL": "Gerais", "ALERT": "Alertas", "EXAMES": "Exames", "GITOPS": "GitOps", "MONITOR": "Monitoramento", "PERGUNTAR": "Perguntar", "VOZ": "Voz"}
 
 
@@ -399,22 +403,24 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
     nomes = {d["nome"] for d in definidas}
     codigo = config.opcoes_do_codigo()
     faltam = sorted(n for n in codigo if n not in nomes)
+    def rotulo(n: str) -> str:  # chaves diferentes com o mesmo rótulo (R2 e BACKUP) viram um grupo só
+        g = config.grupo(n)
+        return CATEGORIAS.get(g, g.title())
     contagem: dict = {}
     for n in [d["nome"] for d in definidas] + faltam:
-        contagem[config.grupo(n)] = contagem.get(config.grupo(n), 0) + 1
+        contagem[rotulo(n)] = contagem.get(rotulo(n), 0) + 1
 
     def cat(n: str) -> str:  # grupo de um item só vai para "Outras"
-        g = config.grupo(n)
-        return g if contagem.get(g, 0) > 1 or g in CATEGORIAS else "OUTRAS"
+        g, r = config.grupo(n), rotulo(n)
+        return r if contagem.get(r, 0) > 1 or g in CATEGORIAS else "Outras"
     grupos: dict = {}
     for i, d in enumerate(definidas):
         grupos.setdefault(cat(d["nome"]), {"def": [], "falta": []})["def"].append(_linha_config(i, d["nome"], d["valor"]))
     for i, n in enumerate(faltam):
         grupos.setdefault(cat(n), {"def": [], "falta": []})["falta"].append(_linha_config(10000 + i, n, "", codigo[n], False))
     blocos = []
-    for g in sorted(grupos, key=lambda x: (x in ("OUTRAS",), CATEGORIAS.get(x, x.title()).lower())):
-        d, f = grupos[g]["def"], grupos[g]["falta"]
-        nome = CATEGORIAS.get(g, "Outras" if g == "OUTRAS" else g.title())
+    for nome in sorted(grupos, key=lambda x: (x == "Outras", x.lower())):
+        d, f = grupos[nome]["def"], grupos[nome]["falta"]
         resumo = f"{nome}: {len(d)} no .env" + (f", {len(f)} opções sem valor" if f else "")
         interno = ((f"<h3>No .env</h3><ul class=\"chaves\">{''.join(d)}</ul>") if d else "") + ((f"<h3>Opções ainda sem valor</h3><ul class=\"chaves\">{''.join(f)}</ul>") if f else "")
         blocos.append(f'<details class="grupo"><summary>{e(resumo)}</summary>{interno}</details>')
@@ -774,7 +780,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
         lista = f"<ul>{''.join('<li>' + e(l) + '</li>' for l in linhas)}</ul>" if len(linhas) > 1 else e(linhas[0] if linhas else "")
         aviso = (f'<div class="ok" role="status">{lista}</div>' if tipo == "ok" else f'<div class="erro" role="alert">{lista}</div>')
     corpo = corpo.replace("{aviso}", aviso, 1)
-    todo = ((design.SCRIPT_ABAS + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
+    todo = ((design.SCRIPT_ABAS + design.SCRIPT_DETALHES + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'

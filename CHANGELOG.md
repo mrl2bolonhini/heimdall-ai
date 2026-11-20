@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Controls: Configurações sem grupos repetidos, com explicação e Esc
+- Configurações: grupos com o mesmo nome (Backup na nuvem R2, Cloudflare) agora são um só. Cada variável tem uma explicação curta em português, lida junto com o campo (heimdall_config_ajuda.py; sem explicação específica, vale a do sufixo: _PORT, _HOST, _TOKEN…).
+- Esc fecha o grupo (ou o menu Conta) em que o foco está e devolve o foco ao resumo (design.SCRIPT_DETALHES).
+
 ## 2026-11-20 - Controls: textos mais curtos e atalhos em português
 - Controls: o atalho de cada aba agora é dito em português ("Atalho: Option Shift 3", ligado à aba por aria-describedby) em vez de "Alt+Shift+3" (aria-keyshortcuts). Os textos ao lado dos botões da Manutenção e da aba Serviços ficaram curtos ("Para todos os serviços, menos este painel.").
 

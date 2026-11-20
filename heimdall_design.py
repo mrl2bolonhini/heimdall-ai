@@ -127,6 +127,19 @@ def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
 # Abrir uma aba troca só o conteúdo do painel (sem recarregar a página, o foco fica na aba e o leitor de tela ouve "<nome> aberta").
 # Abas marcadas com data-completa (as que têm script próprio, como o Terminal) carregam a página inteira, e só se vai delas ou para elas assim.
 # Exige nonce de script na página.
+SCRIPT_DETALHES = r"""
+document.addEventListener('keydown', function (ev) {
+  if (ev.key !== 'Escape' || ev.defaultPrevented) return;
+  var det = ev.target && ev.target.closest ? ev.target.closest('details[open]') : null;
+  if (!det) return;
+  det.removeAttribute('open');
+  var sum = det.querySelector('summary');
+  if (sum) sum.focus();
+  ev.preventDefault();
+});
+"""
+"""Esc fecha o <details> (grupo ou menu) em que o foco está e devolve o foco ao resumo."""
+
 SCRIPT_ABAS = r"""
 (function(){
 var lista = document.querySelector('[role=tablist]'); if (!lista) { return; }
