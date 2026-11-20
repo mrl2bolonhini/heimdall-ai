@@ -67,12 +67,12 @@ with sync_playwright() as pw:
     ta = pg.locator("#terminal")
     valor = lambda: ta.input_value()  # noqa: E731
     estado = lambda: pg.locator("#estado").inner_text()  # noqa: E731
-    confere("campo único começa só com o prompt", valor().endswith(" % ") and "\n" not in valor().strip(), valor())
+    confere("campo único começa só com o prompt", valor().endswith("%") and "\n" not in valor().strip(), valor())
 
     confere("ao abrir a página o foco já está no terminal, com o cursor no fim", espera(lambda: pg.evaluate("document.activeElement.id") == "terminal") and espera(lambda: ta.evaluate("e => e.selectionStart === e.value.length")), pg.evaluate("document.activeElement.id"))
     pg.keyboard.type("echo ola mundo")
     pg.keyboard.press("Enter")
-    confere("saída aparece no próprio campo, com o prompt de volta no fim", espera(lambda: "ola mundo\n[concluído, código 0," in valor() and valor().endswith(" % ")), valor())
+    confere("saída aparece no próprio campo, com o prompt de volta no fim", espera(lambda: "ola mundo\n[concluído, código 0," in valor() and valor().endswith("%")), valor())
     confere("aviso falado traz a saída curta", espera(lambda: "Saída: ola mundo" in estado()), estado())
     confere("o cursor está na linha de digitação", ta.evaluate("e => e.selectionStart === e.value.length"))
 
@@ -118,7 +118,7 @@ with sync_playwright() as pw:
     ta.evaluate("e => e.setSelectionRange(e.value.length, e.value.length)")
     for _ in range(40):
         pg.keyboard.press("Backspace")
-    confere("Backspace não apaga o prompt nem a saída", valor().endswith("ola mundo\n[") or valor().endswith(" % "), valor()[-80:])
+    confere("Backspace não apaga o prompt nem a saída", valor().endswith("ola mundo\n[") or valor().endswith("%"), valor()[-80:])
 
     # programa que pergunta: a resposta vai na mesma linha, sem campo separado
     pg.keyboard.type('read -p "nome? " x; echo ola $x')
@@ -126,7 +126,7 @@ with sync_playwright() as pw:
     confere("pergunta do programa aparece no campo, sem prompt novo", espera(lambda: valor().endswith("nome? ")), valor()[-60:])
     pg.keyboard.type("Ana")
     pg.keyboard.press("Enter")
-    confere("resposta digitada na linha vai ao programa", espera(lambda: "ola Ana" in valor() and valor().endswith(" % ")), valor()[-100:])
+    confere("resposta digitada na linha vai ao programa", espera(lambda: "ola Ana" in valor() and valor().endswith("%")), valor()[-100:])
 
     # saída longa e atalho de ir ao início
     pg.keyboard.type("seq 1 60")
@@ -155,26 +155,26 @@ with sync_playwright() as pw:
     pg.keyboard.press("Alt+Shift+KeyP")
     confere("Option+Shift+P traz o comando anterior à linha", valor().endswith("seq 1 60"), valor()[-40:])
     pg.keyboard.press("Alt+Shift+KeyN")
-    confere("Option+Shift+N volta à linha vazia", valor().endswith(" % "), valor()[-40:])
+    confere("Option+Shift+N volta à linha vazia", valor().endswith("%"), valor()[-40:])
 
     # interromper com Ctrl+C
     pg.keyboard.type("sleep 30")
     pg.keyboard.press("Enter")
     espera(lambda: ta.evaluate("e => e.value.trimEnd().endsWith('sleep 30')"))
     pg.keyboard.press("Control+KeyC")
-    confere("Ctrl+C interrompe o programa em execução", espera(lambda: "[interrompido" in valor() and valor().endswith(" % ")) and espera(lambda: "interrompido" in estado()), (valor()[-80:], estado()))
+    confere("Ctrl+C interrompe o programa em execução", espera(lambda: "[interrompido" in valor() and valor().endswith("%")) and espera(lambda: "interrompido" in estado()), (valor()[-80:], estado()))
 
     # Ctrl+C sem programa apaga a linha
     pg.keyboard.type("lixo")
     pg.keyboard.press("Control+KeyC")
-    confere("Ctrl+C sem programa apaga a linha digitada", valor().endswith(" % ") and "lixo" not in valor())
+    confere("Ctrl+C sem programa apaga a linha digitada", valor().endswith("%") and "lixo" not in valor())
 
     # limpar e reiniciar
     pg.keyboard.type("export HD_N=7")
     pg.keyboard.press("Enter")
     espera(lambda: valor().count("[concluído") >= 4)
     pg.keyboard.press("Control+KeyL")
-    confere("Ctrl+L limpa as saídas: sobra só o prompt", espera(lambda: valor().count("\n") == 0 and valor().endswith(" % ")) and espera(lambda: "Saídas limpas" in estado()), valor())
+    confere("Ctrl+L limpa as saídas: sobra só o prompt", espera(lambda: valor().count("\n") == 0 and valor().endswith("%")) and espera(lambda: "Saídas limpas" in estado()), valor())
     pg.keyboard.type("echo ${HD_N:-vazio}")
     pg.keyboard.press("Enter")
     confere("o shell mantém as variáveis depois de limpar", espera(lambda: "\n7\n" in valor()), valor())
@@ -188,7 +188,7 @@ with sync_playwright() as pw:
     # Tab: completar
     pg.keyboard.type("mkdir -p /tmp/hdct && cd /tmp/hdct && touch alfa.txt alfabeto.txt beta.txt")
     pg.keyboard.press("Enter")
-    espera(lambda: "[concluído" in valor() and valor().endswith("hdct % "))
+    espera(lambda: "[concluído" in valor() and valor().endswith("hdct%"))
     pg.keyboard.type("cat be")
     pg.keyboard.press("Tab")
     confere("Tab completa um arquivo único", espera(lambda: valor().endswith("cat beta.txt ")), valor()[-40:])

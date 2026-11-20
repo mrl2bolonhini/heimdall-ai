@@ -195,16 +195,19 @@ def auditar(ip: str, acao: str, detalhe: str = "") -> None:
 # ----------------------------------------------------------------------------------------
 def duracao(seg: float) -> str:
     seg = max(0.0, seg)
-    """Número colado no s, para o leitor de tela ler certo: 0s, 12,3s, 37,21s (até duas casas, sem zeros sobrando; inteiro quando não há fração)."""
-    if seg >= 60:
-        return f"{int(seg // 60)} min {int(seg % 60)}s"
-    return (f"{seg:.2f}".rstrip("0").rstrip(".") or "0").replace(".", ",") + "s"
+    """Número colado no s, para o leitor de tela ler certo: 0s, 12,3s, 37,21s (até duas casas, sem zeros sobrando; inteiro quando não há fração; minutos: 1min e 5s)."""
+    def _s(x: float) -> str:
+        return (f"{x:.2f}".rstrip("0").rstrip(".") or "0").replace(".", ",") + "s"
+    if seg < 60:
+        return _s(seg)
+    m, resto = int(seg // 60), seg - int(seg // 60) * 60
+    return f"{m}min" + (f" e {_s(resto)}" if round(resto, 2) > 0 else "")
 
 
 def prompt_de(pasta: str) -> str:
     """O prompt mostrado no campo: só o nome da pasta, como o zsh faz (~ para a pasta pessoal)."""
     nome = "~" if pasta == str(Path.home()) else (os.path.basename(pasta.rstrip("/")) or "/")
-    return f"{nome} % "
+    return f"{nome}%"   # sem espaço depois: o leitor de tela não lê "espaço" ao entrar no campo
 
 
 def _situacao(b) -> str:
@@ -226,7 +229,7 @@ def _saida_exibida(sh, b) -> tuple:
 def _texto_do_bloco(sh, b) -> tuple:
     """(texto do comando com prompt, saída e situação; posição onde a saída começa)."""
     cmd = b.comando if len(b.comando) <= 300 else b.comando[:300] + "..."
-    cab = prompt_de(b.pasta) + cmd + "\n"
+    cab = prompt_de(b.pasta) + " " + cmd + "\n"
     saida, corte = _saida_exibida(sh, b)
     corpo = corte + saida
     fim_ = b.estado != "rodando"
@@ -288,7 +291,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         f'<input type="hidden" id="csrf" value="{e(sess["csrf"])}">'
         '<p>O foco já vem no campo Terminal. Digite o comando na última linha e aperte Enter. A saída aparece no próprio campo, logo abaixo do comando. '
         'Se um programa estiver perguntando algo, o que você digitar vai para ele. O campo Terminal mostra só o último comando; os anteriores ficam no campo Histórico, logo acima, com o cursor no fim (do mais novo para o mais antigo, subindo com a seta). '
-        'Tab completa comandos e nomes de arquivos. Option+Shift+H leva à lista de atalhos.</p>'
+        'Ctrl+I completa comandos e nomes de arquivos. Option+Shift+H leva à lista de atalhos.</p>'
         '<div><label for="historico">Histórico</label>'
         f'<textarea class="terminal historico" id="historico" aria-readonly="true" inputmode="none" spellcheck="false" data-n="{t["n_hist"]}">{e(hist)}</textarea></div>'
         '<div><label for="terminal">Terminal</label>'
@@ -309,7 +312,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
         '<p>Funcionam em qualquer ponto desta página. Option é a tecla Alt do Mac.</p><ol>'
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
-        '<li>Tab: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I faz o mesmo que o Tab (é o Tab do terminal de verdade), caso o leitor de tela não entregue o Tab à página. No campo, o Tab nunca sai: para sair use Option+Tab ou Shift+Tab. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
+        '<li>Ctrl+I (ou Tab, quando o navegador o entregar): completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I completa (é o Tab do terminal de verdade). O Tab em si pode ser tomado pelo VoiceOver ou pelo Safari antes de chegar à página; então use Ctrl+I. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
         '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
         '<li>Option+Shift+C: copia a última saída. Option+Shift+1 até 9: copia as últimas 1 a 9 saídas. Option+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
         '<li>Option+Shift+U: leva o cursor ao início da última saída; depois leia com VO+A ou desça com a seta. Option+Shift+O: o leitor de tela lê o começo da última saída.</li>'
@@ -548,7 +551,7 @@ ta.addEventListener('mouseup', function(){ apontador = false; });
 ta.addEventListener('blur', function(){ apontador = false; });
 // entrar no campo (Tab, foco automático, voltar à aba) sempre deixa o cursor depois da última letra; só o clique do mouse escolhe outro ponto
 // o cursor vai ao fim DEPOIS de um instante: mexer nele na hora faz o VoiceOver ler só o caractere ("espaço") e engolir o nome do campo
-ta.addEventListener('focus', function(){ if (!apontador) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 400); } });
+ta.addEventListener('focus', function(){ if (!apontador) { setTimeout(function(){ if (!apontador && document.activeElement === ta) { fimDoCampo(); } }, 300); } });
 window.addEventListener('focus', function(){ if (!document.activeElement || document.activeElement === document.body) { irAoCampo(); } });
 window.addEventListener('pageshow', function(ev){ if (ev.persisted) { irAoCampo(); } });
 document.addEventListener('keydown', function(ev){

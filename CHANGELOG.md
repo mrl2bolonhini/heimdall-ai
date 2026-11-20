@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: prompt sem espaço, minutos por extenso, foco em 0,3 s, Ctrl+I
+- O prompt agora termina em "%" sem espaço (heimdall-ai%), para o VoiceOver não ler "espaço" ao entrar no campo. No cabeçalho de cada comando ainda há um espaço entre o prompt e o comando (heimdall-ai% ls).
+- Duração com minutos: 1min e 5s, 2min (número sempre colado na unidade).
+- O cursor do Terminal vai ao fim 300 ms depois do foco.
+- O Tab é tomado pelo VoiceOver/Safari antes de chegar à página; o que funciona é Ctrl+I, agora indicado na lista de atalhos e na ajuda.
+
 ## 2026-11-19 - Controls: nome do campo, Tab mais firme, duração sem espaço
 - O cursor do Terminal só vai ao fim 0,4 s depois de o campo receber o foco. Mexer nele na hora fazia o VoiceOver ler só o último caractere ("espaço") e engolir o nome "Terminal".
 - O Tab agora é capturado na janela, antes de qualquer outro tratamento, e há uma rede de segurança: se o foco sair do campo logo após um Tab, ele volta e o Tab completa. Ctrl+I faz o mesmo que o Tab (é o Tab do terminal de verdade), para o caso de o leitor de tela não entregar o Tab à página.
