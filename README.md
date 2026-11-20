@@ -111,6 +111,13 @@ python3 teste_email_prioridade.py                 # rebaixamento e diagnóstico 
 python3 gerar_docs.py --check                     # documentação em dia
 ```
 
+### Lembretes, Calendário e Notas sem abrir os apps
+
+- Lembretes e Calendário rodam pelo EventKit (heimdall_eventkit.py), sem abrir os apps. Precisa de `venv/bin/pip install pyobjc-framework-EventKit` e da permissão do macOS (pedida uma vez). Conferir: `venv/bin/python heimdall_eventkit.py --status`. Se faltar o pacote ou a permissão, o agente usa o AppleScript de antes. Desligar: `HEIMDALL_EVENTKIT=0` no .env.
+- O Notas só pode ser usado com o app aberto. O agente o abre escondido, não o fecha (`HEIMDALL_APPS_FECHAR=1` fecha depois de 20 s) e registra cada abertura no log do agente.
+- O Second Brain só consulta o Notas quando há nota nova: o agente olha a data do banco do Notas sem abrir o app e consulta se mudou, ou depois de uma gravação do Heimdall. Se o macOS não deixar ver o banco (falta Acesso Total ao Disco ao Terminal), só consulta depois de uma gravação do Heimdall; `HEIMDALL_NOTAS_VARREDURA_MIN=240` (minutos) liga uma consulta periódica de segurança.
+
+
 Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pasta do projeto.
 
 ## Modelos de linguagem

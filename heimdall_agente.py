@@ -68,6 +68,7 @@ import heimdall_exames as exames
 import heimdall_saude as saude
 import heimdall_seguranca as seguranca
 import heimdall_triagem as triagem
+import heimdall_eventkit as eventkit
 import heimdall_voz as dicionario_voz
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -466,6 +467,9 @@ def _agendar_fechamento(usados: list[str]) -> None:
 def osascript(script: str, *args: str, timeout: int = 0) -> str:
     """Roda um AppleScript (arquivo temporário) com argumentos e devolve a saída.
     Os apps Notas, Lembretes e Calendário são abertos escondidos (sem aparecer na tela) e fechados depois, se estavam fechados."""
+    ok_ek, resultado_ek = eventkit.tentar(script, args)   # Lembretes e Calendário pelo EventKit: não abre app nenhum
+    if ok_ek:
+        return resultado_ek
     usados, abertos_agora = _preparar_apps(script)
     with tempfile.NamedTemporaryFile("w", suffix=".applescript", delete=False, encoding="utf-8") as f:
         f.write(script)
@@ -528,7 +532,58 @@ def ids_privados() -> set:
     return ids
 
 
+# --- Second Brain só quando há nota nova -------------------------------------------------------------------------
+# O fluxo do Second Brain pergunta a cada 5 min quais notas mudaram, e cada pergunta abria o app Notas. Agora o agente primeiro olha, sem abrir
+# o Notas, se o banco de dados das notas mudou desde a última verificação (data do arquivo). Só se mudou, ou se o Heimdall acabou de gravar
+# uma nota, ele consulta o app. Se o macOS não deixar ver o arquivo (falta Acesso Total ao Disco), o agente só consulta o Notas depois de uma
+# gravação do Heimdall e, se HEIMDALL_NOTAS_VARREDURA_MIN estiver ligado, a cada tantos minutos (padrão 0: desligado).
+_gravacao_nova = threading.Event()
+_verificado_mtime = 0.0
+_ultima_varredura = 0.0
+_aviso_sem_acesso = [False]
+VARREDURA_MIN = int(os.environ.get("HEIMDALL_NOTAS_VARREDURA_MIN", "0") or 0)
+_ARQUIVOS_NOTAS = [Path.home() / "Library/Group Containers/group.com.apple.notes" / n for n in ("NoteStore.sqlite", "NoteStore.sqlite-wal")]
+
+
+def _mtime_notas():
+    """Data da última mudança do banco do Notas (sem abrir o app), ou None se o macOS não deixar ver."""
+    try:
+        return max(a.stat().st_mtime for a in _ARQUIVOS_NOTAS)
+    except (OSError, ValueError):
+        return None
+
+
+def _consultar_notas_agora(quieto: int):
+    """(consulta?, mtime): decide se vale abrir o Notas para listar as alteradas."""
+    global _ultima_varredura
+    m = _mtime_notas()
+    if _gravacao_nova.is_set():
+        return True, m
+    if m is not None:
+        return m > _verificado_mtime, m
+    if not _aviso_sem_acesso[0]:
+        _aviso_sem_acesso[0] = True
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} Second Brain: não consigo ver o banco do Notas (dê Acesso Total ao Disco ao Terminal); "
+                         "só consulto o Notas depois de uma gravação do Heimdall" + (f" e a cada {VARREDURA_MIN} min\n" if VARREDURA_MIN else "\n"))
+    if VARREDURA_MIN and time.time() - _ultima_varredura >= VARREDURA_MIN * 60:
+        return True, None
+    return False, None
+
+
 def notas_alteradas(desde: float, quieto: int, limite: int) -> list[dict]:
+    global _verificado_mtime, _ultima_varredura
+    consultar, m_antes = _consultar_notas_agora(quieto)
+    if not consultar:
+        return []
+    notas = _listar_alteradas(desde, quieto, limite)
+    _gravacao_nova.clear()   # só depois de a consulta dar certo; se falhar, a próxima tenta de novo
+    _ultima_varredura = time.time()
+    if m_antes is not None and time.time() - m_antes > quieto + 30:
+        _verificado_mtime = m_antes   # banco quieto há mais que o "quieto": esta consulta já viu tudo o que havia
+    return notas
+
+
+def _listar_alteradas(desde: float, quieto: int, limite: int) -> list[dict]:
     privadas = ids_privados()
     agora = time.time()
     janela = int(max(agora - desde, 0)) + 5
@@ -1023,6 +1078,14 @@ end run
 '''
 
 
+# Estes scripts rodam pelo EventKit quando possível (heimdall_eventkit.py); o AppleScript acima fica como recuo.
+for _script, _funcao in ((AS_EVENTO, eventkit.evento_dia_inteiro), (AS_EVENTO_HORARIO, eventkit.evento_com_hora),
+                         (AS_LEMBRETE, eventkit.lembrete_simples), (AS_PREPARAR_CAL, eventkit.preparar_calendario),
+                         (AS_PREPARAR_LEM, eventkit.preparar_lista), (triagem.AS_CRIAR, eventkit.triagem_criar),
+                         (triagem.AS_LER, eventkit.triagem_ler)):
+    eventkit.registrar(_script, _funcao)
+
+
 def _data(s: str) -> tuple:
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(s)):
         raise ValueError("data inválida (use AAAA-MM-DD)")
@@ -1201,6 +1264,7 @@ class Handler(BaseHTTPRequestHandler):
             dado = json.loads(self.rfile.read(tam).decode("utf-8"))
             if u.path == "/notas/gravar":
                 r = gravar(str(dado.get("pasta", "")), str(dado.get("titulo", "")), str(dado.get("markdown", "")), str(dado.get("audio", "")))
+                _gravacao_nova.set()   # nota nova: o Second Brain pode olhar na próxima verificação
                 return self._json(200, r)
             if u.path == "/saude/relatorio-semanal":
                 rel = saude.relatorio_semanal()
@@ -1380,6 +1444,7 @@ def main() -> int:
     VAULT.mkdir(parents=True, exist_ok=True)
     banco.iniciar()
     exames.preparar_pasta()
+    threading.Thread(target=eventkit.verificar_na_partida, daemon=True).start()   # pede as permissões de Lembretes e Calendário e registra no log
     threading.Thread(target=_vigiar_documentos, daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Agente do Heimdall em http://{HOST}:{PORT} (cofre: {VAULT})", flush=True)

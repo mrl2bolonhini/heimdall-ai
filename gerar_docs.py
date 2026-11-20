@@ -300,6 +300,7 @@ SCRIPTS = [
     ("heimdall_voz.py", "Dicionário de pronúncia: troca palavras por uma grafia que a voz do macOS lê certo (por exemplo, Heimdall vira Háimdal), no anúncio falado do subir.sh e no áudio das notas. Aceita --importar arquivo.csv para trazer as pronúncias do VoiceOver."),
     ("pronuncias.txt", "Pronúncias que vêm com o projeto, uma por linha no formato palavra = como falar. As suas ficam em pronuncias.local.txt, que não vai para o GitHub."),
     ("heimdall_agenda.py", "Regra única entre evento do Calendário e lembrete do app Lembretes, com a tabela de cada tipo de item (consulta, renovação de receita, prazo oficial, triagem) e o envio ao agente do Mac."),
+    ("heimdall_eventkit.py", "Lembretes e Calendário pelo EventKit do macOS, sem abrir os apps (que apareciam na tela e no Command+Tab). O agente tenta o EventKit primeiro e recua para o AppleScript se faltar o pacote pyobjc-framework-EventKit ou a permissão. Conferir: venv/bin/python heimdall_eventkit.py --status. Desligar: HEIMDALL_EVENTKIT=0."),
     ("teste_agenda.py", "Testa a regra evento x lembrete, a consulta e a renovação de receita no Calendário, sem agente real."),
     ("heimdall_exames.py", "Exames, receitas, encaminhamentos e consultas: lê PDF e foto (texto do PDF, ou OCR com tesseract), cataloga cada componente do exame com valor, unidade e referência do laboratório, e só grava depois que você confere, item por item (heimdall labs pending). Os valores precisam aparecer literalmente no documento; o modelo local só ajuda e nunca inventa número. Cruza os resultados com sono, HRV, pulso e atividade do relógio. Pasta do Mac: banco/documentos/entrada. Atalho do iPhone: POST /saude/documento no agente, com código próprio (HEIMDALL_EXAMES_TOKEN)."),
     ("teste_exames.py", "Testa a leitura de exames, receitas e encaminhamentos com documentos fictícios, sem tocar no seu banco."),
@@ -320,6 +321,9 @@ SCRIPTS = [
     ("limpar_espelhos.py", "Remove espelhos duplicados do Cérebro."),
     ("ouvir_estudo.sh", "Toca no Mac o áudio de estudo mais recente."),
     ("teste_triagem.py", "Testa as regras da triagem com uma simulação do app Lembretes e do Bark. Com --mac, confere os scripts de verdade no Mac."),
+    ("teste_eventkit.py", "Testa o texto do EventKit, a escolha entre EventKit e AppleScript e o recuo, sem precisar do macOS."),
+    ("teste_apps_ocultos.py", "Testa que o agente abre o Notas escondido e só fecha o que ele mesmo abriu."),
+    ("teste_second_brain_gatilho.py", "Testa que o Second Brain só abre o Notas quando há nota nova."),
     ("test_mcp.py", "Testa os servidores MCP direto e pelo LiteLLM."),
     ("test_models_tools.py", "Testa a chamada de ferramentas de cada modelo."),
 ]

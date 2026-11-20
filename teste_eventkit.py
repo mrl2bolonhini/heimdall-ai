@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Testa a parte do EventKit que não depende do macOS: o texto devolvido, a escolha entre EventKit e AppleScript e o recuo."""
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import heimdall_eventkit as ek  # noqa: E402
+
+falhas = 0
+
+
+def confere(nome, ok, detalhe=""):
+    global falhas
+    print(("ok   " if ok else "FALHOU ") + nome)
+    if not ok:
+        falhas += 1
+        print("     " + repr(detalhe)[:300])
+
+
+# 1. texto da triagem: igual ao do AppleScript (id, feito, prioridade, vence, feitoEm, nome), pendentes antes dos concluídos
+agora = 1_000_000.0
+itens = [
+    {"notas": "texto\n\n[hd:abc-123]", "prioridade": 1, "nome": "Aviso\tdo\nINSS", "feito": True, "vence_ts": agora - 60, "feito_ts": agora - 30},
+    {"notas": "texto [hd:xyz]", "prioridade": 5, "nome": "Prazo", "feito": False, "vence_ts": agora + 3600, "feito_ts": None},
+    {"notas": "lembrete comum sem marca", "prioridade": 0, "nome": "Outro", "feito": False, "vence_ts": None, "feito_ts": None},
+    {"notas": "[hd:]", "prioridade": 0, "nome": "Marca vazia", "feito": False, "vence_ts": None, "feito_ts": None},
+    {"notas": "[hd:sem-data]", "prioridade": 9, "nome": "Sem data", "feito": False, "vence_ts": None, "feito_ts": None},
+]
+esperado = ("lista:ok\n"
+            "xyz\t0\t5\t3600\t\tPrazo\n"
+            "sem-data\t0\t9\t\t\tSem data\n"
+            "abc-123\t1\t1\t-60\t-30\tAviso do INSS\n")
+confere("texto da triagem igual ao do AppleScript", ek.formatar_triagem(itens, agora) == esperado, ek.formatar_triagem(itens, agora))
+
+# 2. escolha entre EventKit e AppleScript
+chamadas = []
+ek._registro.clear()
+ek.ATIVO = True
+ek._falha_ate = 0.0
+ek.registrar("SCRIPT_OK", lambda a, b: chamadas.append((a, b)) or "criado")
+confere("script registrado: EventKit resolve", ek.tentar("SCRIPT_OK", ("x", "y")) == (True, "criado") and chamadas == [("x", "y")], chamadas)
+confere("script não registrado: usa o AppleScript", ek.tentar("OUTRO", ()) == (False, None))
+
+
+def sem_permissao():
+    chamadas.append("tentou")
+    raise ek.EKIndisponivel("negado")
+
+
+ek.registrar("SCRIPT_NEGADO", sem_permissao)
+chamadas.clear()
+confere("sem permissão: recua para o AppleScript", ek.tentar("SCRIPT_NEGADO", ()) == (False, None))
+confere("e não insiste logo em seguida (nem para os outros scripts)", ek.tentar("SCRIPT_NEGADO", ()) == (False, None) and ek.tentar("SCRIPT_OK", ("a", "b")) == (False, None) and chamadas == ["tentou"], chamadas)
+ek._falha_ate = time.time() - 1
+confere("passado o prazo, tenta de novo", ek.tentar("SCRIPT_OK", ("a", "b")) == (True, "criado"))
+
+
+def quebrado():
+    raise AttributeError("bug")
+
+
+ek.registrar("SCRIPT_BUG", quebrado)
+confere("erro inesperado: recua só desta vez", ek.tentar("SCRIPT_BUG", ()) == (False, None) and ek._falha_ate < time.time())
+ek.ATIVO = False
+confere("HEIMDALL_EVENTKIT=0 desliga", ek.tentar("SCRIPT_OK", ("a", "b")) == (False, None))
+ek.ATIVO = True
+
+# 3. integração com o agente: com o EventKit resolvendo, o AppleScript não roda e nenhum app é aberto
+import heimdall_agente as ag  # noqa: E402
+registrados = [ag.AS_EVENTO, ag.AS_EVENTO_HORARIO, ag.AS_LEMBRETE, ag.AS_PREPARAR_CAL, ag.AS_PREPARAR_LEM, ag.triagem.AS_CRIAR, ag.triagem.AS_LER]
+confere("os 7 scripts de Lembretes e Calendário estão registrados", all(s in ek._registro for s in registrados))
+ek._falha_ate = 0.0
+abriu = []
+ag.subprocess = type("S", (), {"run": staticmethod(lambda *a, **k: abriu.append(a) or (_ for _ in ()).throw(AssertionError("rodou subprocess"))),
+                               "TimeoutExpired": Exception})
+ek.registrar(ag.AS_LEMBRETE, lambda *a: "criado")
+confere("agente: lembrete pelo EventKit não abre app nem roda osascript", ag.osascript(ag.AS_LEMBRETE, "t", "2026", "11", "20", "9", "n", "Heimdall") == "criado" and not abriu, abriu)
+
+print("\nTUDO OK" if not falhas else f"\nFALHAS: {falhas}")
+sys.exit(1 if falhas else 0)

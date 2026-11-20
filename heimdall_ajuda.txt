@@ -15,6 +15,7 @@ Opções:
   -t, --terminal   sobe o Open Terminal (porta 8002)
   -n, --n8n        sobe o n8n (automações, porta 5678)
   -a, --agent      sobe o agente do Mac (ponte do n8n com Notas e Lembretes, porta 8003)
+                   Lembretes e Calendário usam o EventKit (sem abrir os apps); veja heimdall_eventkit.py --status. O Second Brain só consulta o Notas quando há nota nova.
   -i, --ingest     indexa em knowledge/ só o que mudou antes de subir o LiteLLM
   -d, --docling    sobe o Docling (leitura de PDFs com OCR, porta 5001)
   -u, --update     atualiza as imagens Docker (SearXNG, Qdrant e Open WebUI), com backup
