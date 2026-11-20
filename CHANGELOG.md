@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: Tab livre, Ctrl+I completa, o campo muda uma vez só ao executar
+- O Tab deixou de ser capturado: volta a mover o foco pela página como em qualquer lugar. Para completar comandos, arquivos e pastas use só Ctrl+I.
+- Ao apertar Enter, a linha digitada fica no campo até a saída chegar e então o campo troca de texto uma única vez. Antes ele apagava a linha e depois trocava tudo, e o VoiceOver lia um resquício do comando anterior no meio disso.
+
 ## 2026-11-19 - Controls: prompt sem espaço, minutos por extenso, foco em 0,3 s, Ctrl+I
 - O prompt agora termina em "%" sem espaço (heimdall-ai%), para o VoiceOver não ler "espaço" ao entrar no campo. No cabeçalho de cada comando ainda há um espaço entre o prompt e o comando (heimdall-ai% ls).
 - Duração com minutos: 1min e 5s, 2min (número sempre colado na unidade).

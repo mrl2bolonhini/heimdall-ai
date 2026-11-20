@@ -312,7 +312,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
         '<p>Funcionam em qualquer ponto desta página. Option é a tecla Alt do Mac.</p><ol>'
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
-        '<li>Ctrl+I (ou Tab, quando o navegador o entregar): completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I completa (é o Tab do terminal de verdade). O Tab em si pode ser tomado pelo VoiceOver ou pelo Safari antes de chegar à página; então use Ctrl+I. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
+        '<li>Ctrl+I: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I completa (é o Tab do terminal de verdade). O Tab fica livre para mover o foco pela página. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
         '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
         '<li>Option+Shift+C: copia a última saída. Option+Shift+1 até 9: copia as últimas 1 a 9 saídas. Option+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
         '<li>Option+Shift+U: leva o cursor ao início da última saída; depois leia com VO+A ou desça com a seta. Option+Shift+O: o leitor de tela lê o começo da última saída.</li>'
@@ -373,7 +373,7 @@ var rodando = false, ultimaVersao = parseInt(ta.dataset.versao || '0', 10), time
 var inicioUltima = -1, historico = [], hi = -1, apontador = false, pendente = false;
 var hist = document.getElementById('historico'), nHist = parseInt(hist.dataset.n || '0', 10);
 ta.spellcheck = false; ta.setAttribute('autocorrect', 'off'); ta.setAttribute('autocapitalize', 'off');
-var alterna = false;
+var alterna = false, enviado = null;
 function dizer(t){ estado.textContent = ''; alterna = !alterna; setTimeout(function(){ estado.textContent = t + (alterna ? '\u200b' : ''); }, 120); }
 function digitado(){ return ta.value.indexOf(base) === 0 ? ta.value.slice(base.length) : ''; }
 function post(url, dados){
@@ -393,8 +393,10 @@ function atualizarCampo(el, novo){
 function aplicar(s){
   var novo = s.texto + (s.rodando ? '' : s.prompt);
   if (novo !== base) {
-    var resto = digitado(), a = ta.selectionStart, b = ta.selectionEnd, noFim = a >= base.length, desl = ta.scrollTop;
-    var comeco = novo.indexOf(base) === 0 && base.length > 0;
+    var resto = digitado(), trocou = false; if (enviado !== null && resto === enviado) { resto = ''; trocou = true; } enviado = null;
+    var a = ta.selectionStart, b = ta.selectionEnd, noFim = a >= base.length, desl = ta.scrollTop;
+    var comeco = !trocou && novo.indexOf(base) === 0 && base.length > 0;
+    if (trocou) { a = b = base.length; }
     if (comeco) { ta.setRangeText(novo.slice(base.length), base.length, base.length, 'preserve'); } else { ta.value = novo + resto; }
     if (noFim) { ta.setSelectionRange(novo.length + (a - base.length), novo.length + (b - base.length)); ta.scrollTop = ta.scrollHeight; }
     else { var m = ta.value.length; ta.setSelectionRange(Math.min(a, m), Math.min(b, m)); ta.scrollTop = comeco ? desl : ta.scrollHeight; }
@@ -427,9 +429,9 @@ function enviar(){
   }
   if (!t.trim()) { return; }
   historico.push(t); hi = -1;
-  ta.value = base; ta.setSelectionRange(base.length, base.length);
+  enviado = t;                                           // a linha digitada fica até a saída chegar: o campo muda uma vez só, não duas
   post('/terminal/executar', {comando: t}).then(function(r){
-    if (r.erro) { dizer(r.erro); ta.value = base + t; ta.setSelectionRange(ta.value.length, ta.value.length); return; }
+    if (r.erro) { enviado = null; dizer(r.erro); return; }
     vistos[r.n] = 'rodando'; rodando = true; buscarAgora();
   });
 }
@@ -517,24 +519,16 @@ histAoFim();
 function tentarCompletar(){
   var linha = digitado();
   if (ta.selectionStart < base.length) { fimDoCampo(); }
-  if (rodando) { dizer('Há um programa em execução: o Tab não completa.'); return; }
+  if (rodando) { dizer('Há um programa em execução: Ctrl+I não completa.'); return; }
   if (!linha.length) { dizer('Nada digitado para completar.'); return; }
   if (pendente) { return; }                                                          // a resposta do Tab anterior ainda não chegou: espera
   completar(linha);
 }
-var ultimoTab = 0;
-function ehTab(ev){ return (ev.key === 'Tab' || ev.code === 'Tab' || ev.keyCode === 9) && !ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey; }
-// fase de captura na janela: pega o Tab antes de qualquer outro tratamento. No campo, o Tab é sempre de completar; para sair use Option+Tab ou Shift+Tab.
-// Ctrl+I faz o mesmo (no terminal de verdade Ctrl+I é o Tab), caso o leitor de tela ou o navegador não entregue o Tab à página.
+// Ctrl+I completa (no terminal de verdade Ctrl+I é o Tab). O Tab em si fica livre para mover o foco pela página, como em qualquer lugar.
 window.addEventListener('keydown', function(ev){
   if (ev.isComposing || document.activeElement !== ta) { return; }
-  if (ehTab(ev)) { ultimoTab = Date.now(); ev.preventDefault(); ev.stopPropagation(); tentarCompletar(); return; }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyI') { ev.preventDefault(); ev.stopPropagation(); tentarCompletar(); }
 }, true);
-// rede de segurança: se o foco saiu do campo logo depois de um Tab (o navegador ignorou o preventDefault), o foco volta e o Tab completa
-ta.addEventListener('blur', function(ev){
-  if (Date.now() - ultimoTab < 300 && !apontador) { ultimoTab = 0; setTimeout(function(){ ta.focus(); }, 0); }
-});
 ta.addEventListener('keydown', function(ev){
   if (ev.isComposing) { return; }
   if (ev.key === 'Enter' && !ev.shiftKey && !ev.ctrlKey && !ev.altKey && !ev.metaKey) { ev.preventDefault(); enviar(); return; }
