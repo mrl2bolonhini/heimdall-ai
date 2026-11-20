@@ -352,7 +352,9 @@ tell application "Notes" to return (count of notes) as string
 # Por isso o Heimdall abre cada um escondido e em segundo plano (open -g -j), e fecha de novo depois de alguns segundos
 # sem uso, mas SÓ se foi ele que abriu e se você não estiver com o app na frente. Se você já deixou o app aberto, nada muda.
 APPS_ALVO = ("Notes", "Reminders", "Calendar")
-SOSSEGO_APP = 20          # segundos sem uso até fechar um app que o Heimdall abriu
+SOSSEGO_APP = 20          # segundos sem uso até fechar um app que o Heimdall abriu (só se HEIMDALL_APPS_FECHAR=1)
+# Por padrão o Heimdall NÃO fecha o app depois de usar: fechar e abrir de novo a cada ciclo é justamente o que faz o app aparecer toda hora.
+FECHAR_APPS = os.environ.get("HEIMDALL_APPS_FECHAR", "0").strip() == "1"
 _apps_lock = threading.RLock()
 _apps_nossos: set[str] = set()                   # apps abertos pelo Heimdall
 _apps_timers: dict[str, threading.Timer] = {}    # fechamento agendado de cada um
@@ -405,6 +407,8 @@ def _preparar_apps(script: str) -> list[str]:
                 t.cancel()  # voltou a ser usado: adia o fechamento
             if nome in _apps_nossos or _app_rodando(nome):
                 continue  # já aberto (por nós ou por você)
+            primeira = (script.strip().splitlines() or [""])[0][:60]
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} abrindo {nome} escondido (pedido: {primeira})\n")
             try:
                 subprocess.run(["open", "-g", "-j", "-a", nome], capture_output=True, timeout=20)
             except Exception:  # noqa: BLE001
@@ -418,6 +422,8 @@ def _preparar_apps(script: str) -> list[str]:
 
 
 def _agendar_fechamento(usados: list[str]) -> None:
+    if not FECHAR_APPS:
+        return
     with _apps_lock:
         for nome in usados:
             if nome not in _apps_nossos:

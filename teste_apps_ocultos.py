@@ -44,6 +44,7 @@ def falso(cmd, **kw):
 
 ag.subprocess = SimpleNamespace(run=falso, TimeoutExpired=subprocess.TimeoutExpired)
 ag.SOSSEGO_APP = 0.3
+ag.FECHAR_APPS = True
 SCRIPT = 'tell application "Notes" to return "x"'
 
 # 1. app fechado: abre escondido, roda o script e fecha depois
@@ -65,6 +66,17 @@ ag.osascript(SCRIPT)
 time.sleep(0.8)
 confere("não fecha o app se ele está na frente", "Notes" in rodando and ag._apps_nossos == set(), (rodando, ag._apps_nossos))
 na_frente[0] = ""; rodando.discard("Notes")
+
+# 3b. padrão: não fecha o app depois de usar (evita abrir e fechar a cada ciclo)
+ag.FECHAR_APPS = False
+chamadas.clear(); rodando.discard("Notes"); ag._apps_nossos.clear()
+ag.osascript(SCRIPT)
+time.sleep(0.8)
+confere("por padrão o Notas continua aberto (escondido) e não é fechado", "Notes" in rodando and not any(c[:3] == ["osascript", "-e", 'tell application "Notes" to quit'] for c in chamadas), chamadas)
+chamadas.clear()
+ag.osascript(SCRIPT)
+confere("a chamada seguinte não abre o app de novo", not any(c[0] == "open" for c in chamadas), chamadas)
+ag.FECHAR_APPS = True; rodando.discard("Notes"); ag._apps_nossos.clear()
 
 # 4. script que não usa os apps: não abre nada
 chamadas.clear()
