@@ -397,9 +397,31 @@ def _apps_do_script(script: str) -> list[str]:
     return [n for n in APPS_ALVO if f'application "{n}"' in script]
 
 
-def _preparar_apps(script: str) -> list[str]:
-    """Abre escondido os apps que o script usa e que estão fechados. Devolve os apps usados."""
+BUNDLES_APPS = {"Notes": "com.apple.Notes", "Reminders": "com.apple.reminders", "Calendar": "com.apple.iCal"}
+ASSENTAR_APP_S = 1.2      # espera o app terminar de abrir antes de escondê-lo e de mandar o AppleScript
+
+
+def _esconder_app(nome: str) -> None:
+    """Esconde o app (como Command+H), sem permissão especial. Só é chamado logo depois de o próprio Heimdall abri-lo:
+    o Notas e o Lembretes passam à frente ao abrir mesmo com open -g -j."""
+    bundle = BUNDLES_APPS.get(nome)
+    if not bundle:
+        return
+    # no JXA um método sem argumento pode ser chamado como propriedade ou como função; o código aceita os dois jeitos
+    js = ("ObjC.import('AppKit'); var a = $.NSRunningApplication.runningApplicationsWithBundleIdentifier('%s'); "
+          "for (var i = 0; i < a.count; i++) { var r = a.objectAtIndex(i); var h = r.hide; if (typeof h === 'function') { r.hide(); } }" % bundle)
+    try:
+        r = subprocess.run(["osascript", "-l", "JavaScript", "-e", js], capture_output=True, text=True, timeout=20)
+        if r.returncode != 0:
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} não consegui esconder {nome}: {(r.stderr or r.stdout).strip()[:200]}\n")
+    except Exception as e:  # noqa: BLE001
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} não consegui esconder {nome}: {type(e).__name__}\n")
+
+
+def _preparar_apps(script: str) -> tuple[list[str], list[str]]:
+    """Abre escondido os apps que o script usa e que estão fechados. Devolve (apps usados, apps que o Heimdall acabou de abrir)."""
     usados = _apps_do_script(script)
+    abertos_agora: list[str] = []
     with _apps_lock:
         for nome in usados:
             t = _apps_timers.pop(nome, None)
@@ -416,9 +438,13 @@ def _preparar_apps(script: str) -> list[str]:
             for _ in range(60):  # espera até 15 s o app subir
                 if _app_rodando(nome):
                     _apps_nossos.add(nome)
+                    abertos_agora.append(nome)
                     break
                 time.sleep(0.25)
-    return usados
+            if nome in abertos_agora:
+                time.sleep(ASSENTAR_APP_S)   # deixa o app terminar de abrir (ele passa à frente ao final)
+                _esconder_app(nome)
+    return usados, abertos_agora
 
 
 def _agendar_fechamento(usados: list[str]) -> None:
@@ -440,7 +466,7 @@ def _agendar_fechamento(usados: list[str]) -> None:
 def osascript(script: str, *args: str, timeout: int = 0) -> str:
     """Roda um AppleScript (arquivo temporário) com argumentos e devolve a saída.
     Os apps Notas, Lembretes e Calendário são abertos escondidos (sem aparecer na tela) e fechados depois, se estavam fechados."""
-    usados = _preparar_apps(script)
+    usados, abertos_agora = _preparar_apps(script)
     with tempfile.NamedTemporaryFile("w", suffix=".applescript", delete=False, encoding="utf-8") as f:
         f.write(script)
         caminho = f.name
@@ -453,6 +479,8 @@ def osascript(script: str, *args: str, timeout: int = 0) -> str:
     except subprocess.TimeoutExpired:
         raise RuntimeError("o macOS não respondeu em %d s (provável pedido de permissão aberto na tela do Mac)" % limite) from None
     finally:
+        for nome in abertos_agora:
+            _esconder_app(nome)   # esconde de novo no fim da primeira chamada, caso o app tenha passado à frente durante ela
         _agendar_fechamento(usados)
         try:
             os.unlink(caminho)

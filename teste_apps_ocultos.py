@@ -45,6 +45,7 @@ def falso(cmd, **kw):
 ag.subprocess = SimpleNamespace(run=falso, TimeoutExpired=subprocess.TimeoutExpired)
 ag.SOSSEGO_APP = 0.3
 ag.FECHAR_APPS = True
+ag.ASSENTAR_APP_S = 0
 SCRIPT = 'tell application "Notes" to return "x"'
 
 # 1. app fechado: abre escondido, roda o script e fecha depois
@@ -54,11 +55,14 @@ confere("abre o Notas escondido e em segundo plano", ["open", "-g", "-j", "-a", 
 time.sleep(0.8)
 confere("fecha o Notas que o próprio Heimdall abriu", "Notes" not in rodando and ag._apps_nossos == set(), (rodando, ag._apps_nossos))
 
+esconderam = [c for c in chamadas if c[:3] == ["osascript", "-l", "JavaScript"] and "com.apple.Notes" in c[-1]]
+confere("esconde o Notas logo depois de abri-lo e de novo no fim da chamada", len(esconderam) == 2, chamadas)
+
 # 2. app que você já deixou aberto: nunca abre nem fecha
 chamadas.clear(); rodando.add("Notes")
 ag.osascript(SCRIPT)
 time.sleep(0.8)
-confere("não mexe num Notas que já estava aberto", not any(c[0] == "open" for c in chamadas) and "Notes" in rodando, chamadas)
+confere("não mexe num Notas que já estava aberto (nem abre, nem esconde, nem fecha)", not any(c[0] == "open" or c[:3] == ["osascript", "-l", "JavaScript"] for c in chamadas) and "Notes" in rodando, chamadas)
 
 # 3. você passou a usar o app (fica na frente): não fecha
 rodando.discard("Notes"); chamadas.clear(); na_frente[0] = "Notes"
