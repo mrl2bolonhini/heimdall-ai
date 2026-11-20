@@ -79,7 +79,7 @@ confere("convidado não executa comando", s == 401)
 s, corpo, r = req("GET", "/terminal", cookie=token)
 csp = r.getheader("Content-Security-Policy") or ""
 nonce = re.search(r"nonce-([\w-]+)", csp)
-confere("terminal: um só h1, campo único com rótulo, região de status", s == 200 and corpo.count("<h1") == 1 and 'for="terminal"' in corpo and '<textarea class="terminal" id="terminal"' in corpo and 'role="status"' in corpo, corpo[:300])
+confere("terminal: um só h1, campo único com rótulo, região de aviso", s == 200 and corpo.count("<h1") == 1 and 'for="terminal"' in corpo and '<textarea class="terminal" id="terminal"' in corpo and 'role="alert"' in corpo, corpo[:300])
 confere("terminal: sem campo separado de resposta; lista de atalhos presente", "Resposta ao programa" not in corpo and 'id="h-atalhos"' in corpo and "Option+Shift+C" in corpo and "Ctrl+C" in corpo and "Ctrl+L" in corpo)
 confere("terminal: script só com nonce, sem manipulador inline", bool(nonce) and f'<script nonce="{nonce.group(1)}">' in corpo and " onclick=" not in corpo and "javascript:" not in corpo)
 confere("terminal: botões de copiar a última e as últimas N", "Copiar a última saída" in corpo and 'id="qtd"' in corpo and 'for="qtd"' in corpo and "Copiar as últimas saídas" in corpo)
@@ -123,7 +123,7 @@ confere("histórico à parte traz os comandos anteriores ao último, do mais ant
 st_h = json.loads(req("GET", f"/terminal/estado?desde=0&h={st['n_hist']}", cookie=token, extra={"X-Heimdall-Ajax": "1"})[1])
 confere("histórico só vai quando mudou (h igual: não manda de novo)", st_h["historico"] is None and st_h["n_hist"] == st["n_hist"])
 confere("a página traz o histórico ACIMA do terminal, sem verificação de ortografia e com foco automático no terminal",
-        pag.index('id="historico"') < pag.index('id="terminal"') and 'id="historico" aria-readonly="true"' in pag and "readonly" not in pag.split('id="historico"')[1].split(">")[0].replace("aria-readonly", "") and 'spellcheck="false" autofocus' in pag, pag[pag.index('id="historico"') - 60:pag.index('id="historico"') + 200])
+        pag.index('id="historico"') < pag.index('id="terminal"') and 'id="historico" aria-readonly="true"' in pag and '<label for="historico">Histórico</label>' in pag and '<label for="terminal">Terminal</label>' in pag and "readonly" not in pag.split('id="historico"')[1].split(">")[0].replace("aria-readonly", "") and 'spellcheck="false" autofocus' in pag, pag[pag.index('id="historico"') - 60:pag.index('id="historico"') + 200])
 confere("aviso curto traz a saída; histórico de comandos no JSON", "Saída: verm" in b4["aviso"] and any("printf" in c for c in st["comandos"]), b4["aviso"])
 
 # --- completar com Tab
@@ -144,6 +144,13 @@ confere("Tab: espaço no nome é escapado", r4["palavra_nova"] == "sub\\ dir/", 
 confere("Tab: arquivo oculto só aparece se a palavra começar com ponto", ".oculto" not in hcx.completar(str(dc), "cat ")["opcoes"] and ".oculto" in hcx.completar(str(dc), "cat .")["opcoes"])
 r5 = hcx.completar(str(dc), "ec")
 confere("Tab: primeira palavra completa comando", r5["palavra_nova"] == "echo " and r5["inicio"] == 0, r5)
+_h = Path(_tf.mkdtemp(prefix="home_")); (_h / "heimdall-ai").mkdir(); (_h / "heimfile").write_text("x")
+_ant = os.environ.get("HOME"); os.environ["HOME"] = str(_h)
+rcd = hcx.completar(str(dc), "cd heim")
+confere("Tab: cd heim (sem pasta parecida na atual) completa pela pasta pessoal, só pastas", rcd["palavra_nova"] == "~/heimdall-ai/" and rcd["inicio"] == 3 and rcd["opcoes"] == ["heimdall-ai/"], rcd)
+confere("Tab: cd só oferece pastas", hcx.completar(str(dc), "cd sub")["palavra_nova"] == "sub\\ dir/" and "beta.txt" not in hcx.completar(str(dc), "cd ")["opcoes"])
+if _ant is None: os.environ.pop("HOME")
+else: os.environ["HOME"] = _ant
 confere("Tab: nada que combine devolve lista vazia", hcx.completar(str(dc), "cat zzz")["opcoes"] == [])
 confere("Tab: depois de ; volta a completar comando", hcx.completar(str(dc), "ls; ech")["palavra_nova"] == "echo ")
 s_, corpo_, _ = req("GET", "/terminal/completar?linha=" + urllib.parse.quote("ls /us"), cookie=token, extra={"X-Heimdall-Ajax": "1"})

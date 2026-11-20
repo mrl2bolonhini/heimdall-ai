@@ -174,7 +174,7 @@ with sync_playwright() as pw:
     pg.keyboard.press("Enter")
     espera(lambda: valor().count("[concluído") >= 4)
     pg.keyboard.press("Control+KeyL")
-    confere("Ctrl+L limpa as saídas: sobra só o prompt", espera(lambda: valor().count("\n") == 0 and valor().endswith(" % ")) and "Saídas limpas" in estado(), valor())
+    confere("Ctrl+L limpa as saídas: sobra só o prompt", espera(lambda: valor().count("\n") == 0 and valor().endswith(" % ")) and espera(lambda: "Saídas limpas" in estado()), valor())
     pg.keyboard.type("echo ${HD_N:-vazio}")
     pg.keyboard.press("Enter")
     confere("o shell mantém as variáveis depois de limpar", espera(lambda: "\n7\n" in valor()), valor())
@@ -200,11 +200,20 @@ with sync_playwright() as pw:
     pg.wait_for_timeout(400)
     confere("Tab que não muda nada ainda fica no campo", pg.evaluate("document.activeElement.id") == "terminal")
     pg.keyboard.press("Tab")
-    confere("o Tab seguinte, de novo sem efeito, deixa o foco sair do campo", espera(lambda: pg.evaluate("document.activeElement.id") != "terminal"), pg.evaluate("document.activeElement.id"))
-    pg.keyboard.press("Alt+Shift+KeyT")
+    confere("Tab sem efeito de novo continua no campo (não sai)", pg.evaluate("document.activeElement.id") == "terminal")
     pg.keyboard.press("Control+KeyC")
     pg.keyboard.press("Tab")
-    confere("Tab com a linha vazia não é capturado (passa ao próximo item)", pg.evaluate("document.activeElement.id") != "terminal")
+    pg.wait_for_timeout(400)
+    confere("Tab com a linha vazia também fica no campo e avisa", pg.evaluate("document.activeElement.id") == "terminal" and "Nada digitado" in estado(), estado())
+    pg.keyboard.press("Alt+Tab")
+    pg.keyboard.press("Alt+Shift+KeyT")
+    confere("Option+Shift+T volta ao campo", pg.evaluate("document.activeElement.id") == "terminal")
+
+    # nomes dos campos e histórico no fim
+    confere("os campos se chamam só Histórico e Terminal", pg.evaluate("[document.querySelector('label[for=historico]').textContent, document.querySelector('label[for=terminal]').textContent]") == ["Histórico", "Terminal"])
+    pg.keyboard.press("Shift+Tab")
+    confere("histórico: o cursor entra no fim", pg.evaluate("document.activeElement.id") == "historico" and pg.locator("#historico").evaluate("e => e.selectionStart === e.value.length"))
+    pg.keyboard.press("Tab")
     pg.keyboard.press("Alt+Shift+KeyT")
 
     # lista de atalhos

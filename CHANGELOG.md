@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: rótulos curtos, Tab que nunca sai, cd completa pastas, avisos firmes
+- Os campos se chamam apenas Histórico e Terminal (sem frase longa nem título extra). O cursor do Histórico entra sempre no fim e o campo acompanha o fim quando chega comando novo, para ler do mais novo para o mais antigo subindo com a seta.
+- No campo Terminal o Tab é sempre de completar: não sai mais do campo (para sair use Option+Tab ou Shift+Tab). Sem nada digitado ou com programa rodando, ele só avisa. Depois de cd ou pushd completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).
+- Os avisos falados (atalhos, Tab, fim de comando) usam região assertiva e se repetem mesmo quando o texto é igual, para o VoiceOver não engolir.
+- Erros de ortografia: a página já desliga a verificação nos dois campos; o que sobra vem do Safari ou do VoiceOver (ver LEIAME_controls.txt).
+
 ## 2026-11-19 - Controls: foco no terminal, nenhuma letra perdida, histórico acima
 - O foco vem sempre no campo Terminal: ao abrir a página, ao recarregar e ao voltar para a aba do navegador. O cursor entra sempre depois da última letra, tanto ao focar por Tab quanto automaticamente; só o clique do mouse escolhe outro ponto.
 - A primeira letra digitada não se perde mais. Antes, se o cursor estivesse na saída, a proteção contra editar a saída descartava a letra; agora a letra vai para o fim da linha de digitação (vale também para colar).

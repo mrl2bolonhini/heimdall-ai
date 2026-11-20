@@ -141,6 +141,18 @@ def completar(pasta: str, linha: str) -> dict:
         except OSError:
             itens = []
         itens.sort()
+    if not comando and re.match(r"\s*(cd|pushd)\s*$", antes.split(";")[-1].split("|")[-1].split("&")[-1]):
+        itens = [(n, d_) for n, d_ in itens if d_]                       # cd só aceita pastas
+        if not itens and "/" not in sem_esc:                              # nada na pasta atual: tenta na pasta pessoal
+            try:
+                with os.scandir(os.path.expanduser("~")) as it:
+                    outros = sorted((en.name, True) for en in it if en.name.startswith(sem_esc) and (sem_esc.startswith(".") or not en.name.startswith(".")) and en.is_dir())
+            except OSError:
+                outros = []
+            if outros:
+                nomes = [n for n, _ in outros]
+                novo = _ESCAPAR.sub(r"\\\1", nomes[0] if len(nomes) == 1 else os.path.commonprefix(nomes))
+                return {"inicio": inicio, "palavra_nova": "~/" + novo + ("/" if len(nomes) == 1 else ""), "opcoes": [n + "/" for n in nomes]}
     itens = itens[:500]
     if not itens:
         return {"inicio": inicio, "palavra_nova": palavra, "opcoes": []}
@@ -275,17 +287,15 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
     inicial = t["texto"] + ("" if sh.rodando() else prompt_de(sh.pasta))
     hist = t["historico"]
     corpo = (
-        '<p id="estado" role="status" aria-live="polite"></p>'
+        '<p id="estado" role="alert" aria-live="assertive" aria-atomic="true"></p>'
         f'<input type="hidden" id="csrf" value="{e(sess["csrf"])}">'
         '<p>O foco já vem no campo Terminal. Digite o comando na última linha e aperte Enter. A saída aparece no próprio campo, logo abaixo do comando. '
-        'Se um programa estiver perguntando algo, o que você digitar vai para ele. O campo Terminal mostra só o último comando; os anteriores ficam no campo Histórico, logo acima. '
+        'Se um programa estiver perguntando algo, o que você digitar vai para ele. O campo Terminal mostra só o último comando; os anteriores ficam no campo Histórico, logo acima, com o cursor no fim (do mais novo para o mais antigo, subindo com a seta). '
         'Tab completa comandos e nomes de arquivos. Option+Shift+H leva à lista de atalhos.</p>'
-        '<section aria-labelledby="h-hist"><h2 id="h-hist">Histórico</h2>'
-        '<label for="historico">Comandos e saídas anteriores ao atual, do mais antigo ao mais novo (somente leitura)</label>'
-        f'<textarea class="terminal historico" id="historico" aria-readonly="true" inputmode="none" spellcheck="false" data-n="{t["n_hist"]}">{e(hist)}</textarea></section>'
-        '<h2 id="h-term">Linha de comando</h2>'
-        '<label for="terminal">Terminal</label>'
-        f'<textarea class="terminal" id="terminal" spellcheck="false" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}">{e(inicial)}</textarea>'
+        '<div><label for="historico">Histórico</label>'
+        f'<textarea class="terminal historico" id="historico" aria-readonly="true" inputmode="none" spellcheck="false" data-n="{t["n_hist"]}">{e(hist)}</textarea></div>'
+        '<div><label for="terminal">Terminal</label>'
+        f'<textarea class="terminal" id="terminal" spellcheck="false" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" data-versao="{sh.versao}">{e(inicial)}</textarea></div>'
         '<section aria-labelledby="h-ac"><h2 id="h-ac">Ações</h2><div class="linha-acoes">'
         '<div><button type="button" id="bt-copiar-ultima">Copiar a última saída (Option+Shift+C)</button></div>'
         '<div><label for="qtd">Quantas últimas saídas</label><input id="qtd" type="number" min="1" max="300" value="3" inputmode="numeric">'
@@ -302,7 +312,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
         '<p>Funcionam em qualquer ponto desta página. Option é a tecla Alt do Mac.</p><ol>'
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
-        '<li>Tab: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Se nada mudar, o Tab seguinte sai do campo, como de costume. Sem nada digitado, o Tab só passa para o próximo item.</li>'
+        '<li>Tab: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. No campo, o Tab nunca sai: para sair use Option+Tab ou Shift+Tab. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
         '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
         '<li>Option+Shift+C: copia a última saída. Option+Shift+1 até 9: copia as últimas 1 a 9 saídas. Option+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
         '<li>Option+Shift+U: leva o cursor ao início da última saída; depois leia com VO+A ou desça com a seta. Option+Shift+O: o leitor de tela lê o começo da última saída.</li>'
@@ -360,10 +370,11 @@ var ta = document.getElementById('terminal');
 var estado = document.getElementById('estado');
 var base = ta.value;                 // tudo o que o servidor mostra; o que vem depois é o que a pessoa está digitando
 var rodando = false, ultimaVersao = parseInt(ta.dataset.versao || '0', 10), timer = null, vistos = {}, primeira = true;
-var inicioUltima = -1, historico = [], hi = -1, tabParado = false, apontador = false, pendente = false;
+var inicioUltima = -1, historico = [], hi = -1, apontador = false, pendente = false;
 var hist = document.getElementById('historico'), nHist = parseInt(hist.dataset.n || '0', 10);
 ta.spellcheck = false; ta.setAttribute('autocorrect', 'off'); ta.setAttribute('autocapitalize', 'off');
-function dizer(t){ estado.textContent = ''; setTimeout(function(){ estado.textContent = t; }, 60); }
+var alterna = false;
+function dizer(t){ estado.textContent = ''; alterna = !alterna; setTimeout(function(){ estado.textContent = t + (alterna ? '\u200b' : ''); }, 120); }
 function digitado(){ return ta.value.indexOf(base) === 0 ? ta.value.slice(base.length) : ''; }
 function post(url, dados){
   var corpo = new URLSearchParams(dados || {}); corpo.set('csrf', csrf);
@@ -377,6 +388,7 @@ function atualizarCampo(el, novo){
   if (antigo.length > 0 && novo.indexOf(antigo) === 0) { el.setRangeText(novo.slice(antigo.length), antigo.length, antigo.length, 'preserve'); }
   else { el.value = novo; }
   var m = el.value.length; el.setSelectionRange(Math.min(a, m), Math.min(b, m)); el.scrollTop = desl;
+  if (el === hist && a >= antigo.length) { histAoFim(); }       // o histórico acompanha o fim, de onde se lê do mais novo para o mais antigo
 }
 function aplicar(s){
   var novo = s.texto + (s.rodando ? '' : s.prompt);
@@ -471,11 +483,11 @@ function completar(linha){
     pendente = false;
     if (digitado() !== linha) { return; }            // a pessoa continuou digitando enquanto a resposta vinha
     var ops = r.opcoes || [], nova = r.palavra_nova === undefined ? pre : pre.slice(0, r.inicio) + r.palavra_nova;
-    if (nova !== pre) { ta.value = base + nova + pos; ta.setSelectionRange(base.length + nova.length, base.length + nova.length); tabParado = false; } else { tabParado = true; }
+    if (nova !== pre) { ta.value = base + nova + pos; ta.setSelectionRange(base.length + nova.length, base.length + nova.length); } 
     if (!ops.length) { dizer('Sem opções.'); }
     else if (ops.length === 1) { dizer(ops[0]); }
     else { dizer(ops.length + ' opções: ' + ops.slice(0, 25).join(', ') + (ops.length > 25 ? ' e mais ' + (ops.length - 25) : '') + '.'); }
-  }).catch(function(){ pendente = false; tabParado = true; });
+  }).catch(function(){ pendente = false; dizer('Não consegui completar.'); });
 }
 function irAoCampo(){ ta.focus(); fimDoCampo(); }
 // só a última linha pode ser editada: o resto é a saída e fica protegido. Se o cursor estiver na saída, o que a pessoa digita vai para o fim, sem perder letra
@@ -495,15 +507,23 @@ ta.addEventListener('beforeinput', function(ev){
 // o histórico é um campo normal (as setas e o cursor funcionam como em qualquer campo), mas nada pode ser alterado nele
 hist.addEventListener('beforeinput', function(ev){ ev.preventDefault(); });
 hist.spellcheck = false;
+var histApontador = false;
+function histAoFim(){ hist.setSelectionRange(hist.value.length, hist.value.length); hist.scrollTop = hist.scrollHeight; }
+hist.addEventListener('mousedown', function(){ histApontador = true; });
+hist.addEventListener('mouseup', function(){ histApontador = false; });
+hist.addEventListener('blur', function(){ histApontador = false; });
+hist.addEventListener('focus', function(){ if (!histApontador) { histAoFim(); setTimeout(function(){ if (!histApontador) { histAoFim(); } }, 0); } });
+histAoFim();
 ta.addEventListener('keydown', function(ev){
   if (ev.isComposing) { return; }
-  if (ev.key !== 'Tab') { tabParado = false; }
-  if (ev.key === 'Tab' && !ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey) {
+    if (ev.key === 'Tab' && !ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey) {
     var linha = digitado();
-    if (rodando || !linha.length || ta.selectionStart < base.length) { return; }   // sem nada a completar, o Tab é o de sempre: passa ao próximo item
-    if (pendente) { ev.preventDefault(); return; }                                   // a resposta do Tab anterior ainda não chegou: espera
-    if (tabParado) { tabParado = false; return; }                                    // Tab sem efeito duas vezes seguidas: deixa sair do campo
-    ev.preventDefault(); completar(linha); return;
+    ev.preventDefault();                                                               // no campo, o Tab é sempre de completar; para sair use Option+Tab ou Shift+Tab
+    if (ta.selectionStart < base.length) { fimDoCampo(); }
+    if (rodando) { dizer('Há um programa em execução: o Tab não completa.'); return; }
+    if (!linha.length) { dizer('Nada digitado para completar.'); return; }
+    if (pendente) { return; }                                                          // a resposta do Tab anterior ainda não chegou: espera
+    completar(linha); return;
   }
   if (ev.key === 'Enter' && !ev.shiftKey && !ev.ctrlKey && !ev.altKey && !ev.metaKey) { ev.preventDefault(); enviar(); return; }
   if (ev.ctrlKey && !ev.altKey && !ev.metaKey && !ev.shiftKey && ev.code === 'KeyC') {
