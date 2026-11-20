@@ -172,7 +172,7 @@ confere("pedido grande de saídas é limitado, não quebra", s == 200 and "/usr"
 
 n_longo, st_l = exec_("seq 1 40")
 bl = next(b for b in st_l["blocos"] if b["n"] == n_longo)
-confere("aviso de saída longa conta as linhas e cita o atalho", "40 linhas" in bl["aviso"] and "Option+Shift+U" in bl["aviso"], bl["aviso"])
+confere("aviso de saída longa traz a saída inteira", "Saída: 1\n2\n3" in bl["aviso"] and bl["aviso"].rstrip().endswith("40"), bl["aviso"][-60:])
 
 # --- programa que pergunta, e interrupção
 s, corpo, _ = req("POST", "/terminal/executar", {"comando": 'read -p "nome? " x; echo ola $x', "csrf": CSRF}, cookie=token, extra={"X-Heimdall-Ajax": "1"})

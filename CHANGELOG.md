@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-19 - Controls: a saída inteira é lida ao fim do comando
+- Ao terminar um comando o leitor de tela fala a situação e a saída inteira, por maior que seja (antes, saídas com mais de 12 linhas só tinham a contagem de linhas). Control interrompe a fala do VoiceOver. Option+Shift+O também lê a última saída inteira.
+
 ## 2026-11-19 - Controls: leitura mais limpa ao entrar no campo e ao fim do comando
 - O cursor do Terminal já fica no fim enquanto o campo não tem o foco (ao sair dele e a cada atualização), então ao entrar nada se mexe e o VoiceOver lê só o nome do campo; sem atraso para ajustar.
 - A situação do comando ficou curta: "concluído em 0s". O código só aparece quando é erro ("código 2, em 0,3s"). O aviso falado não conta mais comandos nem diz "comando".

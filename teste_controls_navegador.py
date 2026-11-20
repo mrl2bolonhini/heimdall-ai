@@ -132,7 +132,7 @@ with sync_playwright() as pw:
     pg.keyboard.type("seq 1 60")
     pg.keyboard.press("Enter")
     espera(lambda: "[concluído" in valor().split("seq 1 60")[-1])
-    confere("aviso de saída longa cita os atalhos", espera(lambda: "60 linhas" in estado() and "Option+Shift+U" in estado()), estado())
+    confere("aviso de saída longa fala a saída inteira", espera(lambda: "Saída: 1" in estado() and estado().replace("\u200b", "").rstrip().endswith("60")), estado()[-40:])
     pg.keyboard.press("Alt+Shift+KeyU")
     pos = ta.evaluate("e => e.value.slice(e.selectionStart, e.selectionStart + 6)")
     confere("Option+Shift+U leva o cursor ao início da última saída", pos.startswith("1\n2\n3"), pos)

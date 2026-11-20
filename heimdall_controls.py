@@ -256,15 +256,13 @@ def transcricao(sh, com_historico: bool = True) -> dict:
 
 
 def aviso_do_bloco(sh, b) -> str:
-    """O que o leitor de tela fala quando um comando termina: situação e, se for curta, a própria saída."""
+    """O que o leitor de tela fala quando um comando termina: a situação e a saída inteira."""
     saida, _ = _saida_exibida(sh, b)
     linhas = saida.strip().splitlines()
     if not linhas:
         resumo = "Sem saída."
-    elif len(saida.strip()) <= 600 and len(linhas) <= 12:
-        resumo = "Saída: " + saida.strip()
     else:
-        resumo = f"Saída com {len(linhas)} linhas. Option+Shift+U leva o cursor ao início dela; Option+Shift+O lê o começo."
+        resumo = "Saída: " + saida.strip()        # lê tudo, por maior que seja; Control interrompe a fala do VoiceOver
     sit = _situacao(b)
     return f"{sit[0].upper()}{sit[1:]}. {resumo}"
 
@@ -468,7 +466,7 @@ function irAoInicio(){
 function lerUltima(){
   fetch('/terminal/texto?ultimos=1&comando=0', {credentials:'same-origin'}).then(function(r){ return r.text(); }).then(function(t){
     t = t.trim(); if (!t) { dizer('Não há saída.'); return; }
-    dizer(t.length > 2000 ? t.slice(0, 2000) + ' ... (continua; copie ou use Option+Shift+U para ler tudo)' : t);
+    dizer(t);
   });
 }
 function historicoMover(d){
