@@ -69,8 +69,10 @@ r = await chamar("POST", "/v1/enviar", { token: ana, corpo: { tipo: "virus", dad
 confere("tipo desconhecido é recusado", r.status === 400);
 r = await chamar("POST", "/v1/enviar", { token: ana, corpo: "isto não é json" });
 confere("JSON inválido é recusado", r.status === 400);
-r = await chamar("POST", "/v1/enviar", { token: ana, corpo: { tipo: "nota", dados: "x".repeat(300 * 1024) } });
-confere("corpo grande demais é recusado (413)", r.status === 413);
+r = await chamar("POST", "/v1/enviar", { token: ana, corpo: { tipo: "saude", dados: "y".repeat(2 * 1024 * 1024) } });
+confere("item de 2 MB (lote de saúde) é aceito", r.status === 200);
+r = await chamar("POST", "/v1/enviar", { token: ana, corpo: { tipo: "nota", dados: "x".repeat(6 * 1024 * 1024) } });
+confere("corpo acima de 5 MB é recusado (413)", r.status === 413);
 r = await chamar("POST", "/v1/enviar", { token: ana, corpo: { tipo: "nota", dados: "a", usuario: "bia" } });
 const idIntruso = r.json.id;
 confere("telefone não escolhe o destino: o campo usuario é ignorado", [...env.CAIXA.m.keys()].some((k) => k === `u/ana/entrada/${idIntruso}.json`) && ![...env.CAIXA.m.keys()].some((k) => k === `u/bia/entrada/${idIntruso}.json`));
@@ -78,14 +80,14 @@ confere("telefone não escolhe o destino: o campo usuario é ignorado", [...env.
 r = await chamar("GET", "/v1/entrada", { token: ana });
 confere("telefone não lê a entrada", r.status === 403);
 r = await chamar("GET", "/v1/entrada", { token: dono2 });
-confere("dono lê entradas de todos, com o nome da pessoa", r.status === 200 && r.json.itens.length === 3 && r.json.itens.some((i) => i.usuario === "bia" && i.tipo === "nota") && r.json.itens.some((i) => i.usuario === "ana" && i.dados.passos === 1000));
+confere("dono lê entradas de todos, com o nome da pessoa", r.status === 200 && r.json.itens.length === 4 && r.json.itens.some((i) => i.usuario === "bia" && i.tipo === "nota") && r.json.itens.some((i) => i.usuario === "ana" && i.dados.passos === 1000));
 r = await chamar("GET", "/v1/entrada?usuario=bia", { token: dono2 });
 confere("dono filtra por pessoa", r.json.itens.length === 1);
 r = await chamar("DELETE", `/v1/entrada/ana/${idAna}`, { token: ana });
 confere("telefone não apaga entrada", r.status === 403);
 r = await chamar("DELETE", `/v1/entrada/ana/${idAna}`, { token: dono2 });
 r = await chamar("GET", "/v1/entrada?usuario=ana", { token: dono2 });
-confere("dono apaga o item depois de processar", r.json.itens.length === 1);
+confere("dono apaga o item depois de processar", r.json.itens.length === 2);
 
 r = await chamar("POST", "/v1/saida", { token: ana, corpo: { usuario: "ana", tipo: "lembrete", dados: {} } });
 confere("telefone não escreve na saída", r.status === 403);
@@ -115,6 +117,9 @@ let ultimo;
 for (let i = 0; i < 500; i++) ultimo = await chamar("POST", "/v1/enviar", { token: bia, corpo: { tipo: "outro", dados: i } });
 r = await chamar("POST", "/v1/enviar", { token: bia, corpo: { tipo: "outro", dados: 0 } });
 confere("limite diário de envios por pessoa (429)", r.status === 429);
+const caio = (await chamar("POST", "/v1/tokens", { token: dono2, corpo: { usuario: "caio" } })).json.token;
+for (let i = 0; i < 30; i++) ultimo = await chamar("POST", "/v1/enviar", { token: caio, corpo: { tipo: "saude", dados: "z".repeat(2 * 1024 * 1024) } });
+confere("limite diário de 50 MB por pessoa (429)", ultimo.status === 429);
 r = await chamar("GET", "/v1/nada", { token: dono2 });
 confere("rota desconhecida: 404", r.status === 404);
 

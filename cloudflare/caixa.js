@@ -6,7 +6,8 @@
 // Bindings: CAIXA (R2), TOKENS (KV), CONTA_ID (variável de texto). Não é criptografia de ponta a ponta: a Cloudflare consegue ler o que está na caixa.
 
 const TIPOS = new Set(["saude", "nota", "evento", "lembrete", "outro"]);
-const MAX_CORPO = 256 * 1024;
+const MAX_CORPO = 5 * 1024 * 1024;
+const COTA_BYTES_DIA = 50 * 1024 * 1024;
 const COTA_DIA = 500;
 const USUARIO = /^[a-z0-9-]{1,32}$/;
 const ID = /^[0-9]{13}-[0-9a-f]{12}$/;
@@ -109,9 +110,10 @@ export default {
       const usuario = dono ? (c.json.usuario || "dono") : quem.usuario;
       if (!USUARIO.test(usuario)) return erro(400, "usuário inválido");
       const chaveCota = `cota:${usuario}:${new Date().toISOString().slice(0, 10)}`;
-      const usados = Number((await env.TOKENS.get(chaveCota)) || 0);
-      if (usados >= COTA_DIA) return erro(429, "limite diário de envios");
-      await env.TOKENS.put(chaveCota, String(usados + 1), { expirationTtl: 172800 });
+      const [usados, bytes] = ((await env.TOKENS.get(chaveCota)) || "0:0").split(":").map(Number);
+      const tamanho = JSON.stringify(c.json).length;
+      if (usados >= COTA_DIA || bytes + tamanho > COTA_BYTES_DIA) return erro(429, "limite diário de envios");
+      await env.TOKENS.put(chaveCota, `${usados + 1}:${bytes + tamanho}`, { expirationTtl: 172800 });
       const id = novoId();
       await env.CAIXA.put(`u/${usuario}/entrada/${id}.json`, JSON.stringify({ tipo, dados, recebido: new Date().toISOString() }));
       return resp({ id });
