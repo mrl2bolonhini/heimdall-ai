@@ -21,4 +21,6 @@ Recursos maiores, que dependem dos anteriores.
 Ainda sem decisão.
 - Resposta como suporte@: enviar e-mails com o endereço de suporte pelo Cloudflare Email Sending.
 - Áudio no iPhone: anexar o áudio dos estudos às notas direto pelo iPhone.
+- Notion no lugar de Notes e Lembretes: avaliar a API do Notion como base única de notas e lembretes, com integração para os aplicativos que cada pessoa quiser usar. Pontos a pesar: os dados ficariam na nuvem do Notion (por isso só notas e lembretes comuns, nunca saúde nem finanças), o que se perde do Notes atual (pastas, áudios, leitura por voz) e se a acessibilidade do Notion com o VoiceOver é boa o bastante.
+- Health e Finance para várias pessoas: cada usuário com os próprios dados, o Health ligado aos serviços de saúde que ele usa e o Finance às contas bancárias dele (hoje pelo Pluggy). Pontos a pesar: isolamento total entre usuários, consentimento e a regra de que dados de saúde e de finanças não saem do Mac, o que muda se o serviço passar a atender outras pessoas (ver a política de dados abaixo).
 - Política de dados para clientes: se o projeto passar a atendê-los, acesso separado por usuário e nenhum dado real compartilhado.

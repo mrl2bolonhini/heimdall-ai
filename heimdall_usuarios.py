@@ -165,6 +165,12 @@ def host_publico(chave: str) -> str:
     return f"{sub}.heimdall-ai.tech"
 
 
+def _hosts_do_app(app: dict) -> set:
+    """Endereços inteiros (sem caminho) que o aplicativo cobre: o campo domain, os destinos e os domínios extras."""
+    brutos = [app.get("domain") or ""] + [d.get("uri", "") for d in app.get("destinations", []) if isinstance(d, dict)] + list(app.get("self_hosted_domains", []) or [])
+    return {b.lower() for b in brutos if b and "/" not in b and "*" not in b}
+
+
 def _emails_de(politica: dict) -> list:
     return sorted(i["email"]["email"].lower() for i in politica.get("include", []) if isinstance(i, dict) and "email" in i)
 
@@ -183,7 +189,12 @@ def plano() -> list:
     for chave, emails in desejado().items():
         nome = SERVICOS[chave][0]
         host = host_publico(chave)
-        app = next((a for a in apps if (a.get("domain") or "").lower() == host), None)
+        app = next((a for a in apps if host in _hosts_do_app(a)), None)
+        if app and len(_hosts_do_app(app)) > 1:  # aplicativo que cobre vários endereços: uma política por serviço o abriria para todos eles
+            out.append({"servico": chave, "host": host, "emails": emails, "atuais": [], "app": app, "politica": None, "acao": "nada",
+                        "texto": f"{nome} ({host}): coberto pelo aplicativo compartilhado \"{app.get('name')}\" ({len(_hosts_do_app(app))} endereços); não mexo. "
+                                 "Entra quem a política dele permitir; para dar acesso só a este serviço, separe-o em aplicativo próprio."})
+            continue
         pol = pols.get(PREFIXO + nome)
         atuais = _emails_de(pol) if pol else []
         if not emails:
@@ -224,7 +235,7 @@ def aplicar(itens: list) -> list:
                 pid = _api("POST", "/access/policies", corpo)["id"]
             app = it["app"]
             if not app:
-                novo = {"name": f"Heimdall {nome}", "domain": it["host"], "type": "self_hosted", "session_duration": "24h", "policies": [{"id": pid, "precedence": 1}]}
+                novo = {"name": f"Heimdall {nome}", "domain": it["host"], "type": "self_hosted", "session_duration": "8h", "policies": [{"id": pid, "precedence": 1}]}
                 idp = _idp()
                 if idp:
                     novo.update({"allowed_idps": [idp], "auto_redirect_to_identity": True})  # só o login da Microsoft, direto

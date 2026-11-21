@@ -119,6 +119,12 @@ res = u.aplicar(u.plano())
 pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Notes")
 confere("remover tira da política e revoga as sessões", [i["email"]["email"] for i in pn["include"]] == ["dono@x.com"] and ESTADO["revogados"] == ["ana@x.com"], str(res))
 
+# aplicativo compartilhado (vários endereços) e aplicativo só de caminho (RSS): o primeiro não é tocado, o segundo não conta
+ESTADO.update(apps=[{"id": "pes", "name": "Pessoal", "domain": "cloud.heimdall-ai.tech", "destinations": [{"type": "public", "uri": h} for h in ("cloud.heimdall-ai.tech", "notes.heimdall-ai.tech")], "policies": []},
+                    {"id": "rss", "name": "RSS", "domain": "news.heimdall-ai.tech/rss", "policies": []}], pols=[], chamadas=[])
+p2 = {i["servico"]: i for i in u.plano()}
+confere("aplicativo compartilhado não recebe política de serviço; o de caminho (RSS) não vale como cobertura do host",
+        p2["notas"]["acao"] == "nada" and "compartilhado" in p2["notas"]["texto"] and p2["cloud"]["acao"] == "nada" and p2["news"]["acao"] == "mudar", str(p2["news"]["texto"]))
 # aplicativo que já existe, sem a nossa política: liga sem apagar o que existe nem as outras políticas
 ESTADO.update(apps=[{"id": "ap1", "aud": "z", "name": "Meu Games", "domain": "games.heimdall-ai.tech", "type": "self_hosted", "session_duration": "12h",
                      "allowed_idps": ["idp-ms"], "policies": [{"id": "outra", "precedence": 1}]}], pols=[], chamadas=[])

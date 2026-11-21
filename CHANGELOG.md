@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Chat, n8n e Kuma atrás do Access; roadmap
+- Cloudflare Access ligado (pelo conector, a pedido) em chat.heimdall-ai.tech, flows.heimdall-ai.tech e status.heimdall-ai.tech: login só da Microsoft, direto, só o e-mail do dono e Authenticator (MFA) exigido. O Controls lê o Kuma pelo endereço local, então não é afetado. Quem entrava no chat com conta do Open WebUI passa a precisar estar na lista da aba Usuários.
+- A aba Usuários reconhece aplicativos do Access que cobrem vários endereços (como o "Heimdall - Pessoal") e não os altera: uma política por serviço abriria todos os endereços dele. Aplicativos só de caminho (o desvio do RSS) não contam como cobertura. Sessão dos aplicativos novos: 8 h.
+- Roadmap: Notion no lugar de Notes e Lembretes; Health e Finance para várias pessoas.
+
 ## 2026-11-20 - Usuários: Authenticator obrigatório, Microsoft como login padrão e AUD automático
 - As políticas criadas pela aba Usuários exigem o Authenticator (regra de método de autenticação "mfa"; HEIMDALL_CLOUDFLARE_ACCESS_MFA=0 desliga). Os aplicativos novos aceitam só o login da Microsoft, direto, descoberto sozinho se a conta tem um só (ou HEIMDALL_CLOUDFLARE_ACCESS_IDP).
 - Ao aplicar, os identificadores (AUD) dos aplicativos são acrescentados a HEIMDALL_CFACCESS_AUD, para os painéis aceitarem a entrada pelo Access sem pedir senha de novo.
