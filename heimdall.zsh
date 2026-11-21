@@ -69,7 +69,7 @@ _heimdall_port() {  # porta de cada serviço (a do .env, se houver)
 
 _heimdall_stop_ports() {
   local p
-  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 8014 8016 8017 8099 9000; do
+  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 8014 8016 8017 8018 8099 9000; do
     lsof -ti:"$p" 2>/dev/null | xargs kill -9 2>/dev/null
   done
 }
@@ -85,6 +85,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" "-L=--local" ;;
     controls) printf '%s\n' "-o=--open" "-L=--local" ;;
+    account) printf '%s\n' "-L=--local" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
@@ -154,7 +155,7 @@ heimdall() {
   done
   _HLOCAL=0
   case "$cmd" in
-    cloud|notes|news|health|games|finance|controls)
+    cloud|notes|news|health|games|finance|controls|account)
       local _x _n=()
       for _x in "$@"; do
         if [ "$_x" = "--local" ]; then _HLOCAL=1; else _n+=("$_x"); fi
@@ -183,7 +184,7 @@ heimdall() {
         --clean) _heimdall_sh subir.sh --limpar ;;
         --service)
           case "$2" in
-            agent) a=agente ;; notes) a=notas ;; health) a=saude_painel ;; games) a=jogos ;; terminal) a=open_terminal ;; controls) a=controls_debug ;;
+            agent) a=agente ;; notes) a=notas ;; health) a=saude_painel ;; games) a=jogos ;; terminal) a=open_terminal ;; controls) a=controls_debug ;; account) a=account_debug ;;
             finance) a=finance ;; mcp-public) a=mcp_public ;; mcp-data) a=mcp_dados ;; *) a="$2" ;;
           esac
           _heimdall_sh subir.sh --log "$a" ;;
@@ -273,6 +274,7 @@ heimdall() {
         --open) _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health /exames ;;
         *) echo "Use: heimdall labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
       esac ;;
+    account) _heimdall_web "Heimdall Account" ACCOUNT 8018 account ;;
     games)
       case "$1" in
         "") _heimdall_web "Heimdall Jogos" JOGOS 8014 games ;;
@@ -342,6 +344,7 @@ heimdall() {
       echo "games: http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)"
       echo "finance: http://localhost:$(_heimdall_port HEIMDALL_FINANCE_PORT 8016)"
       echo "controls: http://localhost:$(_heimdall_port HEIMDALL_CONTROLS_PORT 8017)"
+      echo "account: http://localhost:$(_heimdall_port HEIMDALL_ACCOUNT_PORT 8018)"
       echo "n8n: http://localhost:5678"
       echo "kuma: http://localhost:3001"
       echo "dozzle: http://localhost:8081" ;;
@@ -455,7 +458,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc

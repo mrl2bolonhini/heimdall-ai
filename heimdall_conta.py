@@ -20,7 +20,11 @@ NOME_TTL, FALHA_TTL = 3600, 600
 
 # nome no cabeçalho de marca -> chave do serviço em heimdall_usuarios.SERVICOS
 CHAVES = {"Heimdall Cloud": "cloud", "Heimdall Notas": "notas", "Heimdall News": "news", "Heimdall Saúde": "saude", "Heimdall Jogos": "jogos",
-          "Heimdall Finance": "finance", "Heimdall Controls": "controls"}
+          "Heimdall Finance": "finance", "Heimdall Controls": "controls", "Heimdall Account": "account"}
+# Nomes reais, como cada serviço se chama (nunca traduzidos): é o que o menu e a página Account mostram, em vez dos rótulos do catálogo de usuários.
+NOMES = {"cloud": "Heimdall Cloud", "notas": "Heimdall Notas", "news": "Heimdall News", "saude": "Heimdall Saúde", "jogos": "Heimdall Jogos", "finance": "Heimdall Finance",
+         "controls": "Heimdall Controls", "chat": "Open WebUI", "flows": "n8n", "status": "Uptime Kuma", "account": "Heimdall Account"}
+ORDEM = ["account", "cloud", "notas", "news", "saude", "jogos", "finance", "controls", "chat", "flows", "status"]
 CAMINHOS = {"status": "/dashboard"}  # o Kuma abre no painel, onde há o menu dele e as Configurações
 
 
@@ -75,14 +79,14 @@ def pessoa(logado_local: bool = False, cabecalhos=None) -> dict:
 
 
 def servicos_da(p: dict) -> list:
-    """[(chave, nome, endereço)] dos serviços que a pessoa pode abrir."""
+    """[(chave, nome real, endereço)] dos serviços que a pessoa pode abrir, na ordem de ORDEM. O Account é de todos que entram."""
     try:
         import heimdall_usuarios as u
         if p.get("papel") == "dono":
-            chaves = list(u.SERVICOS)
+            chaves = set(u.SERVICOS)
         else:
-            chaves = [k for k in u.situacao()["convidados"].get(p.get("email", ""), []) if k in u.SERVICOS and u.SERVICOS[k][3]]
-        return [(k, u.SERVICOS[k][0], f"https://{u.host_publico(k)}{CAMINHOS.get(k, '/')}") for k in chaves]
+            chaves = {k for k in u.situacao()["convidados"].get(p.get("email", ""), []) if k in u.SERVICOS and u.SERVICOS[k][3]} | {"account"}
+        return [(k, NOMES.get(k, u.SERVICOS[k][0]), f"https://{u.host_publico(k)}{CAMINHOS.get(k, '/')}") for k in ORDEM if k in chaves]
     except Exception:  # noqa: BLE001
         return []
 

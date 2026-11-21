@@ -30,6 +30,7 @@ SERVICOS = {
     "controls": ("Controls", "HEIMDALL_CONTROLS_HOSTS", "controls", False),
     "flows": ("n8n", "HEIMDALL_N8N_HOSTS", "flows", False),
     "status": ("Uptime Kuma", "HEIMDALL_KUMA_HOSTS", "status", False),
+    "account": ("Account", "HEIMDALL_ACCOUNT_HOSTS", "account", False),  # tour dos serviços: entram todos os e-mails (donos e convidados), sem escolher
 }
 PREFIXO = "Heimdall: "
 
@@ -178,7 +179,8 @@ def _emails_de(politica: dict) -> list:
 def desejado() -> dict:
     """{serviço: [e-mails que devem entrar]}: donos em todos; convidados só nos serviços liberados (e só nos que podem ser dados a convidado)."""
     s = situacao()
-    return {k: sorted(set(s["donos"]) | {e for e, sv in s["convidados"].items() if k in sv and SERVICOS[k][3]}) for k in SERVICOS}
+    todos = set(s["donos"]) | set(s["convidados"])
+    return {k: sorted(todos if k == "account" else set(s["donos"]) | {e for e, sv in s["convidados"].items() if k in sv and SERVICOS[k][3]}) for k in SERVICOS}
 
 
 def plano() -> list:

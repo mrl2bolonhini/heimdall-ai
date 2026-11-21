@@ -49,6 +49,7 @@ NEWS_PORT="${HEIMDALL_NEWS_PORT:-8012}"
 SAUDE_PAINEL_PORT="${HEIMDALL_SAUDE_PAINEL_PORT:-8013}"
 CONTROLS_PORT="${HEIMDALL_CONTROLS_PORT:-8017}"
 JOGOS_PORT="${HEIMDALL_JOGOS_PORT:-8014}"
+ACCOUNT_PORT="${HEIMDALL_ACCOUNT_PORT:-8018}"
 FINANCE_PORT="${HEIMDALL_FINANCE_PORT:-8016}"
 LLM_PORT=9000
 WEBUI_PORT=3000
@@ -126,6 +127,7 @@ lsof -ti:$NEWS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$SAUDE_PAINEL_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$CONTROLS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$JOGOS_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$ACCOUNT_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$FINANCE_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LLM_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$MCP_PORT | xargs kill -9 2>/dev/null
@@ -607,6 +609,22 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
         done
         echo "     Heimdall Jogos em http://localhost:$JOGOS_PORT"
     fi
+fi
+
+# --- Heimdall Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa e a identidade que o site heimdall-ai.tech mostra ---
+# Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare, com o Access na frente. Não precisa de senha: só atende quem o Access aprovou.
+if [ -f heimdall_account.py ]; then
+    HEIMDALL_ACCOUNT_PORT="$ACCOUNT_PORT" "$VENV_PYTHON" heimdall_account.py > "$(nova_log account_debug)" 2>&1 &
+    COUNTER=0
+    while ! nc -z localhost $ACCOUNT_PORT > /dev/null 2>&1; do
+        sleep 1
+        COUNTER=$((COUNTER+1))
+        if [ $COUNTER -gt 10 ]; then
+            echo "Aviso: o servidor Heimdall Account não respondeu em 10s. Veja logs/account_debug.log."
+            break
+        fi
+    done
+    echo "     Heimdall Account em http://localhost:$ACCOUNT_PORT"
 fi
 
 # --- Heimdall Finance (extratos, categorias e tendências): mesmo login do Heimdall Cloud ---

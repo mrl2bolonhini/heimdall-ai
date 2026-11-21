@@ -178,6 +178,9 @@ header.top::after{content:"";display:block;height:3px;background:linear-gradient
 .ferram{display:flex;align-items:center;gap:.5rem;white-space:nowrap;flex-shrink:0}
 .ferram a,.ferram button{font:inherit;font-size:.95rem;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:.35rem .9rem;text-decoration:none;cursor:pointer;line-height:1.4}
 .ferram a:hover,.ferram button:hover{border-color:var(--link);color:var(--link)}
+.conta-site{position:relative}.conta-site details{position:relative}.conta-site summary{cursor:pointer;font-size:.95rem;border:1px solid var(--line);border-radius:999px;padding:.35rem .9rem;list-style:none;line-height:1.4}
+.conta-site summary:hover{border-color:var(--link);color:var(--link)}.conta-site .caixa{position:absolute;right:0;top:calc(100% + .35rem);z-index:20;min-width:15rem;max-width:20rem;white-space:normal;padding:.6rem .9rem;border:1px solid var(--line);border-radius:.6rem;background:var(--bg,#fff);box-shadow:0 4px 18px rgba(0,0,0,.18)}
+.conta-site .caixa p{margin:.3rem 0}.conta-site .caixa ul{margin:.3rem 0;padding-left:1.1rem}.conta-site .caixa a{border:0;border-radius:0;padding:0;display:inline}
 nav.menu{width:100%}
 nav.menu ul{list-style:none;margin:0;padding:0 0 .35rem;display:flex;gap:.15rem 1.35rem;overflow-x:auto;scrollbar-width:thin}
 nav.menu a{display:block;padding:.35rem 0;color:var(--muted);text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;font-size:.98rem}
@@ -303,6 +306,33 @@ JS = """/* Gerado por gerar_docs.py (docs_tema.py). Tema, copiar comando e olho 
       else { var r = document.createRange(); r.selectNodeContents(alvo); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); try { document.execCommand('copy'); ok(); } catch (e) {} }
     });
   });
+  var cs = document.getElementById('conta-site');
+  if (cs && window.fetch) {
+    var base = cs.getAttribute('data-url');
+    var el = function (tag, texto, filho) { var x = document.createElement(tag); if (texto) x.textContent = texto; if (filho) x.appendChild(filho); return x; };
+    fetch(base + 'quem.json', { credentials: 'include', redirect: 'manual', headers: { 'Accept': 'application/json' } }).then(function (r) {
+      if (r.type === 'opaqueredirect' || !r.ok) return null;
+      return r.json();
+    }).then(function (d) {
+      if (!d || !d.logado) return;
+      var det = document.createElement('details'), sum = el('summary', 'Conta: ' + d.nome), cx = document.createElement('div'), ul = document.createElement('ul');
+      cx.className = 'caixa';
+      cx.appendChild(el('p', 'Conectado como ' + d.nome + (d.email && d.email !== d.nome ? ' (' + d.email + ')' : '') + '.'));
+      cx.appendChild(el('p', 'Serviços do Heimdall'));
+      (d.servicos || []).forEach(function (s) {
+        if (!/^https:\/\//.test(s.url || '')) return;
+        var a = el('a', s.nome); a.href = s.url; ul.appendChild(el('li', '', a));
+      });
+      ul.setAttribute('aria-label', 'Serviços do Heimdall');
+      cx.appendChild(ul);
+      var sai = el('a', 'Sair do Heimdall'); sai.href = base + 'cdn-cgi/access/logout';
+      cx.appendChild(el('p', '', sai));
+      det.appendChild(sum); det.appendChild(cx);
+      det.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && det.open) { det.open = false; sum.focus(); } });
+      cs.textContent = ''; cs.appendChild(det);
+      avisar('Você está conectado como ' + d.nome + '. O menu Conta lista os seus serviços.');
+    }).catch(function () {});
+  }
   var svg = document.getElementById('bridge'), iris = document.getElementById('iris');
   if (!svg || !iris || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
   iris.style.transition = 'transform .12s ease-out';
@@ -349,7 +379,12 @@ def _toc(corpo):
     return f'<aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul>{lis}</ul></nav></aside>'
 
 
+CONTA_URL = "https://account.heimdall-ai.tech/"
+
+
 def pagina(arquivo, titulo, descricao, corpo, home=False):
+    # Só na página inicial: "Entrar" (sem login) ou, com login, o nome e os serviços da pessoa; o heimdall.js pergunta a CONTA_URL + quem.json.
+    conta = f'<div class="conta-site" id="conta-site" data-url="{CONTA_URL}"><a href="{CONTA_URL}">Entrar no Heimdall</a></div>' if arquivo == "index.html" else ""
     menu = "".join('<li><a href="%s"%s>%s</a></li>' % (a, ' aria-current="page"' if a == arquivo else "", H(t)) for a, t, _ in PAGINAS)
     nome = "Heimdall-ai: IA que roda em casa" if arquivo == "index.html" else titulo + " · Heimdall-ai"
     url = SITE if arquivo == "index.html" else SITE + arquivo
@@ -386,7 +421,7 @@ def pagina(arquivo, titulo, descricao, corpo, home=False):
 <a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial">{simbolo_svg()}<span>Heimdall-ai</span></a>
 <span class="gap"></span>
 <nav class="menu" aria-label="Páginas do site"><ul>{menu}</ul></nav>
-<div class="ferram"><button type="button" id="tema">Tema escuro</button></div>
+<div class="ferram">{conta}<button type="button" id="tema">Tema escuro</button></div>
 </div></div></header>
 <main id="conteudo" tabindex="-1"><div class="wrap">
 {principal}

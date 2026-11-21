@@ -192,6 +192,15 @@ Exemplos:
   heimdall labs result vitamina d
   heimdall labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia
 
+@ account | Heimdall Account, a porta de entrada do ecossistema: tour dos serviços de cada pessoa
+Abre o tour dos serviços (porta 8018; de fora, account.heimdall-ai.tech, pelo Cloudflare Access). Cada pessoa vê só os serviços a que tem acesso, com link, o que cada um faz e como configurar; o texto fica em heimdall_conta_info.py. O mesmo endereço responde /quem.json, que o site heimdall-ai.tech usa para mostrar "Entrar" ou o nome e os serviços de quem já entrou. O menu Conta, em todos os serviços, lista os mesmos links. Com --local abre o endereço deste Mac.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost) em vez do endereço público
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall account
+  heimdall account -L
+
 @ controls | Heimdall Controls, central de controle: terminal, serviços ligados e desligados, manutenção
 Abre o painel de administração (porta 8017; de fora, controls.heimdall-ai.tech). O Terminal é um shell completo que roda no Mac com as suas permissões: a pasta e as variáveis continuam de um comando para o outro, o campo mostra só o último comando, com a saída logo abaixo (os anteriores ficam em Histórico), Tab completa comandos, arquivos e pastas (use Ctrl+I; o Tab move o foco), e o que você digita enquanto um programa pergunta vai direto para ele. Atalhos de teclado: Ctrl+C interrompe, Ctrl+L limpa, Option+Shift+C copia a última saída, Option+Shift+1 a 9 copia as últimas N, Option+Shift+U leva o cursor ao início da última saída, Option+Shift+R reinicia o shell, Option+Shift+H mostra a lista. Ao terminar um comando, o leitor de tela fala a situação e a saída inteira (Control para a fala). A página Serviços mostra o que está no ar e tem botões para atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra (Cloudflare Access com o Authenticator, ou senha e código de 6 dígitos) e cada comando fica anotado em logs/controls_audit.log, sem a saída. Programas de tela cheia, como vim e top, não funcionam.
 Opções:
