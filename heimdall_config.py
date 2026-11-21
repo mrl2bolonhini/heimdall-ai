@@ -185,7 +185,7 @@ def opcoes_do_codigo() -> dict:
     try:  # variáveis documentadas na ajuda também aparecem, mesmo se o código as lê de outro jeito
         import heimdall_config_ajuda as _aj
         for nome in _aj.DESCRICOES:
-            if nome.startswith("HEIMDALL_"):
+            if nome.startswith(("HEIMDALL_", "SUBIR_")):
                 achadas.setdefault(nome, "")
     except ImportError:
         pass
