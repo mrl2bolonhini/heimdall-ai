@@ -28,6 +28,8 @@ SERVICOS = {
     "saude": ("Health", "HEIMDALL_SAUDE_PAINEL_HOSTS", "health", False),
     "finance": ("Finance", "HEIMDALL_FINANCE_HOSTS", "finance", False),
     "controls": ("Controls", "HEIMDALL_CONTROLS_HOSTS", "controls", False),
+    "flows": ("n8n", "HEIMDALL_N8N_HOSTS", "flows", False),
+    "status": ("Uptime Kuma", "HEIMDALL_KUMA_HOSTS", "status", False),
 }
 PREFIXO = "Heimdall: "
 
@@ -134,6 +136,26 @@ def _tudo(caminho: str) -> list:
     return out
 
 
+def _mfa() -> bool:
+    return (_env().get("HEIMDALL_CLOUDFLARE_ACCESS_MFA") or os.environ.get("HEIMDALL_CLOUDFLARE_ACCESS_MFA", "1")).strip() != "0"
+
+
+def _idp() -> str:
+    """Login permitido nos aplicativos novos: o de HEIMDALL_CLOUDFLARE_ACCESS_IDP ou, se a conta tem um só login da Microsoft (azureAD), esse."""
+    env = {**_env(), **os.environ}
+    if env.get("HEIMDALL_CLOUDFLARE_ACCESS_IDP", "").strip():
+        return env["HEIMDALL_CLOUDFLARE_ACCESS_IDP"].strip()
+    try:
+        ms = [i["id"] for i in (_api("GET", "/access/identity_providers") or []) if i.get("type") == "azureAD"]
+    except (ErroCloudflare, KeyError, TypeError):
+        return ""
+    return ms[0] if len(ms) == 1 else ""
+
+
+def _exige_mfa(politica: dict) -> bool:
+    return any(isinstance(r, dict) and r.get("auth_method", {}).get("auth_method") == "mfa" for r in politica.get("require", []))
+
+
 def host_publico(chave: str) -> str:
     env = {**_env(), **os.environ}
     _, var, sub, _ = SERVICOS[chave]
@@ -170,8 +192,8 @@ def plano() -> list:
             continue
         ligada = bool(app and pol and any(p.get("id") == pol["id"] for p in app.get("policies", [])))
         tarefas = []
-        if atuais != emails:
-            tarefas.append("criar a política" if not pol else f"atualizar a política (+{len(set(emails) - set(atuais))} -{len(set(atuais) - set(emails))})")
+        if atuais != emails or (pol and _mfa() and not _exige_mfa(pol)):
+            tarefas.append("criar a política" if not pol else f"atualizar a política (+{len(set(emails) - set(atuais))} -{len(set(atuais) - set(emails))}{', exigir o Authenticator' if _mfa() and not _exige_mfa(pol) else ''})")
         if not app:
             tarefas.append(f"criar o aplicativo de {host}")
         elif not ligada:
@@ -183,14 +205,17 @@ def plano() -> list:
 
 def aplicar(itens: list) -> list:
     """Executa o plano. Devolve linhas de resultado. Remoções revogam as sessões abertas do e-mail tirado."""
-    res, tirados = [], set()
+    res, tirados, auds = [], set(), set()
     for it in itens:
         if it["acao"] != "mudar":
             res.append(it["texto"])
+            if it.get("app") and it["app"].get("aud"):
+                auds.add(it["app"]["aud"])
             continue
         nome = SERVICOS[it["servico"]][0]
         try:
-            corpo = {"name": PREFIXO + nome, "decision": "allow", "include": [{"email": {"email": e}} for e in it["emails"]]}
+            corpo = {"name": PREFIXO + nome, "decision": "allow", "include": [{"email": {"email": e}} for e in it["emails"]],
+                     "require": [{"auth_method": {"auth_method": "mfa"}}] if _mfa() else []}  # mfa: a Microsoft só deixa passar com o Authenticator
             pol = it["politica"]
             if pol:
                 _api("PUT", f"/access/policies/{pol['id']}", corpo)
@@ -200,19 +225,26 @@ def aplicar(itens: list) -> list:
             app = it["app"]
             if not app:
                 novo = {"name": f"Heimdall {nome}", "domain": it["host"], "type": "self_hosted", "session_duration": "24h", "policies": [{"id": pid, "precedence": 1}]}
-                idp = (_env().get("HEIMDALL_CLOUDFLARE_ACCESS_IDP") or os.environ.get("HEIMDALL_CLOUDFLARE_ACCESS_IDP", "")).strip()
+                idp = _idp()
                 if idp:
                     novo.update({"allowed_idps": [idp], "auto_redirect_to_identity": True})  # só o login da Microsoft, direto
-                _api("POST", "/access/apps", novo)
+                app = _api("POST", "/access/apps", novo) or {}
             elif not any(p.get("id") == pid for p in app.get("policies", [])):
                 existentes = [{"id": p["id"], "precedence": p.get("precedence", i + 1)} for i, p in enumerate(app.get("policies", []))]
                 prec = max([p["precedence"] for p in existentes] + [0]) + 1
                 inteiro = {k: v for k, v in app.items() if k not in ("id", "aud", "uid", "created_at", "updated_at")}  # o PUT troca tudo: manda o que já existe
                 _api("PUT", f"/access/apps/{app['id']}", {**inteiro, "policies": existentes + [{"id": pid, "precedence": prec}]})
             tirados |= set(it["atuais"]) - set(it["emails"])
+            if app and app.get("aud"):
+                auds.add(app["aud"])
             res.append(f"{nome}: feito.")
         except (ErroCloudflare, KeyError, TypeError) as ex:
             res.append(f"{nome}: NÃO deu: {ex}")
+    atual = [x.strip() for x in _env().get("HEIMDALL_CFACCESS_AUD", "").split(",") if x.strip()]
+    novas = auds - set(atual)
+    if novas:  # os painéis do Heimdall só aceitam o documento do Access dos aplicativos listados em HEIMDALL_CFACCESS_AUD
+        motivo = config.salvar("HEIMDALL_CFACCESS_AUD", ",".join(atual + sorted(novas)))
+        res.append(f"{len(novas)} identificador(es) de aplicativo (AUD) acrescentado(s) a HEIMDALL_CFACCESS_AUD; reinicie para valer." if not motivo else f"Não consegui gravar HEIMDALL_CFACCESS_AUD: {motivo}")
     for e in sorted(tirados - set(desejado_todos())):
         try:
             _api("POST", "/access/organizations/revoke_user", {"email": e})

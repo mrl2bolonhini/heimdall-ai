@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Usuários: Authenticator obrigatório, Microsoft como login padrão e AUD automático
+- As políticas criadas pela aba Usuários exigem o Authenticator (regra de método de autenticação "mfa"; HEIMDALL_CLOUDFLARE_ACCESS_MFA=0 desliga). Os aplicativos novos aceitam só o login da Microsoft, direto, descoberto sozinho se a conta tem um só (ou HEIMDALL_CLOUDFLARE_ACCESS_IDP).
+- Ao aplicar, os identificadores (AUD) dos aplicativos são acrescentados a HEIMDALL_CFACCESS_AUD, para os painéis aceitarem a entrada pelo Access sem pedir senha de novo.
+- n8n (flows) e Uptime Kuma (status) entram na lista de serviços, só para donos.
+
 ## 2026-11-20 - Controls: aba Usuários
 - Nova aba Usuários (Option+Shift+4; Ajustes passou a 5 e Manutenção a 6): donos em só leitura, convidados com os serviços liberados (Cloud, Notes, News, Games e Chat), adicionar, trocar e remover. A lista fica em HEIMDALL_CFACCESS_CONVIDADOS. Health, Finance e Controls são só de donos. Dono não é removido por ali, e ninguém remove o próprio e-mail.
 - Com HEIMDALL_CLOUDFLARE_ACCESS_TOKEN e CLOUDFLARE_ACCOUNT_ID, "Ver o que vai mudar" mostra o plano sem alterar nada e "Aplicar no Cloudflare" cria ou atualiza uma política "Heimdall: Serviço" por serviço e o aplicativo do endereço público (inclusive o do chat), mantendo as outras políticas e as configurações de um aplicativo que já exista, e revoga as sessões de quem saiu. Opcional: HEIMDALL_CLOUDFLARE_ACCESS_IDP.

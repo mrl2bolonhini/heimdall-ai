@@ -61,7 +61,8 @@ class CF(BaseHTTPRequestHandler):
     def do_GET(self):
         assert self.headers["Authorization"] == "Bearer tok"
         c = self._caminho()
-        self._r(ESTADO["apps"] if c == "/access/apps" else ESTADO["pols"] if c == "/access/policies" else [])
+        self._r(ESTADO["apps"] if c == "/access/apps" else ESTADO["pols"] if c == "/access/policies"
+                else [{"id": "ms1", "type": "azureAD"}, {"id": "otp", "type": "onetimepin"}] if c == "/access/identity_providers" else [])
 
     def do_POST(self):
         c, b = self._caminho(), self._corpo()
@@ -72,7 +73,7 @@ class CF(BaseHTTPRequestHandler):
             ESTADO["pols"].append(p)
             self._r(p)
         elif c == "/access/apps":
-            a = dict(b, id=f"a{ESTADO['n']}", aud="x", policies=[{"id": x["id"], "precedence": x["precedence"]} for x in b["policies"]])
+            a = dict(b, id=f"a{ESTADO['n']}", aud=f"aud{ESTADO['n']}", policies=[{"id": x["id"], "precedence": x["precedence"]} for x in b["policies"]])
             ESTADO["apps"].append(a)
             self._r(a)
         elif c == "/access/organizations/revoke_user":
@@ -104,9 +105,12 @@ p = u.plano()
 confere("plano numa conta vazia: tudo a criar", all(i["acao"] == "mudar" for i in p) and "criar o aplicativo de chat.heimdall-ai.tech" in " ".join(i["texto"] for i in p), str([i["texto"] for i in p]))
 confere("plano não muda nada na Cloudflare", ESTADO["apps"] == [] and ESTADO["pols"] == [])
 res = u.aplicar(p)
-confere("aplicar cria política e aplicativo de cada serviço", len(ESTADO["apps"]) == 8 and len(ESTADO["pols"]) == 8 and all(r.endswith("feito.") for r in res), str(res))
+confere("aplicar cria política e aplicativo de cada serviço", len(ESTADO["apps"]) == 10 and len(ESTADO["pols"]) == 10 and all(r.endswith("feito.") for r in res[:10]), str(res))
 pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Notes")
 confere("a política de Notes tem dono e Ana", sorted(i["email"]["email"] for i in pn["include"]) == ["ana@x.com", "dono@x.com"])
+confere("toda política exige o Authenticator (MFA) e todo aplicativo novo só aceita o login da Microsoft, direto", all(x["require"] == [{"auth_method": {"auth_method": "mfa"}}] for x in ESTADO["pols"])
+        and all(a["allowed_idps"] == ["ms1"] and a["auto_redirect_to_identity"] for a in ESTADO["apps"]))
+confere("os AUDs dos aplicativos vão para HEIMDALL_CFACCESS_AUD", len([x for x in {d["nome"]: d["valor"] for d in hcf.ler()}["HEIMDALL_CFACCESS_AUD"].split(",")]) == 10)
 confere("de novo: nada a fazer", all(i["acao"] == "nada" for i in u.plano()))
 
 # remover a Ana: política de Notes perde o e-mail e as sessões dela são revogadas
