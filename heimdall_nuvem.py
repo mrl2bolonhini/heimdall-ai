@@ -52,12 +52,13 @@ def _abrir(req, timeout):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
-def chat(sistema: str, usuario: str, max_tokens: int = 700, timeout: int = 120, env: dict = None, abrir=None) -> str:
+def chat(sistema: str, usuario: str, max_tokens: int = 700, timeout: int = 120, env: dict = None, abrir=None, forcar: bool = False) -> str:
     """Resposta do modelo grande. Levanta exceção se a nuvem estiver desligada, falhar ou voltar vazia."""
     global ultimo_erro
     e = env if env is not None else _env()
-    if not ativo(e):
-        raise RuntimeError("nuvem desligada")
+    tem_chave = bool(e.get("CLOUDFLARE_API_TOKEN")) and bool(e.get("CLOUDFLARE_ACCOUNT_ID"))
+    if not (ativo(e) or (forcar and tem_chave)):  # forcar: teste pontual, mesmo com o interruptor desligado
+        raise RuntimeError("nuvem desligada" if tem_chave else "falta a chave da Cloudflare no .env")
     url = f"https://gateway.ai.cloudflare.com/v1/{e['CLOUDFLARE_ACCOUNT_ID']}/{GATEWAY}/compat/chat/completions"
     token = e["CLOUDFLARE_API_TOKEN"]
     # o gpt-oss gasta parte dos tokens raciocinando antes de responder: dá folga além do que o chamador pediu

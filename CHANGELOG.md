@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Perguntar ao modelo pelo terminal
+- Novo comando heimdall ask "pergunta": responde com o gpt-oss-120b da nuvem se HEIMDALL_NUVEM=1 (e cai para o modelo local, avisando, se a nuvem falhar) ou direto pelo modelo local. Opções --local (só o local) e --cloud (só a nuvem, mesmo com o interruptor em 0, para testar). Uma linha no fim diz qual modelo respondeu. A pergunta não fica guardada.
+
 ## 2026-11-21 - Monitor da Cloudflare (comando e aba)
 - Novo comando heimdall usage (opção --days, de 1 a 31): mostra requisições, tokens de entrada e de saída e custo estimado do modelo grande na nuvem, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês.
 - Nova aba Monitor no Heimdall Controls, com a mesma informação em tabelas (período de 1, 7 ou 30 dias, resposta guardada por 1 minuto). As abas passam a ser 7: Option+Shift+7 abre Manutenção.

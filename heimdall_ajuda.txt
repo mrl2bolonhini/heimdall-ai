@@ -330,6 +330,16 @@ Exemplos:
   heimdall cloudai
   heimdall env --set HEIMDALL_NUVEM 1
 
+@ ask | Pergunta ao modelo pelo terminal
+Faz uma pergunta curta ao modelo e mostra a resposta, com uma linha no fim dizendo quem respondeu. Com a nuvem ligada (HEIMDALL_NUVEM=1) a pergunta vai ao gpt-oss-120b pelo gateway da Cloudflare; se a nuvem falhar, cai sozinha para o modelo local e avisa. A pergunta não fica guardada em histórico. Escreva a pergunta entre aspas.
+Opções:
+  -l, --local          usa só o modelo local
+  -c, --cloud          usa só a nuvem, sem cair para o local
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall ask "o que é um índice no banco de dados?"
+  heimdall ask --local "resuma em duas frases o que é o Heimdall"
+
 @ usage | Consumo e custo da Cloudflare
 Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Monitor do Heimdall Controls. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
 Opções:

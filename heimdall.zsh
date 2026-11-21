@@ -101,6 +101,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     env) printf '%s\n' "-s=--set" "-d=--defaults" ;;
     cloudflare) printf '%s\n' "-s=--set" "-t=--test" ;;
     usage) printf '%s\n' "-d=--days" ;;
+    ask) printf '%s\n' "-l=--local" "-c=--cloud" ;;
     mcp) printf '%s\n' "-v=--verify" ;;
     flows) printf '%s\n' "-a=--advanced" "-b=--basic" "-p=--privacy" "-e=--email" ;;
     hook) printf '%s\n' "-i=--install" "-r=--remove" ;;
@@ -356,6 +357,8 @@ heimdall() {
     db) _heimdall_py heimdall_banco.py "$@" ;;
     notion) _heimdall_py heimdall_notion.py ;;
     cloudai) _heimdall_py heimdall_nuvem.py ;;
+    ask) _heimdall_tr "--local=-
+--cloud=-" "$@"; _heimdall_py heimdall_ask.py "${_HA[@]}" ;;
     usage) _heimdall_tr "--days=--dias" "$@"; _heimdall_py heimdall_cfmonitor.py "${_HA[@]}" ;;
     notices) _heimdall_tr "--migrate=--executar" "$@"; _heimdall_py migrar_avisos.py "${_HA[@]}" ;;
     doctor)
@@ -464,7 +467,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage notices notion cloudai usage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage notices notion cloudai ask usage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -498,6 +501,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       env) compadd -- --set --defaults ;;
       cloudflare) compadd -- --set --test ;;
       usage) compadd -- --days ;;
+      ask) compadd -- --local --cloud ;;
       mcp) compadd -- --verify ;;
       flows) compadd -- --advanced --basic --privacy --email ;;
       hook) compadd -- --install --remove ;;

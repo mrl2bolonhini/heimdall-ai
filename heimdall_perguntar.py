@@ -38,8 +38,8 @@ def _chave() -> str:
     return ""
 
 
-def chamar_local(sistema: str, usuario: str, modelo: str = "", max_tokens: int = 700, timeout: int = 240) -> str:
-    if nuvem.ativo():
+def chamar_local(sistema: str, usuario: str, modelo: str = "", max_tokens: int = 700, timeout: int = 240, usar_nuvem: bool = True) -> str:
+    if usar_nuvem and nuvem.ativo():
         try:
             return nuvem.chat(sistema, usuario, max_tokens=max_tokens, timeout=min(timeout, 120))
         except RuntimeError as ex:

@@ -62,6 +62,13 @@ confere("modelo padrão é o gpt-oss-120b", visto["corpo"]["model"] == "workers-
 confere("dá folga de tokens para o raciocínio", visto["corpo"]["max_tokens"] == 1500, visto["corpo"]["max_tokens"])
 confere("modelo trocável pelo .env", True if nv.chat("s", "u", env={**LIGADO, "HEIMDALL_NUVEM_MODELO": "workers-ai/@cf/meta/llama-3.3-70b-instruct-fp8-fast"}, abrir=abrir_ok) and visto["corpo"]["model"].endswith("llama-3.3-70b-instruct-fp8-fast") else False)
 
+confere("forcar liga a nuvem só nesta chamada, mesmo com o interruptor em 0", nv.chat("s", "u", env={**LIGADO, "HEIMDALL_NUVEM": "0"}, abrir=abrir_ok, forcar=True) == "resposta")
+try:
+    nv.chat("s", "u", env={"HEIMDALL_NUVEM": "0"}, abrir=abrir_ok, forcar=True)
+    confere("forcar sem chave continua recusando", False)
+except RuntimeError as ex:
+    confere("forcar sem chave continua recusando", "chave" in str(ex), str(ex))
+
 # --- falhas -----------------------------------------------------------------------------------------------
 def abrir_403(req, timeout):
     raise urllib.error.HTTPError(req.full_url, 403, "x", {}, io.BytesIO(b"error code: 1010"))
@@ -110,6 +117,35 @@ try:
     confere("com a nuvem desligada, nem tenta a nuvem", pg.chamar_local("s", "u") == "do modelo local" and chamadas == ["local"], chamadas)
 finally:
     pg.nuvem.ativo, pg.nuvem.chat, pg.urllib.request.urlopen = orig_ativo, orig_chat, orig_urlopen
+
+# --- heimdall ask: nuvem ou local, com aviso ---------------------------------------------------------------
+import heimdall_ask as ask  # noqa: E402
+_ativo0 = ask.nuvem.ativo
+try:
+    ask.nuvem.ativo = lambda env=None: True
+    r, quem, aviso = ask.perguntar_ao_modelo("oi", nuvem_chat=lambda s, u: "da nuvem", local_chat=lambda s, u: "do local")
+    confere("ask com a nuvem ligada responde pela nuvem e diz qual modelo", r == "da nuvem" and quem.startswith("nuvem (gpt-oss-120b") and aviso == "", (r, quem, aviso))
+
+    def cai(s, u): raise RuntimeError("HTTP 500")
+    r, quem, aviso = ask.perguntar_ao_modelo("oi", nuvem_chat=cai, local_chat=lambda s, u: "do local")
+    confere("ask: se a nuvem falha, usa o local e avisa", r == "do local" and quem.startswith("modelo local") and "HTTP 500" in aviso, (r, quem, aviso))
+
+    try:
+        ask.perguntar_ao_modelo("oi", modo="cloud", nuvem_chat=cai, local_chat=lambda s, u: "do local")
+        confere("ask --cloud não cai para o local", False)
+    except RuntimeError:
+        confere("ask --cloud não cai para o local", True)
+
+    r, quem, aviso = ask.perguntar_ao_modelo("oi", modo="local", nuvem_chat=lambda s, u: "da nuvem", local_chat=lambda s, u: "do local")
+    confere("ask --local ignora a nuvem", r == "do local" and quem.startswith("modelo local") and aviso == "")
+
+    ask.nuvem.ativo = lambda env=None: False
+    r, quem, aviso = ask.perguntar_ao_modelo("oi", nuvem_chat=lambda s, u: "da nuvem", local_chat=lambda s, u: "do local")
+    confere("ask com a nuvem desligada vai direto ao local", r == "do local" and aviso == "")
+    r, quem, aviso = ask.perguntar_ao_modelo("oi", modo="cloud", nuvem_chat=lambda s, u: "da nuvem", local_chat=lambda s, u: "do local")
+    confere("ask --cloud tenta a nuvem mesmo desligada pelo interruptor", r == "da nuvem", r)
+finally:
+    ask.nuvem.ativo = _ativo0
 
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)
