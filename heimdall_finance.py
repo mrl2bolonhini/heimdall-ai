@@ -123,22 +123,28 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
     nav = ""
     flash = ""
     perguntar_html = ""
+    scripts = ""
     if sess:
         try:
             perguntar_html = _bloco_perguntar(sess)
         except Exception:  # noqa: BLE001  (a página nunca deixa de abrir por causa do campo Perguntar)
             perguntar_html = ""
-        itens = "".join(f'<li><a href="{u}">{e(t)}</a></li>' for u, t in NAV)
-        nav = (f'<nav aria-label="Principal"><ul>{itens}<li><form class="linha" method="post" action="/sair">'
-               f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
+        atual = design.aba_da_rota(sess.get("atual", "/"), NAV, {"/transacao/": "/transacoes"})
+        sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
+        nav = design.nav_abas(NAV, atual, "Seções do Heimdall Finance")
         f = sess.get("flash")
         if f:
             sess["flash"] = None
             flash = f'<div class="aviso {"ok" if f[0] == "ok" else ""}" role="status">{e(f[1])}</div>'
+        conteudo = design.com_abas(NAV, atual, f"<h1>{e(titulo)}</h1>{flash}{corpo}{perguntar_html}")
+        scripts = design.script()
+    else:
+        sair = ""
+        conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Finance</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Finance", nav)}'
-            f'<main id="principal"><h1>{e(titulo)}</h1>{flash}{corpo}{perguntar_html}</main></body></html>').encode("utf-8")
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Finance", nav, sair_html=sair)}'
+            f'<main id="principal">{conteudo}</main>{design.rodape()}{scripts}</body></html>').encode("utf-8")
 
 
 def tabela(legenda: str, cabecalhos: list, linhas: list, numericas: set = None) -> str:
@@ -748,7 +754,7 @@ class Finance(nuvem.ManipuladorBase):
         self.send_header("Content-Type", tipo)
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Security-Policy", CSP_PAGINA)
+        self.send_header("Content-Security-Policy", design.csp(CSP_PAGINA, corpo))
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")

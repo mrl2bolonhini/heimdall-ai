@@ -118,3 +118,45 @@ def ultima(dono: str, rotulo: str = ""):
     with _trava:
         lista = [dict(t) for t in _tarefas.values() if t["dono"] == dono and (not rotulo or t["rotulo"] == rotulo)]
     return max(lista, key=lambda t: t["inicio"]) if lista else None
+
+
+# --- campo Perguntar pronto para qualquer serviço que não guarda as respostas em banco ---------------------
+_respostas: dict = {}
+
+
+def guardar_resposta(dono: str, pergunta: str, r: dict, limite: int = 10) -> None:
+    with _trava:
+        lista = _respostas.setdefault(dono, [])
+        lista.insert(0, {"pergunta": pergunta, "texto": r.get("texto", ""), "avisos": " ".join(r.get("avisos") or []), "quando": time.strftime("%d/%m/%Y %H:%M")})
+        del lista[limite:]
+
+
+def respostas(dono: str) -> list:
+    with _trava:
+        return [dict(x) for x in _respostas.get(dono, [])]
+
+
+def bloco_html(dono: str, csrf: str, volta: str, titulo: str = "Perguntar", dica: str = "", acao: str = "/perguntar", rotulo: str = "pergunta") -> str:
+    """Campo Perguntar do Heimdall Design: o mesmo em todos os serviços compatíveis, no fim do painel da aba. Respostas da sessão, da mais recente para a mais antiga."""
+    import html as _h
+    e = lambda t: _h.escape(str(t), quote=True)  # noqa: E731
+    h = (f'<section aria-labelledby="perguntar-t" class="perguntar"><h2 id="perguntar-t">{e(titulo)}</h2>'
+         f'<p class="sub">{e(dica) or "Pergunte em português. O modelo local responde só com base nos dados desta página e eles não saem do Mac."}</p>'
+         f'<form method="post" action="{e(acao)}"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="volta" value="{e(volta)}">'
+         '<p><label for="pergunta">Sua pergunta</label><br><input type="text" id="pergunta" name="pergunta" autocomplete="off" maxlength="300" required></p>'
+         '<button type="submit">Perguntar</button></form>')
+    pend = em_andamento(dono, rotulo)
+    if any(t["estado"] == "pensando" for t in pend):
+        h += (f'<p role="status">O modelo local está pensando. Quando achar que acabou, use o botão abaixo.</p>'
+              f'<form method="get" action="{e(volta.split("?")[0])}"><button type="submit">Atualizar respostas</button></form>')
+    for t in pend:
+        if t["estado"] == "erro":
+            h += f'<p class="erro" role="alert">Não consegui responder a pergunta "{e(t["info"])}": {e(t["erro"])}</p>'
+    lista = respostas(dono)
+    if lista:
+        h += "<h3>Respostas, da mais recente para a mais antiga</h3>"
+        for r in lista:
+            paragrafos = "".join(f"<p>{e(p)}</p>" for p in r["texto"].split("\n") if p.strip())
+            h += (f'<article><h4>{e(r["pergunta"])}</h4><p class="sub">Perguntado em {e(r["quando"])}.</p>{paragrafos}'
+                  + (f'<p role="status">{e(r["avisos"])}</p>' if r["avisos"] else "") + "</article>")
+    return h + "</section>"

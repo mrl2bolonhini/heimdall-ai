@@ -109,6 +109,27 @@ confere("página inexistente dá 404", st == 404, st)
 st, corpo, _ = pedir("/semana", ck, dados=b"x=1")
 confere("POST fora de /sair e /avisos/lido é recusado (somente leitura)", st == 405, st)
 import heimdall_avisos as _av
+import heimdall_perguntar as _hp
+import time as _tm
+st, corpo, cab = pedir("/sono", ck)
+import re as _re
+_n = _re.search(r"script-src 'nonce-([A-Za-z0-9_-]+)'", cab.get("Content-Security-Policy", ""))
+confere("abas no lugar do menu, atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and "Atalho: Option Shift 2" in corpo and 'aria-selected="true"' in corpo
+        and 'id="topo"' in corpo and 'href="#topo"' in corpo and _n and f'<script nonce="{_n.group(1)}">' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo, corpo[:200])
+confere("campo Perguntar nas telas de dados e não na aba Avisos", 'id="perguntar-t"' in corpo and 'id="perguntar-t"' not in pedir("/avisos", ck)[1])
+_hp.chamar_local = lambda sistema, usuario, modelo="", max_tokens=700, timeout=240: "Seu sono ficou estável."
+st, _, _ = pedir("/perguntar", ck, dados=b"pergunta=como+foi+meu+sono&volta=%2Fsono&csrf=errado")
+confere("Perguntar com CSRF errado é recusado", st == 403, st)
+st, _, cab = pedir("/perguntar", ck, dados=("pergunta=como+foi+meu+sono&volta=%2Fsono&csrf=" + sess["csrf"]).encode())
+confere("Perguntar volta para a mesma aba", st == 303 and cab.get("Location") == "/sono", (st, cab))
+for _ in range(60):
+    corpo = pedir("/sono", ck)[1]
+    if "Seu sono ficou estável." in corpo:
+        break
+    _tm.sleep(0.1)
+confere("a resposta do modelo local aparece no fim da aba, com a pergunta", "Seu sono ficou estável." in corpo and "como foi meu sono" in corpo, corpo[-400:])
+st, _, cab = pedir("/perguntar", ck, dados=("pergunta=x&volta=https%3A%2F%2Foutro.com&csrf=" + sess["csrf"]).encode())
+confere("volta para fora do painel cai no início", cab.get("Location") == "/", cab)
 _av.do_servico("saude").gravar("Relatório da semana de teste", "- sono bom\n<b>x</b>")
 st, corpo, _ = pedir("/avisos", ck)
 confere("aba Avisos lista o relatório, sem HTML do texto, com botão de marcar", st == 200 and "Relatório da semana de teste" in corpo and "&lt;b&gt;" in corpo and "Marcar como lido" in corpo and 'aria-current="page"' in corpo, corpo[:300])

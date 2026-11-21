@@ -133,6 +133,48 @@ def rodape(extra: str = "") -> str:
     return f'<footer class="rodape">{extra}<p><a href="#topo">Voltar para o topo</a></p></footer>'
 
 
+def topo() -> str:
+    """Âncora do "Voltar para o topo" do rodapé: o foco vai para o começo da página e o leitor de tela lê onde está."""
+    return '<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div>'
+
+
+def nav_abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = ()) -> str:
+    """Navegação principal de um serviço: as abas do Heimdall Design (no lugar de menu lateral ou lista de links)."""
+    return '<nav aria-label="Principal">' + abas(itens, atual, rotulo, completas) + "</nav>"
+
+
+def com_abas(itens: list, atual: str, conteudo: str) -> str:
+    """Conteúdo da página dentro do painel da aba aberta (o que o SCRIPT_ABAS troca ao mudar de aba)."""
+    return painel_da_aba(itens, atual, conteudo)
+
+
+def script(extra: str = "") -> str:
+    """<script> com as abas (setas, Home, End e Option+Shift+número) e `extra`, com um nonce novo. Use `csp()` ao enviar a página."""
+    import secrets
+    return f'<script nonce="{secrets.token_urlsafe(16)}">{SCRIPT_ABAS}{extra}</script>'
+
+
+def csp(base: str, corpo: bytes) -> str:
+    """Política de segurança do serviço (`base`, sem script) e, se a página traz o <script nonce=...> do `script()`, a permissão só para esse nonce."""
+    import re
+    m = re.search(rb'<script nonce="([A-Za-z0-9_-]+)"', corpo or b"")
+    if not m:
+        return base
+    return f"script-src 'nonce-{m.group(1).decode()}'; connect-src 'self'; " + base
+
+
+def aba_da_rota(rota: str, itens: list, aliases: dict = None) -> str:
+    """Rota da aba que cobre `rota`: a própria, o alias (ex.: /transacao/5 -> /transacoes) ou a mais longa que for prefixo."""
+    rota = rota.split("?")[0]
+    if rota in {r for r, _ in itens}:
+        return rota
+    for pref, alvo in (aliases or {}).items():
+        if rota.startswith(pref):
+            return alvo
+    cand = [r for r, _ in itens if r != "/" and rota.startswith(r + "/")]
+    return max(cand, key=len) if cand else ""
+
+
 # Mostrar/ocultar valor secreto: o botão ao lado do campo troca type=password por text. Delegado no documento.
 SCRIPT_SEGREDO = r"""
 document.addEventListener('click', function (ev) {

@@ -229,7 +229,10 @@ csrf = sess["csrf"]
 st, corpo, cab = pedir("/", ck)
 confere("início sem dados convida a importar", st == 200 and "Importar extrato" in corpo and "Ainda não há lançamentos" in corpo, (st, corpo[:300]))
 csp = cab.get("Content-Security-Policy", "")
-confere("política de conteúdo: nada de script", "default-src 'none'" in csp and "script-src" not in csp and "<script" not in corpo, csp)
+import re as _re
+_n = _re.search(r"script-src 'nonce-([A-Za-z0-9_-]+)'", csp)
+confere("política de conteúdo: script só com o nonce da página (abas), nada inline sem nonce", "default-src 'none'" in csp and _n and f'<script nonce="{_n.group(1)}">' in corpo and corpo.count("<script") == 1 and "script-src 'unsafe" not in csp, csp)
+confere("abas no lugar do menu de links, atalhos Option+Shift+número e voltar para o topo", 'role="tablist"' in corpo and "Atalho: Option Shift 1" in corpo and 'role="tabpanel"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo, corpo[:200])
 confere("cabeçalhos de segurança", cab.get("X-Frame-Options") == "DENY" and cab.get("Cache-Control") == "no-store", cab)
 
 corpo_m, tipo_m = multipart({"csrf": csrf, "conta": "Itaú conta"}, ("jan.ofx", OFX))
@@ -432,7 +435,7 @@ confere("a rota que salvava no Notas não existe mais", "/analise/notas" not in 
 # campo Perguntar no fim de toda página
 for _rota in ("/", "/transacoes", "/tendencias", "/orcamentos", "/analise", "/futuros", "/boletos", "/recorrentes", "/regras", "/importar", "/avisos"):
     st, corpo, _ = pedir(_rota, ck)
-    confere(f"campo Perguntar no fim de {_rota}", st == 200 and '<label for="pergunta">' in corpo and corpo.rfind('id="perguntar-t"') > corpo.rfind("</table>") and corpo.endswith("</section></main></body></html>"), corpo[-300:])
+    confere(f"campo Perguntar no fim de {_rota}", st == 200 and '<label for="pergunta">' in corpo and corpo.rfind('id="perguntar-t"') > corpo.rfind("</table>") and "</section></div></main>" in corpo and corpo.rfind("Voltar para o topo") > corpo.rfind('id="perguntar-t"'), corpo[-300:])
 st, _, cab = pedir("/perguntar", ck)
 confere("/perguntar não é mais página: volta ao resumo", st in (200, 303) and (st == 200 or cab.get("Location") == "/"))
 _hp.chamar_local = lambda *a, **k: "Primeira resposta."
