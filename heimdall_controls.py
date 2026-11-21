@@ -395,9 +395,6 @@ def pg_servicos(q: dict, sess: dict) -> tuple:
     return "Serviços", corpo
 
 
-_SEGREDO = re.compile(r"(SENHA|SECRET|SEGREDO|TOKEN|KEY|HASH|PASSWORD)")
-
-
 def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: bool = True) -> str:
     if definida:
         dica = ""
@@ -411,7 +408,7 @@ def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: boo
     p_desc = f'<span class="nota" id="desc-{i}">{e(desc)}</span> ' if desc else ""
     ref = f' aria-describedby="desc-{i}"' if desc else ""
     inicial = valor if definida else padrao
-    if _SEGREDO.search(nome):
+    if config.e_segredo(nome):
         campo = (f'<span class="campo-segredo"><input type="password" id="cfg-{i}" name="valor" value="{e(inicial)}"{ref} autocomplete="new-password" autocapitalize="off" spellcheck="false">'
                  f'<button type="button" data-mostrar="cfg-{i}" aria-pressed="false" aria-label="Mostrar o valor de {e(nome)}">Mostrar</button></span>')
     else:
@@ -425,12 +422,13 @@ DESTINO = {"ANOMALIAS_LEMBRETE_H": "Health", "AGENDA_DETALHES": "Health", "RENOV
            "LOCALSTACK_DOCKER": "AWS Emulator", "BARK_KEY": "Alertas", "COOKIE_DOMINIO": "Cloud", "CODE_MODEL": "Modelos de IA", "FLOW_MODEL": "Modelos de IA",
            "EMBED_MODEL": "Modelos de IA", "SEGURANCA_MODELO": "Modelos de IA", "ESTUDO_AUDIO": "Voz", "GITHUB_TOKEN": "GitOps", "VAULT_DIR": "Notes",
            "PASTAS_PROPRIAS": "Notes", "SERVICOS_ESPERA_S": "Controls", "TERMINAL_HOST": "Controls", "BASE_DIR": "Gerais", "DATA_DIR": "Gerais", "DB_DIR": "Gerais",
-           "KNOWLEDGE_DIR": "Gerais", "PROJECT_DIR": "Gerais", "TZ": "Gerais", "OAB": "Gerais", "BACKUP_DESTINO": "Backup na nuvem (R2)"}
+           "KNOWLEDGE_DIR": "Gerais", "PROJECT_DIR": "Gerais", "TZ": "Gerais", "OAB": "Gerais", "BACKUP_DESTINO": "Backup na nuvem (R2)",
+           "SUBIR_VOZ": "Voz", "SUBIR_VOZ_PPM": "Voz"}
 
 
 CATEGORIAS = {"CLOUD": "Cloud", "CONTROLS": "Controls", "NOTAS": "Notes", "NEWS": "News", "SAUDE": "Health", "JOGOS": "Games", "FINANCE": "Finance", "AGENTE": "Mac Agent",
               "KUMA": "Uptime Kuma", "MCP": "MCP", "WEBUI": "Open WebUI", "N8N": "n8n", "R2": "Backup na nuvem (R2)", "BACKUP": "Backup na nuvem (R2)", "CFACCESS": "Cloudflare", "CLOUDFLARE": "Cloudflare", "CF": "Cloudflare",
-              "TRIAGEM": "Triagem", "EMAIL": "Vigia de e-mails", "EMAILS": "Vigia de e-mails", "LITELLM": "LiteLLM", "OLLAMA": "Ollama", "GERAL": "Gerais", "ALERT": "Alertas", "EXAMES": "Exames", "GITOPS": "GitOps", "MONITOR": "Monitoramento", "PERGUNTAR": "Perguntar", "VOZ": "Voz"}
+              "TRIAGEM": "Triagem", "EMAIL": "Vigia de e-mails", "EMAILS": "Vigia de e-mails", "LITELLM": "LiteLLM", "OLLAMA": "Ollama", "GERAL": "Gerais", "ALERT": "Alertas", "EXAMES": "Exames", "GITOPS": "GitOps", "MONITOR": "Monitoramento", "PERGUNTAR": "Perguntar", "VOZ": "Voz", "SUBIR": "Subida dos serviços"}
 
 
 def pg_configuracoes(q: dict, sess: dict) -> tuple:

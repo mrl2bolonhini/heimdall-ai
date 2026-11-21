@@ -139,6 +139,15 @@ def remover(nome: str) -> str:
 # ----------------------------------------------------------------------------------------
 _PY = re.compile(r"""os\.(?:environ\.get|getenv)\(\s*["']([A-Z][A-Z0-9_]+)["']\s*(?:,\s*([^)\n]*?))?\s*\)""")
 _SH = re.compile(r"\$\{([A-Z][A-Z0-9_]+):?-([^}]*)\}")
+_PALAVRAS_SEGREDO = {"SENHA", "SECRET", "SEGREDO", "TOKEN", "KEY", "HASH", "PASSWORD"}
+
+
+def e_segredo(nome: str) -> bool:
+    """Segredo de verdade: alguma palavra do nome é senha, token, chave etc. HEIMDALL_WEBUI_SEM_SENHA é um liga/desliga, não um segredo."""
+    partes = nome.upper().split("_")
+    return any(p in _PALAVRAS_SEGREDO and (i == 0 or partes[i - 1] != "SEM") for i, p in enumerate(partes))
+
+
 _SH_SIMPLES = re.compile(r"\$\{?(HEIMDALL_[A-Z0-9_]+)")
 _cache = {"quando": 0.0, "dados": {}}
 
@@ -197,7 +206,7 @@ def gravar_padroes() -> tuple:
     atuais = {d["nome"] for d in ler()}
     feitas, falhas = [], []
     for n, v in sorted(opcoes_do_codigo().items()):
-        if n in atuais or not v or re.search(r"SENHA|SECRET|SEGREDO|TOKEN|KEY|HASH|PASSWORD", n):
+        if n in atuais or not v or e_segredo(n):
             continue
         (falhas if salvar(n, v) else feitas).append(n)
     return feitas, falhas

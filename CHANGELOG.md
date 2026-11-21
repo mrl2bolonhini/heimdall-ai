@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Ajustes: segredo só quando é segredo; SUBIR_* no lugar certo
+- HEIMDALL_WEBUI_SEM_SENHA (e qualquer NOME com SEM_SENHA) é um liga/desliga e não vem mais oculto como senha. A regra agora olha as palavras do nome (senha, token, chave, hash...), não pedaços de palavra.
+- SUBIR_VOZ e SUBIR_VOZ_PPM agora ficam no grupo Voz; as demais SUBIR_* formam o grupo "Subida dos serviços". Todas ganharam descrição.
+
 ## 2026-11-20 - Excluir usuário do Open WebUI
 - heimdall chat --delete-user (excluir_usuario_webui.sh) apaga uma conta do Open WebUI e os dados ligados a ela (conversas e outras tabelas com user_id), sem apagar o volume: cópia em backups/, pede o e-mail digitado para confirmar e recusa apagar o último administrador.
 
