@@ -94,6 +94,7 @@ Exemplos:
   heimdall chat --diagnose
   heimdall chat --password
   heimdall chat --email
+  heimdall chat --delete-user
   heimdall chat --check
 
 @ notes | Heimdall Notas, o site das notas de estudo

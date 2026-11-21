@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Excluir usuário do Open WebUI
+- heimdall chat --delete-user (excluir_usuario_webui.sh) apaga uma conta do Open WebUI e os dados ligados a ela (conversas e outras tabelas com user_id), sem apagar o volume: cópia em backups/, pede o e-mail digitado para confirmar e recusa apagar o último administrador.
+
 ## 2026-11-20 - Ajustes mostra variáveis lidas como $NOME
 - A lista de Ajustes passa a incluir variáveis que os scripts leem como $HEIMDALL_X (sem valor padrão) e as documentadas na ajuda, como HEIMDALL_WEBUI_ACCESS e HEIMDALL_N8N_SEM_LOGIN, que antes não apareciam. Valores vazios não são gravados por heimdall env --defaults.
 
