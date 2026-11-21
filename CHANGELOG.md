@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Monitor da Cloudflare (comando e aba)
+- Novo comando heimdall usage (opção --days, de 1 a 31): mostra requisições, tokens de entrada e de saída e custo estimado do modelo grande na nuvem, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês.
+- Nova aba Monitor no Heimdall Controls, com a mesma informação em tabelas (período de 1, 7 ou 30 dias, resposta guardada por 1 minuto). As abas passam a ser 7: Option+Shift+7 abre Manutenção.
+- Lê as análises pela API GraphQL da Cloudflare (heimdall_cfmonitor.py). O token heimdall-news precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando e a aba explicam o que acrescentar. O custo é uma estimativa; a fatura é a referência.
+
 ## 2026-11-21 - Modelo grande na nuvem com interruptor
 - Novo heimdall_nuvem.py: com HEIMDALL_NUVEM=1 no .env, as perguntas do Heimdall (Notes, catalogação, Finance e os demais que usam o Perguntar) vão primeiro ao gpt-oss-120b da Cloudflare, pelo gateway de IA "heimdall" (autenticado, sem guardar conteúdo, teto de US$ 10 por mês). Se a nuvem falhar, a pergunta volta sozinha ao modelo local. Vale sem reiniciar, porque o .env é lido a cada chamada.
 - Liga e desliga: heimdall env --set HEIMDALL_NUVEM 1 (ou 0, que volta ao que era). Novo comando heimdall cloudai mostra se está ligada e faz uma pergunta de teste. O gpt-oss gasta parte dos tokens raciocinando; por isso cada pedido recebe 1000 tokens de folga.

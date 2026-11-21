@@ -330,6 +330,15 @@ Exemplos:
   heimdall cloudai
   heimdall env --set HEIMDALL_NUVEM 1
 
+@ usage | Consumo e custo da Cloudflare
+Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Monitor do Heimdall Controls. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
+Opções:
+  -d, --days N         período em dias, de 1 a 31 (o padrão é 30)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall usage
+  heimdall usage --days 7
+
 @ notices | Traz as notas antigas de saúde e finanças para a aba Avisos
 Sem opção só mostra o que seria feito. Com --migrate importa para a aba Avisos do Heimdall Health e do Heimdall Finance as notas de saúde e finanças que o Heimdall já gravou no cofre e no app Notas, confere que tudo chegou e só então apaga as originais. O app Notas manda cada nota para "Apagadas recentemente", onde ela fica 30 dias. Só mexe nas pastas do Heimdall (Saúde dentro de Heimdall-ai e Heimdall Finanças). Pode rodar de novo sem duplicar. O macOS pode pedir permissão para o Terminal controlar o app Notas.
 Opções:

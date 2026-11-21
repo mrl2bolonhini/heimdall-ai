@@ -57,6 +57,7 @@ def carregar_env() -> None:
 carregar_env()
 
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_cfmonitor as cfmonitor  # noqa: E402
 import heimdall_config as config  # noqa: E402
 import heimdall_config_ajuda as ajuda  # noqa: E402
 import heimdall_design as design  # noqa: E402
@@ -172,7 +173,7 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/ajustes", "Ajustes"), ("/manutencao", "Manutenção")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/monitor", "Monitor"), ("/usuarios", "Usuários"), ("/ajustes", "Ajustes"), ("/manutencao", "Manutenção")]
 
 _shell = None
 
@@ -323,10 +324,11 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
     corpo += ("<h2>Para que serve cada aba</h2><ol>"
               '<li><a href="/terminal">Terminal</a>: um shell completo no Mac. A pasta e as variáveis continuam de um comando para o outro, e há atalhos para copiar as últimas saídas.</li>'
               '<li><a href="/servicos">Serviços</a>: uma chave por serviço, para ligar e desligar. O que você desliga continua desligado depois de atualizar e reiniciar.</li>'
+              '<li><a href="/monitor">Monitor</a>: consumo da Cloudflare, com requisições, tokens e custo estimado do modelo grande na nuvem, por modelo e por dia, comparado com o teto de gasto.</li>'
               '<li><a href="/usuarios">Usuários</a>: quem pode entrar em cada serviço. Adiciona e remove convidados, guarda a lista e sincroniza com o Cloudflare Access.</li>'
               '<li><a href="/ajustes">Ajustes</a>: todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar Heimdall, no fim da página, faz isso.</li>'
               '<li><a href="/manutencao">Manutenção</a>: Start, Stop, Update, Restart, status, diagnóstico e logs.</li></ol>'
-              "<p>Setas esquerda e direita movem entre as abas, e Option+Shift+1 a 6 abre cada uma de qualquer ponto da página.</p>")
+              "<p>Setas esquerda e direita movem entre as abas, e Option+Shift+1 a 7 abre cada uma de qualquer ponto da página.</p>")
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando e cada mudança ficam anotados em logs/controls_audit.log, sem a saída nem os valores. '
               'Programas de tela cheia, como vim e top, não funcionam no Terminal: use cat, sed e ps.</p>')
     return "Visão geral", corpo
@@ -547,7 +549,40 @@ def pg_manutencao(q: dict, sess: dict) -> tuple:
     return "Manutenção", corpo
 
 
-ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/usuarios": pg_usuarios, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
+def pg_monitor(q: dict, sess: dict) -> tuple:
+    try:
+        dias = int((q.get("dias") or ["30"])[0])
+    except ValueError:
+        dias = 30
+    dias = dias if dias in (1, 7, 30) else 30
+    r = cfmonitor.consultar(dias, usar_cache=True)
+    ligada = cfmonitor.nuvem.ativo()
+    estado = f"<p>Modelo grande na nuvem: <strong>{'ligado' if ligada else 'desligado'}</strong>. Para mudar, use a aba Ajustes (HEIMDALL_NUVEM, 1 liga e 0 desliga) ou o comando heimdall env --set HEIMDALL_NUVEM.</p>"
+    filtro = "<p>Período: " + " ".join(
+        (f'<strong aria-current="page">{n} dia{"s" if n > 1 else ""}</strong>' if n == dias else f'<a href="/monitor?dias={n}">{n} dia{"s" if n > 1 else ""}</a>') for n in (1, 7, 30)) + "</p>"
+    if not r.get("ok"):
+        return "Monitor da Cloudflare", estado + f'<p role="alert">{e(r.get("erro", "Sem dados."))}</p>'
+    t = r["total"]
+    pct = t["custo"] / cfmonitor.TETO_GATEWAY * 100
+    resumo = (f"<h2>Resumo dos últimos {dias} dia{'s' if dias > 1 else ''}</h2><ul>"
+              f"<li>Requisições: {cfmonitor._n(t['requisicoes'])}, com {t['erros']} erro(s).</li>"
+              f"<li>Tokens: {cfmonitor._n(t['tokens_in'])} de entrada e {cfmonitor._n(t['tokens_out'])} de saída.</li>"
+              f"<li>Custo estimado: {cfmonitor._usd(t['custo'])}, {pct:.1f}% do teto de US$ {cfmonitor.TETO_GATEWAY:.2f} do gateway. O teto combinado da nuvem é de US$ {cfmonitor.TETO_TOTAL:.2f} por mês.</li></ul>")
+
+    def tabela(cap, primeira, linhas, chave):
+        if not linhas:
+            return ""
+        corpo = "".join(f'<tr><th scope="row">{e(l[chave])}</th><td>{cfmonitor._n(l["requisicoes"])}</td><td>{cfmonitor._n(l["tokens_in"] + l["tokens_out"])}</td><td>{cfmonitor._usd(l["custo"])}</td></tr>' for l in linhas)
+        return (f'<table><caption>{e(cap)}</caption><thead><tr><th scope="col">{e(primeira)}</th><th scope="col">Requisições</th><th scope="col">Tokens</th><th scope="col">Custo estimado</th></tr></thead><tbody>{corpo}</tbody></table>')
+    sem = "" if r["por_modelo"] else "<p>Ainda não há uso registrado nesse período.</p>"
+    nota = ('<p>O custo é uma estimativa da Cloudflare a partir dos tokens; a fatura é a referência. No plano gratuito, a cota diária da Workers AI para sozinha em vez de cobrar. '
+            'O gateway corta os pedidos ao passar de US$ 10 por mês.</p>')
+    corpo = (estado + filtro + resumo + sem + tabela("Consumo por modelo", "Modelo", r["por_modelo"], "modelo")
+             + tabela("Consumo por dia, do mais recente ao mais antigo", "Dia", r["por_dia"][:14], "dia") + nota)
+    return "Monitor da Cloudflare", corpo
+
+
+ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/monitor": pg_monitor, "/usuarios": pg_usuarios, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
 
 SCRIPT = r"""
 (function(){

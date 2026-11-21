@@ -207,9 +207,25 @@ confere("serviços: uma chave (role=switch) por serviço, com estado e sem botã
         and 'aria-checked="true"' in corpo and 'aria-checked="false"' in corpo and "Kuma: no ar" in corpo and "Aplicar" not in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo)
 confere("serviços: o próprio Controls não é desligável", "Controls" not in "".join(x["nome"] for x in hsv.catalogo()))
 confere("abas: tablist, tab com aria-selected, painel e atalho",
-        'role="tablist"' in corpo and corpo.count('role="tab"') == 6 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Atalho: Option Shift 3" in corpo and "Alt+Shift" not in corpo)
+        'role="tablist"' in corpo and corpo.count('role="tab"') == 7 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Atalho: Option Shift 3" in corpo and "Alt+Shift" not in corpo)
 confere("abas: o Terminal carrega a página inteira (data-completa)", corpo.count(" data-completa>") == 1)
 confere("abas e chaves: os scripts vão com nonce", "ArrowRight" in corpo and "/servicos/alternar" in corpo and "nonce=" in corpo)
+# --- aba Monitor: consumo da Cloudflare (sem rede: a consulta é trocada por uma resposta pronta) ---------------------
+import heimdall_cfmonitor as hcm  # noqa: E402
+_orig_consultar = hcm.consultar
+hcm.consultar = lambda dias=30, **k: hcm._resumir([{"count": 3, "sum": {"cost": 0.0042, "tokensIn": 1200, "tokensOut": 800, "erroredRequests": 1, "cachedRequests": 0},
+                                                   "dimensions": {"model": "@cf/openai/gpt-oss-120b", "date": "2026-11-21"}}], dias)
+s, corpo, _ = req("GET", "/monitor?dias=7", cookie=token)
+confere("monitor: resumo, tabelas com caption e scope, período atual marcado e um só h1",
+        s == 200 and "Monitor da Cloudflare" in corpo and "<caption>Consumo por modelo</caption>" in corpo and 'scope="row">@cf/openai/gpt-oss-120b' in corpo
+        and "US$ 0.0042" in corpo and 'aria-current="page">7 dias' in corpo and corpo.count("<h1") == 1, [c for c in ("<caption>Consumo por modelo</caption>", 'scope="row">@cf/openai/gpt-oss-120b', "US$ 0.0042", 'aria-current="page">7 dias') if c not in corpo])
+hcm.consultar = lambda dias=30, **k: {"ok": False, "erro": "O token não tem permissão de ler análises."}
+s, corpo, _ = req("GET", "/monitor", cookie=token)
+confere("monitor: sem permissão, mostra o aviso com role=alert e nenhum valor inventado", s == 200 and 'role="alert"' in corpo and "permissão de ler análises" in corpo and "<caption>" not in corpo)
+hcm.consultar = _orig_consultar
+s, corpo, _ = req("GET", "/monitor", cookie=None)
+confere("monitor: exige login", s in (302, 303, 401, 403) or "Entrar" in corpo or "senha" in corpo.lower())
+
 s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": CSRF, "id": "cloud", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 d = json.loads(corpo)
 confere("alternar: liga ou desliga o serviço escolhido e devolve o estado", s == 200 and chamadas == [("cloud", False)] and d["ok"] and "Monitor do Kuma pausado" in d["mensagem"] and "situacao" in d, corpo)
