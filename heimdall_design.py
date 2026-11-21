@@ -80,6 +80,7 @@ ul.acoes{list-style:none;padding:0}ul.acoes li{margin:.6rem 0}ul.acoes button{ma
 [role=tab]{display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;color:var(--texto);text-decoration:none;border:1px solid var(--linha);border-bottom:0;background:var(--superficie)}
 [role=tab][aria-selected=true]{font-weight:700;border-bottom:3px solid var(--ouro);background:var(--fundo)}
 [hidden]{display:none !important}
+.campo-segredo{display:inline-flex;gap:.4rem;align-items:center}.rodape{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--linha)}.rodape form{margin:0 0 1rem}
 .so-leitor{position:absolute;left:-999px;width:1px;height:1px;overflow:hidden}
 ul.chaves{list-style:none;padding:0}ul.chaves li{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem 1rem;margin:.4rem 0;padding:.4rem .6rem;border:1px solid var(--linha)}
 button[role=switch]{margin:0;min-width:11rem;text-align:left;border:3px solid var(--erro)}button[role=switch][aria-checked=true]{border-color:var(--ok)}
@@ -127,6 +128,25 @@ def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
 # Abrir uma aba troca só o conteúdo do painel (sem recarregar a página, o foco fica na aba e o leitor de tela ouve "<nome> aberta").
 # Abas marcadas com data-completa (as que têm script próprio, como o Terminal) carregam a página inteira, e só se vai delas ou para elas assim.
 # Exige nonce de script na página.
+def rodape(extra: str = "") -> str:
+    """Fim de toda página: `extra` (botões de ação, se houver) e o link para o topo, para o leitor de tela não ficar num final abrupto."""
+    return f'<footer class="rodape">{extra}<p><a href="#topo">Voltar para o topo</a></p></footer>'
+
+
+# Mostrar/ocultar valor secreto: o botão ao lado do campo troca type=password por text. Delegado no documento.
+SCRIPT_SEGREDO = r"""
+document.addEventListener('click', function (ev) {
+  var b = ev.target.closest ? ev.target.closest('button[data-mostrar]') : null;
+  if (!b) return;
+  var campo = document.getElementById(b.getAttribute('data-mostrar'));
+  if (!campo) return;
+  var ver = campo.type === 'password';
+  campo.type = ver ? 'text' : 'password';
+  b.setAttribute('aria-pressed', ver ? 'true' : 'false');
+  b.textContent = ver ? 'Ocultar' : 'Mostrar';
+});
+"""
+
 SCRIPT_DETALHES = r"""
 document.addEventListener('keydown', function (ev) {
   if (ev.key !== 'Escape' || ev.defaultPrevented) return;

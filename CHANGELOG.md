@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Controls: segredos ocultos, padrões preenchidos, rodapé com Recarregar e Voltar para o topo
+- Configurações: variáveis de senha, chave, token e segredo vêm com o campo oculto (type=password) e um botão Mostrar/Ocultar ao lado (design.SCRIPT_SEGREDO).
+- Configurações: as opções com valor padrão no código vêm com esse valor preenchido no campo, e o botão "Gravar valores padrão no .env" grava de uma vez as que o .env ainda não tem (nunca segredos; não mexe no que já está lá).
+- Configurações: as variáveis de "Outras" foram para o grupo do serviço a que pertencem (Health, Mac Agent, AWS Emulator, Cloud, Notes, GitOps, Voz, Alertas, Controls) ou para novos grupos (Modelos de IA, Gerais).
+- Toda página termina com um rodapé (design.rodape): botão "Recarregar Heimdall" e o link "Voltar para o topo". O botão fica desabilitado até uma configuração mudar; depois reinicia tudo (o mesmo que Restart na Manutenção).
+
 ## 2026-11-20 - Controls: Configurações sem grupos repetidos, com explicação e Esc
 - Configurações: grupos com o mesmo nome (Backup na nuvem R2, Cloudflare) agora são um só. Cada variável tem uma explicação curta em português, lida junto com o campo (heimdall_config_ajuda.py; sem explicação específica, vale a do sufixo: _PORT, _HOST, _TOKEN…).
 - Esc fecha o grupo (ou o menu Conta) em que o foco está e devolve o foco ao resumo (design.SCRIPT_DETALHES).

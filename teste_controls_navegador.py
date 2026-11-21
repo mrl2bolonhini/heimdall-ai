@@ -276,6 +276,14 @@ with sync_playwright() as pw:
     pg.click("details.grupo >> nth=0 >> summary")
     pg.keyboard.press("Escape")
     confere("Esc fecha o grupo aberto e devolve o foco ao resumo", espera(lambda: pg.locator("details.grupo[open]").count() == 0 and pg.evaluate("document.activeElement.tagName") == "SUMMARY"))
+    confere("Recarregar Heimdall começa desabilitado", pg.is_disabled("#recarregar"))
+    sec = pg.locator("input[type=password]").first
+    sid = sec.get_attribute("id")
+    pg.evaluate("document.querySelector('details.grupo input[type=password]').closest('details').open = true")
+    pg.click(f"button[data-mostrar={sid}]")
+    confere("Mostrar revela o segredo e Ocultar esconde de novo", pg.get_attribute(f"#{sid}", "type") == "text" and pg.get_attribute(f"button[data-mostrar={sid}]", "aria-pressed") == "true")
+    pg.click(f"button[data-mostrar={sid}]")
+    confere("segredo volta a ficar oculto", pg.get_attribute(f"#{sid}", "type") == "password")
     pg.fill("#filtro-cfg", "controls_atraso")
     visiveis = pg.locator("#configuracoes li[data-nome]:visible").count()
     confere("filtro abre o grupo certo, mostra só o que combina e avisa quantas", 0 < visiveis < total and pg.locator("details.grupo[open]").count() >= 1
@@ -289,6 +297,9 @@ with sync_playwright() as pw:
     pg.keyboard.press("Enter")
     confere("Enter no formulário envia sem recarregar, avisa e limpa os campos", espera(lambda: "salva" in pg.inner_text("#resultado-config") and pg.input_value("#nova-nome") == ""
             and pg.evaluate("window.marca") == "mesma" and "HEIMDALL_TESTE_NAV" in pg.evaluate("window.enviado")))
+    confere("depois de salvar, Recarregar Heimdall habilita", espera(lambda: not pg.is_disabled("#recarregar")))
+    pg.click("text=Voltar para o topo")
+    confere("Voltar para o topo leva ao início", espera(lambda: pg.evaluate("window.scrollY") <= 16), str(pg.evaluate("[window.scrollY, location.hash, document.body.scrollHeight, innerHeight]")))
     confere("sem erros de JavaScript no console", not erros, erros)
     nav.close()
 

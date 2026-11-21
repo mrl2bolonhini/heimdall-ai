@@ -104,7 +104,7 @@ DESCRICOES = {
     "HEIMDALL_PERGUNTAR_LLM_URL": "Endereço do modelo que responde no Perguntar.",
     "HEIMDALL_PERGUNTAR_MODELO": "Nome do modelo que responde no Perguntar.",
     "HEIMDALL_PROJECT_DIR": "Pasta do projeto que o agente usa como base de trabalho.",
-    "HEIMDALL_RENOVACAO_DIAS": "Dias de antecedência para avisar de renovações e vencimentos.",
+    "HEIMDALL_RENOVACAO_DIAS": "Quantos dias antes de a receita vencer o evento de renovação é criado na agenda.",
     "HEIMDALL_R2_BUCKET": "Nome do bucket R2 (Cloudflare) do backup.",
     "HEIMDALL_R2_ENDPOINT": "Endereço S3 do R2 (Cloudflare).",
     "HEIMDALL_R2_KEY_ID": "Identificador da chave de acesso ao R2.",

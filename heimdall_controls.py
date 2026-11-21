@@ -380,16 +380,37 @@ def pg_servicos(q: dict, sess: dict) -> tuple:
     return "Serviços", corpo
 
 
+_SEGREDO = re.compile(r"(SENHA|SECRET|SEGREDO|TOKEN|KEY|HASH|PASSWORD)")
+
+
 def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: bool = True) -> str:
-    dica = "" if definida else (f' <span class="nota">Padrão: {e(padrao)}</span>' if padrao else ' <span class="nota">Sem valor padrão fixo no código.</span>')
+    if definida:
+        dica = ""
+    elif padrao:
+        dica = ' <span class="nota">Valor padrão do código, ainda não gravado no .env.</span>'
+    else:
+        dica = ' <span class="nota">Sem valor padrão fixo no código.</span>'
     botoes = ('<button type="submit" name="acao" value="salvar">Salvar</button><button type="submit" name="acao" value="remover">Remover</button>' if definida
               else '<button type="submit" name="acao" value="salvar">Definir</button>')
     desc = ajuda.descricao(nome)
     p_desc = f'<span class="nota" id="desc-{i}">{e(desc)}</span> ' if desc else ""
     ref = f' aria-describedby="desc-{i}"' if desc else ""
+    inicial = valor if definida else padrao
+    if _SEGREDO.search(nome):
+        campo = (f'<span class="campo-segredo"><input type="password" id="cfg-{i}" name="valor" value="{e(inicial)}"{ref} autocomplete="new-password" autocapitalize="off" spellcheck="false">'
+                 f'<button type="button" data-mostrar="cfg-{i}" aria-pressed="false" aria-label="Mostrar o valor de {e(nome)}">Mostrar</button></span>')
+    else:
+        campo = f'<input type="text" id="cfg-{i}" name="valor" value="{e(inicial)}"{ref} autocomplete="off" autocapitalize="off" spellcheck="false">'
     return (f'<li data-nome="{e(nome.lower())}"><form class="linha" data-cfg><input type="hidden" name="nome" value="{e(nome)}">'
-            f'<label for="cfg-{i}">{e(nome)}</label> {p_desc}{dica}<input type="text" id="cfg-{i}" name="valor" value="{e(valor)}"{ref} autocomplete="off" autocapitalize="off" spellcheck="false">'
-            f'{botoes}</form></li>')
+            f'<label for="cfg-{i}">{e(nome)}</label> {p_desc}{dica}{campo}{botoes}</form></li>')
+
+
+# Variáveis que o prefixo não agrupa direito: nome sem HEIMDALL_ -> grupo
+DESTINO = {"ANOMALIAS_LEMBRETE_H": "Health", "AGENDA_DETALHES": "Health", "RENOVACAO_DIAS": "Health", "APPS_FECHAR": "Mac Agent", "AWS_EMULATOR": "AWS Emulator",
+           "LOCALSTACK_DOCKER": "AWS Emulator", "BARK_KEY": "Alertas", "COOKIE_DOMINIO": "Cloud", "CODE_MODEL": "Modelos de IA", "FLOW_MODEL": "Modelos de IA",
+           "EMBED_MODEL": "Modelos de IA", "SEGURANCA_MODELO": "Modelos de IA", "ESTUDO_AUDIO": "Voz", "GITHUB_TOKEN": "GitOps", "VAULT_DIR": "Notes",
+           "PASTAS_PROPRIAS": "Notes", "SERVICOS_ESPERA_S": "Controls", "TERMINAL_HOST": "Controls", "BASE_DIR": "Gerais", "DATA_DIR": "Gerais", "DB_DIR": "Gerais",
+           "KNOWLEDGE_DIR": "Gerais", "PROJECT_DIR": "Gerais", "TZ": "Gerais", "OAB": "Gerais", "BACKUP_DESTINO": "Backup na nuvem (R2)"}
 
 
 CATEGORIAS = {"CLOUD": "Cloud", "CONTROLS": "Controls", "NOTAS": "Notes", "NEWS": "News", "SAUDE": "Health", "JOGOS": "Games", "FINANCE": "Finance", "AGENTE": "Mac Agent",
@@ -405,19 +426,20 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
     faltam = sorted(n for n in codigo if n not in nomes)
     def rotulo(n: str) -> str:  # chaves diferentes com o mesmo rótulo (R2 e BACKUP) viram um grupo só
         g = config.grupo(n)
-        return CATEGORIAS.get(g, g.title())
+        return DESTINO.get(n.removeprefix("HEIMDALL_")) or CATEGORIAS.get(g, g.title())
     contagem: dict = {}
     for n in [d["nome"] for d in definidas] + faltam:
         contagem[rotulo(n)] = contagem.get(rotulo(n), 0) + 1
 
     def cat(n: str) -> str:  # grupo de um item só vai para "Outras"
         g, r = config.grupo(n), rotulo(n)
-        return r if contagem.get(r, 0) > 1 or g in CATEGORIAS else "Outras"
+        return r if contagem.get(r, 0) > 1 or g in CATEGORIAS or n.removeprefix("HEIMDALL_") in DESTINO else "Outras"
     grupos: dict = {}
     for i, d in enumerate(definidas):
         grupos.setdefault(cat(d["nome"]), {"def": [], "falta": []})["def"].append(_linha_config(i, d["nome"], d["valor"]))
     for i, n in enumerate(faltam):
         grupos.setdefault(cat(n), {"def": [], "falta": []})["falta"].append(_linha_config(10000 + i, n, "", codigo[n], False))
+    npad = sum(1 for n in faltam if codigo[n] and not _SEGREDO.search(n))
     blocos = []
     for nome in sorted(grupos, key=lambda x: (x == "Outras", x.lower())):
         d, f = grupos[nome]["def"], grupos[nome]["falta"]
@@ -429,7 +451,9 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
              "(aba Serviços) ou quando você reiniciar tudo (aba Manutenção). Antes de cada mudança o arquivo é copiado para .env.bak. "
              "Cuidado com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO: se errar, você perde o acesso a este painel.</p>"
              '<p><label for="filtro-cfg">Filtrar pelo nome (abre os grupos que têm o que você procura)</label> <input type="search" id="filtro-cfg" autocomplete="off"></p>'
-             '<p id="resultado-config" role="status"></p>'
+             + (f'<form class="linha" id="form-padroes" data-padroes><button type="submit">Gravar valores padrão no .env</button> '
+                f'<span class="nota" id="desc-padroes">Grava as {npad} opções que o código já tem com valor padrão e que o .env ainda não define. Não muda o que já está no .env.</span></form>' if npad else "")
+             + '<p id="resultado-config" role="status"></p>'
              f'<div id="configuracoes" data-csrf="{e(sess["csrf"])}">'
              '<details class="grupo"><summary>Nova variável</summary><form class="linha" data-cfg><label for="nova-nome">Nome</label><input type="text" id="nova-nome" name="nome" autocomplete="off" autocapitalize="characters" spellcheck="false">'
              '<label for="nova-valor">Valor</label><input type="text" id="nova-valor" name="valor" autocomplete="off" spellcheck="false">'
@@ -728,11 +752,34 @@ document.addEventListener('click', function(ev){
 """
 
 
+# Botão "Recarregar Heimdall" do rodapé: desabilitado até uma configuração mudar (evento heimdall:mudou). Guarda o estado na sessão do navegador.
+SCRIPT_RECARGA = r"""
+(function(){
+var b = function(){ return document.getElementById('recarregar'); };
+function lido(){ try { return sessionStorage.getItem('heimdall-mudou') === '1'; } catch (e) { return false; } }
+function ligar(){ var x = b(); if (x) { x.disabled = false; var d = document.getElementById('desc-recarregar'); if (d) { d.textContent = 'Há alterações. Reinicia todos os serviços, inclusive este painel, e espere cerca de um minuto.'; } } }
+if (lido()) { ligar(); }
+document.addEventListener('heimdall:mudou', function(){ try { sessionStorage.setItem('heimdall-mudou', '1'); } catch (e) {} ligar(); });
+document.addEventListener('submit', function(ev){ if (ev.target.id === 'form-recarregar') { try { sessionStorage.removeItem('heimdall-mudou'); } catch (e) {} } });
+})();
+"""
+
+
 # Aba Configurações: salvar e remover sem recarregar, e filtro pelo nome. Delegado no documento (vale depois da troca de aba).
 SCRIPT_CONFIG = r"""
 (function(){
 function dizer(t){ var r = document.getElementById('resultado-config'); if (r) { r.textContent = ''; setTimeout(function(){ r.textContent = t; }, 50); } }
 document.addEventListener('submit', function(ev){
+  var p = ev.target;
+  if (p.hasAttribute && p.hasAttribute('data-padroes')) {
+    ev.preventDefault();
+    dizer('Gravando os valores padrão.');
+    fetch('/configuracoes/padroes', {method: 'POST', credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1', 'Content-Type': 'application/x-www-form-urlencoded'}, body: new URLSearchParams({csrf: document.getElementById('configuracoes').getAttribute('data-csrf')})})
+      .then(function(r){ return r.json(); })
+      .then(function(d){ dizer(d.erro ? d.erro : d.mensagem); if (d.ok) { document.dispatchEvent(new Event('heimdall:mudou')); } })
+      .catch(function(){ dizer('Não consegui falar com o painel. Recarregue a página.'); });
+    return;
+  }
   var f = ev.target; if (!f.hasAttribute || !f.hasAttribute('data-cfg')) { return; }
   ev.preventDefault();
   var raiz = document.getElementById('configuracoes'), acao = (ev.submitter && ev.submitter.value) || 'salvar';
@@ -744,6 +791,7 @@ document.addEventListener('submit', function(ev){
     .then(function(r){ return r.json(); })
     .then(function(d){
       dizer(d.erro ? d.erro : (d.ok ? d.mensagem : 'Não gravei: ' + d.mensagem));
+      if (d.ok) { document.dispatchEvent(new Event('heimdall:mudou')); }
       if (d.ok && f.querySelector('input[name=nome][type=text]')) { f.elements['nome'].value = ''; f.elements['valor'].value = ''; }
     })
     .catch(function(){ dizer('Não consegui falar com o painel. Recarregue a página.'); });
@@ -780,12 +828,18 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
         lista = f"<ul>{''.join('<li>' + e(l) + '</li>' for l in linhas)}</ul>" if len(linhas) > 1 else e(linhas[0] if linhas else "")
         aviso = (f'<div class="ok" role="status">{lista}</div>' if tipo == "ok" else f'<div class="erro" role="alert">{lista}</div>')
     corpo = corpo.replace("{aviso}", aviso, 1)
-    todo = ((design.SCRIPT_ABAS + design.SCRIPT_DETALHES + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
+    extra = ""
+    if sess:
+        extra = (f'<form class="linha" id="form-recarregar" method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><input type="hidden" name="acao" value="restart">'
+                 '<button type="submit" id="recarregar" aria-describedby="desc-recarregar" disabled>Recarregar Heimdall</button> '
+                 '<span class="nota" id="desc-recarregar">Sem alterações para carregar.</span></form>')
+    rodape = design.rodape(extra)
+    todo = ((design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_SEGREDO + SCRIPT_RECARGA + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{conta}{nuvem.cabecalho("Heimdall Controls", nav)}'
-            f'<main id="principal">{corpo}</main>{js}<!--/email_off--></body></html>').encode("utf-8")
+            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{conta}{nuvem.cabecalho("Heimdall Controls", nav)}'
+            f'<main id="principal">{corpo}</main>{rodape}{js}<!--/email_off--></body></html>').encode("utf-8")
 
 
 def pg_entrar(erro: str = "") -> bytes:
@@ -1011,6 +1065,21 @@ class Painel(BaseHTTPRequestHandler):
                 auditar(ip, "configurações: " + ("remover" if acao == "remover" else "salvar"), nome + ("" if not motivo else " (recusado)"))
                 self._json(200, {"ok": not motivo, "mensagem": (motivo or (f"{nome} removida do .env." if acao == "remover" else f"{nome} salva.")
                            + " Vale quando o serviço que usa for reiniciado.")})
+                return
+            elif rota == "/configuracoes/padroes":
+                feitas, falhas = 0, []
+                atuais = {d["nome"] for d in config.ler()}
+                for n, v in config.opcoes_do_codigo().items():
+                    if n in atuais or not v or _SEGREDO.search(n):
+                        continue
+                    motivo = config.salvar(n, v)
+                    if motivo:
+                        falhas.append(n)
+                    else:
+                        feitas += 1
+                auditar(ip, "configurações: gravar padrões", f"{feitas} gravadas, {len(falhas)} recusadas")
+                self._json(200, {"ok": not falhas, "mensagem": (f"{feitas} valores padrão gravados no .env. Recarregue a página para vê-los em No .env."
+                           + (" Não gravei: " + ", ".join(falhas) + "." if falhas else "") + " Valem quando o serviço que usa for reiniciado.")})
                 return
             elif rota == "/servicos/alternar":
                 self._json(200, self._alternar_servico(campos, ip))
