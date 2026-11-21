@@ -4,10 +4,11 @@
 Só lê informações do sistema (vm_stat, ps, df, docker stats, ollama ps...). Não mostra linhas de comando nem argumentos de processo,
 só o nome do programa ou do script, para nada sensível aparecer. Cada parte falha em silêncio quando o comando não existe.
 
-    python3 diagnostico.py [--memoria] [--cpu] [--disco] [--docker] [--ollama] [--servicos] [--topo N]
+    python3 diagnostico.py [--memoria] [--cpu] [--disco] [--docker] [--ollama] [--servicos] [--versoes] [--topo N]
 Sem opção, faz tudo e termina com uma conclusão em linguagem simples.
 """
 import argparse
+import heimdall_versoes
 import os
 import re
 import shutil
@@ -285,11 +286,11 @@ def servicos(procs_por_porta: dict = None) -> list:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Diagnóstico de desempenho do Mac")
-    for o in ("memoria", "cpu", "disco", "docker", "ollama", "servicos"):
+    for o in ("memoria", "cpu", "disco", "docker", "ollama", "servicos", "versoes"):
         ap.add_argument("--" + o, action="store_true")
     ap.add_argument("--topo", type=int, default=8)
     a = ap.parse_args(argv)
-    tudo = not any((a.memoria, a.cpu, a.disco, a.docker, a.ollama, a.servicos))
+    tudo = not any((a.memoria, a.cpu, a.disco, a.docker, a.ollama, a.servicos, a.versoes))
     achados, blocos = [], []
     procs = _processos() if (tudo or a.memoria or a.cpu) else []
     if tudo or a.memoria:
@@ -304,6 +305,8 @@ def main(argv=None) -> int:
         blocos.append(ollama(achados))
     if tudo or a.servicos:
         blocos.append(servicos())
+    if a.versoes:  # só quando pedida: compara com o registro e usa a rede
+        blocos.append(heimdall_versoes.texto(heimdall_versoes.coletar(atualizacoes=True)))
     for b in blocos:
         print("\n".join(b))
         print()

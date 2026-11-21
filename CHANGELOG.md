@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Versões dos serviços: heimdall doctor --versions e Visão geral
+- heimdall doctor --versions (-v) lista as versões do macOS, Python, Docker, Ollama, LiteLLM, do código do Heimdall e de cada contêiner que está rodando (Open WebUI, n8n, Kuma, Qdrant, SearXNG, Dozzle e emuladores), e compara cada imagem com a mais nova no registro: avisa quando há atualização (heimdall restart --update). Se não der para comparar (sem rede, sem buildx), só mostra a versão.
+- A Visão geral do Controls ganhou a tabela "Versões instaladas" (guardada por 10 minutos, sem rede, para a página abrir rápido).
+- Novos: heimdall_versoes.py e teste_versoes.py.
+
 ## 2026-11-20 - HEIMDALL_WEBUI_SEM_SENHA passa a ser ignorada e sai dos Ajustes
 - Testado no Mac: com ENABLE_PASSWORD_AUTH=false o Open WebUI responde 403 a todo login, inclusive o pelo cabeçalho do Access, e a página fica em "Fazendo login". A opção HEIMDALL_WEBUI_SEM_SENHA agora só avisa e não aplica. Com HEIMDALL_WEBUI_ACCESS=1 a senha já não é pedida pelo endereço público. A opção não aparece mais em Ajustes (lista OBSOLETAS em heimdall_config.py).
 

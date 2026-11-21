@@ -89,7 +89,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
-    doctor) printf '%s\n' "-m=--memory" "-c=--cpu" "-d=--disk" "-k=--docker" "-o=--ollama" "-s=--services" "-t=--top" ;;
+    doctor) printf '%s\n' "-m=--memory" "-c=--cpu" "-d=--disk" "-k=--docker" "-o=--ollama" "-s=--services" "-v=--versions" "-t=--top" ;;
     backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
     mail) printf '%s\n' "-t=--test-login" "-s=--simulate" "-d=--diagnose" ;;
     access) printf '%s\n' "-p=--password" "-c=--code" "-a=--all" "-v=--verify" ;;
@@ -353,6 +353,7 @@ heimdall() {
       _heimdall_tr "--memory=--memoria
 --disk=--disco
 --services=--servicos
+--versions=--versoes
 --top=--topo" "$@"
       _heimdall_py diagnostico.py "${_HA[@]}" ;;
     backup)
@@ -476,7 +477,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       cloud) compadd -- --local ;;
       triage) compadd -- --complete-tests ;;
       db) compadd -- --sql ;;
-      doctor) compadd -- --memory --cpu --disk --docker --ollama --services --top ;;
+      doctor) compadd -- --memory --cpu --disk --docker --ollama --services --versions --top ;;
       backup) compadd -- --prepare --password --run --list --verify --restore ;;
       mail) compadd -- --test-login --diagnose --simulate ;;
       access) compadd -- --password --code --all --verify ;;

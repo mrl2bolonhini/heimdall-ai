@@ -327,6 +327,7 @@ Exemplos:
   heimdall doctor
   heimdall doctor --memory --top 15
   heimdall doctor --ollama
+  heimdall doctor --versions
 
 @ backup | Cópia de segurança criptografada do banco
 Tira uma cópia consistente do banco, criptografa (AES-256-GCM) e grava na pasta ou no bucket R2 configurados no .env. Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses.

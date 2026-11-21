@@ -63,7 +63,8 @@ import heimdall_design as design  # noqa: E402
 import heimdall_kuma as kuma  # noqa: E402
 import heimdall_servicos as servicos  # noqa: E402
 import heimdall_shell as hshell  # noqa: E402
-import heimdall_usuarios as usuarios  # noqa: E402
+import heimdall_usuarios as usuarios
+import heimdall_versoes as versoes  # noqa: E402
 
 HOST = os.environ.get("HEIMDALL_CONTROLS_HOST", "127.0.0.1")
 try:
@@ -279,6 +280,26 @@ def aviso_do_bloco(sh, b) -> str:
     return f"{sit[0].upper()}{sit[1:]}. {resumo}"
 
 
+_cache_versoes = {"quando": 0.0, "itens": None}
+
+
+def _bloco_versoes() -> str:
+    """Tabela de versões (macOS, Docker, serviços). Guardada por 10 minutos; sem a rede, para a página abrir rápido."""
+    import time as _t
+    if _cache_versoes["itens"] is None or _t.time() - _cache_versoes["quando"] > 600:
+        try:
+            _cache_versoes.update(itens=versoes.coletar(atualizacoes=False), quando=_t.time())
+        except Exception:
+            _cache_versoes.update(itens=[], quando=_t.time())
+    itens = _cache_versoes["itens"]
+    if not itens:
+        return ""
+    linhas = "".join(f'<tr><th scope="row">{e(i["nome"])}</th><td>{e(i["versao"])}</td><td>{e(i["detalhe"])}</td></tr>' for i in itens)
+    return ('<h2>Versões instaladas</h2><table><caption>Versões do Mac, do Docker e dos serviços</caption><thead><tr><th scope="col">Item</th><th scope="col">Versão</th>'
+            f'<th scope="col">Detalhe</th></tr></thead><tbody>{linhas}</tbody></table>'
+            '<p>A lista é atualizada a cada 10 minutos. Para saber quais têm imagem mais nova no registro, rode <code>heimdall doctor --versions</code> no Terminal.</p>')
+
+
 def pg_inicio(q: dict, sess: dict) -> tuple:
     """Primeira aba: situação dos serviços numa frase, o que pede atenção e para que serve cada aba."""
     sh = obter_shell() if _shell is not None else None
@@ -296,6 +317,7 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
         corpo += "<p>Nenhum serviço fora do ar.</p>"
     if sh and sh.vivo():
         corpo += f"<p>O terminal está aberto, na pasta {e(sh.pasta)}.</p>"
+    corpo += _bloco_versoes()
     corpo += ("<h2>Para que serve cada aba</h2><ol>"
               '<li><a href="/terminal">Terminal</a>: um shell completo no Mac. A pasta e as variáveis continuam de um comando para o outro, e há atalhos para copiar as últimas saídas.</li>'
               '<li><a href="/servicos">Serviços</a>: uma chave por serviço, para ligar e desligar. O que você desliga continua desligado depois de atualizar e reiniciar.</li>'
