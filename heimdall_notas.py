@@ -475,7 +475,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
         nav = design.nav_abas(NAV, atual, "Seções do Heimdall Notes")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         conteudo = design.com_abas(NAV, atual, conteudo)
-        abas_js = design.SCRIPT_ABAS
+        abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES
     js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (script or abas_js) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notes</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'

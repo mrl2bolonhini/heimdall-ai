@@ -6,6 +6,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Heimdall Cloud, Notes, News, Health, Games e Finance trocam o menu de links pelas abas do Heimdall Design (como o Controls já tinha): setas, Home e End movem o foco, Option+Shift+1 a 9 abre a aba pelo número e o leitor de tela ouve "<nome> aberta". Sem JavaScript, as abas continuam sendo links comuns.
 - Todas as páginas terminam com "Voltar para o topo" e começam num alvo de foco (#topo). O script das abas tem nonce e a política de segurança de cada serviço só o aceita para esse nonce. Detalhes novos em heimdall_design.py: nav_abas, com_abas, topo, script, csp e aba_da_rota.
 - Perguntar (modelo local, só com os dados da tela) agora também existe no Heimdall Health (sono, atividade, recuperação e demais relatórios; não é diagnóstico) e no Heimdall News (as notícias das últimas 24 horas). O Finance já tinha. Cloud, Games e o Account não têm Perguntar: não há dado pessoal para consultar. Os dois botões do Notes (perguntar e salvar nota) vêm na próxima etapa.
+- Com mais de 9 abas (Health e Finance), as 9 primeiras ficam como abas e as outras vão para o menu Mais, que abre com Option+Shift+0 (de novo, ou Esc, fecha). Funciona sem JavaScript. Se a página aberta está no Mais, o resumo diz "Mais, aba aberta: nome". Teste: teste_abas_mais.py.
 - O Account, de uma página só, fica sem abas; já tinha o voltar ao topo.
 
 ## 2026-11-21 - Avisos de saúde e finanças fora do Notes

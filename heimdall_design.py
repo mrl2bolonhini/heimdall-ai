@@ -78,6 +78,8 @@ details.grupo{border:1px solid var(--linha);margin:.5rem 0;padding:.3rem .8rem}d
 ul.acoes{list-style:none;padding:0}ul.acoes li{margin:.6rem 0}ul.acoes button{margin:0 .8rem 0 0;min-width:11rem}
 [role=tablist]{display:flex;flex-wrap:wrap;gap:.25rem;margin:.4rem 0 1rem;border-bottom:1px solid var(--linha)}
 [role=tab]{display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;color:var(--texto);text-decoration:none;border:1px solid var(--linha);border-bottom:0;background:var(--superficie)}
+details.mais{display:inline-block;position:relative;margin:.4rem 0 .6rem}details.mais summary{cursor:pointer;display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;border:1px solid var(--linha);background:var(--superficie);color:var(--texto)}
+details.mais ul{list-style:none;margin:.3rem 0 0;padding:.4rem .8rem;border:1px solid var(--linha);background:var(--superficie)}details.mais li{margin:.2rem 0}details.mais a{display:inline-block;padding:.3rem 0;min-height:""" + ALTURA_MINIMA_ALVO + """}
 [role=tab][aria-selected=true]{font-weight:700;border-bottom:3px solid var(--ouro);background:var(--fundo)}
 [hidden]{display:none !important}
 .campo-segredo{display:inline-flex;gap:.4rem;align-items:center}.rodape{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--linha)}.rodape form{margin:0 0 1rem}
@@ -105,18 +107,34 @@ def botao_js(id_: str, rotulo: str) -> str:
     return f'<button type="button" id="{e(id_)}">{e(rotulo)}</button>'
 
 
+MAX_ABAS = 9   # Option+Shift+1 a 9 abrem as 9 primeiras abas; as demais ficam no menu Mais (Option+Shift+0)
+
+
 def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = ()) -> str:
     """Abas de navegação entre páginas (ARIA tablist). Cada aba é um link: ler/ir é link. As setas movem entre as abas e Option+Shift+número
     abre a aba pelo número (o script `SCRIPT_ABAS` faz isso). `itens` é [(rota, nome)]; `atual` é a rota aberta. O painel é o <div role=tabpanel>
-    que `painel_da_aba` devolve em volta do conteúdo."""
+    que `painel_da_aba` devolve em volta do conteúdo.
+    Com mais de 9 itens, as 9 primeiras são abas e as outras vão para o menu Mais (um <details>, que funciona sem JavaScript), aberto por
+    Option+Shift+0; os itens do Mais são links comuns (abrem a página inteira)."""
     e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
-    abas_ = []
+    abas_, extras = [], []
     for i, (rota, nome) in enumerate(itens, 1):
         sel = rota == atual
+        if i > MAX_ABAS:
+            extras.append(f'<li><a id="aba-{i}" href="{e(rota)}"{" aria-current=\"page\"" if sel else ""}>{e(nome)}</a></li>')
+            continue
         abas_.append(f'<a role="tab" id="aba-{i}" href="{e(rota)}" aria-selected="{"true" if sel else "false"}" tabindex="{0 if sel else -1}" '
                      f'aria-controls="painel-aba" aria-describedby="atalho-aba-{i}"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
-    dicas = "".join(f'<span id="atalho-aba-{i}" class="so-leitor">Atalho: Option Shift {i}</span>' for i in range(1, len(itens) + 1))
-    return f'<div role="tablist" aria-label="{e(rotulo)}">' + "".join(abas_) + f'</div>{dicas}<p id="aviso-abas" class="so-leitor" role="status"></p>'
+    dicas = "".join(f'<span id="atalho-aba-{i}" class="so-leitor">Atalho: Option Shift {i}</span>' for i in range(1, min(len(itens), MAX_ABAS) + 1))
+    if abas_ and not any('aria-selected="true"' in a for a in abas_):   # a aba aberta está no Mais: a primeira continua alcançável pelo Tab
+        abas_[0] = abas_[0].replace('tabindex="-1"', 'tabindex="0"', 1)
+    mais = ""
+    if extras:
+        atual_extra = next((n for r, n in itens[MAX_ABAS:] if r == atual), "")
+        titulo = f"Mais, aba aberta: {atual_extra}" if atual_extra else "Mais"
+        mais = (f'<details class="mais" id="mais"{" data-atual" if atual_extra else ""}><summary aria-describedby="atalho-mais">{e(titulo)}</summary>'
+                f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" class="so-leitor">Atalho: Option Shift 0</span>')
+    return (f'<div role="tablist" aria-label="{e(rotulo)}">' + "".join(abas_) + f'</div>{mais}{dicas}<p id="aviso-abas" class="so-leitor" role="status"></p>')
 
 
 def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
@@ -151,7 +169,7 @@ def com_abas(itens: list, atual: str, conteudo: str) -> str:
 def script(extra: str = "") -> str:
     """<script> com as abas (setas, Home, End e Option+Shift+número) e `extra`, com um nonce novo. Use `csp()` ao enviar a página."""
     import secrets
-    return f'<script nonce="{secrets.token_urlsafe(16)}">{SCRIPT_ABAS}{extra}</script>'
+    return f'<script nonce="{secrets.token_urlsafe(16)}">{SCRIPT_ABAS}{SCRIPT_DETALHES}{extra}</script>'
 
 
 def csp(base: str, corpo: bytes, conectar: bool = True) -> str:
@@ -221,7 +239,7 @@ function atual(){ return lista.querySelector('[aria-selected=true]'); }
 function foco(i){ abas.forEach(function(a, k){ a.tabIndex = (k === i) ? 0 : -1; }); abas[i].focus(); }
 function abrir(a, empurrar){
   var de = atual(); if (a === de) { return; }
-  if (a.hasAttribute('data-completa') || (de && de.hasAttribute('data-completa'))) { location.href = a.href; return; }
+  if (!de || a.hasAttribute('data-completa') || de.hasAttribute('data-completa')) { location.href = a.href; return; }
   fetch(a.href, {credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1'}}).then(function(r){
     if (!r.ok || /\/entrar/.test(r.url)) { throw new Error('x'); } return r.text();
   }).then(function(t){
@@ -250,6 +268,13 @@ lista.addEventListener('keydown', function(ev){
 });
 document.addEventListener('keydown', function(ev){
   if (ev.isComposing || !ev.altKey || !ev.shiftKey || ev.ctrlKey || ev.metaKey) { return; }
+  if (ev.code === 'Digit0') {   // menu Mais: abre e põe o foco no primeiro item; de novo, fecha
+    var mais = document.getElementById('mais'); if (!mais) { return; }
+    ev.preventDefault();
+    if (mais.open) { mais.open = false; mais.querySelector('summary').focus(); return; }
+    mais.open = true; var l = mais.querySelector('a'); if (l) { l.focus(); }
+    return;
+  }
   var m = /^Digit([1-9])$/.exec(ev.code); if (!m) { return; }
   var a = abas[parseInt(m[1], 10) - 1]; if (a) { ev.preventDefault(); a.click(); }
 });

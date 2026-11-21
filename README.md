@@ -102,6 +102,7 @@ python3 heimdall_agente.py --teste                # Notas, Calendário e Lembret
 python3 heimdall_agente.py --voz                  # voz e velocidade do áudio
 python3 teste_cloud.py                        # painel do emulador de AWS (sem rede)
 python3 teste_avisos.py                  # avisos de saúde e finanças (sem rede)
+python3 teste_abas_mais.py               # menu Mais das abas (navegador)
 python3 teste_migrar_avisos.py           # migração das notas antigas (sem rede)
 python3 teste_notas.py                   # Heimdall Notes (sem rede)
 python3 teste_news.py                    # Heimdall News (sem rede)
