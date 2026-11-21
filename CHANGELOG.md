@@ -7,7 +7,8 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - O agente tem POST /avisos/gravar e, por segurança, desvia /notas/gravar com pasta Saúde ou Heimdall Finanças para os avisos. O fluxo "monitor de saúde" do n8n passa a gravar nos avisos (rode heimdall flows para instalar a nova versão). O botão Salvar no Notas do Finance foi removido: a análise gerada já vira aviso.
 - O Bark segue notificando, só com texto genérico ("Heimdall Health: aviso novo. Abra a aba Avisos"). Itens de triagem de saúde ou finanças também saem sem título nem resumo no Bark; o detalhe fica no app Lembretes e no serviço.
 - As notas de saúde que já estão no Notas continuam lá; apague-as pelo app Notas se quiser.
-- Novos: heimdall_avisos.py, teste_avisos.py.
+- heimdall notices (sem opção só mostra o plano; com --migrate executa) traz para a aba Avisos as notas de saúde e finanças que já estavam gravadas, tanto a cópia do cofre (com os áudios) quanto a nota do app Notas (pasta Saúde dentro de Heimdall-ai e pasta Heimdall Finanças). Importa tudo, confere que cada item chegou e só então apaga; se algo falhar, nada é apagado. O app Notas manda para "Apagadas recentemente" (30 dias). Uma pasta sua chamada Saúde fora de Heimdall-ai nunca é tocada.
+- Novos: heimdall_avisos.py, migrar_avisos.py, teste_avisos.py, teste_migrar_avisos.py.
 
 ## 2026-11-21 - Heimdall Account (account.heimdall-ai.tech)
 - Novo serviço, porta 8018: o tour dos serviços de cada pessoa, com link, o que cada um faz e como configurar. Dono vê todos; convidado só os seus. O texto fica em heimdall_conta_info.py (Health e Finance já explicam o plano de multiusuário). Todo e-mail de dono ou convidado entra no Account; a aba Usuários o inclui sozinha. Comando: heimdall account (-L abre o endereço do Mac).

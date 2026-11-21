@@ -302,6 +302,8 @@ SCRIPTS = [
     ("heimdall_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e pausa e retoma o monitor de um serviço, com usuário e senha no .env ou, se o login do Kuma estiver desligado, sem senha."),
     ("verificar_access.py", "Confere, sem entrar, se um endereço público está atrás do Cloudflare Access. O start_heimdall.sh o usa antes de ligar o login do Open WebUI pelo Access (HEIMDALL_WEBUI_ACCESS=1); heimdall chat --check roda à mão."),
     ("teste_verificar_access.py", "Testa o verificar_access.py com servidores locais que imitam o Access, um site aberto e um endereço sem resposta."),
+    ("migrar_avisos.py", "Traz as notas antigas de saúde e finanças (cofre e app Notas) para a aba Avisos, confere e só então apaga as originais; heimdall notices --migrate."),
+    ("teste_migrar_avisos.py", "Testa a migração das notas antigas: importa, confere, apaga só o que foi importado e mantém tudo se algo falhar."),
     ("heimdall_avisos.py", "Avisos do Heimdall Health e do Heimdall Finance: relatórios e análises ficam em um banco local de cada serviço, na aba Avisos, e nunca no app Notas. O Bark leva só texto genérico."),
     ("teste_avisos.py", "Testa os avisos: gravar, lido, HTML do texto nunca interpretado, rota /avisos/gravar do agente, pastas de saúde e finanças desviadas do Notas e Bark sem dados sensíveis."),
     ("heimdall_account.py", "Heimdall Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa, com link, o que faz e como configurar, e /quem.json, que o site usa para mostrar Entrar ou o nome e os serviços de quem entrou. Só atende quem o Cloudflare Access aprovou."),

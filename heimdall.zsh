@@ -90,6 +90,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
+    notices) printf '%s\n' "-m=--migrate" ;;
     doctor) printf '%s\n' "-m=--memory" "-c=--cpu" "-d=--disk" "-k=--docker" "-o=--ollama" "-s=--services" "-v=--versions" "-t=--top" ;;
     backup) printf '%s\n' "-p=--prepare" "-P=--password" "-r=--run" "-l=--list" "-v=--verify" "-R=--restore" ;;
     mail) printf '%s\n' "-t=--test-login" "-s=--simulate" "-d=--diagnose" ;;
@@ -352,6 +353,7 @@ heimdall() {
     triage)
       if [ "$1" = "--complete-tests" ]; then _heimdall_sh concluir_testes_triagem.sh; else _heimdall_sh consultar_triagem.sh "$@"; fi ;;
     db) _heimdall_py heimdall_banco.py "$@" ;;
+    notices) _heimdall_tr "--migrate=--executar" "$@"; _heimdall_py migrar_avisos.py "${_HA[@]}" ;;
     doctor)
       _heimdall_tr "--memory=--memoria
 --disk=--disco
@@ -458,7 +460,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage notices db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -479,6 +481,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
         else compadd -- --local --play --list; fi ;;
       cloud) compadd -- --local ;;
       triage) compadd -- --complete-tests ;;
+      notices) compadd -- --migrate ;;
       db) compadd -- --sql ;;
       doctor) compadd -- --memory --cpu --disk --docker --ollama --services --versions --top ;;
       backup) compadd -- --prepare --password --run --list --verify --restore ;;

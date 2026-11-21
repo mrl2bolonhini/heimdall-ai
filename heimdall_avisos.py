@@ -33,17 +33,25 @@ class Avisos:
         con = sqlite3.connect(self.caminho, timeout=10)
         con.row_factory = sqlite3.Row
         con.execute("CREATE TABLE IF NOT EXISTS avisos (id INTEGER PRIMARY KEY AUTOINCREMENT, criado TEXT NOT NULL, titulo TEXT NOT NULL, "
-                    "texto TEXT NOT NULL DEFAULT '', lido INTEGER NOT NULL DEFAULT 0)")
+                    "texto TEXT NOT NULL DEFAULT '', lido INTEGER NOT NULL DEFAULT 0, origem TEXT)")
+        if "origem" not in [r[1] for r in con.execute("PRAGMA table_info(avisos)")]:   # banco criado antes da migração das notas antigas
+            con.execute("ALTER TABLE avisos ADD COLUMN origem TEXT")
+        con.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_avisos_origem ON avisos (origem) WHERE origem IS NOT NULL")
         return con
 
-    def gravar(self, titulo: str, texto: str) -> int:
+    def gravar(self, titulo: str, texto: str, criado: str = "", origem: str = "") -> int:
+        """Grava um aviso. Com `origem` (usada ao trazer notas antigas), gravar de novo a mesma origem não duplica: devolve o id que já existe."""
         titulo = re.sub(r"\s+", " ", str(titulo or "")).strip()[:MAX_TITULO]
         if not titulo:
             raise ValueError("falta o título")
         with _trava:
             con = self._con()
             try:
-                cur = con.execute("INSERT INTO avisos (criado, titulo, texto) VALUES (?, ?, ?)", (_agora(), titulo, str(texto or "")[:MAX_TEXTO]))
+                if origem:
+                    ja = con.execute("SELECT id FROM avisos WHERE origem = ?", (origem,)).fetchone()
+                    if ja:
+                        return ja[0]
+                cur = con.execute("INSERT INTO avisos (criado, titulo, texto, origem) VALUES (?, ?, ?, ?)", (criado or _agora(), titulo, str(texto or "")[:MAX_TEXTO], origem or None))
                 con.execute("DELETE FROM avisos WHERE id NOT IN (SELECT id FROM avisos ORDER BY id DESC LIMIT ?)", (MAX_AVISOS,))
                 con.commit()
                 return cur.lastrowid
@@ -56,6 +64,15 @@ class Avisos:
         con = self._con()
         try:
             return [dict(r) for r in con.execute("SELECT * FROM avisos ORDER BY id DESC LIMIT ?", (int(limite),))]
+        finally:
+            con.close()
+
+    def tem_origem(self, origem: str) -> bool:
+        if not self.caminho.exists():
+            return False
+        con = self._con()
+        try:
+            return con.execute("SELECT 1 FROM avisos WHERE origem = ?", (origem,)).fetchone() is not None
         finally:
             con.close()
 
