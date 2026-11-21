@@ -8,6 +8,7 @@ Antes de apagar qualquer item da caixa, o Mac grava uma cópia em banco/caixa_re
     python3 heimdall_caixa.py status          estado (ligada ou não) e se o Worker responde
     python3 heimdall_caixa.py start           cria o token de dono (prova acesso com a chave da Cloudflare) e o grava no .env
     python3 heimdall_caixa.py add NOME        cria o token de uma pessoa (a-z, 0-9, hífen); o token vai para a área de transferência
+                                              (o seu celular é a pessoa 'eu', ou o nome em HEIMDALL_CAIXA_MEU_NOME: a saúde dele entra no banco de saúde)
     python3 heimdall_caixa.py remove NOME     revoga o token de uma pessoa
     python3 heimdall_caixa.py pull            busca as entradas, grava a cópia local e apaga da caixa
 """
@@ -22,7 +23,7 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 URL_PADRAO = "https://heimdall-caixa.mbolonhinic.workers.dev"
 USER_AGENT = "heimdall-ai/1.0"
-CHAVES = ("HEIMDALL_CAIXA", "HEIMDALL_CAIXA_URL", "HEIMDALL_CAIXA_TOKEN", "CLOUDFLARE_API_TOKEN")
+CHAVES = ("HEIMDALL_CAIXA", "HEIMDALL_CAIXA_URL", "HEIMDALL_CAIXA_TOKEN", "HEIMDALL_CAIXA_MEU_NOME", "CLOUDFLARE_API_TOKEN")
 PASTA = AQUI / "banco" / "caixa_recebidos"
 
 
@@ -137,6 +138,17 @@ def puxar(env=None, abrir=None, pasta=None, tratar=None) -> dict:
     return res
 
 
+def tratar_padrao(item: dict, env=None, importar_saude=None) -> None:
+    """Importa o que já tem destino no Heimdall. Hoje: saúde (formato do Health Auto Export) do próprio dono, para o banco de saúde existente.
+    Itens de outras pessoas e outros tipos ficam só na cópia local até existir o armazenamento por pessoa (cada um com o seu banco)."""
+    env = _env() if env is None else env
+    if item.get("tipo") == "saude" and item.get("usuario") == env.get("HEIMDALL_CAIXA_MEU_NOME", "eu"):
+        if importar_saude is None:
+            import heimdall_saude
+            importar_saude = heimdall_saude.processar_hae
+        importar_saude(item.get("dados"))
+
+
 def _copiar(texto: str) -> bool:
     try:
         subprocess.run(["pbcopy"], input=texto.encode(), check=True, timeout=5)
@@ -177,7 +189,7 @@ def main(argv=None) -> int:
             if not ativa(env):
                 print("Caixa desligada: nada a fazer. Para ligar: heimdall env --set HEIMDALL_CAIXA 1")
                 return 0
-            r = puxar(env)
+            r = puxar(env, tratar=lambda it: tratar_padrao(it, env))
             print(f"Recebidos {r['recebidos']}, apagados da caixa {r['apagados']}, falhas {r['falhas']}. Cópias em banco/caixa_recebidos/.")
             return 1 if r["falhas"] else 0
         else:

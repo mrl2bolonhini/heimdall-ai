@@ -101,6 +101,15 @@ with tempfile.TemporaryDirectory() as d:
     r = cx.puxar(ENV, abrir=caixa_falsa(itens[:1], log, falha_apagar=True), pasta=d)
     confere("se apagar falha, conta a falha e mantém a cópia local", r["falhas"] == 1 and arq.exists(), r)
 
+chamadas = []
+cx.tratar_padrao({"tipo": "saude", "usuario": "eu", "dados": {"data": {"workouts": []}}}, {}, importar_saude=chamadas.append)
+confere("saúde do próprio dono ('eu') vai para o banco de saúde", len(chamadas) == 1)
+cx.tratar_padrao({"tipo": "saude", "usuario": "ana", "dados": {}}, {}, importar_saude=chamadas.append)
+cx.tratar_padrao({"tipo": "nota", "usuario": "eu", "dados": {}}, {}, importar_saude=chamadas.append)
+confere("saúde de outra pessoa e outros tipos só ficam na cópia local", len(chamadas) == 1)
+cx.tratar_padrao({"tipo": "saude", "usuario": "murillo", "dados": {}}, {"HEIMDALL_CAIXA_MEU_NOME": "murillo"}, importar_saude=chamadas.append)
+confere("o nome do dono vem de HEIMDALL_CAIXA_MEU_NOME", len(chamadas) == 2)
+
 try:
     cx.pedido("GET", "/v1/entrada", token="x", env=ENV, abrir=lambda *a, **k: (_ for _ in ()).throw(urllib.error.URLError("sem rede")))
     confere("rede fora vira erro claro", False)
