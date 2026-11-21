@@ -26,5 +26,8 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Cloud, Notas, Ne
 - O usuário é cego e usa VoiceOver: respostas em português, texto corrido e listas numeradas simples, sem elementos visuais.
 - Padrão combinado em conversa que valha para o projeto todo vai para este CLAUDE.md, para as próximas conversas seguirem.
 - Cada recurso novo atualiza gerar_docs.py, README, heimdall_ajuda.txt e CHANGELOG.md.
-- Dados de saúde e finanças nunca saem do Mac; segredos vêm do .env, nunca colados.
+- Segredos vêm do .env, nunca colados.
+- Migração para a Cloudflare (decisão do usuário em 21/11/2026): a regra "saúde e finanças nunca saem do Mac" foi abandonada; saúde, finanças e o resto podem ir para a nuvem da Cloudflare, com dados protegidos (R2 com chave do cliente, acesso restrito). O Mac continua hospedando o Heimdall (sem VPS por enquanto) e o agente da Apple. O desenvolvimento segue na assinatura Pro do Claude, não na API.
+- Limite de gasto da nuvem: no máximo US$ 15 por mês, somando Workers, Workers AI, AI Gateway e créditos de modelos. Ative alertas e limites ANTES de ligar cada fase; nenhuma fase começa sem eles.
+- Plano de volta: toda fase da migração precisa poder ser desligada por um interruptor no .env (ex.: HEIMDALL_NUVEM=0) que devolve o comportamento anterior (modelos locais, dados no Mac), e os dados enviados à nuvem têm cópia de volta no Mac antes de qualquer remoção. Nunca apagar a cópia local antes de o usuário confirmar que a fase vale a pena.
 - Trabalhar em develop; `main` só avança com o sim explícito do usuário.
