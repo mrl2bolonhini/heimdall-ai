@@ -330,6 +330,15 @@ Exemplos:
   heimdall cloudai
   heimdall env --set HEIMDALL_NUVEM 1
 
+@ mailbox | Caixa de correio dos celulares (Cloudflare)
+A caixa de correio é o ponto de encontro entre o Mac e os celulares: o celular deixa lá saúde e notas, o Mac busca, grava uma cópia em banco/caixa_recebidos/ (só o dono lê) e só então apaga da caixa; o que o Mac quer que o celular aplique (lembretes e eventos) fica na saída da pessoa. O que sobrar na nuvem some sozinho em 7 dias. Não é criptografia de ponta a ponta. Subcomandos: status (mostra se está ligada e se responde), start (cria o token de dono, provando acesso com a chave da Cloudflare), add NOME (cria o token de uma pessoa e o copia para a área de transferência), remove NOME (revoga a pessoa), pull (busca as entradas). Para ligar: heimdall env --set HEIMDALL_CAIXA 1. Para desligar: heimdall env --set HEIMDALL_CAIXA 0.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall mailbox start
+  heimdall mailbox add ana
+  heimdall mailbox pull
+
 @ ask | Pergunta ao modelo pelo terminal
 Faz uma pergunta curta ao modelo e mostra a resposta, com uma linha no fim dizendo quem respondeu. Com a nuvem ligada (HEIMDALL_NUVEM=1) a pergunta vai ao gpt-oss-120b pelo gateway da Cloudflare; se a nuvem falhar, cai sozinha para o modelo local e avisa. A pergunta não fica guardada em histórico. Escreva a pergunta entre aspas.
 Opções:

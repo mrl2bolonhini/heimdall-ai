@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Cliente da caixa de correio no Mac (heimdall mailbox)
+- Novo comando heimdall mailbox com os subcomandos status, start, add NOME, remove NOME e pull. O start cria o token de dono provando acesso com a chave da Cloudflare e o grava no .env; o add cria o token de uma pessoa e o copia para a área de transferência (não aparece na tela); o pull busca as entradas, grava uma cópia em banco/caixa_recebidos/ (permissão só do dono) e só depois apaga da caixa. Se algo falhar no meio, o item fica na caixa.
+- Interruptor HEIMDALL_CAIXA (heimdall env --set HEIMDALL_CAIXA 1 liga, 0 desliga). Ainda não importa saúde nem notas automaticamente: isso vem com os Atalhos do iPhone. Teste: python3 teste_caixa_cliente.py.
+
 ## 2026-11-21 - Caixa de correio na Cloudflare (publicada, ainda sem cliente no Mac)
 - Novo Worker cloudflare/caixa.js ("heimdall-caixa"): cada pessoa tem um token e uma caixa de entrada (o celular deixa saúde, notas) e uma de saída (o Mac deixa lembretes e eventos para o celular aplicar). O Mac do dono busca e apaga; o R2 descarta sozinho o que sobrar após 7 dias. No KV fica só o hash dos tokens. Limites: 5 MB por item (cabe um lote grande de saúde), 500 envios e 50 MB por pessoa por dia, para não estourar o teto de gasto. Não é criptografia de ponta a ponta.
 - O primeiro token do dono é entregue a quem prova ter acesso à conta da Cloudflare. Teste: node cloudflare/teste_caixa.mjs (31 verificações, incluindo isolamento entre pessoas). Publicada em https://heimdall-caixa.mbolonhinic.workers.dev com o bucket R2 heimdall-caixa (apaga em 7 dias) e o KV heimdall-caixa-tokens. Cada busca entrega até 10 itens (cerca de 20 MB). Ainda não está ligada ao Mac: falta o cliente.
