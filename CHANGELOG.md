@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Caixa de correio na Cloudflare (código e testes; ainda não publicada)
+- Novo Worker cloudflare/caixa.js ("heimdall-caixa"): cada pessoa tem um token e uma caixa de entrada (o celular deixa saúde, notas) e uma de saída (o Mac deixa lembretes e eventos para o celular aplicar). O Mac do dono busca e apaga; o R2 descarta sozinho o que sobrar após 7 dias. No KV fica só o hash dos tokens. Limites: 256 KB por item e 500 envios por pessoa por dia. Não é criptografia de ponta a ponta.
+- O primeiro token do dono é entregue a quem prova ter acesso à conta da Cloudflare. Teste: node cloudflare/teste_caixa.mjs (31 verificações, incluindo isolamento entre pessoas). Nada foi publicado nem ligado ao Mac ainda.
+
 ## 2026-11-21 - Perguntar ao modelo pelo terminal
 - Novo comando heimdall ask "pergunta": responde com o gpt-oss-120b da nuvem se HEIMDALL_NUVEM=1 (e cai para o modelo local, avisando, se a nuvem falhar) ou direto pelo modelo local. Opções --local (só o local) e --cloud (só a nuvem, mesmo com o interruptor em 0, para testar). Uma linha no fim diz qual modelo respondeu. A pergunta não fica guardada.
 
