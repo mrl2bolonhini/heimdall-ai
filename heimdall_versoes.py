@@ -34,8 +34,8 @@ CONTEINERES = {
     "qdrant": ("Qdrant (base vetorial)", [(["/qdrant/qdrant", "--version"], _primeira_versao)]),
     "searxng": ("SearXNG (busca)", []),
     "dozzle": ("Dozzle (logs)", [(["/dozzle", "--version"], _primeira_versao)]),
-    "moto": ("Emulador de AWS (Moto)", []),
-    "localstack": ("Emulador de AWS (LocalStack)", []),
+    "moto": ("Emulador de AWS (Moto)", [(["python3", "-c", "import moto; print(moto.__version__)"], _primeira_versao)]),
+    "localstack": ("Emulador de AWS (LocalStack)", [(["localstack", "--version"], _primeira_versao), (["cat", "/opt/code/localstack/localstack-core/localstack/version.py"], _primeira_versao)]),
     "docling": ("Docling (leitura de documentos)", []),
 }
 
