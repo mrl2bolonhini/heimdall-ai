@@ -392,9 +392,15 @@ _FAVICON_SVG = ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><re
 ICONE = '<link rel="icon" href="data:image/svg+xml,' + __import__("urllib.parse", fromlist=["quote"]).quote(_FAVICON_SVG) + '">'
 
 
-def cabecalho(nome: str, nav: str = "") -> str:
-    """Cabeçalho de marca: símbolo (decorativo, o nome ao lado já é lido) + nome do serviço + menu + faixa de seis cores."""
-    return f'<header><p class="marca">{SIMBOLO}<strong>{html.escape(nome)}</strong></p>{nav}</header>'
+def cabecalho(nome: str, nav: str = "", sair_html: str = "") -> str:
+    """Cabeçalho de marca: símbolo (decorativo, o nome ao lado já é lido) + nome do serviço + menu + faixa de seis cores.
+    Antes dele vai o menu Conta (nome, e-mail e links dos serviços), quando se sabe quem entrou: pelo Access sempre; pela senha, se há menu (nav) = sessão aberta."""
+    try:
+        import heimdall_conta
+        conta = heimdall_conta.menu(nome, logado_local=bool(nav), sair_html=sair_html)
+    except Exception:  # noqa: BLE001
+        conta = ""
+    return f'{conta}<header><p class="marca">{SIMBOLO}<strong>{html.escape(nome)}</strong></p>{nav}</header>'
 
 
 
@@ -805,7 +811,20 @@ def _formulario(corpo: bytes, tipo: str) -> tuple:
     return {k: v[0] for k, v in parse_qs(corpo.decode("utf-8", "replace"), keep_blank_values=True).items()}, {}
 
 
-class Painel(BaseHTTPRequestHandler):
+class ManipuladorBase(BaseHTTPRequestHandler):
+    """Base de todos os servidores: guarda os cabeçalhos do pedido em curso para o menu Conta saber quem entrou (por thread)."""
+
+    def parse_request(self):
+        ok = super().parse_request()
+        try:
+            import heimdall_conta
+            heimdall_conta.contexto.cabecalhos = self.headers if ok else None
+        except Exception:  # noqa: BLE001
+            pass
+        return ok
+
+
+class Painel(ManipuladorBase):
     server_version = "HeimdallCloud"
     sys_version = ""
     protocol_version = "HTTP/1.0"  # fecha a conexão a cada resposta

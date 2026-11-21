@@ -1050,7 +1050,7 @@ def rss_falha(ip: str) -> None:
                 _rss_falhas.pop(k, None)
 
 
-class News(BaseHTTPRequestHandler):
+class News(nuvem.ManipuladorBase):
     server_version = "HeimdallNews"
     sys_version = ""
     protocol_version = "HTTP/1.0"

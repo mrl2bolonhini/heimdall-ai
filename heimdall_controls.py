@@ -868,12 +868,9 @@ document.addEventListener('input', function(ev){
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash=None) -> bytes:
-    nav = conta = ""
+    nav = sair = ""
     if sess:
-        nome, via = sess.get("_quem") or ("Dono", "senha e código")
-        saida_access = ('<p><a href="/cdn-cgi/access/logout">Sair também do Cloudflare Access</a></p>' if via == "Cloudflare Access" else "")
-        conta = (f'<nav aria-label="Conta"><details class="conta"><summary>Conta: {e(nome)}</summary><p>Conectado como {e(nome)}, entrando por {e(via)}.</p>'
-                 f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>{saida_access}</details></nav>')
+        sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         nav = '<nav aria-label="Principal">' + design.abas(SECOES, atual, completas=("/terminal",)) + '</nav>'
         corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
     else:
@@ -895,7 +892,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'
-            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{conta}{nuvem.cabecalho("Heimdall Controls", nav)}'
+            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Controls", nav, sair_html=sair)}'
             f'<main id="principal">{corpo}</main>{rodape}{js}<!--/email_off--></body></html>').encode("utf-8")
 
 
@@ -912,7 +909,7 @@ def pg_entrar(erro: str = "") -> bytes:
 # ----------------------------------------------------------------------------------------
 # Servidor
 # ----------------------------------------------------------------------------------------
-class Painel(BaseHTTPRequestHandler):
+class Painel(nuvem.ManipuladorBase):
     server_version = "HeimdallControls"
     sys_version = ""
     protocol_version = "HTTP/1.0"

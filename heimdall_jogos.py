@@ -286,7 +286,7 @@ def pg_entrar(erro: str = "") -> bytes:
 CSP_PAGINA = "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src data:; form-action 'self'; base-uri 'none'; connect-src 'none'; frame-ancestors 'none'"
 
 
-class Jogos(BaseHTTPRequestHandler):
+class Jogos(nuvem.ManipuladorBase):
     server_version = "HeimdallJogos"
     sys_version = ""
     protocol_version = "HTTP/1.0"

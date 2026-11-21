@@ -386,7 +386,7 @@ def pg_entrar(erro: str = "") -> bytes:
 # ----------------------------------------------------------------------------------------
 # Servidor
 # ----------------------------------------------------------------------------------------
-class Painel(BaseHTTPRequestHandler):
+class Painel(nuvem.ManipuladorBase):
     server_version = "HeimdallSaude"
     sys_version = ""
     protocol_version = "HTTP/1.0"

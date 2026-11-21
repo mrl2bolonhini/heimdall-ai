@@ -73,7 +73,7 @@ pre{white-space:pre-wrap;word-break:break-word;border:1px solid var(--linha);bac
 .linha-acoes{display:flex;flex-wrap:wrap;gap:.2rem 1rem;align-items:flex-end}.linha-acoes form{margin:0}
 form.acao{display:inline;margin:0}
 .ant-prox form.acao{margin:0}
-details.conta{max-width:22rem;margin:.5rem 0 0 auto;padding:.3rem .6rem;border:1px solid var(--linha);background:var(--superficie)}details.conta summary{cursor:pointer;font-weight:700}details.conta p{margin:.4rem 0}details.conta form{margin:.4rem 0}
+details.conta{max-width:22rem;margin:.5rem 0 0 auto;padding:.3rem .6rem;border:1px solid var(--linha);background:var(--superficie)}details.conta summary{cursor:pointer;font-weight:700}details.conta p{margin:.4rem 0}details.conta form{margin:.4rem 0}details.conta ul{margin:.4rem 0;padding-left:1.2rem}
 details.grupo{border:1px solid var(--linha);margin:.5rem 0;padding:.3rem .8rem}details.grupo summary{cursor:pointer;font-weight:700;min-height:2.75rem}
 ul.acoes{list-style:none;padding:0}ul.acoes li{margin:.6rem 0}ul.acoes button{margin:0 .8rem 0 0;min-width:11rem}
 [role=tablist]{display:flex;flex-wrap:wrap;gap:.25rem;margin:.4rem 0 1rem;border-bottom:1px solid var(--linha)}

@@ -747,7 +747,7 @@ def pg_entrar(erro: str = "") -> bytes:
 CSP_PAGINA = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
 
 
-class Finance(BaseHTTPRequestHandler):
+class Finance(nuvem.ManipuladorBase):
     server_version = "HeimdallFinance"
     sys_version = ""
     protocol_version = "HTTP/1.0"

@@ -302,6 +302,8 @@ SCRIPTS = [
     ("heimdall_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e pausa e retoma o monitor de um serviço, com usuário e senha no .env ou, se o login do Kuma estiver desligado, sem senha."),
     ("verificar_access.py", "Confere, sem entrar, se um endereço público está atrás do Cloudflare Access. O start_heimdall.sh o usa antes de ligar o login do Open WebUI pelo Access (HEIMDALL_WEBUI_ACCESS=1); heimdall chat --check roda à mão."),
     ("teste_verificar_access.py", "Testa o verificar_access.py com servidores locais que imitam o Access, um site aberto e um endereço sem resposta."),
+    ("heimdall_conta.py", "Menu Conta de todos os serviços: nome (da conta Microsoft, pelo Cloudflare Access) e e-mail de quem entrou, e links para os serviços a que a pessoa tem acesso (dono vê todos; convidado só os liberados). O heimdall_cloud.cabecalho o inclui em todas as páginas."),
+    ("teste_conta.py", "Testa o menu Conta: nome e e-mail, serviços por papel, texto escapado, nome guardado na memória, falha sem nome e um servidor real que vê os cabeçalhos de cada pedido."),
     ("heimdall_versoes.py", "Versões do macOS, Python, Docker, Ollama, LiteLLM, do código do Heimdall e de cada serviço em contêiner. Usado por heimdall doctor --versions (compara com a imagem mais nova no registro) e pela Visão geral do Controls (sem rede)."),
     ("teste_versoes.py", "Testa o heimdall_versoes.py com um docker de mentira: versões, comparação com o registro e falhas em silêncio."),
     ("teste_servicos.py", "Testa o catálogo, o liga e desliga de verdade de um processo de teste, o vigia e a leitura do Kuma."),

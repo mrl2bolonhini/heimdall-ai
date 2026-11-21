@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Menu Conta em todos os serviços
+- Cloud, Notas, News, Saúde, Jogos, Finance e Controls ganham o mesmo menu Conta, antes do cabeçalho: "Conta: Nome", com o nome da conta Microsoft e o e-mail, como a pessoa entrou e a lista de links dos serviços a que ela tem acesso. O dono vê todos (Chat, Status, n8n, Controls...); o convidado só os liberados para ele e que podem ser dados a convidado. O serviço atual aparece como "você está aqui". O link do Kuma abre em /dashboard.
+- O nome vem de /cdn-cgi/access/get-identity da equipe no Cloudflare, chamado com o próprio token do Access, e fica só na memória (1 hora; 10 minutos se falhar, e então aparece o e-mail). Quem entra pela porta local com senha e código aparece como "Dono".
+- heimdall_cloud.ManipuladorBase passou a ser a base dos servidores: guarda os cabeçalhos do pedido em curso para o menu saber quem entrou.
+- Novos: heimdall_conta.py e teste_conta.py.
+
 ## 2026-11-21 - Versões dos serviços: heimdall doctor --versions e Visão geral
 - heimdall doctor --versions (-v) lista as versões do macOS, Python, Docker, Ollama, LiteLLM, do código do Heimdall e de cada contêiner que está rodando (Open WebUI, n8n, Kuma, Qdrant, SearXNG, Dozzle e emuladores), e compara cada imagem com a mais nova no registro: avisa quando há atualização (heimdall restart --update). Se não der para comparar (sem rede, sem buildx), só mostra a versão.
 - A Visão geral do Controls ganhou a tabela "Versões instaladas" (guardada por 10 minutos, sem rede, para a página abrir rápido).

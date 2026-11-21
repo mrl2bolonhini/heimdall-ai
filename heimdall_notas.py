@@ -661,7 +661,7 @@ def pg_busca(q: str, pagina: int = 1) -> str:
 # ----------------------------------------------------------------------------------------
 # Servidor
 # ----------------------------------------------------------------------------------------
-class Notas(BaseHTTPRequestHandler):
+class Notas(nuvem.ManipuladorBase):
     server_version = "HeimdallNotas"
     sys_version = ""
     protocol_version = "HTTP/1.0"

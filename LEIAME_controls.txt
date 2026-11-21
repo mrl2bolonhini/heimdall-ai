@@ -37,3 +37,5 @@ Camadas de segurança
 6. Sem senha e código configurados, o painel não sobe.
 
 Se algo falhar: ./subir.sh --log controls, ou heimdall logs --service controls.
+
+Menu Conta: no alto de toda página há "Conta: seu nome". Abre com o nome e o e-mail, como você entrou e os links dos serviços do Heimdall que você pode abrir, o botão Sair e, pelo Access, o link para sair também do Cloudflare Access. O mesmo menu existe em Cloud, Notas, News, Saúde, Jogos e Finance.

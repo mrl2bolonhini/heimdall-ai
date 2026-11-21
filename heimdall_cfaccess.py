@@ -164,6 +164,11 @@ def verificar_jwt(token: str, agora: float = None, buscar=None, servico: str = N
     return email if email and papel(email, servico) else None
 
 
+def email_validado(token: str):
+    """E-mail do token do Access se a assinatura e as claims conferem, sem olhar o papel (quem é o dono ou o convidado)."""
+    return _validar(token) if token else None
+
+
 def identificar(cabecalhos, servico: str = None) -> tuple:
     """(e-mail, papel) do pedido, ou (None, None). cabecalhos: o self.headers do servidor HTTP."""
     if not ativo():
