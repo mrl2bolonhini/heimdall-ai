@@ -433,7 +433,7 @@ CATEGORIAS = {"CLOUD": "Cloud", "CONTROLS": "Controls", "NOTAS": "Notes", "NEWS"
 
 def pg_configuracoes(q: dict, sess: dict) -> tuple:
     """Tudo o que o .env guarda, em grupos que abrem e fecham (um por serviço), mais as opções que o código aceita e o .env ainda não define."""
-    definidas = config.ler()
+    definidas = [d for d in config.ler() if d["nome"] not in config.OBSOLETAS]
     nomes = {d["nome"] for d in definidas}
     codigo = config.opcoes_do_codigo()
     faltam = sorted(n for n in codigo if n not in nomes)

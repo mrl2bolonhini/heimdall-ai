@@ -148,6 +148,8 @@ def e_segredo(nome: str) -> bool:
     return any(p in _PALAVRAS_SEGREDO and (i == 0 or partes[i - 1] != "SEM") for i, p in enumerate(partes))
 
 
+# Opções que não valem mais: não aparecem na lista de Ajustes (quem ainda as tem no .env pode apagá-las à mão ou deixar).
+OBSOLETAS = {"HEIMDALL_WEBUI_SEM_SENHA"}
 _SH_SIMPLES = re.compile(r"\$\{?(HEIMDALL_[A-Z0-9_]+)")
 _cache = {"quando": 0.0, "dados": {}}
 
@@ -189,6 +191,8 @@ def opcoes_do_codigo() -> dict:
                 achadas.setdefault(nome, "")
     except ImportError:
         pass
+    for n in OBSOLETAS:
+        achadas.pop(n, None)
     _cache.update(quando=time.time(), dados=achadas)
     return achadas
 

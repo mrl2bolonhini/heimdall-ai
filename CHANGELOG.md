@@ -2,8 +2,8 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
-## 2026-11-20 - HEIMDALL_WEBUI_SEM_SENHA passa a ser ignorada
-- Testado no Mac: com ENABLE_PASSWORD_AUTH=false o Open WebUI responde 403 a todo login, inclusive o pelo cabeçalho do Access, e a página fica em "Fazendo login". A opção HEIMDALL_WEBUI_SEM_SENHA agora só avisa e não aplica. Com HEIMDALL_WEBUI_ACCESS=1 a senha já não é pedida pelo endereço público.
+## 2026-11-20 - HEIMDALL_WEBUI_SEM_SENHA passa a ser ignorada e sai dos Ajustes
+- Testado no Mac: com ENABLE_PASSWORD_AUTH=false o Open WebUI responde 403 a todo login, inclusive o pelo cabeçalho do Access, e a página fica em "Fazendo login". A opção HEIMDALL_WEBUI_SEM_SENHA agora só avisa e não aplica. Com HEIMDALL_WEBUI_ACCESS=1 a senha já não é pedida pelo endereço público. A opção não aparece mais em Ajustes (lista OBSOLETAS em heimdall_config.py).
 
 ## 2026-11-20 - Ajustes: segredo só quando é segredo; SUBIR_* no lugar certo
 - HEIMDALL_WEBUI_SEM_SENHA (e qualquer NOME com SEM_SENHA) é um liga/desliga e não vem mais oculto como senha. A regra agora olha as palavras do nome (senha, token, chave, hash...), não pedaços de palavra.

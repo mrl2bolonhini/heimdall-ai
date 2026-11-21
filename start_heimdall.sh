@@ -684,7 +684,7 @@ if [ "$WANT_WEBUI" = "1" ]; then
             WEBUI_BIND="127.0.0.1:"
             WEBUI_EXTRA+=(-e "WEBUI_AUTH_TRUSTED_EMAIL_HEADER=${HEIMDALL_WEBUI_ACCESS_HEADER:-Cf-Access-Authenticated-User-Email}")
             # ENABLE_PASSWORD_AUTH=false faz esta versão do Open WebUI recusar (403) também o login pelo cabeçalho do Access; por isso é ignorada.
-            [ "$HEIMDALL_WEBUI_SEM_SENHA" = "1" ] && echo "     Aviso: HEIMDALL_WEBUI_SEM_SENHA foi ignorada (desligar a senha derruba o login pelo Access nesta versão). Pelo Access a senha não aparece."
+            [ "$HEIMDALL_WEBUI_SEM_SENHA" = "1" ] && echo "     Aviso: HEIMDALL_WEBUI_SEM_SENHA foi ignorada (desligar a senha derruba o login pelo Access nesta versão); pode apagá-la do .env."
             echo "     Open WebUI com login pelo Cloudflare Access (porta só em 127.0.0.1)."
         fi
     fi
