@@ -97,7 +97,7 @@ Exemplos:
   heimdall chat --delete-user
   heimdall chat --check
 
-@ notes | Heimdall Notas, o site das notas de estudo
+@ notes | Heimdall Notes, o site das notas de estudo
 Sem opção abre o site de notas e áudios (porta 8011). As opções são manutenção do Second Brain e das pastas do app Notas.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
@@ -213,7 +213,7 @@ Exemplos:
   heimdall controls --open settings
   heimdall controls -L
 
-@ games | Heimdall Jogos, jogos leves para leitor de tela
+@ games | Heimdall Games, jogos leves para leitor de tela
 Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos ficam em categorias, em ordem alfabética, e dentro delas também em ordem alfabética: Ação (arqueiro de áudio e labirinto), Aventuras de texto (cinco histórias e a Travessia das Três Provas), Cartas (paciência e poker), Cassino (bacará, blackjack, caça-níqueis, poker caribenho e roleta), Números e lógica (2048, número secreto, senha e sudoku), Palavras e letras (cinco letras e forca) e Tabuleiro e estratégia (batalha naval, campo minado, gramado, jogo da velha, sonar e xadrez). Os jogos de terceiros só entram se tiverem versão em português ou permitirem tradução.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator

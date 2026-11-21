@@ -33,11 +33,11 @@ def h(tok):
 
 m = c.menu("Heimdall News", cabecalhos=h("tokdono"))
 confere("dono: nome e e-mail no resumo e no texto", "Conta: Murillo Bolonhini" in m and "Murillo Bolonhini (dono@x.com)" in m, m)
-confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Heimdall Cloud<", ">Heimdall Notas<", ">Heimdall Jogos<", ">Heimdall Controls<", ">Heimdall Saúde<", ">Heimdall Finance<", ">n8n<", ">Uptime Kuma<", ">Open WebUI<", ">Heimdall Account<")) and "Chat" not in m and "Health" not in m and "Games" not in m, m)
+confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Heimdall Cloud<", ">Heimdall Notes<", ">Heimdall Games<", ">Heimdall Controls<", ">Heimdall Health<", ">Heimdall Finance<", ">n8n<", ">Uptime Kuma<", ">Open WebUI<", ">Heimdall Account<")) and "Chat" not in m and "Notas" not in m and "Saúde" not in m and "Jogos" not in m, m)
 confere("serviço atual marcado, sem link duplicado", 'aria-current="page">Heimdall News (você está aqui)' in m and m.count(">Heimdall News<") == 0, m)
 confere("Kuma abre no painel (/dashboard)", "https://status.heimdall-ai.tech/dashboard" in m, m)
-g = c.menu("Heimdall Jogos", cabecalhos=h("tokana"))
-confere("convidado: só o que foi liberado e é convidável (Saúde fica de fora, mesmo na lista)", ">Heimdall News<" in g and "Heimdall Jogos (você está aqui)" in g and ">Heimdall Account<" in g and "Saúde" not in g and "Controls" not in g and "Finance" not in g and "Uptime" not in g, g)
+g = c.menu("Heimdall Games", cabecalhos=h("tokana"))
+confere("convidado: só o que foi liberado e é convidável (Saúde fica de fora, mesmo na lista)", ">Heimdall News<" in g and "Heimdall Games (você está aqui)" in g and ">Heimdall Account<" in g and "Saúde" not in g and "Controls" not in g and "Finance" not in g and "Uptime" not in g, g)
 confere("convidado: nome mostrado", "Conta: Ana Souza" in g)
 x = c.menu("", cabecalhos=h("tokxss"))
 confere("nome vindo da Microsoft é escapado", "<script>" not in x and "&lt;script&gt;" in x, x)
@@ -46,7 +46,7 @@ confere("sem nome: mostra o e-mail", "Conta: sem@x.com" in s and "Conectado como
 confere("sem Access e sem sessão: nada", c.menu("", cabecalhos=Cab()) == "")
 confere("token inválido: nada", c.menu("", cabecalhos=h("falso")) == "")
 l = c.menu("Heimdall Cloud", logado_local=True, cabecalhos=Cab(), sair_html="<form>SAIR</form>")
-confere("porta local com sessão: Dono, todos os serviços e o botão Sair do serviço", "Conta: Dono" in l and "senha e código" in l and ">Heimdall Notas<" in l and "<form>SAIR</form>" in l and "cdn-cgi/access/logout" not in l, l)
+confere("porta local com sessão: Dono, todos os serviços e o botão Sair do serviço", "Conta: Dono" in l and "senha e código" in l and ">Heimdall Notes<" in l and "<form>SAIR</form>" in l and "cdn-cgi/access/logout" not in l, l)
 confere("pelo Access há o link para sair do Access", "cdn-cgi/access/logout" in m)
 chamadas = []
 c._nomes.clear()

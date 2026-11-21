@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Notas: um site simples e agradável para LER as notas de estudo e OUVIR os áudios.
+"""Heimdall Notes: um site simples e agradável para LER as notas de estudo e OUVIR os áudios.
 
 Lê direto do cofre (cerebro/: notas em Markdown e áudios .m4a) e da pasta knowledge/ (seus documentos). Não depende de
 nenhum app: abre no Safari do Mac ou do iPhone, funciona com VoiceOver e usa o mesmo login do painel Cloud
@@ -45,7 +45,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 
 def carregar_env() -> None:
-    """Do .env lê só as variáveis do Heimdall Notas e as pastas do cofre (as outras chaves do projeto não entram aqui)."""
+    """Do .env lê só as variáveis do Heimdall Notes e as pastas do cofre (as outras chaves do projeto não entram aqui)."""
     try:
         linhas = (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines()
     except OSError:
@@ -472,8 +472,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
     js = f'<script nonce="{e(nonce)}">{script}</script>' if script else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notas</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Notas", nav)}'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notes</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Notes", nav)}'
             f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main>{js}</body></html>').encode("utf-8")
 
 
@@ -934,16 +934,16 @@ def mostrar_titulos_suspeitos() -> None:
 
 def main() -> None:
     import argparse
-    ap = argparse.ArgumentParser(description="Heimdall Notas: site de notas e áudios")
+    ap = argparse.ArgumentParser(description="Heimdall Notes: site de notas e áudios")
     ap.add_argument("--titulos-suspeitos", action="store_true", help="lista as notas cujo título parece cortado e sai")
     if ap.parse_args().titulos_suspeitos:
         mostrar_titulos_suspeitos()
         return
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Heimdall Notas não sobe. Rode: python3 heimdall_acesso.py --tudo")
+        sys.exit("Sem senha e código configurados o Heimdall Notes não sobe. Rode: python3 heimdall_acesso.py --tudo")
     srv = ThreadingHTTPServer((HOST, PORT), Notas)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Notas em http://{HOST}:{PORT} (cofre: {VAULT}; documentos: {KNOWLEDGE}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Notes em http://{HOST}:{PORT} (cofre: {VAULT}; documentos: {KNOWLEDGE}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

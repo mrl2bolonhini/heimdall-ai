@@ -513,7 +513,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] 
     fi
 fi
 
-# --- Heimdall Notas (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Cloud ---
+# --- Heimdall Notes (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Cloud ---
 # Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (library.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_notas.py ]; then
@@ -523,11 +523,11 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Notas não respondeu em 10s. Veja logs/notas_debug.log."
+                echo "Aviso: o Heimdall Notes não respondeu em 10s. Veja logs/notas_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Notas (notas e áudios) em http://localhost:$NOTAS_PORT"
+        echo "     Heimdall Notes (notas e áudios) em http://localhost:$NOTAS_PORT"
     fi
 fi
 
@@ -553,7 +553,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
     fi
 fi
 
-# --- Heimdall Saúde (painel com as análises do app Saúde, somente leitura): mesmo login do Heimdall Cloud ---
+# --- Heimdall Health (painel com as análises do app Saúde, somente leitura): mesmo login do Heimdall Cloud ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (health.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_painel_saude.py ]; then
@@ -563,11 +563,11 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o painel Heimdall Saúde não respondeu em 10s. Veja logs/saude_painel_debug.log."
+                echo "Aviso: o painel Heimdall Health não respondeu em 10s. Veja logs/saude_painel_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Saúde (painel de saúde) em http://localhost:$SAUDE_PAINEL_PORT"
+        echo "     Heimdall Health (painel de saúde) em http://localhost:$SAUDE_PAINEL_PORT"
     fi
 fi
 
@@ -593,7 +593,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
     fi
 fi
 
-# --- Heimdall Jogos (jogos leves para leitor de tela, no navegador): mesmo login do Heimdall Cloud ---
+# --- Heimdall Games (jogos leves para leitor de tela, no navegador): mesmo login do Heimdall Cloud ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (games.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_jogos.py ]; then
@@ -603,11 +603,11 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o servidor Heimdall Jogos não respondeu em 10s. Veja logs/jogos_debug.log."
+                echo "Aviso: o servidor Heimdall Games não respondeu em 10s. Veja logs/jogos_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Jogos em http://localhost:$JOGOS_PORT"
+        echo "     Heimdall Games em http://localhost:$JOGOS_PORT"
     fi
 fi
 

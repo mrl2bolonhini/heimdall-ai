@@ -54,7 +54,7 @@ s, hd, b = pedir("/quem.json", origem="https://heimdall-ai.tech")
 confere("quem.json sem Access: 401 com logado=false e CORS para o site", s == 401 and json.loads(b) == {"logado": False} and hd.get("access-control-allow-origin") == "https://heimdall-ai.tech", f"{s} {hd}")
 
 s, hd, b = pedir("/", jwt="tokdono")
-confere("dono: página do tour com todos os serviços, nomes reais", s == 200 and all(x in b for x in ("Heimdall Cloud", "Heimdall Notas", "Heimdall Saúde", "Heimdall Jogos", "Heimdall Finance", "Heimdall Controls", "Open WebUI", "n8n", "Uptime Kuma")), b[:300])
+confere("dono: página do tour com todos os serviços, nomes reais", s == 200 and all(x in b for x in ("Heimdall Cloud", "Heimdall Notes", "Heimdall Health", "Heimdall Games", "Heimdall Finance", "Heimdall Controls", "Open WebUI", "n8n", "Uptime Kuma")), b[:300])
 confere("dono: Finance e Saúde explicam o multiusuário e o aviso de serviço do dono", "contas bancárias" in b and "serviços de saúde" in b and "Este serviço é do dono" in b)
 confere("página: lang pt-BR, um só h1, pular para o conteúdo, voltar ao topo e sem script", 'lang="pt-BR"' in b and b.count("<h1>") == 1 and 'class="pular"' in b and 'href="#topo"' in b and 'id="topo"' in b and "<script" not in b)
 confere("página: menu Conta com nome e e-mail", "Conta: Murillo" in b and "Murillo (dono@x.com)" in b)
@@ -62,7 +62,7 @@ confere("cabeçalhos: CSP com nonce de estilo, sem cache, nosniff", "style-src '
 nonce = re.search(r"nonce-([\w-]+)'", hd["content-security-policy"]).group(1)
 confere("o nonce do CSP é o da tag de estilo", f'<style nonce="{nonce}">' in b)
 s, hd, b = pedir("/", jwt="tokana")
-confere("convidado: só os serviços dele; nada de Controls, Finance, n8n, Kuma, Chat", all(x in b for x in ("Heimdall Jogos", "Heimdall News")) and not any(x in b for x in ("Heimdall Controls", "Heimdall Finance", "n8n", "Uptime Kuma", "Open WebUI", "Heimdall Saúde")), b[:200])
+confere("convidado: só os serviços dele; nada de Controls, Finance, n8n, Kuma, Chat", all(x in b for x in ("Heimdall Games", "Heimdall News")) and not any(x in b for x in ("Heimdall Controls", "Heimdall Finance", "n8n", "Uptime Kuma", "Open WebUI", "Heimdall Health")), b[:200])
 s, hd, b = pedir("/", jwt="tokxss")
 confere("nome malicioso vindo da Microsoft é escapado", "<img src=x" not in b and "&lt;img" in b)
 

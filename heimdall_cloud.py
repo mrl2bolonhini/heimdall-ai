@@ -1281,7 +1281,7 @@ def definir_acesso(modo: str) -> None:
         print("O código de 6 dígitos continua o mesmo.")
     if segredo:
         mostrar_segredo(segredo)
-    print("\nA senha e o código valem para o Heimdall Cloud, o Heimdall Notas e o Heimdall News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
+    print("\nA senha e o código valem para o Heimdall Cloud, o Heimdall Notes e o Heimdall News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
     if modo in ("tudo", "senha"):
         aplicar_no_webui(s1)
         aplicar_no_kuma()

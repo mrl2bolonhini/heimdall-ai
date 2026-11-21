@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do bloco de conta da página inicial do site (docs/index.html + heimdall.js) no navegador, com o account.heimdall-ai.tech de mentira.
+"""Teste do bloco de conta das páginas do site (docs/index.html + heimdall.js) no navegador, com o account.heimdall-ai.tech de mentira.
 Sem login (redirecionamento do Access ou 401): fica o link "Entrar no Heimdall". Com login: nome, e-mail e links dos serviços, sem executar HTML vindo do servidor."""
 import functools
 import http.server
@@ -33,7 +33,7 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 ORIGEM = f"http://127.0.0.1:{srv.server_address[1]}"
 CORS = {"Access-Control-Allow-Origin": ORIGEM, "Access-Control-Allow-Credentials": "true", "Content-Type": "application/json"}
 LOGADO = {"logado": True, "nome": "Ana <b>Souza</b>", "email": "ana@x.com", "papel": "convidado",
-          "servicos": [{"nome": "Heimdall Account", "url": "https://account.heimdall-ai.tech/"}, {"nome": "Heimdall Jogos", "url": "https://games.heimdall-ai.tech/"},
+          "servicos": [{"nome": "Heimdall Account", "url": "https://account.heimdall-ai.tech/"}, {"nome": "Heimdall Games", "url": "https://games.heimdall-ai.tech/"},
                        {"nome": "Mal", "url": "javascript:alert(1)"}]}
 
 
@@ -53,7 +53,7 @@ def rodar(rota):
         b_dentro = pg.eval_on_selector_all("#conta-site b", "els => els.length")
         outras = pg.evaluate("document.getElementById('conta-site') !== null")
         pg.goto(ORIGEM + "/arquitetura.html")
-        sem_conta = pg.evaluate("document.getElementById('conta-site') === null")
+        sem_conta = pg.evaluate("document.getElementById('conta-site') !== null")
         nav.close()
         return html, texto, aviso, links, b_dentro, erros, outras, sem_conta
 
@@ -64,7 +64,7 @@ confere("logado: o HTML do nome não é interpretado", b == 0, h)
 confere("logado: links dos serviços https; link javascript: ignorado", "https://games.heimdall-ai.tech/" in ln and not any(x.startswith("javascript") for x in ln), str(ln))
 confere("logado: e-mail no texto, link para sair e aviso para o leitor de tela", "ana@x.com" in t and any(x.endswith("/cdn-cgi/access/logout") for x in ln) and "conectado como" in av.lower(), av)
 confere("logado: sem erro de JavaScript", er == [], str(er))
-confere("só a página inicial tem o bloco de conta", sem)
+confere("as outras páginas do site também têm o bloco de conta", sem)
 
 h, t, av, ln, b, er, _, _ = rodar(lambda r: r.fulfill(status=302, headers={"Location": "https://eq.cloudflareaccess.com/cdn-cgi/access/login/x"}))
 confere("sem login (redirecionamento do Access): continua o link Entrar", "Entrar no Heimdall" in t and ln == ["https://account.heimdall-ai.tech/"] and av == "", f"{t} {ln}")

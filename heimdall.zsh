@@ -205,7 +205,7 @@ heimdall() {
       esac ;;
     notes)
       case "$1" in
-        "") _heimdall_web "Heimdall Notas" NOTAS 8011 notes ;;
+        "") _heimdall_web "Heimdall Notes" NOTAS 8011 notes ;;
         --clean-mirrors) shift; _heimdall_py limpar_espelhos.py "$@" ;;
         --clean-private) shift; _heimdall_py limpar_privadas.py "$@" ;;
         --move-old) shift; _heimdall_tr "--run=--executar" "$@"; _heimdall_py mover_notas_antigas.py "${_HA[@]}" ;;
@@ -277,7 +277,7 @@ heimdall() {
     account) _heimdall_web "Heimdall Account" ACCOUNT 8018 account ;;
     games)
       case "$1" in
-        "") _heimdall_web "Heimdall Jogos" JOGOS 8014 games ;;
+        "") _heimdall_web "Heimdall Games" JOGOS 8014 games ;;
         --play) _heimdall_web "Jogo $2" JOGOS 8014 games "/jogo/$2" ;;
         --list) printf '%s\n' "2048 (heimdall games --play 2048)" "Arqueiro de áudio (heimdall games --play arqueiro)" "Bacará (heimdall games --play bacara)" "Batalha naval (heimdall games --play naval)" "Blackjack (heimdall games --play blackjack)" "Caça-níqueis (heimdall games --play cacaniqueis)" "Campo minado (heimdall games --play minas)" "A Caverna dos Ecos (heimdall games --play caverna)" "Cinco letras (heimdall games --play cincoletras)" "Estação Orion (heimdall games --play orion)" "O Farol Apagado (heimdall games --play aventura)" "Forca (heimdall games --play forca)" "Gramado (heimdall games --play gramado)" "Jogo da velha (heimdall games --play velha)" "Labirinto (heimdall games --play labirinto)" "A Mansão dos Relógios (heimdall games --play relogios)" "Número secreto (heimdall games --play numero)" "Paciência (heimdall games --play paciencia)" "Poker caribenho (heimdall games --play caribenho)" "Poker Texas hold'em (heimdall games --play poker)" "Roleta (heimdall games --play roleta)" "Senha (heimdall games --play senha)" "Sonar (heimdall games --play sonar)" "Sudoku (heimdall games --play sudoku)" "O Templo Submerso (heimdall games --play templo)" "A Travessia das Três Provas (heimdall games --play escolhas)" "Xadrez (heimdall games --play xadrez)" ;;
         *) echo "Use: heimdall games [--play JOGO] [--list]"; return 1 ;;

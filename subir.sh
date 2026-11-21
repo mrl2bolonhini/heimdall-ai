@@ -85,10 +85,10 @@ montar_lista() {
     case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Emulador de AWS|tcp|4566") ;; esac
     if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
         case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Heimdall Cloud|http|http://127.0.0.1:${HEIMDALL_CLOUD_PORT:-8010}/saude") ;; esac
-        LISTA+=("Heimdall Notas|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")
+        LISTA+=("Heimdall Notes|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")
         LISTA+=("Heimdall News|http|http://127.0.0.1:${HEIMDALL_NEWS_PORT:-8012}/saude")
-        LISTA+=("Heimdall Saúde|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
-        LISTA+=("Heimdall Jogos|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")
+        LISTA+=("Heimdall Health|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
+        LISTA+=("Heimdall Games|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")
         LISTA+=("Heimdall Finance|http|http://127.0.0.1:${HEIMDALL_FINANCE_PORT:-8016}/saude")
         LISTA+=("Heimdall Controls|http|http://127.0.0.1:${HEIMDALL_CONTROLS_PORT:-8017}/saude")
     fi

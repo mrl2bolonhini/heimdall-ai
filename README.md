@@ -51,12 +51,12 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Uptime Kuma | 3001 | Painel de disponibilidade dos serviços. |
 | Dozzle | 8081 | Leitor de logs dos contêineres. |
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
-| Heimdall Notas | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
+| Heimdall Notes | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
-| Heimdall Jogos | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
+| Heimdall Games | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Finance | 8016 | Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (dados_financas, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Controls | 8017 | Terminal completo e acessível (um shell de verdade no Mac, com a pasta e as variáveis persistentes, a saída no próprio campo de comando, como num terminal, e atalhos de teclado para interromper, limpar, reiniciar e copiar a última saída ou as últimas N) e painel de serviços com botões de atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra: Cloudflare Access (Authenticator) ou senha e código de 6 dígitos, e cada comando fica anotado sem a saída. Escuta só em 127.0.0.1. |
-| Heimdall Saúde | 8013 | Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela, exames de laboratório, receitas e encaminhamentos já conferidos, e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
+| Heimdall Health | 8013 | Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela, exames de laboratório, receitas e encaminhamentos já conferidos, e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Cloud | 8010 | Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
 <!-- /AUTO:SERVICOS -->
 
@@ -101,7 +101,7 @@ venv/bin/python test_models_tools.py              # chamada de ferramentas por m
 python3 heimdall_agente.py --teste                # Notas, Calendário e Lembretes
 python3 heimdall_agente.py --voz                  # voz e velocidade do áudio
 python3 teste_cloud.py                        # painel do emulador de AWS (sem rede)
-python3 teste_notas.py                   # Heimdall Notas (sem rede)
+python3 teste_notas.py                   # Heimdall Notes (sem rede)
 python3 teste_news.py                    # Heimdall News (sem rede)
 python3 teste_trechos.py                      # trechos de livros do estudo (sem rede)
 bash instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail

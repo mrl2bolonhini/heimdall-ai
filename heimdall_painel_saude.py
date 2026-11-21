@@ -368,8 +368,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
         nav = ('<nav aria-label="Principal"><ul>' + itens + '<li><form class="linha" method="post" action="/sair">'
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Heimdall Saúde</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Saúde", nav)}'
+            f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Heimdall Health</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Health", nav)}'
             f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main></body></html>').encode("utf-8")
 
 
@@ -526,7 +526,7 @@ def main() -> None:
     banco.iniciar()
     srv = ThreadingHTTPServer((HOST, PORT), Painel)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Saúde em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Health em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

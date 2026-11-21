@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do Heimdall Notas (heimdall_notas.py) com um cofre de mentira, sem rede e sem boto3.
+"""Teste do Heimdall Notes (heimdall_notas.py) com um cofre de mentira, sem rede e sem boto3.
 
     python3 teste_notas.py
 
@@ -207,7 +207,7 @@ for _nome, _t in (("claro", _claro), ("escuro", _escuro)):
     confere(f"botão selecionado (fundo sobre azul) no tema {_nome} tem pelo menos 4,5 para 1", _dt.contraste(_t["fundo"], _t["acento"]) >= 4.5)
 s, h, c = req("GET", "/", cookie=ck)
 t = c.decode("utf-8", "replace") if isinstance(c, bytes) else str(c)
-confere("página tem símbolo decorativo, nome, favicon e faixa de seis cores", 'class="marca"' in t and 'aria-hidden="true"' in t and "<strong>Heimdall Notas</strong>" in t and 'rel="icon" href="data:image/svg+xml' in t and "#ffc107" in t and "#bfe3fb" in t)
+confere("página tem símbolo decorativo, nome, favicon e faixa de seis cores", 'class="marca"' in t and 'aria-hidden="true"' in t and "<strong>Heimdall Notes</strong>" in t and 'rel="icon" href="data:image/svg+xml' in t and "#ffc107" in t and "#bfe3fb" in t)
 confere("o favicon em data: é permitido pela política de segurança e nada mais de fora", "img-src data:" in h.get("content-security-policy", "") and "default-src 'none'" in h.get("content-security-policy", ""), h.get("content-security-policy"))
 
 # --- paginação em botões ---
@@ -236,7 +236,7 @@ confere("paginação: janela desliza e última página não tem próxima", _pg.j
 # --- notas ---
 s, h, c = req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)
 t = texto(c)
-confere("nota abre", s == 200 and "<title>Aula 1: Introdução - Heimdall Notas</title>" in t and "<h1>Aula 1: Introdução</h1>" in t)
+confere("nota abre", s == 200 and "<title>Aula 1: Introdução - Heimdall Notes</title>" in t and "<h1>Aula 1: Introdução</h1>" in t)
 confere("título não repete no corpo", t.count("Aula 1: Introdução") == 2)
 confere("frontmatter vira linhas", "Tags:" in t and "séries" in t and "Conceitos:" in t and "name: " not in t)
 confere("negrito, itálico, código", "<strong>negrito</strong>" in t and "<em>itálico</em>" in t and "<code>codigo</code>" in t)

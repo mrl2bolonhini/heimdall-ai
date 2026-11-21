@@ -19,10 +19,10 @@ _trava = threading.Lock()
 NOME_TTL, FALHA_TTL = 3600, 600
 
 # nome no cabeçalho de marca -> chave do serviço em heimdall_usuarios.SERVICOS
-CHAVES = {"Heimdall Cloud": "cloud", "Heimdall Notas": "notas", "Heimdall News": "news", "Heimdall Saúde": "saude", "Heimdall Jogos": "jogos",
+CHAVES = {"Heimdall Cloud": "cloud", "Heimdall Notes": "notas", "Heimdall News": "news", "Heimdall Health": "saude", "Heimdall Games": "jogos",
           "Heimdall Finance": "finance", "Heimdall Controls": "controls", "Heimdall Account": "account"}
 # Nomes reais, como cada serviço se chama (nunca traduzidos): é o que o menu e a página Account mostram, em vez dos rótulos do catálogo de usuários.
-NOMES = {"cloud": "Heimdall Cloud", "notas": "Heimdall Notas", "news": "Heimdall News", "saude": "Heimdall Saúde", "jogos": "Heimdall Jogos", "finance": "Heimdall Finance",
+NOMES = {"cloud": "Heimdall Cloud", "notas": "Heimdall Notes", "news": "Heimdall News", "saude": "Heimdall Health", "jogos": "Heimdall Games", "finance": "Heimdall Finance",
          "controls": "Heimdall Controls", "chat": "Open WebUI", "flows": "n8n", "status": "Uptime Kuma", "account": "Heimdall Account"}
 ORDEM = ["account", "cloud", "notas", "news", "saude", "jogos", "finance", "controls", "chat", "flows", "status"]
 CAMINHOS = {"status": "/dashboard"}  # o Kuma abre no painel, onde há o menu dele e as Configurações

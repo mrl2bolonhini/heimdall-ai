@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Jogos (games.heimdall-ai.tech): jogos leves, feitos para leitor de tela, que rodam no navegador.
+"""Heimdall Games (games.heimdall-ai.tech): jogos leves, feitos para leitor de tela, que rodam no navegador.
 
 Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta jogos/; o que acontece na partida
 é dito em voz alta por uma região aria-live. Nada é gravado: o servidor só entrega as páginas.
@@ -231,8 +231,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scr
                f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
     js = "".join(f'<script src="/js/{e(s)}" defer></script>' for s in (scripts or []))
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow">{extra_head}<title>{e(titulo)} - Heimdall Jogos</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Jogos", nav)}'
+            f'<meta name="robots" content="noindex,nofollow">{extra_head}<title>{e(titulo)} - Heimdall Games</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Games", nav)}'
             f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main>{js}</body></html>').encode("utf-8")
 
 
@@ -431,7 +431,7 @@ def main() -> None:
         sys.exit("Sem senha e código configurados o servidor de jogos não sobe. Rode: python3 heimdall_acesso.py --tudo")
     srv = ThreadingHTTPServer((HOST, PORT), Jogos)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Jogos em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Games em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

@@ -5,8 +5,8 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-21 - Heimdall Account (account.heimdall-ai.tech)
 - Novo serviço, porta 8018: o tour dos serviços de cada pessoa, com link, o que cada um faz e como configurar. Dono vê todos; convidado só os seus. O texto fica em heimdall_conta_info.py (Health e Finance já explicam o plano de multiusuário). Todo e-mail de dono ou convidado entra no Account; a aba Usuários o inclui sozinha. Comando: heimdall account (-L abre o endereço do Mac).
 - Cloudflare (feito pelo conector, a pedido): aplicativo e política "Heimdall Account" no Access (Microsoft e Authenticator), DNS account e rota do túnel para localhost:8018, acrescentada sem mexer nas outras.
-- O menu Conta e o tour usam os nomes reais dos serviços, sem traduzir: Heimdall Notas, Heimdall Saúde, Heimdall Jogos, Open WebUI, Uptime Kuma (antes o menu dizia Notes, Health, Games e Chat). A tabela é NOMES em heimdall_conta.py.
-- /quem.json devolve nome, e-mail e serviços de quem tem o cookie do Access, com CORS e cookies só para os sites de HEIMDALL_ACCOUNT_ORIGENS. A página inicial do site mostra "Entrar no Heimdall" sem login e, com login, "Conta: nome" com os serviços; o login conta depois de abrir o Account uma vez (o cookie é do endereço account).
+- O menu Conta e o tour usam os nomes reais dos serviços, sem traduzir: Heimdall Notes, Heimdall Health, Heimdall Games, Open WebUI, Uptime Kuma. A tabela é NOMES em heimdall_conta.py.
+- /quem.json devolve nome, e-mail e serviços de quem tem o cookie do Access, com CORS e cookies só para os sites de HEIMDALL_ACCOUNT_ORIGENS. Todas as páginas do site mostram "Entrar no Heimdall" sem login e, com login, "Conta: nome" com os serviços; o login conta depois de abrir o Account uma vez (o cookie é do endereço account).
 - Novos: heimdall_account.py, heimdall_conta_info.py, teste_account.py, teste_site_conta.py, LEIAME_account.txt.
 
 ## 2026-11-21 - Menu Conta em todos os serviços

@@ -355,10 +355,10 @@ PAGINAS = [
     ("llms.html", "Modelos", "Modelos de linguagem, usos e testes"),
     ("mcp.html", "Ferramentas", "Servidores MCP e cada ferramenta"),
     ("fluxos.html", "Fluxos", "Fluxos do n8n e scripts"),
-    ("notas.html", "Notas", "Heimdall Notas: ler as notas e ouvir os áudios"),
+    ("notas.html", "Notes", "Heimdall Notes: ler as notas e ouvir os áudios"),
     ("news.html", "News", "Heimdall News: notícias com resumo de IA e feeds RSS"),
-    ("saude.html", "Saúde", "Heimdall Saúde: dados do iPhone e Apple Watch, análises e painel"),
-    ("jogos.html", "Jogos", "Heimdall Jogos: jogos leves para leitor de tela"),
+    ("saude.html", "Health", "Heimdall Health: dados do iPhone e Apple Watch, análises e painel"),
+    ("jogos.html", "Games", "Heimdall Games: jogos leves para leitor de tela"),
     ("finance.html", "Finance", "Heimdall Finance: extratos, categorias e tendências das suas finanças"),
     ("cloud.html", "Cloud", "Painel do emulador de AWS: acesso, segurança e roteiro"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
@@ -383,8 +383,8 @@ CONTA_URL = "https://account.heimdall-ai.tech/"
 
 
 def pagina(arquivo, titulo, descricao, corpo, home=False):
-    # Só na página inicial: "Entrar" (sem login) ou, com login, o nome e os serviços da pessoa; o heimdall.js pergunta a CONTA_URL + quem.json.
-    conta = f'<div class="conta-site" id="conta-site" data-url="{CONTA_URL}"><a href="{CONTA_URL}">Entrar no Heimdall</a></div>' if arquivo == "index.html" else ""
+    # Em todas as páginas do site (menos a 404): "Entrar" (sem login) ou, com login, o nome e os serviços da pessoa; o heimdall.js pergunta a CONTA_URL + quem.json.
+    conta = f'<div class="conta-site" id="conta-site" data-url="{CONTA_URL}"><a href="{CONTA_URL}">Entrar no Heimdall</a></div>' if arquivo != "404.html" else ""
     menu = "".join('<li><a href="%s"%s>%s</a></li>' % (a, ' aria-current="page"' if a == arquivo else "", H(t)) for a, t, _ in PAGINAS)
     nome = "Heimdall-ai: IA que roda em casa" if arquivo == "index.html" else titulo + " · Heimdall-ai"
     url = SITE if arquivo == "index.html" else SITE + arquivo
