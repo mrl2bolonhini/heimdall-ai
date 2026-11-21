@@ -17,3 +17,6 @@ Uptime Kuma
 Para voltar atrás, ligue o login de novo em Settings, Security.
 
 Não é possível desligar o login do Kuma sem a senha atual: é uma proteção do próprio Kuma.
+
+Webhook de saúde do n8n (flows.heimdall-ai.tech)
+O Health Auto Export do iPhone e o Worker "heimdall-saude-caixa" mandam os dados de saúde para flows.heimdall-ai.tech/webhook/heimdall-saude, sem login. Com o Access na frente de flows.heimdall-ai.tech, esse caminho precisa de um aplicativo próprio com política Bypass (Todos), só para ele, como o do RSS do News. A proteção ali é o token do fluxo (cabeçalho X-Heimdall-Saude). Sem isso os envios batem na tela de login do Access e os dados não chegam.

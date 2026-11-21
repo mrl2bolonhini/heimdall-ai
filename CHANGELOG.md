@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Aviso: webhook de saúde precisa de desvio no Access
+- Com o Access em flows.heimdall-ai.tech, o webhook de saúde (/webhook/heimdall-saude, usado pelo Health Auto Export e pelo Worker heimdall-saude-caixa) precisa de um aplicativo do Access só para esse caminho, com política Bypass. Está em LEIAME_login_sem_senha.txt. Os outros webhooks do n8n são chamados só localmente (localhost:5678) e não são afetados.
+
 ## 2026-11-20 - Chat, n8n e Kuma atrás do Access; roadmap
 - Cloudflare Access ligado (pelo conector, a pedido) em chat.heimdall-ai.tech, flows.heimdall-ai.tech e status.heimdall-ai.tech: login só da Microsoft, direto, só o e-mail do dono e Authenticator (MFA) exigido. O Controls lê o Kuma pelo endereço local, então não é afetado. Quem entrava no chat com conta do Open WebUI passa a precisar estar na lista da aba Usuários.
 - A aba Usuários reconhece aplicativos do Access que cobrem vários endereços (como o "Heimdall - Pessoal") e não os altera: uma política por serviço abriria todos os endereços dele. Aplicativos só de caminho (o desvio do RSS) não contam como cobertura. Sessão dos aplicativos novos: 8 h.
