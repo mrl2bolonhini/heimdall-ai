@@ -84,6 +84,8 @@ DESCRICOES = {
     "HEIMDALL_MONITOR_VARIACOES": "Outras grafias do seu nome que o monitor também procura.",
     "HEIMDALL_N8N": "0 desliga o n8n.",
     "HEIMDALL_N8N_URL": "Endereço do n8n, para onde vão os webhooks (resumo de e-mails, por exemplo).",
+    "HEIMDALL_N8N_SESSAO_HORAS": "Quantas horas dura o login do n8n antes de pedir de novo (padrão 8760, um ano).",
+    "HEIMDALL_N8N_SEM_LOGIN": "1 tenta desligar o login do n8n (N8N_BASIC_AUTH_ACTIVE=false); as versões atuais costumam ignorar.",
     "HEIMDALL_N8N_LOCALE": "Idioma da interface do n8n.",
     "HEIMDALL_NEWS_COLETAR": "0 pausa a coleta de notícias.",
     "HEIMDALL_NEWS_FONTES": "Arquivo com a lista de fontes de notícias.",

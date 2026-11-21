@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - n8n com sessão longa; trocar o e-mail do Open WebUI
+- n8n: o contêiner agora é recriado a cada subida para valer as opções do .env (fluxos e credenciais ficam no volume). HEIMDALL_N8N_SESSAO_HORAS (padrão 8760, um ano) estende o login próprio; HEIMDALL_N8N_SEM_LOGIN=1 tenta N8N_BASIC_AUTH_ACTIVE=false, que as versões atuais costumam ignorar.
+- heimdall chat --email (trocar_email_webui.sh) troca o e-mail, que também é o usuário, de uma conta do Open WebUI sem apagar o volume: cópia em backups/, para o Open WebUI por segundos, atualiza as tabelas auth e user, confere e liga de novo. A senha não muda.
+- Webhook de saúde: um GET nesse endereço responde 404 porque o n8n só aceita POST; isso mostra que o desvio do Access funciona. O teste certo é um POST com o token (LEIAME_login_sem_senha.txt).
+
 ## 2026-11-20 - Aviso: webhook de saúde precisa de desvio no Access
 - Com o Access em flows.heimdall-ai.tech, o webhook de saúde (/webhook/heimdall-saude, usado pelo Health Auto Export e pelo Worker heimdall-saude-caixa) precisa de um aplicativo do Access só para esse caminho, com política Bypass. Está em LEIAME_login_sem_senha.txt. Os outros webhooks do n8n são chamados só localmente (localhost:5678) e não são afetados.
 

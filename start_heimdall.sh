@@ -281,22 +281,24 @@ fi
 # Escuta só em 127.0.0.1:5678. Fluxos e credenciais ficam no volume n8n_data (sobrevivem a atualizações).
 # Os agendamentos só disparam com o Mac ligado, acordado e com o Docker rodando.
 if [ "$WANT_N8N" = "1" ]; then
-    if docker ps -a --format '{{.Names}}' | grep -qx n8n; then
-        docker start n8n > /dev/null
-    else
-        N8N_TZ="${HEIMDALL_TZ:-America/Sao_Paulo}"
-        docker run -d --name n8n --restart unless-stopped \
-            --network heimdall \
-            --add-host=host.docker.internal:host-gateway \
-            -p 127.0.0.1:5678:5678 \
-            -e TZ="$N8N_TZ" \
-            -e GENERIC_TIMEZONE="$N8N_TZ" \
-            -e N8N_SECURE_COOKIE=false \
-            -e N8N_DIAGNOSTICS_ENABLED=false \
-            ${HEIMDALL_N8N_LOCALE:+-e N8N_DEFAULT_LOCALE=$HEIMDALL_N8N_LOCALE} \
-            -v n8n_data:/home/node/.n8n \
-            docker.n8n.io/n8nio/n8n:latest > /dev/null
-    fi
+    # O contêiner é recriado a cada subida para valer as opções do .env (fluxos e credenciais ficam no volume n8n_data).
+    docker rm -f n8n > /dev/null 2>&1
+    N8N_TZ="${HEIMDALL_TZ:-America/Sao_Paulo}"
+    # Sessão do login do n8n: padrão 8760 horas (1 ano), para o login próprio quase não aparecer atrás do Access.
+    # HEIMDALL_N8N_SEM_LOGIN=1 tenta N8N_BASIC_AUTH_ACTIVE=false (opção antiga; as versões atuais do n8n costumam ignorá-la).
+    docker run -d --name n8n --restart unless-stopped \
+        --network heimdall \
+        --add-host=host.docker.internal:host-gateway \
+        -p 127.0.0.1:5678:5678 \
+        -e TZ="$N8N_TZ" \
+        -e GENERIC_TIMEZONE="$N8N_TZ" \
+        -e N8N_SECURE_COOKIE=false \
+        -e N8N_DIAGNOSTICS_ENABLED=false \
+        -e N8N_USER_MANAGEMENT_JWT_DURATION_HOURS="${HEIMDALL_N8N_SESSAO_HORAS:-8760}" \
+        ${HEIMDALL_N8N_SEM_LOGIN:+-e N8N_BASIC_AUTH_ACTIVE=false} \
+        ${HEIMDALL_N8N_LOCALE:+-e N8N_DEFAULT_LOCALE=$HEIMDALL_N8N_LOCALE} \
+        -v n8n_data:/home/node/.n8n \
+        docker.n8n.io/n8nio/n8n:latest > /dev/null
     echo "     n8n em http://localhost:5678 (a primeira conta criada vira a dona)."
 else
     docker stop n8n > /dev/null 2>&1
