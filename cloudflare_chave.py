@@ -61,7 +61,8 @@ def _post_gateway(conta: str, token: str, modelo: str) -> str:
     url = f"https://gateway.ai.cloudflare.com/v1/{conta}/heimdall/compat/chat/completions"
     corpo = {"model": modelo, "messages": [{"role": "user", "content": "Responda só: ok"}], "max_tokens": 64}
     req = urllib.request.Request(url, data=json.dumps(corpo).encode(), method="POST", headers={
-        "Authorization": "Bearer " + token, "cf-aig-authorization": "Bearer " + token, "Content-Type": "application/json"})
+        "Authorization": "Bearer " + token, "cf-aig-authorization": "Bearer " + token, "Content-Type": "application/json",
+        "User-Agent": "heimdall-ai/1.0"})  # sem isto o endereço do gateway recusa o Python padrão (erro 1010)
     try:
         with urllib.request.urlopen(req, timeout=90) as r:
             dados = json.loads(r.read(200000))
