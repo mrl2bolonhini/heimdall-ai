@@ -439,7 +439,6 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
         grupos.setdefault(cat(d["nome"]), {"def": [], "falta": []})["def"].append(_linha_config(i, d["nome"], d["valor"]))
     for i, n in enumerate(faltam):
         grupos.setdefault(cat(n), {"def": [], "falta": []})["falta"].append(_linha_config(10000 + i, n, "", codigo[n], False))
-    npad = sum(1 for n in faltam if codigo[n] and not _SEGREDO.search(n))
     blocos = []
     for nome in sorted(grupos, key=lambda x: (x == "Outras", x.lower())):
         d, f = grupos[nome]["def"], grupos[nome]["falta"]
@@ -451,8 +450,6 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
              "(aba Serviços) ou quando você reiniciar tudo (aba Manutenção). Antes de cada mudança o arquivo é copiado para .env.bak. "
              "Cuidado com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO: se errar, você perde o acesso a este painel.</p>"
              '<p><label for="filtro-cfg">Filtrar pelo nome (abre os grupos que têm o que você procura)</label> <input type="search" id="filtro-cfg" autocomplete="off"></p>'
-             + (f'<form class="linha" id="form-padroes" data-padroes><button type="submit">Gravar valores padrão no .env</button> '
-                f'<span class="nota" id="desc-padroes">Grava as {npad} opções que o código já tem com valor padrão e que o .env ainda não define. Não muda o que já está no .env.</span></form>' if npad else "")
              + '<p id="resultado-config" role="status"></p>'
              f'<div id="configuracoes" data-csrf="{e(sess["csrf"])}">'
              '<details class="grupo"><summary>Nova variável</summary><form class="linha" data-cfg><label for="nova-nome">Nome</label><input type="text" id="nova-nome" name="nome" autocomplete="off" autocapitalize="characters" spellcheck="false">'
@@ -770,16 +767,6 @@ SCRIPT_CONFIG = r"""
 (function(){
 function dizer(t){ var r = document.getElementById('resultado-config'); if (r) { r.textContent = ''; setTimeout(function(){ r.textContent = t; }, 50); } }
 document.addEventListener('submit', function(ev){
-  var p = ev.target;
-  if (p.hasAttribute && p.hasAttribute('data-padroes')) {
-    ev.preventDefault();
-    dizer('Gravando os valores padrão.');
-    fetch('/configuracoes/padroes', {method: 'POST', credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1', 'Content-Type': 'application/x-www-form-urlencoded'}, body: new URLSearchParams({csrf: document.getElementById('configuracoes').getAttribute('data-csrf')})})
-      .then(function(r){ return r.json(); })
-      .then(function(d){ dizer(d.erro ? d.erro : d.mensagem); if (d.ok) { document.dispatchEvent(new Event('heimdall:mudou')); } })
-      .catch(function(){ dizer('Não consegui falar com o painel. Recarregue a página.'); });
-    return;
-  }
   var f = ev.target; if (!f.hasAttribute || !f.hasAttribute('data-cfg')) { return; }
   ev.preventDefault();
   var raiz = document.getElementById('configuracoes'), acao = (ev.submitter && ev.submitter.value) || 'salvar';
@@ -1065,21 +1052,6 @@ class Painel(BaseHTTPRequestHandler):
                 auditar(ip, "configurações: " + ("remover" if acao == "remover" else "salvar"), nome + ("" if not motivo else " (recusado)"))
                 self._json(200, {"ok": not motivo, "mensagem": (motivo or (f"{nome} removida do .env." if acao == "remover" else f"{nome} salva.")
                            + " Vale quando o serviço que usa for reiniciado.")})
-                return
-            elif rota == "/configuracoes/padroes":
-                feitas, falhas = 0, []
-                atuais = {d["nome"] for d in config.ler()}
-                for n, v in config.opcoes_do_codigo().items():
-                    if n in atuais or not v or _SEGREDO.search(n):
-                        continue
-                    motivo = config.salvar(n, v)
-                    if motivo:
-                        falhas.append(n)
-                    else:
-                        feitas += 1
-                auditar(ip, "configurações: gravar padrões", f"{feitas} gravadas, {len(falhas)} recusadas")
-                self._json(200, {"ok": not falhas, "mensagem": (f"{feitas} valores padrão gravados no .env. Recarregue a página para vê-los em No .env."
-                           + (" Não gravei: " + ", ".join(falhas) + "." if falhas else "") + " Valem quando o serviço que usa for reiniciado.")})
                 return
             elif rota == "/servicos/alternar":
                 self._json(200, self._alternar_servico(campos, ip))

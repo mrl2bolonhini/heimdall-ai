@@ -90,7 +90,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     voice) printf '%s\n' "-i=--import" ;;
     listen) printf '%s\n' "-l=--list" "-n=--latest" ;;
     ingest) printf '%s\n' "-r=--reset" ;;
-    env) printf '%s\n' "-s=--set" ;;
+    env) printf '%s\n' "-s=--set" "-d=--defaults" ;;
     cloudflare) printf '%s\n' "-s=--set" "-t=--test" ;;
     mcp) printf '%s\n' "-v=--verify" ;;
     flows) printf '%s\n' "-a=--advanced" "-b=--basic" "-p=--privacy" "-e=--email" ;;
@@ -374,7 +374,11 @@ heimdall() {
     listen) _heimdall_tr "--list=--lista
 --latest=-" "$@"; _heimdall_sh ouvir_estudo.sh "${_HA[@]}" ;;
     ingest) _heimdall_py ingest_docs.py "$@" ;;
-    env) _heimdall_tr "--set=-" "$@"; _heimdall_sh guardar_no_env.sh "${_HA[@]}" ;;
+    env)
+      case "$1" in
+        --defaults) _heimdall_py heimdall_config.py --gravar-padroes ;;
+        *) _heimdall_tr "--set=-" "$@"; _heimdall_sh guardar_no_env.sh "${_HA[@]}" ;;
+      esac ;;
     cloudflare) _heimdall_tr "--set=-
 --test=--testar" "$@"; _heimdall_py cloudflare_chave.py "${_HA[@]}" ;;
     mcp) _heimdall_tr "--verify=-" "$@"; _heimdall_sh verificar_mcp_dados.sh "${_HA[@]}" ;;
@@ -471,7 +475,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       voice) compadd -- --import ;;
       listen) compadd -- --list --latest ;;
       ingest) compadd -- --reset ;;
-      env) compadd -- --set ;;
+      env) compadd -- --set --defaults ;;
       cloudflare) compadd -- --set --test ;;
       mcp) compadd -- --verify ;;
       flows) compadd -- --advanced --basic --privacy --email ;;

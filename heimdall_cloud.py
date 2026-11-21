@@ -446,8 +446,8 @@ def pg_inicio() -> str:
         else:
             tabela = ""
     return (f'<h2>Estado do emulador</h2>{estado}{tabela}<h2>Para usar de código no Mac</h2>'
-            f'<p>Endereço: http://localhost:4566. Chave de acesso e chave secreta: test. Região: {e(REGIAO)}. '
-            'Exemplo na AWS CLI: aws --endpoint-url http://localhost:4566 s3 ls</p>'
+            f'<p>Endereço: {e(ENDPOINT)}. Chave de acesso e chave secreta: test. Região: {e(REGIAO)}. '
+            f'Exemplo na AWS CLI: aws --endpoint-url {e(ENDPOINT)} s3 ls</p>'
             '<h2>O que dá para fazer aqui</h2><ol><li><a href="/s3">S3</a>: criar buckets, enviar, baixar e apagar arquivos.</li>'
             '<li><a href="/lambda">Lambda</a>: criar uma função a partir de código, executar e apagar.</li>'
             '<li><a href="/glue">Glue</a>: bancos de dados, tabelas, crawlers e jobs do catálogo de dados.</li>'

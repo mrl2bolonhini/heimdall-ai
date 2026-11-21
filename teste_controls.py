@@ -231,10 +231,7 @@ confere("configurações: nenhum grupo repetido e opções com explicação liga
 confere("configurações: cada campo tem label", corpo.count("<label") >= corpo.count('type="text"') - 1)
 confere("configurações: segredos vêm ocultos com botão Mostrar; há rodapé com Voltar para o topo e Recarregar desabilitado",
         'type="password"' in corpo and 'data-mostrar="cfg-' in corpo and 'href="#topo">Voltar para o topo' in corpo and 'id="topo"' in corpo and "Recarregar Heimdall</button>" in corpo and 'id="recarregar"' in corpo and " disabled>" in corpo)
-confere("configurações: opções com valor padrão vêm preenchidas e há botão para gravá-las", 'value="8010"' in corpo and "Gravar valores padrão no .env" in corpo)
-s, corpo, _ = req("POST", "/configuracoes/padroes", {"csrf": CSRF}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
-_env = hcf.ARQUIVO.read_text()
-confere("gravar padrões põe no .env o que tem valor padrão e nunca segredos", s == 200 and json.loads(corpo)["ok"] and "HEIMDALL_CLOUD_PORT='8010'" in _env and "TOKEN" not in _env and "HEIMDALL_TESTE='um'" in _env, corpo)
+confere("configurações: opções com valor padrão vêm preenchidas e não há mais o botão de gravar padrões", 'value="8010"' in corpo and "Gravar valores padrão" not in corpo)
 s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "dois", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("salvar grava no .env e diz que vale depois de reiniciar", s == 200 and json.loads(corpo)["ok"] and "HEIMDALL_TESTE='dois'" in hcf.ARQUIVO.read_text() and "reiniciado" in corpo, corpo)
 s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "a'b", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})

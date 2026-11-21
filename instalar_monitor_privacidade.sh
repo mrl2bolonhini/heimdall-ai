@@ -306,7 +306,7 @@ if docker exec n8n wget -q -T 15 -O - "http://searxng:8080/search?q=teste&format
 else
     echo " - AVISO: o n8n não recebeu JSON do SearXNG. Confira 'formats: - json' em searxng/settings.yml e rode o start_heimdall.sh de novo."
 fi
-if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' http://localhost:8003/saude)" = "200" ]; then
+if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${HEIMDALL_AGENTE_URL:-http://localhost:8003}/saude)" = "200" ]; then
     echo " - Agente do Mac no ar (o relatório vai para o app Notas, pasta Monitor de Privacidade)."
 else
     echo " - AVISO: o agente do Mac está fora do ar. Sem ele o relatório não chega ao app Notas (o Bark ainda avisa). Rode o start_heimdall.sh."

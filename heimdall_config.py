@@ -179,3 +179,25 @@ def grupo(nome: str) -> str:
     if nome.startswith("HEIMDALL_"):
         return partes[1] if len(partes) > 2 else "GERAL"
     return partes[0] or "GERAL"
+
+
+def gravar_padroes() -> tuple:
+    """Grava no .env as opções que o código define com valor padrão e o .env ainda não tem (nunca segredos). Devolve (gravadas, recusadas)."""
+    atuais = {d["nome"] for d in ler()}
+    feitas, falhas = [], []
+    for n, v in sorted(opcoes_do_codigo().items()):
+        if n in atuais or not v or re.search(r"SENHA|SECRET|SEGREDO|TOKEN|KEY|HASH|PASSWORD", n):
+            continue
+        (falhas if salvar(n, v) else feitas).append(n)
+    return feitas, falhas
+
+
+if __name__ == "__main__":
+    import sys
+    if "--gravar-padroes" in sys.argv:
+        ok, ruins = gravar_padroes()
+        print(f"{len(ok)} valores padrão gravados no .env (cópia anterior em .env.bak)." + (" Recusados: " + ", ".join(ruins) + "." if ruins else ""))
+        for n in ok:
+            print("  " + n)
+    else:
+        print("Use: python3 heimdall_config.py --gravar-padroes")

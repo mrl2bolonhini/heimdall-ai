@@ -39,5 +39,12 @@ op = c.opcoes_do_codigo()
 confere("catálogo: acha opções do código com e sem valor padrão", "HEIMDALL_CONTROLS_ATRASO_CURSOR" in op and op["HEIMDALL_CONTROLS_ATRASO_CURSOR"] == "1800" and len(op) > 30, str(len(op)))
 confere("catálogo: só variáveis HEIMDALL_", all(n.startswith("HEIMDALL_") for n in op))
 confere("grupo pelo nome do serviço", c.grupo("HEIMDALL_CLOUD_PORTA") == "CLOUD" and c.grupo("HEIMDALL_X") == "GERAL")
+c.salvar("HEIMDALL_CLOUD_PORT", "9999")
+ok, ruins = c.gravar_padroes()
+env = {d["nome"]: d["valor"] for d in c.ler()}
+confere("gravar padrões: põe os que faltam, não troca os que já existem e nunca grava segredos", "HEIMDALL_CONTROLS_ATRASO_CURSOR" in ok and env.get("HEIMDALL_CLOUD_PORT") == "9999"
+        and env.get("HEIMDALL_CONTROLS_ATRASO_CURSOR") == "1800" and not any("TOKEN" in n or "SENHA" in n for n in env) and not ruins, str(ruins))
+ok2, _ = c.gravar_padroes()
+confere("gravar padrões de novo não repete nada", ok2 == [])
 print("\nTUDO OK" if not falhas else f"\n{falhas} FALHA(S)")
 sys.exit(1 if falhas else 0)

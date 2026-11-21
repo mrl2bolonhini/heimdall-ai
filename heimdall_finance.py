@@ -572,7 +572,7 @@ def _token_agente() -> str:
 def _salvar_nota(titulo: str, markdown: str) -> None:
     import json
     import urllib.request
-    req = urllib.request.Request("http://127.0.0.1:8003/notas/gravar", method="POST", data=json.dumps({"pasta": "Heimdall Finanças", "titulo": titulo, "markdown": markdown}).encode("utf-8"),
+    req = urllib.request.Request(os.environ.get("HEIMDALL_AGENTE_URL", "http://127.0.0.1:8003").rstrip("/") + "/notas/gravar", method="POST", data=json.dumps({"pasta": "Heimdall Finanças", "titulo": titulo, "markdown": markdown}).encode("utf-8"),
                                  headers={"Content-Type": "application/json", "X-Heimdall-Token": _token_agente()})
     with urllib.request.urlopen(req, timeout=120) as r:
         r.read()

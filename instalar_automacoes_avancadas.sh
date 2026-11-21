@@ -243,7 +243,7 @@ fi
 # --- Conferências ---
 echo
 echo "Conferindo o que os fluxos precisam:"
-if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' http://localhost:8003/saude)" = "200" ]; then
+if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${HEIMDALL_AGENTE_URL:-http://localhost:8003}/saude)" = "200" ]; then
     echo " - Agente do Mac: no ar na porta 8003."
     if docker exec n8n wget -q -T 5 -O - http://host.docker.internal:8003/saude > /dev/null 2>&1; then
         echo " - O n8n alcança o agente do Mac."

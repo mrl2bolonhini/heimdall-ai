@@ -230,6 +230,14 @@ def post_json(url, corpo, cabecalhos=None, timeout=60):
 JULGAMENTO = re.compile(r"(?i)\b(falso|falsa|golpe|phishing|fraude|fraudulent\w*)\b")
 
 
+def url_agente(cfg):
+    return cfg.get("HEIMDALL_AGENTE_URL", "http://127.0.0.1:8003").rstrip("/")
+
+
+def url_n8n(cfg):
+    return cfg.get("HEIMDALL_N8N_URL", "http://localhost:5678").rstrip("/")
+
+
 def resumir(cfg, msg, item):
     """Resumo pelo modelo local. Devolve dict ou None. O e-mail é tratado como dado não confiável."""
     chave, modelo = cfg.get("LITELLM_MASTER_KEY", ""), cfg.get("HEIMDALL_FLOW_MODEL", "qwen3-vl-instruct")
@@ -241,7 +249,7 @@ def resumir(cfg, msg, item):
               "\"prazo\": \"data como está no e-mail ou vazio\", \"prazo_iso\": \"AAAA-MM-DD ou vazio se não houver data clara\", \"acao\": \"o que o usuário deve fazer, sem usar links do e-mail\"}.\n\nHoje é %s.\nAssunto: %s\nTexto: %s"
               % (datetime.date.today().isoformat(), item["assunto"][:200], texto_do_corpo(msg)))
     try:
-        r = post_json("http://localhost:9000/v1/chat/completions",
+        r = post_json(cfg.get("HEIMDALL_LITELLM_URL", "http://localhost:9000/v1/chat/completions"),
                       {"model": modelo, "messages": [{"role": "user", "content": prompt}], "temperature": 0.1},
                       {"Authorization": "Bearer " + chave}, timeout=180)
         txt = r["choices"][0]["message"]["content"]
@@ -270,7 +278,7 @@ def avisar(cfg, titulo, corpo, urgente=False, simular=False):
         # Rotina: vai para o "Resumo agrupado" do n8n (resumo das 10h). Depois das 10h entra direto, mas em silêncio.
         try:
             from datetime import datetime as _dt
-            post_json("http://localhost:5678/webhook/heimdall-resumo",
+            post_json(url_n8n(cfg) + "/webhook/heimdall-resumo",
                       {"slot": "meio" if _dt.now().hour < 10 else "direto", "titulo": titulo[:80], "linha": corpo[:700], "nivel": "passive"}, timeout=15)
             return True
         except Exception as e:  # noqa: BLE001 - sem o n8n, cai no aviso direto
@@ -289,7 +297,7 @@ def gravar_notas(cfg, titulo, markdown, simular=False):
         print("[NOTAS]", titulo, "\n" + markdown)
         return
     try:
-        post_json("http://localhost:8003/notas/gravar", {"pasta": PASTA_NOTAS, "titulo": titulo, "markdown": markdown},
+        post_json(url_agente(cfg) + "/notas/gravar", {"pasta": PASTA_NOTAS, "titulo": titulo, "markdown": markdown},
                   {"X-Heimdall-Token": cfg.get("HEIMDALL_AGENTE_TOKEN", "")}, timeout=120)
     except Exception as e:
         print("Notas falhou:", e, file=sys.stderr)
@@ -302,7 +310,7 @@ def registrar_banco(cfg, itens, simular=False):
     regs = [{"id": it["mid"].lower(), "data": it["data"], "remetente": it["de"], "dominio": it["dominio"], "assunto": it["assunto"],
              "classe": it["classe"], "servico": it["servico"], "motivo": it["motivo"], "urgencia": it.get("urg", ""), "prazo": it.get("prazo", "")} for it in itens]
     try:
-        post_json("http://localhost:8003/banco/gravar", {"tabela": "emails", "registros": regs},
+        post_json(url_agente(cfg) + "/banco/gravar", {"tabela": "emails", "registros": regs},
                   {"X-Heimdall-Token": cfg.get("HEIMDALL_AGENTE_TOKEN", "")}, timeout=30)
     except Exception as e:
         print("Banco falhou:", e, file=sys.stderr)
@@ -339,7 +347,7 @@ def criar_triagem(cfg, itens, simular=False):
         else:
             continue
         try:
-            post_json("http://localhost:8003/triagem/criar", {"id": "email|" + it["mid"].lower(), "titulo": titulo[:150], "resumo": resumo[:800], "nivel": nivel, "fonte": "email"},
+            post_json(url_agente(cfg) + "/triagem/criar", {"id": "email|" + it["mid"].lower(), "titulo": titulo[:150], "resumo": resumo[:800], "nivel": nivel, "fonte": "email"},
                       {"X-Heimdall-Token": cfg.get("HEIMDALL_AGENTE_TOKEN", "")}, timeout=60)
         except Exception as e:
             print("Triagem falhou:", e, file=sys.stderr)
@@ -368,7 +376,7 @@ def agendar(cfg, it, r, agora, simular=False):
             feitos.append(rotulo)
             return
         try:
-            post_json("http://localhost:8003" + rota, corpo, cab, timeout=60)
+            post_json(url_agente(cfg) + rota, corpo, cab, timeout=60)
             feitos.append(rotulo)
         except Exception as e:
             print("Agenda falhou (%s): %s" % (rota, e), file=sys.stderr)
