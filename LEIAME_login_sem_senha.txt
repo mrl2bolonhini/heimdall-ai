@@ -28,3 +28,5 @@ Resposta 200 = chegou ao fluxo; 401 ou 403 do fluxo = o token não confere; 302 
 Trocar o e-mail da conta do Open WebUI sem apagar o volume: heimdall chat --email novo@email (ou -e). Ele guarda uma cópia em backups/.
 
 Login próprio do n8n: HEIMDALL_N8N_SESSAO_HORAS (padrão 8760) estende a sessão; HEIMDALL_N8N_SEM_LOGIN=1 tenta desligar o login, mas a opção N8N_BASIC_AUTH_ACTIVE foi removida das versões atuais do n8n. Depois de mudar, rode heimdall update --restart.
+
+Atenção: não use HEIMDALL_WEBUI_SEM_SENHA. Com a senha desligada (ENABLE_PASSWORD_AUTH=false) o Open WebUI recusa com 403 até o login pelo Access e a página fica em "Fazendo login". A opção é ignorada pelo start_heimdall.sh.

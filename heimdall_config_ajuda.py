@@ -144,7 +144,7 @@ DESCRICOES = {
     "HEIMDALL_WEBUI_ACCESS": "1 faz o Open WebUI entrar pelo Cloudflare Access, sem senha. Só liga se o endereço público estiver atrás do Access; a porta 3000 fica só neste Mac.",
     "HEIMDALL_WEBUI_ACCESS_HEADER": "Cabeçalho em que o Access manda o e-mail de quem entrou (padrão Cf-Access-Authenticated-User-Email).",
     "HEIMDALL_WEBUI_HOST": "Endereço público do chat (padrão chat.heimdall-ai.tech), conferido antes de ligar o login pelo Access.",
-    "HEIMDALL_WEBUI_SEM_SENHA": "1 tira o formulário de senha do Open WebUI (com o login pelo Access ligado). Só o Access passa a dar entrada.",
+    "HEIMDALL_WEBUI_SEM_SENHA": "Não use: desligar a senha faz o Open WebUI atual recusar também o login pelo Access (testado). Fica ignorada; com o Access ligado a tela de senha já não aparece.",
     "HEIMDALL_WEBUI_NAME": "Nome que o Open WebUI mostra no topo.",
     "HEIMDALL_WEBUI_STRIP_SUFFIX": "Sufixo que o Open WebUI tira dos nomes de modelos.",
     "LITELLM_MASTER_KEY": "Chave mestra do LiteLLM; os serviços a usam para falar com os modelos.",

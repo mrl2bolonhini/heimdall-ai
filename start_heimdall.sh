@@ -683,7 +683,8 @@ if [ "$WANT_WEBUI" = "1" ]; then
             [ "$ACC_RC" = "2" ] && echo "     $(cat /tmp/heimdall_access_webui.txt) Seguindo: sem acesso de fora, o cabeçalho não pode ser falsificado."
             WEBUI_BIND="127.0.0.1:"
             WEBUI_EXTRA+=(-e "WEBUI_AUTH_TRUSTED_EMAIL_HEADER=${HEIMDALL_WEBUI_ACCESS_HEADER:-Cf-Access-Authenticated-User-Email}")
-            [ "$HEIMDALL_WEBUI_SEM_SENHA" = "1" ] && WEBUI_EXTRA+=(-e ENABLE_PASSWORD_AUTH=false)
+            # ENABLE_PASSWORD_AUTH=false faz esta versão do Open WebUI recusar (403) também o login pelo cabeçalho do Access; por isso é ignorada.
+            [ "$HEIMDALL_WEBUI_SEM_SENHA" = "1" ] && echo "     Aviso: HEIMDALL_WEBUI_SEM_SENHA foi ignorada (desligar a senha derruba o login pelo Access nesta versão). Pelo Access a senha não aparece."
             echo "     Open WebUI com login pelo Cloudflare Access (porta só em 127.0.0.1)."
         fi
     fi
