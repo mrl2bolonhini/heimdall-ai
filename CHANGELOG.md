@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Controls: aba Usuários
+- Nova aba Usuários (Option+Shift+4; Ajustes passou a 5 e Manutenção a 6): donos em só leitura, convidados com os serviços liberados (Cloud, Notes, News, Games e Chat), adicionar, trocar e remover. A lista fica em HEIMDALL_CFACCESS_CONVIDADOS. Health, Finance e Controls são só de donos. Dono não é removido por ali, e ninguém remove o próprio e-mail.
+- Com HEIMDALL_CLOUDFLARE_ACCESS_TOKEN e CLOUDFLARE_ACCOUNT_ID, "Ver o que vai mudar" mostra o plano sem alterar nada e "Aplicar no Cloudflare" cria ou atualiza uma política "Heimdall: Serviço" por serviço e o aplicativo do endereço público (inclusive o do chat), mantendo as outras políticas e as configurações de um aplicativo que já exista, e revoga as sessões de quem saiu. Opcional: HEIMDALL_CLOUDFLARE_ACCESS_IDP.
+- heimdall env --set aceita HEIMDALL_CLOUDFLARE_ACCESS_TOKEN (lido da área de transferência, nunca pela linha de comando).
+
 ## 2026-11-20 - Open WebUI e Kuma sem senha, pelo Cloudflare Access
 - Open WebUI: com HEIMDALL_WEBUI_ACCESS=1 no .env ele confia no e-mail que o Access manda no cabeçalho e entra sem senha (HEIMDALL_WEBUI_SEM_SENHA=1 tira também o formulário). A porta 3000 passa a escutar só em 127.0.0.1, para ninguém falsificar o cabeçalho. O start_heimdall.sh só liga o modo depois de conferir que o endereço público (HEIMDALL_WEBUI_HOST) está atrás do Access; senão avisa e mantém o login por senha.
 - Novo: heimdall chat --check (verificar_access.py) confere, sem entrar, se um endereço está atrás do Access.

@@ -63,6 +63,7 @@ import heimdall_design as design  # noqa: E402
 import heimdall_kuma as kuma  # noqa: E402
 import heimdall_servicos as servicos  # noqa: E402
 import heimdall_shell as hshell  # noqa: E402
+import heimdall_usuarios as usuarios  # noqa: E402
 
 HOST = os.environ.get("HEIMDALL_CONTROLS_HOST", "127.0.0.1")
 try:
@@ -170,7 +171,7 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/ajustes", "Ajustes"), ("/manutencao", "Manutenção")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/ajustes", "Ajustes"), ("/manutencao", "Manutenção")]
 
 _shell = None
 
@@ -298,9 +299,10 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
     corpo += ("<h2>Para que serve cada aba</h2><ol>"
               '<li><a href="/terminal">Terminal</a>: um shell completo no Mac. A pasta e as variáveis continuam de um comando para o outro, e há atalhos para copiar as últimas saídas.</li>'
               '<li><a href="/servicos">Serviços</a>: uma chave por serviço, para ligar e desligar. O que você desliga continua desligado depois de atualizar e reiniciar.</li>'
+              '<li><a href="/usuarios">Usuários</a>: quem pode entrar em cada serviço. Adiciona e remove convidados, guarda a lista e sincroniza com o Cloudflare Access.</li>'
               '<li><a href="/ajustes">Ajustes</a>: todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar Heimdall, no fim da página, faz isso.</li>'
               '<li><a href="/manutencao">Manutenção</a>: Start, Stop, Update, Restart, status, diagnóstico e logs.</li></ol>'
-              "<p>Setas esquerda e direita movem entre as abas, e Option+Shift+1 a 5 abre cada uma de qualquer ponto da página.</p>")
+              "<p>Setas esquerda e direita movem entre as abas, e Option+Shift+1 a 6 abre cada uma de qualquer ponto da página.</p>")
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando e cada mudança ficam anotados em logs/controls_audit.log, sem a saída nem os valores. '
               'Programas de tela cheia, como vim e top, não funcionam no Terminal: use cat, sed e ps.</p>')
     return "Visão geral", corpo
@@ -472,6 +474,39 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
     return "Ajustes", corpo
 
 
+def pg_usuarios(q: dict, sess: dict) -> tuple:
+    """Donos (só leitura), convidados com os serviços de cada um, formulário para adicionar e o Cloudflare (plano e aplicar)."""
+    st = usuarios.situacao()
+    csrf = e(sess["csrf"])
+    nomes = {k: v[0] for k, v in usuarios.SERVICOS.items()}
+    linhas = []
+    for em, sv in st["convidados"].items():
+        linhas.append(f'<tr><th scope="row">{e(em)}</th><td>{e(", ".join(nomes.get(x, x) for x in sv))}</td><td>'
+                      f'<form class="linha" method="post" action="/usuarios/remover"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="email" value="{e(em)}">'
+                      f'<button type="submit" aria-label="Remover {e(em)}">Remover</button></form></td></tr>')
+    tabela = ('<table><caption>Convidados e os serviços a que têm acesso</caption><thead><tr><th scope="col">E-mail</th><th scope="col">Serviços</th><th scope="col">Ação</th></tr></thead><tbody>'
+              + "".join(linhas) + "</tbody></table>") if linhas else "<p>Nenhum convidado ainda.</p>"
+    caixas = "".join(f'<label><input type="checkbox" name="servico" value="{k}"> {e(v[0])}</label> ' for k, v in usuarios.SERVICOS.items() if v[3])
+    falta = usuarios.configurado()
+    if falta:
+        cf = f'<p class="nota">Cloudflare ainda não configurado: {e(falta)}. Sem isso a lista só vale no Heimdall; o Access não é alterado.</p>'
+    else:
+        cf = (f'<form class="linha" method="post" action="/usuarios/cloudflare"><input type="hidden" name="csrf" value="{csrf}">'
+              '<button type="submit" name="acao" value="ver" aria-describedby="d-cf-ver">Ver o que vai mudar</button> <span id="d-cf-ver">Só consulta a Cloudflare e mostra o plano.</span></form>'
+              f'<form class="linha" method="post" action="/usuarios/cloudflare"><input type="hidden" name="csrf" value="{csrf}">'
+              '<button type="submit" name="acao" value="aplicar" aria-describedby="d-cf-ap">Aplicar no Cloudflare</button> <span id="d-cf-ap">Cria ou atualiza as políticas e os aplicativos e revoga as sessões de quem saiu.</span></form>')
+    marca = '<span data-mudou hidden></span>' if sess.pop("_mudou_usuarios", False) else ""
+    corpo = (marca + "<p>Os donos entram em todos os serviços. Convidados entram só nos que você marcar. Health, Finance e Controls são só de donos e não aparecem na escolha. "
+             "A lista fica no .env e vale no Heimdall depois de reiniciar (o botão Recarregar Heimdall, no fim da página, faz isso).</p>"
+             f"<h2>Donos</h2><p>{e(', '.join(st['donos']) or 'nenhum dono cadastrado (HEIMDALL_CFACCESS_EMAILS em Ajustes)')}</p>"
+             f"<h2>Convidados</h2>{tabela}"
+             f'<h2>Adicionar ou trocar um convidado</h2><form method="post" action="/usuarios/adicionar"><input type="hidden" name="csrf" value="{csrf}">'
+             '<p><label for="usr-email">E-mail do convidado (o mesmo da conta Microsoft ou do código por e-mail)</label> <input type="email" id="usr-email" name="email" autocomplete="off" required></p>'
+             f'<fieldset><legend>Serviços liberados</legend>{caixas}</fieldset><p><button type="submit">Salvar convidado</button></p></form>'
+             f"<h2>Cloudflare Access</h2>{cf}")
+    return "Usuários", corpo
+
+
 def pg_manutencao(q: dict, sess: dict) -> tuple:
     csrf = e(sess["csrf"])
 
@@ -490,7 +525,7 @@ def pg_manutencao(q: dict, sess: dict) -> tuple:
     return "Manutenção", corpo
 
 
-ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
+ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/usuarios": pg_usuarios, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
 
 SCRIPT = r"""
 (function(){
@@ -768,7 +803,7 @@ SCRIPT_RECARGA = r"""
 var b = function(){ return document.getElementById('recarregar'); };
 function lido(){ try { return sessionStorage.getItem('heimdall-mudou') === '1'; } catch (e) { return false; } }
 function ligar(){ var x = b(); if (x) { x.disabled = false; var d = document.getElementById('desc-recarregar'); if (d) { d.textContent = 'Há alterações. Reinicia todos os serviços, inclusive este painel, e espere cerca de um minuto.'; } } }
-if (lido()) { ligar(); }
+if (lido() || document.querySelector('[data-mudou]')) { try { sessionStorage.setItem('heimdall-mudou', '1'); } catch (e) {} ligar(); }
 document.addEventListener('heimdall:mudou', function(){ try { sessionStorage.setItem('heimdall-mudou', '1'); } catch (e) {} ligar(); });
 document.addEventListener('submit', function(ev){ if (ev.target.id === 'form-recarregar') { try { sessionStorage.removeItem('heimdall-mudou'); } catch (e) {} } });
 })();
@@ -947,7 +982,8 @@ class Painel(BaseHTTPRequestHandler):
 
     def _corpo(self) -> dict:
         n = min(int(self.headers.get("Content-Length") or 0), MAX_CORPO)
-        return {k: v[0] for k, v in parse_qs(self.rfile.read(n).decode("utf-8", "replace"), keep_blank_values=True).items()}
+        self._multi = parse_qs(self.rfile.read(n).decode("utf-8", "replace"), keep_blank_values=True)  # com todos os valores (caixas de marcar)
+        return {k: v[0] for k, v in self._multi.items()}
 
     def do_GET(self):  # noqa: N802
         self._despachar("GET")
@@ -1065,6 +1101,33 @@ class Painel(BaseHTTPRequestHandler):
                 auditar(ip, "ajustes: " + ("remover" if acao == "remover" else "salvar"), nome + ("" if not motivo else " (recusado)"))
                 self._json(200, {"ok": not motivo, "mensagem": (motivo or (f"{nome} removida do .env." if acao == "remover" else f"{nome} salva.")
                            + " Vale quando o serviço que usa for reiniciado.")})
+                return
+            elif rota == "/usuarios/adicionar":
+                motivo = usuarios.definir(campos.get("email", ""), getattr(self, "_multi", {}).get("servico", []))
+                auditar(ip, "usuários: salvar convidado", campos.get("email", "") + ("" if not motivo else " (recusado)"))
+                sess["flash"] = ("erro", motivo) if motivo else ("ok", f"{campos.get('email', '').strip().lower()} salvo. Para valer no Cloudflare, use Aplicar no Cloudflare; no Heimdall, Recarregar Heimdall.")
+                sess["_mudou_usuarios"] = not motivo
+                self._ir("/usuarios")
+                return
+            elif rota == "/usuarios/remover":
+                motivo = usuarios.remover(campos.get("email", ""), (sess.get("_quem") or ("", ""))[0])
+                auditar(ip, "usuários: remover convidado", campos.get("email", "") + ("" if not motivo else " (recusado)"))
+                sess["flash"] = ("erro", motivo) if motivo else ("ok", "Removido da lista. Para tirar o acesso no Cloudflare e encerrar as sessões, use Aplicar no Cloudflare.")
+                sess["_mudou_usuarios"] = not motivo
+                self._ir("/usuarios")
+                return
+            elif rota == "/usuarios/cloudflare":
+                acao = campos.get("acao", "ver")
+                try:
+                    pl = usuarios.plano()
+                    if acao == "aplicar":
+                        auditar(ip, "usuários: aplicar no Cloudflare")
+                        sess["flash"] = ("ok", "\n".join(usuarios.aplicar(pl)))
+                    else:
+                        sess["flash"] = ("ok", "Plano (nada foi mudado):\n" + "\n".join(i["texto"] for i in pl))
+                except usuarios.ErroCloudflare as ex:
+                    sess["flash"] = ("erro", str(ex))
+                self._ir("/usuarios")
                 return
             elif rota == "/servicos/alternar":
                 self._json(200, self._alternar_servico(campos, ip))

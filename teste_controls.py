@@ -48,7 +48,7 @@ def req(metodo, rota, corpo=None, cookie="", host="localhost", extra=None):
     cab.update(extra or {})
     dados = None
     if corpo is not None:
-        dados = urllib.parse.urlencode(corpo).encode()
+        dados = urllib.parse.urlencode(corpo, doseq=True).encode()
         cab["Content-Type"] = "application/x-www-form-urlencoded"
     c.request(metodo, rota, body=dados, headers=cab)
     r = c.getresponse()
@@ -207,7 +207,7 @@ confere("serviços: uma chave (role=switch) por serviço, com estado e sem botã
         and 'aria-checked="true"' in corpo and 'aria-checked="false"' in corpo and "Kuma: no ar" in corpo and "Aplicar" not in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo)
 confere("serviços: o próprio Controls não é desligável", "Controls" not in "".join(x["nome"] for x in hsv.catalogo()))
 confere("abas: tablist, tab com aria-selected, painel e atalho",
-        'role="tablist"' in corpo and corpo.count('role="tab"') == 5 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Atalho: Option Shift 3" in corpo and "Alt+Shift" not in corpo)
+        'role="tablist"' in corpo and corpo.count('role="tab"') == 6 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Atalho: Option Shift 3" in corpo and "Alt+Shift" not in corpo)
 confere("abas: o Terminal carrega a página inteira (data-completa)", corpo.count(" data-completa>") == 1)
 confere("abas e chaves: os scripts vão com nonce", "ArrowRight" in corpo and "/servicos/alternar" in corpo and "nonce=" in corpo)
 s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": CSRF, "id": "cloud", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
@@ -240,6 +240,22 @@ s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": "errado", "nome": "HEIMDAL
 confere("salvar sem o token de segurança é recusado", s == 403 and "dois" in hcf.ARQUIVO.read_text())
 s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "acao": "remover"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("remover tira do .env", json.loads(corpo)["ok"] and "HEIMDALL_TESTE" not in hcf.ARQUIVO.read_text())
+# --- usuários
+hcf.ARQUIVO.write_text("HEIMDALL_CFACCESS_EMAILS='dono@x.com'\n", encoding="utf-8")
+s, corpo, _ = req("GET", "/usuarios", cookie=token)
+confere("usuários: página com donos, formulário com e-mail rotulado e serviços liberáveis, sem Health nem Finance na escolha",
+        s == 200 and "dono@x.com" in corpo and 'for="usr-email"' in corpo and 'value="jogos"' in corpo and 'value="saude"' not in corpo and "<h1>Usuários</h1>" in corpo and "Cloudflare ainda não configurado" in corpo, corpo[:100])
+s, corpo, r = req("POST", "/usuarios/adicionar", {"csrf": CSRF, "email": "ana@x.com", "servico": ["jogos", "chat"]}, cookie=token, extra={"Origin": "null"})
+confere("adicionar convidado grava no .env com os serviços marcados", s == 303 and "HEIMDALL_CFACCESS_CONVIDADOS='ana@x.com=chat+jogos'" in hcf.ARQUIVO.read_text(), hcf.ARQUIVO.read_text())
+s, corpo, _ = req("GET", "/usuarios", cookie=token)
+confere("a tabela mostra o convidado, com legenda e Remover; o aviso de mudança liga o Recarregar", "<caption>" in corpo and "ana@x.com" in corpo and "Remover" in corpo and "Chat (Open WebUI)" in corpo and "salvo." in corpo and "data-mudou" in corpo)
+s, corpo, _ = req("POST", "/usuarios/remover", {"csrf": CSRF, "email": "dono@x.com"}, cookie=token, extra={"Origin": "null"})
+s2, c2, _ = req("GET", "/usuarios", cookie=token)
+confere("dono não é removido pela aba", "dono não se remove" in c2 and "dono@x.com" in hcf.ARQUIVO.read_text())
+s, corpo, _ = req("POST", "/usuarios/adicionar", {"csrf": "errado", "email": "zé@x.com", "servico": ["jogos"]}, cookie=token, extra={"Origin": "null"})
+confere("sem o token de segurança é recusado", s == 403 and "zé@x.com" not in hcf.ARQUIVO.read_text())
+s, corpo, _ = req("POST", "/usuarios/remover", {"csrf": CSRF, "email": "ana@x.com"}, cookie=token, extra={"Origin": "null"})
+confere("remover tira do .env", s == 303 and "ana@x.com" not in hcf.ARQUIVO.read_text())
 # Origin "null" (formulário comum com no-referrer), origem de fora e Sec-Fetch-Site
 s, _, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": CSRF}, cookie=token, extra={"Origin": "null"})
 confere("formulário comum com Origin null passa (o token continua valendo)", s == 303)
