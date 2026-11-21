@@ -51,14 +51,19 @@ async function lerCorpo(req) {
   try { return { json: JSON.parse(texto) }; } catch { return { erro: 400 }; }
 }
 
-async function listar(env, prefixo, limite = 50) {
+// Entrega poucos itens por vez (até 10 e cerca de 20 MB) para caber na memória do Worker; o resto vem na próxima busca, depois que o Mac apagar os já processados.
+async function listar(env, prefixo, limite = 10) {
   const l = await env.CAIXA.list({ prefix: prefixo, limit: limite });
   const itens = [];
+  let bytes = 0;
   for (const o of l.objects) {
+    if (bytes >= 20 * 1024 * 1024) break;
     const obj = await env.CAIXA.get(o.key);
     if (!obj) continue;
+    const texto = await obj.text();
+    bytes += texto.length;
     const id = o.key.slice(o.key.lastIndexOf("/") + 1, -5);
-    itens.push({ id, ...JSON.parse(await obj.text()) });
+    itens.push({ id, ...JSON.parse(texto) });
   }
   return itens;
 }
