@@ -224,16 +224,22 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 """
 
 
-def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scripts: list = None) -> bytes:
-    nav = ""
+def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scripts_: list = None) -> bytes:
+    nav = sair = scripts = ""
+    conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
-        nav = ('<nav aria-label="Principal"><ul><li><a href="/">Categorias</a></li><li><form class="linha" method="post" action="/sair">'
-               f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
-    js = "".join(f'<script src="/js/{e(s)}" defer></script>' for s in (scripts or []))
+        nav = design.nav_abas(NAV, "/", "Seções do Heimdall Games")
+        sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
+        conteudo = design.com_abas(NAV, "/", conteudo)
+        scripts = design.script()
+    js = "".join(f'<script src="/js/{e(s)}" defer></script>' for s in (scripts_ or []))
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow">{extra_head}<title>{e(titulo)} - Heimdall Games</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Games", nav)}'
-            f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main>{js}</body></html>').encode("utf-8")
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Games", nav, sair_html=sair)}'
+            f'<main id="principal">{conteudo}</main>{design.rodape()}{scripts}{js}</body></html>').encode("utf-8")
+
+
+NAV = [("/", "Categorias")]
 
 
 def pg_inicio() -> tuple:
@@ -305,7 +311,7 @@ class Jogos(nuvem.ManipuladorBase):
         self.send_header("Content-Type", tipo)
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Security-Policy", CSP_PAGINA)
+        self.send_header("Content-Security-Policy", design.csp(CSP_PAGINA, corpo, conectar=False))
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
@@ -380,7 +386,7 @@ class Jogos(nuvem.ManipuladorBase):
                 return
             if rota == "/":
                 titulo, corpo, scripts = pg_inicio()
-                self._enviar(200, pagina(titulo, corpo, sess, scripts=scripts))
+                self._enviar(200, pagina(titulo, corpo, sess, scripts_=scripts))
                 return
             mc = re.fullmatch(r"/categoria/([a-z0-9]+)", rota)
             if mc:
@@ -388,14 +394,14 @@ class Jogos(nuvem.ManipuladorBase):
                 if not rc:
                     self._enviar(404, pagina("Não encontrei", '<p>Esta categoria não existe.</p>' + design.botao("/", "Ver as categorias"), sess))
                     return
-                self._enviar(200, pagina(rc[0], rc[1], sess, scripts=rc[2]))
+                self._enviar(200, pagina(rc[0], rc[1], sess, scripts_=rc[2]))
                 return
             m = re.fullmatch(r"/jogo/([a-z0-9]+)", rota)
             r = pg_jogo(m.group(1)) if m else None
             if not r:
                 self._enviar(404, pagina("Não encontrei", '<p>Este jogo não existe.</p>' + design.botao("/", "Ver todos os jogos"), sess))
                 return
-            self._enviar(200, pagina(r[0], r[1], sess, scripts=r[2]))
+            self._enviar(200, pagina(r[0], r[1], sess, scripts_=r[2]))
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))

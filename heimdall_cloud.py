@@ -410,15 +410,21 @@ def pagina(titulo: str, corpo: str, sess: dict = None, logado: bool = True) -> b
         tipo, texto = sess["flash"]
         sess["flash"] = None
         aviso = f'<p class="{"ok" if tipo == "ok" else "erro"}" role="{"status" if tipo == "ok" else "alert"}">{e(texto)}</p>'
-    nav = ""
+    nav = sair = scripts = ""
+    conteudo = f"<h1>{e(titulo)}</h1>{aviso}{corpo}"
     if logado and sess:
-        nav = ('<nav aria-label="Principal"><ul><li><a href="/">Início</a></li><li><a href="/s3">S3</a></li><li><a href="/lambda">Lambda</a></li>'
-               '<li><a href="/glue">Glue</a></li><li><a href="/athena">Athena</a></li><li><a href="/console">Console geral</a></li><li><form class="linha" method="post" action="/sair">'
-               f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
+        a = design.aba_da_rota(sess.get("atual", "/"), NAV_CLOUD)
+        nav = design.nav_abas(NAV_CLOUD, a, "Seções do Heimdall Cloud")
+        sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
+        conteudo = design.com_abas(NAV_CLOUD, a, conteudo)
+        scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Cloud</title>{ICONE}<style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{cabecalho("Heimdall Cloud", nav)}'
-            f'<main id="principal"><h1>{e(titulo)}</h1>{aviso}{corpo}</main></body></html>').encode("utf-8")
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{cabecalho("Heimdall Cloud", nav, sair_html=sair)}'
+            f'<main id="principal">{conteudo}</main>{design.rodape()}{scripts}</body></html>').encode("utf-8")
+
+
+NAV_CLOUD = [("/", "Início"), ("/s3", "S3"), ("/lambda", "Lambda"), ("/glue", "Glue"), ("/athena", "Athena"), ("/console", "Console geral")]
 
 
 def csrf(sess: dict) -> str:
@@ -847,7 +853,7 @@ class Painel(ManipuladorBase):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
-        self.send_header("Content-Security-Policy", "default-src 'none'; img-src data:; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+        self.send_header("Content-Security-Policy", design.csp("default-src 'none'; img-src data:; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'", corpo))
         for k, v in (extra or []):
             self.send_header(k, v)
         self.end_headers()
@@ -910,6 +916,7 @@ class Painel(ManipuladorBase):
             if metodo == "POST":
                 self._post(rota, token, sess)
             else:
+                sess["atual"] = self.path
                 self._get(rota, q, sess)
         except ErroPainel as ex:
             self._falha(metodo, rota, str(ex))

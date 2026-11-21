@@ -464,17 +464,23 @@ marcar(1);
 })();"""
 
 
+NAV = [("/", "Início"), ("/busca", "Buscar")]
+
+
 def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: str = "") -> bytes:
-    nav = ""
+    nav = sair = abas_js = ""
+    conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
-        nav = ('<nav aria-label="Principal"><ul><li><a href="/">Início</a></li><li><a href="/busca">Buscar</a></li>'
-               '<li><form class="linha" method="post" action="/sair">'
-               f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form></li></ul></nav>')
-    js = f'<script nonce="{e(nonce)}">{script}</script>' if script else ""
+        atual = "/busca" if str(sess.get("atual", "/")).startswith("/busca") else "/"   # temas e notas ficam na aba Início
+        nav = design.nav_abas(NAV, atual, "Seções do Heimdall Notes")
+        sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
+        conteudo = design.com_abas(NAV, atual, conteudo)
+        abas_js = design.SCRIPT_ABAS
+    js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (script or abas_js) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notes</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Notes", nav)}'
-            f'<main id="principal"><h1>{e(titulo)}</h1>{corpo}</main>{js}</body></html>').encode("utf-8")
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Notes", nav, sair_html=sair)}'
+            f'<main id="principal">{conteudo}</main>{design.rodape()}{js}</body></html>').encode("utf-8")
 
 
 def pg_entrar(erro: str = "") -> bytes:
@@ -685,7 +691,7 @@ class Notas(nuvem.ManipuladorBase):
         self.send_header("Content-Type", tipo)
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
-        script = f" script-src 'nonce-{nonce}';" if nonce else ""
+        script = f" script-src 'nonce-{nonce}'; connect-src 'self';" if nonce else ""
         self.send_header("Content-Security-Policy", f"default-src 'none'; img-src data:; style-src 'unsafe-inline';{script} media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
         self._cabecalhos_base()
         for k, v in (extra or []):
@@ -698,7 +704,7 @@ class Notas(nuvem.ManipuladorBase):
         self._enviar(303, b"", extra=[("Location", destino)] + (extra or []))
 
     def _pagina(self, status: int, titulo: str, corpo: str, sess: dict = None, script: str = "") -> None:
-        nonce = secrets.token_urlsafe(12) if script else ""
+        nonce = secrets.token_urlsafe(12) if (script or sess) else ""   # com sessão, a página leva o script das abas
         self._enviar(status, pagina(titulo, corpo, sess, nonce, script), nonce=nonce)
 
     def _sessao(self):
@@ -754,6 +760,7 @@ class Notas(nuvem.ManipuladorBase):
                 nuvem.encerrar_sessao(token)
                 self._ir("/entrar", [self._cookie("", apagar=True)])
                 return
+            sess["atual"] = self.path
             self._get(rota, q, sess)
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")

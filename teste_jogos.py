@@ -80,7 +80,9 @@ confere("categorias em ordem alfabética", [c[1] for c in hj.CATEGORIAS] == sort
 confere("categoria inexistente dá 404", pedir("/categoria/nada", ck)[0] == 404)
 confere("todo jogo está em uma só categoria", sorted(i for _, ids in hj.GRUPOS for i in ids) == sorted(j[0] for j in hj.CATALOGO))
 csp = cab.get("Content-Security-Policy", "")
-confere("política de conteúdo só deixa script do próprio site", "script-src 'self'" in csp and "default-src 'none'" in csp and "connect-src 'none'" in csp, csp)
+import re as _re_n
+confere("política de conteúdo só deixa script do próprio site e o das abas (com nonce)", _re_n.search(r"script-src 'nonce-[A-Za-z0-9_-]+' 'self'", csp) and "default-src 'none'" in csp and "connect-src 'none'" in csp and "unsafe-eval" not in csp, csp)
+confere("abas, atalho Option+Shift+1, voltar ao topo e tema de rodapé no Games", 'role="tablist"' in corpo and "Atalho: Option Shift 1" in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
 confere("sem script embutido no HTML", "<script>" not in corpo and "onclick" not in corpo.lower())
 confere("cabeçalhos de segurança", cab.get("X-Frame-Options") == "DENY" and cab.get("Cache-Control") == "no-store" and "noindex" in cab.get("X-Robots-Tag", ""), cab)
 confere("a página é pt-BR com link de pular e título", 'lang="pt-BR"' in corpo and "Pular para o conteúdo" in corpo and "<h1>Jogos</h1>" in corpo)

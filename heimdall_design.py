@@ -154,13 +154,23 @@ def script(extra: str = "") -> str:
     return f'<script nonce="{secrets.token_urlsafe(16)}">{SCRIPT_ABAS}{extra}</script>'
 
 
-def csp(base: str, corpo: bytes) -> str:
+def csp(base: str, corpo: bytes, conectar: bool = True) -> str:
     """Política de segurança do serviço (`base`, sem script) e, se a página traz o <script nonce=...> do `script()`, a permissão só para esse nonce."""
     import re
     m = re.search(rb'<script nonce="([A-Za-z0-9_-]+)"', corpo or b"")
     if not m:
         return base
-    return f"script-src 'nonce-{m.group(1).decode()}'; connect-src 'self'; " + base
+    nonce = m.group(1).decode()
+    if "script-src " in base:
+        base = base.replace("script-src ", f"script-src 'nonce-{nonce}' ", 1)
+    else:
+        base = f"script-src 'nonce-{nonce}'; " + base
+    if conectar:   # trocar de aba busca a página (fetch); com uma aba só (Games) não há troca, e o connect-src fica como está
+        if "connect-src " in base:
+            base = re.sub(r"connect-src [^;]*", "connect-src 'self'", base, count=1)
+        else:
+            base = "connect-src 'self'; " + base
+    return base
 
 
 def aba_da_rota(rota: str, itens: list, aliases: dict = None) -> str:

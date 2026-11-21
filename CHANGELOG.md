@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Layout com abas em todos os serviços
+- Heimdall Cloud, Notes, News, Health, Games e Finance trocam o menu de links pelas abas do Heimdall Design (como o Controls já tinha): setas, Home e End movem o foco, Option+Shift+1 a 9 abre a aba pelo número e o leitor de tela ouve "<nome> aberta". Sem JavaScript, as abas continuam sendo links comuns.
+- Todas as páginas terminam com "Voltar para o topo" e começam num alvo de foco (#topo). O script das abas tem nonce e a política de segurança de cada serviço só o aceita para esse nonce. Detalhes novos em heimdall_design.py: nav_abas, com_abas, topo, script, csp e aba_da_rota.
+- Perguntar (modelo local, só com os dados da tela) agora também existe no Heimdall Health (sono, atividade, recuperação e demais relatórios; não é diagnóstico) e no Heimdall News (as notícias das últimas 24 horas). O Finance já tinha. Cloud, Games e o Account não têm Perguntar: não há dado pessoal para consultar. Os dois botões do Notes (perguntar e salvar nota) vêm na próxima etapa.
+- O Account, de uma página só, fica sem abas; já tinha o voltar ao topo.
+
 ## 2026-11-21 - Avisos de saúde e finanças fora do Notes
 - Heimdall Health e Heimdall Finance ganham a aba Avisos. O relatório semanal e o resumo diário de saúde, e as análises de finanças, ficam num banco local de cada serviço (heimdall_avisos.py), com Marcar como lido e Marcar todos. Nada disso vai mais para o app Notas, nem irá para o Notion.
 - O agente tem POST /avisos/gravar e, por segurança, desvia /notas/gravar com pasta Saúde ou Heimdall Finanças para os avisos. O fluxo "monitor de saúde" do n8n passa a gravar nos avisos (rode heimdall flows para instalar a nova versão). O botão Salvar no Notas do Finance foi removido: a análise gerada já vira aviso.
