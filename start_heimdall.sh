@@ -665,10 +665,31 @@ fi
 if [ "$WANT_WEBUI" = "1" ]; then
     echo "[6/7] Subindo o Open WebUI..."
     docker rm -f open-webui > /dev/null 2>&1
+    # Login pelo Cloudflare Access (HEIMDALL_WEBUI_ACCESS=1): o Open WebUI confia no e-mail que o Access manda no cabeçalho e entra sem senha.
+    # Só liga se o endereço público (HEIMDALL_WEBUI_HOST, padrão chat.heimdall-ai.tech) estiver mesmo atrás do Access, porque qualquer um
+    # que alcance o serviço sem passar pelo Access poderia inventar o cabeçalho. Nesse modo a porta fica só em 127.0.0.1 (sem Tailscale/rede local).
+    WEBUI_BIND=""
+    WEBUI_EXTRA=()
+    if [ "$HEIMDALL_WEBUI_ACCESS" = "1" ]; then
+        WEBUI_HOST_PUB="${HEIMDALL_WEBUI_HOST:-chat.heimdall-ai.tech}"
+        "$VENV_PYTHON" verificar_access.py "https://$WEBUI_HOST_PUB" > /tmp/heimdall_access_webui.txt 2>&1
+        ACC_RC=$?
+        if [ "$ACC_RC" = "1" ]; then
+            echo "     AVISO: $(cat /tmp/heimdall_access_webui.txt)"
+            echo "     Login por cabeçalho NÃO ligado. Ponha o Cloudflare Access na frente de $WEBUI_HOST_PUB e suba de novo."
+        else
+            [ "$ACC_RC" = "2" ] && echo "     $(cat /tmp/heimdall_access_webui.txt) Seguindo: sem acesso de fora, o cabeçalho não pode ser falsificado."
+            WEBUI_BIND="127.0.0.1:"
+            WEBUI_EXTRA+=(-e "WEBUI_AUTH_TRUSTED_EMAIL_HEADER=${HEIMDALL_WEBUI_ACCESS_HEADER:-Cf-Access-Authenticated-User-Email}")
+            [ "$HEIMDALL_WEBUI_SEM_SENHA" = "1" ] && WEBUI_EXTRA+=(-e ENABLE_PASSWORD_AUTH=false)
+            echo "     Open WebUI com login pelo Cloudflare Access (porta só em 127.0.0.1)."
+        fi
+    fi
     docker run -d --name open-webui \
         --network heimdall \
         --add-host=host.docker.internal:host-gateway \
-        -p $WEBUI_PORT:8080 \
+        -p ${WEBUI_BIND}$WEBUI_PORT:8080 \
+        ${WEBUI_EXTRA[@]+"${WEBUI_EXTRA[@]}"} \
         -e OPENAI_API_BASE_URL="http://host.docker.internal:$LLM_PORT/v1" \
         -e OPENAI_API_KEY="$LITELLM_MASTER_KEY" \
         -e ENABLE_OLLAMA_API=false \
@@ -699,7 +720,11 @@ if [ "$WANT_WEBUI" = "1" ]; then
         done
         echo "     Aparência: arquivos de branding/ aplicados (atualize o navegador com Ctrl/Cmd+Shift+R)."
     fi
-    echo "[6/7] Open WebUI em http://localhost:$WEBUI_PORT" "${TS_IP:+(Tailscale: http://$TS_IP:$WEBUI_PORT)}"
+    if [ -n "$WEBUI_BIND" ]; then
+        echo "[6/7] Open WebUI em http://localhost:$WEBUI_PORT (e pelo endereço público, atrás do Access)"
+    else
+        echo "[6/7] Open WebUI em http://localhost:$WEBUI_PORT" "${TS_IP:+(Tailscale: http://$TS_IP:$WEBUI_PORT)}"
+    fi
     echo "     A primeira conta criada vira administradora: crie a sua logo ao abrir."
 else
     docker stop open-webui > /dev/null 2>&1

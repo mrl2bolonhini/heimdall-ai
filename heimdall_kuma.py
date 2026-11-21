@@ -9,6 +9,7 @@ O monitor de um serviço é achado pelo nome: o primeiro monitor cujo nome cont�
 """
 import json
 import os
+import time
 import unicodedata
 import urllib.request
 
@@ -57,20 +58,29 @@ def achar(mons: list, *nomes: str):
 
 
 def pausar_ou_retomar(monitor_id: int, pausar: bool) -> str:
-    """Devolve "" se deu certo ou o motivo de não ter dado."""
+    """Devolve "" se deu certo ou o motivo de não ter dado. Com HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA entra com elas; sem elas, só
+    funciona se o login do Kuma estiver desligado (Settings, Security, Disable Auth): nesse caso o Kuma avisa "autoLogin" ao conectar."""
     usuario, senha = os.environ.get("HEIMDALL_KUMA_USUARIO", ""), os.environ.get("HEIMDALL_KUMA_SENHA", "")
-    if not usuario or not senha:
-        return "sem HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env"
     try:
         import socketio  # python-socketio
     except ImportError:
         return "pacote python-socketio não instalado"
     cli = socketio.Client(reconnection=False)
+    entrou = []
+    cli.on("autoLogin", lambda *a: entrou.append(True))
     try:
         cli.connect(URL, wait_timeout=6)
-        r = cli.call("login", {"username": usuario, "password": senha, "token": ""}, timeout=8)
-        if not (isinstance(r, dict) and r.get("ok")):
-            return "o Kuma recusou o usuário ou a senha"
+        if usuario and senha:
+            r = cli.call("login", {"username": usuario, "password": senha, "token": ""}, timeout=8)
+            if not (isinstance(r, dict) and r.get("ok")):
+                return "o Kuma recusou o usuário ou a senha"
+        else:
+            for _ in range(30):  # até 3 s esperando o Kuma dizer que entrou sozinho
+                if entrou:
+                    break
+                time.sleep(0.1)
+            if not entrou:
+                return "sem HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env e o Kuma ainda exige login (desligue em Settings, Security, Disable Auth)"
         r = cli.call("pauseMonitor" if pausar else "resumeMonitor", monitor_id, timeout=8)
         return "" if isinstance(r, dict) and r.get("ok") else "o Kuma não aceitou o pedido"
     except Exception as ex:  # noqa: BLE001 - qualquer falha de rede vira aviso

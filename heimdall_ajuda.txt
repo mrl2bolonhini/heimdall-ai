@@ -87,11 +87,13 @@ Sem opção abre o chat no navegador (porta 3000).
 Opções:
   -d, --diagnose       mostra o que o servidor de dados e o Open WebUI registraram nas últimas chamadas de ferramenta
   -p, --password       troca a senha de um usuário do Open WebUI sem perder conversas (aceita --stdin)
+  -c, --check          confere se o endereço público do chat (HEIMDALL_WEBUI_HOST) está atrás do Cloudflare Access; é o que o login sem senha exige
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall chat
   heimdall chat --diagnose
   heimdall chat --password
+  heimdall chat --check
 
 @ notes | Heimdall Notas, o site das notas de estudo
 Sem opção abre o site de notas e áudios (porta 8011). As opções são manutenção do Second Brain e das pastas do app Notas.

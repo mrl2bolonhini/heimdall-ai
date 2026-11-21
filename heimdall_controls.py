@@ -386,7 +386,7 @@ def pg_servicos(q: dict, sess: dict) -> tuple:
     elif os.environ.get("HEIMDALL_KUMA_USUARIO"):
         aviso_kuma = '<p class="nota">Kuma consultado. Ao desligar ou ligar, o monitor do serviço no Kuma é pausado ou retomado.</p>'
     else:
-        aviso_kuma = '<p class="nota">Kuma consultado só para leitura. Para pausar e retomar monitores por aqui, ponha HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env.</p>'
+        aviso_kuma = '<p class="nota">Kuma consultado só para leitura. Para pausar e retomar monitores por aqui, ponha HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env ou desligue o login do Kuma (Settings, Security, Disable Auth); com o login desligado não precisa de senha.</p>'
     corpo = ("<p>Cada serviço é uma chave: Espaço ou Enter liga ou desliga na hora. O que você desliga continua desligado depois de atualizar e reiniciar.</p>"
              + aviso_kuma + '<p id="resultado-servicos" role="status"></p>'
              + f'<ul class="chaves" id="servicos" data-csrf="{e(sess["csrf"])}">' + "".join(itens) + "</ul>")

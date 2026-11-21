@@ -55,6 +55,12 @@ _heimdall_web() {  # $1 nome, $2 chave (CLOUD, NOTAS, NEWS, SAUDE_PAINEL, JOGOS,
   _heimdall_open "$nome" "https://$host$caminho"
 }
 
+_heimdall_envval() {  # valor do .env ($1), ou o padrão ($2)
+  local v
+  [ -f "$HEIMDALL_DIR/.env" ] && v="$(grep -E "^$1=" "$HEIMDALL_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
+  echo "${v:-$2}"
+}
+
 _heimdall_port() {  # porta de cada serviço (a do .env, se houver)
   local v
   [ -f "$HEIMDALL_DIR/.env" ] && v="$(grep -E "^$1=" "$HEIMDALL_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
@@ -74,7 +80,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     logs) printf '%s\n' "-l=--list" "-c=--clean" "-s=--service" ;;
     containers) printf '%s\n' "-a=--all" ;;
     cloud) printf '%s\n' "-L=--local" ;;
-    chat) printf '%s\n' "-d=--diagnose" "-p=--password" ;;
+    chat) printf '%s\n' "-d=--diagnose" "-p=--password" "-c=--check" ;;
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  "-L=--local" ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" "-L=--local" ;;
@@ -190,8 +196,9 @@ heimdall() {
       case "$1" in
         "") _heimdall_open "Open WebUI (chat)" "http://localhost:3000" ;;
         --diagnose) _heimdall_sh diagnostico_chat.sh ;;
+        --check) _heimdall_py verificar_access.py "https://$(_heimdall_envval HEIMDALL_WEBUI_HOST chat.heimdall-ai.tech)" ;;
         --password) shift; _heimdall_sh trocar_senha_webui.sh "$@" ;;
-        *) echo "Use: heimdall chat [--diagnose] [--password]"; return 1 ;;
+        *) echo "Use: heimdall chat [--diagnose] [--password] [--check]"; return 1 ;;
       esac ;;
     notes)
       case "$1" in
@@ -454,7 +461,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     case ${words[2]} in
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
       logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent cloud notes news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
-      chat) compadd -- --diagnose --password ;;
+      chat) compadd -- --diagnose --password --check ;;
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
       notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
       health)

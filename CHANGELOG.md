@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Open WebUI e Kuma sem senha, pelo Cloudflare Access
+- Open WebUI: com HEIMDALL_WEBUI_ACCESS=1 no .env ele confia no e-mail que o Access manda no cabeçalho e entra sem senha (HEIMDALL_WEBUI_SEM_SENHA=1 tira também o formulário). A porta 3000 passa a escutar só em 127.0.0.1, para ninguém falsificar o cabeçalho. O start_heimdall.sh só liga o modo depois de conferir que o endereço público (HEIMDALL_WEBUI_HOST) está atrás do Access; senão avisa e mantém o login por senha.
+- Novo: heimdall chat --check (verificar_access.py) confere, sem entrar, se um endereço está atrás do Access.
+- Kuma: com o login desligado (Settings, Security, Disable Auth), pausar e retomar monitores pelo Controls não precisa mais de HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA. Passo a passo em LEIAME_login_sem_senha.txt.
+
 ## 2026-11-20 - Controls: Visão geral útil, aba Ajustes
 - A aba Configurações passou a se chamar Ajustes (endereço /ajustes; heimdall controls --open settings). Option+Shift+4 continua abrindo-a.
 - A Visão geral, que é a primeira aba e a que abre ao entrar, ganhou texto novo: quantos serviços estão no ar, quais estão fora do ar sem você ter desligado, quais foram desligados de propósito e para que serve cada aba.
