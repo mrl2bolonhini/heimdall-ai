@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Controls: Visão geral útil, aba Ajustes
+- A aba Configurações passou a se chamar Ajustes (endereço /ajustes; heimdall controls --open settings). Option+Shift+4 continua abrindo-a.
+- A Visão geral, que é a primeira aba e a que abre ao entrar, ganhou texto novo: quantos serviços estão no ar, quais estão fora do ar sem você ter desligado, quais foram desligados de propósito e para que serve cada aba.
+
 ## 2026-11-20 - Valores padrão gravados no .env e endereços do código vindos do .env
 - Novo comando: heimdall env --defaults grava no .env, de uma vez, os valores padrão que o código usa e o .env ainda não tem (nunca segredos; não muda o que já existe; cópia em .env.bak). Rode uma vez; reinicie depois. O botão "Gravar valores padrão" do Controls foi retirado.
 - A vigia de e-mails (heimdall_email_oficial.py), o Finance e a página do Cloud não têm mais endereços fixos: usam HEIMDALL_AGENTE_URL, HEIMDALL_LITELLM_URL, HEIMDALL_CLOUD_ENDPOINT e a nova HEIMDALL_N8N_URL (padrão http://localhost:5678). Os scripts consultar_triagem.sh, instalar_automacoes_avancadas.sh e instalar_monitor_privacidade.sh também leem HEIMDALL_AGENTE_URL.

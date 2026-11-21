@@ -274,9 +274,9 @@ heimdall() {
     controls)
       case "$1" in
         ""|--open)
-          case "$2" in terminal) pg=/terminal ;; services) pg=/servicos ;; maintenance) pg=/manutencao ;; "") pg="" ;; *) pg="/$2" ;; esac
+          case "$2" in terminal) pg=/terminal ;; services) pg=/servicos ;; maintenance) pg=/manutencao ;; settings) pg=/ajustes ;; "") pg="" ;; *) pg="/$2" ;; esac
           _heimdall_web "Heimdall Controls" CONTROLS 8017 controls "$pg" ;;
-        *) echo "Use: heimdall controls [--open [terminal|services|maintenance]] [--local]"; return 1 ;;
+        *) echo "Use: heimdall controls [--open [terminal|services|settings|maintenance]] [--local]"; return 1 ;;
       esac ;;
     finance)
       case "$1" in

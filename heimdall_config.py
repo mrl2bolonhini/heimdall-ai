@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Configurações do Heimdall: ler, mudar e tirar valores do arquivo .env, e listar as opções que o código aceita mas o .env ainda não define.
 
-Quem usa: a aba Configurações do Controls. O formato é o mesmo do guardar_no_env.sh: NOME='valor' (o start_heimdall.sh lê o arquivo com source),
+Quem usa: a aba Ajustes do Controls. O formato é o mesmo do guardar_no_env.sh: NOME='valor' (o start_heimdall.sh lê o arquivo com source),
 permissão 600 e uma cópia de segurança em .env.bak antes de cada mudança. Comentários e linhas que não são variável ficam como estão.
 Mudar um valor aqui só vale para os serviços que lerem o .env depois: reinicie o serviço (aba Serviços) ou o Heimdall (aba Manutenção).
 """

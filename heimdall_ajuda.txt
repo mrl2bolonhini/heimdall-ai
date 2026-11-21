@@ -197,6 +197,7 @@ Opções:
 Exemplos:
   heimdall controls
   heimdall controls --open terminal
+  heimdall controls --open settings
   heimdall controls -L
 
 @ games | Heimdall Jogos, jogos leves para leitor de tela

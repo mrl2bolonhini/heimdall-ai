@@ -221,7 +221,7 @@ import heimdall_config as hcf  # noqa: E402
 import tempfile as _tf  # noqa: E402
 hcf.ARQUIVO = Path(_tf.mkdtemp()) / ".env"
 hcf.ARQUIVO.write_text("HEIMDALL_TESTE='um'\n", encoding="utf-8")
-s, corpo, _ = req("GET", "/configuracoes", cookie=token)
+s, corpo, _ = req("GET", "/ajustes", cookie=token)
 confere("configurações: lista o que está no .env, com o valor inteiro, e as opções do código", s == 200 and "HEIMDALL_TESTE" in corpo and 'value="um"' in corpo
         and "<details" in corpo and "No .env" in corpo and "Opções ainda sem valor" in corpo and "Controls: " in corpo and corpo.count("<h1") == 1 and 'type="search"' in corpo, corpo[:200])
 import re as _re
@@ -232,13 +232,13 @@ confere("configurações: cada campo tem label", corpo.count("<label") >= corpo.
 confere("configurações: segredos vêm ocultos com botão Mostrar; há rodapé com Voltar para o topo e Recarregar desabilitado",
         'type="password"' in corpo and 'data-mostrar="cfg-' in corpo and 'href="#topo">Voltar para o topo' in corpo and 'id="topo"' in corpo and "Recarregar Heimdall</button>" in corpo and 'id="recarregar"' in corpo and " disabled>" in corpo)
 confere("configurações: opções com valor padrão vêm preenchidas e não há mais o botão de gravar padrões", 'value="8010"' in corpo and "Gravar valores padrão" not in corpo)
-s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "dois", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "dois", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("salvar grava no .env e diz que vale depois de reiniciar", s == 200 and json.loads(corpo)["ok"] and "HEIMDALL_TESTE='dois'" in hcf.ARQUIVO.read_text() and "reiniciado" in corpo, corpo)
-s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "a'b", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "a'b", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("valor com aspa simples é recusado com o motivo", not json.loads(corpo)["ok"] and "aspa" in corpo and "a'b" not in hcf.ARQUIVO.read_text())
-s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": "errado", "nome": "HEIMDALL_TESTE", "valor": "x"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": "errado", "nome": "HEIMDALL_TESTE", "valor": "x"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("salvar sem o token de segurança é recusado", s == 403 and "dois" in hcf.ARQUIVO.read_text())
-s, corpo, _ = req("POST", "/configuracoes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "acao": "remover"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "acao": "remover"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("remover tira do .env", json.loads(corpo)["ok"] and "HEIMDALL_TESTE" not in hcf.ARQUIVO.read_text())
 # Origin "null" (formulário comum com no-referrer), origem de fora e Sec-Fetch-Site
 s, _, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": CSRF}, cookie=token, extra={"Origin": "null"})
@@ -250,6 +250,8 @@ confere("Origin null vindo de outro site (Sec-Fetch-Site) é recusado", s == 403
 s, corpo, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": "errado"}, cookie=token, extra={"Origin": "null"})
 confere("Origin null com token errado continua recusado", s == 403)
 s, corpo, _ = req("GET", "/", cookie=token)
+confere("a página inicial é a Visão geral, primeira aba, com a situação dos serviços e a aba Ajustes", s == 200 and corpo.count('aria-selected="true"') == 1 and _re.search(r'aria-selected="true"[^>]*>Visão geral|>Visão geral</a>', corpo)
+        and "serviços no ar" in corpo and 'href="/ajustes"' in corpo and "<h1>Visão geral</h1>" in corpo, corpo[:100])
 confere("menu Conta mostra o nome de quem entrou e tem o Sair", "<summary>Conta: Dono</summary>" in corpo and 'action="/sair"' in corpo and "senha e código" in corpo)
 tk2, _ = hc.nova_sessao("*")
 csrf2 = hc.sessao_valida(tk2, hcx.SERVICO)["csrf"]

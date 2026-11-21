@@ -269,7 +269,7 @@ with sync_playwright() as pw:
     pg.keyboard.press("Space")
     confere("Espaço na chave liga na hora e avisa", espera(lambda: chave.get_attribute("aria-checked") == "true" and "Agora está ligado" in pg.inner_text("#resultado-servicos")))
     # --- configurações: filtro pelo nome e salvar sem recarregar
-    pg.goto(f"http://localhost:{PORTA}/configuracoes")
+    pg.goto(f"http://localhost:{PORTA}/ajustes")
     pg.evaluate("window.marca = 'mesma'")
     total = pg.locator("#configuracoes li[data-nome]").count()
     confere("grupos começam fechados", pg.locator("details.grupo[open]").count() == 0 and pg.locator("details.grupo").count() >= 5)
@@ -289,7 +289,7 @@ with sync_playwright() as pw:
     confere("filtro abre o grupo certo, mostra só o que combina e avisa quantas", 0 < visiveis < total and pg.locator("details.grupo[open]").count() >= 1
             and espera(lambda: "encontrada" in pg.inner_text("#resultado-config")), f"{visiveis}/{total}")
     pg.fill("#filtro-cfg", "")
-    pg.evaluate("window.fetch0 = window.fetch; window.fetch = function(u, o){ if (String(u).indexOf('/configuracoes/salvar') >= 0) { window.enviado = String(o.body); return Promise.resolve(new Response(JSON.stringify({ok: true, mensagem: 'X salva. Vale quando o serviço que usa for reiniciado.'}), {status: 200})); } return window.fetch0(u, o); }; 0")
+    pg.evaluate("window.fetch0 = window.fetch; window.fetch = function(u, o){ if (String(u).indexOf('/ajustes/salvar') >= 0) { window.enviado = String(o.body); return Promise.resolve(new Response(JSON.stringify({ok: true, mensagem: 'X salva. Vale quando o serviço que usa for reiniciado.'}), {status: 200})); } return window.fetch0(u, o); }; 0")
     pg.click("summary:has-text('Nova variável')")
     pg.fill("#nova-nome", "HEIMDALL_TESTE_NAV")
     pg.fill("#nova-valor", "abc")

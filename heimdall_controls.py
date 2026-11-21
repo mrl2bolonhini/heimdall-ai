@@ -170,7 +170,7 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/configuracoes", "Configurações"), ("/manutencao", "Manutenção")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/ajustes", "Ajustes"), ("/manutencao", "Manutenção")]
 
 _shell = None
 
@@ -279,18 +279,31 @@ def aviso_do_bloco(sh, b) -> str:
 
 
 def pg_inicio(q: dict, sess: dict) -> tuple:
+    """Primeira aba: situação dos serviços numa frase, o que pede atenção e para que serve cada aba."""
     sh = obter_shell() if _shell is not None else None
-    corpo = ("<p>Aqui você administra o Heimdall pelo navegador. Tudo roda no seu Mac, com as suas permissões.</p>"
-             "<ol><li><a href=\"/terminal\">Terminal</a>: um shell completo. A pasta e as variáveis continuam de um comando para o outro, "
-             "e há botões para copiar a última saída ou as últimas saídas.</li>"
-             "<li><a href=\"/servicos\">Serviços</a>: todos os serviços do Heimdall, com Ligado e Desligado em cada um.</li>"
-             "<li><a href=\"/manutencao\">Manutenção</a>: atualizar, reiniciar, diagnóstico e logs.</li></ol>"
-             "<p>As seções são abas. Setas esquerda e direita movem entre elas e Option+Shift+1 a 5 abre cada uma.</p>")
+    cat = servicos.catalogo()
+    fora = [sv["nome"] for sv in cat if not servicos.no_ar(sv)]
+    off = servicos.desligados()
+    de_proposito = [sv["nome"] for sv in cat if sv["id"] in off]
+    inesperados = [n for n in fora if n not in de_proposito]
+    corpo = f"<h2>Situação agora</h2><p>{len(cat) - len(fora)} de {len(cat)} serviços no ar.</p>"
+    if inesperados:
+        corpo += f'<p role="status">Fora do ar sem você ter desligado: {e(", ".join(inesperados))}. Abra a aba <a href="/servicos">Serviços</a> para ligar ou, na Manutenção, rode o Diagnóstico.</p>'
+    elif fora:
+        corpo += f"<p>Desligados de propósito: {e(', '.join(de_proposito))}.</p>"
+    else:
+        corpo += "<p>Nenhum serviço fora do ar.</p>"
     if sh and sh.vivo():
         corpo += f"<p>O terminal está aberto, na pasta {e(sh.pasta)}.</p>"
-    corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando fica anotado em logs/controls_audit.log, sem a saída. '
-              'Programas de tela cheia, como vim e top, não funcionam aqui: use cat, sed e ps.</p>')
-    return "Heimdall Controls", corpo
+    corpo += ("<h2>Para que serve cada aba</h2><ol>"
+              '<li><a href="/terminal">Terminal</a>: um shell completo no Mac. A pasta e as variáveis continuam de um comando para o outro, e há atalhos para copiar as últimas saídas.</li>'
+              '<li><a href="/servicos">Serviços</a>: uma chave por serviço, para ligar e desligar. O que você desliga continua desligado depois de atualizar e reiniciar.</li>'
+              '<li><a href="/ajustes">Ajustes</a>: todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar Heimdall, no fim da página, faz isso.</li>'
+              '<li><a href="/manutencao">Manutenção</a>: Start, Stop, Update, Restart, status, diagnóstico e logs.</li></ol>'
+              "<p>Setas esquerda e direita movem entre as abas, e Option+Shift+1 a 5 abre cada uma de qualquer ponto da página.</p>")
+    corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando e cada mudança ficam anotados em logs/controls_audit.log, sem a saída nem os valores. '
+              'Programas de tela cheia, como vim e top, não funcionam no Terminal: use cat, sed e ps.</p>')
+    return "Visão geral", corpo
 
 
 def pg_terminal(q: dict, sess: dict) -> tuple:
@@ -456,7 +469,7 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
              '<label for="nova-valor">Valor</label><input type="text" id="nova-valor" name="valor" autocomplete="off" spellcheck="false">'
              '<button type="submit" name="acao" value="salvar">Adicionar</button></form></details>'
              + "".join(blocos) + "</div>")
-    return "Configurações", corpo
+    return "Ajustes", corpo
 
 
 def pg_manutencao(q: dict, sess: dict) -> tuple:
@@ -477,7 +490,7 @@ def pg_manutencao(q: dict, sess: dict) -> tuple:
     return "Manutenção", corpo
 
 
-ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/configuracoes": pg_configuracoes, "/manutencao": pg_manutencao}
+ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
 
 SCRIPT = r"""
 (function(){
@@ -762,7 +775,7 @@ document.addEventListener('submit', function(ev){ if (ev.target.id === 'form-rec
 """
 
 
-# Aba Configurações: salvar e remover sem recarregar, e filtro pelo nome. Delegado no documento (vale depois da troca de aba).
+# Aba Ajustes: salvar e remover sem recarregar, e filtro pelo nome. Delegado no documento (vale depois da troca de aba).
 SCRIPT_CONFIG = r"""
 (function(){
 function dizer(t){ var r = document.getElementById('resultado-config'); if (r) { r.textContent = ''; setTimeout(function(){ r.textContent = t; }, 50); } }
@@ -774,7 +787,7 @@ document.addEventListener('submit', function(ev){
   if (!nome) { dizer('Escreva o nome da variável.'); f.elements['nome'].focus(); return; }
   var corpo = new URLSearchParams({csrf: raiz.getAttribute('data-csrf'), nome: nome, valor: f.elements['valor'].value, acao: acao});
   dizer((acao === 'remover' ? 'Removendo ' : 'Salvando ') + nome + '.');
-  fetch('/configuracoes/salvar', {method: 'POST', credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1', 'Content-Type': 'application/x-www-form-urlencoded'}, body: corpo})
+  fetch('/ajustes/salvar', {method: 'POST', credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1', 'Content-Type': 'application/x-www-form-urlencoded'}, body: corpo})
     .then(function(r){ return r.json(); })
     .then(function(d){
       dizer(d.erro ? d.erro : (d.ok ? d.mensagem : 'Não gravei: ' + d.mensagem));
@@ -1046,10 +1059,10 @@ class Painel(BaseHTTPRequestHandler):
             elif rota == "/terminal/reiniciar":
                 sh.reiniciar()
                 auditar(ip, "reiniciar o shell")
-            elif rota == "/configuracoes/salvar":
+            elif rota == "/ajustes/salvar":
                 nome, acao = campos.get("nome", ""), campos.get("acao", "salvar")
                 motivo = config.remover(nome) if acao == "remover" else config.salvar(nome, campos.get("valor", ""))
-                auditar(ip, "configurações: " + ("remover" if acao == "remover" else "salvar"), nome + ("" if not motivo else " (recusado)"))
+                auditar(ip, "ajustes: " + ("remover" if acao == "remover" else "salvar"), nome + ("" if not motivo else " (recusado)"))
                 self._json(200, {"ok": not motivo, "mensagem": (motivo or (f"{nome} removida do .env." if acao == "remover" else f"{nome} salva.")
                            + " Vale quando o serviço que usa for reiniciado.")})
                 return
