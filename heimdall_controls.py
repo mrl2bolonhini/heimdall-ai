@@ -295,7 +295,9 @@ def _bloco_versoes() -> str:
     if not itens:
         return ""
     linhas = "".join(f'<tr><th scope="row">{e(i["nome"])}</th><td>{e(i["versao"])}</td><td>{e(i["detalhe"])}</td></tr>' for i in itens)
-    return ('<h2>Versões instaladas</h2><table><caption>Versões do Mac, do Docker e dos serviços</caption><thead><tr><th scope="col">Item</th><th scope="col">Versão</th>'
+    av = [a for a in versoes.avisos(itens) if "não informou" not in a]
+    atencao = ('<p role="status">Atenção: ' + e(" ".join(av)) + "</p>") if av else ""
+    return ('<h2>Versões instaladas</h2>' + atencao + '<table><caption>Versões do Mac, do Docker e dos serviços</caption><thead><tr><th scope="col">Item</th><th scope="col">Versão</th>'
             f'<th scope="col">Detalhe</th></tr></thead><tbody>{linhas}</tbody></table>'
             '<p>A lista é atualizada a cada 10 minutos. Para saber quais têm imagem mais nova no registro, rode <code>heimdall doctor --versions</code> no Terminal.</p>')
 

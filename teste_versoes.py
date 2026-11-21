@@ -13,13 +13,13 @@ def confere(nome, ok, extra=""):
     falhas += 0 if ok else 1
 
 
-def falso(remoto_n8n="sha256:aaa", sem_docker=False):
+def falso(remoto_n8n="sha256:aaa", sem_docker=False, ollama_diferente=False):
     def run(cmd, timeout=6):
         c = " ".join(cmd)
         if cmd[0] == "docker" and sem_docker:
             return None
         if c.startswith("sw_vers"): return "15.1"
-        if c.startswith("ollama"): return "ollama version is 0.5.1"
+        if c.startswith("ollama"): return "ollama version is 0.5.1\nWarning: client version is 0.5.3" if ollama_diferente else "ollama version is 0.5.1"
         if c.startswith("git"): return "abc1234 2026-11-21" if "log" in c else "develop"
         if c.startswith("docker version"): return "27.3.1"
         if c.startswith("docker ps"): return "open-webui\nn8n\nsearxng\noutro"
@@ -30,6 +30,7 @@ def falso(remoto_n8n="sha256:aaa", sem_docker=False):
         if c.startswith("docker exec open-webui"): return '{"name":"open-webui","version":"0.6.9"}'
         if c.startswith("docker exec n8n"): return "1.70.2"
         if c.startswith("docker image inspect -f {{.Created}}"): return "2026-11-10T12:00:00Z"
+        if c.startswith("docker image inspect -f {{.Id}}"): return {"ghcr.io/open-webui/open-webui:main": "sha256:i1", "docker.n8n.io/n8nio/n8n:latest": "sha256:novoid", "searxng/searxng:latest": "sha256:i3"}[cmd[-1]]
         if c.startswith("docker image inspect -f {{json .RepoDigests}}"):
             return {"sha256:i1": '["ghcr.io/x@sha256:novo"]', "sha256:i2": '["docker.n8n.io/y@sha256:aaa"]', "sha256:i3": "[]"}[cmd[-1]]
         if c.startswith("docker buildx imagetools inspect"):
@@ -52,5 +53,12 @@ confere("sem rede não compara", all(i["estado"] == "" for i in sem.values()))
 confere("sem Docker não quebra e ainda mostra o resto", {i["nome"] for i in v.coletar(run=falso(sem_docker=True))} >= {"macOS", "Ollama", "Heimdall-ai (código)"})
 linhas = "\n".join(v.texto(list(it.values())))
 confere("texto: avisa o que tem imagem mais nova", "heimdall restart --update" in linhas and "Open WebUI (chat): 0.6.9" in linhas, linhas)
+av = v.avisos(list(it.values()))
+confere("aviso: imagem mais nova no registro (Open WebUI)", any("Open WebUI" in a and "mais nova no registro" in a for a in av), str(av))
+confere("aviso: contêiner rodando em imagem antiga (n8n)", any("n8n" in a and "imagem antiga" in a for a in av), str(av))
+confere("sem avisos quando tudo bate", v.avisos([{"nome": "X", "versao": "1.0", "detalhe": "", "estado": "atualizada", "aviso": ""}]) == [])
+confere("aviso: versão não informada", any("não informou a versão" in a for a in v.avisos([{"nome": "Y", "versao": "versão não informada pelo serviço", "detalhe": "", "estado": ""}])))
+ol = [i for i in v.coletar(run=falso(ollama_diferente=True)) if i["nome"] == "Ollama"][0]
+confere("aviso: Ollama com cliente e servidor diferentes", "diferentes" in ol["aviso"] and "0.5.3" in ol["aviso"], ol["aviso"])
 print("\nFALHAS: %d" % falhas if falhas else "\nTUDO OK")
 sys.exit(1 if falhas else 0)

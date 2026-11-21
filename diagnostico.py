@@ -305,12 +305,21 @@ def main(argv=None) -> int:
         blocos.append(ollama(achados))
     if tudo or a.servicos:
         blocos.append(servicos())
+    avisos_versoes = []
     if a.versoes:  # só quando pedida: compara com o registro e usa a rede
-        blocos.append(heimdall_versoes.texto(heimdall_versoes.coletar(atualizacoes=True)))
+        itens = heimdall_versoes.coletar(atualizacoes=True)
+        blocos.append(heimdall_versoes.texto(itens))
+        avisos_versoes = heimdall_versoes.avisos(itens)
+    so_versoes = a.versoes and not any((a.memoria, a.cpu, a.disco, a.docker, a.ollama, a.servicos))
     for b in blocos:
         print("\n".join(b))
         print()
+    if so_versoes:  # sem "Nada fora do normal": só fala se houver o que atualizar ou corrigir
+        for n, x in enumerate(avisos_versoes, 1):
+            print(f"Atenção {n}: {x}")
+        return 0
     print("Conclusão")
+    achados = achados + avisos_versoes
     if achados:
         for i, x in enumerate(achados, 1):
             print(f"  {i}. {x}")

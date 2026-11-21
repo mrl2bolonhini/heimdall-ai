@@ -5,6 +5,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-21 - Versões dos serviços: heimdall doctor --versions e Visão geral
 - heimdall doctor --versions (-v) lista as versões do macOS, Python, Docker, Ollama, LiteLLM, do código do Heimdall e de cada contêiner que está rodando (Open WebUI, n8n, Kuma, Qdrant, SearXNG, Dozzle e emuladores), e compara cada imagem com a mais nova no registro: avisa quando há atualização (heimdall restart --update). Se não der para comparar (sem rede, sem buildx), só mostra a versão.
 - A Visão geral do Controls ganhou a tabela "Versões instaladas" (guardada por 10 minutos, sem rede, para a página abrir rápido).
+- heimdall doctor --versions deixou de imprimir a "Conclusão: nada fora do normal". Só fala se houver o que atender: imagem mais nova no registro, contêiner rodando numa imagem antiga (já baixada, falta reiniciar), versão que o serviço não informou, Ollama com cliente e servidor em versões diferentes. Não há tabela de incompatibilidade entre programas; só entra o que dá para conferir. A Visão geral mostra os avisos que não dependem da rede.
 - Novos: heimdall_versoes.py e teste_versoes.py.
 
 ## 2026-11-20 - HEIMDALL_WEBUI_SEM_SENHA passa a ser ignorada e sai dos Ajustes

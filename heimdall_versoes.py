@@ -80,10 +80,13 @@ def _conteiner(nome: str, atualizacoes: bool, run=run) -> dict:
             break
     if not versao and rotulo_ver and rotulo_ver not in ("<no value>", "main", "latest"):
         versao = rotulo_ver
+    atual = run(["docker", "image", "inspect", "-f", "{{.Id}}", imagem])
+    aviso = (f"{rotulo} está rodando numa imagem antiga: já existe uma mais nova baixada no Mac. Reinicie com heimdall restart para usá-la."
+             if atual and atual != imagem_id else "")
     criada = run(["docker", "image", "inspect", "-f", "{{.Created}}", imagem_id]) or ""
     detalhe = f"imagem {imagem}" + (f", criada em {criada[:10]}" if criada else "")
     return {"nome": rotulo, "versao": versao or "versão não informada pelo serviço", "detalhe": detalhe,
-            "estado": _estado(imagem, imagem_id, run) if atualizacoes else ""}
+            "estado": _estado(imagem, imagem_id, run) if atualizacoes else "", "aviso": aviso}
 
 
 def _do_mac(run=run) -> list:
@@ -97,7 +100,10 @@ def _do_mac(run=run) -> list:
         itens.append({"nome": "Docker (motor)", "versao": d, "detalhe": "", "estado": ""})
     o = run(["ollama", "--version"])
     if o and _primeira_versao(o):
-        itens.append({"nome": "Ollama", "versao": _primeira_versao(o), "detalhe": "", "estado": ""})
+        todas = set(re.findall(r"\d+\.\d+\.\d+", o))
+        aviso = (f"O Ollama (cliente e servidor) está com versões diferentes ({', '.join(sorted(todas))}). Atualize o aplicativo e reinicie o Ollama."
+                 if len(todas) > 1 else "")
+        itens.append({"nome": "Ollama", "versao": _primeira_versao(o), "detalhe": "", "estado": "", "aviso": aviso})
     try:
         from importlib.metadata import version
         itens.append({"nome": "LiteLLM (modelos)", "versao": version("litellm"), "detalhe": "", "estado": ""})
@@ -120,6 +126,20 @@ def coletar(atualizacoes: bool = False, run=run) -> list:
     return itens + [a for a in achados if a]
 
 
+def avisos(itens: list) -> list:
+    """O que merece atenção: imagem mais nova no registro, contêiner em imagem antiga, versão que o serviço não informou, cliente e servidor diferentes.
+    Não há tabela de incompatibilidades entre programas: só entra aqui o que dá para conferir de verdade."""
+    out = []
+    for i in itens:
+        if i.get("estado") == "desatualizada":
+            out.append(f"{i['nome']} tem imagem mais nova no registro. Atualize com heimdall restart --update.")
+        if i.get("aviso"):
+            out.append(i["aviso"])
+        if i["versao"].startswith("versão não informada"):
+            out.append(f"{i['nome']} não informou a versão, então não dá para conferir se está atual.")
+    return out
+
+
 def texto(itens: list) -> list:
     """Linhas para o terminal."""
     out = ["Versões instaladas"]
@@ -130,4 +150,7 @@ def texto(itens: list) -> list:
 
 
 if __name__ == "__main__":
-    print("\n".join(texto(coletar(atualizacoes="--sem-rede" not in sys.argv))))
+    it = coletar(atualizacoes="--sem-rede" not in sys.argv)
+    print("\n".join(texto(it)))
+    for n, a in enumerate(avisos(it), 1):
+        print(f"  Atenção {n}: {a}")
