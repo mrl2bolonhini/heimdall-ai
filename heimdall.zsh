@@ -100,6 +100,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     ingest) printf '%s\n' "-r=--reset" ;;
     env) printf '%s\n' "-s=--set" "-d=--defaults" ;;
     cloudflare) printf '%s\n' "-s=--set" "-t=--test" ;;
+    app) printf '%s\n' "-l=--login" "-r=--remove-login" ;;
     usage) printf '%s\n' "-d=--days" ;;
     ask) printf '%s\n' "-l=--local" "-c=--cloud" ;;
     mcp) printf '%s\n' "-v=--verify" ;;
@@ -358,6 +359,8 @@ heimdall() {
     notion) _heimdall_py heimdall_notion.py ;;
     cloudai) _heimdall_py heimdall_nuvem.py ;;
     mailbox) _heimdall_py heimdall_caixa.py "$@" ;;
+    app) _heimdall_tr "--login=--entrar
+--remove-login=--nao-entrar" "$@"; _heimdall_sh construir_app_mac.sh "${_HA[@]}" ;;
     ask) _heimdall_tr "--local=-
 --cloud=-" "$@"; _heimdall_py heimdall_ask.py "${_HA[@]}" ;;
     usage) _heimdall_tr "--days=--dias" "$@"; _heimdall_py heimdall_cfmonitor.py "${_HA[@]}" ;;
@@ -468,7 +471,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage notices notion cloudai mailbox ask usage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage notices notion cloudai mailbox app ask usage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -502,6 +505,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       env) compadd -- --set --defaults ;;
       cloudflare) compadd -- --set --test ;;
       mailbox) compadd -- status start add remove pull ;;
+      app) compadd -- --login --remove-login ;;
       usage) compadd -- --days ;;
       ask) compadd -- --local --cloud ;;
       mcp) compadd -- --verify ;;

@@ -339,6 +339,16 @@ Exemplos:
   heimdall mailbox add ana
   heimdall mailbox pull
 
+@ app | App do Heimdall na barra de menus do Mac
+Compila neste Mac o app de barra de menus do Heimdall e o instala em ~/Applications/Heimdall.app, com assinatura local gratuita (sem conta de desenvolvedor). O app fica em segundo plano, sem ícone no Dock, com o nome Heimdall na barra de menus: estado, ligar, reiniciar e parar os serviços; abrir Controls, Notas, News, Saúde, Jogos, Finance, Cloud e Conta; consumo da nuvem; buscar na caixa de correio (também sozinho, de 10 em 10 minutos); ligar ou desligar a nuvem e a caixa; atualizar o Heimdall. Menus nativos, que o VoiceOver lê. Precisa das ferramentas de linha de comando da Apple; se faltarem, o comando diz para rodar xcode-select --install. Rode de novo depois de um heimdall update que mude o app.
+Opções:
+  -l, --login          abre o app sozinho quando você entra no Mac
+  -r, --remove-login   deixa de abrir sozinho
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall app
+  heimdall app --login
+
 @ ask | Pergunta ao modelo pelo terminal
 Faz uma pergunta curta ao modelo e mostra a resposta, com uma linha no fim dizendo quem respondeu. Com a nuvem ligada (HEIMDALL_NUVEM=1) a pergunta vai ao gpt-oss-120b pelo gateway da Cloudflare; se a nuvem falhar, cai sozinha para o modelo local e avisa. A pergunta não fica guardada em histórico. Escreva a pergunta entre aspas.
 Opções:

@@ -36,7 +36,7 @@ for linha in (AQUI / "heimdall_ajuda.txt").read_text(encoding="utf-8").splitline
 nomes = [s["nome"] for s in secoes]
 codigo = (AQUI / "heimdall.zsh").read_text(encoding="utf-8")
 no_case = set(re.findall(r"^    ([a-z0-9]+)(?:\||\))", codigo.split("heimdall() {")[1].split("# Completar")[0], re.M))
-confere("há seção de ajuda para os 47 comandos", len(nomes) == 47, len(nomes))
+confere("há seção de ajuda para os 48 comandos", len(nomes) == 48, len(nomes))
 confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help"}, (set(nomes) - no_case, no_case - set(nomes)))
 
 # --- --help e -h em todos os comandos mostram só aquele comando

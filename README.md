@@ -107,6 +107,7 @@ python3 teste_migrar_avisos.py           # migração das notas antigas (sem red
 python3 teste_catalogo.py                # catalogação de notas e cliente do Notion (sem rede e sem modelo)
 python3 teste_cfmonitor.py               # monitor de consumo e custo da Cloudflare (sem rede)
 python3 teste_caixa_cliente.py          # cliente da caixa de correio da Cloudflare (sem rede)
+python3 teste_app_mac.py                  # confere o app de barra de menus do Mac sem compilar
 node cloudflare/teste_caixa.mjs           # Worker da caixa de correio (KV e R2 falsos)
 python3 teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
 python3 teste_notas.py                   # Heimdall Notes (sem rede)

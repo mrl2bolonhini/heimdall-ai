@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Confere o app de barra de menus do Mac sem compilar (aqui não há Swift): arquivos, plist, chaves balanceadas, regras de segurança e do projeto.
+
+    python3 teste_app_mac.py
+A compilação de verdade acontece no Mac: heimdall app.
+"""
+import plistlib
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+AQUI = Path(__file__).resolve().parent
+falhas = 0
+
+
+def confere(nome, ok, extra=""):
+    global falhas
+    print(("ok   " if ok else "FALHOU ") + nome + ("" if ok else f" ({extra})"))
+    if not ok:
+        falhas += 1
+
+
+swift = (AQUI / "app_mac" / "Heimdall.swift").read_text(encoding="utf-8")
+sh = (AQUI / "construir_app_mac.sh").read_text(encoding="utf-8")
+pl = plistlib.loads((AQUI / "app_mac" / "Info.plist").read_bytes())
+
+confere("Info.plist: app de barra de menus (sem Dock) e executável certo", pl.get("LSUIElement") is True and pl.get("CFBundleExecutable") == "Heimdall" and pl.get("CFBundlePackageType") == "APPL")
+sem_texto = re.sub(r'"(?:[^"\\]|\\.)*"', '""', re.sub(r"//[^\n]*", "", swift))
+confere("Swift: chaves e parênteses balanceados", sem_texto.count("{") == sem_texto.count("}") and sem_texto.count("(") == sem_texto.count(")"))
+confere("Swift: toda ação do menu tem método @objc", all(f"func {n}(" in swift for n in set(re.findall(r"#selector\((\w+)", swift))))
+confere("Swift: sem ícone no Dock e rodando em segundo plano", ".accessory" in swift and "statusItem" in swift)
+confere("Swift: rótulo de acessibilidade na barra de menus", "setAccessibilityLabel" in swift)
+confere("Swift: não tem segredo, token nem chave", not re.search(r"(hc_|sk-|Bearer|API_TOKEN|password|senha)", swift, re.I))
+confere("Swift: chama só o comando heimdall (nada de rm, sudo ou curl)", not re.search(r'"(rm|sudo|curl|sh)"', swift) and "sudo" not in swift)
+confere("Swift: cada comando usa subcomandos que existem", all(c in (AQUI / "heimdall.zsh").read_text(encoding="utf-8") for c in ("status)", "restart)", "mailbox)", "usage)", "update)", "urls)", "env)")))
+confere("script: sintaxe de shell válida", subprocess.run(["bash", "-n", str(AQUI / "construir_app_mac.sh")]).returncode == 0)
+confere("script: assinatura local (ad hoc), sem conta paga", "codesign --force --deep --sign -" in sh)
+confere("script: só roda no Mac e avisa se falta o compilador", 'uname' in sh and "xcode-select --install" in sh)
+confere("script: mexe só em ~/Applications e no próprio LaunchAgent", "rm -f \"$AGENTE\"" in sh and "rm -rf" not in sh and "sudo" not in sh)
+
+print("\nFALHAS: %d" % falhas if falhas else "\nTudo certo.")
+sys.exit(1 if falhas else 0)

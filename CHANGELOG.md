@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - App do Heimdall na barra de menus do Mac (primeira versão)
+- Novo comando heimdall app: compila neste Mac o app Heimdall (Swift, menus nativos que o VoiceOver lê) e o instala em ~/Applications/Heimdall.app, com assinatura local gratuita (sem conta de desenvolvedor). Fica em segundo plano, sem ícone no Dock, com o nome Heimdall na barra de menus.
+- Menu: estado, ligar, reiniciar e parar os serviços; abrir Controls, Notas, News, Saúde, Jogos, Finance, Cloud e Conta (os endereços vêm de heimdall urls); consumo da nuvem; buscar na caixa de correio (também sozinho, de 10 em 10 minutos); ligar ou desligar a nuvem e a caixa; atualizar o Heimdall com reinício. Atalhos: Command+E estado, Command+U consumo, Command+B caixa, Command+A atualizar, Command+Q sair.
+- Opção heimdall app --login abre o app sozinho ao entrar no Mac; --remove-login desfaz. Precisa das ferramentas de linha de comando da Apple (xcode-select --install). Teste sem compilar: python3 teste_app_mac.py; a compilação em si só roda no Mac.
+
 ## 2026-11-21 - Cliente da caixa de correio no Mac (heimdall mailbox)
 - Novo comando heimdall mailbox com os subcomandos status, start, add NOME, remove NOME e pull. O start cria o token de dono provando acesso com a chave da Cloudflare e o grava no .env; o add cria o token de uma pessoa e o copia para a área de transferência (não aparece na tela); o pull busca as entradas, grava uma cópia em banco/caixa_recebidos/ (permissão só do dono) e só depois apaga da caixa. Se algo falhar no meio, o item fica na caixa.
 - Interruptor HEIMDALL_CAIXA (heimdall env --set HEIMDALL_CAIXA 1 liga, 0 desliga). O pull importa para o banco de saúde os itens de saúde (formato Health Auto Export) do seu próprio celular, a pessoa "eu" (heimdall mailbox add eu; o nome muda em HEIMDALL_CAIXA_MEU_NOME). Itens de outras pessoas e as notas ficam só na cópia local até existir armazenamento por pessoa. O pull ainda é manual (falta agendá-lo). Teste: python3 teste_caixa_cliente.py.
