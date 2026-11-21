@@ -105,6 +105,7 @@ python3 teste_avisos.py                  # avisos de saúde e finanças (sem red
 python3 teste_abas_mais.py               # menu Mais das abas (navegador)
 python3 teste_migrar_avisos.py           # migração das notas antigas (sem rede)
 python3 teste_catalogo.py                # catalogação de notas e cliente do Notion (sem rede e sem modelo)
+python3 teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
 python3 teste_notas.py                   # Heimdall Notes (sem rede)
 python3 teste_news.py                    # Heimdall News (sem rede)
 python3 teste_trechos.py                      # trechos de livros do estudo (sem rede)

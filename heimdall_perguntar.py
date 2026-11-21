@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 """Perguntar ao modelo local, reutilizável pelos sites do Heimdall (Finance primeiro; Saúde, Notas e News podem usar o mesmo).
 
-Só usa o modelo local, pelo LiteLLM (http://127.0.0.1:9000, chave LITELLM_MASTER_KEY do .env). Nunca cai para modelo de fora: quem usa este módulo
-com dados de saúde ou de finanças depende disso. O contexto é montado pelo código de cada site, o modelo só responde com base nele, e
-os números da resposta são conferidos contra o contexto: o que não estiver lá vira aviso, para o modelo não inventar valor.
+Por padrão usa o modelo local, pelo LiteLLM (http://127.0.0.1:9000, chave LITELLM_MASTER_KEY do .env). Com HEIMDALL_NUVEM=1 no .env tenta
+primeiro o modelo grande da Cloudflare (heimdall_nuvem.py, pelo gateway com teto de gasto) e, se a nuvem falhar, volta ao modelo local.
+Desde 21/11/2026 saúde e finanças podem ir à nuvem (regra no CLAUDE.md). O contexto é montado pelo código de cada site, o modelo só responde
+com base nele, e os números da resposta são conferidos contra o contexto: o que não estiver lá vira aviso, para o modelo não inventar valor.
 """
 import json
 import os
 import re
 import threading
 import time
+import sys
 import urllib.request
 import uuid
 from pathlib import Path
+
+import heimdall_nuvem as nuvem
 
 AQUI = Path(__file__).resolve().parent
 LLM_URL = os.environ.get("HEIMDALL_PERGUNTAR_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions")
@@ -35,6 +39,11 @@ def _chave() -> str:
 
 
 def chamar_local(sistema: str, usuario: str, modelo: str = "", max_tokens: int = 700, timeout: int = 240) -> str:
+    if nuvem.ativo():
+        try:
+            return nuvem.chat(sistema, usuario, max_tokens=max_tokens, timeout=min(timeout, 120))
+        except RuntimeError as ex:
+            print(f"[perguntar] nuvem falhou ({ex}); usando o modelo local.", file=sys.stderr)
     corpo = json.dumps({"model": modelo or MODELO_PADRAO, "temperature": 0.2, "max_tokens": max_tokens,
                         "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": usuario}]}).encode("utf-8")
     req = urllib.request.Request(LLM_URL, data=corpo, method="POST",

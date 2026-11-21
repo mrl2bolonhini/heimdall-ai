@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Modelo grande na nuvem com interruptor
+- Novo heimdall_nuvem.py: com HEIMDALL_NUVEM=1 no .env, as perguntas do Heimdall (Notes, catalogação, Finance e os demais que usam o Perguntar) vão primeiro ao gpt-oss-120b da Cloudflare, pelo gateway de IA "heimdall" (autenticado, sem guardar conteúdo, teto de US$ 10 por mês). Se a nuvem falhar, a pergunta volta sozinha ao modelo local. Vale sem reiniciar, porque o .env é lido a cada chamada.
+- Liga e desliga: heimdall env --set HEIMDALL_NUVEM 1 (ou 0, que volta ao que era). Novo comando heimdall cloudai mostra se está ligada e faz uma pergunta de teste. O gpt-oss gasta parte dos tokens raciocinando; por isso cada pedido recebe 1000 tokens de folga.
+- Fica de fora por enquanto: o chat do Open WebUI e os fluxos do n8n, que passam pelo LiteLLM; a ligação deles ao gateway é a etapa seguinte.
+
 ## 2026-11-21 - Gateway de IA da Cloudflare (início da migração)
 - Criado na conta o gateway de IA "heimdall": exige autenticação, não guarda o conteúdo das conversas, repete até 3 vezes em caso de falha e tem teto de US$ 10 por mês. O teto total da nuvem é de US$ 15 por mês e cada fase terá interruptor no .env para voltar ao que era (regras no CLAUDE.md).
 - heimdall cloudflare --test agora também chama o gateway com o gpt-oss-120b (custo de uma fração de centavo). O token heimdall-news precisa das permissões AI Gateway Lido, Executar e Editar. Os modelos ainda não usam o gateway: a ligação com o LiteLLM e o interruptor HEIMDALL_NUVEM vêm depois deste teste passar.
