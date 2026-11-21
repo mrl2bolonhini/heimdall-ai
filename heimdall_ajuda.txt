@@ -313,6 +313,14 @@ Exemplos:
   heimdall triage
   heimdall triage --complete-tests
 
+@ notion | Confere a ligação do Heimdall Notes com o Notion
+Mostra, para ideias, contatos e endereços, se o token e o banco de dados do Notion estão no .env e se a integração enxerga o banco. O Notion só recebe notas comuns; saúde e finanças nunca vão para lá.
+Como ligar, sem colar segredo em conversa: crie uma integração interna em notion.so/profile/integrations, compartilhe com ela os três bancos de dados (ideias, contatos, endereços), copie o token com Command+C e rode: heimdall env --set HEIMDALL_NOTION_TOKEN. Depois copie o endereço de cada banco e rode: heimdall env --set HEIMDALL_NOTION_DB_IDEIAS (e _CONTATOS, _ENDERECOS), uma vez para cada. Por fim rode heimdall notion e reinicie o agente com heimdall update --restart.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall notion
+
 @ notices | Traz as notas antigas de saúde e finanças para a aba Avisos
 Sem opção só mostra o que seria feito. Com --migrate importa para a aba Avisos do Heimdall Health e do Heimdall Finance as notas de saúde e finanças que o Heimdall já gravou no cofre e no app Notas, confere que tudo chegou e só então apaga as originais. O app Notas manda cada nota para "Apagadas recentemente", onde ela fica 30 dias. Só mexe nas pastas do Heimdall (Saúde dentro de Heimdall-ai e Heimdall Finanças). Pode rodar de novo sem duplicar. O macOS pode pedir permissão para o Terminal controlar o app Notas.
 Opções:

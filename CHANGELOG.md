@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Notes cataloga notas e liga com o Notion
+- A aba Início do Heimdall Notes ganha um campo com dois botões: Perguntar (o modelo local responde com trechos das suas notas) e Salvar nota. Ao salvar, a IA local separa a nota em ideias, contatos, endereços, lembretes e eventos.
+- Lembrete (algo a fazer) vai para o app Lembretes e evento (algo numa data e hora) para o Calendário, na hora, com botão Desfazer. Se a data estiver ausente, ambígua ou no passado, o item fica pendente e pede a data. Tipos novos na tabela de heimdall_agenda.py: lembrete_nota e evento_nota; o agente ganha POST /calendario/desfazer e /lembretes/desfazer.
+- Ideias, contatos e endereços vão para três bancos de dados do Notion (heimdall_notion.py; Desfazer arquiva a página). Saúde e finanças nunca vão para o Notion: ficam só numa nota local "Heimdall Notas". Sem Notion configurado, ou se ele falhar, nada se perde: o item vai para a nota local.
+- Novo comando heimdall notion confere token e bancos. Segredos entram pelo .env com heimdall env --set HEIMDALL_NOTION_TOKEN (e _DB_IDEIAS, _DB_CONTATOS, _DB_ENDERECOS), lendo da área de transferência.
+
 ## 2026-11-21 - Layout com abas em todos os serviços
 - Heimdall Cloud, Notes, News, Health, Games e Finance trocam o menu de links pelas abas do Heimdall Design (como o Controls já tinha): setas, Home e End movem o foco, Option+Shift+1 a 9 abre a aba pelo número e o leitor de tela ouve "<nome> aberta". Sem JavaScript, as abas continuam sendo links comuns.
 - Todas as páginas terminam com "Voltar para o topo" e começam num alvo de foco (#topo). O script das abas tem nonce e a política de segurança de cada serviço só o aceita para esse nonce. Detalhes novos em heimdall_design.py: nav_abas, com_abas, topo, script, csp e aba_da_rota.

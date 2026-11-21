@@ -306,12 +306,72 @@ confere("busca escapa a consulta", b"<script>" not in c)
 s, _, c = req("GET", "/busca?q=a", cookie=ck)
 confere("busca curta pede mais letras", "pelo menos duas letras" in texto(c))
 
+# --- perguntar e salvar nota (modelo local e destinos simulados) ---
+import json as _json
+import heimdall_perguntar as _pp
+import heimdall_catalogo as _cat
+_enviados, _notion, _desf, _locais = [], [], [], []
+_hoje = _cat.date.today()
+from datetime import timedelta as _td
+_amanha = (_hoje + _td(days=1)).isoformat()
+
+
+def _llm_falso(sistema, usuario, modelo="", max_tokens=700, timeout=240):
+    if "CONTEXTO" in usuario:
+        return "Achei na nota Aula 1."
+    return _json.dumps([
+        {"tipo": "lembrete", "titulo": "Ligar para o contador", "texto": "pedir a guia", "data": _amanha, "hora": "10:00", "incerto": False},
+        {"tipo": "evento", "titulo": "Jantar com Ana", "texto": "", "data": "", "hora": "", "incerto": True},
+        {"tipo": "contato", "titulo": "Marina", "texto": "telefone 11 99999-0000", "data": "", "hora": "", "incerto": False},
+        {"tipo": "ideia", "titulo": "Exame de sangue", "texto": "lembrar do resultado do exame", "data": "", "hora": "", "incerto": False},
+    ])
+
+
+_pp.chamar_local = _llm_falso
+_cat.agenda.enviar = lambda tipo, dado, post=None: (_enviados.append((tipo, dado)) or (True, "criado"))
+_cat.agenda.desfazer = lambda tipo, dado, post=None: (_desf.append((tipo, dado)) or (True, "apagado"))
+_cat.notion.criar = lambda tipo, titulo, texto, http=None: (_notion.append((tipo, titulo)) or (True, "pagina123"))
+_cat.notion.arquivar = lambda pid, http=None: (_desf.append(("notion", pid)) or (True, "arquivada"))
+_cat._post_agente = lambda rota, dado: (_locais.append((rota, dado)) or (True, "ok"))
+s, _, c = req("GET", "/", cookie=ck)
+t_ = texto(c)
+confere("Início tem os dois botões Perguntar e Salvar nota", ">Perguntar</button>" in t_ and ">Salvar nota</button>" in t_ and 'formaction="/salvar"' in t_)
+csrf = re.search(r'name="csrf" value="([^"]+)"', t_).group(1)
+s, _, _ = req("POST", "/salvar", urlencode({"csrf": "errado", "texto": "x y z"}), cookie=ck)
+confere("salvar sem CSRF recusado", s == 403)
+s, h, _ = req("POST", "/salvar", urlencode({"csrf": csrf, "texto": "ligar para o contador amanhã, jantar com Ana, contato Marina, exame"}), cookie=ck)
+confere("salvar nota redireciona", s == 303)
+for _ in range(50):
+    c = req("GET", "/", cookie=ck)[2]
+    if "Notas catalogadas" in texto(c):
+        break
+    time.sleep(0.1)
+t_ = texto(c)
+confere("lembrete com data criado direto no Lembretes", any(x[0] == "lembrete_nota" and x[1]["vencimento"] == _amanha and x[1]["hora"] == 10 for x in _enviados))
+confere("evento sem data não foi criado e pede confirmação", not any(x[0] == "evento_nota" for x in _enviados) and "Pendente" in t_ and 'type="date"' in t_)
+confere("contato foi para o Notion", ("contato", "Marina") in _notion)
+confere("assunto de saúde ficou fora do Notion", not any(x[1] == "Exame de sangue" for x in _notion) and any(d.get("titulo") == "Exame de sangue" for _, d in _locais))
+confere("botão Desfazer no item criado", "Desfazer: Ligar para o contador" in t_)
+rid_pend = re.search(r'action="/confirmar"><input type="hidden" name="csrf" value="[^"]+"><input type="hidden" name="id" value="([0-9a-f]+)"', t_).group(1)
+s, _, _ = req("POST", "/confirmar", urlencode({"csrf": csrf, "id": rid_pend, "data": _amanha, "hora": "20:30"}), cookie=ck)
+confere("confirmar cria o evento com a data informada", s == 303 and any(x[0] == "evento_nota" and x[1]["data"] == _amanha and x[1]["hora"] == "20:30" for x in _enviados))
+rid_l = re.search(r'action="/desfazer"><input type="hidden" name="csrf" value="[^"]+"><input type="hidden" name="id" value="([0-9a-f]+)"', texto(req("GET", "/", cookie=ck)[2])).group(1)
+req("POST", "/desfazer", urlencode({"csrf": csrf, "id": rid_l}), cookie=ck)
+confere("desfazer apaga no destino", len(_desf) == 1)
+s, _, _ = req("POST", "/perguntar", urlencode({"csrf": csrf, "texto": "o que tem na aula sobre listas?"}), cookie=ck)
+for _ in range(50):
+    c = req("GET", "/", cookie=ck)[2]
+    if "Achei na nota Aula 1" in texto(c):
+        break
+    time.sleep(0.1)
+confere("perguntar responde com base nas notas", "Achei na nota Aula 1" in texto(c))
+confere("contexto das notas traz trecho de nota", "Aula 1" in hb.contexto_notas("introdução listas"))
+
 # --- somente leitura e saída ---
 s, _, c = req("POST", "/nota?p=python&n=aula-1.md", "x=1", cookie=ck)
 confere("POST em página recusado", s == 405)
 s, _, c = req("POST", "/sair", "csrf=errado", cookie=ck)
 confere("sair sem CSRF recusado", s == 403)
-csrf = re.search(r'name="csrf" value="([^"]+)"', texto(req("GET", "/", cookie=ck)[2])).group(1)
 s, h, c = req("POST", "/sair", urlencode({"csrf": csrf}), cookie=ck)
 confere("sair com CSRF", s == 303 and "Max-Age=0" in h["set-cookie"])
 s, h, _ = req("GET", "/", cookie=ck)

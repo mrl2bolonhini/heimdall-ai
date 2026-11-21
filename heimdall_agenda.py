@@ -19,6 +19,7 @@ AQUI = Path(__file__).resolve().parent
 AGENTE = os.environ.get("HEIMDALL_AGENTE_URL", "http://127.0.0.1:8003")
 EVENTO, LEMBRETE = "evento", "lembrete"
 ROTA = {EVENTO: "/calendario/evento", LEMBRETE: "/lembretes/criar"}
+ROTA_DESFAZER = {EVENTO: "/calendario/desfazer", LEMBRETE: "/lembretes/desfazer"}
 
 # tipo -> (destino, quando acontece, onde nasce)
 DESTINOS = {
@@ -26,6 +27,8 @@ DESTINOS = {
     "renovacao_receita": (EVENTO, "dia de dar entrada no pedido de renovação, alguns dias antes de a receita vencer", "heimdall labs: receita confirmada com validade"),
     "prazo_oficial": (EVENTO, "data-limite de um comunicado oficial (dia inteiro)", "heimdall_email_oficial.py: e-mail oficial confirmado"),
     "verificar_prazo": (LEMBRETE, "conferir o comunicado oficial, com hora, até você concluir", "heimdall_email_oficial.py"),
+    "evento_nota": (EVENTO, "compromisso com data (e hora) achado numa nota escrita no Heimdall Notes", "heimdall_catalogo.py: nota catalogada pela IA local"),
+    "lembrete_nota": (LEMBRETE, "algo a fazer, com data, achado numa nota escrita no Heimdall Notes", "heimdall_catalogo.py: nota catalogada pela IA local"),
     "triagem": (LEMBRETE, "item importante que pede decisão; você conclui, reclassifica ou adia", "heimdall_triagem.py (lista Heimdall: Triagem)"),
 }
 
@@ -73,3 +76,21 @@ def enviar(tipo: str, dado: dict, post=None) -> tuple:
     if not isinstance(r, dict) or not r.get("ok"):
         return False, "o agente não confirmou"
     return True, str(r.get("evento") or r.get("lembrete") or "ok")
+
+
+def desfazer(tipo: str, dado: dict, post=None) -> tuple:
+    """Apaga o evento ou lembrete que este mesmo tipo criou (mesmo título e data). Devolve (ok, texto)."""
+    rota = ROTA_DESFAZER[destino(tipo)]
+    cab = {"Content-Type": "application/json", "X-Heimdall-Token": _token()}
+    try:
+        if post:
+            r = post(AGENTE + rota, dado, cab)
+        else:
+            req = urllib.request.Request(AGENTE + rota, data=json.dumps(dado).encode("utf-8"), headers=cab, method="POST")
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                r = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:  # noqa: BLE001
+        return False, f"não consegui falar com o agente do Mac ({type(e).__name__})"
+    if not isinstance(r, dict) or not r.get("ok"):
+        return False, "o agente não confirmou"
+    return True, str(r.get("resultado") or "ok")

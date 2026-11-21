@@ -145,6 +145,14 @@ def bloco_html(dono: str, csrf: str, volta: str, titulo: str = "Perguntar", dica
          f'<form method="post" action="{e(acao)}"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="volta" value="{e(volta)}">'
          '<p><label for="pergunta">Sua pergunta</label><br><input type="text" id="pergunta" name="pergunta" autocomplete="off" maxlength="300" required></p>'
          '<button type="submit">Perguntar</button></form>')
+    return h + respostas_html(dono, volta, rotulo) + "</section>"
+
+
+def respostas_html(dono: str, volta: str, rotulo: str = "pergunta") -> str:
+    """Só o andamento e as respostas guardadas (sem o formulário), para telas que montam o próprio formulário."""
+    import html as _h
+    e = lambda t: _h.escape(str(t), quote=True)  # noqa: E731
+    h = ""
     pend = em_andamento(dono, rotulo)
     if any(t["estado"] == "pensando" for t in pend):
         h += (f'<p role="status">O modelo local está pensando. Quando achar que acabou, use o botão abaixo.</p>'
@@ -159,4 +167,4 @@ def bloco_html(dono: str, csrf: str, volta: str, titulo: str = "Perguntar", dica
             paragrafos = "".join(f"<p>{e(p)}</p>" for p in r["texto"].split("\n") if p.strip())
             h += (f'<article><h4>{e(r["pergunta"])}</h4><p class="sub">Perguntado em {e(r["quando"])}.</p>{paragrafos}'
                   + (f'<p role="status">{e(r["avisos"])}</p>' if r["avisos"] else "") + "</article>")
-    return h + "</section>"
+    return h

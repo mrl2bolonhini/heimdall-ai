@@ -353,6 +353,7 @@ heimdall() {
     triage)
       if [ "$1" = "--complete-tests" ]; then _heimdall_sh concluir_testes_triagem.sh; else _heimdall_sh consultar_triagem.sh "$@"; fi ;;
     db) _heimdall_py heimdall_banco.py "$@" ;;
+    notion) _heimdall_py heimdall_notion.py ;;
     notices) _heimdall_tr "--migrate=--executar" "$@"; _heimdall_py migrar_avisos.py "${_HA[@]}" ;;
     doctor)
       _heimdall_tr "--memory=--memoria
@@ -460,7 +461,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage notices db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes news cloud health labs games finance controls account n8n kuma dozzle urls triage notices notion db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc

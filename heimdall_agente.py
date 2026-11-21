@@ -13,6 +13,8 @@ Rotas:
     GET  /notas/nota?id=                texto simples de uma nota
     GET  /notas/privadas                pastas privadas e os ids das notas protegidas (usado pelo limpar_privadas.py)
     POST /avisos/gravar                 {"servico": "saude"|"financas", "titulo": "...", "markdown": "...", "bark": true (opcional)}
+    POST /calendario/desfazer           {"titulo": "...", "data": "AAAA-MM-DD"}  (apaga o evento criado; o Heimdall Notes usa no botão Desfazer)
+    POST /lembretes/desfazer            {"titulo": "..."}
     POST /notas/gravar                  {"pasta": "Digest", "titulo": "...", "markdown": "...", "audio": "texto a narrar (opcional)"}
                                         cria ou atualiza uma nota e grava uma cópia .md na pasta do cofre
     GET  /banco/resumo                  contagens e período de cada tabela do banco pessoal (SQLite)
@@ -1053,6 +1055,48 @@ on run argv
 end run
 '''
 
+AS_DESFAZER_EVENTO = r'''
+on run argv
+    set tit to item 1 of argv
+    set y to (item 2 of argv) as integer
+    set m to (item 3 of argv) as integer
+    set dd to (item 4 of argv) as integer
+    set nomeCal to item 5 of argv
+    set d0 to current date
+    set day of d0 to 1
+    set year of d0 to y
+    set month of d0 to m
+    set day of d0 to dd
+    set time of d0 to 0
+    tell application "Calendar"
+        if not (exists calendar nomeCal) then return "nada"
+        set achados to (events of calendar nomeCal whose summary is tit and start date >= d0 and start date < (d0 + 1 * days))
+        set n to count of achados
+        repeat with ev in achados
+            delete ev
+        end repeat
+        if n is 0 then return "nada"
+        return "apagado"
+    end tell
+end run
+'''
+AS_DESFAZER_LEMBRETE = r'''
+on run argv
+    set tit to item 1 of argv
+    set nomeLista to item 2 of argv
+    tell application "Reminders"
+        if not (exists list nomeLista) then return "nada"
+        set achados to (reminders of list nomeLista whose name is tit and completed is false)
+        set n to count of achados
+        repeat with r in achados
+            delete r
+        end repeat
+        if n is 0 then return "nada"
+        return "apagado"
+    end tell
+end run
+'''
+
 
 AS_PREPARAR_CAL = r'''
 on run argv
@@ -1135,6 +1179,26 @@ def criar_lembrete(dado: dict) -> dict:
     with _lock:
         r = osascript(AS_LEMBRETE, titulo, y, m, d, str(hora), _texto_curto(dado.get("notas"), 1000), NOME_AGENDA)
     return {"ok": True, "lembrete": r}
+
+
+def desfazer_evento(dado: dict) -> dict:
+    """Apaga o evento do calendário Heimdall com este título e data (usado pelo botão Desfazer do Heimdall Notes)."""
+    titulo = _texto_curto(dado.get("titulo"), 200)
+    if not titulo:
+        raise ValueError("título vazio")
+    y, m, d = _data(dado.get("data", ""))
+    with _lock:
+        r = osascript(AS_DESFAZER_EVENTO, titulo, y, m, d, NOME_AGENDA)
+    return {"ok": True, "resultado": r}
+
+
+def desfazer_lembrete(dado: dict) -> dict:
+    titulo = _texto_curto(dado.get("titulo"), 200)
+    if not titulo:
+        raise ValueError("título vazio")
+    with _lock:
+        r = osascript(AS_DESFAZER_LEMBRETE, titulo, NOME_AGENDA)
+    return {"ok": True, "resultado": r}
 
 
 def osascript_travado(script: str, *args: str) -> str:
@@ -1325,6 +1389,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, criar_evento(dado))
             if u.path == "/lembretes/criar":
                 return self._json(200, criar_lembrete(dado))
+            if u.path == "/calendario/desfazer":
+                return self._json(200, desfazer_evento(dado))
+            if u.path == "/lembretes/desfazer":
+                return self._json(200, desfazer_lembrete(dado))
             if u.path == "/triagem/criar":
                 return self._json(200, triagem.criar(dado, osascript_travado))
             if u.path == "/triagem/ciclo":
