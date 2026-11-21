@@ -139,6 +139,7 @@ def remover(nome: str) -> str:
 # ----------------------------------------------------------------------------------------
 _PY = re.compile(r"""os\.(?:environ\.get|getenv)\(\s*["']([A-Z][A-Z0-9_]+)["']\s*(?:,\s*([^)\n]*?))?\s*\)""")
 _SH = re.compile(r"\$\{([A-Z][A-Z0-9_]+):?-([^}]*)\}")
+_SH_SIMPLES = re.compile(r"\$\{?(HEIMDALL_[A-Z0-9_]+)")
 _cache = {"quando": 0.0, "dados": {}}
 
 
@@ -169,6 +170,16 @@ def opcoes_do_codigo() -> dict:
         for nome, padrao in _SH.findall(texto):
             if nome.startswith("HEIMDALL_") and (nome not in achadas or not achadas[nome]):
                 achadas[nome] = _padrao_legivel(padrao)
+        if f.suffix in (".sh", ".zsh"):
+            for nome in _SH_SIMPLES.findall(texto):  # lidas como $NOME ou ${NOME:+...}, sem padrão
+                achadas.setdefault(nome, "")
+    try:  # variáveis documentadas na ajuda também aparecem, mesmo se o código as lê de outro jeito
+        import heimdall_config_ajuda as _aj
+        for nome in _aj.DESCRICOES:
+            if nome.startswith("HEIMDALL_"):
+                achadas.setdefault(nome, "")
+    except ImportError:
+        pass
     _cache.update(quando=time.time(), dados=achadas)
     return achadas
 

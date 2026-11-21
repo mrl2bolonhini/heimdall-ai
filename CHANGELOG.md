@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-20 - Ajustes mostra variáveis lidas como $NOME
+- A lista de Ajustes passa a incluir variáveis que os scripts leem como $HEIMDALL_X (sem valor padrão) e as documentadas na ajuda, como HEIMDALL_WEBUI_ACCESS e HEIMDALL_N8N_SEM_LOGIN, que antes não apareciam. Valores vazios não são gravados por heimdall env --defaults.
+
 ## 2026-11-20 - n8n com sessão longa; trocar o e-mail do Open WebUI
 - n8n: o contêiner agora é recriado a cada subida para valer as opções do .env (fluxos e credenciais ficam no volume). HEIMDALL_N8N_SESSAO_HORAS (padrão 8760, um ano) estende o login próprio; HEIMDALL_N8N_SEM_LOGIN=1 tenta N8N_BASIC_AUTH_ACTIVE=false, que as versões atuais costumam ignorar.
 - heimdall chat --email (trocar_email_webui.sh) troca o e-mail, que também é o usuário, de uma conta do Open WebUI sem apagar o volume: cópia em backups/, para o Open WebUI por segundos, atualiza as tabelas auth e user, confere e liga de novo. A senha não muda.
