@@ -23,8 +23,8 @@ CHAVES = {"Heimdall Cloud": "cloud", "Heimdall Notes": "notas", "Heimdall News":
           "Heimdall Finance": "finance", "Heimdall Controls": "controls", "Heimdall Account": "account"}
 # Nomes reais, como cada serviço se chama (nunca traduzidos): é o que o menu e a página Account mostram, em vez dos rótulos do catálogo de usuários.
 NOMES = {"cloud": "Heimdall Cloud", "notas": "Heimdall Notes", "news": "Heimdall News", "saude": "Heimdall Health", "jogos": "Heimdall Games", "finance": "Heimdall Finance",
-         "controls": "Heimdall Controls", "chat": "Open WebUI", "flows": "n8n", "status": "Uptime Kuma", "account": "Heimdall Account"}
-ORDEM = ["account", "cloud", "notas", "news", "saude", "jogos", "finance", "controls", "chat", "flows", "status"]
+         "controls": "Heimdall Controls", "chat": "Heimdall Chat", "flows": "Heimdall Flows", "status": "Heimdall Status", "account": "Heimdall Account"}
+ORDEM = sorted(NOMES, key=lambda k: NOMES[k].lower())  # ordem alfabética pelo nome real
 CAMINHOS = {"status": "/dashboard"}  # o Kuma abre no painel, onde há o menu dele e as Configurações
 
 

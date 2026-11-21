@@ -70,7 +70,7 @@ s, hd, b = pedir("/quem.json", jwt="tokana", origem="https://heimdall-ai.tech")
 d = json.loads(b)
 confere("quem.json logado: nome, e-mail e serviços, com CORS e cookies", s == 200 and d["logado"] and d["nome"] == "Ana Souza" and d["email"] == "ana@x.com" and [x["nome"] for x in d["servicos"]][:1] == ["Heimdall Account"]
         and hd["access-control-allow-origin"] == "https://heimdall-ai.tech" and hd["access-control-allow-credentials"] == "true" and "origin" in hd["vary"].lower(), f"{s} {hd} {b}")
-confere("quem.json: convidado não recebe serviços de dono", not any(x["nome"] in ("Heimdall Controls", "Heimdall Finance", "n8n") for x in d["servicos"]))
+confere("quem.json: convidado não recebe serviços de dono", not any(x["nome"] in ("Heimdall Controls", "Heimdall Finance", "Heimdall Flows") for x in d["servicos"]))
 s, hd, b = pedir("/quem.json", jwt="tokana", origem="https://mal.exemplo")
 confere("quem.json: site de fora não ganha CORS", s == 200 and "access-control-allow-origin" not in hd, str(hd))
 s, hd, b = pedir("/quem.json", jwt="tokana")

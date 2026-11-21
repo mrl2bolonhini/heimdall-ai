@@ -2,9 +2,9 @@ Heimdall Account (account.heimdall-ai.tech)
 
 O que é: a porta de entrada do ecossistema. Quem entra pelo Cloudflare Access (conta Microsoft + Authenticator) vê um tour dos serviços do Heimdall a que tem acesso: link para cada um, o que faz e como configurar. O texto de cada serviço fica em heimdall_conta_info.py (um lugar só, para acrescentar serviços e, no futuro, explicar o multiusuário de Health e Finance).
 
-Quem vê o quê: o dono vê todos os serviços; o convidado, só os liberados para ele na aba Usuários do Controls (Cloud, Notas, News, Jogos, Open WebUI). Todo e-mail de dono ou convidado entra no Account, sem escolher.
+Quem vê o quê: o dono vê todos os serviços; o convidado, só os liberados para ele na aba Usuários do Controls (Cloud, Notes, News, Games, Chat). Todo e-mail de dono ou convidado entra no Account, sem escolher.
 
-Os nomes dos serviços aparecem sempre como eles se chamam (Heimdall Cloud, Heimdall Notes, Heimdall News, Heimdall Health, Heimdall Games, Heimdall Finance, Heimdall Controls, Open WebUI, n8n, Uptime Kuma, Heimdall Account), sem tradução. A tabela está em heimdall_conta.py (NOMES).
+Os nomes dos serviços aparecem sempre como eles se chamam (Heimdall Cloud, Heimdall Notes, Heimdall News, Heimdall Health, Heimdall Games, Heimdall Finance, Heimdall Controls, Heimdall Chat, Heimdall Flows, Heimdall Status, Heimdall Account), sem tradução. A tabela está em heimdall_conta.py (NOMES).
 
 Menu Conta: o mesmo no alto de Cloud, Notas, News, Saúde, Jogos, Finance e Controls: nome e e-mail, como entrou e links dos serviços.
 
