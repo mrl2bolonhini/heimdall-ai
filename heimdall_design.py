@@ -77,6 +77,12 @@ details.conta{max-width:22rem;margin:.5rem 0 0 auto;padding:.3rem .6rem;border:1
 details.grupo{border:1px solid var(--linha);margin:.5rem 0;padding:.3rem .8rem}details.grupo summary{cursor:pointer;font-weight:700;min-height:2.75rem}
 ul.acoes{list-style:none;padding:0}ul.acoes li{margin:.6rem 0}ul.acoes button{margin:0 .8rem 0 0;min-width:11rem}
 [role=tablist]{display:flex;flex-wrap:wrap;gap:.25rem;margin:.4rem 0 1rem;border-bottom:1px solid var(--linha)}
+.abas-bloco{display:grid;grid-template-columns:repeat(5,1fr)}.abas-bloco>[role=tablist]{grid-area:1/1/2/-1;margin-bottom:.4rem}
+.abas-bloco>details.mais{grid-area:1/5;align-self:end;margin:0 0 .4rem;position:relative;z-index:2}.abas-bloco>details.mais summary{display:block;width:100%;text-align:center}
+.abas-bloco>details.mais ul{position:absolute;top:100%;right:0;min-width:100%;margin:0}
+[role=tablist] [role=tab]{flex:1 1 auto;text-align:center}[role=tablist].l3 [role=tab]{flex-basis:calc(33.333% - .25rem)}[role=tablist].l4 [role=tab]{flex-basis:calc(25% - .25rem)}[role=tablist].l5 [role=tab]{flex-basis:calc(20% - .25rem)}
+[role=tablist].com-mais [role=tab]{flex-grow:0}
+@media (max-width:36rem){.abas-bloco{display:block}.abas-bloco>details.mais ul{position:static}[role=tablist] [role=tab],[role=tablist].com-mais [role=tab]{flex:1 1 calc(50% - .25rem)}}
 [role=tab]{display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;color:var(--texto);text-decoration:none;border:1px solid var(--linha);border-bottom:0;background:var(--superficie)}
 details.mais{display:inline-block;position:relative;margin:.4rem 0 .6rem}details.mais summary{cursor:pointer;display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;border:1px solid var(--linha);background:var(--superficie);color:var(--texto)}
 details.mais ul{list-style:none;margin:.3rem 0 0;padding:.4rem .8rem;border:1px solid var(--linha);background:var(--superficie)}details.mais li{margin:.2rem 0}details.mais a{display:inline-block;padding:.3rem 0;min-height:""" + ALTURA_MINIMA_ALVO + """}
@@ -110,6 +116,12 @@ def botao_js(id_: str, rotulo: str) -> str:
 MAX_ABAS = 9   # Option+Shift+1 a 9 abrem as 9 primeiras abas; as demais ficam no menu Mais (Option+Shift+0)
 
 
+def por_linha(n: int) -> int:
+    """Abas por linha: até 5 cabem numa linha; de 6 a 9 as duas linhas ficam equilibradas (6 = 3+3, 7 = 4+3, 8 = 4+4, 9 = 5+4); com mais de 9 são 5 + 4 e o menu Mais
+    ocupa o quinto lugar da segunda linha."""
+    return n if n <= 5 else (5 if n > MAX_ABAS else (n + 1) // 2)
+
+
 def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = ()) -> str:
     """Abas de navegação entre páginas (ARIA tablist). Cada aba é um link: ler/ir é link. As setas movem entre as abas e Option+Shift+número
     abre a aba pelo número (o script `SCRIPT_ABAS` faz isso). `itens` é [(rota, nome)]; `atual` é a rota aberta. O painel é o <div role=tabpanel>
@@ -134,7 +146,9 @@ def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = (
         titulo = f"Mais, aba aberta: {atual_extra}" if atual_extra else "Mais"
         mais = (f'<details class="mais" id="mais"{" data-atual" if atual_extra else ""}><summary aria-describedby="atalho-mais">{e(titulo)}</summary>'
                 f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" class="so-leitor">Atalho: Option Shift 0</span>')
-    return (f'<div role="tablist" aria-label="{e(rotulo)}">' + "".join(abas_) + f'</div>{mais}{dicas}<p id="aviso-abas" class="so-leitor" role="status"></p>')
+    classe = f"l{por_linha(len(itens))}" + (" com-mais" if extras else "")
+    return (f'<div class="abas-bloco"><div role="tablist" class="{classe}" aria-label="{e(rotulo)}">' + "".join(abas_)
+            + f'</div>{mais}{dicas}<p id="aviso-abas" class="so-leitor" role="status"></p></div>')
 
 
 def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:

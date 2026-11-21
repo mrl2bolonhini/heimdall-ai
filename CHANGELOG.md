@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Abas em duas linhas
+- Páginas com mais de 5 abas passam a usar duas linhas equilibradas em vez de uma fila longa: 6 abas = 3+3, 7 = 4+3, 8 = 4+4, 9 = 5+4; com mais de 9, 5 na primeira linha, 4 na segunda e o menu Mais no quinto lugar da segunda. Até 5 abas continuam numa linha só. Em tela estreita, duas colunas. Setas, Option+Shift+1 a 9 e 0 e a ordem de leitura não mudam (design.por_linha em heimdall_design.py).
+
 ## 2026-11-21 - Notes cataloga notas e liga com o Notion
 - A aba Início do Heimdall Notes ganha um campo com dois botões: Perguntar (o modelo local responde com trechos das suas notas) e Salvar nota. Ao salvar, a IA local separa a nota em ideias, contatos, endereços, lembretes e eventos.
 - Lembrete (algo a fazer) vai para o app Lembretes e evento (algo numa data e hora) para o Calendário, na hora, com botão Desfazer. Se a data estiver ausente, ambígua ou no passado, o item fica pendente e pede a data. Tipos novos na tabela de heimdall_agenda.py: lembrete_nota e evento_nota; o agente ganha POST /calendario/desfazer e /lembretes/desfazer.

@@ -24,6 +24,10 @@ confere("aba aberta dentro do Mais: resumo diz qual, link marcado, e uma aba con
 confere("o painel da aba do Mais é rotulado pelo link", 'aria-labelledby="aba-11"' in d.painel_da_aba(itens, "/r11", "x"))
 confere("o resumo do Mais é um <summary> (funciona sem JavaScript)", "<summary" in h and "<button" not in h)
 
+confere("quantidade por linha: 5 numa linha; 6=3+3, 7=4+3, 8=4+4, 9=5+4; mais de 9 = 5+4+Mais",
+        [d.por_linha(n) for n in (3, 5, 6, 7, 8, 9, 12)] == [3, 5, 3, 4, 4, 5, 5])
+confere("a lista de abas leva a classe da linha e com-mais só com o menu", 'class="l3"' in d.abas(itens[:6], "/r1") and "com-mais" in h and "com-mais" not in d.abas(itens[:9], "/r1"))
+
 try:
     from playwright.sync_api import sync_playwright
 except ImportError:
@@ -44,6 +48,14 @@ else:
         pg.keyboard.press("Alt+Shift+Digit0")
         pg.keyboard.press("Alt+Shift+Digit0")
         confere("Option+Shift+0 de novo fecha", not pg.evaluate("document.getElementById('mais').open"))
+        pg2 = nav.new_page(viewport={"width": 1000, "height": 700})
+        pg2.set_content('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>t</title><style>' + d.CSS + '</style></head><body>' + d.abas(itens, "/r1") + "</body></html>")
+        caixas = pg2.evaluate("Array.from(document.querySelectorAll('[role=tab],summary')).map(function(x){var r=x.getBoundingClientRect();return [Math.round(r.left),Math.round(r.top)]})")
+        topos = sorted({c[1] for c in caixas})
+        confere("12 abas: duas linhas, 5 na primeira e 4 na segunda, e o Mais na segunda linha, depois das 4", len(topos) == 2 and sum(1 for c in caixas[:9] if c[1] == topos[0]) == 5 and caixas[9][1] == topos[1] and caixas[9][0] > caixas[8][0], caixas)
+        pg2.set_content('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>t</title><style>' + d.CSS + '</style></head><body>' + d.abas(itens[:7], "/r1") + "</body></html>")
+        caixas = pg2.evaluate("Array.from(document.querySelectorAll('[role=tab]')).map(function(x){var r=x.getBoundingClientRect();return [Math.round(r.left),Math.round(r.top)]})")
+        confere("7 abas: 4 na primeira linha e 3 na segunda", sum(1 for c in caixas if c[1] == caixas[0][1]) == 4 and len({c[1] for c in caixas}) == 2, caixas)
         nav.close()
 print("TUDO OK" if not falhas else f"{falhas} falha(s)")
 sys.exit(1 if falhas else 0)
