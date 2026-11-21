@@ -438,7 +438,7 @@ Exemplos:
 Grava no .env a chave que liga a reserva de resumos no Workers AI e a leitura de páginas com navegador do News.
 Opções:
   -s, --set            grava a chave (é o padrão)
-  -t, --test           testa a chave gravada, mostrando a resposta da Cloudflare
+  -t, --test           testa a chave gravada (Workers AI, Browser Run e o gateway de IA), mostrando a resposta da Cloudflare
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall cloudflare

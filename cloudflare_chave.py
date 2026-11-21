@@ -56,6 +56,27 @@ def _post(caminho: str, token: str, corpo: dict) -> str:
         return f"FALHOU: {type(ex).__name__}"
 
 
+def _post_gateway(conta: str, token: str, modelo: str) -> str:
+    """Uma chamada mínima pelo gateway de IA \"heimdall\" (endereço compatível com OpenAI). Custa uma fração de centavo."""
+    url = f"https://gateway.ai.cloudflare.com/v1/{conta}/heimdall/compat/chat/completions"
+    corpo = {"model": modelo, "messages": [{"role": "user", "content": "Responda só: ok"}], "max_tokens": 64}
+    req = urllib.request.Request(url, data=json.dumps(corpo).encode(), method="POST", headers={
+        "Authorization": "Bearer " + token, "cf-aig-authorization": "Bearer " + token, "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=90) as r:
+            dados = json.loads(r.read(200000))
+            texto = ((dados.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+            return f"OK (HTTP {r.status}), resposta: {texto.strip()[:60] or '(vazia)'}"
+    except urllib.error.HTTPError as ex:
+        try:
+            msg = ex.read(2000).decode("utf-8", "replace")
+        except Exception:  # noqa: BLE001
+            msg = ""
+        return f"FALHOU: HTTP {ex.code} {msg[:200]}"
+    except Exception as ex:  # noqa: BLE001
+        return f"FALHOU: {type(ex).__name__}"
+
+
 def testar() -> None:
     env = _ler_env()
     token, conta = env.get("CLOUDFLARE_API_TOKEN", ""), env.get("CLOUDFLARE_ACCOUNT_ID", "")
@@ -64,6 +85,7 @@ def testar() -> None:
     modelo = "@cf/mistralai/mistral-small-3.1-24b-instruct"
     print("Workers AI (reserva de resumos):", _post(f"/accounts/{conta}/ai/run/{modelo}", token, {"messages": [{"role": "user", "content": "Responda só: ok"}], "max_tokens": 5}))
     print("Browser Run (leitura de páginas):", _post(f"/accounts/{conta}/browser-rendering/content", token, {"url": "https://example.com"}))
+    print("Gateway de IA (gpt-oss-120b):", _post_gateway(conta, token, "workers-ai/@cf/openai/gpt-oss-120b"))
 
 
 def main() -> None:

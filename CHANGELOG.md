@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Gateway de IA da Cloudflare (início da migração)
+- Criado na conta o gateway de IA "heimdall": exige autenticação, não guarda o conteúdo das conversas, repete até 3 vezes em caso de falha e tem teto de US$ 10 por mês. O teto total da nuvem é de US$ 15 por mês e cada fase terá interruptor no .env para voltar ao que era (regras no CLAUDE.md).
+- heimdall cloudflare --test agora também chama o gateway com o gpt-oss-120b (custo de uma fração de centavo). O token heimdall-news precisa das permissões AI Gateway Lido, Executar e Editar. Os modelos ainda não usam o gateway: a ligação com o LiteLLM e o interruptor HEIMDALL_NUVEM vêm depois deste teste passar.
+
 ## 2026-11-21 - Abas em duas linhas
 - Páginas com mais de 5 abas passam a usar duas linhas equilibradas em vez de uma fila longa: 6 abas = 3+3, 7 = 4+3, 8 = 4+4, 9 = 5+4; com mais de 9, 5 na primeira linha, 4 na segunda e o menu Mais no quinto lugar da segunda. Até 5 abas continuam numa linha só. Em tela estreita, duas colunas. Setas, Option+Shift+1 a 9 e 0 e a ordem de leitura não mudam (design.por_linha em heimdall_design.py).
 
