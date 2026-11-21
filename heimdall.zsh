@@ -226,7 +226,7 @@ heimdall() {
         --open)
           case "$2" in
             anomalies) pg=anomalias ;; today) pg=hoje ;; week) pg=semana ;; sleep) pg=sono ;; activity) pg=atividade ;;
-            recovery) pg=recuperacao ;; heart) pg=coracao ;; workouts) pg=treinos ;; events) pg=eventos ;; diary) pg=diario ;; labs) pg=exames ;; documents) pg=documentos ;; data) pg=dados ;;
+            recovery) pg=recuperacao ;; heart) pg=coracao ;; workouts) pg=treinos ;; events) pg=eventos ;; diary) pg=diario ;; labs) pg=exames ;; documents) pg=documentos ;; data) pg=dados ;; notices) pg=avisos ;;
             "") pg="" ;; *) pg="$2" ;;
           esac
           _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health "${pg:+/$pg}" ;;
@@ -471,7 +471,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
       notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
       health)
-        if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data
+        if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data notices
         else compadd -- --local --open --today --now --weekly --anomalies --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
       controls) if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- terminal services maintenance; else compadd -- --open --local; fi ;;
       labs) compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals appointments appointment calendar documents token --open --without --date --time --doctor --specialty --place ;;

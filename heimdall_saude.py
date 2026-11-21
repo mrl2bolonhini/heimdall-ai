@@ -1594,11 +1594,8 @@ def relatorio_semanal() -> dict:
             md += [f"## {linhas[0].rstrip(':')}", "", *[f"{l}" + "  " for l in linhas[1:]], ""]
         else:
             md += [*[f"{l}" + "  " for l in linhas], ""]
-    atual = relatorio_estado_atual()
-    veredito = atual.strip().split("\n")[-1] if atual else "Sem dados suficientes para comparar esta semana."
-    ecg_alto = "fibrilação atrial" in texto and bool(_ler("SELECT 1 FROM ecg WHERE dia >= ? AND classificacao_original LIKE '%trial%' LIMIT 1", (_dias_atras(7),)))
-    corpo = veredito + (" Há um ECG da semana para mostrar ao médico." if ecg_alto else "") + " O relatório completo está na nota, na pasta Saúde."
-    return {"titulo": titulo, "markdown": "\n".join(md).strip() + "\n", "audio": texto, "bark": {"title": "Saúde: relatório da semana", "body": corpo[:400],
+    # O Bark leva só texto genérico: o veredito e o ECG ficam no relatório, na aba Avisos do Heimdall Health.
+    return {"titulo": titulo, "markdown": "\n".join(md).strip() + "\n", "audio": texto, "bark": {"title": "Heimdall Health: aviso novo", "body": "Abra a aba Avisos do Heimdall Health.",
             "group": "saude", "level": "active"}}
 
 

@@ -291,14 +291,23 @@ def deve_avisar(row: dict, prioridade: str, agora: datetime) -> tuple:
     return (dentro and agora - _dt(row["ultimo_aviso"]) >= intervalo), critico
 
 
+FONTES_SENSIVEIS = {"saude": "Saúde", "financas": "Finanças", "finance": "Finanças"}
+
+
+def _sensivel(row: dict) -> str:
+    """Nome da área, se o item vem de saúde ou finanças: o Bark nunca leva título nem resumo desses itens (o detalhe fica no app Lembretes e no serviço)."""
+    return FONTES_SENSIVEIS.get(str(row.get("fonte", "")).lower(), "")
+
+
 def montar_aviso(row: dict, critico: bool, pendentes: int, sem_lembrete: bool = False) -> dict:
-    corpo = (row.get("resumo") or "")[:350]
+    area = _sensivel(row)
+    corpo = "" if area else (row.get("resumo") or "")[:350]
     if sem_lembrete:
         corpo = (corpo + "\n" if corpo else "") + ("O lembrete ainda não foi criado no app Lembretes (autorização pendente no Mac); "
                                                   "o aviso continua até isso ser resolvido.")
     else:
         corpo = (corpo + "\n" if corpo else "") + "Abra o app Lembretes, lista " + NOME_LISTA + ". " + INSTRUCAO
-    p = {"title": (("CRÍTICO: " if critico else "Triagem: ") + row["titulo"])[:100], "body": corpo[:900], "group": "triagem",
+    p = {"title": (("CRÍTICO: " if critico else "Triagem: ") + (f"{area}: item para conferir" if area else row["titulo"]))[:100], "body": corpo[:900], "group": "triagem",
          "level": "critical" if critico else "timeSensitive", "badge": pendentes}
     if critico:
         p["volume"] = 7
@@ -310,14 +319,15 @@ def montar_aviso_agrupado(itens: list, critico: bool, pendentes: int) -> dict:
     ("x3"), e cada linha traz o começo do resumo (assunto do e-mail, sinais da saúde) para dar para decidir sem abrir o app."""
     grupos: dict = {}
     for row, _ in itens:
-        g = grupos.setdefault(row["titulo"], {"row": row, "n": 0})
+        chave = f"{_sensivel(row)}: item para conferir" if _sensivel(row) else row["titulo"]   # saúde e finanças: sem título no Bark
+        g = grupos.setdefault(chave, {"row": row, "n": 0})
         g["n"] += 1
 
     def linhas(detalhe: int) -> list:
         saida = []
         for n, (titulo, g) in enumerate(list(grupos.items())[:8], 1):
             lin = f"{n}. {titulo[:80]}" + (f" (x{g['n']})" if g["n"] > 1 else "")
-            det = " ".join((g["row"].get("resumo") or "").split())
+            det = "" if _sensivel(g["row"]) else " ".join((g["row"].get("resumo") or "").split())
             if detalhe and det:
                 lin += ": " + det[:detalhe]
             saida.append(lin)

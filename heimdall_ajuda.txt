@@ -140,7 +140,7 @@ Exemplos:
 Sem opção abre o painel de saúde no navegador (porta 8013). Com --open abre uma página dele. Com qualquer outra opção, roda o relatório no terminal. Nada aqui é diagnóstico.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
-  -o, --open PÁGINA    abre uma página do painel: anomalies, today, week, sleep, activity, recovery, heart, workouts, events, diary, labs, documents, data
+  -o, --open PÁGINA    abre uma página do painel: anomalies, today, week, sleep, activity, recovery, heart, workouts, events, diary, labs, documents, data, notices (a aba Avisos: relatórios da semana)
   -t, --today          o que já chegou de hoje
   -n, --now            os últimos 7 dias contra a média dos 90 anteriores
   -w, --weekly         o relatório da semana

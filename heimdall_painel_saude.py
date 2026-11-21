@@ -59,6 +59,7 @@ import heimdall_banco as banco  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
 import heimdall_saude as saude  # noqa: E402  (as análises)
+import heimdall_avisos as avisos_mod  # noqa: E402  (aba Avisos: relatórios que antes iam para o app Notas)
 import heimdall_exames as exames  # noqa: E402  (exames, receitas e encaminhamentos já confirmados)
 
 HOST = os.environ.get("HEIMDALL_SAUDE_PAINEL_HOST", "127.0.0.1")
@@ -81,7 +82,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 """
 
 SECOES = [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"), ("/anomalias", "Anomalias"),
-          ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/exames", "Exames"), ("/documentos", "Documentos"), ("/dados", "Estado dos dados")]
+          ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/exames", "Exames"), ("/documentos", "Documentos"), ("/dados", "Estado dos dados"), ("/avisos", "Avisos")]
 
 
 # ----------------------------------------------------------------------------------------
@@ -468,7 +469,7 @@ class Painel(nuvem.ManipuladorBase):
                 self._ir("/entrar")
                 return
             if metodo == "POST":
-                if rota != "/sair":
+                if rota not in ("/sair", "/avisos/lido"):
                     self._enviar(405, pagina("Não permitido", "<p>Este painel é somente de leitura.</p>", sess))
                     return
                 n = min(int(self.headers.get("Content-Length") or 0), 4096)
@@ -476,8 +477,19 @@ class Painel(nuvem.ManipuladorBase):
                 if not secrets.compare_digest(campos.get("csrf", ""), sess["csrf"]):
                     self._enviar(403, pagina("Pedido recusado", "<p>Token de segurança inválido. Volte e tente de novo.</p>", sess))
                     return
+                if rota == "/avisos/lido":   # só muda o "lido" do aviso; nenhum dado de saúde é alterado
+                    av = avisos_mod.do_servico("saude")
+                    if campos.get("id") == "todos":
+                        av.marcar_todos()
+                    elif campos.get("id", "").isdigit():
+                        av.marcar(int(campos["id"]))
+                    self._ir("/avisos")
+                    return
                 nuvem.encerrar_sessao(token)
                 self._ir("/entrar", [self._cookie("", apagar=True)])
+                return
+            if rota == "/avisos":
+                self._enviar(200, pagina("Avisos", avisos_mod.pagina(avisos_mod.do_servico("saude").listar(), sess["csrf"]), sess, rota))
                 return
             funcao = ROTAS.get(rota)
             if not funcao:

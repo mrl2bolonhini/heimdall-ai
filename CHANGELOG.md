@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-21 - Avisos de saúde e finanças fora do Notes
+- Heimdall Health e Heimdall Finance ganham a aba Avisos. O relatório semanal e o resumo diário de saúde, e as análises de finanças, ficam num banco local de cada serviço (heimdall_avisos.py), com Marcar como lido e Marcar todos. Nada disso vai mais para o app Notas, nem irá para o Notion.
+- O agente tem POST /avisos/gravar e, por segurança, desvia /notas/gravar com pasta Saúde ou Heimdall Finanças para os avisos. O fluxo "monitor de saúde" do n8n passa a gravar nos avisos (rode heimdall flows para instalar a nova versão). O botão Salvar no Notas do Finance foi removido: a análise gerada já vira aviso.
+- O Bark segue notificando, só com texto genérico ("Heimdall Health: aviso novo. Abra a aba Avisos"). Itens de triagem de saúde ou finanças também saem sem título nem resumo no Bark; o detalhe fica no app Lembretes e no serviço.
+- As notas de saúde que já estão no Notas continuam lá; apague-as pelo app Notas se quiser.
+- Novos: heimdall_avisos.py, teste_avisos.py.
+
 ## 2026-11-21 - Heimdall Account (account.heimdall-ai.tech)
 - Novo serviço, porta 8018: o tour dos serviços de cada pessoa, com link, o que cada um faz e como configurar. Dono vê todos; convidado só os seus. O texto fica em heimdall_conta_info.py (Health e Finance já explicam o plano de multiusuário). Todo e-mail de dono ou convidado entra no Account; a aba Usuários o inclui sozinha. Comando: heimdall account (-L abre o endereço do Mac).
 - Cloudflare (feito pelo conector, a pedido): aplicativo e política "Heimdall Account" no Access (Microsoft e Authenticator), DNS account e rota do túnel para localhost:8018, acrescentada sem mexer nas outras.

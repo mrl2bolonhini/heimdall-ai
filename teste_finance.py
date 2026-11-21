@@ -421,12 +421,16 @@ for _ in range(100):
     _tm.sleep(0.1)
 confere("gerar análise guarda no banco, com texto fixo quando o modelo é curto", st == 303 and con2.execute("SELECT origem FROM analises").fetchone()[0] == "regras")
 st, corpo, _ = pedir("/analise", ck)
-confere("página de análise mostra a análise salva do mês, a da semana calculada e o botão do Notas", st == 200 and "<h3>Resumo</h3>" in corpo and "<ol>" in corpo and "Gerada em" in corpo and "Salvar a análise do mês no Notas" in corpo and "iCloud" in corpo, corpo[:300])
-post("/analise/notas", {"id": "1"}, ck, csrf)
-st, corpo, _ = pedir("/analise", ck)
-confere("salvar no Notas sem o agente avisa sem derrubar a página", st == 200 and ("Análise salva" in corpo or "Não consegui salvar no Notas" in corpo))
+confere("página de análise mostra a análise salva do mês, a da semana calculada e sem botão do Notas", st == 200 and "<h3>Resumo</h3>" in corpo and "<ol>" in corpo and "Gerada em" in corpo and "Salvar a análise do mês no Notas" not in corpo and "aba Avisos" in corpo, corpo[:300])
+st, corpo, _ = pedir("/avisos", ck)
+confere("a análise gerada vira aviso na aba Avisos, sem passar pelo Notas", st == 200 and "Análise de" in corpo and "não lido" in corpo and "Marcar como lido" in corpo, corpo[:300])
+post("/avisos/lido", {"id": "todos"}, ck, csrf)
+st, corpo, _ = pedir("/avisos", ck)
+confere("marcar todos como lidos", "0 não lido(s)" in corpo and "Marcar como lido" not in corpo)
+confere("avisos com CSRF errado são recusados", post("/avisos/lido", {"id": "todos"}, ck, "errado")[0] == 403)
+confere("a rota que salvava no Notas não existe mais", "/analise/notas" not in open("heimdall_finance.py").read())
 # campo Perguntar no fim de toda página
-for _rota in ("/", "/transacoes", "/tendencias", "/orcamentos", "/analise", "/futuros", "/boletos", "/recorrentes", "/regras", "/importar"):
+for _rota in ("/", "/transacoes", "/tendencias", "/orcamentos", "/analise", "/futuros", "/boletos", "/recorrentes", "/regras", "/importar", "/avisos"):
     st, corpo, _ = pedir(_rota, ck)
     confere(f"campo Perguntar no fim de {_rota}", st == 200 and '<label for="pergunta">' in corpo and corpo.rfind('id="perguntar-t"') > corpo.rfind("</table>") and corpo.endswith("</section></main></body></html>"), corpo[-300:])
 st, _, cab = pedir("/perguntar", ck)

@@ -12,6 +12,7 @@ Rotas:
                                         paradas há pelo menos "quieto" segundos, da mais antiga para a mais nova
     GET  /notas/nota?id=                texto simples de uma nota
     GET  /notas/privadas                pastas privadas e os ids das notas protegidas (usado pelo limpar_privadas.py)
+    POST /avisos/gravar                 {"servico": "saude"|"financas", "titulo": "...", "markdown": "...", "bark": true (opcional)}
     POST /notas/gravar                  {"pasta": "Digest", "titulo": "...", "markdown": "...", "audio": "texto a narrar (opcional)"}
                                         cria ou atualiza uma nota e grava uma cópia .md na pasta do cofre
     GET  /banco/resumo                  contagens e período de cada tabela do banco pessoal (SQLite)
@@ -23,7 +24,7 @@ Rotas:
     POST /saude/documento               corpo = o arquivo (PDF, JPG, PNG ou HEIC) de um exame, receita ou encaminhamento; cabeçalho X-Heimdall-Nome com o nome.
                                         Aceita o X-Heimdall-Token ou o código de envio do atalho (X-Heimdall-Upload = HEIMDALL_EXAMES_TOKEN). O arquivo vai para a
                                         pasta de entrada, é lido no Mac e fica pendente até você confirmar (heimdall_exames.py)
-    POST /saude/relatorio-semanal       {}  monta o relatório da semana, grava na pasta Saúde do app Notas (com áudio) e avisa pelo Bark
+    POST /saude/relatorio-semanal       {}  monta o relatório da semana, grava na aba Avisos do Heimdall Health e avisa pelo Bark (texto genérico)
     POST /triagem/criar                 {"id": "origem estável", "titulo": "...", "resumo": "...", "nivel": "critico|alto|medio", "fonte": "justica"}
                                         cria um lembrete na lista "Heimdall: Triagem" (não duplica) e o registra no banco
     POST /triagem/ciclo                 {}  lê os lembretes, registra o que você concluiu, reclassificou ou adiou e avisa pelo Bark
@@ -66,6 +67,7 @@ import heimdall_backup as backup
 import heimdall_banco as banco
 import heimdall_exames as exames
 import heimdall_saude as saude
+import heimdall_avisos as avisos
 import heimdall_seguranca as seguranca
 import heimdall_triagem as triagem
 import heimdall_eventkit as eventkit
@@ -1262,14 +1264,27 @@ class Handler(BaseHTTPRequestHandler):
             if tam <= 0 or tam > (MAX_CORPO_SAUDE if u.path == "/saude/hae" else MAX_CORPO):
                 return self._json(413, {"erro": "corpo ausente ou grande demais"})
             dado = json.loads(self.rfile.read(tam).decode("utf-8"))
+            if u.path == "/avisos/gravar":
+                serv = str(dado.get("servico", ""))
+                if serv not in avisos.SERVICOS:
+                    return self._json(400, {"erro": "servico deve ser saude ou financas"})
+                try:
+                    novo = avisos.do_servico(serv).gravar(str(dado.get("titulo", "")), str(dado.get("markdown", "")))
+                except ValueError as ex:
+                    return self._json(400, {"erro": str(ex)})
+                return self._json(200, {"ok": True, "id": novo, "bark": triagem.enviar_bark(avisos.texto_bark(serv)) if dado.get("bark") else None})
             if u.path == "/notas/gravar":
+                serv = avisos.PASTAS_SENSIVEIS.get(str(dado.get("pasta", "")).strip())
+                if serv:   # saúde e finanças não vão mais para o app Notas: viram aviso na aba Avisos do serviço
+                    novo = avisos.do_servico(serv).gravar(str(dado.get("titulo", "")) or "Aviso", str(dado.get("markdown", "")))
+                    return self._json(200, {"ok": True, "aviso": novo, "destino": "avisos"})
                 r = gravar(str(dado.get("pasta", "")), str(dado.get("titulo", "")), str(dado.get("markdown", "")), str(dado.get("audio", "")))
                 _gravacao_nova.set()   # nota nova: o Second Brain pode olhar na próxima verificação
                 return self._json(200, r)
             if u.path == "/saude/relatorio-semanal":
                 rel = saude.relatorio_semanal()
-                nota = gravar("Saúde", rel["titulo"], rel["markdown"], rel["audio"])
-                r = {"ok": True, "titulo": rel["titulo"], "nota": nota, "bark": triagem.enviar_bark(rel["bark"])}
+                novo = avisos.do_servico("saude").gravar(rel["titulo"], rel["markdown"])   # o relatório fica na aba Avisos do Heimdall Health, não no Notas
+                r = {"ok": True, "titulo": rel["titulo"], "aviso": novo, "bark": triagem.enviar_bark(avisos.texto_bark("saude"))}
                 if not r["bark"]:
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} relatório semanal gravado, mas o Bark não confirmou (HEIMDALL_BARK_KEY?)\n")
                 return self._json(200, r)

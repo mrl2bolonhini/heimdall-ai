@@ -61,6 +61,7 @@ import financas_boletos as fb  # noqa: E402
 import financas_email as femail  # noqa: E402
 import financas_pluggy as fpl  # noqa: E402
 import heimdall_perguntar as perguntar  # noqa: E402
+import heimdall_avisos as avisos_mod  # noqa: E402  (avisos e análises ficam aqui, na aba Avisos; nunca no app Notas)
 import financas_nucleo as fn  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
@@ -115,7 +116,7 @@ form.linha{display:inline}.sub{color:inherit;opacity:.85}
 td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras")]
+NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras"), ("/avisos", "Avisos")]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -466,6 +467,10 @@ def _gerar_analise(tipo: str) -> int:
         cur = con.execute("INSERT INTO analises(tipo, mes, gerado_em, origem, texto, avisos) VALUES(?,?,?,?,?,?)",
                           (tipo, f["mes"], time.strftime("%Y-%m-%d %H:%M:%S"), r["origem"], r["texto"], " ".join(r["avisos"])))
         con.commit()
+        try:
+            avisos_mod.Avisos(DIR_DADOS / "avisos_financas.db").gravar(("Análise da semana " if tipo == "semana" else "Análise de ") + (time.strftime("%d/%m/%Y") if tipo == "semana" else fn.nome_mes(f["mes"])), r["texto"])
+        except Exception:  # noqa: BLE001  (a análise já está guardada; o aviso é um atalho)
+            pass
         return cur.lastrowid
     finally:
         con.close()
@@ -492,8 +497,6 @@ def pg_analise(sess: dict) -> tuple:
             if ult["avisos"]:
                 corpo.append(f'<p role="status">{e(ult["avisos"])}</p>')
             corpo.append(_texto_em_html(ult["texto"]))
-            corpo.append(f'<form class="lim" method="post" action="/analise/notas">{csrf}<input type="hidden" name="id" value="{ult["id"]}">'
-                         f'<button type="submit" aria-label="Salvar a {titulo.lower()} no Notas">Salvar no Notas</button></form>')
         else:
             try:
                 f = fanal.fatos(banco(), tipo)
@@ -502,7 +505,7 @@ def pg_analise(sess: dict) -> tuple:
                 corpo.append(f"<p>{e(str(ex))}</p>")
         corpo.append(f'<form class="lim" method="post" action="/analise/gerar">{csrf}<input type="hidden" name="tipo" value="{tipo}">'
                      f'<button type="submit">Gerar nova {titulo.lower()}</button></form></section>')
-    corpo.append('<p class="sub">O botão Salvar no Notas grava na pasta Heimdall Finanças. O Notas pode sincronizar com o iCloud: só salve se aceitar que a análise vá para lá.</p>')
+    corpo.append('<p class="sub">Cada análise gerada também fica na aba Avisos. Finanças nunca vão para o app Notas nem para o Notion.</p>')
     return "Análise", "".join(corpo)
 
 
@@ -555,27 +558,6 @@ def _responder_e_guardar(ctx: str, pergunta: str, pagina_: str) -> int:
         return cur.lastrowid
     finally:
         con.close()
-
-
-def _token_agente() -> str:
-    if os.environ.get("HEIMDALL_AGENTE_TOKEN"):
-        return os.environ["HEIMDALL_AGENTE_TOKEN"]
-    try:
-        for ln in (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines():
-            if ln.strip().startswith("HEIMDALL_AGENTE_TOKEN="):
-                return ln.split("=", 1)[1].strip().strip('"').strip("'")
-    except OSError:
-        pass
-    return ""
-
-
-def _salvar_nota(titulo: str, markdown: str) -> None:
-    import json
-    import urllib.request
-    req = urllib.request.Request(os.environ.get("HEIMDALL_AGENTE_URL", "http://127.0.0.1:8003").rstrip("/") + "/notas/gravar", method="POST", data=json.dumps({"pasta": "Heimdall Finanças", "titulo": titulo, "markdown": markdown}).encode("utf-8"),
-                                 headers={"Content-Type": "application/json", "X-Heimdall-Token": _token_agente()})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        r.read()
 
 
 def pg_futuros(sess: dict) -> tuple:
@@ -862,6 +844,8 @@ class Finance(nuvem.ManipuladorBase):
         elif rota == "/perguntar":
             self._ir("/")
             return
+        elif rota == "/avisos":
+            titulo, corpo = "Avisos", avisos_mod.pagina(avisos_mod.Avisos(DIR_DADOS / "avisos_financas.db").listar(), sess["csrf"])
         elif rota == "/futuros":
             titulo, corpo = pg_futuros(sess)
         elif rota == "/boletos":
@@ -944,16 +928,13 @@ class Finance(nuvem.ManipuladorBase):
             sess["flash"] = ("ok", "Comecei a análise. O modelo local pode levar alguns minutos; use Ver a análise para conferir.")
             self._ir("/analise")
             return
-        if rota == "/analise/notas":
-            ult = banco().execute("SELECT * FROM analises WHERE id=?", (campos.get("id", "0") if campos.get("id", "0").isdigit() else 0,)).fetchone()
-            if not ult:
-                raise fn.ErroFinance("Não achei essa análise.")
-            try:
-                _salvar_nota(("Análise da semana " if ult["tipo"] == "semana" else "Análise de ") + (ult["gerado_em"][:10] if ult["tipo"] == "semana" else fn.nome_mes(ult["mes"])), ult["texto"])
-                sess["flash"] = ("ok", "Análise salva na pasta Heimdall Finanças do Notas.")
-            except Exception as ex:  # noqa: BLE001
-                sess["flash"] = ("erro", f"Não consegui salvar no Notas ({type(ex).__name__}). O agente do Mac está de pé?")
-            self._ir("/analise")
+        if rota == "/avisos/lido":
+            av = avisos_mod.Avisos(DIR_DADOS / "avisos_financas.db")
+            if campos.get("id") == "todos":
+                av.marcar_todos()
+            elif campos.get("id", "").isdigit():
+                av.marcar(int(campos["id"]))
+            self._ir("/avisos")
             return
         if rota == "/perguntar":
             q_ = " ".join(campos.get("pergunta", "").split())[:300]

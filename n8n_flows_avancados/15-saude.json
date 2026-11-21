@@ -121,7 +121,7 @@
     },
     {
       "id": "gravarnonotas413",
-      "name": "Gravar no Notas",
+      "name": "Gravar nos Avisos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -130,7 +130,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:8003/notas/gravar",
+        "url": "http://host.docker.internal:8003/avisos/gravar",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -146,7 +146,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ pasta: 'Saúde', titulo: $json.titulo, markdown: $json.markdown }) }}",
+        "jsonBody": "={{ JSON.stringify({ servico: 'saude', titulo: $json.titulo, markdown: $json.markdown }) }}",
         "options": {
           "timeout": 120000
         }
@@ -458,7 +458,7 @@
       "main": [
         [
           {
-            "node": "Gravar no Notas",
+            "node": "Gravar nos Avisos",
             "type": "main",
             "index": 0
           },
@@ -475,7 +475,7 @@
         ]
       ]
     },
-    "Gravar no Notas": {
+    "Gravar nos Avisos": {
       "main": [
         [
           {

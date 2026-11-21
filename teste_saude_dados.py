@@ -254,7 +254,7 @@ confere("hoje com dados mostra passos, típico, frequência e o que falta", "Pas
 confere("relatório geral começa por hoje", hs.relatorio_geral(30).startswith("Hoje:"), hs.relatorio_geral(30)[:80])
 rsem = hs.relatorio_semanal()
 confere("relatório semanal: título, seções, áudio e Bark sem números", rsem["titulo"].startswith("Saúde: semana de ") and "## Como você está agora" in rsem["markdown"] and "Sono" in rsem["audio"]
-        and rsem["bark"]["group"] == "saude" and not any(c.isdigit() for c in rsem["bark"]["body"]) and "nota" in rsem["bark"]["body"], str(rsem["bark"]) + rsem["markdown"][:300])
+        and rsem["bark"]["group"] == "saude" and not any(c.isdigit() for c in rsem["bark"]["body"]) and "Avisos" in rsem["bark"]["body"] and "ECG" not in rsem["bark"]["body"] and "sono" not in rsem["bark"]["body"].lower(), str(rsem["bark"]) + rsem["markdown"][:300])
 # banco novo e vazio: relatórios não quebram
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "vazio")
 banco.DB_DIR = TMP / "vazio"
