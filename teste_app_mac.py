@@ -33,7 +33,7 @@ confere("Swift: começa sem ícone no Dock, em segundo plano", ".accessory" in s
 confere("Swift: sites em janela própria (WKWebView), sem abrir o navegador", "WKWebView" in swift and "NSWorkspace.shared.open" not in swift)
 confere("Swift: nomes dos sites são os nomes reais em inglês", all(f'"{n}"' in swift for n in ("Controls", "Notes", "News", "Health", "Games", "Finance", "Cloud", "Account", "Chat", "Flows", "Status")))
 confere("Swift: janela trata arquivos, downloads e avisos do site", all(t in swift for t in ("runOpenPanelWith", "WKDownloadDelegate", "runJavaScriptAlertPanelWithMessage", "runJavaScriptConfirmPanelWithMessage")))
-confere("Swift: barra de menus com Heimdall, Edição, Visualizar, Sites, Serviços e Janela", all(f'submenuDe(principal, "{m}")' in swift for m in ("Heimdall", "Edição", "Visualizar", "Abrir", "Sistema", "Janela")))
+confere("Swift: barra de menus com Heimdall, Arquivo, Edição, Visualizar, Abrir, Sistema e Janela", all(f'submenuDe(principal, "{m}")' in swift for m in ("Heimdall", "Arquivo", "Edição", "Visualizar", "Abrir", "Sistema", "Janela")))
 confere("Swift: tela cheia, zoom e atalhos de copiar, colar, recarregar e fechar", all(t in swift for t in ("toggleFullScreen", "fullScreenPrimary", "pageZoom", '"c"', '"v"', '"r"', '"w"')))
 confere("Swift: sites no menu com Command+1 a 9", "n < 9" in swift)
 confere("Info.plist: só https (sem exceção de rede local nem carregamento aberto)", "NSAppTransportSecurity" not in pl)

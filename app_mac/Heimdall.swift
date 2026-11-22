@@ -457,12 +457,17 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func diminuirZoom() { if let w = janelaAtual()?.web { w.pageZoom = max(0.3, w.pageZoom - 0.1) } }
     @objc func zoomNormal() { janelaAtual()?.web.pageZoom = 1.0 }
 
-    /// Barra de menus do app quando uma janela está em primeiro plano: Heimdall, Edição, Visualizar, Sites, Serviços e Janela.
+    /// Barra de menus do app quando uma janela está em primeiro plano: Heimdall, Arquivo, Edição, Visualizar, Abrir, Sistema e Janela.
     func montarMenuPrincipal() {
         let principal = NSMenu()
 
         let menuApp = submenuDe(principal, "Heimdall")
         _ = itemDe(menuApp, "Sair do Heimdall", #selector(sair), "q")
+
+        let arquivo = submenuDe(principal, "Arquivo")
+        _ = itemDe(arquivo, "Imprimir…", #selector(NSView.print(_:)), "p", alvo: false)
+        arquivo.addItem(NSMenuItem.separator())
+        _ = itemDe(arquivo, "Fechar a janela", #selector(NSWindow.performClose(_:)), "w", alvo: false)
 
         let edicao = submenuDe(principal, "Edição")
         _ = itemDe(edicao, "Recortar", #selector(NSText.cut(_:)), "x", alvo: false)
@@ -510,7 +515,6 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let janela = submenuDe(principal, "Janela")
         _ = itemDe(janela, "Minimizar", #selector(NSWindow.performMiniaturize(_:)), "m", alvo: false)
         _ = itemDe(janela, "Zoom da janela", #selector(NSWindow.performZoom(_:)), "", alvo: false)
-        _ = itemDe(janela, "Fechar a janela", #selector(NSWindow.performClose(_:)), "w", alvo: false)
 
         NSApp.mainMenu = principal
     }

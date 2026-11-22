@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - App do Mac: menu Arquivo
+- A barra de menus do app ganhou o menu Arquivo (Imprimir, com Command+P, e Fechar a janela, com Command+W), antes dos menus Edição, Visualizar, Abrir, Sistema e Janela. A barra aparece quando uma janela de site está aberta e o app está em primeiro plano. Para valer, recompile o app com heimdall app.
+
 ## 2026-11-21 - Saúde por pessoa na caixa de correio
 - Cada pessoa tem o seu banco de saúde: banco/pessoas/<nome>/heimdall.db (pasta só do dono do Mac, com cópia diária própria). O banco do dono continua onde sempre esteve. heimdall mailbox pull agora importa a saúde de todas as pessoas, cada uma no seu banco; antes só a do dono entrava e as outras ficavam na cópia local.
 - Correção: o caminho da caixa importava só treinos, ECG, frequência por hora e eventos; passos, sono, energia, frequência em repouso, HRV, oxigênio e as demais métricas diárias só eram tratadas pelo n8n. Agora a caixa também grava essas métricas (heimdall_saude_diaria.py). Quem manda direto ao n8n continua como antes; o resumo diário das 5h50 do n8n segue usando só o que o n8n recebeu.
