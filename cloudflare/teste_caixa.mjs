@@ -77,17 +77,30 @@ r = await chamar("POST", "/v1/enviar", { token: ana, corpo: { tipo: "nota", dado
 const idIntruso = r.json.id;
 confere("telefone não escolhe o destino: o campo usuario é ignorado", [...env.CAIXA.m.keys()].some((k) => k === `u/ana/entrada/${idIntruso}.json`) && ![...env.CAIXA.m.keys()].some((k) => k === `u/bia/entrada/${idIntruso}.json`));
 
+r = await chamar("POST", "/v1/hae", { token: ana, corpo: { data: { metrics: [{ name: "heart_rate", units: "count/min", data: [] }] } } });
+const idHae = r.json && r.json.id;
+const guardadoHae = idHae && env.CAIXA.m.get(`u/ana/entrada/${idHae}.json`);
+confere("/v1/hae aceita o corpo do Health Auto Export sem envoltório e guarda como saúde da própria pessoa", r.status === 200 && guardadoHae && JSON.parse(guardadoHae).tipo === "saude" && JSON.parse(guardadoHae).dados.data.metrics.length === 1);
+r = await chamar("POST", "/v1/hae", { token: ana, corpo: [1, 2] });
+confere("/v1/hae aceita lista JSON (formato de alguns exportadores)", r.status === 200);
+r = await chamar("POST", "/v1/hae", { token: ana, corpo: "isto não é json" });
+confere("/v1/hae recusa JSON inválido", r.status === 400);
+r = await chamar("POST", "/v1/hae", { token: "hc_naoexiste0000000000000000", corpo: { a: 1 } });
+confere("/v1/hae exige token", r.status === 401);
+r = await chamar("POST", "/v1/hae", { token: ana, corpo: { x: "y".repeat(6 * 1024 * 1024) } });
+confere("/v1/hae recusa mais de 5 MB (413)", r.status === 413);
+
 r = await chamar("GET", "/v1/entrada", { token: ana });
 confere("telefone não lê a entrada", r.status === 403);
 r = await chamar("GET", "/v1/entrada", { token: dono2 });
-confere("dono lê entradas de todos, com o nome da pessoa", r.status === 200 && r.json.itens.length === 4 && r.json.itens.some((i) => i.usuario === "bia" && i.tipo === "nota") && r.json.itens.some((i) => i.usuario === "ana" && i.dados.passos === 1000));
+confere("dono lê entradas de todos, com o nome da pessoa", r.status === 200 && r.json.itens.length === 6 && r.json.itens.some((i) => i.usuario === "bia" && i.tipo === "nota") && r.json.itens.some((i) => i.usuario === "ana" && i.dados.passos === 1000));
 r = await chamar("GET", "/v1/entrada?usuario=bia", { token: dono2 });
 confere("dono filtra por pessoa", r.json.itens.length === 1);
 r = await chamar("DELETE", `/v1/entrada/ana/${idAna}`, { token: ana });
 confere("telefone não apaga entrada", r.status === 403);
 r = await chamar("DELETE", `/v1/entrada/ana/${idAna}`, { token: dono2 });
 r = await chamar("GET", "/v1/entrada?usuario=ana", { token: dono2 });
-confere("dono apaga o item depois de processar", r.json.itens.length === 2);
+confere("dono apaga o item depois de processar", r.json.itens.length === 4);
 
 r = await chamar("POST", "/v1/saida", { token: ana, corpo: { usuario: "ana", tipo: "lembrete", dados: {} } });
 confere("telefone não escreve na saída", r.status === 403);

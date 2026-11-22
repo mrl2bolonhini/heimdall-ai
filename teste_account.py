@@ -30,14 +30,16 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 porta = srv.server_address[1]
 
 
-def pedir(caminho, host="account.heimdall-ai.tech", jwt=None, origem=None, metodo="GET"):
+def pedir(caminho, host="account.heimdall-ai.tech", jwt=None, origem=None, metodo="GET", corpo=None):
     h = {"Host": host}
+    if corpo is not None:
+        h["Content-Type"] = "application/x-www-form-urlencoded"
     if jwt:
         h[cfa.CABECALHO] = jwt
     if origem:
         h["Origin"] = origem
     k = http.client.HTTPConnection("127.0.0.1", porta, timeout=10)
-    k.request(metodo, caminho, headers=h)
+    k.request(metodo, caminho, body=corpo, headers=h)
     r = k.getresponse()
     corpo = r.read().decode("utf-8", "replace")
     k.close()
@@ -84,6 +86,53 @@ s, hd, b = pedir("/quem.json", host="127.0.0.1")
 confere("porta local: quem.json mostra o Dono", s == 200 and json.loads(b)["nome"] == "Dono")
 s, hd, b = pedir("/nada", jwt="tokdono")
 confere("caminho desconhecido: 404", s == 404)
+
+# ---- Integrações ----
+import tempfile  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import heimdall_integracoes as integ  # noqa: E402
+
+integ.ARQUIVO = Path(tempfile.mkdtemp()) / "banco" / "integracoes.json"
+chamadas = []
+amb = {"HEIMDALL_CAIXA": "1", "HEIMDALL_CAIXA_TOKEN": "hc_dono", "HEIMDALL_CAIXA_MEU_NOME": "murillo"}
+integ.caixa._env = lambda: dict(amb)
+integ.caixa.revogar_pessoa = lambda nome, env=None, abrir=None: chamadas.append(("revogar", nome)) or 1
+integ.caixa.criar_pessoa = lambda nome, env=None, abrir=None: chamadas.append(("criar", nome)) or "hc_tokendeteste1234567890"
+
+s, hd, b = pedir("/integracoes")
+confere("integrações sem Access: 403", s == 403)
+s, hd, b = pedir("/integracoes", jwt="tokdono")
+confere("integrações: página do dono com um h1, botão de ativar (POST) e blocos em preparação",
+        s == 200 and b.count("<h1>") == 1 and 'method="post"' in b and "Ativar a Saúde" in b and b.count("em preparação") == 3 and "<script" not in b and 'lang="pt-BR"' in b, b[:400])
+confere("integrações: nada de link para ação (só botão)", 'href="/integracoes/saude' not in b)
+m = re.search(r'name="csrf" value="([0-9a-f]{32})"', b)
+tok_csrf = m.group(1) if m else ""
+s, hd, b = pedir("/integracoes", jwt="tokana")
+confere("integrações: convidado vê que ainda não está disponível e não recebe botão de ativar", s == 200 and "Ainda não disponível" in b and "Ativar a Saúde" not in b)
+
+s, hd, b = pedir("/integracoes/saude/ativar", jwt="tokdono", metodo="POST", corpo="csrf=" + tok_csrf)
+confere("ativar sem Origin: 403", s == 403)
+s, hd, b = pedir("/integracoes/saude/ativar", jwt="tokdono", metodo="POST", origem="https://outro.exemplo", corpo="csrf=" + tok_csrf)
+confere("ativar com origem de outro site: 403", s == 403)
+s, hd, b = pedir("/integracoes/saude/ativar", jwt="tokdono", metodo="POST", origem="https://account.heimdall-ai.tech", corpo="csrf=errado")
+confere("ativar com csrf errado: 403 e nada criado", s == 403 and not chamadas)
+s, hd, b = pedir("/integracoes/saude/ativar", jwt="tokana", metodo="POST", origem="https://account.heimdall-ai.tech", corpo="csrf=" + integ.csrf({"email": "ana@x.com"}))
+confere("convidado não consegue ativar a Saúde (400) e nada é criado", s == 400 and not chamadas, b[:200])
+s, hd, b = pedir("/integracoes/saude/ativar", jwt="tokdono", metodo="POST", origem="https://account.heimdall-ai.tech", corpo="csrf=" + tok_csrf)
+confere("dono ativa: token novo aparece uma vez, em campo somente leitura, com o endereço /v1/hae e passos",
+        s == 200 and "hc_tokendeteste1234567890" in b and "readonly" in b and "/v1/hae" in b and "Authorization" in b and chamadas == [("revogar", "murillo"), ("criar", "murillo")], f"{s} {chamadas} {b[:300]}")
+confere("o token não fica no arquivo de estado", "hc_tokendeteste" not in integ.ARQUIVO.read_text(encoding="utf-8") and (integ.ARQUIVO.stat().st_mode & 0o777) == 0o600)
+s, hd, b = pedir("/integracoes", jwt="tokdono")
+confere("depois de ativar, a página mostra 'Ativa desde' e o token não aparece de novo", "Ativa desde" in b and "hc_tokendeteste" not in b and "Desativar a Saúde" in b)
+s, hd, b = pedir("/integracoes/saude/desativar", jwt="tokdono", metodo="POST", origem="https://account.heimdall-ai.tech", corpo="csrf=" + tok_csrf)
+confere("desativar revoga o token e limpa o estado", s == 200 and "Saúde desativada" in b and chamadas[-1] == ("revogar", "murillo") and "saude" not in integ._ler().get("murillo", {}))
+amb["HEIMDALL_CAIXA"] = "0"
+s, hd, b = pedir("/integracoes/saude/ativar", jwt="tokdono", metodo="POST", origem="https://account.heimdall-ai.tech", corpo="csrf=" + tok_csrf)
+confere("com a caixa desligada, ativar é recusado com mensagem clara", s == 400 and "desligada" in b)
+confere("nome da pessoa na caixa: dono usa o nome combinado; convidado, o e-mail reduzido", integ.usuario_de({"papel": "dono"}, amb) == "murillo" and integ.usuario_de({"papel": "convidado", "email": "Ana.Souza@x.com"}, amb) == "ana-souza-x-com")
+confere("nome longo ganha sufixo e cabe em 32 caracteres", len(integ.usuario_de({"papel": "convidado", "email": "a" * 80 + "@x.com"}, amb)) <= 32)
+
 srv.shutdown()
 print("\nFALHAS: %d" % falhas if falhas else "\nTUDO OK")
 sys.exit(1 if falhas else 0)

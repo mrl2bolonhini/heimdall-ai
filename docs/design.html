@@ -36,7 +36,7 @@
 <section aria-labelledby="regra"><h2 id="regra">1. Link lê, botão age</h2>
 <ol><li><strong>Link</strong> leva a outro lugar para ler: o menu, "Voltar", o nome de um item em lista ou tabela (um bucket, uma nota, um jogo, uma categoria), "Leia mais" e os links dentro de um texto.</li>
 <li><strong>Botão</strong> faz uma ação ou comando, mesmo quando o resultado é abrir outra página: baixar, atualizar, continuar, confirmar, alterar, classificar, importar, trocar a visão ou o período, paginar, "Ver todos..." e "Ver resultado".</li>
-<li>Uma ação que só consulta é um formulário GET com um botão (<code>design.botao(rota, rótulo, parâmetros, nome_acessível, atual)</code>). Funciona sem JavaScript e o leitor de tela anuncia como botão. Ações que mudam dados são formulários POST com token csrf.</li>
+<li>Uma ação que só consulta é um formulário GET com um botão (<code>design.botao(rota, rótulo, parâmetros, nome_acessível, atual)</code>). Funciona sem JavaScript e o leitor de tela anuncia como botão. Ações que mudam dados são formulários POST com token csrf; em páginas sem sessão (o Account) use <code>design.botao_post(rota, rótulo, csrf, parâmetros, nome_acessível)</code>.</li>
 <li>Botão que age na própria página, sem navegar (copiar, interromper, limpar), é <code>design.botao_js(id, rótulo)</code>: um <code>button type="button"</code> com id, cujo comportamento vem de um script com nonce. Nunca use link para isso. Foi criado para o Controls.</li>
 <li>Botões repetidos numa lista levam o nome do item para o leitor de tela diferenciar, por exemplo "Alterar categoria de Mercado".</li>
 <li>A opção escolhida num grupo de botões é marcada com aria-current.</li>

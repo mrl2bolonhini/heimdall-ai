@@ -51,6 +51,9 @@ b = design.botao("/x", "Ver tudo", {"a": "1", "vazio": ""}, 'Ver "tudo"')
 confere("design.botao gera formulário GET com botão e nome acessível escapado", 'method="get"' in b and "<button" in b and 'aria-label="Ver &quot;tudo&quot;"' in b and 'name="a"' in b and 'name="vazio"' not in b, b)
 confere("design.botao marca a opção atual", 'aria-current="true"' in design.botao("/x", "7 dias", None, "", True))
 
+bp = design.botao_post("/y", "Ativar", "tok", {"a": "1", "vazio": ""}, 'Ativar "x"')
+confere("design.botao_post gera formulário POST com csrf oculto, botão e nome acessível escapado", 'method="post"' in bp and 'name="csrf" value="tok"' in bp and "<button" in bp and 'aria-label="Ativar &quot;x&quot;"' in bp and 'name="vazio"' not in bp, bp)
+
 import heimdall_paginacao as pag  # noqa: E402
 
 confere("paginação é toda de botões", "<a " not in pag.html_paginacao("/x", 2, 5, {}, "") and "<button" in pag.html_paginacao("/x", 2, 5, {}, ""))

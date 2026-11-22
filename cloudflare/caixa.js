@@ -68,6 +68,18 @@ async function listar(env, prefixo, limite = 10) {
   return itens;
 }
 
+// Guarda um item na entrada da pessoa, respeitando a cota diária (por quantidade e por bytes).
+async function guardar(env, usuario, tipo, dados, tamanho) {
+  if (!USUARIO.test(usuario)) return erro(400, "usuário inválido");
+  const chaveCota = `cota:${usuario}:${new Date().toISOString().slice(0, 10)}`;
+  const [usados, bytes] = ((await env.TOKENS.get(chaveCota)) || "0:0").split(":").map(Number);
+  if (usados >= COTA_DIA || bytes + tamanho > COTA_BYTES_DIA) return erro(429, "limite diário de envios");
+  await env.TOKENS.put(chaveCota, `${usados + 1}:${bytes + tamanho}`, { expirationTtl: 172800 });
+  const id = novoId();
+  await env.CAIXA.put(`u/${usuario}/entrada/${id}.json`, JSON.stringify({ tipo, dados, recebido: new Date().toISOString() }));
+  return resp({ id });
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -113,15 +125,15 @@ export default {
       const { tipo, dados } = c.json || {};
       if (!TIPOS.has(tipo) || dados === undefined) return erro(400, "tipo ou dados inválidos");
       const usuario = dono ? (c.json.usuario || "dono") : quem.usuario;
-      if (!USUARIO.test(usuario)) return erro(400, "usuário inválido");
-      const chaveCota = `cota:${usuario}:${new Date().toISOString().slice(0, 10)}`;
-      const [usados, bytes] = ((await env.TOKENS.get(chaveCota)) || "0:0").split(":").map(Number);
-      const tamanho = JSON.stringify(c.json).length;
-      if (usados >= COTA_DIA || bytes + tamanho > COTA_BYTES_DIA) return erro(429, "limite diário de envios");
-      await env.TOKENS.put(chaveCota, `${usados + 1}:${bytes + tamanho}`, { expirationTtl: 172800 });
-      const id = novoId();
-      await env.CAIXA.put(`u/${usuario}/entrada/${id}.json`, JSON.stringify({ tipo, dados, recebido: new Date().toISOString() }));
-      return resp({ id });
+      return guardar(env, usuario, tipo, dados, JSON.stringify(c.json).length);
+    }
+
+    // Endereço para o app Health Auto Export (exportação por API REST): o corpo é o JSON do próprio app, sem envoltório; o tipo é sempre "saude".
+    if (m === "POST" && rota === "/v1/hae") {
+      const c = await lerCorpo(req);
+      if (c.erro) return erro(c.erro, c.erro === 413 ? "grande demais" : "JSON inválido");
+      if (c.json === null || typeof c.json !== "object") return erro(400, "corpo inválido");
+      return guardar(env, quem.usuario, "saude", c.json, JSON.stringify(c.json).length);
     }
 
     if (m === "GET" && rota === "/v1/entrada") {

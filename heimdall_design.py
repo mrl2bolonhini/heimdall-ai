@@ -107,6 +107,14 @@ def botao(rota: str, rotulo: str, params: dict = None, nome_acessivel: str = "",
     return f'<form class="acao" method="get" action="{e(rota)}">{ocultos}<button type="submit"{rot}{marca}>{e(rotulo)}</button></form>'
 
 
+def botao_post(rota: str, rotulo: str, csrf: str, params: dict = None, nome_acessivel: str = "") -> str:
+    """Ação que muda algo (gera token, liga, apaga) como botão: formulário POST com o token csrf em campo oculto. Nunca é link nem GET."""
+    e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
+    ocultos = f'<input type="hidden" name="csrf" value="{e(csrf)}">' + "".join(f'<input type="hidden" name="{e(k)}" value="{e(v)}">' for k, v in (params or {}).items() if v not in (None, ""))
+    rot = f' aria-label="{e(nome_acessivel)}"' if nome_acessivel else ""
+    return f'<form class="acao" method="post" action="{e(rota)}">{ocultos}<button type="submit"{rot}>{e(rotulo)}</button></form>'
+
+
 def botao_js(id_: str, rotulo: str) -> str:
     """Botão que age na própria página, sem navegar (o comportamento vem de um script com nonce que escuta o id). Nunca é link."""
     e = lambda t: html.escape(str(t), quote=True)  # noqa: E731

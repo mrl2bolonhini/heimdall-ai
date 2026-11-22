@@ -19,6 +19,7 @@ import os
 import secrets
 import sys
 import time
+import urllib.parse
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
@@ -52,6 +53,7 @@ import heimdall_cloud as nuvem  # noqa: E402  (marca, cabeçalho com o menu Cont
 import heimdall_conta as conta  # noqa: E402
 import heimdall_conta_info as info  # noqa: E402
 import heimdall_design as design  # noqa: E402
+import heimdall_integracoes as integ  # noqa: E402
 
 e = html.escape
 PORT = int(os.environ.get("HEIMDALL_ACCOUNT_PORT", "8018"))
@@ -93,10 +95,71 @@ def pagina_tour(p: dict, nonce: str) -> bytes:
     saudacao = e(p.get("nome") or p.get("email") or "Dono")
     corpo = (f'<h1>Seus serviços do Heimdall</h1><p>Olá, {saudacao}. Aqui estão os serviços do Heimdall a que você tem acesso, com um link para cada um, o que ele faz '
              f'e como configurar. O menu Conta, no alto de qualquer página, leva a todos eles.</p>' + ("".join(blocos) or "<p>Nenhum serviço liberado ainda. Fale com o dono.</p>"))
-    nav = '<nav aria-label="Principal"><ul><li><a href="#principal">Início</a></li></ul></nav>'
+    return _documento("Seus serviços - Heimdall Account", corpo, nonce)
+
+
+NAV = '<nav aria-label="Principal"><ul><li><a href="/">Serviços</a></li><li><a href="/integracoes">Integrações</a></li></ul></nav>'
+
+
+def _documento(titulo: str, corpo: str, nonce: str) -> bytes:
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>Seus serviços - Heimdall Account</title>{nuvem.ICONE}<style nonce="{nonce}">{design.CSS}</style></head><body><div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Account", nav)}<main id="principal">{corpo}</main>{design.rodape()}</body></html>').encode("utf-8")
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)}</title>{nuvem.ICONE}<style nonce="{nonce}">{design.CSS}</style></head><body><div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div>'
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Account", NAV)}<main id="principal">{corpo}</main>{design.rodape()}</body></html>').encode("utf-8")
+
+
+def _passos_hae(url: str) -> str:
+    itens = ["Instale o app Health Auto Export no iPhone e conceda o acesso aos dados de Saúde que quiser enviar.",
+             "No app, abra Automações e crie uma automação nova do tipo API REST. As automações exigem o plano Premium do app (ou o período de teste).",
+             f"No campo de endereço (URL), coloque: {url}",
+             "Método: POST. Formato: JSON. Escolha as métricas de saúde e, se quiser, os treinos.",
+             "Em cabeçalhos (headers), acrescente o nome Authorization com o valor Bearer, um espaço e o token mostrado nesta página.",
+             "Salve e rode a automação uma vez. No Mac, heimdall mailbox pull importa o que chegou; o Heimdall também busca sozinho de tempos em tempos."]
+    return "<ol>" + "".join(f"<li>{e(x)}</li>" for x in itens) + "</ol>"
+
+
+def pagina_integracoes(p: dict, nonce: str, token: str = "", aviso: str = "", erro: str = "") -> bytes:
+    """A página de Integrações. `token` só vem logo depois de ativar: aparece uma vez, num campo somente leitura."""
+    st = integ.estado(p)
+    tok = integ.csrf(p)
+    url = integ.url_hae()
+    topo = ""
+    if erro:
+        topo = f'<p role="alert">{e(erro)}</p>'
+    elif aviso:
+        topo = f'<p role="status">{e(aviso)}</p>'
+    s = st["itens"]["saude"]
+    if token:
+        saude = (f'<section aria-labelledby="i-saude"><h2 id="i-saude">Saúde</h2><p>Integração ativada. Copie o token agora: ele não aparece de novo, e ativar outra vez gera um token novo e invalida este.</p>'
+                 f'<label for="tk">Token (somente leitura)</label><input id="tk" type="text" readonly value="{e(token)}" autocomplete="off">'
+                 f'<p>Como configurar no iPhone</p>{_passos_hae(url)}</section>')
+    else:
+        if s["ativa"]:
+            estado_txt = f'Ativa desde {e(s["desde"])}. Ativar de novo troca o token.'
+        elif not st["pode"]:
+            estado_txt = "Ainda não disponível para a sua conta: falta o armazenamento por pessoa. Por enquanto só o dono do Heimdall pode ligar a Saúde."
+        elif not st["caixa"]:
+            estado_txt = "A caixa de correio está desligada. No terminal do Mac: heimdall mailbox start, depois heimdall env --set HEIMDALL_CAIXA 1."
+        else:
+            estado_txt = "Ainda não ativada."
+        acoes = ""
+        if st["pode"] and st["caixa"]:
+            acoes = design.botao_post("/integracoes/saude/ativar", "Trocar o token da Saúde" if s["ativa"] else "Ativar a Saúde", tok, None, "Gerar o token da integração de Saúde")
+            if s["ativa"]:
+                acoes += design.botao_post("/integracoes/saude/desativar", "Desativar a Saúde", tok, None, "Desativar a integração de Saúde e invalidar o token")
+        saude = (f'<section aria-labelledby="i-saude"><h2 id="i-saude">Saúde</h2><p>Envia os dados do app Saúde do iPhone para o Heimdall, pelo app Health Auto Export, '
+                 f'passando pela caixa de correio da Cloudflare. Não é criptografia de ponta a ponta: a Cloudflare consegue ler o que está na caixa em trânsito, e o que sobra some em 7 dias.</p>'
+                 f'<p>Estado: {estado_txt}</p>{acoes}</section>')
+    prep = []
+    for chave, texto in (("notas", "Ler as suas notas a partir da conta Apple (iCloud) ou Google. Você poderá escolher as pastas, ou deixar o Heimdall buscar sozinho."),
+                         ("lembretes", "Sincronizar lembretes com a conta Apple ou Google."),
+                         ("calendario", "Sincronizar eventos com a conta Apple ou Google.")):
+        n = st["itens"][chave]["nome"]
+        prep.append(f'<section aria-labelledby="i-{chave}"><h2 id="i-{chave}">{e(n)}</h2><p>{e(texto)}</p><p>Estado: em preparação. Falta o armazenamento por pessoa e a ligação com a conta Apple ou Google. '
+                    f'Para o dono, o Mac já lê Notas, Lembretes e Calendário do iCloud pelo agente da Apple.</p></section>')
+    corpo = (f'<h1>Integrações da sua conta</h1>{topo}<p>Aqui você liga o Heimdall aos apps e contas que usa. Cada integração mostra o estado e o que fazer. '
+             f'Android: por enquanto só Calendário e Tarefas, pela conta Google, quando essa integração ficar pronta; a Saúde do Android precisa de um app próprio, que ainda não existe.</p>'
+             + saude + "".join(prep))
+    return _documento("Integrações - Heimdall Account", corpo, nonce)
 
 
 class Account(nuvem.ManipuladorBase):
@@ -163,12 +226,50 @@ class Account(nuvem.ManipuladorBase):
             if not p or (host not in LOCAIS and not p.get("access")):
                 return self._responder(401, json.dumps({"logado": False}).encode(), "application/json", cors=True)
             return self._responder(200, json.dumps(dados_quem(p), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8", cors=True)
-        if caminho != "/":
+        if caminho not in ("/", "/integracoes"):
             return self._responder(404, "Não encontrado.".encode(), "text/plain; charset=utf-8")
         if not p or (host not in LOCAIS and not p.get("access")):
             return self._responder(403, "Entre pelo Cloudflare Access.".encode(), "text/plain; charset=utf-8")
         nonce = secrets.token_urlsafe(12)
-        self._responder(200, pagina_tour(p, nonce), "text/html; charset=utf-8", csp=f"default-src 'none'; img-src data:; style-src 'nonce-{nonce}'; base-uri 'none'; frame-ancestors 'none'")
+        pagina = pagina_tour(p, nonce) if caminho == "/" else pagina_integracoes(p, nonce)
+        self._html(pagina, nonce)
+
+    def _html(self, pagina: bytes, nonce: str, status: int = 200) -> None:
+        self._responder(status, pagina, "text/html; charset=utf-8", csp=f"default-src 'none'; img-src data:; style-src 'nonce-{nonce}'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+
+    def do_POST(self):
+        """Ações das Integrações. Exigem quem entrou (Access ou porta local), origem do próprio site e o token csrf do formulário."""
+        host = self._host()
+        if host not in hosts_ok():
+            return self._responder(421, "Endereço não permitido.".encode(), "text/plain; charset=utf-8")
+        caminho = self.path.split("?", 1)[0]
+        acoes = {"/integracoes/saude/ativar": integ.ativar_saude, "/integracoes/saude/desativar": integ.desativar_saude}
+        if caminho not in acoes:
+            return self._responder(404, "Não encontrado.".encode(), "text/plain; charset=utf-8")
+        p = self._quem()
+        if not p or (host not in LOCAIS and not p.get("access")):
+            return self._responder(403, "Entre pelo Cloudflare Access.".encode(), "text/plain; charset=utf-8")
+        origem = urllib.parse.urlparse(self.headers.get("Origin") or "").hostname or ""
+        if origem.lower() != host:
+            return self._responder(403, "Origem não permitida.".encode(), "text/plain; charset=utf-8")
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            n = -1
+        if not 0 <= n <= 2048:
+            return self._responder(413, "Pedido grande demais.".encode(), "text/plain; charset=utf-8")
+        campos = urllib.parse.parse_qs(self.rfile.read(n).decode("utf-8", "replace"))
+        if not integ.csrf_ok(p, (campos.get("csrf") or [""])[0]):
+            return self._responder(403, "Formulário vencido ou inválido: abra a página de novo.".encode(), "text/plain; charset=utf-8")
+        nonce = secrets.token_urlsafe(12)
+        try:
+            if caminho.endswith("/ativar"):
+                token = acoes[caminho](p)
+                return self._html(pagina_integracoes(p, nonce, token=token), nonce)
+            acoes[caminho](p)
+            self._html(pagina_integracoes(p, nonce, aviso="Saúde desativada. O token foi invalidado."), nonce)
+        except RuntimeError as err:
+            self._html(pagina_integracoes(p, nonce, erro=f"Não foi possível: {err}."), nonce, 400)
 
 
 def main() -> None:
