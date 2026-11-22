@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>CFBundleDevelopmentRegion</key><string>pt-BR</string>
+  <key>CFBundleLocalizations</key><array><string>pt-BR</string><string>pt</string></array>
   <key>CFBundleName</key><string>Heimdall</string>
   <key>CFBundleDisplayName</key><string>Heimdall</string>
   <key>CFBundleIdentifier</key><string>tech.heimdall.menu</string>

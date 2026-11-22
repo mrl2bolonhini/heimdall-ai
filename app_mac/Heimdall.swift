@@ -519,7 +519,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func diminuirZoom() { if let w = janelaAtual()?.web { w.pageZoom = max(0.3, w.pageZoom - 0.1) } }
     @objc func zoomNormal() { janelaAtual()?.web.pageZoom = 1.0 }
 
-    /// Barra de menus do app quando uma janela está em primeiro plano: Heimdall, Arquivo, Edição, Visualizar, Abrir, Sistema e Janela.
+    /// Barra de menus do app quando uma janela está em primeiro plano: Heimdall, Arquivo (com os itens do sistema), Edição, Visualizar, Abrir e Janela.
     func montarMenuPrincipal() {
         let principal = NSMenu()
 
@@ -528,6 +528,21 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let arquivo = submenuDe(principal, "Arquivo")
         _ = itemDe(arquivo, "Imprimir…", #selector(imprimirJanela), "p")
+        arquivo.addItem(NSMenuItem.separator())
+        _ = itemDe(arquivo, "Ligar os serviços", #selector(ligar))
+        _ = itemDe(arquivo, "Reiniciar os serviços", #selector(reiniciar))
+        _ = itemDe(arquivo, "Parar os serviços", #selector(parar))
+        _ = itemDe(arquivo, "Ver o estado em detalhe", #selector(estado), "e")
+        _ = itemDe(arquivo, "Diagnóstico das janelas", #selector(diagnostico))
+        arquivo.addItem(NSMenuItem.separator())
+        _ = itemDe(arquivo, "Consumo e custo da nuvem (último dia)", #selector(consumo), "u")
+        _ = itemDe(arquivo, "Ligar o modelo grande na nuvem", #selector(alternarNuvem))
+        arquivo.addItem(NSMenuItem.separator())
+        _ = itemDe(arquivo, "Sincronizar agora com os celulares", #selector(sincronizarAgora), "b")
+        _ = itemDe(arquivo, "Resultado da última sincronização", #selector(mostrarUltimaBusca))
+        _ = itemDe(arquivo, "Ligar a sincronização com os celulares", #selector(alternarSync))
+        arquivo.addItem(NSMenuItem.separator())
+        _ = itemDe(arquivo, "Atualizar o Heimdall e reiniciar", #selector(atualizar))
         arquivo.addItem(NSMenuItem.separator())
         _ = itemDe(arquivo, "Fechar a janela", #selector(NSWindow.performClose(_:)), "w", alvo: false)
 
@@ -558,22 +573,6 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 i.representedObject = par.1
             }
         }
-
-        let sistema = submenuDe(principal, "Sistema")
-        _ = itemDe(sistema, "Ligar os serviços", #selector(ligar))
-        _ = itemDe(sistema, "Reiniciar os serviços", #selector(reiniciar))
-        _ = itemDe(sistema, "Parar os serviços", #selector(parar))
-        _ = itemDe(sistema, "Ver o estado em detalhe", #selector(estado), "e")
-        _ = itemDe(sistema, "Diagnóstico das janelas", #selector(diagnostico))
-        sistema.addItem(NSMenuItem.separator())
-        _ = itemDe(sistema, "Consumo e custo da nuvem (último dia)", #selector(consumo), "u")
-        _ = itemDe(sistema, "Ligar o modelo grande na nuvem", #selector(alternarNuvem))
-        sistema.addItem(NSMenuItem.separator())
-        _ = itemDe(sistema, "Sincronizar agora com os celulares", #selector(sincronizarAgora), "b")
-        _ = itemDe(sistema, "Resultado da última sincronização", #selector(mostrarUltimaBusca))
-        _ = itemDe(sistema, "Ligar a sincronização com os celulares", #selector(alternarSync))
-        sistema.addItem(NSMenuItem.separator())
-        _ = itemDe(sistema, "Atualizar o Heimdall e reiniciar", #selector(atualizar))
 
         let janela = submenuDe(principal, "Janela")
         _ = itemDe(janela, "Minimizar", #selector(NSWindow.performMiniaturize(_:)), "m", alvo: false)

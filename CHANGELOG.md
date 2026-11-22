@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - App do Mac: menus em português e menu Sistema dentro de Arquivo
+- O menu Sistema deixou de existir: ligar, reiniciar e parar os serviços, estado em detalhe, diagnóstico das janelas, consumo da nuvem, modelo na nuvem, sincronização com os celulares e atualizar passaram para o menu Arquivo (os mesmos atalhos: Command+E, Command+U, Command+B). A barra fica Heimdall, Arquivo, Edição, Visualizar, Abrir e Janela.
+- Português: os itens que o próprio macOS acrescenta aos menus (ditado, emojis, mover e redimensionar a janela...) saíam em inglês porque o pacote do app não declarava português. O Info.plist agora declara pt-BR e o heimdall app cria Contents/Resources/pt-BR.lproj. Os nomes dos sites no menu Abrir continuam os nomes reais em inglês (Controls, Notes, News, Health, Games, Finance, Cloud, Account, Chat, Flows, Status), pela regra do projeto.
+
 ## 2026-11-22 - App do Mac: sempre app normal, abre o Chat ao iniciar
 - O diagnóstico mostrou que, ao trocar o app de "só barra de menus" para "app normal" com a janela já aberta, o macOS não tratava o Heimdall como app ativo (o app em primeiro plano continuava sendo o anterior) e a barra de menus do alto não era a do Heimdall. O app agora é um app normal desde o início (sem LSUIElement no Info.plist): aparece no Dock e em Command+Tab, e a barra de menus do alto é a dele quando ele está em primeiro plano. Fechar a janela não encerra o app: ele continua com o ícone na barra de estado, e clicar no ícone do Dock abre o Chat de novo.
 - Ao iniciar, o app abre sozinho o Chat, uma única vez, assim que a lista de endereços chega.
