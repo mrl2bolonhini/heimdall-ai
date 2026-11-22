@@ -312,8 +312,14 @@ final class Delegado: NSObject, NSApplicationDelegate {
             return
         }
         let nova = JanelaSite(titulo: nome, url: url)
-        nova.aoFechar = { [weak self] in self?.janelas[nome] = nil }
+        nova.aoFechar = { [weak self] in
+            self?.janelas[nome] = nil
+            // Sem janelas abertas, o app volta a ficar só na barra de menus.
+            if self?.janelas.isEmpty == true { NSApp.setActivationPolicy(.accessory) }
+        }
         janelas[nome] = nova
+        // Com uma janela aberta o app aparece no Dock e em Command+Tab, para ela não se perder atrás das outras.
+        NSApp.setActivationPolicy(.regular)
         nova.mostrar()
     }
 
