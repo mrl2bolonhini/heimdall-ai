@@ -29,7 +29,8 @@ fi
 pkill -x Heimdall 2>/dev/null || true
 set -e
 mkdir -p "$DESTINO/Contents/MacOS" "$DESTINO/Contents/Resources"
-swiftc -O -o "$DESTINO/Contents/MacOS/Heimdall" app_mac/Heimdall.swift
+# O alvo é fixado em macOS 12 para o programa abrir em qualquer Mac recente (sem isso o compilador pode exigir uma versão mais nova que a instalada: erro -10825).
+swiftc -O -target "$(uname -m)-apple-macos12.0" -o "$DESTINO/Contents/MacOS/Heimdall" app_mac/Heimdall.swift
 cp app_mac/Info.plist "$DESTINO/Contents/Info.plist"
 codesign --force --deep --sign - "$DESTINO"
 echo "App instalado em $DESTINO"
