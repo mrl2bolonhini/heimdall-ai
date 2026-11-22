@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copia para o banco (banco/heimdall.db) o histórico de saúde que já está guardado dentro do n8n.
+"""Copia para o banco (db/heimdall.db) o histórico de saúde que já está guardado dentro do n8n.
 
 Rode uma vez, no Mac, com o Docker aberto e o n8n no ar:
     python importar_saude_n8n.py

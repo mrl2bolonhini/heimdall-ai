@@ -4,7 +4,7 @@ Este guia leva o conteúdo de docs/ ao GitHub Pages e aponta o domínio, pelo Cl
 
 ## 0. Antes de tudo: plano do GitHub
 
-O repositório mrl2bolonhini/heimdall-ai é privado. GitHub Pages em repositório privado só funciona em plano pago (Pro, Team ou Enterprise). No plano gratuito há duas saídas: assinar o Pro, ou publicar docs/ pelo Cloudflare Pages (seção "Alternativa" no fim). Uma terceira saída é tornar o repositório público (Settings, General, Danger Zone, Change visibility), o que libera o Pages de graça. O código já não traz dados pessoais (caminhos, IPs e e-mail vêm de variáveis); antes de abrir, confira o histórico: `git log --all --oneline -- .env` deve vir vazio, e `git log --all -p | grep -ciE "api_key|token|senha"` não deve mostrar chave real. Nada em .env, knowledge/, qdrant_storage/ e backups pode estar versionado.
+O repositório mrl2bolonhini/heimdall-ai é privado. GitHub Pages em repositório privado só funciona em plano pago (Pro, Team ou Enterprise). No plano gratuito há duas saídas: assinar o Pro, ou publicar docs/ pelo Cloudflare Pages (seção "Alternativa" no fim). Uma terceira saída é tornar o repositório público (Settings, General, Danger Zone, Change visibility), o que libera o Pages de graça. O código já não traz dados pessoais (caminhos, IPs e e-mail vêm de variáveis); antes de abrir, confira o histórico: `git log --all --oneline -- .env` deve vir vazio, e `git log --all -p | grep -ciE "api_key|token|senha"` não deve mostrar chave real. Nada em .env, knowledge/, qdrant/ e backups pode estar versionado.
 
 A página publicada é pública mesmo que o repositório seja privado. A documentação gerada não contém chaves nem dados pessoais; confira com `grep -ril "token\|senha" docs/` antes de publicar.
 
@@ -12,7 +12,7 @@ A página publicada é pública mesmo que o repositório seja privado. A documen
 
 1. `python3 gerar_docs.py --check`
 2. `git add -A`
-3. `git status --short` (confira que .env, knowledge, qdrant_storage e backups não aparecem)
+3. `git status --short` (confira que .env, knowledge, qdrant e backups não aparecem)
 4. `git commit -m "Documentação e site do GitHub Pages"`
 5. `git push`
 

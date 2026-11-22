@@ -5,9 +5,10 @@ Hoje só a Saúde está pronta, e só para o dono: o app Health Auto Export do i
 (endereço /v1/hae) com o token da pessoa; o Mac busca (heimdall mailbox pull) e importa para o banco de saúde. Notas, Lembretes e Calendário
 (conta Apple ou Google) aparecem como "em preparação": falta o armazenamento por pessoa, e ninguém além do dono tem onde guardar esses dados.
 
-O estado fica em banco/integracoes.json (permissão só do dono): quem ativou o quê e quando. O token nunca é guardado aqui; só a caixa guarda o hash.
+O estado fica em db/integracoes.json (permissão só do dono): quem ativou o quê e quando. O token nunca é guardado aqui; só a caixa guarda o hash.
 """
 import hashlib
+import heimdall_pastas
 import hmac
 import json
 import os
@@ -19,7 +20,7 @@ from pathlib import Path
 import heimdall_caixa as caixa
 
 AQUI = Path(__file__).resolve().parent
-ARQUIVO = AQUI / "banco" / "integracoes.json"
+ARQUIVO = heimdall_pastas.db(AQUI) / "integracoes.json"
 _SEGREDO = secrets.token_bytes(32)  # vale enquanto o Account roda; um reinício só invalida formulários abertos
 
 # chave -> (nome, situação). "pronta" pode ser ativada; "em_preparacao" só informa.

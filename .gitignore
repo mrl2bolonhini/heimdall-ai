@@ -9,16 +9,19 @@ __pycache__/
 .DS_Store
 data/
 outputs/
-cerebro/
+brain/
+cerebro/  # nome antigo
 
 knowledge/
-qdrant_storage/
+qdrant/
+qdrant_storage/  # nome antigo
 backups/
 .email_oficial_estado.json
 
 atualizacao*.zip
 
-banco/
+db/
+banco/  # nome antigo
 *.db
 *.db-wal
 *.db-shm

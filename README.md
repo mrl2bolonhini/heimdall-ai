@@ -246,13 +246,13 @@ Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e
 
 Resumos agrupados: os avisos de rotina saem em três notificações por dia (6h, 8h e 10h) pelo fluxo "Resumo agrupado" (webhook `heimdall-resumo`); falhas, GitOps, alerta do Mac e o estudo continuam na hora. O "Monitor de saúde" (webhook `heimdall-saude`, resumo às 5h50) recebe os dados do Health Auto Export; as regras decidem o que é relevante e o modelo só redige.
 
-Banco pessoal: o Mac guarda um SQLite (`banco/heimdall.db`, fora do Git) com saúde, diários oficiais, e-mails de serviços públicos (sem o corpo), estudos, privacidade, avisos e a análise do Second Brain; o chat consulta pelas ferramentas `banco_*`, `saude_historico` e as de treinos, ECG e frequência cardíaca (roteiro em `guides/LEIAME_saude_apple.txt`). Os planos estão em `ROADMAP.md` e no site.
+Banco pessoal: o Mac guarda um SQLite (`db/heimdall.db`, fora do Git) com saúde, diários oficiais, e-mails de serviços públicos (sem o corpo), estudos, privacidade, avisos e a análise do Second Brain; o chat consulta pelas ferramentas `banco_*`, `saude_historico` e as de treinos, ECG e frequência cardíaca (roteiro em `guides/LEIAME_saude_apple.txt`). Os planos estão em `ROADMAP.md` e no site.
 
 Instalação: `bash scripts/instalar_fluxos_n8n.sh` (básicos), `bash scripts/instalar_automacoes_avancadas.sh` (GitOps, digest, Second Brain, estudo) e `bash scripts/instalar_monitor_privacidade.sh` (monitor e diários). Rodar um fluxo agora: `docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=<id>`.
 
 ## Privacidade e segurança
 
-1. Dados pessoais, chaves e identificadores ficam só no Mac. `.env`, `knowledge/`, `qdrant_storage/` e backups nunca são versionados.
+1. Dados pessoais, chaves e identificadores ficam só no Mac. `.env`, `knowledge/`, `qdrant/` e backups nunca são versionados.
 2. Notas de pastas privadas nunca são lidas, indexadas nem analisadas.
 3. O agente do Mac exige token e só grava nas pastas do próprio Heimdall.
 4. O vigia de e-mail é somente leitura, só confia no remetente confirmado pelo Gmail e nunca segue links. Avisos de serviços sem interesse (Serasa, SPC, Boa Vista, Quod por padrão; HEIMDALL_EMAIL_BAIXA_PRIORIDADE no .env muda a lista) não viram triagem nem lembrete, mas golpe imitando eles continua alertando.

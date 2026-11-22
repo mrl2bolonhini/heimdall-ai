@@ -13,6 +13,7 @@ por x e todos os números por 9, menos um vocabulário de rótulos de extrato (d
 me mostrar o layout do seu banco sem que nenhum nome, valor ou número de conta saia do seu Mac.
 """
 import hashlib
+import heimdall_pastas
 import io
 import re
 import shutil
@@ -590,7 +591,7 @@ def _gravar(con, a: dict, nome: str, conta: str, agora: str = None, hash_arquivo
 # Pasta vigiada
 # --------------------------------------------------------------------------------------------
 def preparar_pasta(base: Path) -> Path:
-    entrada = base / "entrada"
+    entrada = heimdall_pastas.finance_inbox(base)
     for sub in ("", "importados", "revisar"):
         (entrada / sub).mkdir(parents=True, exist_ok=True)
     return entrada
@@ -744,7 +745,7 @@ def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 
 
 def pendentes(base: Path) -> list:
     """(arquivo, motivo) dos arquivos em revisar/."""
-    pasta = Path(base) / "entrada" / "revisar"
+    pasta = heimdall_pastas.finance_inbox(base) / "revisar"
     if not pasta.is_dir():
         return []
     saida = []

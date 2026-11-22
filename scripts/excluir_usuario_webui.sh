@@ -24,6 +24,7 @@ religar() { docker start open-webui > /dev/null 2>&1; }
 docker run --rm -v open-webui:/data -v "$PROJECT_DIR/backups":/backup alpine \
     tar czf "/backup/open-webui-excluir-$STAMP.tgz" -C /data . 2> /dev/null || { religar; fail "não consegui fazer a cópia de segurança; nada foi alterado."; }
 chmod 600 "$ARQ"
+bash "$PROJECT_DIR/scripts/podar_backups.sh"
 
 PY='
 import sqlite3, sys

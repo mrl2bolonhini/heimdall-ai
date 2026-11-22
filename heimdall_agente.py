@@ -41,12 +41,13 @@ Rotas:
 Pastas privadas: notas da pasta "Privado" (e de outras listadas em HEIMDALL_NOTAS_PRIVADAS) nunca são listadas nem lidas.
 Segurança: LÊ qualquer nota (menos as privadas), mas só ESCREVE em pastas cujo nome começa com "Heimdall" (as notas
 pessoais nunca são alteradas) e só grava arquivos dentro do cofre (HEIMDALL_VAULT_DIR, padrão
-./cerebro). Notas das pastas "Heimdall*" e da lixeira não entram na lista de alteradas.
+./brain). Notas das pastas "Heimdall*" e da lixeira não entram na lista de alteradas.
 
 Teste (precisa autorizar o controle do app Notas na primeira vez):
     python heimdall_agente.py --teste
 """
 import argparse
+import heimdall_pastas
 import hmac
 import html
 import json
@@ -95,7 +96,7 @@ _carregar_env_da_voz()
 HOST = os.environ.get("HEIMDALL_AGENTE_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_AGENTE_PORT", "8003"))
 TOKEN = os.environ.get("HEIMDALL_AGENTE_TOKEN", "")
-VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(PROJECT_DIR / "cerebro"))).expanduser()
+VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(heimdall_pastas.brain(PROJECT_DIR)))).expanduser()
 PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continuam aceitos e ignorados
 # Pastas do app Notas que o Heimdall cria e onde só ele escreve. Nunca são lidas como fonte (evita laço) e as
 # suas notas pessoais nunca são alteradas. Para mudar, use no .env: HEIMDALL_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro"

@@ -2,7 +2,7 @@
 """Avisos nativos no Mac: o Heimdall grava o aviso completo numa pasta local e o app do Mac mostra como notificação do macOS.
 
 O Bark entrega ao iPhone com texto genérico (o texto passa por um servidor de terceiros). No Mac não há esse limite: o aviso fica só em
-`banco/avisos_mac/` (permissão 700) e é lido pelo app, que o apaga depois de mostrar. Campos no estilo do Bark: title, body, group, level.
+`db/avisos_mac/` (permissão 700) e é lido pelo app, que o apaga depois de mostrar. Campos no estilo do Bark: title, body, group, level.
 Desligar: HEIMDALL_AVISOS_MAC=0.
 """
 import json

@@ -25,9 +25,9 @@ def confere(nome, ok, extra=""):
         falhas += 1
 
 
-swift = (AQUI / "app_mac" / "Heimdall.swift").read_text(encoding="utf-8")
+swift = (AQUI / "macapp" / "Heimdall.swift").read_text(encoding="utf-8")
 sh = (AQUI / "scripts/construir_app_mac.sh").read_text(encoding="utf-8")
-pl = plistlib.loads((AQUI / "app_mac" / "Info.plist").read_bytes())
+pl = plistlib.loads((AQUI / "macapp" / "Info.plist").read_bytes())
 
 confere("Info.plist: app normal (Dock e barra de menus do alto) e executável certo", "LSUIElement" not in pl and pl.get("CFBundleExecutable") == "Heimdall" and pl.get("CFBundlePackageType") == "APPL")
 confere("Swift: avisos nativos (UNUserNotificationCenter, pasta avisos_mac, interruptor nas Configurações)",

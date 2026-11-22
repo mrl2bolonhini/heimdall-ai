@@ -8,7 +8,7 @@
     python3 financas_cli.py --entrada                             importa o que estiver na pasta de entrada
     python3 financas_cli.py --pasta [--abrir]                     mostra (e abre) a pasta de entrada e mostra a de planilhas
 
-A pasta de entrada é finance/entrada. Arquivos que importam vão para importados/; os que deixam dúvida vão para revisar/,
+A pasta de entrada é finance/inbox. Arquivos que importam vão para importados/; os que deixam dúvida vão para revisar/,
 cada um com um .motivo.txt. Os dados ficam só neste Mac.
 """
 import argparse

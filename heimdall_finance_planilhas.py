@@ -77,7 +77,7 @@ def pg_planilhas(con, sess: dict, pasta: Path) -> tuple:
         corpo.append("<h2>Conjuntos</h2>" + tabela("Conjuntos de planilhas", ["Nome", "Tipo", "Linhas", "Última importação"], linhas, {2}))
     else:
         corpo.append("<p>Ainda não há conjuntos. Importe a primeira planilha acima.</p>")
-    corpo.append(f'<p class="sub">Você também pode soltar planilhas na pasta entrada_planilhas, dentro da pasta de dados do Finance: a cada minuto o Heimdall importa o que entender e deixa as dúvidas aqui. No terminal: heimdall finance --folder.</p>')
+    corpo.append(f'<p class="sub">Você também pode soltar planilhas na pasta sheets, dentro da pasta de dados do Finance: a cada minuto o Heimdall importa o que entender e deixa as dúvidas aqui. No terminal: heimdall finance --folder.</p>')
     return "Planilhas", "".join(corpo)
 
 

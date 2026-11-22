@@ -296,7 +296,7 @@ s, h, c = req("GET", "/doc?t=python&c=sub/extra.txt", cookie=ck)
 confere("texto simples escapado", s == 200 and "&lt;b&gt;x&lt;/b&gt;" in texto(c))
 s, _, _ = req("GET", "/arquivo?t=python&c=perigo.html", cookie=ck)
 confere("html de documento não é servido", s == 404)
-for ruim in ("../../cerebro/saude/exame.md", "..%2Fguia.pdf", "sub/../guia.pdf", "/etc/passwd"):
+for ruim in ("../../brain/saude/exame.md", "..%2Fguia.pdf", "sub/../guia.pdf", "/etc/passwd"):
     s, _, _ = req("GET", f"/arquivo?t=python&c={ruim}", cookie=ck)
     confere(f"fuga em documentos bloqueada: {ruim}", s == 404)
 

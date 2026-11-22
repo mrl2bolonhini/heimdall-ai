@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Mais pastas padronizadas e poda dos backups
+- Padrão de nomes: pasta em inglês, uma palavra só, sem sublinhado. Mudaram: banco para db, cerebro para brain, qdrant_storage para qdrant, app_mac para macapp e, dentro do finance, entrada para inbox e entrada_planilhas para sheets. As pastas de dados do Mac são renomeadas sozinhas na primeira subida (heimdall update --restart), com os mesmos dados, sem copiar nem apagar; a do Qdrant é feita pelo start_heimdall.sh, que remove o contêiner do Qdrant e o recria apontando para a pasta nova (os dados ficam na pasta). Se não der para renomear, o Heimdall segue com o nome antigo.
+- Quem abre a pasta cerebro no Obsidian precisa abrir brain como cofre depois da migração.
+- Novo scripts/podar_backups.sh: depois de cada backup do Open WebUI, do n8n e do Qdrant, mantém só os 3 mais recentes de cada tipo (HEIMDALL_BACKUPS_MANTER no .env muda). Cada cópia do Open WebUI tem cerca de 1 GB e a pasta backups tinha chegado a 12 GB. Só mexe em arquivos .tgz com os nomes dos backups.
+- O .gitignore passou a ignorar .env.* e *.bak (o .env.bak, com segredos, estava solto).
+
 ## 2026-11-22 - Repositório reorganizado em pastas
 - Testes: os 64 arquivos de teste saíram da raiz para tests/<serviço>/ (finance, health, news, notes, games, cloud, account, controls, agent, chat, design, monitor, core). Novo ./rodar_testes.sh roda todos (ou uma pasta: ./rodar_testes.sh finance; ./rodar_testes.sh -l lista). Onde estas novidades antigas dizem "python3 teste_x.py", o arquivo agora está em tests/<serviço>/.
 - Guias e ajudas foram para guides/ (LEIAME_*, heimdall_ajuda.txt, modelos_open_webui.txt, PUBLICAR_PAGINAS.md, instructions.txt); os prompts do chat para prompts/; os scripts de shell (instalar_*, trocar_*, guardar_no_env.sh etc.) para scripts/. Ficam na raiz subir.sh, start_heimdall.sh, start_ecosystem.sh e heimdall.zsh, porque os LaunchAgents do Mac apontam para eles.

@@ -38,8 +38,19 @@ d3 = Path(tempfile.mkdtemp())
 (d3 / "dados_financas" / "velho.txt").write_text("v")
 confere("as duas existem: não mexe em nenhuma", hp.finance(d3) == d3 / "finance" and (d3 / "dados_financas" / "velho.txt").exists() and (d3 / "finance" / "novo.txt").exists())
 
+# demais pastas: db, brain e, dentro do Finance, inbox e sheets
+d4 = Path(tempfile.mkdtemp())
+for antigo in ("banco", "cerebro", "entrada", "entrada_planilhas"):
+    (d4 / antigo).mkdir()
+    (d4 / antigo / "arq.txt").write_text(antigo)
+confere("banco vira db com os dados", hp.db(d4) == d4 / "db" and (d4 / "db" / "arq.txt").read_text() == "banco" and not (d4 / "banco").exists())
+confere("cerebro vira brain com os dados", hp.brain(d4) == d4 / "brain" and (d4 / "brain" / "arq.txt").read_text() == "cerebro")
+confere("entrada vira inbox", hp.finance_inbox(d4) == d4 / "inbox" and (d4 / "inbox" / "arq.txt").read_text() == "entrada")
+confere("entrada_planilhas vira sheets", hp.finance_sheets(d4) == d4 / "sheets" and (d4 / "sheets" / "arq.txt").read_text() == "entrada_planilhas")
+confere("db sem nenhuma pasta devolve db sem criar", hp.db(Path(tempfile.mkdtemp())).name == "db")
+
 # organização do repositório
 soltos = [p.name for p in RAIZ.iterdir() if p.is_file() and (p.name.startswith(("teste_", "test_")) or p.name.startswith("LEIAME_") or p.name.startswith("prompt_chat_"))]
 confere("nenhum teste, guia LEIAME ou prompt solto na raiz", not soltos, ", ".join(soltos))
-confere("nenhuma pasta com o nome antigo no repositório", not any((RAIZ / n).exists() for n in ("n8n_flows", "n8n_flows_avancados", "n8n_flows_monitor", "jogos")))
+confere("nenhuma pasta com o nome antigo no repositório", not any((RAIZ / n).exists() for n in ("n8n_flows", "n8n_flows_avancados", "n8n_flows_monitor", "jogos", "app_mac")))
 sys.exit(1 if falhas else 0)

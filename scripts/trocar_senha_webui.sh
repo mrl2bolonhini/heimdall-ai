@@ -36,6 +36,7 @@ echo "Copiando o volume do Open WebUI para $ARQ ..."
 docker run --rm -v open-webui:/data -v "$PROJECT_DIR/backups":/backup alpine \
     tar czf "/backup/open-webui-senha-$STAMP.tgz" -C /data . 2> /dev/null || fail "não consegui fazer a cópia de segurança; nada foi alterado."
 chmod 600 "$ARQ"
+bash "$PROJECT_DIR/scripts/podar_backups.sh"
 echo "Cópia feita."
 
 USUARIOS="$(docker exec open-webui python3 -c "

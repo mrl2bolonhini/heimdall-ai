@@ -101,7 +101,7 @@ b = cx.importar_saude("bia", {"data": {"metrics": [{"name": "step_count", "units
 d = cx.importar_saude("eu", hae1, "eu")
 va, vb, vd = valores("ana", "eu"), valores("bia", "eu"), valores("eu", "eu")
 confere("cada pessoa no seu banco: Ana, Bia e o dono não se misturam", va[("2026-11-20", "passos")] == 1000.0 and vb == {("2026-11-20", "passos"): 77.0} and vd[("2026-11-20", "passos")] == 1500.0, (va, vb))
-confere("o banco do dono continua no caminho de sempre e o de cada pessoa em banco/pessoas/<nome>/", raiz.exists() and (TMP / "banco" / "pessoas" / "ana" / "heimdall.db").exists() and (TMP / "banco" / "pessoas" / "bia" / "heimdall.db").exists())
+confere("o banco do dono continua no caminho de sempre e o de cada pessoa em db/pessoas/<nome>/", raiz.exists() and (TMP / "banco" / "pessoas" / "ana" / "heimdall.db").exists() and (TMP / "banco" / "pessoas" / "bia" / "heimdall.db").exists())
 confere("a pasta da pessoa é só do dono (0700)", ((TMP / "banco" / "pessoas" / "ana").stat().st_mode & 0o777) == 0o700)
 confere("importar de novo é idempotente (mesmo resultado)", (cx.importar_saude("ana", atalho, "eu"), valores("ana", "eu"))[1] == va)
 confere("a importação devolve o resumo (treinos, FC por hora e métricas diárias)", a["diarias"] >= 4 and a["fc_horas"] == 1 and d["diarias"] >= 5, (a, d))

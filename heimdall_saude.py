@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Saúde do ecossistema Apple no Heimdall: treinos, ECG, frequência cardíaca, sintomas, humor, medicamentos e avisos do relógio.
 
-Duas portas de entrada, a mesma gravação no banco pessoal (banco/heimdall.db):
+Duas portas de entrada, a mesma gravação no banco pessoal (db/heimdall.db):
 
 1. Contínua: o Health Auto Export (app do iPhone) manda um JSON para o n8n, que repassa ao agente do Mac (POST /saude/hae).
    O n8n guarda o diário de sempre (passos, sono, pulso em repouso...); este módulo cuida do que é novo: treinos, ECG,

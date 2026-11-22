@@ -1072,7 +1072,7 @@ class Finance(nuvem.ManipuladorBase):
 
 
 def _vigiar_entrada() -> None:
-    """A cada minuto importa o que foi solto em finance/entrada. Só registra o nome do arquivo, nunca os valores."""
+    """A cada minuto importa o que foi solto em finance/inbox. Só registra o nome do arquivo, nunca os valores."""
     fa.preparar_pasta(DIR_DADOS)
     fplan.pasta_de_entrada(DIR_DADOS)
     while True:

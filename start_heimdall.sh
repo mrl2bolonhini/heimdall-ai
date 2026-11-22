@@ -155,13 +155,23 @@ echo "[1/7] Docker pronto."
 # Rede própria para os contêineres se enxergarem pelo nome.
 docker network inspect heimdall > /dev/null 2>&1 || docker network create heimdall > /dev/null
 
+# --- Pasta do Qdrant: qdrant_storage passou a se chamar qdrant ---
+# O contêiner guarda o caminho antigo; por isso ele é removido (os dados ficam na pasta, no Mac) e recriado com o caminho novo mais abaixo.
+# Se não der para renomear, tudo segue com qdrant_storage, sem perder nada.
+QDRANT_DIR=qdrant
+if [ -d qdrant_storage ] && [ ! -e qdrant ]; then
+    docker rm -f qdrant > /dev/null 2>&1
+    mv qdrant_storage qdrant || QDRANT_DIR=qdrant_storage
+fi
+[ -d qdrant_storage ] && [ ! -e qdrant ] && QDRANT_DIR=qdrant_storage
+
 # --- Atualização opcional das imagens (SearXNG, Qdrant, Open WebUI e extras) ---
 if [ "$WANT_UPDATE" = "1" ]; then
     echo "     Atualizando imagens Docker..."
     mkdir -p backups
     STAMP="$(date +%Y%m%d-%H%M%S)"
-    if [ -d qdrant_storage ]; then
-        tar czf "backups/qdrant_storage-$STAMP.tgz" qdrant_storage && echo "     Backup: backups/qdrant_storage-$STAMP.tgz"
+    if [ -d "$QDRANT_DIR" ]; then
+        tar czf "backups/qdrant-$STAMP.tgz" "$QDRANT_DIR" && echo "     Backup: backups/qdrant-$STAMP.tgz"
     fi
     if docker volume inspect open-webui > /dev/null 2>&1; then
         docker run --rm -v open-webui:/data -v "$PROJECT_DIR/backups":/backup alpine \
@@ -186,6 +196,8 @@ if [ "$WANT_UPDATE" = "1" ]; then
                 || echo "     Aviso: não consegui fazer o backup do volume n8n_data."
         fi
     fi
+    # Só ficam os últimos backups de cada tipo (HEIMDALL_BACKUPS_MANTER no .env muda; padrão 3). Cada cópia do Open WebUI tem cerca de 1 GB.
+    bash "$PROJECT_DIR/scripts/podar_backups.sh"
     case "$HEIMDALL_AWS_EMULATOR" in
         off) ;;
         moto) UPDATE_IMAGES="$UPDATE_IMAGES motoserver/moto:latest" ;;
@@ -200,7 +212,7 @@ if [ "$WANT_UPDATE" = "1" ]; then
         fi
     done
     # Recria os contêineres para usarem a imagem nova. Dados e configurações ficam
-    # nas pastas montadas (searxng/ e qdrant_storage/) e no volume open-webui.
+    # nas pastas montadas (searxng/ e qdrant/) e no volume open-webui.
     docker rm -f searxng qdrant uptime-kuma dozzle moto localstack docling n8n > /dev/null 2>&1
 fi
 
@@ -233,14 +245,14 @@ docker network connect heimdall searxng 2>/dev/null || true
 echo "[2/7] SearXNG pronto (porta 8080)."
 
 # --- Qdrant (base vetorial da ferramenta rag_search) ---
-mkdir -p knowledge qdrant_storage
+mkdir -p knowledge "$QDRANT_DIR"
 if docker ps -a --format '{{.Names}}' | grep -qx qdrant; then
     docker start qdrant > /dev/null
 else
     docker run -d --name qdrant --restart unless-stopped \
         --network heimdall \
         -p 127.0.0.1:6333:6333 \
-        -v "$PROJECT_DIR/qdrant_storage:/qdrant/storage" \
+        -v "$PROJECT_DIR/$QDRANT_DIR:/qdrant/storage" \
         qdrant/qdrant > /dev/null
 fi
 docker network connect heimdall qdrant 2>/dev/null || true

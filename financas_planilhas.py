@@ -9,6 +9,7 @@ Visões são formas gravadas de mostrar um conjunto (colunas escolhidas e na ord
 registros na hora de abrir, lançamentos novos aparecem nelas sem refazer nada.
 """
 import csv
+import heimdall_pastas
 import hashlib
 import io
 import json
@@ -626,7 +627,7 @@ def importar_arquivo(con, dados: bytes, arquivo: str, pasta: Path, **kw) -> list
 
 
 def pasta_de_entrada(base: Path) -> Path:
-    p = Path(base) / "entrada_planilhas"
+    p = heimdall_pastas.finance_sheets(base)
     for sub in ("", "importados"):
         (p / sub).mkdir(parents=True, exist_ok=True)
         try:
@@ -637,7 +638,7 @@ def pasta_de_entrada(base: Path) -> Path:
 
 
 def processar_pasta(con, base: Path, agora: str = None, modelo=None) -> list:
-    """Importa o que foi solto em entrada_planilhas/. Sucesso vai para importados/; dúvida vira pergunta na página Planilhas e o arquivo sai da pasta."""
+    """Importa o que foi solto em sheets/. Sucesso vai para importados/; dúvida vira pergunta na página Planilhas e o arquivo sai da pasta."""
     entrada = pasta_de_entrada(base)
     saida = []
     for arq in sorted(entrada.iterdir()):

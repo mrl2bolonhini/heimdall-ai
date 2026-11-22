@@ -4,7 +4,7 @@
 Use depois de mover uma nota para a pasta "Privado" (ou outra listada em HEIMDALL_NOTAS_PRIVADAS) se ela já tinha
 sido analisada antes. O agente do Mac precisa estar no ar. O script remove, só dessas notas:
   1. os pontos na base vetorial (Qdrant, coleção heimdall_notas);
-  2. a cópia em Markdown em cerebro/heimdall-cerebro/;
+  2. a cópia em Markdown em brain/heimdall-cerebro/;
   3. a nota espelho "Cérebro: <título>" na pasta "Cérebro" do app Notas (vai para "Apagadas Recentemente").
 A nota original nunca é tocada.
 
@@ -12,6 +12,7 @@ Uso (na pasta do projeto):   python3 limpar_privadas.py
 Opção --so-listar mostra o que seria apagado, sem apagar nada.
 """
 import json
+import heimdall_pastas
 import os
 import re
 import subprocess
@@ -23,7 +24,7 @@ AQUI = Path(__file__).resolve().parent
 SO_LISTAR = "--so-listar" in sys.argv
 QDRANT = os.environ.get("QDRANT_URL", "http://localhost:6333").rstrip("/")
 AGENTE = f"http://localhost:{os.environ.get('HEIMDALL_AGENTE_PORT', '8003')}"
-COFRE = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(AQUI / "cerebro"))).expanduser()
+COFRE = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(heimdall_pastas.brain(AQUI)))).expanduser()
 COLECAO = "heimdall_notas"
 
 

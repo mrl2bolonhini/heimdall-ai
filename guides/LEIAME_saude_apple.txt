@@ -1,7 +1,7 @@
 SAÚDE DO ECOSSISTEMA APPLE NO HEIMDALL: TREINOS, ECG, FREQUÊNCIA CARDÍACA E MAIS
 ===============================================================================
 
-O que entra no banco (banco/heimdall.db, só no seu Mac):
+O que entra no banco (db/heimdall.db, só no seu Mac):
 - treinos: tipo, duração, distância, energia, frequência cardíaca (mínima, média, máxima e a série), recuperação em 1 minuto, subida, passos, velocidade, esforço, temperatura e rota.
 - ecg: classificação da Apple, frequência média, a forma de onda inteira (comprimida) e, calculado pelo Heimdall a partir dela, o intervalo entre batimentos (RR), RMSSD, pNN50 e a irregularidade. Tudo informativo, nada é diagnóstico.
 - fc_hora: mínimo, média e máximo da frequência cardíaca por hora; e fc_min, fc_media e fc_max por dia em saude_diaria.

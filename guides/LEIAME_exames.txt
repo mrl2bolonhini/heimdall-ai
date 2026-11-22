@@ -1,12 +1,12 @@
 Exames, receitas e encaminhamentos no Heimdall
 
-O que faz: lê o PDF ou a foto, separa cada item, e só grava nas métricas de saúde depois que você confere. Os originais ficam só no Mac, em banco/documentos/arquivados, com permissão só sua, e não entram no backup do banco.
+O que faz: lê o PDF ou a foto, separa cada item, e só grava nas métricas de saúde depois que você confere. Os originais ficam só no Mac, em db/documentos/arquivados, com permissão só sua, e não entram no backup do banco.
 
 1. Uma vez, no Mac: instale a leitura de foto e de PDF escaneado, se ainda não tiver: brew install tesseract tesseract-lang poppler
 2. Reinicie o agente para ele passar a vigiar a pasta e aceitar o envio do iPhone: ./subir.sh --reiniciar
 
 Pelo Mac
-1. Coloque o PDF ou a foto na pasta banco/documentos/entrada (dentro da pasta do Heimdall). O agente lê sozinho e avisa no Bark, sem nome nem número.
+1. Coloque o PDF ou a foto na pasta db/documentos/entrada (dentro da pasta do Heimdall). O agente lê sozinho e avisa no Bark, sem nome nem número.
 2. Para ler na hora: heimdall labs folder
 3. Ouvir o que foi lido: heimdall labs pending, depois heimdall labs read NÚMERO.
 4. Se estiver certo: heimdall labs confirm NÚMERO. Se algum item estiver errado, deixe-o de fora: heimdall labs confirm NÚMERO --without 2,5. Se o documento não tiver data, acrescente --date AAAA-MM-DD. Para jogar fora: heimdall labs discard NÚMERO.

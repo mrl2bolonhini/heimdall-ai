@@ -5,10 +5,11 @@ Guarda no Mac, fora do n8n e fora do Git, o histórico que hoje se perde ou fica
 saúde por dia, menções dos diários oficiais e análises do Second Brain. O agente (heimdall_agente.py)
 expõe isto em /banco/*; o n8n grava, e o chat e os painéis futuros consultam.
 
-Arquivo: HEIMDALL_DB_DIR/heimdall.db (padrão: ./banco/heimdall.db). Cópia diária em banco/copias (7 últimas).
+Arquivo: HEIMDALL_DB_DIR/heimdall.db (padrão: ./banco/heimdall.db). Cópia diária em db/copias (7 últimas).
 Leitura livre só por SELECT (consulta_sql): conexão somente leitura + autorizador que recusa qualquer outra coisa.
 """
 import contextlib
+import heimdall_pastas
 import json
 import os
 import re
@@ -20,7 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent
-DB_DIR = Path(os.environ.get("HEIMDALL_DB_DIR", str(PROJECT_DIR / "banco"))).expanduser()
+DB_DIR = Path(os.environ.get("HEIMDALL_DB_DIR", str(heimdall_pastas.db(PROJECT_DIR)))).expanduser()
 DB_PATH = DB_DIR / "heimdall.db"
 _RAIZ = DB_DIR   # a pasta de base não muda, mesmo quando banco.pessoa() troca DB_DIR
 _trava = threading.Lock()
@@ -351,7 +352,7 @@ _troca = threading.RLock()
 
 
 def pasta_da_pessoa(nome: str) -> Path:
-    """Pasta do banco de uma pessoa (banco/pessoas/<nome>/). Só a-z, 0-9 e hífen: nada de ../."""
+    """Pasta do banco de uma pessoa (db/pessoas/<nome>/). Só a-z, 0-9 e hífen: nada de ../."""
     if not _NOME_PESSOA.match(nome or ""):
         raise ValueError("nome de pessoa inválido")
     return _RAIZ / "pessoas" / nome
@@ -359,7 +360,7 @@ def pasta_da_pessoa(nome: str) -> Path:
 
 @contextlib.contextmanager
 def pessoa(nome: str, padrao: str = ""):
-    """Dentro do bloco, TODO o módulo (e quem usa banco.DB_PATH) trabalha no banco da pessoa: banco/pessoas/<nome>/heimdall.db, com cópia diária própria.
+    """Dentro do bloco, TODO o módulo (e quem usa banco.DB_PATH) trabalha no banco da pessoa: db/pessoas/<nome>/heimdall.db, com cópia diária própria.
     Se `nome` for o do dono (`padrao`) ou vazio, nada muda e vale o banco de sempre. Troca variáveis do módulo: use só em processo próprio
     (o heimdall mailbox pull), nunca dentro do agente, que atende vários pedidos ao mesmo tempo."""
     global DB_DIR, DB_PATH

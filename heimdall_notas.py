@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Heimdall Notes: um site simples e agradável para LER as notas de estudo e OUVIR os áudios.
 
-Lê direto do cofre (cerebro/: notas em Markdown e áudios .m4a) e da pasta knowledge/ (seus documentos). Não depende de
+Lê direto do cofre (brain/: notas em Markdown e áudios .m4a) e da pasta knowledge/ (seus documentos). Não depende de
 nenhum app: abre no Safari do Mac ou do iPhone, funciona com VoiceOver e usa o mesmo login do painel Cloud
 (a mesma senha e o mesmo código de 6 dígitos).
 
@@ -28,6 +28,7 @@ Variáveis opcionais: HEIMDALL_NOTAS_PORT (8011), HEIMDALL_NOTAS_HOST (127.0.0.1
 Usa só a biblioteca padrão do Python.
 """
 import html
+import heimdall_pastas
 import mimetypes
 import os
 import re
@@ -80,7 +81,7 @@ import heimdall_perguntar as perguntar  # noqa: E402  (campo Perguntar, só com 
 HOST = os.environ.get("HEIMDALL_NOTAS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_NOTAS_PORT", "8011"))
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_NOTAS_HOSTS", "notes.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
-VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(PROJECT_DIR / "cerebro"))).expanduser()
+VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(heimdall_pastas.brain(PROJECT_DIR)))).expanduser()
 KNOWLEDGE = Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
 COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 NOMES = {"heimdall-privacidade": "Monitor de Privacidade", "heimdall-cerebro": "Second Brain", "saude": "Saúde", "heimdall-digest": "Digest"}

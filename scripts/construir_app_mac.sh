@@ -30,8 +30,8 @@ pkill -x Heimdall 2>/dev/null || true
 set -e
 mkdir -p "$DESTINO/Contents/MacOS" "$DESTINO/Contents/Resources"
 # O alvo é fixado em macOS 12 para o programa abrir em qualquer Mac recente (sem isso o compilador pode exigir uma versão mais nova que a instalada: erro -10825).
-swiftc -O -target "$(uname -m)-apple-macos12.0" -o "$DESTINO/Contents/MacOS/Heimdall" app_mac/Heimdall.swift
-cp app_mac/Info.plist "$DESTINO/Contents/Info.plist"
+swiftc -O -target "$(uname -m)-apple-macos12.0" -o "$DESTINO/Contents/MacOS/Heimdall" macapp/Heimdall.swift
+cp macapp/Info.plist "$DESTINO/Contents/Info.plist"
 # Sem uma localização em português dentro do pacote, o macOS mostra em inglês os itens que ele mesmo acrescenta aos menus (ditado, emojis, mover e redimensionar...).
 mkdir -p "$DESTINO/Contents/Resources/pt-BR.lproj"
 printf '"CFBundleName" = "Heimdall";\n"CFBundleDisplayName" = "Heimdall";\n' > "$DESTINO/Contents/Resources/pt-BR.lproj/InfoPlist.strings"

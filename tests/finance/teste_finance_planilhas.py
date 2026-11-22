@@ -179,7 +179,7 @@ confere("arquivo quebrado vira aviso claro", "não parece uma planilha" in corpo
 
 # pasta com permissões do dono
 fp.pasta_de_entrada(hf.DIR_DADOS)
-confere("pastas de planilhas só do dono", oct(os.stat(hf.DIR_DADOS / "entrada_planilhas").st_mode & 0o777) == "0o700" and oct(os.stat(hf.DIR_DADOS / "planilhas_pendentes").st_mode & 0o777) == "0o700")
+confere("pastas de planilhas só do dono", oct(os.stat(hf.DIR_DADOS / "sheets").st_mode & 0o777) == "0o700" and oct(os.stat(hf.DIR_DADOS / "planilhas_pendentes").st_mode & 0o777) == "0o700")
 
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)

@@ -6,7 +6,7 @@ deepseek-coder-v2:16b e conversas) passam a responder pelo gpt-oss-120b do gatew
 local continua na lista com o nome "<modelo>-local" e é o plano de volta: se a nuvem falhar ou o limite cortar, o LiteLLM tenta o local sozinho.
 Com HEIMDALL_NUVEM diferente de 1, vale o litellm_config.yaml sem mudança nenhuma (como antes da migração).
 
-O arquivo gerado (banco/litellm_config_efetivo.yaml, fora do git, permissão 600) leva a chave lida do .env, por isso nunca é copiado.
+O arquivo gerado (db/litellm_config_efetivo.yaml, fora do git, permissão 600) leva a chave lida do .env, por isso nunca é copiado.
 O Conversas usa outro modelo da nuvem (Qwen3 30B, HEIMDALL_NUVEM_CONVERSAS_MODELO muda), porque o gpt-oss recusa o que o gemma local não recusa.
 O gemma-4-uncensored continua disponível, só local, para quem quiser escolher à mão.
 
@@ -14,6 +14,7 @@ O gemma-4-uncensored continua disponível, só local, para quem quiser escolher 
     python3 heimdall_litellm.py --so-gerar             só gera e mostra o caminho do arquivo que será usado
 """
 import os
+import heimdall_pastas
 import sys
 from pathlib import Path
 
@@ -21,7 +22,7 @@ import heimdall_nuvem as nuvem
 
 AQUI = Path(__file__).resolve().parent
 ORIGINAL = AQUI / "litellm_config.yaml"
-EFETIVO = AQUI / "banco" / "litellm_config_efetivo.yaml"
+EFETIVO = heimdall_pastas.db(AQUI) / "litellm_config_efetivo.yaml"
 PADRAO_CHAT = "qwen3-vl-instruct,deepseek-coder-v2:16b,conversas"
 # O Conversas tem modelo próprio na nuvem: o Qwen3 30B custa bem menos por token que o gpt-oss e o Mistral (confira os preços no Workers AI),
 # aceita ferramentas e não recusa tanto. Outro modelo: heimdall env --set HEIMDALL_NUVEM_CONVERSAS_MODELO "workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct"

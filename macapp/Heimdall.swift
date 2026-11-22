@@ -259,7 +259,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         iniciarAvisos()
     }
 
-    // --- avisos nativos: o Heimdall grava o aviso completo em banco/avisos_mac/ (só no Mac) e o app mostra como notificação do macOS
+    // --- avisos nativos: o Heimdall grava o aviso completo em db/avisos_mac/ (só no Mac) e o app mostra como notificação do macOS
     var temporizadorAvisos: Timer?
     var avisosPermitidos: Bool { UserDefaults.standard.object(forKey: "avisosNoMac") as? Bool ?? true }
 
