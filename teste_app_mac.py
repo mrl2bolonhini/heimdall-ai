@@ -35,6 +35,7 @@ confere("Swift: nomes dos sites são os nomes reais em inglês", all(f'"{n}"' in
 confere("Swift: janela trata arquivos, downloads e avisos do site", all(t in swift for t in ("runOpenPanelWith", "WKDownloadDelegate", "runJavaScriptAlertPanelWithMessage", "runJavaScriptConfirmPanelWithMessage")))
 confere("Swift: menu principal com copiar, colar, recarregar e fechar (atalhos)", all(t in swift for t in ('keyEquivalent: "c"', 'keyEquivalent: "v"', 'keyEquivalent: "r"', 'keyEquivalent: "w"')))
 confere("Info.plist: libera só a rede local para o http://localhost", pl.get("NSAppTransportSecurity", {}).get("NSAllowsLocalNetworking") is True and "NSAllowsArbitraryLoads" not in pl.get("NSAppTransportSecurity", {}))
+confere("Swift: o chat abre pelo endereço público (Cloudflare Access), não por localhost", "HEIMDALL_WEBUI_HOST" in swift and "chat.heimdall-ai.tech" in swift)
 confere("Swift: rótulo de acessibilidade na barra de menus", "setAccessibilityLabel" in swift)
 confere("Swift: não tem segredo, token nem chave", not re.search(r"(hc_|sk-|Bearer|API_TOKEN|password|senha)", swift, re.I))
 confere("Swift: chama só o comando heimdall (nada de rm, sudo ou curl)", not re.search(r'"(rm|sudo|curl|sh)"', swift) and "sudo" not in swift)
