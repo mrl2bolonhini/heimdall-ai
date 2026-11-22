@@ -26,7 +26,7 @@ sh = (AQUI / "construir_app_mac.sh").read_text(encoding="utf-8")
 pl = plistlib.loads((AQUI / "app_mac" / "Info.plist").read_bytes())
 
 confere("Info.plist: app de barra de menus (sem Dock) e executável certo", pl.get("LSUIElement") is True and pl.get("CFBundleExecutable") == "Heimdall" and pl.get("CFBundlePackageType") == "APPL")
-sem_texto = re.sub(r'"(?:[^"\\]|\\.)*"', '""', re.sub(r"//[^\n]*", "", swift))
+sem_texto = re.sub(r"//[^\n]*", "", re.sub(r'"(?:[^"\\]|\\.)*"', '""', swift))
 confere("Swift: chaves e parênteses balanceados", sem_texto.count("{") == sem_texto.count("}") and sem_texto.count("(") == sem_texto.count(")"))
 confere("Swift: toda ação do menu tem método @objc", all(f"func {n}(" in swift for n in set(re.findall(r"#selector\((\w+)[(\)]", swift))))
 confere("Swift: sem ícone no Dock e rodando em segundo plano", ".accessory" in swift and "statusItem" in swift)
