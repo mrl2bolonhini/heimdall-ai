@@ -31,8 +31,14 @@ sleep 1
 if ! docker info > /dev/null 2>&1; then
     echo "[1/5] Subindo o Docker Desktop..."
     open -g -j -a Docker   # em segundo plano e escondido: não rouba o foco nem abre a janela
+    ESPERA=0
     while ! docker info > /dev/null 2>&1; do
         sleep 2
+        ESPERA=$((ESPERA+2))
+        if [ "$ESPERA" = 40 ]; then   # se o modo escondido não subiu o Docker, tenta o modo normal
+            echo "O Docker não subiu escondido; abrindo do jeito normal..."
+            open -a Docker
+        fi
     done
 fi
 echo "[1/5] Docker pronto."
