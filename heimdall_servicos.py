@@ -41,11 +41,10 @@ def _porta(var: str, padrao: int) -> int:
 def catalogo() -> list:
     """Lista de serviços, na ordem em que aparecem. As portas respeitam o .env."""
     py = sys.executable or "python3"
-    lit = str(Path(py).parent / "litellm")
-    lit_cmd = [lit] if os.path.exists(lit) else [py, "-m", "litellm.proxy.proxy_cli"]
+    lit_cmd = [py, "heimdall_litellm.py"]  # escolhe a configuração conforme HEIMDALL_NUVEM e inicia o LiteLLM
     return [
         {"id": "litellm", "nome": "LiteLLM", "porta": 9000, "tipo": "cmd", "log": "litellm",
-         "liga": lit_cmd + ["--config", "litellm_config.yaml", "--host", "0.0.0.0", "--port", "9000"]},
+         "liga": lit_cmd + ["--host", "0.0.0.0", "--port", "9000"]},
         {"id": "ollama", "nome": "Ollama", "porta": 11434, "tipo": "cmd", "log": "ollama", "liga": ["ollama", "serve"]},
         {"id": "qdrant", "nome": "Qdrant", "porta": 6333, "tipo": "docker", "alvo": ["qdrant"]},
         {"id": "searxng", "nome": "SearXNG", "porta": 8080, "tipo": "docker", "alvo": ["searxng"]},

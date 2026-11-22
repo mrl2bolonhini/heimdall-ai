@@ -272,6 +272,7 @@ SCRIPTS = [
     ("teste_boletos.py", "Teste do leitor de boletos, com linhas inventadas montadas por contas independentes."),
     ("teste_finance_chat.py", "Teste das ferramentas do Finance no chat: leitura, filtros, conexão somente leitura, desligar e banco ausente."),
     ("financas_analise.py", "Análise de consultor do Finance: fatos calculados em código (semana e mês), texto fixo, reescrita pelo modelo local com conferência dos números e contexto das perguntas."),
+    ("heimdall_litellm.py", "Inicia o LiteLLM: com HEIMDALL_NUVEM=1 gera banco/litellm_config_efetivo.yaml (chat no gpt-oss-120b da nuvem, modelo local como volta automática); desligado, usa o litellm_config.yaml."),
     ("heimdall_perguntar.py", "Perguntar ao modelo local, reutilizável pelos sites: contexto montado pelo código, resposta só com base nele, conferência dos valores e tarefas em segundo plano. Sem reserva na nuvem."),
     ("teste_finance_analise.py", "Teste da análise e do Perguntar com modelo simulado."),
     ("financas_pluggy.py", "Conexão com os bancos pelo Open Finance, com o plano pessoal gratuito do Meu Pluggy: autenticação e leituras (GET) de contas e transações em /v2/transactions, conversão de sinais (conta corrente pelo tipo, cartão pela fatura), importação sem duplicar, aviso de autorização perto de vencer e gravação das chaves no .env a partir da área de transferência. Nada é movido nem pago; os dados passam pelos servidores do Pluggy."),

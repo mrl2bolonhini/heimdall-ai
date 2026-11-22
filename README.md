@@ -114,6 +114,7 @@ python3 teste_app_mac.py                  # confere o app de barra de menus do M
 bash teste_silenciar_docker.sh            # script que impede o Docker de abrir o painel ao iniciar (pasta falsa)
 node cloudflare/teste_caixa.mjs           # Worker da caixa de correio (KV e R2 falsos)
 python3 teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
+python3 teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor HEIMDALL_NUVEM (sem rede)
 python3 teste_notas.py                   # Heimdall Notes (sem rede)
 python3 teste_news.py                    # Heimdall News (sem rede)
 python3 teste_trechos.py                      # trechos de livros do estudo (sem rede)

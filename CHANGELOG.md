@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Chat na nuvem (LiteLLM com o gpt-oss-120b)
+- Com HEIMDALL_NUVEM=1, o chat do Open WebUI passa a responder pelo gpt-oss-120b da Cloudflare (gateway "heimdall", teto de gasto no gateway) em vez do modelo local, que era lento. Valem para os modelos Meus Dados, Saúde, Finanças, Curiosidades e Documentos e Memória (base qwen3-vl-instruct) e para o Código (base deepseek-coder-v2:16b). O gpt-oss chama as ferramentas (MCP) normalmente.
+- Plano de volta: o modelo local continua na lista com o nome "<modelo>-local" e é usado sozinho se a nuvem falhar ou o limite de gasto cortar. Com HEIMDALL_NUVEM=0 (ou sem a chave da Cloudflare) vale o litellm_config.yaml exatamente como antes.
+- O Conversas (gemma-4-uncensored) fica local de propósito, porque o gpt-oss recusa coisas que esse modelo não recusa. Para incluir: heimdall env --set HEIMDALL_NUVEM_CHAT "qwen3-vl-instruct,deepseek-coder-v2:16b,gemma-4-uncensored".
+- Novo heimdall_litellm.py: gera, a cada subida, banco/litellm_config_efetivo.yaml (permissão 600, fora do git, leva a chave lida do .env) e inicia o LiteLLM com ele; start_heimdall.sh e o Controls passaram a usá-lo. Diferente dos outros usos da nuvem, aqui o interruptor só vale depois de reiniciar o LiteLLM (heimdall restart ou religar o LiteLLM pelo Controls).
+- Novo teste: python3 teste_litellm_nuvem.py (sem rede).
+
 ## 2026-11-22 - Finance: tudo do Pluggy e abas criadas pelos dados
 - O sincronizador do Pluggy passou a ler também contas e cartões (saldo, limite, fechamento, cheque especial), faturas de cartão, investimentos, movimentações de investimentos e empréstimos e financiamentos. Cada leitura vira uma foto do dia nos conjuntos "Pluggy: ..." (histórico de saldos e posições), com todas as colunas que o Pluggy mandar e uma visão "Principais". Se o plano ou o banco não liberar um produto, a página Importar extrato avisa e as transações seguem normais.
 - Identidade (CPF, endereço, telefones) não é lida, de propósito.
