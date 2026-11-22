@@ -84,6 +84,7 @@ final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownload
         janela.title = "Heimdall " + titulo
         janela.contentView = web
         janela.isReleasedWhenClosed = false
+        janela.collectionBehavior = [.fullScreenPrimary]
         janela.delegate = self
         janela.center()
         web.navigationDelegate = self
@@ -254,6 +255,7 @@ final class Delegado: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async {
                 self.sites = achados
                 self.montarMenu()
+                self.montarMenuPrincipal()
             }
         }
     }
@@ -331,37 +333,73 @@ final class Delegado: NSObject, NSApplicationDelegate {
     @objc func voltarJanela() { janelaAtual()?.web.goBack() }
     @objc func avancarJanela() { janelaAtual()?.web.goForward() }
 
-    /// Menu do app quando uma janela está em primeiro plano: copiar e colar, recarregar, voltar, fechar. O app não tem ícone no Dock.
+    func itemDe(_ menu: NSMenu, _ titulo: String, _ acao: Selector?, _ tecla: String = "", alvo: Bool = true) -> NSMenuItem {
+        let i = menu.addItem(withTitle: titulo, action: acao, keyEquivalent: tecla)
+        if alvo { i.target = self }
+        return i
+    }
+
+    func submenuDe(_ principal: NSMenu, _ titulo: String) -> NSMenu {
+        let item = NSMenuItem()
+        principal.addItem(item)
+        let menu = NSMenu(title: titulo)
+        item.submenu = menu
+        return menu
+    }
+
+    @objc func aumentarZoom() { if let w = janelaAtual()?.web { w.pageZoom += 0.1 } }
+    @objc func diminuirZoom() { if let w = janelaAtual()?.web { w.pageZoom = max(0.3, w.pageZoom - 0.1) } }
+    @objc func zoomNormal() { janelaAtual()?.web.pageZoom = 1.0 }
+
+    /// Barra de menus do app quando uma janela está em primeiro plano: Heimdall, Edição, Visualizar, Sites, Serviços e Janela.
     func montarMenuPrincipal() {
         let principal = NSMenu()
 
-        let itemApp = NSMenuItem()
-        principal.addItem(itemApp)
-        let menuApp = NSMenu(title: "Heimdall")
-        let sairItem = menuApp.addItem(withTitle: "Sair do Heimdall", action: #selector(sair), keyEquivalent: "q")
-        sairItem.target = self
-        itemApp.submenu = menuApp
+        let menuApp = submenuDe(principal, "Heimdall")
+        _ = itemDe(menuApp, "Sair do Heimdall", #selector(sair), "q")
 
-        let itemEdicao = NSMenuItem()
-        principal.addItem(itemEdicao)
-        let edicao = NSMenu(title: "Edição")
-        edicao.addItem(withTitle: "Recortar", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        edicao.addItem(withTitle: "Copiar", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        edicao.addItem(withTitle: "Colar", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        edicao.addItem(withTitle: "Selecionar tudo", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
-        itemEdicao.submenu = edicao
+        let edicao = submenuDe(principal, "Edição")
+        _ = itemDe(edicao, "Recortar", #selector(NSText.cut(_:)), "x", alvo: false)
+        _ = itemDe(edicao, "Copiar", #selector(NSText.copy(_:)), "c", alvo: false)
+        _ = itemDe(edicao, "Colar", #selector(NSText.paste(_:)), "v", alvo: false)
+        _ = itemDe(edicao, "Selecionar tudo", #selector(NSText.selectAll(_:)), "a", alvo: false)
 
-        let itemJanela = NSMenuItem()
-        principal.addItem(itemJanela)
-        let janela = NSMenu(title: "Janela")
-        let rec = janela.addItem(withTitle: "Recarregar", action: #selector(recarregarJanela), keyEquivalent: "r")
-        rec.target = self
-        let vol = janela.addItem(withTitle: "Voltar", action: #selector(voltarJanela), keyEquivalent: "[")
-        vol.target = self
-        let ava = janela.addItem(withTitle: "Avançar", action: #selector(avancarJanela), keyEquivalent: "]")
-        ava.target = self
-        janela.addItem(withTitle: "Fechar a janela", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        itemJanela.submenu = janela
+        let visualizar = submenuDe(principal, "Visualizar")
+        let tela = itemDe(visualizar, "Entrar ou sair da tela cheia", #selector(NSWindow.toggleFullScreen(_:)), "f", alvo: false)
+        tela.keyEquivalentModifierMask = [.command, .control]
+        visualizar.addItem(NSMenuItem.separator())
+        _ = itemDe(visualizar, "Recarregar", #selector(recarregarJanela), "r")
+        _ = itemDe(visualizar, "Voltar", #selector(voltarJanela), "[")
+        _ = itemDe(visualizar, "Avançar", #selector(avancarJanela), "]")
+        visualizar.addItem(NSMenuItem.separator())
+        _ = itemDe(visualizar, "Aumentar o zoom", #selector(aumentarZoom), "+")
+        _ = itemDe(visualizar, "Diminuir o zoom", #selector(diminuirZoom), "-")
+        _ = itemDe(visualizar, "Tamanho normal", #selector(zoomNormal), "0")
+
+        let menuSites = submenuDe(principal, "Sites")
+        if sites.isEmpty {
+            _ = itemDe(menuSites, "Atualizar a lista de endereços", #selector(recarregarSites))
+        } else {
+            for (n, par) in sites.enumerated() {
+                let i = itemDe(menuSites, par.0, #selector(abrirSite(_:)), n < 9 ? String(n + 1) : "")
+                i.representedObject = par.1
+            }
+        }
+
+        let servicos = submenuDe(principal, "Serviços")
+        _ = itemDe(servicos, "Estado dos serviços", #selector(estado), "e")
+        _ = itemDe(servicos, "Ligar os serviços", #selector(ligar))
+        _ = itemDe(servicos, "Reiniciar os serviços", #selector(reiniciar))
+        _ = itemDe(servicos, "Parar os serviços", #selector(parar))
+        servicos.addItem(NSMenuItem.separator())
+        _ = itemDe(servicos, "Consumo da nuvem (último dia)", #selector(consumo), "u")
+        _ = itemDe(servicos, "Buscar agora na caixa de correio", #selector(buscarAgora), "b")
+        _ = itemDe(servicos, "Atualizar o Heimdall e reiniciar", #selector(atualizar))
+
+        let janela = submenuDe(principal, "Janela")
+        _ = itemDe(janela, "Minimizar", #selector(NSWindow.performMiniaturize(_:)), "m", alvo: false)
+        _ = itemDe(janela, "Zoom da janela", #selector(NSWindow.performZoom(_:)), "", alvo: false)
+        _ = itemDe(janela, "Fechar a janela", #selector(NSWindow.performClose(_:)), "w", alvo: false)
 
         NSApp.mainMenu = principal
     }
