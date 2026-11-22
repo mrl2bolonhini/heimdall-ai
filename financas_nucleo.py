@@ -84,6 +84,17 @@ CREATE TABLE IF NOT EXISTS importacoes(
   id INTEGER PRIMARY KEY AUTOINCREMENT, arquivo TEXT, conta TEXT, quando TEXT, formato TEXT, novas INTEGER, repetidas INTEGER);
 CREATE TABLE IF NOT EXISTS deduplicados(conta TEXT NOT NULL, data TEXT NOT NULL, valor INTEGER NOT NULL, PRIMARY KEY(conta, data, valor));
 CREATE TABLE IF NOT EXISTS renomeacoes(antigo TEXT NOT NULL, novo TEXT NOT NULL, quando TEXT, PRIMARY KEY(antigo, novo));
+CREATE TABLE IF NOT EXISTS conjuntos(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL UNIQUE, tipo TEXT NOT NULL, colunas TEXT NOT NULL, papeis TEXT NOT NULL, criado TEXT);
+CREATE TABLE IF NOT EXISTS modelos(
+  assinatura TEXT PRIMARY KEY, conjunto_id INTEGER NOT NULL, tipo TEXT NOT NULL, papeis TEXT NOT NULL, criado TEXT);
+CREATE TABLE IF NOT EXISTS registros(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, conjunto_id INTEGER NOT NULL, hash TEXT NOT NULL, dados TEXT NOT NULL, arquivo TEXT, importado_em TEXT, UNIQUE(conjunto_id, hash));
+CREATE TABLE IF NOT EXISTS visoes(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, conjunto_id INTEGER NOT NULL, nome TEXT NOT NULL, config TEXT NOT NULL, criado TEXT, UNIQUE(conjunto_id, nome));
+CREATE TABLE IF NOT EXISTS duvidas(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, arquivo TEXT, aba TEXT NOT NULL DEFAULT '', hash_arquivo TEXT NOT NULL, pergunta TEXT NOT NULL, campos TEXT NOT NULL, criado TEXT);
+CREATE TABLE IF NOT EXISTS planilhas_arquivos(hash TEXT PRIMARY KEY, nome TEXT, quando TEXT);
 """
 
 

@@ -91,7 +91,7 @@ confere("pergunta: resposta com valor dos dados passa sem aviso", r["texto"].sta
 hp.chamar_local = lambda *a, **k: "Foram R$ 777,77."
 r = hp.responder(ctx, "x")
 confere("pergunta: valor que não está nos dados gera aviso", r["avisos"] and "R$ 777,77" in r["avisos"][0], r)
-confere("o módulo não tem reserva na nuvem", "cloudflare" not in (AQUI / "heimdall_perguntar.py").read_text(encoding="utf-8").lower().replace("nunca cai para modelo de fora", ""))
+confere("o módulo tenta a nuvem só quando ligada e volta ao modelo local se ela falhar", "nuvem.ativo()" in (AQUI / "heimdall_perguntar.py").read_text(encoding="utf-8") and "usando o modelo local" in (AQUI / "heimdall_perguntar.py").read_text(encoding="utf-8"))
 
 # tarefas em segundo plano
 import time  # noqa: E402

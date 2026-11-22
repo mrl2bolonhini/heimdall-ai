@@ -2,6 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Finance: planilhas, investimentos, empréstimos e visões personalizadas
+- Novas abas no Finance: Planilhas, Investimentos, Empréstimos e Visões. Em Planilhas você envia xlsx ou csv (ou solta o arquivo na pasta entrada_planilhas, que o Heimdall confere a cada minuto) de gastos, investimentos, empréstimos ou qualquer outro assunto.
+- O Heimdall descobre o tipo e o papel de cada coluna pelas palavras do cabeçalho; quando não basta, pergunta ao modelo de linguagem (só o cabeçalho e as 5 primeiras linhas; HEIMDALL_FINANCE_PLANILHAS_NUVEM=0 usa só o modelo local). Se mesmo assim não tiver certeza, guarda o arquivo e faz uma pergunta na página Planilhas (tipo da planilha, qual coluna é o valor etc.); a resposta importa o arquivo.
+- O jeito de ler fica gravado pelas colunas: o próximo arquivo com o mesmo layout (ou 70% parecido) entra sozinho no mesmo conjunto, sem duplicar linhas já importadas nem arquivos idênticos. Planilhas de gastos também alimentam as transações, os orçamentos e o resumo.
+- Investimentos e Empréstimos resumem a posição mais recente de cada ativo ou contrato (total, por tipo, saldo devedor, parcelas por mês).
+- Visões: em cada conjunto você cria visões com as colunas que quiser, na ordem que quiser (botões Mover para cima, Mover para baixo, Tirar da visão e Incluir), com ordenação, filtro por texto e agrupamento com soma. Ficam gravadas e são calculadas na hora de abrir, então as linhas de planilhas futuras aparecem nelas sozinhas.
+- Leitura de xlsx sem biblioteca externa (datas e porcentagens do Excel viram texto legível). Testes: teste_planilhas.py e teste_finance_planilhas.py. O teste_finance_analise.py foi atualizado: o Perguntar usa a nuvem quando ligada.
+- Não incluído: leitura de PDF de investimentos/empréstimos e dados de investimento vindos do Pluggy; hoje entram por planilha.
+
 ## 2026-11-22 - Análise de saúde lida pelo VoiceOver sem armadilhas e estudos conferíveis
 - Faixas como "20‑30 min" (com hífen especial entre os números) eram lidas pelo VoiceOver como "2000 minutos". Agora todo o texto da análise passa por um ajuste: faixas viram "20 a 30 min" e milhares com espaço ("1 776 passos") viram "1776". O modelo também foi instruído a escrever faixas por extenso.
 - Estudos: cada citação agora traz, além da leitura do modelo, o começo do resumo do próprio estudo, para você conferir se ele sustenta mesmo a afirmação (o modelo chegou a citar uma revisão sobre canabinoides para falar de remédios). O modelo foi instruído a citar um estudo só quando o título e o resumo sustentarem diretamente a frase, e a usar em "a favor" e "contra" só fatos presentes nos dados.

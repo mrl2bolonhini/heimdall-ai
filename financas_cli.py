@@ -6,7 +6,7 @@
     python3 financas_cli.py --prever ARQUIVO                      mostra o que seria importado, sem gravar
     python3 financas_cli.py --importar ARQUIVO [--conta NOME] [--forcar]
     python3 financas_cli.py --entrada                             importa o que estiver na pasta de entrada
-    python3 financas_cli.py --pasta [--abrir]                     mostra (e abre) a pasta de entrada
+    python3 financas_cli.py --pasta [--abrir]                     mostra (e abre) a pasta de entrada e mostra a de planilhas
 
 A pasta de entrada é dados_financas/entrada. Arquivos que importam vão para importados/; os que deixam dúvida vão para revisar/,
 cada um com um .motivo.txt. Os dados ficam só neste Mac.
@@ -402,6 +402,8 @@ def main() -> None:
             pasta = fa.preparar_pasta(DIR_DADOS)
             fa._limpar_motivos(pasta / "revisar")
             print(f"Pasta de entrada: {pasta}")
+            import financas_planilhas as fplan
+            print(f"Pasta de planilhas (xlsx e csv de gastos, investimentos, empréstimos e outros): {fplan.pasta_de_entrada(DIR_DADOS)}")
             for nome, motivo in fa.pendentes(DIR_DADOS):
                 print(f"Para revisar: {nome}: {motivo}")
             if a.abrir and shutil.which("open"):

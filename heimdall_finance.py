@@ -60,6 +60,8 @@ import financas_analise as fanal  # noqa: E402
 import financas_boletos as fb  # noqa: E402
 import financas_email as femail  # noqa: E402
 import financas_pluggy as fpl  # noqa: E402
+import financas_planilhas as fplan  # noqa: E402
+import heimdall_finance_planilhas as hfp  # noqa: E402  (páginas de planilhas, investimentos, empréstimos e visões)
 import heimdall_perguntar as perguntar  # noqa: E402
 import heimdall_avisos as avisos_mod  # noqa: E402  (avisos e análises ficam aqui, na aba Avisos; nunca no app Notas)
 import financas_nucleo as fn  # noqa: E402
@@ -116,7 +118,7 @@ form.linha{display:inline}.sub{color:inherit;opacity:.85}
 td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras"), ("/avisos", "Avisos")]
+NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/planilhas", "Planilhas"), ("/investimentos", "Investimentos"), ("/emprestimos", "Empréstimos"), ("/visoes", "Visões"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras"), ("/avisos", "Avisos")]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -129,7 +131,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
             perguntar_html = _bloco_perguntar(sess)
         except Exception:  # noqa: BLE001  (a página nunca deixa de abrir por causa do campo Perguntar)
             perguntar_html = ""
-        atual = design.aba_da_rota(sess.get("atual", "/"), NAV, {"/transacao/": "/transacoes"})
+        atual = design.aba_da_rota(sess.get("atual", "/"), NAV, {"/transacao/": "/transacoes", "/conjunto": "/planilhas", "/visao": "/visoes"})
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         nav = design.nav_abas(NAV, atual, "Seções do Heimdall Finance")
         f = sess.get("flash")
@@ -860,6 +862,12 @@ class Finance(nuvem.ManipuladorBase):
             titulo, corpo = pg_recorrentes()
         elif rota == "/regras":
             titulo, corpo = pg_regras(sess)
+        elif rota in hfp.ROTAS_GET:
+            r = hfp.get(banco(), rota, q, sess, DIR_DADOS)
+            if not r:
+                self._enviar(404, pagina("Não encontrei", '<p><a href="/planilhas">Voltar às planilhas</a></p>', sess))
+                return
+            titulo, corpo = r
         elif rota == "/exportar.csv":
             self._enviar(200, fn.exportar_csv(banco()).encode("utf-8-sig"), "text/csv; charset=utf-8",
                          [("Content-Disposition", 'attachment; filename="heimdall-finance.csv"')])
@@ -875,13 +883,16 @@ class Finance(nuvem.ManipuladorBase):
 
     def _post(self, rota: str, token: str, sess: dict) -> None:
         tipo = self.headers.get("Content-Type", "")
-        campos, arquivos = nuvem._formulario(self._corpo(MAX_ENVIO + 65536 if rota == "/importar" else 16384), tipo)
+        campos, arquivos = nuvem._formulario(self._corpo(MAX_ENVIO + 65536 if rota in ("/importar", "/planilhas") else 16384), tipo)
         if not secrets.compare_digest(campos.get("csrf", ""), sess["csrf"]):
             self._enviar(403, pagina("Pedido recusado", "<p>Token de segurança inválido. Volte e tente de novo.</p>", sess))
             return
         if rota == "/sair":
             nuvem.encerrar_sessao(token)
             self._ir("/entrar", [self._cookie("", apagar=True)])
+            return
+        if rota in hfp.ROTAS_POST:
+            self._ir(hfp.post(banco(), rota, campos, arquivos, sess, DIR_DADOS, MAX_ENVIO))
             return
         if rota == "/importar":
             arq = arquivos.get("arquivo")
@@ -1054,8 +1065,11 @@ class Finance(nuvem.ManipuladorBase):
 def _vigiar_entrada() -> None:
     """A cada minuto importa o que foi solto em dados_financas/entrada. Só registra o nome do arquivo, nunca os valores."""
     fa.preparar_pasta(DIR_DADOS)
+    fplan.pasta_de_entrada(DIR_DADOS)
     while True:
         try:
+            for r in fplan.processar_pasta(banco(), DIR_DADOS):  # fora da trava: pode esperar o modelo de linguagem
+                sys.stderr.write(f"{time.strftime('%H:%M:%S')} planilhas: {r['arquivo']} -> " + ("erro" if r.get("ok") is False else "processado") + "\n")
             with _trava:
                 for r in fa.processar_entrada(banco(), DIR_DADOS):
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} entrada: {r['arquivo']} -> " + ("duplicado apagado" if r.get("duplicado") else "motivos antigos limpos" if r.get("limpeza") else f"{r['conta']} ({r['novas']} novos)" if r["ok"] else "para revisar") + "\n")
