@@ -192,7 +192,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var ocupado = false
     var sites: [(String, String)] = []
     var ultimaBusca = "Ainda não houve sincronização com os celulares desde que o app abriu."
-    var ligadosCache: (Date, Bool)?
+    var portas: [(String, Int)] = []
+    var situacaoCache: (Date, [String], [String])?
     var temporizador: Timer?
     var janelas: [String: JanelaSite] = [:]
 
@@ -202,6 +203,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         item.button?.setAccessibilityLabel("Heimdall, menu de estado")
         montarMenuPrincipal()
         montarMenu()
+        carregarPortas()
         carregarSites()
         temporizador = Timer.scheduledTimer(withTimeInterval: 600, repeats: true) { [weak self] _ in
             self?.buscarCaixa(silencioso: true)
@@ -222,22 +224,57 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return sub
     }
 
-    // --- estado: o que está ligado agora (os itens do menu se habilitam e desabilitam por ele)
-    func servicosLigados() -> Bool {
-        if let c = ligadosCache, Date().timeIntervalSince(c.0) < 2 { return c.1 }
-        let porta = Int(valorDoEnv("HEIMDALL_CONTROLS_PORT") ?? "8017") ?? 8017
-        let ligados = portaAberta(porta)
-        ligadosCache = (Date(), ligados)
-        return ligados
+    // --- estado: o que está ligado agora (cada serviço tem a sua porta; os itens do menu se habilitam por isto)
+    func carregarPortas() {
+        DispatchQueue.global().async {
+            let (texto, codigo) = rodarHeimdall(["urls"])
+            var achadas: [(String, Int)] = []
+            if codigo == 0 {
+                for linha in texto.split(separator: "\n") {
+                    guard let corte = linha.range(of: ": ") else { continue }
+                    let nome = String(linha[linha.startIndex..<corte.lowerBound])
+                    let url = String(linha[corte.upperBound...]).trimmingCharacters(in: .whitespaces)
+                    if let porta = URL(string: url)?.port { achadas.append((nome, porta)) }
+                }
+            }
+            DispatchQueue.main.async {
+                self.portas = achadas
+                self.situacaoCache = nil
+            }
+        }
     }
+
+    /// (ligados, desligados): olha a porta de cada serviço. Sem a lista de portas, olha só a do Controls.
+    func situacao() -> ([String], [String]) {
+        if let c = situacaoCache, Date().timeIntervalSince(c.0) < 2 { return (c.1, c.2) }
+        var lista = portas
+        if lista.isEmpty { lista = [("controls", Int(valorDoEnv("HEIMDALL_CONTROLS_PORT") ?? "8017") ?? 8017)] }
+        var abertos: [String] = []
+        var fechados: [String] = []
+        for (nome, porta) in lista {
+            if portaAberta(porta) { abertos.append(nome) } else { fechados.append(nome) }
+        }
+        situacaoCache = (Date(), abertos, fechados)
+        return (abertos, fechados)
+    }
+    func todosLigados() -> Bool { return situacao().1.isEmpty }
+    func algumLigado() -> Bool { return !situacao().0.isEmpty }
+
+    func resumoServicos() -> String {
+        let (abertos, fechados) = situacao()
+        if fechados.isEmpty { return "Serviços do Heimdall: todos ligados (\(abertos.count))" }
+        if abertos.isEmpty { return "Serviços do Heimdall: desligados" }
+        return "Serviços do Heimdall: \(abertos.count) de \(abertos.count + fechados.count) ligados"
+    }
+
     func nuvemLigada() -> Bool { return valorDoEnv("HEIMDALL_NUVEM") == "1" }
     func syncLigada() -> Bool { return valorDoEnv("HEIMDALL_CAIXA") == "1" }
 
     /// Liga ou desliga cada item conforme o estado: Ligar só vale com os serviços desligados; Reiniciar e Parar, só com eles ligados.
     @objc func validateMenuItem(_ m: NSMenuItem) -> Bool {
         guard let a = m.action else { return false }
-        if a == #selector(ligar) { return !ocupado && !servicosLigados() }
-        if a == #selector(reiniciar) || a == #selector(parar) { return !ocupado && servicosLigados() }
+        if a == #selector(ligar) { return !ocupado && !todosLigados() }
+        if a == #selector(reiniciar) || a == #selector(parar) { return !ocupado && algumLigado() }
         if a == #selector(alternarNuvem) {
             m.title = nuvemLigada() ? "Desligar o modelo na nuvem (volta ao modelo local)" : "Ligar o modelo grande na nuvem"
             return !ocupado
@@ -253,8 +290,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// Linhas de estado no alto do menu de estado (o VoiceOver as lê como itens sem ação).
     func menuNeedsUpdate(_ menu: NSMenu) {
-        ligadosCache = nil
-        menu.item(withTag: 101)?.title = servicosLigados() ? "Serviços do Heimdall: ligados" : "Serviços do Heimdall: desligados"
+        situacaoCache = nil
+        menu.item(withTag: 101)?.title = resumoServicos()
         menu.item(withTag: 102)?.title = nuvemLigada() ? "Modelo de IA: nuvem (gpt-oss-120b)" : "Modelo de IA: local"
         menu.item(withTag: 103)?.title = syncLigada() ? "Celulares: sincronização ligada" : "Celulares: sincronização desligada"
     }
@@ -326,7 +363,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     /// Roda um comando em segundo plano e mostra o resultado numa janela de aviso. Um de cada vez.
-    func executar(_ titulo: String, _ args: [String]) {
+    func executar(_ titulo: String, _ args: [String], prefixo: String = "") {
         if ocupado {
             avisar("Heimdall", "Ainda estou terminando outra tarefa. Tente de novo em instantes.")
             return
@@ -337,9 +374,9 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let (texto, codigo) = rodarHeimdall(args)
             DispatchQueue.main.async {
                 self.ocupado = false
-                self.ligadosCache = nil
+                self.situacaoCache = nil
                 self.item.button?.title = "Heimdall"
-                avisar(codigo == 0 ? "\(titulo): concluído" : "\(titulo): falhou (código \(codigo))", texto)
+                avisar(codigo == 0 ? "\(titulo): concluído" : "\(titulo): falhou (código \(codigo))", prefixo.isEmpty ? texto : prefixo + "\n\n" + texto)
             }
         }
     }
@@ -358,7 +395,12 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    @objc func estado() { executar("Estado dos serviços", ["status"]) }
+    @objc func estado() {
+        let (abertos, fechados) = situacao()
+        var resumo = "Ligados: " + (abertos.isEmpty ? "nenhum" : abertos.joined(separator: ", ")) + "."
+        resumo += "\nFora do ar: " + (fechados.isEmpty ? "nenhum" : fechados.joined(separator: ", ")) + "."
+        executar("Estado dos serviços", ["status"], prefixo: resumo)
+    }
     @objc func ligar() { executar("Ligar os serviços", ["up"]) }
     @objc func reiniciar() { executar("Reiniciar os serviços", ["restart"]) }
     @objc func parar() { executar("Parar os serviços", ["stop"]) }
