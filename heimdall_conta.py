@@ -108,3 +108,34 @@ def menu(atual: str = "", logado_local: bool = False, sair_html: str = "", cabec
     saida = '<p><a href="/cdn-cgi/access/logout">Sair também do Cloudflare Access</a></p>' if p.get("access") else ""
     return (f'<nav aria-label="Conta"><details class="conta"><summary>Conta: {e(nome)}</summary><p>Conectado como {quem}, entrando por {e(p["via"])}.</p>'
             f'{lista}{sair_html}{saida}</details></nav>')
+
+
+def urls_publicas() -> list:
+    """[(nome do serviço, endereço público)] de todos os serviços, com os nomes de heimdall urls (controls, notes, health...). É o que o app do Mac abre."""
+    import heimdall_usuarios as u
+    return [(u.SERVICOS[k][2], url) for k, _, url in servicos_da({"papel": "dono"})]
+
+
+def main(argv=None) -> int:
+    """python3 heimdall_conta.py --urls-publicas [--verificar]: lista os endereços públicos; com --verificar confere se cada um está atrás do Cloudflare Access."""
+    import sys
+    a = list(sys.argv[1:] if argv is None else argv)
+    if "--urls-publicas" not in a:
+        print(main.__doc__)
+        return 2
+    ruim = 0
+    for nome, url in urls_publicas():
+        if "--verificar" in a:
+            import verificar_access as va
+            cod, _ = va.verificar(url)
+            estado = {0: "protegido pelo Access", 1: "ABERTO: o Access não está na frente", 2: "sem resposta"}[cod]
+            ruim += cod == 1
+            print(f"{nome}: {url}  [{estado}]")
+        else:
+            print(f"{nome}: {url}")
+    return 1 if ruim else 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

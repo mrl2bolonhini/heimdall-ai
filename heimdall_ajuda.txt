@@ -298,11 +298,14 @@ Exemplos:
   heimdall dozzle
 
 @ urls | Todos os endereços locais
-Lista os endereços de chat, notes, news, cloud, health, games, finance, n8n, kuma e dozzle, com as portas do seu .env.
+Lista os endereços de chat, notes, news, cloud, health, games, finance, n8n, kuma e dozzle, com as portas do seu .env. Com --public lista os endereços públicos (https), que passam pelo Cloudflare Access e são os que o app do Mac abre; com --public --check confere, sem entrar, se cada um está mesmo atrás do Access.
 Opções:
+  -p, --public         lista os endereços públicos (os do Cloudflare Access)
+  -c, --check          com --public, confere se cada endereço está protegido pelo Access
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall urls
+  heimdall urls --public --check
 
 @ triage | Triagem obrigatória de avisos
 Sem opção mostra o estado da triagem no agente do Mac (lê o token do .env). Os itens são lembretes na lista "Heimdall: Triagem".

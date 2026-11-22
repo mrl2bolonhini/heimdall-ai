@@ -100,6 +100,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     ingest) printf '%s\n' "-r=--reset" ;;
     env) printf '%s\n' "-s=--set" "-d=--defaults" ;;
     cloudflare) printf '%s\n' "-s=--set" "-t=--test" ;;
+    urls) printf '%s\n' "-p=--public" "-c=--check" ;;
     app) printf '%s\n' "-l=--login" "-r=--remove-login" ;;
     usage) printf '%s\n' "-d=--days" ;;
     ask) printf '%s\n' "-l=--local" "-c=--cloud" ;;
@@ -340,6 +341,9 @@ heimdall() {
     kuma) _heimdall_open "Uptime Kuma" "http://localhost:3001" ;;
     dozzle) _heimdall_open "Dozzle (logs)" "http://localhost:8081" ;;
     urls)
+      if [ "$1" = "--public" ]; then
+        shift; _heimdall_tr "--check=--verificar" "$@"; _heimdall_py heimdall_conta.py --urls-publicas "${_HA[@]}"; return $?
+      fi
       echo "chat: http://localhost:3000"
       echo "notes: http://localhost:$(_heimdall_port HEIMDALL_NOTAS_PORT 8011)"
       echo "news: http://localhost:$(_heimdall_port HEIMDALL_NEWS_PORT 8012)"
@@ -505,6 +509,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       env) compadd -- --set --defaults ;;
       cloudflare) compadd -- --set --test ;;
       mailbox) compadd -- status start add remove pull ;;
+      urls) compadd -- --public --check ;;
       app) compadd -- --login --remove-login ;;
       usage) compadd -- --days ;;
       ask) compadd -- --local --cloud ;;

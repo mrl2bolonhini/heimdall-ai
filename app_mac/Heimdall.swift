@@ -36,20 +36,6 @@ func rodarHeimdall(_ args: [String]) -> (String, Int32) {
     return (texto, p.terminationStatus)
 }
 
-/// Lê um valor do .env do projeto (só o endereço público do chat; o app não guarda nem usa chaves).
-func valorDoEnv(_ chave: String) -> String? {
-    guard let texto = try? String(contentsOfFile: pastaHeimdall + "/.env", encoding: .utf8) else { return nil }
-    for linha in texto.split(separator: "\n") {
-        let l = linha.trimmingCharacters(in: .whitespaces)
-        let sem = l.hasPrefix("export ") ? String(l.dropFirst(7)) : l
-        if sem.hasPrefix(chave + "=") {
-            let v = String(sem.dropFirst(chave.count + 1)).trimmingCharacters(in: CharacterSet(charactersIn: "\"' "))
-            return v.isEmpty ? nil : v
-        }
-    }
-    return nil
-}
-
 func avisar(_ titulo: String, _ texto: String) {
     let a = NSAlert()
     a.messageText = titulo
@@ -64,6 +50,7 @@ func avisar(_ titulo: String, _ texto: String) {
 let nomesDosSites: [(String, String)] = [
     ("controls", "Controls"), ("notes", "Notes"), ("news", "News"), ("health", "Health"),
     ("games", "Games"), ("finance", "Finance"), ("cloud", "Cloud"), ("account", "Account"), ("chat", "Chat"),
+    ("flows", "Flows"), ("status", "Status"),
 ]
 
 /// Uma janela do app com um site do Heimdall dentro (WKWebView). Login, cookies e envio de arquivos funcionam como no navegador.
@@ -238,7 +225,7 @@ final class Delegado: NSObject, NSApplicationDelegate {
 
     func carregarSites() {
         DispatchQueue.global().async {
-            let (texto, codigo) = rodarHeimdall(["urls"])
+            let (texto, codigo) = rodarHeimdall(["urls", "--public"])
             var achados: [(String, String)] = []
             if codigo == 0 {
                 for linha in texto.split(separator: "\n") {
@@ -246,9 +233,7 @@ final class Delegado: NSObject, NSApplicationDelegate {
                     let chave = String(linha[linha.startIndex..<corte.lowerBound])
                     let url = String(linha[corte.upperBound...]).trimmingCharacters(in: .whitespaces)
                     if let par = nomesDosSites.first(where: { $0.0 == chave }), url.hasPrefix("http") {
-                        // O chat só aceita entrada pelo endereço público, onde o Cloudflare Access identifica você (localhost não traz esse cabeçalho).
-                        let destino = chave == "chat" ? "https://" + (valorDoEnv("HEIMDALL_WEBUI_HOST") ?? "chat.heimdall-ai.tech") : url
-                        achados.append((par.1, destino))
+                        achados.append((par.1, url))
                     }
                 }
             }
