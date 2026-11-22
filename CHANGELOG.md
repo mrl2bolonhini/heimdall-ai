@@ -7,6 +7,9 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Menu: estado, ligar, reiniciar e parar os serviços; abrir Controls, Notes, News, Health, Games, Finance, Cloud, Account e Chat (os nomes reais dos sites; os endereços vêm de heimdall urls), cada um em janela própria do app, com o WebKit (motor do Safari), sem abrir o navegador e sem Electron (login, envio de arquivos, downloads e Command+R, Command+[ e Command+] funcionam); consumo da nuvem; buscar na caixa de correio (também sozinho, de 10 em 10 minutos); ligar ou desligar a nuvem e a caixa; atualizar o Heimdall com reinício. Atalhos: Command+E estado, Command+U consumo, Command+B caixa, Command+A atualizar, Command+Q sair.
 - Opção heimdall app --login abre o app sozinho ao entrar no Mac; --remove-login desfaz. Precisa das ferramentas de linha de comando da Apple (xcode-select --install). Teste sem compilar: python3 teste_app_mac.py; a compilação em si só roda no Mac.
 
+## 2026-11-21 - Docker Desktop em segundo plano
+- Ao subir o Heimdall, o Docker Desktop agora é aberto escondido e sem tomar o foco (open -g -j), em start_heimdall.sh e start_ecosystem.sh. Novo script silenciar_docker.sh (--desfazer volta ao normal): desliga na configuração do Docker a abertura do painel ao iniciar, com cópia de segurança. Teste: bash teste_silenciar_docker.sh. Não testado contra o Docker real; o ícone do Docker no Dock continua enquanto ele roda.
+
 ## 2026-11-21 - Correção: janela do app não se perde mais
 - Com o app só na barra de menus, a janela de um site ia para trás das outras ao perder o foco e não havia como voltar a ela. Agora, enquanto há uma janela aberta, o app aparece no Dock e em Command+Tab (e o menu do app aparece no lugar do menu do Safari); ao fechar a última janela, volta a ficar só na barra de menus. Escolher o site de novo no submenu também traz a janela para a frente.
 

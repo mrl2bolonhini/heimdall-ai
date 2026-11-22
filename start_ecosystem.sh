@@ -30,7 +30,7 @@ sleep 1
 # --- Docker + SearXNG ---
 if ! docker info > /dev/null 2>&1; then
     echo "[1/5] Subindo o Docker Desktop..."
-    open -a Docker
+    open -g -j -a Docker   # em segundo plano e escondido: não rouba o foco nem abre a janela
     while ! docker info > /dev/null 2>&1; do
         sleep 2
     done
