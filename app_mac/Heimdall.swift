@@ -72,6 +72,13 @@ func ativarApp() {
     if #available(macOS 14.0, *) { NSApp.activate() } else { NSApp.activate(ignoringOtherApps: true) }
 }
 
+/// Pede ao próprio sistema (LaunchServices) que ative o Heimdall, como se ele tivesse sido aberto de novo. É o caminho que o macOS sempre aceita.
+func reativarPeloSistema() {
+    let c = NSWorkspace.OpenConfiguration()
+    c.activates = true
+    NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: c, completionHandler: nil)
+}
+
 func avisar(_ titulo: String, _ texto: String) {
     let a = NSAlert()
     a.messageText = titulo
@@ -124,6 +131,10 @@ final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownload
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
             ativarApp()
             self?.janela.makeKeyAndOrderFront(nil)
+        }
+        // Se mesmo assim o macOS não considerar o app ativo, a barra de menus do alto seria a de outro app: pede a ativação ao sistema.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            if !NSApp.isActive { reativarPeloSistema() }
         }
     }
 
@@ -334,6 +345,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         adicionar(menu, "Reiniciar os serviços", #selector(reiniciar))
         adicionar(menu, "Parar os serviços", #selector(parar))
         adicionar(menu, "Ver o estado em detalhe", #selector(estado), "e")
+        adicionar(menu, "Diagnóstico das janelas", #selector(diagnostico))
         menu.addItem(NSMenuItem.separator())
 
         let nuvem = grupo(menu, "Nuvem (Cloudflare)")
@@ -464,6 +476,19 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return menu
     }
 
+    @objc func diagnostico() {
+        let politica = ["normal (regular)", "só barra de menus (accessory)", "proibido (prohibited)"][min(max(NSApp.activationPolicy().rawValue, 0), 2)]
+        let primeiro = NSWorkspace.shared.frontmostApplication?.localizedName ?? "nenhum"
+        let menus = NSApp.mainMenu?.items.map { $0.submenu?.title ?? $0.title }.joined(separator: ", ") ?? "nenhum"
+        avisar("Diagnóstico das janelas", """
+        Política do app: \(politica)
+        O Heimdall é o app ativo: \(NSApp.isActive ? "sim" : "não")
+        App em primeiro plano agora: \(primeiro)
+        Menus montados: \(menus)
+        Janelas abertas: \(janelas.count); janela em foco: \(NSApp.keyWindow != nil ? "sim" : "não")
+        """)
+    }
+
     @objc func imprimirJanela() {
         guard let j = janelaAtual() else { return }
         let operacao = j.web.printOperation(with: NSPrintInfo.shared)
@@ -520,6 +545,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         _ = itemDe(sistema, "Reiniciar os serviços", #selector(reiniciar))
         _ = itemDe(sistema, "Parar os serviços", #selector(parar))
         _ = itemDe(sistema, "Ver o estado em detalhe", #selector(estado), "e")
+        _ = itemDe(sistema, "Diagnóstico das janelas", #selector(diagnostico))
         sistema.addItem(NSMenuItem.separator())
         _ = itemDe(sistema, "Consumo e custo da nuvem (último dia)", #selector(consumo), "u")
         _ = itemDe(sistema, "Ligar o modelo grande na nuvem", #selector(alternarNuvem))

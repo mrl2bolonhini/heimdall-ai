@@ -37,6 +37,7 @@ confere("Swift: barra de menus com Heimdall, Arquivo, Edição, Visualizar, Abri
 confere("Swift: tela cheia, zoom e atalhos de copiar, colar, recarregar e fechar", all(t in swift for t in ("toggleFullScreen", "fullScreenPrimary", "pageZoom", '"c"', '"v"', '"r"', '"w"')))
 confere("Swift: ativa o app de novo logo depois de virar app normal (senão a barra de menus continua a do app anterior)", "func ativarApp()" in swift and "asyncAfter" in swift and swift.count("ativarApp()") >= 3)
 confere("Swift: Imprimir usa printOperation do WebKit (NSView não tem print)", "printOperation(with: NSPrintInfo.shared)" in swift and "NSView.print" not in swift)
+confere("Swift: reativa pelo sistema se o app não ficar ativo e tem diagnóstico das janelas nos dois menus", "reativarPeloSistema" in swift and "openApplication(at:" in swift and swift.count("Diagnóstico das janelas") >= 3 and "func diagnostico" in swift)
 confere("Swift: sites no menu com Command+1 a 9", "n < 9" in swift)
 confere("Info.plist: só https (sem exceção de rede local nem carregamento aberto)", "NSAppTransportSecurity" not in pl)
 confere("Swift: todos os sites abrem pelos endereços públicos (Cloudflare Access), não por localhost", '["urls", "--public"]' in swift and "localhost" not in swift)

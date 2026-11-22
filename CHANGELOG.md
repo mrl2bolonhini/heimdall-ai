@@ -5,6 +5,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-22 - App do Mac: menu Arquivo
 - A barra de menus do app ganhou o menu Arquivo (Imprimir, com Command+P, pela impressão do WebKit, e Fechar a janela, com Command+W), antes dos menus Edição, Visualizar, Abrir, Sistema e Janela. A barra aparece quando uma janela de site está aberta e o app está em primeiro plano. Para valer, recompile o app com heimdall app.
 - Correção: com a janela aberta, a barra de menus do alto continuava sendo a do app anterior, porque o macOS não tratava o Heimdall como app ativo logo depois de ele virar app normal. A janela agora ativa o app de novo um instante depois de abrir. Se ainda acontecer, Command+Tab até o Heimdall mostra os menus.
+- Se meio segundo depois de abrir a janela o macOS ainda não tratar o Heimdall como app ativo, o app pede a ativação ao próprio sistema. Novo item "Diagnóstico das janelas" (menu de estado e menu Sistema): mostra a política do app, se ele é o app ativo, qual app está em primeiro plano e os menus montados, para investigar quando a barra de menus do alto não é a do Heimdall.
 
 ## 2026-11-21 - Saúde por pessoa na caixa de correio
 - Cada pessoa tem o seu banco de saúde: banco/pessoas/<nome>/heimdall.db (pasta só do dono do Mac, com cópia diária própria). O banco do dono continua onde sempre esteve. heimdall mailbox pull agora importa a saúde de todas as pessoas, cada uma no seu banco; antes só a do dono entrava e as outras ficavam na cópia local.
