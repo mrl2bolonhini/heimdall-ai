@@ -1227,6 +1227,24 @@ def buscar_site(url: str) -> str:
 
 
 
+_analise_saude_rodando = threading.Lock()
+
+
+def _analise_de_saude_em_segundo_plano() -> None:
+    """Depois que chegam dados de saúde, roda o analista (modelo + PubMed) numa thread. Ele mesmo respeita o intervalo mínimo e o interruptor HEIMDALL_SAUDE_ANALISTA=0."""
+    def tarefa():
+        if not _analise_saude_rodando.acquire(blocking=False):
+            return
+        try:
+            import heimdall_analista_saude as analista
+            analista.rodar()
+        except Exception as e:  # noqa: BLE001 - a análise é um extra; nunca derruba o agente
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} análise de saúde falhou: {str(e)[:120]}\n")
+        finally:
+            _analise_saude_rodando.release()
+    threading.Thread(target=tarefa, daemon=True).start()
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "HeimdallAgente/1.0"
 
@@ -1338,6 +1356,10 @@ class Handler(BaseHTTPRequestHandler):
                 except ValueError as ex:
                     return self._json(400, {"erro": str(ex)})
                 return self._json(200, {"ok": True, "id": novo, "bark": triagem.enviar_bark(avisos.texto_bark(serv)) if dado.get("bark") else None})
+            if u.path == "/saude/analise":   # roda agora a análise completa e devolve o texto (o aviso também vai para a aba Avisos do Health)
+                import heimdall_analista_saude as analista
+                a = analista.rodar(forcar=True)
+                return self._json(200, {"ok": True, "gravidade": a["resultado"]["gravidade"], "com_modelo": a["com_modelo"], "texto": a["texto"], "avisou": a["avisou"]})
             if u.path == "/avisos/mac":   # os fluxos do n8n mandam aqui o mesmo aviso do Bark, completo, para virar notificação do macOS
                 ok = avisos_mac.publicar(dado)
                 return self._json(200, {"ok": ok})
@@ -1384,6 +1406,7 @@ class Handler(BaseHTTPRequestHandler):
                         r["triagem"] = r.get("triagem", 0) + 1
                 except Exception as e:  # noqa: BLE001 - os dados já foram gravados; a triagem é um aviso a mais
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} alerta de anomalias falhou: {str(e)[:120]}\n")
+                _analise_de_saude_em_segundo_plano()   # análise completa por modelo, no máximo uma vez por dia; não segura a resposta da importação
                 return self._json(200, r)
             if u.path == "/banco/gravar":
                 return self._json(200, banco.gravar(str(dado.get("tabela", "")), dado.get("registros", [])))

@@ -108,6 +108,7 @@ python3 teste_catalogo.py                # catalogação de notas e cliente do N
 python3 teste_cfmonitor.py               # monitor de consumo e custo da Cloudflare (sem rede)
 python3 teste_caixa_cliente.py          # cliente da caixa de correio da Cloudflare (sem rede)
 python3 teste_saude_pessoas.py           # saúde por pessoa: banco separado, métricas diárias e conversor do Atalho (sem rede)
+python3 teste_analista_saude.py          # analista de saúde: dossiê, correlações, PubMed simulado, modelo simulado (sem rede)
 python3 teste_account.py                  # Account: tour, Integrações (csrf, origem, ativar e desativar) e quem.json
 python3 teste_app_mac.py                  # confere o app de barra de menus do Mac sem compilar
 bash teste_silenciar_docker.sh            # script que impede o Docker de abrir o painel ao iniciar (pasta falsa)
