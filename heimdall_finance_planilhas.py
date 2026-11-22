@@ -2,15 +2,22 @@
 """Páginas do Heimdall Finance para planilhas, investimentos, empréstimos e visões (a lógica está em financas_planilhas.py).
 Link lê, botão age: abrir uma página é link; criar, mover coluna, responder dúvida e apagar são botões em formulário POST com token."""
 import html
+import re
 from pathlib import Path
 
 import financas_nucleo as fn
 import financas_planilhas as fp
+import financas_pluggy_dados as pd
 import heimdall_design as design
 
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 MAX_VISIVEIS = 500
-ROTAS_GET = ("/planilhas", "/investimentos", "/emprestimos", "/conjunto", "/visoes", "/visao")
+ROTAS_GET = ("/planilhas", "/investimentos", "/emprestimos", "/conjunto", "/visoes", "/visao", "/contas", "/cartoes")
+_CREDITO = re.compile(r"/credito/(" + "|".join(fp.CATEGORIAS_CREDITO) + ")")
+
+
+def eh_rota_get(rota: str) -> bool:
+    return rota in ROTAS_GET or bool(_CREDITO.fullmatch(rota))
 ROTAS_POST = ("/planilhas", "/planilhas/duvida", "/planilhas/duvida/descartar", "/visoes/nova", "/visao/coluna", "/visao/regras", "/visao/renomear", "/visao/apagar")
 
 
@@ -47,7 +54,7 @@ def pg_planilhas(con, sess: dict, pasta: Path) -> tuple:
              'Quando eu não tiver certeza, guardo o arquivo e pergunto aqui embaixo, em vez de chutar. Planilhas de gastos também alimentam as transações, os orçamentos e o resumo.</p>',
              f'<form method="post" action="/planilhas" enctype="multipart/form-data">{_oculto(sess)}'
              '<label for="arquivo">Planilha (xlsx, xlsm, csv)</label><input id="arquivo" name="arquivo" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" required>'
-             f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes(list(fp.TIPOS.items()), "", "Deixar o Heimdall decidir")}</select>'
+             f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes(list(fp.TIPOS_USUARIO.items()), "", "Deixar o Heimdall decidir")}</select>'
              '<label for="nome">Nome do conjunto (em branco: uso o nome do arquivo ou o que eu entender)</label><input id="nome" name="nome" type="text" maxlength="60">'
              '<label><input type="checkbox" name="inverter" value="1"> Nesta planilha de gastos, os gastos vêm com valor positivo</label>'
              '<button type="submit">Importar planilha</button></form>']
@@ -211,17 +218,144 @@ def pg_investimentos(con) -> tuple:
     return "Investimentos", "".join(corpo)
 
 
-def pg_emprestimos(con) -> tuple:
-    r = fp.resumo_emprestimos(con)
+def _dinheiro(txt: str) -> str:
+    try:
+        return fn.brl(fn.parse_valor(txt))
+    except ValueError:
+        return txt or ""
+
+
+def pg_emprestimos(con, categoria: str = "") -> tuple:
+    titulo = fp.CATEGORIAS_CREDITO.get(categoria, "Dívidas e financiamentos")
+    r = fp.resumo_emprestimos(con, categoria)
     if not r["itens"]:
-        return "Empréstimos", ('<p>Ainda não há empréstimos. Importe uma planilha das suas dívidas (com colunas como contrato, saldo devedor, parcela e taxa) na página Planilhas, e eu monto o resumo aqui.</p>'
-                               '<p><a href="/planilhas">Ir para Planilhas</a></p>')
-    corpo = [f'<p>{len(r["itens"])} contrato(s): saldo devedor total de {e(fn.brl(r["saldo"]))} e parcelas que somam {e(fn.brl(r["parcelas"]))} por mês.</p>']
+        return titulo, ('<p>Ainda não há dados aqui. O Heimdall cria esta aba sozinho quando encontra o tipo de crédito nos dados do Pluggy (heimdall finance --sync) ou numa planilha de dívidas '
+                        '(com colunas como contrato, saldo devedor, parcela e taxa) importada em Planilhas.</p><p><a href="/planilhas">Ir para Planilhas</a></p>')
+    corpo = [f'<p>{len(r["itens"])} contrato(s): saldo devedor total de {e(fn.brl(r["saldo"]))}'
+             + (f' e parcelas que somam {e(fn.brl(r["parcelas"]))} por mês' if r["parcelas"] else "") + ".</p>"]
     if r["sem_valor"]:
         corpo.append(f'<div class="aviso" role="status">{r["sem_valor"]} contrato(s) ficaram sem saldo nem parcela legíveis.</div>')
-    corpo.append(tabela("Contratos", ["Contrato", "Credor", "Saldo devedor", "Parcela", "Taxa", "Vencimento", "Parcelas restantes"],
-                        [[e(i["contrato"]), e(i["credor"]), e(_brl(i["saldo"])), e(_brl(i["parcela"])), e(i["taxa"]), e(i["vencimento"]), e(i["restantes"])] for i in r["itens"]], {2, 3}))
-    return "Empréstimos", "".join(corpo)
+    if not categoria:
+        por = {}
+        for i in r["itens"]:
+            x = por.setdefault(i["categoria"], [0, 0])
+            x[0] += 1
+            x[1] += i["saldo"] or 0
+        corpo.append(tabela("Dívidas por tipo", ["Tipo", "Contratos", "Saldo devedor"],
+                            [[f'<a href="/credito/{k}">{e(fp.CATEGORIAS_CREDITO[k])}</a>', str(por[k][0]), e(fn.brl(por[k][1]))] for k in fp.CATEGORIAS_CREDITO if k in por], {1, 2}))
+    cab = ["Contrato", "Credor", "Saldo devedor", "Parcela", "Taxa ou CET", "Vencimento", "Parcelas pagas", "Parcelas a vencer", "Origem"]
+    linhas = [[e(i["contrato"]), e(i["credor"]), e(_brl(i["saldo"])), e(_brl(i["parcela"])), e(i["taxa"]), e(i["vencimento"]), e(i["pagas"]), e(i["restantes"]),
+               f'<a href="/conjunto?id={i["conjunto_id"]}">{e(i["conjunto"])}</a>'] for i in r["itens"]]
+    if not categoria:
+        cab.insert(1, "Tipo")
+        for l, i in zip(linhas, r["itens"]):
+            l.insert(1, e(fp.CATEGORIAS_CREDITO[i["categoria"]]))
+    corpo.append(tabela(f"Contratos: {titulo}", cab, linhas, {2, 3} if categoria else {3, 4}))
+    return titulo, "".join(corpo)
+
+
+def _contas_pluggy(con, tipo: str) -> list:
+    return [d for d in fp.linhas_atuais(con, pd.NOME_CONTAS) if d.get("type", "").upper() == tipo]
+
+
+def _por_conta_transacoes(con, cartao: bool) -> list:
+    from datetime import date, timedelta
+    desde = (date.today() - timedelta(days=30)).isoformat()
+    linhas = []
+    for c in con.execute("SELECT conta, COUNT(*) n, MIN(data) ini, MAX(data) fim, "
+                         "SUM(CASE WHEN data>=? AND valor>0 THEN valor ELSE 0 END) ent, SUM(CASE WHEN data>=? AND valor<0 THEN valor ELSE 0 END) sai "
+                         "FROM transacoes GROUP BY conta ORDER BY conta", (desde, desde)):
+        if ("cartao" in fn.norm(c["conta"])) == cartao:
+            linhas.append(c)
+    return linhas
+
+
+def tem_contas(con) -> bool:
+    return bool(_por_conta_transacoes(con, False) or _contas_pluggy(con, "BANK"))
+
+
+def tem_cartoes(con) -> bool:
+    return bool(_por_conta_transacoes(con, True) or _contas_pluggy(con, "CREDIT") or fp.linhas_atuais(con, pd.NOME_FATURAS))
+
+
+def _tabela_lancamentos(linhas, cartao: bool) -> str:
+    rot = ("Gastos em 30 dias" if cartao else "Saídas em 30 dias", "Créditos em 30 dias" if cartao else "Entradas em 30 dias")
+    return tabela("Lançamentos por cartão" if cartao else "Lançamentos por conta", ["Nome", "Lançamentos", "Primeiro", "Último", rot[1], rot[0]],
+                  [[f'<a href="/transacoes?conta={e(c["conta"])}">{e(c["conta"])}</a>', str(c["n"]), e(fn.data_br(c["ini"])), e(fn.data_br(c["fim"])), e(fn.brl(c["ent"])), e(fn.brl(-c["sai"]))]
+                   for c in linhas], {1, 4, 5})
+
+
+def pg_contas(con) -> tuple:
+    corpo = ['<p>Extratos das contas correntes e de pagamento: os lançamentos vêm de extratos importados e da conexão com os bancos. Os cartões de crédito ficam na aba Cartões.</p>']
+    t = _por_conta_transacoes(con, False)
+    if t:
+        corpo.append("<h2>Lançamentos</h2>" + _tabela_lancamentos(t, False))
+    p = _contas_pluggy(con, "BANK")
+    if p:
+        total = 0
+        linhas = []
+        for d in p:
+            try:
+                total += fn.parse_valor(d.get("balance", ""))
+            except ValueError:
+                pass
+            linhas.append([e(d.get("name", "")), e(d.get("subtype", "")), e(d.get("bankdata_transfernumber", "") or d.get("number", "")), e(_dinheiro(d.get("balance", ""))),
+                           e(_dinheiro(d.get("bankdata_overdraftcontractedlimit", ""))), e(_dinheiro(d.get("bankdata_overdraftusedlimit", ""))), e(d.get("coletado_em", ""))])
+        corpo.append(f"<h2>Saldos informados pelos bancos</h2><p>Saldo somado de {len(p)} conta(s): {e(fn.brl(total))}.</p>"
+                     + tabela("Contas bancárias no Pluggy", ["Nome", "Tipo", "Agência e conta", "Saldo", "Limite do cheque especial", "Cheque especial usado", "Lido em"], linhas, {3, 4, 5}))
+        c = next((x for x in fp.conjuntos(con) if x["nome"] == pd.NOME_CONTAS), None)
+        if c:
+            corpo.append(f'<p><a href="/conjunto?id={c["id"]}">Ver todos os dados das contas e criar visões</a></p>')
+    if not t and not p:
+        corpo.append("<p>Ainda não há contas. Importe um extrato ou sincronize o Pluggy.</p>")
+    return "Contas", "".join(corpo)
+
+
+def pg_cartoes(con) -> tuple:
+    corpo = ['<p>Cartões de crédito: limite, fechamento, faturas e gastos. Os extratos das contas ficam na aba Contas.</p>']
+    t = _por_conta_transacoes(con, True)
+    if t:
+        corpo.append("<h2>Lançamentos</h2>" + _tabela_lancamentos(t, True))
+    p = _contas_pluggy(con, "CREDIT")
+    if p:
+        linhas = [[e(d.get("name", "")), e(d.get("creditdata_brand", "")), e(d.get("creditdata_level", "")), e(_dinheiro(d.get("creditdata_creditlimit", ""))),
+                   e(_dinheiro(d.get("creditdata_availablecreditlimit", ""))), e(d.get("creditdata_balanceclosedate", "")), e(d.get("creditdata_balanceduedate", "")),
+                   e(_dinheiro(d.get("creditdata_minimumpayment", "")))] for d in p]
+        corpo.append("<h2>Limites e fatura atual</h2>" + tabela("Cartões no Pluggy", ["Nome", "Bandeira", "Nível", "Limite", "Disponível", "Fecha em", "Vence em", "Pagamento mínimo"],
+                                                              linhas, {3, 4, 7}))
+    fat = fp.linhas_atuais(con, pd.NOME_FATURAS)
+    if fat:
+        fat = sorted(fat, key=lambda d: d.get("duedate", ""), reverse=True)
+        corpo.append("<h2>Faturas</h2>" + tabela("Faturas dos cartões", ["Cartão", "Vencimento", "Total", "Pagamento mínimo", "Permite parcelar"],
+                                                [[e(d.get("cartao", "")), e(d.get("duedate", "")), e(_dinheiro(d.get("totalamount", ""))), e(_dinheiro(d.get("minimumpaymentamount", ""))),
+                                                  e(d.get("allowsinstallments", ""))] for d in fat], {2, 3}))
+    if p or fat:
+        c = next((x for x in fp.conjuntos(con) if x["nome"] in (pd.NOME_FATURAS, pd.NOME_CONTAS)), None)
+        if c:
+            corpo.append(f'<p><a href="/conjunto?id={c["id"]}">Ver todos os dados e criar visões</a></p>')
+    if not (t or p or fat):
+        corpo.append("<p>Ainda não há cartões. Importe uma fatura ou sincronize o Pluggy.</p>")
+    return "Cartões", "".join(corpo)
+
+
+def nav(con, base: list) -> list:
+    """As abas fixas mais as que os dados pedem: Contas, Cartões, Investimentos e um tipo de crédito por aba (só os que existem)."""
+    din = []
+    try:
+        if tem_contas(con):
+            din.append(("/contas", "Contas"))
+        if tem_cartoes(con):
+            din.append(("/cartoes", "Cartões"))
+        if fp.resumo_investimentos(con)["itens"]:
+            din.append(("/investimentos", "Investimentos"))
+        cats = fp.categorias_de_credito(con)
+        if len(cats) > 1:
+            din.append(("/emprestimos", "Todas as dívidas"))
+        din += [(f"/credito/{k}", fp.CATEGORIAS_CREDITO[k]) for k, _ in cats]
+    except Exception:  # noqa: BLE001  (a navegação nunca derruba a página)
+        din = []
+    i = next((n + 1 for n, (r, _) in enumerate(base) if r == "/transacoes"), len(base))
+    return base[:i] + din + base[i:]
 
 
 # --------------------------------------------------------------------------------------------
@@ -235,6 +369,13 @@ def get(con, rota: str, q: dict, sess: dict, pasta: Path):
         return pg_investimentos(con)
     if rota == "/emprestimos":
         return pg_emprestimos(con)
+    if rota == "/contas":
+        return pg_contas(con)
+    if rota == "/cartoes":
+        return pg_cartoes(con)
+    m = _CREDITO.fullmatch(rota)
+    if m:
+        return pg_emprestimos(con, m.group(1))
     if rota == "/conjunto":
         return pg_conjunto(con, q, sess)
     if rota == "/visoes":
@@ -261,7 +402,7 @@ def post(con, rota: str, campos: dict, arquivos: dict, sess: dict, pasta: Path, 
                 raise fn.ErroFinance("Escolha a planilha.")
             if len(arq[1]) > max_bytes:
                 raise fn.ErroFinance(f"O limite é de {max_bytes // (1024 * 1024)} MB por arquivo.")
-            res = fp.importar_arquivo(con, arq[1], arq[0], pasta, tipo=campos.get("tipo", "") if campos.get("tipo") in fp.TIPOS else "",
+            res = fp.importar_arquivo(con, arq[1], arq[0], pasta, tipo=campos.get("tipo", "") if campos.get("tipo") in fp.TIPOS_USUARIO else "",
                                       nome=campos.get("nome", ""), inverter=campos.get("inverter") == "1")
             sess["flash"] = ("ok", resumo_resultados(res))
             ok = [r for r in res if r.get("ok") and r.get("conjunto_id")]

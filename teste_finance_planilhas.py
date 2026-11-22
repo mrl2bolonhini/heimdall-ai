@@ -92,11 +92,11 @@ except urllib.error.HTTPError as ex:
     st = ex.code
 confere("planilhas exigem login", st == 303)
 
-for rota, trecho in (("/planilhas", "Importar planilha"), ("/investimentos", "Ainda não há investimentos"), ("/emprestimos", "Ainda não há empréstimos"), ("/visoes", "formas gravadas")):
+for rota, trecho in (("/planilhas", "Importar planilha"), ("/investimentos", "Ainda não há investimentos"), ("/emprestimos", "Ainda não há dados aqui"), ("/visoes", "formas gravadas")):
     st, corpo, _ = pedir(rota)
     confere(f"{rota} abre vazio", st == 200 and trecho in corpo, (st, corpo[:200]))
 st, corpo, _ = pedir("/planilhas")
-confere("abas novas na navegação", all(x in corpo for x in ("Planilhas", "Investimentos", "Empréstimos", "Visões")))
+confere("abas fixas novas na navegação", all(x in corpo for x in ("Planilhas", "Visões")) and "Investimentos</a>" not in corpo)
 confere("formulário com token, rótulos e arquivo", 'name="csrf"' in corpo and '<label for="arquivo">' in corpo and 'enctype="multipart/form-data"' in corpo)
 
 # sem token a ação é recusada
@@ -142,12 +142,16 @@ confere("lista de visões", "Só valores" in corpo and "Personalizar" in corpo)
 # investimentos e empréstimos
 inv = xlsx({"Carteira": [["Ativo", "Tipo", "Quantidade", "Valor atual", "Data"], ["PETR4", "Ação", 100, 3500, ("data", 46296)], ["Tesouro Selic", "Renda fixa", 1, 10000, ("data", 46296)]]})
 envio("/planilhas", "carteira.xlsx", inv)
+st, corpo, _ = pedir("/planilhas")
+confere("a aba Investimentos aparece quando há dados", "Investimentos" in corpo)
 st, corpo, _ = pedir("/investimentos")
 confere("investimentos mostram total e por tipo", "R$ 13.500,00" in corpo and "Renda fixa" in corpo and "<caption>Investimentos por tipo</caption>" in corpo, corpo[:400])
 emp = xlsx({"Dívidas": [["Contrato", "Credor", "Saldo devedor", "Valor da parcela", "Taxa de juros"], ["Carro", "Banco X", 25000, 850, ("pct", 0.0189)]]})
 envio("/planilhas", "dividas.xlsx", emp)
 st, corpo, _ = pedir("/emprestimos")
 confere("empréstimos mostram saldo e taxa", "R$ 25.000,00" in corpo and "1,89%" in corpo, corpo[:400])
+st, corpo, _ = pedir("/credito/veiculo")
+confere("financiamento de carro cai na aba de veículo", st == 200 and "Carro" in corpo and "Financiamento de veículo" in corpo, corpo[:300])
 
 # dúvida pelo site
 estranha = xlsx({"Plan": [["Coisa", "Outra", "Mais"], ["a", "b", 1]]})

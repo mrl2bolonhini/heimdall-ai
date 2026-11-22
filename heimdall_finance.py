@@ -118,7 +118,7 @@ form.linha{display:inline}.sub{color:inherit;opacity:.85}
 td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/planilhas", "Planilhas"), ("/investimentos", "Investimentos"), ("/emprestimos", "Empréstimos"), ("/visoes", "Visões"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras"), ("/avisos", "Avisos")]
+NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/planilhas", "Planilhas"), ("/visoes", "Visões"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras"), ("/avisos", "Avisos")]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -131,14 +131,15 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
             perguntar_html = _bloco_perguntar(sess)
         except Exception:  # noqa: BLE001  (a página nunca deixa de abrir por causa do campo Perguntar)
             perguntar_html = ""
-        atual = design.aba_da_rota(sess.get("atual", "/"), NAV, {"/transacao/": "/transacoes", "/conjunto": "/planilhas", "/visao": "/visoes"})
+        itens_nav = hfp.nav(banco(), NAV)
+        atual = design.aba_da_rota(sess.get("atual", "/"), itens_nav, {"/transacao/": "/transacoes", "/conjunto": "/planilhas", "/visao": "/visoes"})
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        nav = design.nav_abas(NAV, atual, "Seções do Heimdall Finance")
+        nav = design.nav_abas(itens_nav, atual, "Seções do Heimdall Finance")
         f = sess.get("flash")
         if f:
             sess["flash"] = None
             flash = f'<div class="aviso {"ok" if f[0] == "ok" else ""}" role="status">{e(f[1])}</div>'
-        conteudo = design.com_abas(NAV, atual, f"<h1>{e(titulo)}</h1>{flash}{corpo}{perguntar_html}")
+        conteudo = design.com_abas(itens_nav, atual, f"<h1>{e(titulo)}</h1>{flash}{corpo}{perguntar_html}")
         scripts = design.script()
     else:
         sair = ""
@@ -348,6 +349,13 @@ def _bloco_pluggy(sess: dict) -> str:
         corpo.append(f'<p>Última sincronização: {e(est["ultima"])}.</p>')
         corpo.append(tabela("Contas sincronizadas na última rodada", ["Conta", "Novas", "Repetidas", "A partir de"],
                             [[e(c["conta"]), str(c["novas"]), str(c["repetidas"]), e(fn.data_br(c["desde"]))] for c in est.get("resumo", [])], {1, 2}))
+        ex = est.get("extras") or {}
+        rot = {"contas": "contas e cartões", "faturas": "faturas", "investimentos": "investimentos", "mov": "movimentações de investimentos", "emprestimos": "empréstimos e financiamentos"}
+        lidos = [f"{ex[k]} de {r}" for k, r in rot.items() if ex.get(k)]
+        if lidos:
+            corpo.append("<p>Também lidos do Pluggy na última rodada: " + e("; ".join(lidos)) + ". As abas Contas, Cartões, Investimentos e as de crédito aparecem sozinhas conforme os dados.</p>")
+        if ex.get("indisponiveis"):
+            corpo.append('<div class="aviso" role="status">O Pluggy não entregou: ' + e("; ".join(ex["indisponiveis"])) + ". Pode ser que o plano ou o banco não ofereça esse dado.</div>")
     else:
         corpo.append("<p>Ainda não sincronizou. O painel repete a sincronização a cada 6 horas; o Meu Pluggy atualiza os dados a cada 24 horas.</p>")
     if est.get("erro"):
@@ -517,7 +525,7 @@ def pg_analise(sess: dict) -> tuple:
     return "Análise", "".join(corpo)
 
 
-_ROTAS_VOLTA = {u for u, _ in NAV} | {"/transacoes"}
+_ROTAS_VOLTA = {u for u, _ in NAV} | {"/transacoes", "/contas", "/cartoes", "/investimentos", "/emprestimos"}
 
 
 def _volta_valida(v: str) -> str:
@@ -862,7 +870,7 @@ class Finance(nuvem.ManipuladorBase):
             titulo, corpo = pg_recorrentes()
         elif rota == "/regras":
             titulo, corpo = pg_regras(sess)
-        elif rota in hfp.ROTAS_GET:
+        elif hfp.eh_rota_get(rota):
             r = hfp.get(banco(), rota, q, sess, DIR_DADOS)
             if not r:
                 self._enviar(404, pagina("Não encontrei", '<p><a href="/planilhas">Voltar às planilhas</a></p>', sess))

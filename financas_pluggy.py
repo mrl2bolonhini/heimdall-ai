@@ -593,7 +593,7 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
     cli = cliente or Cliente(cfg)
     nomes = nomes or {}
     guardados = estado.setdefault("contas", {})
-    pacotes, avisos, todas = [], [], []
+    pacotes, avisos, todas, faturas_cruas = [], [], [], {}
     for item_id in cfg["itens"]:
         avisos += _avisos_item(cli.item(item_id), hoje)
         todas += cli.contas(item_id)
@@ -615,6 +615,7 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
             credito.update(_dados_conta(c))
         if (c.get("type") or "").upper() == "CREDIT":
             faturas = cli.faturas(c["id"])
+            faturas_cruas[c["id"]] = faturas
             credito.update(_proxima_fatura(faturas, hoje))
             if faturas:
                 longas = cli.transacoes(c["id"], hoje - timedelta(days=PARCELADOS_DIAS), hoje)
@@ -627,7 +628,13 @@ def coletar(cfg: dict, estado: dict, con_leitura, desde: date = None, hoje: date
                     credito["sem_fatura"] = sem
         itens = para_itens(c, recebidas)
         pacotes.append({"id": c["id"], "nome": nome, "tipo": c.get("type"), "final": _final(c), "itens": itens, "desde": ini.isoformat(), "recebidas": len(recebidas), "saldo": _saldo_centavos(c), "credito": credito})
-    return {"pacotes": pacotes, "avisos": avisos}
+    extras = {}
+    try:  # investimentos, empréstimos, faturas e saldos: nunca atrapalham as transações
+        import financas_pluggy_dados as pdados
+        extras = pdados.coletar_extras(cli, cfg["itens"], todas, faturas_cruas, hoje)
+    except Exception:  # noqa: BLE001
+        extras = {}
+    return {"pacotes": pacotes, "avisos": avisos, "extras": extras}
 
 
 def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None) -> dict:
@@ -639,6 +646,11 @@ def gravar(con, coleta: dict, estado: dict, hoje: date = None, agora: str = None
         r = fn.importar_itens(con, p["itens"], "pluggy", "Meu Pluggy", p["nome"], agora)
         resumo.append({"conta": p["nome"], "tipo": p["tipo"], "final": p["final"], "lidas": r["lidas"], "novas": r["novas"], "repetidas": r["repetidas"], "desde": p["desde"], "recebidas": p.get("recebidas", len(p["itens"])), "parcelas": (p.get("credito") or {}).get("parcelas_abertas")})
         guardados[p["id"]] = {**{k: v for k, v in guardados.get(p["id"], {}).items() if k in ("fechamento", "parcelas_fixas")}, "nome": p["nome"], "ultimo": hoje.isoformat(), "tipo": p["tipo"], "final": p["final"], "saldo": p.get("saldo"), "credito": p.get("credito")}
+    try:
+        import financas_pluggy_dados as pdados
+        estado["extras"] = pdados.gravar(con, coleta.get("extras"), agora)
+    except Exception as ex:  # noqa: BLE001
+        estado["extras"] = {"erro": type(ex).__name__}
     estado["avisos"] = coleta["avisos"]
     estado["ultima"] = (agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     estado["resumo"] = resumo

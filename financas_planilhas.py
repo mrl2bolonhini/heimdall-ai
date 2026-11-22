@@ -21,7 +21,15 @@ from pathlib import Path
 
 import financas_nucleo as fn
 
-TIPOS = {"gastos": "Gastos", "investimentos": "Investimentos", "emprestimos": "Empréstimos", "outros": "Outros assuntos"}
+TIPOS_USUARIO = {"gastos": "Gastos", "investimentos": "Investimentos", "emprestimos": "Empréstimos", "outros": "Outros assuntos"}
+# tipos que só a conexão com o Pluggy cria
+TIPOS = dict(TIPOS_USUARIO, contas="Contas e cartões (Pluggy)", faturas="Faturas de cartão (Pluggy)", movimentos="Movimentações de investimentos (Pluggy)")
+CATEGORIAS_CREDITO = {"veiculo": "Financiamento de veículo", "imovel": "Financiamento imobiliário", "consignado": "Consignado", "pessoal": "Empréstimo pessoal",
+                      "outros": "Outros empréstimos e financiamentos"}
+_PALAVRAS_CREDITO = [("consignado", ("consign",)),
+                     ("veiculo", ("veicul", "automotor", "automovel", "carro", "moto ", "motocicleta", "caminhao")),
+                     ("imovel", ("imobili", "habitac", "casa propria", "apartamento", "home equity", "sfh", "sfi", "terreno", "imovel")),
+                     ("pessoal", ("pessoal", "cdc", "credito direto", "credito pessoal"))]
 EXT_PLANILHA = {".xlsx", ".xlsm", ".csv", ".tsv", ".txt"}
 MAX_BYTES = 12 * 1024 * 1024
 MAX_LINHAS = 20000
@@ -57,6 +65,15 @@ NOMES_PAPEIS = {
     "parcela": "o valor da parcela", "taxa": "a taxa de juros", "vencimento": "o vencimento", "restantes": "as parcelas restantes",
 }
 # o que precisa existir para a planilha entrar: uma lista de alternativas, e basta uma completa
+def categoria_credito(texto: str) -> str:
+    """veiculo, imovel, consignado, pessoal ou outros, pelas palavras do tipo, do produto ou do nome do contrato (consignado vem antes de pessoal)."""
+    t = " " + fn.norm(texto).replace("_", " ") + " "
+    for cat, palavras in _PALAVRAS_CREDITO:
+        if any(p in t for p in palavras):
+            return cat
+    return "outros"
+
+
 OBRIGATORIOS = {"gastos": [["data", "descricao", "valor"]], "investimentos": [["ativo", "valor"], ["ativo", "quantidade", "preco"]],
                 "emprestimos": [["saldo"], ["parcela"]], "outros": [[]]}
 PALAVRAS_TIPO = {
@@ -319,7 +336,7 @@ def _pedir_ao_modelo(modelo, arquivo, cab, linhas) -> dict:
         d = json.loads(m.group(0)) if m else {}
     except Exception:  # noqa: BLE001  (modelo fora do ar ou resposta torta: segue só com o código)
         return {}
-    if not isinstance(d, dict) or d.get("tipo") not in TIPOS:
+    if not isinstance(d, dict) or d.get("tipo") not in TIPOS_USUARIO:
         return {}
     return d
 
@@ -327,8 +344,8 @@ def _pedir_ao_modelo(modelo, arquivo, cab, linhas) -> dict:
 def interpretar(arquivo: str, cab: list, chaves: list, linhas: list, tipo: str = "", modelo=None, usar_modelo: bool = True) -> dict:
     """{tipo, papeis{papel: chave}, nome, origem, faltam[...]}. `tipo` forçado pelo usuário pula a classificação."""
     por_chave = dict(zip(chaves, cab))
-    origem = "usuario" if tipo in TIPOS else "palavras"
-    if tipo not in TIPOS:
+    origem = "usuario" if tipo in TIPOS_USUARIO else "palavras"
+    if tipo not in TIPOS_USUARIO:
         pontos = _pontuar(arquivo, cab, _papeis_por_palavras("gastos", por_chave))
         ordem = sorted(pontos.items(), key=lambda kv: -kv[1])
         if ordem[0][1] >= 2 and ordem[0][1] > ordem[1][1]:
@@ -477,7 +494,7 @@ def _criar_duvida(con, pasta: Path, dados: bytes, arquivo: str, aba: str, interp
     h = hashlib.sha256(dados).hexdigest()
     campos = []
     if not interp["tipo"]:
-        campos.append({"chave": "tipo", "rotulo": "Que tipo de planilha é esta?", "opcoes": [[k, v] for k, v in TIPOS.items()]})
+        campos.append({"chave": "tipo", "rotulo": "Que tipo de planilha é esta?", "opcoes": [[k, v] for k, v in TIPOS_USUARIO.items()]})
     for papel in (interp["faltam"] if interp["tipo"] else []):
         campos.append({"chave": f"papel:{papel}", "rotulo": f"Qual coluna tem {NOMES_PAPEIS.get(papel, papel)}?", "opcoes": [[k, c or k] for k, c in zip(chaves, cab)]})
     arq = _pasta_pendentes(pasta) / f"{h}.dat"
@@ -808,6 +825,14 @@ def aplicar_visao(con, cid: int, cfg: dict = None) -> dict:
 # --------------------------------------------------------------------------------------------
 # Resumos de investimentos e empréstimos
 # --------------------------------------------------------------------------------------------
+def _so_lote_atual(regs: list, coluna_lote: str) -> list:
+    """Conexões como a do Pluggy gravam uma foto por dia: vale só a mais recente (o que sumiu da conexão deixa de aparecer)."""
+    if not coluna_lote:
+        return regs
+    ultimo = max((d.get(coluna_lote, "") for _, d in regs), default="")
+    return [(rid, d) for rid, d in regs if d.get(coluna_lote, "") == ultimo]
+
+
 def _mais_recente(regs: list, papel_data: str, chave_item: str) -> list:
     """Uma linha por item (ativo ou contrato): a mais recente pela coluna de data, ou a última importada."""
     por_item = {}
@@ -825,11 +850,20 @@ def _mais_recente(regs: list, papel_data: str, chave_item: str) -> list:
     return [(q, d) for q, _, d in por_item.values()]
 
 
+def linhas_atuais(con, nome_conjunto: str) -> list:
+    """Linhas (dicts por chave) da foto mais recente de um conjunto de conexão, ou todas se o conjunto não tem foto. Lista vazia se o conjunto não existe."""
+    c = con.execute("SELECT * FROM conjuntos WHERE nome=?", (nome_conjunto,)).fetchone()
+    if not c:
+        return []
+    return [d for _, d in _so_lote_atual(registros(con, c["id"]), _json(c["papeis"], {}).get("lote", ""))]
+
+
 def resumo_investimentos(con) -> dict:
     itens, total, sem_valor = [], 0, 0
     for c in con.execute("SELECT * FROM conjuntos WHERE tipo='investimentos' ORDER BY nome"):
         p = _json(c["papeis"], {})
-        for quando, d in _mais_recente(registros(con, c["id"]), p.get("data", ""), p.get("ativo", "")):
+        regs = _so_lote_atual(registros(con, c["id"]), p.get("lote", ""))
+        for quando, d in _mais_recente(regs, p.get("data", ""), p.get("id") or p.get("ativo", "")):
             v = _valor_centavos(d.get(p.get("valor", ""), "")) if p.get("valor") else None
             if v is None and p.get("quantidade") and p.get("preco"):
                 try:
@@ -851,18 +885,37 @@ def resumo_investimentos(con) -> dict:
     return {"itens": sorted(itens, key=lambda i: -(i["valor"] or 0)), "total": total, "por_tipo": sorted(por_tipo.items(), key=lambda kv: -kv[1]), "sem_valor": sem_valor}
 
 
-def resumo_emprestimos(con) -> dict:
-    itens, saldo, parcelas, sem_valor = [], 0, 0, 0
+_CHAVES_TIPO = ("tipo", "modalidade", "produto", "type", "productname", "finalidade")
+
+
+def resumo_emprestimos(con, categoria: str = "") -> dict:
+    """Dívidas das planilhas e do Pluggy, cada uma numa categoria (veículo, imóvel, consignado, pessoal, outros). `categoria` filtra."""
+    itens, sem_valor = [], 0
     for c in con.execute("SELECT * FROM conjuntos WHERE tipo='emprestimos' ORDER BY nome"):
         p = _json(c["papeis"], {})
-        for quando, d in _mais_recente(registros(con, c["id"]), "", p.get("contrato", "")):
+        regs = _so_lote_atual(registros(con, c["id"]), p.get("lote", ""))
+        for quando, d in _mais_recente(regs, p.get("coletado", ""), p.get("id") or p.get("contrato", "")):
             s = _valor_centavos(d.get(p.get("saldo", ""), "")) if p.get("saldo") else None
             pa = _valor_centavos(d.get(p.get("parcela", ""), "")) if p.get("parcela") else None
+            texto = " ".join([c["nome"], d.get(p.get("contrato", ""), ""), d.get(p.get("credor", ""), "")] +
+                             [v for k, v in d.items() if any(x in k for x in _CHAVES_TIPO)])
+            cat = categoria_credito(texto)
+            if categoria and cat != categoria:
+                continue
             if s is None and pa is None:
                 sem_valor += 1
-            saldo += s or 0
-            parcelas += pa or 0
-            itens.append({"conjunto": c["nome"], "contrato": d.get(p.get("contrato", ""), "") or c["nome"], "credor": d.get(p.get("credor", ""), ""),
-                          "saldo": s, "parcela": pa, "taxa": d.get(p.get("taxa", ""), ""), "vencimento": d.get(p.get("vencimento", ""), ""),
-                          "restantes": d.get(p.get("restantes", ""), "")})
-    return {"itens": sorted(itens, key=lambda i: -(i["saldo"] or 0)), "saldo": saldo, "parcelas": parcelas, "sem_valor": sem_valor}
+            itens.append({"conjunto": c["nome"], "conjunto_id": c["id"], "categoria": cat, "contrato": d.get(p.get("contrato", ""), "") or c["nome"],
+                          "credor": d.get(p.get("credor", ""), ""), "saldo": s, "parcela": pa, "taxa": d.get(p.get("taxa", ""), ""),
+                          "vencimento": d.get(p.get("vencimento", ""), ""), "restantes": d.get(p.get("restantes", ""), ""),
+                          "pagas": d.get("installments_paidinstallments", ""), "contratacao": d.get("contractdate", ""),
+                          "contratado": _valor_centavos(d.get("contractamount", "")) if d.get("contractamount") else None})
+    return {"itens": sorted(itens, key=lambda i: -(i["saldo"] or 0)), "saldo": sum(i["saldo"] or 0 for i in itens),
+            "parcelas": sum(i["parcela"] or 0 for i in itens), "sem_valor": sem_valor}
+
+
+def categorias_de_credito(con) -> list:
+    """[(categoria, quantidade)] das categorias que existem nos dados, na ordem de CATEGORIAS_CREDITO."""
+    cont = {}
+    for i in resumo_emprestimos(con)["itens"]:
+        cont[i["categoria"]] = cont.get(i["categoria"], 0) + 1
+    return [(k, cont[k]) for k in CATEGORIAS_CREDITO if k in cont]

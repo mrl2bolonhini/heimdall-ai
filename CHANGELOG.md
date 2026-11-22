@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Finance: tudo do Pluggy e abas criadas pelos dados
+- O sincronizador do Pluggy passou a ler também contas e cartões (saldo, limite, fechamento, cheque especial), faturas de cartão, investimentos, movimentações de investimentos e empréstimos e financiamentos. Cada leitura vira uma foto do dia nos conjuntos "Pluggy: ..." (histórico de saldos e posições), com todas as colunas que o Pluggy mandar e uma visão "Principais". Se o plano ou o banco não liberar um produto, a página Importar extrato avisa e as transações seguem normais.
+- Identidade (CPF, endereço, telefones) não é lida, de propósito.
+- Abas criadas pelos dados: Contas (extratos, separados dos cartões), Cartões (limite, fatura, faturas), Investimentos e uma aba por tipo de crédito encontrado (Financiamento de veículo, Financiamento imobiliário, Consignado, Empréstimo pessoal, Outros), mais Todas as dívidas quando há mais de um tipo. Dívidas vindas de planilha caem nas mesmas abas. Aba sem dados não aparece.
+- Atenção: como as abas variam, o número do atalho Option+Shift+número de cada aba pode mudar quando uma aparece.
+
 ## 2026-11-22 - Finance: planilhas, investimentos, empréstimos e visões personalizadas
 - Novas abas no Finance: Planilhas, Investimentos, Empréstimos e Visões. Em Planilhas você envia xlsx ou csv (ou solta o arquivo na pasta entrada_planilhas, que o Heimdall confere a cada minuto) de gastos, investimentos, empréstimos ou qualquer outro assunto.
 - O Heimdall descobre o tipo e o papel de cada coluna pelas palavras do cabeçalho; quando não basta, pergunta ao modelo de linguagem (só o cabeçalho e as 5 primeiras linhas; HEIMDALL_FINANCE_PLANILHAS_NUVEM=0 usa só o modelo local). Se mesmo assim não tiver certeza, guarda o arquivo e faz uma pergunta na página Planilhas (tipo da planilha, qual coluna é o valor etc.); a resposta importa o arquivo.
