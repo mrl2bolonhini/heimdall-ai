@@ -138,15 +138,26 @@ def puxar(env=None, abrir=None, pasta=None, tratar=None) -> dict:
     return res
 
 
-def tratar_padrao(item: dict, env=None, importar_saude=None) -> None:
-    """Importa o que já tem destino no Heimdall. Hoje: saúde (formato do Health Auto Export) do próprio dono, para o banco de saúde existente.
-    Itens de outras pessoas e outros tipos ficam só na cópia local até existir o armazenamento por pessoa (cada um com o seu banco)."""
+def importar_saude(nome: str, dados, meu_nome: str = "") -> dict:
+    """Grava a saúde de uma pessoa no banco dela (banco/pessoas/<nome>/, ou o banco de sempre se for o dono): treinos, ECG, frequência por hora, eventos
+    (heimdall_saude) e métricas diárias (heimdall_saude_diaria). Aceita o formato do Atalho (heimdall_atalhos) e o do Health Auto Export."""
+    import heimdall_atalhos
+    import heimdall_banco
+    import heimdall_saude
+    import heimdall_saude_diaria
+    payload = heimdall_atalhos.para_hae(dados) if heimdall_atalhos.e_atalho(dados) else dados
+    with heimdall_banco.pessoa(nome, meu_nome):
+        res = heimdall_saude.processar_hae(payload)
+        res["diarias"] = heimdall_saude_diaria.gravar(payload)
+    return res
+
+
+def tratar_padrao(item: dict, env=None, importar=None) -> None:
+    """Importa o que já tem destino no Heimdall: saúde de cada pessoa, no banco dela (o do dono é o banco de sempre).
+    Outros tipos (notas...) ficam só na cópia local até existir o destino deles."""
     env = _env() if env is None else env
-    if item.get("tipo") == "saude" and item.get("usuario") == env.get("HEIMDALL_CAIXA_MEU_NOME", "eu"):
-        if importar_saude is None:
-            import heimdall_saude
-            importar_saude = heimdall_saude.processar_hae
-        importar_saude(item.get("dados"))
+    if item.get("tipo") == "saude":
+        (importar or importar_saude)(item.get("usuario", ""), item.get("dados"), env.get("HEIMDALL_CAIXA_MEU_NOME", "eu"))
 
 
 def _copiar(texto: str) -> bool:

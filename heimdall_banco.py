@@ -8,6 +8,7 @@ expõe isto em /banco/*; o n8n grava, e o chat e os painéis futuros consultam.
 Arquivo: HEIMDALL_DB_DIR/heimdall.db (padrão: ./banco/heimdall.db). Cópia diária em banco/copias (7 últimas).
 Leitura livre só por SELECT (consulta_sql): conexão somente leitura + autorizador que recusa qualquer outra coisa.
 """
+import contextlib
 import json
 import os
 import re
@@ -21,6 +22,7 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent
 DB_DIR = Path(os.environ.get("HEIMDALL_DB_DIR", str(PROJECT_DIR / "banco"))).expanduser()
 DB_PATH = DB_DIR / "heimdall.db"
+_RAIZ = DB_DIR   # a pasta de base não muda, mesmo quando banco.pessoa() troca DB_DIR
 _trava = threading.Lock()
 
 ESQUEMA = """
@@ -342,6 +344,38 @@ _CARIMBO = {"saude_diaria": "atualizado", "saude_resumos": "atualizado", "analis
             "diarios": "visto_em", "emails": "visto_em", "privacidade": "visto_em", "avisos": None}
 _TEXTO_MAX = 8000
 _DATA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+_NOME_PESSOA = re.compile(r"^[a-z0-9-]{1,32}$")
+_troca = threading.RLock()
+
+
+def pasta_da_pessoa(nome: str) -> Path:
+    """Pasta do banco de uma pessoa (banco/pessoas/<nome>/). Só a-z, 0-9 e hífen: nada de ../."""
+    if not _NOME_PESSOA.match(nome or ""):
+        raise ValueError("nome de pessoa inválido")
+    return _RAIZ / "pessoas" / nome
+
+
+@contextlib.contextmanager
+def pessoa(nome: str, padrao: str = ""):
+    """Dentro do bloco, TODO o módulo (e quem usa banco.DB_PATH) trabalha no banco da pessoa: banco/pessoas/<nome>/heimdall.db, com cópia diária própria.
+    Se `nome` for o do dono (`padrao`) ou vazio, nada muda e vale o banco de sempre. Troca variáveis do módulo: use só em processo próprio
+    (o heimdall mailbox pull), nunca dentro do agente, que atende vários pedidos ao mesmo tempo."""
+    global DB_DIR, DB_PATH
+    if not nome or nome == padrao:
+        yield
+        return
+    destino = pasta_da_pessoa(nome)
+    with _troca:
+        antes = (DB_DIR, DB_PATH)
+        destino.mkdir(parents=True, exist_ok=True)
+        os.chmod(destino, 0o700)
+        DB_DIR, DB_PATH = destino, destino / "heimdall.db"
+        try:
+            yield
+        finally:
+            DB_DIR, DB_PATH = antes
 
 
 def _agora() -> str:

@@ -102,13 +102,15 @@ with tempfile.TemporaryDirectory() as d:
     confere("se apagar falha, conta a falha e mantém a cópia local", r["falhas"] == 1 and arq.exists(), r)
 
 chamadas = []
-cx.tratar_padrao({"tipo": "saude", "usuario": "eu", "dados": {"data": {"workouts": []}}}, {}, importar_saude=chamadas.append)
-confere("saúde do próprio dono ('eu') vai para o banco de saúde", len(chamadas) == 1)
-cx.tratar_padrao({"tipo": "saude", "usuario": "ana", "dados": {}}, {}, importar_saude=chamadas.append)
-cx.tratar_padrao({"tipo": "nota", "usuario": "eu", "dados": {}}, {}, importar_saude=chamadas.append)
-confere("saúde de outra pessoa e outros tipos só ficam na cópia local", len(chamadas) == 1)
-cx.tratar_padrao({"tipo": "saude", "usuario": "murillo", "dados": {}}, {"HEIMDALL_CAIXA_MEU_NOME": "murillo"}, importar_saude=chamadas.append)
-confere("o nome do dono vem de HEIMDALL_CAIXA_MEU_NOME", len(chamadas) == 2)
+reg = lambda nome, dados, meu: chamadas.append((nome, meu))  # noqa: E731
+cx.tratar_padrao({"tipo": "saude", "usuario": "eu", "dados": {"data": {"workouts": []}}}, {}, importar=reg)
+confere("saúde do dono ('eu') é importada com o nome do dono", chamadas == [("eu", "eu")])
+cx.tratar_padrao({"tipo": "saude", "usuario": "ana", "dados": {}}, {}, importar=reg)
+confere("saúde de outra pessoa também é importada, para o banco dela", chamadas[-1] == ("ana", "eu"))
+cx.tratar_padrao({"tipo": "nota", "usuario": "eu", "dados": {}}, {}, importar=reg)
+confere("outros tipos só ficam na cópia local", len(chamadas) == 2)
+cx.tratar_padrao({"tipo": "saude", "usuario": "murillo", "dados": {}}, {"HEIMDALL_CAIXA_MEU_NOME": "murillo"}, importar=reg)
+confere("o nome do dono vem de HEIMDALL_CAIXA_MEU_NOME", chamadas[-1] == ("murillo", "murillo"))
 
 try:
     cx.pedido("GET", "/v1/entrada", token="x", env=ENV, abrir=lambda *a, **k: (_ for _ in ()).throw(urllib.error.URLError("sem rede")))
