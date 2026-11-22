@@ -381,6 +381,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self.sites = achados
                 self.montarMenu()
                 self.montarMenuPrincipal()
+                self.abrirJanelaInicial()
             }
         }
     }
@@ -436,23 +437,41 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func recarregarSites() { carregarSites() }
 
     @objc func abrirSite(_ remetente: NSMenuItem) {
-        guard let texto = remetente.representedObject as? String, let url = URL(string: texto) else { return }
-        let nome = remetente.title
+        guard let texto = remetente.representedObject as? String else { return }
+        abrirJanela(remetente.title, texto)
+    }
+
+    /// Abre (ou traz para a frente) a janela de um site. O app é sempre um app normal (Dock, Command+Tab e barra de menus do alto): trocar de
+    /// "só barra de menus" para "app normal" com a janela já aberta fazia o macOS não tratar o Heimdall como app ativo.
+    func abrirJanela(_ nome: String, _ texto: String) {
+        guard let url = URL(string: texto) else { return }
         if let existente = janelas[nome] {
             existente.mostrar()
             return
         }
         let nova = JanelaSite(titulo: nome, url: url)
-        nova.aoFechar = { [weak self] in
-            self?.janelas[nome] = nil
-            // Sem janelas abertas, o app volta a ficar só na barra de menus.
-            if self?.janelas.isEmpty == true { NSApp.setActivationPolicy(.accessory) }
-        }
+        nova.aoFechar = { [weak self] in self?.janelas[nome] = nil }
         janelas[nome] = nova
-        // Com uma janela aberta o app aparece no Dock e em Command+Tab, para ela não se perder atrás das outras.
-        NSApp.setActivationPolicy(.regular)
         nova.mostrar()
     }
+
+    /// Janela inicial: assim que a lista de endereços chega, abre o Chat uma única vez.
+    var abriuInicial = false
+    func abrirJanelaInicial() {
+        guard !abriuInicial, let par = sites.first(where: { $0.0 == "Chat" }) else { return }
+        abriuInicial = true
+        abrirJanela(par.0, par.1)
+    }
+
+    /// Clique no ícone do Dock sem janelas: abre o Chat de novo. Fechar a janela não encerra o app (ele continua na barra de estado).
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            if let par = sites.first(where: { $0.0 == "Chat" }) ?? sites.first { abrirJanela(par.0, par.1) }
+        }
+        return true
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { return false }
 
     func janelaAtual() -> JanelaSite? {
         return janelas.values.first(where: { $0.janela == NSApp.keyWindow })
@@ -569,5 +588,5 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
 let aplicativo = NSApplication.shared
 let delegado = Delegado()
 aplicativo.delegate = delegado
-aplicativo.setActivationPolicy(.accessory)
+aplicativo.setActivationPolicy(.regular)
 aplicativo.run()
