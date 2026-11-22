@@ -3,7 +3,7 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-22 - App do Mac: menu Arquivo
-- A barra de menus do app ganhou o menu Arquivo (Imprimir, com Command+P, e Fechar a janela, com Command+W), antes dos menus Edição, Visualizar, Abrir, Sistema e Janela. A barra aparece quando uma janela de site está aberta e o app está em primeiro plano. Para valer, recompile o app com heimdall app.
+- A barra de menus do app ganhou o menu Arquivo (Imprimir, com Command+P, pela impressão do WebKit, e Fechar a janela, com Command+W), antes dos menus Edição, Visualizar, Abrir, Sistema e Janela. A barra aparece quando uma janela de site está aberta e o app está em primeiro plano. Para valer, recompile o app com heimdall app.
 - Correção: com a janela aberta, a barra de menus do alto continuava sendo a do app anterior, porque o macOS não tratava o Heimdall como app ativo logo depois de ele virar app normal. A janela agora ativa o app de novo um instante depois de abrir. Se ainda acontecer, Command+Tab até o Heimdall mostra os menus.
 
 ## 2026-11-21 - Saúde por pessoa na caixa de correio

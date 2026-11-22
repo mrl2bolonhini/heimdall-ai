@@ -464,6 +464,13 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return menu
     }
 
+    @objc func imprimirJanela() {
+        guard let j = janelaAtual() else { return }
+        let operacao = j.web.printOperation(with: NSPrintInfo.shared)
+        operacao.view?.frame = j.web.bounds
+        operacao.runModal(for: j.janela, delegate: nil, didRun: nil, contextInfo: nil)
+    }
+
     @objc func aumentarZoom() { if let w = janelaAtual()?.web { w.pageZoom += 0.1 } }
     @objc func diminuirZoom() { if let w = janelaAtual()?.web { w.pageZoom = max(0.3, w.pageZoom - 0.1) } }
     @objc func zoomNormal() { janelaAtual()?.web.pageZoom = 1.0 }
@@ -476,7 +483,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         _ = itemDe(menuApp, "Sair do Heimdall", #selector(sair), "q")
 
         let arquivo = submenuDe(principal, "Arquivo")
-        _ = itemDe(arquivo, "Imprimir…", #selector(NSView.print(_:)), "p", alvo: false)
+        _ = itemDe(arquivo, "Imprimir…", #selector(imprimirJanela), "p")
         arquivo.addItem(NSMenuItem.separator())
         _ = itemDe(arquivo, "Fechar a janela", #selector(NSWindow.performClose(_:)), "w", alvo: false)
 
