@@ -15,6 +15,17 @@ model_list:
     model_info:
       supports_function_calling: true
 
+  # Base do modelo Conversas do Open WebUI. Local, é o mesmo gemma de cima; com HEIMDALL_NUVEM=1 o heimdall_litellm.py troca este nome
+  # pelo modelo da nuvem (Qwen3 30B), com ferramentas (SearXNG), e deixa este local como volta ("conversas-local").
+  - model_name: conversas
+    litellm_params:
+      model: ollama_chat/eriktonon/gemma4-uncensored
+      api_base: http://localhost:11434
+      num_ctx: 8192
+      keep_alive: "2m"
+    model_info:
+      supports_function_calling: true
+
   - model_name: dolphin3-cyber-8b
     litellm_params:
       model: ollama_chat/mparvin/dolphin3-cyber-8b-gguf:q8_0

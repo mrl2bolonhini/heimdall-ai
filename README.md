@@ -140,11 +140,12 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 | Nome no LiteLLM | Modelo no Ollama | Uso | Observações |
 |---|---|---|---|
 | `gemma-4-uncensored` | `ollama_chat/eriktonon/gemma4-uncensored` | Uso geral | Confira a chamada de ferramentas com test_models_tools.py. |
+| `conversas` | `ollama_chat/eriktonon/gemma4-uncensored` | Base do modelo Conversas do Open WebUI | Local é o mesmo gemma de gemma-4-uncensored; com HEIMDALL_NUVEM=1 o heimdall_litellm.py o troca pelo Qwen3 30B da nuvem e deixa este como volta (conversas-local). |
 | `dolphin3-cyber-8b` | `ollama_chat/mparvin/dolphin3-cyber-8b-gguf:q8_0` | Segurança e conversa livre, só texto | Não chama ferramentas no Ollama; use para análises de texto, não nos fluxos com MCP. |
 | `deepseek-coder-v2:16b` | `ollama_chat/deepseek-coder-v2:16b` | Código (usado pelo GitOps) | O GitOps usa este modelo na etapa de análise de código. |
 | `qwen3-vl-instruct` | `ollama_chat/qwen3-vl:8b-instruct` | Modelo padrão dos fluxos; entende imagens | Declara suporte a imagens no LiteLLM. |
 | `gemma3-4b` | `ollama_chat/gemma3:4b` | Modelo pequeno e rápido (3 GB), usado nos resumos do Heimdall News | No teste com um parágrafo resumiu certo em português; baixe com ollama pull gemma3:4b. |
-| `llama-3.1-8b` | `ollama_chat/llama3.1:8b` | Uso geral; aceita ferramentas | Template do Ollama com suporte a ferramentas; respondeu bem em português. |
+| `llama-3.1-8b` | `ollama_chat/llama3.1:8b` | Modelo local padrão do Perguntar; aceita ferramentas | Template do Ollama com suporte a ferramentas; respondeu bem em português. Nenhum modelo do chat o usa. |
 <!-- /AUTO:MODELOS -->
 
 ## Modelos do chat
@@ -159,7 +160,7 @@ Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e 
 | Finanças | `qwen3-vl-instruct` | `banco-financas` | `financas_resumo`, `financas_transacoes`, `financas_orcamentos`, `financas_recorrentes`, `financas_boletos`, `financas_futuros`, `get_system_timestamp` | 0,2 |
 | Código | `deepseek-coder-v2:16b` | nenhuma |  | 0,2 |
 | Curiosidades | `qwen3-vl-instruct` | `internet` | `search_searxng`, `calculate_expression`, `get_system_timestamp`, `get_hackernews_top_stories`, `search_reddit_posts`, `fetch_rss_feed`, `get_astronomy_apod`, `get_youtube_transcript`, `fetch_url` | 0,4 |
-| Conversas | `gemma-4-uncensored` | nenhuma |  | 0,8 |
+| Conversas | `conversas` | `web-basica` | `search_searxng`, `fetch_url`, `calculate_expression`, `get_system_timestamp` | 0,8 |
 | Documentos e Memória | `qwen3-vl-instruct` | `mac-admin` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search` | 0,2 |
 <!-- /AUTO:MODELOS_CHAT -->
 

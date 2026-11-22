@@ -2,10 +2,16 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Conversas com pesquisa na web, Qwen3 na nuvem e guia do Open WebUI reescrito
+- O Conversas agora pesquisa na web quando a pergunta pede (SearXNG, leitura de página, cálculo e hora), por uma conexão nova e enxuta, a "Web básica (Conversas)", para gastar menos tokens com a lista de ferramentas. Ele passa a ter a base "conversas" no LiteLLM: local, é o mesmo gemma de antes; com HEIMDALL_NUVEM=1 vira o Qwen3 30B do Workers AI, bem mais barato por token que o gpt-oss e o Mistral, com o gemma local como volta (conversas-local). O prompt ganhou a linha /no_think, que desliga o raciocínio do Qwen3 e poupa tokens.
+- HEIMDALL_NUVEM_CONVERSAS_MODELO troca o modelo do Conversas (por exemplo, o Mistral Small 3.1: workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct). Atenção: a página do Qwen3 30B no Workers AI mostrava uma data de descontinuação de 20/11/2026; se a nuvem falhar nesse modelo, o Conversas cai no gemma local e some a pesquisa. Teste com uma pergunta e, se preciso, troque o modelo.
+- O guia do Open WebUI (modelos_open_webui.txt) foi reescrito como passo a passo da primeira configuração: antes de começar, seis conexões de ferramentas, sete modelos, teste com pergunta real e o que vai para a nuvem. Os arquivos para importar estão em openwebui/ (agora com a conexão web-basica e o modelo Conversas novos).
+- Todos os modelos locais continuam no LiteLLM: listar um modelo não gasta memória (o Ollama só carrega o que é chamado) e todos têm uso: gemma e dolphin (segurança), qwen3-vl (fluxos e imagens), deepseek-coder (GitOps), gemma3-4b (resumos do News) e llama-3.1-8b (modelo local padrão do Perguntar).
+
 ## 2026-11-22 - Chat na nuvem (LiteLLM com o gpt-oss-120b)
 - Com HEIMDALL_NUVEM=1, o chat do Open WebUI passa a responder pelo gpt-oss-120b da Cloudflare (gateway "heimdall", teto de gasto no gateway) em vez do modelo local, que era lento. Valem para os modelos Meus Dados, Saúde, Finanças, Curiosidades e Documentos e Memória (base qwen3-vl-instruct) e para o Código (base deepseek-coder-v2:16b). O gpt-oss chama as ferramentas (MCP) normalmente.
 - Plano de volta: o modelo local continua na lista com o nome "<modelo>-local" e é usado sozinho se a nuvem falhar ou o limite de gasto cortar. Com HEIMDALL_NUVEM=0 (ou sem a chave da Cloudflare) vale o litellm_config.yaml exatamente como antes.
-- O Conversas (gemma-4-uncensored) fica local de propósito, porque o gpt-oss recusa coisas que esse modelo não recusa. Para incluir: heimdall env --set HEIMDALL_NUVEM_CHAT "qwen3-vl-instruct,deepseek-coder-v2:16b,gemma-4-uncensored".
+- O Conversas usa outro modelo da nuvem (ver o bloco acima).
 - Novo heimdall_litellm.py: gera, a cada subida, banco/litellm_config_efetivo.yaml (permissão 600, fora do git, leva a chave lida do .env) e inicia o LiteLLM com ele; start_heimdall.sh e o Controls passaram a usá-lo. Diferente dos outros usos da nuvem, aqui o interruptor só vale depois de reiniciar o LiteLLM (heimdall restart ou religar o LiteLLM pelo Controls).
 - Novo teste: python3 teste_litellm_nuvem.py (sem rede).
 

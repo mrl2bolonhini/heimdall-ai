@@ -2,13 +2,13 @@
 """Inicia o LiteLLM com a configuração certa para o interruptor da nuvem (HEIMDALL_NUVEM).
 
 Com HEIMDALL_NUVEM=1 (e a chave da Cloudflare no .env), os modelos do chat (HEIMDALL_NUVEM_CHAT, padrão qwen3-vl-instruct e
-deepseek-coder-v2:16b) passam a responder pelo gpt-oss-120b do gateway "heimdall" da Cloudflare (teto de gasto no gateway). O modelo
+deepseek-coder-v2:16b e conversas) passam a responder pelo gpt-oss-120b do gateway "heimdall" da Cloudflare (teto de gasto no gateway). O modelo
 local continua na lista com o nome "<modelo>-local" e é o plano de volta: se a nuvem falhar ou o limite cortar, o LiteLLM tenta o local sozinho.
 Com HEIMDALL_NUVEM diferente de 1, vale o litellm_config.yaml sem mudança nenhuma (como antes da migração).
 
 O arquivo gerado (banco/litellm_config_efetivo.yaml, fora do git, permissão 600) leva a chave lida do .env, por isso nunca é copiado.
-O Conversas (gemma-4-uncensored) fica no modelo local, de propósito: o gpt-oss recusa o que esse modelo não recusa.
-Para incluir outros: heimdall env --set HEIMDALL_NUVEM_CHAT "qwen3-vl-instruct,deepseek-coder-v2:16b,gemma-4-uncensored"
+O Conversas usa outro modelo da nuvem (Qwen3 30B, HEIMDALL_NUVEM_CONVERSAS_MODELO muda), porque o gpt-oss recusa o que o gemma local não recusa.
+O gemma-4-uncensored continua disponível, só local, para quem quiser escolher à mão.
 
     python3 heimdall_litellm.py [opções do litellm]    gera a configuração e inicia o LiteLLM com ela
     python3 heimdall_litellm.py --so-gerar             só gera e mostra o caminho do arquivo que será usado
@@ -22,8 +22,11 @@ import heimdall_nuvem as nuvem
 AQUI = Path(__file__).resolve().parent
 ORIGINAL = AQUI / "litellm_config.yaml"
 EFETIVO = AQUI / "banco" / "litellm_config_efetivo.yaml"
-PADRAO_CHAT = "qwen3-vl-instruct,deepseek-coder-v2:16b"
-CHAVES_EXTRA = ("HEIMDALL_NUVEM_CHAT",)
+PADRAO_CHAT = "qwen3-vl-instruct,deepseek-coder-v2:16b,conversas"
+# O Conversas tem modelo próprio na nuvem: o Qwen3 30B custa bem menos por token que o gpt-oss e o Mistral (confira os preços no Workers AI),
+# aceita ferramentas e não recusa tanto. Outro modelo: heimdall env --set HEIMDALL_NUVEM_CONVERSAS_MODELO "workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct"
+MODELO_CONVERSAS = "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8"
+CHAVES_EXTRA = ("HEIMDALL_NUVEM_CHAT", "HEIMDALL_NUVEM_CONVERSAS_MODELO")
 
 
 def _ler_extra() -> dict:
@@ -56,7 +59,8 @@ def config_para_nuvem(cfg: dict, env: dict) -> dict:
     novo = copy.deepcopy(cfg)
     token = env["CLOUDFLARE_API_TOKEN"]
     base = f"https://gateway.ai.cloudflare.com/v1/{env['CLOUDFLARE_ACCOUNT_ID']}/{nuvem.GATEWAY}/compat"
-    modelo = env.get("HEIMDALL_NUVEM_MODELO") or nuvem.MODELO_PADRAO
+    modelo_padrao = env.get("HEIMDALL_NUVEM_MODELO") or nuvem.MODELO_PADRAO
+    modelo_por_nome = {"conversas": env.get("HEIMDALL_NUVEM_CONVERSAS_MODELO") or MODELO_CONVERSAS}
     escolhidos = set(nomes_na_nuvem(env))
     lista, voltas = [], {}
     for item in novo.get("model_list", []):
@@ -72,7 +76,7 @@ def config_para_nuvem(cfg: dict, env: dict) -> dict:
         lista.append({
             "model_name": nome,
             "litellm_params": {
-                "model": "openai/" + modelo, "api_base": base, "api_key": token,
+                "model": "openai/" + modelo_por_nome.get(nome, modelo_padrao), "api_base": base, "api_key": token,
                 "extra_headers": {"cf-aig-authorization": "Bearer " + token, "User-Agent": nuvem.USER_AGENT},
                 "timeout": 120, "num_retries": 0,
             },

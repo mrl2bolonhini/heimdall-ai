@@ -17,6 +17,7 @@ FINANCAS = ["financas_resumo", "financas_transacoes", "financas_orcamentos", "fi
 GERAL = ["banco_resumo", "banco_consultar", "banco_buscar", "saude_historico", "get_system_timestamp"]
 INTERNET = ["search_searxng", "calculate_expression", "get_system_timestamp", "get_hackernews_top_stories", "search_reddit_posts", "fetch_rss_feed",
             "get_astronomy_apod", "get_youtube_transcript", "fetch_url"]
+WEB_BASICA = ["search_searxng", "fetch_url", "calculate_expression", "get_system_timestamp"]
 MEMORIA = ["memory_save", "memory_search", "memory_forget", "rag_temas", "rag_search"]
 
 # Conexões em Configurações do administrador, Integrações, Servidores de ferramentas externos. Várias conexões podem apontar para o mesmo servidor
@@ -26,6 +27,7 @@ CONEXOES = [
     {"id": "banco-saude", "nome": "Saúde (banco pessoal)", "descricao": "Saúde em modo leitura: histórico por métrica, análises, coração, ECG, treinos e relatório. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
     {"id": "banco-financas", "nome": "Finanças (Finance)", "descricao": "Finance em modo leitura: resumo do mês, lançamentos, orçamentos, recorrentes, boletos e pagamentos futuros. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
     {"id": "internet", "nome": "Internet e Utilidades", "descricao": "Pesquisa na web, cálculo, notícias, feeds, transcrições e utilidades públicas.", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": INTERNET},
+    {"id": "web-basica", "nome": "Web básica (Conversas)", "descricao": "Só pesquisa na web, leitura de página, cálculo e hora: poucas funções para o Conversas gastar pouco com a lista de ferramentas.", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": WEB_BASICA},
     {"id": "mac-admin", "nome": "Mac e Memória (administrador)", "descricao": "Memória persistente e documentos pessoais (RAG). Só para o administrador.", "url": "http://host.docker.internal:8000/mcp", "grupo": "MAC_TOOLS", "acesso": "só do administrador", "funcoes": MEMORIA},
 ]
 
@@ -43,14 +45,15 @@ MODELOS = [
     {"id": "curiosidades", "nome": "Curiosidades", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_curiosidades.txt", "temperatura": 0.4, "conexao": "internet",
      "uso": "web, notícias, cálculo, transcrições e feeds", "nativa": True,
      "obs": "usa o mesmo modelo do Meus Dados, sem trocar de modelo na memória."},
-    {"id": "conversas", "nome": "Conversas", "base": "gemma-4-uncensored", "prompt": "prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "",
-     "uso": "conversa livre, sem ferramentas", "nativa": False},
+    {"id": "conversas", "nome": "Conversas", "base": "conversas", "prompt": "prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "web-basica",
+     "uso": "conversa livre, com pesquisa na web quando a pergunta pede", "nativa": True,
+     "obs": "na nuvem (HEIMDALL_NUVEM=1) usa o Qwen3 30B; sem a nuvem, o gemma local, que pode não chamar a pesquisa."},
     {"id": "documentos", "nome": "Documentos e Memória", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
      "uso": "livros, notas e documentos do estudo e memória pessoal (opcional)", "nativa": True},
 ]
 
-NOVOS = """MODELOS NOVOS QUE AINDA NÃO TÊM PAPEL NO CHAT
-  llama-3.1-8b: aceita ferramentas e respondeu bem em português. É candidato a substituir o qwen3-vl-instruct no Curiosidades ou no Meus Dados, se ele errar menos ao escolher ferramentas. Compare as mesmas 3 perguntas nos dois antes de trocar. Atenção: usar um segundo modelo de 8B alternando com o qwen3-vl-instruct faz a memória de 16 GB trocar de modelo a cada mudança de chat.
+NOVOS = """OUTROS MODELOS DO LITELLM (não são base de nenhum modelo do chat)
+  llama-3.1-8b: aceita ferramentas e respondeu bem em português. É o modelo local padrão do Perguntar (heimdall ask e os sites, quando a nuvem está desligada ou falha). Nenhum modelo do chat o usa. Compare-o com o qwen3-vl-instruct antes de trocar algum modelo do chat; um segundo modelo de 8B alternando faz a memória trocar de modelo a cada mudança de chat.
   dolphin3-cyber-8b: só texto (sem ferramentas). Já trabalha nas tarefas programadas de segurança; no chat só faria sentido para analisar um texto colado.
   gemma3-4b: usado nos resumos do News; é pequeno e rápido, serve para conversas curtas sem tirar o qwen3-vl-instruct da memória.
 """
@@ -140,18 +143,35 @@ def problemas():
 
 
 def texto_guia():
-    L = ["MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos)", "",
+    com_filtro = [c["id"] for c in CONEXOES if excluidas(c)]
+    sem_filtro = [c["id"] for c in CONEXOES if not excluidas(c)]
+    L = ["MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos): GUIA DA PRIMEIRA CONFIGURAÇÃO", "",
          "Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.", "",
-         "IMPORTAR TUDO DE UMA VEZ (recomendado). Os arquivos estão em ~/heimdall-ai/openwebui/:",
-         "  1. openwebui/ferramentas/: um arquivo por conexão (banco-pessoal.json, banco-saude.json, banco-financas.json, internet.json e mac-admin.json), porque o Open WebUI importa só a primeira conexão de cada arquivo. Em Configurações do administrador, Integrações, Servidores de ferramentas, use Importar cinco vezes, uma para cada arquivo. Antes, apague as conexões antigas internet, mac-admin e banco-pessoal, para não duplicar. Depois reaplique o acesso do convidado ao internet, se ele usava.",
-         "     O filtro NÃO vem na importação (o Open WebUI não o exporta nem o importa). Em cada conexão que tiver o arquivo openwebui/filtro_ID.txt, abra a edição e cole a lista no campo Lista de filtros de nomes de funções: copie com pbcopy < ~/heimdall-ai/openwebui/filtro_ID.txt (troque ID por banco-pessoal, banco-saude, banco-financas ou mac-admin) e cole com Command+V. A conexão internet usa todas as funções e não precisa de filtro.",
-         "     Quando uma função nova entrar no servidor, rode python3 gerar_docs.py e cole o filtro de novo nas conexões que mudarem.",
-         "  2. openwebui/modelos_importar.json (todos os modelos) ou, se só o primeiro entrar, os arquivos da pasta openwebui/modelos/, um por modelo: em Workspace, Modelos, use Importar. Os modelos entram só para o administrador. Os modelos antigos não são apagados: apague à mão só os que não quiser mais.",
-         "  3. Confira cada conexão e cada modelo uma vez, com uma pergunta real. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.",
-         "Abaixo, o que cada arquivo contém, para conferir ou para criar à mão.", "",
+         "Serve para quem ainda não importou nada. Todos os arquivos estão em ~/heimdall-ai/openwebui/. Tudo leva uns 15 minutos. Os passos são de teclado e de terminal, pensados para o VoiceOver.", "",
+         "ANTES DE COMEÇAR",
+         "  1. Atualize o Heimdall e reinicie: heimdall update --restart. Isso sobe o LiteLLM, que é de onde o Open WebUI tira a lista de modelos.",
+         "  2. Para o chat responder pela nuvem (rápido), ligue o interruptor e reinicie: heimdall env --set HEIMDALL_NUVEM 1, depois heimdall restart. Confira com heimdall cloudai. Sem a nuvem, o chat usa os modelos locais do Ollama e fica lento. Para voltar ao local: heimdall env --set HEIMDALL_NUVEM 0 e heimdall restart.",
+         "  3. Abra o Open WebUI (porta 3000, ou o endereço do seu acesso) e entre como administrador. Em Workspace, Modelos, a lista deve mostrar os modelos do LiteLLM (qwen3-vl-instruct, conversas, deepseek-coder-v2:16b e os outros). Se estiver vazia, o LiteLLM não subiu: rode heimdall status.", "",
+         "PASSO 1: AS CONEXÕES DE FERRAMENTAS (%d arquivos)" % len(CONEXOES),
+         "  1. Abra Configurações do administrador, Integrações, Servidores de ferramentas externos.",
+         "  2. Use Importar, uma vez para cada arquivo da pasta openwebui/ferramentas/: " + ", ".join(c["id"] + ".json" for c in CONEXOES) + ". Um arquivo por conexão, porque o Open WebUI importa só a primeira conexão de cada arquivo. Se o Open WebUI já tiver uma conexão com o mesmo ID (por exemplo internet), apague a antiga antes de importar, para não duplicar; se o convidado usava essa conexão, reaplique o acesso dele depois.",
+         "  3. O filtro de funções NÃO vem na importação (o Open WebUI não o exporta nem o importa). Ele é o que impede cada modelo de enxergar funções que não são do seu assunto. Nas conexões " + ", ".join(com_filtro) + ", abra a edição e cole a lista no campo Lista de filtros de nomes de funções. Para copiar sem digitar, no Terminal: pbcopy < ~/heimdall-ai/openwebui/filtro_ID.txt (troque ID pelo nome da conexão) e depois Command+V no campo. Sem filtro (usa todas as funções do servidor): " + ", ".join(sem_filtro) + ".",
+         "  4. Salve cada conexão e use o botão de verificar conexão. As que usam o servidor de dados (porta 8004) e o do Mac (porta 8000) só respondem com o Heimdall ligado.", "",
+         "PASSO 2: OS MODELOS (%d)" % len(MODELOS),
+         "  1. Abra Workspace, Modelos, Importar, e escolha openwebui/modelos_importar.json (todos de uma vez). Se só o primeiro entrar, importe um por um os arquivos de openwebui/modelos/ (" + ", ".join(m["id"] + ".json" for m in MODELOS) + ").",
+         "  2. Os modelos entram só para o administrador, de propósito: eles mexem em saúde, finanças e dados pessoais. Para o convidado usar algum, dê o acesso modelo a modelo, e só aos que não tocam dados pessoais (Curiosidades, Conversas, Código).",
+         "  3. Cada modelo já chega com o prompt, a temperatura, a conexão de ferramentas e a chamada de função Nativa. Confira uma vez abrindo o modelo para editar. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.", "",
+         "PASSO 3: TESTE COM UMA PERGUNTA REAL EM CADA MODELO",
+         "  1. Conversas: \"Quem ganhou o jogo do Corinthians ontem?\" (deve pesquisar na web e dizer de onde veio).",
+         "  2. Curiosidades: uma notícia do dia. Meus Dados, Saúde e Finanças: uma pergunta simples sobre os seus dados (ex.: como foi o meu sono na semana).",
+         "  3. Se um modelo ignorar as ferramentas, confira se a chamada de função está em Nativa e se a conexão do modelo está ligada em Ferramentas.",
+         "  4. Na nuvem, o primeiro uso do dia pode demorar alguns segundos; se a nuvem falhar ou o limite de gasto cortar, o LiteLLM usa sozinho o modelo local (o chat só fica mais lento).", "",
+         "O QUE VAI PARA A NUVEM COM HEIMDALL_NUVEM=1",
+         "  Meus Dados, Saúde, Finanças, Curiosidades, Documentos e Memória e Código: gpt-oss-120b (gateway \"heimdall\", teto de gasto). Conversas: Qwen3 30B (HEIMDALL_NUVEM_CONVERSAS_MODELO troca). Os modelos locais ficam como volta. Lembrete: o contexto das conversas, incluindo saúde e finanças nos modelos desses assuntos, passa pela Cloudflare (decisão de 21/11/2026).", "",
+         "CAMINHO MANUAL (para conferir ou criar à mão). Abaixo, o que cada arquivo contém.", "",
          "Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos).",
          "Cada conexão tem um filtro que EXCLUI as funções do servidor que não são do seu assunto (formato !funcao1, !funcao2). Como o servidor é compartilhado, assim a função fica bloqueada de verdade e não depende do modelo se comportar.",
-         "As três primeiras apontam para o mesmo servidor, o de dados, e só mudam o filtro.", ""]
+         "As conexões de dados apontam para o mesmo servidor (porta 8004) e só mudam o filtro; Internet e Web básica também dividem o servidor público (porta 8001).", ""]
     for k, c in enumerate(CONEXOES):
         letra = "Conexão %d" % (k + 1)
         L.append("%s: ID %s, nome \"%s\", %s%s" % (letra, c["id"], c["nome"], c["url"], (", acesso " + c["acesso"]) if c["acesso"] else ""))
@@ -178,7 +198,7 @@ def texto_guia():
           "AJUSTES EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)"]
     for m in MODELOS:
         L.append("  %s: temperatura %s." % (m["nome"], str(m["temperatura"]).replace(".", ",")))
-    L.append("  Nos que têm ferramentas, deixe a chamada de função em Nativa. O contexto (8192, o mesmo no Código) e o tempo na memória já vêm do litellm_config.yaml.")
+    L.append("  Nos que têm ferramentas, deixe a chamada de função em Nativa. O contexto (8192 nos modelos locais) e o tempo na memória já vêm do litellm_config.yaml; na nuvem o Conversas usa o contexto de 32 mil tokens do Qwen3.")
     L.append("")
     L.append(NOVOS.rstrip("\n"))
     return "\n".join(L) + "\n"

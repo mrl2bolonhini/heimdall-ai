@@ -328,7 +328,7 @@ Exemplos:
 
 @ cloudai | Modelo grande na nuvem (gpt-oss-120b)
 Mostra se o modelo grande da Cloudflare está ligado e, se estiver, faz uma pergunta de teste. Com o interruptor ligado, as perguntas do Heimdall (Notes, Finance e os demais que usam o Perguntar) vão primeiro à nuvem, pelo gateway de IA com teto de US$ 10 por mês e sem guardar o conteúdo; se a nuvem falhar, voltam sozinhas ao modelo local. Não precisa reiniciar.
-O chat do Open WebUI também usa a nuvem (modelos Meus Dados, Saúde, Finanças, Curiosidades, Documentos e Memória e Código), com o modelo local como volta automática; o Conversas fica local, e HEIMDALL_NUVEM_CHAT muda a lista. Para o chat valer, reinicie o LiteLLM (heimdall restart). Para ligar: heimdall env --set HEIMDALL_NUVEM 1. Para voltar ao que era: heimdall env --set HEIMDALL_NUVEM 0. A chave é a do News (heimdall cloudflare), com a permissão AI Gateway (Lido, Executar e Editar).
+O chat do Open WebUI também usa a nuvem (modelos Meus Dados, Saúde, Finanças, Curiosidades, Documentos e Memória e Código), com o modelo local como volta automática; o Conversas usa o Qwen3 30B (HEIMDALL_NUVEM_CONVERSAS_MODELO troca) e pesquisa na web; HEIMDALL_NUVEM_CHAT muda a lista de modelos do chat na nuvem. Para o chat valer, reinicie o LiteLLM (heimdall restart). Para ligar: heimdall env --set HEIMDALL_NUVEM 1. Para voltar ao que era: heimdall env --set HEIMDALL_NUVEM 0. A chave é a do News (heimdall cloudflare), com a permissão AI Gateway (Lido, Executar e Editar).
 Opções:
   -h, --help           mostra esta ajuda
 Exemplos:
