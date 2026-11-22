@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Repositório reorganizado em pastas
+- Testes: os 64 arquivos de teste saíram da raiz para tests/<serviço>/ (finance, health, news, notes, games, cloud, account, controls, agent, chat, design, monitor, core). Novo ./rodar_testes.sh roda todos (ou uma pasta: ./rodar_testes.sh finance; ./rodar_testes.sh -l lista). Onde estas novidades antigas dizem "python3 teste_x.py", o arquivo agora está em tests/<serviço>/.
+- Guias e ajudas foram para guides/ (LEIAME_*, heimdall_ajuda.txt, modelos_open_webui.txt, PUBLICAR_PAGINAS.md, instructions.txt); os prompts do chat para prompts/; os scripts de shell (instalar_*, trocar_*, guardar_no_env.sh etc.) para scripts/. Ficam na raiz subir.sh, start_heimdall.sh, start_ecosystem.sh e heimdall.zsh, porque os LaunchAgents do Mac apontam para eles.
+- Fluxos do n8n: n8n_flows, n8n_flows_avancados e n8n_flows_monitor viraram flows/basic, flows/advanced e flows/monitor. A pasta jogos/ virou games/.
+- A pasta de dados do Finance, dados_financas/, passa a se chamar finance/. A migração é automática: na primeira subida (heimdall update --restart) a pasta é renomeada, com os mesmos dados (nada é copiado nem apagado). Se HEIMDALL_FINANCE_DIR estiver no .env, ele continua mandando. Novo heimdall_pastas.py guarda a regra.
+- O comando heimdall e os instaladores continuam iguais para quem usa; só os caminhos dos arquivos mudaram. Novo teste: tests/core/teste_pastas.py.
+
 ## 2026-11-22 - Conversas com pesquisa na web, Qwen3 na nuvem e guia do Open WebUI reescrito
 - O Conversas agora pesquisa na web quando a pergunta pede (SearXNG, leitura de página, cálculo e hora), por uma conexão nova e enxuta, a "Web básica (Conversas)", para gastar menos tokens com a lista de ferramentas. Ele passa a ter a base "conversas" no LiteLLM: local, é o mesmo gemma de antes; com HEIMDALL_NUVEM=1 vira o Qwen3 30B do Workers AI, bem mais barato por token que o gpt-oss e o Mistral, com o gemma local como volta (conversas-local). O prompt ganhou a linha /no_think, que desliga o raciocínio do Qwen3 e poupa tokens.
 - HEIMDALL_NUVEM_CONVERSAS_MODELO troca o modelo do Conversas (por exemplo, o Mistral Small 3.1: workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct). Atenção: a página do Qwen3 30B no Workers AI mostrava uma data de descontinuação de 20/11/2026; se a nuvem falhar nesse modelo, o Conversas cai no gemma local e some a pesquisa. Teste com uma pergunta e, se preciso, troque o modelo.

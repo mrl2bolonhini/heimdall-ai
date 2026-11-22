@@ -16,7 +16,7 @@ Regras de insistência (constantes abaixo):
     - Se você baixar a prioridade de um item, ele deixa de ser tratado como crítico (você já o viu e decidiu).
 
 Este módulo não fala com o macOS diretamente: quem chama (heimdall_agente.py) entrega a função que roda o AppleScript.
-Assim as regras podem ser testadas em qualquer máquina (teste_triagem.py).
+Assim as regras podem ser testadas em qualquer máquina (tests/monitor/teste_triagem.py).
 """
 import hashlib
 import json

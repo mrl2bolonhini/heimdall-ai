@@ -544,7 +544,7 @@ def main():
     cfg = ler_env(os.path.join(AQUI, ".env"))
     for k in ("HEIMDALL_EMAIL_USUARIO", "HEIMDALL_EMAIL_SENHA_APP"):
         if not cfg.get(k):
-            print("Falta %s no .env. Rode: bash instalar_email_oficial.sh" % k, file=sys.stderr)
+            print("Falta %s no .env. Rode: bash scripts/instalar_email_oficial.sh" % k, file=sys.stderr)
             return 2
     if "--testar-login" in sys.argv:
         try:

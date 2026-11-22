@@ -33,7 +33,8 @@ export.zip
 apple_health_export/
 
 # Dados financeiros do Heimdall Finance (nunca vão para o git)
-dados_financas/
+finance/
+dados_financas/  # nome antigo da pasta do Finance (migrada para finance/ na primeira subida)
 .heimdall_desligados.json
 
 # Extratos e faturas de amostra (nunca vão para o git)

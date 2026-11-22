@@ -7,7 +7,7 @@
 #       ./start_heimdall.sh --docling  sobe também o Docling (extração de PDFs com OCR) na porta 5001 (ou HEIMDALL_DOCLING=1)
 #       ./start_heimdall.sh --n8n      sobe também o n8n (automações e agendamentos) em http://localhost:5678 (ou HEIMDALL_N8N=1)
 #       ./start_heimdall.sh --agente   sobe também o agente do Mac (ponte do n8n com o app Notas) na porta 8003; sobe sozinho
-#                                      quando HEIMDALL_AGENTE_TOKEN existe no .env (o instalar_automacoes_avancadas.sh cria)
+#                                      quando HEIMDALL_AGENTE_TOKEN existe no .env (o scripts/instalar_automacoes_avancadas.sh cria)
 #       Aparência do Open WebUI (no .env): HEIMDALL_WEBUI_NAME="Heimdall-ai" (nome); arquivos em branding/
 #       (favicon.png, logo.png, splash.png...) são copiados para dentro do contêiner a cada subida.
 #       Extras (opcionais, no .env): HEIMDALL_MONITORING=0 desliga Uptime Kuma e Dozzle;
@@ -635,7 +635,7 @@ fi
 
 # --- Heimdall Finance (extratos, categorias e tendências): mesmo login do Heimdall Cloud ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (finance.heimdall-ai.tech).
-# Os dados ficam em dados_financas/ (fora do git) e nunca saem do Mac.
+# Os dados ficam em finance/ (fora do git) e nunca saem do Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_finance.py ]; then
         HEIMDALL_FINANCE_PORT="$FINANCE_PORT" "$VENV_PYTHON" heimdall_finance.py > "$(nova_log finance_debug)" 2>&1 &

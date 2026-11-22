@@ -115,7 +115,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
   printf '%s\n' "-h=--help"
 }
 
-_heimdall_ajuda_arquivo() { echo "$HEIMDALL_DIR/heimdall_ajuda.txt"; }
+_heimdall_ajuda_arquivo() { echo "$HEIMDALL_DIR/guides/heimdall_ajuda.txt"; }
 
 _heimdall_overview() {  # lista os comandos, um por linha
   echo "Uso: heimdall COMANDO [--opção ...]. Para as variações de um comando: heimdall COMANDO --help (ou -h)."
@@ -201,11 +201,11 @@ heimdall() {
     chat)
       case "$1" in
         "") _heimdall_open "Open WebUI (chat)" "http://localhost:3000" ;;
-        --diagnose) _heimdall_sh diagnostico_chat.sh ;;
+        --diagnose) _heimdall_sh scripts/diagnostico_chat.sh ;;
         --check) _heimdall_py verificar_access.py "https://$(_heimdall_envval HEIMDALL_WEBUI_HOST chat.heimdall-ai.tech)" ;;
-        --password) shift; _heimdall_sh trocar_senha_webui.sh "$@" ;;
-        --email) shift; _heimdall_sh trocar_email_webui.sh "$@" ;;
-        --delete-user) shift; _heimdall_sh excluir_usuario_webui.sh "$@" ;;
+        --password) shift; _heimdall_sh scripts/trocar_senha_webui.sh "$@" ;;
+        --email) shift; _heimdall_sh scripts/trocar_email_webui.sh "$@" ;;
+        --delete-user) shift; _heimdall_sh scripts/excluir_usuario_webui.sh "$@" ;;
         *) echo "Use: heimdall chat [--diagnose] [--password] [--email] [--delete-user] [--check]"; return 1 ;;
       esac ;;
     notes)
@@ -359,13 +359,13 @@ heimdall() {
       echo "dozzle: http://localhost:8081" ;;
 
     triage)
-      if [ "$1" = "--complete-tests" ]; then _heimdall_sh concluir_testes_triagem.sh; else _heimdall_sh consultar_triagem.sh "$@"; fi ;;
+      if [ "$1" = "--complete-tests" ]; then _heimdall_sh scripts/concluir_testes_triagem.sh; else _heimdall_sh scripts/consultar_triagem.sh "$@"; fi ;;
     db) _heimdall_py heimdall_banco.py "$@" ;;
     notion) _heimdall_py heimdall_notion.py ;;
     cloudai) _heimdall_py heimdall_nuvem.py ;;
     mailbox) _heimdall_py heimdall_caixa.py "$@" ;;
     app) _heimdall_tr "--login=--entrar
---remove-login=--nao-entrar" "$@"; _heimdall_sh construir_app_mac.sh "${_HA[@]}" ;;
+--remove-login=--nao-entrar" "$@"; _heimdall_sh scripts/construir_app_mac.sh "${_HA[@]}" ;;
     ask) _heimdall_tr "--local=-
 --cloud=-" "$@"; _heimdall_py heimdall_ask.py "${_HA[@]}" ;;
     usage) _heimdall_tr "--days=--dias" "$@"; _heimdall_py heimdall_cfmonitor.py "${_HA[@]}" ;;
@@ -403,27 +403,27 @@ heimdall() {
       _heimdall_py heimdall_acesso.py "${_HA[@]}" ;;
     voice) _heimdall_tr "--import=--importar" "$@"; _heimdall_py heimdall_voz.py "${_HA[@]}" ;;
     listen) _heimdall_tr "--list=--lista
---latest=-" "$@"; _heimdall_sh ouvir_estudo.sh "${_HA[@]}" ;;
+--latest=-" "$@"; _heimdall_sh scripts/ouvir_estudo.sh "${_HA[@]}" ;;
     ingest) _heimdall_py ingest_docs.py "$@" ;;
     env)
       case "$1" in
         --defaults) _heimdall_py heimdall_config.py --gravar-padroes ;;
-        *) _heimdall_tr "--set=-" "$@"; _heimdall_sh guardar_no_env.sh "${_HA[@]}" ;;
+        *) _heimdall_tr "--set=-" "$@"; _heimdall_sh scripts/guardar_no_env.sh "${_HA[@]}" ;;
       esac ;;
     cloudflare) _heimdall_tr "--set=-
 --test=--testar" "$@"; _heimdall_py cloudflare_chave.py "${_HA[@]}" ;;
-    mcp) _heimdall_tr "--verify=-" "$@"; _heimdall_sh verificar_mcp_dados.sh "${_HA[@]}" ;;
+    mcp) _heimdall_tr "--verify=-" "$@"; _heimdall_sh scripts/verificar_mcp_dados.sh "${_HA[@]}" ;;
 
     flows)
       case "$1" in
-        ""|--advanced) shift 2>/dev/null; _heimdall_sh instalar_automacoes_avancadas.sh "$@" ;;
-        --basic) shift; _heimdall_sh instalar_fluxos_n8n.sh "$@" ;;
-        --privacy) shift; _heimdall_sh instalar_monitor_privacidade.sh "$@" ;;
-        --email) shift; _heimdall_sh instalar_email_oficial.sh "$@" ;;
+        ""|--advanced) shift 2>/dev/null; _heimdall_sh scripts/instalar_automacoes_avancadas.sh "$@" ;;
+        --basic) shift; _heimdall_sh scripts/instalar_fluxos_n8n.sh "$@" ;;
+        --privacy) shift; _heimdall_sh scripts/instalar_monitor_privacidade.sh "$@" ;;
+        --email) shift; _heimdall_sh scripts/instalar_email_oficial.sh "$@" ;;
         *) echo "Use: heimdall flows [--advanced] [--basic] [--privacy] [--email]"; return 1 ;;
       esac ;;
     hook) _heimdall_tr "--install=-
---remove=--remover" "$@"; _heimdall_sh instalar_hook_gitops.sh "${_HA[@]}" ;;
+--remove=--remover" "$@"; _heimdall_sh scripts/instalar_hook_gitops.sh "${_HA[@]}" ;;
     update)
       local restart=0 branch
       case "$1" in

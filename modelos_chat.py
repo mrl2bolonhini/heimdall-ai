@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fonte única dos modelos personalizados do chat (Open WebUI) e das funções que cada um pode usar.
 
-Daqui saem o guia modelos_open_webui.txt e a tabela do README (python3 gerar_docs.py). O teste teste_modelos_chat.py confere que
+Daqui saem o guia guides/modelos_open_webui.txt e a tabela do README (python3 gerar_docs.py). O teste tests/chat/teste_modelos_chat.py confere que
 toda função citada existe, que cada prompt só fala das funções do seu modelo e que nenhuma função do servidor de dados ficou sem uso.
 Para criar um modelo novo: acrescente-o em MODELOS (e, se precisar de um filtro novo, em CONEXOES), crie o prompt_chat_*.txt e rode gerar_docs.py.
 """
@@ -33,22 +33,22 @@ CONEXOES = [
 
 # temperatura: valor sugerido no campo Parâmetros avançados. conexao: id da conexão acima (vazio = sem ferramentas).
 MODELOS = [
-    {"id": "meus-dados", "nome": "Meus Dados", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "banco-pessoal",
+    {"id": "meus-dados", "nome": "Meus Dados", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "banco-pessoal",
      "uso": "diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos, Second Brain e métricas de saúde simples", "nativa": True},
-    {"id": "saude", "nome": "Saúde", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "banco-saude",
+    {"id": "saude", "nome": "Saúde", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "banco-saude",
      "uso": "sono, pulso, variabilidade, treinos, ECG, anomalias, relatórios de saúde, exames de laboratório, receitas e encaminhamentos", "nativa": True},
-    {"id": "financas", "nome": "Finanças", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "banco-financas",
+    {"id": "financas", "nome": "Finanças", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "banco-financas",
      "uso": "gastos, receitas, categorias, orçamentos, assinaturas, parcelas e boletos do Finance (só leitura)", "nativa": True},
-    {"id": "codigo", "nome": "Código", "base": "deepseek-coder-v2:16b", "prompt": "prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
+    {"id": "codigo", "nome": "Código", "base": "deepseek-coder-v2:16b", "prompt": "prompts/prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
      "uso": "programação, sem ferramentas", "nativa": False,
      "obs": "nos seus testes esse modelo não suporta ferramentas no Ollama. O contexto dele é de 8192 tokens e ele sai da memória 30 segundos depois do uso."},
-    {"id": "curiosidades", "nome": "Curiosidades", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_curiosidades.txt", "temperatura": 0.4, "conexao": "internet",
+    {"id": "curiosidades", "nome": "Curiosidades", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_curiosidades.txt", "temperatura": 0.4, "conexao": "internet",
      "uso": "web, notícias, cálculo, transcrições e feeds", "nativa": True,
      "obs": "usa o mesmo modelo do Meus Dados, sem trocar de modelo na memória."},
-    {"id": "conversas", "nome": "Conversas", "base": "conversas", "prompt": "prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "web-basica",
+    {"id": "conversas", "nome": "Conversas", "base": "conversas", "prompt": "prompts/prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "web-basica",
      "uso": "conversa livre, com pesquisa na web quando a pergunta pede", "nativa": True,
      "obs": "na nuvem (HEIMDALL_NUVEM=1) usa o Qwen3 30B; sem a nuvem, o gemma local, que pode não chamar a pesquisa."},
-    {"id": "documentos", "nome": "Documentos e Memória", "base": "qwen3-vl-instruct", "prompt": "prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
+    {"id": "documentos", "nome": "Documentos e Memória", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
      "uso": "livros, notas e documentos do estudo e memória pessoal (opcional)", "nativa": True},
 ]
 
@@ -265,12 +265,12 @@ if __name__ == "__main__":
     for e in erros:
         print("PROBLEMA:", e)
     if "--escrever" in sys.argv and not erros:
-        (AQUI / "modelos_open_webui.txt").write_text(texto_guia(), encoding="utf-8")
+        (AQUI / "guides/modelos_open_webui.txt").write_text(texto_guia(), encoding="utf-8")
         PASTA_IMPORTAR.mkdir(exist_ok=True)
         for nome, conteudo in json_importar().items():
             (PASTA_IMPORTAR / nome).parent.mkdir(parents=True, exist_ok=True)
             (PASTA_IMPORTAR / nome).write_text(conteudo, encoding="utf-8")
-        print("modelos_open_webui.txt e openwebui/*.json escritos.")
+        print("guides/modelos_open_webui.txt e openwebui/*.json escritos.")
     elif "--guia" in sys.argv:
         print(texto_guia())
     sys.exit(1 if erros else 0)

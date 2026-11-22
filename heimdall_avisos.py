@@ -5,6 +5,7 @@ Agora ficam num banco local de cada serviço, só no Mac, e aparecem na aba Avis
 saúde nem finanças. O Bark continua avisando, mas só com texto genérico ("há um aviso novo"): `texto_bark` monta esse texto.
 """
 import html
+import heimdall_pastas
 import re
 import sqlite3
 import threading
@@ -113,7 +114,7 @@ def do_servico(servico: str) -> "Avisos":
         import heimdall_banco
         return Avisos(heimdall_banco.DB_DIR / "avisos_saude.db")
     if servico == "financas":
-        return Avisos(Path(os.environ.get("HEIMDALL_FINANCE_DIR") or (Path(__file__).resolve().parent / "dados_financas")) / "avisos_financas.db")
+        return Avisos(Path(os.environ.get("HEIMDALL_FINANCE_DIR") or heimdall_pastas.finance(Path(__file__).resolve().parent)) / "avisos_financas.db")
     raise ValueError("serviço sem avisos: " + str(servico))
 
 

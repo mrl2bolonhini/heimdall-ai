@@ -41,7 +41,7 @@ INFO = {
         "oque": "Extratos do banco e do cartão importados, gastos por categoria, tendências e alertas, em páginas de texto para leitor de tela.",
         "como": ["No terminal do dono, importe um extrato com heimdall finance --import ARQUIVO --account NOME.",
                  "Abra o serviço para ver os gastos por categoria, as tendências e os boletos.",
-                 "Os dados ficam em dados_financas/ no Mac e nunca saem dele."],
+                 "Os dados ficam em finance/ no Mac e nunca saem dele."],
         "so_dono": True,
         "multiusuario": "Hoje só o dono usa. Está no roadmap uma versão para outras pessoas, em que cada uma conectaria as próprias contas bancárias, com os dados dela guardados à parte dos do dono.",
     },

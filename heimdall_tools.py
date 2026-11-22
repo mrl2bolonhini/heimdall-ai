@@ -10,6 +10,7 @@ Variáveis de ambiente opcionais (no .env): REDDIT_CLIENT_ID, REDDIT_CLIENT_SECR
 REDDIT_USER_AGENT, NASA_API_KEY.
 """
 import ast
+import heimdall_pastas
 import ipaddress
 import json
 import math
@@ -1075,7 +1076,7 @@ def _financas_ro():
                     pasta = ln.split("=", 1)[1].strip().strip('"').strip("'")
         except OSError:
             pass
-    caminho = Path(pasta or (Path(__file__).resolve().parent / "dados_financas")) / "financas.db"
+    caminho = Path(pasta or heimdall_pastas.finance(Path(__file__).resolve().parent)) / "financas.db"
     if not caminho.is_file():
         raise FileNotFoundError("ainda não há banco do Finance: importe um extrato primeiro")
     con = sqlite3.connect(f"file:{caminho}?mode=ro", uri=True, timeout=10)

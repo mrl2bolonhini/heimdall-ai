@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Núcleo do Heimdall Finance: banco SQLite local, leitura de extratos OFX e CSV, categorias por regras e relatórios.
 
-Nada aqui usa internet: os extratos entram por arquivo e o banco fica só no seu Mac (pasta dados_financas, fora do git).
+Nada aqui usa internet: os extratos entram por arquivo e o banco fica só no seu Mac (pasta finance, fora do git).
 Valores são guardados em centavos (inteiros); gasto é negativo, entrada é positiva.
 """
 import csv

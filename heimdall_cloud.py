@@ -1235,7 +1235,7 @@ def mostrar_segredo(segredo: str) -> None:
 
 def aplicar_no_webui(senha: str) -> None:
     """Oferece usar a mesma senha no Open WebUI (chat). Conversas e configurações de lá ficam como estão; o Open WebUI não tem o código de 6 dígitos."""
-    script = PROJECT_DIR / "trocar_senha_webui.sh"
+    script = PROJECT_DIR / "scripts/trocar_senha_webui.sh"
     if not script.is_file():
         return
     if len(senha.encode("utf-8")) > 72:

@@ -4,7 +4,7 @@
 Você importa extratos (OFX ou CSV) do banco e do cartão; o painel classifica os gastos por categoria com regras que você
 ajusta, mostra o resumo do mês, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara.
 
-Privacidade: nada aqui chama a internet. O banco SQLite fica em dados_financas/ (fora do git) e os dados financeiros nunca vão
+Privacidade: nada aqui chama a internet. O banco SQLite fica em finance/ (fora do git) e os dados financeiros nunca vão
 para a Cloudflare nem para modelo de fora. O Cloudflare só repassa as páginas, como nos outros painéis.
 
 Segurança (mesmas camadas dos outros painéis):
@@ -18,6 +18,7 @@ Variáveis opcionais no .env: HEIMDALL_FINANCE_PORT (8016), HEIMDALL_FINANCE_HOS
 HEIMDALL_FINANCE_HOSTS (finance.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_FINANCE_DIR (pasta do banco) e HEIMDALL_FINANCE_MAX_MB (8).
 """
 import html
+import heimdall_pastas
 import os
 import re
 import secrets
@@ -75,7 +76,7 @@ try:
 except ValueError:
     PORT = 8016
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_FINANCE_HOSTS", "finance.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
-DIR_DADOS = Path(os.environ.get("HEIMDALL_FINANCE_DIR") or (PROJECT_DIR / "dados_financas"))
+DIR_DADOS = Path(os.environ.get("HEIMDALL_FINANCE_DIR") or heimdall_pastas.finance(PROJECT_DIR))
 try:
     MAX_ENVIO = int(float(os.environ.get("HEIMDALL_FINANCE_MAX_MB", "8")) * 1024 * 1024)
 except ValueError:
@@ -1071,7 +1072,7 @@ class Finance(nuvem.ManipuladorBase):
 
 
 def _vigiar_entrada() -> None:
-    """A cada minuto importa o que foi solto em dados_financas/entrada. Só registra o nome do arquivo, nunca os valores."""
+    """A cada minuto importa o que foi solto em finance/entrada. Só registra o nome do arquivo, nunca os valores."""
     fa.preparar_pasta(DIR_DADOS)
     fplan.pasta_de_entrada(DIR_DADOS)
     while True:

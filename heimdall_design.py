@@ -13,7 +13,7 @@ import html
 
 # ---------------------------------------------------------------------------------------------------------------------
 # 1. CORES (fonte única). Claro e escuro seguem o sistema (prefers-color-scheme). Todo texto precisa de contraste mínimo
-#    de 4,5:1 sobre o fundo e sobre a superfície; as linhas de borda de campos e tabelas, 3:1 (teste_design.py confere).
+#    de 4,5:1 sobre o fundo e sobre a superfície; as linhas de borda de campos e tabelas, 3:1 (tests/design/teste_design.py confere).
 #    Nunca use cor sozinha para dizer algo: sempre junto com texto ("Erro: ...").
 # ---------------------------------------------------------------------------------------------------------------------
 CORES_CLARO = {"fundo": "#f3f6fc", "superficie": "#ffffff", "texto": "#0c1530", "suave": "#46557a", "linha": "#7a87a6",

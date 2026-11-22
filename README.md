@@ -54,7 +54,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Heimdall Notes | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Games | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
-| Heimdall Finance | 8016 | Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (dados_financas, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
+| Heimdall Finance | 8016 | Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Controls | 8017 | Terminal completo e acessível (um shell de verdade no Mac, com a pasta e as variáveis persistentes, a saída no próprio campo de comando, como num terminal, e atalhos de teclado para interromper, limpar, reiniciar e copiar a última saída ou as últimas N) e painel de serviços com botões de atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra: Cloudflare Access (Authenticator) ou senha e código de 6 dígitos, e cada comando fica anotado sem a saída. Escuta só em 127.0.0.1. |
 | Heimdall Health | 8013 | Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela, exames de laboratório, receitas e encaminhamentos já conferidos, e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Cloud | 8010 | Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
@@ -93,35 +93,39 @@ O `subir.sh` recusa iniciar uma segunda subida enquanto outra estiver em andamen
 
 Opções: `--webui`, `--terminal`, `--n8n`, `--agente`, `--docling`, `--ingest`, `--update`. A lista completa está no cabeçalho de `start_heimdall.sh` e em https://heimdall-ai.tech/comandos.html.
 
+## Organização das pastas
+Módulos Python, `subir.sh`, `start_heimdall.sh` e `heimdall.zsh` ficam na raiz. `tests/<serviço>/` guarda os testes (finance, health, news, notes, games, cloud, account, controls, agent, chat, design, monitor, core); `guides/` os guias e ajudas; `prompts/` os prompts do chat; `scripts/` os scripts de shell; `flows/` os fluxos do n8n (basic, advanced, monitor); `games/` os jogos; `finance/` os dados do Finance no Mac (antes `dados_financas/`, renomeada sozinha na primeira subida). `./rodar_testes.sh` roda todos os testes; `./rodar_testes.sh finance` só os de uma pasta.
+
 ## Testar
 
 ```
-venv/bin/python test_mcp.py                       # servidores MCP, direto e pelo LiteLLM
-venv/bin/python test_models_tools.py              # chamada de ferramentas por modelo
+./rodar_testes.sh                                  # todos os testes (./rodar_testes.sh finance roda só uma pasta; -l lista)
+venv/bin/python tests/chat/test_mcp.py                       # servidores MCP, direto e pelo LiteLLM
+venv/bin/python tests/chat/test_models_tools.py              # chamada de ferramentas por modelo
 python3 heimdall_agente.py --teste                # Notas, Calendário e Lembretes
 python3 heimdall_agente.py --voz                  # voz e velocidade do áudio
-python3 teste_cloud.py                        # painel do emulador de AWS (sem rede)
-python3 teste_avisos.py                  # avisos de saúde e finanças (sem rede)
-python3 teste_abas_mais.py               # menu Mais das abas (navegador)
-python3 teste_migrar_avisos.py           # migração das notas antigas (sem rede)
-python3 teste_catalogo.py                # catalogação de notas e cliente do Notion (sem rede e sem modelo)
-python3 teste_cfmonitor.py               # monitor de consumo e custo da Cloudflare (sem rede)
-python3 teste_caixa_cliente.py          # cliente da caixa de correio da Cloudflare (sem rede)
-python3 teste_saude_pessoas.py           # saúde por pessoa: banco separado, métricas diárias e conversor do Atalho (sem rede)
-python3 teste_analista_saude.py          # analista de saúde: dossiê, correlações, PubMed simulado, modelo simulado (sem rede)
-python3 teste_account.py                  # Account: tour, Integrações (csrf, origem, ativar e desativar) e quem.json
-python3 teste_app_mac.py                  # confere o app de barra de menus do Mac sem compilar
-bash teste_silenciar_docker.sh            # script que impede o Docker de abrir o painel ao iniciar (pasta falsa)
+python3 tests/cloud/teste_cloud.py                        # painel do emulador de AWS (sem rede)
+python3 tests/core/teste_avisos.py                  # avisos de saúde e finanças (sem rede)
+python3 tests/design/teste_abas_mais.py               # menu Mais das abas (navegador)
+python3 tests/core/teste_migrar_avisos.py           # migração das notas antigas (sem rede)
+python3 tests/notes/teste_catalogo.py                # catalogação de notas e cliente do Notion (sem rede e sem modelo)
+python3 tests/cloud/teste_cfmonitor.py               # monitor de consumo e custo da Cloudflare (sem rede)
+python3 tests/cloud/teste_caixa_cliente.py          # cliente da caixa de correio da Cloudflare (sem rede)
+python3 tests/health/teste_saude_pessoas.py           # saúde por pessoa: banco separado, métricas diárias e conversor do Atalho (sem rede)
+python3 tests/health/teste_analista_saude.py          # analista de saúde: dossiê, correlações, PubMed simulado, modelo simulado (sem rede)
+python3 tests/account/teste_account.py                  # Account: tour, Integrações (csrf, origem, ativar e desativar) e quem.json
+python3 tests/agent/teste_app_mac.py                  # confere o app de barra de menus do Mac sem compilar
+bash tests/core/teste_silenciar_docker.sh            # script que impede o Docker de abrir o painel ao iniciar (pasta falsa)
 node cloudflare/teste_caixa.mjs           # Worker da caixa de correio (KV e R2 falsos)
-python3 teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
-python3 teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor HEIMDALL_NUVEM (sem rede)
-python3 teste_notas.py                   # Heimdall Notes (sem rede)
-python3 teste_news.py                    # Heimdall News (sem rede)
-python3 teste_trechos.py                      # trechos de livros do estudo (sem rede)
-bash instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail
+python3 tests/cloud/teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
+python3 tests/cloud/teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor HEIMDALL_NUVEM (sem rede)
+python3 tests/notes/teste_notas.py                   # Heimdall Notes (sem rede)
+python3 tests/news/teste_news.py                    # Heimdall News (sem rede)
+python3 tests/notes/teste_trechos.py                      # trechos de livros do estudo (sem rede)
+bash scripts/instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail
 python3 heimdall_email_oficial.py --diagnostico   # como cada e-mail recente foi classificado (inclui os já vistos)
-python3 teste_modelos_chat.py                  # funções por modelo do chat e guia em dia
-python3 teste_email_prioridade.py                 # rebaixamento e diagnóstico do vigia de e-mail
+python3 tests/chat/teste_modelos_chat.py                  # funções por modelo do chat e guia em dia
+python3 tests/monitor/teste_email_prioridade.py                 # rebaixamento e diagnóstico do vigia de e-mail
 python3 gerar_docs.py --check                     # documentação em dia
 ```
 
@@ -139,7 +143,7 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 <!-- AUTO:MODELOS -->
 | Nome no LiteLLM | Modelo no Ollama | Uso | Observações |
 |---|---|---|---|
-| `gemma-4-uncensored` | `ollama_chat/eriktonon/gemma4-uncensored` | Uso geral | Confira a chamada de ferramentas com test_models_tools.py. |
+| `gemma-4-uncensored` | `ollama_chat/eriktonon/gemma4-uncensored` | Uso geral | Confira a chamada de ferramentas com tests/chat/test_models_tools.py. |
 | `conversas` | `ollama_chat/eriktonon/gemma4-uncensored` | Base do modelo Conversas do Open WebUI | Local é o mesmo gemma de gemma-4-uncensored; com HEIMDALL_NUVEM=1 o heimdall_litellm.py o troca pelo Qwen3 30B da nuvem e deixa este como volta (conversas-local). |
 | `dolphin3-cyber-8b` | `ollama_chat/mparvin/dolphin3-cyber-8b-gguf:q8_0` | Segurança e conversa livre, só texto | Não chama ferramentas no Ollama; use para análises de texto, não nos fluxos com MCP. |
 | `deepseek-coder-v2:16b` | `ollama_chat/deepseek-coder-v2:16b` | Código (usado pelo GitOps) | O GitOps usa este modelo na etapa de análise de código. |
@@ -150,7 +154,7 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 
 ## Modelos do chat
 
-Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e só com as funções do seu assunto (o filtro da conexão de ferramentas limita o que o modelo enxerga). A fonte é `modelos_chat.py`; o passo a passo para criá-los no Open WebUI está em `modelos_open_webui.txt`, gerado por `python3 gerar_docs.py`.
+Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e só com as funções do seu assunto (o filtro da conexão de ferramentas limita o que o modelo enxerga). A fonte é `modelos_chat.py`; o passo a passo para criá-los no Open WebUI está em `guides/modelos_open_webui.txt`, gerado por `python3 gerar_docs.py`.
 
 <!-- AUTO:MODELOS_CHAT -->
 | Modelo | Base | Ferramentas (conexão) | Funções | Temperatura |
@@ -213,7 +217,7 @@ Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta
 | `financas_futuros` | dados (8004) | `meses=6` | Pagamentos e entradas previstos nos próximos meses no Finance do usuário: parcelas que faltam, contas recorrentes, previstos cadastrados e boletos em aberto, com o total de saídas e entradas de cada mês. |
 <!-- /AUTO:FERRAMENTAS -->
 
-Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e docstring claro, acrescente-a a `PUBLIC_TOOLS` ou `MAC_TOOLS`, reinicie, rode `test_mcp.py` e `gerar_docs.py`. Ferramentas públicas são seguras para convidados; as do Mac acessam arquivos e memória e são só do administrador.
+Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e docstring claro, acrescente-a a `PUBLIC_TOOLS` ou `MAC_TOOLS`, reinicie, rode `tests/chat/test_mcp.py` e `gerar_docs.py`. Ferramentas públicas são seguras para convidados; as do Mac acessam arquivos e memória e são só do administrador.
 
 ## Fluxos do n8n
 
@@ -242,9 +246,9 @@ Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e
 
 Resumos agrupados: os avisos de rotina saem em três notificações por dia (6h, 8h e 10h) pelo fluxo "Resumo agrupado" (webhook `heimdall-resumo`); falhas, GitOps, alerta do Mac e o estudo continuam na hora. O "Monitor de saúde" (webhook `heimdall-saude`, resumo às 5h50) recebe os dados do Health Auto Export; as regras decidem o que é relevante e o modelo só redige.
 
-Banco pessoal: o Mac guarda um SQLite (`banco/heimdall.db`, fora do Git) com saúde, diários oficiais, e-mails de serviços públicos (sem o corpo), estudos, privacidade, avisos e a análise do Second Brain; o chat consulta pelas ferramentas `banco_*`, `saude_historico` e as de treinos, ECG e frequência cardíaca (roteiro em `LEIAME_saude_apple.txt`). Os planos estão em `ROADMAP.md` e no site.
+Banco pessoal: o Mac guarda um SQLite (`banco/heimdall.db`, fora do Git) com saúde, diários oficiais, e-mails de serviços públicos (sem o corpo), estudos, privacidade, avisos e a análise do Second Brain; o chat consulta pelas ferramentas `banco_*`, `saude_historico` e as de treinos, ECG e frequência cardíaca (roteiro em `guides/LEIAME_saude_apple.txt`). Os planos estão em `ROADMAP.md` e no site.
 
-Instalação: `bash instalar_fluxos_n8n.sh` (básicos), `bash instalar_automacoes_avancadas.sh` (GitOps, digest, Second Brain, estudo) e `bash instalar_monitor_privacidade.sh` (monitor e diários). Rodar um fluxo agora: `docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=<id>`.
+Instalação: `bash scripts/instalar_fluxos_n8n.sh` (básicos), `bash scripts/instalar_automacoes_avancadas.sh` (GitOps, digest, Second Brain, estudo) e `bash scripts/instalar_monitor_privacidade.sh` (monitor e diários). Rodar um fluxo agora: `docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=<id>`.
 
 ## Privacidade e segurança
 
@@ -258,7 +262,7 @@ Instalação: `bash instalar_fluxos_n8n.sh` (básicos), `bash instalar_automacoe
 
 ## Publicação da documentação
 
-A pasta docs/ é publicada pelo GitHub Pages com o domínio heimdall-ai.tech (arquivo `docs/CNAME`). O fluxo `.github/workflows/pages.yml` confere se a documentação está em dia e publica a cada push em `main`. O passo a passo de DNS no Cloudflare está em `PUBLICAR_PAGINAS.md`. Observação: GitHub Pages em repositório privado exige plano pago; em repositório público é gratuito.
+A pasta docs/ é publicada pelo GitHub Pages com o domínio heimdall-ai.tech (arquivo `docs/CNAME`). O fluxo `.github/workflows/pages.yml` confere se a documentação está em dia e publica a cada push em `main`. O passo a passo de DNS no Cloudflare está em `guides/PUBLICAR_PAGINAS.md`. Observação: GitHub Pages em repositório privado exige plano pago; em repositório público é gratuito.
 
 ## Como manter (a cada recurso novo)
 

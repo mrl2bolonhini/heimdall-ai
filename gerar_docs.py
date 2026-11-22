@@ -6,7 +6,7 @@ Uso, na pasta do projeto:
     python3 gerar_docs.py --check    só confere se docs/ e README estão em dia (sai com 1 se não estiverem)
 
 O que sai do código (sempre em dia): ferramentas (heimdall_tools.py), modelos e servidores MCP (litellm_config.yaml),
-fluxos do n8n (n8n_flows*/), opções do start_heimdall.sh e as novidades (CHANGELOG.md).
+fluxos do n8n (flows/*/), opções do start_heimdall.sh e as novidades (CHANGELOG.md).
 O que é texto escrito à mão: os textos explicativos deste arquivo. Ao criar um recurso novo, siga a lista de
 "Como manter" do README: CHANGELOG.md, texto aqui se preciso, e rode este script.
 Só usa a biblioteca padrão (PyYAML é usado se existir; senão, uma leitura simples do YAML).
@@ -118,7 +118,7 @@ def agenda_do_gatilho(n):
 
 def ler_fluxos():
     vistos, saida = set(), []
-    for f in sorted(glob.glob(str(AQUI / "n8n_flows*" / "*.json")), key=lambda x: (int(re.match(r"(\d+)", Path(x).name).group(1)), x)):
+    for f in sorted(glob.glob(str(AQUI / "flows/**" / "*.json")), key=lambda x: (int(re.match(r"(\d+)", Path(x).name).group(1)), x)):
         w = json.loads(Path(f).read_text(encoding="utf-8"))
         if w["id"] in vistos:
             continue
@@ -199,7 +199,7 @@ SERVICOS = [
     ("Heimdall Notes", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Games", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
-    ("Heimdall Finance", "Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (dados_financas, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8016", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Finance", "Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8016", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Controls", "Terminal completo e acessível (um shell de verdade no Mac, com a pasta e as variáveis persistentes, a saída no próprio campo de comando, como num terminal, e atalhos de teclado para interromper, limpar, reiniciar e copiar a última saída ou as últimas N) e painel de serviços com botões de atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra: Cloudflare Access (Authenticator) ou senha e código de 6 dígitos, e cada comando fica anotado sem a saída. Escuta só em 127.0.0.1.", "8017", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Health", "Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela, exames de laboratório, receitas e encaminhamentos já conferidos, e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8013", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Cloud", "Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare.", "8010", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
@@ -226,7 +226,7 @@ TECNOLOGIAS = [
 ]
 
 MODELOS_NOTAS = {
-    "gemma-4-uncensored": ("Uso geral", "Confira a chamada de ferramentas com test_models_tools.py."),
+    "gemma-4-uncensored": ("Uso geral", "Confira a chamada de ferramentas com tests/chat/test_models_tools.py."),
     "dolphin3-cyber-8b": ("Segurança e conversa livre, só texto", "Não chama ferramentas no Ollama; use para análises de texto, não nos fluxos com MCP."),
     "deepseek-coder-v2:16b": ("Código (usado pelo GitOps)", "O GitOps usa este modelo na etapa de análise de código."),
     "qwen3-vl-instruct": ("Modelo padrão dos fluxos; entende imagens", "Declara suporte a imagens no LiteLLM."),
@@ -263,42 +263,42 @@ SCRIPTS = [
     ("heimdall_triagem.py", "Triagem obrigatória de avisos importantes. Cria lembretes na lista \"Heimdall: Triagem\" do app Lembretes (menções do Diário da Justiça, alertas de saúde, e-mails suspeitos ou urgentes e achados de privacidade de risco médio ou alto) e insiste pelo Bark até você concluir, reclassificar ou adiar. Roda dentro do agente do Mac."),
     ("heimdall_email_oficial.py", "Vigia o Gmail a cada hora, só lendo. Confere se e-mails de serviços públicos (INSS, gov.br, FGTS, Receita, Serasa e outros) são autênticos, resume os verdadeiros, alerta sobre imitações e cria evento e lembrete quando há prazo. Nunca segue links."),
     ("heimdall_notas.py", "Heimdall Notes (porta 8011): site para ler as notas de estudo do cofre e ouvir os áudios, com velocidade, voltar e avançar 15 segundos, busca e os documentos de knowledge/. Mesmo login do Heimdall Cloud; mostra o cofre inteiro, menos o Digest."),
-    ("heimdall_cfaccess.py", "Entrada pelo Cloudflare Access com Microsoft Entra ID: a aprovação chega como notificação no Microsoft Authenticator e os painéis abrem a sessão sem senha nem código de 6 dígitos. Confere a assinatura do Cloudflare só com a biblioteca padrão. Desligado até haver HEIMDALL_CFACCESS_EQUIPE, _AUD e _EMAILS no .env; --status confere a configuração. Passo a passo em LEIAME_autenticacao_microsoft.txt."),
+    ("heimdall_cfaccess.py", "Entrada pelo Cloudflare Access com Microsoft Entra ID: a aprovação chega como notificação no Microsoft Authenticator e os painéis abrem a sessão sem senha nem código de 6 dígitos. Confere a assinatura do Cloudflare só com a biblioteca padrão. Desligado até haver HEIMDALL_CFACCESS_EQUIPE, _AUD e _EMAILS no .env; --status confere a configuração. Passo a passo em guides/LEIAME_autenticacao_microsoft.txt."),
     ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Cloud, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
     ("heimdall_design.py", "Heimdall Design: o padrão de interface igual em todos os sites (link lê, botão age): botão de ação como formulário GET, com nome acessível, e o CSS compartilhado."),
     ("CLAUDE.md", "Regras do repositório: toda atualização de interface segue o Heimdall Design."),
     ("diagnostico.py", "Diagnóstico de desempenho do Mac (heimdall doctor): memória, troca em disco, processador, disco, Docker, Ollama e serviços."),
     ("financas_boletos.py", "Leitor de boletos: linha digitável de 47 e 48 números, dígitos verificadores, vencimento e contas a pagar no banco local."),
-    ("teste_boletos.py", "Teste do leitor de boletos, com linhas inventadas montadas por contas independentes."),
-    ("teste_finance_chat.py", "Teste das ferramentas do Finance no chat: leitura, filtros, conexão somente leitura, desligar e banco ausente."),
+    ("tests/finance/teste_boletos.py", "Teste do leitor de boletos, com linhas inventadas montadas por contas independentes."),
+    ("tests/finance/teste_finance_chat.py", "Teste das ferramentas do Finance no chat: leitura, filtros, conexão somente leitura, desligar e banco ausente."),
     ("financas_analise.py", "Análise de consultor do Finance: fatos calculados em código (semana e mês), texto fixo, reescrita pelo modelo local com conferência dos números e contexto das perguntas."),
     ("heimdall_litellm.py", "Inicia o LiteLLM: com HEIMDALL_NUVEM=1 gera banco/litellm_config_efetivo.yaml (chat no gpt-oss-120b da nuvem, modelo local como volta automática); desligado, usa o litellm_config.yaml."),
     ("heimdall_perguntar.py", "Perguntar ao modelo local, reutilizável pelos sites: contexto montado pelo código, resposta só com base nele, conferência dos valores e tarefas em segundo plano. Sem reserva na nuvem."),
-    ("teste_finance_analise.py", "Teste da análise e do Perguntar com modelo simulado."),
+    ("tests/finance/teste_finance_analise.py", "Teste da análise e do Perguntar com modelo simulado."),
     ("financas_pluggy.py", "Conexão com os bancos pelo Open Finance, com o plano pessoal gratuito do Meu Pluggy: autenticação e leituras (GET) de contas e transações em /v2/transactions, conversão de sinais (conta corrente pelo tipo, cartão pela fatura), importação sem duplicar, aviso de autorização perto de vencer e gravação das chaves no .env a partir da área de transferência. Nada é movido nem pago; os dados passam pelos servidores do Pluggy."),
     ("financas_consulta.py", "Consultas do Finance no terminal (heimdall finance --balance, --latest, --summary): saldo de cada conta e fatura de cada cartão, últimos lançamentos com filtros e resumo do mês, em texto corrido e listas numeradas. Só lê o banco local e o saldo guardado na última sincronização."),
-    ("modelos_chat.py", "Fonte única dos modelos personalizados do chat (Open WebUI): base, prompt, temperatura e a lista de funções que cada modelo pode usar. Gera o guia modelos_open_webui.txt e a tabela do README."),
+    ("modelos_chat.py", "Fonte única dos modelos personalizados do chat (Open WebUI): base, prompt, temperatura e a lista de funções que cada modelo pode usar. Gera o guia guides/modelos_open_webui.txt e a tabela do README."),
     ("openwebui/modelos_importar.json", "Os sete modelos do chat prontos para importar no Open WebUI (Workspace, Modelos, Importar): prompt, temperatura, chamada de função nativa e a conexão de ferramentas de cada um. Gerado por gerar_docs.py; entram só para o administrador. A pasta openwebui/modelos/ tem os mesmos modelos, um por arquivo."),
     ("openwebui/ferramentas/", "Uma conexão de ferramentas (MCP) por arquivo, prontas para importar no Open WebUI (ele importa só a primeira de cada arquivo), no mesmo formato que o Open WebUI exporta. O filtro de funções não viaja nele: o filtro de cada conexão (as funções do servidor que ela deve esconder, no formato !funcao) fica em openwebui/filtro_<id>.txt, para copiar com pbcopy e colar à mão."),
-    ("teste_modelos_chat.py", "Confere que cada função citada existe e pertence ao servidor certo, que cada prompt só fala das funções do seu modelo e que o guia está em dia."),
-    ("prompt_chat_saude.txt", "Instrução de sistema do modelo Saúde do chat: como escolher entre as funções de saúde, sem diagnóstico e sem inventar números."),
-    ("prompt_chat_financas.txt", "Instrução de sistema do modelo Finanças do chat: como escolher entre as funções do Finance, só leitura, sem conselho de investimento e sem pagar nada."),
-    ("teste_email_prioridade.py", "Testa o rebaixamento de e-mails oficiais de serviços sem interesse (Serasa, SPC, Boa Vista, Quod): não viram triagem nem lembrete; golpe imitando eles continua alertando."),
-    ("teste_finance_pluggy.py", "Testa o sincronizador do Pluggy com uma API simulada: sinais, cursor, duplicidade, nomes de conta, avisos, chaves no .env. Sem rede."),
+    ("tests/chat/teste_modelos_chat.py", "Confere que cada função citada existe e pertence ao servidor certo, que cada prompt só fala das funções do seu modelo e que o guia está em dia."),
+    ("prompts/prompt_chat_saude.txt", "Instrução de sistema do modelo Saúde do chat: como escolher entre as funções de saúde, sem diagnóstico e sem inventar números."),
+    ("prompts/prompt_chat_financas.txt", "Instrução de sistema do modelo Finanças do chat: como escolher entre as funções do Finance, só leitura, sem conselho de investimento e sem pagar nada."),
+    ("tests/monitor/teste_email_prioridade.py", "Testa o rebaixamento de e-mails oficiais de serviços sem interesse (Serasa, SPC, Boa Vista, Quod): não viram triagem nem lembrete; golpe imitando eles continua alertando."),
+    ("tests/finance/teste_finance_pluggy.py", "Testa o sincronizador do Pluggy com uma API simulada: sinais, cursor, duplicidade, nomes de conta, avisos, chaves no .env. Sem rede."),
     ("financas_email.py", "Leitura do Gmail (somente leitura) atrás de boletos e Pix, no corpo e nos PDFs anexados, com conferência da autenticação do remetente. Nunca abre links."),
-    ("teste_finance_email.py", "Teste da leitura de boletos por e-mail com mensagens montadas no teste."),
-    ("teste_diagnostico.py", "Teste do diagnóstico: análise dos textos do macOS sem depender do Mac."),
-    ("teste_design.py", "Teste do Heimdall Design: falha se um link de painel tiver texto de ação, se algum contraste de cor ficar abaixo do mínimo, se o foco for removido ou houver cor solta fora do Heimdall Design."),
+    ("tests/finance/teste_finance_email.py", "Teste da leitura de boletos por e-mail com mensagens montadas no teste."),
+    ("tests/core/teste_diagnostico.py", "Teste do diagnóstico: análise dos textos do macOS sem depender do Mac."),
+    ("tests/design/teste_design.py", "Teste do Heimdall Design: falha se um link de painel tiver texto de ação, se algum contraste de cor ficar abaixo do mínimo, se o foco for removido ou houver cor solta fora do Heimdall Design."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News, Notas e Finance: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
-    ("heimdall_jogos.py", "Heimdall Games (porta 8014): entrega os jogos da pasta jogos/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
+    ("heimdall_jogos.py", "Heimdall Games (porta 8014): entrega os jogos da pasta games/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
     ("financas_planilhas.py", "Planilhas do Finance: lê xlsx (sem biblioteca externa) e csv, descobre o tipo (gastos, investimentos, empréstimos, outros) e o papel de cada coluna por palavras do cabeçalho e, na dúvida, pelo modelo de linguagem (só o cabeçalho e 5 linhas; HEIMDALL_FINANCE_PLANILHAS_NUVEM=0 mantém no modelo local), grava as linhas em conjuntos sem duplicar, aprende o layout pela assinatura dos cabeçalhos para os próximos arquivos, guarda dúvidas com o arquivo e pergunta ao usuário, e mantém as visões gravadas (colunas, ordem, ordenação, filtro, agrupamento com soma). Gastos também alimentam as transações."),
     ("heimdall_finance_planilhas.py", "Páginas do Finance para Planilhas (importação, dúvidas, conjuntos), Investimentos, Empréstimos e Visões (personalizar colunas com botões de mover, tirar e incluir). Ações em formulários POST com token."),
-    ("teste_planilhas.py", "Teste das planilhas do Finance: xlsx montado à mão, datas e porcentagens do Excel, classificação, aprendizado do layout, dúvidas, modelo simulado, visões e pasta de entrada. Sem rede."),
-    ("teste_planilhas_util.py", "Monta um .xlsx mínimo para os testes de planilhas."),
+    ("tests/finance/teste_planilhas.py", "Teste das planilhas do Finance: xlsx montado à mão, datas e porcentagens do Excel, classificação, aprendizado do layout, dúvidas, modelo simulado, visões e pasta de entrada. Sem rede."),
+    ("tests/finance/teste_planilhas_util.py", "Monta um .xlsx mínimo para os testes de planilhas."),
     ("financas_pluggy_dados.py", "Tudo o que o Pluggy entrega além das transações: contas e cartões (saldo, limite, fechamento), faturas, investimentos, movimentações de investimentos e empréstimos e financiamentos, em conjuntos com foto diária (histórico de saldos e posições). Nenhuma coluna é descartada; a identidade (CPF, endereço) fica de fora de propósito. Falha de produto não atrapalha as transações."),
-    ("teste_finance_pluggy_dados.py", "Teste da coleta extra do Pluggy com API simulada, das categorias de crédito (veículo, imóvel, consignado, pessoal) e das abas que os dados criam."),
-    ("teste_finance_planilhas.py", "Teste das páginas de planilhas, investimentos, empréstimos e visões com o servidor do Finance temporário."),
+    ("tests/finance/teste_finance_pluggy_dados.py", "Teste da coleta extra do Pluggy com API simulada, das categorias de crédito (veículo, imóvel, consignado, pessoal) e das abas que os dados criam."),
+    ("tests/finance/teste_finance_planilhas.py", "Teste das páginas de planilhas, investimentos, empréstimos e visões com o servidor do Finance temporário."),
     ("heimdall_finance.py", "Heimdall Finance (porta 8016): painel web das finanças (resumo do mês, transações, tendências, importação, regras) atrás do mesmo login do Cloud, com CSRF em todo envio e política de conteúdo sem script. Endereço de fora: finance.heimdall-ai.tech."),
     ("financas_nucleo.py", "Núcleo do Heimdall Finance: banco SQLite local, leitura de extratos OFX e CSV (formatos e valores brasileiros), deduplicação, categorias por regras (as suas vencem as padrão) e relatórios de resumo e tendências. Sem internet."),
     ("financas_arquivos.py", "Arquivos do Heimdall Finance: leitura de PDF de extrato e fatura (texto extraído por pypdf ou pdftotext e lido por linhas de data, descrição e valor, com conferência do total do documento), identificação do banco e do tipo, inspeção anônima do layout (letras viram x, números viram 9) e a pasta de entrada vigiada. Sem internet."),
@@ -307,50 +307,50 @@ SCRIPTS = [
     ("heimdall_shell.py", "Shell persistente do Controls num pseudoterminal: a pasta e as variáveis continuam entre comandos, a saída vem limpa de cores e códigos de tela, e cada comando é um bloco com estado e código de saída."),
     ("heimdall_servicos.py", "Catálogo dos serviços do Heimdall e o liga e desliga de cada um (usado pela aba Serviços do Controls); lembra o que foi desligado em .heimdall_desligados.json e um vigia mantém desligado."),
     ("heimdall_config.py", "Lê, grava e remove valores do .env (NOME='valor', permissão 600, cópia em .env.bak) e lista as opções HEIMDALL_* que o código aceita; usado pela aba Ajustes do Controls."),
-    ("teste_config.py", "Testa ler, salvar, remover e o catálogo de opções, num .env de mentira."),
+    ("tests/core/teste_config.py", "Testa ler, salvar, remover e o catálogo de opções, num .env de mentira."),
     ("heimdall_usuarios.py", "Usuários do Heimdall: donos e convidados no .env (quem entra em quais serviços) e a sincronização com o Cloudflare Access, com plano antes e aplicar depois; usado pela aba Usuários do Controls."),
-    ("teste_usuarios.py", "Testa a lista de usuários e a sincronização, com uma Cloudflare de mentira (servidor local)."),
+    ("tests/account/teste_usuarios.py", "Testa a lista de usuários e a sincronização, com uma Cloudflare de mentira (servidor local)."),
     ("heimdall_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e pausa e retoma o monitor de um serviço, com usuário e senha no .env ou, se o login do Kuma estiver desligado, sem senha."),
     ("verificar_access.py", "Confere, sem entrar, se um endereço público está atrás do Cloudflare Access. O start_heimdall.sh o usa antes de ligar o login do Open WebUI pelo Access (HEIMDALL_WEBUI_ACCESS=1); heimdall chat --check roda à mão."),
-    ("teste_verificar_access.py", "Testa o verificar_access.py com servidores locais que imitam o Access, um site aberto e um endereço sem resposta."),
+    ("tests/cloud/teste_verificar_access.py", "Testa o verificar_access.py com servidores locais que imitam o Access, um site aberto e um endereço sem resposta."),
     ("heimdall_catalogo.py", "Catalogação de notas do Heimdall Notes pela IA local: separa ideias, contatos, endereços, lembretes e eventos. Lembrete e evento com data vão direto para o Lembretes e o Calendário (com Desfazer); data duvidosa fica pendente de confirmação; ideias, contatos e endereços vão para o Notion; saúde e finanças nunca vão para o Notion."),
     ("heimdall_notion.py", "Cliente mínimo da API do Notion (token e três bancos no .env). Cria páginas de ideia, contato e endereço, arquiva no Desfazer; heimdall notion confere a ligação."),
-    ("teste_catalogo.py", "Testa a catalogação (classificação, datas, privacidade, Desfazer) e o cliente do Notion com uma API simulada. Sem rede e sem modelo."),
+    ("tests/notes/teste_catalogo.py", "Testa a catalogação (classificação, datas, privacidade, Desfazer) e o cliente do Notion com uma API simulada. Sem rede e sem modelo."),
     ("migrar_avisos.py", "Traz as notas antigas de saúde e finanças (cofre e app Notas) para a aba Avisos, confere e só então apaga as originais; heimdall notices --migrate."),
-    ("teste_migrar_avisos.py", "Testa a migração das notas antigas: importa, confere, apaga só o que foi importado e mantém tudo se algo falhar."),
-    ("teste_abas_mais.py", "Testa o menu Mais das abas (mais de 9 itens) e a distribuição em duas linhas: marcação, Option+Shift+0 e Esc e posição das abas no navegador."),
+    ("tests/core/teste_migrar_avisos.py", "Testa a migração das notas antigas: importa, confere, apaga só o que foi importado e mantém tudo se algo falhar."),
+    ("tests/design/teste_abas_mais.py", "Testa o menu Mais das abas (mais de 9 itens) e a distribuição em duas linhas: marcação, Option+Shift+0 e Esc e posição das abas no navegador."),
     ("heimdall_avisos.py", "Avisos do Heimdall Health e do Heimdall Finance: relatórios e análises ficam em um banco local de cada serviço, na aba Avisos, e nunca no app Notas. O Bark leva só texto genérico."),
-    ("teste_analista_saude.py", "Testa o analista de saúde: dossiê, correlações, PubMed simulado e cache, conferência do JSON do modelo, análise sem modelo, limiares, gravação e aviso."),
-    ("teste_avisos_mac.py", "Testa os avisos nativos do Mac: fila local com permissões, texto completo só no Mac, Bark genérico, interruptor."),
-    ("teste_avisos.py", "Testa os avisos: gravar, lido, HTML do texto nunca interpretado, rota /avisos/gravar do agente, pastas de saúde e finanças desviadas do Notas e Bark sem dados sensíveis."),
+    ("tests/health/teste_analista_saude.py", "Testa o analista de saúde: dossiê, correlações, PubMed simulado e cache, conferência do JSON do modelo, análise sem modelo, limiares, gravação e aviso."),
+    ("tests/agent/teste_avisos_mac.py", "Testa os avisos nativos do Mac: fila local com permissões, texto completo só no Mac, Bark genérico, interruptor."),
+    ("tests/core/teste_avisos.py", "Testa os avisos: gravar, lido, HTML do texto nunca interpretado, rota /avisos/gravar do agente, pastas de saúde e finanças desviadas do Notas e Bark sem dados sensíveis."),
     ("heimdall_account.py", "Heimdall Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa, com link, o que faz e como configurar, página de Integrações (/integracoes, com ações POST) e /quem.json, que o site usa para mostrar Entrar ou o nome e os serviços de quem entrou. Só atende quem o Cloudflare Access aprovou."),
     ("heimdall_saude_diaria.py", "Métricas diárias de saúde (passos, energia, sono, frequência em repouso, HRV, oxigênio...) a partir do corpo do Health Auto Export, para o caminho da caixa de correio; soma as horas já recebidas para o total do dia nunca diminuir."),
     ("heimdall_atalhos.py", "Conversor do que o Atalho do iPhone envia (amostras de saúde, formato versão 1) para o formato do Health Auto Export."),
-    ("teste_saude_pessoas.py", "Testa a saúde por pessoa: banco separado, métricas diárias, conversor do Atalho e importação pela caixa."),
+    ("tests/health/teste_saude_pessoas.py", "Testa a saúde por pessoa: banco separado, métricas diárias, conversor do Atalho e importação pela caixa."),
     ("heimdall_integracoes.py", "Integrações da Conta: ativar, trocar e desativar a integração de Saúde (token da pessoa na caixa, endereço /v1/hae do Health Auto Export), token csrf dos formulários e o estado em banco/integracoes.json."),
     ("heimdall_conta_info.py", "Texto do tour do Account: o que cada serviço faz, como configurar e o que muda quando houver mais de um usuário."),
-    ("teste_account.py", "Testa o Heimdall Account: tour por papel, Integrações (csrf, origem, ativar e desativar), quem.json com CORS só para os sites do Heimdall, 403 e 401 sem Access, porta local e cabeçalhos."),
-    ("teste_site_conta.py", "Testa no navegador o bloco de conta das páginas do site: Entrar sem login; nome, e-mail e serviços com login; HTML do servidor nunca interpretado."),
+    ("tests/account/teste_account.py", "Testa o Heimdall Account: tour por papel, Integrações (csrf, origem, ativar e desativar), quem.json com CORS só para os sites do Heimdall, 403 e 401 sem Access, porta local e cabeçalhos."),
+    ("tests/account/teste_site_conta.py", "Testa no navegador o bloco de conta das páginas do site: Entrar sem login; nome, e-mail e serviços com login; HTML do servidor nunca interpretado."),
     ("heimdall_conta.py", "Menu Conta de todos os serviços: nome (da conta Microsoft, pelo Cloudflare Access) e e-mail de quem entrou, e links para os serviços a que a pessoa tem acesso (dono vê todos; convidado só os liberados). O heimdall_cloud.cabecalho o inclui em todas as páginas."),
-    ("teste_conta.py", "Testa o menu Conta: nome e e-mail, serviços por papel, texto escapado, nome guardado na memória, falha sem nome e um servidor real que vê os cabeçalhos de cada pedido."),
+    ("tests/account/teste_conta.py", "Testa o menu Conta: nome e e-mail, serviços por papel, texto escapado, nome guardado na memória, falha sem nome e um servidor real que vê os cabeçalhos de cada pedido."),
     ("heimdall_versoes.py", "Versões do macOS, Python, Docker, Ollama, LiteLLM, do código do Heimdall e de cada serviço em contêiner. Usado por heimdall doctor --versions (compara com a imagem mais nova no registro) e pela Visão geral do Controls (sem rede)."),
-    ("teste_versoes.py", "Testa o heimdall_versoes.py com um docker de mentira: versões, comparação com o registro e falhas em silêncio."),
-    ("teste_servicos.py", "Testa o catálogo, o liga e desliga de verdade de um processo de teste, o vigia e a leitura do Kuma."),
-    ("teste_controls.py", "Testa o Heimdall Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade."),
-    ("teste_controls_navegador.py", "Testa o terminal do Controls num Chrome de verdade (Playwright): saída no próprio campo, resposta a programas, atalhos de teclado. Pula se não houver Playwright ou Chrome."),
+    ("tests/core/teste_versoes.py", "Testa o heimdall_versoes.py com um docker de mentira: versões, comparação com o registro e falhas em silêncio."),
+    ("tests/controls/teste_servicos.py", "Testa o catálogo, o liga e desliga de verdade de um processo de teste, o vigia e a leitura do Kuma."),
+    ("tests/controls/teste_controls.py", "Testa o Heimdall Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade."),
+    ("tests/controls/teste_controls_navegador.py", "Testa o terminal do Controls num Chrome de verdade (Playwright): saída no próprio campo, resposta a programas, atalhos de teclado. Pula se não houver Playwright ou Chrome."),
     ("heimdall_painel_saude.py", "Heimdall Health (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Cloud (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
     ("heimdall_voz.py", "Dicionário de pronúncia: troca palavras por uma grafia que a voz do macOS lê certo (por exemplo, Heimdall vira Háimdal), no anúncio falado do subir.sh e no áudio das notas. Aceita --importar arquivo.csv para trazer as pronúncias do VoiceOver."),
     ("pronuncias.txt", "Pronúncias que vêm com o projeto, uma por linha no formato palavra = como falar. As suas ficam em pronuncias.local.txt, que não vai para o GitHub."),
     ("heimdall_agenda.py", "Regra única entre evento do Calendário e lembrete do app Lembretes, com a tabela de cada tipo de item (consulta, renovação de receita, prazo oficial, triagem) e o envio ao agente do Mac."),
     ("heimdall_eventkit.py", "Lembretes e Calendário pelo EventKit do macOS, sem abrir os apps (que apareciam na tela e no Command+Tab). O agente tenta o EventKit primeiro e recua para o AppleScript se faltar o pacote pyobjc-framework-EventKit ou a permissão. Conferir: venv/bin/python heimdall_eventkit.py --status. Desligar: HEIMDALL_EVENTKIT=0."),
-    ("teste_agenda.py", "Testa a regra evento x lembrete, a consulta e a renovação de receita no Calendário, sem agente real."),
+    ("tests/agent/teste_agenda.py", "Testa a regra evento x lembrete, a consulta e a renovação de receita no Calendário, sem agente real."),
     ("heimdall_exames.py", "Exames, receitas, encaminhamentos e consultas: lê PDF e foto (texto do PDF, ou OCR com tesseract), cataloga cada componente do exame com valor, unidade e referência do laboratório, e só grava depois que você confere, item por item (heimdall labs pending). Os valores precisam aparecer literalmente no documento; o modelo local só ajuda e nunca inventa número. Cruza os resultados com sono, HRV, pulso e atividade do relógio. Pasta do Mac: banco/documentos/entrada. Atalho do iPhone: POST /saude/documento no agente, com código próprio (HEIMDALL_EXAMES_TOKEN)."),
-    ("teste_exames.py", "Testa a leitura de exames, receitas e encaminhamentos com documentos fictícios, sem tocar no seu banco."),
-    ("teste_exames_agente.py", "Testa o envio de documentos pelo agente (código, tipo, tamanho, duplicado, aviso)."),
+    ("tests/health/teste_exames.py", "Testa a leitura de exames, receitas e encaminhamentos com documentos fictícios, sem tocar no seu banco."),
+    ("tests/health/teste_exames_agente.py", "Testa o envio de documentos pelo agente (código, tipo, tamanho, duplicado, aviso)."),
     ("importar_saude_n8n.py", "Copia para o banco pessoal o histórico de saúde que já estava guardado dentro do n8n. Pode rodar de novo sem duplicar."),
-    ("teste_voz.py", "Testa o dicionário de pronúncia."),
-    ("teste_saude_dados.py", "Testa as análises de saúde com 200 dias de dados sintéticos, sem tocar no seu banco."),
-    ("teste_painel_saude.py", "Testa o painel Heimdall Health: login, páginas, segurança e acessibilidade."),
+    ("tests/core/teste_voz.py", "Testa o dicionário de pronúncia."),
+    ("tests/health/teste_saude_dados.py", "Testa as análises de saúde com 200 dias de dados sintéticos, sem tocar no seu banco."),
+    ("tests/health/teste_painel_saude.py", "Testa o painel Heimdall Health: login, páginas, segurança e acessibilidade."),
     ("cloudflare/saude_caixa.js", "Worker da Cloudflare na frente do webhook de saúde do n8n (mesmo endereço do Health Auto Export): repassa o envio quando o Mac está no ar e, quando não está, guarda no KV por 7 dias e reenvia de 5 em 5 minutos."),
     ("cloudflare/teste_vigia.mjs", "Testa o vigia da Cloudflare com KV e rede de mentira, contando as gravações por dia (limite gratuito: 1.000): node cloudflare/teste_vigia.mjs."),
     ("cloudflare/teste_saude_caixa.mjs", "Testa a caixa de entrada da saúde com KV e rede de mentira: node cloudflare/teste_saude_caixa.mjs."),
@@ -361,13 +361,13 @@ SCRIPTS = [
     ("ingest_docs.py", "Indexa os documentos de knowledge/ no Qdrant, de forma incremental. Cada subpasta vira um tema."),
     ("limpar_privadas.py", "Apaga do Second Brain o que veio de notas que depois foram para uma pasta privada."),
     ("limpar_espelhos.py", "Remove espelhos duplicados do Cérebro."),
-    ("ouvir_estudo.sh", "Toca no Mac o áudio de estudo mais recente."),
-    ("teste_triagem.py", "Testa as regras da triagem com uma simulação do app Lembretes e do Bark. Com --mac, confere os scripts de verdade no Mac."),
-    ("teste_eventkit.py", "Testa o texto do EventKit, a escolha entre EventKit e AppleScript e o recuo, sem precisar do macOS."),
-    ("teste_apps_ocultos.py", "Testa que o agente abre o Notas escondido e só fecha o que ele mesmo abriu."),
-    ("teste_second_brain_gatilho.py", "Testa que o Second Brain só abre o Notas quando há nota nova."),
-    ("test_mcp.py", "Testa os servidores MCP direto e pelo LiteLLM."),
-    ("test_models_tools.py", "Testa a chamada de ferramentas de cada modelo."),
+    ("scripts/ouvir_estudo.sh", "Toca no Mac o áudio de estudo mais recente."),
+    ("tests/monitor/teste_triagem.py", "Testa as regras da triagem com uma simulação do app Lembretes e do Bark. Com --mac, confere os scripts de verdade no Mac."),
+    ("tests/agent/teste_eventkit.py", "Testa o texto do EventKit, a escolha entre EventKit e AppleScript e o recuo, sem precisar do macOS."),
+    ("tests/agent/teste_apps_ocultos.py", "Testa que o agente abre o Notas escondido e só fecha o que ele mesmo abriu."),
+    ("tests/notes/teste_second_brain_gatilho.py", "Testa que o Second Brain só abre o Notas quando há nota nova."),
+    ("tests/chat/test_mcp.py", "Testa os servidores MCP direto e pelo LiteLLM."),
+    ("tests/chat/test_models_tools.py", "Testa a chamada de ferramentas de cada modelo."),
 ]
 
 COMANDOS = [
@@ -409,8 +409,8 @@ COMANDOS = [
         ("Fila de resumos do News", "python3 heimdall_news.py --fila"),
         ("O que cada fonte do News entrega agora (itens, idade, quantos no banco)", "python3 heimdall_news.py --fontes   # com um nome ou categoria, só essas: --fontes Astronomia"),
         ("Testar a chave da Cloudflare (Workers AI e Browser Run)", "python3 cloudflare_chave.py --testar"),
-        ("Testar as análises e o painel de saúde", "python3 teste_saude_dados.py && python3 teste_painel_saude.py && python3 teste_exames.py && python3 teste_exames_agente.py && python3 teste_agenda.py && python3 teste_controls.py"),
-        ("Testar a voz", "python3 teste_voz.py"),
+        ("Testar as análises e o painel de saúde", "python3 tests/health/teste_saude_dados.py && python3 tests/health/teste_painel_saude.py && python3 tests/health/teste_exames.py && python3 tests/health/teste_exames_agente.py && python3 tests/agent/teste_agenda.py && python3 tests/controls/teste_controls.py"),
+        ("Testar a voz", "python3 tests/core/teste_voz.py"),
         ("Ligar a reserva de resumos e a leitura de páginas do News na Cloudflare (token pedido sem aparecer)", "python3 cloudflare_chave.py"),
         ("Testar a caixa de entrada da saúde (Worker da Cloudflare)", "node cloudflare/teste_saude_caixa.mjs"),
         ("Testar o vigia da Cloudflare (gravações no KV)", "node cloudflare/teste_vigia.mjs"),
@@ -419,8 +419,8 @@ COMANDOS = [
         ("Agente do Mac (deve responder ok)", "curl -s http://localhost:8003/saude"),
         ("Contêineres rodando", "docker ps --format '{{.Names}}: {{.Status}}'"),
         ("Modelos carregados no Ollama", "ollama ps"),
-        ("Servidores MCP, direto e pelo LiteLLM", "venv/bin/python test_mcp.py"),
-        ("Chamada de ferramentas de cada modelo", "venv/bin/python test_models_tools.py --only qwen"),
+        ("Servidores MCP, direto e pelo LiteLLM", "venv/bin/python tests/chat/test_mcp.py"),
+        ("Chamada de ferramentas de cada modelo", "venv/bin/python tests/chat/test_models_tools.py --only qwen"),
         ("Acesso ao app Notas, Calendário e Lembretes", "python3 heimdall_agente.py --teste"),
         ("Voz e velocidade do áudio de estudo", "python3 heimdall_agente.py --voz"),
         ("Painel do emulador de AWS (deve responder ok)", "curl -s http://localhost:8010/saude"),
@@ -437,46 +437,46 @@ COMANDOS = [
         ("Gravar um arquivo OPML com todos os feeds (traz a chave secreta: importe e apague)", "python3 heimdall_news.py --opml"),
         ("Atualizar as notícias agora, uma vez", "python3 heimdall_news.py --uma-vez"),
         ("Reiniciar só o Heimdall Notes", "pkill -f heimdall_notas.py   # depois suba o sistema como de costume"),
-        ("Teste do painel do emulador de AWS (sem rede)", "python3 teste_cloud.py"),
-        ("Teste do Heimdall Notes (sem rede)", "python3 teste_notas.py"),
-        ("Teste do Heimdall News (sem rede)", "python3 teste_news.py"),
-        ("Teste do Heimdall Games (servidor, regras e interface)", "python3 teste_jogos.py"),
-        ("Teste do Heimdall Finance (extratos, categorias, relatórios e servidor)", "python3 teste_finance.py"),
-        ("Teste dos arquivos do Finance (PDF, inspeção anônima, pasta de entrada)", "python3 teste_finance_arquivos.py"),
-        ("Teste das planilhas do Finance (xlsx, layout aprendido, dúvidas, visões)", "python3 teste_planilhas.py"),
-        ("Teste das páginas de planilhas, investimentos, empréstimos e visões", "python3 teste_finance_planilhas.py"),
-        ("Teste da coleta completa do Pluggy e das abas criadas pelos dados", "python3 teste_finance_pluggy_dados.py"),
-        ("Teste do Heimdall Design (nenhuma ação é link)", "python3 teste_design.py"),
-        ("Teste do diagnóstico de desempenho", "python3 teste_diagnostico.py"),
-        ("Teste do leitor de boletos", "python3 teste_boletos.py"),
-        ("Teste da leitura de boletos por e-mail", "python3 teste_finance_email.py"),
-        ("Teste da conexão com os bancos (Pluggy simulado)", "python3 teste_finance_pluggy.py"),
-        ("Teste da análise e do Perguntar do Finance", "python3 teste_finance_analise.py"),
-        ("Teste das ferramentas do Finance no chat", "python3 teste_finance_chat.py"),
-        ("Teste do xadrez, da batalha naval, das aventuras e dos jogos novos (Node)", "node teste_jogos_xadrez.js && node teste_jogos_naval.js && node teste_jogos_cincoletras.js && node teste_jogos_sudoku.js && node teste_historias.js && node teste_jogos_novos.js"),
-        ("Teste do painel de saúde (sem rede)", "python3 teste_painel_saude.py"),
+        ("Teste do painel do emulador de AWS (sem rede)", "python3 tests/cloud/teste_cloud.py"),
+        ("Teste do Heimdall Notes (sem rede)", "python3 tests/notes/teste_notas.py"),
+        ("Teste do Heimdall News (sem rede)", "python3 tests/news/teste_news.py"),
+        ("Teste do Heimdall Games (servidor, regras e interface)", "python3 tests/games/teste_jogos.py"),
+        ("Teste do Heimdall Finance (extratos, categorias, relatórios e servidor)", "python3 tests/finance/teste_finance.py"),
+        ("Teste dos arquivos do Finance (PDF, inspeção anônima, pasta de entrada)", "python3 tests/finance/teste_finance_arquivos.py"),
+        ("Teste das planilhas do Finance (xlsx, layout aprendido, dúvidas, visões)", "python3 tests/finance/teste_planilhas.py"),
+        ("Teste das páginas de planilhas, investimentos, empréstimos e visões", "python3 tests/finance/teste_finance_planilhas.py"),
+        ("Teste da coleta completa do Pluggy e das abas criadas pelos dados", "python3 tests/finance/teste_finance_pluggy_dados.py"),
+        ("Teste do Heimdall Design (nenhuma ação é link)", "python3 tests/design/teste_design.py"),
+        ("Teste do diagnóstico de desempenho", "python3 tests/core/teste_diagnostico.py"),
+        ("Teste do leitor de boletos", "python3 tests/finance/teste_boletos.py"),
+        ("Teste da leitura de boletos por e-mail", "python3 tests/finance/teste_finance_email.py"),
+        ("Teste da conexão com os bancos (Pluggy simulado)", "python3 tests/finance/teste_finance_pluggy.py"),
+        ("Teste da análise e do Perguntar do Finance", "python3 tests/finance/teste_finance_analise.py"),
+        ("Teste das ferramentas do Finance no chat", "python3 tests/finance/teste_finance_chat.py"),
+        ("Teste do xadrez, da batalha naval, das aventuras e dos jogos novos (Node)", "node tests/games/teste_jogos_xadrez.js && node tests/games/teste_jogos_naval.js && node tests/games/teste_jogos_cincoletras.js && node tests/games/teste_jogos_sudoku.js && node tests/games/teste_historias.js && node tests/games/teste_jogos_novos.js"),
+        ("Teste do painel de saúde (sem rede)", "python3 tests/health/teste_painel_saude.py"),
         ("Listar notas com título que parece cortado", "python3 heimdall_notas.py --titulos-suspeitos"),
-        ("Teste dos trechos de livros do estudo (sem rede, precisa do Node)", "python3 teste_trechos.py"),
-        ("Login e simulação do vigia de e-mail", "bash instalar_email_oficial.sh --testar"),
+        ("Teste dos trechos de livros do estudo (sem rede, precisa do Node)", "python3 tests/notes/teste_trechos.py"),
+        ("Login e simulação do vigia de e-mail", "bash scripts/instalar_email_oficial.sh --testar"),
         ("Ver como cada e-mail recente foi classificado, inclusive os já vistos", "heimdall mail --diagnose"),
     ]),
     ("Documentos e conhecimento", [
         ("Indexar knowledge/ (incremental)", "python3 ingest_docs.py"),
         ("Recriar a base do zero (troca de modelo de embedding)", "python3 ingest_docs.py --reset"),
-        ("Ouvir o áudio de estudo mais recente", "bash ouvir_estudo.sh"),
+        ("Ouvir o áudio de estudo mais recente", "bash scripts/ouvir_estudo.sh"),
         ("Listar o que o Second Brain guardou de pastas privadas, sem apagar", "python3 limpar_privadas.py --so-listar"),
     ]),
     ("Instalar e atualizar as automações", [
-        ("Fluxos básicos (AWS, versões, saúde do Mac, disponibilidade)", "bash instalar_fluxos_n8n.sh"),
-        ("Fluxos avançados (GitOps, digest, Second Brain, estudo)", "bash instalar_automacoes_avancadas.sh"),
-        ("Monitor de privacidade e diários oficiais", "bash instalar_monitor_privacidade.sh"),
-        ("Mudar o que o monitor procura", "bash instalar_monitor_privacidade.sh --reconfigurar"),
-        ("Vigia de e-mail de serviços públicos", "bash instalar_email_oficial.sh"),
-        ("Conferir Querido Diário e Diário da Justiça", "python3 teste_diario_justica.py"),
-        ("Testar as regras da triagem de avisos", "python3 teste_triagem.py"),
-        ("Conferir a triagem de verdade no Mac (cria um lembrete de teste)", "python3 teste_triagem.py --mac"),
+        ("Fluxos básicos (AWS, versões, saúde do Mac, disponibilidade)", "bash scripts/instalar_fluxos_n8n.sh"),
+        ("Fluxos avançados (GitOps, digest, Second Brain, estudo)", "bash scripts/instalar_automacoes_avancadas.sh"),
+        ("Monitor de privacidade e diários oficiais", "bash scripts/instalar_monitor_privacidade.sh"),
+        ("Mudar o que o monitor procura", "bash scripts/instalar_monitor_privacidade.sh --reconfigurar"),
+        ("Vigia de e-mail de serviços públicos", "bash scripts/instalar_email_oficial.sh"),
+        ("Conferir Querido Diário e Diário da Justiça", "python3 tests/monitor/teste_diario_justica.py"),
+        ("Testar as regras da triagem de avisos", "python3 tests/monitor/teste_triagem.py"),
+        ("Conferir a triagem de verdade no Mac (cria um lembrete de teste)", "python3 tests/monitor/teste_triagem.py --mac"),
         ("Ver os itens pendentes da triagem", "python3 heimdall_banco.py --sql \"SELECT titulo, nivel, estado, avisos FROM triagem WHERE estado='pendente'\""),
-        ("Ligar um repositório ao GitOps", "bash instalar_hook_gitops.sh /caminho/do/repositorio"),
+        ("Ligar um repositório ao GitOps", "bash scripts/instalar_hook_gitops.sh /caminho/do/repositorio"),
     ]),
     ("Rodar um fluxo agora", [
         ("Estudo dos livros", "docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdEstudoDiario01 2>&1 | tail -20"),
@@ -513,9 +513,9 @@ from docs_tema import (CSS, JS, PAGINAS, REPO, ACESSOS, pagina, comando, tabela,
 
 
 def ler_ajuda_comando():
-    """Lê heimdall_ajuda.txt: lista de (nome, resumo, descrição, opções [(opção, texto)], exemplos)."""
+    """Lê guides/heimdall_ajuda.txt: lista de (nome, resumo, descrição, opções [(opção, texto)], exemplos)."""
     secoes, atual, modo = [], None, ""
-    for linha in (AQUI / "heimdall_ajuda.txt").read_text(encoding="utf-8").splitlines():
+    for linha in (AQUI / "guides/heimdall_ajuda.txt").read_text(encoding="utf-8").splitlines():
         if linha.startswith("#") or not linha.strip() and atual is None:
             continue
         if linha.startswith("@ "):
@@ -553,7 +553,7 @@ def pagina_comando_heimdall():
 <h1>Comando heimdall</h1>
 <p>O comando <code>heimdall</code> reúne o ecossistema no terminal do Mac, no formato <code>heimdall SERVIÇO --opção</code>: o comando é o serviço e o que ele faz vem em opções. Toda opção tem a forma longa, com dois hífens, e a curta, de uma letra com um hífen (<code>--help</code> e <code>-h</code>). Cada comando mostra só as suas variações com <code>heimdall COMANDO --help</code>. Esta página também abre com <code>heimdall help --doc</code>.</p>
 <section aria-labelledby="instalar"><h2 id="instalar">Instalar</h2>
-<ol><li>Na pasta do projeto: <code>bash instalar_comando_heimdall.sh</code>. Ele faz cópia do ~/.zshrc, remove uma função heimdall antiga e liga o heimdall.zsh do projeto.</li>
+<ol><li>Na pasta do projeto: <code>bash scripts/instalar_comando_heimdall.sh</code>. Ele faz cópia do ~/.zshrc, remove uma função heimdall antiga e liga o heimdall.zsh do projeto.</li>
 <li>Depois: <code>source ~/.zshrc</code>. A partir daí o comando se atualiza com <code>heimdall update</code>.</li>
 <li>Se o projeto não estiver em ~/heimdall-ai, defina HEIMDALL_DIR no ~/.zshrc antes da linha do source.</li></ol></section>
 <section aria-labelledby="indice"><h2 id="indice">Todos os comandos</h2><ul>{indice}</ul></section>
@@ -574,7 +574,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
         f"<tr><th scope=\"row\">{H(a)} sobre {H(b)}</th><td>{_d.contraste(_d.CORES_CLARO[a], _d.CORES_CLARO[b]):.1f} para 1</td><td>{_d.contraste(_d.CORES_ESCURO[a], _d.CORES_ESCURO[b]):.1f} para 1</td><td>{str(m).replace('.', ',')} para 1</td></tr>" for a, b, m in _d.PARES_DE_CONTRASTE)
     out["design.html"] = pagina("design.html", "Design", "Heimdall Design: cores, tipografia, componentes, acessibilidade e o passo a passo para criar páginas dos sites do Heimdall.", f"""
 <h1>Heimdall Design</h1>
-<p>O Heimdall Design é a única fonte de tudo que é aparência e comportamento de interface nos sites do Heimdall (Cloud, Notas, News, Saúde, Jogos e Finance): cores, tipografia, medidas, componentes, acessibilidade e tom do texto. Ele foi pensado para leitor de tela e teclado. <strong>Toda página nova e toda mudança numa página existente segue esta página.</strong> O código está em <code>heimdall_design.py</code> (cores, tipografia, CSS e botão) e <code>heimdall_paginacao.py</code> (paginação); o teste <code>teste_design.py</code> confere as regras que dá para conferir sozinho; e o arquivo <code>CLAUDE.md</code> do repositório obriga a seguir o padrão em cada atualização.</p>
+<p>O Heimdall Design é a única fonte de tudo que é aparência e comportamento de interface nos sites do Heimdall (Cloud, Notas, News, Saúde, Jogos e Finance): cores, tipografia, medidas, componentes, acessibilidade e tom do texto. Ele foi pensado para leitor de tela e teclado. <strong>Toda página nova e toda mudança numa página existente segue esta página.</strong> O código está em <code>heimdall_design.py</code> (cores, tipografia, CSS e botão) e <code>heimdall_paginacao.py</code> (paginação); o teste <code>tests/design/teste_design.py</code> confere as regras que dá para conferir sozinho; e o arquivo <code>CLAUDE.md</code> do repositório obriga a seguir o padrão em cada atualização.</p>
 <section aria-labelledby="regra"><h2 id="regra">1. Link lê, botão age</h2>
 <ol><li><strong>Link</strong> leva a outro lugar para ler: o menu, "Voltar", o nome de um item em lista ou tabela (um bucket, uma nota, um jogo, uma categoria), "Leia mais" e os links dentro de um texto.</li>
 <li><strong>Botão</strong> faz uma ação ou comando, mesmo quando o resultado é abrir outra página: baixar, atualizar, continuar, confirmar, alterar, classificar, importar, trocar a visão ou o período, paginar, "Ver todos..." e "Ver resultado".</li>
@@ -710,16 +710,16 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <h1>Modelos de linguagem (LLMs)</h1>
 <section aria-labelledby="lista"><h2 id="lista">Modelos configurados</h2>
 {tabela("Modelos no LiteLLM", ["Nome no LiteLLM", "Modelo no Ollama", "Uso", "Declara suporte a", "Observações"], ml)}
-<p class="muted">A coluna "Declara suporte a" vem do <code>litellm_config.yaml</code>; é o que o LiteLLM anuncia, não o resultado do teste. O resultado real de cada modelo se confere com <code>venv/bin/python test_models_tools.py</code>.</p></section>
+<p class="muted">A coluna "Declara suporte a" vem do <code>litellm_config.yaml</code>; é o que o LiteLLM anuncia, não o resultado do teste. O resultado real de cada modelo se confere com <code>venv/bin/python tests/chat/test_models_tools.py</code>.</p></section>
 <section aria-labelledby="como"><h2 id="como">Como funciona</h2>
 <ul><li>Todos usam o prefixo <code>ollama_chat/</code>, que chama o endpoint de chat do Ollama e suporta chamada de ferramentas. O prefixo <code>ollama/</code> não suporta.</li>
-<li>O modelo só chama ferramentas se o template dele no Ollama tiver suporte a ferramentas; o LiteLLM apenas declara. Quem decide é o teste (<code>test_models_tools.py</code>).</li>
+<li>O modelo só chama ferramentas se o template dele no Ollama tiver suporte a ferramentas; o LiteLLM apenas declara. Quem decide é o teste (<code>tests/chat/test_models_tools.py</code>).</li>
 <li>O contexto é de 8192 tokens (<code>num_ctx</code>) para todos.</li>
 <li>Modelo padrão dos fluxos do n8n: <code>qwen3-vl-instruct</code> (muda com <code>HEIMDALL_FLOW_MODEL</code> no <code>.env</code>). O GitOps usa o <code>deepseek-coder-v2:16b</code>.</li>
 <li>Embeddings: <code>nomic-embed-text</code>, para a base vetorial.</li></ul></section>
 <section aria-labelledby="teste"><h2 id="teste">Como testar um modelo</h2>
-{comando("venv/bin/python test_models_tools.py", "Testa todos os modelos")}
-{comando("venv/bin/python test_models_tools.py --only qwen", "Testa só os que têm 'qwen' no nome")}
+{comando("venv/bin/python tests/chat/test_models_tools.py", "Testa todos os modelos")}
+{comando("venv/bin/python tests/chat/test_models_tools.py --only qwen", "Testa só os que têm 'qwen' no nome")}
 <p>O teste faz duas etapas: a chamada (o modelo devolve uma chamada estruturada à ferramenta certa) e o ciclo (a ferramenta executa e a resposta final usa o resultado real). Chamada escrita como texto é reprovada.</p></section>
 """)
 
@@ -742,12 +742,12 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <p>Os grupos de ferramentas são separados de propósito: o Open WebUI dos convidados se conecta só ao grupo público (porta 8001), e o grupo do Mac fica restrito ao administrador. O Open WebUI do administrador se conecta ao grupo de dados (porta 8004), que só tem as ferramentas do banco pessoal e escuta apenas em 127.0.0.1.</p></section>
 {blocos}
 <section aria-labelledby="teste"><h2 id="teste">Como testar</h2>
-{comando("venv/bin/python test_mcp.py", "Testa os dois grupos direto e pelo LiteLLM")}
-{comando("venv/bin/python test_mcp.py <IP-do-Tailscale>", "Testa pelo IP do Tailscale")}
+{comando("venv/bin/python tests/chat/test_mcp.py", "Testa os dois grupos direto e pelo LiteLLM")}
+{comando("venv/bin/python tests/chat/test_mcp.py <IP-do-Tailscale>", "Testa pelo IP do Tailscale")}
 <h3>Como criar uma ferramenta nova</h3>
 <ol><li>Escreva a função em <code>heimdall_tools.py</code>, com anotação de tipos e um docstring claro (é o que o modelo lê para decidir quando usar).</li>
 <li>Acrescente-a a <code>PUBLIC_TOOLS</code> (segura para convidados) ou <code>MAC_TOOLS</code> (acessa o Mac).</li>
-<li>Reinicie o sistema e rode <code>test_mcp.py</code>.</li>
+<li>Reinicie o sistema e rode <code>tests/chat/test_mcp.py</code>.</li>
 <li>Rode <code>python3 gerar_docs.py</code>: esta página se atualiza sozinha.</li></ol></section>
 """)
 
@@ -815,7 +815,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>No Glue, crie um banco de dados.</li>
 <li>No Glue, crie uma tabela apontando para a pasta do S3, com as colunas e os tipos.</li>
 <li>No Athena, escolha o banco e rode um SELECT na tabela.</li></ol>
-<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/mrl2bolonhini/heimdall-ai/blob/main/LEIAME_cloud_roteiro.txt">LEIAME_cloud_roteiro.txt</a>.</p></section>
+<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/mrl2bolonhini/heimdall-ai/blob/main/guides/LEIAME_cloud_roteiro.txt">guides/LEIAME_cloud_roteiro.txt</a>.</p></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
 <ul><li>O painel escuta só em 127.0.0.1. A porta do emulador nunca é exposta, porque ela não tem senha.</li>
 <li>Entrada com senha (guardada só como hash PBKDF2) e código de 6 dígitos (TOTP), que não pode ser reaproveitado.</li>
@@ -829,7 +829,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Trocar só a senha: <code>python3 heimdall_acesso.py --senha</code></li>
 <li>Gerar só um novo código: <code>python3 heimdall_acesso.py --codigo</code></li>
 <li>Conferir se o painel está no ar: <code>curl -s http://localhost:8010/saude</code></li>
-<li>Testar o painel sem o LocalStack: <code>python3 teste_cloud.py</code></li></ul>
+<li>Testar o painel sem o LocalStack: <code>python3 tests/cloud/teste_cloud.py</code></li></ul>
 <p>O painel sobe sozinho com o sistema quando há senha e código no <code>.env</code>. Se o LocalStack recusar a licença, o sistema avisa e usa o Moto no lugar, onde Lambda, Glue e Athena são só simulados. Veja os comandos completos em <a href="comandos.html">Comandos</a> e o histórico em <a href="novidades.html">Novidades</a>.</p></section>
 """)
     out["notas.html"] = pagina("notas.html", "Notas", "Heimdall Notes: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Cloud.", """
@@ -862,7 +862,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <ul><li>O Heimdall Notes sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Cloud).</li>
 <li>Conferir se está no ar: <code>curl -s http://localhost:8011/saude</code></li>
 <li>Reiniciar só ela: <code>pkill -f heimdall_notas.py</code> e subir o sistema como de costume.</li>
-<li>Testar sem rede: <code>python3 teste_notas.py</code></li>
+<li>Testar sem rede: <code>python3 tests/notes/teste_notas.py</code></li>
 <li>Se algo falhar: <code>tail -20 logs/notas_debug.log</code></li></ul></section>
 """)
     out["news.html"] = pagina("news.html", "News", "Heimdall News: notícias das últimas 24 horas com resumo feito por IA e feeds RSS para o iPhone.", """
@@ -905,7 +905,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <ul><li>Sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Cloud).</li>
 <li>Conferir se está no ar: <code>curl -s http://localhost:8012/saude</code></li>
 <li>Atualizar agora, uma vez: <code>python3 heimdall_news.py --uma-vez</code></li>
-<li>Testar sem rede: <code>python3 teste_news.py</code></li>
+<li>Testar sem rede: <code>python3 tests/news/teste_news.py</code></li>
 <li>Se algo falhar: <code>tail -20 logs/news_debug.log</code> ou <code>./subir.sh --log news</code></li></ul></section>
 """)
     out["jogos.html"] = pagina("jogos.html", "Jogos", "Heimdall Games: jogos leves no navegador, feitos para leitor de tela, atrás do mesmo login dos outros painéis.", """
@@ -933,7 +933,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <h3>Cassino</h3>
 <ul><li><strong>Bacará:</strong> (punto banco) com créditos de mentira. Você escolhe o valor e o lado, <code>apostar 10 banca</code>, <code>jogador</code> ou <code>empate</code>; o jogo dá as cartas, aplica sozinho as regras da terceira carta e lê cada passo e o resultado. Ás vale 1, de 2 a 9 valem o número, 10 e figuras valem 0, e a mão é a soma, ficando só o último dígito; vence quem chega mais perto de 9. Jogador e banca pagam 1 para 1 (nesta versão, se a banca vencer com três cartas somando 7, a aposta só é devolvida); empate paga 8 para 1, e nele as apostas nos outros lados voltam. Também há <code>repetir</code>, <code>tabela</code>, <code>histórico</code>, <code>saldo</code> e <code>dica</code>. Fácil: 100 créditos e dicas à vontade; normal: 100 créditos e 3 dicas; difícil: 60 créditos e sem dicas. As apostas na banca e no jogador devolvem cerca de 99%; o empate, só 86%.</li>
 <li><strong>Blackjack:</strong> vinte e um contra a banca, com créditos de mentira (nunca dinheiro de verdade). Você chega mais perto de 21 que a banca sem passar; Ás vale 11 ou 1, Valete, Dama e Rei valem 10, e o blackjack natural paga 3 para 2. A banca compra até 17 e para em qualquer 17. Aposta par, de 2 a 50 créditos, com <code>apostar 10</code> ou <code>repetir</code>; depois <code>pedir</code>, <code>parar</code>, <code>dobrar</code> (só nas duas primeiras cartas) e <code>dividir</code> (um par, uma vez). Também há <code>mao</code>, <code>banca</code>, <code>saldo</code>, <code>tabela</code> (pagamentos) e <code>dica</code>, que segue a estratégia básica. Fácil: 100 créditos e dicas à vontade; normal: 100 créditos e 5 dicas; difícil: 60 créditos e sem dicas. Com a estratégia básica a banca leva só cerca de 1% do que é apostado.</li>
-<li><strong>Caça-níqueis:</strong> um painel de três dígitos de 0 a 9 e um botão Girar. Três dígitos iguais (trinca) pagam 25 vezes a aposta; uma sequência de três, subindo ou descendo, como 1 2 3, 3 2 1, 9 0 1 ou 1 0 9, paga 10 vezes; dois números iguais (um par, como 4 4 7) pagam 2 vezes, um prêmio pequeno que sai em cerca de 27% das rodadas; qualquer outra combinação perde a aposta. No total, cerca de três em cada dez rodadas pagam alguma coisa, e em média você recebe de volta uns 99% do que aposta. Você começa com 30 créditos de mentira (nunca dinheiro de verdade) e aposta 1, 2 ou 5 por rodada. Os números ficam no começo de jogos/cacaniqueis.js, se quiser mudar.</li>
+<li><strong>Caça-níqueis:</strong> um painel de três dígitos de 0 a 9 e um botão Girar. Três dígitos iguais (trinca) pagam 25 vezes a aposta; uma sequência de três, subindo ou descendo, como 1 2 3, 3 2 1, 9 0 1 ou 1 0 9, paga 10 vezes; dois números iguais (um par, como 4 4 7) pagam 2 vezes, um prêmio pequeno que sai em cerca de 27% das rodadas; qualquer outra combinação perde a aposta. No total, cerca de três em cada dez rodadas pagam alguma coisa, e em média você recebe de volta uns 99% do que aposta. Você começa com 30 créditos de mentira (nunca dinheiro de verdade) e aposta 1, 2 ou 5 por rodada. Os números ficam no começo de games/cacaniqueis.js, se quiser mudar.</li>
 <li><strong>Poker caribenho:</strong> (Caribbean Stud) contra a banca, com créditos de mentira. Você aposta o ante (<code>apostar 5</code>, de 1 a 25) e recebe cinco cartas abertas, lidas com o nome da sua mão; a banca recebe cinco e mostra só uma. Então você decide: <code>desistir</code> (perde o ante) ou <code>aumentar</code> (paga mais duas vezes o ante; é preciso ter três vezes o ante em créditos). A banca só joga com Ás e Rei ou melhor: se não jogar, o ante paga 1 para 1 e o aumento volta; se jogar, vence a melhor mão, o ante paga 1 para 1 e o aumento paga pela sua mão (par 1 para 1, dois pares 2, trinca 3, sequência 4, flush 5, full house 7, quadra 20, straight flush 50, royal flush 100). Empate devolve tudo. Também há <code>repetir</code>, <code>mao</code>, <code>banca</code>, <code>saldo</code>, <code>tabela</code> e <code>dica</code>, que simula as mãos possíveis da banca e diz se vale aumentar. Jogando assim, a casa leva cerca de 5% do ante. Não há prêmio acumulado. Fácil: 100 créditos e dicas à vontade; normal: 100 créditos e 3 dicas; difícil: 60 créditos e sem dicas.</li>
 <li><strong>Roleta:</strong> com créditos de mentira. Você faz uma ou mais apostas e manda <code>girar</code>; o jogo lê onde a bola parou (número, cor, par ou ímpar, alto ou baixo) e o que cada aposta rendeu. Apostas: <code>apostar 5 vermelho</code>, <code>preto</code>, <code>par</code>, <code>ímpar</code>, <code>alto</code> (19 a 36), <code>baixo</code> (1 a 18), <code>dúzia 1</code> a <code>3</code>, <code>coluna 1</code> a <code>3</code> ou um número, como <code>apostar 2 no 17</code> ou <code>apostar 1 zero</code>. Número paga 35 para 1, dúzia e coluna 2 para 1, e as demais 1 para 1; o zero só paga a quem apostou nele. Também há <code>apostas</code>, <code>limpar</code>, <code>repetir</code>, <code>tabela</code>, <code>histórico</code> e <code>saldo</code>. Fácil: 100 créditos, roleta europeia (retorno de cerca de 97%); normal: 60 créditos; difícil: 60 créditos e roleta americana, com zero e duplo zero (retorno de cerca de 95%).</li></ul>
 <h3>Números e lógica</h3>
@@ -942,7 +942,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li><strong>Senha (Mastermind):</strong> descubra 4 dígitos de 1 a 6 em até 10 tentativas; a dica diz quantos estão no lugar certo e quantos no lugar errado.</li>
 <li><strong>Sudoku:</strong> por comandos, com linhas, colunas e quadrantes de 1 a 9 (os quadrantes vão da esquerda para a direita e de cima para baixo). Todo tabuleiro é gerado na hora e tem uma única solução. Você coloca com <code>colocar 5 em 3 4</code> (valor, linha, coluna). Para ouvir: linha 3, coluna 4, quadrante 5, casa 3 4 (diz quais números podem entrar), tabuleiro, faltam linha 3 (quais números faltam), vazias coluna 4 e resumo. Também há apagar 3 4, desfazer, verificar, dica e desistir. Números repetidos em linha, coluna ou quadrante são sempre recusados na hora. Níveis: fácil (40 números dados, o jogo avisa na hora se o número não é o certo e dá dicas à vontade), normal (32 dados, 3 dicas, e verificar aponta os erros) e difícil (26 dados, sem dicas e sem conferência).</li></ul>
 <h3>Palavras e letras</h3>
-<ul><li><strong>Cinco letras:</strong> palavra secreta de 5 letras, em português, no estilo Wordle. Você digita um palpite (acentos não importam; qualquer combinação de 5 letras vale, não há dicionário para conferir) e ouve, letra por letra, se ela está no lugar certo, em outro lugar ou não tem. Letras repetidas contam só as que existem na palavra. Comandos: tentativas, pistas (lugares conhecidos, letras em outro lugar e letras que não têm), letras (as não testadas), dica e desistir. Níveis: fácil (8 tentativas e dicas à vontade), normal (6 tentativas e uma dica) e difícil (6 tentativas, sem dicas, e cada palpite precisa manter as letras certas no lugar e usar as que já estão na palavra). A palavra vem de uma lista de mais de 400 palavras comuns, no começo de jogos/cincoletras.js.</li>
+<ul><li><strong>Cinco letras:</strong> palavra secreta de 5 letras, em português, no estilo Wordle. Você digita um palpite (acentos não importam; qualquer combinação de 5 letras vale, não há dicionário para conferir) e ouve, letra por letra, se ela está no lugar certo, em outro lugar ou não tem. Letras repetidas contam só as que existem na palavra. Comandos: tentativas, pistas (lugares conhecidos, letras em outro lugar e letras que não têm), letras (as não testadas), dica e desistir. Níveis: fácil (8 tentativas e dicas à vontade), normal (6 tentativas e uma dica) e difícil (6 tentativas, sem dicas, e cada palpite precisa manter as letras certas no lugar e usar as que já estão na palavra). A palavra vem de uma lista de mais de 400 palavras comuns, no começo de games/cincoletras.js.</li>
 <li><strong>Forca:</strong> palavras em português por categoria, 7 erros; letra ou palavra inteira, sem se importar com acentos.</li></ul>
 <h3>Tabuleiro e estratégia</h3>
 <ul><li><strong>Batalha naval:</strong> contra o computador, em tabuleiro 10 por 10 (colunas de A a J, linhas de 1 a 10) com a frota clássica: porta-aviões (5 casas), encouraçado (4), cruzador (3), submarino (3) e destróier (2). As duas frotas são sorteadas, e você ouve onde estão os seus navios com o comando frota. Para atirar, diga a casa (B7 ou tiro b7); a resposta diz água, acertou ou afundou, e logo em seguida o computador atira e a resposta dele também é lida. Para consultar: tiros, inimigo, restantes, linha 3, coluna c, resumo, último e dica. Níveis: fácil (o computador atira ao acaso, em média uns 96 tiros), normal (caça em volta dos acertos, uns 53) e difícil (calcula onde os navios restantes mais cabem, uns 44).</li>
@@ -953,8 +953,8 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li><strong>Xadrez:</strong> partida completa contra o computador, com roque, en passant, promoção, xeque, mate, afogamento, repetição, regra dos cinquenta lances e material insuficiente. Você escreve o lance (e4, Cf3, Cxe5, O-O, e8=D ou de casa para casa, como e2 e4); as letras das peças são R rei, D dama, T torre, B bispo e C cavalo. Três níveis (fácil, médio e difícil), jogar de brancas ou de pretas, dica e desfazer. Para consultar: tabuleiro, linha 4, coluna e, casa e4, peças, lances, histórico, material e último. O motor de regras foi conferido contra as contagens oficiais de lances (perft) de quatro posições de referência.</li></ul>
 <h3>Sons de apoio</h3>
 <p><strong>Sons de apoio:</strong> todos os jogos (exceto o Arqueiro, que tem o seu próprio som) tocam sons curtos como recurso de acessibilidade: ficha ao apostar, carta ao dar, a bola da roleta, os rolos do caça-níqueis, acerto e erro, o tiro e a água da batalha naval, a peça e a captura do xadrez, os passos no gramado e um som para ganhou, perdeu, empate ou estouro. A fala espera o som terminar. O botão Sons, no começo de cada jogo, liga e desliga tudo, e a escolha fica gravada no navegador.</p>
-<p>As aventuras A Caverna dos Ecos, A Mansão dos Relógios, Estação Orion e O Templo Submerso rodam no mesmo motor (jogos/motor.js) e têm três níveis, que você escolhe antes de recomeçar: <strong>fácil</strong> (dicas à vontade e sem limite de passos), <strong>normal</strong> (3 dicas e limite de passos folgado) e <strong>difícil</strong> (sem dicas, limite apertado, enigmas a mais e perigos que acabam a partida, como andar no escuro). Comandos: olhar, ir norte/sul/leste/oeste/subir/descer, pegar, largar, examinar, usar ITEM, usar ITEM em ALGO, dar ITEM a ALGUÉM, falar com ALGUÉM, digitar CÓDIGO em ALGO, empurrar, puxar, girar, abrir, inventário, objetivo, mapa, dica, tempo, salvar, carregar e recomeçar. Salvar guarda a partida só neste navegador.</p>
-<p>Cada jogo está em um arquivo da pasta jogos/, em JavaScript sem dependências. As histórias do motor são só dados (jogos/hist_*.js), então dá para criar a sua copiando uma delas; o teste teste_historias.js confere as referências e joga a solução em cada nível. Para abrir um jogo direto: <code>heimdall games --play xadrez</code>.</p></section>
+<p>As aventuras A Caverna dos Ecos, A Mansão dos Relógios, Estação Orion e O Templo Submerso rodam no mesmo motor (games/motor.js) e têm três níveis, que você escolhe antes de recomeçar: <strong>fácil</strong> (dicas à vontade e sem limite de passos), <strong>normal</strong> (3 dicas e limite de passos folgado) e <strong>difícil</strong> (sem dicas, limite apertado, enigmas a mais e perigos que acabam a partida, como andar no escuro). Comandos: olhar, ir norte/sul/leste/oeste/subir/descer, pegar, largar, examinar, usar ITEM, usar ITEM em ALGO, dar ITEM a ALGUÉM, falar com ALGUÉM, digitar CÓDIGO em ALGO, empurrar, puxar, girar, abrir, inventário, objetivo, mapa, dica, tempo, salvar, carregar e recomeçar. Salvar guarda a partida só neste navegador.</p>
+<p>Cada jogo está em um arquivo da pasta games/, em JavaScript sem dependências. As histórias do motor são só dados (games/hist_*.js), então dá para criar a sua copiando uma delas; o teste tests/games/teste_historias.js confere as referências e joga a solução em cada nível. Para abrir um jogo direto: <code>heimdall games --play xadrez</code>.</p></section>
 <section aria-labelledby="terceiros"><h2 id="terceiros">Jogos de terceiros</h2>
 <p>O Heimdall só lista jogos de terceiros que tenham versão em português ou permitam tradução. Por isso o Enigma (em inglês e espanhol) e o PlayAural (sem português) foram retirados, e hoje nenhum jogo de terceiros é instalado. Se aparecer um que atenda a esse critério, ele pode ser listado em HEIMDALL_JOGOS_EXTRAS, como descrito em Outros jogos, abaixo.</p></section>
 <section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
@@ -979,7 +979,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="usar"><h2 id="usar">Como usar</h2>
 <ol><li><strong>Importar:</strong> na página Importar extrato, escolha o arquivo (OFX, CSV com colunas de data, descrição e valor, ou PDF de extrato ou de fatura). O banco (Nubank, Itaú, Mercado Pago) e o tipo (conta ou cartão) são identificados pelo conteúdo e pelo nome do arquivo; deixe o nome da conta em branco para usar o que foi identificado (por exemplo "Nubank cartão") ou digite o seu. Importar o mesmo arquivo de novo não duplica nada. Em CSV de cartão em que os gastos vêm positivos, marque a opção de inverter (o CSV de fatura do Nubank no formato date, category, title, amount já é reconhecido sozinho).</li>
 <li><strong>PDF:</strong> o texto do PDF é lido linha a linha (data, descrição, valor) e o total que o próprio documento cita, por exemplo "Total da fatura", é conferido com a soma dos lançamentos. Só o PDF que confere é importado sozinho; se não conferir, a tela pede que você revise e marque a opção de importar mesmo assim. Na fatura, compra vira gasto e estorno ou pagamento vira crédito; no extrato de conta, a coluna de saldo é ignorada. Cada banco monta o PDF de um jeito, então o leitor é genérico: por isso a conferência existe.</li>
-<li><strong>Pasta de entrada:</strong> <code>heimdall finance --folder</code> abre a pasta dados_financas/entrada. Solte lá extratos e faturas; a cada minuto o Heimdall importa o que conferir (vai para a subpasta importados) e separa o que deixar dúvida (subpasta revisar, com um arquivo .motivo.txt dizendo o porquê, e a lista aparece na página Importar). Arquivo duplicado não é importado e a cópia é apagada; o .motivo.txt some sozinho quando o arquivo sai de revisar, e importar um arquivo de revisar com <code>--force</code> o move para importados. <code>heimdall finance --inbox</code> importa na hora e <code>heimdall finance --retry</code> devolve tudo de revisar para a entrada e tenta de novo.</li>
+<li><strong>Pasta de entrada:</strong> <code>heimdall finance --folder</code> abre a pasta finance/entrada. Solte lá extratos e faturas; a cada minuto o Heimdall importa o que conferir (vai para a subpasta importados) e separa o que deixar dúvida (subpasta revisar, com um arquivo .motivo.txt dizendo o porquê, e a lista aparece na página Importar). Arquivo duplicado não é importado e a cópia é apagada; o .motivo.txt some sozinho quando o arquivo sai de revisar, e importar um arquivo de revisar com <code>--force</code> o move para importados. <code>heimdall finance --inbox</code> importa na hora e <code>heimdall finance --retry</code> devolve tudo de revisar para a entrada e tenta de novo.</li>
 <li><strong>Linha de comando:</strong> <code>heimdall finance --preview ARQUIVO</code> mostra o que seria importado, com a conferência do total, sem gravar; <code>heimdall finance --import ARQUIVO --account "Nubank cartão"</code> importa; <code>heimdall finance --inspect ARQUIVO</code> mostra só a estrutura do arquivo, com todas as letras trocadas por x e todos os números por 9, e copia para a área de transferência. <code>heimdall finance --explain ARQUIVO</code> faz o mesmo para PDF e ainda mostra, linha por linha, o que o leitor aceitou ou descartou e por quê. É o jeito de mostrar o layout do seu banco a quem for ajustar o leitor, sem que nenhum nome, valor ou número de conta saia do seu Mac.</li>
 <li><strong>PDF e requisitos:</strong> a leitura de PDF usa o pypdf, que já está no requirements.txt, ou o pdftotext (<code>brew install poppler</code>). PDF escaneado, que é imagem, não tem texto para ler. PDF com senha precisa ser salvo sem senha antes.</li>
 <li><strong>Classificar:</strong> as regras padrão cuidam do óbvio (mercado, transporte, assinaturas, saúde, salário...). O resumo avisa quantos lançamentos ficaram sem categoria, e a lista deles traz um campo de categoria em cada linha. Ao corrigir, a regra nasce sozinha e vale para os lançamentos parecidos e para as próximas importações. Suas regras vencem as padrão, e o que você categoriza à mão nunca é mudado por regra.</li>
@@ -1002,7 +1002,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>De fora de casa, o nome finance.heimdall-ai.tech já existe no túnel (aponta para localhost:8016, com o DNS), então responde assim que o serviço estiver no ar.</li>
 <li>Se algo falhar: <code>heimdall logs --service finance</code></li></ol></section>
 <section aria-labelledby="seg"><h2 id="seg">Privacidade e segurança</h2>
-<ul><li>Os dados ficam em um banco SQLite na pasta dados_financas do projeto (permissão só do seu usuário), fora do git e fora dos backups da nuvem. Nada é enviado para a internet, para a Cloudflare ou para modelo de fora.</li>
+<ul><li>Os dados ficam em um banco SQLite na pasta finance do projeto (permissão só do seu usuário), fora do git e fora dos backups da nuvem. Nada é enviado para a internet, para a Cloudflare ou para modelo de fora.</li>
 <li>Escuta só em 127.0.0.1, com login, limite de tentativas, sessão em cookie HttpOnly, token CSRF em todo envio de formulário e lista de sites permitidos.</li>
 <li>A política de conteúdo não permite nenhum script: as páginas são HTML puro.</li></ul></section>
 """)
@@ -1044,7 +1044,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>O recebimento do Health Auto Export exige o token do agente.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração e problemas</h2>
 <ul><li>Conferir se está no ar: <code>curl -s http://localhost:8013/saude</code></li>
-<li>Testar sem tocar no banco: <code>python3 teste_saude_dados.py</code> e <code>python3 teste_painel_saude.py</code></li>
+<li>Testar sem tocar no banco: <code>python3 tests/health/teste_saude_dados.py</code> e <code>python3 tests/health/teste_painel_saude.py</code></li>
 <li>Se faltar dado, abra a página Dados do painel e confira a automação correspondente no Health Auto Export.</li>
 <li>Se algo falhar: <code>./subir.sh --log saude_painel</code></li></ul></section>
 """)
@@ -1118,9 +1118,9 @@ def main():
     for e in mc.problemas():
         print("Modelos do chat:", e)
         desatualizado.append("modelos_chat.py")
-    guia = AQUI / "modelos_open_webui.txt"
+    guia = AQUI / "guides/modelos_open_webui.txt"
     if not guia.exists() or guia.read_text(encoding="utf-8") != mc.texto_guia():
-        desatualizado.append("modelos_open_webui.txt")
+        desatualizado.append("guides/modelos_open_webui.txt")
         if not so_checar:
             guia.write_text(mc.texto_guia(), encoding="utf-8")
     (AQUI / "openwebui").mkdir(exist_ok=True)

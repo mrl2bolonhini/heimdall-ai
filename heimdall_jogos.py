@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Heimdall Games (games.heimdall-ai.tech): jogos leves, feitos para leitor de tela, que rodam no navegador.
 
-Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta jogos/; o que acontece na partida
+Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta games/; o que acontece na partida
 é dito em voz alta por uma região aria-live. Nada é gravado: o servidor só entrega as páginas.
 Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e aventuras de texto
 (O Farol Apagado, A Mansão dos Relógios, O Templo Submerso, Estação Orion; as três últimas com níveis de dificuldade).
@@ -31,7 +31,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 PROJECT_DIR = Path(__file__).resolve().parent
-JOGOS_DIR = PROJECT_DIR / "jogos"
+JOGOS_DIR = PROJECT_DIR / "games"
 
 
 def carregar_env() -> None:

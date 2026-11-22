@@ -7,7 +7,7 @@ Regra (vale para toda aplicação do Heimdall):
   - LEMBRETE (app Lembretes, lista "Heimdall" ou "Heimdall: Triagem") é algo que você precisa fazer e marcar como feito: conferir, pagar, ligar.
     Fica pendente até você concluir, e o Heimdall volta a avisar enquanto estiver pendente.
 Cada tipo de item que vai para a agenda é cadastrado em DESTINOS, com o destino escolhido. Quem criar um tipo novo acrescenta aqui (o teste
-teste_agenda.py barra tipo fora desta tabela) e a tabela entra na página de documentação.
+tests/agent/teste_agenda.py barra tipo fora desta tabela) e a tabela entra na página de documentação.
 """
 import json
 import os
