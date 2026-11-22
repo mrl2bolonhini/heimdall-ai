@@ -71,6 +71,48 @@ EFEITO_ESFORCO = {"fc_repouso", "fc_madrugada", "fc_min", "fc_horas", "hrv", "re
 # exposição que só faz mal acima de um nível: (aviso, forte) em dB, média do dia. 70 dB em 24 h é o limite de referência da OMS e da EPA; abaixo disso nunca é achado.
 EXPOSICAO = {"x:environmental_audio_exposure": (70.0, 75.0)}
 
+# O que cada medida significa, para o aviso nunca ser só um número: (o que é, o que quer dizer quando sai do normal no sentido ruim e qual o efeito prático)
+EXPLICACAO = {
+    "hrv": ("A HRV (variabilidade da frequência cardíaca) mede, em milissegundos, o quanto o tempo entre um batimento e outro varia; ela mostra o quanto o corpo está descansado e recuperado.",
+            "Quando cai bem abaixo do seu normal, costuma indicar recuperação pior: sono ruim, estresse, álcool, treino pesado ou início de infecção. Na prática, é um recado para poupar esforço e dormir bem. "
+            "Um dia isolado pesa pouco; três dias seguidos, ou junto com o pulso em repouso mais alto, pesam mais."),
+    "fc_repouso": ("O pulso em repouso é quantas vezes o coração bate por minuto quando você está parado.",
+                   "Quando sobe vários bpm acima do seu normal, o corpo está trabalhando mais para se manter: cansaço, pouco sono, desidratação, febre ou estresse. Um dia isolado costuma passar; vários dias seguidos merecem atenção."),
+    "fc_min": ("A frequência mínima do dia é o menor pulso medido, geralmente durante o sono.", "Mais alta que o normal sugere que o corpo não descansou de verdade: sono curto, álcool tarde, febre ou estresse."),
+    "fc_madrugada": ("É o pulso médio entre 0h e 7h, quando você está dormindo.", "Acima do normal indica sono menos reparador: álcool, refeição pesada tarde, febre, estresse ou ambiente quente."),
+    "fc_horas": ("É a média do pulso nas horas de hoje que já foram medidas, comparada às mesmas horas dos dias anteriores.", "Muito acima do normal sem esforço físico pode ser estresse, cafeína, desidratação ou início de doença."),
+    "resp": ("A frequência respiratória no sono é quantas vezes você respira por minuto enquanto dorme.", "Mais rápida que o normal costuma acompanhar febre, congestão ou estresse do corpo."),
+    "spo2": ("O oxigênio no sangue (SpO2) mostra a fração da hemoglobina carregando oxigênio; o normal fica perto de 95 a 100 por cento.",
+             "Abaixo do seu normal pode ser leitura ruim (relógio frouxo, mão fria) ou respiração prejudicada. Valores repetidos abaixo de 92 por cento merecem conversa com um médico."),
+    "spo2_min": ("É a menor leitura de oxigênio no sangue do dia.", "Quedas isoladas costumam ser erro de leitura; quedas repetidas durante o sono podem indicar pausas respiratórias."),
+    "sono_total": ("É o tempo total que você dormiu na noite.", "Dormir bem menos que o seu normal reduz a recuperação e costuma baixar a HRV e subir o pulso no dia seguinte."),
+    "sono_profundo": ("O sono profundo é a fase mais reparadora, em que o corpo se recupera fisicamente.", "Menos sono profundo deixa a sensação de descanso incompleto, mesmo dormindo as horas de sempre."),
+    "sono_rem": ("O sono REM é a fase ligada à memória e ao humor.", "Menos REM costuma acompanhar álcool, estresse ou sono interrompido."),
+    "x:breathing_disturbances": ("Os distúrbios respiratórios no sono medem o quanto sua respiração foi interrompida ou irregular durante a noite.", "Valores altos e repetidos costumam ser investigados por suspeita de apneia do sono."),
+    "x:apple_sleeping_wrist_temperature": ("É a temperatura do pulso durante o sono, comparada à sua linha de base.", "Acima do normal pode acompanhar febre, infecção ou ambiente quente."),
+}
+
+
+def explicar(achados: list, limite: int = 3) -> str:
+    """Frases fixas (não dependem do modelo) que dizem o que cada medida é e o que o desvio quer dizer na prática."""
+    vistos, partes = set(), []
+    for a in achados:
+        e = EXPLICACAO.get(a.get("chave"))
+        if e and a["chave"] not in vistos and len(partes) < limite:
+            vistos.add(a["chave"])
+            partes.append(f"{a['nome']}: {e[0]} {e[1]}")
+    return " ".join(partes)
+
+
+def _cortar(txt: str, n: int) -> str:
+    """Corta no fim de uma frase, sem deixar o texto pela metade."""
+    if len(txt) <= n:
+        return txt
+    c = txt[:n]
+    i = max(c.rfind(". "), c.rfind("; "))
+    return (c[:i + 1] if i > n * 0.5 else c.rstrip()) + ("" if i > n * 0.5 else "...")
+
+
 BASE_DIAS = 30        # janela do "normal"
 BASE_MIN = 10         # dias mínimos de histórico para comparar
 Z_ALERTA = 2.5        # desvios robustos para sair do normal
@@ -136,6 +178,12 @@ def _analisa_metrica(chave: str, hoje: str) -> dict:
     rel = abs(dif) / abs(med) if med else 0
     ruim = sentido == 0 or (dif > 0) == (sentido > 0)
     achado = {"chave": chave, "nome": nome, "dia": dia, "valor": v, "normal": med, "z": z, "dif": dif, "ruim": ruim, "sentido": sentido, "seguidos": 0, "tipo": "dia"}
+    pct = 100 * dif / med if med else 0.0
+    tao = sum(1 for x in base if (x <= v if dif < 0 else x >= v))   # em quantos dos dias do normal o valor foi igualmente extremo
+    achado["pct"], achado["tao_extremo"], achado["n_base"] = pct, tao, len(base)
+    palavra = "baixo" if dif < 0 else "alto"
+    raridade = (f"o mais {palavra} dos últimos {len(base)} dias" if tao == 0 else
+                f"só em {tao} dos últimos {len(base)} dias o valor foi tão {palavra}" if tao <= max(2, len(base) // 6) else f"em {tao} dos últimos {len(base)} dias o valor foi tão {palavra}, ou seja, não é raro")
     if chave in EXPOSICAO:   # vale o nível absoluto, não o desvio do seu normal: ruído que mudou mas está baixo não faz mal
         aviso, forte = EXPOSICAO[chave]
         if v < aviso:
@@ -158,7 +206,7 @@ def _analisa_metrica(chave: str, hoje: str) -> dict:
         achado["seguidos"] = n
         sinal = "acima" if dif > 0 else "abaixo"
         achado["texto"] = (f"{nome}: {_fmt(chave, v, casas, un)} em {hs._br(dia)}, {sinal} do seu normal de {_fmt(chave, med, casas, un)} "
-                           f"({'+' if dif > 0 else '-'}{_fmt(chave, abs(dif), casas, un)})" + (f"; {n} dias seguidos fora do normal" if n >= 3 else ""))
+                           f"({'+' if dif > 0 else '-'}{_fmt(chave, abs(dif), casas, un)}, {abs(round(pct))} por cento {sinal}; {raridade})" + (f"; {n} dias seguidos fora do normal" if n >= 3 else ""))
         return achado
     # dentro do normal hoje: olha a média dos últimos 7 dias (uma mudança lenta que nenhum dia isolado mostra)
     ult = [serie[d] for d in dias if d <= dia][-7:]
@@ -352,6 +400,8 @@ def _interpretar(r: dict, fortes: list, antes: dict, mudou: dict) -> dict:
         "Você analisa dados de saúde de um adulto vindos do Apple Watch e do iPhone, em português do Brasil. O texto vai para um leitor de tela: frases curtas, sem listas, sem símbolos.\n\n"
         "TAREFA: avalie se os achados abaixo fazem sentido juntos e se merecem atenção. Pense em duas hipóteses antes de concluir: (a) o corpo realmente mudou; (b) o dado está errado ou incompleto "
         "(relógio fora do pulso ou sem sincronizar, dia ainda em andamento, unidade trocada, ambiente barulhento). Diga qual é a mais provável e por quê, citando os números.\n"
+        "A pessoa NÃO conhece os termos técnicos: para cada achado explique (1) o que a medida representa, em palavras simples; (2) o tamanho do desvio e se é raro, usando os números dados (percentual, em quantos dias foi igual); "
+        "(3) as causas mais comuns; (4) qual o impacto prático (o que isso afeta no corpo e no dia a dia) e se é motivo de preocupação ou só de atenção. Nunca devolva apenas o número e a média.\n"
         "Não diagnostique, não invente números, não trate variação pequena como perigo. Sugira de duas a três ações concretas e proporcionais (por exemplo conferir se o relógio estava no pulso, "
         "medir a temperatura, descansar, hidratar, repetir a medida amanhã). Só sugira procurar atendimento se houver combinação clara de sinais ou sintomas relatados.\n"
         + (f"Condições da pessoa que você deve respeitar: {os.environ['HEIMDALL_SAUDE_CONDICOES']}.\n" if os.environ.get("HEIMDALL_SAUDE_CONDICOES") else "")
@@ -365,8 +415,8 @@ def _interpretar(r: dict, fortes: list, antes: dict, mudou: dict) -> dict:
         + "\nO QUE MUDOU DESDE O ÚLTIMO AVISO: " + (mudou.get("resumo") or "primeiro aviso")
         + ("\nDADOS SUSPEITOS (ignorados): " + "; ".join(r["suspeitos"]) if r.get("suspeitos") else "")
         + ("\nSEM DADO RECENTE: " + ", ".join(r["sem_dado_recente"]) if r.get("sem_dado_recente") else "")
-        + '\n\nResponda só com JSON: {"veredito": "atencao" ou "provavel_artefato" ou "inconclusivo", "explicacao": "duas a quatro frases", "acoes": ["...", "..."], "mudou": "uma frase sobre o que mudou em relação ao último aviso"}')
-    corpo = json.dumps({"model": LLM_MODELO, "temperature": 0.2, "max_tokens": 600, "messages": [{"role": "user", "content": prompt}]}).encode()
+        + '\n\nResponda só com JSON: {"veredito": "atencao" ou "provavel_artefato" ou "inconclusivo", "explicacao": "cinco a oito frases, em linguagem simples, respondendo os quatro pontos acima", "acoes": ["...", "..."], "mudou": "uma frase sobre o que mudou em relação ao último aviso"}')
+    corpo = json.dumps({"model": LLM_MODELO, "temperature": 0.2, "max_tokens": 1000, "messages": [{"role": "user", "content": prompt}]}).encode()
     cab = {"Content-Type": "application/json"}
     if os.environ.get("LITELLM_MASTER_KEY"):
         cab["Authorization"] = "Bearer " + os.environ["LITELLM_MASTER_KEY"]
@@ -439,8 +489,11 @@ def alerta(hoje: str = None, agora: datetime = None, interpretar=_interpretar):
     if motivo == "lembrete":
         titulo = "Lembrete: " + titulo
         resumo = f"O mesmo quadro continua há {int(horas // 24)} dias, sem mudança. " + resumo
+    sig = explicar(fortes) if not interp else ""   # com o modelo a explicação já vem no texto dele; sem ele, o glossário garante o significado
+    if sig:
+        resumo += " O que isso significa: " + sig
     return {"id": f"anomalias|{r['dia']}|{sel}", "titulo": titulo, "nivel": nivel, "fonte": "saude",
-            "resumo": resumo[:850] + " Detalhes na página Anomalias do painel de saúde. Isto não é diagnóstico.",
+            "resumo": _cortar(resumo, 1500) + " Detalhes na página Anomalias do painel de saúde. Isto não é diagnóstico.",
             "_estado": {"sinais": sinais, "quando": _agora_iso(agora)}}
 
 

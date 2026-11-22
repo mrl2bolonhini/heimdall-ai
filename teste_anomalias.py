@@ -82,6 +82,15 @@ a = an.alerta(HOJE)
 confere("combo gera um item de triagem alto, com id estável", a and a["nivel"] == "alto" and a["id"].startswith(f"anomalias|{HOJE}|") and an.alerta(HOJE)["id"] == a["id"], a)
 confere("resumo não é diagnóstico e usa datas brasileiras", a and "não é diagnóstico" in a["resumo"].lower() and not re.search(r"\d{4}-\d\d-\d\d", a["resumo"]), a and a["resumo"])
 
+# 5b. o aviso explica a medida, o tamanho do desvio e o impacto (nunca só "20 ms contra 29 ms")
+txt_hrv = next((a["texto"] for a in r["achados"] if a["chave"] == "hrv"), "")
+confere("achado traz percentual e quão raro foi", "por cento" in txt_hrv and ("dos últimos" in txt_hrv), txt_hrv)
+sig = an.explicar(r["achados"])
+confere("glossário diz o que é a HRV e o efeito prático", "variabilidade da frequência cardíaca" in sig and "recuperação" in sig, sig)
+a_sem = an.alerta(HOJE, interpretar=None)
+confere("sem o modelo, o aviso ainda explica o significado", a_sem and "O que isso significa" in a_sem["resumo"], a_sem and a_sem["resumo"][:300])
+confere("resumo cabe no limite e não corta no meio da frase", a_sem and len(a_sem["resumo"]) < 1800, a_sem and len(a_sem["resumo"]))
+
 # 6. combo respiração/sono (apneia)
 for m, v in NORMAL.items():
     grava(m, HOJE, v)

@@ -32,6 +32,11 @@ Avisos que você pode receber no Bark
 2. "Busca sem resultados": as buscas voltaram vazias. Não significa que não exista nada; os motores podem estar bloqueando o SearXNG. Veja docker logs --tail 40 searxng.
 3. "Falha: ...": o SearXNG não respondeu ou outra etapa quebrou (fluxo 9, aviso de falha).
 
+Filtro de relevância (novo)
+1. O modelo decide se a página é mesmo sobre você. Parente com o mesmo sobrenome, homônimo ou empresa sem ligação com o seu nome completo, e-mail ou usuário são descartados e não geram aviso.
+2. As descartadas aparecem no relatório, na seção "Descartados pela análise", com o motivo. Se o Bark disser "Nada relevante hoje", é porque só houve descartadas.
+3. Nunca descarta quando o seu e-mail ou usuário aparece, nem em vazamento ou dado sensível.
+
 Limites honestos
 1. Só encontra páginas públicas indexadas pelos motores do SearXNG. Não vê vazamentos em mercados clandestinos nem bancos de senhas. Para vazamentos de e-mail, cadastre também o serviço Have I Been Pwned.
 2. As buscas contêm seu nome e e-mail e passam pelos buscadores. Por isso o instalador não aceita CPF nem documentos.

@@ -227,7 +227,7 @@ def criar(dado: dict, osa) -> dict:
     if nivel not in NIVEIS:
         nivel = "alto"
     fonte = re.sub(r"[^a-z0-9_-]", "", str(dado.get("fonte", "")).lower())[:20]
-    resumo = _texto(dado.get("resumo"), 900)
+    resumo = _texto(dado.get("resumo"), 2000)
     tid = gerar_id(origem)
     agora = _iso(_agora())
     banco.iniciar() if not banco.DB_PATH.exists() else None
@@ -303,13 +303,13 @@ def _sensivel(row: dict) -> str:
 def montar_aviso(row: dict, critico: bool, pendentes: int, sem_lembrete: bool = False, completo: bool = False) -> dict:
     """`completo=True` é o aviso do Mac (fica só no Mac): mostra título e resumo mesmo de saúde e finanças."""
     area = None if completo else _sensivel(row)
-    corpo = "" if area else (row.get("resumo") or "")[:350 if not completo else 900]
+    corpo = "" if area else (row.get("resumo") or "")[:350 if not completo else 2000]
     if sem_lembrete:
         corpo = (corpo + "\n" if corpo else "") + ("O lembrete ainda não foi criado no app Lembretes (autorização pendente no Mac); "
                                                   "o aviso continua até isso ser resolvido.")
     else:
         corpo = (corpo + "\n" if corpo else "") + "Abra o app Lembretes, lista " + NOME_LISTA + ". " + INSTRUCAO
-    p = {"title": (("CRÍTICO: " if critico else "Triagem: ") + (f"{area}: item para conferir" if area else row["titulo"]))[:100], "body": corpo[:900], "group": "triagem",
+    p = {"title": (("CRÍTICO: " if critico else "Triagem: ") + (f"{area}: item para conferir" if area else row["titulo"]))[:100], "body": corpo[:2000 if completo else 900], "group": "triagem",
          "level": "critical" if critico else "timeSensitive", "badge": pendentes}
     if critico:
         p["volume"] = 7

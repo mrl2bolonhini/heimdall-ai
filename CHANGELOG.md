@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Avisos mais úteis: privacidade só com o que é seu, saúde explicada
+- Monitor de privacidade: a análise do modelo agora decide primeiro se a página é mesmo sobre você. Mesmo sobrenome não basta: parente, homônimo ou empresa/jogo que não cita seu nome completo, e-mail ou usuário são descartados e não entram no nível de atenção, no Bark nem na triagem. Também descarta o que é inofensivo e não pede ação. As descartadas ficam numa seção do relatório ("Descartados pela análise"), com o motivo, para você conferir. Nunca descarta quando o seu e-mail ou usuário aparece na página, nem em caso de vazamento ou dado sensível. Quando só sobram descartadas, o Bark diz "Nada relevante hoje".
+- Saúde: os avisos de anomalia deixam de ser só "HRV 20 ms, normal 29 ms". Cada sinal traz o percentual de desvio e quão raro foi (por exemplo, "31 por cento abaixo; só em 1 dos últimos 30 dias foi tão baixo"), e o aviso explica o que a medida representa, as causas mais comuns e o impacto prático. O modelo local foi instruído a explicar assim, em linguagem simples; se ele não responder, um glossário fixo garante a explicação. O texto do aviso pode ter até cerca de 1500 caracteres.
+- Para valer: `heimdall flows` (fluxo do monitor de privacidade mudou) e `heimdall update --restart`.
+
 ## 2026-11-22 - Avisos completos direto no Mac
 - Os mesmos avisos enviados ao iPhone pelo Bark agora também chegam ao Mac como notificações nativas do macOS, com o texto completo (inclusive títulos e resumos de saúde e finanças), sem passar por servidor de terceiros. O Bark do iPhone continua com o texto genérico.
 - Como funciona: o Heimdall grava o aviso em banco/avisos_mac/ (pasta só do dono) e o app do Mac lê a cada 4 segundos, mostra a notificação e apaga o arquivo. Na primeira vez o macOS pede permissão para notificações; o Foco do Mac é respeitado.
