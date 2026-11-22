@@ -3,11 +3,12 @@
 
 Quem é a pessoa: o Cloudflare Access manda o documento assinado (JWT) em cada pedido; heimdall_cfaccess confere a assinatura. O nome vem do endereço
 /cdn-cgi/access/get-identity da equipe no Cloudflare, chamado com esse mesmo documento; fica só na memória, por 1 hora (10 minutos se falhar).
-Sem nome, mostra o e-mail. Quem entra pela porta local (senha e código) é o dono do Mac: aparece como "Dono".
+Sem nome, mostra o e-mail. Quem entra pela porta local (senha e código) é o dono do Mac: aparece com o nome de HEIMDALL_DONO_NOME no .env (sem ele, "Dono").
 Serviços listados: dono vê todos; convidado só os liberados para ele (HEIMDALL_CFACCESS_CONVIDADOS). O endereço de cada um sai de heimdall_usuarios.
 """
 import html
 import json
+import os
 import re
 import threading
 import time
@@ -74,7 +75,7 @@ def pessoa(logado_local: bool = False, cabecalhos=None) -> dict:
     except Exception:  # noqa: BLE001
         pass
     if logado_local:
-        return {"email": "", "nome": "Dono", "papel": "dono", "via": "senha e código", "access": False}
+        return {"email": "", "nome": _limpo(os.environ.get("HEIMDALL_DONO_NOME")) or "Dono", "papel": "dono", "via": "senha e código", "access": False}
     return {}
 
 

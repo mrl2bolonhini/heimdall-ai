@@ -7,6 +7,9 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Menu: estado, ligar, reiniciar e parar os serviços; abrir Controls, Notes, News, Health, Games, Finance, Cloud, Account e Chat (os nomes reais dos sites; os endereços vêm de heimdall urls), cada um em janela própria do app, com o WebKit (motor do Safari), sem abrir o navegador e sem Electron (login, envio de arquivos, downloads e Command+R, Command+[ e Command+] funcionam); consumo da nuvem; buscar na caixa de correio (também sozinho, de 10 em 10 minutos); ligar ou desligar a nuvem e a caixa; atualizar o Heimdall com reinício. Atalhos: Command+E estado, Command+U consumo, Command+B caixa, Command+A atualizar, Command+Q sair.
 - Opção heimdall app --login abre o app sozinho ao entrar no Mac; --remove-login desfaz. Precisa das ferramentas de linha de comando da Apple (xcode-select --install). Teste sem compilar: python3 teste_app_mac.py; a compilação em si só roda no Mac.
 
+## 2026-11-21 - Seu nome no Account em vez de "Dono"
+- Quem entra pela porta local (senha e código) aparecia como "Dono" no menu Conta e na página Account. Agora aparece com o nome de HEIMDALL_DONO_NOME no .env (uma palavra, sem espaços): heimdall env --set HEIMDALL_DONO_NOME Murillo, seguido de heimdall restart. Sem a variável, continua "Dono". Quem entra pelo Cloudflare Access segue com o nome da conta Microsoft. Teste: python3 teste_conta.py.
+
 ## 2026-11-21 - Barra de menus do app Heimdall
 - Com uma janela aberta, o app mostra a barra de menus completa: Heimdall, Edição, Visualizar (tela cheia com Control+Command+F, recarregar, voltar, avançar, zoom com Command+ + - 0), Sites (Controls, Notes, News, Health, Games, Finance, Cloud, Account e Chat, com Command+1 a 9, para ir de um serviço a outro sem voltar ao menu de estado), Serviços (estado, ligar, reiniciar, parar, consumo, caixa, atualizar) e Janela (minimizar, zoom, fechar). As janelas aceitam tela cheia.
 
