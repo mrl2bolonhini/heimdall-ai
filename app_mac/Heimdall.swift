@@ -67,6 +67,11 @@ func portaAberta(_ porta: Int) -> Bool {
     return r == 0
 }
 
+/// Torna o Heimdall o app ativo (é o app ativo que manda na barra de menus do alto). Do macOS 14 em diante o método antigo foi substituído.
+func ativarApp() {
+    if #available(macOS 14.0, *) { NSApp.activate() } else { NSApp.activate(ignoringOtherApps: true) }
+}
+
 func avisar(_ titulo: String, _ texto: String) {
     let a = NSAlert()
     a.messageText = titulo
@@ -112,8 +117,14 @@ final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownload
     }
 
     func mostrar() {
-        NSApp.activate(ignoringOtherApps: true)
+        ativarApp()
         janela.makeKeyAndOrderFront(nil)
+        // Logo depois de o app virar .regular o macOS ainda não o considera ativo, e a barra de menus do alto continua a do app anterior.
+        // Ativar de novo um instante depois resolve.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            ativarApp()
+            self?.janela.makeKeyAndOrderFront(nil)
+        }
     }
 
     func windowWillClose(_ notification: Notification) { aoFechar?() }

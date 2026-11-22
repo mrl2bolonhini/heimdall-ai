@@ -35,6 +35,7 @@ confere("Swift: nomes dos sites são os nomes reais em inglês", all(f'"{n}"' in
 confere("Swift: janela trata arquivos, downloads e avisos do site", all(t in swift for t in ("runOpenPanelWith", "WKDownloadDelegate", "runJavaScriptAlertPanelWithMessage", "runJavaScriptConfirmPanelWithMessage")))
 confere("Swift: barra de menus com Heimdall, Arquivo, Edição, Visualizar, Abrir, Sistema e Janela", all(f'submenuDe(principal, "{m}")' in swift for m in ("Heimdall", "Arquivo", "Edição", "Visualizar", "Abrir", "Sistema", "Janela")))
 confere("Swift: tela cheia, zoom e atalhos de copiar, colar, recarregar e fechar", all(t in swift for t in ("toggleFullScreen", "fullScreenPrimary", "pageZoom", '"c"', '"v"', '"r"', '"w"')))
+confere("Swift: ativa o app de novo logo depois de virar app normal (senão a barra de menus continua a do app anterior)", "func ativarApp()" in swift and "asyncAfter" in swift and swift.count("ativarApp()") >= 3)
 confere("Swift: sites no menu com Command+1 a 9", "n < 9" in swift)
 confere("Info.plist: só https (sem exceção de rede local nem carregamento aberto)", "NSAppTransportSecurity" not in pl)
 confere("Swift: todos os sites abrem pelos endereços públicos (Cloudflare Access), não por localhost", '["urls", "--public"]' in swift and "localhost" not in swift)
