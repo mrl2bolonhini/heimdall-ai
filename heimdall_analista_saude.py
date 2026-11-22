@@ -27,6 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import heimdall_anomalias as an  # noqa: E402
+import heimdall_nuvem as nuvem  # noqa: E402
 import heimdall_saude as hs  # noqa: E402
 
 LLM_URL = os.environ.get("HEIMDALL_SAUDE_ANALISTA_URL", an.LLM_URL)
@@ -271,13 +272,28 @@ def _prompt(d: dict, lit: list, anterior: dict) -> str:
         '"acompanhar": ["..."], "literatura": [{"pmid": "...", "o_que_diz": "..."}], "mudou": "uma frase sobre o que mudou desde a análise anterior"}')
 
 
+SISTEMA_NUVEM = "Você é o analista de saúde pessoal descrito pelo usuário. Siga exatamente as instruções e responda SOMENTE com o JSON pedido."
+modelo_usado = ""   # quem respondeu a última análise (mostrado no fim do texto)
+
+
 def _chamar_modelo(prompt: str) -> str:
+    """Modelo grande da nuvem (gpt-oss-120b pelo gateway da Cloudflare) quando HEIMDALL_NUVEM=1; se falhar, ou com HEIMDALL_SAUDE_ANALISTA_NUVEM=0, o modelo local."""
+    global modelo_usado
+    if nuvem.ativo() and _env("HEIMDALL_SAUDE_ANALISTA_NUVEM", "1") != "0":
+        try:
+            txt = nuvem.chat(SISTEMA_NUVEM, prompt, max_tokens=3000, timeout=300)
+            modelo_usado = "gpt-oss-120b (nuvem)"
+            return txt
+        except RuntimeError:
+            pass   # nuvem fora do ar ou limite de gasto: cai para o modelo local
     corpo = json.dumps({"model": LLM_MODELO, "temperature": 0.2, "max_tokens": 3000, "messages": [{"role": "user", "content": prompt}]}).encode()
     cab = {"Content-Type": "application/json"}
     if os.environ.get("LITELLM_MASTER_KEY"):
         cab["Authorization"] = "Bearer " + os.environ["LITELLM_MASTER_KEY"]
     with _abridor.open(urllib.request.Request(LLM_URL, data=corpo, headers=cab), timeout=420) as resp:
-        return json.loads(resp.read(4_000_000))["choices"][0]["message"]["content"] or ""
+        txt = json.loads(resp.read(4_000_000))["choices"][0]["message"]["content"] or ""
+    modelo_usado = f"{LLM_MODELO} (local)"
+    return txt
 
 
 def _txt(v, n=600) -> str:
@@ -361,7 +377,8 @@ def renderizar(r: dict, d: dict, lit: list) -> str:
     if r["literatura"]:
         por = {x["pmid"]: x for x in lit}
         L += ["", "Estudos consultados (PubMed):"] + [f"{i}. {por[x['pmid']]['titulo']} ({por[x['pmid']]['revista']}, {por[x['pmid']]['ano']}), PMID {x['pmid']}. {x['o_que_diz']}" for i, x in enumerate(r["literatura"], 1)]
-    L += ["", "A decisão de procurar um médico é sua; esta análise é feita pelo Heimdall a partir dos seus dados e de resumos de estudos, e pode errar."]
+    L += ["", "A decisão de procurar um médico é sua; esta análise é feita pelo Heimdall a partir dos seus dados e de resumos de estudos, e pode errar."
+          + (f" Modelo: {modelo_usado}." if modelo_usado and r.get("_modelo") else "")]
     return "\n".join(L)
 
 
@@ -397,6 +414,8 @@ def analisar(hoje: str = None, usar_modelo: bool = True, usar_literatura: bool =
     if usar_modelo and d["medidas"]:
         try:
             r = conferir((modelo or _chamar_modelo)(_prompt(d, lit, anterior)), lit)
+            if r and not modelo:
+                r["_modelo"] = True
         except Exception:  # noqa: BLE001 - modelo fora do ar: segue com a análise do código
             r = {}
     com_modelo = bool(r)

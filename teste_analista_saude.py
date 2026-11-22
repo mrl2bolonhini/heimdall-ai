@@ -102,6 +102,34 @@ confere("citação de estudo que não foi fornecido é descartada", [x["pmid"] f
 confere("lixo do modelo vira vazio", an.conferir("não sei", lit) == {} and an.conferir('{"panorama": ""}', lit) == {})
 confere("gravidade inventada vira informativo", an.conferir('{"panorama":"x","gravidade":"catastrofe"}', lit)["gravidade"] == "informativo")
 
+# modelo: nuvem (120b) quando ligada, local se a nuvem falhar ou se o interruptor da análise pedir
+import heimdall_nuvem as nv  # noqa: E402
+vistos = []
+nv.ativo = lambda env=None: True
+nv.chat = lambda sistema, usuario, max_tokens=0, timeout=0, **k: (vistos.append((sistema, max_tokens, timeout)) or "nuvem respondeu")
+confere("nuvem ligada: usa o gpt-oss-120b e diz qual modelo", an._chamar_modelo("p") == "nuvem respondeu" and an.modelo_usado == "gpt-oss-120b (nuvem)" and vistos and vistos[0][1] >= 3000, (an.modelo_usado, vistos))
+
+
+def nuvem_falha(*a, **k):
+    raise RuntimeError("HTTP 429")
+
+
+class _R:
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+    def read(self, n): return json.dumps({"choices": [{"message": {"content": "local respondeu"}}]}).encode()
+
+
+nv.chat = nuvem_falha
+an._abridor = type("A", (), {"open": staticmethod(lambda req, timeout=0: _R())})()
+confere("nuvem falha (limite, rede): cai para o modelo local", an._chamar_modelo("p") == "local respondeu" and an.modelo_usado.endswith("(local)"), an.modelo_usado)
+nv.chat = lambda *a, **k: "nuvem respondeu"
+os.environ["HEIMDALL_SAUDE_ANALISTA_NUVEM"] = "0"
+confere("HEIMDALL_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local", an._chamar_modelo("p") == "local respondeu", an.modelo_usado)
+os.environ.pop("HEIMDALL_SAUDE_ANALISTA_NUVEM")
+nv.ativo = lambda env=None: False
+confere("nuvem desligada: modelo local", an._chamar_modelo("p") == "local respondeu")
+
 # análise completa, com e sem modelo
 avisos_mac = []
 a = an.analisar(HOJE, modelo=lambda p: bom, abrir=abrir)

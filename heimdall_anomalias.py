@@ -420,11 +420,19 @@ def _interpretar(r: dict, fortes: list, antes: dict, mudou: dict) -> dict:
     cab = {"Content-Type": "application/json"}
     if os.environ.get("LITELLM_MASTER_KEY"):
         cab["Authorization"] = "Bearer " + os.environ["LITELLM_MASTER_KEY"]
-    try:
-        with _abridor_local.open(urllib.request.Request(LLM_URL, data=corpo, headers=cab), timeout=120) as resp:
-            txt = json.loads(resp.read(2_000_000))["choices"][0]["message"]["content"] or ""
-    except Exception:  # noqa: BLE001 - sem modelo, o aviso sai com o texto simples
-        return {}
+    txt = ""
+    try:   # modelo grande da nuvem (gpt-oss-120b) quando HEIMDALL_NUVEM=1; HEIMDALL_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local
+        import heimdall_nuvem
+        if heimdall_nuvem.ativo() and os.environ.get("HEIMDALL_SAUDE_ANALISTA_NUVEM", "1") != "0":
+            txt = heimdall_nuvem.chat("Responda SOMENTE com o JSON pedido.", prompt, max_tokens=900, timeout=180)
+    except Exception:  # noqa: BLE001 - nuvem fora do ar: cai para o modelo local
+        txt = ""
+    if not txt:
+        try:
+            with _abridor_local.open(urllib.request.Request(LLM_URL, data=corpo, headers=cab), timeout=120) as resp:
+                txt = json.loads(resp.read(2_000_000))["choices"][0]["message"]["content"] or ""
+        except Exception:  # noqa: BLE001 - sem modelo, o aviso sai com o texto simples
+            return {}
     import re
     txt = re.sub(r"(?is)<think>.*?</think>", "", txt)
     a, b = txt.find("{"), txt.rfind("}")

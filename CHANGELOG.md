@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Análise de saúde com o gpt-oss-120b
+- O analista de saúde e a interpretação dos alertas de anomalia agora usam o gpt-oss-120b da nuvem (gateway da Cloudflare) quando HEIMDALL_NUVEM=1. Se a nuvem falhar ou o limite de gasto cortar, cai sozinho para o modelo local. O fim da análise diz qual modelo respondeu.
+- Atenção: com a nuvem, os números de saúde da análise saem do Mac, pelo gateway (autenticado, sem guardar o conteúdo). Para manter só a saúde no modelo local: HEIMDALL_SAUDE_ANALISTA_NUVEM=0 no .env. Os termos enviados ao PubMed continuam genéricos.
+
 ## 2026-11-22 - Analista de saúde: todas as métricas, correlações, hipóteses e estudos
 - Novo analista (heimdall_analista_saude.py): depois que chegam dados de saúde, no máximo uma vez por dia, o código monta um dossiê com todas as medidas (cada uma contra o seu normal, desvio percentual, raridade, tendência de 7 dias), correlações calculadas (mesmo dia e com um dia de atraso), treinos, sintomas, exames fora da faixa e as condições do .env, e o modelo escreve a análise: o que cada sinal mede e o impacto, como as medidas se relacionam, hipóteses com probabilidade (a favor e contra), perigos e quando agir, recomendações priorizadas e o que acompanhar.
 - Sem o freio de "não sou médico": o modelo pode levantar hipóteses de condições de saúde, sempre como hipótese; a decisão de procurar um médico é sua. O texto termina dizendo isso uma vez.
