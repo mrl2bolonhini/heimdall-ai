@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - App do Mac: Configurações e novos atalhos do menu Abrir
+- Novo item "Configurações…" (Command+vírgula) no menu Heimdall e no menu de estado: escolher qual serviço abre ao iniciar o app (qualquer um, ou nenhum; padrão Chat), iniciar o Heimdall quando o Mac ligar (cria ou apaga o mesmo LaunchAgent do heimdall app --entrar; vale a partir do próximo login) e ligar os serviços ao abrir o app (só liga se nada estiver no ar). As escolhas ficam nas preferências do app. Clicar no ícone do Dock sem janelas abre o serviço escolhido.
+- O menu Heimdall ganhou Sobre o Heimdall, Ocultar o Heimdall (Command+H), Ocultar os outros (Option+Command+H) e Mostrar tudo.
+- Atalhos do menu Abrir: Account é Command+0; os demais seguem a contagem pulando Account e Flows: Controls 1, Notes 2, News 3, Health 4, Games 5, Finance 6, Cloud 7, Chat 8, Status 9. Flows fica sem atalho. O zoom "Tamanho normal" passou de Command+0 para Option+Command+0.
+
 ## 2026-11-22 - App do Mac: menus em português e menu Sistema dentro de Arquivo
 - O menu Sistema deixou de existir: ligar, reiniciar e parar os serviços, estado em detalhe, diagnóstico das janelas, consumo da nuvem, modelo na nuvem, sincronização com os celulares e atualizar passaram para o menu Arquivo (os mesmos atalhos: Command+E, Command+U, Command+B). A barra fica Heimdall, Arquivo, Edição, Visualizar, Abrir e Janela.
 - Português: os itens que o próprio macOS acrescenta aos menus (ditado, emojis, mover e redimensionar a janela...) saíam em inglês porque o pacote do app não declarava português. O Info.plist agora declara pt-BR e o heimdall app cria Contents/Resources/pt-BR.lproj. Os nomes dos sites no menu Abrir continuam os nomes reais em inglês (Controls, Notes, News, Health, Games, Finance, Cloud, Account, Chat, Flows, Status), pela regra do projeto.

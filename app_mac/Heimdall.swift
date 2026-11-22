@@ -96,6 +96,28 @@ let nomesDosSites: [(String, String)] = [
     ("flows", "Flows"), ("status", "Status"),
 ]
 
+/// Atalho de teclado de cada site no menu Abrir: Account é Command+0; os demais seguem a contagem a partir do 1, pulando Account e Flows
+/// (Controls 1, Notes 2, News 3, Health 4, Games 5, Finance 6, Cloud 7, Chat 8, Status 9). Flows fica sem atalho.
+func teclaDoSite(_ nome: String) -> String {
+    if nome == "Account" { return "0" }
+    if nome == "Flows" { return "" }
+    var n = 0
+    for par in nomesDosSites where par.1 != "Account" && par.1 != "Flows" {
+        n += 1
+        if par.1 == nome { return n <= 9 ? String(n) : "" }
+    }
+    return ""
+}
+
+/// Preferências do app (UserDefaults): serviço que abre ao iniciar ("" = nenhum; padrão Chat) e ligar os serviços ao abrir o app.
+func servicoInicial() -> String {
+    if UserDefaults.standard.object(forKey: "servicoInicial") == nil { return "Chat" }
+    return UserDefaults.standard.string(forKey: "servicoInicial") ?? ""
+}
+
+let agenteDeEntrada = NSHomeDirectory() + "/Library/LaunchAgents/tech.heimdall.menu.plist"
+func entradaAtiva() -> Bool { return FileManager.default.fileExists(atPath: agenteDeEntrada) }
+
 /// Uma janela do app com um site do Heimdall dentro (WKWebView). Login, cookies e envio de arquivos funcionam como no navegador.
 final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, NSWindowDelegate {
     let janela: NSWindow
@@ -227,6 +249,13 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         montarMenu()
         carregarPortas()
         carregarSites()
+        if UserDefaults.standard.bool(forKey: "ligarAoAbrir") {
+            // Dá tempo de ler as portas e só liga se nada do Heimdall estiver no ar.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+                guard let self = self else { return }
+                if self.situacao().0.isEmpty { self.ligar() }
+            }
+        }
         temporizador = Timer.scheduledTimer(withTimeInterval: 600, repeats: true) { [weak self] _ in
             self?.buscarCaixa(silencioso: true)
         }
@@ -346,6 +375,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         adicionar(menu, "Parar os serviços", #selector(parar))
         adicionar(menu, "Ver o estado em detalhe", #selector(estado), "e")
         adicionar(menu, "Diagnóstico das janelas", #selector(diagnostico))
+        adicionar(menu, "Configurações…", #selector(abrirConfiguracoes), ",")
         menu.addItem(NSMenuItem.separator())
 
         let nuvem = grupo(menu, "Nuvem (Cloudflare)")
@@ -455,10 +485,11 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         nova.mostrar()
     }
 
-    /// Janela inicial: assim que a lista de endereços chega, abre o Chat uma única vez.
+    /// Janela inicial: assim que a lista de endereços chega, abre o serviço escolhido nas Configurações (padrão: Chat) uma única vez.
     var abriuInicial = false
     func abrirJanelaInicial() {
-        guard !abriuInicial, let par = sites.first(where: { $0.0 == "Chat" }) else { return }
+        let nome = servicoInicial()
+        guard !abriuInicial, !nome.isEmpty, let par = sites.first(where: { $0.0 == nome }) else { return }
         abriuInicial = true
         abrirJanela(par.0, par.1)
     }
@@ -466,7 +497,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Clique no ícone do Dock sem janelas: abre o Chat de novo. Fechar a janela não encerra o app (ele continua na barra de estado).
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
-            if let par = sites.first(where: { $0.0 == "Chat" }) ?? sites.first { abrirJanela(par.0, par.1) }
+            let nome = servicoInicial()
+            if let par = sites.first(where: { $0.0 == nome }) ?? sites.first(where: { $0.0 == "Chat" }) ?? sites.first { abrirJanela(par.0, par.1) }
         }
         return true
     }
@@ -493,6 +525,86 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let menu = NSMenu(title: titulo)
         item.submenu = menu
         return menu
+    }
+
+    // MARK: Configurações
+
+    var janelaConfig: NSWindow?
+    let escolhaInicial = NSPopUpButton(frame: .zero, pullsDown: false)
+    var caixaEntrar: NSButton!
+    var caixaLigar: NSButton!
+
+    @objc func abrirConfiguracoes() {
+        if janelaConfig == nil {
+            let rotulo = NSTextField(labelWithString: "Serviço que abre ao iniciar o app:")
+            escolhaInicial.removeAllItems()
+            escolhaInicial.addItem(withTitle: "Nenhum (só a barra de estado)")
+            escolhaInicial.addItems(withTitles: nomesDosSites.map { $0.1 })
+            escolhaInicial.target = self
+            escolhaInicial.action = #selector(mudouServicoInicial)
+            escolhaInicial.setAccessibilityLabel("Serviço que abre ao iniciar o app")
+            caixaEntrar = NSButton(checkboxWithTitle: "Iniciar o Heimdall quando eu ligar o Mac", target: self, action: #selector(mudouEntrada))
+            caixaLigar = NSButton(checkboxWithTitle: "Ligar os serviços do Heimdall ao abrir o app", target: self, action: #selector(mudouLigar))
+            let pilha = NSStackView(views: [rotulo, escolhaInicial, caixaEntrar, caixaLigar])
+            pilha.orientation = .vertical
+            pilha.alignment = .leading
+            pilha.spacing = 14
+            pilha.translatesAutoresizingMaskIntoConstraints = false
+            let j = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 190), styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            j.title = "Configurações do Heimdall"
+            j.isReleasedWhenClosed = false
+            if let conteudo = j.contentView {
+                conteudo.addSubview(pilha)
+                NSLayoutConstraint.activate([
+                    pilha.leadingAnchor.constraint(equalTo: conteudo.leadingAnchor, constant: 24),
+                    pilha.trailingAnchor.constraint(lessThanOrEqualTo: conteudo.trailingAnchor, constant: -24),
+                    pilha.topAnchor.constraint(equalTo: conteudo.topAnchor, constant: 24),
+                ])
+            }
+            j.center()
+            janelaConfig = j
+        }
+        // O que está na tela reflete o que está gravado agora (o arquivo de entrada pode ter sido mexido pelo terminal).
+        let atual = servicoInicial()
+        escolhaInicial.selectItem(withTitle: atual.isEmpty ? "Nenhum (só a barra de estado)" : atual)
+        caixaEntrar.state = entradaAtiva() ? .on : .off
+        caixaLigar.state = UserDefaults.standard.bool(forKey: "ligarAoAbrir") ? .on : .off
+        ativarApp()
+        janelaConfig?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc func mudouServicoInicial() {
+        let t = escolhaInicial.titleOfSelectedItem ?? ""
+        UserDefaults.standard.set(t.hasPrefix("Nenhum") ? "" : t, forKey: "servicoInicial")
+    }
+
+    @objc func mudouLigar() { UserDefaults.standard.set(caixaLigar.state == .on, forKey: "ligarAoAbrir") }
+
+    /// Iniciar ao ligar o Mac: cria ou apaga o mesmo LaunchAgent que o heimdall app --entrar cria. Vale a partir do próximo login.
+    @objc func mudouEntrada() {
+        if caixaEntrar.state == .on {
+            let executavel = Bundle.main.executablePath ?? (NSHomeDirectory() + "/Applications/Heimdall.app/Contents/MacOS/Heimdall")
+            let texto = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0"><dict>
+            <key>Label</key><string>tech.heimdall.menu</string>
+            <key>ProgramArguments</key><array><string>\(executavel)</string></array>
+            <key>RunAtLoad</key><true/>
+            </dict></plist>
+
+            """
+            try? FileManager.default.createDirectory(atPath: NSHomeDirectory() + "/Library/LaunchAgents", withIntermediateDirectories: true)
+            do { try texto.write(toFile: agenteDeEntrada, atomically: true, encoding: .utf8) } catch {
+                caixaEntrar.state = .off
+                avisar("Configurações", "Não consegui ativar o início com o Mac: " + error.localizedDescription)
+            }
+        } else {
+            do { try FileManager.default.removeItem(atPath: agenteDeEntrada) } catch {
+                caixaEntrar.state = .on
+                avisar("Configurações", "Não consegui desativar o início com o Mac: " + error.localizedDescription)
+            }
+        }
     }
 
     @objc func diagnostico() {
@@ -524,6 +636,15 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let principal = NSMenu()
 
         let menuApp = submenuDe(principal, "Heimdall")
+        _ = itemDe(menuApp, "Sobre o Heimdall", #selector(NSApplication.orderFrontStandardAboutPanel(_:)), "", alvo: false)
+        menuApp.addItem(NSMenuItem.separator())
+        _ = itemDe(menuApp, "Configurações…", #selector(abrirConfiguracoes), ",")
+        menuApp.addItem(NSMenuItem.separator())
+        _ = itemDe(menuApp, "Ocultar o Heimdall", #selector(NSApplication.hide(_:)), "h", alvo: false)
+        let outros = itemDe(menuApp, "Ocultar os outros", #selector(NSApplication.hideOtherApplications(_:)), "h", alvo: false)
+        outros.keyEquivalentModifierMask = [.command, .option]
+        _ = itemDe(menuApp, "Mostrar tudo", #selector(NSApplication.unhideAllApplications(_:)), "", alvo: false)
+        menuApp.addItem(NSMenuItem.separator())
         _ = itemDe(menuApp, "Sair do Heimdall", #selector(sair), "q")
 
         let arquivo = submenuDe(principal, "Arquivo")
@@ -562,14 +683,15 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         visualizar.addItem(NSMenuItem.separator())
         _ = itemDe(visualizar, "Aumentar o zoom", #selector(aumentarZoom), "+")
         _ = itemDe(visualizar, "Diminuir o zoom", #selector(diminuirZoom), "-")
-        _ = itemDe(visualizar, "Tamanho normal", #selector(zoomNormal), "0")
+        let normal = itemDe(visualizar, "Tamanho normal", #selector(zoomNormal), "0")
+        normal.keyEquivalentModifierMask = [.command, .option]   // Command+0 abre o Account
 
         let menuSites = submenuDe(principal, "Abrir")
         if sites.isEmpty {
             _ = itemDe(menuSites, "Atualizar a lista de endereços", #selector(recarregarSites))
         } else {
-            for (n, par) in sites.enumerated() {
-                let i = itemDe(menuSites, par.0, #selector(abrirSite(_:)), n < 9 ? String(n + 1) : "")
+            for par in sites {
+                let i = itemDe(menuSites, par.0, #selector(abrirSite(_:)), teclaDoSite(par.0))
                 i.representedObject = par.1
             }
         }
