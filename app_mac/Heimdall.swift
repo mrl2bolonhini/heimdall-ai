@@ -96,16 +96,12 @@ let nomesDosSites: [(String, String)] = [
     ("flows", "Flows"), ("status", "Status"),
 ]
 
-/// Atalho de teclado de cada site no menu Abrir: Account é Command+0; os demais seguem a contagem a partir do 1, pulando Account e Flows
-/// (Controls 1, Notes 2, News 3, Health 4, Games 5, Finance 6, Cloud 7, Chat 8, Status 9). Flows fica sem atalho.
+/// Atalho de teclado de cada site no menu Abrir: Account é Command+0; os demais, em ordem alfabética, de 1 a 9, sem Account e Flows
+/// (Chat 1, Cloud 2, Controls 3, Finance 4, Games 5, Health 6, News 7, Notes 8, Status 9). Flows fica sem atalho.
 func teclaDoSite(_ nome: String) -> String {
     if nome == "Account" { return "0" }
-    if nome == "Flows" { return "" }
-    var n = 0
-    for par in nomesDosSites where par.1 != "Account" && par.1 != "Flows" {
-        n += 1
-        if par.1 == nome { return n <= 9 ? String(n) : "" }
-    }
+    let ordem = nomesDosSites.map { $0.1 }.filter { $0 != "Account" && $0 != "Flows" }.sorted()
+    if let n = ordem.firstIndex(of: nome), n < 9 { return String(n + 1) }
     return ""
 }
 
@@ -408,7 +404,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
             DispatchQueue.main.async {
-                self.sites = achados
+                self.sites = achados.sorted { $0.0.localizedStandardCompare($1.0) == .orderedAscending }   // menus em ordem alfabética
                 self.montarMenu()
                 self.montarMenuPrincipal()
                 self.abrirJanelaInicial()

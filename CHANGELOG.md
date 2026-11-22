@@ -5,7 +5,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-22 - App do Mac: Configurações e novos atalhos do menu Abrir
 - Novo item "Configurações…" (Command+vírgula) no menu Heimdall e no menu de estado: escolher qual serviço abre ao iniciar o app (qualquer um, ou nenhum; padrão Chat), iniciar o Heimdall quando o Mac ligar (cria ou apaga o mesmo LaunchAgent do heimdall app --entrar; vale a partir do próximo login) e ligar os serviços ao abrir o app (só liga se nada estiver no ar). As escolhas ficam nas preferências do app. Clicar no ícone do Dock sem janelas abre o serviço escolhido.
 - O menu Heimdall ganhou Sobre o Heimdall, Ocultar o Heimdall (Command+H), Ocultar os outros (Option+Command+H) e Mostrar tudo.
-- Atalhos do menu Abrir: Account é Command+0; os demais seguem a contagem pulando Account e Flows: Controls 1, Notes 2, News 3, Health 4, Games 5, Finance 6, Cloud 7, Chat 8, Status 9. Flows fica sem atalho. O zoom "Tamanho normal" passou de Command+0 para Option+Command+0.
+- Atalhos do menu Abrir, em ordem alfabética (e o menu também fica em ordem alfabética): Account é Command+0; Chat 1, Cloud 2, Controls 3, Finance 4, Games 5, Health 6, News 7, Notes 8, Status 9. Flows fica sem atalho. O zoom "Tamanho normal" passou de Command+0 para Option+Command+0.
 
 ## 2026-11-22 - App do Mac: menus em português e menu Sistema dentro de Arquivo
 - O menu Sistema deixou de existir: ligar, reiniciar e parar os serviços, estado em detalhe, diagnóstico das janelas, consumo da nuvem, modelo na nuvem, sincronização com os celulares e atualizar passaram para o menu Arquivo (os mesmos atalhos: Command+E, Command+U, Command+B). A barra fica Heimdall, Arquivo, Edição, Visualizar, Abrir e Janela.
