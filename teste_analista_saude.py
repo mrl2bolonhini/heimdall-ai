@@ -137,9 +137,20 @@ confere("com modelo: texto traz sinais, hipóteses, perigos, recomendações e e
 confere("o prompt leva dados, correlações e estudos", "hrv" in an._prompt(a["dossie"], lit, {}).lower() and "CORRELAÇÕES" in an._prompt(a["dossie"], lit, {}) and "PMID 111" in an._prompt(a["dossie"], lit, {}))
 confere("o texto diz que a decisão de procurar médico é do usuário", "decisão de procurar um médico é sua" in a["texto"])
 b = an.analisar(HOJE, modelo=lambda p: 1 / 0, abrir=abrir)
-confere("modelo falha: análise do código, com explicações e sem hipóteses", not b["com_modelo"] and "Análise feita só pelo código" in b["texto"] and "recuperação" in b["texto"] and b["resultado"]["gravidade"] == "urgente", b["texto"][:500])
+confere("modelo falha: análise do código, com explicações e sem hipóteses", not b["com_modelo"] and "foi feita só pelo código" in b["texto"] and "Motivo:" in b["texto"] and "recuperação" in b["texto"] and b["resultado"]["gravidade"] == "urgente", b["texto"][:500])
 c = an.analisar(HOJE, modelo=lambda p: bom.replace('"importante"', '"informativo"', 1), abrir=abrir)
 confere("o limiar urgente nunca fica abaixo do que o código cruzou", c["resultado"]["gravidade"] == "urgente", c["resultado"]["gravidade"])
+
+# datas e formatos que o leitor entende
+hrv = next(m for m in d["medidas"] if m["chave"] == "sono_total")
+confere("sono em horas e minutos, não em minutos soltos", " h " in hrv["valor_txt"] and "min" in hrv["valor_txt"], hrv["valor_txt"])
+confere("cada medida diz a data e se é hoje ou ontem", "(hoje)" in nomes["hrv"]["quando"] and "/" in nomes["hrv"]["quando"], nomes["hrv"]["quando"])
+confere("correlação em palavras: força e significado, sem r solto", "relação" in an.frase_correlacao(d["correlacoes"][0]) and "escala de 0" in an.frase_correlacao(d["correlacoes"][0]))
+confere("medidas da mesma família não se correlacionam (passos x distância)", an._mesma_familia("passos", "x:walking_running_distance") and not an._mesma_familia("hrv", "sono_total"))
+confere("o prompt pede horas e minutos e a data", "3 h 48 min" in an._prompt(d, lit, {}) and "DATA da medida" in an._prompt(d, lit, {}))
+# por que o modelo não respondeu fica escrito na análise
+e = an.analisar(HOJE, modelo=lambda p: "lixo", abrir=abrir)
+confere("modelo fora do formato: o texto diz o motivo", not e["com_modelo"] and "fora do formato" in e["texto"], e["texto"][:600])
 
 # rodar: grava na aba Avisos, avisa pela gravidade, respeita o intervalo
 import heimdall_avisos as av  # noqa: E402

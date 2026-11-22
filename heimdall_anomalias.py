@@ -90,6 +90,13 @@ EXPLICACAO = {
     "sono_rem": ("O sono REM é a fase ligada à memória e ao humor.", "Menos REM costuma acompanhar álcool, estresse ou sono interrompido."),
     "x:breathing_disturbances": ("Os distúrbios respiratórios no sono medem o quanto sua respiração foi interrompida ou irregular durante a noite.", "Valores altos e repetidos costumam ser investigados por suspeita de apneia do sono."),
     "x:apple_sleeping_wrist_temperature": ("É a temperatura do pulso durante o sono, comparada à sua linha de base.", "Acima do normal pode acompanhar febre, infecção ou ambiente quente."),
+    "x:environmental_audio_exposure": ("O ruído do ambiente é o volume médio do som ao seu redor ao longo do dia, medido pelo microfone do relógio, em decibéis (dB).",
+                                       "A média acima de 70 dB em 24 horas é o limite de referência da OMS: ruído constante nesse nível, com o tempo, prejudica a audição e aumenta o estresse. Um dia isolado pesa pouco."),
+    "x:basal_energy_burned": ("A energia em repouso é uma estimativa das calorias que o corpo gasta só para se manter vivo, calculada pelo relógio.", "Varia com o tamanho do dia medido, a massa muscular e a temperatura; sozinha não indica problema, mas junto com febre ou pulso alto merece olhar."),
+    "passos": ("Os passos são a contagem diária de passadas.", "Muito abaixo do seu normal costuma ser dia parado, doente ou relógio fora do pulso; é contexto para interpretar pulso e sono."),
+    "energia": ("A energia ativa são as calorias gastas em movimento, estimadas pelo relógio.", "É contexto: explica pulso e HRV alterados no dia seguinte quando foi um dia pesado."),
+    "x:apple_exercise_time": ("Os minutos de exercício são o tempo em atividade acima de uma caminhada leve.", "Muito acima do normal explica pulso e HRV alterados no dia seguinte; muito abaixo indica dia sedentário."),
+    "fc_media": ("A frequência cardíaca média do dia é a média de todos os batimentos medidos.", "Depende muito do que você fez no dia; é contexto, mais útil junto com o pulso em repouso."),
 }
 
 

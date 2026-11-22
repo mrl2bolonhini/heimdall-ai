@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Análise de saúde: datas, unidades, correlações em palavras e motivo da falha do modelo
+- Cada medida agora diz a data (e se é hoje, ontem ou há N dias), o sono vem em horas e minutos ("3 h 48 min"), os números usam vírgula e o texto diz quão raro foi ("nenhum dos 30 dias anteriores foi tão baixo").
+- Correlações: o coeficiente r deixou de aparecer solto. O texto diz a força (moderada, forte, muito forte), o sentido (sobem juntas ou em sentidos opostos), o período e o que isso significa. Medidas da mesma família (passos, distância, energia ativa, exercício; as fases do sono; os tipos de pulso) não se correlacionam entre si, e correlação de 0,97 ou mais (a mesma grandeza medida de dois jeitos) é descartada.
+- Sem o modelo, a análise do código ficou mais explicativa (o que cada medida é, o impacto, leituras cruzadas como "noite curta explica REM baixo") e diz POR QUE o modelo não respondeu: nuvem desligada, HTTP 401/429, modelo local sem resposta ou resposta fora do formato. O modelo ganhou uma segunda tentativa se responder fora do formato.
+- Correção: rodado à mão no terminal, o analista não lia a chave do LiteLLM do .env, e o modelo local falhava em silêncio. Agora lê a chave direto do .env.
+
 ## 2026-11-22 - Análise de saúde com o gpt-oss-120b
 - O analista de saúde e a interpretação dos alertas de anomalia agora usam o gpt-oss-120b da nuvem (gateway da Cloudflare) quando HEIMDALL_NUVEM=1. Se a nuvem falhar ou o limite de gasto cortar, cai sozinho para o modelo local. O fim da análise diz qual modelo respondeu.
 - Atenção: com a nuvem, os números de saúde da análise saem do Mac, pelo gateway (autenticado, sem guardar o conteúdo). Para manter só a saúde no modelo local: HEIMDALL_SAUDE_ANALISTA_NUVEM=0 no .env. Os termos enviados ao PubMed continuam genéricos.

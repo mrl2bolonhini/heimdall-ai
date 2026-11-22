@@ -69,8 +69,51 @@ BUSCA_COMBO = {"combo_estresse": "resting heart rate heart rate variability slee
                "combo_sono_respiracao": "wearable oxygen saturation breathing disturbances sleep apnea screening"}
 
 
+# Medidas da mesma família medem quase a mesma coisa (passos e distância, por exemplo): correlação entre elas não diz nada, então não entra.
+FAMILIAS = [
+    {"passos", "energia", "x:apple_exercise_time", "x:apple_stand_hour", "x:flights_climbed", "x:walking_running_distance", "x:time_in_daylight", "x:basal_energy_burned"},
+    {"sono_total", "sono_profundo", "sono_rem", "sono_cama"},
+    {"fc_repouso", "fc_min", "fc_media", "fc_madrugada", "x:walking_heart_rate_average"},
+    {"spo2", "spo2_min"},
+    {"x:walking_speed", "x:walking_step_length", "x:walking_asymmetry_percentage", "x:walking_double_support_percentage"},
+]
+
+
+def _mesma_familia(a: str, b: str) -> bool:
+    return any(a in f and b in f for f in FAMILIAS)
+
+
+def forca(r: float) -> str:
+    a = abs(r)
+    return "muito forte" if a >= 0.8 else "forte" if a >= 0.6 else "moderada"
+
+
+def frase_correlacao(c: dict) -> str:
+    """O que o coeficiente r quer dizer, em palavras: força, sentido e período."""
+    sentido = "tendem a subir e descer juntas" if c["r"] > 0 else "andam em sentidos opostos: quando uma sobe, a outra tende a cair"
+    quando = (f"O valor de ontem de {c['a']} acompanha o de hoje de {c['b']}" if c["atraso_dias"] else f"{c['a']} e {c['b']} no mesmo dia")
+    return (f"{quando}: relação {forca(c['r'])} ({sentido}), observada em {c['n']} dias. "
+            f"O coeficiente é {hs._num(abs(c['r']), 2)} numa escala de 0 (nenhuma relação) a 1 (idênticas).")
+
+
 def _env(c: str, padrao: str = "") -> str:
     return os.environ.get(c, padrao).strip()
+
+
+def _do_dotenv(chave: str) -> str:
+    """Lê um valor direto do .env (rodado à mão, o terminal não leu o .env, e o hs.carregar_env só traz HEIMDALL_SAUDE_*). Só a chave local do LiteLLM é usada daqui."""
+    if os.environ.get(chave):
+        return os.environ[chave].strip()
+    try:
+        for ln in (Path(__file__).resolve().parent / ".env").read_text(encoding="utf-8").splitlines():
+            ln = ln.strip()
+            ln = ln[7:] if ln.startswith("export ") else ln
+            k, _, v = ln.partition("=")
+            if k.strip() == chave:
+                return v.strip().strip("'\"")
+    except OSError:
+        pass
+    return ""
 
 
 # ----------------------------------------------------------------------------------------
@@ -95,7 +138,7 @@ def _correlacoes(chaves: list, hoje: str, dias: int = 90, maximo: int = 8) -> li
                         xs.append(v)
                         ys.append(series[b][d2])
                 r = hs._correlacao(xs, ys)
-                if r is None or abs(r) < 0.4:
+                if r is None or abs(r) < 0.4 or abs(r) >= 0.97 or _mesma_familia(a, b):   # 0,97 ou mais: é a mesma grandeza medida de dois jeitos
                     continue
                 pri, seg, lag = (a, b, 1) if atraso == 1 else (b, a, 1) if atraso == -1 else (a, b, 0)
                 item = {"a": nomes[pri], "b": nomes[seg], "r": round(r, 2), "n": len(xs), "atraso_dias": lag, "chaves": [pri, seg]}
@@ -131,6 +174,27 @@ def _contexto_clinico(hoje: str) -> dict:
     return ctx
 
 
+def _hm(minutos: float) -> str:
+    """Minutos em horas e minutos por extenso: 228 vira '3 h 48 min'."""
+    m = int(round(minutos))
+    return f"{m // 60} h {m % 60:02d} min" if m >= 60 else f"{m} min"
+
+
+def _valor(chave: str, v: float, casas: int, un: str) -> str:
+    return _hm(v) if chave.startswith("sono_") else an._fmt(chave, v, casas, un)
+
+
+def _raridade(tao: int, n: int, palavra: str) -> str:
+    if tao == 0:
+        return f"nenhum dos {n} dias anteriores foi tão {palavra}: é o valor mais extremo do período"
+    return f"só {tao} dos {n} dias anteriores {'foi' if tao == 1 else 'foram'} tão {palavra}" if tao <= max(2, n // 6) else f"{tao} dos {n} dias anteriores foram tão {palavra}, ou seja, não é raro"
+
+
+def _quando(dia: str, hoje: str) -> str:
+    n = (datetime.strptime(hoje, "%Y-%m-%d") - datetime.strptime(dia, "%Y-%m-%d")).days
+    return f"{hs._br(dia)} ({'hoje' if n == 0 else 'ontem' if n == 1 else 'anteontem' if n == 2 else f'há {n} dias'})"
+
+
 def dossie(hoje: str = None, dias: int = 30) -> dict:
     hoje = hoje or datetime.now().strftime("%Y-%m-%d")
     hs._garantir_banco()
@@ -143,9 +207,12 @@ def dossie(hoje: str = None, dias: int = 30) -> dict:
         if not r or "valor" not in r:
             continue
         un = (an._spec(ch) or ("", ""))[1]
-        item = {"chave": ch, "nome": r["nome"], "unidade": un, "dia": r["dia"], "valor": round(r["valor"], 2), "normal_30d": round(r["normal"], 2),
+        spec = an._spec(ch)
+        casas = spec[6] if spec else 1
+        item = {"chave": ch, "nome": r["nome"], "unidade": un, "dia": r["dia"], "quando": _quando(r["dia"], hoje), "valor_txt": _valor(ch, r["valor"], casas, un),
+                "normal_txt": _valor(ch, r["normal"], casas, un), "valor": round(r["valor"], 2), "normal_30d": round(r["normal"], 2),
                 "desvio_pct": round(r.get("pct", 0), 1), "z": round(r["z"], 1), "estado": r.get("nivel", "normal"), "sentido_ruim": r["sentido"],
-                "dias_seguidos_fora": r.get("seguidos", 0), "raridade": f"{r.get('tao_extremo', '?')} de {r.get('n_base', '?')} dias tão extremo"}
+                "dias_seguidos_fora": r.get("seguidos", 0), "raridade": _raridade(r.get("tao_extremo", 0), r.get("n_base", 0), "baixo" if r["dif"] < 0 else "alto")}
         serie = hs._serie(ch, (datetime.strptime(hoje, "%Y-%m-%d") - timedelta(days=7)).strftime("%Y-%m-%d"))
         if len(serie) >= 4:
             item["media_7d"] = round(statistics.fmean(serie.values()), 2)
@@ -241,17 +308,18 @@ def literatura(d: dict, abrir=None, agora: float = None) -> list:
 # 3. Modelo
 # ----------------------------------------------------------------------------------------
 def _prompt(d: dict, lit: list, anterior: dict) -> str:
-    medidas = "\n".join(f"- {m['nome']} ({m['chave']}): {m['valor']} {m['unidade']} em {m['dia']}; normal dos 30 dias {m['normal_30d']}; desvio {m['desvio_pct']:+} por cento (z {m['z']}); "
+    medidas = "\n".join(f"- {m['nome']} ({m['chave']}): {m['valor_txt']}, medido em {m['quando']}; normal dos 30 dias {m['normal_txt']}; desvio {m['desvio_pct']:+} por cento (z {m['z']}); "
                         f"estado {m['estado']}; {m['raridade']}" + (f"; média de 7 dias {m['media_7d']}" if "media_7d" in m else "") +
                         (f"; {m['dias_seguidos_fora']} dias seguidos fora do normal" if m["dias_seguidos_fora"] >= 2 else "") for m in d["medidas"][:45])
-    corr = "\n".join(f"- {c['a']} x {c['b']}: r = {c['r']} em {c['n']} dias" + (" (a primeira medida de ONTEM contra a segunda de hoje)" if c["atraso_dias"] else " (mesmo dia)") for c in d["correlacoes"]) or "nenhuma correlação forte"
+    corr = "\n".join("- " + frase_correlacao(c) for c in d["correlacoes"]) or "nenhuma correlação relevante entre famílias diferentes de medidas"
     ctx = d["contexto"]
     litt = "\n".join(f"[PMID {x['pmid']}] {x['titulo']} ({x['revista']}, {x['ano']}): {x['resumo']}" for x in lit) or "nenhum estudo disponível (sem internet ou sem busca)"
     return (
         "Você é o analista de saúde pessoal de UM adulto, que usa o Apple Watch e o iPhone. Escreva em português do Brasil, em linguagem simples; o texto é lido por leitor de tela (frases curtas, sem tabelas nem símbolos). "
         "A pessoa sabe que você não é médico e NÃO quer avisos genéricos: quer análise de verdade para decidir sozinha se procura um médico.\n\n"
         "O QUE FAZER:\n"
-        "1. Explique o que cada sinal relevante mede, quanto desviou, se é raro e o impacto prático. Nunca devolva só 'valor X, média Y'.\n"
+        "1. Explique o que cada sinal relevante mede, a DATA da medida (já dada em cada linha), quanto desviou, se é raro e o impacto prático. Nunca devolva só 'valor X, média Y'. "
+        "Escreva durações em horas e minutos (por exemplo, 3 h 48 min, nunca 228 minutos), use vírgula decimal e NUNCA escreva a letra r ou o coeficiente sem traduzi-lo: diga se a relação é moderada, forte ou muito forte e o que isso significa na prática.\n"
         "2. Correlacione as medidas entre si e com treinos, sintomas, exames e condições da pessoa; diga o que as correlações calculadas sugerem e o que NÃO provam.\n"
         "3. Levante hipóteses (inclusive condições de saúde possíveis) com probabilidade baixa, media ou alta, e o que há a favor e contra cada uma. Considere sempre a hipótese de dado errado (relógio frouxo, dia incompleto).\n"
         "4. Aponte perigos concretos e em que ponto ficaria urgente (limiar ou sintoma), e o que acompanhar nos próximos dias.\n"
@@ -277,23 +345,37 @@ modelo_usado = ""   # quem respondeu a última análise (mostrado no fim do text
 
 
 def _chamar_modelo(prompt: str) -> str:
-    """Modelo grande da nuvem (gpt-oss-120b pelo gateway da Cloudflare) quando HEIMDALL_NUVEM=1; se falhar, ou com HEIMDALL_SAUDE_ANALISTA_NUVEM=0, o modelo local."""
+    """Modelo grande da nuvem (gpt-oss-120b pelo gateway da Cloudflare) quando HEIMDALL_NUVEM=1; se falhar, ou com HEIMDALL_SAUDE_ANALISTA_NUVEM=0, o modelo local.
+    Cada falha entra em `falhas_modelo`, para a análise dizer por que o modelo não respondeu."""
     global modelo_usado
-    if nuvem.ativo() and _env("HEIMDALL_SAUDE_ANALISTA_NUVEM", "1") != "0":
+    if _env("HEIMDALL_SAUDE_ANALISTA_NUVEM", "1") == "0":
+        falhas_modelo.append("nuvem não usada na saúde (HEIMDALL_SAUDE_ANALISTA_NUVEM=0)")
+    elif nuvem.ativo():
         try:
             txt = nuvem.chat(SISTEMA_NUVEM, prompt, max_tokens=3000, timeout=300)
             modelo_usado = "gpt-oss-120b (nuvem)"
             return txt
-        except RuntimeError:
-            pass   # nuvem fora do ar ou limite de gasto: cai para o modelo local
+        except RuntimeError as e:
+            falhas_modelo.append(f"nuvem: {e}")
+    else:
+        e = nuvem._env()
+        falhas_modelo.append("nuvem desligada (falta HEIMDALL_NUVEM=1 no .env)" if e.get("CLOUDFLARE_API_TOKEN") else "nuvem sem chave da Cloudflare no .env")
     corpo = json.dumps({"model": LLM_MODELO, "temperature": 0.2, "max_tokens": 3000, "messages": [{"role": "user", "content": prompt}]}).encode()
     cab = {"Content-Type": "application/json"}
-    if os.environ.get("LITELLM_MASTER_KEY"):
-        cab["Authorization"] = "Bearer " + os.environ["LITELLM_MASTER_KEY"]
-    with _abridor.open(urllib.request.Request(LLM_URL, data=corpo, headers=cab), timeout=420) as resp:
-        txt = json.loads(resp.read(4_000_000))["choices"][0]["message"]["content"] or ""
+    chave = _do_dotenv("LITELLM_MASTER_KEY")
+    if chave:
+        cab["Authorization"] = "Bearer " + chave
+    try:
+        with _abridor.open(urllib.request.Request(LLM_URL, data=corpo, headers=cab), timeout=420) as resp:
+            txt = json.loads(resp.read(4_000_000))["choices"][0]["message"]["content"] or ""
+    except Exception as e:  # noqa: BLE001
+        falhas_modelo.append(f"modelo local {LLM_MODELO}: {getattr(e, 'code', '') or type(e).__name__}" + (" (sem a chave do LiteLLM)" if getattr(e, "code", 0) == 401 else ""))
+        raise
     modelo_usado = f"{LLM_MODELO} (local)"
     return txt
+
+
+falhas_modelo: list = []
 
 
 def _txt(v, n=600) -> str:
@@ -329,21 +411,42 @@ def conferir(bruto: str, lit: list) -> dict:
             "mudou": _txt(d.get("mudou"), 300)}
 
 
+def _lado(m: dict) -> str:
+    return "abaixo" if m["valor"] < m["normal_30d"] else "acima"
+
+
 def sem_modelo(d: dict) -> dict:
-    """Análise feita só pelo código: desvios explicados, correlações em palavras e limiares cruzados."""
+    """Análise feita só pelo código: desvios com data e unidade, o que cada medida é, causas prováveis cruzando sinais e correlações em palavras."""
     fora = [m for m in d["medidas"] if m["estado"] in ("forte", "moderada")]
+    por = {m["chave"]: m for m in fora}
     sinais = []
     for m in fora[:8]:
         e = an.EXPLICACAO.get(m["chave"])
-        sinais.append({"medida": m["nome"], "o_que_e": e[0] if e else "", "o_que_mostra": f"{m['valor']} {m['unidade']}, {abs(m['desvio_pct']):.0f} por cento {'abaixo' if m['valor'] < m['normal_30d'] else 'acima'} do seu normal de {m['normal_30d']} ({m['raridade']}).",
+        sinais.append({"medida": m["nome"], "o_que_e": e[0] if e else "",
+                       "o_que_mostra": f"Medido em {m['quando']}: {m['valor_txt']}, {abs(m['desvio_pct']):.0f} por cento {_lado(m)} do seu normal de {m['normal_txt']} (mediana dos 30 dias anteriores); {m['raridade']}."
+                                       + (f" Está assim há {m['dias_seguidos_fora']} dias seguidos." if m["dias_seguidos_fora"] >= 3 else ""),
                        "impacto": e[1] if e else "", "gravidade": "atencao" if m["estado"] == "forte" else "informativo"})
     for l in d["limiares"]:
-        sinais.append({"medida": l["chave"], "o_que_e": "", "o_que_mostra": l["texto"], "impacto": "", "gravidade": l["gravidade"]})
+        sinais.append({"medida": l["chave"], "o_que_e": "", "o_que_mostra": f"{l['texto']} (valor {l['valor']}, em {hs._br(l['dia'])}).", "impacto": "", "gravidade": l["gravidade"]})
     grav = max([s["gravidade"] for s in sinais] + ["informativo"], key=GRAVIDADES.index)
-    corr = [{"texto": f"{c['a']} e {c['b']} andam {'juntas' if c['r'] > 0 else 'em sentidos opostos'} (r {c['r']}, {c['n']} dias" + (", com a primeira medida um dia antes" if c["atraso_dias"] else "") + ").",
-             "interpretacao": "Correlação mostra que variam juntas, não que uma causa a outra."} for c in d["correlacoes"][:4]]
-    pan = (f"{len(fora)} medida(s) fora do seu normal. " if fora else "Nenhuma medida saiu muito do seu normal. ") + " ".join(d["combos"][:2]) + " (Análise feita só pelo código: o modelo não respondeu.)"
-    return {"panorama": pan.strip(), "gravidade": grav, "sinais": sinais, "correlacoes": corr, "hipoteses": [], "perigos": [], "recomendacoes": [], "acompanhar": [], "literatura": [], "mudou": ""}
+    # leituras cruzadas que o código sabe fazer sem o modelo
+    cruz = []
+    sono = por.get("sono_total")
+    if sono and sono["valor"] < sono["normal_30d"]:
+        outros = [{"sono_rem": "o sono REM", "sono_profundo": "o sono profundo"}[k] for k in ("sono_rem", "sono_profundo") if k in por]
+        if outros:
+            cruz.append(f"A noite foi mais curta que o seu normal ({sono['valor_txt']} contra {sono['normal_txt']}), e {' e '.join(outros)} também {'caiu' if len(outros) == 1 else 'caíram'}. "
+                        "É o esperado: as fases do sono encolhem junto com a noite, então não são problemas separados, é um só.")
+        cruz.append("Uma noite curta costuma baixar a HRV e subir o pulso em repouso no dia seguinte; vale observar esses dois amanhã antes de tirar conclusões.")
+    ruido = por.get("x:environmental_audio_exposure")
+    if ruido:
+        cruz.append(f"O ruído médio do dia ({ruido['valor_txt']}) passou do limite de referência de 70 dB; se foi um dia em lugar barulhento, é explicação suficiente, sem relação com saúde do coração.")
+    if "x:basal_energy_burned" in por and len(por) <= 4:
+        cruz.append("A energia em repouso é uma estimativa do relógio e oscila com o dia medido; sozinha ela não pesa.")
+    corr = [{"texto": frase_correlacao(c), "interpretacao": ""} for c in d["correlacoes"][:4]]
+    pan = (f"{len(fora)} medida(s) saíram do seu normal em {d['dia'] and hs._br(d['dia'])}. " if fora else "Nenhuma medida saiu muito do seu normal. ") + " ".join(d["combos"][:2])
+    return {"panorama": pan.strip(), "gravidade": grav, "sinais": sinais, "correlacoes": corr, "hipoteses": [], "perigos": [],
+            "recomendacoes": [], "leituras": cruz, "acompanhar": [], "literatura": [], "mudou": ""}
 
 
 # ----------------------------------------------------------------------------------------
@@ -354,6 +457,8 @@ ROT_G = {"informativo": "informativo", "atencao": "atenção", "importante": "im
 
 def renderizar(r: dict, d: dict, lit: list) -> str:
     L = [f"Análise de saúde de {hs._br(d['dia'])}. Gravidade geral: {ROT_G[r['gravidade']]}.", "", r["panorama"]]
+    if r.get("_motivo_sem_modelo"):
+        L += ["", "Atenção: o modelo não respondeu, por isso esta análise foi feita só pelo código, sem hipóteses nem estudos. Motivo: " + r["_motivo_sem_modelo"] + "."]
     if r.get("mudou"):
         L += ["", "O que mudou: " + r["mudou"]]
     for l in d["limiares"]:
@@ -362,8 +467,10 @@ def renderizar(r: dict, d: dict, lit: list) -> str:
         L += ["", "Sinais, um por um:"]
         for i, s in enumerate(r["sinais"], 1):
             L.append(f"{i}. {s['medida']} ({ROT_G[s['gravidade']]}). " + " ".join(x for x in (s["o_que_e"], s["o_que_mostra"], ("Impacto: " + s["impacto"]) if s["impacto"] else "") if x))
+    if r.get("leituras"):
+        L += ["", "O que os sinais indicam juntos:"] + [f"{i}. {x}" for i, x in enumerate(r["leituras"], 1)]
     if r["correlacoes"]:
-        L += ["", "Como as medidas se relacionam:"] + [f"{i}. {c['texto']} {c['interpretacao']}".strip() for i, c in enumerate(r["correlacoes"], 1)]
+        L += ["", "Como as medidas se relacionam (correlação mostra que variam juntas, não que uma causa a outra):"] + [f"{i}. {c['texto']} {c['interpretacao']}".strip() for i, c in enumerate(r["correlacoes"], 1)]
     if r["hipoteses"]:
         L += ["", "Hipóteses (não são diagnóstico):"]
         for i, h in enumerate(r["hipoteses"], 1):
@@ -386,6 +493,7 @@ def resumo_curto(r: dict, d: dict) -> str:
     """Texto do aviso (Mac e iPhone): o quadro geral, o limite cruzado, a hipótese principal e as recomendações mais importantes."""
     p = [r["panorama"]]
     p += [l["texto"] for l in d["limiares"][:1]]
+    p += r.get("leituras", [])[:2]
     if r["hipoteses"]:
         p.append("Hipótese principal: " + r["hipoteses"][0]["texto"] + f" (probabilidade {r['hipoteses'][0]['probabilidade'] or 'não informada'}).")
     if r["recomendacoes"]:
@@ -410,22 +518,35 @@ def analisar(hoje: str = None, usar_modelo: bool = True, usar_literatura: bool =
     d = dossie(hoje)
     anterior = _ler_estado().get("ultima", {})
     lit = literatura(d, abrir=abrir) if usar_literatura else []
+    falhas_modelo.clear()
     r = {}
     if usar_modelo and d["medidas"]:
-        try:
-            r = conferir((modelo or _chamar_modelo)(_prompt(d, lit, anterior)), lit)
-            if r and not modelo:
-                r["_modelo"] = True
-        except Exception:  # noqa: BLE001 - modelo fora do ar: segue com a análise do código
-            r = {}
+        for tentativa in (1, 2):   # uma segunda chance se o modelo responder fora do formato
+            try:
+                bruto = (modelo or _chamar_modelo)(_prompt(d, lit, anterior))
+            except Exception as e:  # noqa: BLE001 - modelo fora do ar: segue com a análise do código
+                if not falhas_modelo:
+                    falhas_modelo.append(f"{type(e).__name__}")
+                break
+            r = conferir(bruto, lit)
+            if r:
+                if not modelo:
+                    r["_modelo"] = True
+                break
+            if tentativa == 2:
+                falhas_modelo.append("o modelo respondeu duas vezes fora do formato esperado")
+    elif not usar_modelo:
+        falhas_modelo.append("modelo não usado (--sem-modelo)")
     com_modelo = bool(r)
+    motivo = "; ".join(dict.fromkeys(falhas_modelo))
     if not r:
         r = sem_modelo(d)
     # o código nunca deixa a gravidade ficar abaixo do que um limiar de referência cruzado exige
     for l in d["limiares"]:
         if GRAVIDADES.index(l["gravidade"]) > GRAVIDADES.index(r["gravidade"]):
             r["gravidade"] = l["gravidade"]
-    return {"dia": d["dia"], "dossie": d, "literatura": lit, "resultado": r, "com_modelo": com_modelo, "texto": renderizar(r, d, lit), "curto": resumo_curto(r, d)}
+    r["_motivo_sem_modelo"] = "" if com_modelo else motivo
+    return {"dia": d["dia"], "dossie": d, "literatura": lit, "resultado": r, "com_modelo": com_modelo, "motivo_modelo": motivo, "texto": renderizar(r, d, lit), "curto": resumo_curto(r, d)}
 
 
 def rodar(agora: datetime = None, forcar: bool = False, avisar_mac=None, **kw) -> dict:
