@@ -95,6 +95,7 @@ Exemplos:
   heimdall chat --password
   heimdall chat --email
   heimdall chat --delete-user
+  heimdall chat --models    cria ou atualiza no Open WebUI os 7 modelos com os prompts padrão, pela API (chave em HEIMDALL_WEBUI_API_KEY ou perguntada na hora); --dry-run só mostra
   heimdall chat --check
 
 @ notes | Heimdall Notes, o site das notas de estudo
