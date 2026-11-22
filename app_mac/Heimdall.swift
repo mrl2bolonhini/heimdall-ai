@@ -36,6 +36,37 @@ func rodarHeimdall(_ args: [String]) -> (String, Int32) {
     return (texto, p.terminationStatus)
 }
 
+/// Lê um valor do .env do projeto. O app só usa isto para ver interruptores (0 ou 1) e a porta do Controls; nunca lê chaves.
+func valorDoEnv(_ chave: String) -> String? {
+    guard let texto = try? String(contentsOfFile: pastaHeimdall + "/.env", encoding: .utf8) else { return nil }
+    for linha in texto.split(separator: "\n") {
+        let l = linha.trimmingCharacters(in: .whitespaces)
+        let sem = l.hasPrefix("export ") ? String(l.dropFirst(7)) : l
+        if sem.hasPrefix(chave + "=") {
+            let v = String(sem.dropFirst(chave.count + 1)).trimmingCharacters(in: CharacterSet(charactersIn: "\"' "))
+            return v.isEmpty ? nil : v
+        }
+    }
+    return nil
+}
+
+/// Diz se há algo escutando nesta porta do próprio Mac (é assim que o app sabe se os serviços estão ligados).
+func portaAberta(_ porta: Int) -> Bool {
+    let fd = socket(AF_INET, SOCK_STREAM, 0)
+    if fd < 0 { return false }
+    defer { close(fd) }
+    var endereco = sockaddr_in()
+    endereco.sin_family = sa_family_t(AF_INET)
+    endereco.sin_port = in_port_t(porta).bigEndian
+    endereco.sin_addr.s_addr = inet_addr("127.0.0.1")
+    let r = withUnsafePointer(to: &endereco) {
+        $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+            connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+        }
+    }
+    return r == 0
+}
+
 func avisar(_ titulo: String, _ texto: String) {
     let a = NSAlert()
     a.messageText = titulo
@@ -156,11 +187,12 @@ final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownload
     }
 }
 
-final class Delegado: NSObject, NSApplicationDelegate {
+final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var item: NSStatusItem!
     var ocupado = false
     var sites: [(String, String)] = []
-    var ultimaBusca = "Ainda não houve busca na caixa de correio desde que o app abriu."
+    var ultimaBusca = "Ainda não houve sincronização com os celulares desde que o app abriu."
+    var ligadosCache: (Date, Bool)?
     var temporizador: Timer?
     var janelas: [String: JanelaSite] = [:]
 
@@ -182,43 +214,91 @@ final class Delegado: NSObject, NSApplicationDelegate {
         menu.addItem(i)
     }
 
+    func grupo(_ menu: NSMenu, _ titulo: String) -> NSMenu {
+        let i = NSMenuItem(title: titulo, action: nil, keyEquivalent: "")
+        let sub = NSMenu(title: titulo)
+        i.submenu = sub
+        menu.addItem(i)
+        return sub
+    }
+
+    // --- estado: o que está ligado agora (os itens do menu se habilitam e desabilitam por ele)
+    func servicosLigados() -> Bool {
+        if let c = ligadosCache, Date().timeIntervalSince(c.0) < 2 { return c.1 }
+        let porta = Int(valorDoEnv("HEIMDALL_CONTROLS_PORT") ?? "8017") ?? 8017
+        let ligados = portaAberta(porta)
+        ligadosCache = (Date(), ligados)
+        return ligados
+    }
+    func nuvemLigada() -> Bool { return valorDoEnv("HEIMDALL_NUVEM") == "1" }
+    func syncLigada() -> Bool { return valorDoEnv("HEIMDALL_CAIXA") == "1" }
+
+    /// Liga ou desliga cada item conforme o estado: Ligar só vale com os serviços desligados; Reiniciar e Parar, só com eles ligados.
+    @objc func validateMenuItem(_ m: NSMenuItem) -> Bool {
+        guard let a = m.action else { return false }
+        if a == #selector(ligar) { return !ocupado && !servicosLigados() }
+        if a == #selector(reiniciar) || a == #selector(parar) { return !ocupado && servicosLigados() }
+        if a == #selector(alternarNuvem) {
+            m.title = nuvemLigada() ? "Desligar o modelo na nuvem (volta ao modelo local)" : "Ligar o modelo grande na nuvem"
+            return !ocupado
+        }
+        if a == #selector(alternarSync) {
+            m.title = syncLigada() ? "Desligar a sincronização com os celulares" : "Ligar a sincronização com os celulares"
+            return !ocupado
+        }
+        if a == #selector(sincronizarAgora) { return !ocupado && syncLigada() }
+        if a == #selector(estado) || a == #selector(consumo) || a == #selector(atualizar) { return !ocupado }
+        return true
+    }
+
+    /// Linhas de estado no alto do menu de estado (o VoiceOver as lê como itens sem ação).
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        ligadosCache = nil
+        menu.item(withTag: 101)?.title = servicosLigados() ? "Serviços do Heimdall: ligados" : "Serviços do Heimdall: desligados"
+        menu.item(withTag: 102)?.title = nuvemLigada() ? "Modelo de IA: nuvem (gpt-oss-120b)" : "Modelo de IA: local"
+        menu.item(withTag: 103)?.title = syncLigada() ? "Celulares: sincronização ligada" : "Celulares: sincronização desligada"
+    }
+
     func montarMenu() {
         let menu = NSMenu()
-        adicionar(menu, "Estado dos serviços", #selector(estado), "e")
-        adicionar(menu, "Ligar os serviços", #selector(ligar))
-        adicionar(menu, "Reiniciar os serviços", #selector(reiniciar))
-        adicionar(menu, "Parar os serviços", #selector(parar))
+        menu.delegate = self
+        for (tag, texto) in [(101, "Serviços do Heimdall"), (102, "Modelo de IA"), (103, "Celulares")] {
+            let linha = NSMenuItem(title: texto, action: nil, keyEquivalent: "")
+            linha.tag = tag
+            menu.addItem(linha)
+        }
         menu.addItem(NSMenuItem.separator())
 
-        let abrir = NSMenuItem(title: "Abrir numa janela do app", action: nil, keyEquivalent: "")
-        let sub = NSMenu()
+        let abrir = grupo(menu, "Abrir serviço")
         if sites.isEmpty {
-            adicionar(sub, "Atualizar a lista de endereços", #selector(recarregarSites))
+            adicionar(abrir, "Atualizar a lista de endereços", #selector(recarregarSites))
         } else {
             for (nome, url) in sites {
                 let i = NSMenuItem(title: nome, action: #selector(abrirSite(_:)), keyEquivalent: "")
                 i.target = self
                 i.representedObject = url
-                sub.addItem(i)
+                abrir.addItem(i)
             }
         }
-        abrir.submenu = sub
-        menu.addItem(abrir)
         menu.addItem(NSMenuItem.separator())
 
-        adicionar(menu, "Consumo da nuvem (último dia)", #selector(consumo), "u")
-        adicionar(menu, "Buscar agora na caixa de correio", #selector(buscarAgora), "b")
-        adicionar(menu, "Resultado da última busca na caixa", #selector(mostrarUltimaBusca))
+        adicionar(menu, "Ligar os serviços", #selector(ligar))
+        adicionar(menu, "Reiniciar os serviços", #selector(reiniciar))
+        adicionar(menu, "Parar os serviços", #selector(parar))
+        adicionar(menu, "Ver o estado em detalhe", #selector(estado), "e")
         menu.addItem(NSMenuItem.separator())
 
-        adicionar(menu, "Ligar o modelo grande na nuvem", #selector(nuvemLigar))
-        adicionar(menu, "Voltar ao modelo local", #selector(nuvemDesligar))
-        adicionar(menu, "Ligar a caixa de correio", #selector(caixaLigar))
-        adicionar(menu, "Desligar a caixa de correio", #selector(caixaDesligar))
+        let nuvem = grupo(menu, "Nuvem (Cloudflare)")
+        adicionar(nuvem, "Consumo e custo do último dia", #selector(consumo), "u")
+        adicionar(nuvem, "Ligar o modelo grande na nuvem", #selector(alternarNuvem))
+
+        let celulares = grupo(menu, "Celulares")
+        adicionar(celulares, "Sincronizar agora", #selector(sincronizarAgora), "b")
+        adicionar(celulares, "Resultado da última sincronização", #selector(mostrarUltimaBusca))
+        adicionar(celulares, "Ligar a sincronização com os celulares", #selector(alternarSync))
         menu.addItem(NSMenuItem.separator())
 
         adicionar(menu, "Atualizar o Heimdall e reiniciar", #selector(atualizar), "a")
-        menu.addItem(NSMenuItem.separator())
         adicionar(menu, "Sair do Heimdall", #selector(sair), "q")
         item.menu = menu
     }
@@ -257,6 +337,7 @@ final class Delegado: NSObject, NSApplicationDelegate {
             let (texto, codigo) = rodarHeimdall(args)
             DispatchQueue.main.async {
                 self.ocupado = false
+                self.ligadosCache = nil
                 self.item.button?.title = "Heimdall"
                 avisar(codigo == 0 ? "\(titulo): concluído" : "\(titulo): falhou (código \(codigo))", texto)
             }
@@ -272,7 +353,7 @@ final class Delegado: NSObject, NSApplicationDelegate {
                 self.ocupado = false
                 self.ultimaBusca = texto + (codigo == 0 ? "" : "\n(código de saída \(codigo))")
                 self.item.button?.title = codigo == 0 ? "Heimdall" : "Heimdall (atenção)"
-                if !silencioso { avisar(codigo == 0 ? "Caixa de correio" : "Caixa de correio: atenção", self.ultimaBusca) }
+                if !silencioso { avisar(codigo == 0 ? "Sincronização com os celulares" : "Sincronização com os celulares: atenção", self.ultimaBusca) }
             }
         }
     }
@@ -282,12 +363,10 @@ final class Delegado: NSObject, NSApplicationDelegate {
     @objc func reiniciar() { executar("Reiniciar os serviços", ["restart"]) }
     @objc func parar() { executar("Parar os serviços", ["stop"]) }
     @objc func consumo() { executar("Consumo da nuvem", ["usage", "--days", "1"]) }
-    @objc func buscarAgora() { buscarCaixa(silencioso: false) }
-    @objc func mostrarUltimaBusca() { avisar("Última busca na caixa", ultimaBusca) }
-    @objc func nuvemLigar() { executar("Modelo grande na nuvem", ["env", "--set", "HEIMDALL_NUVEM", "1"]) }
-    @objc func nuvemDesligar() { executar("Modelo local", ["env", "--set", "HEIMDALL_NUVEM", "0"]) }
-    @objc func caixaLigar() { executar("Caixa de correio", ["env", "--set", "HEIMDALL_CAIXA", "1"]) }
-    @objc func caixaDesligar() { executar("Caixa de correio", ["env", "--set", "HEIMDALL_CAIXA", "0"]) }
+    @objc func sincronizarAgora() { buscarCaixa(silencioso: false) }
+    @objc func mostrarUltimaBusca() { avisar("Última sincronização com os celulares", ultimaBusca) }
+    @objc func alternarNuvem() { executar("Modelo de IA", ["env", "--set", "HEIMDALL_NUVEM", nuvemLigada() ? "0" : "1"]) }
+    @objc func alternarSync() { executar("Sincronização com os celulares", ["env", "--set", "HEIMDALL_CAIXA", syncLigada() ? "0" : "1"]) }
     @objc func atualizar() { executar("Atualizar o Heimdall", ["update", "--restart"]) }
     @objc func recarregarSites() { carregarSites() }
 
@@ -361,7 +440,7 @@ final class Delegado: NSObject, NSApplicationDelegate {
         _ = itemDe(visualizar, "Diminuir o zoom", #selector(diminuirZoom), "-")
         _ = itemDe(visualizar, "Tamanho normal", #selector(zoomNormal), "0")
 
-        let menuSites = submenuDe(principal, "Sites")
+        let menuSites = submenuDe(principal, "Abrir")
         if sites.isEmpty {
             _ = itemDe(menuSites, "Atualizar a lista de endereços", #selector(recarregarSites))
         } else {
@@ -371,15 +450,20 @@ final class Delegado: NSObject, NSApplicationDelegate {
             }
         }
 
-        let servicos = submenuDe(principal, "Serviços")
-        _ = itemDe(servicos, "Estado dos serviços", #selector(estado), "e")
-        _ = itemDe(servicos, "Ligar os serviços", #selector(ligar))
-        _ = itemDe(servicos, "Reiniciar os serviços", #selector(reiniciar))
-        _ = itemDe(servicos, "Parar os serviços", #selector(parar))
-        servicos.addItem(NSMenuItem.separator())
-        _ = itemDe(servicos, "Consumo da nuvem (último dia)", #selector(consumo), "u")
-        _ = itemDe(servicos, "Buscar agora na caixa de correio", #selector(buscarAgora), "b")
-        _ = itemDe(servicos, "Atualizar o Heimdall e reiniciar", #selector(atualizar))
+        let sistema = submenuDe(principal, "Sistema")
+        _ = itemDe(sistema, "Ligar os serviços", #selector(ligar))
+        _ = itemDe(sistema, "Reiniciar os serviços", #selector(reiniciar))
+        _ = itemDe(sistema, "Parar os serviços", #selector(parar))
+        _ = itemDe(sistema, "Ver o estado em detalhe", #selector(estado), "e")
+        sistema.addItem(NSMenuItem.separator())
+        _ = itemDe(sistema, "Consumo e custo da nuvem (último dia)", #selector(consumo), "u")
+        _ = itemDe(sistema, "Ligar o modelo grande na nuvem", #selector(alternarNuvem))
+        sistema.addItem(NSMenuItem.separator())
+        _ = itemDe(sistema, "Sincronizar agora com os celulares", #selector(sincronizarAgora), "b")
+        _ = itemDe(sistema, "Resultado da última sincronização", #selector(mostrarUltimaBusca))
+        _ = itemDe(sistema, "Ligar a sincronização com os celulares", #selector(alternarSync))
+        sistema.addItem(NSMenuItem.separator())
+        _ = itemDe(sistema, "Atualizar o Heimdall e reiniciar", #selector(atualizar))
 
         let janela = submenuDe(principal, "Janela")
         _ = itemDe(janela, "Minimizar", #selector(NSWindow.performMiniaturize(_:)), "m", alvo: false)
