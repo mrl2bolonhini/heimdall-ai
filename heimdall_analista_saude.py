@@ -324,7 +324,8 @@ def _prompt(d: dict, lit: list, anterior: dict) -> str:
         "3. Levante hipóteses (inclusive condições de saúde possíveis) com probabilidade baixa, media ou alta, e o que há a favor e contra cada uma. Considere sempre a hipótese de dado errado (relógio frouxo, dia incompleto).\n"
         "4. Aponte perigos concretos e em que ponto ficaria urgente (limiar ou sintoma), e o que acompanhar nos próximos dias.\n"
         "5. Dê recomendações práticas e priorizadas, com o motivo de cada uma.\n"
-        "6. Use os estudos fornecidos quando ajudarem, citando o PMID; diga o que o estudo mostra com as suas palavras. NUNCA cite estudo que não esteja na lista e nunca invente número.\n"
+        "6. Use os estudos fornecidos SÓ quando o título e o resumo dele sustentarem diretamente a afirmação (não force: um estudo sobre outro assunto, como canabidiol, não prova nada sobre um remédio); cite o PMID e diga o que o estudo mostra com as suas palavras. "
+        "NUNCA cite estudo que não esteja na lista, nunca invente número e, em 'a_favor' e 'contra', use só fatos que estão nos dados fornecidos (não invente relatos, sintomas nem mudanças de dose). Escreva faixas por extenso, como '20 a 30 minutos', nunca com hífen entre números.\n"
         "Use só os dados abaixo. Se nada importante saiu do normal, diga isso com clareza e aponte o que está bom; não invente alarme.\n\n"
         f"DIA: {d['dia']}\nMEDIDAS (cada uma contra o normal pessoal dos 30 dias anteriores):\n{medidas}\n\n"
         f"CRUZAMENTOS FEITOS PELO CÓDIGO:\n" + ("\n".join("- " + c for c in d["combos"]) or "nenhum padrão combinado") + f"\n\nCORRELAÇÕES (últimos 90 dias):\n{corr}\n\n"
@@ -378,8 +379,16 @@ def _chamar_modelo(prompt: str) -> str:
 falhas_modelo: list = []
 
 
+def para_leitor_de_tela(t: str) -> str:
+    """Deixa o texto sem armadilhas para o VoiceOver: faixa como '20‑30' (hífen especial) vira '20 a 30', e '1 776' (espaço no milhar) vira '1776'."""
+    t = re.sub(r"(?<=\d)\s*[\u2010\u2011\u2012\u2013\u2014\u2212-]\s*(?=\d)", " a ", t)
+    t = re.sub(r"(?<=\d)[\u00a0\u202f\u2009](?=\d)", "", t)
+    t = re.sub(r"\b(\d{1,3}) (\d{3})\b(?! ?(?:h|min|s)\b)", r"\1\2", t)
+    return t.replace("\u2011", "-")
+
+
 def _txt(v, n=600) -> str:
-    return re.sub(r"\s+", " ", str(v or "")).strip()[:n]
+    return para_leitor_de_tela(re.sub(r"\s+", " ", str(v or "")).strip()[:n])
 
 
 def _lista(v) -> list:
@@ -474,19 +483,20 @@ def renderizar(r: dict, d: dict, lit: list) -> str:
     if r["hipoteses"]:
         L += ["", "Hipóteses (não são diagnóstico):"]
         for i, h in enumerate(r["hipoteses"], 1):
-            L.append(f"{i}. {h['texto']} Probabilidade {h['probabilidade'] or 'não informada'}. A favor: {h['a_favor'] or 'não informado'}. Contra: {h['contra'] or 'não informado'}.")
+            L.append(f"{i}. {h['texto'].rstrip('.')}. Probabilidade {h['probabilidade'] or 'não informada'}. A favor: {(h['a_favor'] or 'não informado').rstrip('.')}. Contra: {(h['contra'] or 'não informado').rstrip('.')}.")
     if r["perigos"]:
-        L += ["", "Perigos e quando agir:"] + [f"{i}. {p['texto']} Quando agir: {p['quando_agir'] or 'não informado'}." for i, p in enumerate(r["perigos"], 1)]
+        L += ["", "Perigos e quando agir:"] + [f"{i}. {p['texto'].rstrip('.')}. Quando agir: {(p['quando_agir'] or 'não informado').rstrip('.')}." for i, p in enumerate(r["perigos"], 1)]
     if r["recomendacoes"]:
-        L += ["", "Recomendações:"] + [f"{i}. {x['acao']} Por quê: {x['porque']}" + (f" (prioridade {x['prioridade']})" if x["prioridade"] else "") for i, x in enumerate(r["recomendacoes"], 1)]
+        L += ["", "Recomendações:"] + [f"{i}. {x['acao'].rstrip('.')}. Por quê: {x['porque']}" + (f" (prioridade {x['prioridade']})" if x["prioridade"] else "") for i, x in enumerate(r["recomendacoes"], 1)]
     if r["acompanhar"]:
         L += ["", "O que acompanhar nos próximos dias:"] + [f"{i}. {x}" for i, x in enumerate(r["acompanhar"], 1)]
     if r["literatura"]:
         por = {x["pmid"]: x for x in lit}
-        L += ["", "Estudos consultados (PubMed):"] + [f"{i}. {por[x['pmid']]['titulo']} ({por[x['pmid']]['revista']}, {por[x['pmid']]['ano']}), PMID {x['pmid']}. {x['o_que_diz']}" for i, x in enumerate(r["literatura"], 1)]
+        L += ["", "Estudos consultados (PubMed):"] + [f"{i}. {por[x['pmid']]['titulo']} ({por[x['pmid']]['revista']}, {por[x['pmid']]['ano']}), PMID {x['pmid']}. Leitura do modelo: {x['o_que_diz']} "
+                                                       f"Começo do resumo do estudo, para você conferir: {por[x['pmid']]['resumo'][:260].rstrip()}..." for i, x in enumerate(r["literatura"], 1)]
     L += ["", "A decisão de procurar um médico é sua; esta análise é feita pelo Heimdall a partir dos seus dados e de resumos de estudos, e pode errar."
           + (f" Modelo: {modelo_usado}." if modelo_usado and r.get("_modelo") else "")]
-    return "\n".join(L)
+    return para_leitor_de_tela("\n".join(L))
 
 
 def resumo_curto(r: dict, d: dict) -> str:

@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Análise de saúde lida pelo VoiceOver sem armadilhas e estudos conferíveis
+- Faixas como "20‑30 min" (com hífen especial entre os números) eram lidas pelo VoiceOver como "2000 minutos". Agora todo o texto da análise passa por um ajuste: faixas viram "20 a 30 min" e milhares com espaço ("1 776 passos") viram "1776". O modelo também foi instruído a escrever faixas por extenso.
+- Estudos: cada citação agora traz, além da leitura do modelo, o começo do resumo do próprio estudo, para você conferir se ele sustenta mesmo a afirmação (o modelo chegou a citar uma revisão sobre canabinoides para falar de remédios). O modelo foi instruído a citar um estudo só quando o título e o resumo sustentarem diretamente a frase, e a usar em "a favor" e "contra" só fatos presentes nos dados.
+- Texto: sem pontos duplicados nas hipóteses, perigos e recomendações.
+
 ## 2026-11-22 - Análise de saúde: datas, unidades, correlações em palavras e motivo da falha do modelo
 - Cada medida agora diz a data (e se é hoje, ontem ou há N dias), o sono vem em horas e minutos ("3 h 48 min"), os números usam vírgula e o texto diz quão raro foi ("nenhum dos 30 dias anteriores foi tão baixo").
 - Correlações: o coeficiente r deixou de aparecer solto. O texto diz a força (moderada, forte, muito forte), o sentido (sobem juntas ou em sentidos opostos), o período e o que isso significa. Medidas da mesma família (passos, distância, energia ativa, exercício; as fases do sono; os tipos de pulso) não se correlacionam entre si, e correlação de 0,97 ou mais (a mesma grandeza medida de dois jeitos) é descartada.

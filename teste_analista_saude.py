@@ -148,6 +148,11 @@ confere("cada medida diz a data e se é hoje ou ontem", "(hoje)" in nomes["hrv"]
 confere("correlação em palavras: força e significado, sem r solto", "relação" in an.frase_correlacao(d["correlacoes"][0]) and "escala de 0" in an.frase_correlacao(d["correlacoes"][0]))
 confere("medidas da mesma família não se correlacionam (passos x distância)", an._mesma_familia("passos", "x:walking_running_distance") and not an._mesma_familia("hrv", "sono_total"))
 confere("o prompt pede horas e minutos e a data", "3 h 48 min" in an._prompt(d, lit, {}) and "DATA da medida" in an._prompt(d, lit, {}))
+# texto para leitor de tela: faixa com hífen especial e milhar com espaço
+confere("faixa '20‑30 min' vira '20 a 30 min' (o hífen era lido como 2000)", an.para_leitor_de_tela("caminhada de 20\u201130 min e 5-6 h") == "caminhada de 20 a 30 min e 5 a 6 h", an.para_leitor_de_tela("caminhada de 20\u201130 min"))
+confere("milhar com espaço vira número só, sem mexer em horas", an.para_leitor_de_tela("1 776 passos, 3 h 48 min") == "1776 passos, 3 h 48 min", an.para_leitor_de_tela("1 776 passos, 3 h 48 min"))
+confere("o texto final não tem ponto duplo", ".." not in a["texto"].replace("...", ""), a["texto"][:200])
+confere("o estudo vem com o começo do resumo para conferir", "Começo do resumo do estudo" in a["texto"])
 # por que o modelo não respondeu fica escrito na análise
 e = an.analisar(HOJE, modelo=lambda p: "lixo", abrir=abrir)
 confere("modelo fora do formato: o texto diz o motivo", not e["com_modelo"] and "fora do formato" in e["texto"], e["texto"][:600])
