@@ -257,6 +257,7 @@ FLUXO_DESCRICAO = {
 
 SCRIPTS = [
     ("heimdall_agente.py", "Agente do Mac (porta 8003). Recebe pedidos do n8n com um token e grava notas no app Notas, cria eventos no Calendário e lembretes no app Lembretes, narra textos com a voz do macOS e busca em dois sites públicos permitidos. Só escreve nas pastas do próprio Heimdall e nunca lê notas de pastas privadas."),
+    ("heimdall_avisos_mac.py", "Avisos nativos no Mac: grava o aviso completo (título e texto, inclusive de saúde e finanças) em banco/avisos_mac/, só do dono; o app do Mac lê a pasta e mostra a notificação do macOS. Desligar: HEIMDALL_AVISOS_MAC=0."),
     ("heimdall_triagem.py", "Triagem obrigatória de avisos importantes. Cria lembretes na lista \"Heimdall: Triagem\" do app Lembretes (menções do Diário da Justiça, alertas de saúde, e-mails suspeitos ou urgentes e achados de privacidade de risco médio ou alto) e insiste pelo Bark até você concluir, reclassificar ou adiar. Roda dentro do agente do Mac."),
     ("heimdall_email_oficial.py", "Vigia o Gmail a cada hora, só lendo. Confere se e-mails de serviços públicos (INSS, gov.br, FGTS, Receita, Serasa e outros) são autênticos, resume os verdadeiros, alerta sobre imitações e cria evento e lembrete quando há prazo. Nunca segue links."),
     ("heimdall_notas.py", "Heimdall Notes (porta 8011): site para ler as notas de estudo do cofre e ouvir os áudios, com velocidade, voltar e avançar 15 segundos, busca e os documentos de knowledge/. Mesmo login do Heimdall Cloud; mostra o cofre inteiro, menos o Digest."),
@@ -309,6 +310,7 @@ SCRIPTS = [
     ("teste_migrar_avisos.py", "Testa a migração das notas antigas: importa, confere, apaga só o que foi importado e mantém tudo se algo falhar."),
     ("teste_abas_mais.py", "Testa o menu Mais das abas (mais de 9 itens) e a distribuição em duas linhas: marcação, Option+Shift+0 e Esc e posição das abas no navegador."),
     ("heimdall_avisos.py", "Avisos do Heimdall Health e do Heimdall Finance: relatórios e análises ficam em um banco local de cada serviço, na aba Avisos, e nunca no app Notas. O Bark leva só texto genérico."),
+    ("teste_avisos_mac.py", "Testa os avisos nativos do Mac: fila local com permissões, texto completo só no Mac, Bark genérico, interruptor."),
     ("teste_avisos.py", "Testa os avisos: gravar, lido, HTML do texto nunca interpretado, rota /avisos/gravar do agente, pastas de saúde e finanças desviadas do Notas e Bark sem dados sensíveis."),
     ("heimdall_account.py", "Heimdall Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa, com link, o que faz e como configurar, página de Integrações (/integracoes, com ações POST) e /quem.json, que o site usa para mostrar Entrar ou o nome e os serviços de quem entrou. Só atende quem o Cloudflare Access aprovou."),
     ("heimdall_saude_diaria.py", "Métricas diárias de saúde (passos, energia, sono, frequência em repouso, HRV, oxigênio...) a partir do corpo do Health Auto Export, para o caminho da caixa de correio; soma as horas já recebidas para o total do dia nunca diminuir."),

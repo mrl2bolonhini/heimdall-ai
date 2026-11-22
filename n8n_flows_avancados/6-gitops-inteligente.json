@@ -795,6 +795,176 @@
     }
    },
    "onError": "continueRegularOutput"
+  },
+  {
+   "id": "avisarnoiphone510-mac",
+   "name": "Avisar o Mac: Avisar no iPhone",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    5200,
+    160
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/avisos/mac",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ title: 'PR em rascunho aberto', body: String($('Consolidar').first().json.titulo + ' (' + $('Consolidar').first().json.repo + ')').slice(0, 900), group: 'heimdall', url: $json.html_url }) }}",
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "avisarprnoabriu909-mac",
+   "name": "Avisar o Mac: Avisar: PR não abriu",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    5460,
+    380
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/avisos/mac",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ title: 'GitOps: o PR não abriu, branch apagada', body: String('O GitHub recusou abrir o Pull Request em ' + $('Consolidar').first().json.repo + ': ' + String((($('Abrir PR em rascunho').first().json.error || {}).message) || $('Abrir PR em rascunho').first().json.message || 'motivo desconhecido').slice(0, 200) + '. ' + ($json.error ? 'Não consegui apagar a branch ' + $('Consolidar').first().json.branch + '; apague à mão. ' : 'Apaguei a branch ' + $('Consolidar').first().json.branch + ' para não deixar lixo. ') + 'Achados descartados com a branch: ' + String($('Consolidar').first().json.corpo || '').replace(/\\s+/g, ' ').slice(0, 450)).slice(0, 900), group: 'heimdall' }) }}",
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "avisarsemcdigo822-mac",
+   "name": "Avisar o Mac: Avisar: sem código",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1820,
+    380
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/avisos/mac",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ title: $json.titulo, body: String($json.motivo).slice(0, 900), group: 'heimdall' }) }}",
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "avisarnadaparaanal435-mac",
+   "name": "Avisar o Mac: Avisar: nada para analisar",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2600,
+    380
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/avisos/mac",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ title: $json.titulo, body: String($json.motivo).slice(0, 900), group: 'heimdall' }) }}",
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "avisarsemmudanas37-mac",
+   "name": "Avisar o Mac: Avisar: sem mudanças",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    3380,
+    380
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8003/avisos/mac",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "X-Heimdall-Token",
+       "value": "__AGENTE_TOKEN__"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ title: $json.titulo, body: String($json.motivo).slice(0, 900), group: 'heimdall' }) }}",
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "onError": "continueRegularOutput"
   }
  ],
  "connections": {
@@ -882,6 +1052,11 @@
       "node": "Avisar: sem código",
       "type": "main",
       "index": 0
+     },
+     {
+      "node": "Avisar o Mac: Avisar: sem código",
+      "type": "main",
+      "index": 0
      }
     ],
     [
@@ -920,6 +1095,11 @@
     [
      {
       "node": "Avisar: nada para analisar",
+      "type": "main",
+      "index": 0
+     },
+     {
+      "node": "Avisar o Mac: Avisar: nada para analisar",
       "type": "main",
       "index": 0
      }
@@ -965,6 +1145,11 @@
     [
      {
       "node": "Avisar: sem mudanças",
+      "type": "main",
+      "index": 0
+     },
+     {
+      "node": "Avisar o Mac: Avisar: sem mudanças",
       "type": "main",
       "index": 0
      }
@@ -1047,6 +1232,11 @@
       "node": "Avisar no iPhone",
       "type": "main",
       "index": 0
+     },
+     {
+      "node": "Avisar o Mac: Avisar no iPhone",
+      "type": "main",
+      "index": 0
      }
     ]
    ]
@@ -1056,6 +1246,11 @@
     [
      {
       "node": "Avisar: PR não abriu",
+      "type": "main",
+      "index": 0
+     },
+     {
+      "node": "Avisar o Mac: Avisar: PR não abriu",
       "type": "main",
       "index": 0
      }

@@ -26,6 +26,8 @@ sh = (AQUI / "construir_app_mac.sh").read_text(encoding="utf-8")
 pl = plistlib.loads((AQUI / "app_mac" / "Info.plist").read_bytes())
 
 confere("Info.plist: app normal (Dock e barra de menus do alto) e executável certo", "LSUIElement" not in pl and pl.get("CFBundleExecutable") == "Heimdall" and pl.get("CFBundlePackageType") == "APPL")
+confere("Swift: avisos nativos (UNUserNotificationCenter, pasta avisos_mac, interruptor nas Configurações)",
+        "UNUserNotificationCenter" in swift and "avisos_mac" in swift and "avisosNoMac" in swift and "requestAuthorization" in swift)
 sem_texto = re.sub(r"//[^\n]*", "", re.sub(r'"(?:[^"\\]|\\.)*"', '""', swift))
 confere("Swift: chaves e parênteses balanceados", sem_texto.count("{") == sem_texto.count("}") and sem_texto.count("(") == sem_texto.count(")"))
 confere("Swift: toda ação do menu tem método @objc", all(f"func {n}(" in swift for n in set(re.findall(r"#selector\((\w+)[(\)]", swift))))

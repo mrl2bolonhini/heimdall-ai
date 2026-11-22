@@ -84,7 +84,7 @@ cleanup() {
 trap cleanup EXIT
 
 # --- Aplica as chaves e parâmetros (por variáveis de ambiente, fora da lista de processos) ---
-SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_MODELO="$MODELO" SUBS_SLUG="$SLUG" \
+SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_AGENTE="${HEIMDALL_AGENTE_TOKEN:-}" SUBS_MODELO="$MODELO" SUBS_SLUG="$SLUG" \
 SUBS_RAM="$A_RAM" SUBS_SWAP="$A_SWAP" SUBS_DISCO="$A_DISCO" SUBS_LIVRE="$A_LIVRE" \
 "$PY" - "$PROJECT_DIR/n8n_flows" "$TMP" <<'PYEOF' || fail "não consegui preparar os fluxos."
 import json, os, pathlib, re, sys
@@ -93,6 +93,7 @@ src, dst = map(pathlib.Path, sys.argv[1:3])
 subs = {
     "__LITELLM_KEY__": os.environ["SUBS_LITELLM_KEY"],
     "__BARK_KEY__": os.environ["SUBS_BARK_KEY"],
+    "__AGENTE_TOKEN__": os.environ["SUBS_AGENTE"],   # aviso direto ao Mac (/avisos/mac); sem token o nó falha em silêncio
     "__MODELO__": os.environ["SUBS_MODELO"],
     "__KUMA_SLUG__": os.environ["SUBS_SLUG"],
     "__ALERTA_RAM__": os.environ["SUBS_RAM"],

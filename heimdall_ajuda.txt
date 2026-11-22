@@ -576,3 +576,7 @@ Exemplos:
   heimdall help
   heimdall help health
   heimdall help --doc
+
+Avisos no Mac
+  Os avisos que vão ao iPhone pelo Bark também aparecem no Mac como notificações do macOS, com o texto completo (o Bark do iPhone continua genérico).
+  O app do Mac mostra as notificações; na primeira vez o macOS pede permissão. Liga e desliga em Heimdall, Configurações. No .env: HEIMDALL_AVISOS_MAC=0 desliga de vez.

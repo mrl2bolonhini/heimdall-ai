@@ -55,6 +55,40 @@
           "timeout": 30000
         }
       }
+    },
+    {
+      "id": "avisarfalha154-mac",
+      "name": "Avisar o Mac: Avisar falha",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/avisos/mac",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.titulo, body: String($json.corpo).slice(0, 900), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -74,6 +108,11 @@
         [
           {
             "node": "Avisar falha",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Avisar o Mac: Avisar falha",
             "type": "main",
             "index": 0
           }

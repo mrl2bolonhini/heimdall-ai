@@ -70,6 +70,7 @@ import heimdall_banco as banco
 import heimdall_exames as exames
 import heimdall_saude as saude
 import heimdall_avisos as avisos
+import heimdall_avisos_mac as avisos_mac
 import heimdall_seguranca as seguranca
 import heimdall_triagem as triagem
 import heimdall_eventkit as eventkit
@@ -1337,6 +1338,9 @@ class Handler(BaseHTTPRequestHandler):
                 except ValueError as ex:
                     return self._json(400, {"erro": str(ex)})
                 return self._json(200, {"ok": True, "id": novo, "bark": triagem.enviar_bark(avisos.texto_bark(serv)) if dado.get("bark") else None})
+            if u.path == "/avisos/mac":   # os fluxos do n8n mandam aqui o mesmo aviso do Bark, completo, para virar notificação do macOS
+                ok = avisos_mac.publicar(dado)
+                return self._json(200, {"ok": ok})
             if u.path == "/notas/gravar":
                 serv = avisos.PASTAS_SENSIVEIS.get(str(dado.get("pasta", "")).strip())
                 if serv:   # saúde e finanças não vão mais para o app Notas: viram aviso na aba Avisos do serviço

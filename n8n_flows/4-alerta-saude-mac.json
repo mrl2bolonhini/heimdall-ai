@@ -92,6 +92,40 @@
         200
       ],
       "parameters": {}
+    },
+    {
+      "id": "enviaraoiphone700-mac",
+      "name": "Avisar o Mac: Enviar ao iPhone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8003/avisos/mac",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Heimdall-Token",
+              "value": "__AGENTE_TOKEN__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: 'Alerta do Mac', body: String($json.mensagem).slice(0, 1500), group: 'heimdall' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -122,6 +156,11 @@
         [
           {
             "node": "Enviar ao iPhone",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Avisar o Mac: Enviar ao iPhone",
             "type": "main",
             "index": 0
           }

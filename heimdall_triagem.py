@@ -27,6 +27,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import heimdall_avisos_mac as avisos_mac
 import heimdall_banco as banco
 
 try:
@@ -299,9 +300,10 @@ def _sensivel(row: dict) -> str:
     return FONTES_SENSIVEIS.get(str(row.get("fonte", "")).lower(), "")
 
 
-def montar_aviso(row: dict, critico: bool, pendentes: int, sem_lembrete: bool = False) -> dict:
-    area = _sensivel(row)
-    corpo = "" if area else (row.get("resumo") or "")[:350]
+def montar_aviso(row: dict, critico: bool, pendentes: int, sem_lembrete: bool = False, completo: bool = False) -> dict:
+    """`completo=True` é o aviso do Mac (fica só no Mac): mostra título e resumo mesmo de saúde e finanças."""
+    area = None if completo else _sensivel(row)
+    corpo = "" if area else (row.get("resumo") or "")[:350 if not completo else 900]
     if sem_lembrete:
         corpo = (corpo + "\n" if corpo else "") + ("O lembrete ainda não foi criado no app Lembretes (autorização pendente no Mac); "
                                                   "o aviso continua até isso ser resolvido.")
@@ -314,12 +316,13 @@ def montar_aviso(row: dict, critico: bool, pendentes: int, sem_lembrete: bool = 
     return p
 
 
-def montar_aviso_agrupado(itens: list, critico: bool, pendentes: int) -> dict:
+def montar_aviso_agrupado(itens: list, critico: bool, pendentes: int, completo: bool = False) -> dict:
     """Um só aviso para vários itens pendentes (em vez de um aviso por item). `itens` é [(row, sem_lembrete)]. Itens com o mesmo título viram uma linha só
     ("x3"), e cada linha traz o começo do resumo (assunto do e-mail, sinais da saúde) para dar para decidir sem abrir o app."""
     grupos: dict = {}
     for row, _ in itens:
-        chave = f"{_sensivel(row)}: item para conferir" if _sensivel(row) else row["titulo"]   # saúde e finanças: sem título no Bark
+        sens = None if completo else _sensivel(row)   # completo (Mac): mostra o título também de saúde e finanças
+        chave = f"{sens}: item para conferir" if sens else row["titulo"]   # saúde e finanças: sem título no Bark
         g = grupos.setdefault(chave, {"row": row, "n": 0})
         g["n"] += 1
 
@@ -327,7 +330,7 @@ def montar_aviso_agrupado(itens: list, critico: bool, pendentes: int) -> dict:
         saida = []
         for n, (titulo, g) in enumerate(list(grupos.items())[:8], 1):
             lin = f"{n}. {titulo[:80]}" + (f" (x{g['n']})" if g["n"] > 1 else "")
-            det = "" if _sensivel(g["row"]) else " ".join((g["row"].get("resumo") or "").split())
+            det = "" if (not completo and _sensivel(g["row"])) else " ".join((g["row"].get("resumo") or "").split())
             if detalhe and det:
                 lin += ": " + det[:detalhe]
             saida.append(lin)
@@ -466,6 +469,9 @@ def ciclo(osa, enviar=enviar_bark, agora: datetime = None) -> dict:
         else:  # vários pendentes: um só aviso, que reinicia a contagem de todos os listados
             membros = [(tid, row, critico) for tid, row, _ in ativos]
             payload = montar_aviso_agrupado([(row, sem) for _, row, sem in ativos], critico, res["pendentes"])
+        if avisos_mac.ligado():   # o Mac recebe o texto completo, direto, sem passar pelo Bark
+            avisos_mac.publicar(montar_aviso(row, critico, res["pendentes"], sem_lembrete, completo=True) if len(ativos) <= 1 else
+                                montar_aviso_agrupado([(r, sem) for _, r, sem in ativos], critico, res["pendentes"], completo=True))
         if enviar(payload):
             for tid, row, crit in membros:
                 _atualizar(tid, avisos=int(row["avisos"] or 0) + 1, ultimo_aviso=_iso(agora))

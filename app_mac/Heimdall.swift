@@ -3,6 +3,7 @@
 // Compilado no seu Mac por construir_app_mac.sh (heimdall app).
 import AppKit
 import Foundation
+import UserNotifications
 import WebKit
 
 let pastaHeimdall: String = ProcessInfo.processInfo.environment["HEIMDALL_DIR"] ?? (NSHomeDirectory() + "/heimdall-ai")
@@ -227,7 +228,7 @@ final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownload
     }
 }
 
-final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
+final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNotificationCenterDelegate {
     var item: NSStatusItem!
     var ocupado = false
     var sites: [(String, String)] = []
@@ -255,7 +256,70 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         temporizador = Timer.scheduledTimer(withTimeInterval: 600, repeats: true) { [weak self] _ in
             self?.buscarCaixa(silencioso: true)
         }
+        iniciarAvisos()
     }
+
+    // --- avisos nativos: o Heimdall grava o aviso completo em banco/avisos_mac/ (só no Mac) e o app mostra como notificação do macOS
+    var temporizadorAvisos: Timer?
+    var avisosPermitidos: Bool { UserDefaults.standard.object(forKey: "avisosNoMac") as? Bool ?? true }
+
+    func pastaDeAvisos() -> String {
+        let base = valorDoEnv("HEIMDALL_DB_DIR") ?? (pastaHeimdall + "/banco")
+        return (base as NSString).expandingTildeInPath + "/avisos_mac"
+    }
+
+    func iniciarAvisos() {
+        guard valorDoEnv("HEIMDALL_AVISOS_MAC") != "0" else { return }
+        let centro = UNUserNotificationCenter.current()
+        centro.delegate = self
+        centro.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
+        temporizadorAvisos = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in self?.lerAvisos() }
+    }
+
+    func lerAvisos() {
+        let pasta = pastaDeAvisos()
+        let fm = FileManager.default
+        guard let nomes = try? fm.contentsOfDirectory(atPath: pasta) else { return }
+        for nome in nomes.filter({ $0.hasSuffix(".json") }).sorted() {
+            let caminho = pasta + "/" + nome
+            defer { try? fm.removeItem(atPath: caminho) }   // o arquivo some depois de lido; com o aviso desligado, também (não acumula)
+            guard avisosPermitidos,
+                  let dados = fm.contents(atPath: caminho),
+                  let o = try? JSONSerialization.jsonObject(with: dados) as? [String: Any] else { continue }
+            mostrarAviso(titulo: o["titulo"] as? String ?? "Heimdall", corpo: o["corpo"] as? String ?? "",
+                         grupo: o["grupo"] as? String ?? "heimdall", nivel: o["nivel"] as? String ?? "active")
+        }
+    }
+
+    func mostrarAviso(titulo: String, corpo: String, grupo: String, nivel: String) {
+        let c = UNMutableNotificationContent()
+        c.title = titulo
+        c.body = corpo
+        c.threadIdentifier = grupo
+        c.sound = .default
+        if #available(macOS 12.0, *) {
+            switch nivel {
+            case "critical", "timeSensitive": c.interruptionLevel = .timeSensitive
+            case "passive": c.interruptionLevel = .passive; c.sound = nil
+            default: c.interruptionLevel = .active
+            }
+        }
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: c, trigger: nil))
+    }
+
+    // Com o app em primeiro plano o macOS não mostra a notificação sozinho: pede para mostrar mesmo assim.
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .list, .sound])
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        ativarApp()
+        completionHandler()
+    }
+
+    @objc func mudouAvisos() { UserDefaults.standard.set(caixaAvisos.state == .on, forKey: "avisosNoMac") }
 
     func adicionar(_ menu: NSMenu, _ titulo: String, _ acao: Selector, _ tecla: String = "") {
         let i = NSMenuItem(title: titulo, action: acao, keyEquivalent: tecla)
@@ -529,6 +593,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let escolhaInicial = NSPopUpButton(frame: .zero, pullsDown: false)
     var caixaEntrar: NSButton!
     var caixaLigar: NSButton!
+    var caixaAvisos: NSButton!
 
     @objc func abrirConfiguracoes() {
         if janelaConfig == nil {
@@ -541,12 +606,13 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
             escolhaInicial.setAccessibilityLabel("Serviço que abre ao iniciar o app")
             caixaEntrar = NSButton(checkboxWithTitle: "Iniciar o Heimdall quando eu ligar o Mac", target: self, action: #selector(mudouEntrada))
             caixaLigar = NSButton(checkboxWithTitle: "Ligar os serviços do Heimdall ao abrir o app", target: self, action: #selector(mudouLigar))
-            let pilha = NSStackView(views: [rotulo, escolhaInicial, caixaEntrar, caixaLigar])
+            caixaAvisos = NSButton(checkboxWithTitle: "Mostrar os avisos do Heimdall como notificações do Mac", target: self, action: #selector(mudouAvisos))
+            let pilha = NSStackView(views: [rotulo, escolhaInicial, caixaEntrar, caixaLigar, caixaAvisos])
             pilha.orientation = .vertical
             pilha.alignment = .leading
             pilha.spacing = 14
             pilha.translatesAutoresizingMaskIntoConstraints = false
-            let j = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 190), styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            let j = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 230), styleMask: [.titled, .closable], backing: .buffered, defer: false)
             j.title = "Configurações do Heimdall"
             j.isReleasedWhenClosed = false
             if let conteudo = j.contentView {
@@ -565,6 +631,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate {
         escolhaInicial.selectItem(withTitle: atual.isEmpty ? "Nenhum (só a barra de estado)" : atual)
         caixaEntrar.state = entradaAtiva() ? .on : .off
         caixaLigar.state = UserDefaults.standard.bool(forKey: "ligarAoAbrir") ? .on : .off
+        caixaAvisos.state = avisosPermitidos ? .on : .off
         ativarApp()
         janelaConfig?.makeKeyAndOrderFront(nil)
     }

@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Avisos completos direto no Mac
+- Os mesmos avisos enviados ao iPhone pelo Bark agora também chegam ao Mac como notificações nativas do macOS, com o texto completo (inclusive títulos e resumos de saúde e finanças), sem passar por servidor de terceiros. O Bark do iPhone continua com o texto genérico.
+- Como funciona: o Heimdall grava o aviso em banco/avisos_mac/ (pasta só do dono) e o app do Mac lê a cada 4 segundos, mostra a notificação e apaga o arquivo. Na primeira vez o macOS pede permissão para notificações; o Foco do Mac é respeitado.
+- Onde nasce: triagem de pendências, avisos urgentes do e-mail oficial e os fluxos do n8n que usavam o Bark (alerta do Mac, estudo, resumo agrupado, GitOps, Second Brain, aviso de falha), por um nó "Avisar o Mac" ao lado de cada nó do Bark. Rotas novas do agente: POST /avisos/mac.
+- Configurações do app: caixa "Mostrar os avisos do Heimdall como notificações do Mac". Desligar de vez: HEIMDALL_AVISOS_MAC=0 no .env.
+- Instalador dos fluxos básicos (instalar_fluxos_n8n.sh) agora também preenche o token do agente.
+
 ## 2026-11-22 - App do Mac: Configurações e novos atalhos do menu Abrir
 - Novo item "Configurações…" (Command+vírgula) no menu Heimdall e no menu de estado: escolher qual serviço abre ao iniciar o app (qualquer um, ou nenhum; padrão Chat), iniciar o Heimdall quando o Mac ligar (cria ou apaga o mesmo LaunchAgent do heimdall app --entrar; vale a partir do próximo login) e ligar os serviços ao abrir o app (só liga se nada estiver no ar). As escolhas ficam nas preferências do app. Clicar no ícone do Dock sem janelas abre o serviço escolhido.
 - O menu Heimdall ganhou Sobre o Heimdall, Ocultar o Heimdall (Command+H), Ocultar os outros (Option+Command+H) e Mostrar tudo.

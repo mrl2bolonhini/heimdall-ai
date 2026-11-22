@@ -284,6 +284,11 @@ def avisar(cfg, titulo, corpo, urgente=False, simular=False):
         except Exception as e:  # noqa: BLE001 - sem o n8n, cai no aviso direto
             print("Resumo agrupado indisponível, aviso direto:", e, file=sys.stderr)
     try:
+        import heimdall_avisos_mac as _mac   # o Mac recebe o aviso direto, completo
+        _mac.publicar({"title": titulo, "body": corpo, "group": "heimdall", "level": "timeSensitive" if urgente else "active"})
+    except Exception:  # noqa: BLE001 - o aviso do Mac nunca derruba o do iPhone
+        pass
+    try:
         post_json("https://api.day.app/push", {"device_key": chave, "title": titulo, "body": corpo[:900], "group": "heimdall",
                                                **({"level": "timeSensitive"} if urgente else {})}, timeout=30)
         return True
