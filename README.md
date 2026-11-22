@@ -246,7 +246,7 @@ Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e
 
 Resumos agrupados: os avisos de rotina saem em três notificações por dia (6h, 8h e 10h) pelo fluxo "Resumo agrupado" (webhook `heimdall-resumo`); falhas, GitOps, alerta do Mac e o estudo continuam na hora. O "Monitor de saúde" (webhook `heimdall-saude`, resumo às 5h50) recebe os dados do Health Auto Export; as regras decidem o que é relevante e o modelo só redige.
 
-Banco pessoal: o Mac guarda um SQLite (`db/heimdall.db`, fora do Git) com saúde, diários oficiais, e-mails de serviços públicos (sem o corpo), estudos, privacidade, avisos e a análise do Second Brain; o chat consulta pelas ferramentas `banco_*`, `saude_historico` e as de treinos, ECG e frequência cardíaca (roteiro em `guides/LEIAME_saude_apple.txt`). Os planos estão em `ROADMAP.md` e no site.
+Banco pessoal: o Mac guarda um SQLite (`db/heimdall.db`, fora do Git) com saúde, diários oficiais, e-mails de serviços públicos (sem o corpo), estudos, privacidade, avisos e a análise do Second Brain; o chat consulta pelas ferramentas `banco_*`, `saude_historico` e as de treinos, ECG e frequência cardíaca (roteiro em `guides/LEIAME_saude_apple.txt`). Exames, receitas e encaminhamentos vão para a pasta própria `health/inbox` (originais lidos em `health/archive`, o que não deu para ler em `health/review`). Os planos estão em `ROADMAP.md` e no site.
 
 Instalação: `bash scripts/instalar_fluxos_n8n.sh` (básicos), `bash scripts/instalar_automacoes_avancadas.sh` (GitOps, digest, Second Brain, estudo) e `bash scripts/instalar_monitor_privacidade.sh` (monitor e diários). Rodar um fluxo agora: `docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=<id>`.
 

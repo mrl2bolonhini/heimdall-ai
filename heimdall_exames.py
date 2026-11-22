@@ -70,9 +70,10 @@ def carregar_env() -> None:
 
 carregar_env()
 import heimdall_banco as banco  # noqa: E402
+import heimdall_pastas  # noqa: E402
 import heimdall_agenda as agenda  # noqa: E402  (evento do Calendário ou lembrete: a regra única)
 
-DIR = Path(os.environ.get("HEIMDALL_EXAMES_DIR", str(banco.DB_DIR / "documentos"))).expanduser()
+DIR = Path(os.environ.get("HEIMDALL_EXAMES_DIR", str(heimdall_pastas.health(PROJECT_DIR, banco.DB_DIR)))).expanduser()
 MAX_BYTES = 25 * 1024 * 1024
 EXT_OK = {".pdf", ".png", ".jpg", ".jpeg", ".heic"}
 USAR_MODELO = os.environ.get("HEIMDALL_EXAMES_LLM", "1") != "0"
@@ -922,14 +923,26 @@ def _escrever(fn):
             con.close()
 
 
+def _pasta_inbox() -> Path:
+    return heimdall_pastas.health_inbox(DIR)
+
+
+def _pasta_archive() -> Path:
+    return heimdall_pastas.health_archive(DIR)
+
+
+def _pasta_review() -> Path:
+    return heimdall_pastas.health_review(DIR)
+
+
 def preparar_pasta() -> Path:
-    for sub in ("entrada", "arquivados", "revisar"):
-        (DIR / sub).mkdir(parents=True, exist_ok=True)
+    for pasta in (DIR, _pasta_inbox(), _pasta_archive(), _pasta_review()):
+        pasta.mkdir(parents=True, exist_ok=True)
         try:
-            (DIR / sub).chmod(0o700)
+            pasta.chmod(0o700)
         except OSError:
             pass
-    return DIR / "entrada"
+    return _pasta_inbox()
 
 
 def registrar(dados: bytes, nome: str, origem: str = "pasta") -> dict:
@@ -955,7 +968,7 @@ def registrar(dados: bytes, nome: str, origem: str = "pasta") -> dict:
 
     doc_id = _escrever(grava)
     preparar_pasta()
-    destino = DIR / "arquivados" / f"{doc_id:05d}{Path(nome).suffix.lower()}"
+    destino = _pasta_archive() / f"{doc_id:05d}{Path(nome).suffix.lower()}"
     destino.write_bytes(dados)
     try:
         destino.chmod(0o600)
@@ -965,7 +978,7 @@ def registrar(dados: bytes, nome: str, origem: str = "pasta") -> dict:
 
 
 def _mover_para_revisar(arq: Path, motivo: str) -> None:
-    revisar = DIR / "revisar"
+    revisar = _pasta_review()
     revisar.mkdir(parents=True, exist_ok=True)
     destino = revisar / arq.name
     if destino.exists():
@@ -979,7 +992,7 @@ def _mover_para_revisar(arq: Path, motivo: str) -> None:
 
 
 def processar_entrada(origem: str = "pasta") -> list:
-    """Lê o que estiver na pasta de entrada. Cada arquivo vira um documento pendente (e é arquivado) ou vai para revisar/ com o motivo."""
+    """Lê o que estiver na pasta de entrada. Cada arquivo vira um documento pendente (e é arquivado) ou vai para health/review com o motivo."""
     entrada = preparar_pasta()
     saida = []
     with _TRAVA:

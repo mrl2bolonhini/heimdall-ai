@@ -8,7 +8,7 @@
     python3 financas_cli.py --entrada                             importa o que estiver na pasta de entrada
     python3 financas_cli.py --pasta [--abrir]                     mostra (e abre) a pasta de entrada e mostra a de planilhas
 
-A pasta de entrada é finance/inbox. Arquivos que importam vão para importados/; os que deixam dúvida vão para revisar/,
+A pasta de entrada é finance/inbox. Arquivos que importam vão para imported/; os que deixam dúvida vão para review/,
 cada um com um .motivo.txt. Os dados ficam só neste Mac.
 """
 import argparse
@@ -149,7 +149,7 @@ def main() -> None:
             dados, nome = _ler(a.importar)
             con = _banco()
             r = fa.importar_arquivo(con, dados, nome, a.conta, a.forcar)
-            fa.concluir_revisao(DIR_DADOS, Path(a.importar).expanduser())  # se veio de revisar/, vai para importados/ e o motivo some
+            fa.concluir_revisao(DIR_DADOS, Path(a.importar).expanduser())  # se veio de review/, vai para imported/ e o motivo some
             print(r["resumo"])
             print(f"\nImportado na conta '{r['conta']}': {r['novas']} novos, {r['repetidas']} já existentes.")
         elif a.boleto:
@@ -401,7 +401,7 @@ def main() -> None:
                     print(f"Para revisar: {r['arquivo']}: {r['motivo']}")
         else:
             pasta = fa.preparar_pasta(DIR_DADOS)
-            fa._limpar_motivos(pasta / "revisar")
+            fa._limpar_motivos(heimdall_pastas.finance_review(pasta))
             print(f"Pasta de entrada: {pasta}")
             import financas_planilhas as fplan
             print(f"Pasta de planilhas (xlsx e csv de gastos, investimentos, empréstimos e outros): {fplan.pasta_de_entrada(DIR_DADOS)}")

@@ -6,7 +6,7 @@ Tudo roda no seu Mac; nada daqui usa internet. Os extratos e faturas entram como
 PDF: o texto é extraído (pypdf, que já está no requirements.txt, ou o pdftotext do poppler) e lido por um leitor
 genérico de linhas "data, descrição, valor". Como cada banco monta o PDF de um jeito, o leitor confere o resultado
 com os totais que o próprio documento cita (por exemplo "Total da fatura"). Só o que confere é importado sozinho;
-o resto vai para a pasta "revisar" ou pede confirmação sua.
+o resto vai para a pasta "review" ou pede confirmação sua.
 
 Inspeção anônima (heimdall finance --inspect ARQUIVO): mostra só a estrutura do arquivo, com todas as letras trocadas
 por x e todos os números por 9, menos um vocabulário de rótulos de extrato (data, valor, total, fatura...). Serve para
@@ -592,8 +592,8 @@ def _gravar(con, a: dict, nome: str, conta: str, agora: str = None, hash_arquivo
 # --------------------------------------------------------------------------------------------
 def preparar_pasta(base: Path) -> Path:
     entrada = heimdall_pastas.finance_inbox(base)
-    for sub in ("", "importados", "revisar"):
-        (entrada / sub).mkdir(parents=True, exist_ok=True)
+    for pasta in (entrada, heimdall_pastas.finance_imported(entrada), heimdall_pastas.finance_review(entrada)):
+        pasta.mkdir(parents=True, exist_ok=True)
     return entrada
 
 
@@ -614,7 +614,7 @@ def _motivo_de(arq: Path) -> Path:
 
 
 def _limpar_motivos(revisar: Path) -> int:
-    """Apaga os .motivo.txt cujo arquivo já saiu de revisar/ (foi revisado, importado ou apagado)."""
+    """Apaga os .motivo.txt cujo arquivo já saiu de review/ (foi revisado, importado ou apagado)."""
     n = 0
     if not revisar.is_dir():
         return 0
@@ -629,7 +629,7 @@ def _limpar_motivos(revisar: Path) -> int:
 
 
 def _ja_em_revisar(revisar: Path, h: str, ignorar: Path) -> bool:
-    """True se já há em revisar/ um arquivo com exatamente o mesmo conteúdo."""
+    """True se já há em review/ um arquivo com exatamente o mesmo conteúdo."""
     for outro in revisar.iterdir():
         if outro.is_file() and outro != ignorar and not outro.name.endswith(".motivo.txt") and not outro.name.startswith("."):
             try:
@@ -641,19 +641,19 @@ def _ja_em_revisar(revisar: Path, h: str, ignorar: Path) -> bool:
 
 
 def concluir_revisao(base: Path, arquivo: Path, agora: str = None) -> None:
-    """Chamado quando um arquivo de revisar/ foi de fato revisado e importado: vai para importados/ e o motivo é apagado."""
+    """Chamado quando um arquivo de review/ foi de fato revisado e importado: vai para imported/ e o motivo é apagado."""
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     entrada = preparar_pasta(Path(base))
     arquivo = Path(arquivo)
-    if arquivo.is_file() and arquivo.parent.resolve() == (entrada / "revisar").resolve():
-        _mover(arquivo, entrada / "importados", agora)
-    _limpar_motivos(entrada / "revisar")
+    if arquivo.is_file() and arquivo.parent.resolve() == heimdall_pastas.finance_review(entrada).resolve():
+        _mover(arquivo, heimdall_pastas.finance_imported(entrada), agora)
+    _limpar_motivos(heimdall_pastas.finance_review(entrada))
 
 
 def devolver_para_entrada(base: Path) -> list:
-    """Move os arquivos de revisar/ de volta para entrada/ (sem os .motivo.txt) para serem lidos de novo. Devolve [(nome, movido, aviso)]."""
+    """Move os arquivos de review/ de volta para entrada/ (sem os .motivo.txt) para serem lidos de novo. Devolve [(nome, movido, aviso)]."""
     entrada = preparar_pasta(Path(base))
-    revisar = entrada / "revisar"
+    revisar = heimdall_pastas.finance_review(entrada)
     saida = []
     for arq in sorted(revisar.iterdir()):
         if not arq.is_file() or arq.name.startswith(".") or arq.name.endswith(".motivo.txt"):
@@ -686,12 +686,12 @@ def _tentar_boleto(con, arq: Path, dados: bytes, agora: str):
 
 
 def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 1024 * 1024) -> list:
-    """Importa o que estiver na pasta entrada/. Sucesso vai para importados/; dúvida vai para revisar/ com um .motivo.txt.
+    """Importa o que estiver na pasta entrada/. Sucesso vai para imported/; dúvida vai para review/ com um .motivo.txt.
     Arquivo duplicado (mesmo conteúdo já importado, ou nada novo nos lançamentos) não é importado e é apagado.
-    Os .motivo.txt de arquivos que já saíram de revisar/ são apagados."""
+    Os .motivo.txt de arquivos que já saíram de review/ são apagados."""
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     entrada = preparar_pasta(Path(base))
-    revisar = entrada / "revisar"
+    revisar = heimdall_pastas.finance_review(entrada)
     resultados = []
     limpos = _limpar_motivos(revisar)
     if limpos:
@@ -725,13 +725,13 @@ def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 
                 resultados.append({"arquivo": arq.name, "ok": True, "duplicado": True, "conta": r["conta"], "novas": 0, "repetidas": r["repetidas"], "lidas": r["lidas"],
                                    "motivo": "Todos os lançamentos já estavam importados: não importei de novo e apaguei esta cópia."})
                 continue
-            _mover(arq, entrada / "importados", agora)
+            _mover(arq, heimdall_pastas.finance_imported(entrada), agora)
             _limpar_motivos(revisar)
             resultados.append({"arquivo": arq.name, "ok": True, "conta": r["conta"], "novas": r["novas"], "repetidas": r["repetidas"], "lidas": r["lidas"]})
         except ERRO as ex:
             boleto = _tentar_boleto(con, arq, dados, agora) if arq.suffix.lower() == ".pdf" else None
             if boleto:
-                _mover(arq, entrada / "importados", agora)
+                _mover(arq, heimdall_pastas.finance_imported(entrada), agora)
                 _limpar_motivos(revisar)
                 resultados.append(boleto)
                 continue
@@ -744,8 +744,8 @@ def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 
 
 
 def pendentes(base: Path) -> list:
-    """(arquivo, motivo) dos arquivos em revisar/."""
-    pasta = heimdall_pastas.finance_inbox(base) / "revisar"
+    """(arquivo, motivo) dos arquivos em review/."""
+    pasta = heimdall_pastas.finance_review(heimdall_pastas.finance_inbox(base))
     if not pasta.is_dir():
         return []
     saida = []

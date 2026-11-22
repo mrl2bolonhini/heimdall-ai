@@ -15,7 +15,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-exames-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "documentos"), "HEIMDALL_EXAMES_LLM": "0"})
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "health"), "HEIMDALL_EXAMES_LLM": "0"})
 sys.path.insert(0, str(RAIZ))
 import heimdall_banco as banco  # noqa: E402
 import heimdall_exames as ex  # noqa: E402
@@ -222,7 +222,7 @@ confere("PDF com texto é lido direto (sem OCR)", not ocr_pdf and "Hemoglobina" 
 r = ex.registrar(pdf, "exame.pdf", "pasta")
 confere("registrar cria documento pendente", not r["duplicado"] and r["tipo"] == "exame" and r["itens"] >= 12 and r["dia"] == "2026-11-10", r)
 d1 = r["id"]
-confere("original arquivado com permissão restrita", (ex.DIR / "arquivados" / f"{d1:05d}.pdf").exists() and oct((ex.DIR / "arquivados" / f"{d1:05d}.pdf").stat().st_mode)[-3:] == "600")
+confere("original arquivado com permissão restrita", (ex.DIR / "archive" / f"{d1:05d}.pdf").exists() and oct((ex.DIR / "archive" / f"{d1:05d}.pdf").stat().st_mode)[-3:] == "600")
 confere("nada nas tabelas definitivas antes de confirmar", sql("SELECT COUNT(*) n FROM exames_resultados")[0]["n"] == 0)
 resumo = ex.resumo_documento(d1)
 confere("resumo para ouvir: separa fora da referência e traz o código de confirmação", "Fora da referência:" in resumo and "Vitamina D" in resumo and f"heimdall labs confirm {d1}" in resumo, resumo)
@@ -300,7 +300,7 @@ confere("relatório de encaminhamentos", "Endocrinologia" in ex.relatorio_encami
 # 6. Pasta de entrada e recebimento do iPhone
 # ----------------------------------------------------------------------------------------
 entrada = ex.preparar_pasta()
-confere("pastas criadas", all((ex.DIR / s).is_dir() for s in ("entrada", "arquivados", "revisar")))
+confere("pastas criadas", all((ex.DIR / s).is_dir() for s in ("inbox", "archive", "review")))
 (entrada / "novo.pdf").write_bytes(pdf_com_texto(["Exame", "Data da coleta: 02/02/2026", "Ferritina 55 ng/mL 30 a 400", "TSH 1,9 uUI/mL 0,4 a 4,5", "Creatinina 0,8 mg/dL 0,7 a 1,3"]))
 (entrada / "quebrado.pdf").write_bytes(b"isto nao e um pdf")
 (entrada / "nota.docx").write_bytes(b"x")
@@ -310,7 +310,7 @@ os.utime(entrada / "quebrado.pdf", (datetime.now().timestamp() - 10,) * 2)
 rs = ex.processar_entrada()
 nomes = {x["arquivo"]: x for x in rs}
 confere("pasta: documento bom vira pendente e sai da entrada", nomes["novo.pdf"]["ok"] and not (entrada / "novo.pdf").exists())
-confere("pasta: arquivo ruim vai para revisar com o motivo", not nomes["quebrado.pdf"]["ok"] and (ex.DIR / "revisar" / "quebrado.pdf").exists() and (ex.DIR / "revisar" / "quebrado.pdf.motivo.txt").exists(), nomes)
+confere("pasta: arquivo ruim vai para revisar com o motivo", not nomes["quebrado.pdf"]["ok"] and (ex.DIR / "review" / "quebrado.pdf").exists() and (ex.DIR / "review" / "quebrado.pdf.motivo.txt").exists(), nomes)
 confere("pasta: extensão desconhecida é ignorada", (entrada / "nota.docx").exists() and "nota.docx" not in nomes)
 confere("pasta de novo: nada a refazer", ex.processar_entrada() == [])
 

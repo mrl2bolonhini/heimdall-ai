@@ -6,6 +6,9 @@ e, dentro do finance, entrada para inbox e entrada_planilhas para sheets (qdrant
 Pasta de dados do Finance: era dados_financas/, agora é finance/. Na primeira vez que qualquer serviço pede a pasta, se só a antiga existir,
 ela é renomeada (os dados não são copiados nem apagados: o mesmo diretório muda de nome). Se não der para renomear, continua valendo a antiga.
 HEIMDALL_FINANCE_DIR no .env, quando existe, manda mais que tudo isto.
+Subpastas: db/copias para db/copies, db/caixa_recebidos para db/mailbox, db/avisos_mac para db/alerts, db/pessoas para db/people;
+finance/inbox/importados para imported e revisar para review; os documentos de saúde saíram de db/documentos para a pasta própria health/
+(entrada para inbox, arquivados para archive, revisar para review).
 """
 import os
 from pathlib import Path
@@ -46,3 +49,59 @@ def finance_inbox(base: Path) -> Path:
 def finance_sheets(base: Path) -> Path:
     """Pasta onde se soltam planilhas, dentro da pasta de dados do Finance. Era entrada_planilhas/."""
     return migrar(Path(base), "entrada_planilhas", "sheets")
+
+
+def finance_imported(inbox: Path) -> Path:
+    """Arquivos do Finance já importados, dentro de finance/inbox. Era importados/."""
+    return migrar(Path(inbox), "importados", "imported")
+
+
+def finance_review(inbox: Path) -> Path:
+    """Arquivos do Finance que pedem conferência, dentro de finance/inbox. Era revisar/."""
+    return migrar(Path(inbox), "revisar", "review")
+
+
+def db_copies(raiz: Path = AQUI) -> Path:
+    """Cópia diária do banco (7 últimas). Era db/copias/."""
+    return migrar(db(raiz), "copias", "copies")
+
+
+def db_mailbox(raiz: Path = AQUI) -> Path:
+    """Cópia local do que veio da caixa na nuvem. Era db/caixa_recebidos/."""
+    return migrar(db(raiz), "caixa_recebidos", "mailbox")
+
+
+def db_alerts(raiz: Path = AQUI) -> Path:
+    """Avisos para o app do Mac. Era db/avisos_mac/."""
+    return migrar(db(raiz), "avisos_mac", "alerts")
+
+
+def db_people(raiz: Path = AQUI) -> Path:
+    """Banco de cada pessoa (permissão 0700 preservada: é o mesmo diretório). Era db/pessoas/."""
+    return migrar(db(raiz), "pessoas", "people")
+
+
+def health(raiz: Path = AQUI, db_dir: Path = None) -> Path:
+    """Pasta própria da Saúde para soltar exames, receitas e encaminhamentos (inbox), com archive e review.
+    Os documentos ficavam em db/documentos/: se só ela existir, é movida para health/ (mesmo diretório, nada é copiado nem apagado)."""
+    raiz = Path(raiz)
+    novo = raiz / "health"
+    antigo = (Path(db_dir) if db_dir else db(raiz)) / "documentos"
+    if antigo.exists() and not novo.exists():
+        try:
+            os.rename(antigo, novo)
+        except OSError:
+            return antigo
+    return novo
+
+
+def health_inbox(base: Path) -> Path:
+    return migrar(Path(base), "entrada", "inbox")
+
+
+def health_archive(base: Path) -> Path:
+    return migrar(Path(base), "arquivados", "archive")
+
+
+def health_review(base: Path) -> Path:
+    return migrar(Path(base), "revisar", "review")

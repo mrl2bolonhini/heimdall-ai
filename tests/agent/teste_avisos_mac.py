@@ -29,7 +29,7 @@ def confere(nome, ok, extra=""):
         falhas += 1
 
 
-pasta = Path(tmp) / "avisos_mac"
+pasta = Path(tmp) / "alerts"
 confere("publicar grava um JSON na pasta de avisos", mac.publicar({"title": "Olá", "body": "Corpo completo", "group": "teste", "level": "timeSensitive"}))
 arqs = list(pasta.glob("*.json"))
 confere("um arquivo, sem temporário sobrando", len(arqs) == 1 and not list(pasta.glob(".*.tmp")))

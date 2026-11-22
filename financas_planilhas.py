@@ -628,17 +628,17 @@ def importar_arquivo(con, dados: bytes, arquivo: str, pasta: Path, **kw) -> list
 
 def pasta_de_entrada(base: Path) -> Path:
     p = heimdall_pastas.finance_sheets(base)
-    for sub in ("", "importados"):
-        (p / sub).mkdir(parents=True, exist_ok=True)
+    for pasta in (p, heimdall_pastas.finance_imported(p)):
+        pasta.mkdir(parents=True, exist_ok=True)
         try:
-            (p / sub).chmod(0o700)
+            pasta.chmod(0o700)
         except OSError:
             pass
     return p
 
 
 def processar_pasta(con, base: Path, agora: str = None, modelo=None) -> list:
-    """Importa o que foi solto em sheets/. Sucesso vai para importados/; dúvida vira pergunta na página Planilhas e o arquivo sai da pasta."""
+    """Importa o que foi solto em sheets/. Sucesso vai para imported/; dúvida vira pergunta na página Planilhas e o arquivo sai da pasta."""
     entrada = pasta_de_entrada(base)
     saida = []
     for arq in sorted(entrada.iterdir()):
@@ -652,9 +652,9 @@ def processar_pasta(con, base: Path, agora: str = None, modelo=None) -> list:
             if any(r.get("duplicado") for r in res):
                 arq.unlink()
             else:
-                destino = entrada / "importados" / arq.name
+                destino = heimdall_pastas.finance_imported(entrada) / arq.name
                 if destino.exists():
-                    destino = entrada / "importados" / f"{datetime.now():%Y%m%d-%H%M%S}-{arq.name}"
+                    destino = heimdall_pastas.finance_imported(entrada) / f"{datetime.now():%Y%m%d-%H%M%S}-{arq.name}"
                 arq.replace(destino)
             saida.append({"arquivo": arq.name, "resultados": res})
         except fn.ErroFinance as ex:

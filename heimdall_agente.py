@@ -1505,7 +1505,7 @@ def _ler_documentos() -> None:
                                  "body": f"{len(novos)} documento(s) lido(s). Para ouvir o que foi lido: heimdall labs pending."})
         if falhos:
             triagem.enviar_bark({"title": "Saúde: documento não lido", "group": "saude", "level": "active",
-                                 "body": f"{len(falhos)} documento(s) não puderam ser lidos e estão na pasta revisar, com o motivo."})
+                                 "body": f"{len(falhos)} documento(s) não puderam ser lidos e estão na pasta health/review, com o motivo."})
     except Exception as e:  # noqa: BLE001 - a vigia nunca derruba o agente
         sys.stderr.write(f"{time.strftime('%H:%M:%S')} documentos de saúde: {type(e).__name__}: {str(e)[:160]}\n")
     finally:

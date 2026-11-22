@@ -3,7 +3,7 @@
 
 Interruptor: HEIMDALL_CAIXA=1 no .env liga; qualquer outro valor desliga e o Heimdall volta a depender só do agente do Mac.
 Chaves no .env: HEIMDALL_CAIXA_URL (padrão abaixo), HEIMDALL_CAIXA_TOKEN (token de dono, criado por `start`), CLOUDFLARE_API_TOKEN (só para `start`).
-Antes de apagar qualquer item da caixa, o Mac grava uma cópia em db/caixa_recebidos/<pessoa>/ (permissão só do dono): nada se perde.
+Antes de apagar qualquer item da caixa, o Mac grava uma cópia em db/mailbox/<pessoa>/ (permissão só do dono): nada se perde.
 
     python3 heimdall_caixa.py status          estado (ligada ou não) e se o Worker responde
     python3 heimdall_caixa.py start           cria o token de dono (prova acesso com a chave da Cloudflare) e o grava no .env
@@ -25,7 +25,7 @@ AQUI = Path(__file__).resolve().parent
 URL_PADRAO = "https://heimdall-caixa.mbolonhinic.workers.dev"
 USER_AGENT = "heimdall-ai/1.0"
 CHAVES = ("HEIMDALL_CAIXA", "HEIMDALL_CAIXA_URL", "HEIMDALL_CAIXA_TOKEN", "HEIMDALL_CAIXA_MEU_NOME", "CLOUDFLARE_API_TOKEN")
-PASTA = heimdall_pastas.db(AQUI) / "caixa_recebidos"
+PASTA = heimdall_pastas.db_mailbox(AQUI)
 
 
 def _env() -> dict:
@@ -140,7 +140,7 @@ def puxar(env=None, abrir=None, pasta=None, tratar=None) -> dict:
 
 
 def importar_saude(nome: str, dados, meu_nome: str = "") -> dict:
-    """Grava a saúde de uma pessoa no banco dela (db/pessoas/<nome>/, ou o banco de sempre se for o dono): treinos, ECG, frequência por hora, eventos
+    """Grava a saúde de uma pessoa no banco dela (db/people/<nome>/, ou o banco de sempre se for o dono): treinos, ECG, frequência por hora, eventos
     (heimdall_saude) e métricas diárias (heimdall_saude_diaria). Aceita o formato do Atalho (heimdall_atalhos) e o do Health Auto Export."""
     import heimdall_atalhos
     import heimdall_banco
@@ -202,7 +202,7 @@ def main(argv=None) -> int:
                 print("Caixa desligada: nada a fazer. Para ligar: heimdall env --set HEIMDALL_CAIXA 1")
                 return 0
             r = puxar(env, tratar=lambda it: tratar_padrao(it, env))
-            print(f"Recebidos {r['recebidos']}, apagados da caixa {r['apagados']}, falhas {r['falhas']}. Cópias em db/caixa_recebidos/.")
+            print(f"Recebidos {r['recebidos']}, apagados da caixa {r['apagados']}, falhas {r['falhas']}. Cópias em db/mailbox/.")
             return 1 if r["falhas"] else 0
         else:
             print(__doc__)

@@ -259,13 +259,22 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         iniciarAvisos()
     }
 
-    // --- avisos nativos: o Heimdall grava o aviso completo em db/avisos_mac/ (só no Mac) e o app mostra como notificação do macOS
+    // --- avisos nativos: o Heimdall grava o aviso completo em db/alerts/ (só no Mac) e o app mostra como notificação do macOS
     var temporizadorAvisos: Timer?
     var avisosPermitidos: Bool { UserDefaults.standard.object(forKey: "avisosNoMac") as? Bool ?? true }
 
     func pastaDeAvisos() -> String {
-        let base = valorDoEnv("HEIMDALL_DB_DIR") ?? (pastaHeimdall + "/banco")
-        return (base as NSString).expandingTildeInPath + "/avisos_mac"
+        // Pastas novas (db/alerts); se o Mac ainda estiver com as antigas (banco/avisos_mac), usa-as até o Heimdall migrar.
+        let fm = FileManager.default
+        var base = valorDoEnv("HEIMDALL_DB_DIR") ?? (pastaHeimdall + "/db")
+        if valorDoEnv("HEIMDALL_DB_DIR") == nil && !fm.fileExists(atPath: base) && fm.fileExists(atPath: pastaHeimdall + "/banco") {
+            base = pastaHeimdall + "/banco"
+        }
+        base = (base as NSString).expandingTildeInPath
+        if !fm.fileExists(atPath: base + "/alerts") && fm.fileExists(atPath: base + "/avisos_mac") {
+            return base + "/avisos_mac"
+        }
+        return base + "/alerts"
     }
 
     func iniciarAvisos() {

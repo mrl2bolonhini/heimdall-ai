@@ -49,6 +49,38 @@ confere("entrada vira inbox", hp.finance_inbox(d4) == d4 / "inbox" and (d4 / "in
 confere("entrada_planilhas vira sheets", hp.finance_sheets(d4) == d4 / "sheets" and (d4 / "sheets" / "arq.txt").read_text() == "entrada_planilhas")
 confere("db sem nenhuma pasta devolve db sem criar", hp.db(Path(tempfile.mkdtemp())).name == "db")
 
+# subpastas do db, do Finance e a pasta própria da Saúde
+import os, stat
+d5 = Path(tempfile.mkdtemp())
+(d5 / "db").mkdir()
+for antigo in ("copias", "caixa_recebidos", "avisos_mac", "pessoas", "documentos"):
+    (d5 / "db" / antigo).mkdir()
+    (d5 / "db" / antigo / "arq.txt").write_text(antigo)
+os.chmod(d5 / "db" / "pessoas", 0o700)
+confere("copias vira copies", hp.db_copies(d5) == d5 / "db" / "copies" and (d5 / "db" / "copies" / "arq.txt").read_text() == "copias")
+confere("caixa_recebidos vira mailbox", hp.db_mailbox(d5) == d5 / "db" / "mailbox" and (d5 / "db" / "mailbox" / "arq.txt").exists())
+confere("avisos_mac vira alerts", hp.db_alerts(d5) == d5 / "db" / "alerts" and (d5 / "db" / "alerts" / "arq.txt").exists())
+confere("pessoas vira people e mantém a permissão 0700", hp.db_people(d5) == d5 / "db" / "people" and stat.S_IMODE((d5 / "db" / "people").stat().st_mode) == 0o700)
+for antigo, novo_ in (("entrada", "inbox"), ("arquivados", "archive"), ("revisar", "review")):
+    (d5 / "db" / "documentos" / antigo).mkdir()
+    (d5 / "db" / "documentos" / antigo / "doc.pdf").write_text(antigo)
+h = hp.health(d5)
+confere("db/documentos sai do db e vira health/ com os arquivos", h == d5 / "health" and not (d5 / "db" / "documentos").exists() and (h / "entrada" / "doc.pdf").exists())
+confere("health: entrada vira inbox", hp.health_inbox(h) == h / "inbox" and (h / "inbox" / "doc.pdf").read_text() == "entrada")
+confere("health: arquivados vira archive", hp.health_archive(h) == h / "archive" and (h / "archive" / "doc.pdf").exists())
+confere("health: revisar vira review", hp.health_review(h) == h / "review" and (h / "review" / "doc.pdf").exists())
+confere("health chamado de novo não muda nada", hp.health(d5) == h and (h / "inbox" / "doc.pdf").exists())
+d6 = Path(tempfile.mkdtemp())
+confere("health sem nenhuma pasta devolve health sem criar", hp.health(d6) == d6 / "health" and not (d6 / "health").exists())
+d7 = Path(tempfile.mkdtemp())
+(d7 / "inbox").mkdir()
+for antigo in ("importados", "revisar"):
+    (d7 / "inbox" / antigo).mkdir()
+    (d7 / "inbox" / antigo / "x.csv").write_text(antigo)
+confere("finance: importados vira imported", hp.finance_imported(d7 / "inbox") == d7 / "inbox" / "imported" and (d7 / "inbox" / "imported" / "x.csv").exists())
+confere("finance: revisar vira review", hp.finance_review(d7 / "inbox") == d7 / "inbox" / "review" and (d7 / "inbox" / "review" / "x.csv").exists())
+confere("health/ está no .gitignore", "health/" in (RAIZ / ".gitignore").read_text().splitlines())
+
 # organização do repositório
 soltos = [p.name for p in RAIZ.iterdir() if p.is_file() and (p.name.startswith(("teste_", "test_")) or p.name.startswith("LEIAME_") or p.name.startswith("prompt_chat_"))]
 confere("nenhum teste, guia LEIAME ou prompt solto na raiz", not soltos, ", ".join(soltos))

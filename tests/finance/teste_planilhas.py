@@ -177,7 +177,7 @@ for f in ent.iterdir():
 res = fp.processar_pasta(con5, pasta5, modelo=sem_modelo)
 confere("pasta: o que entendeu foi importado", any(x["arquivo"] == "carteira.xlsx" and x["resultados"][0]["ok"] for x in res), res)
 confere("pasta: dúvida vira pergunta e o arquivo sai da pasta", len(fp.duvidas(con5)) == 1 and not (ent / "estranha.xlsx").exists())
-confere("pasta: importado vai para importados/", (ent / "importados" / "carteira.xlsx").exists())
+confere("pasta: importado vai para imported/", (ent / "imported" / "carteira.xlsx").exists())
 
 print("\nFalhas:", falhas)
 sys.exit(1 if falhas else 0)

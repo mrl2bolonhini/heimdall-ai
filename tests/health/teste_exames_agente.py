@@ -16,7 +16,7 @@ import urllib.parse
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-exames-agente-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "documentos"), "HEIMDALL_EXAMES_LLM": "0",
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "health"), "HEIMDALL_EXAMES_LLM": "0",
                    "HEIMDALL_VAULT_DIR": str(TMP / "cofre"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
 import heimdall_agente as ag  # noqa: E402
@@ -122,8 +122,8 @@ c.close()
 
 st, r = post("/saude/documento", pdf_com_texto(["Foto sem nada", "x"]), {"X-Heimdall-Upload": ENVIO, "X-Heimdall-Nome": "vazio.pdf"})
 time.sleep(3)
-confere("documento ilegível: vai para revisar, com motivo e aviso no Bark", any((ex.DIR / "revisar").glob("vazio*.pdf")) and any((ex.DIR / "revisar").glob("vazio*.motivo.txt"))
-        and any("não lido" in a["title"] for a in avisos), (list((ex.DIR / "revisar").glob("*")), avisos))
+confere("documento ilegível: vai para revisar, com motivo e aviso no Bark", any((ex.DIR / "review").glob("vazio*.pdf")) and any((ex.DIR / "review").glob("vazio*.motivo.txt"))
+        and any("não lido" in a["title"] for a in avisos), (list((ex.DIR / "review").glob("*")), avisos))
 
 srv.shutdown()
 print("\n" + ("TUDO OK" if not falhas else f"{falhas} FALHA(S)"))

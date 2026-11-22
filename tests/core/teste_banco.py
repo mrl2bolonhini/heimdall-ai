@@ -62,7 +62,7 @@ try:
 except ValueError:
     ok(True, "recusa tabela desconhecida")
 ok(b.resumo()["saude_diaria"]["dias"] == 2, "resumo conta os dias")
-ok(any(p.name.startswith("heimdall-") for p in (b.DB_DIR / "copias").glob("*.db")), "cópia diária criada")
+ok(any(p.name.startswith("heimdall-") for p in (b.DB_DIR / "copies").glob("*.db")), "cópia diária criada")
 
 
 # ferramentas do chat (heimdall_tools)

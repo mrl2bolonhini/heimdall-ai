@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Subpastas em inglês e pasta própria da Saúde
+- A Saúde ganhou pasta própria na raiz, como o Finance: health/inbox (solte aqui exames, receitas e encaminhamentos), health/archive (os originais já lidos, só do dono) e health/review (o que não deu para ler, com o motivo). Antes ficava em db/documentos. A migração é automática: na primeira subida a pasta é movida (mesmos arquivos, nada copiado nem apagado) e entrada, arquivados e revisar viram inbox, archive e review. health/ não vai para o Git.
+- Subpastas do db: copias para copies, caixa_recebidos para mailbox, avisos_mac para alerts, pessoas para people (a permissão 0700 de people continua). No finance/inbox: importados para imported e revisar para review (e importados para imported dentro de finance/sheets).
+- O app do Mac (macapp) passou a ler db/alerts; enquanto o app não for recompilado, o Heimdall mantém avisos_mac se ela já existir. Corrigido de passagem: o app procurava a pasta banco, que já se chamava db.
+- Corrigido: o .env tinha HEIMDALL_VAULT_DIR apontando para cerebro, e por isso os serviços recriavam a pasta vazia; agora aponta para brain.
+- Teste novo em tests/core/teste_pastas.py cobre todas essas migrações.
+
 ## 2026-11-22 - Mais pastas padronizadas e poda dos backups
 - Padrão de nomes: pasta em inglês, uma palavra só, sem sublinhado. Mudaram: banco para db, cerebro para brain, qdrant_storage para qdrant, app_mac para macapp e, dentro do finance, entrada para inbox e entrada_planilhas para sheets. As pastas de dados do Mac são renomeadas sozinhas na primeira subida (heimdall update --restart), com os mesmos dados, sem copiar nem apagar; a do Qdrant é feita pelo start_heimdall.sh, que remove o contêiner do Qdrant e o recria apontando para a pasta nova (os dados ficam na pasta). Se não der para renomear, o Heimdall segue com o nome antigo.
 - Quem abre a pasta cerebro no Obsidian precisa abrir brain como cofre depois da migração.
