@@ -71,7 +71,6 @@ HOST = os.environ.get("HEIMDALL_LEARN_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_LEARN_PORT", "8019"))
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_LEARN_HOSTS", "learn.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 COOKIE = nuvem.COOKIE
-NAV = [("/", "Início"), ("/licoes", "Lições"), ("/exercicios", "Exercícios"), ("/cards", "Cards"), ("/progresso", "Progresso"), ("/ajustes", "Ajustes")]
 MAX_FORM = 20000
 ESTADOS_LICAO = {"gerando": "sendo criada", "pronta": "aguardando respostas", "corrigindo": "corrigindo", "concluida": "concluída", "erro": "erro ao criar", "erro_correcao": "erro na correção"}
 ESTADOS = {"importado": "importado das notas antigas", "sorteado": "gerando a pergunta", "perguntado": "aguardando a resposta", "corrigindo": "corrigindo", "corrigido": "concluído",
@@ -79,7 +78,7 @@ ESTADOS = {"importado": "importado das notas antigas", "sorteado": "gerando a pe
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 CSS = nuvem.CSS + """
 body{font-size:19px;line-height:1.7;max-width:50rem}main{overflow-wrap:anywhere}
-.meta{color:var(--suave);font-size:.9em}.lista{list-style:none;padding:0}.lista li{border-bottom:1px solid var(--linha);padding:.6rem 0}
+.acoes-topo{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}.meta{color:var(--suave);font-size:.9em}.lista{list-style:none;padding:0}.lista li{border-bottom:1px solid var(--linha);padding:.6rem 0}
 form.campos label{display:block;margin-top:.9rem;font-weight:700}form.campos input[type=text],form.campos select,form.campos input[type=file]{display:block;width:100%;max-width:30rem}
 """
 
@@ -88,15 +87,51 @@ def plural(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
 
+def topo(rel: str) -> str:
+    """O tema de um caminho de pasta: a pasta de nível de cima."""
+    return (rel or "").strip("/").split("/")[0]
+
+
+def no_tema(caminho: str, tema: str) -> bool:
+    return bool(tema) and (caminho == tema or caminho.startswith(tema + "/"))
+
+
+def href_aba(tema: str, nome: str) -> str:
+    return f"/{nome}?t={quote(tema)}"
+
+
+def abas_do_tema(tema: str) -> list:
+    """Abas do tema escolhido, pela categoria dele e pelo que ele já tem. Aleatório: Estudos. Sequencial: Lições e Exercícios. Um tema que tem
+    lições (ou estudos) de antes de mudar de categoria continua mostrando a aba correspondente, para consulta. Cards e Progresso são de todos."""
+    reg = dados.obter_pasta(tema)
+    cat = reg["categoria"] if reg else "aleatorio"
+    tem_licao = any(no_tema(x["pasta"], tema) for x in licoes.listar("", 5000))
+    tem_estudo = any(no_tema(x["pasta"], tema) for x in estudo.historico("", 5000))
+    licao = [(href_aba(tema, "licoes"), "Lições"), (href_aba(tema, "exercicios"), "Exercícios")]
+    estudos = [(href_aba(tema, "estudos"), "Estudos")]
+    if cat == "sequencial":
+        itens = licao + (estudos if tem_estudo else [])
+    else:
+        itens = estudos + (licao if tem_licao else [])
+    return itens + [(href_aba(tema, "cards"), "Cards"), (href_aba(tema, "progresso"), "Progresso")]
+
+
 def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: str = "") -> bytes:
     nav = sair = abas_js = ""
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
-        atual = urlparse(str(sess.get("atual", "/"))).path
-        atual = "/licoes" if atual in ("/licoes", "/licao") else (atual if atual in ("/exercicios", "/cards", "/progresso", "/ajustes") else "/")
-        nav = design.nav_abas(NAV, atual, "Seções do Heimdall Learn")
+        tema, aba = sess.get("tema", ""), sess.get("aba", "")
+        botoes = (design.botao("/", "Trocar de tema") if tema or aba == "ajustes" else "")
+        if aba == "ajustes":
+            botoes += design.botao("/tema", "Voltar ao tema", {"t": tema}) if tema else ""
+        else:
+            botoes += design.botao("/ajustes", "Ajustes", {"t": tema} if tema else None)
+        nav = f'<div class="acoes-topo">{botoes}</div>'
+        if tema and aba and aba != "ajustes":
+            itens = abas_do_tema(tema)
+            nav += design.nav_abas(itens, aba, f"Seções do tema {dados.nome_bonito(tema)}")
+            conteudo = design.com_abas(itens, aba, conteudo)
         sair = f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>'
-        conteudo = design.com_abas(NAV, atual, conteudo)
         abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES
     js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (abas_js or script) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -125,14 +160,15 @@ def pg_entrar(erro: str = "") -> bytes:
     return pagina("Entrar", corpo)
 
 
-def _lista_pastas(itens: list) -> str:
+def _lista_pastas(itens: list, destino: str = "pasta") -> str:
     if not itens:
         return '<p role="status">Nenhuma pasta ainda.</p>'
     linhas = "".join(
-        f'<tr><th scope="row"><a href="/pasta?c={quote(p["caminho"])}">{e(p["nome"])}</a></th><td>{e(p["categoria_nome"])}</td>'
+        (f'<tr><th scope="row"><a href="/tema?t={quote(p["caminho"])}">{e(p["nome"])}</a></th>' if destino == "tema"
+         else f'<tr><th scope="row"><a href="/pasta?c={quote(p["caminho"])}">{e(p["nome"])}</a></th>') + f'<td>{e(p["categoria_nome"])}</td>'
         f'<td>{e(p["tipo"] or "sem tipo")}{(" (" + e(p["idioma"]) + ")") if p.get("idioma") else ""}</td>'
         f'<td>{p["documentos"]}</td><td>{p["subpastas"]}</td></tr>' for p in itens)
-    return ('<table><caption>Pastas de estudo</caption><thead><tr><th scope="col">Pasta</th><th scope="col">Categoria</th><th scope="col">Tipo</th>'
+    return (f'<table><caption>{"Temas de estudo" if destino == "tema" else "Subpastas"}</caption><thead><tr><th scope="col">{"Tema" if destino == "tema" else "Pasta"}</th><th scope="col">Categoria</th><th scope="col">Tipo</th>'
             f'<th scope="col">Documentos</th><th scope="col">Subpastas</th></tr></thead><tbody>{linhas}</tbody></table>')
 
 
@@ -140,8 +176,8 @@ def pg_inicio(sess: dict) -> str:
     r = dados.resumo()
     cats = "".join(f"<li><strong>{e(n)}</strong>: {e(d)}</li>" for n, d in dados.CATEGORIAS.values())
     novo = design.botao("/nova", "Novo estudo")
-    return (aviso(sess) + novo + f'<p role="status">{plural(r["pastas"], "pasta", "pastas")} e {plural(r["documentos"], "documento", "documentos")}.</p>'
-            + _lista_pastas(dados.listar_pastas("")) + f'<h2>Categorias</h2><ul>{cats}</ul>'
+    return (aviso(sess) + novo + f'<p role="status">{plural(r["pastas"], "pasta", "pastas")} e {plural(r["documentos"], "documento", "documentos")}. Escolha um tema para ver as abas dele.</p>'
+            + _lista_pastas(dados.listar_pastas(""), "tema") + f'<h2>Categorias</h2><ul>{cats}</ul>'
             + '<p>' + design.botao("/tipos", "Ver os tipos de estudo e suas regras") + '</p>')
 
 
@@ -207,34 +243,12 @@ def pg_pasta(sess: dict, rel: str) -> str:
                f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes_tipo(p["tipo"])}</select>'
                f'<label for="idioma">Idioma de estudo</label><input id="idioma" name="idioma" type="text" maxlength="40" value="{e(p.get("idioma") or "")}">'
                '<button type="submit">Salvar</button></form>')
-    estudar = ""
-    if p["categoria"] == "aleatorio":
-        estudar = ('<h2>Estudar</h2><p>O Learn sorteia um trecho do material desta pasta e faz uma pergunta. Depois da sua resposta, corrige com base no trecho, '
-                   'mostra o trecho, grava o áudio e sugere matérias.</p>' + design.botao_post("/sortear", "Sortear trecho e perguntar", csrf, {"c": rel}))
-        hist = estudo.historico(rel, 10)
-        if hist:
-            itens = "".join(f'<tr><th scope="row"><a href="/estudo?id={h["id"]}">Estudo {h["id"]}</a></th><td>{e(h["criado"])}</td><td>{e(Path(h["documento"]).name)}</td>'
-                            f'<td>{e(ESTADOS.get(h["estado"], h["estado"]))}</td></tr>' for h in hist)
-            estudar += ('<table><caption>Últimos estudos desta pasta</caption><thead><tr><th scope="col">Estudo</th><th scope="col">Quando</th><th scope="col">Documento</th>'
-                        f'<th scope="col">Situação</th></tr></thead><tbody>{itens}</tbody></table>')
-    elif p["categoria"] == "sequencial":
-        pr = licoes.resumo_progresso(rel)
-        media = f" Média das notas: {round(pr['media'] * 100)}%." if pr["media"] is not None else ""
-        estudar = (f'<h2>Lições</h2><p role="status">{plural(pr["criadas"], "lição criada", "lições criadas")}, {plural(pr["concluidas"], "concluída", "concluídas")}. '
-                   f'Ainda dá para criar cerca de {pr["restantes"]} com o material atual.{media}</p>'
-                   + design.botao_post("/licao/nova", "Próxima lição", csrf, {"c": rel}))
-        hist = licoes.listar(rel, 10)
-        if hist:
-            itens = "".join(f'<tr><th scope="row"><a href="/licao?id={h["id"]}">Lição {h["numero"]}{(": " + e(h["titulo"])) if h["titulo"] else ""}</a></th>'
-                            f'<td>{e(ESTADOS_LICAO.get(h["estado"], h["estado"]))}</td><td>{(str(round(h["nota"] * 100)) + "%") if h["nota"] is not None else "sem nota"}</td></tr>' for h in hist)
-            estudar += ('<table><caption>Lições desta pasta</caption><thead><tr><th scope="col">Lição</th><th scope="col">Situação</th><th scope="col">Nota</th></tr></thead>'
-                        f'<tbody>{itens}</tbody></table>')
     agenda_html = ('<h2>Cards e lições por dia</h2><p>Cards são pílulas de conhecimento enviadas por notificação (aviso no Mac e aviso genérico no iPhone). '
                    'Até 3 cards e 1 lição por dia; os cards saem de 4 em 4 horas a partir do horário. 0 desliga.</p>' + _form_agenda(p, csrf, "pasta")
                    + design.botao_post("/card/novo", "Gerar um card agora", csrf, {"c": rel}))
-    novo = design.botao("/nova", "Criar subpasta aqui", {"pai": rel})
-    voltar = design.botao("/", "Voltar ao início")
-    return aviso(sess) + cab + estudar + agenda_html + tabela + subs + novo + form_imp + form_ed + voltar
+    novo = design.botao("/nova", "Criar subpasta aqui", {"pai": rel}) + design.botao("/ajustes/arquivar", "Arquivar esta pasta", {"c": rel})
+    voltar = design.botao("/tema", "Voltar ao tema", {"t": topo(rel)}) + design.botao("/", "Trocar de tema")
+    return aviso(sess) + cab + agenda_html + tabela + subs + novo + form_imp + form_ed + voltar
 
 
 def pg_tipos(sess: dict) -> str:
@@ -263,11 +277,11 @@ def pg_estudo(sess: dict, id_: int) -> tuple:
     csrf, rel = sess["csrf"], est["pasta"]
     pasta = dados.obter_pasta(rel) or {"nome": rel}
     st = est["estado"]
-    topo = f'<p>Pasta: <a href="/pasta?c={quote(rel)}">{e(pasta["nome"])}</a>. Documento: {e(Path(est["documento"]).name)}.</p>'
+    cab_est = f'<p>Pasta: <a href="/pasta?c={quote(rel)}">{e(pasta["nome"])}</a>. Documento: {e(Path(est["documento"]).name)}.</p>'
     titulo_pg = est["titulo"] or f"Estudo {id_}"
     atualizar = design.botao("/estudo", "Atualizar", {"id": id_})
     repetir = design.botao_post("/repetir", "Tentar de novo", csrf, {"id": id_})
-    corpo = aviso(sess) + topo
+    corpo = aviso(sess) + cab_est
     if st == "sorteado":
         corpo += '<p role="status">Gerando a pergunta. O modelo local pode levar alguns minutos.</p>' + atualizar + repetir
     elif st == "erro":
@@ -308,25 +322,50 @@ def pg_estudo(sess: dict, id_: int) -> tuple:
                 corpo += f'<h2>Áudio do trecho</h2><audio controls src="/audio?id={id_}" aria-label="Áudio do trecho consultado"></audio>'
             else:
                 corpo += design.botao_post("/gravar", "Gravar áudio do trecho", csrf, {"id": id_})
-    corpo += design.botao_post("/sortear", "Sortear outro trecho", csrf, {"c": rel}) + design.botao("/pasta", "Voltar à pasta", {"c": rel})
+    corpo += design.botao_post("/sortear", "Sortear outro trecho", csrf, {"c": rel}) + design.botao("/estudos", "Voltar aos estudos", {"t": topo(rel)})
     return titulo_pg, corpo
 
 
-def pg_licoes(sess: dict) -> str:
-    itens = licoes.listar("", 40)
+def pg_estudos(sess: dict, tema: str) -> str:
+    csrf = sess["csrf"]
+    pastas = [x for x in dados.arvore_plana() if no_tema(x["caminho"], tema)]
+    sortear = [x for x in pastas if x["categoria"] == "aleatorio"]
+    saida = aviso(sess)
+    if sortear:
+        saida += ("<p>O Learn sorteia um trecho do material, faz uma pergunta e, depois da sua resposta, corrige com base no trecho, mostra o trecho, grava o áudio e sugere matérias.</p>"
+                  + "".join(design.botao_post("/sortear", "Sortear trecho e perguntar" + (f" em {x['nome']}" if len(sortear) > 1 else ""), csrf, {"c": x["caminho"], "t": tema}) for x in sortear))
+    itens = [h for h in estudo.historico("", 5000) if no_tema(h["pasta"], tema)]
     if not itens:
-        return aviso(sess) + '<p role="status">Nenhuma lição ainda. Abra uma pasta da categoria sequencial e peça a próxima lição.</p>' + design.botao("/", "Ver as pastas")
+        return saida + '<p role="status">Nenhum estudo ainda neste tema.</p>'
+    linhas = "".join(f'<tr><th scope="row"><a href="/estudo?id={h["id"]}">Estudo {h["id"]}</a></th><td>{e(h["criado"])}</td><td>{e(h["pasta"])}</td>'
+                     f'<td>{e(Path(h["documento"]).name) if h["documento"] else "nota antiga"}</td><td>{e(ESTADOS.get(h["estado"], h["estado"]))}</td></tr>' for h in itens[:200])
+    nota = f' Mostrando os 200 mais recentes de {len(itens)}.' if len(itens) > 200 else ""
+    return (saida + f'<p role="status">{plural(len(itens), "estudo", "estudos")}.{nota}</p><table><caption>Estudos deste tema, do mais recente para o mais antigo</caption><thead><tr>'
+            '<th scope="col">Estudo</th><th scope="col">Quando</th><th scope="col">Pasta</th><th scope="col">Documento</th><th scope="col">Situação</th></tr></thead>'
+            f'<tbody>{linhas}</tbody></table>')
+
+
+def pg_licoes(sess: dict, tema: str) -> str:
+    csrf = sess["csrf"]
+    saida = aviso(sess)
+    for x in (x for x in dados.arvore_plana() if no_tema(x["caminho"], tema) and x["categoria"] == "sequencial"):
+        pr = licoes.resumo_progresso(x["caminho"])
+        media = f" Média das notas: {round(pr['media'] * 100)}%." if pr["media"] is not None else ""
+        saida += (f'<h2>{e(x["nome"])}</h2><p role="status">{plural(pr["criadas"], "lição criada", "lições criadas")}, {plural(pr["concluidas"], "concluída", "concluídas")}. '
+                  f'Ainda dá para criar cerca de {pr["restantes"]} com o material atual.{media}</p>' + design.botao_post("/licao/nova", "Próxima lição", csrf, {"c": x["caminho"], "t": tema}))
+    itens = [h for h in licoes.listar("", 5000) if no_tema(h["pasta"], tema)]
+    if not itens:
+        return saida + '<p role="status">Nenhuma lição ainda neste tema.</p>'
     linhas = "".join(f'<tr><th scope="row"><a href="/licao?id={h["id"]}">Lição {h["numero"]}{(": " + e(h["titulo"])) if h["titulo"] else ""}</a></th>'
-                     f'<td><a href="/pasta?c={quote(h["pasta"])}">{e(h["pasta"])}</a></td><td>{e(ESTADOS_LICAO.get(h["estado"], h["estado"]))}</td>'
-                     f'<td>{(str(round(h["nota"] * 100)) + "%") if h["nota"] is not None else "sem nota"}</td></tr>' for h in itens)
-    return (aviso(sess) + '<table><caption>Suas lições, da mais recente para a mais antiga</caption><thead><tr><th scope="col">Lição</th><th scope="col">Pasta</th>'
+                     f'<td>{e(h["pasta"])}</td><td>{e(ESTADOS_LICAO.get(h["estado"], h["estado"]))}</td>'
+                     f'<td>{(str(round(h["nota"] * 100)) + "%") if h["nota"] is not None else "sem nota"}</td></tr>' for h in itens[:100])
+    return (saida + '<table><caption>Lições deste tema, da mais recente para a mais antiga</caption><thead><tr><th scope="col">Lição</th><th scope="col">Pasta</th>'
             f'<th scope="col">Situação</th><th scope="col">Nota</th></tr></thead><tbody>{linhas}</tbody></table>')
 
 
-def pg_exercicios(sess: dict, pasta: str = "", so_erros: bool = False) -> str:
-    itens = painel.exercicios(pasta, so_erros, 60)
-    filtros = (design.botao("/exercicios", "Todos os exercícios", {"c": pasta} if pasta else None)
-               + design.botao("/exercicios", "Só os que errei ou acertei em parte", {"c": pasta, "erros": "1"} if pasta else {"erros": "1"}))
+def pg_exercicios(sess: dict, tema: str, so_erros: bool = False) -> str:
+    itens = painel.exercicios(tema, so_erros, 60)
+    filtros = (design.botao("/exercicios", "Todos os exercícios", {"t": tema}) + design.botao("/exercicios", "Só os que errei ou acertei em parte", {"t": tema, "erros": "1"}))
     if not itens:
         msg = "Nenhum exercício para mostrar." if so_erros else "Nenhum exercício ainda. Eles aparecem quando você abre uma lição."
         return aviso(sess) + f'<p role="status">{msg}</p>' + filtros
@@ -341,27 +380,27 @@ def pg_exercicios(sess: dict, pasta: str = "", so_erros: bool = False) -> str:
             f'<th scope="col">Sua resposta</th><th scope="col">Resultado</th><th scope="col">Resposta esperada</th></tr></thead><tbody>{linhas}</tbody></table>')
 
 
-def pg_progresso(sess: dict) -> str:
-    pr = painel.progresso()
+def pg_progresso(sess: dict, tema: str) -> str:
+    pr = painel.progresso(tema)
     if not pr["pastas"]:
-        return aviso(sess) + '<p role="status">Ainda não há o que mostrar. Estude um trecho, faça uma lição ou leia um card.</p>' + design.botao("/", "Ver as pastas")
+        return aviso(sess) + '<p role="status">Ainda não há o que mostrar neste tema. Estude um trecho, faça uma lição ou leia um card.</p>'
     saida = aviso(sess) + f'<p role="status">{plural(pr["seguidos"], "dia seguido", "dias seguidos")} de estudo, e {plural(pr["dias_com_estudo"], "dia", "dias")} no total.</p>'
     linhas = ""
     for p in pr["pastas"]:
         media = f'{round(p["media"] * 100)}%' if p["media"] is not None else "sem nota"
         linhas += (f'<tr><th scope="row"><a href="/pasta?c={quote(p["caminho"])}">{e(p["nome"])}</a></th><td>{p["concluidas"]} de {p["licoes"]}</td><td>{media}</td>'
                    f'<td>{p["estudos_corrigidos"]} de {p["estudos"]}</td><td>{p["cards_lidos"]} de {p["cards"]}</td></tr>')
-    saida += ('<table><caption>Progresso por pasta</caption><thead><tr><th scope="col">Pasta</th><th scope="col">Lições concluídas</th><th scope="col">Média das lições</th>'
+    saida += ('<table><caption>Progresso por pasta deste tema</caption><thead><tr><th scope="col">Pasta</th><th scope="col">Lições concluídas</th><th scope="col">Média das lições</th>'
               f'<th scope="col">Estudos corrigidos</th><th scope="col">Cards lidos</th></tr></thead><tbody>{linhas}</tbody></table>')
     if pr["por_tipo"]:
         nomes = {"alternativas": "Alternativas", "texto": "Respostas escritas ou faladas"}
         lt = "".join(f'<tr><th scope="row">{e(nomes.get(k, k))}</th><td>{v["total"]}</td><td>{round(v["acerto"] * 100)}%</td></tr>' for k, v in sorted(pr["por_tipo"].items()))
         saida += ('<table><caption>Acertos por tipo de exercício</caption><thead><tr><th scope="col">Tipo</th><th scope="col">Corrigidos</th><th scope="col">Acerto</th></tr></thead>'
                   f'<tbody>{lt}</tbody></table>')
-    return saida + design.botao("/exercicios", "Rever o que errei", {"erros": "1"})
+    return saida + design.botao("/exercicios", "Rever o que errei", {"t": tema, "erros": "1"})
 
 
-def pg_ajustes(sess: dict) -> str:
+def pg_ajustes(sess: dict, tema: str = "") -> str:
     csrf = sess["csrf"]
     env_agenda = os.environ.get("HEIMDALL_LEARN_AGENDA", "1") == "0"
     env_avisos = os.environ.get("HEIMDALL_LEARN_NOTIFICAR", "1") == "0"
@@ -371,11 +410,13 @@ def pg_ajustes(sess: dict) -> str:
              + ". Avisos no Mac e no iPhone: " + ("ligados" if av_ajuste and not env_avisos else "desligados") + ".</p>"
              + ('<p class="meta">A agenda está desligada no .env do Mac (HEIMDALL_LEARN_AGENDA=0); ela só volta depois que você tirar essa linha e reiniciar.</p>' if env_agenda else "")
              + ('<p class="meta">Os avisos estão desligados no .env do Mac (HEIMDALL_LEARN_NOTIFICAR=0).</p>' if env_avisos else "")
-             + design.botao_post("/ajustes/definir", "Pausar a agenda" if ag_ajuste else "Ligar a agenda", csrf, {"chave": "agenda", "valor": "0" if ag_ajuste else "1"})
-             + design.botao_post("/ajustes/definir", "Desligar os avisos" if av_ajuste else "Ligar os avisos", csrf, {"chave": "avisos", "valor": "0" if av_ajuste else "1"})
+             + design.botao_post("/ajustes/definir", "Pausar a agenda" if ag_ajuste else "Ligar a agenda", csrf, {"chave": "agenda", "valor": "0" if ag_ajuste else "1", "t": tema})
+             + design.botao_post("/ajustes/definir", "Desligar os avisos" if av_ajuste else "Ligar os avisos", csrf, {"chave": "avisos", "valor": "0" if av_ajuste else "1", "t": tema})
              + f'<p role="status">Estudos por sorteio por dia (pasta e trecho ao acaso, às 6h, 13h e 20h): {cards.estudos_por_dia()}.</p>'
-             + "".join(design.botao_post("/ajustes/definir", f"{k} estudo(s) por dia" if k else "Sem estudos por sorteio", csrf, {"chave": "estudos_dia", "valor": str(k)}) for k in range(4) if k != cards.estudos_por_dia())
+             + "".join(design.botao_post("/ajustes/definir", f"{k} estudo(s) por dia" if k else "Sem estudos por sorteio", csrf, {"chave": "estudos_dia", "valor": str(k), "t": tema}) for k in range(4) if k != cards.estudos_por_dia())
              + design.botao("/nova", "Novo estudo") + design.botao("/tipos", "Tipos de estudo e suas regras"))
+    if tema and dados.obter_pasta(tema):
+        return aviso(sess) + geral + f'<h2>Tema {e(dados.nome_bonito(tema))}</h2>' + pg_pasta(sess, tema)
     saida = aviso(sess) + geral + "<h2>Pastas</h2>"
     achou = False
     for i, t in enumerate(dados.arvore_plana()):
@@ -396,17 +437,19 @@ def pg_arquivar(sess: dict, rel: str) -> str:
     return (aviso(sess) + f'<p role="alert">Arquivar a pasta {e(reg["nome"])}? Ela e as subpastas saem do Learn e da busca nos documentos. Nada é apagado: '
             'os arquivos vão para a pasta oculta .arquivo dentro de knowledge/, onde você pode movê-los de volta, e o histórico de lições, estudos e cards fica guardado.</p>'
             + design.botao_post("/ajustes/arquivar", "Sim, arquivar a pasta", sess["csrf"], {"c": reg["caminho"], "confirmar": "1"})
-            + design.botao("/ajustes", "Não, voltar aos ajustes"))
+            + design.botao("/ajustes", "Não, voltar aos ajustes", {"t": topo(rel)}))
 
 
-def pg_cards(sess: dict) -> str:
+def pg_cards(sess: dict, tema: str) -> str:
     csrf = sess["csrf"]
-    itens = cards.listar(False, 40)
+    itens = [c for c in cards.listar(False, 2000) if no_tema(c["pasta"], tema)][:40]
+    pastas = [y for y in dados.arvore_plana() if no_tema(y["caminho"], tema)]
+    pedir = "".join(design.botao_post("/card/novo", "Gerar um card agora" + (f" em {x['nome']}" if len(pastas) > 1 else ""), csrf, {"c": x["caminho"], "t": tema}) for x in pastas)
     if not itens:
-        return aviso(sess) + ('<p role="status">Nenhum card ainda. Em uma pasta, defina quantos cards por dia você quer, ou peça um card na hora.</p>' + design.botao("/", "Ver as pastas"))
-    saida = aviso(sess) + f'<p role="status">{plural(sum(1 for c in itens if not c["lido"]), "card novo", "cards novos")}.</p><ol class="lista">'
+        return aviso(sess) + '<p role="status">Nenhum card ainda neste tema. Defina quantos cards por dia você quer nos Ajustes, ou peça um card agora.</p>' + pedir
+    saida = aviso(sess) + f'<p role="status">{plural(sum(1 for c in itens if not c["lido"]), "card novo", "cards novos")}.</p>' + pedir + '<ol class="lista">'
     for c in itens:
-        marca = design.botao_post("/cards/lido", "Marcar como lido", csrf, {"id": c["id"]}) if not c["lido"] else '<span class="meta">Lido.</span>'
+        marca = design.botao_post("/cards/lido", "Marcar como lido", csrf, {"id": c["id"], "t": tema}) if not c["lido"] else '<span class="meta">Lido.</span>'
         saida += (f'<li><h2>{e(c["titulo"])}</h2><p>{e(c["corpo"])}</p><p class="meta">Pasta {e(c["pasta"])}, fonte {e(c["fonte"])}, {e(c["criado"])}.</p>{marca}</li>')
     return saida + "</ol>"
 
@@ -499,7 +542,7 @@ def pg_licao(sess: dict, id_: int) -> tuple:
     elif st == "concluida":
         corpo += f'<h2>Resultado</h2><p role="status">Nota da lição: {round((lic["nota"] or 0) * 100)}%.</p>'
         corpo += design.botao_post("/licao/nova", "Próxima lição", csrf, {"c": rel})
-    corpo += design.botao("/pasta", "Voltar à pasta", {"c": rel})
+    corpo += design.botao("/licoes", "Voltar às lições", {"t": topo(rel)})
     return titulo, corpo + ("<!--voz-->" if usa_voz else "")
 
 
@@ -640,30 +683,53 @@ class Learn(nuvem.ManipuladorBase):
 
     def _get(self, rota: str, q: dict, sess: dict) -> None:
         p = lambda k: (q.get(k) or [""])[0]  # noqa: E731
+        sess["tema"], sess["aba"] = "", ""   # a sessão guarda o último valor: cada página diz o seu
+        tema = p("t")
+        if tema and not dados.obter_pasta(tema):
+            raise dados.ErroLearn("Tema não encontrado.")
         if rota == "/":
             dados.sincronizar()
-            self._pagina(200, "Início", pg_inicio(sess), sess)
+            self._pagina(200, "Temas de estudo", pg_inicio(sess), sess)
+        elif rota == "/tema":
+            if not tema:
+                self._ir("/")
+                return
+            self._ir(abas_do_tema(tema)[0][0])
         elif rota == "/pasta":
             reg = dados.obter_pasta(p("c"))
+            sess["tema"], sess["aba"] = topo(p("c")) if reg else "", "ajustes"
             self._pagina(200, reg["nome"] if reg else "Pasta", pg_pasta(sess, p("c")), sess)
         elif rota == "/estudo":
             titulo, corpo = pg_estudo(sess, int(p("id") or 0))
+            rel = (estudo.obter(int(p("id") or 0)) or {}).get("pasta", "")
+            sess["tema"], sess["aba"] = topo(rel), href_aba(topo(rel), "estudos")
             self._pagina(200, titulo, corpo, sess)
-        elif rota == "/cards":
-            self._pagina(200, "Cards", pg_cards(sess), sess)
-        elif rota == "/licoes":
-            self._pagina(200, "Lições", pg_licoes(sess), sess)
-        elif rota == "/exercicios":
-            self._pagina(200, "Exercícios", pg_exercicios(sess, p("c"), p("erros") == "1"), sess)
+        elif rota in ("/estudos", "/licoes", "/exercicios", "/cards", "/progresso"):
+            if not tema:
+                self._ir("/")
+                return
+            sess["tema"], sess["aba"] = tema, href_aba(tema, rota[1:])
+            if rota == "/estudos":
+                self._pagina(200, "Estudos", pg_estudos(sess, tema), sess)
+            elif rota == "/licoes":
+                self._pagina(200, "Lições", pg_licoes(sess, tema), sess)
+            elif rota == "/exercicios":
+                self._pagina(200, "Exercícios", pg_exercicios(sess, tema, p("erros") == "1"), sess)
+            elif rota == "/cards":
+                self._pagina(200, "Cards", pg_cards(sess, tema), sess)
+            else:
+                self._pagina(200, "Progresso", pg_progresso(sess, tema), sess)
         elif rota == "/ajustes":
-            self._pagina(200, "Ajustes", pg_ajustes(sess), sess)
+            sess["tema"], sess["aba"] = tema, "ajustes"
+            self._pagina(200, "Ajustes", pg_ajustes(sess, tema), sess)
         elif rota == "/ajustes/arquivar":
+            sess["tema"], sess["aba"] = topo(p("c")), "ajustes"
             self._pagina(200, "Arquivar pasta", pg_arquivar(sess, p("c")), sess)
-        elif rota == "/progresso":
-            self._pagina(200, "Progresso", pg_progresso(sess), sess)
         elif rota == "/licao":
             titulo, corpo = pg_licao(sess, int(p("id") or 0)) if p("id").isdigit() else (_ for _ in ()).throw(dados.ErroLearn("Lição não encontrada."))
             voz_js = SCRIPT_VOZ if "<!--voz-->" in corpo else ""
+            rel = (licoes.obter(int(p("id"))) or {}).get("pasta", "")
+            sess["tema"], sess["aba"] = topo(rel), href_aba(topo(rel), "licoes")
             self._pagina(200, titulo, corpo.replace("<!--voz-->", ""), sess, voz_js)
         elif rota == "/audio-licao":
             arq = licoes.caminho_audio(int(p("id")), p("k")) if p("id").isdigit() else None
@@ -763,7 +829,7 @@ class Learn(nuvem.ManipuladorBase):
             elif rota == "/ajustes/definir":
                 dados.definir_ajuste(campos.get("chave", ""), campos.get("valor", ""))
                 sess["flash"] = ("ok", "Ajuste salvo.")
-                destino = "/ajustes"
+                destino = "/ajustes" + (f"?t={quote(campos['t'])}" if campos.get("t") else "")
             elif rota == "/ajustes/arquivar":
                 if campos.get("confirmar") != "1":
                     raise dados.ErroLearn("Confirme o arquivamento.")
@@ -772,12 +838,12 @@ class Learn(nuvem.ManipuladorBase):
                 destino = "/ajustes"
             elif rota == "/card/novo":
                 rel = campos.get("c", "")
-                destino = "/pasta?c=" + quote(rel)
+                destino = "/cards?t=" + quote(topo(rel))
                 perguntar.iniciar(sess["csrf"], "learn-card", lambda: cards.gerar_card(rel, origem="aluno"), f"card {rel}")
                 sess["flash"] = ("ok", "Gerando o card. Ele aparece na aba Cards em instantes.")
             elif rota == "/cards/lido":
                 cards.marcar_lido(int(campos.get("id", "0") or 0))
-                destino = "/cards"
+                destino = "/cards?t=" + quote(campos.get("t", "")) if campos.get("t") else "/"
             elif rota == "/licao/nova":
                 rel = campos.get("c", "")
                 id_ = licoes.nova_licao(rel)
@@ -820,7 +886,9 @@ class Learn(nuvem.ManipuladorBase):
             sess["flash"] = ("erro", str(ex))
             if rota in ("/ajustes/definir", "/ajustes/arquivar") or (rota == "/agenda" and campos.get("volta") == "ajustes"):
                 destino = "/ajustes"
-            elif rota in ("/agenda", "/card/novo", "/licao/nova", "/sortear", "/importar") and campos.get("c"):
+            elif rota in ("/card/novo", "/licao/nova", "/sortear") and campos.get("c"):
+                destino = {"/card/novo": "/cards", "/licao/nova": "/licoes", "/sortear": "/estudos"}[rota] + "?t=" + quote(topo(campos["c"]))
+            elif rota in ("/agenda", "/importar") and campos.get("c"):
                 destino = "/pasta?c=" + quote(campos["c"])
             elif rota == "/criar":
                 destino = "/nova"

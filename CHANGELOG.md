@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Learn organizado por tema
+- A tela inicial do Learn agora é a lista de temas (a aba Início deixou de existir), com os botões Novo estudo e Ajustes. Ao escolher um tema, as abas passam a mostrar só o que é dele: tema sequencial tem Lições, Exercícios, Cards e Progresso; tema aleatório tem Estudos, Cards e Progresso. Trocar de tema volta à lista.
+- Mudar a categoria de um tema muda as abas na hora e não apaga nada: se o tema já tem lições (ou estudos), a aba correspondente continua aparecendo para consulta.
+- Ajustes virou um botão no topo, ao lado de Trocar de tema, e abre uma tela sem abas: geral (agenda, avisos, estudos por dia) e, com um tema escolhido, as configurações dele (agenda, importar documentos, categoria e tipo, arquivar).
+- A aba Estudos lista todos os estudos do tema (inclusive os importados das notas antigas) e tem o botão de sortear; a aba Lições tem o progresso e o botão Próxima lição por pasta.
+- A simulação da migração (heimdall learn --migrate) agora conta as notas por pasta e avisa os temas do cofre que ainda não têm pasta no Learn.
+
 ## 2026-11-23 - Estudos no Learn; Notes só com triagem, diários e privacidade
 - Os estudos saíram do Notes. Com HEIMDALL_LEARN=1, o Notes não mostra mais os temas de estudo (knowledge/ e os livros do cofre) e fica com triagem, diários, privacidade, Second Brain e saúde; HEIMDALL_LEARN=0 devolve os estudos ao Notes. O Notes passou a ser só do dono: convidado não entra nele, e Notes não pode mais ser dado a convidado na aba Usuários.
 - Migração do que já existe: heimdall learn --migrate mostra o que seria levado (notas dos livros no cofre e a tabela estudos do banco) e heimdall learn --migrate --apply grava no Learn com o estado importado, copiando os áudios. Pode rodar de novo sem duplicar, e nada é apagado nem movido nos originais.

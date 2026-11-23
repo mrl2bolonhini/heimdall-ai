@@ -21,7 +21,8 @@ def exercicios(pasta: str = "", so_erros: bool = False, limite: int = 60) -> lis
     """Exercícios das lições, da lição mais recente para a mais antiga. Cada item traz o resultado e, só em lição concluída, o gabarito."""
     con = dados.conectar()
     if pasta:
-        lics = con.execute("SELECT id, pasta, numero, titulo, estado, exercicios FROM licoes WHERE pasta = ? AND estado != 'gerando' ORDER BY id DESC", (dados.normalizar_caminho(pasta),)).fetchall()
+        n = dados.normalizar_caminho(pasta)   # a pasta e tudo o que há dentro dela (um tema inclui as subpastas)
+        lics = con.execute("SELECT id, pasta, numero, titulo, estado, exercicios FROM licoes WHERE (pasta = ? OR pasta LIKE ?) AND estado != 'gerando' ORDER BY id DESC", (n, n + "/%")).fetchall()
     else:
         lics = con.execute("SELECT id, pasta, numero, titulo, estado, exercicios FROM licoes WHERE estado != 'gerando' ORDER BY id DESC").fetchall()
     saida = []
@@ -71,12 +72,14 @@ def sequencia_de_dias(datas: list, hoje: date = None) -> tuple:
     return n, len(dias)
 
 
-def progresso() -> dict:
-    """Números do aluno: por pasta e no geral."""
+def progresso(tema: str = "") -> dict:
+    """Números do aluno: por pasta e no geral. Com `tema`, só as pastas dele (e das subpastas) e os exercícios dele."""
     con = dados.conectar()
     pastas = []
     for p in con.execute("SELECT caminho, nome, categoria FROM pastas ORDER BY caminho").fetchall():
         c = p["caminho"]
+        if tema and not (c == tema or c.startswith(tema + "/")):
+            continue
         lic = con.execute("SELECT COUNT(*) c, SUM(CASE WHEN estado='concluida' THEN 1 ELSE 0 END) f, AVG(CASE WHEN estado='concluida' THEN nota END) m FROM licoes WHERE pasta = ?", (c,)).fetchone()
         est = con.execute("SELECT COUNT(*) c, SUM(CASE WHEN estado='corrigido' THEN 1 ELSE 0 END) f FROM estudos WHERE pasta = ?", (c,)).fetchone()
         crd = con.execute("SELECT COUNT(*) c, SUM(lido) l FROM cards WHERE pasta = ?", (c,)).fetchone()
@@ -87,7 +90,7 @@ def progresso() -> dict:
     datas = [r[0] for r in con.execute("SELECT criado FROM respostas UNION ALL SELECT criado FROM estudos WHERE resposta != '' UNION ALL SELECT criado FROM cards WHERE lido = 1")]
     seguidos, total_dias = sequencia_de_dias(datas)
     por_tipo = {}
-    for ex in exercicios("", False, 100000):
+    for ex in exercicios(tema, False, 100000):
         if ex["resultado"] in ("certo", "parcial", "errado"):
             t = por_tipo.setdefault(ex["tipo"] or "outro", {"total": 0, "pontos": 0.0})
             t["total"] += 1

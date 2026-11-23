@@ -176,8 +176,8 @@ confere("tela do estudo importado: título, pergunta, resposta escondida em deta
         and f'src="/audio?id={nova["id"]}"' in pag and "Alura" in pag and 'for="resposta"' in pag, re.sub(r"<[^>]+>", " ", pag)[:400])
 st, aud_resp, _ = req("GET", f"/audio?id={nova['id']}")
 confere("o áudio importado toca", st == 200 and aud_resp == "AUDIO-FALSO")
-_, pasta, _ = req("GET", "/pasta?c=" + "Arquitetura%20e%20Engenharia%20de%20Dados")
-confere("a pasta lista o estudo importado", "importado" in pasta.lower() or "Como a equipe" in pasta)
+_, pasta, _ = req("GET", "/estudos?t=" + "Arquitetura%20e%20Engenharia%20de%20Dados")
+confere("a aba Estudos do tema lista o estudo importado", "importado" in pasta.lower() or "Como a equipe" in pasta)
 
 # responder um estudo importado usa a correção normal
 es._modelo = lambda sistema, usuario, max_tokens=900: "Parcial. Faltou citar o cache.\nSUGESTÕES: filas; cache"

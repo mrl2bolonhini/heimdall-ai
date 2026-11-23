@@ -189,7 +189,7 @@ def post(rota, campos):
 d.criar_pasta("Alemão", "sequencial", "Idiomas", "alemão")
 (TMP / "knowledge" / "alemao" / "aula.md").write_text("\n\n".join(par(i) for i in range(1, 6)), encoding="utf-8")
 li._modelo = modelo_licao
-st, corpo, _ = req("GET", "/pasta?c=alemao")
+st, corpo, _ = req("GET", "/licoes?t=alemao")
 csrf = re.search(r'name="csrf" value="([^"]+)"', corpo).group(1)
 confere("pasta sequencial mostra Próxima lição e progresso", "Próxima lição" in corpo and "lições criadas" in corpo or "lição criada" in corpo)
 st, _, r = post("/licao/nova", {"csrf": "x", "c": "alemao"})
@@ -199,7 +199,7 @@ loc = r.getheader("Location")
 confere("pedir lição leva à página dela", st == 303 and loc.startswith("/licao?id="), loc)
 for _ in range(60):
     _, corpo, _ = req("GET", loc)
-    if "Exercícios" in corpo:
+    if "Explicação" in corpo or "Não consegui criar" in corpo:
         break
     time.sleep(0.1)
 confere("lição aparece com explicação e trecho", "Explicação" in corpo and "Trecho de estudo" in corpo and "O verbo to sit" in corpo)
@@ -220,7 +220,7 @@ for _ in range(60):
     time.sleep(0.1)
 confere("resultado com nota e correções, e agora o gabarito aparece", "Nota da lição: 100%" in corpo and "(falada)" in corpo and "A tradução está correta" in corpo, re.sub(r"<[^>]+>", " ", corpo)[-300:])
 confere("lição concluída oferece a próxima", "Próxima lição" in corpo)
-_, corpo, _ = req("GET", "/licoes")
+_, corpo, _ = req("GET", "/licoes?t=ingles")
 confere("aba Lições lista com caption e escopo", "<caption>" in corpo and 'scope="row"' in corpo and "O verbo to sit" in corpo)
 st, corpo, _ = req("GET", "/licao?id=999")
 confere("lição inexistente dá erro amigável", st == 400 and "não encontrada" in corpo)

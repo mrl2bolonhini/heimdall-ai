@@ -80,7 +80,7 @@ st, _, _ = req("GET", "/pasta?c=aws", com_cookie=False)
 confere("pasta exige login", st == 303)
 
 st, corpo, r = req("GET", "/")
-confere("início abre", st == 200 and "Pastas de estudo" in corpo, st)
+confere("início abre", st == 200 and "Temas de estudo" in corpo, st)
 confere("início cadastra pasta existente (aws)", "aws" in corpo.lower())
 confere("lang pt-BR, um h1, pular para o conteúdo", 'lang="pt-BR"' in corpo and corpo.count("<h1>") == 1 and "Pular para o conteúdo" in corpo)
 confere("tabela com caption e scope", "<caption>" in corpo and 'scope="col"' in corpo and 'scope="row"' in corpo)

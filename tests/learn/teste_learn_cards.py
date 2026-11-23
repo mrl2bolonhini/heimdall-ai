@@ -186,7 +186,7 @@ confere("agenda inválida volta à pasta com erro", "No máximo 3" in corpo and 
 ca._modelo = modelo_card
 st, _, r = post("/card/novo", {"csrf": csrf, "c": "dados"})
 for _ in range(50):
-    _, corpo, _ = req("GET", "/cards")
+    _, corpo, _ = req("GET", "/cards?t=dados")
     if "Filas desacoplam" in corpo:
         break
     time.sleep(0.1)
@@ -195,15 +195,21 @@ cid = ca.listar(True)[0]["id"]
 st, _, _ = post("/cards/lido", {"csrf": csrf, "id": cid})
 confere("marcar como lido pelo site", ca.listar(True) == [] or all(c["id"] != cid for c in ca.listar(True)))
 _, corpo, _ = req("GET", "/")
-confere("as abas são Início, Lições, Exercícios, Cards e Progresso", all(x in corpo for x in ("Início", "Lições", "Exercícios", "Cards", "Progresso")))
+confere("o início é a lista de temas, sem abas, com os botões Ajustes e Novo estudo", "Temas de estudo" in corpo and "<div role=\"tablist\"" not in corpo and "Ajustes" in corpo and "/tema?t=" in corpo)
+_, ab, _ = req("GET", "/estudos?t=dados")
+confere("tema aleatório: abas Estudos, Cards e Progresso, sem Lições nem Exercícios, e botões Trocar de tema e Ajustes", all(x in ab for x in ("Estudos", "Cards", "Progresso", "Trocar de tema", "Ajustes")) and "Lições" not in ab and "Exercícios" not in ab and ">Início</a>" not in ab.split("role=\"tabpanel\"")[0].split("</nav>")[0].split("role=\"tablist\"")[-1])
+_, ab, _ = req("GET", "/licoes?t=ingles")
+confere("tema sequencial: abas Lições, Exercícios, Cards e Progresso, sem Estudos", all(x in ab for x in ("Lições", "Exercícios", "Cards", "Progresso")) and ">Estudos</a>" not in ab.split("</nav>")[0])
+_, aj, _ = req("GET", "/ajustes?t=dados")
+confere("Ajustes carrega tela sem abas, com Voltar ao tema", "<div role=\"tablist\"" not in aj and "Voltar ao tema" in aj and "Trocar de tema" in aj)
 confere("criar estudo e tipos saíram das abas e viraram botões no início", 'href="/nova"' not in corpo and 'href="/tipos"' not in corpo and "Novo estudo" in corpo and "Ver os tipos de estudo" in corpo)
 _, corpo, _ = req("GET", "/nova")
 confere("Novo estudo pede nome, categoria e tipo", "Novo estudo" in corpo and 'for="categoria"' in corpo and 'for="tipo"' in corpo and "Criar estudo" in corpo)
-_, corpo, _ = req("GET", "/exercicios")
+_, corpo, _ = req("GET", "/exercicios?t=ingles")
 confere("aba Exercícios lista com tabela, caption e scope, e esconde o gabarito de lição em aberto", "<caption>Exercícios das suas lições</caption>" in corpo and 'scope="col"' in corpo and "Resposta esperada" in corpo)
-_, corpo, _ = req("GET", "/exercicios?erros=1")
+_, corpo, _ = req("GET", "/exercicios?t=ingles&erros=1")
 confere("filtro dos erros funciona", st == 303 or "Exercícios" in corpo)
-_, corpo, _ = req("GET", "/progresso")
+_, corpo, _ = req("GET", "/progresso?t=ingles")
 confere("aba Progresso mostra dias seguidos e tabela por pasta", "Progresso por pasta" in corpo and "dia" in corpo)
 
 print("\n" + ("Tudo certo." if not falhas else f"{falhas} falha(s)."))

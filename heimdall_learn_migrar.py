@@ -112,6 +112,9 @@ def notas_do_cofre(cofre: Path = None) -> tuple:
             continue
         pasta = pasta_do_tema(d.name)
         if not pasta:
+            sem = sum(1 for p in d.glob("*.md") if ler_nota(p))
+            if sem:
+                avisos.append(f"o tema {d.name} do cofre tem {sem} nota(s) de estudo, mas não há uma pasta {d.name} no Learn; não serão importadas (crie a pasta e rode de novo)")
             continue
         for p in sorted(d.glob("*.md")):
             n = ler_nota(p)
@@ -179,7 +182,7 @@ def _inserir(con, n: dict, origem: str) -> int:
 def migrar(aplicar: bool = False, cofre: Path = None, banco: Path = None) -> dict:
     """Importa (ou só conta, se aplicar=False). Idempotente. Devolve os números e os avisos."""
     plano = planejar(cofre, banco)
-    r = {"notas": 0, "banco": 0, "audios": 0, "ja_importados": 0, "avisos": list(plano["avisos"]), "aplicado": aplicar}
+    r = {"notas": 0, "banco": 0, "audios": 0, "ja_importados": 0, "avisos": list(plano["avisos"]), "aplicado": aplicar, "por_pasta": {}}
     con = dados.conectar()
     with dados._trava:
         for origem, itens in (("nota", plano["notas"]), ("banco", plano["banco"])):
@@ -188,6 +191,7 @@ def migrar(aplicar: bool = False, cofre: Path = None, banco: Path = None) -> dic
                     r["ja_importados"] += 1
                     continue
                 r["notas" if origem == "nota" else "banco"] += 1
+                r["por_pasta"][n["pasta"]] = r["por_pasta"].get(n["pasta"], 0) + 1
                 if not aplicar:
                     continue
                 id_ = _inserir(con, n, origem)
@@ -207,7 +211,8 @@ def texto_resumo(r: dict) -> str:
     verbo = "Importados" if r["aplicado"] else "Seriam importados"
     linhas = [f"{verbo}: {r['notas']} nota(s) do cofre e {r['banco']} estudo(s) só do banco" + (f", com {r['audios']} áudio(s)" if r["aplicado"] else "") + ".",
               f"Já estavam no Learn: {r['ja_importados']}."]
-    linhas += [f"Aviso: {a}" for a in r["avisos"][:10]]
+    linhas += [f"  {pasta}: {n}" for pasta, n in sorted(r["por_pasta"].items())]
+    linhas += [f"Aviso: {a}" for a in r["avisos"][:20]]
     if not r["aplicado"]:
         linhas.append("Nada foi gravado. Para importar: heimdall learn --migrate --apply")
     else:
