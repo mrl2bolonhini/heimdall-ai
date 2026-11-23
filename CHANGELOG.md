@@ -4,6 +4,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 
 ## 2026-11-23 - App do Mac com o Learn
 - O app ganhou o Learn no menu Abrir (janela própria, atalho Command+7) e o comando Cadastrar as pastas de estudo novas (heimdall learn --sync) no menu Arquivo e no menu de estado. Com o Learn entrando na ordem alfabética, News passou a Command+8, Notes a Command+9, e Status e Flows ficam sem atalho. Rode heimdall app de novo para compilar.
+- heimdall env --set agora grava HEIMDALL_LEARN_AGENDA e HEIMDALL_LEARN_NOTIFICAR (só 0 ou 1), para ligar e desligar a agenda e o aviso do Learn sem editar o .env.
 
 ## 2026-11-23 - Heimdall Learn completo: lições, voz, cards e modelo Learn
 - Fase 3, lições sequenciais: em pasta sequencial, Próxima lição gera explicação, trecho de estudo e 3 a 5 exercícios (alternativas e texto) a partir do material, dois trechos por lição, uma lição aberta por vez. Você responde, a correção vem exercício a exercício (certo, parcial, errado) e a lição conclui. Há progresso da pasta e áudio do trecho e da explicação.
