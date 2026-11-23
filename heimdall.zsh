@@ -80,7 +80,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     logs) printf '%s\n' "-l=--list" "-c=--clean" "-s=--service" ;;
     containers) printf '%s\n' "-a=--all" ;;
     cloud) printf '%s\n' "-L=--local" ;;
-    chat) printf '%s\n' "-d=--diagnose" "-p=--password" "-e=--email" "-D=--delete-user" "-c=--check" "-m=--models" ;;
+    chat) printf '%s\n' "-d=--diagnose" "-p=--password" "-e=--email" "-D=--delete-user" "-c=--check" "-m=--models" "-t=--tools" ;;
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  "-L=--local" ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-y=--analysis" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" "-L=--local" ;;
@@ -206,8 +206,10 @@ heimdall() {
         --password) shift; _heimdall_sh scripts/trocar_senha_webui.sh "$@" ;;
         --email) shift; _heimdall_sh scripts/trocar_email_webui.sh "$@" ;;
         --delete-user) shift; _heimdall_sh scripts/excluir_usuario_webui.sh "$@" ;;
-        --models) shift; _heimdall_sh scripts/importar_modelos_webui.sh "$@" ;;
-        *) echo "Use: heimdall chat [--diagnose] [--password] [--email] [--delete-user] [--models] [--check]"; return 1 ;;
+        --models) shift; _heimdall_sh scripts/importar_modelos_webui.sh --models "$@" ;;
+        --tools) shift; _heimdall_sh scripts/importar_modelos_webui.sh --tools "$@" ;;
+        --import) shift; _heimdall_sh scripts/importar_modelos_webui.sh "$@" ;;
+        *) echo "Use: heimdall chat [--diagnose] [--password] [--email] [--delete-user] [--tools] [--models] [--import] [--check]"; return 1 ;;
       esac ;;
     notes)
       case "$1" in
@@ -486,7 +488,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     case ${words[2]} in
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
       logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent cloud notes news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
-      chat) compadd -- --diagnose --password --email --delete-user --models --check ;;
+      chat) compadd -- --diagnose --password --email --delete-user --tools --models --import --check ;;
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
       notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
       health)

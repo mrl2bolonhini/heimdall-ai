@@ -16,7 +16,7 @@ PASSO 1: AS CONEXÕES DE FERRAMENTAS (6 arquivos)
   4. Salve cada conexão e use o botão de verificar conexão. As que usam o servidor de dados (porta 8004) e o do Mac (porta 8000) só respondem com o Heimdall ligado.
 
 PASSO 2: OS MODELOS (7)
-  0. Atalho: crie uma chave em Configurações, Conta, Chaves de API (conta administradora) e rode heimdall chat --models; ele cria ou atualiza os 7 modelos com os prompts padrão, sem importar arquivo. A chave pode ficar em HEIMDALL_WEBUI_API_KEY no .env ou ser digitada na hora.
+  0. Atalho: crie uma chave em Configurações, Conta, Chaves de API (conta administradora) e rode heimdall chat --import; ele cria ou atualiza as conexões de ferramentas (já com o filtro de funções) e os 7 modelos com os prompts padrão, sem importar arquivo nem colar filtro. Só as conexões: heimdall chat --tools; só os modelos: heimdall chat --models. A chave pode ficar em HEIMDALL_WEBUI_API_KEY no .env ou ser digitada na hora.
   1. Ou abra Workspace, Modelos, Importar, e escolha openwebui/modelos_importar.json (todos de uma vez). Se só o primeiro entrar, importe um por um os arquivos de openwebui/modelos/ (meus-dados.json, saude.json, financas.json, codigo.json, curiosidades.json, conversas.json, documentos.json).
   2. Os modelos entram só para o administrador, de propósito: eles mexem em saúde, finanças e dados pessoais. Para o convidado usar algum, dê o acesso modelo a modelo, e só aos que não tocam dados pessoais (Curiosidades, Conversas, Código).
   3. Cada modelo já chega com o prompt, a temperatura, a conexão de ferramentas e a chamada de função Nativa. Confira uma vez abrindo o modelo para editar. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.

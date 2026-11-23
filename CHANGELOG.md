@@ -3,7 +3,7 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-22 - Modelos do Open WebUI criados por comando
-- Novo heimdall chat --models (scripts/importar_modelos_webui.sh): cria ou atualiza os 7 modelos com os prompts padrão pela API do Open WebUI, sem importar arquivo à mão. Usa uma chave de API (HEIMDALL_WEBUI_API_KEY no .env, ou digitada na hora, sem aparecer na tela). --dry-run só lista. As conexões de ferramentas continuam à mão.
+- Novo heimdall chat --import (scripts/importar_modelos_webui.sh): cria ou atualiza pela API do Open WebUI as conexões de ferramentas (já com o filtro de funções, sem colar à mão) e os 7 modelos com os prompts padrão. --tools faz só as conexões e --models só os modelos. As outras conexões que você já tem ficam como estão. Usa uma chave de API (HEIMDALL_WEBUI_API_KEY no .env, ou digitada na hora, sem aparecer na tela). --dry-run só lista.
 
 ## 2026-11-22 - Subpastas em inglês e pasta própria da Saúde
 - A Saúde ganhou pasta própria na raiz, como o Finance: health/inbox (solte aqui exames, receitas e encaminhamentos), health/archive (os originais já lidos, só do dono) e health/review (o que não deu para ler, com o motivo). Antes ficava em db/documentos. A migração é automática: na primeira subida a pasta é movida (mesmos arquivos, nada copiado nem apagado) e entrada, arquivados e revisar viram inbox, archive e review. health/ não vai para o Git.
