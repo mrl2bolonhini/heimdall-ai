@@ -38,9 +38,14 @@ t("tudo é alcançável na ordem certa: chave da delegacia, escada, espingarda, 
   assert(V.INIM0.filter(m => m.t === "chefe").length === 1);
   assert(Object.keys(V.TRANCADAS).every(k => { const [a, x, y] = k.split(",").map(Number); return V.tile(e, a, x, y) === "L"; }));
 });
-t("começa no oeste da ponte, olhando para leste, com revólver 6 + 12, faca e mão livre", () => {
+t("há munição de revólver em pelo menos 7 lugares espalhados, em casa, plantação, rua, igreja, hospital, delegacia e prefeitura", () => {
+  const m = V.ITENS0.filter(i => i.tipo === "municao" && i.arma === "revolver" && i.a === 0); assert(m.length >= 7, "lugares: " + m.length);
+  const e = V.novo("normal"); const regiao = m.map(i => V.areaDe(i.a, i.x, i.y)); ["casa do fazendeiro", "plantação", "rua do vilarejo", "igreja", "hospital", "delegacia", "prefeitura"].forEach(a => assert(regiao.includes(a), "falta munição em " + a));
+  const total = 6 + 6 + m.reduce((a, i) => a + i.qtd, 0); assert(total >= 40 && total <= 60, "total " + total);
+});
+t("começa no oeste da ponte, olhando para leste, com revólver 6 + 6, faca e mão livre", () => {
   const e = V.novo("normal", rn(1));
-  assert.deepEqual([e.x, e.y, e.dir, e.andar], [8, 8, "leste", 0]); assert.equal(e.arma, "revolver"); assert.deepEqual(e.mun.revolver, { carga: 6, reserva: 12 });
+  assert.deepEqual([e.x, e.y, e.dir, e.andar], [8, 8, "leste", 0]); assert.equal(e.arma, "revolver"); assert.deepEqual(e.mun.revolver, { carga: 6, reserva: 6 });
   assert(e.armas.faca && e.armas.mao && !e.armas.espingarda); assert.equal(e.hp, 20); assert.equal(V.novo("facil").hp, 30); assert.equal(V.novo("dificil").hp, 14);
   assert.equal(e.area, "margem oeste do riacho");
 });
@@ -60,19 +65,19 @@ t("o riacho, a parede e árvores bloqueiam, mas viram o personagem para lá", ()
 t("porta: fechada bloqueia; x abre; trancada exige a chave certa", () => {
   const e = V.novo("normal", rn(1)); sem(e); poe(e, 16, 6, "norte");
   let r = V.mover(e, "norte"); assert(/Porta fechada/.test(msgs(r))); assert.equal(e.y, 6);
-  r = V.usar(e); assert(/abriu a porta/.test(msgs(r))); r = V.mover(e, "norte"); assert.equal(e.y, 5);
-  poe(e, 16, 9, "sul"); r = V.mover(e, "sul"); assert(/Porta trancada/.test(msgs(r))); r = V.usar(e); assert(/chave da delegacia/.test(msgs(r)) && !e.abertas["0,16,10"]);
-  e.chaves.push("chave da prefeitura"); r = V.usar(e); assert(!e.abertas["0,16,10"], "chave errada não abre");
-  e.chaves.push("chave da delegacia"); r = V.usar(e); assert(/destrancou/.test(msgs(r)) && e.abertas["0,16,10"]);
+  r = V.pegar(e); assert(/abriu a porta/.test(msgs(r))); r = V.mover(e, "norte"); assert.equal(e.y, 5);
+  poe(e, 16, 9, "sul"); r = V.mover(e, "sul"); assert(/Porta trancada/.test(msgs(r))); r = V.pegar(e); assert(/chave da delegacia/.test(msgs(r)) && !e.abertas["0,16,10"]);
+  e.chaves.push("chave da prefeitura"); r = V.pegar(e); assert(!e.abertas["0,16,10"], "chave errada não abre");
+  e.chaves.push("chave da delegacia"); r = V.pegar(e); assert(/destrancou/.test(msgs(r)) && e.abertas["0,16,10"]);
   r = V.mover(e, "sul"); assert.equal(e.y, 10);
 });
-t("itens: x pega a chave, os kits, a munição e a espingarda; x sem item usa o kit", () => {
+t("itens: x pega a chave, os kits, a munição e a espingarda; c usa o kit médico; x e c têm funções separadas", () => {
   const e = V.novo("normal", rn(1)); sem(e); poe(e, 5, 12, "norte");
-  let r = V.usar(e); assert(/chave da delegacia/.test(msgs(r)) && e.chaves.includes("chave da delegacia"));
-  poe(e, 3, 12); r = V.usar(e); assert.equal(e.mun.revolver.reserva, 24);
-  poe(e, 3, 11); r = V.usar(e); assert.equal(e.kits, 1); r = V.usar(e); assert(/Vida cheia|vida está cheia/i.test(msgs(r)), msgs(r));
-  e.hp = 5; r = V.usar(e); assert.equal(e.hp, 13); assert.equal(e.kits, 0); r = V.usar(e); assert(/Nada para pegar/.test(msgs(r)));
-  e.andar = 1; poe(e, 14, 11); r = V.usar(e); assert(e.armas.espingarda && e.mun.espingarda.reserva === 4, msgs(r));
+  let r = V.pegar(e); assert(/chave da delegacia/.test(msgs(r)) && e.chaves.includes("chave da delegacia"));
+  poe(e, 3, 12); r = V.pegar(e); assert.equal(e.mun.revolver.reserva, 12);
+  poe(e, 3, 11); r = V.pegar(e); assert.equal(e.kits, 1); assert(/Aperte c/.test(msgs(r))); r = V.curar(e); assert(/vida está cheia/i.test(msgs(r)), msgs(r));
+  e.hp = 5; r = V.curar(e); assert.equal(e.hp, 13); assert.equal(e.kits, 0); r = V.curar(e); assert(/não tem kit/.test(msgs(r))); r = V.pegar(e); assert(/Nada para pegar/.test(msgs(r)));
+  e.andar = 1; poe(e, 14, 11); r = V.pegar(e); assert(e.armas.espingarda && e.mun.espingarda.reserva === 4, msgs(r));
   poe(e, 14, 12); r = V.comando(e, "atirar"); // não explode sem arma equipada
   assert(V.escolher(e, 2).length === 1 && e.arma === "espingarda");
 });
@@ -82,8 +87,8 @@ t("chegar a uma casa com item avisa e escada avisa", () => {
 });
 t("escada: sobe ao andar de cima e desce de volta, na mesma casa", () => {
   const e = V.novo("normal", rn(1)); sem(e); poe(e, 16, 12, "sul");
-  let r = V.usar(e); assert.equal(e.andar, 1); assert(/subiu/.test(msgs(r)) && /andar de cima/.test(msgs(r))); assert.equal(e.area, "andar de cima da delegacia");
-  r = V.usar(e); assert.equal(e.andar, 0); assert(/desceu/.test(msgs(r)));
+  let r = V.pegar(e); assert.equal(e.andar, 1); assert(/subiu/.test(msgs(r)) && /andar de cima/.test(msgs(r))); assert.equal(e.area, "andar de cima da delegacia");
+  r = V.pegar(e); assert.equal(e.andar, 0); assert(/desceu/.test(msgs(r)));
 });
 t("mira: começa no centro, as setas movem, tem limites e andar centraliza", () => {
   const e = V.novo("normal", rn(1)); sem(e); assert.deepEqual([e.mx, e.my], [0, 0]);
@@ -117,7 +122,7 @@ t("mirar sobre um inimigo avisa 'Mira sobre' e dá o evento de trava", () => {
 t("revólver sem munição faz clique; recarregar leva tempo, usa a reserva e tem limites", () => {
   const e = V.novo("normal", rn(1)); sem(e); e.mun.revolver.carga = 0;
   assert(/Sem munição na arma/.test(msgs(V.atirar(e)))); let r = V.recarregar(e); assert(/Recarregando/.test(msgs(r)) && e.recarga === 2);
-  assert(/Recarregando\. Espere/.test(msgs(V.atirar(e)))); V.tick(e); assert.equal(e.mun.revolver.carga, 0); r = V.tick(e); assert(/Recarregada: 6 na arma e 6 de reserva/.test(msgs(r)), msgs(r)); assert.equal(e.recarga, 0);
+  assert(/Recarregando\. Espere/.test(msgs(V.atirar(e)))); V.tick(e); assert.equal(e.mun.revolver.carga, 0); r = V.tick(e); assert(/Recarregada: 6 na arma e 0 de reserva/.test(msgs(r)), msgs(r)); assert.equal(e.recarga, 0);
   assert(/já está carregada/.test(msgs(V.recarregar(e)))); e.mun.revolver = { carga: 2, reserva: 0 }; assert(/Sem munição de reserva/.test(msgs(V.recarregar(e))));
   V.escolher(e, 3); assert(/não recarrega/.test(msgs(V.recarregar(e))));
 });
@@ -135,7 +140,7 @@ t("faca e mão livre só acertam quem está colado à frente; mão dá 1, faca 3
 });
 t("trocar de arma: 1 a 4; sem a espingarda avisa; número inválido orienta", () => {
   const e = V.novo("normal", rn(1)); assert(/ainda não tem a espingarda/.test(msgs(V.escolher(e, 2)))); assert(/Arma: faca/.test(msgs(V.escolher(e, 3)))); assert(/Escolha uma arma/.test(msgs(V.escolher(e, 7))));
-  assert(/Arma: revólver, 6 na arma e 12 de reserva/.test(msgs(V.comando(e, "arma revolver"))));
+  assert(/Arma: revólver, 6 na arma e 6 de reserva/.test(msgs(V.comando(e, "arma revolver"))));
 });
 t("inimigo acorda perto, anuncia, anda até você pelo caminho (não atravessa parede) e ataca", () => {
   const e = V.novo("normal", rn(1)); sem(e); poe(e, 14, 8, "leste"); const c = inim(e, "cao", 19, 8);
@@ -164,18 +169,18 @@ t("vitória ao derrubar o chefe; derrota quando a vida zera; depois disso nada m
 });
 t("status, olhar e ajuda falam tudo que importa", () => {
   const e = V.novo("normal", rn(1)); poe(e, 14, 8, "leste"); e.area = V.areaDe(0, 14, 8);
-  assert(/Vida 20 de 20\. Arma: revólver, 6 na arma e 12 de reserva\. Kits médicos: 0\. Chaves: nenhuma\. Térreo, rua do vilarejo, olhando para leste\. Inimigos vivos: 11\./.test(V.status(e)), V.status(e));
+  assert(/Vida 20 de 20\. Arma: revólver, 6 na arma e 6 de reserva\. Kits médicos: 0\. Chaves: nenhuma\. Térreo, rua do vilarejo, olhando para leste\. Inimigos vivos: 11\./.test(V.status(e)), V.status(e));
   const o = V.olhar(e); assert(/rua do vilarejo, olhando para leste/.test(o) && /passos livres/.test(o), o);
   inim(e, "bandido", 17, 8); assert(/bandido à frente, a 3 passos/.test(V.olhar(e)), V.olhar(e));
   assert(/W norte, D leste, S sul, A oeste/.test(V.ajuda()) && /Shift direito recarrega/.test(V.ajuda()) && /1 a 4/.test(V.ajuda()));
-  ["status", "e", "r", "olhar", "o", "ajuda", "h"].forEach(c => assert.equal(V.comando(e, c)[0].t, "info"));
+  ["status", "e", "olhar", "o", "ajuda", "h"].forEach(c => assert.equal(V.comando(e, c)[0].t, "info"));
   assert(/Não entendi/.test(msgs(V.comando(e, "dançar"))));
   assert.equal(V.comando(e, "ir norte")[0] && true, true);
 });
 t("comandos de texto cobrem teclado: norte, atirar, recarregar, mira, arma 3, pegar", () => {
   const e = V.novo("normal", rn(1)); sem(e);
   V.comando(e, "norte"); assert.equal(e.y, 7); V.comando(e, "mira esquerda"); assert.equal(e.mx, -1); V.comando(e, "mira cima"); assert.equal(e.my, 1); V.comando(e, "mira centro"); assert.equal(e.mx, 0);
-  V.comando(e, "atirar"); assert.equal(e.mun.revolver.carga, 5); V.comando(e, "recarregar"); assert.equal(e.recarga, 2); V.comando(e, "3"); assert.equal(e.arma, "faca"); assert(/Nada para pegar/.test(msgs(V.comando(e, "pegar"))));
+  V.comando(e, "atirar"); assert.equal(e.mun.revolver.carga, 5); V.comando(e, "recarregar"); assert.equal(e.recarga, 2); V.comando(e, "3"); assert.equal(e.arma, "faca"); assert(/Nada para pegar/.test(msgs(V.comando(e, "pegar")))); assert(/não tem kit/.test(msgs(V.comando(e, "usar"))));
 });
 t("os sons e a fala existem: todo evento tem tipo, texto e nível de narração", () => {
   const e = V.novo("normal", rn(3)); poe(e, 14, 8, "leste"); inim(e, "bandido", 17, 8);

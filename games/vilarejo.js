@@ -49,7 +49,7 @@
   var ITENS0 = [
     { a: 0, x: 5, y: 12, tipo: "chave", nome: "chave da delegacia" },
     { a: 0, x: 3, y: 11, tipo: "kit", nome: "kit médico" },
-    { a: 0, x: 3, y: 12, tipo: "municao", arma: "revolver", qtd: 12, nome: "12 balas de revólver" },
+    { a: 0, x: 3, y: 12, tipo: "municao", arma: "revolver", qtd: 6, nome: "6 balas de revólver" },
     { a: 0, x: 16, y: 2, tipo: "kit", nome: "kit médico" },
     { a: 0, x: 14, y: 3, tipo: "municao", arma: "revolver", qtd: 6, nome: "6 balas de revólver" },
     { a: 0, x: 23, y: 2, tipo: "kit", nome: "kit médico" },
@@ -59,7 +59,11 @@
     { a: 1, x: 14, y: 11, tipo: "arma", arma: "espingarda", qtd: 4, nome: "espingarda, com 4 cartuchos" },
     { a: 1, x: 18, y: 11, tipo: "municao", arma: "espingarda", qtd: 4, nome: "4 cartuchos de espingarda" },
     { a: 1, x: 18, y: 13, tipo: "chave", nome: "chave da prefeitura" },
-    { a: 0, x: 23, y: 13, tipo: "kit", nome: "kit médico" }
+    { a: 0, x: 23, y: 13, tipo: "kit", nome: "kit médico" },
+    { a: 0, x: 9, y: 1, tipo: "municao", arma: "revolver", qtd: 4, nome: "4 balas de revólver, numa caixa esquecida na plantação" },
+    { a: 0, x: 20, y: 6, tipo: "municao", arma: "revolver", qtd: 4, nome: "4 balas de revólver, num caixote na rua" },
+    { a: 0, x: 23, y: 4, tipo: "municao", arma: "revolver", qtd: 6, nome: "6 balas de revólver" },
+    { a: 0, x: 27, y: 13, tipo: "municao", arma: "revolver", qtd: 4, nome: "4 balas de revólver" }
   ];
   var INIM0 = [
     { t: "rato", a: 0, x: 5, y: 11 }, { t: "cao", a: 0, x: 3, y: 2 },
@@ -88,7 +92,7 @@
     var e = {
       nivel: k, nome: n.nome, rnd: rnd || sorteio, mapa: andares(), andar: INICIO.a, x: INICIO.x, y: INICIO.y, dir: INICIO.dir, mx: 0, my: 0,
       hp: n.hp, hpMax: n.hp, arma: "revolver", armas: { revolver: true, faca: true, mao: true, espingarda: false },
-      mun: { revolver: { carga: 6, reserva: 12 }, espingarda: { carga: 0, reserva: 0 } }, kits: 0, chaves: [], abertas: {}, recarga: 0, recargaArma: "",
+      mun: { revolver: { carga: 6, reserva: 6 }, espingarda: { carga: 0, reserva: 0 } }, kits: 0, chaves: [], abertas: {}, recarga: 0, recargaArma: "",
       itens: ITENS0.map(function (i) { return Object.assign({}, i); }), inimigos: [], t: 0, passos: 0, mortos: 0, tiros: 0, acertos: 0, fim: null, area: ""
     };
     INIM0.forEach(function (s) { var tp = TIPOS[s.t]; e.inimigos.push({ t: s.t, a: s.a, x: s.x, y: s.y, hp: tp.hp, ativo: false, cool: 0, visto: false }); });
@@ -260,7 +264,7 @@
     var mu = e.mun[id];
     return [ev("arma", "Arma: " + ARMAS[id].nome + (ARMAS[id].municao ? ", " + mu.carga + " na arma e " + mu.reserva + " de reserva." : "."), 1, { c: ARMAS[id].nome + "." })];
   }
-  function usar(e) {
+  function pegar(e) {
     var evs = [];
     if (e.fim) return evs;
     var aqui = e.itens.filter(function (i) { return i.a === e.andar && i.x === e.x && i.y === e.y; });
@@ -268,7 +272,7 @@
       aqui.forEach(function (i) {
         e.itens.splice(e.itens.indexOf(i), 1);
         if (i.tipo === "chave") { e.chaves.push(i.nome); evs.push(ev("pegou", "Pegou a " + i.nome + ".", 1, { c: "Pegou." })); }
-        else if (i.tipo === "kit") { e.kits++; evs.push(ev("pegou", "Pegou um kit médico. Você tem " + e.kits + ". Aperte x onde não houver nada para pegar para usar.", 1, { c: "Kit." })); }
+        else if (i.tipo === "kit") { e.kits++; evs.push(ev("pegou", "Pegou um kit médico. Você tem " + e.kits + ". Aperte c para usar quando precisar.", 1, { c: "Kit." })); }
         else if (i.tipo === "municao") { e.mun[i.arma].reserva += i.qtd; evs.push(ev("pegou", "Pegou " + i.nome + ". Reserva: " + e.mun[i.arma].reserva + ".", 1, { c: "Munição." })); }
         else if (i.tipo === "arma") { e.armas[i.arma] = true; e.mun[i.arma].reserva += i.qtd; evs.push(ev("pegou", "Pegou a " + ARMAS[i.arma].nome + " com " + i.qtd + " cartuchos. Aperte 2 para empunhar.", 1, { c: "Espingarda." })); }
       });
@@ -289,12 +293,14 @@
       evs.push(ev("escada", aq === "^" ? "Você subiu ao andar de cima da delegacia." : "Você desceu ao térreo da delegacia.", 1, { c: aq === "^" ? "Subiu." : "Desceu." }));
       e.area = ""; chegada(e, evs); return evs;
     }
-    if (e.kits > 0) {
-      if (e.hp >= e.hpMax) return [ev("erro", "Sua vida está cheia: " + e.hp + ".", 2, { c: "Vida cheia." })];
-      e.kits--; e.hp = Math.min(e.hpMax, e.hp + KIT);
-      return [ev("cura", "Usou um kit médico. Vida " + e.hp + " de " + e.hpMax + ". Restam " + e.kits + " kits.", 1, { c: "Vida " + e.hp + "." })];
-    }
-    return [ev("erro", "Nada para pegar ou usar aqui.", 2, { c: "Nada." })];
+    return [ev("erro", "Nada para pegar, abrir ou subir aqui.", 2, { c: "Nada." })];
+  }
+  function curar(e) {
+    if (e.fim) return [];
+    if (e.kits <= 0) return [ev("erro", "Você não tem kit médico.", 1, { c: "Sem kit." })];
+    if (e.hp >= e.hpMax) return [ev("erro", "Sua vida está cheia: " + e.hp + ".", 2, { c: "Vida cheia." })];
+    e.kits--; e.hp = Math.min(e.hpMax, e.hp + KIT);
+    return [ev("cura", "Usou um kit médico. Vida " + e.hp + " de " + e.hpMax + ". Restam " + e.kits + " kits.", 1, { c: "Vida " + e.hp + "." })];
   }
   function olhar(e) {
     var d = DIRS[e.dir], n = 0, x = e.x + d[0], y = e.y + d[1];
@@ -320,7 +326,7 @@
   }
   function ajuda() {
     return "Objetivo: libertar o vilarejo derrubando o chefe dos bandidos, na prefeitura. Andar: W norte, D leste, S sul, A oeste. Você olha para onde andou por último. Setas mudam a mira, que começa no centro e volta ao centro quando você anda; Q centraliza. " +
-      "Barra de espaço atira. Shift direito recarrega. Teclas 1 a 4 escolhem revólver, espingarda, faca e mão livre. X ou C pega o item do chão, abre a porta à frente, sobe ou desce a escada e, se não houver nada disso, usa um kit médico. E ou R diz o estado, O descreve o que está à frente, H repete esta ajuda. " +
+      "Barra de espaço atira. Shift direito recarrega. Teclas 1 a 4 escolhem revólver, espingarda, faca e mão livre. X pega o item do chão, abre a porta à frente e sobe ou desce a escada. C usa um kit médico. E diz o estado, O descreve o que está à frente, H repete esta ajuda. " +
       "O som mostra onde estão os inimigos: o lado no estéreo, o volume é a distância e o tom grave é de animal, que fica abaixo da mira (seta para baixo). Quando a mira passa sobre um inimigo, soa um sinal agudo. Faca e mão livre só acertam quem está colado à sua frente. A espingarda pega vários, mas só de perto.";
   }
   function norm(t) { return String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
@@ -341,8 +347,9 @@
     if (v === "arma") { var n = Number(r); if (!n) { var porNome = { revolver: 1, espingarda: 2, faca: 3, mao: 4 }; n = porNome[r] || 0; } return escolher(e, n); }
     if (/^[1-4]$/.test(v)) return escolher(e, Number(v));
     if (v === "revolver" || v === "espingarda" || v === "faca" || v === "mao") return escolher(e, ARMAS[v].tecla);
-    if (v === "pegar" || v === "usar" || v === "x" || v === "c" || v === "abrir" || v === "subir" || v === "descer" || v === "curar") return usar(e);
-    if (v === "status" || v === "estado" || v === "e" || v === "r" || v === "vida") return [ev("info", status(e), 1)];
+    if (v === "pegar" || v === "x" || v === "abrir" || v === "subir" || v === "descer") return pegar(e);
+    if (v === "usar" || v === "c" || v === "curar" || v === "kit") return curar(e);
+    if (v === "status" || v === "estado" || v === "e" || v === "vida") return [ev("info", status(e), 1)];
     if (v === "olhar" || v === "o") return [ev("info", olhar(e), 1)];
     if (v === "ajuda" || v === "h") return [ev("info", ajuda(), 1)];
     return [ev("erro", "Não entendi. Digite ajuda para ver os comandos.", 1)];
@@ -435,7 +442,7 @@
   var api = {
     NIVEIS: NIVEIS, ARMAS: ARMAS, TIPOS: TIPOS, LARG: LARG, ALT: ALT, ALCANCE: ALCANCE, ANDAR0: ANDAR0, ITENS0: ITENS0, INIM0: INIM0, INICIO: INICIO, TRANCADAS: TRANCADAS,
     novo: novo, tile: tile, passavel: passavel, transparente: transparente, visiveis: visiveis, relativo: relativo, coluna: coluna, mover: mover, mirar: mirar, centralizar: centralizar,
-    atirar: atirar, recarregar: recarregar, escolher: escolher, usar: usar, olhar: olhar, status: status, ajuda: ajuda, comando: comando, aberta: aberta, tick: tick, areaDe: areaDe, resultado: resultado, vivos: vivos, inimigoEm: inimigoEm
+    atirar: atirar, recarregar: recarregar, escolher: escolher, pegar: pegar, curar: curar, olhar: olhar, status: status, ajuda: ajuda, comando: comando, aberta: aberta, tick: tick, areaDe: areaDe, resultado: resultado, vivos: vivos, inimigoEm: inimigoEm
   };
   if (typeof module !== "undefined") module.exports = api;
   if (typeof document === "undefined") return;
@@ -602,7 +609,7 @@
   }
 
   // ---- controles ----
-  var campoTeclas = H.el("input", { id: "teclas", type: "text", autocomplete: "off", spellcheck: "false", "aria-label": "Área de jogo. W A S D andam, setas mudam a mira, espaço atira, Shift direito recarrega, 1 a 4 escolhem a arma, X pega e usa, E diz o estado, O descreve, H ajuda. Também dá para digitar comandos e apertar Enter" });
+  var campoTeclas = H.el("input", { id: "teclas", type: "text", autocomplete: "off", spellcheck: "false", "aria-label": "Área de jogo. W A S D andam, setas mudam a mira, espaço atira, Shift direito recarrega, 1 a 4 escolhem a arma, X pega e abre, C usa kit médico, E diz o estado, O descreve, H ajuda. Também dá para digitar comandos e apertar Enter" });
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { var n = NIVEIS[k]; return H.el("option", { value: k, texto: n.nome.charAt(0).toUpperCase() + n.nome.slice(1) + (k === "facil" ? ": mais vida e inimigos mais fracos" : k === "normal" ? ": equilibrado" : ": pouca vida, inimigos rápidos e certeiros") }); }));
   nivelSel.value = "normal";
   var falaSel = H.el("select", { id: "fala" }, [["completa", "Completa: descreve tudo"], ["curta", "Curta: só o essencial"]].map(function (o) { return H.el("option", { value: o[0], texto: o[1] }); }));
@@ -611,7 +618,7 @@
   var comandoCampo = H.el("input", { id: "comando", type: "text", autocomplete: "off", spellcheck: "false", "aria-label": "Comando por texto, como atirar, norte ou status, e Enter" });
   var cv = H.el("canvas", { width: String(W), height: String(HT), "aria-hidden": "true" });
   cv.style.maxWidth = "100%"; cv.style.height = "auto"; cv.style.imageRendering = "pixelated"; cv.style.background = "#000"; cv.style.display = "block";
-  var teclado = H.el("div", { role: "group", "aria-label": "Controles" }, [["Norte", "norte"], ["Oeste", "oeste"], ["Leste", "leste"], ["Sul", "sul"], ["Atirar", "atirar"], ["Recarregar", "recarregar"], ["Pegar ou usar", "usar"], ["Estado", "status"], ["Olhar", "olhar"], ["Ajuda", "ajuda"]].map(function (x) {
+  var teclado = H.el("div", { role: "group", "aria-label": "Controles" }, [["Norte", "norte"], ["Oeste", "oeste"], ["Leste", "leste"], ["Sul", "sul"], ["Atirar", "atirar"], ["Recarregar", "recarregar"], ["Pegar, abrir e subir (X)", "pegar"], ["Usar kit médico (C)", "curar"], ["Estado", "status"], ["Olhar", "olhar"], ["Ajuda", "ajuda"]].map(function (x) {
     var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { acao(x[1]); }); return b;
   }));
   [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, H.el("label", { "for": "fala", texto: "Narração" }), falaSel, iniciarBtn, pararBtn, testeSom, H.el("label", { "for": "teclas", texto: "Área de jogo (teclado)" }), campoTeclas, cv, teclado, H.el("label", { "for": "comando", texto: "Comando por texto" }), comandoCampo].forEach(function (x) { jogo.appendChild(x); });
@@ -646,7 +653,7 @@
       temposTeste.push(setTimeout(ir, 500));
     } else tocar();
   });
-  var TECLAS = { w: "norte", a: "oeste", s: "sul", d: "leste", ArrowUp: "mira cima", ArrowDown: "mira baixo", ArrowLeft: "mira esquerda", ArrowRight: "mira direita", " ": "atirar", q: "centralizar", x: "usar", c: "usar", e: "status", r: "status", o: "olhar", h: "ajuda", "1": "arma 1", "2": "arma 2", "3": "arma 3", "4": "arma 4" };
+  var TECLAS = { w: "norte", a: "oeste", s: "sul", d: "leste", ArrowUp: "mira cima", ArrowDown: "mira baixo", ArrowLeft: "mira esquerda", ArrowRight: "mira direita", " ": "atirar", q: "centralizar", x: "pegar", c: "curar", e: "status", o: "olhar", h: "ajuda", "1": "arma 1", "2": "arma 2", "3": "arma 3", "4": "arma 4" };
   function tecla(ev) {
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return null;
     if (ev.key === "Shift" && ev.code === "ShiftRight") return "recarregar";

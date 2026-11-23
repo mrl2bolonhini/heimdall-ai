@@ -29,7 +29,8 @@ const campo = achar("input", i => i.attrs.id === "teclas")[0];
 const tecla = (key, extra) => { const ev = Object.assign({ key, code: key.length === 1 ? "Key" + key.toUpperCase() : key, target: campo, preventDefault() { this.parado = true; }, repeat: false }, extra || {}); ouvintes.keydown.forEach(f => f(ev)); return ev; };
 
 t("a página monta controles, canvas escondido do leitor de tela e avisa como começar", () => {
-  assert(botao("Iniciar") && botao("Parar") && botao("Testar o som") && botao("Ajuda") && botao("Recarregar") && botao("Pegar ou usar"));
+  assert(botao("Iniciar") && botao("Parar") && botao("Testar o som") && botao("Ajuda") && botao("Recarregar") && botao("Pegar, abrir e subir (X)") && botao("Usar kit médico (C)"));
+  assert(!tecla("r").parado, "R não faz nada: só E diz o estado");
   const cv = achar("canvas")[0]; assert.equal(cv.attrs["aria-hidden"], "true"); assert(/teclas|Área de jogo/.test(campo.attrs["aria-label"]));
   assert(falas.some(f => /Vilarejo Sitiado/.test(f))); assert(desenho.chamadas > 50, "desenhou a cena inicial");
 });
@@ -42,7 +43,7 @@ t("Iniciar começa a partida e fala o objetivo", () => {
   botao("Iniciar").ouvintes.click[0](); assert(/Partida iniciada, nível normal/.test(falas[falas.length - 1]) && /derrube o chefe/.test(falas[falas.length - 1]));
 });
 t("W A S D, setas, espaço, Shift direito, 1 a 4, X, E, O, Q e H são reconhecidos e consomem a tecla", () => {
-  const casos = { w: 1, a: 1, s: 1, d: 1, ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1, " ": 1, q: 1, x: 1, c: 1, e: 1, r: 1, o: 1, h: 1, 1: 1, 2: 1, 3: 1, 4: 1 };
+  const casos = { w: 1, a: 1, s: 1, d: 1, ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1, " ": 1, q: 1, x: 1, c: 1, e: 1, o: 1, h: 1, 1: 1, 2: 1, 3: 1, 4: 1 };
   Object.keys(casos).forEach(k => { const ev = tecla(k); assert(ev.parado, "tecla não tratada: " + k); });
   const sh = tecla("Shift", { code: "ShiftRight" }); assert(sh.parado, "Shift direito recarrega");
   const shE = tecla("Shift", { code: "ShiftLeft" }); assert(!shE.parado, "Shift esquerdo não faz nada");
