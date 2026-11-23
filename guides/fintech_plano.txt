@@ -1,0 +1,126 @@
+PLANO: PRODUTO FINANCEIRO PRÓPRIO (FINTECH) COM DADOS DO OPEN FINANCE
+Desenho de 23/11/2026. É só um plano: nada foi construído e nada aqui é aconselhamento jurídico ou financeiro. Os números e as normas vêm de pesquisa na web e precisam ser conferidos nas fontes oficiais antes de qualquer decisão.
+
+1. DECISÃO DE FUNDO
+
+1. Abrir uma instituição autorizada pelo Banco Central (instituição de pagamento ou similar) só para ter conectores próprios foi descartado: o capital mínimo encontrado é de R$ 1 a 2 milhões (varia por modalidade e mudou em normas recentes), mais autorização demorada, certificação do Open Finance, rateio de custos e conformidade permanente.
+2. O caminho escolhido para começar é a parceria: uma empresa comum (a sua) recebe os dados por meio de uma instituição receptora autorizada, chamada de integradora pela Resolução Conjunta nº 21/2026 (22/10/2026). Quem responde pelos dados perante o cliente e o regulador é a integradora.
+3. Só se pensa em licença própria depois de tração comprovada (usuários pagantes, receita que sustente capital, equipe e conformidade).
+
+2. O QUE A NORMA NOVA IMPÕE AO PARCEIRO (conferir o texto oficial)
+
+1. É proibido repassar a terceiros os dados recebidos. O produto não pode prever revenda nem repasse.
+2. O nome do produto e da empresa não pode usar termos típicos de instituições financeiras ou de pagamento (evitar banco, pay, financeira, crédito e semelhantes).
+3. Não pode haver parceria entre duas instituições autorizadas, nem o parceiro agindo em nome da contratante.
+4. A integradora precisa seguir exigências de segurança, privacidade e governança e informar ao Banco Central os seus parceiros (prazo para os contratos antigos: 1º de dezembro de 2026). Espere que ela repasse essas exigências a você por contrato.
+5. O consentimento é colhido pela integradora, e o cliente pode revogá-lo a qualquer momento.
+
+3. PERGUNTAS PARA OS RECEPTORES E AGREGADORES
+
+Fazer as mesmas perguntas a pelo menos três candidatos (por exemplo, Pluggy e receptores menores, como fintechs de pagamento) e comparar as respostas por escrito.
+
+Modelo e papel
+1. Vocês atuam como instituição integradora nos termos da Resolução Conjunta nº 21/2026? Qual é a modalidade de autorização de vocês?
+2. Um parceiro sem autorização do Banco Central, sem licença e sem CNPJ antigo, pode contratar? Há exigência de tempo de empresa ou de faturamento?
+3. Quem colhe o consentimento: a tela de vocês ou a minha? Que texto e que fluxo são obrigatórios?
+4. Quais dados e serviços eu posso receber (contas, saldos, extratos, cartões, investimentos, crédito) e quais ficam de fora? Há iniciação de pagamento?
+5. Vocês cobrem pessoa física e pessoa jurídica? Quais bancos e instituições transmissoras, e com que taxa de sucesso de conexão?
+
+Preço e contrato
+6. Como é a cobrança: mensalidade fixa, valor por consentimento ativo, por chamada ou percentual? Há mínimo mensal ou taxa de implantação?
+7. O preço muda se o número de usuários crescer 10 vezes? Há teto?
+8. Qual é o prazo do contrato, a multa de rescisão e o aviso prévio para encerrar?
+9. Posso trocar de integradora sem perder meus usuários e os consentimentos? Como funciona a migração?
+10. O preço pode ser reajustado e com que antecedência avisam? O rateio do Open Finance (que segue o patrimônio líquido da participante) é repassado a mim?
+
+Uso dos dados
+11. Qual é a finalidade que o contrato permite? Posso guardar o histórico por quanto tempo? Posso usar modelos de IA (inclusive de terceiros, na nuvem) sobre os dados?
+12. Posso cruzar os dados com outras fontes do usuário (saúde, agenda, e-mail)? Isso é vedado ou depende de autorização?
+13. Posso gerar relatórios e alertas para o usuário? Posso enviá-los por e-mail, notificação e voz?
+14. O que acontece com os dados quando o usuário revoga o consentimento ou encerra a conta? Vocês exigem que eu apague, e em quanto tempo?
+15. Posso exportar os dados do usuário a pedido dele (portabilidade, LGPD)?
+
+Segurança e conformidade
+16. Que certificações e documentos vocês exigem de mim (política de segurança, testes de invasão, ISO 27001, plano de resposta a incidentes)? Aceitam um plano de adequação em etapas?
+17. Em que país e provedor os dados ficam hospedados? Vocês aceitam que eu guarde os dados na Cloudflare (R2 com chave do cliente)?
+18. Como é o processo de análise prévia (KYC e due diligence) do parceiro, quanto tempo leva e que documentos pedem dos sócios?
+19. Qual é o prazo de resposta e de notificação em caso de incidente? Quem notifica o usuário e a ANPD?
+20. Vocês auditam os meus acessos? Que registros eu preciso guardar e por quanto tempo?
+21. Em que condições vocês podem me desligar de imediato (mecanismo de corte rápido por risco)?
+
+Operação e acessibilidade
+22. Há ambiente de testes (sandbox) com dados fictícios e contas de teste dos principais bancos? Há documentação em português e suporte com prazo de resposta?
+23. Qual é o contrato de nível de serviço (disponibilidade, tempo de correção)? Há histórico público de incidentes?
+24. A tela de consentimento funciona com leitor de tela (VoiceOver) e com teclado? Posso ver essa tela antes de assinar? Como acessibilidade é tratada em caso de falha?
+25. Posso usar a minha própria marca e tela, sem a marca de vocês?
+
+Responsabilidade
+26. Quem responde perante o cliente e o Banco Central se um dado vazar por falha minha? Há cláusula de ressarcimento ou seguro exigido?
+27. Quais mudanças de norma vocês preveem para parcerias em 2027? Como o contrato se adapta a elas?
+
+4. PERGUNTAS PARA UM ESCRITÓRIO REGULATÓRIO (consulta paga e curta)
+
+1. O desenho do produto (organizar finanças de pessoa física com dados do Open Finance, sem mover dinheiro e sem aconselhar investimento) cabe como entidade parceira, ou cai em alguma atividade regulada?
+2. Preciso de alguma autorização para fazer recomendações ou alertas sobre gastos, dívidas e investimentos? Onde fica a linha entre informação e aconselhamento?
+3. Qual é a melhor natureza jurídica e o contrato social, e há restrição de nome?
+4. Que obrigações da LGPD se aplicam a um serviço de dados financeiros e de saúde (bases legais, encarregado, relatório de impacto, transferência internacional para a Cloudflare)?
+5. Há exigência de armazenamento no Brasil ou vedação a processamento por IA estrangeira?
+6. Como tratar o uso de dados de saúde no mesmo produto que os financeiros (consentimentos separados)?
+7. Quais são os riscos de responsabilidade do fundador e como limitar (sociedade limitada, seguro)?
+8. Meu vínculo de emprego atual (instituição financeira) e as políticas de conflito de interesse ou de dedicação exclusiva do contrato permitem abrir e administrar essa empresa? Preciso de autorização por escrito?
+
+5. FASES
+
+Fase 0 - Validação sem empresa (agora)
+1. Seguir usando o Pluggy no uso pessoal, só para o seu Finance, sem terceiros.
+2. Mandar as perguntas da seção 3 aos candidatos e arquivar as respostas por escrito.
+3. Marcar uma consulta com escritório regulatório para as perguntas da seção 4, incluindo a do vínculo de emprego.
+4. Saída: decidir por escrito integradora, preço máximo e se o desenho do produto é permitido.
+
+Fase 1 - Empresa e documentos
+1. Abrir o CNPJ com a natureza e o nome indicados na consulta (sem termos financeiros).
+2. Criar política de privacidade, termos de uso, registro das operações de tratamento, política de segurança e plano de resposta a incidentes.
+3. Nomear o encarregado pelos dados (LGPD) e abrir um e-mail de privacidade.
+4. Saída: pacote de documentos pronto para a análise prévia da integradora.
+
+Fase 2 - Piloto fechado
+1. Assinar o contrato com a integradora escolhida, com cláusula de saída e portabilidade.
+2. Atender poucas pessoas conhecidas, com o isolamento por pessoa do guides/dados_por_pessoa_plano.txt e consentimento próprio.
+3. Teste de acessibilidade com VoiceOver em todo o fluxo, incluindo a tela de consentimento da integradora.
+4. Saída: custo real por usuário, taxa de conexão bem-sucedida e nenhum incidente.
+
+Fase 3 - Abertura e preço
+1. Definir o preço do produto a partir do custo real da fase 2 mais margem.
+2. Auditoria de segurança externa antes de crescer.
+3. Saída: receita que cubra a integradora, a nuvem e o seu tempo.
+
+Fase 4 - Decisão sobre licença própria
+1. Só reavaliar a licença do Banco Central quando houver tração e capital. Voltar ao desenho de custos: capital mínimo, prazo, certificação e rateio.
+
+6. COMO ISSO MEXE COM AS REGRAS DO PROJETO
+
+1. O CLAUDE.md fala em limite de US$ 15 por mês para a nuvem do uso pessoal. O custo de um produto com clientes é outro orçamento e precisa de teto próprio e alertas antes de ligar.
+2. O Finance com várias pessoas já está em avaliação no ROADMAP. Este plano depende do isolamento por pessoa e da política de dados para clientes (nenhum dado real compartilhado entre pessoas).
+3. A regra de que dados de saúde e finanças podem ir à nuvem da Cloudflare, com chave do cliente, vale para o seu uso. Para clientes, precisa de consentimento específico e da resposta jurídica da pergunta 4.4 da seção 4.
+4. Todo recurso do produto continua com interruptor no .env e plano de volta.
+
+7. RISCOS PRINCIPAIS
+
+1. Dependência da integradora: ela pode encerrar o contrato ou mudar o preço. Mitigação: duas integradoras e cláusula de migração.
+2. Mudança de norma: as regras de parcerias foram apertadas em outubro de 2026 e ainda estão se assentando.
+3. Vazamento de dados: o impacto é regulatório e de reputação. Mitigação: chave do cliente, mínimo de dados, auditoria e seguro.
+4. Linha entre informar e aconselhar: alertas e recomendações financeiras podem cair em atividade regulada. Depende da resposta da seção 4.
+5. Conflito com o emprego atual: verificar antes de qualquer abertura de empresa.
+6. Tempo: você é a única pessoa. Definir quantas horas por semana entram nisso antes da fase 1.
+
+8. O QUE NÃO FOI CONFIRMADO
+
+1. Valores de parceria, de rateio da faixa mais baixa e de certificação: não achei fontes.
+2. Prazo de autorização do Banco Central: não há prazo oficial encontrado.
+3. Capital mínimo atual por modalidade: normas de 2024 e 2025 mudaram os números; conferir o texto vigente (Resolução BCB nº 80 e alterações).
+4. O texto integral da Resolução Conjunta nº 21/2026 foi lido só por resumos de imprensa e de escritórios.
+
+FONTES CONSULTADAS (pesquisa de 23/11/2026)
+1. Banco Central: Resolução BCB nº 80/2021 e votos 122/2024 e 111/2025; Resolução Conjunta nº 1/2020 e nº 21/2026.
+2. Capital Aberto, Finsiders Brasil, Mundo Coop (Banco Central), Cescon Barrieu e Machado Meyer, sobre as regras de parcerias.
+3. Let's Money e InfoMoney, sobre o rateio do Open Finance.

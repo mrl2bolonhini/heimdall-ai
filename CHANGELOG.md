@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Plano da fintech por parceria
+- Novo guides/fintech_plano.txt: plano para transformar o Finance em produto sem abrir instituição autorizada (custo alto): ser entidade parceira de uma instituição receptora do Open Finance, com as regras da Resolução Conjunta nº 21/2026, 27 perguntas para receptores e agregadores, perguntas para um escritório regulatório, cinco fases com critério de saída, riscos e o que não foi confirmado. Só o plano; nada foi construído.
+
 ## 2026-11-23 - Vilarejo Sitiado (jogo de tiro e exploração)
 - Ajuste no mesmo dia: X e C têm funções separadas (X pega, abre e sobe; C usa o kit médico), o R deixou de ser estado (só E), você começa com 6 balas de reserva em vez de 12 e há munição em sete lugares (casa, plantação, rua, igreja, hospital, delegacia e prefeitura), o que obriga a explorar.
 - Novo jogo na categoria Ação: Vilarejo Sitiado. Bandidos tomaram um vilarejo com riacho e ponte, plantação, casa, igreja, hospital, delegacia de dois andares e prefeitura; você derruba o chefe, na prefeitura, ouvindo onde cada inimigo está (bandidos e animais, em estéreo: lado, distância e tom).
