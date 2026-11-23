@@ -439,7 +439,7 @@ confere("a rota que salvava no Notas não existe mais", "/analise/notas" not in 
 # campo Perguntar no fim de toda página
 for _rota in ("/", "/transacoes", "/tendencias", "/orcamentos", "/analise", "/futuros", "/boletos", "/recorrentes", "/regras", "/importar", "/avisos"):
     st, corpo, _ = pedir(_rota, ck)
-    confere(f"campo Perguntar no fim de {_rota}", st == 200 and '<label for="pergunta">' in corpo and corpo.rfind('id="perguntar-t"') > corpo.rfind("</table>") and "</section></div></main>" in corpo and corpo.rfind("Voltar para o topo") > corpo.rfind('id="perguntar-t"'), corpo[-300:])
+    confere(f"campo Perguntar no fim de {_rota}", st == 200 and '<label for="pergunta">' in corpo and corpo.rfind('id="perguntar-t"') > corpo.rfind("</table>") and ("</section></div></main>" in corpo or "</section></div></div></main>" in corpo) and corpo.rfind("Voltar para o topo") > corpo.rfind('id="perguntar-t"'), corpo[-300:])
 st, _, cab = pedir("/perguntar", ck)
 confere("/perguntar não é mais página: volta ao resumo", st in (200, 303) and (st == 200 or cab.get("Location") == "/"))
 _hp.chamar_local = lambda *a, **k: "Primeira resposta."

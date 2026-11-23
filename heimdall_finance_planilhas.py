@@ -12,7 +12,7 @@ import heimdall_design as design
 
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 MAX_VISIVEIS = 500
-ROTAS_GET = ("/planilhas", "/investimentos", "/emprestimos", "/conjunto", "/visoes", "/visao", "/contas", "/cartoes")
+ROTAS_GET = ("/planilhas", "/investimentos", "/emprestimos", "/conjunto", "/visoes", "/visao", "/contas", "/cartoes", "/cartoes/fechadas")
 _CREDITO = re.compile(r"/credito/(" + "|".join(fp.CATEGORIAS_CREDITO) + ")")
 
 
@@ -57,6 +57,7 @@ def pg_planilhas(con, sess: dict, pasta: Path) -> tuple:
              f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes(list(fp.TIPOS_USUARIO.items()), "", "Deixar o Heimdall decidir")}</select>'
              '<label for="nome">Nome do conjunto (em branco: uso o nome do arquivo ou o que eu entender)</label><input id="nome" name="nome" type="text" maxlength="60">'
              '<label><input type="checkbox" name="inverter" value="1"> Nesta planilha de gastos, os gastos vêm com valor positivo</label>'
+             '<label><input type="checkbox" name="visao" value="1"> Criar uma visão a partir desta planilha (você escolhe as colunas e a ordem na aba Visões)</label>'
              '<button type="submit">Importar planilha</button></form>']
     ds = fp.duvidas(con)
     if ds:
@@ -96,7 +97,7 @@ def resumo_resultados(res: list) -> str:
                 txt += ", lidas pelo layout que já conhecia"
             partes.append(txt + ".")
         elif r.get("duvida"):
-            partes.append(f"Aba {r['aba']}: tenho uma dúvida, responda na página Planilhas.")
+            partes.append(f"Aba {r['aba']}: tenho uma dúvida, responda na aba Ajustes, em Importar planilha.")
         else:
             partes.append(f"Aba {r['aba']}: {r.get('motivo', 'não importada')}")
     return " ".join(partes)
@@ -147,14 +148,26 @@ def pg_conjunto(con, q: dict, sess: dict) -> tuple:
     return c["nome"], "".join(corpo)
 
 
-def pg_visoes(con) -> tuple:
+def pg_visoes(con, sess: dict = None) -> tuple:
+    """Criar e ver as visões: o formulário de nova visão (conjunto e nome) e a tabela das visões gravadas."""
     vs = fp.visoes(con)
-    if not vs:
-        return "Visões", ('<p>Visões são formas gravadas de mostrar uma planilha: você escolhe as colunas, a ordem delas, como ordenar, filtrar e agrupar, e o Heimdall mantém isso para as linhas novas que chegarem. '
-                          'Abra um conjunto em Planilhas e crie a primeira visão.</p><p><a href="/planilhas">Ir para Planilhas</a></p>')
-    linhas = [[f'<a href="/conjunto?id={v["conjunto_id"]}&amp;visao={v["id"]}">{e(v["nome"])}</a>', e(v["conjunto_nome"]), str(len(v["cfg"].get("colunas", []))),
-               f'<a href="/visao?id={v["id"]}">Personalizar</a>'] for v in vs]
-    return "Visões", tabela("Visões gravadas", ["Visão", "Conjunto", "Colunas", "Personalizar"], linhas, {2})
+    cs = fp.conjuntos(con)
+    corpo = ['<p>Visões são formas gravadas de mostrar uma planilha: você escolhe as colunas, a ordem delas, como ordenar, filtrar e agrupar, e o Heimdall mantém isso para as linhas novas que chegarem.</p>']
+    if cs and sess:
+        corpo.append("<h2>Criar uma visão</h2>"
+                     f'<form method="post" action="/visoes/nova">{_oculto(sess)}'
+                     f'<label for="vconj">Planilha (conjunto)</label><select id="vconj" name="conjunto_id" required>{_opcoes([(str(c["id"]), c["nome"]) for c in cs], "", "Escolha a planilha")}</select>'
+                     '<label for="vnome">Nome da visão</label><input id="vnome" name="nome" type="text" maxlength="60" required>'
+                     '<button type="submit">Criar visão</button></form>')
+    elif not cs:
+        corpo.append('<p>Ainda não há planilhas para criar visões. Importe uma em Ajustes, em Importar planilha, e marque a opção de criar uma visão.</p>')
+    if vs:
+        linhas = [[f'<a href="/conjunto?id={v["conjunto_id"]}&amp;visao={v["id"]}">{e(v["nome"])}</a>', e(v["conjunto_nome"]), str(len(v["cfg"].get("colunas", []))),
+                   f'<a href="/visao?id={v["id"]}">Personalizar</a>'] for v in vs]
+        corpo.append("<h2>Visões gravadas</h2>" + tabela("Visões gravadas", ["Visão", "Conjunto", "Colunas", "Personalizar"], linhas, {2}))
+    elif cs:
+        corpo.append("<p>Ainda não há visões gravadas.</p>")
+    return "Visões", "".join(corpo)
 
 
 def pg_visao(con, q: dict, sess: dict) -> tuple:
@@ -311,31 +324,38 @@ def pg_contas(con) -> tuple:
     return "Contas", "".join(corpo)
 
 
-def pg_cartoes(con) -> tuple:
-    corpo = ['<p>Cartões de crédito: limite, fechamento, faturas e gastos. Os extratos das contas ficam na aba Contas.</p>']
-    t = _por_conta_transacoes(con, True)
-    if t:
-        corpo.append("<h2>Lançamentos</h2>" + _tabela_lancamentos(t, True))
+def pg_cartoes(con, fechadas: bool = False) -> tuple:
+    """Cartões em duas subabas: a fatura aberta (limite, fechamento, vencimento e os lançamentos em andamento) e as faturas fechadas (as já emitidas)."""
+    corpo = []
     p = _contas_pluggy(con, "CREDIT")
+    fat = fp.linhas_atuais(con, pd.NOME_FATURAS)
+    if fechadas:
+        corpo.append('<p>Faturas já fechadas dos cartões de crédito, da mais recente para a mais antiga.</p>')
+        if fat:
+            fat = sorted(fat, key=lambda d: d.get("duedate", ""), reverse=True)
+            corpo.append("<h2>Faturas fechadas</h2>" + tabela("Faturas fechadas dos cartões", ["Cartão", "Vencimento", "Total", "Pagamento mínimo", "Permite parcelar"],
+                                                              [[e(d.get("cartao", "")), e(d.get("duedate", "")), e(_dinheiro(d.get("totalamount", ""))), e(_dinheiro(d.get("minimumpaymentamount", ""))),
+                                                                e(d.get("allowsinstallments", ""))] for d in fat], {2, 3}))
+        else:
+            corpo.append("<p>Ainda não há faturas fechadas. Importe uma fatura em PDF, OFX ou CSV em Ajustes, ou sincronize o Pluggy.</p>")
+        if fat:
+            c = next((x for x in fp.conjuntos(con) if x["nome"] in (pd.NOME_FATURAS, pd.NOME_CONTAS)), None)
+            if c:
+                corpo.append(f'<p><a href="/conjunto?id={c["id"]}">Ver todos os dados e criar visões</a></p>')
+        return "Faturas fechadas", "".join(corpo)
+    corpo.append('<p>Fatura aberta dos cartões de crédito: limite, fechamento, vencimento e o que já foi lançado. Os extratos das contas ficam em Extratos.</p>')
     if p:
         linhas = [[e(d.get("name", "")), e(d.get("creditdata_brand", "")), e(d.get("creditdata_level", "")), e(_dinheiro(d.get("creditdata_creditlimit", ""))),
                    e(_dinheiro(d.get("creditdata_availablecreditlimit", ""))), e(d.get("creditdata_balanceclosedate", "")), e(d.get("creditdata_balanceduedate", "")),
                    e(_dinheiro(d.get("creditdata_minimumpayment", "")))] for d in p]
         corpo.append("<h2>Limites e fatura atual</h2>" + tabela("Cartões no Pluggy", ["Nome", "Bandeira", "Nível", "Limite", "Disponível", "Fecha em", "Vence em", "Pagamento mínimo"],
                                                               linhas, {3, 4, 7}))
-    fat = fp.linhas_atuais(con, pd.NOME_FATURAS)
-    if fat:
-        fat = sorted(fat, key=lambda d: d.get("duedate", ""), reverse=True)
-        corpo.append("<h2>Faturas</h2>" + tabela("Faturas dos cartões", ["Cartão", "Vencimento", "Total", "Pagamento mínimo", "Permite parcelar"],
-                                                [[e(d.get("cartao", "")), e(d.get("duedate", "")), e(_dinheiro(d.get("totalamount", ""))), e(_dinheiro(d.get("minimumpaymentamount", ""))),
-                                                  e(d.get("allowsinstallments", ""))] for d in fat], {2, 3}))
-    if p or fat:
-        c = next((x for x in fp.conjuntos(con) if x["nome"] in (pd.NOME_FATURAS, pd.NOME_CONTAS)), None)
-        if c:
-            corpo.append(f'<p><a href="/conjunto?id={c["id"]}">Ver todos os dados e criar visões</a></p>')
-    if not (t or p or fat):
-        corpo.append("<p>Ainda não há cartões. Importe uma fatura ou sincronize o Pluggy.</p>")
-    return "Cartões", "".join(corpo)
+    t = _por_conta_transacoes(con, True)
+    if t:
+        corpo.append("<h2>Lançamentos</h2>" + _tabela_lancamentos(t, True))
+    if not (t or p):
+        corpo.append("<p>Ainda não há cartões. Importe uma fatura em Ajustes ou sincronize o Pluggy.</p>")
+    return "Fatura aberta", "".join(corpo)
 
 
 def nav(con, base: list) -> list:
@@ -373,13 +393,15 @@ def get(con, rota: str, q: dict, sess: dict, pasta: Path):
         return pg_contas(con)
     if rota == "/cartoes":
         return pg_cartoes(con)
+    if rota == "/cartoes/fechadas":
+        return pg_cartoes(con, True)
     m = _CREDITO.fullmatch(rota)
     if m:
         return pg_emprestimos(con, m.group(1))
     if rota == "/conjunto":
         return pg_conjunto(con, q, sess)
     if rota == "/visoes":
-        return pg_visoes(con)
+        return pg_visoes(con, sess)
     if rota == "/visao":
         return pg_visao(con, q, sess)
     return None
@@ -408,6 +430,16 @@ def post(con, rota: str, campos: dict, arquivos: dict, sess: dict, pasta: Path, 
             ok = [r for r in res if r.get("ok") and r.get("conjunto_id")]
             if len(ok) == 1 and len(res) == 1:
                 volta = f"/conjunto?id={ok[0]['conjunto_id']}"
+            if campos.get("visao") == "1" and ok:
+                criadas = []
+                for r in ok:
+                    nome_v = str(r.get("conjunto") or "Visão")[:60]
+                    if con.execute("SELECT 1 FROM visoes WHERE conjunto_id=? AND nome=?", (r["conjunto_id"], nome_v)).fetchone():
+                        continue   # importar de novo a mesma planilha não cria visão repetida
+                    criadas.append(fp.criar_visao(con, r["conjunto_id"], nome_v))
+                if criadas:
+                    sess["flash"] = ("ok", sess["flash"][1] + (" Visão criada; escolha as colunas e a ordem abaixo." if len(criadas) == 1 else f" {len(criadas)} visões criadas na aba Visões."))
+                    volta = f"/visao?id={criadas[0]}" if len(criadas) == 1 else "/visoes"
         elif rota == "/planilhas/duvida":
             did = _inteiro(campos, "id")
             res = fp.responder_duvida(con, pasta, did, {k: v for k, v in campos.items() if k in ("tipo", "nome") or k.startswith("papel:")})

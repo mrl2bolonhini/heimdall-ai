@@ -1356,7 +1356,7 @@ class Handler(BaseHTTPRequestHandler):
                     novo = avisos.do_servico(serv).gravar(str(dado.get("titulo", "")), str(dado.get("markdown", "")))
                 except ValueError as ex:
                     return self._json(400, {"erro": str(ex)})
-                return self._json(200, {"ok": True, "id": novo, "bark": triagem.enviar_bark(avisos.texto_bark(serv)) if dado.get("bark") else None})
+                return self._json(200, {"ok": True, "id": novo, "bark": triagem.enviar_bark(avisos.texto_bark(serv)) if dado.get("bark") and avisos.bark_ligado(serv) else None})
             if u.path == "/saude/analise":   # roda agora a análise completa e devolve o texto (o aviso também vai para a aba Avisos do Health)
                 import heimdall_analista_saude as analista
                 a = analista.rodar(forcar=True)

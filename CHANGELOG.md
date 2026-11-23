@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Finance em abas com subabas
+- Finance: as 13 abas viraram seis com subabas. Tendências (Resumo, Evolução, Orçamentos, Contas recorrentes, Análises, Avisos), Extratos (Transações, Contas, Pagamentos futuros, Boletos), Cartões (Fatura aberta, Faturas fechadas), Patrimônio (Investimentos e Dívidas por tipo de crédito, só com dados), Visões (formulário para criar e tabela das gravadas) e Ajustes (Importar extrato, Importar planilha, Regras, Avisos). Rotas antigas continuam abrindo a aba certa.
+- Ao importar uma planilha há uma opção para criar a visão na hora. Ajustes > Avisos tem a configuração do Bark (liga ou desliga a notificação no iPhone; o aviso sempre aparece em Tendências > Avisos).
+- Design: subabas (design.subabas, com_subabas, SCRIPT_ABAS de dois níveis); trocar de subaba troca só o painel interno; Alt+Shift+seta troca de subaba.
+- Testes: tests/design/teste_subabas.py e tests/finance/teste_finance_estrutura.py; testes antigos do Finance atualizados. Não testado no Safari com VoiceOver.
+
 ## 2026-11-23 - Games com categorias em abas e Tab que não volta ao menu Conta
 - Games: a barra de uma aba só (Categorias) acabou. Cada categoria virou uma aba, em ordem alfabética e em duas linhas (7 abas = 4 + 3), com Option+Shift+1 a 7; a aba Outros jogos aparece só quando há jogos de terceiros no .env (8 abas = 4 + 4). A página inicial é a primeira aba, com a apresentação do site. Dentro de um jogo, a aba da categoria dele fica marcada, o link de volta leva à categoria e trocar de aba carrega a página inteira (o jogo tem teclas e sons próprios). Trocar de aba entre categorias não recarrega; a página do jogo continua sem permissão de conexão.
 - Todos os sites com abas: o Tab que saía da aba voltava ao menu Conta, sem alcançar o conteúdo nem o Voltar para o topo, porque o painel de conteúdo não era parada do Tab e, em navegador que pula links (o Safari, por padrão), a aba era a última parada. Agora o painel da aba aberta tem tabindex 0 (padrão ARIA das abas) e o link Voltar para o topo também; aba, painel e resumo do menu ganharam contorno de foco. O percurso é: aba, painel, os controles do conteúdo, Voltar para o topo e fim da página.

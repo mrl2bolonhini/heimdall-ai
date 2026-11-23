@@ -119,7 +119,53 @@ form.linha{display:inline}.sub{color:inherit;opacity:.85}
 td form.lim{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}td form.lim input{width:8rem;margin:0}td form.lim button{margin:0}
 """
 
-NAV = [("/", "Resumo"), ("/transacoes", "Transações"), ("/tendencias", "Tendências"), ("/importar", "Importar extrato"), ("/planilhas", "Planilhas"), ("/visoes", "Visões"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"), ("/analise", "Análise"), ("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos"), ("/regras", "Regras"), ("/avisos", "Avisos")]
+# Abas e subabas. Cada grupo é (chave, nome da aba, [(rota, nome da subaba)]); a aba aponta para a primeira subaba. Um grupo com uma subaba só não mostra subabas.
+# Extratos ganha Contas e Patrimônio nasce quando há dados (ver `estrutura`). Rotas que não aparecem aqui ficam ligadas a uma subaba por `ALIASES`.
+ALIASES = {"/transacao/": "/transacoes", "/conjunto": "/visoes", "/visao": "/visoes"}
+
+
+def estrutura(con) -> list:
+    """[(chave, nome, [(rota, subaba)])] com as abas fixas e as que os dados pedem (Contas em Extratos; Patrimônio com Investimentos e dívidas)."""
+    extratos = [("/transacoes", "Transações")]
+    patrimonio = []
+    try:
+        if hfp.tem_contas(con):
+            extratos.append(("/contas", "Contas"))
+        if hfp.fp.resumo_investimentos(con)["itens"]:
+            patrimonio.append(("/investimentos", "Investimentos"))
+        cats = hfp.fp.categorias_de_credito(con)
+        if len(cats) > 1:
+            patrimonio.append(("/emprestimos", "Todas as dívidas"))
+        patrimonio += [(f"/credito/{k}", hfp.fp.CATEGORIAS_CREDITO[k]) for k, _ in cats]
+    except Exception:  # noqa: BLE001  (a navegação nunca derruba a página)
+        patrimonio = []
+    extratos += [("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos")]
+    grupos = [("tendencias", "Tendências", [("/", "Resumo"), ("/tendencias", "Evolução"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"),
+                                           ("/analise", "Análises"), ("/avisos", "Avisos")]),
+              ("extratos", "Extratos", extratos),
+              ("cartoes", "Cartões", [("/cartoes", "Fatura aberta"), ("/cartoes/fechadas", "Faturas fechadas")])]
+    if patrimonio:
+        grupos.append(("patrimonio", "Patrimônio", patrimonio))
+    grupos += [("visoes", "Visões", [("/visoes", "Visões")]),
+               ("ajustes", "Ajustes", [("/importar", "Importar extrato"), ("/planilhas", "Importar planilha"), ("/regras", "Regras"), ("/avisos/config", "Avisos")])]
+    return grupos
+
+
+def localizar(grupos: list, rota: str) -> tuple:
+    """(grupo, rota da subaba) a que a rota pertence, ou (None, "") se não for de nenhuma (página de erro, por exemplo)."""
+    rota = rota.split("?")[0]
+    for g in grupos:
+        for r, _ in g[2]:
+            if r == rota:
+                return g, r
+    for pref, alvo in ALIASES.items():
+        if rota.startswith(pref):
+            return localizar(grupos, alvo)
+    return None, ""
+
+
+ROTAS_FIXAS = ["/", "/tendencias", "/orcamentos", "/recorrentes", "/analise", "/avisos", "/transacoes", "/contas", "/futuros", "/boletos", "/cartoes", "/cartoes/fechadas",
+               "/investimentos", "/emprestimos", "/visoes", "/importar", "/planilhas", "/regras", "/avisos/config"]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -132,15 +178,21 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
             perguntar_html = _bloco_perguntar(sess)
         except Exception:  # noqa: BLE001  (a página nunca deixa de abrir por causa do campo Perguntar)
             perguntar_html = ""
-        itens_nav = hfp.nav(banco(), NAV)
-        atual = design.aba_da_rota(sess.get("atual", "/"), itens_nav, {"/transacao/": "/transacoes", "/conjunto": "/planilhas", "/visao": "/visoes"})
+        grupos = estrutura(banco())
+        grupo, sub = localizar(grupos, sess.get("atual", "/"))
+        itens_nav = [(g[2][0][0], g[1]) for g in grupos]
+        atual = grupo[2][0][0] if grupo else ""
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         nav = design.nav_abas(itens_nav, atual, "Seções do Heimdall Finance")
         f = sess.get("flash")
         if f:
             sess["flash"] = None
             flash = f'<div class="aviso {"ok" if f[0] == "ok" else ""}" role="status">{e(f[1])}</div>'
-        conteudo = design.com_abas(itens_nav, atual, f"<h1>{e(titulo)}</h1>{flash}{corpo}{perguntar_html}")
+        interno = f"<h1>{e(titulo)}</h1>{flash}{corpo}{perguntar_html}"
+        if grupo and len(grupo[2]) > 1:   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
+            conteudo = design.com_abas(itens_nav, atual, design.com_subabas(grupo[2], sub, interno, f"Seções de {grupo[1]}"), foco=False)
+        else:
+            conteudo = design.com_abas(itens_nav, atual, interno)
         scripts = design.script()
     else:
         sair = ""
@@ -526,12 +578,12 @@ def pg_analise(sess: dict) -> tuple:
     return "Análise", "".join(corpo)
 
 
-_ROTAS_VOLTA = {u for u, _ in NAV} | {"/transacoes", "/contas", "/cartoes", "/investimentos", "/emprestimos"}
+_ROTAS_VOLTA = set(ROTAS_FIXAS)
 
 
 def _volta_valida(v: str) -> str:
     """Caminho da própria página para voltar depois de perguntar: só rotas conhecidas, com consulta simples; senão, o resumo."""
-    m = re.fullmatch(r"(/[a-z]*)(\?[A-Za-z0-9=&%._-]{0,200})?", v or "")
+    m = re.fullmatch(r"(/[a-z]*(?:/[a-z]+)?)(\?[A-Za-z0-9=&%._-]{0,200})?", v or "")
     return v if m and m.group(1) in _ROTAS_VOLTA else "/"
 
 
@@ -708,6 +760,28 @@ def pg_recorrentes() -> tuple:
     return "Contas recorrentes", "".join(corpo)
 
 
+def _volta_de_erro(rota: str) -> str:
+    """Para onde voltar quando uma ação falha (o aviso do erro aparece lá)."""
+    if rota in ("/importar", "/sincronizar"):
+        return "/importar"
+    for pref in ("/regras", "/orcamentos", "/boletos", "/futuros", "/analise", "/perguntar", "/avisos/config"):
+        if rota.startswith(pref):
+            return pref if pref != "/perguntar" else "/perguntar"
+    return "/transacoes"
+
+
+def pg_avisos_config(sess: dict) -> tuple:
+    """Ajustes > Avisos: como o Finance avisa quando entra um aviso novo. A lista dos avisos fica em Tendências > Avisos."""
+    cfg = avisos_mod.config("financas")
+    corpo = ('<p>Escolha como o Heimdall Finance avisa quando entra um aviso novo (análises e relatórios). A lista dos avisos fica em Tendências, na subaba Avisos.</p>'
+             f'<form method="post" action="/avisos/config"><input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
+             f'<label><input type="checkbox" name="bark" value="1"{" checked" if cfg["bark"] else ""}> Avisar no iPhone (Bark) quando entrar um aviso novo. '
+             'O texto da notificação é genérico, sem valores nem nomes.</label>'
+             '<button type="submit">Salvar configuração</button></form>'
+             '<p class="sub">O aviso sempre aparece em Tendências, em Avisos; esta opção só liga ou desliga a notificação no iPhone.</p>')
+    return "Configuração dos avisos", corpo
+
+
 def pg_regras(sess: dict) -> tuple:
     rs = banco().execute("SELECT * FROM regras ORDER BY (origem='usuario') DESC, categoria, padrao").fetchall()
     meu = [[e(r["padrao"]), e(r["categoria"]),
@@ -830,7 +904,7 @@ class Finance(nuvem.ManipuladorBase):
         except fn.ErroFinance as ex:
             if sess:
                 sess["flash"] = ("erro", str(ex))
-            self._ir("/importar" if rota in ("/importar", "/sincronizar") else "/regras" if rota.startswith("/regras") else "/orcamentos" if rota.startswith("/orcamentos") else "/boletos" if rota.startswith("/boletos") else "/futuros" if rota.startswith("/futuros") else "/analise" if rota.startswith("/analise") else "/perguntar" if rota.startswith("/perguntar") else "/transacoes")
+            self._ir(_volta_de_erro(rota))
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))
@@ -854,6 +928,8 @@ class Finance(nuvem.ManipuladorBase):
             return
         elif rota == "/avisos":
             titulo, corpo = "Avisos", avisos_mod.pagina(avisos_mod.Avisos(DIR_DADOS / "avisos_financas.db").listar(), sess["csrf"])
+        elif rota == "/avisos/config":
+            titulo, corpo = pg_avisos_config(sess)
         elif rota == "/futuros":
             titulo, corpo = pg_futuros(sess)
         elif rota == "/boletos":
@@ -925,6 +1001,11 @@ class Finance(nuvem.ManipuladorBase):
             else:
                 sess["flash"] = ("ok", f"Limite de {cat} removido." if fn.remover_orcamento(banco(), cat) else f"{cat} não tinha limite.")
             self._ir(volta)
+            return
+        if rota == "/avisos/config":
+            avisos_mod.salvar_config("financas", bark=campos.get("bark") == "1")
+            sess["flash"] = ("ok", "Configuração dos avisos salva.")
+            self._ir("/avisos/config")
             return
         if rota == "/sincronizar":
             if not fpl.credenciais():

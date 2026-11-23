@@ -114,19 +114,19 @@ confere("dívida de planilha vira empréstimo pessoal", [k for k, _ in fp.catego
 bloq = pd.coletar_extras(Falso(("/loans", "/investments")), ["i1"], CONTAS, FATURAS)
 confere("produto bloqueado vira aviso e não derruba a coleta", "empréstimos e financiamentos" in bloq["indisponiveis"] and "investimentos" in bloq["indisponiveis"] and bloq["contas"], bloq["indisponiveis"])
 con_vazio = fn.conectar(Path(tempfile.mkdtemp()) / "v.db")
-confere("sem dados as abas dinâmicas não aparecem", [r for r, _ in hfp.nav(con_vazio, hf.NAV)] == [r for r, _ in hf.NAV])
+confere("sem dados as abas dinâmicas não aparecem", [g[0] for g in hf.estrutura(con_vazio)] == ["tendencias", "extratos", "cartoes", "visoes", "ajustes"] and "/contas" not in [r for g in hf.estrutura(con_vazio) for r, _ in g[2]])
 
 # abas e páginas
 fn.importar_itens(con, [{"data": "2026-11-20", "valor": -5000, "descricao": "Mercado"}], "ofx", "x", "Itaú conta")
 fn.importar_itens(con, [{"data": "2026-11-20", "valor": -9000, "descricao": "Loja"}], "ofx", "x", "Nubank cartão")
-rotas = [r for r, _ in hfp.nav(con, hf.NAV)]
-confere("abas criadas pelos dados, depois de Transações", rotas[:2] == ["/", "/transacoes"] and rotas[2:9] == ["/contas", "/cartoes", "/investimentos", "/emprestimos", "/credito/veiculo", "/credito/imovel", "/credito/consignado"] and "/credito/pessoal" in rotas, rotas)
-rot = hfp.nav(con, hf.NAV)
+rotas = [r for g in hf.estrutura(con) for r, _ in g[2]]
+confere("abas criadas pelos dados, depois de Transações", rotas[6:8] == ["/transacoes", "/contas"] and rotas[12:18] == ["/investimentos", "/emprestimos", "/credito/veiculo", "/credito/imovel", "/credito/consignado", "/credito/pessoal"] and "/credito/pessoal" in rotas, rotas)
+rot = [x for g in hf.estrutura(con) for x in g[2]]
 confere("rótulos em português", ("/credito/veiculo", "Financiamento de veículo") in rot and ("/credito/imovel", "Financiamento imobiliário") in rot and ("/credito/consignado", "Consignado") in rot)
 t, c = hfp.get(con, "/contas", {}, {"csrf": "x"}, None)
 confere("Contas separa extrato de cartão e mostra saldo do banco", "Itaú conta" in c and "Nubank cartão" not in c and "R$ 1.600,00" in c and "Cheque especial" in c, c[:300])
 t, c = hfp.get(con, "/cartoes", {}, {"csrf": "x"}, None)
-confere("Cartões mostra limite, fechamento e faturas", "Nubank cartão" in c and "R$ 10.000,00" in c and "2026-12-05" in c and "R$ 800,00" in c and "Faturas dos cartões" in c, c[:400])
+confere("Cartões mostra limite, fechamento e faturas", "Nubank cartão" in c and "R$ 10.000,00" in c and "2026-12-05" in c and "Limites e fatura atual" in c and "R$ 800,00" in hfp.get(con, "/cartoes/fechadas", {}, {"csrf": "x"}, None)[1], c[:400])
 t, c = hfp.get(con, "/credito/imovel", {}, {"csrf": "x"}, None)
 confere("aba de financiamento imobiliário", t == "Financiamento imobiliário" and "R$ 310.000,00" in c, c[:300])
 t, c = hfp.get(con, "/emprestimos", {}, {"csrf": "x"}, None)

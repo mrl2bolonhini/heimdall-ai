@@ -87,6 +87,7 @@ ul.acoes{list-style:none;padding:0}ul.acoes li{margin:.6rem 0}ul.acoes button{ma
 details.mais{display:inline-block;position:relative;margin:.4rem 0 .6rem}details.mais summary{cursor:pointer;display:inline-block;padding:.5rem 1rem;min-height:""" + ALTURA_MINIMA_ALVO + """;box-sizing:border-box;border:1px solid var(--linha);background:var(--superficie);color:var(--texto)}
 details.mais ul{list-style:none;margin:.3rem 0 0;padding:.4rem .8rem;border:1px solid var(--linha);background:var(--superficie)}details.mais li{margin:.2rem 0}details.mais a{display:inline-block;padding:.3rem 0;min-height:""" + ALTURA_MINIMA_ALVO + """}
 [role=tab][aria-selected=true]{font-weight:700;border-bottom:3px solid var(--ouro);background:var(--fundo)}
+[role=tablist].subabas{border-bottom:0;margin:.2rem 0 1rem}.subabas [role=tab]{border:1px solid var(--linha);border-radius:.4rem;background:transparent;font-size:.95em}.subabas [role=tab][aria-selected=true]{font-weight:700;border:2px solid var(--ouro);background:var(--superficie)}
 [hidden]{display:none !important}
 .campo-segredo{display:inline-flex;gap:.4rem;align-items:center}.rodape{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--linha)}.rodape form{margin:0 0 1rem}
 .so-leitor{position:absolute;left:-999px;width:1px;height:1px;overflow:hidden}
@@ -160,11 +161,38 @@ def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = (
             + f'</div>{mais}{dicas}<p id="aviso-abas" class="so-leitor" role="status"></p></div>')
 
 
-def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
+def painel_da_aba(itens: list, atual: str, conteudo: str, foco: bool = True) -> str:
+    """O painel da aba aberta. `foco`: parada do Tab (tabindex=0); fica False quando o painel começa com subabas, que já são a primeira parada dentro dele."""
     i = next((n for n, (r, _) in enumerate(itens, 1) if r == atual), 1)
     # tabindex=0: o Tab que sai da aba cai no painel (padrão ARIA das abas). Sem isso, em navegador que pula links no Tab (Safari por padrão)
     # a aba era a última parada e o foco voltava ao menu Conta.
-    return f'<div role="tabpanel" id="painel-aba" aria-labelledby="aba-{i}" tabindex="0">{conteudo}</div>'
+    return f'<div role="tabpanel" id="painel-aba" aria-labelledby="aba-{i}"{" tabindex=\"0\"" if foco else ""}>{conteudo}</div>'
+
+
+def subabas(itens: list, atual: str, rotulo: str = "Subseções", completas: tuple = ()) -> str:
+    """Subabas: um segundo nível de abas dentro do painel de uma aba (ex.: Extratos > Transações, Pagamentos futuros, Boletos). Mesmo padrão das abas
+    (links com role=tab, uma parada do Tab, setas, Home e End), com data-nivel=2; Option+Shift+seta direita ou esquerda passa para a próxima ou a anterior.
+    As subabas trocam só o painel interno (`painel_da_subaba`); a aba de cima continua onde está. `itens` é [(rota, nome)]."""
+    e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
+    tabs = []
+    for i, (rota, nome) in enumerate(itens, 1):
+        sel = rota == atual
+        tabs.append(f'<a role="tab" id="subaba-{i}" href="{e(rota)}" aria-selected="{"true" if sel else "false"}" tabindex="{0 if sel else -1}" '
+                    f'aria-controls="painel-subaba"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
+    if tabs and not any('aria-selected="true"' in t for t in tabs):
+        tabs[0] = tabs[0].replace('tabindex="-1"', 'tabindex="0"', 1)
+    return (f'<div role="tablist" class="subabas l{por_linha(len(itens))}" data-nivel="2" aria-label="{e(rotulo)}" aria-describedby="atalho-subabas">' + "".join(tabs)
+            + '</div><span id="atalho-subabas" hidden>Atalho: Option Shift seta para a direita ou para a esquerda</span>')
+
+
+def painel_da_subaba(itens: list, atual: str, conteudo: str) -> str:
+    i = next((n for n, (r, _) in enumerate(itens, 1) if r == atual), 1)
+    return f'<div role="tabpanel" id="painel-subaba" aria-labelledby="subaba-{i}" tabindex="0">{conteudo}</div>'
+
+
+def com_subabas(itens: list, atual: str, conteudo: str, rotulo: str = "Subseções", completas: tuple = ()) -> str:
+    """As subabas e o painel interno com o conteúdo, para ir dentro de `com_abas(..., foco=False)`."""
+    return subabas(itens, atual, rotulo, completas) + painel_da_subaba(itens, atual, conteudo)
 
 
 # Setas Esquerda/Direita, Home e End movem o foco entre as abas; Enter ou Espaço abre a aba em foco; Option+Shift+1..9 abre pelo número.
@@ -187,9 +215,9 @@ def nav_abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple
     return '<nav aria-label="Principal">' + abas(itens, atual, rotulo, completas) + "</nav>"
 
 
-def com_abas(itens: list, atual: str, conteudo: str) -> str:
-    """Conteúdo da página dentro do painel da aba aberta (o que o SCRIPT_ABAS troca ao mudar de aba)."""
-    return painel_da_aba(itens, atual, conteudo)
+def com_abas(itens: list, atual: str, conteudo: str, foco: bool = True) -> str:
+    """Conteúdo da página dentro do painel da aba aberta (o que o SCRIPT_ABAS troca ao mudar de aba). Com subabas, passe foco=False."""
+    return painel_da_aba(itens, atual, conteudo, foco)
 
 
 def script(extra: str = "") -> str:
@@ -326,43 +354,56 @@ window.hdPerguntar();
 
 SCRIPT_ABAS = r"""
 (function(){
-var lista = document.querySelector('[role=tablist]'); if (!lista) { return; }
-var abas = Array.prototype.slice.call(lista.querySelectorAll('[role=tab]'));
+var ALVO = {'1': 'painel-aba', '2': 'painel-subaba'};
 var aviso = document.getElementById('aviso-abas');
-function atual(){ return lista.querySelector('[aria-selected=true]'); }
-function foco(i){ abas.forEach(function(a, k){ a.tabIndex = (k === i) ? 0 : -1; }); abas[i].focus(); }
+function nivel(lista){ return lista.getAttribute('data-nivel') || '1'; }
+function listaDe(el){ return el && el.closest ? el.closest('[role=tablist]') : null; }
+function abasDe(lista){ return Array.prototype.slice.call(lista.querySelectorAll('[role=tab]')); }
+function atual(lista){ return lista.querySelector('[aria-selected=true]'); }
+function foco(lista, i){ var as = abasDe(lista); as.forEach(function(a, k){ a.tabIndex = (k === i) ? 0 : -1; }); as[i].focus(); }
+function principal(){ return document.querySelector('[role=tablist]:not([data-nivel])'); }
 function abrir(a, empurrar){
-  var de = atual(); if (a === de) { return; }
+  var lista = listaDe(a), de = lista && atual(lista); if (!lista || a === de) { return; }
   if (!de || a.hasAttribute('data-completa') || de.hasAttribute('data-completa')) { location.href = a.href; return; }
+  var id = ALVO[nivel(lista)];
   fetch(a.href, {credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1'}}).then(function(r){
     if (!r.ok || /\/entrar/.test(r.url)) { throw new Error('x'); } return r.text();
   }).then(function(t){
-    var d = new DOMParser().parseFromString(t, 'text/html'), novo = d.getElementById('painel-aba'), velho = document.getElementById('painel-aba');
+    var d = new DOMParser().parseFromString(t, 'text/html'), novo = d.getElementById(id), velho = document.getElementById(id);
     if (!novo || !velho) { throw new Error('x'); }
-    velho.innerHTML = novo.innerHTML; velho.setAttribute('aria-labelledby', a.id);
-    abas.forEach(function(x){ var s = (x === a); x.setAttribute('aria-selected', s ? 'true' : 'false'); x.tabIndex = s ? 0 : -1; });
+    velho.innerHTML = novo.innerHTML;
+    ['aria-labelledby', 'tabindex'].forEach(function(k){ if (novo.hasAttribute(k)) { velho.setAttribute(k, novo.getAttribute(k)); } else { velho.removeAttribute(k); } });
+    abasDe(lista).forEach(function(x){ var s = (x === a); x.setAttribute('aria-selected', s ? 'true' : 'false'); x.tabIndex = s ? 0 : -1; });
     if (window.hdPerguntar) { window.hdPerguntar(); }
     document.title = d.title; if (empurrar) { history.pushState({}, '', a.href); }
     if (aviso) { aviso.textContent = ''; setTimeout(function(){ aviso.textContent = a.textContent + ' aberta'; }, 50); }
   }).catch(function(){ location.href = a.href; });
 }
-abas.forEach(function(a){ a.addEventListener('click', function(ev){
+document.addEventListener('click', function(ev){
+  var a = ev.target && ev.target.closest ? ev.target.closest('a[role=tab]') : null; if (!a) { return; }
   if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button) { return; } ev.preventDefault(); abrir(a, true);
-}); });
+});
 window.addEventListener('popstate', function(){ location.reload(); });
-lista.addEventListener('keydown', function(ev){
-  var i = abas.indexOf(document.activeElement); if (i < 0 || ev.altKey || ev.ctrlKey || ev.metaKey) { return; }
+document.addEventListener('keydown', function(ev){
+  var lista = listaDe(ev.target); if (!lista || ev.altKey || ev.ctrlKey || ev.metaKey) { return; }
+  var as = abasDe(lista), i = as.indexOf(ev.target); if (i < 0) { return; }
   var k = ev.key;
-  if (k === 'ArrowRight') { foco((i + 1) % abas.length); }
-  else if (k === 'ArrowLeft') { foco((i - 1 + abas.length) % abas.length); }
-  else if (k === 'Home') { foco(0); }
-  else if (k === 'End') { foco(abas.length - 1); }
-  else if (k === ' ') { abas[i].click(); }
+  if (k === 'ArrowRight') { foco(lista, (i + 1) % as.length); }
+  else if (k === 'ArrowLeft') { foco(lista, (i - 1 + as.length) % as.length); }
+  else if (k === 'Home') { foco(lista, 0); }
+  else if (k === 'End') { foco(lista, as.length - 1); }
+  else if (k === ' ') { as[i].click(); }
   else { return; }
   ev.preventDefault();
 });
 document.addEventListener('keydown', function(ev){
   if (ev.isComposing || !ev.altKey || !ev.shiftKey || ev.ctrlKey || ev.metaKey) { return; }
+  if (ev.code === 'ArrowRight' || ev.code === 'ArrowLeft') {   // subabas: próxima ou anterior (fora de campos de texto, onde Option+Shift+seta seleciona texto)
+    var alvo = ev.target, tag = alvo && alvo.tagName; if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (alvo && alvo.isContentEditable)) { return; }
+    var sub = document.querySelector('[role=tablist][data-nivel="2"]'); if (!sub) { return; }
+    var as = abasDe(sub), i = as.indexOf(atual(sub)); if (i < 0) { i = 0; }
+    ev.preventDefault(); as[(i + (ev.code === 'ArrowRight' ? 1 : as.length - 1)) % as.length].click(); return;
+  }
   if (ev.code === 'Digit0') {   // menu Mais: abre e põe o foco no primeiro item; de novo, fecha
     var mais = document.getElementById('mais'); if (!mais) { return; }
     ev.preventDefault();
@@ -371,7 +412,8 @@ document.addEventListener('keydown', function(ev){
     return;
   }
   var m = /^Digit([1-9])$/.exec(ev.code); if (!m) { return; }
-  var a = abas[parseInt(m[1], 10) - 1]; if (a) { ev.preventDefault(); a.click(); }
+  var top = principal(); if (!top) { return; }
+  var a = abasDe(top)[parseInt(m[1], 10) - 1]; if (a) { ev.preventDefault(); a.click(); }
 });
 })();
 """

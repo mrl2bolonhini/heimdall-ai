@@ -118,6 +118,42 @@ def do_servico(servico: str) -> "Avisos":
     raise ValueError("serviço sem avisos: " + str(servico))
 
 
+CONFIG_PADRAO = {"bark": True}   # avisar no iPhone (Bark) quando entra aviso novo; é a configuração da aba Ajustes > Avisos
+
+
+def _arquivo_config(servico: str) -> Path:
+    return do_servico(servico).caminho.parent / f"avisos_config_{servico}.json"
+
+
+def config(servico: str) -> dict:
+    """Configuração dos avisos do serviço (arquivo JSON ao lado do banco de avisos); o que faltar ou estiver ilegível usa o padrão."""
+    import json
+    cfg = dict(CONFIG_PADRAO)
+    try:
+        lido = json.loads(_arquivo_config(servico).read_text(encoding="utf-8"))
+        if isinstance(lido, dict):
+            cfg.update({k: bool(v) for k, v in lido.items() if k in CONFIG_PADRAO})
+    except (OSError, ValueError):
+        pass
+    return cfg
+
+
+def salvar_config(servico: str, **valores) -> dict:
+    import json
+    cfg = config(servico)
+    cfg.update({k: bool(v) for k, v in valores.items() if k in CONFIG_PADRAO})
+    arq = _arquivo_config(servico)
+    arq.parent.mkdir(parents=True, exist_ok=True)
+    tmp = arq.with_suffix(".tmp")
+    tmp.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(arq)
+    return cfg
+
+
+def bark_ligado(servico: str) -> bool:
+    return config(servico)["bark"]
+
+
 def texto_bark(servico: str, quantos: int = 1) -> dict:
     """Texto do Bark para um aviso novo: genérico, sem título, valor, nome ou número do conteúdo."""
     nome = SERVICOS.get(servico, "Heimdall")
