@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Limites de gasto da Cloudflare
+- Novo scripts/limites_gasto_cloudflare.sh: cria as políticas de gasto (bloqueio de uso em Workers até US$ 10 e Durable Objects até US$ 5, mais avisos por e-mail na metade) lendo o token do .env; --ver só lista. Exige token com permissão Faturamento (edição). Antes de ligar a fase de continuidade.
+
 ## 2026-11-23 - Plano de continuidade na nuvem
 - Novo guides/continuidade_nuvem.txt: plano para os serviços e fluxos continuarem na nuvem quando o Mac cai, com Worker de entrada, Cloudflare Containers que só ligam na queda, cópias cifradas no R2 e Workflows, fases com interruptor e custo estimado dentro do teto de US$ 15. Ainda não implementado.
 
