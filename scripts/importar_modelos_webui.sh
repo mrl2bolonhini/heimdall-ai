@@ -12,7 +12,8 @@
 # para sobrar só os 7 criados. Eles continuam funcionando por baixo. --keep-base não esconde nada.
 #
 # A chave da API vem de HEIMDALL_WEBUI_API_KEY no .env; se não houver, o script pergunta sem mostrar na tela e não grava.
-# Crie a chave no Open WebUI: Configurações, Conta, Chaves de API, Criar (conta administradora). A chave nunca é impressa.
+# Crie a chave no Open WebUI: Configurações, Conta, Chaves de API, Criar (conta administradora). Copie-a com Command+C e grave com
+# heimdall env --set HEIMDALL_WEBUI_API_KEY (lê a área de transferência, sem mostrar). A chave nunca é impressa.
 # Conexão com o mesmo ID é atualizada no lugar (as outras conexões ficam como estão); modelo com o mesmo id é atualizado. Nada é apagado.
 cd "$(dirname "$0")/.." || exit 1
 python3 - "$@" <<'PY'
