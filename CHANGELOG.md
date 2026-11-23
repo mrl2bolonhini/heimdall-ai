@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Heimdall Learn, fase 2 (modo aleatório) e catálogo de tipos
+- Learn publicado em learn.heimdall-ai.tech: rota no túnel (porta 8019), DNS e o endereço entrou no aplicativo do Cloudflare Access do dono (mesma política, com Authenticator). Continua desligado no Mac até HEIMDALL_LEARN=1.
+- Catálogo de tipos com regras próprias (heimdall_learn_tipos.py): Idiomas, Programação, Exatas, Arquitetura e dados, Filosofia, Humanas, Direito, Medicina, Esoterismo e Outro. Cada um define a categoria sugerida, o que a IA faz, o que evita, as regras do prompt e o que vem depois. A aba Tipos mostra tudo; tipo que você cadastra usa o perfil genérico. Na criação da pasta, sem categoria escolhida, vale a sugerida pelo tipo.
+- Modo aleatório: em pasta de categoria aleatório, o botão Sortear trecho e perguntar escolhe um trecho do material (txt, Markdown, Word, EPUB e PDF com pdftotext, também nas subpastas, sem repetir os últimos 30), o modelo faz uma pergunta, você responde, e a correção vem com base no trecho, mais o trecho consultado, matérias sugeridas e o botão Gravar áudio do trecho (voz do macOS, no idioma de estudo quando a pasta é de idiomas). Tudo fica em db/learn.db (tabela estudos); áudios em db/audio.
+- O modelo Learn do chat fica para a fase 3, junto com as ferramentas que leem lições e progresso.
+
 ## 2026-11-22 - Heimdall Learn, fase 1 (site novo de estudos)
 - Novo serviço Heimdall Learn (porta 8019, heimdall learn), desligado por padrão: ligue com heimdall env --set HEIMDALL_LEARN 1 e heimdall update --restart. Usa o mesmo login do Cloud e entra na lista do Cloudflare Access e dos convidados.
 - Pastas de estudo em knowledge/ com categoria (aleatório ou sequencial) e tipo aberto (Idiomas, Programação, Filosofia, Medicina, Exatas, Humanas, Arquitetura e dados, Esoterismo, Outro, e os que você cadastrar). Idiomas pede o idioma de estudo. Subpastas herdam categoria, tipo e idioma.

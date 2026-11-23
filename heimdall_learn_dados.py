@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 import heimdall_pastas
+import heimdall_learn_tipos as tipos_perfis
 
 PROJECT_DIR = Path(__file__).resolve().parent
 
@@ -38,7 +39,7 @@ CATEGORIAS = {
     "aleatorio": ("Aleatório", "Perguntas e respostas sobre trechos sorteados do material, com a transcrição do trecho, áudio e sugestão de matérias."),
     "sequencial": ("Sequencial", "Lições em ordem crescente, criadas a partir do material, com exercícios (idiomas, programação)."),
 }
-TIPOS_INICIAIS = ["Idiomas", "Programação", "Filosofia", "Medicina", "Exatas", "Humanas", "Arquitetura e dados", "Esoterismo", "Outro"]
+TIPOS_INICIAIS = list(tipos_perfis.PERFIS)   # o catálogo com as regras de cada tipo fica em heimdall_learn_tipos.py
 EXT_DOC = {".pdf", ".md", ".markdown", ".txt", ".docx", ".epub", ".m4a", ".mp3"}
 PROFUNDIDADE_MAX = 5
 NOME_ARQ_RE = re.compile(r"^[^\W_][\w .,()+-]{0,118}\.[A-Za-z0-9]{1,8}$")
@@ -94,6 +95,21 @@ def conectar() -> sqlite3.Connection:
             sha256 TEXT NOT NULL,
             importado TEXT NOT NULL,
             UNIQUE (pasta, arquivo)
+        );
+        CREATE TABLE IF NOT EXISTS estudos (          -- modo aleatório: um sorteio, uma pergunta, uma resposta, uma correção
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pasta TEXT NOT NULL,
+            documento TEXT NOT NULL,
+            trecho_idx INTEGER NOT NULL,
+            trecho TEXT NOT NULL,
+            pergunta TEXT NOT NULL DEFAULT '',
+            resposta TEXT NOT NULL DEFAULT '',
+            correcao TEXT NOT NULL DEFAULT '',
+            sugestoes TEXT NOT NULL DEFAULT '',
+            audio TEXT NOT NULL DEFAULT '',
+            estado TEXT NOT NULL DEFAULT 'sorteado',
+            erro TEXT NOT NULL DEFAULT '',
+            criado TEXT NOT NULL
         );
     """)
     for t in TIPOS_INICIAIS:
@@ -172,7 +188,7 @@ def criar_tipo(nome: str) -> str:
 
 
 def _eh_idiomas(tipo: str) -> bool:
-    return slug(tipo) == "idiomas"
+    return tipos_perfis.pede_idioma(tipo)
 
 
 # --------------------------------------------------------------------------------------------
@@ -226,12 +242,15 @@ def criar_pasta(nome: str, categoria: str = "", tipo: str = "", idioma: str = ""
             pai_reg = obter_pasta(pai)
             if not pai_reg or not pasta_no_disco(pai).is_dir():
                 raise ErroLearn("A pasta de cima não existe.")
-        categoria = categoria or (pai_reg["categoria"] if pai_reg else "")
-        if categoria not in CATEGORIAS:
-            raise ErroLearn("Escolha a categoria: aleatório ou sequencial.")
         tipo = tipo.strip() or (pai_reg["tipo"] if pai_reg else "")
         if not tipo:
             raise ErroLearn("Escolha ou cadastre o tipo da pasta (por exemplo, idiomas ou programação).")
+        # categoria: a escolhida; senão a da pasta de cima (se o tipo não mudou); senão a que o catálogo sugere para o tipo
+        if not categoria and pai_reg and pai_reg["tipo"].lower() == tipo.lower():
+            categoria = pai_reg["categoria"]
+        categoria = categoria or tipos_perfis.categoria_sugerida(tipo)
+        if categoria not in CATEGORIAS:
+            raise ErroLearn("Escolha a categoria: aleatório ou sequencial.")
         tipo = criar_tipo(tipo)
         idioma = " ".join((idioma or (pai_reg["idioma"] if pai_reg else "")).split())[:40]
         if _eh_idiomas(tipo) and not idioma:

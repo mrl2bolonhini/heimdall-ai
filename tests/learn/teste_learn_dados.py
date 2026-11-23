@@ -66,7 +66,10 @@ confere("subpasta herda categoria, tipo e idioma", sub["categoria"] == "sequenci
 confere("recusa nome repetido", erro(d.criar_pasta, "Inglês Básico", "sequencial", "Idiomas", "inglês") is not None)
 confere("recusa categoria inválida", erro(d.criar_pasta, "X Y", "qualquer", "Outro") is not None)
 confere("recusa pasta de cima inexistente", erro(d.criar_pasta, "Abc", "aleatorio", "Outro", pai="nao-existe") is not None)
-confere("recusa sem categoria e sem pai", erro(d.criar_pasta, "Sem Cat", "", "Outro") is not None)
+confere("sem categoria usa a sugerida pelo tipo (Outro: aleatório)", d.criar_pasta("Sem Cat", "", "Outro")["categoria"] == "aleatorio")
+confere("tipo Programação sugere sequencial", d.criar_pasta("Linguagem Rust", "", "Programação")["categoria"] == "sequencial")
+confere("recusa sem categoria, sem pai e sem tipo", erro(d.criar_pasta, "Sem Tipo", "", "") is not None)
+confere("tipo novo usa o perfil genérico", d.tipos_perfis.perfil("Culinária")["categoria"] == "aleatorio" and d.tipos_perfis.perfil("idiomas")["pede_idioma"])
 confere("recusa nome vazio ou sem letras", erro(d.criar_pasta, "!!", "aleatorio", "Outro") is not None)
 confere("barra inicial nao vira caminho absoluto: /etc fica dentro de knowledge/", d.normalizar_caminho("/etc") == "etc" and d.pasta_no_disco("/etc") == (TMP / "knowledge" / "etc").resolve())
 for ruim in ("../fora", "a/../../b", ".oculta", "a/./b"):

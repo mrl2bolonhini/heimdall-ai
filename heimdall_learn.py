@@ -57,6 +57,9 @@ carregar_env()
 import heimdall_cloud as nuvem  # noqa: E402  (login e sessões: o mesmo do painel Cloud)
 import heimdall_design as design  # noqa: E402
 import heimdall_learn_dados as dados  # noqa: E402
+import heimdall_learn_estudo as estudo  # noqa: E402
+import heimdall_learn_tipos as tipos  # noqa: E402
+import heimdall_perguntar as perguntar  # noqa: E402  (tarefas em segundo plano do modelo)
 
 HOST = os.environ.get("HEIMDALL_LEARN_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_LEARN_PORT", "8019"))
@@ -64,6 +67,8 @@ HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_LEARN_HOSTS", "l
 COOKIE = nuvem.COOKIE
 NAV = [("/", "Início"), ("/nova", "Nova pasta"), ("/tipos", "Tipos")]
 MAX_FORM = 20000
+ESTADOS = {"sorteado": "gerando a pergunta", "perguntado": "aguardando a resposta", "corrigindo": "corrigindo", "corrigido": "concluído",
+           "erro": "erro na pergunta", "erro_correcao": "erro na correção"}
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 CSS = nuvem.CSS + """
 body{font-size:19px;line-height:1.7;max-width:50rem}main{overflow-wrap:anywhere}
@@ -149,7 +154,7 @@ def pg_nova(sess: dict, pai: str = "") -> str:
             f'<form class="campos" method="post" action="/criar"><input type="hidden" name="csrf" value="{e(csrf)}">'
             '<label for="nome">Nome da pasta</label><input id="nome" name="nome" type="text" maxlength="80" required>'
             f'<label for="pai">Dentro de</label><select id="pai" name="pai"><option value="">Raiz do Learn</option>{pais}</select>'
-            f'<label for="categoria">Categoria</label><select id="categoria" name="categoria">{_opcoes_categoria()}</select>'
+            f'<label for="categoria">Categoria</label><select id="categoria" name="categoria"><option value="">Sugerida pelo tipo</option>{_opcoes_categoria()}</select>'
             f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes_tipo()}</select>'
             '<label for="tipo_novo">Ou um tipo novo</label><input id="tipo_novo" name="tipo_novo" type="text" maxlength="40">'
             '<label for="idioma">Idioma de estudo (só para o tipo Idiomas)</label><input id="idioma" name="idioma" type="text" maxlength="40">'
@@ -180,18 +185,81 @@ def pg_pasta(sess: dict, rel: str) -> str:
                f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes_tipo(p["tipo"])}</select>'
                f'<label for="idioma">Idioma de estudo</label><input id="idioma" name="idioma" type="text" maxlength="40" value="{e(p.get("idioma") or "")}">'
                '<button type="submit">Salvar</button></form>')
+    estudar = ""
+    if p["categoria"] == "aleatorio":
+        estudar = ('<h2>Estudar</h2><p>O Learn sorteia um trecho do material desta pasta e faz uma pergunta. Depois da sua resposta, corrige com base no trecho, '
+                   'mostra o trecho, grava o áudio e sugere matérias.</p>' + design.botao_post("/sortear", "Sortear trecho e perguntar", csrf, {"c": rel}))
+        hist = estudo.historico(rel, 10)
+        if hist:
+            itens = "".join(f'<tr><th scope="row"><a href="/estudo?id={h["id"]}">Estudo {h["id"]}</a></th><td>{e(h["criado"])}</td><td>{e(Path(h["documento"]).name)}</td>'
+                            f'<td>{e(ESTADOS.get(h["estado"], h["estado"]))}</td></tr>' for h in hist)
+            estudar += ('<table><caption>Últimos estudos desta pasta</caption><thead><tr><th scope="col">Estudo</th><th scope="col">Quando</th><th scope="col">Documento</th>'
+                        f'<th scope="col">Situação</th></tr></thead><tbody>{itens}</tbody></table>')
+    elif p["categoria"] == "sequencial":
+        estudar = '<h2>Estudar</h2><p role="status">As lições em sequência chegam na próxima fase. Por enquanto, esta pasta guarda o material.</p>'
     novo = design.botao("/nova", "Criar subpasta aqui", {"pai": rel})
     voltar = design.botao("/", "Voltar ao início")
-    return aviso(sess) + cab + tabela + subs + novo + form_imp + form_ed + voltar
+    return aviso(sess) + cab + estudar + tabela + subs + novo + form_imp + form_ed + voltar
 
 
 def pg_tipos(sess: dict) -> str:
     csrf = sess["csrf"]
-    itens = "".join(f"<li>{e(t)}</li>" for t in dados.listar_tipos())
-    return (aviso(sess) + f'<h2>Tipos cadastrados</h2><ul>{itens}</ul>'
+    linhas = ""
+    for t in dados.listar_tipos():
+        p = tipos.perfil(t)
+        linhas += (f'<tr><th scope="row">{e(t)}</th><td>{e(dados.CATEGORIAS[p["categoria"]][0])}</td><td>{e(p["resumo"])}</td></tr>')
+    detalhes = ""
+    for t in dados.listar_tipos():
+        p = tipos.perfil(t)
+        detalhes += (f'<details><summary>{e(t)}: o que a IA faz</summary><p><strong>Faz:</strong></p><ol>' + "".join(f"<li>{e(x)}</li>" for x in p["faz"])
+                     + '</ol><p><strong>Evita:</strong></p><ol>' + "".join(f"<li>{e(x)}</li>" for x in p["evita"]) + "</ol>"
+                     + (f'<p><strong>Em breve:</strong> {e(p["depois"])}</p>' if p["depois"] else "") + "</details>")
+    return (aviso(sess) + '<p>Cada tipo traz regras próprias para a IA. Tipos que você cadastra usam o perfil genérico: a IA estuda o material e, se faltar contexto, pergunta.</p>'
+            f'<table><caption>Tipos de estudo</caption><thead><tr><th scope="col">Tipo</th><th scope="col">Categoria sugerida</th><th scope="col">Para quê</th></tr></thead><tbody>{linhas}</tbody></table>{detalhes}'
             f'<form class="campos" method="post" action="/tipo"><input type="hidden" name="csrf" value="{e(csrf)}">'
             '<label for="nome">Novo tipo de estudo</label><input id="nome" name="nome" type="text" maxlength="40" required>'
             '<button type="submit">Cadastrar tipo</button></form>')
+
+
+def pg_estudo(sess: dict, id_: int) -> tuple:
+    est = estudo.obter(id_)
+    if not est:
+        raise dados.ErroLearn("Estudo não encontrado.")
+    csrf, rel = sess["csrf"], est["pasta"]
+    pasta = dados.obter_pasta(rel) or {"nome": rel}
+    st = est["estado"]
+    topo = f'<p>Pasta: <a href="/pasta?c={quote(rel)}">{e(pasta["nome"])}</a>. Documento: {e(Path(est["documento"]).name)}.</p>'
+    atualizar = design.botao("/estudo", "Atualizar", {"id": id_})
+    repetir = design.botao_post("/repetir", "Tentar de novo", csrf, {"id": id_})
+    corpo = aviso(sess) + topo
+    if st == "sorteado":
+        corpo += '<p role="status">Gerando a pergunta. O modelo local pode levar alguns minutos.</p>' + atualizar + repetir
+    elif st == "erro":
+        corpo += f'<p class="erro" role="alert">Não consegui gerar a pergunta: {e(est["erro"])}</p>' + repetir
+    else:
+        corpo += f'<h2>Pergunta</h2><p>{e(est["pergunta"])}</p>'
+        if st == "perguntado":
+            corpo += (f'<form class="campos" method="post" action="/responder"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="id" value="{id_}">'
+                      '<label for="resposta">Sua resposta</label><textarea id="resposta" name="resposta" rows="6" maxlength="4000" required></textarea>'
+                      '<button type="submit">Enviar resposta</button></form>')
+        else:
+            corpo += f'<h2>Sua resposta</h2><p>{e(est["resposta"])}</p>'
+        if st == "corrigindo":
+            corpo += '<p role="status">Corrigindo a resposta com base no trecho.</p>' + atualizar + repetir
+        elif st == "erro_correcao":
+            corpo += f'<p class="erro" role="alert">Não consegui corrigir: {e(est["erro"])}</p>' + repetir
+        elif st == "corrigido":
+            corpo += f'<h2>Correção</h2><p>{e(est["correcao"]).replace(chr(10), "<br>")}</p>'
+            if est["sugestoes"]:
+                itens = "".join(f"<li>{e(x.strip())}</li>" for x in re.split(r"[;\n]+", est["sugestoes"]) if x.strip())
+                corpo += f'<h2>Matérias sugeridas</h2><ol>{itens}</ol>'
+            corpo += f'<h2>Trecho consultado</h2><blockquote>{e(est["trecho"]).replace(chr(10), "<br>")}</blockquote>'
+            if estudo.caminho_audio(id_):
+                corpo += f'<h2>Áudio do trecho</h2><audio controls src="/audio?id={id_}" aria-label="Áudio do trecho consultado"></audio>'
+            else:
+                corpo += design.botao_post("/gravar", "Gravar áudio do trecho", csrf, {"id": id_})
+    corpo += design.botao_post("/sortear", "Sortear outro trecho", csrf, {"c": rel}) + design.botao("/pasta", "Voltar à pasta", {"c": rel})
+    return f"Estudo {id_}", corpo
 
 
 def ler_multipart(tipo_conteudo: str, corpo: bytes) -> tuple:
@@ -233,7 +301,7 @@ class Learn(nuvem.ManipuladorBase):
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
         script = f" script-src 'nonce-{nonce}';" if nonce else ""
-        self.send_header("Content-Security-Policy", f"default-src 'none'; img-src data:; style-src 'unsafe-inline';{script} form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+        self.send_header("Content-Security-Policy", f"default-src 'none'; img-src data:; style-src 'unsafe-inline';{script} media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
@@ -333,6 +401,15 @@ class Learn(nuvem.ManipuladorBase):
         elif rota == "/pasta":
             reg = dados.obter_pasta(p("c"))
             self._pagina(200, reg["nome"] if reg else "Pasta", pg_pasta(sess, p("c")), sess)
+        elif rota == "/estudo":
+            titulo, corpo = pg_estudo(sess, int(p("id") or 0))
+            self._pagina(200, titulo, corpo, sess)
+        elif rota == "/audio":
+            arq = estudo.caminho_audio(int(p("id") or 0)) if p("id").isdigit() else None
+            if not arq:
+                self._pagina(404, "Não encontrei", "<p>Este áudio não existe.</p>", sess)
+            else:
+                self._servir(arq)
         elif rota == "/nova":
             self._pagina(200, "Nova pasta", pg_nova(sess, p("pai")), sess)
         elif rota == "/tipos":
@@ -341,7 +418,7 @@ class Learn(nuvem.ManipuladorBase):
             self._pagina(404, "Não encontrei", '<p>Esta página não existe.</p><p><a href="/">Voltar ao início</a></p>', sess)
 
     def _post(self, rota: str, token: str, sess: dict) -> None:
-        if rota not in ("/sair", "/criar", "/atualizar", "/tipo", "/importar"):
+        if rota not in ("/sair", "/criar", "/atualizar", "/tipo", "/importar", "/sortear", "/responder", "/repetir", "/gravar"):
             self._pagina(405, "Não permitido", "<p>Esta ação não existe.</p>", sess)
             return
         tipo_c = self.headers.get("Content-Type", "")
@@ -377,6 +454,36 @@ class Learn(nuvem.ManipuladorBase):
                 dados.atualizar_pasta(rel, campos.get("categoria", ""), campos.get("tipo", ""), campos.get("idioma", ""))
                 sess["flash"] = ("ok", "Pasta atualizada.")
                 destino = "/pasta?c=" + quote(rel)
+            elif rota == "/sortear":
+                rel = campos.get("c", "")
+                if (dados.obter_pasta(rel) or {}).get("categoria") != "aleatorio":
+                    raise dados.ErroLearn("Só pastas da categoria aleatório têm estudo por sorteio.")
+                id_ = estudo.novo_estudo(rel)
+                perguntar.iniciar(sess["csrf"], f"learn-p{id_}", lambda i=id_: estudo.gerar_pergunta(i), f"pergunta {id_}")
+                destino = f"/estudo?id={id_}"
+            elif rota in ("/responder", "/repetir", "/gravar"):
+                id_ = int(campos.get("id", "0") or 0)
+                est = estudo.obter(id_)
+                if not est:
+                    raise dados.ErroLearn("Estudo não encontrado.")
+                destino = f"/estudo?id={id_}"
+                if rota == "/responder":
+                    if est["estado"] != "perguntado":
+                        raise dados.ErroLearn("Este estudo não está esperando resposta.")
+                    resp = campos.get("resposta", "")
+                    if len(" ".join(resp.split())) < 2:
+                        raise dados.ErroLearn("Escreva a sua resposta.")
+                    perguntar.iniciar(sess["csrf"], f"learn-c{id_}", lambda: estudo.corrigir(id_, resp), f"correção {id_}")
+                elif rota == "/repetir":
+                    if est["estado"] in ("sorteado", "erro"):
+                        perguntar.iniciar(sess["csrf"], f"learn-p{id_}", lambda: estudo.gerar_pergunta(id_), f"pergunta {id_}")
+                    elif est["estado"] in ("corrigindo", "erro_correcao") and est["resposta"]:
+                        perguntar.iniciar(sess["csrf"], f"learn-c{id_}", lambda: estudo.corrigir(id_, est["resposta"]), f"correção {id_}")
+                else:
+                    if est["estado"] != "corrigido":
+                        raise dados.ErroLearn("O áudio é gravado depois da correção.")
+                    motivo = estudo.gravar_audio(id_)
+                    sess["flash"] = ("erro", "Áudio não gravado: " + motivo) if motivo else ("ok", "Áudio gravado.")
             elif rota == "/tipo":
                 dados.criar_tipo(campos.get("nome", ""))
                 sess["flash"] = ("ok", "Tipo cadastrado.")
@@ -394,6 +501,51 @@ class Learn(nuvem.ManipuladorBase):
             elif rota == "/tipo":
                 destino = "/tipos"
         self._ir(destino)
+
+
+def _servir_audio(self, arq: Path) -> None:
+    """Entrega o m4a com suporte a Range (o Safari do iPhone exige para tocar áudio)."""
+    total = arq.stat().st_size
+    ini, fim, status = 0, total - 1, 200
+    m = re.match(r"^bytes=(\d*)-(\d*)$", self.headers.get("Range", "").strip())
+    if m and (m.group(1) or m.group(2)) and total > 0:
+        if m.group(1):
+            ini = int(m.group(1))
+            fim = min(int(m.group(2)), total - 1) if m.group(2) else total - 1
+        else:
+            ini = max(0, total - int(m.group(2)))
+        if ini > fim or ini >= total:
+            self._enviar(416, b"", extra=[("Content-Range", f"bytes */{total}")])
+            return
+        status = 206
+    tamanho = max(0, fim - ini + 1)
+    self.send_response(status)
+    self.send_header("Content-Type", "audio/mp4")
+    self.send_header("Content-Length", str(tamanho))
+    self.send_header("Accept-Ranges", "bytes")
+    if status == 206:
+        self.send_header("Content-Range", f"bytes {ini}-{fim}/{total}")
+    self.send_header("Cache-Control", "private, max-age=600")
+    self.send_header("Content-Security-Policy", "default-src 'none'; sandbox")
+    self.send_header("X-Content-Type-Options", "nosniff")
+    self.end_headers()
+    if self.command == "HEAD":
+        return
+    with arq.open("rb") as f:
+        f.seek(ini)
+        restante = tamanho
+        while restante > 0:
+            bloco = f.read(min(65536, restante))
+            if not bloco:
+                break
+            try:
+                self.wfile.write(bloco)
+            except (BrokenPipeError, ConnectionResetError):
+                return
+            restante -= len(bloco)
+
+
+Learn._servir = _servir_audio
 
 
 def main() -> None:
