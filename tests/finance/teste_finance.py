@@ -236,7 +236,7 @@ csp = cab.get("Content-Security-Policy", "")
 import re as _re
 _n = _re.search(r"script-src 'nonce-([A-Za-z0-9_-]+)'", csp)
 confere("política de conteúdo: script só com o nonce da página (abas), nada inline sem nonce", "default-src 'none'" in csp and _n and f'<script nonce="{_n.group(1)}">' in corpo and corpo.count("<script") == 1 and "script-src 'unsafe" not in csp, csp)
-confere("abas no lugar do menu de links, atalhos Option+Shift+número e voltar para o topo", 'role="tablist"' in corpo and "Atalho: Option Shift 1" in corpo and 'role="tabpanel"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo, corpo[:200])
+confere("abas no lugar do menu de links, atalhos Option+Shift+número e voltar para o topo", 'role="tablist"' in corpo and "Atalho: Option Shift 1 a" in corpo and 'role="tabpanel"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo, corpo[:200])
 confere("cabeçalhos de segurança", cab.get("X-Frame-Options") == "DENY" and cab.get("Cache-Control") == "no-store", cab)
 
 corpo_m, tipo_m = multipart({"csrf": csrf, "conta": "Itaú conta"}, ("jan.ofx", OFX))
@@ -450,7 +450,7 @@ for _ in range(100):
     if "Primeira resposta." in corpo:
         break
     _tm.sleep(0.1)
-confere("a resposta aparece no fim da página, abaixo do campo", "Primeira resposta." in corpo and corpo.index('id="pergunta"') < corpo.index("Primeira resposta."), corpo[-500:])
+confere("a resposta aparece no fim da página, acima do campo, e sem botão de atualizar quando há JavaScript", "Primeira resposta." in corpo and corpo.index("Primeira resposta.") < corpo.index('id="pergunta"') and 'id="perguntar-resp"' in corpo and 'id="perguntar-estado"' in corpo, corpo[-500:])
 _hp.chamar_local = lambda *a, **k: "Segunda resposta."
 post("/perguntar", {"pergunta": "e de restaurantes?", "volta": "/tendencias"}, ck, csrf)
 for _ in range(100):
@@ -458,7 +458,7 @@ for _ in range(100):
     if "Segunda resposta." in corpo:
         break
     _tm.sleep(0.1)
-confere("respostas em ordem decrescente e visíveis em qualquer página", "Segunda resposta." in corpo and corpo.index("Segunda resposta.") < corpo.index("Primeira resposta."), corpo[-700:])
+confere("respostas em ordem de conversa (a mais recente embaixo) e visíveis em qualquer página", "Segunda resposta." in corpo and corpo.index("Primeira resposta.") < corpo.index("Segunda resposta."), corpo[-700:])
 confere("pergunta com volta maliciosa vai para o resumo", post("/perguntar", {"pergunta": "teste", "volta": "https://evil.example/x"}, ck, csrf)[2].get("Location") == "/" and post("/perguntar", {"pergunta": "teste", "volta": "//evil.example"}, ck, csrf)[2].get("Location") == "/")
 confere("pergunta vazia é recusada", post("/perguntar", {"pergunta": " "}, ck, csrf)[0] == 303)
 confere("pergunta com CSRF errado é recusada", post("/perguntar", {"pergunta": "x"}, ck, "errado")[0] == 403)

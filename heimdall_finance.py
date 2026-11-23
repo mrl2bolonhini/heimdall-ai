@@ -536,31 +536,22 @@ def _volta_valida(v: str) -> str:
 
 
 def _bloco_perguntar(sess: dict) -> str:
-    """Campo Perguntar no fim de toda página, com as respostas logo abaixo, da mais recente para a mais antiga."""
+    """Campo Perguntar no fim de toda página, com as respostas logo acima do campo, a mais recente embaixo."""
     atual = _volta_valida(sess.get("atual", "/"))
     mes = (parse_qs(urlparse(atual).query).get("mes") or [""])[0]
     csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
-    h = ('<section aria-labelledby="perguntar-t" class="perguntar"><h2 id="perguntar-t">Perguntar sobre os seus dados</h2>'
-         '<p class="sub">Pergunte em português, por exemplo: quanto gastei com mercado neste mês? O modelo local responde só com base nos seus dados, que não saem do Mac. '
-         'A resposta aparece logo abaixo, a mais recente primeiro.</p>'
-         f'<form method="post" action="/perguntar">{csrf}<input type="hidden" name="volta" value="{e(atual)}"><input type="hidden" name="mes" value="{e(mes)}">'
-         '<p><label for="pergunta">Sua pergunta</label><br><input type="text" id="pergunta" name="pergunta" autocomplete="off" maxlength="300" required></p>'
-         '<button type="submit">Perguntar</button></form>')
-    pend = perguntar.em_andamento(sess["csrf"], "pergunta")
-    if any(t["estado"] == "pensando" for t in pend):
-        h += '<p role="status">O modelo local está pensando. Quando achar que acabou, use o botão abaixo.</p>' + design.botao(atual.split("?")[0], "Atualizar respostas", {k: v[0] for k, v in parse_qs(urlparse(atual).query).items()})
-    for t in pend:
-        if t["estado"] == "erro":
-            h += f'<p class="erro" role="alert">Não consegui responder a pergunta "{e(t["info"])}": {e(t["erro"])}</p>'
     try:
         linhas = banco().execute("SELECT * FROM perguntas ORDER BY id DESC LIMIT 10").fetchall()
     except Exception:  # noqa: BLE001
         linhas = []
-    if linhas:
-        h += "<h3>Respostas, da mais recente para a mais antiga</h3>"
-        for r in linhas:
-            h += (f'<article><h4>{e(r["pergunta"])}</h4><p class="sub">Perguntado em {e(r["quando"])}.</p>' + _texto_em_html(r["resposta"])
-                  + (f'<p role="status">{e(r["avisos"])}</p>' if r["avisos"] else "") + "</article>")
+    lista = [{"pergunta": r["pergunta"], "quando": r["quando"], "html": _texto_em_html(r["resposta"]), "avisos": r["avisos"]} for r in linhas]
+    h = ('<section aria-labelledby="perguntar-t" class="perguntar"><h2 id="perguntar-t">Perguntar sobre os seus dados</h2>'
+         '<p class="sub">Pergunte em português, por exemplo: quanto gastei com mercado neste mês? O modelo local responde só com base nos seus dados, que não saem do Mac. '
+         'A resposta aparece sozinha logo acima do campo, a mais recente embaixo.</p>'
+         + perguntar.renderizar(atual, perguntar.em_andamento(sess["csrf"], "pergunta"), lista) +
+         f'<form method="post" action="/perguntar" data-perguntar>{csrf}<input type="hidden" name="volta" value="{e(atual)}"><input type="hidden" name="mes" value="{e(mes)}">'
+         '<p><label for="pergunta">Sua pergunta</label><br><input type="text" id="pergunta" name="pergunta" data-pergunta autocomplete="off"></p>'
+         '<button type="submit">Perguntar</button></form>')
     return h + "</section>"
 
 
@@ -970,7 +961,7 @@ class Finance(nuvem.ManipuladorBase):
             mes_p = campos.get("mes", "") if re.fullmatch(r"\d{4}-\d{2}", campos.get("mes", "")) else ""
             ctx = fanal.contexto_pergunta(banco(), q_, None, mes_p)
             perguntar.iniciar(sess["csrf"], "pergunta", lambda: _responder_e_guardar(ctx, q_, volta), q_)
-            sess["flash"] = ("ok", "Pergunta enviada ao modelo local. A resposta aparece no fim da página; use Atualizar respostas para conferir.")
+            sess["flash"] = ("ok", "Pergunta enviada ao modelo local. A resposta aparece sozinha acima do campo.")
             self._ir(volta)
             return
         if rota == "/futuros":

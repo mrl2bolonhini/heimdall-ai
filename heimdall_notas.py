@@ -506,10 +506,11 @@ def bloco_inicio(sess: dict) -> str:
             '<p class="sub">Escreva uma pergunta para o modelo local responder com base nas suas notas, ou escreva uma nota para o Heimdall catalogar sozinho: '
             'ideias, contatos e endereços vão para o Notion; lembretes e eventos com data vão direto para o Lembretes e o Calendário, com botão Desfazer. '
             'Assuntos de saúde e finanças nunca vão para o Notion. Tudo roda no Mac.</p>'
-            f'<form method="post" action="/perguntar"><input type="hidden" name="csrf" value="{e(csrf)}">'
-            '<p><label for="texto">Pergunta ou nota</label><br><textarea id="texto" name="texto" maxlength="8000" required></textarea></p>'
+            + perguntar.respostas_html(dono, "/") +
+            f'<form method="post" action="/perguntar" data-perguntar><input type="hidden" name="csrf" value="{e(csrf)}">'
+            '<p><label for="texto">Pergunta ou nota</label><br><textarea id="texto" name="texto" data-pergunta maxlength="8000"></textarea></p>'
             '<button type="submit">Perguntar</button> <button type="submit" formaction="/salvar">Salvar nota</button></form>')
-    return form + perguntar.respostas_html(dono, "/") + "</section>" + catalogo.bloco_html(dono, csrf)
+    return form + "</section>" + catalogo.bloco_html(dono, csrf)
 
 
 
@@ -523,7 +524,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
         if atual == "/" and urlparse(str(sess.get("atual", "/"))).path == "/":
             conteudo += bloco_inicio(sess)
         conteudo = design.com_abas(NAV, atual, conteudo)
-        abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES
+        abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_PERGUNTAR
     js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (script or abas_js) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notes</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'

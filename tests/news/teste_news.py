@@ -531,7 +531,7 @@ import time as _tm
 _s, _h, _b = req("GET", "/", cookie=ck)
 _t = txt(_b)
 _n = re.search(r"script-src 'nonce-([A-Za-z0-9_-]+)'", _h.get("content-security-policy", ""))
-confere("News: abas, atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in _t and "Atalho: Option Shift 2" in _t and 'id="topo"' in _t and 'href="#topo"' in _t
+confere("News: abas, atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in _t and "Atalho: Option Shift 1 a" in _t and 'id="topo"' in _t and 'href="#topo"' in _t
         and _n and f'<script nonce="{_n.group(1)}">' in _t and "<nav aria-label=\"Principal\"><ul>" not in _t, _t[:200])
 confere("News: Perguntar na aba Notícias e não no Estado das fontes", 'id="perguntar-t"' in _t and 'id="perguntar-t"' not in txt(req("GET", "/estado", cookie=ck)[2]))
 _hp.chamar_local = lambda sistema, usuario, modelo="", max_tokens=700, timeout=240: "Saiu uma notícia de teste."

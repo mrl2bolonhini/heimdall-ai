@@ -221,7 +221,7 @@ confere("depois de 5 falhas vem bloqueio 429", st == 429)
 
 st, _, corpo = req("GET", "/", cookie=cookie)
 confere("início abre com sessão", st == 200 and "Estado do emulador" in corpo and "O emulador está respondendo" in corpo)
-confere("Cloud: abas (S3, Lambda, Glue, Athena), atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and "Atalho: Option Shift 6" in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and '<script nonce="' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
+confere("Cloud: abas (S3, Lambda, Glue, Athena), atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and "Atalho: Option Shift 1 a 6" in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and '<script nonce="' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
 st, _, corpo = req("GET", "/s3", cookie=cookie)
 confere("Cloud: a aba S3 fica selecionada em /s3", 'aria-selected="true"' in corpo and ">S3</a>" in corpo and corpo.index('aria-selected="true"') < corpo.index(">S3</a>") + 5)
 confere("S3 lista buckets", st == 200 and "dados" in corpo)

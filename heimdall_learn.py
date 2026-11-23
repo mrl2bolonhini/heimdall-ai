@@ -138,7 +138,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
             nav += design.nav_abas(itens, aba, f"Seções do tema {dados.nome_bonito(tema)}")
             conteudo = design.com_abas(itens, aba, conteudo)
         sair = f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>'
-        abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES
+        abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_PERGUNTAR
     js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (abas_js or script) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Learn</title>{nuvem.ICONE}<style>{CSS}</style></head><body{(' data-csrf="' + e(sess['csrf']) + '"') if sess else ''}>'

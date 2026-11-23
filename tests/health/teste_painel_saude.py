@@ -118,7 +118,7 @@ import time as _tm
 st, corpo, cab = pedir("/sono", ck)
 import re as _re
 _n = _re.search(r"script-src 'nonce-([A-Za-z0-9_-]+)'", cab.get("Content-Security-Policy", ""))
-confere("abas no lugar do menu, atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and "Atalho: Option Shift 2" in corpo and 'aria-selected="true"' in corpo
+confere("abas no lugar do menu, atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and "Atalho: Option Shift 1 a" in corpo and 'aria-selected="true"' in corpo
         and 'id="topo"' in corpo and 'href="#topo"' in corpo and _n and f'<script nonce="{_n.group(1)}">' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo, corpo[:200])
 confere("campo Perguntar nas telas de dados e não na aba Avisos", 'id="perguntar-t"' in corpo and 'id="perguntar-t"' not in pedir("/avisos", ck)[1])
 _hp.chamar_local = lambda sistema, usuario, modelo="", max_tokens=700, timeout=240: "Seu sono ficou estável."

@@ -22,7 +22,7 @@ def confere(nome, cond, detalhe=""):
 itens = [(f"/r{i}", f"Nome{i}") for i in range(1, 13)]
 h = d.abas(itens, "/r2")
 confere("até 9 itens: sem Mais", "<details" not in d.abas(itens[:9], "/r2") and d.abas(itens[:9], "/r2").count('role="tab"') == 9)
-confere("12 itens: 9 abas, Mais com 3 links, atalhos de 1 a 9 mais o 0", h.count('role="tab"') == 9 and 'id="mais"' in h and h.count("<li><a") == 3 and "Atalho: Option Shift 0" in h and "Atalho: Option Shift 9" in h and "Option Shift 10" not in h, h)
+confere("12 itens: 9 abas, Mais com 3 links, atalhos de 1 a 9 mais o 0", h.count('role="tab"') == 9 and 'id="mais"' in h and h.count("<li><a") == 3 and "Atalho: Option Shift 0" in h and "Atalho: Option Shift 1 a 9" in h and "Option Shift 10" not in h, h)
 h2 = d.abas(itens, "/r11")
 confere("aba aberta dentro do Mais: resumo diz qual, link marcado, e uma aba continua alcançável pelo Tab", "Mais, aba aberta: Nome11" in h2 and 'aria-current="page"' in h2 and 'tabindex="0"' in h2 and 'aria-selected="true"' not in h2, h2)
 confere("o painel da aba do Mais é rotulado pelo link", 'aria-labelledby="aba-11"' in d.painel_da_aba(itens, "/r11", "x"))

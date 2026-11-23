@@ -144,18 +144,19 @@ def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = (
             extras.append(f'<li><a id="aba-{i}" href="{e(rota)}"{" aria-current=\"page\"" if sel else ""}>{e(nome)}</a></li>')
             continue
         abas_.append(f'<a role="tab" id="aba-{i}" href="{e(rota)}" aria-selected="{"true" if sel else "false"}" tabindex="{0 if sel else -1}" '
-                     f'aria-controls="painel-aba" aria-describedby="atalho-aba-{i}"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
-    dicas = "".join(f'<span id="atalho-aba-{i}" class="so-leitor">Atalho: Option Shift {i}</span>' for i in range(1, min(len(itens), MAX_ABAS) + 1))
+                     f'aria-controls="painel-aba"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
+    n_abas = min(len(itens), MAX_ABAS)
+    dicas = f'<span id="atalho-abas" hidden>Atalho: Option Shift 1 a {n_abas}</span>' if n_abas > 1 else (f'<span id="atalho-abas" hidden>Atalho: Option Shift 1</span>' if n_abas else "")
     if abas_ and not any('aria-selected="true"' in a for a in abas_):   # a aba aberta está no Mais: a primeira continua alcançável pelo Tab
         abas_[0] = abas_[0].replace('tabindex="-1"', 'tabindex="0"', 1)
     mais = ""
     if extras:
         atual_extra = next((n for r, n in itens[MAX_ABAS:] if r == atual), "")
         titulo = f"Mais, aba aberta: {atual_extra}" if atual_extra else "Mais"
-        mais = (f'<details class="mais" id="mais"{" data-atual" if atual_extra else ""}><summary aria-describedby="atalho-mais">{e(titulo)}</summary>'
-                f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" class="so-leitor">Atalho: Option Shift 0</span>')
+        mais = (f'<details class="mais" id="mais"{" data-atual" if atual_extra else ""}><summary>{e(titulo)}</summary>'
+                f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" hidden>Atalho: Option Shift 0</span>')
     classe = f"l{por_linha(len(itens))}" + (" com-mais" if extras else "")
-    return (f'<div class="abas-bloco"><div role="tablist" class="{classe}" aria-label="{e(rotulo)}">' + "".join(abas_)
+    return (f'<div class="abas-bloco"><div role="tablist" class="{classe}" aria-label="{e(rotulo)}"{' aria-describedby="atalho-abas"' if dicas else ""}>' + "".join(abas_)
             + f'</div>{mais}{dicas}<p id="aviso-abas" class="so-leitor" role="status"></p></div>')
 
 
@@ -191,7 +192,7 @@ def com_abas(itens: list, atual: str, conteudo: str) -> str:
 def script(extra: str = "") -> str:
     """<script> com as abas (setas, Home, End e Option+Shift+número) e `extra`, com um nonce novo. Use `csp()` ao enviar a página."""
     import secrets
-    return f'<script nonce="{secrets.token_urlsafe(16)}">{SCRIPT_ABAS}{SCRIPT_DETALHES}{extra}</script>'
+    return f'<script nonce="{secrets.token_urlsafe(16)}">{SCRIPT_ABAS}{SCRIPT_DETALHES}{SCRIPT_PERGUNTAR}{extra}</script>'
 
 
 def csp(base: str, corpo: bytes, conectar: bool = True) -> str:
@@ -252,6 +253,61 @@ document.addEventListener('keydown', function (ev) {
 """
 """Esc fecha o <details> (grupo ou menu) em que o foco está e devolve o foco ao resumo."""
 
+SCRIPT_PERGUNTAR = r"""
+(function(){
+var temporizador = null, tentativas = 0, pensando = false;
+function el(id){ return document.getElementById(id); }
+function aplicar(texto){
+  var d = new DOMParser().parseFromString(texto, 'text/html');
+  var novo = d.getElementById('perguntar-resp'), n_estado = d.getElementById('perguntar-estado');
+  var resp = el('perguntar-resp'), estado = el('perguntar-estado');
+  if (!novo || !n_estado || !resp || !estado) { return null; }
+  if (resp.innerHTML !== novo.innerHTML) { resp.innerHTML = novo.innerHTML; }
+  var agora = n_estado.getAttribute('data-pensando') === '1';
+  if (agora) {
+    if (!pensando || !estado.textContent) { estado.textContent = n_estado.textContent; }
+  } else if (pensando) {
+    var ult = novo.querySelectorAll('article'); ult = ult.length ? ult[ult.length - 1] : null;
+    estado.textContent = ult ? 'Resposta pronta. ' + ult.textContent.replace(/\s+/g, ' ').trim() : '';
+  }
+  estado.setAttribute('data-pensando', agora ? '1' : '0');
+  pensando = agora;
+  return agora;
+}
+function conferir(){
+  var resp = el('perguntar-resp'); if (!resp) { parar(); return; }
+  tentativas += 1; if (tentativas > 400) { parar(); return; }
+  fetch(resp.getAttribute('data-volta') || location.pathname, {credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1'}})
+    .then(function(r){ if (!r.ok || /\/entrar/.test(r.url)) { throw new Error('x'); } return r.text(); })
+    .then(function(t){ if (aplicar(t) === false) { parar(); } })
+    .catch(function(){ parar(); });
+}
+function parar(){ if (temporizador) { clearInterval(temporizador); temporizador = null; } }
+function acompanhar(){ if (temporizador) { return; } tentativas = 0; temporizador = setInterval(conferir, 3000); }
+window.hdPerguntar = function(){
+  var estado = el('perguntar-estado'); parar();
+  pensando = !!estado && estado.getAttribute('data-pensando') === '1';
+  if (pensando) { acompanhar(); }
+};
+document.addEventListener('submit', function(ev){
+  var f = ev.target;
+  if (!f || !f.hasAttribute || !f.hasAttribute('data-perguntar') || !window.fetch || !window.URLSearchParams) { return; }
+  if (ev.submitter && ev.submitter.hasAttribute('formaction')) { return; }
+  var campo = f.querySelector('[data-pergunta]'), estado = el('perguntar-estado');
+  if (!campo || !estado) { return; }
+  ev.preventDefault();
+  if (!campo.value.trim()) { estado.textContent = 'Escreva a pergunta antes de enviar.'; campo.focus(); return; }
+  var dados = new URLSearchParams(new FormData(f));
+  estado.textContent = 'Pergunta enviada. O modelo local está pensando; a resposta aparece aqui sozinha.';
+  fetch(f.action, {method: 'POST', credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1', 'Content-Type': 'application/x-www-form-urlencoded'}, body: dados.toString()})
+    .then(function(r){ if (!r.ok || /\/entrar/.test(r.url)) { throw new Error('x'); } return r.text(); })
+    .then(function(t){ campo.value = ''; pensando = true; estado.setAttribute('data-pensando', '1'); aplicar(t); acompanhar(); })
+    .catch(function(){ f.submit(); });
+});
+window.hdPerguntar();
+})();
+"""
+
 SCRIPT_ABAS = r"""
 (function(){
 var lista = document.querySelector('[role=tablist]'); if (!lista) { return; }
@@ -269,6 +325,7 @@ function abrir(a, empurrar){
     if (!novo || !velho) { throw new Error('x'); }
     velho.innerHTML = novo.innerHTML; velho.setAttribute('aria-labelledby', a.id);
     abas.forEach(function(x){ var s = (x === a); x.setAttribute('aria-selected', s ? 'true' : 'false'); x.tabIndex = s ? 0 : -1; });
+    if (window.hdPerguntar) { window.hdPerguntar(); }
     document.title = d.title; if (empurrar) { history.pushState({}, '', a.href); }
     if (aviso) { aviso.textContent = ''; setTimeout(function(){ aviso.textContent = a.textContent + ' aberta'; }, 50); }
   }).catch(function(){ location.href = a.href; });

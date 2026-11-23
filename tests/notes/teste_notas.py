@@ -255,7 +255,7 @@ confere("script com nonce combinando com a CSP", bool(m) and f"'nonce-{m.group(1
 confere("próxima/anterior nota", "Nota anterior" in t or "Próxima nota" in t)
 s, h, c = req("GET", "/nota?p=python&n=aula-2.md", cookie=ck)
 confere("nota sem áudio: sem leitor e sem script próprio (só o das abas, com nonce)", s == 200 and b"<audio" not in c and c.count(b"<script") == 1 and b"data-velocidade" not in c and b"playbackRate" not in c and "script-src 'nonce-" in h["content-security-policy"], h["content-security-policy"])
-confere("Notes: abas Início e Buscar, atalho Option+Shift+2, voltar ao topo e sem menu de links", b'role="tablist"' in c and "Atalho: Option Shift 2".encode() in c and b'id="topo"' in c and b'href="#topo"' in c and b'<nav aria-label="Principal"><ul>' not in c)
+confere("Notes: abas Início e Buscar, atalho Option+Shift+2, voltar ao topo e sem menu de links", b'role="tablist"' in c and "Atalho: Option Shift 1 a 2".encode() in c and b'id="topo"' in c and b'href="#topo"' in c and b'<nav aria-label="Principal"><ul>' not in c)
 for ruim in ("../fora.md", "..%2Ffora.md", "/etc/passwd", "aula-1.md%00.png", ".hidden.md", "aula-1.pdf"):
     s, _, c = req("GET", f"/nota?p=python&n={ruim}", cookie=ck)
     confere(f"fuga de pasta bloqueada: {ruim}", s == 404)

@@ -149,34 +149,43 @@ def respostas(dono: str) -> list:
 
 
 def bloco_html(dono: str, csrf: str, volta: str, titulo: str = "Perguntar", dica: str = "", acao: str = "/perguntar", rotulo: str = "pergunta") -> str:
-    """Campo Perguntar do Heimdall Design: o mesmo em todos os serviços compatíveis, no fim do painel da aba. Respostas da sessão, da mais recente para a mais antiga."""
+    """Campo Perguntar do Heimdall Design, no estilo de chat: as respostas ficam acima do campo (a mais recente perto dele), a resposta aparece sozinha
+    quando o modelo termina (o script do design confere de 3 em 3 segundos, sem recarregar a página e sem tirar o foco do campo) e é anunciada ao leitor de tela."""
     import html as _h
     e = lambda t: _h.escape(str(t), quote=True)  # noqa: E731
     h = (f'<section aria-labelledby="perguntar-t" class="perguntar"><h2 id="perguntar-t">{e(titulo)}</h2>'
          f'<p class="sub">{e(dica) or "Pergunte em português. O modelo local responde só com base nos dados desta página e eles não saem do Mac."}</p>'
-         f'<form method="post" action="{e(acao)}"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="volta" value="{e(volta)}">'
-         '<p><label for="pergunta">Sua pergunta</label><br><input type="text" id="pergunta" name="pergunta" autocomplete="off" maxlength="300" required></p>'
+         + respostas_html(dono, volta, rotulo) +
+         f'<form method="post" action="{e(acao)}" data-perguntar><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="volta" value="{e(volta)}">'
+         '<p><label for="pergunta">Sua pergunta</label><br><input type="text" id="pergunta" name="pergunta" data-pergunta autocomplete="off"></p>'
          '<button type="submit">Perguntar</button></form>')
-    return h + respostas_html(dono, volta, rotulo) + "</section>"
+    return h + "</section>"
+
+
+def renderizar(volta: str, pendentes: list, lista: list) -> str:
+    """Área das respostas (id perguntar-resp, que o script troca sozinho) e a linha de estado (perguntar-estado, role status). `lista` vem da mais recente
+    para a mais antiga e é mostrada em ordem de conversa: a mais recente embaixo, perto do campo. Item com a chave 'html' usa esse HTML no lugar do texto."""
+    import html as _h
+    e = lambda t: _h.escape(str(t), quote=True)  # noqa: E731
+    pensando = any(t["estado"] == "pensando" for t in pendentes)
+    h = f'<div id="perguntar-resp" data-volta="{e(volta)}">'
+    for t in pendentes:
+        if t["estado"] == "erro":
+            h += f'<p class="erro" role="alert">Não consegui responder a pergunta "{e(t["info"])}": {e(t["erro"])}</p>'
+    if lista:
+        h += "<h3>Respostas, da mais antiga para a mais recente</h3>"
+        for r in reversed(lista):
+            corpo = r.get("html") or "".join(f"<p>{e(p)}</p>" for p in r["texto"].split("\n") if p.strip())
+            h += (f'<article><h4>{e(r["pergunta"])}</h4><p class="sub">Perguntado em {e(r["quando"])}.</p>{corpo}'
+                  + (f'<p role="status">{e(r["avisos"])}</p>' if r.get("avisos") else "") + "</article>")
+    h += "</div>"
+    h += (f'<p id="perguntar-estado" role="status" data-pensando="{1 if pensando else 0}">'
+          + ("O modelo local está pensando; a resposta aparece aqui sozinha." if pensando else "") + "</p>")
+    if pensando:   # sem JavaScript a página não se atualiza sozinha
+        h += (f'<noscript><form method="get" action="{e(volta.split("?")[0])}"><button type="submit">Atualizar respostas</button></form></noscript>')
+    return h
 
 
 def respostas_html(dono: str, volta: str, rotulo: str = "pergunta") -> str:
-    """Só o andamento e as respostas guardadas (sem o formulário), para telas que montam o próprio formulário."""
-    import html as _h
-    e = lambda t: _h.escape(str(t), quote=True)  # noqa: E731
-    h = ""
-    pend = em_andamento(dono, rotulo)
-    if any(t["estado"] == "pensando" for t in pend):
-        h += (f'<p role="status">O modelo local está pensando. Quando achar que acabou, use o botão abaixo.</p>'
-              f'<form method="get" action="{e(volta.split("?")[0])}"><button type="submit">Atualizar respostas</button></form>')
-    for t in pend:
-        if t["estado"] == "erro":
-            h += f'<p class="erro" role="alert">Não consegui responder a pergunta "{e(t["info"])}": {e(t["erro"])}</p>'
-    lista = respostas(dono)
-    if lista:
-        h += "<h3>Respostas, da mais recente para a mais antiga</h3>"
-        for r in lista:
-            paragrafos = "".join(f"<p>{e(p)}</p>" for p in r["texto"].split("\n") if p.strip())
-            h += (f'<article><h4>{e(r["pergunta"])}</h4><p class="sub">Perguntado em {e(r["quando"])}.</p>{paragrafos}'
-                  + (f'<p role="status">{e(r["avisos"])}</p>' if r["avisos"] else "") + "</article>")
-    return h
+    """Só as respostas e o estado (sem o formulário), para telas que montam o próprio formulário."""
+    return renderizar(volta, em_andamento(dono, rotulo), respostas(dono))
