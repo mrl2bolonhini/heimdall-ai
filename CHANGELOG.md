@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Perguntar no Learn
+- Campo Perguntar no fim de cada aba do tema (Estudos, Lições, Exercícios, Cards, Progresso) e na lista de temas. O modelo responde só com o seu progresso e o que você fez no tema: estudos com pergunta, resposta e correção, lições e notas, exercícios errados, cards. O gabarito de lição em aberto e o texto dos livros não vão ao modelo; a resposta de um tema não aparece em outro.
+- Nova regra no CLAUDE.md: todo serviço com dados pessoais tem o Perguntar.
+
 ## 2026-11-23 - Learn organizado por tema
 - A tela inicial do Learn agora é a lista de temas (a aba Início deixou de existir), com os botões Novo estudo e Ajustes. Ao escolher um tema, as abas passam a mostrar só o que é dele: tema sequencial tem Lições, Exercícios, Cards e Progresso; tema aleatório tem Estudos, Cards e Progresso. Trocar de tema volta à lista.
 - Mudar a categoria de um tema muda as abas na hora e não apaga nada: se o tema já tem lições (ou estudos), a aba correspondente continua aparecendo para consulta.

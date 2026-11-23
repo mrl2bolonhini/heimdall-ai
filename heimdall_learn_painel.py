@@ -97,3 +97,48 @@ def progresso(tema: str = "") -> dict:
             t["pontos"] += 1.0 if ex["resultado"] == "certo" else (0.5 if ex["resultado"] == "parcial" else 0.0)
     return {"pastas": pastas, "seguidos": seguidos, "dias_com_estudo": total_dias,
             "por_tipo": {k: {"total": v["total"], "acerto": v["pontos"] / v["total"]} for k, v in por_tipo.items()}}
+
+
+# --- Perguntar: contexto do tema para o modelo ---------------------------------------------------------
+def _corta(t, n: int) -> str:
+    t = " ".join(str(t or "").split())
+    return t if len(t) <= n else t[:n - 1] + "…"
+
+
+def contexto_do_tema(tema: str = "", limite: int = 7000) -> str:
+    """Texto que o campo Perguntar do Learn entrega ao modelo: números de progresso e o que o aluno fez no tema (ou em todos, se tema vazio).
+    Só leitura. O gabarito de lição em aberto não entra (exercicios() já o esconde)."""
+    con = dados.conectar()
+    sob = lambda campo: (f"({campo} = ? OR {campo} LIKE ?)", (tema, tema + "/%")) if tema else ("1 = 1", ())  # noqa: E731
+    pr = progresso(tema)
+    partes = [f"TEMA: {dados.nome_bonito(tema) if tema else 'todos os temas'}.",
+              f"Dias seguidos de estudo: {pr['seguidos']}; dias com estudo no total: {pr['dias_com_estudo']}."]
+    for p in pr["pastas"]:
+        media = f"{round(p['media'] * 100)}%" if p["media"] is not None else "sem nota"
+        partes.append(f"Pasta {p['caminho']} ({p['categoria']}): lições concluídas {p['concluidas']} de {p['licoes']}, média {media}; estudos corrigidos {p['estudos_corrigidos']} de {p['estudos']}; cards lidos {p['cards_lidos']} de {p['cards']}.")
+    for k, v in sorted(pr["por_tipo"].items()):
+        partes.append(f"Acerto em exercícios do tipo {k}: {round(v['acerto'] * 100)}% em {v['total']}.")
+    w, a = sob("pasta")
+    est = con.execute(f"SELECT pasta, titulo, documento, pergunta, resposta, correcao, estado, criado FROM estudos WHERE {w} ORDER BY id DESC LIMIT 12", a).fetchall()
+    if est:
+        partes.append("ESTUDOS RECENTES:")
+        for x in est:
+            partes.append(f"- {x['criado'][:10]} {x['pasta']} ({x['titulo'] or x['documento']}) [{x['estado']}] pergunta: {_corta(x['pergunta'], 220)}"
+                          + (f" | resposta do aluno: {_corta(x['resposta'], 250)}" if x["resposta"] else "") + (f" | correção: {_corta(x['correcao'], 300)}" if x["correcao"] else ""))
+    lic = con.execute(f"SELECT pasta, numero, titulo, estado, nota, criado FROM licoes WHERE {w} ORDER BY id DESC LIMIT 8", a).fetchall()
+    if lic:
+        partes.append("LIÇÕES RECENTES:")
+        for x in lic:
+            partes.append(f"- {x['criado'][:10]} {x['pasta']} lição {x['numero']} {x['titulo']} [{x['estado']}]" + (f", nota {round(x['nota'] * 100)}%" if x["nota"] is not None else ""))
+    erros = exercicios(tema, True, 15)
+    if erros:
+        partes.append("EXERCÍCIOS ERRADOS OU PARCIAIS:")
+        for x in erros:
+            partes.append(f"- {x['pasta']} lição {x['licao']}: {_corta(x['enunciado'], 200)} | resposta: {_corta(x['resposta'], 150)} | {x['resultado']}"
+                          + (f" | esperado: {_corta(x['gabarito'], 150)}" if x["gabarito"] else ""))
+    w2, a2 = sob("pasta")
+    crd = con.execute(f"SELECT pasta, titulo, corpo, lido FROM cards WHERE {w2} ORDER BY id DESC LIMIT 8", a2).fetchall()
+    if crd:
+        partes.append("CARDS RECENTES:")
+        partes += [f"- {x['pasta']}: {x['titulo']}: {_corta(x['corpo'], 200)}" + ("" if x["lido"] else " (não lido)") for x in crd]
+    return "\n".join(partes)[:limite]
