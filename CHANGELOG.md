@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Plano de continuidade na nuvem
+- Novo guides/continuidade_nuvem.txt: plano para os serviços e fluxos continuarem na nuvem quando o Mac cai, com Worker de entrada, Cloudflare Containers que só ligam na queda, cópias cifradas no R2 e Workflows, fases com interruptor e custo estimado dentro do teto de US$ 15. Ainda não implementado.
+
 ## 2026-11-23 - Ajustes em Learn e Controls, Conta antes de Ajustes e página inicial na primeira aba
 - Ajustes passou a botão no topo também no Learn e no Controls (no Controls saiu das abas: 6 abas, Option+Shift+6 é Manutenção). Na ordem do Tab e da leitura, o menu Conta vem primeiro e o botão Ajustes depois; visualmente Conta à esquerda e Ajustes à direita.
 - Finance: a página inicial (/) agora abre a primeira aba, Extratos (Transações); o Resumo passou para /resumo (Tendências > Resumo).

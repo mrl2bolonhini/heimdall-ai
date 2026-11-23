@@ -1,0 +1,43 @@
+Continuidade do Heimdall na nuvem quando o Mac fica fora do ar
+
+Status: plano a desenvolver (decisões do usuário em 23/11/2026: só entra em ação quando o Mac cai; gravar dados na nuvem é aceito, inclusive saúde e finanças).
+
+1. Objetivo
+Quando o Mac ficar sem energia ou sem rede, os sites do Heimdall (Finance, Health, Notes, News, Learn, Games, Lab, Controls) e os fluxos essenciais continuam funcionando na nuvem, sem custo enquanto o Mac está no ar. Quando o Mac volta, ele reassume e os dados feitos na nuvem voltam para ele.
+
+2. Peças na Cloudflare (preços e limites conferidos na documentação da Cloudflare em 23/11/2026)
+1) Worker de entrada: recebe o tráfego dos endereços *.heimdall-ai.tech, tenta o Mac pelo túnel e, se o Mac não responde dentro de poucos segundos, encaminha para o container. Publica uma faixa de aviso "Modo de continuidade" nas páginas atendidas pela nuvem.
+2) Cloudflare Containers: roda a mesma imagem do Heimdall (um container por grupo de serviços). Faz parte do plano Workers Paid (US$ 5 por mês). Cobra a cada 10 ms só enquanto o container está ativo e escala a zero depois de um tempo sem uso. Memória e disco cobram pelo tipo de instância; CPU, pelo uso. Franquia mensal incluída: 25 GiB-hora de memória, 375 vCPU-minuto e 200 GB-hora de disco. Tipos: de lite (1/16 vCPU, 256 MiB) a standard-4 (4 vCPU, 12 GiB). Imagens: 50 GB por conta.
+3) R2 com chave do cliente: guarda as cópias dos bancos e do .env (cifrado). É de onde o container restaura os dados ao iniciar. Os documentos da Cloudflare lidos não dizem se o disco do container é persistente; por isso nada fica só nele.
+4) Workflows: executa os fluxos essenciais com passos, esperas e novas tentativas, sem container. Incluído nos planos Workers; 10 milhões de requisições e 500 mil passos por mês no Paid (a cobrança de passos e armazenamento começa em 10/08/2026).
+5) Alertas e limite de gasto antes de ligar: teto de US$ 15 por mês somando tudo (regra do projeto), com alerta em 50% e 80%.
+
+3. Estimativa de custo (a confirmar no painel antes de ligar)
+- Mac no ar: só a assinatura Workers Paid (US$ 5), mais uso do Worker de entrada.
+- Uma queda de 3 horas com um container standard-1 (4 GiB): cerca de 12 GiB-hora de memória, dentro da franquia mensal. O custo extra fica perto de zero.
+- Um container ligado o mês inteiro seria caro (cerca de 2.900 GiB-hora de memória): por isso o container só liga quando o Mac cai e dorme sozinho depois.
+
+4. Dados
+1) O Mac continua sendo a fonte. A cada alteração (ou em intervalos curtos) ele envia cópias cifradas dos bancos para o R2, com versão e data.
+2) Ao iniciar, o container restaura a última cópia e mostra a data dela na faixa de aviso.
+3) Durante a queda, a nuvem grava em um diário de alterações (não sobrescreve a cópia). Quando o Mac volta, ele aplica o diário na ordem e só então reassume. Conflito: a alteração mais recente por registro vence e a outra fica guardada para conferência.
+4) Nunca apagar a cópia local antes de o usuário confirmar (regra do projeto).
+
+5. O que não migra
+- Agente da Apple (Calendário, Lembretes, Notas): fica em fila no R2 e roda quando o Mac volta, com aviso claro.
+- Modelos locais (Ollama): na nuvem usam os modelos da Workers AI, no modelo leve já definido.
+- Tailscale e o app de iPhone dependem do Mac: ficam fora no modo de continuidade.
+
+6. Fases (cada uma com interruptor no .env, ex.: HEIMDALL_CONTINUIDADE=0)
+1) Alertas e limite de gasto na Cloudflare; Workers Paid ativo.
+2) Imagem do Heimdall para contêiner (Dockerfile), testada localmente.
+3) Cópias cifradas dos bancos para o R2, com restauração testada.
+4) Worker de entrada com failover e faixa de aviso; teste desligando o Mac de propósito.
+5) Diário de alterações e reconciliação na volta do Mac.
+6) Fluxos essenciais em Workflows (Cron Triggers e novas tentativas), um a um.
+
+7. Itens não confirmados
+- Tempo de inicialização a frio do container (a documentação lida não informa; medir na fase 4).
+- Se o disco do container é persistente (tratar como efêmero).
+- Status de disponibilidade geral dos Containers e do Workflows (a documentação lida não declara).
+- Quais fluxos do n8n são essenciais e podem virar Workflows.
