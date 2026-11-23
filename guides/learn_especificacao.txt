@@ -1,0 +1,42 @@
+LEARN: PLATAFORMA DE ESTUDOS DO HEIMDALL (ESPECIFICAÇÃO, 22/11/2026)
+
+Este é o desenho combinado em conversa. Nada aqui está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, e tem interruptor no .env (HEIMDALL_LEARN=0 devolve o comportamento anterior).
+
+O QUE É
+  Um site novo, no padrão dos outros (Heimdall Design, leitor de tela, teclado), com acesso próprio, como learn.heimdall-ai.tech. Reúne tudo que hoje é estudo e nota: os temas de knowledge/, os estudos das 6h, 13h e 20h, as notas e a leitura em áudio. O modelo Notes do chat vira o modelo Learn quando o serviço existir; ele consulta as pastas, as lições e o progresso.
+
+PASTAS E CATEGORIAS
+  1. Pastas e subpastas dentro de knowledge/, criadas e preenchidas pela plataforma (criar pasta, importar documentos), sem mexer no Finder.
+  2. Cada pasta tem uma categoria, e a IA se comporta de acordo com ela. A categoria fica num arquivo de metadados da pasta, não no nome.
+  3. Categoria "aleatório" (arquitetura e engenharia de dados, esoterismo e misticismo): continua como hoje. Pergunta, resposta sobre um trecho sorteado, transcrição do trecho consultado, gravação em áudio e sugestão de matérias.
+  4. Categoria "sequencial" (idiomas, programação): a IA cria o conteúdo de forma crescente, consultando o material da pasta, e guarda onde o aluno parou.
+
+LIÇÕES (CATEGORIA SEQUENCIAL)
+  1. Cada lição é gerada a partir do material da pasta, em ordem, sem pular nível.
+  2. Parte da lição no idioma de estudo, com o trecho gravado em áudio nesse idioma. Explicação em português, com áudio em português.
+  3. De 3 a 5 exercícios interativos por lição: alternativas, campo para digitar e resposta falada. A voz do aluno é gravada, transcrita no Mac (Whisper) e corrigida pela IA. Depois do envio, a correção aparece com a explicação do erro.
+  4. As lições ficam numa aba própria, para estudar no seu tempo.
+
+CARDS E AGENDA
+  1. Cards de "pílulas de conhecimento" enviados por notificação (aviso nativo do Mac e Bark).
+  2. Frequência configurável por pasta: no máximo 3 cards e 1 lição por dia. O horário também é configurável.
+  3. Os estudos das 6h, 13h e 20h existentes migram para esse mecanismo.
+
+FASES (cada uma já entrega algo usável)
+  1. Pastas e subpastas com categoria, importar documentos pela plataforma, e mover estudos e notas para o Learn. Site novo, acesso próprio, interruptor HEIMDALL_LEARN.
+  2. Categoria aleatório funcionando no Learn, com o que já existe hoje. O modelo Notes vira Learn.
+  3. Lições sequenciais, com explicação e exercícios de alternativas e de texto.
+  4. Voz do aluno (gravar, transcrever, corrigir) e trechos falados no idioma de estudo.
+  5. Cards por notificação e a agenda de frequência.
+
+REGRAS DO PROJETO QUE VALEM AQUI
+  1. Interface no Heimdall Design, página de Design lida antes, tudo acessível por VoiceOver e teclado.
+  2. Pasta de dados do serviço com nome em inglês, uma palavra (learn/ ou dentro de knowledge/), com migração automática de qualquer pasta que mude de nome.
+  3. Gasto: a geração de lições e correções por IA entra no teto de US$ 15 por mês da nuvem. Alertas e limite antes de ligar a fase 3. Sem a nuvem, os modelos locais fazem o trabalho, mais devagar.
+  4. Tudo que o serviço grava (progresso, respostas, áudios do aluno) fica no Mac, com cópia diária e permissão só do dono; áudio do aluno não sai do Mac.
+  5. Teste novo em tests/learn/. Prompts em prompts/.
+
+PONTOS EM ABERTO (decidir antes de cada fase)
+  1. Voz no idioma de estudo: usar as vozes do macOS (grátis, qualidade variável) ou um serviço de voz na nuvem (melhor, com custo).
+  2. Como detectar o idioma de uma pasta (metadados ou perguntar ao criar).
+  3. Se o Learn guarda o progresso no banco pessoal (db/) ou num banco próprio.
