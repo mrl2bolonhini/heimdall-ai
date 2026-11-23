@@ -51,7 +51,15 @@ Segurança e conformidade
 Operação e acessibilidade
 22. Há ambiente de testes (sandbox) com dados fictícios e contas de teste dos principais bancos? Há documentação em português e suporte com prazo de resposta?
 23. Qual é o contrato de nível de serviço (disponibilidade, tempo de correção)? Há histórico público de incidentes?
-24. A tela de consentimento funciona com leitor de tela (VoiceOver) e com teclado? Posso ver essa tela antes de assinar? Como acessibilidade é tratada em caso de falha?
+24. Acessibilidade da tela de consentimento e do fluxo de conexão (a parte que é de vocês e eu não controlo):
+   a) Com quais tecnologias assistivas e plataformas vocês testam? Pedir a lista por escrito, no mínimo: VoiceOver (iPhone e Mac), TalkBack (Android), NVDA e JAWS (Windows), Narrator, Orca, leitor de tela com navegação só por teclado, ampliador de tela e lupa (zoom do sistema e do navegador até 200% ou 400% sem perda de conteúdo), alto contraste, tamanho de fonte aumentado, comando de voz, controle por chave (switch) e redução de movimento.
+   b) A tela segue as WCAG 2.2 nível AA? Existe relatório de conformidade ou VPAT atualizado e quem o assinou (auditoria própria ou externa, com pessoas que usam essas tecnologias)?
+   c) Quem testa com usuários reais com deficiência visual, auditiva, motora e cognitiva, e com que frequência? Os resultados ficam disponíveis para mim?
+   d) O fluxo de redirecionamento para o banco e a volta funcionam com leitor de tela, foco e teclado? Em especial: foco que vai para o lugar certo ao trocar de tela, avisos de erro e de sucesso anunciados, tempo limite de sessão com aviso e prorrogação, e código de verificação sem depender de ver a tela ou de copiar de outro app.
+   e) Há alternativa a CAPTCHA, arrastar, gestos complexos ou leitura de QR code para quem não enxerga ou tem limitação motora?
+   f) Posso ver essa tela antes de assinar, em ambiente de testes, com as minhas próprias tecnologias assistivas? Posso testar em iPhone, Android e computador?
+   g) Como a acessibilidade é tratada em caso de falha: canal de contato próprio, prazo de correção e se a falha de acessibilidade conta no contrato de nível de serviço? Existe alternativa humana (telefone ou atendimento) quando o fluxo digital não funciona para o usuário?
+   h) Posso exigir em contrato que o fluxo mantenha o nível de acessibilidade ao longo das atualizações, com aviso antes de mudanças grandes de tela?
 25. Posso usar a minha própria marca e tela, sem a marca de vocês?
 
 Responsabilidade
@@ -86,7 +94,7 @@ Fase 1 - Empresa e documentos
 Fase 2 - Piloto fechado
 1. Assinar o contrato com a integradora escolhida, com cláusula de saída e portabilidade.
 2. Atender poucas pessoas conhecidas, com o isolamento por pessoa do guides/dados_por_pessoa_plano.txt e consentimento próprio.
-3. Teste de acessibilidade com VoiceOver em todo o fluxo, incluindo a tela de consentimento da integradora.
+3. Teste de acessibilidade em todo o fluxo, incluindo a tela de consentimento da integradora, com VoiceOver (iPhone e Mac), TalkBack, NVDA, ampliador de tela e lupa, só teclado e alto contraste; convidar pessoas que usam cada uma dessas tecnologias, já que eu só uso VoiceOver.
 4. Saída: custo real por usuário, taxa de conexão bem-sucedida e nenhum incidente.
 
 Fase 3 - Abertura e preço
