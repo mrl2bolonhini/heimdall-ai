@@ -377,7 +377,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
     return "Terminal", corpo
 
 
-LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data", "agente": "Mac Agent", "cloud": "Cloud", "notas": "Notes", "news": "News",
+LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data", "agente": "Mac Agent", "cloud": "Cloud", "notas": "Notes", "learn": "Learn", "news": "News",
            "saude_painel": "Health", "jogos": "Games", "finance": "Finance", "controls": "Controls", "ingest": "Ingest"}
 # ação -> (rótulo, comando, o que faz). Só estas viram botão; o texto livre vai pelo terminal. Start e Stop têm código próprio.
 ACOES = {

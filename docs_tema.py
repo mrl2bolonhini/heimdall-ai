@@ -20,6 +20,7 @@ ACESSOS = {
     "news": "https://news.heimdall-ai.tech",
     "saude": "https://health.heimdall-ai.tech",
     "jogos": "https://games.heimdall-ai.tech",
+    "learn": "https://learn.heimdall-ai.tech",
     "finance": "https://finance.heimdall-ai.tech",
 }
 H = lambda s: html.escape(str(s), quote=True)

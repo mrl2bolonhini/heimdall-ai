@@ -22,6 +22,7 @@ EMAIL = re.compile(r"^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24
 SERVICOS = {
     "cloud": ("Cloud", "HEIMDALL_CLOUD_HOSTS", "cloud", True),
     "notas": ("Notes", "HEIMDALL_NOTAS_HOSTS", "notes", True),
+    "learn": ("Learn", "HEIMDALL_LEARN_HOSTS", "learn", True),
     "news": ("News", "HEIMDALL_NEWS_HOSTS", "news", True),
     "jogos": ("Games", "HEIMDALL_JOGOS_HOSTS", "games", True),
     "chat": ("Chat (Open WebUI)", "HEIMDALL_WEBUI_HOST", "chat", True),

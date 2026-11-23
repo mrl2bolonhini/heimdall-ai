@@ -31,6 +31,13 @@ INFO = {
         "so_dono": True,
         "multiusuario": "Hoje só o dono usa, e os dados dele não saem do Mac. Está no roadmap uma versão para outras pessoas, em que cada uma conectaria os próprios serviços de saúde.",
     },
+    "learn": {
+        "oque": "Plataforma de estudos: pastas de material com categoria (aleatório ou sequencial) e tipo (idiomas, programação, filosofia, medicina e outros), e importação de documentos.",
+        "como": ["Crie uma pasta, escolha a categoria e o tipo, e importe PDF, Markdown, texto, Word, EPUB ou áudio.",
+                 "Subpastas herdam categoria, tipo e idioma da pasta de cima.",
+                 "Perguntas, lições, voz e cards vêm nas próximas fases."],
+        "so_dono": True,
+    },
     "jogos": {
         "oque": "Jogos leves no navegador, feitos para leitor de tela: forca, jogo da velha, xadrez, sudoku, 2048, batalha naval, aventuras de texto e outros.",
         "como": ["Abra o serviço e escolha o jogo na lista.",

@@ -51,6 +51,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Uptime Kuma | 3001 | Painel de disponibilidade dos serviços. |
 | Dozzle | 8081 | Leitor de logs dos contêineres. |
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
+| Heimdall Learn | 8019 | Plataforma de estudos (fase 1): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo aberto (idiomas, programação, filosofia, medicina...), importação de documentos e banco próprio db/learn.db. Mesmo login do Heimdall Cloud. |
 | Heimdall Notes | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
 | Heimdall Games | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
@@ -120,6 +121,8 @@ node cloudflare/teste_caixa.mjs           # Worker da caixa de correio (KV e R2 
 python3 tests/cloud/teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
 python3 tests/cloud/teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor HEIMDALL_NUVEM (sem rede)
 python3 tests/notes/teste_notas.py                   # Heimdall Notes (sem rede)
+python3 tests/learn/teste_learn_dados.py             # Heimdall Learn: banco e pastas
+python3 tests/learn/teste_learn_site.py              # Heimdall Learn: site
 python3 tests/news/teste_news.py                    # Heimdall News (sem rede)
 python3 tests/notes/teste_trechos.py                      # trechos de livros do estudo (sem rede)
 bash scripts/instalar_email_oficial.sh --testar           # login e simulação do vigia de e-mail

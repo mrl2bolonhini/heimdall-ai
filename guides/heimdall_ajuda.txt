@@ -115,6 +115,16 @@ Exemplos:
   heimdall notes --move-old
   heimdall notes --move-old --run
 
+@ learn | Heimdall Learn, plataforma de estudos (fase 1)
+Sem opção, abre o site de estudos (porta 8019): pastas de material com categoria (aleatório ou sequencial) e tipo (idiomas, programação, filosofia, medicina e outros), importação de documentos e banco próprio (db/learn.db). Desligado por padrão: ligue com heimdall env --set HEIMDALL_LEARN 1 e reinicie.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
+  -s, --sync           cadastra no banco as pastas que já existem em knowledge/ (categoria aleatório, tipo Outro)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall learn
+  heimdall learn --sync
+
 @ news | Heimdall News, notícias com resumo de IA
 Sem opção, abre o site de notícias das últimas 24 horas (porta 8012). Com opção, cuida dos feeds RSS, das fontes e da atualização.
 Opções:

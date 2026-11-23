@@ -36,7 +36,7 @@ REGRAS DO PROJETO QUE VALEM AQUI
   4. Tudo que o serviço grava (progresso, respostas, áudios do aluno) fica no Mac, com cópia diária e permissão só do dono; áudio do aluno não sai do Mac.
   5. Teste novo em tests/learn/. Prompts em prompts/.
 
-PONTOS EM ABERTO (decidir antes de cada fase)
-  1. Voz no idioma de estudo: usar as vozes do macOS (grátis, qualidade variável) ou um serviço de voz na nuvem (melhor, com custo).
-  2. Como detectar o idioma de uma pasta (metadados ou perguntar ao criar).
-  3. Se o Learn guarda o progresso no banco pessoal (db/) ou num banco próprio.
+DECISÕES DO USUÁRIO (22/11/2026)
+  1. Voz no idioma de estudo: voz do macOS, por enquanto (serviço de voz na nuvem pode vir depois).
+  2. Cada pasta é cadastrada com categoria (aleatório ou sequencial) e também com um tipo aberto: idiomas, programação, filosofia, medicina, exatas, humanas e outros que o usuário criar. A IA junta categoria, tipo (e o idioma, quando a pasta é de idiomas) com o material da pasta. Se faltar, o Learn pergunta na hora de criar a pasta.
+  3. O progresso e o cadastro das pastas ficam num banco próprio do Learn (db/learn.db), separado do banco pessoal.

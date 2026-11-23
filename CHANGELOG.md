@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-22 - Heimdall Learn, fase 1 (site novo de estudos)
+- Novo serviço Heimdall Learn (porta 8019, heimdall learn), desligado por padrão: ligue com heimdall env --set HEIMDALL_LEARN 1 e heimdall update --restart. Usa o mesmo login do Cloud e entra na lista do Cloudflare Access e dos convidados.
+- Pastas de estudo em knowledge/ com categoria (aleatório ou sequencial) e tipo aberto (Idiomas, Programação, Filosofia, Medicina, Exatas, Humanas, Arquitetura e dados, Esoterismo, Outro, e os que você cadastrar). Idiomas pede o idioma de estudo. Subpastas herdam categoria, tipo e idioma.
+- Importação de documentos pelo site (PDF, Markdown, texto, Word, EPUB, M4A, MP3; limite de 50 MB em HEIMDALL_LEARN_MAX_MB; nunca sobrescreve; permissão só do dono).
+- Banco próprio db/learn.db (pastas, tipos, documentos). heimdall learn --sync cadastra as pastas que já existem em knowledge/.
+- Fases seguintes, já especificadas em guides/learn_especificacao.txt: perguntas aleatórias com áudio, lições sequenciais com exercícios, voz do aluno, cards e agenda.
+
 ## 2026-11-22 - Modelos do Open WebUI criados por comando
 - A chave da API do Open WebUI pode ser gravada no .env sem aparecer na tela: copie a chave com Command+C e rode heimdall env --set HEIMDALL_WEBUI_API_KEY.
 - Estudos dos livros passaram do Alerts para o Notes: o Notes ganhou a conexão banco-estudos (só banco_buscar e banco_consultar, para a tabela estudos) além da memória e dos documentos, e o prompt do Alerts manda perguntas de estudo para o Notes. O modelo Código virou Code (id code). Rode heimdall chat --import para criar a conexão nova e atualizar os modelos.

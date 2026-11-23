@@ -59,6 +59,8 @@ def catalogo() -> list:
          "porta_env": "HEIMDALL_CLOUD_PORT", "log": "cloud_debug"},
         {"id": "notas", "nome": "Notes", "apelidos": ["notas"], "porta": _porta("HEIMDALL_NOTAS_PORT", 8011), "tipo": "py", "script": ["heimdall_notas.py"],
          "porta_env": "HEIMDALL_NOTAS_PORT", "log": "notas_debug"},
+        {"id": "learn", "nome": "Learn", "porta": _porta("HEIMDALL_LEARN_PORT", 8019), "tipo": "py", "script": ["heimdall_learn.py"],
+         "porta_env": "HEIMDALL_LEARN_PORT", "log": "learn_debug", "opcional": True},
         {"id": "news", "nome": "News", "porta": _porta("HEIMDALL_NEWS_PORT", 8012), "tipo": "py", "script": ["heimdall_news.py"],
          "porta_env": "HEIMDALL_NEWS_PORT", "log": "news_debug"},
         {"id": "saude", "nome": "Health", "apelidos": ["saude"], "porta": _porta("HEIMDALL_SAUDE_PAINEL_PORT", 8013), "tipo": "py", "script": ["heimdall_painel_saude.py"],
