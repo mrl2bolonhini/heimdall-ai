@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - App do Mac com o Learn
+- O app ganhou o Learn no menu Abrir (janela própria, atalho Command+7) e o comando Cadastrar as pastas de estudo novas (heimdall learn --sync) no menu Arquivo e no menu de estado. Com o Learn entrando na ordem alfabética, News passou a Command+8, Notes a Command+9, e Status e Flows ficam sem atalho. Rode heimdall app de novo para compilar.
+
 ## 2026-11-23 - Heimdall Learn completo: lições, voz, cards e modelo Learn
 - Fase 3, lições sequenciais: em pasta sequencial, Próxima lição gera explicação, trecho de estudo e 3 a 5 exercícios (alternativas e texto) a partir do material, dois trechos por lição, uma lição aberta por vez. Você responde, a correção vem exercício a exercício (certo, parcial, errado) e a lição conclui. Há progresso da pasta e áudio do trecho e da explicação.
 - Fase 4, voz: o botão Gravar resposta usa o microfone do navegador, transcreve no Mac (whisper-cpp, mlx_whisper ou whisper, com ffmpeg ou afconvert), você edita o texto e envia. O áudio é apagado depois de transcrito (HEIMDALL_LEARN_GUARDAR_VOZ=1 guarda em db/voz). Variáveis: HEIMDALL_LEARN_WHISPER_MODELO e HEIMDALL_LEARN_WHISPER_TAMANHO.

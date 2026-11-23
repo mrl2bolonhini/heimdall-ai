@@ -92,13 +92,13 @@ func avisar(_ titulo: String, _ texto: String) {
 }
 
 let nomesDosSites: [(String, String)] = [
-    ("controls", "Controls"), ("notes", "Notes"), ("news", "News"), ("health", "Health"),
+    ("controls", "Controls"), ("notes", "Notes"), ("learn", "Learn"), ("news", "News"), ("health", "Health"),
     ("games", "Games"), ("finance", "Finance"), ("cloud", "Cloud"), ("account", "Account"), ("chat", "Chat"),
     ("flows", "Flows"), ("status", "Status"),
 ]
 
 /// Atalho de teclado de cada site no menu Abrir: Account é Command+0; os demais, em ordem alfabética, de 1 a 9, sem Account e Flows
-/// (Chat 1, Cloud 2, Controls 3, Finance 4, Games 5, Health 6, News 7, Notes 8, Status 9). Flows fica sem atalho.
+/// (Chat 1, Cloud 2, Controls 3, Finance 4, Games 5, Health 6, Learn 7, News 8, Notes 9). Status e Flows ficam sem atalho.
 func teclaDoSite(_ nome: String) -> String {
     if nome == "Account" { return "0" }
     let ordem = nomesDosSites.map { $0.1 }.filter { $0 != "Account" && $0 != "Flows" }.sorted()
@@ -451,6 +451,9 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         adicionar(nuvem, "Consumo e custo do último dia", #selector(consumo), "u")
         adicionar(nuvem, "Ligar o modelo grande na nuvem", #selector(alternarNuvem))
 
+        let learn = grupo(menu, "Learn")
+        adicionar(learn, "Cadastrar as pastas de estudo novas", #selector(sincronizarLearn))
+
         let celulares = grupo(menu, "Celulares")
         adicionar(celulares, "Sincronizar agora", #selector(sincronizarAgora), "b")
         adicionar(celulares, "Resultado da última sincronização", #selector(mostrarUltimaBusca))
@@ -528,6 +531,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     @objc func reiniciar() { executar("Reiniciar os serviços", ["restart"]) }
     @objc func parar() { executar("Parar os serviços", ["stop"]) }
     @objc func consumo() { executar("Consumo da nuvem", ["usage", "--days", "1"]) }
+    @objc func sincronizarLearn() { executar("Pastas do Learn", ["learn", "--sync"]) }
     @objc func sincronizarAgora() { buscarCaixa(silencioso: false) }
     @objc func mostrarUltimaBusca() { avisar("Última sincronização com os celulares", ultimaBusca) }
     @objc func alternarNuvem() { executar("Modelo de IA", ["env", "--set", "HEIMDALL_NUVEM", nuvemLigada() ? "0" : "1"]) }
@@ -730,6 +734,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         arquivo.addItem(NSMenuItem.separator())
         _ = itemDe(arquivo, "Consumo e custo da nuvem (último dia)", #selector(consumo), "u")
         _ = itemDe(arquivo, "Ligar o modelo grande na nuvem", #selector(alternarNuvem))
+        arquivo.addItem(NSMenuItem.separator())
+        _ = itemDe(arquivo, "Cadastrar as pastas de estudo novas do Learn", #selector(sincronizarLearn))
         arquivo.addItem(NSMenuItem.separator())
         _ = itemDe(arquivo, "Sincronizar agora com os celulares", #selector(sincronizarAgora), "b")
         _ = itemDe(arquivo, "Resultado da última sincronização", #selector(mostrarUltimaBusca))
