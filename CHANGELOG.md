@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Plano de dados separados por pessoa
+- Novo guides/dados_por_pessoa_plano.txt: desenho para que cada pessoa tenha os seus dados separados dos do dono em todos os serviços (uma pasta por pessoa, com um banco por serviço, e um módulo único que escolhe o caminho). Só o plano; nada foi construído.
+
 ## 2026-11-23 - Learn: aba Ajustes
 - Nova aba Ajustes no Learn: pausar ou ligar a agenda de cards e lições e os avisos (vale na hora, sem reiniciar; HEIMDALL_LEARN_AGENDA=0 e HEIMDALL_LEARN_NOTIFICAR=0 no .env continuam mandando), e, para cada pasta, cards por dia, lições por dia e horário. Atalhos para Novo estudo e para os tipos.
 - Arquivar pasta, com confirmação: a pasta e as subpastas saem do Learn e da busca nos documentos, mas nada é apagado. Os arquivos vão para knowledge/.arquivo/ (pasta oculta, o nome ganha (2) se já existir) e o histórico de lições, estudos e cards fica guardado. Para desfazer, mova a pasta de volta para knowledge/ e rode heimdall learn --sync. Os documentos já indexados na busca saem do índice na próxima vez que você rodar heimdall ingest.
