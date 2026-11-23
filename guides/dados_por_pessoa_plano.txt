@@ -1,5 +1,7 @@
 DADOS SEPARADOS POR PESSOA (PLANO, 23/11/2026)
 
+STATUS (23/11/2026): decisões aprovadas pelo usuário (dono nos caminhos de hoje; convidado sem aviso por enquanto; cota por pessoa no teto de US$ 15; login local é sempre o dono). Fase 0 (fundação) e fase 1 (Learn) prontas. Faltam as fases 2 a 5 e a cota por pessoa.
+
 Decisão do usuário: todos os serviços devem guardar os dados de cada pessoa separados dos dados do dono. Nada abaixo está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, tem teste de isolamento e interruptor no .env (HEIMDALL_PESSOAS=0 devolve o comportamento atual, de um dono só).
 
 COMO É HOJE (conferido no código)
@@ -17,7 +19,7 @@ DESENHO ESCOLHIDO (recomendado)
 
   Layout:
     db/pessoas/<id>/learn.db, notes.db, news.db, games.db ...
-    knowledge/ e áudios do Learn: <pasta de dados>/pessoas/<id>/...
+    material do Learn de cada convidado: db/pessoas/<id>/knowledge/ (fora do knowledge/ do dono, para a busca nos documentos do dono nunca ver os arquivos dele); áudios em db/pessoas/<id>/audio/
   O <id> é derivado do e-mail (uma sigla do hash dele), sem o e-mail no nome da pasta.
   O dono mantém os caminhos de hoje (db/learn.db, knowledge/). Assim não há migração nem risco para os seus dados. As pessoas novas entram em db/pessoas/. (Decisão a confirmar: ver o fim.)
 

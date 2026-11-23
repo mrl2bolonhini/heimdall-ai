@@ -217,6 +217,15 @@ def _escopo_do_token(token: str) -> str:
     return partes[2].split("~", 1)[0] if len(partes) == 4 and "~" in partes[2] else "*"
 
 
+def _pessoa_do_token(token: str) -> str:
+    """"dono" para a sessão de tudo; para convidado, o id da pessoa que foi assinado dentro do sorteio ("" se o token não traz)."""
+    partes = (token or "").split(".")
+    if len(partes) != 4 or "~" not in partes[2]:
+        return "dono"
+    segs = partes[2].split("~")
+    return segs[2] if len(segs) == 3 else ""
+
+
 def _dados_da_sessao(token: str, agora: float):
     """Valida um token assinado (v1.validade.escopo~sorteio.assinatura). Devolve a validade ou None."""
     partes = (token or "").split(".")
@@ -233,14 +242,17 @@ def _dados_da_sessao(token: str, agora: float):
     return ate
 
 
-def nova_sessao(escopo: str = "*") -> tuple:
+def nova_sessao(escopo: str = "*", pessoa: str = "") -> tuple:
     """Sessão assinada, sem estado no servidor. Com escopo "*" (você) qualquer serviço a reconhece, pois o cookie vale para o domínio todo;
     com o nome de um serviço (um convidado do Cloudflare Access) só aquele serviço a aceita."""
     if escopo != "*" and not re.fullmatch(r"[a-z0-9]{1,20}", escopo):
         raise ValueError("escopo inválido")
     agora = time.time()
     ate = int(agora + SESSAO_SEG)
-    base = f"v1.{ate}.{escopo}~{secrets.token_urlsafe(12)}" if escopo != "*" else f"v1.{ate}.{secrets.token_urlsafe(12)}"
+    if pessoa and (escopo == "*" or not re.fullmatch(r"p[0-9a-f]{12}", pessoa)):
+        raise ValueError("pessoa inválida")
+    sorteio = secrets.token_urlsafe(12).replace(".", "_").replace("~", "_")
+    base = f"v1.{ate}.{escopo}~{sorteio}" + (f"~{pessoa}" if pessoa else "") if escopo != "*" else f"v1.{ate}.{sorteio}"
     token = f"{base}.{_assinar(base)}"
     return token, sessao_valida(token, escopo if escopo != "*" else None)
 
@@ -254,12 +266,13 @@ def sessao_valida(token: str, servico: str = None):
     escopo = _escopo_do_token(token)
     if escopo != "*" and escopo != servico:
         return None
+    pessoa = _pessoa_do_token(token)   # "" em sessão de convidado antiga, sem a pessoa dentro: os serviços que separam dados por pessoa a recusam
     with _lock:
         for t in [t for t, s in _sessoes.items() if agora > s["ate"]]:
             _sessoes.pop(t, None)
         s = _sessoes.get(token)
         if s is None:
-            s = _sessoes[token] = {"csrf": _assinar("csrf\0" + token)[:32], "ate": ate, "ultimo": agora, "flash": None}
+            s = _sessoes[token] = {"csrf": _assinar("csrf\0" + token)[:32], "ate": ate, "ultimo": agora, "flash": None, "pessoa": pessoa}
         s["ultimo"] = agora
         return s
 
@@ -285,7 +298,11 @@ def entrada_por_access(cabecalhos, servico: str = None):
         return None
     if not email:
         return None
-    token, _ = nova_sessao("*" if papel == "dono" else servico)
+    if papel == "dono":
+        token, _ = nova_sessao("*")
+    else:
+        import heimdall_pessoas as pessoas
+        token, _ = nova_sessao(servico, pessoas.id_da(email))
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} login aceito pelo Cloudflare Access ({email}, {papel})\n")
     return token
 

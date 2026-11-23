@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Dados separados por pessoa: fundação e Learn
+- A sessão de convidado do Cloudflare Access agora carrega quem é a pessoa (um id derivado do e-mail, assinado dentro do cookie). Novo heimdall_pessoas.py decide onde ficam os dados de cada uma. O dono mantém os caminhos de sempre, sem migração.
+- Learn: cada convidado tem a sua pasta em db/pessoas/<id>/ com o próprio banco, o próprio material (fora do knowledge/ do dono, então a busca nos documentos não o enxerga), áudios, agenda, cards, lições, progresso e ajustes. A agenda percorre o dono e cada pessoa; só o dono recebe aviso no Mac e no iPhone (convidados veem os cards na aba Cards). Tarefas em segundo plano (perguntas, lições, correções) trabalham com os dados de quem pediu.
+- Sessões antigas de convidado, sem a pessoa dentro, são mandadas entrar de novo pelo Access. HEIMDALL_PESSOAS=0 devolve o comportamento anterior (todos usam os dados do dono); heimdall env --set HEIMDALL_PESSOAS 0 ou 1.
+- Os outros serviços (Cloud, Notes, News, Games e o Chat) já sabem quem é a pessoa, mas ainda guardam os dados juntos: entram nas próximas fases do plano.
+
 ## 2026-11-23 - Plano de dados separados por pessoa
 - Novo guides/dados_por_pessoa_plano.txt: desenho para que cada pessoa tenha os seus dados separados dos do dono em todos os serviços (uma pasta por pessoa, com um banco por serviço, e um módulo único que escolhe o caminho). Só o plano; nada foi construído.
 

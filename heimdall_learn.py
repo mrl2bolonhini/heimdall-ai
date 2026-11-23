@@ -64,7 +64,8 @@ import heimdall_learn_painel as painel  # noqa: E402
 import heimdall_learn_voz as voz  # noqa: E402
 import json  # noqa: E402
 import heimdall_learn_tipos as tipos  # noqa: E402
-import heimdall_perguntar as perguntar  # noqa: E402  (tarefas em segundo plano do modelo)
+import heimdall_perguntar as perguntar  # noqa: E402
+import heimdall_pessoas as pessoas  # noqa: E402  (tarefas em segundo plano do modelo)
 
 HOST = os.environ.get("HEIMDALL_LEARN_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_LEARN_PORT", "8019"))
@@ -549,7 +550,10 @@ class Learn(nuvem.ManipuladorBase):
             return None, None
         m = c.get(COOKIE)
         token = m.value if m else ""
-        return token, nuvem.sessao_valida(token, "learn")
+        sess = nuvem.sessao_valida(token, "learn")
+        if sess and pessoas.ativo() and not pessoas.valido(sess.get("pessoa", "")):
+            return token, None   # sessão de convidado sem a pessoa dentro: entra de novo pelo Access
+        return token, sess
 
     def _cookie(self, token: str, apagar: bool = False) -> tuple:
         return nuvem.cabecalho_cookie(token, self.headers.get("Host", ""), self._https(), apagar)
@@ -582,11 +586,12 @@ class Learn(nuvem.ManipuladorBase):
             if not sess:
                 self._ir("/entrar")
                 return
-            if metodo == "POST":
-                self._post(rota, token, sess)
-                return
-            sess["atual"] = self.path
-            self._get(rota, q, sess)
+            with pessoas.definir(sess.get("pessoa") or pessoas.DONO):   # daqui em diante, os dados são os da pessoa desta sessão
+                if metodo == "POST":
+                    self._post(rota, token, sess)
+                    return
+                sess["atual"] = self.path
+                self._get(rota, q, sess)
         except dados.ErroLearn as ex:
             self._pagina(400, "Não foi possível", f'<p class="erro" role="alert">{e(ex)}</p><p>{design.botao("/", "Voltar ao início")}</p>', sess)
         except Exception as ex:  # noqa: BLE001

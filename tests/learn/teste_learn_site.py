@@ -39,7 +39,7 @@ srv = ThreadingHTTPServer(("127.0.0.1", 0), site.Learn)
 srv.daemon_threads = True
 porta = srv.server_address[1]
 threading.Thread(target=srv.serve_forever, daemon=True).start()
-token, sess = nuvem.nova_sessao("learn")
+token, sess = nuvem.nova_sessao("*")
 cookie = f"{nuvem.COOKIE}={token}"
 
 

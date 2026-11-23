@@ -18,17 +18,30 @@ from datetime import datetime
 from pathlib import Path
 
 import heimdall_pastas
+import heimdall_pessoas as pessoas
 import heimdall_learn_tipos as tipos_perfis
 
 PROJECT_DIR = Path(__file__).resolve().parent
 
 
-def pasta_dados() -> Path:
+def pasta_dados_base() -> Path:
+    """Pasta de dados do dono (db/). A das outras pessoas fica dentro dela, em pessoas/<id>/."""
     return Path(os.environ.get("HEIMDALL_DB_DIR", str(heimdall_pastas.db(PROJECT_DIR)))).expanduser()
 
 
+def pasta_dados() -> Path:
+    """Pasta de dados da pessoa da requisição (o dono, se nada foi definido). Único lugar que decide isso no Learn."""
+    return pessoas.raiz(pasta_dados_base())
+
+
 def pasta_knowledge() -> Path:
-    return Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
+    """Material de estudo da pessoa. O dono usa knowledge/ (a mesma pasta dos documentos do resto do Heimdall); as outras pessoas, a sua própria,
+    fora dela, para a busca nos documentos do dono nunca ver os arquivos delas."""
+    if pessoas.e_dono():
+        return Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
+    p = pasta_dados() / "knowledge"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
 
 
 def caminho_banco() -> Path:

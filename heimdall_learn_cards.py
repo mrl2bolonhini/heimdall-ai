@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import heimdall_learn_dados as dados
+import heimdall_pessoas as pessoas
 import heimdall_learn_estudo as estudo
 import heimdall_learn_licoes as licoes
 import heimdall_learn_tipos as tipos
@@ -210,13 +211,16 @@ def iniciar_agenda(intervalo: int = 60):
 
     def laco():
         while True:
-            try:
-                for linha in executar_agenda():
+            for pessoa in pessoas.existentes(dados.pasta_dados_base()):
+                try:
+                    with pessoas.definir(pessoa):
+                        # aviso no Mac e no iPhone é do dono; as outras pessoas recebem o conteúdo na aba Cards, sem aviso, até haver um canal próprio
+                        for linha in executar_agenda(notificar=None if pessoa == pessoas.DONO else (lambda *a, **k: None)):
+                            import sys
+                            sys.stderr.write(f"{time.strftime('%H:%M:%S')} agenda ({pessoa}): {linha}\n")
+                except Exception as ex:  # noqa: BLE001
                     import sys
-                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} agenda: {linha}\n")
-            except Exception as ex:  # noqa: BLE001
-                import sys
-                sys.stderr.write(f"{time.strftime('%H:%M:%S')} agenda falhou: {type(ex).__name__}: {str(ex)[:100]}\n")
+                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} agenda falhou ({pessoa}): {type(ex).__name__}: {str(ex)[:100]}\n")
             time.sleep(intervalo)
 
     t = threading.Thread(target=laco, daemon=True, name="learn-agenda")

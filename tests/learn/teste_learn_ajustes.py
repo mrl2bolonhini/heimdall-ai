@@ -97,7 +97,7 @@ for ruim in ("", "../fora", "nao-existe"):
 srv = ThreadingHTTPServer(("127.0.0.1", 0), site.Learn)
 srv.daemon_threads = True
 threading.Thread(target=srv.serve_forever, daemon=True).start()
-token, _ = nuvem.nova_sessao("learn")
+token, _ = nuvem.nova_sessao("*")
 
 
 def req(metodo, caminho, corpo=None, cab=None):

@@ -17,6 +17,7 @@ import uuid
 from pathlib import Path
 
 import heimdall_nuvem as nuvem
+import heimdall_pessoas as pessoas
 
 AQUI = Path(__file__).resolve().parent
 LLM_URL = os.environ.get("HEIMDALL_PERGUNTAR_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions")
@@ -101,6 +102,8 @@ def iniciar(dono: str, rotulo: str, funcao, info: str = "") -> str:
         _tarefas[tid] = {"id": tid, "dono": dono, "rotulo": rotulo, "estado": "pensando", "resultado": None, "erro": "", "inicio": time.time(), "info": info}
         for k in [k for k, v in _tarefas.items() if time.time() - v["inicio"] > 3600]:
             _tarefas.pop(k, None)
+
+    funcao = pessoas.vincular(funcao)   # a tarefa em segundo plano trabalha com os dados da mesma pessoa de quem pediu
 
     def rodar():
         try:
