@@ -74,7 +74,7 @@ COOKIE = nuvem.COOKIE
 NAV = [("/", "Início"), ("/licoes", "Lições"), ("/exercicios", "Exercícios"), ("/cards", "Cards"), ("/progresso", "Progresso"), ("/ajustes", "Ajustes")]
 MAX_FORM = 20000
 ESTADOS_LICAO = {"gerando": "sendo criada", "pronta": "aguardando respostas", "corrigindo": "corrigindo", "concluida": "concluída", "erro": "erro ao criar", "erro_correcao": "erro na correção"}
-ESTADOS = {"sorteado": "gerando a pergunta", "perguntado": "aguardando a resposta", "corrigindo": "corrigindo", "corrigido": "concluído",
+ESTADOS = {"importado": "importado das notas antigas", "sorteado": "gerando a pergunta", "perguntado": "aguardando a resposta", "corrigindo": "corrigindo", "corrigido": "concluído",
            "erro": "erro na pergunta", "erro_correcao": "erro na correção"}
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 CSS = nuvem.CSS + """
@@ -264,6 +264,7 @@ def pg_estudo(sess: dict, id_: int) -> tuple:
     pasta = dados.obter_pasta(rel) or {"nome": rel}
     st = est["estado"]
     topo = f'<p>Pasta: <a href="/pasta?c={quote(rel)}">{e(pasta["nome"])}</a>. Documento: {e(Path(est["documento"]).name)}.</p>'
+    titulo_pg = est["titulo"] or f"Estudo {id_}"
     atualizar = design.botao("/estudo", "Atualizar", {"id": id_})
     repetir = design.botao_post("/repetir", "Tentar de novo", csrf, {"id": id_})
     corpo = aviso(sess) + topo
@@ -271,6 +272,20 @@ def pg_estudo(sess: dict, id_: int) -> tuple:
         corpo += '<p role="status">Gerando a pergunta. O modelo local pode levar alguns minutos.</p>' + atualizar + repetir
     elif st == "erro":
         corpo += f'<p class="erro" role="alert">Não consegui gerar a pergunta: {e(est["erro"])}</p>' + repetir
+    elif st == "importado":
+        # estudo vindo das notas antigas (Notes): pergunta, resposta esperada escondida até você tentar, leitura, artigos e áudio
+        corpo += f'<p class="meta">Estudo de {e(est["criado"][:16])}, importado das notas antigas.</p><h2>Pergunta</h2><p>{e(est["pergunta"])}</p>'
+        corpo += (f'<details><summary>Resposta esperada (confira só depois de tentar)</summary><p>{e(est["correcao"].split(chr(10), 1)[-1]).replace(chr(10), "<br>")}</p></details>')
+        corpo += (f'<form class="campos" method="post" action="/responder"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="id" value="{id_}">'
+                  '<label for="resposta">Tentar responder agora (a correção usa a leitura abaixo)</label><textarea id="resposta" name="resposta" rows="5" maxlength="4000" required></textarea>'
+                  '<button type="submit">Enviar resposta</button></form>')
+        if est["trecho"]:
+            corpo += f'<h2>Leitura</h2><blockquote>{e(est["trecho"]).replace(chr(10), "<br>")}</blockquote>'
+        if estudo.caminho_audio(id_):
+            corpo += f'<h2>Áudio</h2><audio controls src="/audio?id={id_}" aria-label="Áudio do estudo"></audio>'
+        if est["sugestoes"]:
+            itens = "".join(f"<li>{e(x.strip())}</li>" for x in est["sugestoes"].split("\n") if x.strip())
+            corpo += f'<h2>Para aprofundar</h2><ol>{itens}</ol>'
     else:
         corpo += f'<h2>Pergunta</h2><p>{e(est["pergunta"])}</p>'
         if st == "perguntado":
@@ -294,7 +309,7 @@ def pg_estudo(sess: dict, id_: int) -> tuple:
             else:
                 corpo += design.botao_post("/gravar", "Gravar áudio do trecho", csrf, {"id": id_})
     corpo += design.botao_post("/sortear", "Sortear outro trecho", csrf, {"c": rel}) + design.botao("/pasta", "Voltar à pasta", {"c": rel})
-    return f"Estudo {id_}", corpo
+    return titulo_pg, corpo
 
 
 def pg_licoes(sess: dict) -> str:
@@ -358,6 +373,8 @@ def pg_ajustes(sess: dict) -> str:
              + ('<p class="meta">Os avisos estão desligados no .env do Mac (HEIMDALL_LEARN_NOTIFICAR=0).</p>' if env_avisos else "")
              + design.botao_post("/ajustes/definir", "Pausar a agenda" if ag_ajuste else "Ligar a agenda", csrf, {"chave": "agenda", "valor": "0" if ag_ajuste else "1"})
              + design.botao_post("/ajustes/definir", "Desligar os avisos" if av_ajuste else "Ligar os avisos", csrf, {"chave": "avisos", "valor": "0" if av_ajuste else "1"})
+             + f'<p role="status">Estudos por sorteio por dia (pasta e trecho ao acaso, às 6h, 13h e 20h): {cards.estudos_por_dia()}.</p>'
+             + "".join(design.botao_post("/ajustes/definir", f"{k} estudo(s) por dia" if k else "Sem estudos por sorteio", csrf, {"chave": "estudos_dia", "valor": str(k)}) for k in range(4) if k != cards.estudos_por_dia())
              + design.botao("/nova", "Novo estudo") + design.botao("/tipos", "Tipos de estudo e suas regras"))
     saida = aviso(sess) + geral + "<h2>Pastas</h2>"
     achou = False
@@ -722,7 +739,7 @@ class Learn(nuvem.ManipuladorBase):
                     raise dados.ErroLearn("Estudo não encontrado.")
                 destino = f"/estudo?id={id_}"
                 if rota == "/responder":
-                    if est["estado"] != "perguntado":
+                    if est["estado"] not in ("perguntado", "importado"):
                         raise dados.ErroLearn("Este estudo não está esperando resposta.")
                     resp = campos.get("resposta", "")
                     if len(" ".join(resp.split())) < 2:

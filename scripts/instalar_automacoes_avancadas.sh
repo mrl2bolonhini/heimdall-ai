@@ -227,13 +227,22 @@ fi
 echo "$IMPORT_OUT" | tail -n 5
 
 ATIVADOS=0
+DESLIGADO_PELO_LEARN=0
 for id in $IDS; do
+    # Com o Learn ligado, os estudos por sorteio (6h, 13h e 20h) são feitos por ele; o fluxo "estudo dos livros" fica importado, mas desligado.
+    # HEIMDALL_LEARN=0 no .env devolve o fluxo ao n8n na próxima instalação.
+    if [ "$id" = "hdEstudoDiario01" ] && [ "${HEIMDALL_LEARN:-0}" = "1" ]; then
+        docker exec n8n n8n update:workflow --id="$id" --active=false > /dev/null 2>&1
+        DESLIGADO_PELO_LEARN=1
+        continue
+    fi
     if docker exec n8n n8n update:workflow --id="$id" --active=true > /dev/null 2>&1 \
        || docker exec n8n n8n publish:workflow --id="$id" > /dev/null 2>&1; then
         ATIVADOS=$((ATIVADOS + 1))
     fi
 done
 TOTAL="$(printf '%s\n' "$IDS" | wc -l | tr -d ' ')"
+TOTAL=$((TOTAL - DESLIGADO_PELO_LEARN))
 docker restart n8n > /dev/null
 echo "Fluxos ativados: $ATIVADOS de $TOTAL."
 if [ "$ATIVADOS" -lt "$TOTAL" ]; then

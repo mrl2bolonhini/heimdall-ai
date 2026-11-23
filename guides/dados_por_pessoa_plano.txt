@@ -1,6 +1,6 @@
 DADOS SEPARADOS POR PESSOA (PLANO, 23/11/2026)
 
-STATUS (23/11/2026): decisões aprovadas pelo usuário (dono nos caminhos de hoje; convidado sem aviso por enquanto; cota por pessoa no teto de US$ 15; login local é sempre o dono). Fase 0 (fundação) e fase 1 (Learn) prontas. Faltam as fases 2 a 5 e a cota por pessoa.
+STATUS (23/11/2026): decisões aprovadas pelo usuário (dono nos caminhos de hoje; convidado sem aviso por enquanto; cota por pessoa no teto de US$ 15; login local é sempre o dono). Fase 0 (fundação) e fase 1 (Learn) prontas. O Notes deixou de guardar estudos (foram para o Learn) e ficou só do dono (triagem, diários, privacidade): não precisa de dados por pessoa. Faltam, na fase 2, Cloud, News e Games, e depois as fases 3 a 5 e a cota por pessoa.
 
 Decisão do usuário: todos os serviços devem guardar os dados de cada pessoa separados dos dados do dono. Nada abaixo está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, tem teste de isolamento e interruptor no .env (HEIMDALL_PESSOAS=0 devolve o comportamento atual, de um dono só).
 

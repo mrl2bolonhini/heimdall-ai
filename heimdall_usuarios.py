@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Usuários do Heimdall: quem entra em quais serviços, no .env e no Cloudflare Access (aba Usuários do Controls).
 
-Heimdall: donos em HEIMDALL_CFACCESS_EMAILS (entram em tudo) e convidados em HEIMDALL_CFACCESS_CONVIDADOS ("ana@x.com=jogos+chat;beto@y.com=notas").
+Heimdall: donos em HEIMDALL_CFACCESS_EMAILS (entram em tudo) e convidados em HEIMDALL_CFACCESS_CONVIDADOS ("ana@x.com=jogos+chat;beto@y.com=chat").
 Cloudflare: uma política reutilizável "Heimdall: <serviço>" por serviço, com os e-mails que podem entrar, ligada ao aplicativo do endereço público
 do serviço (criado se não existir). Só se mexe em política com esse nome; as de outra origem ficam como estão.
 Token: HEIMDALL_CLOUDFLARE_ACCESS_TOKEN (permissão "Access: Apps and Policies" de edição) e CLOUDFLARE_ACCOUNT_ID, no .env.
@@ -21,7 +21,7 @@ EMAIL = re.compile(r"^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24
 # chave -> (nome, variável com o(s) endereço(s) públicos, subdomínio padrão, pode ser dado a convidado)
 SERVICOS = {
     "cloud": ("Cloud", "HEIMDALL_CLOUD_HOSTS", "cloud", True),
-    "notas": ("Notes", "HEIMDALL_NOTAS_HOSTS", "notes", True),
+    "notas": ("Notes", "HEIMDALL_NOTAS_HOSTS", "notes", False),   # triagem, diários e privacidade: só do dono (os estudos foram para o Learn)
     "learn": ("Learn", "HEIMDALL_LEARN_HOSTS", "learn", True),
     "news": ("News", "HEIMDALL_NEWS_HOSTS", "news", True),
     "jogos": ("Games", "HEIMDALL_JOGOS_HOSTS", "games", True),
@@ -51,7 +51,7 @@ def situacao() -> dict:
     for item in env.get("HEIMDALL_CFACCESS_CONVIDADOS", "").split(";"):
         if "=" in item:
             e, s = item.split("=", 1)
-            sv = sorted({x.strip().lower() for x in s.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", x.strip().lower())})
+            sv = sorted({x.strip().lower() for x in s.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", x.strip().lower()) and SERVICOS.get(x.strip().lower(), (0, 0, 0, True))[3]})
             if e.strip() and sv:
                 conv[e.strip().lower()] = sv
     return {"donos": _lista(env.get("HEIMDALL_CFACCESS_EMAILS", "")), "convidados": conv}

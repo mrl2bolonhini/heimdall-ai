@@ -86,7 +86,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-y=--analysis" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" "-L=--local" ;;
     controls) printf '%s\n' "-o=--open" "-L=--local" ;;
     account) printf '%s\n' "-L=--local" ;;
-    learn) printf '%s\n' "-L=--local" "-s=--sync" ;;
+    learn) printf '%s\n' "-L=--local" "-s=--sync" "-m=--migrate" "-a=--apply" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
@@ -289,7 +289,8 @@ heimdall() {
       case "$1" in
         "") _heimdall_web "Heimdall Learn" LEARN 8019 learn ;;
         -s|--sync) _heimdall_py heimdall_learn_dados.py --sincronizar ;;
-        *) echo "Use: heimdall learn [--sync] [--local]"; return 1 ;;
+        -m|--migrate) shift; _heimdall_tr "--apply=--aplicar" "$@"; _heimdall_py heimdall_learn_migrar.py "${_HA[@]}" ;;
+        *) echo "Use: heimdall learn [--sync] [--migrate [--apply]] [--local]"; return 1 ;;
       esac ;;
     games)
       case "$1" in

@@ -25,6 +25,7 @@ import heimdall_learn_tipos as tipos
 
 PROMPT = Path(__file__).resolve().parent / "prompts" / "prompt_learn_card.txt"
 MAX_CARDS_DIA, MAX_LICOES_DIA = 3, 1
+HORARIOS_ESTUDO = ("06:00", "13:00", "20:00")   # os mesmos do antigo fluxo "estudo dos livros" do n8n
 ESPERA_FALHA = 30 * 60
 _falhas: dict = {}
 
@@ -151,6 +152,43 @@ def _tentar(chave: tuple, agora: float) -> bool:
     return agora - _falhas.get(chave, 0) >= ESPERA_FALHA
 
 
+def estudos_por_dia() -> int:
+    """Quantos estudos por sorteio a agenda faz por dia (0 a 3). Padrão: 3 para o dono (como era o fluxo do n8n), 0 para convidados."""
+    padrao = "3" if pessoas.e_dono() else "0"
+    try:
+        return max(0, min(3, int(dados.ajuste("estudos_dia", padrao))))
+    except ValueError:
+        return 0
+
+
+def _estudo_do_dia(con, dia: str, hora: str, modelo, notificar, rng) -> list:
+    """Um estudo por sorteio (pasta e trecho ao acaso, entre as pastas com material) quando chega a hora do próximo do dia."""
+    n = estudos_por_dia()
+    feitos = con.execute("SELECT COUNT(*) FROM estudos WHERE origem = 'agenda' AND criado LIKE ?", (dia + "%",)).fetchone()[0]
+    if not n or feitos >= n or hora < HORARIOS_ESTUDO[feitos] or not _tentar(("*", "estudo"), time.time()):
+        return []
+    candidatas = [p["caminho"] for p in dados.arvore_plana()]
+    rng.shuffle(candidatas)
+    for rel in candidatas[:8]:
+        try:
+            id_ = estudo.novo_estudo(rel, rng)
+        except dados.ErroLearn:
+            continue   # pasta sem texto: tenta outra
+        with dados._trava:
+            c = dados.conectar()
+            c.execute("UPDATE estudos SET origem = 'agenda' WHERE id = ?", (id_,))
+            c.commit()
+        estudo.gerar_pergunta(id_, modelo)
+        e = estudo.obter(id_)
+        if e["estado"] != "perguntado":
+            _falhas[("*", "estudo")] = time.time()
+            return [f"erro estudo {rel}: {(e['erro'] or '')[:80]}"]
+        notificar(f"Estudo do dia: {dados.nome_bonito(rel)}", e["pergunta"], "Há um estudo novo no Learn.")
+        return [f"estudo {rel}"]
+    _falhas[("*", "estudo")] = time.time()
+    return ["estudo: nenhuma pasta com material de texto"]
+
+
 def executar_agenda(agora: datetime = None, modelo_card=None, modelo_licao=None, notificar=None, rng=None) -> list:
     """Faz o que a agenda pede neste momento (no máximo uma ação por pasta). Devolve a lista do que fez ou falhou, para log e teste."""
     if dados.ajuste("agenda", "1") == "0":
@@ -161,6 +199,11 @@ def executar_agenda(agora: datetime = None, modelo_card=None, modelo_licao=None,
     dia, hora = agora.strftime("%Y-%m-%d"), agora.strftime("%H:%M")
     feito = []
     con = dados.conectar()
+    try:
+        feito += _estudo_do_dia(con, dia, hora, modelo_card, notificar, rng)
+    except Exception as ex:  # noqa: BLE001
+        _falhas[("*", "estudo")] = time.time()
+        feito.append(f"erro estudo: {str(ex)[:80]}")
     for ag in [dict(r) for r in con.execute("SELECT * FROM agenda WHERE ativo = 1").fetchall()]:
         rel = ag["pasta"]
         pasta = dados.obter_pasta(rel)

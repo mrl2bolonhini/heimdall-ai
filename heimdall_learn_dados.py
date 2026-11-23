@@ -122,7 +122,10 @@ def conectar() -> sqlite3.Connection:
             audio TEXT NOT NULL DEFAULT '',
             estado TEXT NOT NULL DEFAULT 'sorteado',
             erro TEXT NOT NULL DEFAULT '',
-            criado TEXT NOT NULL
+            criado TEXT NOT NULL,
+            titulo TEXT NOT NULL DEFAULT '',     -- só nos estudos importados das notas antigas
+            origem TEXT NOT NULL DEFAULT 'learn', -- learn, nota (importado do brain/) ou banco (importado da tabela estudos)
+            chave TEXT NOT NULL DEFAULT ''        -- identifica o que foi importado, para importar de novo sem duplicar
         );
         CREATE TABLE IF NOT EXISTS licoes (            -- modo sequencial: uma lição por número, em ordem
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -175,6 +178,10 @@ def conectar() -> sqlite3.Connection:
             ativo INTEGER NOT NULL DEFAULT 1
         );
     """)
+    cols = {r[1] for r in con.execute("PRAGMA table_info(estudos)")}
+    for nome, ddl in (("titulo", "TEXT NOT NULL DEFAULT ''"), ("origem", "TEXT NOT NULL DEFAULT 'learn'"), ("chave", "TEXT NOT NULL DEFAULT ''")):
+        if nome not in cols:
+            con.execute(f"ALTER TABLE estudos ADD COLUMN {nome} {ddl}")
     for t in TIPOS_INICIAIS:
         con.execute("INSERT OR IGNORE INTO tipos (nome, criado) VALUES (?, ?)", (t, _agora()))
     con.commit()
@@ -433,7 +440,7 @@ def importar_documento(rel: str, nome_arquivo: str, dados: bytes) -> dict:
     return {"arquivo": destino.name, "bytes": len(dados), "pasta": rel}
 
 
-AJUSTES_VALIDOS = {"agenda": ("1", "0"), "avisos": ("1", "0")}
+AJUSTES_VALIDOS = {"agenda": ("1", "0"), "avisos": ("1", "0"), "estudos_dia": ("0", "1", "2", "3")}
 
 
 def ajuste(chave: str, padrao: str = "1") -> str:

@@ -28,6 +28,7 @@ import heimdall_cloud as nuvem  # noqa: E402
 import heimdall_learn as site  # noqa: E402
 import heimdall_learn_cards as ca  # noqa: E402
 import heimdall_learn_dados as d  # noqa: E402
+d.definir_ajuste("estudos_dia", "0")   # estudos por sorteio têm teste próprio (teste_learn_estudos_dia.py)
 import heimdall_learn_licoes as li  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"

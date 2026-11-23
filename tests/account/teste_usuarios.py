@@ -36,13 +36,14 @@ confere("dono não vira convidado", "dono" in u.definir("dono@x.com", ["jogos"])
 confere("sem serviço é recusado", "serviço" in u.definir("ana@x.com", []))
 confere("serviço que só dono pode (Health) não é dado a convidado", "serviço" in u.definir("ana@x.com", ["saude", "controls"]))
 confere("adiciona convidado", u.definir("Ana@X.com", ["jogos", "chat"]) == "" and u.situacao()["convidados"] == {"ana@x.com": ["chat", "jogos"]})
-confere("troca os serviços", u.definir("ana@x.com", ["notas"]) == "" and u.situacao()["convidados"]["ana@x.com"] == ["notas"])
+confere("troca os serviços", u.definir("ana@x.com", ["jogos"]) == "" and u.situacao()["convidados"]["ana@x.com"] == ["jogos"])
+confere("Notes (triagem, diários, privacidade) não é dado a convidado", "serviço" in u.definir("ana@x.com", ["notas"]))
 confere("dono não se remove", "dono" in u.remover("dono@x.com") and "dono@x.com" in u.situacao()["donos"])
 confere("não remove a si mesmo", "próprio" in u.remover("ana@x.com", "ana@x.com"))
 confere("e-mail que não é convidado", "não é de convidado" in u.remover("zé@x.com"))
 u.definir("beto@y.com", ["chat"])
 d = u.desejado()
-confere("donos entram em tudo; convidados só onde liberados", d["controls"] == ["dono@x.com"] and d["notas"] == ["ana@x.com", "dono@x.com"] and d["chat"] == ["beto@y.com", "dono@x.com"] and d["saude"] == ["dono@x.com"], str(d))
+confere("donos entram em tudo; convidados só onde liberados", d["controls"] == ["dono@x.com"] and d["notas"] == ["dono@x.com"] and d["jogos"] == ["ana@x.com", "dono@x.com"] and d["chat"] == ["beto@y.com", "dono@x.com"] and d["saude"] == ["dono@x.com"], str(d))
 
 # Cloudflare de mentira
 ESTADO = {"apps": [], "pols": [], "revogados": [], "chamadas": [], "n": 0}
@@ -110,8 +111,8 @@ confere("plano numa conta vazia: tudo a criar", all(i["acao"] == "mudar" for i i
 confere("plano não muda nada na Cloudflare", ESTADO["apps"] == [] and ESTADO["pols"] == [])
 res = u.aplicar(p)
 confere("aplicar cria política e aplicativo de cada serviço", len(ESTADO["apps"]) == 12 and len(ESTADO["pols"]) == 12 and all(r.endswith("feito.") for r in res[:12]), str(res))
-pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Notes")
-confere("a política de Notes tem dono e Ana", sorted(i["email"]["email"] for i in pn["include"]) == ["ana@x.com", "dono@x.com"])
+pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Games")
+confere("a política de Games tem dono e Ana", sorted(i["email"]["email"] for i in pn["include"]) == ["ana@x.com", "dono@x.com"])
 confere("toda política exige o Authenticator (MFA) e todo aplicativo novo só aceita o login da Microsoft, direto", all(x["require"] == [{"auth_method": {"auth_method": "mfa"}}] for x in ESTADO["pols"])
         and all(a["allowed_idps"] == ["ms1"] and a["auto_redirect_to_identity"] for a in ESTADO["apps"]))
 confere("os AUDs dos aplicativos vão para HEIMDALL_CFACCESS_AUD", len([x for x in {d["nome"]: d["valor"] for d in hcf.ler()}["HEIMDALL_CFACCESS_AUD"].split(",")]) == 12)
@@ -120,7 +121,7 @@ confere("de novo: nada a fazer", all(i["acao"] == "nada" for i in u.plano()))
 # remover a Ana: política de Notes perde o e-mail e as sessões dela são revogadas
 u.remover("ana@x.com")
 res = u.aplicar(u.plano())
-pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Notes")
+pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Games")
 confere("remover tira da política e revoga as sessões", [i["email"]["email"] for i in pn["include"]] == ["dono@x.com"] and ESTADO["revogados"] == ["ana@x.com"], str(res))
 
 # aplicativo compartilhado (vários endereços) e aplicativo só de caminho (RSS): o primeiro não é tocado, o segundo não conta

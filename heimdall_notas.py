@@ -61,7 +61,7 @@ def carregar_env() -> None:
         chave, valor = chave.strip(), valor.strip()
         if chave.startswith("HEIMDALL_BIBLIOTECA_"):  # nome antigo das variáveis: continua valendo
             chave = "HEIMDALL_NOTAS_" + chave[len("HEIMDALL_BIBLIOTECA_"):]
-        elif not (chave.startswith("HEIMDALL_NOTAS_") or chave in ("HEIMDALL_VAULT_DIR", "HEIMDALL_KNOWLEDGE_DIR")):
+        elif not (chave.startswith("HEIMDALL_NOTAS_") or chave in ("HEIMDALL_VAULT_DIR", "HEIMDALL_KNOWLEDGE_DIR", "HEIMDALL_LEARN")):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -77,6 +77,7 @@ import heimdall_design as design  # noqa: E402  (padrão de interface: link lê,
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
 import heimdall_catalogo as catalogo  # noqa: E402  (catalogação da nota pela IA local: ideias, contatos, endereços, lembretes, eventos)
 import heimdall_perguntar as perguntar  # noqa: E402  (campo Perguntar, só com o modelo local)
+import heimdall_pessoas as pessoas  # noqa: E402
 
 HOST = os.environ.get("HEIMDALL_NOTAS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_NOTAS_PORT", "8011"))
@@ -119,6 +120,12 @@ def _subdirs(raiz: Path) -> list:
         return []
 
 
+def learn_ativo() -> bool:
+    """Com o Learn ligado, os estudos (os temas dos livros e os documentos de knowledge/) ficam só nele; o Notes mostra o resto do cofre
+    (triagem, diários, privacidade, Second Brain, saúde). HEIMDALL_LEARN=0 devolve os estudos ao Notes."""
+    return os.environ.get("HEIMDALL_LEARN", "0") == "1"
+
+
 def pastas() -> dict:
     """Pastas liberadas: chave (slug) -> {'nome', 'cofre' (notas e áudios), 'docs' (documentos de knowledge)}."""
     cfg = os.environ.get("HEIMDALL_NOTAS_PASTAS", "*").strip() or "*"
@@ -126,12 +133,15 @@ def pastas() -> dict:
     liberadas = {slug(x) for x in cfg.split(",") if x.strip()}
     fora = {slug(x) for x in os.environ.get("HEIMDALL_NOTAS_EXCLUIR", "heimdall-digest").split(",") if x.strip()}
     res = {}
-    for d in _subdirs(KNOWLEDGE):
-        if slug(d.name) not in fora:
-            res.setdefault(slug(d.name), {"nome": d.name[:1].upper() + d.name[1:], "cofre": None, "docs": d})
+    estudo_no_learn = learn_ativo()
+    temas_de_estudo = {slug(d.name) for d in _subdirs(KNOWLEDGE)}
+    if not estudo_no_learn:
+        for d in _subdirs(KNOWLEDGE):
+            if slug(d.name) not in fora:
+                res.setdefault(slug(d.name), {"nome": d.name[:1].upper() + d.name[1:], "cofre": None, "docs": d})
     for d in _subdirs(VAULT):
         k = slug(d.name)
-        if k in fora:
+        if k in fora or (estudo_no_learn and k in temas_de_estudo):
             continue
         if tudo or k in liberadas or k in res:
             r = res.setdefault(k, {"nome": nome_bonito(k), "cofre": None, "docs": None})
@@ -753,7 +763,10 @@ class Notas(nuvem.ManipuladorBase):
             return None, None
         m = c.get(COOKIE)
         token = m.value if m else ""
-        return token, nuvem.sessao_valida(token, "notas")
+        sess = nuvem.sessao_valida(token, "notas")
+        if sess and pessoas.ativo() and sess.get("pessoa") != pessoas.DONO:
+            return token, None   # triagem, diários e privacidade são do dono: convidado não entra no Notes
+        return token, sess
 
     def _cookie(self, token: str, apagar: bool = False) -> tuple:
         return nuvem.cabecalho_cookie(token, self.headers.get("Host", ""), self._https(), apagar)

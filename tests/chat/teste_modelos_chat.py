@@ -29,7 +29,7 @@ confere("Finance só lê: nenhuma função de escrita ou pagamento", all(f.start
 confere("Code fica sem ferramentas", all(not mc.funcoes_do_modelo(m) for m in mc.MODELOS if m["nome"] == "Code"))
 notes = next(m for m in mc.MODELOS if m["nome"] == "Notes")
 alerts = next(m for m in mc.MODELOS if m["nome"] == "Alerts")
-confere("Notes lê os estudos pelo banco (só busca e consulta) além da memória e dos documentos", {"banco_buscar", "banco_consultar", "rag_search", "memory_search"} <= set(mc.funcoes_do_modelo(notes)) and "saude_historico" not in mc.funcoes_do_modelo(notes))
+confere("Notes só tem memória e documentos (os estudos ficam no Learn)", {"rag_search", "memory_search"} <= set(mc.funcoes_do_modelo(notes)) and not ({"banco_buscar", "banco_consultar", "saude_historico"} & set(mc.funcoes_do_modelo(notes))))
 confere("estudos saiu do Alerts", "estudos" not in alerts["uso"] and "estudos" not in (Path(mc.AQUI) / alerts["prompt"]).read_text(encoding="utf-8").split("Perguntas sobre os estudos")[0])
 conv = [m for m in mc.MODELOS if m["nome"] == "General"][0]
 confere("General só tem pesquisa, leitura de página, cálculo e hora", sorted(mc.funcoes_do_modelo(conv)) == sorted(["search_searxng", "fetch_url", "calculate_expression", "get_system_timestamp"]))

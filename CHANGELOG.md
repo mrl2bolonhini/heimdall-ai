@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Estudos no Learn; Notes só com triagem, diários e privacidade
+- Os estudos saíram do Notes. Com HEIMDALL_LEARN=1, o Notes não mostra mais os temas de estudo (knowledge/ e os livros do cofre) e fica com triagem, diários, privacidade, Second Brain e saúde; HEIMDALL_LEARN=0 devolve os estudos ao Notes. O Notes passou a ser só do dono: convidado não entra nele, e Notes não pode mais ser dado a convidado na aba Usuários.
+- Migração do que já existe: heimdall learn --migrate mostra o que seria levado (notas dos livros no cofre e a tabela estudos do banco) e heimdall learn --migrate --apply grava no Learn com o estado importado, copiando os áudios. Pode rodar de novo sem duplicar, e nada é apagado nem movido nos originais.
+- Estudos por dia no Learn: às 6h, 13h e 20h a agenda sorteia uma pasta com material e um trecho, faz a pergunta e avisa. Padrão 3 por dia para o dono e 0 para convidados; escolha de 0 a 3 na aba Ajustes. Isso substitui o fluxo "estudo dos livros" do n8n: com o Learn ligado, o instalador dos fluxos importa o fluxo 13, mas o deixa desligado (para desligar já, abra o n8n e desative "Heimdall: estudo dos livros").
+- O modelo de chat Notes perdeu a conexão com a tabela de estudos (banco-estudos): perguntas de estudo vão para o modelo Learn.
+
 ## 2026-11-23 - Dados separados por pessoa: fundação e Learn
 - A sessão de convidado do Cloudflare Access agora carrega quem é a pessoa (um id derivado do e-mail, assinado dentro do cookie). Novo heimdall_pessoas.py decide onde ficam os dados de cada uma. O dono mantém os caminhos de sempre, sem migração.
 - Learn: cada convidado tem a sua pasta em db/pessoas/<id>/ com o próprio banco, o próprio material (fora do knowledge/ do dono, então a busca nos documentos não o enxerga), áudios, agenda, cards, lições, progresso e ajustes. A agenda percorre o dono e cada pessoa; só o dono recebe aviso no Mac e no iPhone (convidados veem os cards na aba Cards). Tarefas em segundo plano (perguntas, lições, correções) trabalham com os dados de quem pediu.

@@ -120,10 +120,14 @@ Sem opção, abre o site de estudos (porta 8019), com as abas Início, Lições,
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
   -s, --sync           cadastra no banco as pastas que já existem em knowledge/ (categoria aleatório, tipo Outro)
+  -m, --migrate        mostra o que seria levado dos estudos antigos (Notes) para o Learn, sem gravar nada
+  -a, --apply          com --migrate, grava a migração (estado "importado"; os originais ficam onde estão)
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall learn
   heimdall learn --sync
+  heimdall learn --migrate
+  heimdall learn --migrate --apply
 
 @ news | Heimdall News, notícias com resumo de IA
 Sem opção, abre o site de notícias das últimas 24 horas (porta 8012). Com opção, cuida dos feeds RSS, das fontes e da atualização.
