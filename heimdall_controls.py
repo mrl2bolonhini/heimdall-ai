@@ -173,7 +173,7 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/monitor", "Monitor"), ("/usuarios", "Usuários"), ("/ajustes", "Ajustes"), ("/manutencao", "Manutenção")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/monitor", "Monitor"), ("/usuarios", "Usuários"), ("/manutencao", "Manutenção")]
 
 _shell = None
 
@@ -903,11 +903,17 @@ document.addEventListener('input', function(ev){
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: str = "", script: str = "", flash=None) -> bytes:
-    nav = sair = ""
+    nav = sair = ajustes_html = ""
     if sess:
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        nav = '<nav aria-label="Principal">' + design.abas(SECOES, atual, completas=("/terminal",)) + '</nav>'
-        corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
+        em_ajustes = atual == "/ajustes"   # Ajustes é botão no topo, à direita, e não aba (padrão do Heimdall Design)
+        ajustes_html = design.botao("/ajustes", "Ajustes", atual=em_ajustes)
+        if em_ajustes:
+            nav = " "
+            corpo = f'<div class="acoes-topo">{design.botao("/", "Voltar ao Controls")}</div><h1>{e(titulo)}</h1>{{aviso}}{corpo}'
+        else:
+            nav = '<nav aria-label="Principal">' + design.abas(SECOES, atual, completas=("/terminal",)) + '</nav>'
+            corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
     else:
         corpo = f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}"
     aviso = ""
@@ -927,7 +933,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'
-            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Controls", nav, sair_html=sair)}'
+            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Controls", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{corpo}</main>{rodape}{js}<!--/email_off--></body></html>').encode("utf-8")
 
 

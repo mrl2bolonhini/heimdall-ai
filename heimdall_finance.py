@@ -144,7 +144,7 @@ def estrutura(con) -> list:
               ("cartoes", "Cartões", [("/cartoes", "Fatura aberta"), ("/cartoes/fechadas", "Faturas fechadas")])]
     if patrimonio:
         grupos.append(("patrimonio", "Patrimônio", patrimonio))
-    grupos += [("tendencias", "Tendências", [("/", "Resumo"), ("/tendencias", "Evolução"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"),
+    grupos += [("tendencias", "Tendências", [("/resumo", "Resumo"), ("/tendencias", "Evolução"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"),
                                             ("/analise", "Análises"), ("/avisos", "Avisos")]),
                ("visoes", "Visões", [("/visoes", "Visões")]),
                ("ajustes", "Ajustes", [("/importar", "Importar extrato"), ("/planilhas", "Importar planilha"), ("/regras", "Regras"), ("/avisos/config", "Avisos")])]
@@ -164,7 +164,7 @@ def localizar(grupos: list, rota: str) -> tuple:
     return None, ""
 
 
-ROTAS_FIXAS = ["/", "/tendencias", "/orcamentos", "/recorrentes", "/analise", "/avisos", "/transacoes", "/contas", "/futuros", "/boletos", "/cartoes", "/cartoes/fechadas",
+ROTAS_FIXAS = ["/resumo", "/tendencias", "/orcamentos", "/recorrentes", "/analise", "/avisos", "/transacoes", "/contas", "/futuros", "/boletos", "/cartoes", "/cartoes/fechadas",
                "/investimentos", "/emprestimos", "/visoes", "/importar", "/planilhas", "/regras", "/avisos/config"]
 
 
@@ -218,7 +218,7 @@ def tabela(legenda: str, cabecalhos: list, linhas: list, numericas: set = None) 
     return f"<table><caption>{e(legenda)}</caption><thead><tr>{cab}</tr></thead><tbody>{corpo}</tbody></table>"
 
 
-def seletor_mes(atual: str, rota: str = "/", extra: str = "") -> str:
+def seletor_mes(atual: str, rota: str = "/resumo", extra: str = "") -> str:
     ms = fn.meses(banco())
     if not ms:
         return ""
@@ -255,7 +255,7 @@ def pg_resumo(mes: str, visao: str = "") -> tuple:
     if r["despesas_anterior"]:
         v = round(100 * (r["despesas"] - r["despesas_anterior"]) / r["despesas_anterior"])
         dif = f' Isso é {abs(v)}% {"a mais" if v > 0 else "a menos"} que em {fn.nome_mes(fn.mes_anterior(mes))} ({fn.brl(r["despesas_anterior"])}).' if v else " Igual ao mês anterior."
-    corpo = [seletor_mes(mes, "/", f'<input type="hidden" name="visao" value="{e(visao)}">'), seletor_visao(visao, "/", mes)]
+    corpo = [seletor_mes(mes, "/resumo", f'<input type="hidden" name="visao" value="{e(visao)}">'), seletor_visao(visao, "/resumo", mes)]
     corpo.append(f'<p>Em {e(fn.nome_mes(mes))}: receitas de {e(fn.brl(r["receitas"]))}, despesas de {e(fn.brl(r["despesas"]))} e saldo de {e(fn.brl(r["saldo"], True))}.{e(dif)}</p>')
     orc = fn.orcamentos(banco(), mes, visao)
     if orc["com_limite"]:
@@ -915,7 +915,10 @@ class Finance(nuvem.ManipuladorBase):
 
     def _get(self, rota: str, q: dict, sess: dict) -> None:
         sess["atual"] = self.path
-        if rota == "/":
+        if rota == "/":   # a página inicial é a primeira aba (Extratos)
+            self._ir("/transacoes")
+            return
+        if rota == "/resumo":
             titulo, corpo = pg_resumo((q.get("mes") or [""])[0], (q.get("visao") or [""])[0])
         elif rota == "/transacoes":
             titulo, corpo = pg_transacoes(q, sess)

@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Ajustes em Learn e Controls, Conta antes de Ajustes e página inicial na primeira aba
+- Ajustes passou a botão no topo também no Learn e no Controls (no Controls saiu das abas: 6 abas, Option+Shift+6 é Manutenção). Na ordem do Tab e da leitura, o menu Conta vem primeiro e o botão Ajustes depois; visualmente Conta à esquerda e Ajustes à direita.
+- Finance: a página inicial (/) agora abre a primeira aba, Extratos (Transações); o Resumo passou para /resumo (Tendências > Resumo).
+- Padrão: a página inicial de um serviço é a primeira aba (CLAUDE.md).
+
 ## 2026-11-23 - Ajustes como botão no topo (padrão) e nova ordem das abas do Finance
 - Padrão do projeto: Ajustes é um botão no topo, à direita, na mesma linha do menu Conta e antes dele (heimdall_lab.cabecalho aceita ajustes_html), e não uma aba. Abre uma tela sem as abas de cima, com o botão Voltar e subabas. Regra acrescentada ao CLAUDE.md e à página de Design.
 - Finance: abas de cima agora Extratos, Cartões, Patrimônio (só com dados), Tendências e Visões; Ajustes saiu das abas. A página inicial continua sendo Tendências > Resumo.

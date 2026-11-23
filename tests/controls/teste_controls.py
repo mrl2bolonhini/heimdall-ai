@@ -211,7 +211,10 @@ confere("serviços: uma chave (role=switch) por serviço, com estado e sem botã
         and 'aria-checked="true"' in corpo and 'aria-checked="false"' in corpo and "Kuma: no ar" in corpo and "Aplicar" not in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo)
 confere("serviços: o próprio Controls não é desligável", "Controls" not in "".join(x["nome"] for x in hsv.catalogo()))
 confere("abas: tablist, tab com aria-selected, painel e atalho",
-        'role="tablist"' in corpo and corpo.count('role="tab"') == 7 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Atalho: Option Shift 1 a" in corpo and "Alt+Shift" not in corpo)
+        'role="tablist"' in corpo and corpo.count('role="tab"') == 6 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Atalho: Option Shift 1 a" in corpo and "Alt+Shift" not in corpo)
+confere("Ajustes é botão no topo e não aba", ">Ajustes</button>" in corpo and "Ajustes</a>" not in corpo.split("<main")[0])
+s_aj, c_aj, _ = req("GET", "/ajustes", cookie=token)
+confere("tela de Ajustes: sem abas de cima, com Voltar ao Controls", s_aj == 200 and 'role="tablist"' not in c_aj and "Voltar ao Controls" in c_aj and 'aria-current="true">Ajustes' in c_aj)
 confere("abas: o Terminal carrega a página inteira (data-completa)", corpo.count(" data-completa>") == 1)
 confere("abas e chaves: os scripts vão com nonce", "ArrowRight" in corpo and "/servicos/alternar" in corpo and "nonce=" in corpo)
 # --- aba Monitor: consumo da Cloudflare (sem rede: a consulta é trocada por uma resposta pronta) ---------------------

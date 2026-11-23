@@ -5,7 +5,8 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News
 (gerada em gerar_docs.py, seção "Heimdall Design") e siga-a. A fonte única de cores, tipografia, medidas, foco e botão é `heimdall_design.py`.
 - Link lê, botão age (`design.botao`; paginação em `heimdall_paginacao.py`).
 - Nada de cor, tamanho de fonte ou foco definido só numa página: use as variáveis (`var(--texto)` etc.). Precisa de algo novo? Acrescente primeiro ao `heimdall_design.py` e à página de Design.
-- Ajustes de um serviço é um botão no topo, à direita, na mesma linha do menu Conta e antes dele (`ajustes_html` em `heimdall_lab.cabecalho`, com `design.botao`), nunca uma aba: abre uma tela sem as abas de cima, com botão de voltar e subabas se houver mais de uma seção. Serviço com ajustes segue isso (Finance já; Learn e os demais ao serem mexidos). Ajuda (FAQ e envio de mensagem para suporte@heimdall-ai.tech) vai em Ajustes quando for criada.
+- A página inicial de um serviço é a primeira aba.
+- Ajustes de um serviço é um botão no topo, à direita, na mesma linha, depois do menu Conta (o Tab passa pelo Conta e depois pelo Ajustes; `ajustes_html` em `heimdall_lab.cabecalho`, com `design.botao`), nunca uma aba: abre uma tela sem as abas de cima, com botão de voltar e subabas se houver mais de uma seção. Finance, Learn e Controls já seguem; todo serviço com ajustes segue. Ajuda (FAQ e envio de mensagem para suporte@heimdall-ai.tech) vai em Ajustes quando for criada.
 - Acessibilidade para leitor de tela (VoiceOver) e teclado: lang pt-BR, pular para o conteúdo, um só h1, tabelas com caption e scope, campos com label, avisos com role status/alert.
 - Rode `python3 tests/design/teste_design.py` e o teste do serviço alterado antes de enviar.
 

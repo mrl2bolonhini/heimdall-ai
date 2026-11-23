@@ -120,16 +120,19 @@ def abas_do_tema(tema: str) -> list:
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: str = "") -> bytes:
-    nav = sair = abas_js = ""
+    nav = sair = abas_js = ajustes_html = ""
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
         tema, aba = sess.get("tema", ""), sess.get("aba", "")
         if aba == "inicio":
-            botoes = design.botao("/nova", "Novo estudo") + design.botao("/ajustes", "Ajustes")
+            botoes = design.botao("/nova", "Novo estudo")
+            ajustes_html = design.botao("/ajustes", "Ajustes")
         elif aba == "ajustes":
             botoes = design.botao("/", "Trocar de tema") + (design.botao("/tema", "Voltar ao tema", {"t": tema}) if tema else "")
+            ajustes_html = design.botao("/ajustes", "Ajustes", {"t": tema}, atual=True)
         elif tema:
-            botoes = design.botao("/", "Trocar de tema") + design.botao("/ajustes", "Ajustes", {"t": tema})
+            botoes = design.botao("/", "Trocar de tema")
+            ajustes_html = design.botao("/ajustes", "Ajustes", {"t": tema})
         else:
             botoes = design.botao("/", "Voltar aos temas")
         nav = f'<div class="acoes-topo">{botoes}</div>'
@@ -142,7 +145,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
     js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (abas_js or script) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Learn</title>{nuvem.ICONE}<style>{CSS}</style></head><body{(' data-csrf="' + e(sess['csrf']) + '"') if sess else ''}>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Learn", nav, sair_html=sair)}'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Learn", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape()}{js}</body></html>').encode("utf-8")
 
 

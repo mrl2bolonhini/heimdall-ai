@@ -230,7 +230,7 @@ confere("exportação exige login", pedir("/exportar.csv")[0] == 303)
 token, sess = hc.nova_sessao()
 ck = f"{hc.COOKIE}={token}"
 csrf = sess["csrf"]
-st, corpo, cab = pedir("/", ck)
+st, corpo, cab = pedir("/resumo", ck)
 confere("início sem dados convida a importar", st == 200 and "Importar extrato" in corpo and "Ainda não há lançamentos" in corpo, (st, corpo[:300]))
 csp = cab.get("Content-Security-Policy", "")
 import re as _re
@@ -268,7 +268,7 @@ try:
 except ImportError:
     pass
 
-st, corpo, _ = pedir("/?mes=2026-01", ck)
+st, corpo, _ = pedir("/resumo?mes=2026-01", ck)
 confere("resumo do mês mostra totais e tabela com legenda", st == 200 and "R$ 8.000,00" in corpo and "R$ 1.919,20" in corpo and "Faturas pagas sem fatura importada" in corpo and "<caption>Gastos por categoria em janeiro de 2026</caption>" in corpo and 'scope="col"' in corpo, corpo[:500])
 confere("aviso de lançamentos sem categoria não aparece quando não há", "sem categoria neste mês" not in corpo)
 st, corpo, _ = pedir("/transacoes?mes=2026-01&cat=Mercado&q=extra", ck)
@@ -282,7 +282,7 @@ st, corpo, _ = pedir("/transacoes?conta=Ita%C3%BA%20conta&produto=pix", ck)
 confere("filtro de conta e produto combinados só traz Pix da conta", st == 200 and "PIX" in corpo.upper() and "<td>Pix</td>" in corpo and "UBER" not in corpo and "1 lançamento(s)" in corpo, corpo[:300])
 st, corpo, _ = pedir("/transacoes?mes=2026-01", ck)
 confere("ações são botões (Alterar categoria, Baixar CSV) e não links", 'aria-label="Alterar categoria de ' in corpo and ">Alterar categoria</a>" not in corpo and ">Baixar tudo em CSV</a>" not in corpo and ">Baixar tudo em CSV</button>" in corpo)
-st, corpo, _ = pedir("/", ck)
+st, corpo, _ = pedir("/resumo", ck)
 confere("trocar a visão é botão", ">Ver por saída de caixa</button>" in corpo and ">Ver por saída de caixa</a>" not in corpo)
 _b2 = hf.banco()
 for _i in range(hf.POR_PAGINA + 3):
@@ -330,7 +330,7 @@ confere("salvar limite pela página volta à página", st == 303 and cab.get("Lo
 confere("limite gravado em centavos", con2.execute("SELECT limite FROM orcamentos WHERE categoria='Outros gastos'").fetchone()[0] == 1000)
 st, corpo, _ = pedir("/orcamentos?mes=2025-03", ck)
 confere("página de orçamentos mostra situação, tabela com legenda e botões com nome", st == 200 and "Estourado" in corpo and "<caption>" in corpo and 'aria-label="Salvar limite de Outros gastos"' in corpo and 'aria-label="Remover limite de Outros gastos"' in corpo and 'scope="col"' in corpo, corpo[:300])
-st, corpo, _ = pedir("/?mes=2025-03", ck)
+st, corpo, _ = pedir("/resumo?mes=2025-03", ck)
 confere("o Resumo avisa dos orçamentos estourados", "Orçamentos de" in corpo and "estourado(s)" in corpo and "Ver orçamentos" in corpo)
 confere("limite inválido pela página não grava", post("/orcamentos", {"categoria": "Outros gastos", "limite": "abc"}, ck, csrf)[0] == 303 and con2.execute("SELECT limite FROM orcamentos WHERE categoria='Outros gastos'").fetchone()[0] == 1000)
 confere("orçamento com CSRF errado é recusado", post("/orcamentos", {"categoria": "Outros gastos", "limite": "5"}, ck, "errado")[0] == 403)
@@ -437,7 +437,7 @@ confere("marcar todos como lidos", "0 não lido(s)" in corpo and "Marcar como li
 confere("avisos com CSRF errado são recusados", post("/avisos/lido", {"id": "todos"}, ck, "errado")[0] == 403)
 confere("a rota que salvava no Notas não existe mais", "/analise/notas" not in open("heimdall_finance.py").read())
 # campo Perguntar no fim de toda página
-for _rota in ("/", "/transacoes", "/tendencias", "/orcamentos", "/analise", "/futuros", "/boletos", "/recorrentes", "/regras", "/importar", "/avisos"):
+for _rota in ("/resumo", "/transacoes", "/tendencias", "/orcamentos", "/analise", "/futuros", "/boletos", "/recorrentes", "/regras", "/importar", "/avisos"):
     st, corpo, _ = pedir(_rota, ck)
     confere(f"campo Perguntar no fim de {_rota}", st == 200 and '<label for="pergunta">' in corpo and corpo.rfind('id="perguntar-t"') > corpo.rfind("</table>") and ("</section></div></main>" in corpo or "</section></div></div></main>" in corpo) and corpo.rfind("Voltar para o topo") > corpo.rfind('id="perguntar-t"'), corpo[-300:])
 st, _, cab = pedir("/perguntar", ck)
@@ -465,7 +465,7 @@ confere("pergunta com CSRF errado é recusada", post("/perguntar", {"pergunta": 
 _hp.chamar_local = lambda *a, **k: "Foram R$ 123.456,78."
 post("/perguntar", {"pergunta": "total do mercado em 2025", "volta": "/"}, ck, csrf)
 for _ in range(100):
-    st2, corpo, _ = pedir("/", ck)
+    st2, corpo, _ = pedir("/resumo", ck)
     if "123.456,78" in corpo:
         break
     _tm.sleep(0.1)
