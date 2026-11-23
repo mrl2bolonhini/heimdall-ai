@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Perguntar do News enxerga os 30 dias
+- O Perguntar do News passou a procurar em todas as notícias guardadas no banco (30 dias), sem despejar tudo no modelo: primeiro o modelo vê só as categorias com a quantidade e escolhe onde e em quantos dias procurar; depois o código filtra e dá nota pelas palavras da pergunta, e o modelo escolhe pelos títulos as poucas notícias que servem (até 8); só dessas entram o resumo e o trecho na resposta. Gasta bem menos tokens que mandar 60 notícias de uma vez.
+- Se o modelo falhar ou não responder no formato esperado, o código segue sozinho por palavras. Dentro de uma categoria aberta, a busca fica nela. A resposta cita a data de cada notícia e, se nada servir, mostra os títulos mais próximos. Código em heimdall_news_busca.py, teste em tests/news/teste_news_busca.py.
+
 ## 2026-11-23 - Cloud virou Lab
 - O painel do emulador de AWS agora se chama Lab (laboratório de dados): Heimdall Lab, comando heimdall lab (heimdall cloud continua valendo), módulo heimdall_lab.py, testes em tests/lab, guia LEIAME_lab_roteiro.txt e página lab.html. Os testes que eram de Cloudflare ficaram em tests/cloudflare.
 - Variáveis do .env: HEIMDALL_CLOUD_PORT, _HOST, _HOSTS, _ENDPOINT, _REGIAO e _MAX_MB viram HEIMDALL_LAB_*; a subida do sistema troca sozinha no .env (cópia em .env.bak) e o valor antigo continua valendo se a troca não rodar. A senha, o código de 6 dígitos e a duração da sessão (HEIMDALL_CLOUD_SENHA_HASH, _TOTP_SEGREDO e _SESSAO_HORAS) mantêm o nome, porque valem para todos os sites.

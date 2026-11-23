@@ -67,6 +67,15 @@ def chamar_local(sistema: str, usuario: str, modelo: str = "", max_tokens: int =
     return (d["choices"][0]["message"]["content"] or "").strip()
 
 
+def chamar_leve(sistema: str, usuario: str, max_tokens: int = 200) -> str:
+    """Chamada curta ao modelo leve (Qwen3 30B sem raciocínio) para etapas de busca; sem conferência de valores."""
+    marca = _LEVE.set(True)
+    try:
+        return chamar_local(sistema, usuario, max_tokens=max_tokens, timeout=60)
+    finally:
+        _LEVE.reset(marca)
+
+
 _NUM = re.compile(r"R\$\s?-?[\d.]+,\d{2}|\d+(?:[.,]\d+)?\s?%")
 
 
