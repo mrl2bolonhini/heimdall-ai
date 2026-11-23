@@ -31,6 +31,7 @@ confere("respostas em ordem de conversa, acima do campo", h.index("Um.") < h.ind
 confere("área de respostas e estado ligados ao script", 'id="perguntar-resp" data-volta="/"' in h and 'id="perguntar-estado" role="status" data-pensando="0"' in h)
 confere("sem botão de atualizar quando nada está pensando", "Atualizar respostas" not in h)
 confere("o formulário é do script e o campo não tem required (evita balão de validação)", "data-perguntar" in h and "data-pergunta" in h and "required" not in h)
+confere("o campo é de várias linhas, e a dica ensina o atalho e o Enter", "<textarea" in h and "data-envia" in h and "Option Shift P" in h and "Shift Enter pula linha" in h)
 
 perguntar._tarefas.clear()
 perguntar._tarefas["x"] = {"id": "x", "dono": "d", "rotulo": "pergunta", "estado": "pensando", "resultado": None, "erro": "", "inicio": time.time(), "info": "q"}
@@ -42,7 +43,8 @@ confere("erro aparece como alerta dentro da área de respostas", 'role="alert"' 
 perguntar._tarefas.clear()
 
 s = design.SCRIPT_PERGUNTAR
-confere("o script confere a resposta sozinho e anuncia no estado, sem mexer no foco", "setInterval(conferir, 3000)" in s and "Resposta pronta." in s and ".focus()" in s and s.count(".focus()") == 1)
+confere("o script confere a resposta sozinho e anuncia no estado, sem mexer no foco", "setInterval(conferir, 3000)" in s and "Resposta pronta." in s and ".focus()" in s)
+confere("Option+Shift+P leva ao campo; Enter envia e Shift+Enter não", "'KeyP'" in s and "ev.key === 'Enter' && !ev.shiftKey" in s and "requestSubmit" in s and "data-envia" in s)
 confere("as abas trocadas reiniciam o acompanhamento", "window.hdPerguntar" in design.SCRIPT_ABAS)
 confere("design.script() leva o script do Perguntar", "perguntar-resp" in design.script())
 

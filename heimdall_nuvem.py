@@ -19,8 +19,10 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 GATEWAY = "heimdall"
 MODELO_PADRAO = "workers-ai/@cf/openai/gpt-oss-120b"
+# Perguntar dos sites: modelo mais leve e barato, sem raciocínio (o /no_think vai no prompt). HEIMDALL_NUVEM_PERGUNTAR_MODELO troca.
+MODELO_PERGUNTAR = "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8"
 USER_AGENT = "heimdall-ai/1.0"  # sem isto o endereço do gateway recusa o Python padrão (erro 1010)
-CHAVES = ("HEIMDALL_NUVEM", "HEIMDALL_NUVEM_MODELO", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+CHAVES = ("HEIMDALL_NUVEM", "HEIMDALL_NUVEM_MODELO", "HEIMDALL_NUVEM_PERGUNTAR_MODELO", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
 ultimo_erro = ""
 
 
@@ -52,7 +54,12 @@ def _abrir(req, timeout):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
-def chat(sistema: str, usuario: str, max_tokens: int = 700, timeout: int = 120, env: dict = None, abrir=None, forcar: bool = False) -> str:
+def modelo_perguntar(env: dict = None) -> str:
+    e = env if env is not None else _env()
+    return e.get("HEIMDALL_NUVEM_PERGUNTAR_MODELO") or MODELO_PERGUNTAR
+
+
+def chat(sistema: str, usuario: str, max_tokens: int = 700, timeout: int = 120, env: dict = None, abrir=None, forcar: bool = False, modelo: str = "", folga: int = 1000) -> str:
     """Resposta do modelo grande. Levanta exceção se a nuvem estiver desligada, falhar ou voltar vazia."""
     global ultimo_erro
     e = env if env is not None else _env()
@@ -61,8 +68,8 @@ def chat(sistema: str, usuario: str, max_tokens: int = 700, timeout: int = 120, 
         raise RuntimeError("nuvem desligada" if tem_chave else "falta a chave da Cloudflare no .env")
     url = f"https://gateway.ai.cloudflare.com/v1/{e['CLOUDFLARE_ACCOUNT_ID']}/{GATEWAY}/compat/chat/completions"
     token = e["CLOUDFLARE_API_TOKEN"]
-    # o gpt-oss gasta parte dos tokens raciocinando antes de responder: dá folga além do que o chamador pediu
-    corpo = {"model": e.get("HEIMDALL_NUVEM_MODELO") or MODELO_PADRAO, "temperature": 0.2, "max_tokens": int(max_tokens) + 1000,
+    # o gpt-oss gasta parte dos tokens raciocinando antes de responder: dá folga além do que o chamador pediu (modelo sem raciocínio usa folga menor)
+    corpo = {"model": modelo or e.get("HEIMDALL_NUVEM_MODELO") or MODELO_PADRAO, "temperature": 0.2, "max_tokens": int(max_tokens) + int(folga),
              "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": usuario}]}
     req = urllib.request.Request(url, data=json.dumps(corpo).encode("utf-8"), method="POST", headers={
         "Authorization": "Bearer " + token, "cf-aig-authorization": "Bearer " + token,

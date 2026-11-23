@@ -380,7 +380,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
 
 def _bloco_perguntar(sess: dict, atual: str) -> str:
     return perguntar.bloco_html(sess["csrf"], sess["csrf"], atual or "/", "Perguntar sobre a sua saúde",
-                                "Pergunte em português, por exemplo: como foi meu sono nesta semana? O modelo local responde só com base nos seus dados, que não saem do Mac. "
+                                "Pergunte em português, por exemplo: como foi meu sono nesta semana? O modelo responde só com base nos seus dados. "
                                 "Não é diagnóstico.") if atual != "/avisos" else ""
 
 

@@ -546,11 +546,11 @@ def _bloco_perguntar(sess: dict) -> str:
         linhas = []
     lista = [{"pergunta": r["pergunta"], "quando": r["quando"], "html": _texto_em_html(r["resposta"]), "avisos": r["avisos"]} for r in linhas]
     h = ('<section aria-labelledby="perguntar-t" class="perguntar"><h2 id="perguntar-t">Perguntar sobre os seus dados</h2>'
-         '<p class="sub">Pergunte em português, por exemplo: quanto gastei com mercado neste mês? O modelo local responde só com base nos seus dados, que não saem do Mac. '
-         'A resposta aparece sozinha logo acima do campo, a mais recente embaixo.</p>'
+         '<p class="sub">Pergunte em português, por exemplo: quanto gastei com mercado neste mês? O modelo responde só com base nos seus dados. '
+         'A resposta aparece sozinha logo acima do campo, a mais recente embaixo. ' + perguntar.ATALHOS + '</p>'
          + perguntar.renderizar(atual, perguntar.em_andamento(sess["csrf"], "pergunta"), lista) +
          f'<form method="post" action="/perguntar" data-perguntar>{csrf}<input type="hidden" name="volta" value="{e(atual)}"><input type="hidden" name="mes" value="{e(mes)}">'
-         '<p><label for="pergunta">Sua pergunta</label><br><input type="text" id="pergunta" name="pergunta" data-pergunta autocomplete="off"></p>'
+         f'<p><label for="pergunta">Sua pergunta</label><br>{perguntar.CAMPO}</p>'
          '<button type="submit">Perguntar</button></form>')
     return h + "</section>"
 
@@ -961,7 +961,7 @@ class Finance(nuvem.ManipuladorBase):
             mes_p = campos.get("mes", "") if re.fullmatch(r"\d{4}-\d{2}", campos.get("mes", "")) else ""
             ctx = fanal.contexto_pergunta(banco(), q_, None, mes_p)
             perguntar.iniciar(sess["csrf"], "pergunta", lambda: _responder_e_guardar(ctx, q_, volta), q_)
-            sess["flash"] = ("ok", "Pergunta enviada ao modelo local. A resposta aparece sozinha acima do campo.")
+            sess["flash"] = ("ok", "Pergunta enviada ao modelo. A resposta aparece sozinha acima do campo.")
             self._ir(volta)
             return
         if rota == "/futuros":

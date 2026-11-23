@@ -66,6 +66,17 @@ confere("modelo padrão é o gpt-oss-120b", visto["corpo"]["model"] == "workers-
 confere("dá folga de tokens para o raciocínio", visto["corpo"]["max_tokens"] == 1500, visto["corpo"]["max_tokens"])
 confere("modelo trocável pelo .env", True if nv.chat("s", "u", env={**LIGADO, "HEIMDALL_NUVEM_MODELO": "workers-ai/@cf/meta/llama-3.3-70b-instruct-fp8-fast"}, abrir=abrir_ok) and visto["corpo"]["model"].endswith("llama-3.3-70b-instruct-fp8-fast") else False)
 
+confere("modelo do Perguntar: Qwen3 30B por padrão, trocável pelo .env", nv.modelo_perguntar(LIGADO) == "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8" and nv.modelo_perguntar({**LIGADO, "HEIMDALL_NUVEM_PERGUNTAR_MODELO": "x/y"}) == "x/y")
+nv.chat("s", "u", max_tokens=500, env=LIGADO, abrir=abrir_ok, modelo=nv.modelo_perguntar(LIGADO), folga=300)
+confere("modelo e folga escolhidos por quem chama (sem raciocínio, folga menor)", visto["corpo"]["model"].endswith("qwen3-30b-a3b-fp8") and visto["corpo"]["max_tokens"] == 800, visto["corpo"])
+import heimdall_perguntar as _pg
+_vistos = []
+_orig = (_pg.nuvem.ativo, _pg.nuvem.chat)
+_pg.nuvem.ativo = lambda *a, **k: True
+_pg.nuvem.chat = lambda sistema, usuario, **kw: (_vistos.append((sistema, kw)) or "<think>pensando</think>Resposta limpa.")
+_t = _pg.responder("ctx", "pergunta?", "SIS")
+confere("responder usa o modelo leve com /no_think e tira o raciocínio do texto", _t["texto"] == "Resposta limpa." and _vistos[0][0].endswith("/no_think") and _vistos[0][1]["modelo"].endswith("qwen3-30b-a3b-fp8") and _vistos[0][1]["folga"] == 300, _vistos)
+_pg.nuvem.ativo, _pg.nuvem.chat = _orig
 confere("forcar liga a nuvem só nesta chamada, mesmo com o interruptor em 0", nv.chat("s", "u", env={**LIGADO, "HEIMDALL_NUVEM": "0"}, abrir=abrir_ok, forcar=True) == "resposta")
 try:
     nv.chat("s", "u", env={"HEIMDALL_NUVEM": "0"}, abrir=abrir_ok, forcar=True)

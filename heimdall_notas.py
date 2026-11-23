@@ -503,9 +503,9 @@ def bloco_inicio(sess: dict) -> str:
     """Pergunta e salvar nota, no fim da aba Início: um campo e dois botões."""
     csrf, dono = sess["csrf"], sess["csrf"]
     form = ('<section aria-labelledby="escrever-t" class="perguntar"><h2 id="escrever-t">Perguntar ou salvar nota</h2>'
-            '<p class="sub">Escreva uma pergunta para o modelo local responder com base nas suas notas, ou escreva uma nota para o Heimdall catalogar sozinho: '
+            '<p class="sub">Escreva uma pergunta para o modelo responder com base nas suas notas, ou escreva uma nota para o Heimdall catalogar sozinho: '
             'ideias, contatos e endereços vão para o Notion; lembretes e eventos com data vão direto para o Lembretes e o Calendário, com botão Desfazer. '
-            'Assuntos de saúde e finanças nunca vão para o Notion. Tudo roda no Mac.</p>'
+            'Assuntos de saúde e finanças nunca vão para o Notion. Tudo roda no Mac. Atalho Option Shift P leva ao campo.</p>'
             + perguntar.respostas_html(dono, "/") +
             f'<form method="post" action="/perguntar" data-perguntar><input type="hidden" name="csrf" value="{e(csrf)}">'
             '<p><label for="texto">Pergunta ou nota</label><br><textarea id="texto" name="texto" data-pergunta maxlength="8000"></textarea></p>'

@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Perguntar: modelo leve, teclado e Perguntar no Cloud
+- O Perguntar dos sites passou a usar, com a nuvem ligada (HEIMDALL_NUVEM=1), o Qwen3 30B sem raciocínio, mais leve e barato que o gpt-oss; sem a nuvem, ou se ela falhar, continua o modelo local. HEIMDALL_NUVEM_PERGUNTAR_MODELO troca o modelo. Os demais usos da nuvem (chat do Open WebUI, análises) não mudaram.
+- Teclado: Option+Shift+P leva ao campo da pergunta; Enter envia e Shift+Enter pula linha (o campo agora tem várias linhas). No Notes o Enter continua pulando linha, porque o mesmo campo também salva notas; ali só vale o atalho.
+- O Cloud ganhou o Perguntar no fim de cada aba. O assistente enxerga o que existe agora no emulador (buckets e arquivos, funções Lambda, bancos, tabelas e colunas do Glue, últimas consultas do Athena) e como o site funciona, e pode usar conhecimento geral de AWS para tirar dúvidas e ajudar a montar recursos, dizendo a aba e os campos ou o comando da AWS CLI. Ele não executa nada.
+- Os textos do Perguntar deixaram de dizer que o modelo é local e que os dados não saem do Mac, o que não vale com a nuvem ligada.
+
 ## 2026-11-23 - Perguntar em estilo de chat e abas mais enxutas no leitor de tela
 - O Perguntar não precisa mais do botão Atualizar respostas: ao enviar, o foco continua no campo, a página confere sozinha de 3 em 3 segundos e, quando o modelo termina, o leitor de tela anuncia "Resposta pronta" com o texto. As respostas ficam acima do campo, em ordem de conversa (a mais recente embaixo, perto do campo). Vale para Finance, Health, News, Notes e Learn. Sem JavaScript, um botão Atualizar respostas continua existindo.
 - O campo não tem mais o atributo obrigatório (o balão de validação do navegador atrapalhava o VoiceOver); pergunta vazia é avisada no estado, sem recarregar.

@@ -402,6 +402,40 @@ confere("domínio parecido não ganha Domain", "Domain" not in k3)
 k4 = hc.cabecalho_cookie("", "news.heimdall-ai.tech", True, apagar=True)[1]
 confere("apagar o cookie usa o mesmo Domain e Max-Age=0", "Domain=heimdall-ai.tech" in k4 and "Max-Age=0" in k4)
 
+# ---- Perguntar do Cloud ----
+print("\nPerguntar")
+import heimdall_perguntar as _pg  # noqa: E402
+_pg._respostas.clear()
+_tk2, _ss2 = hc.nova_sessao()
+cookie = f"{hc.COOKIE}={_tk2}"
+csrf = _ss2["csrf"]
+_pedidos = []
+_orig_resp = _pg.responder
+_pg.responder = lambda ctx, q, sistema="", modelo="", **kw: (_pedidos.append((ctx, q, sistema, kw)) or {"texto": "Crie o banco no Glue.", "avisos": []})
+st, _, corpo = req("GET", "/glue", cookie=cookie)
+confere("o Perguntar aparece no fim de cada aba, com atalho e Enter que envia", 'id="perguntar-resp"' in corpo and "data-envia" in corpo and "Option Shift P" in corpo and "Perguntar ao laboratório" in corpo)
+confere("a página de erro e a entrada não levam o Perguntar", 'id="perguntar-resp"' not in req("GET", "/rota-que-nao-existe", cookie=cookie)[2])
+st, hd, _ = req("POST", "/perguntar", form(csrf="errado", pergunta="como crio uma tabela?", volta="/glue"), cookie=cookie)
+confere("pergunta sem token de segurança é recusada", st == 303 and not _pedidos and hd["location"] != "/glue?x")
+st, hd, _ = req("POST", "/perguntar", form(csrf=csrf, pergunta="como crio uma tabela no Glue para um CSV?", volta="/glue"), cookie=cookie)
+for _ in range(50):
+    if _pedidos:
+        break
+    time.sleep(0.1)
+confere("pergunta válida volta para a mesma aba e vai ao modelo", st == 303 and hd["location"] == "/glue" and len(_pedidos) == 1)
+ctx, q, sistema, kw = _pedidos[0]
+confere("o contexto traz o estado do emulador (S3, Glue com colunas, Athena) e o manual do site", "bucket dados: a.txt (3 bytes)" in ctx and "tabela clientes em s3://dados/clientes/ com colunas id int" in ctx and "Athena, últimas consultas: SELECT 1" in ctx and "COMO ESTE SITE FUNCIONA" in ctx and "PÁGINA ABERTA: /glue" in ctx, ctx[:600])
+confere("o modelo pode usar conhecimento geral de AWS e não confere valores contra o contexto", "conhecimento geral" in sistema and kw.get("conferir") is False)
+for _ in range(50):
+    st, _, corpo = req("GET", "/glue", cookie=cookie)
+    if "Crie o banco no Glue." in corpo:
+        break
+    time.sleep(0.1)
+confere("a resposta aparece na página, acima do campo", "Crie o banco no Glue." in corpo and corpo.index("Crie o banco no Glue.") < corpo.index('id="pergunta"'))
+st, hd, _ = req("POST", "/perguntar", form(csrf=csrf, pergunta="oi, tudo bem?", volta="https://malvado.exemplo/\r\nX: y"), cookie=cookie)
+confere("endereço de volta inválido cai no início", st == 303 and hd["location"] == "/")
+_pg.responder = _orig_resp
+
 srv.shutdown()
 print("\n" + ("Tudo certo." if not falhas else f"{falhas} teste(s) falharam."))
 sys.exit(1 if falhas else 0)

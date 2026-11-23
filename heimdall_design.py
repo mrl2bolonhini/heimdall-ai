@@ -298,11 +298,24 @@ document.addEventListener('submit', function(ev){
   ev.preventDefault();
   if (!campo.value.trim()) { estado.textContent = 'Escreva a pergunta antes de enviar.'; campo.focus(); return; }
   var dados = new URLSearchParams(new FormData(f));
-  estado.textContent = 'Pergunta enviada. O modelo local está pensando; a resposta aparece aqui sozinha.';
+  estado.textContent = 'Pergunta enviada. O modelo está pensando; a resposta aparece aqui sozinha.';
   fetch(f.action, {method: 'POST', credentials: 'same-origin', headers: {'X-Heimdall-Ajax': '1', 'Content-Type': 'application/x-www-form-urlencoded'}, body: dados.toString()})
     .then(function(r){ if (!r.ok || /\/entrar/.test(r.url)) { throw new Error('x'); } return r.text(); })
     .then(function(t){ campo.value = ''; pensando = true; estado.setAttribute('data-pensando', '1'); aplicar(t); acompanhar(); })
     .catch(function(){ f.submit(); });
+});
+document.addEventListener('keydown', function(ev){
+  if (ev.isComposing) { return; }
+  if (ev.altKey && ev.shiftKey && !ev.ctrlKey && !ev.metaKey && ev.code === 'KeyP') {   // Option+Shift+P leva ao campo da pergunta
+    var c = document.querySelector('[data-pergunta]');
+    if (c) { ev.preventDefault(); c.scrollIntoView({block: 'center'}); c.focus(); }
+    return;
+  }
+  if (ev.key === 'Enter' && !ev.shiftKey && !ev.altKey && !ev.ctrlKey && !ev.metaKey && ev.target && ev.target.hasAttribute && ev.target.hasAttribute('data-envia')) {
+    ev.preventDefault();   // Enter envia; Shift+Enter pula linha
+    var f = ev.target.form;
+    if (f) { if (f.requestSubmit) { f.requestSubmit(); } else { f.submit(); } }
+  }
 });
 window.hdPerguntar();
 })();

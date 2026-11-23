@@ -898,7 +898,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
         nav = design.nav_abas(NAV, atual, "Seções do Heimdall News")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         extra = perguntar.bloco_html(sess["csrf"], sess["csrf"], sess.get("atual", "/") or "/", "Perguntar sobre as notícias",
-                                     "Pergunte em português, por exemplo: o que saiu sobre economia hoje? O modelo local responde só com as notícias das últimas 24 horas deste site.") if atual == "/" else ""
+                                     "Pergunte em português, por exemplo: o que saiu sobre economia hoje? O modelo responde só com as notícias das últimas 24 horas deste site.") if atual == "/" else ""
         conteudo = design.com_abas(NAV, atual, conteudo + extra)
         scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
