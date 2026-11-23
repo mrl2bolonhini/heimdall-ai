@@ -37,6 +37,8 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News
 - Arquivo novo: guia vai para `guides/`, script para `scripts/` (com `cd "$(dirname "$0")/.."` no começo) e teste para `tests/<serviço>/`.
 
 ## Outras regras fixas
+- O Heimdall passa a ser pensado como possível produto comercial (decisão do usuário em 23/11/2026). Todo texto dentro do Heimdall (interface, mensagens de erro e aviso, ajuda, documentação, notificações) segue comunicação profissional voltada a produto: clara, objetiva, neutra e consistente, sem gíria nem tom pessoal ou de bastidor, nomeando o que o usuário pode fazer. Texto que já existe é ajustado ao ser mexido.
+- Continuidade (decisão do usuário em 23/11/2026): quando o Mac fica fora do ar (queda de energia, por exemplo), serviços e fluxos precisam continuar na nuvem. Ver o item de continuidade no ROADMAP; toda fase segue as regras de interruptor no .env e de limite de gasto.
 - O usuário é cego e usa VoiceOver: respostas em português, texto corrido e listas numeradas simples, sem elementos visuais.
 - Padrão combinado em conversa que valha para o projeto todo vai para este CLAUDE.md, para as próximas conversas seguirem.
 - Cada recurso novo atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md.
