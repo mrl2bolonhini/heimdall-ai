@@ -68,6 +68,7 @@ import heimdall_avisos as avisos_mod  # noqa: E402  (avisos e análises ficam aq
 import financas_nucleo as fn  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
+import heimdall_continuidade  # noqa: E402
 import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 
 HOST = os.environ.get("HEIMDALL_FINANCE_HOST", "127.0.0.1")
@@ -1200,9 +1201,10 @@ def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
         sys.exit("Sem senha e código configurados o Heimdall Finance não sobe. Rode: python3 heimdall_acesso.py --tudo")
     banco()
-    threading.Thread(target=_vigiar_entrada, daemon=True).start()
-    threading.Thread(target=_vigiar_email, daemon=True).start()
-    threading.Thread(target=_vigiar_pluggy, daemon=True).start()
+    if not heimdall_continuidade.modo_continuidade():   # na nuvem, em continuidade, só leitura: nada de vigiar pasta, e-mail ou Pluggy
+        threading.Thread(target=_vigiar_entrada, daemon=True).start()
+        threading.Thread(target=_vigiar_email, daemon=True).start()
+        threading.Thread(target=_vigiar_pluggy, daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), Finance)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Finance em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))}; dados em {DIR_DADOS})\n")

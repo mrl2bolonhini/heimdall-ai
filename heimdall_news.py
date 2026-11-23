@@ -85,6 +85,7 @@ def carregar_env() -> None:
 carregar_env()
 
 import heimdall_banco as banco  # noqa: E402  (o banco pessoal)
+import heimdall_continuidade  # noqa: E402
 import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
@@ -1377,7 +1378,7 @@ def main() -> None:
         return
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
         sys.exit("Sem senha e código configurados o Heimdall News não sobe. Rode: python3 heimdall_acesso.py --tudo")
-    if COLETAR:
+    if COLETAR and not heimdall_continuidade.modo_continuidade():
         threading.Thread(target=laco, name="coletor", daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), News)
     srv.daemon_threads = True

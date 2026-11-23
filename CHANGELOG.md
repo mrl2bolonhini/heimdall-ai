@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Continuidade na nuvem: primeira versão (fases 2 a 4, sem implantar)
+- Novo heimdall_continuidade.py: cópia cifrada (AES-256-GCM, senha própria HEIMDALL_CONTINUIDADE_SENHA) dos bancos para o R2, só do que mudou, e restauração conferida por soma. Interruptor HEIMDALL_CONTINUIDADE (padrão 0). Comando: heimdall continuity --prepare, --send, --status.
+- Novo cloudflare/continuity: imagem do contêiner (Dockerfile e entrada), Worker de entrada com failover (repassa ao Mac; com o túnel fora, liga o contêiner em modo somente leitura, com aviso e data da cópia) e wrangler.jsonc com uma instância no máximo. Em modo continuidade o Finance e o News não rodam coletores nem vigias.
+- scripts/continuidade_nuvem.sh (heimdall continuity --deploy, --off, --on, --secrets): recusa implantar sem bloqueio de gasto em Workers e Durable Objects e sem a cópia no R2.
+- Decisão: a cópia usa arquivos SQLite cifrados no R2; o D1 entra no diário de alterações (fase 5), para o contêiner não precisar de camada de dados nova.
+- Testes: tests/core/teste_continuidade.py, tests/core/teste_continuidade_entrada.py, cloudflare/teste_continuity.mjs. Não testado: build da imagem (sem Docker aqui), implantação, Containers reais.
+
 ## 2026-11-23 - Limites de gasto da Cloudflare
 - Novo scripts/limites_gasto_cloudflare.sh: cria as políticas de gasto (bloqueio de uso em Workers até US$ 10 e Durable Objects até US$ 5, mais avisos por e-mail na metade) lendo o token do .env; --ver só lista. Exige token com permissão Faturamento (edição). Antes de ligar a fase de continuidade.
 

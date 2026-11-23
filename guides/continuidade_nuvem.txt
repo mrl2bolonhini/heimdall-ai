@@ -42,3 +42,7 @@ Quando o Mac ficar sem energia ou sem rede, os sites do Heimdall (Finance, Healt
 - Se o disco do container é persistente (tratar como efêmero).
 - Status de disponibilidade geral dos Containers e do Workflows (a documentação lida não declara).
 - Quais fluxos do n8n são essenciais e podem virar Workflows.
+
+8. Andamento (23/11/2026)
+Feito, sem implantar: fase 2 (imagem em cloudflare/continuity), fase 3 (cópias cifradas dos bancos para o R2, com R2 em vez do D1 por ora, porque os sites usam arquivos SQLite) e fase 4 (Worker de entrada com failover e interruptor). Falta: implantar (exige o bloqueio de Durable Objects), medir a subida a frio, o diário de alterações no D1 (fase 5) e os fluxos em Workflows (fase 6). Em continuidade os sites ficam somente leitura; Lab, Controls e o agente da Apple não entram.
+Pontos a verificar na implantação: build da imagem com wrangler (contexto na raiz do repositório), nomes reais dos sites em heimdall urls (rotas do wrangler.jsonc), memória do tipo standard-1 com os sete sites, e se a Cloudflare Access libera a requisição ao Worker antes de chegar ao contêiner.
