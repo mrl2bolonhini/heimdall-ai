@@ -9,7 +9,7 @@
   "key": "",
   "info": {
    "id": "banco-saude",
-   "name": "Saúde (banco pessoal)",
+   "name": "Health (banco pessoal)",
    "description": "Saúde em modo leitura: histórico por métrica, análises, coração, ECG, treinos e relatório. Só para o administrador."
   }
  }

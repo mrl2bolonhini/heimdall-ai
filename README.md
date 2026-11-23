@@ -144,7 +144,7 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 | Nome no LiteLLM | Modelo no Ollama | Uso | Observações |
 |---|---|---|---|
 | `gemma-4-uncensored` | `ollama_chat/eriktonon/gemma4-uncensored` | Uso geral | Confira a chamada de ferramentas com tests/chat/test_models_tools.py. |
-| `conversas` | `ollama_chat/eriktonon/gemma4-uncensored` | Base do modelo Conversas do Open WebUI | Local é o mesmo gemma de gemma-4-uncensored; com HEIMDALL_NUVEM=1 o heimdall_litellm.py o troca pelo Qwen3 30B da nuvem e deixa este como volta (conversas-local). |
+| `conversas` | `ollama_chat/eriktonon/gemma4-uncensored` | Base do modelo General do Open WebUI | Local é o mesmo gemma de gemma-4-uncensored; com HEIMDALL_NUVEM=1 o heimdall_litellm.py o troca pelo Qwen3 30B da nuvem e deixa este como volta (conversas-local). |
 | `dolphin3-cyber-8b` | `ollama_chat/mparvin/dolphin3-cyber-8b-gguf:q8_0` | Segurança e conversa livre, só texto | Não chama ferramentas no Ollama; use para análises de texto, não nos fluxos com MCP. |
 | `deepseek-coder-v2:16b` | `ollama_chat/deepseek-coder-v2:16b` | Código (usado pelo GitOps) | O GitOps usa este modelo na etapa de análise de código. |
 | `qwen3-vl-instruct` | `ollama_chat/qwen3-vl:8b-instruct` | Modelo padrão dos fluxos; entende imagens | Declara suporte a imagens no LiteLLM. |
@@ -159,13 +159,12 @@ Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e 
 <!-- AUTO:MODELOS_CHAT -->
 | Modelo | Base | Ferramentas (conexão) | Funções | Temperatura |
 |---|---|---|---|---|
-| Meus Dados | `qwen3-vl-instruct` | `banco-pessoal` | `banco_resumo`, `banco_consultar`, `banco_buscar`, `saude_historico`, `get_system_timestamp` | 0,2 |
-| Saúde | `qwen3-vl-instruct` | `banco-saude` | `saude_historico`, `analise_saude`, `frequencia_cardiaca_resumo`, `ecg_resumo`, `treinos_resumo`, `relatorio_saude`, `exames_resumo`, `exame_historico`, `analise_exames`, `exames_pendentes`, `receitas_encaminhamentos`, `banco_consultar`, `get_system_timestamp` | 0,2 |
-| Finanças | `qwen3-vl-instruct` | `banco-financas` | `financas_resumo`, `financas_transacoes`, `financas_orcamentos`, `financas_recorrentes`, `financas_boletos`, `financas_futuros`, `get_system_timestamp` | 0,2 |
+| Alerts | `qwen3-vl-instruct` | `banco-pessoal` | `banco_resumo`, `banco_consultar`, `banco_buscar`, `saude_historico`, `get_system_timestamp` | 0,2 |
+| Health | `qwen3-vl-instruct` | `banco-saude` | `saude_historico`, `analise_saude`, `frequencia_cardiaca_resumo`, `ecg_resumo`, `treinos_resumo`, `relatorio_saude`, `exames_resumo`, `exame_historico`, `analise_exames`, `exames_pendentes`, `receitas_encaminhamentos`, `banco_consultar`, `get_system_timestamp` | 0,2 |
+| Finance | `qwen3-vl-instruct` | `banco-financas` | `financas_resumo`, `financas_transacoes`, `financas_orcamentos`, `financas_recorrentes`, `financas_boletos`, `financas_futuros`, `get_system_timestamp` | 0,2 |
 | Código | `deepseek-coder-v2:16b` | nenhuma |  | 0,2 |
-| Curiosidades | `qwen3-vl-instruct` | `internet` | `search_searxng`, `calculate_expression`, `get_system_timestamp`, `get_hackernews_top_stories`, `search_reddit_posts`, `fetch_rss_feed`, `get_astronomy_apod`, `get_youtube_transcript`, `fetch_url` | 0,4 |
-| Conversas | `conversas` | `web-basica` | `search_searxng`, `fetch_url`, `calculate_expression`, `get_system_timestamp` | 0,8 |
-| Documentos e Memória | `qwen3-vl-instruct` | `mac-admin` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search` | 0,2 |
+| General | `conversas` | `web-basica` | `search_searxng`, `fetch_url`, `calculate_expression`, `get_system_timestamp` | 0,8 |
+| Notes | `qwen3-vl-instruct` | `mac-admin` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search` | 0,2 |
 <!-- /AUTO:MODELOS_CHAT -->
 
 Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta chamada de ferramentas) e contexto de 8192 tokens. Modelo padrão dos fluxos: `qwen3-vl-instruct` (`HEIMDALL_FLOW_MODEL`). Embeddings: `nomic-embed-text`.

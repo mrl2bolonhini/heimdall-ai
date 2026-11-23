@@ -232,7 +232,7 @@ MODELOS_NOTAS = {
     "qwen3-vl-instruct": ("Modelo padrão dos fluxos; entende imagens", "Declara suporte a imagens no LiteLLM."),
     "gemma3-4b": ("Modelo pequeno e rápido (3 GB), usado nos resumos do Heimdall News", "No teste com um parágrafo resumiu certo em português; baixe com ollama pull gemma3:4b."),
     "llama-3.1-8b": ("Modelo local padrão do Perguntar; aceita ferramentas", "Template do Ollama com suporte a ferramentas; respondeu bem em português. Nenhum modelo do chat o usa."),
-    "conversas": ("Base do modelo Conversas do Open WebUI", "Local é o mesmo gemma de gemma-4-uncensored; com HEIMDALL_NUVEM=1 o heimdall_litellm.py o troca pelo Qwen3 30B da nuvem e deixa este como volta (conversas-local)."),
+    "conversas": ("Base do modelo General do Open WebUI", "Local é o mesmo gemma de gemma-4-uncensored; com HEIMDALL_NUVEM=1 o heimdall_litellm.py o troca pelo Qwen3 30B da nuvem e deixa este como volta (conversas-local)."),
 }
 
 FLUXO_DESCRICAO = {

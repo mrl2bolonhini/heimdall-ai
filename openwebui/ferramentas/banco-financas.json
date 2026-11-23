@@ -9,7 +9,7 @@
   "key": "",
   "info": {
    "id": "banco-financas",
-   "name": "Finanças (Finance)",
+   "name": "Finance (banco pessoal)",
    "description": "Finance em modo leitura: resumo do mês, lançamentos, orçamentos, recorrentes, boletos e pagamentos futuros. Só para o administrador."
   }
  }

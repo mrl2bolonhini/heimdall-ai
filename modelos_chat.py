@@ -23,33 +23,29 @@ MEMORIA = ["memory_save", "memory_search", "memory_forget", "rag_temas", "rag_se
 # Conexões em Configurações do administrador, Integrações, Servidores de ferramentas externos. Várias conexões podem apontar para o mesmo servidor
 # com filtros diferentes: é o filtro que limita as funções que cada modelo enxerga (um modelo de 8B escolhe melhor entre 7 funções do que entre 16).
 CONEXOES = [
-    {"id": "banco-pessoal", "nome": "Meus Dados (banco pessoal)", "descricao": "Banco pessoal em modo leitura: diários oficiais, e-mails, estudos, privacidade, avisos, Second Brain e métricas de saúde simples. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
-    {"id": "banco-saude", "nome": "Saúde (banco pessoal)", "descricao": "Saúde em modo leitura: histórico por métrica, análises, coração, ECG, treinos e relatório. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
-    {"id": "banco-financas", "nome": "Finanças (Finance)", "descricao": "Finance em modo leitura: resumo do mês, lançamentos, orçamentos, recorrentes, boletos e pagamentos futuros. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
-    {"id": "internet", "nome": "Internet e Utilidades", "descricao": "Pesquisa na web, cálculo, notícias, feeds, transcrições e utilidades públicas.", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": INTERNET},
-    {"id": "web-basica", "nome": "Web básica (Conversas)", "descricao": "Só pesquisa na web, leitura de página, cálculo e hora: poucas funções para o Conversas gastar pouco com a lista de ferramentas.", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": WEB_BASICA},
-    {"id": "mac-admin", "nome": "Mac e Memória (administrador)", "descricao": "Memória persistente e documentos pessoais (RAG). Só para o administrador.", "url": "http://host.docker.internal:8000/mcp", "grupo": "MAC_TOOLS", "acesso": "só do administrador", "funcoes": MEMORIA},
+    {"id": "banco-pessoal", "nome": "Alerts (banco pessoal)", "descricao": "Banco pessoal em modo leitura: diários oficiais, e-mails, estudos, privacidade, avisos, Second Brain e métricas de saúde simples. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
+    {"id": "banco-saude", "nome": "Health (banco pessoal)", "descricao": "Saúde em modo leitura: histórico por métrica, análises, coração, ECG, treinos e relatório. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
+    {"id": "banco-financas", "nome": "Finance (banco pessoal)", "descricao": "Finance em modo leitura: resumo do mês, lançamentos, orçamentos, recorrentes, boletos e pagamentos futuros. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
+    {"id": "web-basica", "nome": "Web básica (General)", "descricao": "Só pesquisa na web, leitura de página, cálculo e hora: poucas funções para o General gastar pouco com a lista de ferramentas.", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": WEB_BASICA},
+    {"id": "mac-admin", "nome": "Notes (Mac e memória, administrador)", "descricao": "Memória persistente e documentos pessoais (RAG). Só para o administrador.", "url": "http://host.docker.internal:8000/mcp", "grupo": "MAC_TOOLS", "acesso": "só do administrador", "funcoes": MEMORIA},
 ]
 
 # temperatura: valor sugerido no campo Parâmetros avançados. conexao: id da conexão acima (vazio = sem ferramentas).
 MODELOS = [
-    {"id": "meus-dados", "nome": "Meus Dados", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "banco-pessoal",
-     "uso": "diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos, Second Brain e métricas de saúde simples", "nativa": True},
-    {"id": "saude", "nome": "Saúde", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "banco-saude",
+    {"id": "alerts", "nome": "Alerts", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "banco-pessoal",
+     "uso": "diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos e Second Brain", "nativa": True},
+    {"id": "health", "nome": "Health", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "banco-saude",
      "uso": "sono, pulso, variabilidade, treinos, ECG, anomalias, relatórios de saúde, exames de laboratório, receitas e encaminhamentos", "nativa": True},
-    {"id": "financas", "nome": "Finanças", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "banco-financas",
+    {"id": "finance", "nome": "Finance", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "banco-financas",
      "uso": "gastos, receitas, categorias, orçamentos, assinaturas, parcelas e boletos do Finance (só leitura)", "nativa": True},
     {"id": "codigo", "nome": "Código", "base": "deepseek-coder-v2:16b", "prompt": "prompts/prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
      "uso": "programação, sem ferramentas", "nativa": False,
      "obs": "nos seus testes esse modelo não suporta ferramentas no Ollama. O contexto dele é de 8192 tokens e ele sai da memória 30 segundos depois do uso."},
-    {"id": "curiosidades", "nome": "Curiosidades", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_curiosidades.txt", "temperatura": 0.4, "conexao": "internet",
-     "uso": "web, notícias, cálculo, transcrições e feeds", "nativa": True,
-     "obs": "usa o mesmo modelo do Meus Dados, sem trocar de modelo na memória."},
-    {"id": "conversas", "nome": "Conversas", "base": "conversas", "prompt": "prompts/prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "web-basica",
-     "uso": "conversa livre, com pesquisa na web quando a pergunta pede", "nativa": True,
+    {"id": "general", "nome": "General", "base": "conversas", "prompt": "prompts/prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "web-basica",
+     "uso": "conversa livre e pesquisa na web quando a pergunta pede (também faz o papel do antigo Curiosidades)", "nativa": True,
      "obs": "na nuvem (HEIMDALL_NUVEM=1) usa o Qwen3 30B; sem a nuvem, o gemma local, que pode não chamar a pesquisa."},
-    {"id": "documentos", "nome": "Documentos e Memória", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
-     "uso": "livros, notas e documentos do estudo e memória pessoal (opcional)", "nativa": True},
+    {"id": "notes", "nome": "Notes", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
+     "uso": "livros, notas e documentos do estudo e memória pessoal (opcional; antes, Documentos e Memória)", "nativa": True},
 ]
 
 NOVOS = """OUTROS MODELOS DO LITELLM (não são base de nenhum modelo do chat)
@@ -59,7 +55,7 @@ NOVOS = """OUTROS MODELOS DO LITELLM (não são base de nenhum modelo do chat)
 """
 
 
-# Coleção de conhecimento do Open WebUI usada pelo modelo Documentos e Memória (a que já existe no seu Open WebUI).
+# Coleção de conhecimento do Open WebUI usada pelo modelo Notes (a que já existe no seu Open WebUI).
 CONHECIMENTO = {"id": "42999e43-33d7-4a5e-bef7-0f2bd58184d7", "name": "heimdall_docs", "type": "collection", "description": "Meus documentos"}
 PASTA_IMPORTAR = AQUI / "openwebui"
 
@@ -163,12 +159,12 @@ def texto_guia():
          "  2. Os modelos entram só para o administrador, de propósito: eles mexem em saúde, finanças e dados pessoais. Para o convidado usar algum, dê o acesso modelo a modelo, e só aos que não tocam dados pessoais (Curiosidades, Conversas, Código).",
          "  3. Cada modelo já chega com o prompt, a temperatura, a conexão de ferramentas e a chamada de função Nativa. Confira uma vez abrindo o modelo para editar. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.", "",
          "PASSO 3: TESTE COM UMA PERGUNTA REAL EM CADA MODELO",
-         "  1. Conversas: \"Quem ganhou o jogo do Corinthians ontem?\" (deve pesquisar na web e dizer de onde veio).",
-         "  2. Curiosidades: uma notícia do dia. Meus Dados, Saúde e Finanças: uma pergunta simples sobre os seus dados (ex.: como foi o meu sono na semana).",
+         "  1. General: \"Quem ganhou o jogo do Corinthians ontem?\" (deve pesquisar na web e dizer de onde veio).",
+         "  2. General: uma notícia do dia. Alerts, Health e Finance: uma pergunta simples sobre os seus dados (ex.: como foi o meu sono na semana).",
          "  3. Se um modelo ignorar as ferramentas, confira se a chamada de função está em Nativa e se a conexão do modelo está ligada em Ferramentas.",
          "  4. Na nuvem, o primeiro uso do dia pode demorar alguns segundos; se a nuvem falhar ou o limite de gasto cortar, o LiteLLM usa sozinho o modelo local (o chat só fica mais lento).", "",
          "O QUE VAI PARA A NUVEM COM HEIMDALL_NUVEM=1",
-         "  Meus Dados, Saúde, Finanças, Curiosidades, Documentos e Memória e Código: gpt-oss-120b (gateway \"heimdall\", teto de gasto). Conversas: Qwen3 30B (HEIMDALL_NUVEM_CONVERSAS_MODELO troca). Os modelos locais ficam como volta. Lembrete: o contexto das conversas, incluindo saúde e finanças nos modelos desses assuntos, passa pela Cloudflare (decisão de 21/11/2026).", "",
+         "  Alerts, Health, Finance, Notes e Código: gpt-oss-120b (gateway \"heimdall\", teto de gasto). General: Qwen3 30B (HEIMDALL_NUVEM_CONVERSAS_MODELO troca). Os modelos locais ficam como volta. Lembrete: o contexto das conversas, incluindo saúde e finanças nos modelos desses assuntos, passa pela Cloudflare (decisão de 21/11/2026).", "",
          "CAMINHO MANUAL (para conferir ou criar à mão). Abaixo, o que cada arquivo contém.", "",
          "Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos).",
          "Cada conexão tem um filtro que EXCLUI as funções do servidor que não são do seu assunto (formato !funcao1, !funcao2). Como o servidor é compartilhado, assim a função fica bloqueada de verdade e não depende do modelo se comportar.",
@@ -199,7 +195,7 @@ def texto_guia():
           "AJUSTES EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)"]
     for m in MODELOS:
         L.append("  %s: temperatura %s." % (m["nome"], str(m["temperatura"]).replace(".", ",")))
-    L.append("  Nos que têm ferramentas, deixe a chamada de função em Nativa. O contexto (8192 nos modelos locais) e o tempo na memória já vêm do litellm_config.yaml; na nuvem o Conversas usa o contexto de 32 mil tokens do Qwen3.")
+    L.append("  Nos que têm ferramentas, deixe a chamada de função em Nativa. O contexto (8192 nos modelos locais) e o tempo na memória já vêm do litellm_config.yaml; na nuvem o General usa o contexto de 32 mil tokens do Qwen3.")
     L.append("")
     L.append(NOVOS.rstrip("\n"))
     return "\n".join(L) + "\n"
@@ -231,10 +227,10 @@ def exportar_modelos():
     for m in MODELOS:
         com_ferr = bool(m["conexao"])
         meta = {"profile_image_url": None, "background_image_url": None, "description": m["uso"][:1].upper() + m["uso"][1:] + ".",
-                "capabilities": {"file_context": m["nome"] == "Documentos e Memória", "vision": False, "file_upload": False, "web_search": False,
+                "capabilities": {"file_context": m["nome"] == "Notes", "vision": False, "file_upload": False, "web_search": False,
                                  "image_generation": False, "code_interpreter": False, "terminal": False, "citations": True, "status_updates": True,
                                  "memory": False, "builtin_tools": False},
-                "knowledge": [CONHECIMENTO] if m["nome"] == "Documentos e Memória" else [], "defaultFeatureIds": []}
+                "knowledge": [CONHECIMENTO] if m["nome"] == "Notes" else [], "defaultFeatureIds": []}
         if com_ferr:
             meta["toolIds"] = ["server:mcp:" + m["conexao"]]
         params = {"system": (AQUI / m["prompt"]).read_text(encoding="utf-8").strip(), "temperature": m["temperatura"]}
