@@ -57,7 +57,7 @@ def contraste(a: str, b: str) -> float:
 CSS = (f":root{{color-scheme:light dark;{_tokens(CORES_CLARO)}}}\n"
        f"@media (prefers-color-scheme:dark){{:root{{{_tokens(CORES_ESCURO)}}}}}\n"
        + """body{background:var(--fundo);color:var(--texto);font:18px/1.5 system-ui,sans-serif;margin:0;padding:0 1rem 3rem;max-width:60rem;margin-inline:auto}
-a{color:var(--acento)}a:focus,button:focus,input:focus,select:focus,textarea:focus{outline:3px solid var(--acento);outline-offset:2px}
+a{color:var(--acento)}a:focus,button:focus,input:focus,select:focus,textarea:focus,summary:focus,[role=tab]:focus,[role=tabpanel]:focus{outline:3px solid var(--acento);outline-offset:2px}
 .pular{position:absolute;left:-999px}.pular:focus{left:0;background:var(--fundo);padding:.5rem}
 header{margin-bottom:1rem}header::after{content:"";display:block;height:3px;background:linear-gradient(90deg,#bfe3fb 0 16.66%,#93d2fa 0 33.33%,#42a5f5 0 50%,#26c6da 0 66.66%,#1e88e5 0 83.33%,#ffc107 0)}
 .marca{display:flex;align-items:center;gap:.7rem;margin:.6rem 0 .2rem}.marca svg{width:3.4rem;height:auto;flex:none}.marca strong{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:1.3em}
@@ -162,7 +162,9 @@ def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = (
 
 def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
     i = next((n for n, (r, _) in enumerate(itens, 1) if r == atual), 1)
-    return f'<div role="tabpanel" id="painel-aba" aria-labelledby="aba-{i}">{conteudo}</div>'
+    # tabindex=0: o Tab que sai da aba cai no painel (padrão ARIA das abas). Sem isso, em navegador que pula links no Tab (Safari por padrão)
+    # a aba era a última parada e o foco voltava ao menu Conta.
+    return f'<div role="tabpanel" id="painel-aba" aria-labelledby="aba-{i}" tabindex="0">{conteudo}</div>'
 
 
 # Setas Esquerda/Direita, Home e End movem o foco entre as abas; Enter ou Espaço abre a aba em foco; Option+Shift+1..9 abre pelo número.
@@ -170,8 +172,9 @@ def painel_da_aba(itens: list, atual: str, conteudo: str) -> str:
 # Abas marcadas com data-completa (as que têm script próprio, como o Terminal) carregam a página inteira, e só se vai delas ou para elas assim.
 # Exige nonce de script na página.
 def rodape(extra: str = "") -> str:
-    """Fim de toda página: `extra` (botões de ação, se houver) e o link para o topo, para o leitor de tela não ficar num final abrupto."""
-    return f'<footer class="rodape">{extra}<p><a href="#topo">Voltar para o topo</a></p></footer>'
+    """Fim de toda página: `extra` (botões de ação, se houver) e o link para o topo, para o leitor de tela não ficar num final abrupto.
+    O link leva tabindex=0 para ser parada do Tab também onde o navegador pula links (Safari por padrão): é o fim do percurso por Tab."""
+    return f'<footer class="rodape">{extra}<p><a href="#topo" tabindex="0">Voltar para o topo</a></p></footer>'
 
 
 def topo() -> str:

@@ -75,21 +75,30 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 token, sess = hc.nova_sessao()
 ck = f"{hc.COOKIE}={token}"
 st, corpo, cab = pedir("/", ck)
-confere("início lista as categorias com link e contagem", st == 200 and len(hj.CATALOGO) == 28 and len(hj.CATEGORIAS) == 7 and all(f"/categoria/{c[0]}" in corpo and c[1] in corpo for c in hj.CATEGORIAS), (st, corpo[:300]))
+confere("categorias são abas: uma aba por categoria, em duas linhas (7 = 4 + 3), com a primeira aberta no início", st == 200 and len(hj.CATALOGO) == 28 and len(hj.CATEGORIAS) == 7
+        and corpo.count('role="tab"') == 7 and 'class="l4"' in corpo and all(f'href="/categoria/{c[0]}"' in corpo and c[1] in corpo for c in hj.CATEGORIAS)
+        and f'href="/categoria/{hj.CATEGORIAS[0][0]}" aria-selected="true"' in corpo and "Atalho: Option Shift 1 a 7" in corpo, (st, corpo[:300]))
+confere("o início mostra a apresentação e os jogos da primeira categoria", "Cada aba é uma categoria" in corpo and all(f"/jogo/{i}" in corpo for i in hj.CATEGORIAS[0][3]))
 for c in hj.CATEGORIAS:
     st_c, corpo_c, _ = pedir(f"/categoria/{c[0]}", ck)
-    confere(f"categoria {c[0]} lista os seus jogos", st_c == 200 and all(f"/jogo/{i}" in corpo_c for i in c[3]), (st_c, corpo_c[:200]))
+    confere(f"categoria {c[0]} lista os seus jogos, com a própria aba aberta e a troca de aba sem recarregar", st_c == 200 and all(f"/jogo/{i}" in corpo_c for i in c[3])
+            and f'href="/categoria/{c[0]}" aria-selected="true"' in corpo_c and corpo_c.count('aria-selected="true"') == 1 and " data-completa>" not in corpo_c
+            and f"<h1>{hj.e(c[1])}</h1>" in corpo_c and "Voltar às categorias" not in corpo_c, (st_c, corpo_c[:200]))
 confere("jogos de cada categoria em ordem alfabética", all([hj.POR_ID[i][1] for i in c[3]] == sorted((hj.POR_ID[i][1] for i in c[3]), key=hj._chave) for c in hj.CATEGORIAS))
 confere("categorias em ordem alfabética", [c[1] for c in hj.CATEGORIAS] == sorted((c[1] for c in hj.CATEGORIAS), key=lambda t: __import__("unicodedata").normalize("NFD", t).encode("ascii", "ignore").decode().lower()), [c[1] for c in hj.CATEGORIAS])
 confere("categoria inexistente dá 404", pedir("/categoria/nada", ck)[0] == 404)
 confere("todo jogo está em uma só categoria", sorted(i for _, ids in hj.GRUPOS for i in ids) == sorted(j[0] for j in hj.CATALOGO))
 csp = cab.get("Content-Security-Policy", "")
 import re as _re_n
-confere("política de conteúdo só deixa script do próprio site e o das abas (com nonce)", _re_n.search(r"script-src 'nonce-[A-Za-z0-9_-]+' 'self'", csp) and "default-src 'none'" in csp and "connect-src 'none'" in csp and "unsafe-eval" not in csp, csp)
+confere("política de conteúdo só deixa script do próprio site e o das abas (com nonce)", _re_n.search(r"script-src 'nonce-[A-Za-z0-9_-]+' 'self'", csp) and "default-src 'none'" in csp and "connect-src 'self'" in csp and "unsafe-eval" not in csp, csp)
+st_j, corpo_j, cab_j = pedir("/jogo/vilarejo", ck)
+confere("página de jogo: aba da categoria aberta, trocar de aba carrega a página inteira, volta para a categoria e conexão da página fechada",
+        'href="/categoria/acao" aria-selected="true"' in corpo_j and corpo_j.count(" data-completa>") == 7 and 'href="/categoria/acao">Voltar para Ação' in corpo_j
+        and "connect-src 'none'" in cab_j.get("Content-Security-Policy", ""), (st_j, cab_j.get("Content-Security-Policy")))
 confere("abas, atalho Option+Shift+1, voltar ao topo e tema de rodapé no Games", 'role="tablist"' in corpo and "Atalho: Option Shift 1" in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
 confere("sem script embutido no HTML", "<script>" not in corpo and "onclick" not in corpo.lower())
 confere("cabeçalhos de segurança", cab.get("X-Frame-Options") == "DENY" and cab.get("Cache-Control") == "no-store" and "noindex" in cab.get("X-Robots-Tag", ""), cab)
-confere("a página é pt-BR com link de pular e título", 'lang="pt-BR"' in corpo and "Pular para o conteúdo" in corpo and "<h1>Jogos</h1>" in corpo)
+confere("a página é pt-BR com link de pular e título", 'lang="pt-BR"' in corpo and "Pular para o conteúdo" in corpo and f"<h1>{hj.e(hj.CATEGORIAS[0][1])}</h1>" in corpo)
 
 for jid, titulo, arq, resumo, como in hj.CATALOGO:
     st, corpo, _ = pedir(f"/jogo/{jid}", ck)
@@ -124,9 +133,12 @@ os.environ["HEIMDALL_JOGOS_EXTRAS"] = "Terceiro|http://localhost:8015|Quebra-cab
 ex = hj.extras()
 confere("extras aceitam só http e https", [x[0] for x in ex] == ["Terceiro", "Outro"], ex)
 token2, _ = hc.nova_sessao()
-st, corpo, _ = pedir("/", f"{hc.COOKIE}={token2}")
-confere("extras aparecem no início, sem o endereço perigoso", 'href="http://localhost:8015"' in corpo and "javascript:" not in corpo, corpo[-500:])
+st, corpo, _ = pedir("/outros", f"{hc.COOKIE}={token2}")
+confere("extras aparecem na aba Outros jogos (a oitava, 4 + 4), sem o endereço perigoso", st == 200 and 'href="http://localhost:8015"' in corpo and "javascript:" not in corpo
+        and 'href="/outros" aria-selected="true"' in corpo and corpo.count('role="tab"') == 8 and 'class="l4"' in corpo, (st, corpo[-500:]))
 os.environ.pop("HEIMDALL_JOGOS_EXTRAS")
+confere("sem extras não há aba Outros jogos nem a rota", pedir("/outros", f"{hc.COOKIE}={token2}")[0] == 404 and 'href="/outros"' not in pedir("/", f"{hc.COOKIE}={token2}")[1])
+os.environ.pop("HEIMDALL_JOGOS_EXTRAS", None)
 
 for arq in ("tests/games/teste_jogos_logica.js", "tests/games/teste_jogos_ui.js"):
     r = subprocess.run(["node", str(AQUI / arq)], capture_output=True, text=True, timeout=120)

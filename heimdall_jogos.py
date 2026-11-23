@@ -230,13 +230,28 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 """
 
 
-def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scripts_: list = None) -> bytes:
+def nav_jogos() -> list:
+    """Abas do Games: uma por categoria (em ordem alfabética) e, se há jogos hospedados por você, a aba Outros jogos. Até 9 abas; com 7 ficam 4 + 3."""
+    itens = [(f"/categoria/{cid}", t) for cid, t, _, _ in CATEGORIAS]
+    return itens + ([("/outros", "Outros jogos")] if extras() else [])
+
+
+def aba_do_jogo(jid: str) -> str:
+    """Rota da aba (a categoria) a que o jogo pertence."""
+    return next((f"/categoria/{c[0]}" for c in CATEGORIAS if jid in c[3]), nav_jogos()[0][0])
+
+
+def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scripts_: list = None, atual: str = "") -> bytes:
     nav = sair = scripts = ""
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
-        nav = design.nav_abas(NAV, "/", "Seções do Heimdall Games")
+        itens = nav_jogos()
+        atual = atual or itens[0][0]
+        # Numa página de jogo, trocar de aba carrega a página inteira (o jogo tem script e teclas próprias que não podem ficar para trás).
+        completas = tuple(r for r, _ in itens) if scripts_ else ()
+        nav = design.nav_abas(itens, atual, "Categorias de jogos do Heimdall Games", completas)
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        conteudo = design.com_abas(NAV, "/", conteudo)
+        conteudo = design.com_abas(itens, atual, conteudo)
         scripts = design.script()
     js = "".join(f'<script src="/js/{e(s)}" defer></script>' for s in (scripts_ or []))
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -245,31 +260,34 @@ def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scr
             f'<main id="principal">{conteudo}</main>{design.rodape()}{scripts}{js}</body></html>').encode("utf-8")
 
 
-NAV = [("/", "Categorias")]
+def _lista_categoria(c: tuple) -> str:
+    _, _, desc, ids = c
+    lista = '<ul class="lista-jogos">' + "".join(
+        f'<li><h2><a href="/jogo/{e(i)}">{e(POR_ID[i][1])}</a></h2><p>{e(POR_ID[i][3])}</p></li>' for i in ids) + "</ul>"
+    return f"<p>{e(desc)} {len(ids)} {'jogo' if len(ids) == 1 else 'jogos'}.</p>{lista}"
 
 
 def pg_inicio() -> tuple:
-    itens = '<h2>Categorias</h2><ul class="lista-jogos">' + "".join(
-        f'<li><h3><a href="/categoria/{e(cid)}">{e(t)}</a></h3><p>{e(d)} {len(ids)} {"jogo" if len(ids) == 1 else "jogos"}: '
-        + ", ".join(e(POR_ID[i][1]) for i in ids) + ".</p></li>" for cid, t, d, ids in CATEGORIAS) + "</ul>"
-    ex = extras()
-    outros = ""
-    if ex:
-        outros = ("<h2>Outros jogos hospedados aqui</h2><ul class=\"lista-jogos\">"
-                  + "".join(f'<li><a href="{e(u)}">{e(n)}</a>' + (f": {e(d)}" if d else "") + "</li>" for n, u, d in ex) + "</ul>")
-    corpo = ("<p>Jogos leves para jogar no navegador, feitos para leitor de tela: tudo é botão, campo de texto ou lista, e cada jogada é lida em voz alta. "
-             "Nada é guardado no servidor.</p>" f"{itens}{outros}")
-    return "Jogos", corpo, []
+    """A página inicial é a primeira categoria (a primeira aba), com a apresentação do site antes da lista."""
+    c = CATEGORIAS[0]
+    intro = ("<p>Jogos leves para jogar no navegador, feitos para leitor de tela: tudo é botão, campo de texto ou lista, e cada jogada é lida em voz alta. "
+             "Nada é guardado no servidor. Cada aba é uma categoria de jogos.</p>")
+    return c[1], intro + _lista_categoria(c), []
 
 
 def pg_categoria(cid: str):
     c = POR_CATEGORIA.get(cid)
     if not c:
         return None
-    _, titulo, desc, ids = c
-    lista = '<ul class="lista-jogos">' + "".join(
-        f'<li><h2><a href="/jogo/{e(i)}">{e(POR_ID[i][1])}</a></h2><p>{e(POR_ID[i][3])}</p></li>' for i in ids) + "</ul>"
-    return titulo, f'<p>{e(desc)}</p>{lista}<p><a href="/">Voltar às categorias</a></p>', []
+    return c[1], _lista_categoria(c), []
+
+
+def pg_outros():
+    ex = extras()
+    if not ex:
+        return None
+    lista = '<ul class="lista-jogos">' + "".join(f'<li><a href="{e(u)}">{e(n)}</a>' + (f": {e(d)}" if d else "") + "</li>" for n, u, d in ex) + "</ul>"
+    return "Outros jogos", f"<p>Jogos hospedados por você, fora do Heimdall Games.</p>{lista}", []
 
 
 def pg_jogo(jid: str):
@@ -278,10 +296,11 @@ def pg_jogo(jid: str):
         return None
     como = "".join(f"<li>{e(t)}</li>" for t in j[4])
     dado = f' data-historia="{e(jid)}"' if jid in HISTORIAS else ""
+    cat = next(c for c in CATEGORIAS if jid in c[3])
     corpo = (f'<p>{e(j[3])}</p><h2>Como jogar</h2><ol>{como}</ol><h2>Jogo</h2>'
              '<noscript><p class="erro">Este jogo precisa de JavaScript ligado no navegador.</p></noscript>'
              f'<div id="jogo"{dado}></div><div id="anuncio" role="status" aria-live="polite" aria-atomic="true"></div>'
-             '<p><a href="/">Voltar para todos os jogos</a></p>')
+             f'<p><a href="/categoria/{e(cat[0])}">Voltar para {e(cat[1])}</a></p>')
     return j[1], corpo, scripts_do_jogo(jid)
 
 
@@ -317,7 +336,7 @@ class Jogos(nuvem.ManipuladorBase):
         self.send_header("Content-Type", tipo)
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Security-Policy", design.csp(CSP_PAGINA, corpo, conectar=False))
+        self.send_header("Content-Security-Policy", design.csp(CSP_PAGINA, corpo, conectar=b'<script src="/js/' not in corpo))
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
@@ -392,7 +411,14 @@ class Jogos(nuvem.ManipuladorBase):
                 return
             if rota == "/":
                 titulo, corpo, scripts = pg_inicio()
-                self._enviar(200, pagina(titulo, corpo, sess, scripts_=scripts))
+                self._enviar(200, pagina(titulo, corpo, sess, scripts_=scripts, atual=nav_jogos()[0][0]))
+                return
+            if rota == "/outros":
+                ro = pg_outros()
+                if not ro:
+                    self._enviar(404, pagina("Não encontrei", '<p>Não há outros jogos configurados.</p>' + design.botao("/", "Ver as categorias"), sess))
+                    return
+                self._enviar(200, pagina(ro[0], ro[1], sess, scripts_=ro[2], atual="/outros"))
                 return
             mc = re.fullmatch(r"/categoria/([a-z0-9]+)", rota)
             if mc:
@@ -400,14 +426,14 @@ class Jogos(nuvem.ManipuladorBase):
                 if not rc:
                     self._enviar(404, pagina("Não encontrei", '<p>Esta categoria não existe.</p>' + design.botao("/", "Ver as categorias"), sess))
                     return
-                self._enviar(200, pagina(rc[0], rc[1], sess, scripts_=rc[2]))
+                self._enviar(200, pagina(rc[0], rc[1], sess, scripts_=rc[2], atual=f"/categoria/{POR_CATEGORIA[mc.group(1)][0]}"))
                 return
             m = re.fullmatch(r"/jogo/([a-z0-9]+)", rota)
             r = pg_jogo(m.group(1)) if m else None
             if not r:
                 self._enviar(404, pagina("Não encontrei", '<p>Este jogo não existe.</p>' + design.botao("/", "Ver todos os jogos"), sess))
                 return
-            self._enviar(200, pagina(r[0], r[1], sess, scripts_=r[2]))
+            self._enviar(200, pagina(r[0], r[1], sess, scripts_=r[2], atual=aba_do_jogo(m.group(1))))
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))

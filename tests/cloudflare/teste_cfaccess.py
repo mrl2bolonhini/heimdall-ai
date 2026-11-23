@@ -192,7 +192,7 @@ confere("token válido do Access abre a sessão sem senha nem código", st == 20
 confere("a entrada não é um redirecionamento (cookie Strict se perderia na cadeia) e segue por meta refresh", "Location" not in cab and 'http-equiv="refresh"' in corpo and "SameSite=Strict" in cab.get("Set-Cookie", ""), (st, cab))
 confere("o cookie é HttpOnly e SameSite=Strict", "HttpOnly" in cookie and "SameSite=Strict" in cookie, cookie)
 st, corpo, _ = pedir("/", {"Cookie": cookie.split(";")[0]})
-confere("com esse cookie o painel abre", st == 200 and "<h1>Jogos</h1>" in corpo, (st, corpo[:200]))
+confere("com esse cookie o painel abre", st == 200 and "<h1>Ação</h1>" in corpo and 'role="tablist"' in corpo, (st, corpo[:200]))
 st, _, cab = pedir("/", {cfa.CABECALHO: jwt()})
 confere("o token sozinho, sem passar por /entrar, ainda manda para /entrar (que então abre a sessão)", st == 303 and cab.get("Location") == "/entrar", (st, cab))
 st, _, cab = pedir("/entrar", {cfa.CABECALHO: jwt({"email": "intruso@exemplo.test"})})
@@ -237,7 +237,7 @@ st, _, cab = pedir("/entrar", {cfa.CABECALHO: jwt({"email": "ana@exemplo.test"})
 ck_ana = cab.get("Set-Cookie", "").split(";")[0]
 confere("convidado liberado para jogos recebe sessão no painel de jogos", st == 200 and ck_ana.startswith(hc.COOKIE + "="), (st, cab))
 st, corpo, _ = pedir("/", {"Cookie": ck_ana})
-confere("e com ela abre os jogos", st == 200 and "<h1>Jogos</h1>" in corpo)
+confere("e com ela abre os jogos", st == 200 and "<h1>Ação</h1>" in corpo and 'role="tablist"' in corpo)
 st, _, cab = pedir("/entrar", {cfa.CABECALHO: jwt({"email": "beto@exemplo.test"})})
 confere("convidado de dois serviços também entra em jogos", st == 200 and cab.get("Set-Cookie"))
 os.environ["HEIMDALL_CFACCESS_CONVIDADOS"] = "ana@exemplo.test=finance"
