@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Learn: abas novas e Novo estudo por botão
+- As abas do Learn agora são Início, Lições, Exercícios, Cards e Progresso. Nova pasta e Tipos saíram das abas: no Início há o botão Novo estudo (nome, categoria e tipo, ou um tipo novo na hora) e o botão Ver os tipos de estudo e suas regras.
+- Aba Exercícios: todos os exercícios das lições com a sua resposta e o resultado (certo, parcial ou errado); a resposta esperada só aparece depois de concluir a lição. Filtro para ver só o que você errou.
+- Aba Progresso: dias seguidos de estudo, por pasta (lições concluídas, média, estudos corrigidos, cards lidos) e acertos por tipo de exercício.
+
 ## 2026-11-23 - App do Mac com o Learn
 - O app ganhou o Learn no menu Abrir (janela própria, atalho Command+7) e o comando Cadastrar as pastas de estudo novas (heimdall learn --sync) no menu Arquivo e no menu de estado. Com o Learn entrando na ordem alfabética, News passou a Command+8, Notes a Command+9, e Status e Flows ficam sem atalho. Rode heimdall app de novo para compilar.
 - heimdall env --set agora grava HEIMDALL_LEARN_AGENDA e HEIMDALL_LEARN_NOTIFICAR (só 0 ou 1), para ligar e desligar a agenda e o aviso do Learn sem editar o .env.

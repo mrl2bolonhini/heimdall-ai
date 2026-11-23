@@ -60,6 +60,7 @@ import heimdall_learn_dados as dados  # noqa: E402
 import heimdall_learn_estudo as estudo  # noqa: E402
 import heimdall_learn_cards as cards  # noqa: E402
 import heimdall_learn_licoes as licoes  # noqa: E402
+import heimdall_learn_painel as painel  # noqa: E402
 import heimdall_learn_voz as voz  # noqa: E402
 import json  # noqa: E402
 import heimdall_learn_tipos as tipos  # noqa: E402
@@ -69,7 +70,7 @@ HOST = os.environ.get("HEIMDALL_LEARN_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_LEARN_PORT", "8019"))
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_LEARN_HOSTS", "learn.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 COOKIE = nuvem.COOKIE
-NAV = [("/", "Início"), ("/licoes", "Lições"), ("/cards", "Cards"), ("/nova", "Nova pasta"), ("/tipos", "Tipos")]
+NAV = [("/", "Início"), ("/licoes", "Lições"), ("/exercicios", "Exercícios"), ("/cards", "Cards"), ("/progresso", "Progresso")]
 MAX_FORM = 20000
 ESTADOS_LICAO = {"gerando": "sendo criada", "pronta": "aguardando respostas", "corrigindo": "corrigindo", "concluida": "concluída", "erro": "erro ao criar", "erro_correcao": "erro na correção"}
 ESTADOS = {"sorteado": "gerando a pergunta", "perguntado": "aguardando a resposta", "corrigindo": "corrigindo", "corrigido": "concluído",
@@ -91,7 +92,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
         atual = urlparse(str(sess.get("atual", "/"))).path
-        atual = "/licoes" if atual in ("/licoes", "/licao") else (atual if atual in ("/nova", "/tipos", "/cards") else "/")
+        atual = "/licoes" if atual in ("/licoes", "/licao") else (atual if atual in ("/exercicios", "/cards", "/progresso") else "/")
         nav = design.nav_abas(NAV, atual, "Seções do Heimdall Learn")
         sair = f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>'
         conteudo = design.com_abas(NAV, atual, conteudo)
@@ -137,9 +138,10 @@ def _lista_pastas(itens: list) -> str:
 def pg_inicio(sess: dict) -> str:
     r = dados.resumo()
     cats = "".join(f"<li><strong>{e(n)}</strong>: {e(d)}</li>" for n, d in dados.CATEGORIAS.values())
-    return (aviso(sess) + f'<p role="status">{plural(r["pastas"], "pasta", "pastas")} e {plural(r["documentos"], "documento", "documentos")}.</p>'
+    novo = design.botao("/nova", "Novo estudo")
+    return (aviso(sess) + novo + f'<p role="status">{plural(r["pastas"], "pasta", "pastas")} e {plural(r["documentos"], "documento", "documentos")}.</p>'
             + _lista_pastas(dados.listar_pastas("")) + f'<h2>Categorias</h2><ul>{cats}</ul>'
-            '<p class="meta">Fase 1: organizar pastas e importar material. Perguntas, lições, voz e cards vêm nas próximas fases.</p>')
+            + '<p>' + design.botao("/tipos", "Ver os tipos de estudo e suas regras") + '</p>')
 
 
 def _opcoes_tipo(atual: str = "") -> str:
@@ -157,14 +159,14 @@ def pg_nova(sess: dict, pai: str = "") -> str:
     pais = "".join(f'<option value="{e(p["caminho"])}"{" selected" if p["caminho"] == pai else ""}>{e(p["caminho"])}</option>' for p in dados.arvore_plana())
     return (aviso(sess) +
             f'<form class="campos" method="post" action="/criar"><input type="hidden" name="csrf" value="{e(csrf)}">'
-            '<label for="nome">Nome da pasta</label><input id="nome" name="nome" type="text" maxlength="80" required>'
+            '<label for="nome">Nome do estudo (vira uma pasta de material)</label><input id="nome" name="nome" type="text" maxlength="80" required>'
             f'<label for="pai">Dentro de</label><select id="pai" name="pai"><option value="">Raiz do Learn</option>{pais}</select>'
             f'<label for="categoria">Categoria</label><select id="categoria" name="categoria"><option value="">Sugerida pelo tipo</option>{_opcoes_categoria()}</select>'
             f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes_tipo()}</select>'
             '<label for="tipo_novo">Ou um tipo novo</label><input id="tipo_novo" name="tipo_novo" type="text" maxlength="40">'
             '<label for="idioma">Idioma de estudo (só para o tipo Idiomas)</label><input id="idioma" name="idioma" type="text" maxlength="40">'
             '<p class="meta">Em subpasta, categoria, tipo e idioma em branco herdam da pasta de cima.</p>'
-            '<button type="submit">Criar pasta</button></form>')
+            '<button type="submit">Criar estudo</button></form>' + design.botao("/tipos", "Ver as regras de cada tipo"))
 
 
 def pg_pasta(sess: dict, rel: str) -> str:
@@ -297,6 +299,44 @@ def pg_licoes(sess: dict) -> str:
                      f'<td>{(str(round(h["nota"] * 100)) + "%") if h["nota"] is not None else "sem nota"}</td></tr>' for h in itens)
     return (aviso(sess) + '<table><caption>Suas lições, da mais recente para a mais antiga</caption><thead><tr><th scope="col">Lição</th><th scope="col">Pasta</th>'
             f'<th scope="col">Situação</th><th scope="col">Nota</th></tr></thead><tbody>{linhas}</tbody></table>')
+
+
+def pg_exercicios(sess: dict, pasta: str = "", so_erros: bool = False) -> str:
+    itens = painel.exercicios(pasta, so_erros, 60)
+    filtros = (design.botao("/exercicios", "Todos os exercícios", {"c": pasta} if pasta else None)
+               + design.botao("/exercicios", "Só os que errei ou acertei em parte", {"c": pasta, "erros": "1"} if pasta else {"erros": "1"}))
+    if not itens:
+        msg = "Nenhum exercício para mostrar." if so_erros else "Nenhum exercício ainda. Eles aparecem quando você abre uma lição."
+        return aviso(sess) + f'<p role="status">{msg}</p>' + filtros
+    linhas = ""
+    for x in itens:
+        resp = (e(x["resposta"]) + (" (falada)" if x["via"] == "voz" else "")) if x["resposta"] else "sem resposta"
+        gab = e(x["gabarito"]) if x["gabarito"] else "só depois de concluir a lição"
+        linhas += (f'<tr><th scope="row"><a href="/licao?id={x["licao_id"]}">Lição {x["licao"]}, exercício {x["numero"]}</a></th>'
+                   f'<td>{e(x["pasta"])}</td><td>{e(x["enunciado"])}</td><td>{resp}</td><td>{e(x["resultado"])}</td><td>{gab}</td></tr>')
+    return (aviso(sess) + filtros + f'<p role="status">{plural(len(itens), "exercício", "exercícios")}.</p>'
+            '<table><caption>Exercícios das suas lições</caption><thead><tr><th scope="col">Exercício</th><th scope="col">Pasta</th><th scope="col">Enunciado</th>'
+            f'<th scope="col">Sua resposta</th><th scope="col">Resultado</th><th scope="col">Resposta esperada</th></tr></thead><tbody>{linhas}</tbody></table>')
+
+
+def pg_progresso(sess: dict) -> str:
+    pr = painel.progresso()
+    if not pr["pastas"]:
+        return aviso(sess) + '<p role="status">Ainda não há o que mostrar. Estude um trecho, faça uma lição ou leia um card.</p>' + design.botao("/", "Ver as pastas")
+    saida = aviso(sess) + f'<p role="status">{plural(pr["seguidos"], "dia seguido", "dias seguidos")} de estudo, e {plural(pr["dias_com_estudo"], "dia", "dias")} no total.</p>'
+    linhas = ""
+    for p in pr["pastas"]:
+        media = f'{round(p["media"] * 100)}%' if p["media"] is not None else "sem nota"
+        linhas += (f'<tr><th scope="row"><a href="/pasta?c={quote(p["caminho"])}">{e(p["nome"])}</a></th><td>{p["concluidas"]} de {p["licoes"]}</td><td>{media}</td>'
+                   f'<td>{p["estudos_corrigidos"]} de {p["estudos"]}</td><td>{p["cards_lidos"]} de {p["cards"]}</td></tr>')
+    saida += ('<table><caption>Progresso por pasta</caption><thead><tr><th scope="col">Pasta</th><th scope="col">Lições concluídas</th><th scope="col">Média das lições</th>'
+              f'<th scope="col">Estudos corrigidos</th><th scope="col">Cards lidos</th></tr></thead><tbody>{linhas}</tbody></table>')
+    if pr["por_tipo"]:
+        nomes = {"alternativas": "Alternativas", "texto": "Respostas escritas ou faladas"}
+        lt = "".join(f'<tr><th scope="row">{e(nomes.get(k, k))}</th><td>{v["total"]}</td><td>{round(v["acerto"] * 100)}%</td></tr>' for k, v in sorted(pr["por_tipo"].items()))
+        saida += ('<table><caption>Acertos por tipo de exercício</caption><thead><tr><th scope="col">Tipo</th><th scope="col">Corrigidos</th><th scope="col">Acerto</th></tr></thead>'
+                  f'<tbody>{lt}</tbody></table>')
+    return saida + design.botao("/exercicios", "Rever o que errei", {"erros": "1"})
 
 
 def pg_cards(sess: dict) -> str:
@@ -549,6 +589,10 @@ class Learn(nuvem.ManipuladorBase):
             self._pagina(200, "Cards", pg_cards(sess), sess)
         elif rota == "/licoes":
             self._pagina(200, "Lições", pg_licoes(sess), sess)
+        elif rota == "/exercicios":
+            self._pagina(200, "Exercícios", pg_exercicios(sess, p("c"), p("erros") == "1"), sess)
+        elif rota == "/progresso":
+            self._pagina(200, "Progresso", pg_progresso(sess), sess)
         elif rota == "/licao":
             titulo, corpo = pg_licao(sess, int(p("id") or 0)) if p("id").isdigit() else (_ for _ in ()).throw(dados.ErroLearn("Lição não encontrada."))
             voz_js = SCRIPT_VOZ if "<!--voz-->" in corpo else ""
@@ -566,7 +610,7 @@ class Learn(nuvem.ManipuladorBase):
             else:
                 self._servir(arq)
         elif rota == "/nova":
-            self._pagina(200, "Nova pasta", pg_nova(sess, p("pai")), sess)
+            self._pagina(200, "Novo estudo", pg_nova(sess, p("pai")), sess)
         elif rota == "/tipos":
             self._pagina(200, "Tipos de estudo", pg_tipos(sess), sess)
         else:
