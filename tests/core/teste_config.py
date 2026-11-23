@@ -60,5 +60,10 @@ confere("renomear_antigas: senha e código continuam com o nome de sempre", lido
 confere("renomear_antigas: se o novo já existe, vale o novo e o antigo sai", lido.get("HEIMDALL_LAB_MAX_MB") == "9" and "HEIMDALL_CLOUD_MAX_MB" not in lido and len(trocadas) == 3, str(trocadas))
 confere("renomear_antigas: de novo não muda nada e faz cópia na primeira vez", c.renomear_antigas() == [] and (tmp / ".env.bak").exists())
 
+_op = c.opcoes_do_codigo()
+for _n in ("HEIMDALL_CONTINUIDADE", "HEIMDALL_CONTINUIDADE_SENHA", "HEIMDALL_CF_ALERTA_EMAIL"):
+    confere(f"catálogo inclui {_n}", _n in _op)
+confere("senha da continuidade é segredo", c.e_segredo("HEIMDALL_CONTINUIDADE_SENHA"))
 print("\nTUDO OK" if not falhas else f"\n{falhas} FALHA(S)")
+
 sys.exit(1 if falhas else 0)

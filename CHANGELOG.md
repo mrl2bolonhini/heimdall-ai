@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Variáveis da continuidade no editor do .env
+- HEIMDALL_CONTINUIDADE, HEIMDALL_CONTINUIDADE_SENHA (oculta como segredo) e HEIMDALL_CF_ALERTA_EMAIL agora aparecem no editor de Ajustes do Controls, com descrição.
+
 ## 2026-11-23 - Continuidade na nuvem: primeira versão (fases 2 a 4, sem implantar)
 - Novo heimdall_continuidade.py: cópia cifrada (AES-256-GCM, senha própria HEIMDALL_CONTINUIDADE_SENHA) dos bancos para o R2, só do que mudou, e restauração conferida por soma. Interruptor HEIMDALL_CONTINUIDADE (padrão 0). Comando: heimdall continuity --prepare, --send, --status.
 - Novo cloudflare/continuity: imagem do contêiner (Dockerfile e entrada), Worker de entrada com failover (repassa ao Mac; com o túnel fora, liga o contêiner em modo somente leitura, com aviso e data da cópia) e wrangler.jsonc com uma instância no máximo. Em modo continuidade o Finance e o News não rodam coletores nem vigias.
