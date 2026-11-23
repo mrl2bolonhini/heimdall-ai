@@ -67,8 +67,13 @@ def ler_nota(p: Path) -> dict:
     except OSError:
         return {}
     pergunta, resposta = _secao(md, "Pergunta"), _secao(md, "Resposta")
+    sem_pergunta = False
     if not pergunta or not resposta:
-        return {}
+        # nota dos primeiros dias, em que o modelo não devolveu a pergunta: o trecho lido continua valendo, a pergunta se gera de novo no Learn
+        if not _secao(md, "Leitura") or not md.lstrip().startswith("#"):
+            return {}
+        pergunta = resposta = ""
+        sem_pergunta = True
     titulo = (re.search(r"^# (.+)$", md, re.M) or [None, p.stem])[1].strip()
     dia = hora = tema = livro = ""
     m = CABECALHO.search(md)
@@ -84,7 +89,7 @@ def ler_nota(p: Path) -> dict:
             tema, livro = t[1].strip(), (t[2] or "").strip().rstrip(".")
     artigos = [x.strip() for x in _secao(md, "Para aprofundar").splitlines() if x.strip()]
     artigos = [re.sub(r"^\d+\.\s*", "", x) for x in artigos]
-    return {"arquivo": p, "titulo": titulo, "dia": dia, "hora": hora, "tema": tema or p.parent.name, "livro": livro, "pergunta": pergunta,
+    return {"arquivo": p, "titulo": titulo, "dia": dia, "hora": hora, "tema": tema or p.parent.name, "livro": livro, "pergunta": pergunta, "sem_pergunta": sem_pergunta,
             "resposta": resposta, "leitura": _secao(md, "Leitura"), "artigos": artigos}
 
 
@@ -171,11 +176,13 @@ def planejar(cofre: Path = None, banco: Path = None) -> dict:
 
 def _inserir(con, n: dict, origem: str) -> int:
     criado = f"{n['dia'] or '2026-01-01'} {n['hora'] or '00'}:00:00"
-    texto_resp = "Resposta esperada (do estudo original):\n" + n["resposta"]
+    sem = n.get("sem_pergunta")
+    texto_resp = "" if sem else "Resposta esperada (do estudo original):\n" + n["resposta"]
+    estado, erro = ("erro", "Esta nota antiga não tinha pergunta. Use Tentar de novo para gerar uma pergunta sobre o trecho.") if sem else ("importado", "")
     cur = con.execute(
         "INSERT INTO estudos (pasta, documento, trecho_idx, trecho, pergunta, resposta, correcao, sugestoes, audio, estado, erro, criado, titulo, origem, chave) "
-        "VALUES (?, ?, 0, ?, ?, '', ?, ?, '', 'importado', '', ?, ?, ?, ?)",
-        (n["pasta"], n["livro"] or "(sem livro)", n["leitura"], n["pergunta"], texto_resp, "\n".join(n["artigos"]), criado, n["titulo"], origem, n["chave"]))
+        "VALUES (?, ?, 0, ?, ?, '', ?, ?, '', ?, ?, ?, ?, ?, ?)",
+        (n["pasta"], n["livro"] or "(sem livro)", n["leitura"], n["pergunta"], texto_resp, "\n".join(n["artigos"]), estado, erro, criado, n["titulo"], origem, n["chave"]))
     return cur.lastrowid
 
 

@@ -90,6 +90,7 @@ O texto compara ETL e ELT.
 """
 (B / "arquitetura-e-engenharia-de-dados" / "arquitetura-com-cache.md").write_text(NOVA, encoding="utf-8")
 (B / "arquitetura-e-engenharia-de-dados" / "estudo-2026-11-09-12h-etl.md").write_text(ANTIGA + "\x00lixo", encoding="utf-8")
+(B / "arquitetura-e-engenharia-de-dados" / "estudo-2026-11-09-20h-sem-pergunta.md").write_text("# Estudo 2026-11-09 20h: Framework AWS\n\nTema: arquitetura-e-engenharia-de-dados. Livro: Framework AWS.\n\n## Pergunta e resposta\n\n(O modelo não devolveu uma pergunta utilizável desta vez; a leitura abaixo continua valendo.)\n\n## Leitura (trecho de Framework AWS)\n\nTRECHO-SEM-PERGUNTA sobre malha de dados.\n", encoding="utf-8")
 (B / "arquitetura-e-engenharia-de-dados" / "indice.md").write_text("# Índice\n\nSó um índice, sem pergunta.\n", encoding="utf-8")
 (B / "arquitetura-e-engenharia-de-dados" / "audio" / "arquitetura-com-cache.m4a").write_bytes(b"AUDIO-FALSO")
 (B / "esoterismo-e-mistissismo" / "alma.md").write_text(NOVA.replace("arquitetura-e-engenharia-de-dados", "esoterismo-e-mistissismo").replace("Arquitetura com cache e priorização", "A alma"), encoding="utf-8")
@@ -112,11 +113,13 @@ confere("nota nova: título, dia, hora, tema, livro, pergunta, resposta, leitura
         and n["livro"].startswith("Fundamentos da arquitetura") and n["pergunta"].startswith("Como a equipe") and n["resposta"].startswith("Criaram") and "filas" in n["leitura"] and len(n["artigos"]) == 2 and n["artigos"][0].startswith("Performance"), n)
 n2 = mg.ler_nota(B / "arquitetura-e-engenharia-de-dados" / "estudo-2026-11-09-12h-etl.md")
 confere("nota no formato antigo: dia e hora vêm do título, e caractere nulo é ignorado", n2["dia"] == "2026-11-09" and n2["hora"] == "12" and n2["titulo"] == "ETL versus ELT" and n2["livro"] == "Fundamentos de Engenharia de Dados" and "\x00" not in n2["leitura"] and n2["livro"].endswith("Dados"), n2)
+ns = mg.ler_nota(B / "arquitetura-e-engenharia-de-dados" / "estudo-2026-11-09-20h-sem-pergunta.md")
+confere("nota dos primeiros dias, sem pergunta mas com leitura, é lida como sem_pergunta", ns.get("sem_pergunta") is True and "TRECHO-SEM-PERGUNTA" in ns["leitura"] and ns["dia"] == "2026-11-09" and ns["hora"] == "20", ns)
 confere("arquivo sem pergunta e resposta não é nota de estudo", mg.ler_nota(B / "arquitetura-e-engenharia-de-dados" / "indice.md") == {})
 
 # simulação não grava
 r = mg.migrar(False)
-confere("sem --apply só conta e não grava nada", r["notas"] == 3 and r["banco"] == 1 and not r["aplicado"] and d.conectar().execute("SELECT COUNT(*) FROM estudos").fetchone()[0] == 0, r)
+confere("sem --apply só conta e não grava nada", r["notas"] == 4 and r["banco"] == 1 and not r["aplicado"] and d.conectar().execute("SELECT COUNT(*) FROM estudos").fetchone()[0] == 0, r)
 confere("avisos: índice fica de fora e tema geral não tem pasta", any("indice.md" in a for a in r["avisos"]) and any("geral" in a for a in r["avisos"]), r["avisos"])
 confere("pasta de privacidade não é tratada como estudo", not any("privacidade" in a or "relatorio" in a for a in r["avisos"]))
 
@@ -124,7 +127,9 @@ confere("pasta de privacidade não é tratada como estudo", not any("privacidade
 r = mg.migrar(True)
 con = d.conectar()
 linhas = [dict(x) for x in con.execute("SELECT * FROM estudos ORDER BY id")]
-confere("importou 3 notas e 1 linha só do banco, com 1 áudio", r["notas"] == 3 and r["banco"] == 1 and r["audios"] == 1 and len(linhas) == 4, r)
+confere("importou 4 notas (uma sem pergunta) e 1 linha só do banco, com 1 áudio", r["notas"] == 4 and r["banco"] == 1 and r["audios"] == 1 and len(linhas) == 5, r)
+sp = d.conectar().execute("SELECT estado, pergunta, trecho, erro FROM estudos WHERE trecho LIKE '%TRECHO-SEM-PERGUNTA%'").fetchone()
+confere("a nota sem pergunta entra em erro com o trecho, pronta para Tentar de novo", sp and sp["estado"] == "erro" and sp["pergunta"] == "" and "Tentar de novo" in sp["erro"], dict(sp) if sp else None)
 nova = next(x for x in linhas if x["titulo"] == "Arquitetura com cache e priorização")
 confere("estudo importado: pasta certa, estado, origem, data, pergunta, leitura e artigos", nova["pasta"] == "Arquitetura e Engenharia de Dados" and nova["estado"] == "importado" and nova["origem"] == "nota" and nova["criado"] == "2026-11-21 06:00:00"
         and nova["pergunta"].startswith("Como a equipe") and "filas" in nova["trecho"] and "Alura" in nova["sugestoes"] and nova["correcao"].startswith("Resposta esperada"), nova)
@@ -139,8 +144,8 @@ confere("o banco principal não foi alterado", sqlite3.connect(bp).execute("SELE
 
 # idempotência
 r2 = mg.migrar(True)
-confere("rodar de novo não duplica", r2["notas"] == 0 and r2["banco"] == 0 and r2["ja_importados"] == 4 and con.execute("SELECT COUNT(*) FROM estudos").fetchone()[0] == 4, r2)
-confere("resumo em texto", "Já estavam no Learn: 4" in mg.texto_resumo(r2) and "Nada foi apagado" in mg.texto_resumo(r2))
+confere("rodar de novo não duplica", r2["notas"] == 0 and r2["banco"] == 0 and r2["ja_importados"] == 5 and con.execute("SELECT COUNT(*) FROM estudos").fetchone()[0] == 5, r2)
+confere("resumo em texto", "Já estavam no Learn: 5" in mg.texto_resumo(r2) and "Nada foi apagado" in mg.texto_resumo(r2))
 
 # schema antigo: banco do Learn sem as colunas novas ganha as colunas
 arq = TMP / "velho" / "learn.db"

@@ -11,6 +11,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Mudar a categoria de um tema muda as abas na hora e não apaga nada: se o tema já tem lições (ou estudos), a aba correspondente continua aparecendo para consulta.
 - Ajustes virou um botão no topo, ao lado de Trocar de tema, e abre uma tela sem abas: geral (agenda, avisos, estudos por dia) e, com um tema escolhido, as configurações dele (agenda, importar documentos, categoria e tipo, arquivar).
 - A aba Estudos lista todos os estudos do tema (inclusive os importados das notas antigas) e tem o botão de sortear; a aba Lições tem o progresso e o botão Próxima lição por pasta.
+- A migração também leva as notas dos primeiros dias em que o modelo não devolveu pergunta: elas entram com o trecho lido e o estado "erro na pergunta", e o botão Tentar de novo gera a pergunta no Learn.
 - A simulação da migração (heimdall learn --migrate) agora conta as notas por pasta e avisa os temas do cofre que ainda não têm pasta no Learn.
 
 ## 2026-11-23 - Estudos no Learn; Notes só com triagem, diários e privacidade
