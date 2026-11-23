@@ -92,8 +92,8 @@ def iniciar(env=None, abrir=None, gravar=None) -> str:
     if not token:
         raise RuntimeError("a caixa não devolveu o token")
     if gravar is None:
-        import heimdall_cloud
-        gravar = heimdall_cloud.env_gravar
+        import heimdall_lab
+        gravar = heimdall_lab.env_gravar
     gravar({"HEIMDALL_CAIXA_TOKEN": token})
     return token
 

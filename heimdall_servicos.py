@@ -55,8 +55,8 @@ def catalogo() -> list:
         {"id": "terminal", "nome": "Open Terminal", "porta": 8002, "tipo": "py", "script": None, "log": "open_terminal"},
         {"id": "agente", "nome": "Mac Agent", "apelidos": ["agente"], "porta": _porta("HEIMDALL_AGENTE_PORT", 8003), "tipo": "py", "script": ["heimdall_agente.py"],
          "porta_env": "HEIMDALL_AGENTE_PORT", "log": "agente_debug"},
-        {"id": "cloud", "nome": "Cloud", "porta": _porta("HEIMDALL_CLOUD_PORT", 8010), "tipo": "py", "script": ["heimdall_cloud.py"],
-         "porta_env": "HEIMDALL_CLOUD_PORT", "log": "cloud_debug"},
+        {"id": "lab", "nome": "Lab", "apelidos": ["cloud"], "porta": _porta("HEIMDALL_LAB_PORT", 8010), "tipo": "py", "script": ["heimdall_lab.py"],
+         "porta_env": "HEIMDALL_LAB_PORT", "log": "lab_debug"},
         {"id": "notas", "nome": "Notes", "apelidos": ["notas"], "porta": _porta("HEIMDALL_NOTAS_PORT", 8011), "tipo": "py", "script": ["heimdall_notas.py"],
          "porta_env": "HEIMDALL_NOTAS_PORT", "log": "notas_debug"},
         {"id": "learn", "nome": "Learn", "porta": _porta("HEIMDALL_LEARN_PORT", 8019), "tipo": "py", "script": ["heimdall_learn.py"],
@@ -141,7 +141,7 @@ _trava = threading.Lock()
 def desligados() -> set:
     try:
         d = json.loads(ARQUIVO.read_text(encoding="utf-8"))
-        return {str(x) for x in d.get("desligados", [])}
+        return {("lab" if str(x) == "cloud" else str(x)) for x in d.get("desligados", [])}   # o Cloud virou Lab
     except (OSError, ValueError, AttributeError):
         return set()
 

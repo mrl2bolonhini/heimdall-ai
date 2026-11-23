@@ -21,7 +21,7 @@ os.environ.update({"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,loc
 TMP = tempfile.mkdtemp(prefix="finance_plan_teste_")
 os.environ["HEIMDALL_FINANCE_DIR"] = TMP
 sys.path.insert(0, str(AQUI))
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 import heimdall_finance as hf  # noqa: E402
 import financas_planilhas as fp  # noqa: E402
 from teste_planilhas_util import xlsx  # noqa: E402

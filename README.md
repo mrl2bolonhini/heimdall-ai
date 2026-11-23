@@ -11,10 +11,10 @@ Este README é mantido junto com o código. As tabelas entre marcadores `AUTO` s
 1. Chat: https://chat.heimdall-ai.tech (por convite).
 2. Automações: https://flows.heimdall-ai.tech (login do administrador).
 3. Status: https://status.heimdall-ai.tech (acesso restrito).
-4. Cloud: https://cloud.heimdall-ai.tech (painel do emulador de AWS; senha e código de 6 dígitos).
+4. Lab: https://lab.heimdall-ai.tech (painel do emulador de AWS; senha e código de 6 dígitos).
 4b. Saúde: https://health.heimdall-ai.tech (painel de saúde, somente leitura; senha e código de 6 dígitos).
 4c. Jogos: https://games.heimdall-ai.tech (jogos leves para leitor de tela; senha e código de 6 dígitos).
-5. Documentação: https://heimdall-ai.tech (página do Cloud: https://heimdall-ai.tech/cloud.html)
+5. Documentação: https://heimdall-ai.tech (página do Lab: https://heimdall-ai.tech/lab.html)
 
 Contato: suporte@heimdall-ai.tech e https://www.linkedin.com/in/murillobolonhinicita
 
@@ -51,14 +51,14 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Uptime Kuma | 3001 | Painel de disponibilidade dos serviços. |
 | Dozzle | 8081 | Leitor de logs dos contêineres. |
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
-| Heimdall Learn | 8019 | Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Heimdall Cloud. |
-| Heimdall Notes | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
-| Heimdall News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
-| Heimdall Games | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
-| Heimdall Finance | 8016 | Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
+| Heimdall Learn | 8019 | Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Heimdall Lab. |
+| Heimdall Notes | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1. |
+| Heimdall News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1. |
+| Heimdall Games | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1. |
+| Heimdall Finance | 8016 | Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1. |
 | Heimdall Controls | 8017 | Terminal completo e acessível (um shell de verdade no Mac, com a pasta e as variáveis persistentes, a saída no próprio campo de comando, como num terminal, e atalhos de teclado para interromper, limpar, reiniciar e copiar a última saída ou as últimas N) e painel de serviços com botões de atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra: Cloudflare Access (Authenticator) ou senha e código de 6 dígitos, e cada comando fica anotado sem a saída. Escuta só em 127.0.0.1. |
-| Heimdall Health | 8013 | Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela, exames de laboratório, receitas e encaminhamentos já conferidos, e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1. |
-| Heimdall Cloud | 8010 | Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
+| Heimdall Health | 8013 | Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela, exames de laboratório, receitas e encaminhamentos já conferidos, e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1. |
+| Heimdall Lab | 8010 | Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare. |
 <!-- /AUTO:SERVICOS -->
 
 ## Requisitos
@@ -83,7 +83,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 ./subir.sh --update        # os argumentos são os do start_heimdall.sh
 ./subir.sh --status        # confere agora o que está no ar
 ./subir.sh --log           # últimas linhas do log da subida atual
-./subir.sh --log notas     # idem, de um serviço (mcp, agente, cloud, notas, open_terminal...)
+./subir.sh --log notas     # idem, de um serviço (mcp, agente, lab, notas, open_terminal...)
 ./subir.sh --logs          # lista os logs em logs/
 ./subir.sh --limpar        # apaga os logs antigos que ficavam soltos na pasta do projeto
 ./subir.sh --reiniciar     # encerra a subida em andamento e sobe de novo
@@ -95,7 +95,7 @@ O `subir.sh` recusa iniciar uma segunda subida enquanto outra estiver em andamen
 Opções: `--webui`, `--terminal`, `--n8n`, `--agente`, `--docling`, `--ingest`, `--update`. A lista completa está no cabeçalho de `start_heimdall.sh` e em https://heimdall-ai.tech/comandos.html.
 
 ## Organização das pastas
-Módulos Python, `subir.sh`, `start_heimdall.sh` e `heimdall.zsh` ficam na raiz. `tests/<serviço>/` guarda os testes (finance, health, news, notes, games, cloud, account, controls, agent, chat, design, monitor, core); `guides/` os guias e ajudas; `prompts/` os prompts do chat; `scripts/` os scripts de shell; `flows/` os fluxos do n8n (basic, advanced, monitor); `games/` os jogos; `finance/` os dados do Finance no Mac (antes `dados_financas/`, renomeada sozinha na primeira subida). `./rodar_testes.sh` roda todos os testes; `./rodar_testes.sh finance` só os de uma pasta.
+Módulos Python, `subir.sh`, `start_heimdall.sh` e `heimdall.zsh` ficam na raiz. `tests/<serviço>/` guarda os testes (finance, health, news, notes, games, lab, cloudflare, account, controls, agent, chat, design, monitor, core); `guides/` os guias e ajudas; `prompts/` os prompts do chat; `scripts/` os scripts de shell; `flows/` os fluxos do n8n (basic, advanced, monitor); `games/` os jogos; `finance/` os dados do Finance no Mac (antes `dados_financas/`, renomeada sozinha na primeira subida). `./rodar_testes.sh` roda todos os testes; `./rodar_testes.sh finance` só os de uma pasta.
 
 ## Testar
 
@@ -105,21 +105,21 @@ venv/bin/python tests/chat/test_mcp.py                       # servidores MCP, d
 venv/bin/python tests/chat/test_models_tools.py              # chamada de ferramentas por modelo
 python3 heimdall_agente.py --teste                # Notas, Calendário e Lembretes
 python3 heimdall_agente.py --voz                  # voz e velocidade do áudio
-python3 tests/cloud/teste_cloud.py                        # painel do emulador de AWS (sem rede)
+python3 tests/lab/teste_lab.py                        # painel do emulador de AWS (sem rede)
 python3 tests/core/teste_avisos.py                  # avisos de saúde e finanças (sem rede)
 python3 tests/design/teste_abas_mais.py               # menu Mais das abas (navegador)
 python3 tests/core/teste_migrar_avisos.py           # migração das notas antigas (sem rede)
 python3 tests/notes/teste_catalogo.py                # catalogação de notas e cliente do Notion (sem rede e sem modelo)
-python3 tests/cloud/teste_cfmonitor.py               # monitor de consumo e custo da Cloudflare (sem rede)
-python3 tests/cloud/teste_caixa_cliente.py          # cliente da caixa de correio da Cloudflare (sem rede)
+python3 tests/cloudflare/teste_cfmonitor.py               # monitor de consumo e custo da Cloudflare (sem rede)
+python3 tests/cloudflare/teste_caixa_cliente.py          # cliente da caixa de correio da Cloudflare (sem rede)
 python3 tests/health/teste_saude_pessoas.py           # saúde por pessoa: banco separado, métricas diárias e conversor do Atalho (sem rede)
 python3 tests/health/teste_analista_saude.py          # analista de saúde: dossiê, correlações, PubMed simulado, modelo simulado (sem rede)
 python3 tests/account/teste_account.py                  # Account: tour, Integrações (csrf, origem, ativar e desativar) e quem.json
 python3 tests/agent/teste_app_mac.py                  # confere o app de barra de menus do Mac sem compilar
 bash tests/core/teste_silenciar_docker.sh            # script que impede o Docker de abrir o painel ao iniciar (pasta falsa)
 node cloudflare/teste_caixa.mjs           # Worker da caixa de correio (KV e R2 falsos)
-python3 tests/cloud/teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
-python3 tests/cloud/teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor HEIMDALL_NUVEM (sem rede)
+python3 tests/cloudflare/teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
+python3 tests/cloudflare/teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor HEIMDALL_NUVEM (sem rede)
 python3 tests/notes/teste_notas.py                   # Heimdall Notes (sem rede)
 python3 tests/learn/teste_learn_dados.py             # Heimdall Learn: banco e pastas
 python3 tests/learn/teste_learn_site.py              # Heimdall Learn: site

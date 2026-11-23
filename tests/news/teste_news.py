@@ -195,7 +195,7 @@ os.environ.update({
     "HEIMDALL_NEWS_MODELO": "modelo-de-teste", "HEIMDALL_NEWS_URL": "https://news.exemplo.test", "HEIMDALL_NEWS_FUSO": "America/Sao_Paulo",
 })
 sys.path.insert(0, str(RAIZ))
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 
 hc.SENHA_HASH = hc.hash_senha(SENHA, iteracoes=100_000)
 hc.TOTP_SEGREDO = SEGREDO

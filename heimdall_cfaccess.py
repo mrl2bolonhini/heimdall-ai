@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Entrada pelo Cloudflare Access (Microsoft Entra ID), com aprovação por notificação no Microsoft Authenticator.
 
-Como funciona: o Cloudflare Access fica na frente dos endereços públicos (cloud, notas, news, saúde, jogos...).
+Como funciona: o Cloudflare Access fica na frente dos endereços públicos (lab, notas, news, saúde, jogos...).
 Quem chega é mandado ao login da Microsoft; o Authenticator no celular recebe a notificação e você aprova
 digitando no celular o número mostrado na tela. Só então o Cloudflare deixa o pedido passar, com um documento
 assinado (JWT) no cabeçalho Cf-Access-Jwt-Assertion. Os painéis conferem a assinatura aqui, sem biblioteca de fora,
@@ -13,7 +13,7 @@ Fica DESLIGADO até você preencher três valores no .env:
     HEIMDALL_CFACCESS_AUD      "AUD tag" do aplicativo do Access; com mais de um aplicativo, separe as tags por vírgula
     HEIMDALL_CFACCESS_EMAILS   e-mails de dono (entram em todos os painéis), separados por vírgula
 
-Opcional, para outras pessoas com acesso só a alguns painéis (use os nomes cloud, notas, news, saude, jogos, finance):
+Opcional, para outras pessoas com acesso só a alguns painéis (use os nomes lab, notas, news, saude, jogos, finance):
 
     HEIMDALL_CFACCESS_CONVIDADOS   ana@exemplo.com=jogos;beto@exemplo.com=jogos+finance
 
@@ -59,7 +59,7 @@ def config() -> dict:
             continue
         email, servicos = item.split("=", 1)
         email = email.strip().lower()
-        sv = {s.strip().lower() for s in servicos.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", s.strip().lower())}
+        sv = {("lab" if s.strip().lower() == "cloud" else s.strip().lower()) for s in servicos.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", s.strip().lower())}   # o Cloud virou Lab
         if email and sv:
             convidados[email] = sv
     return {"equipe": equipe, "auds": auds, "donos": donos, "convidados": convidados}

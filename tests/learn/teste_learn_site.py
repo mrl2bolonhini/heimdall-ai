@@ -20,7 +20,7 @@ os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 os.environ["HEIMDALL_LEARN_MAX_MB"] = "1"
 (TMP / "knowledge" / "aws").mkdir(parents=True)
 
-import heimdall_cloud as nuvem  # noqa: E402
+import heimdall_lab as nuvem  # noqa: E402
 import heimdall_learn as site  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"

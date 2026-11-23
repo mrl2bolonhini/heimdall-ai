@@ -9,7 +9,7 @@ para a Cloudflare nem para modelo de fora. O Cloudflare só repassa as páginas,
 
 Segurança (mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
-  2. Entrada com a senha e o código de 6 dígitos do Heimdall Cloud (ou o Cloudflare Access, se ligado).
+  2. Entrada com a senha e o código de 6 dígitos do Heimdall Lab (ou o Cloudflare Access, se ligado).
   3. Limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict, token CSRF em todo POST.
   4. Só atende os nomes de site permitidos (HEIMDALL_FINANCE_HOSTS) e manda cabeçalhos de segurança.
   5. Sem senha e sem código configurados, o servidor não sobe.
@@ -68,7 +68,7 @@ import heimdall_avisos as avisos_mod  # noqa: E402  (avisos e análises ficam aq
 import financas_nucleo as fn  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
-import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 
 HOST = os.environ.get("HEIMDALL_FINANCE_HOST", "127.0.0.1")
 try:

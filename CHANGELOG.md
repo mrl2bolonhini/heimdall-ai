@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Cloud virou Lab
+- O painel do emulador de AWS agora se chama Lab (laboratório de dados): Heimdall Lab, comando heimdall lab (heimdall cloud continua valendo), módulo heimdall_lab.py, testes em tests/lab, guia LEIAME_lab_roteiro.txt e página lab.html. Os testes que eram de Cloudflare ficaram em tests/cloudflare.
+- Variáveis do .env: HEIMDALL_CLOUD_PORT, _HOST, _HOSTS, _ENDPOINT, _REGIAO e _MAX_MB viram HEIMDALL_LAB_*; a subida do sistema troca sozinha no .env (cópia em .env.bak) e o valor antigo continua valendo se a troca não rodar. A senha, o código de 6 dígitos e a duração da sessão (HEIMDALL_CLOUD_SENHA_HASH, _TOTP_SEGREDO e _SESSAO_HORAS) mantêm o nome, porque valem para todos os sites.
+- Endereço: o Lab aceita lab.heimdall-ai.tech e cloud.heimdall-ai.tech ao mesmo tempo. Para o novo endereço funcionar de fora é preciso criá-lo na Cloudflare (rota do túnel, DNS e aplicativo do Access); até lá, o endereço antigo segue funcionando e o vigia da Cloudflare (cloudflare/vigia.js) confere o novo, então só o implante depois de criar o endereço.
+- Convidados com o serviço cloud no .env, o estado de serviços desligados e o monitor "Cloud" do Kuma continuam valendo como lab. No app do Mac, o item Cloud virou Lab e os atalhos mudam: Command+2 Controls, 3 Finance, 4 Games, 5 Health, 6 Lab; recompile o app (heimdall app).
+
 ## 2026-11-23 - Perguntar: modelo leve, teclado e Perguntar no Cloud
 - O Perguntar dos sites passou a usar, com a nuvem ligada (HEIMDALL_NUVEM=1), o Qwen3 30B sem raciocínio, mais leve e barato que o gpt-oss; sem a nuvem, ou se ela falhar, continua o modelo local. HEIMDALL_NUVEM_PERGUNTAR_MODELO troca o modelo. Os demais usos da nuvem (chat do Open WebUI, análises) não mudaram.
 - Teclado: Option+Shift+P leva ao campo da pergunta; Enter envia e Shift+Enter pula linha (o campo agora tem várias linhas). No Notes o Enter continua pulando linha, porque o mesmo campo também salva notas; ali só vale o atalho.

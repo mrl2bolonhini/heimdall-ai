@@ -91,7 +91,7 @@ SISTEMA_PADRAO = ("Você responde em português do Brasil, em texto corrido ou l
 
 def responder(contexto: str, pergunta: str, sistema: str = "", modelo: str = "", conferir: bool = True, max_tokens: int = 700, instrucao: str = "Responda de forma direta e curta.") -> dict:
     """{'texto', 'avisos'}. Usa o modelo leve da nuvem sem raciocínio (Qwen3 30B) quando a nuvem está ligada, e o modelo local se não.
-    conferir=False não procura valores sem base (para respostas com conhecimento geral, como o Perguntar do Cloud). Levanta exceção se nenhum responder."""
+    conferir=False não procura valores sem base (para respostas com conhecimento geral, como o Perguntar do Lab). Levanta exceção se nenhum responder."""
     pedido = f"CONTEXTO:\n{contexto}\n\nPERGUNTA: {pergunta.strip()}\n\n{instrucao}"
     marca = _LEVE.set(True)
     try:

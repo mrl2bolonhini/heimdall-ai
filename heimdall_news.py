@@ -5,7 +5,7 @@ O que faz (tudo em um processo só, que o start_heimdall.sh sobe quando há senh
   - De 30 em 30 minutos lê os feeds listados em noticias_fontes.json (as mesmas fontes do Digest), tira repetidas,
     traduz os títulos em inglês e pede a um modelo local um resumo curto de cada matéria. Tudo vai para o banco pessoal
     (tabela noticias) e fica 30 dias para consulta; o site mostra só as últimas 24 horas.
-  - Site com login (a mesma senha e o mesmo código de 6 dígitos do Heimdall Cloud e do Notas): 10 notícias por página,
+  - Site com login (a mesma senha e o mesmo código de 6 dígitos do Heimdall Lab e do Notas): 10 notícias por página,
     título como cabeçalho, o resumo sempre marcado como "Resumo feito por IA" e o link "Leia mais sobre ..." para a matéria.
   - Feeds RSS para um app de leitura de feeds, em endereços com uma chave secreta (apps de feed não digitam o código de
     6 dígitos): um feed geral, um por categoria e um arquivo OPML que traz todos de uma vez.
@@ -85,7 +85,7 @@ def carregar_env() -> None:
 carregar_env()
 
 import heimdall_banco as banco  # noqa: E402  (o banco pessoal)
-import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
 import heimdall_perguntar as perguntar  # noqa: E402  (campo Perguntar, só com o modelo local)

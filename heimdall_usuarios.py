@@ -20,7 +20,7 @@ BASE = "https://api.cloudflare.com/client/v4"
 EMAIL = re.compile(r"^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$")
 # chave -> (nome, variável com o(s) endereço(s) públicos, subdomínio padrão, pode ser dado a convidado)
 SERVICOS = {
-    "cloud": ("Cloud", "HEIMDALL_CLOUD_HOSTS", "cloud", True),
+    "lab": ("Lab", "HEIMDALL_LAB_HOSTS", "lab", True),
     "notas": ("Notes", "HEIMDALL_NOTAS_HOSTS", "notes", False),   # triagem, diários e privacidade: só do dono (os estudos foram para o Learn)
     "learn": ("Learn", "HEIMDALL_LEARN_HOSTS", "learn", True),
     "news": ("News", "HEIMDALL_NEWS_HOSTS", "news", True),

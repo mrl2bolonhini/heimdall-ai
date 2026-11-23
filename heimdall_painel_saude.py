@@ -8,7 +8,7 @@ Somente leitura: o painel nunca grava nada no banco.
 
 Segurança (os dados de saúde podem ficar acessíveis de fora, então tem as mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
-  2. Entrada com a senha e o código de 6 dígitos do Heimdall Cloud (python3 heimdall_acesso.py --tudo).
+  2. Entrada com a senha e o código de 6 dígitos do Heimdall Lab (python3 heimdall_acesso.py --tudo).
   3. Limite de tentativas por endereço e global, sessão em cookie HttpOnly e SameSite=Strict.
   4. Só atende os nomes de site permitidos (HEIMDALL_SAUDE_PAINEL_HOSTS) e manda cabeçalhos de segurança.
   5. Sem senha e sem código configurados, o painel não sobe.
@@ -57,7 +57,7 @@ carregar_env()
 
 import heimdall_banco as banco  # noqa: E402
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
-import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 import heimdall_saude as saude  # noqa: E402  (as análises)
 import heimdall_perguntar as perguntar  # noqa: E402  (campo Perguntar, só com o modelo local)
 import heimdall_avisos as avisos_mod  # noqa: E402  (aba Avisos: relatórios que antes iam para o app Notas)

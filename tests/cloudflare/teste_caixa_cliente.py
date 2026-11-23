@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Teste do cliente da caixa de correio (heimdall_caixa.py), sem rede e sem token real.
 
-    python3 tests/cloud/teste_caixa_cliente.py
+    python3 tests/cloudflare/teste_caixa_cliente.py
 """
 import sys as _sys
 from pathlib import Path as _Path

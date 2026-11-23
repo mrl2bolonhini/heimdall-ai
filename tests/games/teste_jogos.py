@@ -17,7 +17,7 @@ from pathlib import Path
 AQUI = RAIZ
 os.environ.update({"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(AQUI))
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 import heimdall_jogos as hj  # noqa: E402
 
 falhas = 0

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Teste do painel heimdall_cloud.py sem precisar do LocalStack nem do boto3 (usa um emulador de mentira).
+"""Teste do painel heimdall_lab.py sem precisar do LocalStack nem do boto3 (usa um emulador de mentira).
 
-    python3 tests/cloud/teste_cloud.py
+    python3 tests/lab/teste_lab.py
 
 Confere: código de 6 dígitos (vetor oficial da RFC 6238), senha, bloqueio de tentativas, sessão, proteção contra CSRF,
 páginas do S3, Lambda e console geral, envio e download de arquivo, e escape de texto perigoso.
@@ -133,7 +133,7 @@ botocore.config = types.ModuleType("botocore.config")
 botocore.config.Config = lambda **kw: None
 sys.modules.update({"boto3": boto3, "botocore": botocore, "botocore.config": botocore.config})
 
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 
 falhas = 0
 
@@ -221,9 +221,9 @@ confere("depois de 5 falhas vem bloqueio 429", st == 429)
 
 st, _, corpo = req("GET", "/", cookie=cookie)
 confere("início abre com sessão", st == 200 and "Estado do emulador" in corpo and "O emulador está respondendo" in corpo)
-confere("Cloud: abas (S3, Lambda, Glue, Athena), atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and "Atalho: Option Shift 1 a 6" in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and '<script nonce="' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
+confere("Lab: abas (S3, Lambda, Glue, Athena), atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and "Atalho: Option Shift 1 a 6" in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and '<script nonce="' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
 st, _, corpo = req("GET", "/s3", cookie=cookie)
-confere("Cloud: a aba S3 fica selecionada em /s3", 'aria-selected="true"' in corpo and ">S3</a>" in corpo and corpo.index('aria-selected="true"') < corpo.index(">S3</a>") + 5)
+confere("Lab: a aba S3 fica selecionada em /s3", 'aria-selected="true"' in corpo and ">S3</a>" in corpo and corpo.index('aria-selected="true"') < corpo.index(">S3</a>") + 5)
 confere("S3 lista buckets", st == 200 and "dados" in corpo)
 confere("nome de bucket perigoso vem escapado", "x<script>" not in corpo and "x&lt;script&gt;" in corpo)
 st, _, corpo = req("GET", "/s3/b?bucket=dados", cookie=cookie)
@@ -359,7 +359,7 @@ e1 = _env()
 h1 = _re.search(r"SENHA_HASH='([^']+)'", e1).group(1)
 t1 = _re.search(r"TOTP_SEGREDO='([^']+)'", e1).group(1)
 confere("--tudo grava senha (hash) e código e preserva o resto", err is None and "OUTRA='coisa'" in e1 and hc.confere_senha("uma frase bem longa 123", h1) and "uma frase bem longa" not in e1)
-confere("--tudo mostra a chave do código e a lista de serviços", t1[:4] in out and "Cloud, o Heimdall Notes e o Heimdall News" in out)
+confere("--tudo mostra a chave do código e a lista de serviços", t1[:4] in out and "Lab, o Heimdall Notes e o Heimdall News" in out)
 out, err = _rodar("senha", ["outra frase bem comprida 456", "outra frase bem comprida 456"])
 e2 = _env()
 confere("--senha troca só a senha", err is None and _re.search(r"TOTP_SEGREDO='([^']+)'", e2).group(1) == t1 and _re.search(r"SENHA_HASH='([^']+)'", e2).group(1) != h1 and "continua o mesmo" in out and t1[:4] not in out)
@@ -402,7 +402,7 @@ confere("domínio parecido não ganha Domain", "Domain" not in k3)
 k4 = hc.cabecalho_cookie("", "news.heimdall-ai.tech", True, apagar=True)[1]
 confere("apagar o cookie usa o mesmo Domain e Max-Age=0", "Domain=heimdall-ai.tech" in k4 and "Max-Age=0" in k4)
 
-# ---- Perguntar do Cloud ----
+# ---- Perguntar do Lab ----
 print("\nPerguntar")
 import heimdall_perguntar as _pg  # noqa: E402
 _pg._respostas.clear()

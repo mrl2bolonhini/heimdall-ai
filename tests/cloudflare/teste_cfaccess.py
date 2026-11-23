@@ -21,7 +21,7 @@ AQUI = RAIZ
 os.environ.update({"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(AQUI))
 import heimdall_cfaccess as cfa  # noqa: E402
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 import heimdall_jogos as hj  # noqa: E402
 
 falhas = 0
@@ -210,16 +210,16 @@ confere("duas AUDs separadas por vírgula", cfg["auds"] == {AUD, "aud-do-app-gam
 confere("token de outra AUD da lista também vale", cfa.verificar_jwt(jwt({"aud": ["aud-do-app-games"]}), time.time()) == EMAIL)
 ana = jwt({"email": "ana@exemplo.test"})
 confere("convidado entra no serviço liberado", cfa.verificar_jwt(ana, servico="jogos") == "ana@exemplo.test")
-confere("convidado NÃO entra em outro serviço", cfa.verificar_jwt(ana, servico="cloud") is None and cfa.verificar_jwt(ana, servico="finance") is None and cfa.verificar_jwt(ana) is None)
+confere("convidado NÃO entra em outro serviço", cfa.verificar_jwt(ana, servico="lab") is None and cfa.verificar_jwt(ana, servico="finance") is None and cfa.verificar_jwt(ana) is None)
 confere("convidado com dois serviços entra nos dois", cfa.verificar_jwt(jwt({"email": "beto@exemplo.test"}), servico="finance") == "beto@exemplo.test")
-confere("dono entra em qualquer serviço", all(cfa.verificar_jwt(jwt(), servico=s) == EMAIL for s in ("cloud", "notas", "news", "saude", "jogos", "finance")))
-confere("papéis", cfa.papel(EMAIL, "cloud") == "dono" and cfa.papel("ana@exemplo.test", "jogos") == "convidado" and cfa.papel("ana@exemplo.test", "cloud") is None)
+confere("dono entra em qualquer serviço", all(cfa.verificar_jwt(jwt(), servico=s) == EMAIL for s in ("lab", "notas", "news", "saude", "jogos", "finance")))
+confere("papéis", cfa.papel(EMAIL, "lab") == "dono" and cfa.papel("ana@exemplo.test", "jogos") == "convidado" and cfa.papel("ana@exemplo.test", "lab") is None)
 
 # sessões com escopo
 tk_dono, _ = hc.nova_sessao()
 tk_ana, s_ana = hc.nova_sessao("jogos")
-confere("sessão de dono vale em todo serviço e sem serviço", all(hc.sessao_valida(tk_dono, s) for s in ("cloud", "jogos", "finance", None)))
-confere("sessão de convidado vale só no serviço dela", s_ana is not None and hc.sessao_valida(tk_ana, "jogos") and not hc.sessao_valida(tk_ana, "cloud") and not hc.sessao_valida(tk_ana, "finance") and not hc.sessao_valida(tk_ana))
+confere("sessão de dono vale em todo serviço e sem serviço", all(hc.sessao_valida(tk_dono, s) for s in ("lab", "jogos", "finance", None)))
+confere("sessão de convidado vale só no serviço dela", s_ana is not None and hc.sessao_valida(tk_ana, "jogos") and not hc.sessao_valida(tk_ana, "lab") and not hc.sessao_valida(tk_ana, "finance") and not hc.sessao_valida(tk_ana))
 p = tk_ana.split(".")
 trocado = ".".join([p[0], p[1], "finance~" + p[2].split("~", 1)[1], p[3]])
 confere("trocar o escopo do token invalida a assinatura", hc.sessao_valida(trocado, "finance") is None)

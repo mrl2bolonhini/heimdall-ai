@@ -5,7 +5,7 @@ As pastas ficam em knowledge/ (a mesma pasta de documentos do resto do Heimdall)
 (db/learn.db). Cada pasta tem uma CATEGORIA (aleatório ou sequencial) e um TIPO aberto (idiomas, programação, filosofia, medicina...).
 A IA combina categoria, tipo e material para decidir como estudar (fases seguintes: perguntas aleatórias, lições, voz, cards).
 
-Segurança: escuta só em 127.0.0.1; mesmo login do painel Cloud (senha, código de 6 dígitos ou Cloudflare Access); CSRF em todo POST;
+Segurança: escuta só em 127.0.0.1; mesmo login do painel Lab (senha, código de 6 dígitos ou Cloudflare Access); CSRF em todo POST;
 sessão em cookie HttpOnly; só nomes de site permitidos; caminhos conferidos contra fuga de pasta; arquivos só com extensão
 conhecida, nome simples e limite de tamanho (HEIMDALL_LEARN_MAX_MB, 50); HTML sempre escapado.
 
@@ -54,7 +54,7 @@ def carregar_env() -> None:
 
 carregar_env()
 
-import heimdall_cloud as nuvem  # noqa: E402  (login e sessões: o mesmo do painel Cloud)
+import heimdall_lab as nuvem  # noqa: E402  (login e sessões: o mesmo do painel Lab)
 import heimdall_design as design  # noqa: E402
 import heimdall_learn_dados as dados  # noqa: E402
 import heimdall_learn_estudo as estudo  # noqa: E402

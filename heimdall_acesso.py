@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Senha e código de 6 dígitos de todos os serviços Heimdall com login (Cloud, Notas e News).
+"""Senha e código de 6 dígitos de todos os serviços Heimdall com login (Lab, Notas e News).
 
 Os três usam o mesmo acesso, guardado no .env (a senha só como hash, nunca em texto). Aqui você troca o que precisar:
 
@@ -17,7 +17,7 @@ import getpass
 import re
 import time
 
-import heimdall_cloud as nuvem
+import heimdall_lab as nuvem
 
 
 def _ler_env() -> dict:
@@ -31,7 +31,7 @@ def _ler_env() -> dict:
         l = l.strip()
         if l.startswith("export "):
             l = l[7:]
-        if l.startswith("HEIMDALL_CLOUD_") and "=" in l:
+        if l.startswith("HEIMDALL_LAB_") and "=" in l:
             k, v = l.split("=", 1)
             v = v.strip()
             if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"":
@@ -66,7 +66,7 @@ def verificar() -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Senha e código de 6 dígitos dos serviços Heimdall (Cloud, Notas e News)")
+    ap = argparse.ArgumentParser(description="Senha e código de 6 dígitos dos serviços Heimdall (Lab, Notas e News)")
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--tudo", action="store_true", help="nova senha e novo código de 6 dígitos")
     g.add_argument("--senha", action="store_true", help="só troca a senha")

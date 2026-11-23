@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Testes da cópia de segurança (heimdall_backup.py), sem rede: R2 simulado e banco temporário.
-Uso: python3 tests/cloud/teste_backup.py"""
+Uso: python3 tests/cloudflare/teste_backup.py"""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

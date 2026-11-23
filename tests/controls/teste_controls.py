@@ -19,7 +19,7 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp(prefix="controls_"))
 os.environ.update({"HEIMDALL_CONTROLS_SHELL": "/bin/bash", "HEIMDALL_CONTROLS_RC": "0", "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 import heimdall_controls as hcx  # noqa: E402
 
 hcx.AUDITORIA = TMP / "logs" / "controls_audit.log"
@@ -200,11 +200,11 @@ confere("interromper (Ctrl+C)", json.loads(corpo)["ok"] and hcx.obter_shell().bl
 # --- serviços (rádios) e manutenção (ações)
 import heimdall_servicos as hsv  # noqa: E402
 import heimdall_kuma as hku  # noqa: E402
-hku.monitores = lambda: ([{"id": 7, "nome": "Cloud (8010)", "status": "no ar"}], "")
+hku.monitores = lambda: ([{"id": 7, "nome": "Lab (8010)", "status": "no ar"}], "")
 chamadas = []
 hsv.aplicar = lambda sid, lig: (chamadas.append((sid, lig)) or (True, f"{sid} ok"))
 hku.pausar_ou_retomar = lambda mid, pausar: ""
-estado_falso = {"cloud": True, "news": False}
+estado_falso = {"lab": True, "news": False}
 hsv.no_ar = lambda sv: estado_falso.get(sv["id"], True)
 s, corpo, _ = req("GET", "/servicos", cookie=token)
 confere("serviços: uma chave (role=switch) por serviço, com estado e sem botão Aplicar", s == 200 and corpo.count('role="switch"') == len(hsv.catalogo())
@@ -230,12 +230,12 @@ hcm.consultar = _orig_consultar
 s, corpo, _ = req("GET", "/monitor", cookie=None)
 confere("monitor: exige login", s in (302, 303, 401, 403) or "Entrar" in corpo or "senha" in corpo.lower())
 
-s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": CSRF, "id": "cloud", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": CSRF, "id": "lab", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 d = json.loads(corpo)
-confere("alternar: liga ou desliga o serviço escolhido e devolve o estado", s == 200 and chamadas == [("cloud", False)] and d["ok"] and "Monitor do Kuma pausado" in d["mensagem"] and "situacao" in d, corpo)
+confere("alternar: liga ou desliga o serviço escolhido e devolve o estado", s == 200 and chamadas == [("lab", False)] and d["ok"] and "Monitor do Kuma pausado" in d["mensagem"] and "situacao" in d, corpo)
 s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": CSRF, "id": "inventado", "estado": "on"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("alternar: serviço desconhecido é recusado", s == 409, corpo)
-s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": "errado", "id": "cloud", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": "errado", "id": "lab", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("alternar sem o token de segurança é recusado, com o motivo", s == 403 and "token" in corpo, corpo)
 import heimdall_config as hcf  # noqa: E402
 import tempfile as _tf  # noqa: E402
@@ -300,7 +300,7 @@ s, corpo, _ = req("GET", "/", cookie=token)
 confere("páginas marcadas para o Cloudflare não trocar e-mails por link (email_off)", "<!--email_off-->" in corpo and "<!--/email_off-->" in corpo)
 s, corpo, _ = req("GET", "/manutencao", cookie=token)
 confere("manutenção: botões de ação e um só h1", s == 200 and "Update e restart" in corpo and ">Start<" in corpo and ">Stop<" in corpo and "Exibir log" in corpo and corpo.count("<h1") == 1)
-hsv.parar_tudo = lambda: [("Cloud", True, "parado"), ("News", True, "parado")]
+hsv.parar_tudo = lambda: [("Lab", True, "parado"), ("News", True, "parado")]
 hsv.iniciar_tudo = lambda: (True, "subida iniciada")
 s, _, r = req("POST", "/manutencao/acao", {"acao": "stop", "csrf": CSRF}, cookie=token)
 s2, corpo, _ = req("GET", "/manutencao", cookie=token)

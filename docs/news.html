@@ -26,7 +26,7 @@
 <header class="top"><div class="wrap"><div class="barra">
 <a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>Heimdall-ai</span></a>
 <span class="gap"></span>
-<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="notas.html">Notes</a></li><li><a href="news.html" aria-current="page">News</a></li><li><a href="saude.html">Health</a></li><li><a href="jogos.html">Games</a></li><li><a href="finance.html">Finance</a></li><li><a href="cloud.html">Cloud</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="comando-heimdall.html">Comando heimdall</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="design.html">Design</a></li></ul></nav>
+<nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="notas.html">Notes</a></li><li><a href="news.html" aria-current="page">News</a></li><li><a href="saude.html">Health</a></li><li><a href="jogos.html">Games</a></li><li><a href="finance.html">Finance</a></li><li><a href="lab.html">Lab</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="comando-heimdall.html">Comando heimdall</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="design.html">Design</a></li></ul></nav>
 <div class="ferram"><div class="conta-site" id="conta-site" data-url="https://account.heimdall-ai.tech/"><a href="https://account.heimdall-ai.tech/">Entrar no Heimdall</a></div><button type="button" id="tema">Tema escuro</button></div>
 </div></div></header>
 <main id="conteudo" tabindex="-1"><div class="wrap">
@@ -35,7 +35,7 @@
 <p>O Heimdall News reúne as notícias das fontes que você escolheu, atualiza de 30 em 30 minutos e mostra as das últimas 24 horas, com um resumo feito por um modelo local de IA. Também serve feeds RSS para você ler no iPhone em um app de feeds. Foi feito para leitor de tela: o título de cada notícia é um cabeçalho, o resumo vem sempre identificado como feito por IA e há link para pular ao conteúdo.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8012, depois de subir o sistema.</li>
-<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Cloud e do Heimdall Notes.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Lab e do Heimdall Notes.</li>
 <li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. O endereço já existe no túnel; o site continua privado, pois exige a senha e o código de 6 dígitos.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que mostra</h2>
 <ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com paginação em botões (Página anterior, números com a atual marcada, Próxima página e Última página).</li>
@@ -67,7 +67,7 @@
 <li>Feeds e matérias só são baixados de endereços públicos (nunca da sua rede ou do próprio Mac), e o texto deles é tratado como dado: o modelo é instruído a ignorar qualquer ordem que apareça nele.</li>
 <li>Resumos de IA podem conter erros; o site e os feeds avisam e levam à matéria original.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>Sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Cloud).</li>
+<ul><li>Sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Lab).</li>
 <li>Conferir se está no ar: <code>curl -s http://localhost:8012/saude</code></li>
 <li>Atualizar agora, uma vez: <code>python3 heimdall_news.py --uma-vez</code></li>
 <li>Testar sem rede: <code>python3 tests/news/teste_news.py</code></li>

@@ -23,7 +23,7 @@ TMP = tempfile.mkdtemp(prefix="finance_teste_")
 os.environ["HEIMDALL_FINANCE_DIR"] = TMP
 sys.path.insert(0, str(AQUI))
 import financas_nucleo as fn  # noqa: E402
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 import heimdall_finance as hf  # noqa: E402
 
 falhas = 0

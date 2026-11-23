@@ -8,7 +8,7 @@ Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco le
 
 Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
-  2. Entrada com a senha e o código de 6 dígitos do Heimdall Cloud (python3 heimdall_acesso.py --tudo).
+  2. Entrada com a senha e o código de 6 dígitos do Heimdall Lab (python3 heimdall_acesso.py --tudo).
   3. Limite de tentativas por endereço e global, sessão em cookie HttpOnly e SameSite=Strict.
   4. Só atende os nomes de site permitidos (HEIMDALL_JOGOS_HOSTS) e manda cabeçalhos de segurança.
   5. Só os arquivos .js do catálogo são entregues, e a política de conteúdo só deixa rodar script do próprio site.
@@ -58,7 +58,7 @@ def carregar_env() -> None:
 carregar_env()
 
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
-import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 
 HOST = os.environ.get("HEIMDALL_JOGOS_HOST", "127.0.0.1")
 try:

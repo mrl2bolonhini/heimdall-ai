@@ -11,7 +11,7 @@ import threading
 from pathlib import Path
 
 os.environ.pop("HEIMDALL_PESSOAS", None)
-import heimdall_cloud as nuvem  # noqa: E402
+import heimdall_lab as nuvem  # noqa: E402
 import heimdall_pessoas as pe  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"

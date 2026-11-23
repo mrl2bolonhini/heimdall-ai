@@ -46,10 +46,10 @@ tmp = tempfile.mkdtemp()
 hsv.ARQUIVO = Path(tmp) / "desligados.json"
 confere("começa sem nada desligado", hsv.desligados() == set())
 hsv.marcar("news", True)
-hsv.marcar("cloud", True)
-confere("marcar desliga e lembra", hsv.desligados() == {"news", "cloud"})
+hsv.marcar("lab", True)
+confere("marcar desliga e lembra", hsv.desligados() == {"news", "lab"})
 hsv.marcar("news", False)
-confere("ligar tira da lista", hsv.desligados() == {"cloud"})
+confere("ligar tira da lista", hsv.desligados() == {"lab"})
 hsv.ARQUIVO.write_text("{lixo", encoding="utf-8")
 confere("arquivo corrompido vira lista vazia, sem erro", hsv.desligados() == set())
 
@@ -78,7 +78,7 @@ sem_liga = {"id": "x", "nome": "X", "porta": porta_livre(), "tipo": "py", "scrip
 confere("serviço sem como ligar explica o caminho", hsv.ligar(sem_liga)[0] is False and "heimdall restart" in hsv.ligar(sem_liga)[1])
 
 # --- Kuma: leitura da página de status
-PAGINA = {"publicGroupList": [{"monitorList": [{"id": 1, "name": "Cloud (8010)"}, {"id": 2, "name": "Notas"}, {"id": 3, "name": "Jogos"}]}]}
+PAGINA = {"publicGroupList": [{"monitorList": [{"id": 1, "name": "Lab (8010)"}, {"id": 2, "name": "Notas"}, {"id": 3, "name": "Jogos"}]}]}
 BEATS = {"heartbeatList": {"1": [{"status": 0}, {"status": 1}], "2": [{"status": 0}], "3": []}}
 
 
@@ -100,7 +100,7 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 hku.URL = f"http://127.0.0.1:{srv.server_port}"
 mons, erro = hku.monitores()
 confere("Kuma: lê os monitores e o último batimento", not erro and [m["status"] for m in mons] == ["no ar", "fora do ar", "desconhecido"], str(mons))
-confere("Kuma: acha o monitor pelo nome do serviço, sem acento nem parênteses", hku.achar(mons, "Cloud")["id"] == 1 and hku.achar(mons, "Notes", "Notas")["id"] == 2
+confere("Kuma: acha o monitor pelo nome do serviço, sem acento nem parênteses", hku.achar(mons, "Lab")["id"] == 1 and hku.achar(mons, "Notes", "Notas")["id"] == 2
         and hku.achar(mons, "Uptime Kuma") is None)
 srv.shutdown()
 mons, erro = hku.monitores()

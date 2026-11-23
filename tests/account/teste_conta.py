@@ -37,7 +37,7 @@ def h(tok):
 
 m = c.menu("Heimdall News", cabecalhos=h("tokdono"))
 confere("dono: nome e e-mail no resumo e no texto", "Conta: Murillo Bolonhini" in m and "Murillo Bolonhini (dono@x.com)" in m, m)
-confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Heimdall Cloud<", ">Heimdall Notes<", ">Heimdall Games<", ">Heimdall Controls<", ">Heimdall Health<", ">Heimdall Finance<", ">Heimdall Flows<", ">Heimdall Status<", ">Heimdall Chat<", ">Heimdall Account<")) and "Open WebUI" not in m and "Uptime Kuma" not in m and "Notas" not in m and "Saúde" not in m and "Jogos" not in m, m)
+confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Heimdall Lab<", ">Heimdall Notes<", ">Heimdall Games<", ">Heimdall Controls<", ">Heimdall Health<", ">Heimdall Finance<", ">Heimdall Flows<", ">Heimdall Status<", ">Heimdall Chat<", ">Heimdall Account<")) and "Open WebUI" not in m and "Uptime Kuma" not in m and "Notas" not in m and "Saúde" not in m and "Jogos" not in m, m)
 import heimdall_conta as _c
 confere("lista em ordem alfabética pelo nome real", [_c.NOMES[k] for k in _c.ORDEM] == sorted(_c.NOMES.values(), key=str.lower))
 confere("serviço atual marcado, sem link duplicado", 'aria-current="page">Heimdall News (você está aqui)' in m and m.count(">Heimdall News<") == 0, m)
@@ -51,10 +51,10 @@ s = c.menu("", cabecalhos=h("toksemnome"))
 confere("sem nome: mostra o e-mail", "Conta: sem@x.com" in s and "Conectado como sem@x.com" in s, s)
 confere("sem Access e sem sessão: nada", c.menu("", cabecalhos=Cab()) == "")
 confere("token inválido: nada", c.menu("", cabecalhos=h("falso")) == "")
-l = c.menu("Heimdall Cloud", logado_local=True, cabecalhos=Cab(), sair_html="<form>SAIR</form>")
+l = c.menu("Heimdall Lab", logado_local=True, cabecalhos=Cab(), sair_html="<form>SAIR</form>")
 import os
 os.environ["HEIMDALL_DONO_NOME"] = "Murillo"
-l_nome = c.menu("Heimdall Cloud", logado_local=True, cabecalhos=Cab())
+l_nome = c.menu("Heimdall Lab", logado_local=True, cabecalhos=Cab())
 confere("porta local com HEIMDALL_DONO_NOME: mostra o nome, não \"Dono\"", "Conta: Murillo" in l_nome and "Conta: Dono" not in l_nome, l_nome)
 del os.environ["HEIMDALL_DONO_NOME"]
 confere("porta local com sessão: Dono, todos os serviços e o botão Sair do serviço", "Conta: Dono" in l and "senha e código" in l and ">Heimdall Notes<" in l and "<form>SAIR</form>" in l and "cdn-cgi/access/logout" not in l, l)
@@ -80,7 +80,7 @@ import threading
 import urllib.request
 from http.server import ThreadingHTTPServer
 
-import heimdall_cloud as nuvem
+import heimdall_lab as nuvem
 
 
 class Eco(nuvem.ManipuladorBase):

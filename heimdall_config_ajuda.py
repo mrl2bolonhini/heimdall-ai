@@ -21,10 +21,10 @@ DESCRICOES = {
     "HEIMDALL_CFACCESS_CONVIDADOS": "E-mails de convidados autorizados pelo Cloudflare Access, separados por vírgula.",
     "HEIMDALL_CFACCESS_EMAILS": "E-mails autorizados pelo Cloudflare Access, separados por vírgula.",
     "HEIMDALL_CFACCESS_EQUIPE": "Domínio ou lista da equipe autorizada pelo Cloudflare Access.",
-    "HEIMDALL_CLOUD_ENDPOINT": "Endereço S3 do armazenamento do Cloud, quando não é o da AWS.",
-    "HEIMDALL_CLOUD_MAX_MB": "Tamanho máximo de um envio ao Cloud, em MB.",
-    "HEIMDALL_CLOUD_REGIAO": "Região do armazenamento S3 usado pelo Cloud.",
-    "HEIMDALL_CLOUD_SENHA_HASH": "Senha de entrada do Cloud e do Controls, guardada como hash. Se errar, perde o acesso ao painel.",
+    "HEIMDALL_LAB_ENDPOINT": "Endereço S3 do armazenamento do Lab, quando não é o da AWS.",
+    "HEIMDALL_LAB_MAX_MB": "Tamanho máximo de um envio ao Lab, em MB.",
+    "HEIMDALL_LAB_REGIAO": "Região do armazenamento S3 usado pelo Lab.",
+    "HEIMDALL_CLOUD_SENHA_HASH": "Senha de entrada do Lab e do Controls, guardada como hash. Se errar, perde o acesso ao painel.",
     "HEIMDALL_CLOUD_SESSAO_HORAS": "Horas que uma sessão aberta continua valendo.",
     "HEIMDALL_CLOUD_TOTP_SEGREDO": "Segredo do código de seis dígitos (TOTP) da entrada. Se errar, perde o acesso ao painel.",
     "HEIMDALL_CODE_MODEL": "Modelo usado para escrever código e fluxos.",
@@ -163,7 +163,7 @@ DESCRICOES = {
     "TZ": "Fuso horário do sistema.",
 }
 
-_SERVICO = {"AGENTE": "do agente do Mac", "CLOUD": "do Cloud", "CONTROLS": "do Controls", "FINANCE": "do Finance", "JOGOS": "do Games", "NEWS": "do News",
+_SERVICO = {"AGENTE": "do agente do Mac", "CLOUD": "do Lab", "LAB": "do Lab", "CONTROLS": "do Controls", "FINANCE": "do Finance", "JOGOS": "do Games", "NEWS": "do News",
             "NOTAS": "do Notes", "SAUDE": "do Health", "TERMINAL": "do Terminal"}
 _SUFIXOS = (("_HOSTS", "Hosts (domínios) que o serviço aceita, separados por vírgula."), ("_HOST", "Endereço em que o serviço escuta (127.0.0.1 só neste Mac)."),
             ("_PORT", "Porta em que o serviço escuta."), ("_TOKEN", "Senha de acesso."), ("_URL", "Endereço do serviço."), ("_MODELO", "Nome do modelo usado."),

@@ -196,14 +196,14 @@ SERVICOS = [
     ("Uptime Kuma", "Painel de disponibilidade dos serviços.", "3001", "start_heimdall.sh (HEIMDALL_MONITORING=0 desliga)"),
     ("Dozzle", "Leitor de logs dos contêineres.", "8081", "start_heimdall.sh (HEIMDALL_MONITORING=0 desliga)"),
     ("Emulador de AWS (Moto ou LocalStack)", "Para testar código de AWS sem custo.", "4566", "start_heimdall.sh (HEIMDALL_AWS_EMULATOR)"),
-    ("Heimdall Learn", "Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Heimdall Cloud.", "8019", "desligado por padrão: HEIMDALL_LEARN=1 no .env, com senha e código configurados"),
-    ("Heimdall Notes", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
-    ("Heimdall News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
-    ("Heimdall Games", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
-    ("Heimdall Finance", "Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8016", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Learn", "Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Heimdall Lab.", "8019", "desligado por padrão: HEIMDALL_LEARN=1 no .env, com senha e código configurados"),
+    ("Heimdall Notes", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Games", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Finance", "Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1.", "8016", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Heimdall Controls", "Terminal completo e acessível (um shell de verdade no Mac, com a pasta e as variáveis persistentes, a saída no próprio campo de comando, como num terminal, e atalhos de teclado para interromper, limpar, reiniciar e copiar a última saída ou as últimas N) e painel de serviços com botões de atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra: Cloudflare Access (Authenticator) ou senha e código de 6 dígitos, e cada comando fica anotado sem a saída. Escuta só em 127.0.0.1.", "8017", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
-    ("Heimdall Health", "Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela, exames de laboratório, receitas e encaminhamentos já conferidos, e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Cloud. Escuta só em 127.0.0.1.", "8013", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
-    ("Heimdall Cloud", "Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare.", "8010", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Health", "Painel somente de leitura com as análises do app Saúde: como você está agora, tendências, sono, atividade, recuperação, coração e ECG, treinos, sintomas, humor, medicamentos, relatório da semana, diário em tabela, exames de laboratório, receitas e encaminhamentos já conferidos, e o estado dos dados (mostra se a exportação contínua do iPhone parou). Mesmo login do Heimdall Lab. Escuta só em 127.0.0.1.", "8013", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
+    ("Heimdall Lab", "Painel web do emulador de AWS (S3, Lambda, Glue, Athena e console geral), com senha e código de 6 dígitos. Escuta só em 127.0.0.1; o acesso público é pelo túnel Cloudflare.", "8010", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
 ]
 
 TECNOLOGIAS = [
@@ -218,7 +218,7 @@ TECNOLOGIAS = [
     ("Bark", "https://github.com/Finb/Bark", "Aplicativo de notificações para o iPhone."),
     ("Docker", "https://www.docker.com", "Contêineres dos serviços auxiliares."),
     ("LocalStack e Moto", "https://www.localstack.cloud", "Emulam a AWS no computador (S3, Lambda, Glue, Athena e outros), para estudar e testar código sem custo."),
-    ("boto3", "https://boto3.amazonaws.com/v1/documentation/api/latest/index.html", "Biblioteca da AWS em Python, usada pelo painel Heimdall Cloud para falar com o emulador."),
+    ("boto3", "https://boto3.amazonaws.com/v1/documentation/api/latest/index.html", "Biblioteca da AWS em Python, usada pelo painel Heimdall Lab para falar com o emulador."),
     ("Tailscale", "https://tailscale.com", "Rede privada que liga o celular ao computador."),
     ("Cloudflare", "https://www.cloudflare.com", "Domínio, DNS e túnel de acesso ao chat."),
     ("GitHub e GitHub Pages", "https://pages.github.com", "Código e esta documentação."),
@@ -263,7 +263,7 @@ SCRIPTS = [
     ("heimdall_avisos_mac.py", "Avisos nativos no Mac: grava o aviso completo (título e texto, inclusive de saúde e finanças) em db/alerts/, só do dono; o app do Mac lê a pasta e mostra a notificação do macOS. Desligar: HEIMDALL_AVISOS_MAC=0."),
     ("heimdall_triagem.py", "Triagem obrigatória de avisos importantes. Cria lembretes na lista \"Heimdall: Triagem\" do app Lembretes (menções do Diário da Justiça, alertas de saúde, e-mails suspeitos ou urgentes e achados de privacidade de risco médio ou alto) e insiste pelo Bark até você concluir, reclassificar ou adiar. Roda dentro do agente do Mac."),
     ("heimdall_email_oficial.py", "Vigia o Gmail a cada hora, só lendo. Confere se e-mails de serviços públicos (INSS, gov.br, FGTS, Receita, Serasa e outros) são autênticos, resume os verdadeiros, alerta sobre imitações e cria evento e lembrete quando há prazo. Nunca segue links."),
-    ("heimdall_learn.py", "Heimdall Learn (porta 8019): site de estudos. Tela inicial com a lista de temas; ao escolher um tema, abas pela categoria (Lições e Exercícios, ou Estudos, e Cards e Progresso) com tudo filtrado pelo tema; Ajustes é um botão que abre tela sem abas. Pastas com categoria e tipo, subpastas que herdam, importação de documentos (multipart, limite de tamanho, nome e extensão conferidos). Mesmo login do Cloud; só sobe com HEIMDALL_LEARN=1."),
+    ("heimdall_learn.py", "Heimdall Learn (porta 8019): site de estudos. Tela inicial com a lista de temas; ao escolher um tema, abas pela categoria (Lições e Exercícios, ou Estudos, e Cards e Progresso) com tudo filtrado pelo tema; Ajustes é um botão que abre tela sem abas. Pastas com categoria e tipo, subpastas que herdam, importação de documentos (multipart, limite de tamanho, nome e extensão conferidos). Mesmo login do Lab; só sobe com HEIMDALL_LEARN=1."),
     ("heimdall_learn_dados.py", "Dados do Heimdall Learn: banco próprio db/learn.db (tipos, pastas, documentos), sincronização com knowledge/, criação de pastas e importação de arquivos, tudo conferido contra fuga de pasta."),
     ("tests/learn/teste_learn_dados.py", "Testa o banco do Learn: pastas, tipos, herança, sincronização, recusas e importação."),
     ("heimdall_learn_tipos.py", "Catálogo dos tipos de estudo do Learn (idiomas, programação, exatas, arquitetura e dados, filosofia, humanas, direito, medicina, esoterismo, outro): categoria sugerida, o que a IA faz e evita, regras do prompt."),
@@ -293,9 +293,9 @@ SCRIPTS = [
     ("tests/learn/teste_learn_painel.py", "Testa as abas Exercícios e Progresso: gabarito escondido, filtro dos erros, sequência de dias e acertos por tipo."),
     ("tests/learn/teste_learn_ferramentas.py", "Testa as ferramentas de leitura do modelo Learn, sempre somente leitura."),
     ("tests/learn/teste_learn_site.py", "Testa o site do Learn: login, host, CSRF, criação, importação multipart e acessibilidade."),
-    ("heimdall_notas.py", "Heimdall Notes (porta 8011): site para ler as notas de estudo do cofre e ouvir os áudios, com velocidade, voltar e avançar 15 segundos, busca e os documentos de knowledge/. Mesmo login do Heimdall Cloud; mostra o cofre inteiro, menos o Digest."),
+    ("heimdall_notas.py", "Heimdall Notes (porta 8011): site para ler as notas de estudo do cofre e ouvir os áudios, com velocidade, voltar e avançar 15 segundos, busca e os documentos de knowledge/. Mesmo login do Heimdall Lab; mostra o cofre inteiro, menos o Digest."),
     ("heimdall_cfaccess.py", "Entrada pelo Cloudflare Access com Microsoft Entra ID: a aprovação chega como notificação no Microsoft Authenticator e os painéis abrem a sessão sem senha nem código de 6 dígitos. Confere a assinatura do Cloudflare só com a biblioteca padrão. Desligado até haver HEIMDALL_CFACCESS_EQUIPE, _AUD e _EMAILS no .env; --status confere a configuração. Passo a passo em guides/LEIAME_autenticacao_microsoft.txt."),
-    ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Cloud, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
+    ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Lab, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
     ("heimdall_news.py", "Heimdall News (porta 8012): lê os feeds de noticias_fontes.json de 30 em 30 minutos, tira repetidas, traduz títulos em inglês e pede a um modelo local um resumo de cada matéria (sempre marcado como feito por IA). Guarda 30 dias na tabela noticias do banco pessoal, mostra as últimas 24 horas em páginas de 10 e serve feeds RSS (geral, por categoria e OPML) em endereços com chave secreta."),
     ("heimdall_design.py", "Heimdall Design: o padrão de interface igual em todos os sites (link lê, botão age): botão de ação como formulário GET, com nome acessível, e o CSS compartilhado."),
     ("CLAUDE.md", "Regras do repositório: toda atualização de interface segue o Heimdall Design."),
@@ -322,7 +322,7 @@ SCRIPTS = [
     ("tests/core/teste_diagnostico.py", "Teste do diagnóstico: análise dos textos do macOS sem depender do Mac."),
     ("tests/design/teste_design.py", "Teste do Heimdall Design: falha se um link de painel tiver texto de ação, se algum contraste de cor ficar abaixo do mínimo, se o foco for removido ou houver cor solta fora do Heimdall Design."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Heimdall News, Notas e Finance: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
-    ("heimdall_jogos.py", "Heimdall Games (porta 8014): entrega os jogos da pasta games/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Cloud, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
+    ("heimdall_jogos.py", "Heimdall Games (porta 8014): entrega os jogos da pasta games/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Lab, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
     ("financas_planilhas.py", "Planilhas do Finance: lê xlsx (sem biblioteca externa) e csv, descobre o tipo (gastos, investimentos, empréstimos, outros) e o papel de cada coluna por palavras do cabeçalho e, na dúvida, pelo modelo de linguagem (só o cabeçalho e 5 linhas; HEIMDALL_FINANCE_PLANILHAS_NUVEM=0 mantém no modelo local), grava as linhas em conjuntos sem duplicar, aprende o layout pela assinatura dos cabeçalhos para os próximos arquivos, guarda dúvidas com o arquivo e pergunta ao usuário, e mantém as visões gravadas (colunas, ordem, ordenação, filtro, agrupamento com soma). Gastos também alimentam as transações."),
     ("heimdall_finance_planilhas.py", "Páginas do Finance para Planilhas (importação, dúvidas, conjuntos), Investimentos, Empréstimos e Visões (personalizar colunas com botões de mover, tirar e incluir). Ações em formulários POST com token."),
     ("tests/finance/teste_planilhas.py", "Teste das planilhas do Finance: xlsx montado à mão, datas e porcentagens do Excel, classificação, aprendizado do layout, dúvidas, modelo simulado, visões e pasta de entrada. Sem rede."),
@@ -330,7 +330,7 @@ SCRIPTS = [
     ("financas_pluggy_dados.py", "Tudo o que o Pluggy entrega além das transações: contas e cartões (saldo, limite, fechamento), faturas, investimentos, movimentações de investimentos e empréstimos e financiamentos, em conjuntos com foto diária (histórico de saldos e posições). Nenhuma coluna é descartada; a identidade (CPF, endereço) fica de fora de propósito. Falha de produto não atrapalha as transações."),
     ("tests/finance/teste_finance_pluggy_dados.py", "Teste da coleta extra do Pluggy com API simulada, das categorias de crédito (veículo, imóvel, consignado, pessoal) e das abas que os dados criam."),
     ("tests/finance/teste_finance_planilhas.py", "Teste das páginas de planilhas, investimentos, empréstimos e visões com o servidor do Finance temporário."),
-    ("heimdall_finance.py", "Heimdall Finance (porta 8016): painel web das finanças (resumo do mês, transações, tendências, importação, regras) atrás do mesmo login do Cloud, com CSRF em todo envio e política de conteúdo sem script. Endereço de fora: finance.heimdall-ai.tech."),
+    ("heimdall_finance.py", "Heimdall Finance (porta 8016): painel web das finanças (resumo do mês, transações, tendências, importação, regras) atrás do mesmo login do Lab, com CSRF em todo envio e política de conteúdo sem script. Endereço de fora: finance.heimdall-ai.tech."),
     ("financas_nucleo.py", "Núcleo do Heimdall Finance: banco SQLite local, leitura de extratos OFX e CSV (formatos e valores brasileiros), deduplicação, categorias por regras (as suas vencem as padrão) e relatórios de resumo e tendências. Sem internet."),
     ("financas_arquivos.py", "Arquivos do Heimdall Finance: leitura de PDF de extrato e fatura (texto extraído por pypdf ou pdftotext e lido por linhas de data, descrição e valor, com conferência do total do documento), identificação do banco e do tipo, inspeção anônima do layout (letras viram x, números viram 9) e a pasta de entrada vigiada. Sem internet."),
     ("financas_cli.py", "Comandos de terminal do Finance para arquivos: --inspect, --explain, --preview, --import, --inbox e --folder (heimdall finance ...)."),
@@ -343,7 +343,7 @@ SCRIPTS = [
     ("tests/account/teste_usuarios.py", "Testa a lista de usuários e a sincronização, com uma Cloudflare de mentira (servidor local)."),
     ("heimdall_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e pausa e retoma o monitor de um serviço, com usuário e senha no .env ou, se o login do Kuma estiver desligado, sem senha."),
     ("verificar_access.py", "Confere, sem entrar, se um endereço público está atrás do Cloudflare Access. O start_heimdall.sh o usa antes de ligar o login do Open WebUI pelo Access (HEIMDALL_WEBUI_ACCESS=1); heimdall chat --check roda à mão."),
-    ("tests/cloud/teste_verificar_access.py", "Testa o verificar_access.py com servidores locais que imitam o Access, um site aberto e um endereço sem resposta."),
+    ("tests/cloudflare/teste_verificar_access.py", "Testa o verificar_access.py com servidores locais que imitam o Access, um site aberto e um endereço sem resposta."),
     ("heimdall_catalogo.py", "Catalogação de notas do Heimdall Notes pela IA local: separa ideias, contatos, endereços, lembretes e eventos. Lembrete e evento com data vão direto para o Lembretes e o Calendário (com Desfazer); data duvidosa fica pendente de confirmação; ideias, contatos e endereços vão para o Notion; saúde e finanças nunca vão para o Notion."),
     ("heimdall_notion.py", "Cliente mínimo da API do Notion (token e três bancos no .env). Cria páginas de ideia, contato e endereço, arquiva no Desfazer; heimdall notion confere a ligação."),
     ("tests/notes/teste_catalogo.py", "Testa a catalogação (classificação, datas, privacidade, Desfazer) e o cliente do Notion com uma API simulada. Sem rede e sem modelo."),
@@ -362,14 +362,14 @@ SCRIPTS = [
     ("heimdall_conta_info.py", "Texto do tour do Account: o que cada serviço faz, como configurar e o que muda quando houver mais de um usuário."),
     ("tests/account/teste_account.py", "Testa o Heimdall Account: tour por papel, Integrações (csrf, origem, ativar e desativar), quem.json com CORS só para os sites do Heimdall, 403 e 401 sem Access, porta local e cabeçalhos."),
     ("tests/account/teste_site_conta.py", "Testa no navegador o bloco de conta das páginas do site: Entrar sem login; nome, e-mail e serviços com login; HTML do servidor nunca interpretado."),
-    ("heimdall_conta.py", "Menu Conta de todos os serviços: nome (da conta Microsoft, pelo Cloudflare Access) e e-mail de quem entrou, e links para os serviços a que a pessoa tem acesso (dono vê todos; convidado só os liberados). O heimdall_cloud.cabecalho o inclui em todas as páginas."),
+    ("heimdall_conta.py", "Menu Conta de todos os serviços: nome (da conta Microsoft, pelo Cloudflare Access) e e-mail de quem entrou, e links para os serviços a que a pessoa tem acesso (dono vê todos; convidado só os liberados). O heimdall_lab.cabecalho o inclui em todas as páginas."),
     ("tests/account/teste_conta.py", "Testa o menu Conta: nome e e-mail, serviços por papel, texto escapado, nome guardado na memória, falha sem nome e um servidor real que vê os cabeçalhos de cada pedido."),
     ("heimdall_versoes.py", "Versões do macOS, Python, Docker, Ollama, LiteLLM, do código do Heimdall e de cada serviço em contêiner. Usado por heimdall doctor --versions (compara com a imagem mais nova no registro) e pela Visão geral do Controls (sem rede)."),
     ("tests/core/teste_versoes.py", "Testa o heimdall_versoes.py com um docker de mentira: versões, comparação com o registro e falhas em silêncio."),
     ("tests/controls/teste_servicos.py", "Testa o catálogo, o liga e desliga de verdade de um processo de teste, o vigia e a leitura do Kuma."),
     ("tests/controls/teste_controls.py", "Testa o Heimdall Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade."),
     ("tests/controls/teste_controls_navegador.py", "Testa o terminal do Controls num Chrome de verdade (Playwright): saída no próprio campo, resposta a programas, atalhos de teclado. Pula se não houver Playwright ou Chrome."),
-    ("heimdall_painel_saude.py", "Heimdall Health (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Cloud (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
+    ("heimdall_painel_saude.py", "Heimdall Health (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Lab (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
     ("heimdall_voz.py", "Dicionário de pronúncia: troca palavras por uma grafia que a voz do macOS lê certo (por exemplo, Heimdall vira Háimdal), no anúncio falado do subir.sh e no áudio das notas. Aceita --importar arquivo.csv para trazer as pronúncias do VoiceOver."),
     ("pronuncias.txt", "Pronúncias que vêm com o projeto, uma por linha no formato palavra = como falar. As suas ficam em pronuncias.local.txt, que não vai para o GitHub."),
     ("heimdall_agenda.py", "Regra única entre evento do Calendário e lembrete do app Lembretes, com a tabela de cada tipo de item (consulta, renovação de receita, prazo oficial, triagem) e o envio ao agente do Mac."),
@@ -386,9 +386,9 @@ SCRIPTS = [
     ("cloudflare/teste_vigia.mjs", "Testa o vigia da Cloudflare com KV e rede de mentira, contando as gravações por dia (limite gratuito: 1.000): node cloudflare/teste_vigia.mjs."),
     ("cloudflare/teste_saude_caixa.mjs", "Testa a caixa de entrada da saúde com KV e rede de mentira: node cloudflare/teste_saude_caixa.mjs."),
     ("cloudflare_chave.py", "Grava no .env o token da Cloudflare (pedido sem aparecer na tela) para a reserva de resumos e a leitura de páginas com navegador do News; descobre o número da conta sozinho."),
-    ("cloudflare/vigia.js", "Worker da Cloudflare (cron de 5 em 5 minutos) que confere de fora de casa se chat, flows, cloud, notes, news e health respondem e avisa por e-mail quando algo cai ou volta. O destino do aviso fica na variável ALERTA_PARA, só na Cloudflare."),
+    ("cloudflare/vigia.js", "Worker da Cloudflare (cron de 5 em 5 minutos) que confere de fora de casa se chat, flows, lab, notes, news e health respondem e avisa por e-mail quando algo cai ou volta. O destino do aviso fica na variável ALERTA_PARA, só na Cloudflare."),
     ("noticias_fontes.json", "Fontes do Heimdall News (categoria, nome, endereço do feed, idioma, limite por atualização). Edite à vontade; é relido a cada atualização."),
-    ("heimdall_cloud.py", "Painel web do emulador de AWS (porta 8010): S3, Lambda, Glue (bancos, tabelas, crawlers e jobs), Athena (consultas SQL) e um console geral que chama qualquer operação de qualquer serviço. Entrada com senha (hash PBKDF2) e código de 6 dígitos, limite de tentativas, sessão com validade e proteção contra CSRF. Escuta só em 127.0.0.1 e nunca expõe a porta do emulador."),
+    ("heimdall_lab.py", "Painel web do emulador de AWS (porta 8010): S3, Lambda, Glue (bancos, tabelas, crawlers e jobs), Athena (consultas SQL) e um console geral que chama qualquer operação de qualquer serviço. Entrada com senha (hash PBKDF2) e código de 6 dígitos, limite de tentativas, sessão com validade e proteção contra CSRF. Escuta só em 127.0.0.1 e nunca expõe a porta do emulador."),
     ("ingest_docs.py", "Indexa os documentos de knowledge/ no Qdrant, de forma incremental. Cada subpasta vira um tema."),
     ("limpar_privadas.py", "Apaga do Second Brain o que veio de notas que depois foram para uma pasta privada."),
     ("limpar_espelhos.py", "Remove espelhos duplicados do Cérebro."),
@@ -406,7 +406,7 @@ COMANDOS = [
         ("Subir uma vez só, guardando o log e avisando quando tudo estiver no ar (aceita os argumentos do start_heimdall.sh)", "./subir.sh"),
         ("Ver agora o que está no ar, sem subir nada", "./subir.sh --status"),
         ("Ver as últimas linhas do log da subida atual", "./subir.sh --log"),
-        ("Ver o log de um serviço (mcp, mcp_public, mcp_dados, agente, cloud, notas, news, open_terminal, ingest)", "./subir.sh --log notas"),
+        ("Ver o log de um serviço (mcp, mcp_public, mcp_dados, agente, lab, notas, news, open_terminal, ingest)", "./subir.sh --log notas"),
         ("Listar os logs, todos na pasta logs/", "./subir.sh --logs"),
         ("Apagar os logs antigos que ficavam soltos na pasta do projeto", "./subir.sh --limpar"),
         ("Encerrar a subida em andamento e subir de novo", "./subir.sh --reiniciar"),
@@ -415,11 +415,11 @@ COMANDOS = [
         ("Subir e indexar os documentos novos antes", "nohup bash start_heimdall.sh --ingest > heimdall.log 2>&1 &"),
         ("Atualizar as imagens Docker (com backup) ao subir", "nohup bash start_heimdall.sh --update > heimdall.log 2>&1 &"),
         ("Reiniciar só o agente do Mac", "pkill -f heimdall_agente.py   # depois suba o sistema como de costume"),
-        ("Nova senha e novo código de 6 dígitos (valem para Cloud, Notas, News e Saúde)", "python3 heimdall_acesso.py --tudo"),
+        ("Nova senha e novo código de 6 dígitos (valem para Lab, Notas, News e Saúde)", "python3 heimdall_acesso.py --tudo"),
         ("Trocar só a senha, mantendo o código de 6 dígitos", "python3 heimdall_acesso.py --senha"),
         ("Gerar só um novo código de 6 dígitos", "python3 heimdall_acesso.py --codigo"),
         ("Ver se a entrada pelo Cloudflare Access (aprovação no Microsoft Authenticator) está ligada", "python3 heimdall_cfaccess.py --status"),
-        ("Reiniciar só o painel do emulador de AWS", "pkill -f heimdall_cloud.py   # depois suba o sistema como de costume"),
+        ("Reiniciar só o painel do emulador de AWS", "pkill -f heimdall_lab.py   # depois suba o sistema como de costume"),
         ("Ver o final do log", "tail -30 heimdall.log"),
     ]),
     ("Saúde: análises no terminal", [
@@ -468,7 +468,7 @@ COMANDOS = [
         ("Gravar um arquivo OPML com todos os feeds (traz a chave secreta: importe e apague)", "python3 heimdall_news.py --opml"),
         ("Atualizar as notícias agora, uma vez", "python3 heimdall_news.py --uma-vez"),
         ("Reiniciar só o Heimdall Notes", "pkill -f heimdall_notas.py   # depois suba o sistema como de costume"),
-        ("Teste do painel do emulador de AWS (sem rede)", "python3 tests/cloud/teste_cloud.py"),
+        ("Teste do painel do emulador de AWS (sem rede)", "python3 tests/lab/teste_lab.py"),
         ("Teste do Heimdall Notes (sem rede)", "python3 tests/notes/teste_notas.py"),
         ("Teste do Heimdall News (sem rede)", "python3 tests/news/teste_news.py"),
         ("Teste do Heimdall Games (servidor, regras e interface)", "python3 tests/games/teste_jogos.py"),
@@ -605,7 +605,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
         f"<tr><th scope=\"row\">{H(a)} sobre {H(b)}</th><td>{_d.contraste(_d.CORES_CLARO[a], _d.CORES_CLARO[b]):.1f} para 1</td><td>{_d.contraste(_d.CORES_ESCURO[a], _d.CORES_ESCURO[b]):.1f} para 1</td><td>{str(m).replace('.', ',')} para 1</td></tr>" for a, b, m in _d.PARES_DE_CONTRASTE)
     out["design.html"] = pagina("design.html", "Design", "Heimdall Design: cores, tipografia, componentes, acessibilidade e o passo a passo para criar páginas dos sites do Heimdall.", f"""
 <h1>Heimdall Design</h1>
-<p>O Heimdall Design é a única fonte de tudo que é aparência e comportamento de interface nos sites do Heimdall (Cloud, Notas, News, Saúde, Jogos e Finance): cores, tipografia, medidas, componentes, acessibilidade e tom do texto. Ele foi pensado para leitor de tela e teclado. <strong>Toda página nova e toda mudança numa página existente segue esta página.</strong> O código está em <code>heimdall_design.py</code> (cores, tipografia, CSS e botão) e <code>heimdall_paginacao.py</code> (paginação); o teste <code>tests/design/teste_design.py</code> confere as regras que dá para conferir sozinho; e o arquivo <code>CLAUDE.md</code> do repositório obriga a seguir o padrão em cada atualização.</p>
+<p>O Heimdall Design é a única fonte de tudo que é aparência e comportamento de interface nos sites do Heimdall (Lab, Notas, News, Saúde, Jogos e Finance): cores, tipografia, medidas, componentes, acessibilidade e tom do texto. Ele foi pensado para leitor de tela e teclado. <strong>Toda página nova e toda mudança numa página existente segue esta página.</strong> O código está em <code>heimdall_design.py</code> (cores, tipografia, CSS e botão) e <code>heimdall_paginacao.py</code> (paginação); o teste <code>tests/design/teste_design.py</code> confere as regras que dá para conferir sozinho; e o arquivo <code>CLAUDE.md</code> do repositório obriga a seguir o padrão em cada atualização.</p>
 <section aria-labelledby="regra"><h2 id="regra">1. Link lê, botão age</h2>
 <ol><li><strong>Link</strong> leva a outro lugar para ler: o menu, "Voltar", o nome de um item em lista ou tabela (um bucket, uma nota, um jogo, uma categoria), "Leia mais" e os links dentro de um texto.</li>
 <li><strong>Botão</strong> faz uma ação ou comando, mesmo quando o resultado é abrir outra página: baixar, atualizar, continuar, confirmar, alterar, classificar, importar, trocar a visão ou o período, paginar, "Ver todos..." e "Ver resultado".</li>
@@ -627,7 +627,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Alvos de clique e toque: altura mínima de {_d.ALTURA_MINIMA_ALVO} (cerca de 44 px) em botões de paginação e botões de ação.</li>
 <li>Foco do teclado: contorno de 3 px na cor de destaque, com recuo de 2 px, sempre visível. Nunca remover o contorno do foco.</li></ul></section>
 <section aria-labelledby="comp"><h2 id="comp">4. Componentes</h2>
-<ul><li><strong>Cabeçalho de marca:</strong> o símbolo (decorativo, escondido do leitor de tela) mais o nome do serviço, o menu e a faixa de seis cores. Peças em <code>heimdall_cloud.cabecalho</code> e <code>SIMBOLO</code>.</li>
+<ul><li><strong>Cabeçalho de marca:</strong> o símbolo (decorativo, escondido do leitor de tela) mais o nome do serviço, o menu e a faixa de seis cores. Peças em <code>heimdall_lab.cabecalho</code> e <code>SIMBOLO</code>.</li>
 <li><strong>Menu:</strong> lista de links numa região <code>nav</code> com nome ("Principal"); a página atual leva aria-current="page" e fica em negrito com sublinhado dourado.</li>
 <li><strong>Tabela:</strong> sempre com <code>caption</code>, <code>th scope="col"</code> (e <code>scope="row"</code> quando a primeira célula nomeia a linha). Quando há muitas colunas, prefira lista com rótulos a tabela.</li>
 <li><strong>Formulário:</strong> cada campo com <code>label</code> ligado por for/id, um campo por linha, autocomplete correto, botão de envio com verbo claro ("Entrar", "Importar extrato").</li>
@@ -651,13 +651,13 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Mensagem de erro: o que houve, por que, o que fazer agora. Nunca só um código.</li>
 <li>Dados de saúde e finanças aparecem só nas páginas protegidas e nunca vão em avisos, notificações ou endereços (URL).</li></ul></section>
 <section aria-labelledby="novo"><h2 id="novo">7. Ao criar ou mudar uma página</h2>
-<ol><li>Importe <code>heimdall_design</code> e use o <code>CSS</code> dele (por <code>heimdall_cloud.CSS</code>). Não escreva cor, tamanho de fonte nem foco por conta própria: use as variáveis.</li>
+<ol><li>Importe <code>heimdall_design</code> e use o <code>CSS</code> dele (por <code>heimdall_lab.CSS</code>). Não escreva cor, tamanho de fonte nem foco por conta própria: use as variáveis.</li>
 <li>Use <code>design.botao</code> para qualquer ação de consulta e <code>heimdall_paginacao</code> para listas longas.</li>
-<li>Monte a página pela estrutura padrão (<code>heimdall_cloud.pagina</code> e <code>cabecalho</code>).</li>
+<li>Monte a página pela estrutura padrão (<code>heimdall_lab.pagina</code> e <code>cabecalho</code>).</li>
 <li>Passe pela lista de acessibilidade da seção 5.</li>
 <li>Rode <code>heimdall test --run design</code> e o teste do serviço mexido.</li>
-<li>Abas de navegação entre páginas (<code>design.abas</code> e <code>design.painel_da_aba</code>, com o <code>design.SCRIPT_ABAS</code> e um script com nonce na página): <code>role="tablist"</code> com um link <code>role="tab"</code> por página, <code>aria-selected</code> na aberta, setas, Home e End movem o foco, Option+Shift+número abre a aba. O conteúdo fica num <code>role="tabpanel"</code> dentro de <code>main</code>. É o padrão de todos os serviços (Cloud, Notes, News, Health, Games, Finance e Controls): nada de menu lateral nem lista de links. Ajudantes: <code>design.nav_abas</code>, <code>design.com_abas</code>, <code>design.topo</code>, <code>design.script</code> (script com nonce novo) e <code>design.csp</code> (acrescenta o nonce à política de segurança). O Account, de uma página só, não tem abas. Com mais de 9 abas (Health, Finance), as 9 primeiras são abas e as outras vão para o menu Mais, um <code>&lt;details&gt;</code> que abre com Option+Shift+0 (de novo fecha; Esc também) e traz links comuns; se a página aberta está no Mais, o resumo diz qual. Distribuição: até 5 abas ficam numa linha; de 6 a 9 as abas se dividem em duas linhas equilibradas (6 = 3+3, 7 = 4+3, 8 = 4+4, 9 = 5+4); com mais de 9, são 5 na primeira linha, 4 na segunda e o menu Mais no quinto lugar da segunda linha (<code>design.por_linha</code>). Em tela estreita as abas ficam em duas colunas. A ordem de leitura e os atalhos Option+Shift+1 a 9 e 0 não mudam.</li>
-<li>Perguntar (<code>heimdall_perguntar.bloco_html</code>): campo no fim do painel da aba nas telas em que faz sentido (Finance, Health, News e Learn, em todas as abas do tema; o Notes ganha o seu à parte), sempre com o modelo local e só com os dados daquela tela. Cloud, Games e Controls não têm.</li>
+<li>Abas de navegação entre páginas (<code>design.abas</code> e <code>design.painel_da_aba</code>, com o <code>design.SCRIPT_ABAS</code> e um script com nonce na página): <code>role="tablist"</code> com um link <code>role="tab"</code> por página, <code>aria-selected</code> na aberta, setas, Home e End movem o foco, Option+Shift+número abre a aba. O conteúdo fica num <code>role="tabpanel"</code> dentro de <code>main</code>. É o padrão de todos os serviços (Lab, Notes, News, Health, Games, Finance e Controls): nada de menu lateral nem lista de links. Ajudantes: <code>design.nav_abas</code>, <code>design.com_abas</code>, <code>design.topo</code>, <code>design.script</code> (script com nonce novo) e <code>design.csp</code> (acrescenta o nonce à política de segurança). O Account, de uma página só, não tem abas. Com mais de 9 abas (Health, Finance), as 9 primeiras são abas e as outras vão para o menu Mais, um <code>&lt;details&gt;</code> que abre com Option+Shift+0 (de novo fecha; Esc também) e traz links comuns; se a página aberta está no Mais, o resumo diz qual. Distribuição: até 5 abas ficam numa linha; de 6 a 9 as abas se dividem em duas linhas equilibradas (6 = 3+3, 7 = 4+3, 8 = 4+4, 9 = 5+4); com mais de 9, são 5 na primeira linha, 4 na segunda e o menu Mais no quinto lugar da segunda linha (<code>design.por_linha</code>). Em tela estreita as abas ficam em duas colunas. A ordem de leitura e os atalhos Option+Shift+1 a 9 e 0 não mudam.</li>
+<li>Perguntar (<code>heimdall_perguntar.bloco_html</code>): campo no fim do painel da aba nas telas em que faz sentido (Finance, Health, News e Learn, em todas as abas do tema; o Notes ganha o seu à parte), sempre com o modelo local e só com os dados daquela tela. Lab, Games e Controls não têm.</li>
 <li>Fim de toda página: <code>design.rodape</code> com o link "Voltar para o topo" (alvo <code>#topo</code>) e, se houver, botões de ação antes dele. Valores secretos em campo <code>type=password</code> com botão Mostrar/Ocultar (<code>design.SCRIPT_SEGREDO</code>).</li>
 <li>Accordions (<code>&lt;details&gt;&lt;summary&gt;</code>): Esc fecha o aberto em que o foco está e devolve o foco ao resumo (<code>design.SCRIPT_DETALHES</code>).</li>
 <li>Grupo que abre e fecha: <code>details class="grupo"</code> com <code>summary</code> que diz o nome e a contagem. Menu de conta: <code>details class="conta"</code> no topo, com o nome de quem entrou e o Sair.</li>
@@ -677,7 +677,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="saudecam"><h2 id="saudecam">Dados de saúde e painéis</h2>
 <ol><li>O iPhone e o Apple Watch guardam os dados no app Saúde. O app Health Auto Export manda os números ao n8n por um webhook, em automações agendadas (métricas gerais e frequência cardíaca de hora em hora, o resto uma vez por dia).</li>
 <li>O n8n repassa ao agente do Mac, que grava no banco pessoal (SQLite, só nesta máquina).</li>
-<li>Seis serviços web leem o banco e os arquivos do Mac: Cloud (8010), Notas (8011), News (8012), Saúde (8013) e Jogos (8014, que não lê nada, só entrega os jogos) e Finance (8016, com banco próprio só das suas finanças). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
+<li>Seis serviços web leem o banco e os arquivos do Mac: Lab (8010), Notas (8011), News (8012), Saúde (8013) e Jogos (8014, que não lê nada, só entrega os jogos) e Finance (8016, com banco próprio só das suas finanças). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
 <li>Aos domingos, às 9h, o n8n pede o relatório da semana: ele vira nota com áudio e um aviso no Bark sem números.</li></ol></section>
 <section aria-labelledby="cfarq"><h2 id="cfarq">Serviços da Cloudflare</h2>
 <ol><li><strong>Túnel</strong> leva os endereços .heimdall-ai.tech até o Mac, sem abrir portas.</li>
@@ -828,11 +828,11 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
         "".join("<li><strong>%s</strong>%s</li>" % (H(t), (": " + H(d)) if d else "") for t, d in e["itens"])) for k, e in enumerate(etapas)) or "<p>Sem itens ainda.</p>"
     out["roadmap.html"] = pagina("roadmap.html", "Roadmap", "Próximos recursos do Heimdall-ai: o que está em andamento, o que vem em seguida e as ideias em avaliação.",
                                  f"<h1>Roadmap</h1><p>{H(intro_rm)}</p>{rm}<p>O que já foi entregue está em <a href=\"novidades.html\">Novidades</a>.</p>")
-    out["cloud.html"] = pagina("cloud.html", "Cloud", "Heimdall Cloud: painel web do emulador de AWS do Heimdall-ai, com S3, Lambda, Glue, Athena e console geral, protegido por senha e código de 6 dígitos.", """
-<h1>Cloud</h1>
-<p>O Heimdall Cloud é um painel web para usar o emulador de AWS (LocalStack, com o Moto como alternativa) pelo navegador. Serve para estudar engenharia de dados na AWS sem custo e sem depender de um console visual: as páginas são texto, títulos, tabelas e formulários simples, boas para leitor de tela.</p>
+    out["lab.html"] = pagina("lab.html", "Lab", "Heimdall Lab: painel web do emulador de AWS do Heimdall-ai, com S3, Lambda, Glue, Athena e console geral, protegido por senha e código de 6 dígitos.", """
+<h1>Lab</h1>
+<p>O Heimdall Lab é um painel web para usar o emulador de AWS (LocalStack, com o Moto como alternativa) pelo navegador. Serve para estudar engenharia de dados na AWS sem custo e sem depender de um console visual: as páginas são texto, títulos, tabelas e formulários simples, boas para leitor de tela.</p>
 <section aria-labelledby="entrar"><h2 id="entrar">Como entrar</h2>
-<ol><li>Endereço: <a href="https://cloud.heimdall-ai.tech">cloud.heimdall-ai.tech</a>. É de uso pessoal, não é aberto ao público.</li>
+<ol><li>Endereço: <a href="https://lab.heimdall-ai.tech">lab.heimdall-ai.tech</a>. É de uso pessoal, não é aberto ao público.</li>
 <li>A entrada pede uma senha forte e um código de 6 dígitos, que o aplicativo Senhas da Apple gera e troca a cada 30 segundos.</li>
 <li>O painel só responde com o computador ligado e o sistema rodando. No próprio computador, o endereço é http://localhost:8010.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que dá para fazer</h2>
@@ -846,29 +846,29 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>No Glue, crie um banco de dados.</li>
 <li>No Glue, crie uma tabela apontando para a pasta do S3, com as colunas e os tipos.</li>
 <li>No Athena, escolha o banco e rode um SELECT na tabela.</li></ol>
-<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/mrl2bolonhini/heimdall-ai/blob/main/guides/LEIAME_cloud_roteiro.txt">guides/LEIAME_cloud_roteiro.txt</a>.</p></section>
+<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/mrl2bolonhini/heimdall-ai/blob/main/guides/LEIAME_lab_roteiro.txt">guides/LEIAME_lab_roteiro.txt</a>.</p></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
 <ul><li>O painel escuta só em 127.0.0.1. A porta do emulador nunca é exposta, porque ela não tem senha.</li>
 <li>Entrada com senha (guardada só como hash PBKDF2) e código de 6 dígitos (TOTP), que não pode ser reaproveitado.</li>
 <li>Limite de tentativas por endereço e global, com bloqueio de 15 minutos.</li>
 <li>Sessão em cookie HttpOnly e SameSite=Strict, com validade, e token contra CSRF nos formulários.</li>
-<li>A sessão é única para Cloud, Notas, News e Saúde: entrando em um, os outros três já reconhecem você (o cookie vale para *.heimdall-ai.tech e é assinado com uma chave que sai da senha e da chave do código). Sair em um sai em todos; trocar a senha ou o código derruba todas as sessões. Em localhost a sessão fica só no endereço aberto.</li>
+<li>A sessão é única para Lab, Notas, News e Saúde: entrando em um, os outros três já reconhecem você (o cookie vale para *.heimdall-ai.tech e é assinado com uma chave que sai da senha e da chave do código). Sair em um sai em todos; trocar a senha ou o código derruba todas as sessões. Em localhost a sessão fica só no endereço aberto.</li>
 <li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
 <li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>HEIMDALL_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>Definir a senha e gerar o código de 6 dígitos (os mesmos valem para Cloud, Notas, News e Saúde): <code>python3 heimdall_acesso.py --tudo</code></li>
+<ul><li>Definir a senha e gerar o código de 6 dígitos (os mesmos valem para Lab, Notas, News e Saúde): <code>python3 heimdall_acesso.py --tudo</code></li>
 <li>Trocar só a senha: <code>python3 heimdall_acesso.py --senha</code></li>
 <li>Gerar só um novo código: <code>python3 heimdall_acesso.py --codigo</code></li>
 <li>Conferir se o painel está no ar: <code>curl -s http://localhost:8010/saude</code></li>
-<li>Testar o painel sem o LocalStack: <code>python3 tests/cloud/teste_cloud.py</code></li></ul>
+<li>Testar o painel sem o LocalStack: <code>python3 tests/lab/teste_lab.py</code></li></ul>
 <p>O painel sobe sozinho com o sistema quando há senha e código no <code>.env</code>. Se o LocalStack recusar a licença, o sistema avisa e usa o Moto no lugar, onde Lambda, Glue e Athena são só simulados. Veja os comandos completos em <a href="comandos.html">Comandos</a> e o histórico em <a href="novidades.html">Novidades</a>.</p></section>
 """)
-    out["notas.html"] = pagina("notas.html", "Notas", "Heimdall Notes: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Cloud.", """
+    out["notas.html"] = pagina("notas.html", "Notas", "Heimdall Notes: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Lab.", """
 <h1>Heimdall Notes</h1>
 <p>O Heimdall Notes é um site simples e agradável para ler as notas de estudo e ouvir os áudios gerados pelo Heimdall-ai. Ela lê direto do cofre (notas em Markdown e áudios .m4a) e da pasta knowledge/, sem depender de nenhum aplicativo de notas. Foi feita para leitor de tela: títulos, listas e botões com nomes claros, link para pular ao conteúdo e áudio com controles nativos.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8011, depois de subir o sistema.</li>
-<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Cloud.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Lab.</li>
 <li>Para abrir de fora de casa, o site pode ganhar um endereço público próprio pelo túnel Cloudflare, em notes.heimdall-ai.tech. Isso é opcional e só funciona com o computador ligado.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que dá para fazer</h2>
 <ul><li><strong>Ler</strong>: cada nota vira uma página limpa, com títulos, listas e tabelas, e as tags e os conceitos em linhas simples.</li>
@@ -890,7 +890,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict.</li>
 <li>Só atende os nomes de site permitidos. Os caminhos são conferidos contra fuga de pasta, todo texto é escapado e arquivos que não são PDF ou áudio só baixam, nunca executam.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>O Heimdall Notes sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Cloud).</li>
+<ul><li>O Heimdall Notes sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Lab).</li>
 <li>Conferir se está no ar: <code>curl -s http://localhost:8011/saude</code></li>
 <li>Reiniciar só ela: <code>pkill -f heimdall_notas.py</code> e subir o sistema como de costume.</li>
 <li>Testar sem rede: <code>python3 tests/notes/teste_notas.py</code></li>
@@ -901,7 +901,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <p>O Heimdall News reúne as notícias das fontes que você escolheu, atualiza de 30 em 30 minutos e mostra as das últimas 24 horas, com um resumo feito por um modelo local de IA. Também serve feeds RSS para você ler no iPhone em um app de feeds. Foi feito para leitor de tela: o título de cada notícia é um cabeçalho, o resumo vem sempre identificado como feito por IA e há link para pular ao conteúdo.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8012, depois de subir o sistema.</li>
-<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Cloud e do Heimdall Notes.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Lab e do Heimdall Notes.</li>
 <li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. O endereço já existe no túnel; o site continua privado, pois exige a senha e o código de 6 dígitos.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que mostra</h2>
 <ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com paginação em botões (Página anterior, números com a atual marcada, Próxima página e Última página).</li>
@@ -933,7 +933,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Feeds e matérias só são baixados de endereços públicos (nunca da sua rede ou do próprio Mac), e o texto deles é tratado como dado: o modelo é instruído a ignorar qualquer ordem que apareça nele.</li>
 <li>Resumos de IA podem conter erros; o site e os feeds avisam e levam à matéria original.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>Sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Cloud).</li>
+<ul><li>Sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Lab).</li>
 <li>Conferir se está no ar: <code>curl -s http://localhost:8012/saude</code></li>
 <li>Atualizar agora, uma vez: <code>python3 heimdall_news.py --uma-vez</code></li>
 <li>Testar sem rede: <code>python3 tests/news/teste_news.py</code></li>
@@ -945,7 +945,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: <code>heimdall games</code> abre o endereço público pelo Cloudflare Access; <code>heimdall games --local</code> (ou <code>-L</code>) abre http://localhost:8014 direto neste Mac, depois de subir o sistema.</li>
 <li>De fora de casa: games.heimdall-ai.tech, pelo túnel Cloudflare (veja Colocar no ar, abaixo).</li>
-<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, do Notas, do News e do Saúde.</li></ol></section>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Lab, do Notas, do News e do Saúde.</li></ol></section>
 <section aria-labelledby="lista"><h2 id="lista">Os jogos</h2>
 <p>A página inicial mostra as categorias em ordem alfabética, e cada categoria tem a sua página com os jogos: Ação (arqueiro, labirinto), Aventuras de texto (inclui a Travessia das Três Provas), Cartas (paciência e poker), Cassino (caça-níqueis, blackjack, roleta, bacará e poker caribenho), Números e lógica (senha, número secreto, sudoku, 2048), Palavras e letras (forca, cinco letras) e Tabuleiro e estratégia (xadrez, batalha naval, sonar, jogo da velha, campo minado, gramado).</p>
 <h3>Ação</h3>
@@ -1006,7 +1006,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: <code>heimdall finance</code> (http://localhost:8016), depois de subir o sistema.</li>
 <li>De fora de casa: finance.heimdall-ai.tech, pelo túnel Cloudflare.</li>
-<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, ou a aprovação no Microsoft Authenticator, se você ligar o Cloudflare Access.</li></ol></section>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Lab, ou a aprovação no Microsoft Authenticator, se você ligar o Cloudflare Access.</li></ol></section>
 <section aria-labelledby="usar"><h2 id="usar">Como usar</h2>
 <ol><li><strong>Importar:</strong> na página Importar extrato, escolha o arquivo (OFX, CSV com colunas de data, descrição e valor, ou PDF de extrato ou de fatura). O banco (Nubank, Itaú, Mercado Pago) e o tipo (conta ou cartão) são identificados pelo conteúdo e pelo nome do arquivo; deixe o nome da conta em branco para usar o que foi identificado (por exemplo "Nubank cartão") ou digite o seu. Importar o mesmo arquivo de novo não duplica nada. Em CSV de cartão em que os gastos vêm positivos, marque a opção de inverter (o CSV de fatura do Nubank no formato date, category, title, amount já é reconhecido sozinho).</li>
 <li><strong>PDF:</strong> o texto do PDF é lido linha a linha (data, descrição, valor) e o total que o próprio documento cita, por exemplo "Total da fatura", é conferido com a soma dos lançamentos. Só o PDF que confere é importado sozinho; se não conferir, a tela pede que você revise e marque a opção de importar mesmo assim. Na fatura, compra vira gasto e estorno ou pagamento vira crédito; no extrato de conta, a coluna de saldo é ignorada. Cada banco monta o PDF de um jeito, então o leitor é genérico: por isso a conferência existe.</li>
@@ -1044,7 +1044,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8013, depois de subir o sistema.</li>
 <li>De fora de casa: health.heimdall-ai.tech, pelo túnel Cloudflare.</li>
-<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Cloud, do Notas e do News. O painel é somente de leitura.</li></ol></section>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Lab, do Notas e do News. O painel é somente de leitura.</li></ol></section>
 <section aria-labelledby="dados"><h2 id="dados">De onde vêm os dados</h2>
 <ol><li><strong>Importação do histórico:</strong> exporte o app Saúde (export.zip) e rode <code>python3 heimdall_saude.py --importar ~/Downloads/export.zip</code>. Pode repetir sem duplicar.</li>
 <li><strong>Envio contínuo:</strong> o app Health Auto Export, com uma automação por tipo de dado, manda ao n8n. Métricas gerais e frequência cardíaca de hora em hora; treinos, ECG e o restante uma vez por dia.</li>

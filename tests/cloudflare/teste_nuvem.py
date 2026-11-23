@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Teste do modelo grande na nuvem (heimdall_nuvem.py) e da volta ao modelo local, sem rede e sem token real.
 
-    python3 tests/cloud/teste_nuvem.py
+    python3 tests/cloudflare/teste_nuvem.py
 """
 import sys as _sys
 from pathlib import Path as _Path

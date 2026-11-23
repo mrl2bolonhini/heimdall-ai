@@ -24,7 +24,7 @@ os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 os.environ["HEIMDALL_AVISOS_MAC"] = "0"
 (TMP / "knowledge").mkdir()
 
-import heimdall_cloud as nuvem  # noqa: E402
+import heimdall_lab as nuvem  # noqa: E402
 import heimdall_learn as site  # noqa: E402
 import heimdall_learn_cards as ca  # noqa: E402
 import heimdall_learn_dados as d  # noqa: E402

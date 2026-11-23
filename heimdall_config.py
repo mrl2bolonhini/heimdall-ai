@@ -134,6 +134,31 @@ def remover(nome: str) -> str:
     return ""
 
 
+# Nomes que mudaram: o Cloud virou Lab (23/11/2026). A senha, o código e a duração da sessão (HEIMDALL_CLOUD_SENHA_HASH, _TOTP_SEGREDO e _SESSAO_HORAS)
+# servem a todos os sites e mantêm o nome.
+RENOMEADAS = {f"HEIMDALL_CLOUD_{x}": f"HEIMDALL_LAB_{x}" for x in ("HOST", "PORT", "ENDPOINT", "REGIAO", "HOSTS", "MAX_MB")}
+
+
+def renomear_antigas() -> list:
+    """Troca no .env os nomes antigos pelos novos (sem perder valor: se o novo já existe, o antigo só sai). Faz cópia em .env.bak. Devolve os nomes trocados."""
+    linhas = _linhas_atuais()
+    if not linhas:
+        return []
+    trocadas, saida = [], []
+    for ln in linhas:
+        nome = next((a for a in RENOMEADAS if _e_do_nome(ln, a)), "")
+        if not nome:
+            saida.append(ln)
+            continue
+        trocadas.append(nome)
+        if not any(_e_do_nome(x, RENOMEADAS[nome]) for x in linhas):
+            saida.append(ln.replace(nome, RENOMEADAS[nome], 1))
+    if trocadas:
+        _copia()
+        _gravar(saida)
+    return trocadas
+
+
 # ----------------------------------------------------------------------------------------
 # O que o código aceita
 # ----------------------------------------------------------------------------------------
@@ -198,7 +223,7 @@ def opcoes_do_codigo() -> dict:
 
 
 def grupo(nome: str) -> str:
-    """Agrupa pelo serviço: HEIMDALL_CLOUD_PORTA -> CLOUD; LITELLM_MASTER_KEY -> LITELLM. Sem prefixo, vai para GERAL."""
+    """Agrupa pelo serviço: HEIMDALL_LAB_PORT -> LAB; LITELLM_MASTER_KEY -> LITELLM. Sem prefixo, vai para GERAL."""
     partes = nome.split("_")
     if nome.startswith("HEIMDALL_"):
         return partes[1] if len(partes) > 2 else "GERAL"

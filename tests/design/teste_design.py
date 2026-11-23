@@ -18,7 +18,7 @@ from pathlib import Path
 
 AQUI = RAIZ
 sys.path.insert(0, str(AQUI))
-PAINEIS = ["heimdall_cloud.py", "heimdall_notas.py", "heimdall_news.py", "heimdall_painel_saude.py", "heimdall_jogos.py", "heimdall_finance.py", "heimdall_controls.py"]
+PAINEIS = ["heimdall_lab.py", "heimdall_notas.py", "heimdall_news.py", "heimdall_painel_saude.py", "heimdall_jogos.py", "heimdall_finance.py", "heimdall_controls.py"]
 ACAO = re.compile(r"^(Baixar|Atualizar|Continuar|Confirmar|Conferir|Alterar|Classificar|Importar|Salvar|Apagar|Enviar|Ver\b|Pr[óo]xim[ao]|Anterior|P[áa]gina|Nota anterior|Subir)", re.I)
 ANCORA = re.compile(r"<a\b([^>]*)>([^<{]*)</a>")
 
@@ -61,7 +61,7 @@ confere("design.botao_post gera formulário POST com csrf oculto, botão e nome 
 import heimdall_paginacao as pag  # noqa: E402
 
 confere("paginação é toda de botões", "<a " not in pag.html_paginacao("/x", 2, 5, {}, "") and "<button" in pag.html_paginacao("/x", 2, 5, {}, ""))
-confere("o pacote de CSS do Heimdall Design chega aos painéis (via heimdall_cloud)", "form.acao" in __import__("heimdall_cloud").CSS)
+confere("o pacote de CSS do Heimdall Design chega aos painéis (via heimdall_lab)", "form.acao" in __import__("heimdall_lab").CSS)
 
 # ---- cores, tipografia e foco: fonte única em heimdall_design.py
 for tema, cores in (("claro", design.CORES_CLARO), ("escuro", design.CORES_ESCURO)):
@@ -78,7 +78,7 @@ for nome in arqs:
 for nome in PAINEIS:
     src = (AQUI / nome).read_text(encoding="utf-8")
     soltas = [m for m in re.findall(r"(?<![\w&])#[0-9a-fA-F]{6}\b", src) if True]
-    confere(f"{nome}: sem cor solta fora do Heimdall Design (use var(--...))", not soltas or nome == "heimdall_cloud.py", soltas[:5])  # o Cloud guarda o desenho da marca
+    confere(f"{nome}: sem cor solta fora do Heimdall Design (use var(--...))", not soltas or nome == "heimdall_lab.py", soltas[:5])  # o Lab guarda o desenho da marca
     confere(f"{nome}: páginas em pt-BR e com viewport", "pt-BR" in src and "viewport" in src, "")
 claude_md = (AQUI / "CLAUDE.md")
 confere("CLAUDE.md manda seguir o Heimdall Design em toda atualização", claude_md.is_file() and "Heimdall Design" in claude_md.read_text(encoding="utf-8"))

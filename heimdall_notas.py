@@ -2,7 +2,7 @@
 """Heimdall Notes: um site simples e agradável para LER as notas de estudo e OUVIR os áudios.
 
 Lê direto do cofre (brain/: notas em Markdown e áudios .m4a) e da pasta knowledge/ (seus documentos). Não depende de
-nenhum app: abre no Safari do Mac ou do iPhone, funciona com VoiceOver e usa o mesmo login do painel Cloud
+nenhum app: abre no Safari do Mac ou do iPhone, funciona com VoiceOver e usa o mesmo login do painel Lab
 (a mesma senha e o mesmo código de 6 dígitos).
 
 O que tem:
@@ -16,7 +16,7 @@ Digest. Para tirar mais pastas: HEIMDALL_NOTAS_EXCLUIR="heimdall-digest,saude". 
 dos temas de estudo: HEIMDALL_NOTAS_PASTAS="heimdall-cerebro,outra-pasta".
 
 Segurança (pode ficar público em notes.heimdall-ai.tech): escuta só em 127.0.0.1; senha forte + código de 6 dígitos
-(HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO, os mesmos do painel Cloud); limite de tentativas; sessão em cookie
+(HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO, os mesmos do painel Lab); limite de tentativas; sessão em cookie
 HttpOnly e SameSite=Strict; só nomes de site permitidos; somente leitura (nada aqui grava ou apaga arquivos); caminhos
 conferidos contra fuga de pasta; HTML sempre escapado; documentos que não são PDF ou áudio só baixam, nunca executam.
 
@@ -72,7 +72,7 @@ carregar_env()
 for _k in [k for k in os.environ if k.startswith("HEIMDALL_BIBLIOTECA_")]:  # idem para variáveis já no ambiente
     os.environ.setdefault("HEIMDALL_NOTAS_" + _k[len("HEIMDALL_BIBLIOTECA_"):], os.environ[_k])
 
-import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, igual no News e no Notas)
 import heimdall_catalogo as catalogo  # noqa: E402  (catalogação da nota pela IA local: ideias, contatos, endereços, lembretes, eventos)

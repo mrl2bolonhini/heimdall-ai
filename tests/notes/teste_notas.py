@@ -76,7 +76,7 @@ escrever(RAIZ / "fora.md", "# Fora do cofre\n")
 
 os.environ.update({"HEIMDALL_VAULT_DIR": str(COFRE), "HEIMDALL_KNOWLEDGE_DIR": str(CONHEC), "HEIMDALL_CLOUD_TOTP_SEGREDO": SEGREDO})
 sys.path.insert(0, str(RAIZ))
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 
 os.environ["HEIMDALL_CLOUD_SENHA_HASH"] = hc.hash_senha(SENHA, iteracoes=100_000)
 hc.SENHA_HASH = os.environ["HEIMDALL_CLOUD_SENHA_HASH"]

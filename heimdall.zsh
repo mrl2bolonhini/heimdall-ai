@@ -38,7 +38,7 @@ _heimdall_open() {  # $1 = nome, $2 = endereço
   open "$2" 2>/dev/null || echo "Abra o endereço acima no navegador."
 }
 
-_heimdall_web() {  # $1 nome, $2 chave (CLOUD, NOTAS, NEWS, SAUDE_PAINEL, JOGOS, FINANCE), $3 porta padrão, $4 subdomínio padrão, $5 caminho opcional
+_heimdall_web() {  # $1 nome, $2 chave (LAB, NOTAS, NEWS, SAUDE_PAINEL, JOGOS, FINANCE), $3 porta padrão, $4 subdomínio padrão, $5 caminho opcional
   # Abre o endereço público (passa pelo Cloudflare Access, com o Authenticator) ou, com --local, o endereço deste Mac (senha e código de 6 dígitos).
   local nome="$1" chave="$2" padrao="$3" sub="$4" caminho="$5" porta host lista h
   porta="$(_heimdall_port "HEIMDALL_${chave}_PORT" "$padrao")"
@@ -79,7 +79,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     up|restart) printf '%s\n' "-w=--webui" "-t=--terminal" "-n=--n8n" "-a=--agent" "-i=--ingest" "-d=--docling" "-u=--update" ;;
     logs) printf '%s\n' "-l=--list" "-c=--clean" "-s=--service" ;;
     containers) printf '%s\n' "-a=--all" ;;
-    cloud) printf '%s\n' "-L=--local" ;;
+    lab|cloud) printf '%s\n' "-L=--local" ;;
     chat) printf '%s\n' "-d=--diagnose" "-p=--password" "-e=--email" "-D=--delete-user" "-c=--check" "-m=--models" "-t=--tools" ;;
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  "-L=--local" ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
@@ -161,7 +161,7 @@ heimdall() {
   done
   _HLOCAL=0
   case "$cmd" in
-    cloud|notes|learn|news|health|games|finance|controls|account)
+    lab|cloud|notes|learn|news|health|games|finance|controls|account)
       local _x _n=()
       for _x in "$@"; do
         if [ "$_x" = "--local" ]; then _HLOCAL=1; else _n+=("$_x"); fi
@@ -228,7 +228,7 @@ heimdall() {
 --queue=--fila
 --now=--uma-vez" "$@"; _heimdall_py heimdall_news.py "${_HA[@]}" ;;
       esac ;;
-    cloud) _heimdall_web "Heimdall Cloud" CLOUD 8010 cloud ;;
+    lab|cloud) _heimdall_web "Heimdall Lab" LAB 8010 lab ;;
     health)
       case "$1" in
         "") _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health ;;
@@ -360,7 +360,7 @@ heimdall() {
       echo "notes: http://localhost:$(_heimdall_port HEIMDALL_NOTAS_PORT 8011)"
       echo "learn: http://localhost:$(_heimdall_port HEIMDALL_LEARN_PORT 8019)"
       echo "news: http://localhost:$(_heimdall_port HEIMDALL_NEWS_PORT 8012)"
-      echo "cloud: http://localhost:$(_heimdall_port HEIMDALL_CLOUD_PORT 8010)"
+      echo "lab: http://localhost:$(_heimdall_port HEIMDALL_LAB_PORT "$(_heimdall_port HEIMDALL_CLOUD_PORT 8010)")"
       echo "health: http://localhost:$(_heimdall_port HEIMDALL_SAUDE_PAINEL_PORT 8013)"
       echo "games: http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)"
       echo "finance: http://localhost:$(_heimdall_port HEIMDALL_FINANCE_PORT 8016)"
@@ -488,7 +488,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes learn news cloud health labs games finance controls account n8n kuma dozzle urls triage notices notion cloudai mailbox app ask usage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes learn news lab health labs games finance controls account n8n kuma dozzle urls triage notices notion cloudai mailbox app ask usage db doctor backup mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -496,7 +496,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     fi
     case ${words[2]} in
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
-      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent cloud notes learn news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
+      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent lab notes learn news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
       chat) compadd -- --diagnose --password --email --delete-user --tools --models --import --check ;;
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
       notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
@@ -507,7 +507,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       labs) compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals appointments appointment calendar documents token --open --without --date --time --doctor --specialty --place ;;
       games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas xadrez
         else compadd -- --local --play --list; fi ;;
-      cloud) compadd -- --local ;;
+      lab) compadd -- --local ;;
       triage) compadd -- --complete-tests ;;
       notices) compadd -- --migrate ;;
       db) compadd -- --sql ;;

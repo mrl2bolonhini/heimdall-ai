@@ -93,12 +93,12 @@ func avisar(_ titulo: String, _ texto: String) {
 
 let nomesDosSites: [(String, String)] = [
     ("controls", "Controls"), ("notes", "Notes"), ("learn", "Learn"), ("news", "News"), ("health", "Health"),
-    ("games", "Games"), ("finance", "Finance"), ("cloud", "Cloud"), ("account", "Account"), ("chat", "Chat"),
+    ("games", "Games"), ("finance", "Finance"), ("lab", "Lab"), ("account", "Account"), ("chat", "Chat"),
     ("flows", "Flows"), ("status", "Status"),
 ]
 
 /// Atalho de teclado de cada site no menu Abrir: Account é Command+0; os demais, em ordem alfabética, de 1 a 9, sem Account e Flows
-/// (Chat 1, Cloud 2, Controls 3, Finance 4, Games 5, Health 6, Learn 7, News 8, Notes 9). Status e Flows ficam sem atalho.
+/// (Chat 1, Controls 2, Finance 3, Games 4, Health 5, Lab 6, Learn 7, News 8, Notes 9). Status e Flows ficam sem atalho.
 func teclaDoSite(_ nome: String) -> String {
     if nome == "Account" { return "0" }
     let ordem = nomesDosSites.map { $0.1 }.filter { $0 != "Account" && $0 != "Flows" }.sorted()

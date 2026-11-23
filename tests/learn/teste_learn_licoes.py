@@ -22,7 +22,7 @@ os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
 os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 (TMP / "knowledge").mkdir()
 
-import heimdall_cloud as nuvem  # noqa: E402
+import heimdall_lab as nuvem  # noqa: E402
 import heimdall_learn as site  # noqa: E402
 import heimdall_learn_dados as d  # noqa: E402
 import heimdall_learn_licoes as li  # noqa: E402

@@ -42,13 +42,23 @@ confere("sem .env: ler devolve lista vazia e salvar cria o arquivo", c.ler() == 
 op = c.opcoes_do_codigo()
 confere("catálogo: acha opções do código com e sem valor padrão", "HEIMDALL_CONTROLS_ATRASO_CURSOR" in op and op["HEIMDALL_CONTROLS_ATRASO_CURSOR"] == "1800" and len(op) > 30, str(len(op)))
 confere("catálogo: só variáveis HEIMDALL_ (e SUBIR_, da subida dos serviços)", all(n.startswith(("HEIMDALL_", "SUBIR_")) for n in op))
-confere("grupo pelo nome do serviço", c.grupo("HEIMDALL_CLOUD_PORTA") == "CLOUD" and c.grupo("HEIMDALL_X") == "GERAL")
-c.salvar("HEIMDALL_CLOUD_PORT", "9999")
+confere("grupo pelo nome do serviço", c.grupo("HEIMDALL_LAB_PORTA") == "LAB" and c.grupo("HEIMDALL_X") == "GERAL")
+c.salvar("HEIMDALL_LAB_PORT", "9999")
 ok, ruins = c.gravar_padroes()
 env = {d["nome"]: d["valor"] for d in c.ler()}
-confere("gravar padrões: põe os que faltam, não troca os que já existem e nunca grava segredos", "HEIMDALL_CONTROLS_ATRASO_CURSOR" in ok and env.get("HEIMDALL_CLOUD_PORT") == "9999"
+confere("gravar padrões: põe os que faltam, não troca os que já existem e nunca grava segredos", "HEIMDALL_CONTROLS_ATRASO_CURSOR" in ok and env.get("HEIMDALL_LAB_PORT") == "9999"
         and env.get("HEIMDALL_CONTROLS_ATRASO_CURSOR") == "1800" and not any("TOKEN" in n or "SENHA" in n for n in env) and not ruins, str(ruins))
 ok2, _ = c.gravar_padroes()
 confere("gravar padrões de novo não repete nada", ok2 == [])
+
+# ---- o Cloud virou Lab: nomes antigos do .env ----
+c.ARQUIVO.write_text("HEIMDALL_CLOUD_PORT='8010'\nHEIMDALL_CLOUD_HOSTS='cloud.heimdall-ai.tech,localhost'\nHEIMDALL_CLOUD_SENHA_HASH='x'\nHEIMDALL_CLOUD_TOTP_SEGREDO='y'\nHEIMDALL_LAB_MAX_MB='9'\nHEIMDALL_CLOUD_MAX_MB='50'\n", encoding="utf-8")
+trocadas = c.renomear_antigas()
+lido = {d["nome"]: d["valor"] for d in c.ler()}
+confere("renomear_antigas: troca porta e endereços pelos nomes do Lab", lido.get("HEIMDALL_LAB_PORT") == "8010" and lido.get("HEIMDALL_LAB_HOSTS") == "cloud.heimdall-ai.tech,localhost" and "HEIMDALL_CLOUD_PORT" not in lido, str(lido))
+confere("renomear_antigas: senha e código continuam com o nome de sempre", lido.get("HEIMDALL_CLOUD_SENHA_HASH") == "x" and lido.get("HEIMDALL_CLOUD_TOTP_SEGREDO") == "y")
+confere("renomear_antigas: se o novo já existe, vale o novo e o antigo sai", lido.get("HEIMDALL_LAB_MAX_MB") == "9" and "HEIMDALL_CLOUD_MAX_MB" not in lido and len(trocadas) == 3, str(trocadas))
+confere("renomear_antigas: de novo não muda nada e faz cópia na primeira vez", c.renomear_antigas() == [] and (tmp / ".env.bak").exists())
+
 print("\nTUDO OK" if not falhas else f"\n{falhas} FALHA(S)")
 sys.exit(1 if falhas else 0)

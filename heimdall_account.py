@@ -49,7 +49,7 @@ def carregar_env() -> None:
 
 carregar_env()
 
-import heimdall_cloud as nuvem  # noqa: E402  (marca, cabeçalho com o menu Conta e a base dos servidores)
+import heimdall_lab as nuvem  # noqa: E402  (marca, cabeçalho com o menu Conta e a base dos servidores)
 import heimdall_conta as conta  # noqa: E402
 import heimdall_conta_info as info  # noqa: E402
 import heimdall_design as design  # noqa: E402

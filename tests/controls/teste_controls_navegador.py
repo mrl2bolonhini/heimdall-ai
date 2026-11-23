@@ -21,7 +21,7 @@ try:
 except ImportError:
     print("Playwright não instalado: teste do navegador pulado.")
     sys.exit(0)
-import heimdall_cloud as hc  # noqa: E402
+import heimdall_lab as hc  # noqa: E402
 import heimdall_controls as hcx  # noqa: E402
 
 hcx.ATRASO_CURSOR_MS = 400

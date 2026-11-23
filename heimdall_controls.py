@@ -5,7 +5,7 @@ O terminal roda no Mac, com as permissões do seu usuário (heimdall_shell.py): 
 perguntam algo recebem a resposta pelo campo "Resposta ao programa", e há botões para interromper e para copiar a última saída ou as últimas N saídas.
 Isso é o recurso mais poderoso do Heimdall: quem entra aqui manda no Mac. Por isso as camadas são as dos outros painéis e mais duas:
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
-  2. Entrada pelo Cloudflare Access (Microsoft Authenticator) ou pela senha e o código de 6 dígitos do Heimdall Cloud.
+  2. Entrada pelo Cloudflare Access (Microsoft Authenticator) ou pela senha e o código de 6 dígitos do Heimdall Lab.
   3. Só o dono entra: sessão de convidado (escopo de um serviço) é recusada aqui, mesmo que o Access a aceite.
   4. Em endereço público, com o Access ligado, todo pedido precisa trazer o token do Access de um dono (HEIMDALL_CONTROLS_EXIGE_ACCESS=0 desliga).
   5. Token anti-falsificação (CSRF) e conferência de Origin em todo pedido que age; cabeçalhos de segurança; script só com nonce.
@@ -56,7 +56,7 @@ def carregar_env() -> None:
 
 carregar_env()
 
-import heimdall_cloud as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Cloud)
+import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 import heimdall_cfmonitor as cfmonitor  # noqa: E402
 import heimdall_config as config  # noqa: E402
 import heimdall_config_ajuda as ajuda  # noqa: E402
@@ -377,7 +377,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
     return "Terminal", corpo
 
 
-LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data", "agente": "Mac Agent", "cloud": "Cloud", "notas": "Notes", "learn": "Learn", "news": "News",
+LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data", "agente": "Mac Agent", "lab": "Lab", "notas": "Notes", "learn": "Learn", "news": "News",
            "saude_painel": "Health", "jogos": "Games", "finance": "Finance", "controls": "Controls", "ingest": "Ingest"}
 # ação -> (rótulo, comando, o que faz). Só estas viram botão; o texto livre vai pelo terminal. Start e Stop têm código próprio.
 ACOES = {
@@ -445,14 +445,14 @@ def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: boo
 
 # Variáveis que o prefixo não agrupa direito: nome sem HEIMDALL_ -> grupo
 DESTINO = {"ANOMALIAS_LEMBRETE_H": "Health", "AGENDA_DETALHES": "Health", "RENOVACAO_DIAS": "Health", "APPS_FECHAR": "Mac Agent", "AWS_EMULATOR": "AWS Emulator",
-           "LOCALSTACK_DOCKER": "AWS Emulator", "BARK_KEY": "Alertas", "COOKIE_DOMINIO": "Cloud", "CODE_MODEL": "Modelos de IA", "FLOW_MODEL": "Modelos de IA",
+           "LOCALSTACK_DOCKER": "AWS Emulator", "BARK_KEY": "Alertas", "COOKIE_DOMINIO": "Lab", "CODE_MODEL": "Modelos de IA", "FLOW_MODEL": "Modelos de IA",
            "EMBED_MODEL": "Modelos de IA", "SEGURANCA_MODELO": "Modelos de IA", "ESTUDO_AUDIO": "Voz", "GITHUB_TOKEN": "GitOps", "VAULT_DIR": "Notes",
            "PASTAS_PROPRIAS": "Notes", "SERVICOS_ESPERA_S": "Controls", "TERMINAL_HOST": "Controls", "BASE_DIR": "Gerais", "DATA_DIR": "Gerais", "DB_DIR": "Gerais",
            "KNOWLEDGE_DIR": "Gerais", "PROJECT_DIR": "Gerais", "TZ": "Gerais", "OAB": "Gerais", "BACKUP_DESTINO": "Backup na nuvem (R2)",
            "SUBIR_VOZ": "Voz", "SUBIR_VOZ_PPM": "Voz"}
 
 
-CATEGORIAS = {"CLOUD": "Cloud", "CONTROLS": "Controls", "NOTAS": "Notes", "NEWS": "News", "SAUDE": "Health", "JOGOS": "Games", "FINANCE": "Finance", "AGENTE": "Mac Agent",
+CATEGORIAS = {"CLOUD": "Lab", "LAB": "Lab", "CONTROLS": "Controls", "NOTAS": "Notes", "NEWS": "News", "SAUDE": "Health", "JOGOS": "Games", "FINANCE": "Finance", "AGENTE": "Mac Agent",
               "KUMA": "Uptime Kuma", "MCP": "MCP", "WEBUI": "Open WebUI", "N8N": "n8n", "R2": "Backup na nuvem (R2)", "BACKUP": "Backup na nuvem (R2)", "CFACCESS": "Cloudflare", "CLOUDFLARE": "Cloudflare", "CF": "Cloudflare",
               "TRIAGEM": "Triagem", "EMAIL": "Vigia de e-mails", "EMAILS": "Vigia de e-mails", "LITELLM": "LiteLLM", "OLLAMA": "Ollama", "GERAL": "Gerais", "ALERT": "Alertas", "EXAMES": "Exames", "GITOPS": "GitOps", "MONITOR": "Monitoramento", "PERGUNTAR": "Perguntar", "VOZ": "Voz", "ACCOUNT": "Account", "SUBIR": "Subida dos serviços"}
 

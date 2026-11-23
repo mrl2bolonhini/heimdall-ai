@@ -5,7 +5,7 @@ Para acrescentar um serviço ou mudar um texto, edite só aqui. "como" é uma li
 "multiusuario" diz o que muda quando outras pessoas puderem usá-lo (aparece só para quem pode abrir o serviço).
 """
 INFO = {
-    "cloud": {
+    "lab": {
         "oque": "Painel web do emulador de AWS do Heimdall, com S3, Lambda, Glue, Athena e um console geral, para estudar e testar sem custo.",
         "como": ["Entre pelo Cloudflare Access, com a sua conta Microsoft e a aprovação no Authenticator.",
                  "Escolha na barra do alto o serviço da AWS que quer usar: S3, Lambda, Glue, Athena ou Console geral.",

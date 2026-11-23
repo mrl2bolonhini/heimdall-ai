@@ -43,7 +43,7 @@ PUBLIC_MCP_PORT=8001
 DADOS_MCP_PORT=8004
 TERMINAL_PORT=8002
 AGENTE_PORT="${HEIMDALL_AGENTE_PORT:-8003}"
-CLOUD_PORT="${HEIMDALL_CLOUD_PORT:-8010}"
+LAB_PORT="${HEIMDALL_LAB_PORT:-${HEIMDALL_CLOUD_PORT:-8010}}"
 NOTAS_PORT="${HEIMDALL_NOTAS_PORT:-8011}"
 NEWS_PORT="${HEIMDALL_NEWS_PORT:-8012}"
 LEARN_PORT="${HEIMDALL_LEARN_PORT:-8019}"
@@ -77,7 +77,10 @@ echo "Projeto: $PROJECT_DIR"
 
 # --- Chave mestra do LiteLLM (guardada em .env, nunca no YAML) ---
 if [ -f .env ]; then
+    # O Cloud virou Lab: troca no .env os nomes antigos (HEIMDALL_CLOUD_PORT etc.) pelos novos, com cópia em .env.bak
+    "$VENV_PYTHON" -c "import heimdall_config as c; t = c.renomear_antigas(); print('Nomes do Lab atualizados no .env:', ', '.join(t)) if t else None" 2>/dev/null
     set -a; source .env; set +a
+    LAB_PORT="${HEIMDALL_LAB_PORT:-${HEIMDALL_CLOUD_PORT:-8010}}"
 fi
 # Acrescenta uma linha ao .env sem colar na última (se o arquivo não terminar em quebra de linha).
 env_append() {
@@ -122,7 +125,7 @@ export HEIMDALL_AGENTE_TOKEN
 
 echo "[0/7] Liberando portas em uso..."
 lsof -ti:$AGENTE_PORT | xargs kill -9 2>/dev/null
-lsof -ti:$CLOUD_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$LAB_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NOTAS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NEWS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LEARN_PORT | xargs kill -9 2>/dev/null
@@ -351,7 +354,7 @@ case "$AWS_EMU" in
         docker rm -f moto > /dev/null 2>&1
         # Lambda: o LocalStack executa as funções em contêineres, então precisa do socket do Docker (e da rede heimdall, para os
         # contêineres das funções acharem o LocalStack). Ligado por padrão; HEIMDALL_LOCALSTACK_DOCKER=0 no .env desliga.
-        # Atenção: isso dá ao contêiner do LocalStack controle do Docker do Mac. Quem passa pelo painel Heimdall Cloud (senha e
+        # Atenção: isso dá ao contêiner do LocalStack controle do Docker do Mac. Quem passa pelo painel Heimdall Lab (senha e
         # código de 6 dígitos) consegue executar código em contêineres.
         LS_DOCKER=()
         LS_QUER=0
@@ -383,7 +386,7 @@ case "$AWS_EMU" in
         echo "     Emulador de AWS desligado." ;;
 esac
 # Se o LocalStack parar logo ao subir (o caso comum é o LOCALSTACK_AUTH_TOKEN recusado, código de saída 55), cai para o Moto,
-# para o painel Heimdall Cloud e o código de estudo continuarem com um emulador no ar.
+# para o painel Heimdall Lab e o código de estudo continuarem com um emulador no ar.
 if [ "$AWS_EMU" = "localstack" ]; then
     LS_PAROU=0
     for _ in 1 2 3 4 5 6 7 8; do
@@ -515,25 +518,25 @@ if [ "$WANT_AGENTE" = "1" ]; then
     fi
 fi
 
-# --- Heimdall Cloud (painel web do emulador de AWS): sobe sozinho se houver senha e código no .env ---
+# --- Heimdall Lab (painel web do emulador de AWS): sobe sozinho se houver senha e código no .env ---
 # Para configurar: python3 heimdall_acesso.py --tudo. Escuta só em 127.0.0.1; o acesso público vem do túnel Cloudflare.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] && [ "$AWS_EMU" != "off" ]; then
-    if [ -f heimdall_cloud.py ]; then
-        HEIMDALL_CLOUD_PORT="$CLOUD_PORT" "$VENV_PYTHON" heimdall_cloud.py > "$(nova_log cloud_debug)" 2>&1 &
+    if [ -f heimdall_lab.py ]; then
+        HEIMDALL_LAB_PORT="$LAB_PORT" "$VENV_PYTHON" heimdall_lab.py > "$(nova_log lab_debug)" 2>&1 &
         COUNTER=0
-        while ! nc -z localhost $CLOUD_PORT > /dev/null 2>&1; do
+        while ! nc -z localhost $LAB_PORT > /dev/null 2>&1; do
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o painel Heimdall Cloud não respondeu em 10s. Veja logs/cloud_debug.log."
+                echo "Aviso: o painel Heimdall Lab não respondeu em 10s. Veja logs/lab_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Cloud (painel do emulador de AWS) em http://localhost:$CLOUD_PORT"
+        echo "     Heimdall Lab (painel do emulador de AWS) em http://localhost:$LAB_PORT"
     fi
 fi
 
-# --- Heimdall Notes (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Cloud ---
+# --- Heimdall Notes (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Lab ---
 # Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (library.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_notas.py ]; then
@@ -552,7 +555,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
 fi
 
 # --- Heimdall Learn (plataforma de estudos; fase 1: pastas com categoria e tipo, importação de documentos) ---
-# Desligado por padrão: ligue com HEIMDALL_LEARN=1 no .env (heimdall env --set HEIMDALL_LEARN 1). Mesmo login do Heimdall Cloud.
+# Desligado por padrão: ligue com HEIMDALL_LEARN=1 no .env (heimdall env --set HEIMDALL_LEARN 1). Mesmo login do Heimdall Lab.
 if [ "${HEIMDALL_LEARN:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_learn.py ]; then
         HEIMDALL_LEARN_PORT="$LEARN_PORT" "$VENV_PYTHON" heimdall_learn.py > "$(nova_log learn_debug)" 2>&1 &
@@ -569,7 +572,7 @@ if [ "${HEIMDALL_LEARN:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ 
     fi
 fi
 
-# --- Heimdall News (notícias das últimas 24 h com resumo de IA e feeds RSS): mesmo login do Heimdall Cloud ---
+# --- Heimdall News (notícias das últimas 24 h com resumo de IA e feeds RSS): mesmo login do Heimdall Lab ---
 # Atualiza sozinho de 30 em 30 minutos. Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (news.heimdall-ai.tech).
 # Os resumos usam o LiteLLM (porta $LLM_PORT): enquanto ele não estiver no ar, as matérias ficam na fila e o serviço tenta de novo na próxima atualização.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
@@ -591,7 +594,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
     fi
 fi
 
-# --- Heimdall Health (painel com as análises do app Saúde, somente leitura): mesmo login do Heimdall Cloud ---
+# --- Heimdall Health (painel com as análises do app Saúde, somente leitura): mesmo login do Heimdall Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (health.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_painel_saude.py ]; then
@@ -609,7 +612,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
     fi
 fi
 
-# --- Heimdall Controls (terminal completo e painel de serviços): mesmo login do Heimdall Cloud ---
+# --- Heimdall Controls (terminal completo e painel de serviços): mesmo login do Heimdall Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare (controls.heimdall-ai.tech), atrás do Cloudflare Access. Quem entra manda no Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_controls.py ]; then
@@ -631,7 +634,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
     fi
 fi
 
-# --- Heimdall Games (jogos leves para leitor de tela, no navegador): mesmo login do Heimdall Cloud ---
+# --- Heimdall Games (jogos leves para leitor de tela, no navegador): mesmo login do Heimdall Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (games.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_jogos.py ]; then
@@ -665,7 +668,7 @@ if [ -f heimdall_account.py ]; then
     echo "     Heimdall Account em http://localhost:$ACCOUNT_PORT"
 fi
 
-# --- Heimdall Finance (extratos, categorias e tendências): mesmo login do Heimdall Cloud ---
+# --- Heimdall Finance (extratos, categorias e tendências): mesmo login do Heimdall Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (finance.heimdall-ai.tech).
 # Os dados ficam em finance/ (fora do git) e nunca saem do Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
