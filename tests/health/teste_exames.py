@@ -225,7 +225,7 @@ d1 = r["id"]
 confere("original arquivado com permissão restrita", (ex.DIR / "archive" / f"{d1:05d}.pdf").exists() and oct((ex.DIR / "archive" / f"{d1:05d}.pdf").stat().st_mode)[-3:] == "600")
 confere("nada nas tabelas definitivas antes de confirmar", sql("SELECT COUNT(*) n FROM exames_resultados")[0]["n"] == 0)
 resumo = ex.resumo_documento(d1)
-confere("resumo para ouvir: separa fora da referência e traz o código de confirmação", "Fora da referência:" in resumo and "Vitamina D" in resumo and f"heimdall labs confirm {d1}" in resumo, resumo)
+confere("resumo para ouvir: separa fora da referência e traz o código de confirmação", "Fora da referência:" in resumo and "Vitamina D" in resumo and f"heimdall health --labs confirm {d1}" in resumo, resumo)
 confere("resumo cita itens numerados", "Item 1." in resumo)
 dup = ex.registrar(pdf, "copia.pdf", "iphone")
 confere("mesmo arquivo não entra duas vezes", dup["duplicado"] and dup["id"] == d1)

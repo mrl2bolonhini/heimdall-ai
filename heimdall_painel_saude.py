@@ -287,7 +287,7 @@ def pg_documentos(q: dict) -> tuple:
     corpo = ""
     if pend:
         corpo += (f'<p role="status">{len(pend)} documento(s) aguardam a sua conferência. Para ouvir o que foi lido e confirmar, use no terminal do Mac: '
-                  'heimdall labs pending.</p>')
+                  'heimdall health --labs pending.</p>')
     docs = exames.listar_documentos()
     if docs:
         cab = "".join(f'<th scope="col">{c}</th>' for c in ("Número", "Tipo", "Data", "Situação", "Origem"))

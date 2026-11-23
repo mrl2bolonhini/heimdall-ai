@@ -174,7 +174,26 @@ Opções:
   -f, --fc [DIAS]      frequência cardíaca (padrão 14)
   -i, --import ARQUIVO   importa o export.zip do app Saúde (pode repetir sem duplicar)
   -N, --import-n8n     copia para o banco o histórico de saúde que estava no n8n
+  -l, --labs [SUB]     exames de laboratório, receitas, encaminhamentos e consultas: lê PDF e foto, guarda cada item depois que você confere (pasta health/inbox; o iPhone envia pelo atalho). Subcomandos abaixo. Nada é diagnóstico
+  -l, --labs [SUB]     exames, receitas, encaminhamentos e consultas (subcomandos abaixo)
   -h, --help           mostra esta ajuda
+  --labs summary       (ou só --labs) o último resultado de cada exame confirmado
+  --labs pending       documentos lidos que aguardam a sua conferência
+  --labs read ID       conta o que foi lido no documento, item por item, com numeração
+  --labs confirm ID [--without 2,5] [--date AAAA-MM-DD]   grava os itens (deixa de fora os números de --without) e leva consultas e renovações ao Calendário
+  --labs discard ID    joga o documento fora sem gravar nada
+  --labs folder        lê agora o que estiver na pasta de entrada
+  --labs import FILE...   lê arquivos de qualquer pasta
+  --labs result NAME   histórico de um exame, com o que o relógio mostrou antes de cada coleta
+  --labs analysis [NAME]   leitura cruzada com sono, HRV, pulso e atividade
+  --labs prescriptions    receitas confirmadas
+  --labs referrals     encaminhamentos confirmados
+  --labs appointments  consultas cadastradas
+  --labs appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NOME] [--specialty NOME] [--place LOCAL]   cadastra uma consulta à mão e a leva ao Calendário
+  --labs calendar      leva ao Calendário o que ainda estiver pendente (se o agente estava fora do ar)
+  --labs documents     lista de tudo que foi recebido
+  --labs token         gera o código do atalho do iPhone (fica no .env)
+  --labs --open        abre a página Exames do painel de saúde
 Exemplos:
   heimdall health
   heimdall health --open anomalies
@@ -182,35 +201,10 @@ Exemplos:
   heimdall health --anomalies 2026-11-10
   heimdall health --analysis
   heimdall health -r 60
-
-@ labs | Exames de laboratório, receitas, encaminhamentos e consultas
-Lê PDF e foto de exame, receita, encaminhamento e confirmação de consulta e guarda cada item nas métricas de saúde, depois que você confere. A pasta do Mac é health/inbox (fora do Git; os originais lidos vão para health/archive e o que não deu para ler, para health/review); o iPhone envia pelo atalho. Consulta e pedido de renovação de receita vão para o Calendário como evento (calendário Heimdall). Nada aqui é diagnóstico.
-Uso: heimdall labs [SUBCOMANDO]
-Opções:
-  -h, --help           mostra esta ajuda
-Subcomandos:
-  summary (ou sem nada)  o último resultado de cada exame confirmado
-  pending              documentos lidos que aguardam a sua conferência
-  read ID              conta o que foi lido no documento, item por item, com numeração
-  confirm ID [--without 2,5] [--date AAAA-MM-DD]   grava os itens (deixa de fora os números de --without) e leva consultas e renovações ao Calendário
-  discard ID           joga o documento fora sem gravar nada
-  folder               lê agora o que estiver na pasta de entrada
-  import FILE...       lê arquivos de qualquer pasta
-  result NAME          histórico de um exame, com o que o relógio mostrou antes de cada coleta
-  analysis [NAME]      leitura cruzada com sono, HRV, pulso e atividade
-  prescriptions        receitas confirmadas
-  referrals            encaminhamentos confirmados
-  appointments         consultas cadastradas
-  appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NOME] [--specialty NOME] [--place LOCAL]   cadastra uma consulta à mão e a leva ao Calendário
-  calendar             leva ao Calendário o que ainda estiver pendente (se o agente estava fora do ar)
-  documents            lista de tudo que foi recebido
-  token                gera o código do atalho do iPhone (fica no .env)
-  --open               abre a página Exames do painel de saúde
-Exemplos:
-  heimdall labs pending
-  heimdall labs confirm 3 --without 7
-  heimdall labs result vitamina d
-  heimdall labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia
+  heimdall health --labs pending
+  heimdall health --labs confirm 3 --without 7
+  heimdall health --labs result vitamina d
+  heimdall health --labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia
 
 @ account | Heimdall Account, a porta de entrada do ecossistema: tour dos serviços de cada pessoa
 Abre o tour dos serviços (porta 8018; de fora, account.heimdall-ai.tech, pelo Cloudflare Access). Cada pessoa vê só os serviços a que tem acesso, com link, o que cada um faz e como configurar; o texto fica em heimdall_conta_info.py. O mesmo endereço responde /quem.json, que o site heimdall-ai.tech usa para mostrar "Entrar" ou o nome e os serviços de quem já entrou. O menu Conta, em todos os serviços, lista os mesmos links. A página Integrações (/integracoes) liga a Saúde do iPhone: o botão Ativar gera o token da pessoa e mostra o endereço e o passo a passo para o app Health Auto Export (precisa da caixa de correio ligada; por enquanto só o dono ativa). Notas, Lembretes e Calendário por conta Apple ou Google estão em preparação. Com --local abre o endereço deste Mac.

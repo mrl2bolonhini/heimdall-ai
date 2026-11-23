@@ -23,8 +23,8 @@ ROTA_DESFAZER = {EVENTO: "/calendario/desfazer", LEMBRETE: "/lembretes/desfazer"
 
 # tipo -> (destino, quando acontece, onde nasce)
 DESTINOS = {
-    "consulta": (EVENTO, "dia e hora da consulta médica, com local e médico", "heimdall labs: consulta lida de um documento ou cadastrada à mão"),
-    "renovacao_receita": (EVENTO, "dia de dar entrada no pedido de renovação, alguns dias antes de a receita vencer", "heimdall labs: receita confirmada com validade"),
+    "consulta": (EVENTO, "dia e hora da consulta médica, com local e médico", "heimdall health --labs: consulta lida de um documento ou cadastrada à mão"),
+    "renovacao_receita": (EVENTO, "dia de dar entrada no pedido de renovação, alguns dias antes de a receita vencer", "heimdall health --labs: receita confirmada com validade"),
     "prazo_oficial": (EVENTO, "data-limite de um comunicado oficial (dia inteiro)", "heimdall_email_oficial.py: e-mail oficial confirmado"),
     "verificar_prazo": (LEMBRETE, "conferir o comunicado oficial, com hora, até você concluir", "heimdall_email_oficial.py"),
     "evento_nota": (EVENTO, "compromisso com data (e hora) achado numa nota escrita no Heimdall Notes", "heimdall_catalogo.py: nota catalogada pela IA local"),

@@ -11,7 +11,7 @@ Como a leitura é confiável:
    descartado e listado como "não consegui confirmar". O modelo nunca calcula nem inventa número.
 3. A situação (abaixo, dentro, acima) só é calculada quando a referência do laboratório tem uma única faixa clara. Faixas por sexo, idade ou
    várias metas ficam sem situação, com o texto original da referência.
-4. Nada entra nas tabelas definitivas sem a sua conferência: o documento fica "pendente" até você confirmar (heimdall labs confirm ID).
+4. Nada entra nas tabelas definitivas sem a sua conferência: o documento fica "pendente" até você confirmar (heimdall health --labs confirm ID).
    O texto do documento é tratado como dado, nunca como instrução.
 
 Uso:
@@ -1110,7 +1110,7 @@ def resumo_documento(doc_id: int) -> str:
         linhas += [f"{x['texto']}: {x['motivo']}." for x in ext["descartados"][:15]]
     for a in json.loads(d["avisos"] or "[]"):
         linhas.append("Atenção: " + a)
-    linhas.append(f"Para guardar: heimdall labs confirm {d['id']} (para deixar itens de fora: --without 3,5). Para descartar: heimdall labs discard {d['id']}.")
+    linhas.append(f"Para guardar: heimdall health --labs confirm {d['id']} (para deixar itens de fora: --without 3,5). Para descartar: heimdall health --labs discard {d['id']}.")
     return "\n".join(linhas)
 
 
@@ -1130,7 +1130,7 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
     ext = json.loads(d["extraido"] or "{}")
     dia = dia or d["dia"]
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", dia or ""):
-        raise ErroExames("Falta a data do documento. Use: heimdall labs confirm ID --date AAAA-MM-DD")
+        raise ErroExames("Falta a data do documento. Use: heimdall health --labs confirm ID --date AAAA-MM-DD")
     sem = set(int(x) for x in (sem or []))
     chave_lista = {"exame": "resultados", "receita": "receitas", "encaminhamento": "encaminhamentos", "consulta": "consultas"}.get(d["tipo"])
     itens = [x for i, x in enumerate(ext.get(chave_lista, []) if chave_lista else [], 1) if i not in sem]
@@ -1216,7 +1216,7 @@ def relatorio_exames(dias: int = 730) -> str:
     rows = _ler("SELECT r.* FROM exames_resultados r WHERE r.dia >= ? ORDER BY r.dia DESC, r.id", (de,))
     if not rows:
         pend = pendentes()
-        extra = f" Há {len(pend)} documento(s) aguardando conferência: heimdall labs pending." if pend else ""
+        extra = f" Há {len(pend)} documento(s) aguardando conferência: heimdall health --labs pending." if pend else ""
         return "Ainda não há resultados de exames confirmados neste período." + extra
     ultimo, anterior = {}, {}
     for r in rows:
@@ -1313,7 +1313,7 @@ def _eventos_pendentes(hoje: date) -> list:
         itens.append({"chave": f"consulta|{c['id']}|{c['dia']}", "tipo": "consulta", "dia": c["dia"],
                       "dado": {"titulo": "Consulta médica" + (f": {det}" if det else ""), "data": c["dia"], "hora": c["hora"], "duracao_min": 60,
                                "local": c["local"] if DETALHES_NA_AGENDA else "", "alertas_min_antes": [60, 1440],
-                               "notas": "Criado pelo Heimdall. Detalhes: heimdall labs appointments."}})
+                               "notas": "Criado pelo Heimdall. Detalhes: heimdall health --labs appointments."}})
     por_doc = {}
     for r in _ler("SELECT * FROM receitas WHERE validade >= ? AND validade != '' ORDER BY validade, id", (hoje.isoformat(),)):
         por_doc.setdefault((r["documento_id"], r["validade"]), []).append(r)
@@ -1322,13 +1322,13 @@ def _eventos_pendentes(hoje: date) -> list:
         nomes = ", ".join(r["medicamento"] for r in rs[:3]) + (f" e mais {len(rs) - 3}" if len(rs) > 3 else "") if DETALHES_NA_AGENDA else ""
         itens.append({"chave": f"renovacao_receita|{doc}|{val}", "tipo": "renovacao_receita", "dia": quando.isoformat(),
                       "dado": {"titulo": "Pedir renovação de receita" + (f": {nomes}" if nomes else ""), "data": quando.isoformat(),
-                               "notas": f"Criado pelo Heimdall. A receita vence em {_br(val)}. Detalhes: heimdall labs prescriptions.", "alerta_dias_antes": 1}})
+                               "notas": f"Criado pelo Heimdall. A receita vence em {_br(val)}. Detalhes: heimdall health --labs prescriptions.", "alerta_dias_antes": 1}})
     return itens
 
 
 def sincronizar_agenda(post=None, hoje: date = None) -> dict:
     """Cria no Calendário o que ainda não foi criado. Pode rodar quantas vezes quiser: cada item tem chave própria e, se o agente do Mac estiver
-    fora do ar, fica pendente até a próxima vez (heimdall labs calendar). Devolve {criados, pendentes, ja_feitos, erro}."""
+    fora do ar, fica pendente até a próxima vez (heimdall health --labs calendar). Devolve {criados, pendentes, ja_feitos, erro}."""
     hoje = hoje or date.today()
     feitos = {r["chave"] for r in _ler("SELECT chave FROM agenda_saude WHERE estado = 'feito'")}
     res = {"criados": 0, "pendentes": 0, "ja_feitos": 0, "erro": ""}
@@ -1355,7 +1355,7 @@ def texto_agenda(r: dict) -> str:
         return "Nada para o Calendário (sem consulta futura nem receita com validade futura)."
     t = f"Calendário: {r['criados']} evento(s) criado(s), {r['ja_feitos']} já estavam lá"
     if r["pendentes"]:
-        t += f", {r['pendentes']} pendente(s) ({r['erro']}). Quando o agente do Mac estiver no ar, rode: heimdall labs calendar"
+        t += f", {r['pendentes']} pendente(s) ({r['erro']}). Quando o agente do Mac estiver no ar, rode: heimdall health --labs calendar"
     return t + "."
 
 
@@ -1498,7 +1498,7 @@ def main() -> int:
             if not r:
                 print("Nada novo na pasta.")
             if any(x["ok"] and not x.get("duplicado") for x in r):
-                print("Para ouvir o que foi lido: heimdall labs pending")
+                print("Para ouvir o que foi lido: heimdall health --labs pending")
         elif a.importar:
             for caminho in a.importar:
                 p = Path(caminho).expanduser()

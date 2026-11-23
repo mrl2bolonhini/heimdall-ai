@@ -1006,7 +1006,7 @@ def analise_exames(exame: str = "", dias: int = 730) -> str:
 
 def exames_pendentes() -> str:
     """Documentos de saúde (exames, receitas, encaminhamentos) que o Heimdall já leu e que aguardam a conferência do usuário, item por item. Esta ferramenta só lê: quem confirma
-    ou descarta é o usuário, no terminal (heimdall labs confirm ID), depois de ouvir o que foi lido. Nunca confirme nada por conta própria."""
+    ou descarta é o usuário, no terminal (heimdall health --labs confirm ID), depois de ouvir o que foi lido. Nunca confirme nada por conta própria."""
     try:
         return _BANCO_AVISO + "\n" + _exames_mod().texto_pendentes()
     except Exception as e:  # noqa: BLE001
