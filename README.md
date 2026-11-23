@@ -168,6 +168,7 @@ Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e 
 | Finance | `qwen3-vl-instruct` | `banco-financas` | `financas_resumo`, `financas_transacoes`, `financas_orcamentos`, `financas_recorrentes`, `financas_boletos`, `financas_futuros`, `get_system_timestamp` | 0,2 |
 | Code | `deepseek-coder-v2:16b` | nenhuma |  | 0,2 |
 | General | `conversas` | `web-basica` | `search_searxng`, `fetch_url`, `calculate_expression`, `get_system_timestamp` | 0,8 |
+| Learn | `qwen3-vl-instruct` | `mac-admin`, `banco-learn` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search`, `learn_progresso`, `learn_licoes`, `learn_cards`, `get_system_timestamp` | 0,3 |
 | Notes | `qwen3-vl-instruct` | `mac-admin`, `banco-estudos` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search`, `banco_buscar`, `banco_consultar` | 0,2 |
 <!-- /AUTO:MODELOS_CHAT -->
 
@@ -218,6 +219,9 @@ Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta
 | `financas_recorrentes` | dados (8004) | `` | Contas que se repetem todo mês no Finance do usuário (aluguel, assinaturas, salário), deduzidas do histórico, com valor e dia típicos e a situação neste mês: já chegou, por vir, atrasada ou possivelmente encerrada. |
 | `financas_boletos` | dados (8004) | `` | Boletos em aberto registrados no Finance do usuário (contas a pagar), com valor, vencimento e situação: vencido, vence hoje ou a vencer. |
 | `financas_futuros` | dados (8004) | `meses=6` | Pagamentos e entradas previstos nos próximos meses no Finance do usuário: parcelas que faltam, contas recorrentes, previstos cadastrados e boletos em aberto, com o total de saídas e entradas de cada mês. |
+| `learn_progresso` | dados (8004) | `` | Progresso no Heimdall Learn: cada pasta de estudo com categoria (aleatório ou sequencial), tipo, idioma, lições criadas e concluídas, média das notas, estudos por sorteio feitos e a agenda de cards e lições por dia. |
+| `learn_licoes` | dados (8004) | `pasta='', limite=10` | Últimas lições do Heimdall Learn: número, título, situação, nota e, nas já concluídas, os exercícios em que o aluno errou (enunciado, resposta dada e correção). |
+| `learn_cards` | dados (8004) | `limite=10` | Últimos cards (pílulas de conhecimento) do Heimdall Learn, com pasta, título, texto e se já foram lidos. |
 <!-- /AUTO:FERRAMENTAS -->
 
 Para criar uma ferramenta: escreva a função em `heimdall_tools.py` com tipos e docstring claro, acrescente-a a `PUBLIC_TOOLS` ou `MAC_TOOLS`, reinicie, rode `tests/chat/test_mcp.py` e `gerar_docs.py`. Ferramentas públicas são seguras para convidados; as do Mac acessam arquivos e memória e são só do administrador.

@@ -16,6 +16,7 @@ from pathlib import Path
 
 import heimdall_learn_dados as dados
 import heimdall_learn_tipos as tipos
+import heimdall_learn_voz as voz
 
 PROMPT = Path(__file__).resolve().parent / "prompts" / "prompt_learn_aleatorio.txt"
 EXT_TEXTO = {".md", ".markdown", ".txt"}
@@ -224,57 +225,20 @@ def historico(rel: str = "", limite: int = 20) -> list:
 
 # --- áudio (voz do macOS) -------------------------------------------------------------------------------
 def pasta_audio() -> Path:
-    p = dados.pasta_dados() / "audio"
-    p.mkdir(parents=True, exist_ok=True, mode=0o700)
-    return p
-
-
-def _voz(idioma_codigo: str = "pt_BR") -> str:
-    try:
-        saida = subprocess.run(["say", "-v", "?"], capture_output=True, text=True, timeout=20).stdout
-    except (OSError, subprocess.SubprocessError):
-        return ""
-    vozes = []
-    for ln in saida.splitlines():
-        m = re.match(r"^(.+?)\s{2,}([a-z]{2}[_-][A-Za-z]{2})\b", ln)
-        if m and m.group(2).replace("-", "_").lower() == idioma_codigo.lower():
-            vozes.append(m.group(1).strip())
-    vozes.sort(key=lambda v: ("Enhanced" not in v and "Premium" not in v, v))
-    return vozes[0] if vozes else ""
+    return voz.pasta_audio()
 
 
 def gravar_audio(id_: int) -> str:
-    """Grava o trecho em áudio (say + afconvert, só no Mac). Devolve '' se deu certo ou o motivo da falha."""
+    """Grava o trecho em áudio (voz do macOS, no idioma de estudo da pasta). Devolve '' se deu certo ou o motivo da falha."""
     e = obter(id_)
     if not e:
         return "estudo não encontrado"
-    if sys.platform != "darwin" or not shutil.which("say"):
-        return "a voz do Mac só funciona no Mac que hospeda o Heimdall"
-    try:
-        import heimdall_voz
-        texto = heimdall_voz.aplicar(e["trecho"])
-    except Exception:  # noqa: BLE001
-        texto = e["trecho"]
     idioma = (dados.obter_pasta(e["pasta"]) or {}).get("idioma", "")
-    codigo = {"inglês": "en_US", "ingles": "en_US", "espanhol": "es_ES", "francês": "fr_FR", "frances": "fr_FR", "alemão": "de_DE", "alemao": "de_DE",
-              "italiano": "it_IT", "japonês": "ja_JP", "japones": "ja_JP"}.get(idioma.lower(), "pt_BR")
-    voz = _voz(codigo) or _voz("pt_BR")
     base = pasta_audio() / f"estudo-{int(id_)}"
-    try:
-        cmd = ["say", "-o", str(base) + ".aiff"] + (["-v", voz] if voz else []) + ["-f", "-"]
-        r = subprocess.run(cmd, input=texto[:6000].encode("utf-8"), capture_output=True, timeout=300)
-        if r.returncode != 0:
-            return "o say falhou: " + (r.stderr.decode("utf-8", "replace").strip()[:100] or "sem mensagem")
-        c = subprocess.run(["afconvert", "-f", "m4af", "-d", "aac", str(base) + ".aiff", str(base) + ".m4a"], capture_output=True, timeout=300)
-        Path(str(base) + ".aiff").unlink(missing_ok=True)
-        if c.returncode != 0:
-            return "não consegui converter o áudio"
-        import os
-        os.chmod(str(base) + ".m4a", 0o600)
+    motivo = voz.falar(e["trecho"], idioma, base)
+    if not motivo:
         _gravar(id_, audio=base.name + ".m4a")
-        return ""
-    except (OSError, subprocess.SubprocessError) as ex:
-        return "falha ao gravar: " + str(ex)[:100]
+    return motivo
 
 
 def caminho_audio(id_: int):

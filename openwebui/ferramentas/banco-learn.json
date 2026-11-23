@@ -1,0 +1,16 @@
+[
+ {
+  "type": "mcp",
+  "url": "http://host.docker.internal:8004/mcp",
+  "spec_type": "url",
+  "spec": "",
+  "path": "openapi.json",
+  "auth_type": "none",
+  "key": "",
+  "info": {
+   "id": "banco-learn",
+   "name": "Learn (progresso e lições)",
+   "description": "Só leitura do Heimdall Learn: progresso por pasta, lições com os erros do aluno e cards. Só para o administrador."
+  }
+ }
+]

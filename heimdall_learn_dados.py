@@ -111,6 +111,52 @@ def conectar() -> sqlite3.Connection:
             erro TEXT NOT NULL DEFAULT '',
             criado TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS licoes (            -- modo sequencial: uma lição por número, em ordem
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pasta TEXT NOT NULL,
+            numero INTEGER NOT NULL,
+            titulo TEXT NOT NULL DEFAULT '',
+            explicacao TEXT NOT NULL DEFAULT '',
+            trecho_estudo TEXT NOT NULL DEFAULT '',
+            exercicios TEXT NOT NULL DEFAULT '[]',     -- JSON: lista de exercícios (com gabarito; nunca vai à página antes da resposta)
+            fonte TEXT NOT NULL DEFAULT '',            -- documentos usados
+            estado TEXT NOT NULL DEFAULT 'gerando',    -- gerando, pronta, erro, corrigindo, erro_correcao, concluida
+            erro TEXT NOT NULL DEFAULT '',
+            nota REAL,
+            origem TEXT NOT NULL DEFAULT 'aluno',      -- aluno ou agenda
+            criado TEXT NOT NULL,
+            concluido TEXT NOT NULL DEFAULT '',
+            UNIQUE (pasta, numero)
+        );
+        CREATE TABLE IF NOT EXISTS respostas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            licao_id INTEGER NOT NULL,
+            ex_idx INTEGER NOT NULL,
+            resposta TEXT NOT NULL DEFAULT '',
+            via TEXT NOT NULL DEFAULT 'texto',         -- texto, voz ou escolha
+            correto REAL,                              -- 1, 0,5 ou 0; vazio enquanto não corrigida
+            correcao TEXT NOT NULL DEFAULT '',
+            criado TEXT NOT NULL,
+            UNIQUE (licao_id, ex_idx)
+        );
+        CREATE TABLE IF NOT EXISTS cards (               -- pílulas de conhecimento
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pasta TEXT NOT NULL,
+            titulo TEXT NOT NULL,
+            corpo TEXT NOT NULL,
+            fonte TEXT NOT NULL DEFAULT '',
+            origem TEXT NOT NULL DEFAULT 'agenda',      -- agenda (conta no limite diário) ou aluno (pedido na hora)
+            dia TEXT NOT NULL,                           -- AAAA-MM-DD
+            lido INTEGER NOT NULL DEFAULT 0,
+            criado TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS agenda (              -- frequência por pasta: até 3 cards e 1 lição por dia
+            pasta TEXT PRIMARY KEY,
+            cards_dia INTEGER NOT NULL DEFAULT 0,
+            licao_dia INTEGER NOT NULL DEFAULT 0,
+            horario TEXT NOT NULL DEFAULT '08:00',
+            ativo INTEGER NOT NULL DEFAULT 1
+        );
     """)
     for t in TIPOS_INICIAIS:
         con.execute("INSERT OR IGNORE INTO tipos (nome, criado) VALUES (?, ?)", (t, _agora()))

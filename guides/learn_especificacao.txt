@@ -22,8 +22,8 @@ CARDS E AGENDA
   2. Frequência configurável por pasta: no máximo 3 cards e 1 lição por dia. O horário também é configurável.
   3. Os estudos das 6h, 13h e 20h existentes migram para esse mecanismo.
 
-STATUS (22/11/2026)
-  Fase 1 pronta. Fase 2 pronta, exceto o modelo Learn do chat: ele fica para a fase 3, porque precisa de ferramentas que leiam lições e progresso. O catálogo de tipos com regras próprias está em heimdall_learn_tipos.py. learn.heimdall-ai.tech está publicado (túnel, DNS e Access).
+STATUS (23/11/2026)
+  Fases 1 a 5 prontas e o modelo Learn do chat com as ferramentas de leitura. Pendente: migrar os estudos de 6h, 13h e 20h para a agenda do Learn e medir o gasto de nuvem se lições e correções forem para ela.
 
 FASES (cada uma já entrega algo usável)
   1. Pastas e subpastas com categoria, importar documentos pela plataforma, e mover estudos e notas para o Learn. Site novo, acesso próprio, interruptor HEIMDALL_LEARN.

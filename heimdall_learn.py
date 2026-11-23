@@ -58,6 +58,10 @@ import heimdall_cloud as nuvem  # noqa: E402  (login e sessões: o mesmo do pain
 import heimdall_design as design  # noqa: E402
 import heimdall_learn_dados as dados  # noqa: E402
 import heimdall_learn_estudo as estudo  # noqa: E402
+import heimdall_learn_cards as cards  # noqa: E402
+import heimdall_learn_licoes as licoes  # noqa: E402
+import heimdall_learn_voz as voz  # noqa: E402
+import json  # noqa: E402
 import heimdall_learn_tipos as tipos  # noqa: E402
 import heimdall_perguntar as perguntar  # noqa: E402  (tarefas em segundo plano do modelo)
 
@@ -65,8 +69,9 @@ HOST = os.environ.get("HEIMDALL_LEARN_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_LEARN_PORT", "8019"))
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_LEARN_HOSTS", "learn.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 COOKIE = nuvem.COOKIE
-NAV = [("/", "Início"), ("/nova", "Nova pasta"), ("/tipos", "Tipos")]
+NAV = [("/", "Início"), ("/licoes", "Lições"), ("/cards", "Cards"), ("/nova", "Nova pasta"), ("/tipos", "Tipos")]
 MAX_FORM = 20000
+ESTADOS_LICAO = {"gerando": "sendo criada", "pronta": "aguardando respostas", "corrigindo": "corrigindo", "concluida": "concluída", "erro": "erro ao criar", "erro_correcao": "erro na correção"}
 ESTADOS = {"sorteado": "gerando a pergunta", "perguntado": "aguardando a resposta", "corrigindo": "corrigindo", "corrigido": "concluído",
            "erro": "erro na pergunta", "erro_correcao": "erro na correção"}
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
@@ -81,19 +86,19 @@ def plural(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
 
-def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "") -> bytes:
+def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: str = "") -> bytes:
     nav = sair = abas_js = ""
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
         atual = urlparse(str(sess.get("atual", "/"))).path
-        atual = atual if atual in ("/nova", "/tipos") else "/"
+        atual = "/licoes" if atual in ("/licoes", "/licao") else (atual if atual in ("/nova", "/tipos", "/cards") else "/")
         nav = design.nav_abas(NAV, atual, "Seções do Heimdall Learn")
         sair = f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>'
         conteudo = design.com_abas(NAV, atual, conteudo)
         abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES
-    js = f'<script nonce="{e(nonce)}">{abas_js}</script>' if abas_js and nonce else ""
+    js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (abas_js or script) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Learn</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Learn</title>{nuvem.ICONE}<style>{CSS}</style></head><body{(' data-csrf="' + e(sess['csrf']) + '"') if sess else ''}>'
             f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Learn", nav, sair_html=sair)}'
             f'<main id="principal">{conteudo}</main>{design.rodape()}{js}</body></html>').encode("utf-8")
 
@@ -196,10 +201,31 @@ def pg_pasta(sess: dict, rel: str) -> str:
             estudar += ('<table><caption>Últimos estudos desta pasta</caption><thead><tr><th scope="col">Estudo</th><th scope="col">Quando</th><th scope="col">Documento</th>'
                         f'<th scope="col">Situação</th></tr></thead><tbody>{itens}</tbody></table>')
     elif p["categoria"] == "sequencial":
-        estudar = '<h2>Estudar</h2><p role="status">As lições em sequência chegam na próxima fase. Por enquanto, esta pasta guarda o material.</p>'
+        pr = licoes.resumo_progresso(rel)
+        media = f" Média das notas: {round(pr['media'] * 100)}%." if pr["media"] is not None else ""
+        estudar = (f'<h2>Lições</h2><p role="status">{plural(pr["criadas"], "lição criada", "lições criadas")}, {plural(pr["concluidas"], "concluída", "concluídas")}. '
+                   f'Ainda dá para criar cerca de {pr["restantes"]} com o material atual.{media}</p>'
+                   + design.botao_post("/licao/nova", "Próxima lição", csrf, {"c": rel}))
+        hist = licoes.listar(rel, 10)
+        if hist:
+            itens = "".join(f'<tr><th scope="row"><a href="/licao?id={h["id"]}">Lição {h["numero"]}{(": " + e(h["titulo"])) if h["titulo"] else ""}</a></th>'
+                            f'<td>{e(ESTADOS_LICAO.get(h["estado"], h["estado"]))}</td><td>{(str(round(h["nota"] * 100)) + "%") if h["nota"] is not None else "sem nota"}</td></tr>' for h in hist)
+            estudar += ('<table><caption>Lições desta pasta</caption><thead><tr><th scope="col">Lição</th><th scope="col">Situação</th><th scope="col">Nota</th></tr></thead>'
+                        f'<tbody>{itens}</tbody></table>')
+    ag = cards.obter_agenda(rel)
+    sel = lambda nome, mx, atual_: "".join(f'<option value="{k}"{" selected" if k == atual_ else ""}>{k}</option>' for k in range(mx + 1))  # noqa: E731
+    agenda_html = ('<h2>Cards e lições por dia</h2><p>Cards são pílulas de conhecimento enviadas por notificação (aviso no Mac e aviso genérico no iPhone). '
+                   'Até 3 cards e 1 lição por dia; os cards saem de 4 em 4 horas a partir do horário. 0 desliga.</p>'
+                   f'<form class="campos" method="post" action="/agenda"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="c" value="{e(rel)}">'
+                   f'<label for="cards_dia">Cards por dia (0 a 3)</label><select id="cards_dia" name="cards_dia">{sel("c", 3, ag["cards_dia"])}</select>'
+                   + (f'<label for="licao_dia">Lições por dia (0 ou 1)</label><select id="licao_dia" name="licao_dia">{sel("l", 1, ag["licao_dia"])}</select>' if p["categoria"] == "sequencial"
+                      else '<input type="hidden" name="licao_dia" value="0">')
+                   + f'<label for="horario">Horário (hora:minuto)</label><input id="horario" name="horario" type="text" value="{e(ag["horario"])}" pattern="[0-2]?[0-9]:[0-5][0-9]" maxlength="5" required>'
+                   '<button type="submit">Salvar agenda</button></form>'
+                   + design.botao_post("/card/novo", "Gerar um card agora", csrf, {"c": rel}))
     novo = design.botao("/nova", "Criar subpasta aqui", {"pai": rel})
     voltar = design.botao("/", "Voltar ao início")
-    return aviso(sess) + cab + estudar + tabela + subs + novo + form_imp + form_ed + voltar
+    return aviso(sess) + cab + estudar + agenda_html + tabela + subs + novo + form_imp + form_ed + voltar
 
 
 def pg_tipos(sess: dict) -> str:
@@ -262,6 +288,121 @@ def pg_estudo(sess: dict, id_: int) -> tuple:
     return f"Estudo {id_}", corpo
 
 
+def pg_licoes(sess: dict) -> str:
+    itens = licoes.listar("", 40)
+    if not itens:
+        return aviso(sess) + '<p role="status">Nenhuma lição ainda. Abra uma pasta da categoria sequencial e peça a próxima lição.</p>' + design.botao("/", "Ver as pastas")
+    linhas = "".join(f'<tr><th scope="row"><a href="/licao?id={h["id"]}">Lição {h["numero"]}{(": " + e(h["titulo"])) if h["titulo"] else ""}</a></th>'
+                     f'<td><a href="/pasta?c={quote(h["pasta"])}">{e(h["pasta"])}</a></td><td>{e(ESTADOS_LICAO.get(h["estado"], h["estado"]))}</td>'
+                     f'<td>{(str(round(h["nota"] * 100)) + "%") if h["nota"] is not None else "sem nota"}</td></tr>' for h in itens)
+    return (aviso(sess) + '<table><caption>Suas lições, da mais recente para a mais antiga</caption><thead><tr><th scope="col">Lição</th><th scope="col">Pasta</th>'
+            f'<th scope="col">Situação</th><th scope="col">Nota</th></tr></thead><tbody>{linhas}</tbody></table>')
+
+
+def pg_cards(sess: dict) -> str:
+    csrf = sess["csrf"]
+    itens = cards.listar(False, 40)
+    if not itens:
+        return aviso(sess) + ('<p role="status">Nenhum card ainda. Em uma pasta, defina quantos cards por dia você quer, ou peça um card na hora.</p>' + design.botao("/", "Ver as pastas"))
+    saida = aviso(sess) + f'<p role="status">{plural(sum(1 for c in itens if not c["lido"]), "card novo", "cards novos")}.</p><ol class="lista">'
+    for c in itens:
+        marca = design.botao_post("/cards/lido", "Marcar como lido", csrf, {"id": c["id"]}) if not c["lido"] else '<span class="meta">Lido.</span>'
+        saida += (f'<li><h2>{e(c["titulo"])}</h2><p>{e(c["corpo"])}</p><p class="meta">Pasta {e(c["pasta"])}, fonte {e(c["fonte"])}, {e(c["criado"])}.</p>{marca}</li>')
+    return saida + "</ol>"
+
+
+SCRIPT_VOZ = """(function(){
+var bs=document.querySelectorAll('[data-voz]');if(!bs.length){return;}
+var csrf=document.body.getAttribute('data-csrf')||'';
+bs.forEach(function(b){
+var rec=null,partes=[],st=document.getElementById(b.getAttribute('data-estado'));
+function aviso(t){if(st){st.textContent=t;}}
+b.addEventListener('click',function(){
+if(rec&&rec.state==='recording'){rec.stop();return;}
+if(!navigator.mediaDevices||!window.MediaRecorder){aviso('Este navegador não grava áudio. Escreva a resposta.');return;}
+navigator.mediaDevices.getUserMedia({audio:true}).then(function(fluxo){
+partes=[];rec=new MediaRecorder(fluxo);
+rec.ondataavailable=function(e){if(e.data&&e.data.size){partes.push(e.data);}};
+rec.onstop=function(){fluxo.getTracks().forEach(function(t){t.stop();});b.setAttribute('aria-pressed','false');b.textContent='Gravar resposta falada';aviso('Transcrevendo no Mac. Aguarde.');
+var blob=new Blob(partes,{type:rec.mimeType||'audio/mp4'});
+fetch('/licao/voz',{method:'POST',headers:{'X-CSRF':csrf,'Content-Type':blob.type||'audio/mp4'},body:blob}).then(function(r){return r.json();}).then(function(j){
+if(j.erro){aviso(j.erro);return;}
+var alvo=document.getElementById(b.getAttribute('data-alvo'));alvo.value=(alvo.value?alvo.value+' ':'')+j.texto;
+var via=document.getElementById(b.getAttribute('data-via'));if(via){via.value='voz';}
+aviso('Transcrito. Confira o texto, corrija se precisar e envie.');alvo.focus();}).catch(function(){aviso('Não consegui transcrever. Escreva a resposta.');});};
+rec.start();b.setAttribute('aria-pressed','true');b.textContent='Parar a gravação';aviso('Gravando. Ative o botão de novo para parar.');
+}).catch(function(){aviso('Sem acesso ao microfone. Permita o microfone ou escreva a resposta.');});
+});});
+})();"""
+
+
+def pg_licao(sess: dict, id_: int) -> tuple:
+    lic = licoes.obter(id_)
+    if not lic:
+        raise dados.ErroLearn("Lição não encontrada.")
+    csrf, rel, st = sess["csrf"], lic["pasta"], lic["estado"]
+    pasta = dados.obter_pasta(rel) or {"nome": rel, "idioma": ""}
+    atualizar = design.botao("/licao", "Atualizar", {"id": id_})
+    repetir = design.botao_post("/licao/repetir", "Tentar de novo", csrf, {"id": id_})
+    titulo = f"Lição {lic['numero']}" + (f": {lic['titulo']}" if lic["titulo"] else "")
+    corpo = aviso(sess) + f'<p>Pasta: <a href="/pasta?c={quote(rel)}">{e(pasta["nome"])}</a>.</p>'
+    if st == "gerando":
+        return titulo, corpo + '<p role="status">Criando a lição a partir do material. O modelo local pode levar alguns minutos.</p>' + atualizar + repetir
+    if st == "erro":
+        return titulo, corpo + f'<p class="erro" role="alert">Não consegui criar a lição: {e(lic["erro"])}</p>' + repetir
+    corpo += f'<h2>Explicação</h2><p>{e(lic["explicacao"]).replace(chr(10), "<br>")}</p>'
+    if licoes.caminho_audio(id_, "explicacao"):
+        corpo += f'<audio controls src="/audio-licao?id={id_}&amp;k=explicacao" aria-label="Áudio da explicação"></audio>'
+    else:
+        corpo += design.botao_post("/licao/audio", "Gravar áudio da explicação", csrf, {"id": id_, "k": "explicacao"})
+    if lic["trecho_estudo"]:
+        corpo += f'<h2>Trecho de estudo</h2><blockquote>{e(lic["trecho_estudo"]).replace(chr(10), "<br>")}</blockquote>'
+        if licoes.caminho_audio(id_, "trecho"):
+            corpo += f'<audio controls src="/audio-licao?id={id_}&amp;k=trecho" aria-label="Áudio do trecho de estudo"></audio>'
+        else:
+            corpo += design.botao_post("/licao/audio", "Gravar áudio do trecho", csrf, {"id": id_, "k": "trecho"})
+    resp = licoes.respostas(id_)
+    corpo += "<h2>Exercícios</h2>"
+    aberto = st == "pronta"
+    form = ""
+    if aberto:
+        form += f'<form class="campos" method="post" action="/licao/responder"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="id" value="{id_}">'
+    usa_voz = False
+    for i, ex in enumerate(lic["exercicios"]):
+        n = i + 1
+        if ex["tipo"] == "alternativas":
+            if aberto:
+                ops = "".join(f'<label class="opcao"><input type="radio" name="ex{i}" value="{k}" required> {e(o)}</label>' for k, o in enumerate(ex["opcoes"]))
+                form += f'<fieldset class="opcao"><legend>Exercício {n} de {len(lic["exercicios"])}: {e(ex["enunciado"])}</legend>{ops}</fieldset>'
+            else:
+                r = resp.get(i)
+                corpo += (f'<h3>Exercício {n}: {e(ex["enunciado"])}</h3><p>Sua resposta: {e(r["resposta"]) if r else "sem resposta"}.</p>'
+                          + (f'<p>{e(r["correcao"])}</p>' if r else ""))
+        else:
+            if aberto:
+                usa_voz = True
+                form += (f'<p><label for="ex{i}">Exercício {n} de {len(lic["exercicios"])}: {e(ex["enunciado"])}</label><br>'
+                         f'<textarea id="ex{i}" name="ex{i}" rows="4" maxlength="2000" required></textarea>'
+                         f'<input type="hidden" id="via{i}" name="via{i}" value="texto">'
+                         f'<button type="button" data-voz="1" data-alvo="ex{i}" data-via="via{i}" data-estado="voz{i}" aria-pressed="false">Gravar resposta falada</button>'
+                         f'<span id="voz{i}" role="status"></span></p>')
+            else:
+                r = resp.get(i)
+                corpo += (f'<h3>Exercício {n}: {e(ex["enunciado"])}</h3><p>Sua resposta{" (falada)" if r and r["via"] == "voz" else ""}: {e(r["resposta"]) if r else "sem resposta"}.</p>'
+                          + (f'<p>{e(r["correcao"])}</p>' if r and r["correcao"] else ""))
+    if aberto:
+        corpo += form + '<button type="submit">Enviar respostas</button></form>'
+    if st == "corrigindo":
+        corpo += '<p role="status">Corrigindo suas respostas. Atualize em alguns instantes.</p>' + atualizar + repetir
+    elif st == "erro_correcao":
+        corpo += f'<p class="erro" role="alert">Não consegui terminar a correção: {e(lic["erro"])}</p>' + repetir
+    elif st == "concluida":
+        corpo += f'<h2>Resultado</h2><p role="status">Nota da lição: {round((lic["nota"] or 0) * 100)}%.</p>'
+        corpo += design.botao_post("/licao/nova", "Próxima lição", csrf, {"c": rel})
+    corpo += design.botao("/pasta", "Voltar à pasta", {"c": rel})
+    return titulo, corpo + ("<!--voz-->" if usa_voz else "")
+
+
 def ler_multipart(tipo_conteudo: str, corpo: bytes) -> tuple:
     """(campos, arquivos) de um formulário multipart/form-data. arquivos: nome do campo -> (nome do arquivo, bytes)."""
     msg = message_from_bytes(b"Content-Type: " + tipo_conteudo.encode("latin-1", "replace") + b"\r\nMIME-Version: 1.0\r\n\r\n" + corpo, policy=HTTP)
@@ -301,7 +442,7 @@ class Learn(nuvem.ManipuladorBase):
         self.send_header("Content-Length", str(len(corpo)))
         self.send_header("Cache-Control", "no-store")
         script = f" script-src 'nonce-{nonce}';" if nonce else ""
-        self.send_header("Content-Security-Policy", f"default-src 'none'; img-src data:; style-src 'unsafe-inline';{script} media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+        self.send_header("Content-Security-Policy", f"default-src 'none'; img-src data:; style-src 'unsafe-inline';{script} media-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
@@ -314,9 +455,9 @@ class Learn(nuvem.ManipuladorBase):
     def _ir(self, destino: str, extra: list = None) -> None:
         self._enviar(303, b"", extra=[("Location", destino)] + (extra or []))
 
-    def _pagina(self, status: int, titulo: str, corpo: str, sess: dict = None) -> None:
-        nonce = secrets.token_urlsafe(12) if sess else ""
-        self._enviar(status, pagina(titulo, corpo, sess, nonce), nonce=nonce)
+    def _pagina(self, status: int, titulo: str, corpo: str, sess: dict = None, script: str = "") -> None:
+        nonce = secrets.token_urlsafe(12) if (sess or script) else ""
+        self._enviar(status, pagina(titulo, corpo, sess, nonce, script), nonce=nonce)
 
     def _sessao(self):
         c = SimpleCookie()
@@ -404,6 +545,20 @@ class Learn(nuvem.ManipuladorBase):
         elif rota == "/estudo":
             titulo, corpo = pg_estudo(sess, int(p("id") or 0))
             self._pagina(200, titulo, corpo, sess)
+        elif rota == "/cards":
+            self._pagina(200, "Cards", pg_cards(sess), sess)
+        elif rota == "/licoes":
+            self._pagina(200, "Lições", pg_licoes(sess), sess)
+        elif rota == "/licao":
+            titulo, corpo = pg_licao(sess, int(p("id") or 0)) if p("id").isdigit() else (_ for _ in ()).throw(dados.ErroLearn("Lição não encontrada."))
+            voz_js = SCRIPT_VOZ if "<!--voz-->" in corpo else ""
+            self._pagina(200, titulo, corpo.replace("<!--voz-->", ""), sess, voz_js)
+        elif rota == "/audio-licao":
+            arq = licoes.caminho_audio(int(p("id")), p("k")) if p("id").isdigit() else None
+            if not arq:
+                self._pagina(404, "Não encontrei", "<p>Este áudio não existe.</p>", sess)
+            else:
+                self._servir(arq)
         elif rota == "/audio":
             arq = estudo.caminho_audio(int(p("id") or 0)) if p("id").isdigit() else None
             if not arq:
@@ -418,7 +573,11 @@ class Learn(nuvem.ManipuladorBase):
             self._pagina(404, "Não encontrei", '<p>Esta página não existe.</p><p><a href="/">Voltar ao início</a></p>', sess)
 
     def _post(self, rota: str, token: str, sess: dict) -> None:
-        if rota not in ("/sair", "/criar", "/atualizar", "/tipo", "/importar", "/sortear", "/responder", "/repetir", "/gravar"):
+        if rota == "/licao/voz":
+            self._voz(sess)
+            return
+        if rota not in ("/sair", "/criar", "/atualizar", "/tipo", "/importar", "/sortear", "/responder", "/repetir", "/gravar",
+                        "/licao/nova", "/licao/repetir", "/licao/responder", "/licao/audio", "/agenda", "/card/novo", "/cards/lido"):
             self._pagina(405, "Não permitido", "<p>Esta ação não existe.</p>", sess)
             return
         tipo_c = self.headers.get("Content-Type", "")
@@ -484,6 +643,47 @@ class Learn(nuvem.ManipuladorBase):
                         raise dados.ErroLearn("O áudio é gravado depois da correção.")
                     motivo = estudo.gravar_audio(id_)
                     sess["flash"] = ("erro", "Áudio não gravado: " + motivo) if motivo else ("ok", "Áudio gravado.")
+            elif rota == "/agenda":
+                rel = campos.get("c", "")
+                cards.configurar(rel, campos.get("cards_dia", "0"), campos.get("licao_dia", "0"), campos.get("horario", ""))
+                sess["flash"] = ("ok", "Agenda salva.")
+                destino = "/pasta?c=" + quote(rel)
+            elif rota == "/card/novo":
+                rel = campos.get("c", "")
+                destino = "/pasta?c=" + quote(rel)
+                perguntar.iniciar(sess["csrf"], "learn-card", lambda: cards.gerar_card(rel, origem="aluno"), f"card {rel}")
+                sess["flash"] = ("ok", "Gerando o card. Ele aparece na aba Cards em instantes.")
+            elif rota == "/cards/lido":
+                cards.marcar_lido(int(campos.get("id", "0") or 0))
+                destino = "/cards"
+            elif rota == "/licao/nova":
+                rel = campos.get("c", "")
+                id_ = licoes.nova_licao(rel)
+                if licoes.obter(id_)["estado"] == "gerando":
+                    perguntar.iniciar(sess["csrf"], f"learn-l{id_}", lambda: licoes.gerar(id_), f"lição {id_}")
+                destino = f"/licao?id={id_}"
+            elif rota in ("/licao/repetir", "/licao/responder", "/licao/audio"):
+                id_ = int(campos.get("id", "0") or 0)
+                lic = licoes.obter(id_)
+                if not lic:
+                    raise dados.ErroLearn("Lição não encontrada.")
+                destino = f"/licao?id={id_}"
+                if rota == "/licao/responder":
+                    resp = {}
+                    for i in range(len(lic["exercicios"])):
+                        resp[i] = campos.get(f"ex{i}", "")
+                    vias = {i: campos.get(f"via{i}", "") for i in range(len(lic["exercicios"]))}
+                    licoes.enviar_respostas(id_, resp, vias)
+                    perguntar.iniciar(sess["csrf"], f"learn-c{id_}", lambda: licoes.corrigir_pendentes(id_), f"correção da lição {id_}")
+                elif rota == "/licao/repetir":
+                    if lic["estado"] in ("gerando", "erro"):
+                        licoes._gravar(id_, estado="gerando", erro="")
+                        perguntar.iniciar(sess["csrf"], f"learn-l{id_}", lambda: licoes.gerar(id_), f"lição {id_}")
+                    elif lic["estado"] in ("corrigindo", "erro_correcao"):
+                        perguntar.iniciar(sess["csrf"], f"learn-c{id_}", lambda: licoes.corrigir_pendentes(id_), f"correção da lição {id_}")
+                else:
+                    motivo = licoes.gravar_audio(id_, campos.get("k", ""))
+                    sess["flash"] = ("erro", "Áudio não gravado: " + motivo) if motivo else ("ok", "Áudio gravado.")
             elif rota == "/tipo":
                 dados.criar_tipo(campos.get("nome", ""))
                 sess["flash"] = ("ok", "Tipo cadastrado.")
@@ -496,11 +696,36 @@ class Learn(nuvem.ManipuladorBase):
                 sess["flash"] = ("ok", f"Arquivo {r['arquivo']} importado.")
         except dados.ErroLearn as ex:
             sess["flash"] = ("erro", str(ex))
-            if rota == "/criar":
+            if rota in ("/agenda", "/card/novo", "/licao/nova", "/sortear", "/importar") and campos.get("c"):
+                destino = "/pasta?c=" + quote(campos["c"])
+            elif rota == "/criar":
                 destino = "/nova"
             elif rota == "/tipo":
                 destino = "/tipos"
         self._ir(destino)
+
+
+def _voz_post(self, sess: dict) -> None:
+    """Recebe o áudio gravado no navegador, transcreve no Mac e devolve {"texto"} ou {"erro"}. O token csrf vem no cabeçalho X-CSRF."""
+    def json_(status, obj):
+        self._enviar(status, json.dumps(obj, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
+    if not secrets.compare_digest(self.headers.get("X-CSRF", ""), sess["csrf"]):
+        json_(403, {"erro": "Token de segurança inválido. Recarregue a página."})
+        return
+    try:
+        n = int(self.headers.get("Content-Length") or 0)
+    except ValueError:
+        n = -1
+    if n <= 0 or n > voz.MAX_AUDIO:
+        json_(413, {"erro": "Gravação vazia ou grande demais."})
+        return
+    try:
+        json_(200, {"texto": voz.transcrever(self.rfile.read(n), "auto")})
+    except dados.ErroLearn as ex:
+        json_(200, {"erro": str(ex)})
+
+
+Learn._voz = _voz_post
 
 
 def _servir_audio(self, arq: Path) -> None:
@@ -552,6 +777,7 @@ def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
         sys.exit("Sem senha e código configurados o Heimdall Learn não sobe. Rode: python3 heimdall_acesso.py --tudo")
     dados.sincronizar()
+    cards.iniciar_agenda()
     srv = ThreadingHTTPServer((HOST, PORT), Learn)
     srv.daemon_threads = True
     sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Learn em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")

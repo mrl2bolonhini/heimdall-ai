@@ -9,15 +9,15 @@ ANTES DE COMEÇAR
   2. Para o chat responder pela nuvem (rápido), ligue o interruptor e reinicie: heimdall env --set HEIMDALL_NUVEM 1, depois heimdall restart. Confira com heimdall cloudai. Sem a nuvem, o chat usa os modelos locais do Ollama e fica lento. Para voltar ao local: heimdall env --set HEIMDALL_NUVEM 0 e heimdall restart.
   3. Abra o Open WebUI (porta 3000, ou o endereço do seu acesso) e entre como administrador. Em Workspace, Modelos, a lista deve mostrar os modelos do LiteLLM (qwen3-vl-instruct, conversas, deepseek-coder-v2:16b e os outros). Se estiver vazia, o LiteLLM não subiu: rode heimdall status.
 
-PASSO 1: AS CONEXÕES DE FERRAMENTAS (6 arquivos)
+PASSO 1: AS CONEXÕES DE FERRAMENTAS (7 arquivos)
   1. Abra Configurações do administrador, Integrações, Servidores de ferramentas externos.
-  2. Use Importar, uma vez para cada arquivo da pasta openwebui/ferramentas/: banco-pessoal.json, banco-estudos.json, banco-saude.json, banco-financas.json, web-basica.json, mac-admin.json. Um arquivo por conexão, porque o Open WebUI importa só a primeira conexão de cada arquivo. Se o Open WebUI já tiver uma conexão com o mesmo ID (por exemplo internet), apague a antiga antes de importar, para não duplicar; se o convidado usava essa conexão, reaplique o acesso dele depois.
-  3. O filtro de funções NÃO vem na importação (o Open WebUI não o exporta nem o importa). Ele é o que impede cada modelo de enxergar funções que não são do seu assunto. Nas conexões banco-pessoal, banco-estudos, banco-saude, banco-financas, web-basica, mac-admin, abra a edição e cole a lista no campo Lista de filtros de nomes de funções. Para copiar sem digitar, no Terminal: pbcopy < ~/heimdall-ai/openwebui/filtro_ID.txt (troque ID pelo nome da conexão) e depois Command+V no campo. Sem filtro (usa todas as funções do servidor): .
+  2. Use Importar, uma vez para cada arquivo da pasta openwebui/ferramentas/: banco-pessoal.json, banco-estudos.json, banco-learn.json, banco-saude.json, banco-financas.json, web-basica.json, mac-admin.json. Um arquivo por conexão, porque o Open WebUI importa só a primeira conexão de cada arquivo. Se o Open WebUI já tiver uma conexão com o mesmo ID (por exemplo internet), apague a antiga antes de importar, para não duplicar; se o convidado usava essa conexão, reaplique o acesso dele depois.
+  3. O filtro de funções NÃO vem na importação (o Open WebUI não o exporta nem o importa). Ele é o que impede cada modelo de enxergar funções que não são do seu assunto. Nas conexões banco-pessoal, banco-estudos, banco-learn, banco-saude, banco-financas, web-basica, mac-admin, abra a edição e cole a lista no campo Lista de filtros de nomes de funções. Para copiar sem digitar, no Terminal: pbcopy < ~/heimdall-ai/openwebui/filtro_ID.txt (troque ID pelo nome da conexão) e depois Command+V no campo. Sem filtro (usa todas as funções do servidor): .
   4. Salve cada conexão e use o botão de verificar conexão. As que usam o servidor de dados (porta 8004) e o do Mac (porta 8000) só respondem com o Heimdall ligado.
 
-PASSO 2: OS MODELOS (6)
+PASSO 2: OS MODELOS (7)
   0. Atalho: crie uma chave em Configurações, Conta, Chaves de API (conta administradora) e rode heimdall chat --import; ele cria ou atualiza as conexões de ferramentas (já com o filtro de funções) e os 7 modelos com os prompts padrão, sem importar arquivo nem colar filtro. Só as conexões: heimdall chat --tools; só os modelos: heimdall chat --models. A chave pode ficar em HEIMDALL_WEBUI_API_KEY no .env ou ser digitada na hora.
-  1. Ou abra Workspace, Modelos, Importar, e escolha openwebui/modelos_importar.json (todos de uma vez). Se só o primeiro entrar, importe um por um os arquivos de openwebui/modelos/ (alerts.json, health.json, finance.json, code.json, general.json, notes.json).
+  1. Ou abra Workspace, Modelos, Importar, e escolha openwebui/modelos_importar.json (todos de uma vez). Se só o primeiro entrar, importe um por um os arquivos de openwebui/modelos/ (alerts.json, health.json, finance.json, code.json, general.json, learn.json, notes.json).
   2. Os modelos entram só para o administrador, de propósito: eles mexem em saúde, finanças e dados pessoais. Para o convidado usar algum, dê o acesso modelo a modelo, e só aos que não tocam dados pessoais (Curiosidades, Conversas, Código).
   3. Cada modelo já chega com o prompt, a temperatura, a conexão de ferramentas e a chamada de função Nativa. Confira uma vez abrindo o modelo para editar. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.
 
@@ -38,20 +38,23 @@ As conexões de dados apontam para o mesmo servidor (porta 8004) e só mudam o f
 
 Conexão 1: ID banco-pessoal, nome "Alerts (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
   Funções permitidas: banco_resumo, banco_consultar, banco_buscar, saude_historico, get_system_timestamp
-  Filtro a colar (exclui o resto do servidor): !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros
+  Filtro a colar (exclui o resto do servidor): !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros, !learn_progresso, !learn_licoes, !learn_cards
 Conexão 2: ID banco-estudos, nome "Notes (estudos do banco)", http://host.docker.internal:8004/mcp, acesso só do administrador
   Funções permitidas: banco_buscar, banco_consultar
-  Filtro a colar (exclui o resto do servidor): !banco_resumo, !saude_historico, !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros, !get_system_timestamp
-Conexão 3: ID banco-saude, nome "Health (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
+  Filtro a colar (exclui o resto do servidor): !banco_resumo, !saude_historico, !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros, !learn_progresso, !learn_licoes, !learn_cards, !get_system_timestamp
+Conexão 3: ID banco-learn, nome "Learn (progresso e lições)", http://host.docker.internal:8004/mcp, acesso só do administrador
+  Funções permitidas: learn_progresso, learn_licoes, learn_cards, get_system_timestamp
+  Filtro a colar (exclui o resto do servidor): !banco_resumo, !banco_consultar, !banco_buscar, !saude_historico, !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros
+Conexão 4: ID banco-saude, nome "Health (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
   Funções permitidas: saude_historico, analise_saude, frequencia_cardiaca_resumo, ecg_resumo, treinos_resumo, relatorio_saude, exames_resumo, exame_historico, analise_exames, exames_pendentes, receitas_encaminhamentos, banco_consultar, get_system_timestamp
-  Filtro a colar (exclui o resto do servidor): !banco_resumo, !banco_buscar, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros
-Conexão 4: ID banco-financas, nome "Finance (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
+  Filtro a colar (exclui o resto do servidor): !banco_resumo, !banco_buscar, !financas_resumo, !financas_transacoes, !financas_orcamentos, !financas_recorrentes, !financas_boletos, !financas_futuros, !learn_progresso, !learn_licoes, !learn_cards
+Conexão 5: ID banco-financas, nome "Finance (banco pessoal)", http://host.docker.internal:8004/mcp, acesso só do administrador
   Funções permitidas: financas_resumo, financas_transacoes, financas_orcamentos, financas_recorrentes, financas_boletos, financas_futuros, get_system_timestamp
-  Filtro a colar (exclui o resto do servidor): !banco_resumo, !banco_consultar, !banco_buscar, !saude_historico, !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos
-Conexão 5: ID web-basica, nome "Web básica (General)", http://host.docker.internal:8001/mcp
+  Filtro a colar (exclui o resto do servidor): !banco_resumo, !banco_consultar, !banco_buscar, !saude_historico, !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos, !learn_progresso, !learn_licoes, !learn_cards
+Conexão 6: ID web-basica, nome "Web básica (General)", http://host.docker.internal:8001/mcp
   Funções permitidas: search_searxng, fetch_url, calculate_expression, get_system_timestamp
   Filtro a colar (exclui o resto do servidor): !get_hackernews_top_stories, !search_reddit_posts, !fetch_rss_feed, !get_astronomy_apod, !get_youtube_transcript
-Conexão 6: ID mac-admin, nome "Notes (Mac e memória, administrador)", http://host.docker.internal:8000/mcp, acesso só do administrador
+Conexão 7: ID mac-admin, nome "Notes (Mac e memória, administrador)", http://host.docker.internal:8000/mcp, acesso só do administrador
   Funções permitidas: memory_save, memory_search, memory_forget, rag_temas, rag_search
   Filtro a colar (exclui o resto do servidor): !list_directory, !read_file, !write_file, !get_system_metrics, !get_disk_usage, !check_ollama_models, !banco_resumo, !banco_consultar, !banco_buscar, !saude_historico, !treinos_resumo, !ecg_resumo, !frequencia_cardiaca_resumo, !relatorio_saude, !analise_saude, !exames_resumo, !exame_historico, !analise_exames, !exames_pendentes, !receitas_encaminhamentos
 
@@ -96,7 +99,16 @@ Conexão 6: ID mac-admin, nome "Notes (Mac e memória, administrador)", http://h
    Temperatura: 0,8
    Observação: na nuvem (HEIMDALL_NUVEM=1) usa o Qwen3 30B; sem a nuvem, o gemma local, que pode não chamar a pesquisa.
 
-6. Notes
+6. Learn
+   Para: ajuda nas lições e nos estudos do Heimdall Learn: progresso, erros, revisão e dúvidas sobre o material (precisa do Learn ligado)
+   Base: qwen3-vl-instruct
+   Prompt: prompts/prompt_chat_learn.txt
+   Ferramentas: conexão mac-admin (5 funções: memory_save, memory_search, memory_forget, rag_temas, rag_search)
+   Ferramentas: conexão banco-learn (4 funções: learn_progresso, learn_licoes, learn_cards, get_system_timestamp)
+   Chamada de função: Nativa
+   Temperatura: 0,3
+
+7. Notes
    Para: livros, notas, estudos dos livros e documentos, e memória pessoal (opcional; antes, Documentos e Memória)
    Base: qwen3-vl-instruct
    Prompt: prompts/prompt_chat_documentos.txt
@@ -113,6 +125,7 @@ AJUSTES EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)
   Finance: temperatura 0,2.
   Code: temperatura 0,2.
   General: temperatura 0,8.
+  Learn: temperatura 0,3.
   Notes: temperatura 0,2.
   Nos que têm ferramentas, deixe a chamada de função em Nativa. O contexto (8192 nos modelos locais) e o tempo na memória já vêm do litellm_config.yaml; na nuvem o General usa o contexto de 32 mil tokens do Qwen3.
 

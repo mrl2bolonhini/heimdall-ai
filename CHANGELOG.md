@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Heimdall Learn completo: lições, voz, cards e modelo Learn
+- Fase 3, lições sequenciais: em pasta sequencial, Próxima lição gera explicação, trecho de estudo e 3 a 5 exercícios (alternativas e texto) a partir do material, dois trechos por lição, uma lição aberta por vez. Você responde, a correção vem exercício a exercício (certo, parcial, errado) e a lição conclui. Há progresso da pasta e áudio do trecho e da explicação.
+- Fase 4, voz: o botão Gravar resposta usa o microfone do navegador, transcreve no Mac (whisper-cpp, mlx_whisper ou whisper, com ffmpeg ou afconvert), você edita o texto e envia. O áudio é apagado depois de transcrito (HEIMDALL_LEARN_GUARDAR_VOZ=1 guarda em db/voz). Variáveis: HEIMDALL_LEARN_WHISPER_MODELO e HEIMDALL_LEARN_WHISPER_TAMANHO.
+- Fase 5, cards e agenda: por pasta, de 0 a 3 cards por dia (de 4 em 4 horas a partir do horário) e uma lição por dia em pasta sequencial. Aviso no Mac e no Bark com o texto do card; HEIMDALL_LEARN_AGENDA=0 desliga a agenda e HEIMDALL_LEARN_NOTIFICAR=0 tira o aviso. Se o modelo falhar, tenta de novo em 30 minutos. Aba Cards com marcar como lido.
+- Modelo Learn no chat (agora 8 modelos), com a conexão banco-learn: learn_progresso, learn_licoes (com seus erros) e learn_cards, só leitura. Rode heimdall chat --import.
+- Modelos locais por padrão; se a nuvem estiver ligada, lições e correções entram no teto de US$ 15 por mês.
+
 ## 2026-11-22 - Heimdall Learn, fase 2 (modo aleatório) e catálogo de tipos
 - Learn publicado em learn.heimdall-ai.tech: rota no túnel (porta 8019), DNS e o endereço entrou no aplicativo do Cloudflare Access do dono (mesma política, com Authenticator). Continua desligado no Mac até HEIMDALL_LEARN=1.
 - Catálogo de tipos com regras próprias (heimdall_learn_tipos.py): Idiomas, Programação, Exatas, Arquitetura e dados, Filosofia, Humanas, Direito, Medicina, Esoterismo e Outro. Cada um define a categoria sugerida, o que a IA faz, o que evita, as regras do prompt e o que vem depois. A aba Tipos mostra tudo; tipo que você cadastra usa o perfil genérico. Na criação da pasta, sem categoria escolhida, vale a sugerida pelo tipo.

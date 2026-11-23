@@ -95,7 +95,7 @@ Exemplos:
   heimdall chat --password
   heimdall chat --email
   heimdall chat --delete-user
-  heimdall chat --import    cria ou atualiza no Open WebUI as conexões de ferramentas (com o filtro de funções) e os 7 modelos com os prompts padrão, pela API (chave em HEIMDALL_WEBUI_API_KEY ou perguntada na hora)
+  heimdall chat --import    cria ou atualiza no Open WebUI as conexões de ferramentas (com o filtro de funções) e os 8 modelos com os prompts padrão, pela API (chave em HEIMDALL_WEBUI_API_KEY ou perguntada na hora)
   heimdall chat --tools     só as conexões de ferramentas
   heimdall chat --models    só os modelos; no fim esconde do seletor os modelos de base, para sobrarem só os criados (--keep-base não esconde; --show-all mostra de novo)
   Em qualquer um, --dry-run só mostra o que faria.
@@ -116,7 +116,7 @@ Exemplos:
   heimdall notes --move-old --run
 
 @ learn | Heimdall Learn, plataforma de estudos (fase 1)
-Sem opção, abre o site de estudos (porta 8019): pastas de material com categoria (aleatório ou sequencial) e tipo com regras próprias (idiomas, programação, exatas, arquitetura e dados, filosofia, humanas, direito, medicina, esoterismo e outros), importação de documentos, estudo por sorteio de trecho com pergunta, correção, áudio e matérias sugeridas, e banco próprio (db/learn.db). Desligado por padrão: ligue com heimdall env --set HEIMDALL_LEARN 1 e reinicie.
+Sem opção, abre o site de estudos (porta 8019): pastas de material com categoria (aleatório ou sequencial) e tipo com regras próprias (idiomas, programação, exatas, arquitetura e dados, filosofia, humanas, direito, medicina, esoterismo e outros), importação de documentos, estudo por sorteio de trecho com pergunta, correção, áudio e matérias sugeridas, lições sequenciais com exercícios e correção, voz do aluno (gravar, transcrever, editar, enviar), cards e lições agendados com aviso no Mac e no Bark, e banco próprio (db/learn.db). Variáveis: HEIMDALL_LEARN_AGENDA=0 desliga a agenda, HEIMDALL_LEARN_NOTIFICAR=0 tira o aviso, HEIMDALL_LEARN_WHISPER_MODELO e HEIMDALL_LEARN_WHISPER_TAMANHO configuram a transcrição, HEIMDALL_LEARN_GUARDAR_VOZ=1 guarda o áudio do aluno. Desligado por padrão: ligue com heimdall env --set HEIMDALL_LEARN 1 e reinicie.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
   -s, --sync           cadastra no banco as pastas que já existem em knowledge/ (categoria aleatório, tipo Outro)
