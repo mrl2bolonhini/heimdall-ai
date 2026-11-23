@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Ajustes como botão no topo (padrão) e nova ordem das abas do Finance
+- Padrão do projeto: Ajustes é um botão no topo, à direita, na mesma linha do menu Conta e antes dele (heimdall_lab.cabecalho aceita ajustes_html), e não uma aba. Abre uma tela sem as abas de cima, com o botão Voltar e subabas. Regra acrescentada ao CLAUDE.md e à página de Design.
+- Finance: abas de cima agora Extratos, Cartões, Patrimônio (só com dados), Tendências e Visões; Ajustes saiu das abas. A página inicial continua sendo Tendências > Resumo.
+- Ideia registrada: seção de ajuda dentro de Ajustes, com FAQ e envio de mensagem para suporte@heimdall-ai.tech.
+
 ## 2026-11-23 - Finance em abas com subabas
 - Finance: as 13 abas viraram seis com subabas. Tendências (Resumo, Evolução, Orçamentos, Contas recorrentes, Análises, Avisos), Extratos (Transações, Contas, Pagamentos futuros, Boletos), Cartões (Fatura aberta, Faturas fechadas), Patrimônio (Investimentos e Dívidas por tipo de crédito, só com dados), Visões (formulário para criar e tabela das gravadas) e Ajustes (Importar extrato, Importar planilha, Regras, Avisos). Rotas antigas continuam abrindo a aba certa.
 - Ao importar uma planilha há uma opção para criar a visão na hora. Ajustes > Avisos tem a configuração do Bark (liga ou desliga a notificação no iPhone; o aviso sempre aparece em Tendências > Avisos).

@@ -414,14 +414,17 @@ _FAVICON_SVG = ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><re
 ICONE = '<link rel="icon" href="data:image/svg+xml,' + __import__("urllib.parse", fromlist=["quote"]).quote(_FAVICON_SVG) + '">'
 
 
-def cabecalho(nome: str, nav: str = "", sair_html: str = "") -> str:
+def cabecalho(nome: str, nav: str = "", sair_html: str = "", ajustes_html: str = "") -> str:
     """Cabeçalho de marca: símbolo (decorativo, o nome ao lado já é lido) + nome do serviço + menu + faixa de seis cores.
-    Antes dele vai o menu Conta (nome, e-mail e links dos serviços), quando se sabe quem entrou: pelo Access sempre; pela senha, se há menu (nav) = sessão aberta."""
+    Antes dele vai o menu Conta (nome, e-mail e links dos serviços), quando se sabe quem entrou: pelo Access sempre; pela senha, se há menu (nav) = sessão aberta.
+    `ajustes_html` (design.botao do Ajustes do serviço) é o botão Ajustes, no topo à direita, na mesma linha do menu Conta e antes dele: padrão de todo serviço que tem ajustes."""
     try:
         import heimdall_conta
-        conta = heimdall_conta.menu(nome, logado_local=bool(nav), sair_html=sair_html)
+        conta = heimdall_conta.menu(nome, logado_local=bool(nav or ajustes_html), sair_html=sair_html)
     except Exception:  # noqa: BLE001
         conta = ""
+    if ajustes_html:
+        conta = f'<div class="topo-conta">{ajustes_html}{conta}</div>'
     return f'{conta}<header><p class="marca">{SIMBOLO}<strong>{html.escape(nome)}</strong></p>{nav}</header>'
 
 

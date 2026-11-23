@@ -114,13 +114,13 @@ confere("dívida de planilha vira empréstimo pessoal", [k for k, _ in fp.catego
 bloq = pd.coletar_extras(Falso(("/loans", "/investments")), ["i1"], CONTAS, FATURAS)
 confere("produto bloqueado vira aviso e não derruba a coleta", "empréstimos e financiamentos" in bloq["indisponiveis"] and "investimentos" in bloq["indisponiveis"] and bloq["contas"], bloq["indisponiveis"])
 con_vazio = fn.conectar(Path(tempfile.mkdtemp()) / "v.db")
-confere("sem dados as abas dinâmicas não aparecem", [g[0] for g in hf.estrutura(con_vazio)] == ["tendencias", "extratos", "cartoes", "visoes", "ajustes"] and "/contas" not in [r for g in hf.estrutura(con_vazio) for r, _ in g[2]])
+confere("sem dados as abas dinâmicas não aparecem", [g[0] for g in hf.estrutura(con_vazio)] == ["extratos", "cartoes", "tendencias", "visoes", "ajustes"] and "/contas" not in [r for g in hf.estrutura(con_vazio) for r, _ in g[2]])
 
 # abas e páginas
 fn.importar_itens(con, [{"data": "2026-11-20", "valor": -5000, "descricao": "Mercado"}], "ofx", "x", "Itaú conta")
 fn.importar_itens(con, [{"data": "2026-11-20", "valor": -9000, "descricao": "Loja"}], "ofx", "x", "Nubank cartão")
 rotas = [r for g in hf.estrutura(con) for r, _ in g[2]]
-confere("abas criadas pelos dados, depois de Transações", rotas[6:8] == ["/transacoes", "/contas"] and rotas[12:18] == ["/investimentos", "/emprestimos", "/credito/veiculo", "/credito/imovel", "/credito/consignado", "/credito/pessoal"] and "/credito/pessoal" in rotas, rotas)
+confere("abas criadas pelos dados, depois de Transações", rotas[:2] == ["/transacoes", "/contas"] and rotas[6:12] == ["/investimentos", "/emprestimos", "/credito/veiculo", "/credito/imovel", "/credito/consignado", "/credito/pessoal"] and "/credito/pessoal" in rotas, rotas)
 rot = [x for g in hf.estrutura(con) for x in g[2]]
 confere("rótulos em português", ("/credito/veiculo", "Financiamento de veículo") in rot and ("/credito/imovel", "Financiamento imobiliário") in rot and ("/credito/consignado", "Consignado") in rot)
 t, c = hfp.get(con, "/contas", {}, {"csrf": "x"}, None)

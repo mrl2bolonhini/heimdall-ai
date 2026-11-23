@@ -140,13 +140,13 @@ def estrutura(con) -> list:
     except Exception:  # noqa: BLE001  (a navegação nunca derruba a página)
         patrimonio = []
     extratos += [("/futuros", "Pagamentos futuros"), ("/boletos", "Boletos")]
-    grupos = [("tendencias", "Tendências", [("/", "Resumo"), ("/tendencias", "Evolução"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"),
-                                           ("/analise", "Análises"), ("/avisos", "Avisos")]),
-              ("extratos", "Extratos", extratos),
+    grupos = [("extratos", "Extratos", extratos),
               ("cartoes", "Cartões", [("/cartoes", "Fatura aberta"), ("/cartoes/fechadas", "Faturas fechadas")])]
     if patrimonio:
         grupos.append(("patrimonio", "Patrimônio", patrimonio))
-    grupos += [("visoes", "Visões", [("/visoes", "Visões")]),
+    grupos += [("tendencias", "Tendências", [("/", "Resumo"), ("/tendencias", "Evolução"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"),
+                                            ("/analise", "Análises"), ("/avisos", "Avisos")]),
+               ("visoes", "Visões", [("/visoes", "Visões")]),
                ("ajustes", "Ajustes", [("/importar", "Importar extrato"), ("/planilhas", "Importar planilha"), ("/regras", "Regras"), ("/avisos/config", "Avisos")])]
     return grupos
 
@@ -180,26 +180,30 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
             perguntar_html = ""
         grupos = estrutura(banco())
         grupo, sub = localizar(grupos, sess.get("atual", "/"))
-        itens_nav = [(g[2][0][0], g[1]) for g in grupos]
-        atual = grupo[2][0][0] if grupo else ""
+        em_ajustes = bool(grupo) and grupo[0] == "ajustes"   # Ajustes é botão no topo, à direita, e não aba (padrão do Heimdall Design)
+        itens_nav = [(g[2][0][0], g[1]) for g in grupos if g[0] != "ajustes"]
+        atual = "" if em_ajustes else (grupo[2][0][0] if grupo else "")
+        ajustes_html = design.botao("/importar", "Ajustes", atual=em_ajustes)
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        nav = design.nav_abas(itens_nav, atual, "Seções do Heimdall Finance")
+        nav = "" if em_ajustes else design.nav_abas(itens_nav, atual, "Seções do Heimdall Finance")
         f = sess.get("flash")
         if f:
             sess["flash"] = None
             flash = f'<div class="aviso {"ok" if f[0] == "ok" else ""}" role="status">{e(f[1])}</div>'
         interno = f"<h1>{e(titulo)}</h1>{flash}{corpo}{perguntar_html}"
-        if grupo and len(grupo[2]) > 1:   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
+        if em_ajustes:   # tela sem abas de cima: botão para voltar e as subabas dos ajustes
+            conteudo = f'<div class="acoes-topo">{design.botao("/", "Voltar ao Finance")}</div>' + design.com_subabas(grupo[2], sub, interno, "Seções dos Ajustes")
+        elif grupo and len(grupo[2]) > 1:   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
             conteudo = design.com_abas(itens_nav, atual, design.com_subabas(grupo[2], sub, interno, f"Seções de {grupo[1]}"), foco=False)
         else:
             conteudo = design.com_abas(itens_nav, atual, interno)
         scripts = design.script()
     else:
-        sair = ""
+        sair = ajustes_html = ""
         conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Finance</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Finance", nav, sair_html=sair)}'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Finance", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape()}{scripts}</body></html>').encode("utf-8")
 
 
