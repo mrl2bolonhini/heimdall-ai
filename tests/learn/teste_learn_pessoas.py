@@ -84,7 +84,7 @@ _, pagina_ana, _ = req("ana", "GET", "/")
 _, pagina_beto, _ = req("beto", "GET", "/")
 confere("o dono não vê a pasta da Ana", "segredos-da-ana" in pagina_ana and "segredos-da-ana" not in pagina_dono and "estudo-do-dono" in pagina_dono)
 confere("a Ana não vê a pasta do dono", "estudo-do-dono" not in pagina_ana)
-confere("o Beto não vê nada de ninguém", "segredos" not in pagina_beto and "estudo-do-dono" not in pagina_beto and "Nenhuma pasta" in pagina_beto)
+confere("o Beto não vê nada de ninguém", "segredos" not in pagina_beto and "estudo-do-dono" not in pagina_beto and "Nenhum tema cadastrado" in pagina_beto)
 confere("pastas com o mesmo nome são independentes (categoria diferente)", d.obter_pasta("comum")["categoria"] == "aleatorio" and "Sequencial" in pagina_ana)
 
 # arquivos no lugar certo

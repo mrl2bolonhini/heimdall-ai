@@ -283,6 +283,7 @@ SCRIPTS = [
     ("tests/learn/teste_learn_pessoas.py", "Testa que o Learn separa pastas, arquivos, agenda, cards e ajustes entre o dono e dois convidados, e o interruptor HEIMDALL_PESSOAS=0."),
     ("heimdall_learn_migrar.py", "Migra os estudos antigos (notas dos livros no cofre e a tabela estudos do banco) para o Learn, com o estado importado; idempotente e sem apagar nada. Comando: heimdall learn --migrate [--apply]."),
     ("heimdall_learn_painel.py", "Dados das abas Exercícios e Progresso do Learn, só leitura: exercícios com resposta e resultado (gabarito só depois de concluir a lição), dias seguidos e acertos por tipo."),
+    ("tests/learn/teste_learn_novo.py", "Testa o Novo estudo (nome, vários arquivos, categoria e tipo numa tela só) e o Resumo da tela inicial do Learn."),
     ("tests/learn/teste_learn_ajustes.py", "Testa a aba Ajustes: pausar agenda e avisos, agenda por pasta, arquivar pasta sem apagar nada e confirmação."),
     ("tests/learn/teste_learn_migrar.py", "Testa a migração dos estudos antigos para o Learn: simulação sem gravar, importação, repetição sem duplicar e originais intactos."),
     ("tests/learn/teste_learn_estudos_dia.py", "Testa os estudos por dia da agenda do Learn: 6h, 13h e 20h, pasta sorteada, ajuste de 0 a 3 e sem repetir."),

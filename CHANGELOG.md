@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Learn: Resumo na tela inicial e Novo estudo numa tela só
+- A tela inicial do Learn começa com um Resumo em texto: quantos temas estão cadastrados e, por tema, a categoria, quantos documentos de consulta, estudos e lições. Os botões Novo estudo e Ajustes ficam acima, e a lista numerada de temas leva ao tema.
+- Novo estudo é um formulário só: dê o nome do tema (ou escolha a pasta mãe), envie os arquivos, escolha a categoria e o tipo de estudo numa lista de opções, com a explicação de cada tipo logo abaixo do nome, e toque em Criar. Os arquivos aceitos entram na hora; os que não servem são avisados pelo nome. Tipo novo se cadastra ali mesmo.
+- A página "Tipos de estudo e suas regras" saiu do menu e agora fica em Ajustes.
+
 ## 2026-11-23 - Perguntar no Learn
 - Campo Perguntar no fim de cada aba do tema (Estudos, Lições, Exercícios, Cards, Progresso) e na lista de temas. O modelo responde só com o seu progresso e o que você fez no tema: estudos com pergunta, resposta e correção, lições e notas, exercícios errados, cards. Os trechos estudados (do estudo e da lição, com a explicação) vão junto, para você perguntar sobre o texto e pedir explicação; o livro inteiro e o gabarito de lição em aberto não vão; a resposta de um tema não aparece em outro.
 - Nova regra no CLAUDE.md: todo serviço com dados pessoais tem o Perguntar.

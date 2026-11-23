@@ -94,7 +94,7 @@ ul.chaves{list-style:none;padding:0}ul.chaves li{display:flex;flex-wrap:wrap;ali
 button[role=switch]{margin:0;min-width:11rem;text-align:left;border:3px solid var(--erro)}button[role=switch][aria-checked=true]{border-color:var(--ok)}
 button[role=switch][aria-disabled=true]{opacity:.6;cursor:progress}
 fieldset.opcao{border:1px solid var(--linha);margin:.6rem 0;padding:.5rem .9rem}fieldset.opcao legend{font-weight:700;padding:0 .3rem}
-fieldset.opcao label{display:inline-block;font-weight:400;margin:.2rem 1.2rem .2rem 0}
+fieldset.opcao label{display:inline-block;font-weight:400;margin:.2rem 1.2rem .2rem 0}.acoes-topo{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}.tipo-op{margin:.6rem 0}.tipo-op p{margin:.1rem 0 0 1.8rem}
 """)
 
 

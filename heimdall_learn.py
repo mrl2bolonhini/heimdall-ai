@@ -81,7 +81,7 @@ SISTEMA_LEARN = ("Você responde em português do Brasil, em texto corrido ou li
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 CSS = nuvem.CSS + """
 body{font-size:19px;line-height:1.7;max-width:50rem}main{overflow-wrap:anywhere}
-.acoes-topo{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}.meta{color:var(--suave);font-size:.9em}.lista{list-style:none;padding:0}.lista li{border-bottom:1px solid var(--linha);padding:.6rem 0}
+.meta{color:var(--suave);font-size:.9em}.lista{list-style:none;padding:0}.lista li{border-bottom:1px solid var(--linha);padding:.6rem 0}
 form.campos label{display:block;margin-top:.9rem;font-weight:700}form.campos input[type=text],form.campos select,form.campos input[type=file]{display:block;width:100%;max-width:30rem}
 """
 
@@ -124,11 +124,14 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
         tema, aba = sess.get("tema", ""), sess.get("aba", "")
-        botoes = (design.botao("/", "Trocar de tema") if tema or aba == "ajustes" else "")
-        if aba == "ajustes":
-            botoes += design.botao("/tema", "Voltar ao tema", {"t": tema}) if tema else ""
+        if aba == "inicio":
+            botoes = design.botao("/nova", "Novo estudo") + design.botao("/ajustes", "Ajustes")
+        elif aba == "ajustes":
+            botoes = design.botao("/", "Trocar de tema") + (design.botao("/tema", "Voltar ao tema", {"t": tema}) if tema else "")
+        elif tema:
+            botoes = design.botao("/", "Trocar de tema") + design.botao("/ajustes", "Ajustes", {"t": tema})
         else:
-            botoes += design.botao("/ajustes", "Ajustes", {"t": tema} if tema else None)
+            botoes = design.botao("/", "Voltar aos temas")
         nav = f'<div class="acoes-topo">{botoes}</div>'
         if tema and aba and aba != "ajustes":
             itens = abas_do_tema(tema)
@@ -189,12 +192,15 @@ def _lista_pastas(itens: list, destino: str = "pasta") -> str:
 
 
 def pg_inicio(sess: dict) -> str:
-    r = dados.resumo()
-    cats = "".join(f"<li><strong>{e(n)}</strong>: {e(d)}</li>" for n, d in dados.CATEGORIAS.values())
-    novo = design.botao("/nova", "Novo estudo")
-    return (aviso(sess) + novo + f'<p role="status">{plural(r["pastas"], "pasta", "pastas")} e {plural(r["documentos"], "documento", "documentos")}. Escolha um tema para ver as abas dele.</p>'
-            + _lista_pastas(dados.listar_pastas(""), "tema") + f'<h2>Categorias</h2><ul>{cats}</ul>'
-            + '<p>' + design.botao("/tipos", "Ver os tipos de estudo e suas regras") + '</p>')
+    itens = painel.resumo_dos_temas()
+    if not itens:
+        return aviso(sess) + '<p role="status">Nenhum tema cadastrado ainda. Use o botão Novo estudo, acima.</p>'
+    soma = lambda k: sum(x[k] for x in itens)  # noqa: E731
+    lista = "".join(f'<li><a href="/tema?t={quote(x["caminho"])}">{e(x["nome"])}</a>: {e(x["categoria"])}. {plural(x["documentos"], "documento de consulta", "documentos de consulta")}, '
+                    f'{plural(x["estudos"], "estudo", "estudos")} e {plural(x["licoes"], "lição", "lições")}.</li>' for x in itens)
+    return (aviso(sess) + f'<h2>Resumo</h2><p role="status">{plural(len(itens), "tema cadastrado", "temas cadastrados")}, com {plural(soma("documentos"), "documento de consulta", "documentos de consulta")}, '
+            f'{plural(soma("estudos"), "estudo", "estudos")} e {plural(soma("licoes"), "lição", "lições")} no total.</p>'
+            f'<h2>Temas</h2><p>Abra um tema para ver as abas dele.</p><ol>{lista}</ol>')
 
 
 def _opcoes_tipo(atual: str = "") -> str:
@@ -208,18 +214,28 @@ def _opcoes_categoria(atual: str = "") -> str:
 
 
 def pg_nova(sess: dict, pai: str = "") -> str:
+    """Novo estudo, numa tela só: nome (ou a pasta de cima), arquivos, categoria, tipo com a explicação de cada um e Criar."""
     csrf = sess["csrf"]
     pais = "".join(f'<option value="{e(p["caminho"])}"{" selected" if p["caminho"] == pai else ""}>{e(p["caminho"])}</option>' for p in dados.arvore_plana())
+    radios = ""
+    for k, t in enumerate(dados.listar_tipos()):
+        pf = tipos.perfil(t)
+        radios += (f'<div class="tipo-op"><input type="radio" id="tipo_{k}" name="tipo" value="{e(t)}" aria-describedby="tipo_{k}_d"{" checked" if t == "Outro" else ""}>'
+                   f'<label for="tipo_{k}">{e(t)}</label><p class="meta" id="tipo_{k}_d">{e(dados.CATEGORIAS[pf["categoria"]][0])}. {e(pf["resumo"])}</p></div>')
+    radios += ('<div class="tipo-op"><input type="radio" id="tipo_novo_r" name="tipo" value="__novo__" aria-describedby="tipo_novo_d"><label for="tipo_novo_r">Um tipo novo</label>'
+               '<p class="meta" id="tipo_novo_d">A IA usa o perfil genérico: estuda o material e, se faltar contexto, pergunta. Escreva o nome abaixo.</p>'
+               '<label for="tipo_novo">Nome do tipo novo</label><input id="tipo_novo" name="tipo_novo" type="text" maxlength="40"></div>')
     return (aviso(sess) +
-            f'<form class="campos" method="post" action="/criar"><input type="hidden" name="csrf" value="{e(csrf)}">'
-            '<label for="nome">Nome do estudo (vira uma pasta de material)</label><input id="nome" name="nome" type="text" maxlength="80" required>'
-            f'<label for="pai">Dentro de</label><select id="pai" name="pai"><option value="">Raiz do Learn</option>{pais}</select>'
+            f'<form class="campos" method="post" action="/criar" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{e(csrf)}">'
+            '<label for="nome">Nome do tema de estudo</label><input id="nome" name="nome" type="text" maxlength="80" required>'
+            f'<label for="pai">Dentro de (deixe em branco para um tema novo)</label><select id="pai" name="pai"><option value="">Nenhuma, é um tema novo</option>{pais}</select>'
+            '<label for="arquivos">Arquivos de consulta (PDF, Markdown, texto, Word, EPUB, M4A ou MP3; pode escolher vários e pode ficar em branco)</label>'
+            '<input id="arquivos" name="arquivo" type="file" multiple>'
             f'<label for="categoria">Categoria</label><select id="categoria" name="categoria"><option value="">Sugerida pelo tipo</option>{_opcoes_categoria()}</select>'
-            f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes_tipo()}</select>'
-            '<label for="tipo_novo">Ou um tipo novo</label><input id="tipo_novo" name="tipo_novo" type="text" maxlength="40">'
+            f'<fieldset class="opcao"><legend>Tipo de estudo</legend>{radios}</fieldset>'
             '<label for="idioma">Idioma de estudo (só para o tipo Idiomas)</label><input id="idioma" name="idioma" type="text" maxlength="40">'
-            '<p class="meta">Em subpasta, categoria, tipo e idioma em branco herdam da pasta de cima.</p>'
-            '<button type="submit">Criar estudo</button></form>' + design.botao("/tipos", "Ver as regras de cada tipo"))
+            '<p class="meta">Em subpasta, categoria e idioma em branco herdam da pasta de cima.</p>'
+            '<button type="submit">Criar estudo</button></form>')
 
 
 def _form_agenda(p: dict, csrf: str, volta: str = "pasta", sufixo: str = "") -> str:
@@ -283,7 +299,7 @@ def pg_tipos(sess: dict) -> str:
             f'<table><caption>Tipos de estudo</caption><thead><tr><th scope="col">Tipo</th><th scope="col">Categoria sugerida</th><th scope="col">Para quê</th></tr></thead><tbody>{linhas}</tbody></table>{detalhes}'
             f'<form class="campos" method="post" action="/tipo"><input type="hidden" name="csrf" value="{e(csrf)}">'
             '<label for="nome">Novo tipo de estudo</label><input id="nome" name="nome" type="text" maxlength="40" required>'
-            '<button type="submit">Cadastrar tipo</button></form>')
+            '<button type="submit">Cadastrar tipo</button></form>' + design.botao("/ajustes", "Voltar aos Ajustes"))
 
 
 def pg_estudo(sess: dict, id_: int) -> tuple:
@@ -428,6 +444,7 @@ def pg_ajustes(sess: dict, tema: str = "") -> str:
              + ('<p class="meta">Os avisos estão desligados no .env do Mac (HEIMDALL_LEARN_NOTIFICAR=0).</p>' if env_avisos else "")
              + design.botao_post("/ajustes/definir", "Pausar a agenda" if ag_ajuste else "Ligar a agenda", csrf, {"chave": "agenda", "valor": "0" if ag_ajuste else "1", "t": tema})
              + design.botao_post("/ajustes/definir", "Desligar os avisos" if av_ajuste else "Ligar os avisos", csrf, {"chave": "avisos", "valor": "0" if av_ajuste else "1", "t": tema})
+             + design.botao("/tipos", "Tipos de estudo e suas regras")
              + f'<p role="status">Estudos por sorteio por dia (pasta e trecho ao acaso, às 6h, 13h e 20h): {cards.estudos_por_dia()}.</p>'
              + "".join(design.botao_post("/ajustes/definir", f"{k} estudo(s) por dia" if k else "Sem estudos por sorteio", csrf, {"chave": "estudos_dia", "valor": str(k), "t": tema}) for k in range(4) if k != cards.estudos_por_dia())
              + design.botao("/nova", "Novo estudo") + design.botao("/tipos", "Tipos de estudo e suas regras"))
@@ -566,6 +583,7 @@ def ler_multipart(tipo_conteudo: str, corpo: bytes) -> tuple:
     """(campos, arquivos) de um formulário multipart/form-data. arquivos: nome do campo -> (nome do arquivo, bytes)."""
     msg = message_from_bytes(b"Content-Type: " + tipo_conteudo.encode("latin-1", "replace") + b"\r\nMIME-Version: 1.0\r\n\r\n" + corpo, policy=HTTP)
     campos, arquivos = {}, {}
+    todos = []
     if not msg.is_multipart():
         return campos, arquivos
     for parte in msg.iter_parts():
@@ -576,8 +594,11 @@ def ler_multipart(tipo_conteudo: str, corpo: bytes) -> tuple:
         carga = parte.get_payload(decode=True) or b""
         if arq is not None:
             arquivos[nome] = (arq, carga)
+            if arq:
+                todos.append((arq, carga))
         else:
             campos[nome] = carga.decode("utf-8", "replace")
+    arquivos["__todos__"] = todos   # todos os arquivos do formulário, na ordem (o dicionário guarda só o último de cada campo)
     return campos, arquivos
 
 
@@ -705,6 +726,7 @@ class Learn(nuvem.ManipuladorBase):
             raise dados.ErroLearn("Tema não encontrado.")
         if rota == "/":
             dados.sincronizar()
+            sess["aba"] = "inicio"
             self._pagina(200, "Temas de estudo", com_perguntar(sess, pg_inicio(sess)), sess)
         elif rota == "/tema":
             if not tema:
@@ -775,7 +797,7 @@ class Learn(nuvem.ManipuladorBase):
             self._pagina(405, "Não permitido", "<p>Esta ação não existe.</p>", sess)
             return
         tipo_c = self.headers.get("Content-Type", "")
-        limite = dados.max_bytes() + 65536 if rota == "/importar" else MAX_FORM
+        limite = dados.max_bytes() * (5 if rota == "/criar" else 1) + 65536 if rota in ("/importar", "/criar") else MAX_FORM
         try:
             n = int(self.headers.get("Content-Length") or 0)
         except ValueError:
@@ -784,7 +806,7 @@ class Learn(nuvem.ManipuladorBase):
             self._pagina(413, "Pedido grande demais", f'<p class="erro" role="alert">O arquivo passa do limite de {dados.max_bytes() // (1024 * 1024)} MB.</p>', sess)
             return
         bruto = self.rfile.read(n)
-        if rota == "/importar":
+        if rota in ("/importar", "/criar") and tipo_c.startswith("multipart/form-data"):
             campos, arquivos = ler_multipart(tipo_c, bruto)
         else:
             campos, arquivos = {k: v[0] for k, v in parse_qs(bruto.decode("utf-8", "replace"), keep_blank_values=True).items()}, {}
@@ -798,9 +820,21 @@ class Learn(nuvem.ManipuladorBase):
         destino = "/"
         try:
             if rota == "/criar":
-                tipo = campos.get("tipo_novo", "").strip() and dados.criar_tipo(campos["tipo_novo"]) or campos.get("tipo", "")
+                tipo = campos.get("tipo", "")
+                if tipo == "__novo__":
+                    if not campos.get("tipo_novo", "").strip():
+                        raise dados.ErroLearn("Escreva o nome do tipo novo.")
+                    tipo = dados.criar_tipo(campos["tipo_novo"])
                 r = dados.criar_pasta(campos.get("nome", ""), campos.get("categoria", ""), tipo, campos.get("idioma", ""), campos.get("pai", ""))
-                sess["flash"] = ("ok", f"Pasta {r['nome']} criada.")
+                ok, falhas_ = 0, []
+                for nome_arq, conteudo in arquivos.get("__todos__", []):
+                    try:
+                        dados.importar_documento(r["caminho"], nome_arq, conteudo)
+                        ok += 1
+                    except dados.ErroLearn as ex:
+                        falhas_.append(f"{nome_arq}: {ex}")
+                msg = f"Pasta {r['nome']} criada" + (f" e {plural(ok, 'arquivo importado', 'arquivos importados')}" if ok else "") + "."
+                sess["flash"] = ("erro", msg + " Não entraram: " + "; ".join(falhas_)) if falhas_ else ("ok", msg)
                 destino = "/pasta?c=" + quote(r["caminho"])
             elif rota == "/atualizar":
                 rel = campos.get("c", "")

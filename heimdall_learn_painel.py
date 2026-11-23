@@ -144,3 +144,16 @@ def contexto_do_tema(tema: str = "", limite: int = 14000) -> str:
         partes.append("CARDS RECENTES:")
         partes += [f"- {x['pasta']}: {x['titulo']}: {_corta(x['corpo'], 200)}" + ("" if x["lido"] else " (não lido)") for x in crd]
     return "\n".join(partes)[:limite]
+
+
+def resumo_dos_temas() -> list:
+    """Um item por tema (pasta de nível de cima): documentos de consulta (da pasta e das subpastas), estudos e lições."""
+    con = dados.conectar()
+    saida = []
+    for t in dados.listar_pastas(""):
+        c = t["caminho"]
+        docs = sum(len(dados.listar_documentos(x["caminho"])) for x in dados.arvore_plana() if x["caminho"] == c or x["caminho"].startswith(c + "/"))
+        est = con.execute("SELECT COUNT(*) FROM estudos WHERE pasta = ? OR pasta LIKE ?", (c, c + "/%")).fetchone()[0]
+        lic = con.execute("SELECT COUNT(*) FROM licoes WHERE pasta = ? OR pasta LIKE ?", (c, c + "/%")).fetchone()[0]
+        saida.append({"caminho": c, "nome": t["nome"], "categoria": t["categoria_nome"], "tipo": t.get("tipo") or "", "documentos": docs, "estudos": est, "licoes": lic})
+    return saida
