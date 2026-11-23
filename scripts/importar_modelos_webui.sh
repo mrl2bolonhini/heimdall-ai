@@ -7,13 +7,16 @@
 #     bash scripts/importar_modelos_webui.sh --tools         só as conexões de ferramentas
 #     bash scripts/importar_modelos_webui.sh --models        só os modelos
 #     bash scripts/importar_modelos_webui.sh --dry-run       só mostra o que faria (combina com os outros)
+#     bash scripts/importar_modelos_webui.sh --show-all      desfaz o esconder: mostra de novo todos os modelos no seletor
+# Depois de criar os modelos, os modelos de base (gemma, qwen, deepseek, os -local...) são escondidos do seletor de modelos do chat,
+# para sobrar só os 7 criados. Eles continuam funcionando por baixo. --keep-base não esconde nada.
 #
 # A chave da API vem de HEIMDALL_WEBUI_API_KEY no .env; se não houver, o script pergunta sem mostrar na tela e não grava.
 # Crie a chave no Open WebUI: Configurações, Conta, Chaves de API, Criar (conta administradora). A chave nunca é impressa.
 # Conexão com o mesmo ID é atualizada no lugar (as outras conexões ficam como estão); modelo com o mesmo id é atualizado. Nada é apagado.
 cd "$(dirname "$0")/.." || exit 1
 python3 - "$@" <<'PY'
-import getpass, json, os, sys, urllib.error, urllib.request
+import getpass, json, os, sys, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 
 DRY = "--dry-run" in sys.argv
@@ -63,6 +66,41 @@ def chamar(metodo, caminho, corpo=None):
 
 
 ok = falhas = 0
+
+
+def esconder_base(esconder):
+    """Marca como escondidos (ou mostra de novo) os modelos que não são os criados aqui; só muda o seletor, nada é apagado."""
+    st, r = chamar("GET", "/api/models")
+    lista = r.get("data", []) if st == 200 and isinstance(r, dict) else []
+    meus = {m["id"] for m in json.loads(Path("openwebui/modelos_importar.json").read_text(encoding="utf-8"))}
+    n = 0
+    for item in lista:
+        mid = item.get("id")
+        if not mid or mid in meus:
+            continue
+        st, atual = chamar("GET", "/api/v1/models/model?id=" + urllib.parse.quote(mid, safe=""))
+        if st == 200 and isinstance(atual, dict):
+            meta = dict(atual.get("meta") or {})
+            if bool(meta.get("hidden")) == esconder:
+                continue
+            meta["hidden"] = esconder
+            corpo = {"id": mid, "base_model_id": atual.get("base_model_id"), "name": atual.get("name") or item.get("name") or mid,
+                     "meta": meta, "params": atual.get("params") or {}, "access_grants": atual.get("access_grants") or [],
+                     "is_active": atual.get("is_active", True)}
+            st2, _ = chamar("POST", "/api/v1/models/model/update", corpo)
+        elif esconder:
+            corpo = {"id": mid, "base_model_id": None, "name": item.get("name") or mid, "meta": {"hidden": True, "description": ""},
+                     "params": {}, "access_grants": [], "is_active": True}
+            st2, _ = chamar("POST", "/api/v1/models/create", corpo)
+        else:
+            continue
+        n += 1 if st2 == 200 else 0
+    print(("Escondidos do seletor: " if esconder else "Mostrados de novo no seletor: ") + str(n) + " modelos de base.")
+
+
+if "--show-all" in sys.argv:
+    esconder_base(False)
+    sys.exit(0)
 if conexoes:
     st, atual = chamar("GET", "/api/v1/configs/tool_servers")
     if st in (401, 403):
@@ -102,6 +140,8 @@ for m in modelos:
         falhas += 1
         if st in (401, 403):
             sys.exit("A chave foi recusada. Crie outra em Configurações, Conta, Chaves de API (a conta precisa ser administradora).")
+if modelos and not falhas and "--keep-base" not in sys.argv:
+    esconder_base(True)
 print(f"Itens criados ou atualizados: {ok}. Falhas: {falhas}.")
 sys.exit(1 if falhas else 0)
 PY
