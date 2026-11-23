@@ -105,9 +105,9 @@ def _corta(t, n: int) -> str:
     return t if len(t) <= n else t[:n - 1] + "…"
 
 
-def contexto_do_tema(tema: str = "", limite: int = 7000) -> str:
+def contexto_do_tema(tema: str = "", limite: int = 14000) -> str:
     """Texto que o campo Perguntar do Learn entrega ao modelo: números de progresso e o que o aluno fez no tema (ou em todos, se tema vazio).
-    Só leitura. O gabarito de lição em aberto não entra (exercicios() já o esconde)."""
+    Só leitura. Entram os trechos que o aluno estudou (o do estudo e o da lição, para poder perguntar sobre o texto), nunca o livro inteiro. O gabarito de lição em aberto não entra (exercicios() já o esconde)."""
     con = dados.conectar()
     sob = lambda campo: (f"({campo} = ? OR {campo} LIKE ?)", (tema, tema + "/%")) if tema else ("1 = 1", ())  # noqa: E731
     pr = progresso(tema)
@@ -119,17 +119,19 @@ def contexto_do_tema(tema: str = "", limite: int = 7000) -> str:
     for k, v in sorted(pr["por_tipo"].items()):
         partes.append(f"Acerto em exercícios do tipo {k}: {round(v['acerto'] * 100)}% em {v['total']}.")
     w, a = sob("pasta")
-    est = con.execute(f"SELECT pasta, titulo, documento, pergunta, resposta, correcao, estado, criado FROM estudos WHERE {w} ORDER BY id DESC LIMIT 12", a).fetchall()
+    est = con.execute(f"SELECT pasta, titulo, documento, trecho, pergunta, resposta, correcao, estado, criado FROM estudos WHERE {w} ORDER BY id DESC LIMIT 8", a).fetchall()
     if est:
         partes.append("ESTUDOS RECENTES:")
         for x in est:
             partes.append(f"- {x['criado'][:10]} {x['pasta']} ({x['titulo'] or x['documento']}) [{x['estado']}] pergunta: {_corta(x['pergunta'], 220)}"
-                          + (f" | resposta do aluno: {_corta(x['resposta'], 250)}" if x["resposta"] else "") + (f" | correção: {_corta(x['correcao'], 300)}" if x["correcao"] else ""))
-    lic = con.execute(f"SELECT pasta, numero, titulo, estado, nota, criado FROM licoes WHERE {w} ORDER BY id DESC LIMIT 8", a).fetchall()
+                          + (f" | resposta do aluno: {_corta(x['resposta'], 250)}" if x["resposta"] else "") + (f" | correção: {_corta(x['correcao'], 300)}" if x["correcao"] else "")
+                          + (f"\n  trecho estudado: {_corta(x['trecho'], 1200)}" if x["trecho"] else ""))
+    lic = con.execute(f"SELECT pasta, numero, titulo, explicacao, trecho_estudo, estado, nota, criado FROM licoes WHERE {w} ORDER BY id DESC LIMIT 6", a).fetchall()
     if lic:
         partes.append("LIÇÕES RECENTES:")
         for x in lic:
-            partes.append(f"- {x['criado'][:10]} {x['pasta']} lição {x['numero']} {x['titulo']} [{x['estado']}]" + (f", nota {round(x['nota'] * 100)}%" if x["nota"] is not None else ""))
+            partes.append(f"- {x['criado'][:10]} {x['pasta']} lição {x['numero']} {x['titulo']} [{x['estado']}]" + (f", nota {round(x['nota'] * 100)}%" if x["nota"] is not None else "")
+                          + (f"\n  explicação: {_corta(x['explicacao'], 600)}" if x["explicacao"] else "") + (f"\n  trecho de estudo: {_corta(x['trecho_estudo'], 1200)}" if x["trecho_estudo"] else ""))
     erros = exercicios(tema, True, 15)
     if erros:
         partes.append("EXERCÍCIOS ERRADOS OU PARCIAIS:")

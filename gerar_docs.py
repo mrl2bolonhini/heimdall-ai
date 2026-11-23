@@ -287,7 +287,7 @@ SCRIPTS = [
     ("tests/learn/teste_learn_migrar.py", "Testa a migração dos estudos antigos para o Learn: simulação sem gravar, importação, repetição sem duplicar e originais intactos."),
     ("tests/learn/teste_learn_estudos_dia.py", "Testa os estudos por dia da agenda do Learn: 6h, 13h e 20h, pasta sorteada, ajuste de 0 a 3 e sem repetir."),
     ("tests/notes/teste_notas_sem_estudos.py", "Testa que o Notes, com o Learn ligado, deixa os estudos para o Learn e mostra triagem, diários e privacidade."),
-    ("tests/learn/teste_learn_perguntar.py", "Testa o Perguntar do Learn: campo em cada aba do tema, contexto só do tema sem o gabarito de lição em aberto nem o texto dos livros, CSRF e retorno validado."),
+    ("tests/learn/teste_learn_perguntar.py", "Testa o Perguntar do Learn: campo em cada aba do tema, contexto só do tema, com os trechos estudados e sem o gabarito de lição em aberto nem o livro inteiro, CSRF e retorno validado."),
     ("tests/learn/teste_learn_painel.py", "Testa as abas Exercícios e Progresso: gabarito escondido, filtro dos erros, sequência de dias e acertos por tipo."),
     ("tests/learn/teste_learn_ferramentas.py", "Testa as ferramentas de leitura do modelo Learn, sempre somente leitura."),
     ("tests/learn/teste_learn_site.py", "Testa o site do Learn: login, host, CSRF, criação, importação multipart e acessibilidade."),

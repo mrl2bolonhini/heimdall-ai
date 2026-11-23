@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Testa o campo Perguntar do Learn: aparece nas abas do tema e na lista de temas, usa só os dados de estudo do tema (sem gabarito de lição em aberto,
-sem o texto dos livros), exige CSRF, valida o retorno e responde pelo modelo (de mentira aqui).
+"""Testa o campo Perguntar do Learn: aparece nas abas do tema e na lista de temas, usa só os dados de estudo do tema (com os trechos estudados, sem gabarito de lição em aberto,
+sem o livro inteiro), exige CSRF, valida o retorno e responde pelo modelo (de mentira aqui).
 
     python3 tests/learn/teste_learn_perguntar.py
 """
@@ -47,18 +47,22 @@ d.criar_pasta("Dados", "sequencial", "Programação")
 d.criar_pasta("Esoterismo", "aleatorio", "Outro")
 con = d.conectar()
 exs = [{"tipo": "texto", "enunciado": "O que é uma fila?", "gabarito": "GABARITO-SECRETO-ABERTA"}]
-con.execute("INSERT INTO licoes (pasta, numero, titulo, exercicios, estado, criado) VALUES ('dados', 1, 'Filas', ?, 'pronta', '2026-11-23 10:00:00')", (json.dumps(exs),))
+con.execute("INSERT INTO licoes (pasta, numero, titulo, explicacao, trecho_estudo, exercicios, estado, criado) VALUES ('dados', 1, 'Filas', 'EXPLICACAO-DA-LICAO', 'TRECHO-DA-LICAO', ?, 'pronta', '2026-11-23 10:00:00')", (json.dumps(exs),))
 con.execute("INSERT INTO respostas (licao_id, ex_idx, resposta, correto, correcao, criado) VALUES (1, 0, 'não sei', 0, 'faltou o conceito', '2026-11-23 10:05:00')")
 exs2 = [{"tipo": "texto", "enunciado": "O que é cache?", "gabarito": "GABARITO-CONCLUIDA"}]
 con.execute("INSERT INTO licoes (pasta, numero, titulo, exercicios, estado, nota, criado) VALUES ('dados', 2, 'Cache', ?, 'concluida', 0.5, '2026-11-23 11:00:00')", (json.dumps(exs2),))
 con.execute("INSERT INTO respostas (licao_id, ex_idx, resposta, correto, correcao, criado) VALUES (2, 0, 'guarda dados', 0.5, 'parcial', '2026-11-23 11:05:00')")
-con.execute("INSERT INTO estudos (pasta, documento, trecho_idx, trecho, pergunta, resposta, correcao, estado, criado) VALUES ('esoterismo', 'livro.md', 0, 'TRECHO-DO-LIVRO-NAO-ENVIAR', 'O que é a tríade?', 'três partes', 'certo', 'corrigido', '2026-11-23 12:00:00')")
+con.execute("INSERT INTO estudos (pasta, documento, trecho_idx, trecho, pergunta, resposta, correcao, estado, criado) VALUES ('esoterismo', 'livro.md', 0, 'TRECHO-DO-LIVRO-ENVIAR', 'O que é a tríade?', 'três partes', 'certo', 'corrigido', '2026-11-23 12:00:00')")
 con.commit()
 
 ctx = painel.contexto_do_tema("dados")
 confere("contexto do tema traz progresso, lições e erros", "Pasta dados" in ctx and "Filas" in ctx and "O que é uma fila?" in ctx and "não sei" in ctx)
 confere("o gabarito de lição em aberto não entra; o de lição concluída entra", "GABARITO-SECRETO-ABERTA" not in ctx and "GABARITO-CONCLUIDA" in ctx)
-confere("o contexto de um tema não mistura outro tema nem o texto dos livros", "tríade" not in ctx and "TRECHO-DO-LIVRO" not in painel.contexto_do_tema("esoterismo") and "tríade" in painel.contexto_do_tema("esoterismo"))
+confere("o contexto de um tema não mistura outro tema", "tríade" not in ctx and "TRECHO-DO-LIVRO" not in ctx and "tríade" in painel.contexto_do_tema("esoterismo"))
+confere("o trecho estudado entra, para poder perguntar sobre o texto", "TRECHO-DO-LIVRO-ENVIAR" in painel.contexto_do_tema("esoterismo") and "TRECHO-DA-LICAO" in ctx and "EXPLICACAO-DA-LICAO" in ctx)
+con.execute("INSERT INTO estudos (pasta, documento, trecho_idx, trecho, estado, criado) VALUES ('esoterismo', 'grande.md', 1, ?, 'sorteado', '2026-11-23 12:30:00')", ("x" * 5000,))
+con.commit()
+confere("trecho muito longo é cortado e o livro inteiro nunca vai", len(painel.contexto_do_tema("esoterismo")) < 6000 and "x" * 1300 not in painel.contexto_do_tema("esoterismo"))
 confere("sem tema, o contexto cobre todos", "tríade" in painel.contexto_do_tema("") and "Filas" in painel.contexto_do_tema(""))
 confere("o contexto é limitado", len(painel.contexto_do_tema("", 300)) <= 300)
 

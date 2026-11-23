@@ -14,7 +14,7 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Cloud, Notas, Ne
 - O usuário aceitou que o Calendário sincronize com a nuvem da Apple (ela já fornece dados de saúde ao Heimdall): o evento leva especialidade, médico e local. HEIMDALL_AGENDA_DETALHES=0 volta ao título genérico.
 
 ## Perguntar (obrigatório em todo serviço com dados pessoais)
-- Todo serviço que mostra dados pessoais do usuário (Finance, Health, News, Notes, Learn) tem o campo Perguntar no fim do painel de cada aba (`heimdall_perguntar.bloco_html`): o código do serviço monta o contexto só com os dados daquela tela, o modelo responde só com base nele (nunca dá gabarito ainda secreto, nem envia o texto dos livros) e a rota POST /perguntar exige CSRF e valida o endereço de volta. Serviço novo com dados pessoais já nasce com o Perguntar e um teste dele. Cloud, Games e Controls ficam de fora por ora.
+- Todo serviço que mostra dados pessoais do usuário (Finance, Health, News, Notes, Learn) tem o campo Perguntar no fim do painel de cada aba (`heimdall_perguntar.bloco_html`): o código do serviço monta o contexto só com os dados daquela tela, o modelo responde só com base nele (com os trechos que o usuário estudou, para poder perguntar sobre o texto, nunca o livro inteiro nem o gabarito ainda secreto) e a rota POST /perguntar exige CSRF e valida o endereço de volta. Serviço novo com dados pessoais já nasce com o Perguntar e um teste dele. Cloud, Games e Controls ficam de fora por ora.
 
 ## Comandos do terminal
 - Nomes de comando, subcomando e opção do `heimdall` são em inglês (health, labs, --today, --without); o texto que o usuário lê continua em português. O script Python por trás pode ter opções em português: o heimdall.zsh traduz com `_heimdall_tr`.
