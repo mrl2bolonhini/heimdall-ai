@@ -279,6 +279,7 @@ SCRIPTS = [
     ("tests/learn/teste_learn_licoes.py", "Testa as lições: geração, validação, respostas, correção e progresso com modelo simulado."),
     ("tests/learn/teste_learn_cards.py", "Testa cards e agenda: limites por dia, horários, falha do modelo e aviso."),
     ("heimdall_learn_painel.py", "Dados das abas Exercícios e Progresso do Learn, só leitura: exercícios com resposta e resultado (gabarito só depois de concluir a lição), dias seguidos e acertos por tipo."),
+    ("tests/learn/teste_learn_ajustes.py", "Testa a aba Ajustes: pausar agenda e avisos, agenda por pasta, arquivar pasta sem apagar nada e confirmação."),
     ("tests/learn/teste_learn_painel.py", "Testa as abas Exercícios e Progresso: gabarito escondido, filtro dos erros, sequência de dias e acertos por tipo."),
     ("tests/learn/teste_learn_ferramentas.py", "Testa as ferramentas de leitura do modelo Learn, sempre somente leitura."),
     ("tests/learn/teste_learn_site.py", "Testa o site do Learn: login, host, CSRF, criação, importação multipart e acessibilidade."),

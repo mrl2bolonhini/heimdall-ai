@@ -150,6 +150,10 @@ def conectar() -> sqlite3.Connection:
             lido INTEGER NOT NULL DEFAULT 0,
             criado TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS ajustes (             -- opções gerais do aluno (chave e valor)
+            chave TEXT PRIMARY KEY,
+            valor TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS agenda (              -- frequência por pasta: até 3 cards e 1 lição por dia
             pasta TEXT PRIMARY KEY,
             cards_dia INTEGER NOT NULL DEFAULT 0,
@@ -414,6 +418,54 @@ def importar_documento(rel: str, nome_arquivo: str, dados: bytes) -> dict:
                     (rel, destino.name, len(dados), hashlib.sha256(dados).hexdigest(), _agora()))
         con.commit()
     return {"arquivo": destino.name, "bytes": len(dados), "pasta": rel}
+
+
+AJUSTES_VALIDOS = {"agenda": ("1", "0"), "avisos": ("1", "0")}
+
+
+def ajuste(chave: str, padrao: str = "1") -> str:
+    r = conectar().execute("SELECT valor FROM ajustes WHERE chave = ?", (chave,)).fetchone()
+    return r["valor"] if r else padrao
+
+
+def definir_ajuste(chave: str, valor: str) -> None:
+    if chave not in AJUSTES_VALIDOS or valor not in AJUSTES_VALIDOS[chave]:
+        raise ErroLearn("Ajuste inválido.")
+    with _trava:
+        con = conectar()
+        con.execute("INSERT INTO ajustes (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor", (chave, valor))
+        con.commit()
+
+
+def arquivar_pasta(rel: str) -> dict:
+    """Tira a pasta (e as subpastas) do Learn sem apagar nada: os arquivos vão para knowledge/.arquivo/ (pasta oculta, fora do Learn e da busca nos
+    documentos) e o cadastro, os documentos e a agenda saem do banco. O histórico de lições, estudos e cards fica guardado. Devolve onde ficou."""
+    rel = normalizar_caminho(rel)
+    if not rel:
+        raise ErroLearn("Escolha uma pasta.")
+    with _trava:
+        con = conectar()
+        if not con.execute("SELECT 1 FROM pastas WHERE caminho = ?", (rel,)).fetchone():
+            raise ErroLearn("Pasta não encontrada.")
+        origem = pasta_no_disco(rel)
+        destino_rel = ""
+        if origem.is_dir() and not origem.is_symlink():
+            base = pasta_knowledge().resolve() / ".arquivo"
+            base.mkdir(mode=0o700, exist_ok=True)
+            nome = rel.replace("/", " - ")
+            destino = base / nome
+            n = 2
+            while destino.exists():
+                destino = base / f"{nome} ({n})"
+                n += 1
+            origem.rename(destino)
+            destino_rel = ".arquivo/" + destino.name
+        like = rel.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "/%"
+        for tab in ("pastas", "documentos", "agenda"):
+            col = "caminho" if tab == "pastas" else "pasta"
+            con.execute(f"DELETE FROM {tab} WHERE {col} = ? OR {col} LIKE ? ESCAPE '\\'", (rel, like))
+        con.commit()
+    return {"pasta": rel, "guardada_em": destino_rel}
 
 
 def resumo() -> dict:

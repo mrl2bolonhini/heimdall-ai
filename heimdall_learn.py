@@ -70,7 +70,7 @@ HOST = os.environ.get("HEIMDALL_LEARN_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEIMDALL_LEARN_PORT", "8019"))
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_LEARN_HOSTS", "learn.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 COOKIE = nuvem.COOKIE
-NAV = [("/", "Início"), ("/licoes", "Lições"), ("/exercicios", "Exercícios"), ("/cards", "Cards"), ("/progresso", "Progresso")]
+NAV = [("/", "Início"), ("/licoes", "Lições"), ("/exercicios", "Exercícios"), ("/cards", "Cards"), ("/progresso", "Progresso"), ("/ajustes", "Ajustes")]
 MAX_FORM = 20000
 ESTADOS_LICAO = {"gerando": "sendo criada", "pronta": "aguardando respostas", "corrigindo": "corrigindo", "concluida": "concluída", "erro": "erro ao criar", "erro_correcao": "erro na correção"}
 ESTADOS = {"sorteado": "gerando a pergunta", "perguntado": "aguardando a resposta", "corrigindo": "corrigindo", "corrigido": "concluído",
@@ -92,7 +92,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
         atual = urlparse(str(sess.get("atual", "/"))).path
-        atual = "/licoes" if atual in ("/licoes", "/licao") else (atual if atual in ("/exercicios", "/cards", "/progresso") else "/")
+        atual = "/licoes" if atual in ("/licoes", "/licao") else (atual if atual in ("/exercicios", "/cards", "/progresso", "/ajustes") else "/")
         nav = design.nav_abas(NAV, atual, "Seções do Heimdall Learn")
         sair = f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>'
         conteudo = design.com_abas(NAV, atual, conteudo)
@@ -169,6 +169,20 @@ def pg_nova(sess: dict, pai: str = "") -> str:
             '<button type="submit">Criar estudo</button></form>' + design.botao("/tipos", "Ver as regras de cada tipo"))
 
 
+def _form_agenda(p: dict, csrf: str, volta: str = "pasta", sufixo: str = "") -> str:
+    """Formulário de cards e lições por dia de uma pasta. `sufixo` deixa os ids únicos quando há vários formulários na mesma página."""
+    rel = p["caminho"]
+    ag = cards.obter_agenda(rel)
+    sel = lambda mx, atual_: "".join(f'<option value="{k}"{" selected" if k == atual_ else ""}>{k}</option>' for k in range(mx + 1))  # noqa: E731
+    return (f'<form class="campos" method="post" action="/agenda"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="c" value="{e(rel)}">'
+            f'<input type="hidden" name="volta" value="{e(volta)}">'
+            f'<label for="cards_dia{sufixo}">Cards por dia (0 a 3)</label><select id="cards_dia{sufixo}" name="cards_dia">{sel(3, ag["cards_dia"])}</select>'
+            + (f'<label for="licao_dia{sufixo}">Lições por dia (0 ou 1)</label><select id="licao_dia{sufixo}" name="licao_dia">{sel(1, ag["licao_dia"])}</select>' if p["categoria"] == "sequencial"
+               else '<input type="hidden" name="licao_dia" value="0">')
+            + f'<label for="horario{sufixo}">Horário (hora:minuto)</label><input id="horario{sufixo}" name="horario" type="text" value="{e(ag["horario"])}" pattern="[0-2]?[0-9]:[0-5][0-9]" maxlength="5" required>'
+            '<button type="submit">Salvar agenda</button></form>')
+
+
 def pg_pasta(sess: dict, rel: str) -> str:
     p = dados.obter_pasta(rel)
     if not p:
@@ -214,16 +228,8 @@ def pg_pasta(sess: dict, rel: str) -> str:
                             f'<td>{e(ESTADOS_LICAO.get(h["estado"], h["estado"]))}</td><td>{(str(round(h["nota"] * 100)) + "%") if h["nota"] is not None else "sem nota"}</td></tr>' for h in hist)
             estudar += ('<table><caption>Lições desta pasta</caption><thead><tr><th scope="col">Lição</th><th scope="col">Situação</th><th scope="col">Nota</th></tr></thead>'
                         f'<tbody>{itens}</tbody></table>')
-    ag = cards.obter_agenda(rel)
-    sel = lambda nome, mx, atual_: "".join(f'<option value="{k}"{" selected" if k == atual_ else ""}>{k}</option>' for k in range(mx + 1))  # noqa: E731
     agenda_html = ('<h2>Cards e lições por dia</h2><p>Cards são pílulas de conhecimento enviadas por notificação (aviso no Mac e aviso genérico no iPhone). '
-                   'Até 3 cards e 1 lição por dia; os cards saem de 4 em 4 horas a partir do horário. 0 desliga.</p>'
-                   f'<form class="campos" method="post" action="/agenda"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="c" value="{e(rel)}">'
-                   f'<label for="cards_dia">Cards por dia (0 a 3)</label><select id="cards_dia" name="cards_dia">{sel("c", 3, ag["cards_dia"])}</select>'
-                   + (f'<label for="licao_dia">Lições por dia (0 ou 1)</label><select id="licao_dia" name="licao_dia">{sel("l", 1, ag["licao_dia"])}</select>' if p["categoria"] == "sequencial"
-                      else '<input type="hidden" name="licao_dia" value="0">')
-                   + f'<label for="horario">Horário (hora:minuto)</label><input id="horario" name="horario" type="text" value="{e(ag["horario"])}" pattern="[0-2]?[0-9]:[0-5][0-9]" maxlength="5" required>'
-                   '<button type="submit">Salvar agenda</button></form>'
+                   'Até 3 cards e 1 lição por dia; os cards saem de 4 em 4 horas a partir do horário. 0 desliga.</p>' + _form_agenda(p, csrf, "pasta")
                    + design.botao_post("/card/novo", "Gerar um card agora", csrf, {"c": rel}))
     novo = design.botao("/nova", "Criar subpasta aqui", {"pai": rel})
     voltar = design.botao("/", "Voltar ao início")
@@ -337,6 +343,42 @@ def pg_progresso(sess: dict) -> str:
         saida += ('<table><caption>Acertos por tipo de exercício</caption><thead><tr><th scope="col">Tipo</th><th scope="col">Corrigidos</th><th scope="col">Acerto</th></tr></thead>'
                   f'<tbody>{lt}</tbody></table>')
     return saida + design.botao("/exercicios", "Rever o que errei", {"erros": "1"})
+
+
+def pg_ajustes(sess: dict) -> str:
+    csrf = sess["csrf"]
+    env_agenda = os.environ.get("HEIMDALL_LEARN_AGENDA", "1") == "0"
+    env_avisos = os.environ.get("HEIMDALL_LEARN_NOTIFICAR", "1") == "0"
+    ag_ajuste = dados.ajuste("agenda", "1") == "1"
+    av_ajuste = dados.ajuste("avisos", "1") == "1"
+    geral = ('<h2>Geral</h2><p role="status">Agenda de cards e lições: ' + ("ligada" if ag_ajuste and not env_agenda else "pausada")
+             + ". Avisos no Mac e no iPhone: " + ("ligados" if av_ajuste and not env_avisos else "desligados") + ".</p>"
+             + ('<p class="meta">A agenda está desligada no .env do Mac (HEIMDALL_LEARN_AGENDA=0); ela só volta depois que você tirar essa linha e reiniciar.</p>' if env_agenda else "")
+             + ('<p class="meta">Os avisos estão desligados no .env do Mac (HEIMDALL_LEARN_NOTIFICAR=0).</p>' if env_avisos else "")
+             + design.botao_post("/ajustes/definir", "Pausar a agenda" if ag_ajuste else "Ligar a agenda", csrf, {"chave": "agenda", "valor": "0" if ag_ajuste else "1"})
+             + design.botao_post("/ajustes/definir", "Desligar os avisos" if av_ajuste else "Ligar os avisos", csrf, {"chave": "avisos", "valor": "0" if av_ajuste else "1"})
+             + design.botao("/nova", "Novo estudo") + design.botao("/tipos", "Tipos de estudo e suas regras"))
+    saida = aviso(sess) + geral + "<h2>Pastas</h2>"
+    achou = False
+    for i, t in enumerate(dados.arvore_plana()):
+        reg = dados.obter_pasta(t["caminho"])
+        if not reg:
+            continue
+        achou = True
+        saida += (f'<h3>{e(reg["nome"])}</h3><p class="meta">{e(reg["caminho"])}: {e(dados.CATEGORIAS[reg["categoria"]][0])}, {e(reg["tipo"] or "sem tipo")}.</p>'
+                  + _form_agenda(reg, csrf, "ajustes", f"_{i}")
+                  + design.botao("/pasta", "Abrir a pasta", {"c": reg["caminho"]}) + design.botao("/ajustes/arquivar", "Arquivar a pasta", {"c": reg["caminho"]}))
+    return saida if achou else saida + '<p role="status">Nenhuma pasta ainda.</p>'
+
+
+def pg_arquivar(sess: dict, rel: str) -> str:
+    reg = dados.obter_pasta(rel)
+    if not reg:
+        raise dados.ErroLearn("Pasta não encontrada.")
+    return (aviso(sess) + f'<p role="alert">Arquivar a pasta {e(reg["nome"])}? Ela e as subpastas saem do Learn e da busca nos documentos. Nada é apagado: '
+            'os arquivos vão para a pasta oculta .arquivo dentro de knowledge/, onde você pode movê-los de volta, e o histórico de lições, estudos e cards fica guardado.</p>'
+            + design.botao_post("/ajustes/arquivar", "Sim, arquivar a pasta", sess["csrf"], {"c": reg["caminho"], "confirmar": "1"})
+            + design.botao("/ajustes", "Não, voltar aos ajustes"))
 
 
 def pg_cards(sess: dict) -> str:
@@ -591,6 +633,10 @@ class Learn(nuvem.ManipuladorBase):
             self._pagina(200, "Lições", pg_licoes(sess), sess)
         elif rota == "/exercicios":
             self._pagina(200, "Exercícios", pg_exercicios(sess, p("c"), p("erros") == "1"), sess)
+        elif rota == "/ajustes":
+            self._pagina(200, "Ajustes", pg_ajustes(sess), sess)
+        elif rota == "/ajustes/arquivar":
+            self._pagina(200, "Arquivar pasta", pg_arquivar(sess, p("c")), sess)
         elif rota == "/progresso":
             self._pagina(200, "Progresso", pg_progresso(sess), sess)
         elif rota == "/licao":
@@ -621,7 +667,7 @@ class Learn(nuvem.ManipuladorBase):
             self._voz(sess)
             return
         if rota not in ("/sair", "/criar", "/atualizar", "/tipo", "/importar", "/sortear", "/responder", "/repetir", "/gravar",
-                        "/licao/nova", "/licao/repetir", "/licao/responder", "/licao/audio", "/agenda", "/card/novo", "/cards/lido"):
+                        "/licao/nova", "/licao/repetir", "/licao/responder", "/licao/audio", "/agenda", "/card/novo", "/cards/lido", "/ajustes/definir", "/ajustes/arquivar"):
             self._pagina(405, "Não permitido", "<p>Esta ação não existe.</p>", sess)
             return
         tipo_c = self.headers.get("Content-Type", "")
@@ -691,7 +737,17 @@ class Learn(nuvem.ManipuladorBase):
                 rel = campos.get("c", "")
                 cards.configurar(rel, campos.get("cards_dia", "0"), campos.get("licao_dia", "0"), campos.get("horario", ""))
                 sess["flash"] = ("ok", "Agenda salva.")
-                destino = "/pasta?c=" + quote(rel)
+                destino = "/ajustes" if campos.get("volta") == "ajustes" else "/pasta?c=" + quote(rel)
+            elif rota == "/ajustes/definir":
+                dados.definir_ajuste(campos.get("chave", ""), campos.get("valor", ""))
+                sess["flash"] = ("ok", "Ajuste salvo.")
+                destino = "/ajustes"
+            elif rota == "/ajustes/arquivar":
+                if campos.get("confirmar") != "1":
+                    raise dados.ErroLearn("Confirme o arquivamento.")
+                r = dados.arquivar_pasta(campos.get("c", ""))
+                sess["flash"] = ("ok", f"Pasta {r['pasta']} arquivada" + (f" em knowledge/{r['guardada_em']}." if r["guardada_em"] else "."))
+                destino = "/ajustes"
             elif rota == "/card/novo":
                 rel = campos.get("c", "")
                 destino = "/pasta?c=" + quote(rel)
@@ -740,7 +796,9 @@ class Learn(nuvem.ManipuladorBase):
                 sess["flash"] = ("ok", f"Arquivo {r['arquivo']} importado.")
         except dados.ErroLearn as ex:
             sess["flash"] = ("erro", str(ex))
-            if rota in ("/agenda", "/card/novo", "/licao/nova", "/sortear", "/importar") and campos.get("c"):
+            if rota in ("/ajustes/definir", "/ajustes/arquivar") or (rota == "/agenda" and campos.get("volta") == "ajustes"):
+                destino = "/ajustes"
+            elif rota in ("/agenda", "/card/novo", "/licao/nova", "/sortear", "/importar") and campos.get("c"):
                 destino = "/pasta?c=" + quote(campos["c"])
             elif rota == "/criar":
                 destino = "/nova"

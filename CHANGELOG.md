@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Learn: aba Ajustes
+- Nova aba Ajustes no Learn: pausar ou ligar a agenda de cards e lições e os avisos (vale na hora, sem reiniciar; HEIMDALL_LEARN_AGENDA=0 e HEIMDALL_LEARN_NOTIFICAR=0 no .env continuam mandando), e, para cada pasta, cards por dia, lições por dia e horário. Atalhos para Novo estudo e para os tipos.
+- Arquivar pasta, com confirmação: a pasta e as subpastas saem do Learn e da busca nos documentos, mas nada é apagado. Os arquivos vão para knowledge/.arquivo/ (pasta oculta, o nome ganha (2) se já existir) e o histórico de lições, estudos e cards fica guardado. Para desfazer, mova a pasta de volta para knowledge/ e rode heimdall learn --sync. Os documentos já indexados na busca saem do índice na próxima vez que você rodar heimdall ingest.
+
 ## 2026-11-23 - Learn: abas novas e Novo estudo por botão
 - As abas do Learn agora são Início, Lições, Exercícios, Cards e Progresso. Nova pasta e Tipos saíram das abas: no Início há o botão Novo estudo (nome, categoria e tipo, ou um tipo novo na hora) e o botão Ver os tipos de estudo e suas regras.
 - Aba Exercícios: todos os exercícios das lições com a sua resposta e o resultado (certo, parcial ou errado); a resposta esperada só aparece depois de concluir a lição. Filtro para ver só o que você errou.

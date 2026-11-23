@@ -132,7 +132,7 @@ def marcar_lido(id_: int, lido: bool = True) -> None:
 
 def notificar_padrao(titulo: str, corpo: str, generico: str = "Há novidade no Learn.") -> None:
     """Mac: aviso nativo com o texto completo. iPhone: Bark só com texto genérico. Nunca levanta erro."""
-    if os.environ.get("HEIMDALL_LEARN_NOTIFICAR", "1") == "0":
+    if os.environ.get("HEIMDALL_LEARN_NOTIFICAR", "1") == "0" or dados.ajuste("avisos", "1") == "0":
         return
     try:
         import heimdall_avisos_mac as mac
@@ -152,6 +152,8 @@ def _tentar(chave: tuple, agora: float) -> bool:
 
 def executar_agenda(agora: datetime = None, modelo_card=None, modelo_licao=None, notificar=None, rng=None) -> list:
     """Faz o que a agenda pede neste momento (no máximo uma ação por pasta). Devolve a lista do que fez ou falhou, para log e teste."""
+    if dados.ajuste("agenda", "1") == "0":
+        return []   # pausada nos Ajustes do site (vale na hora, sem reiniciar)
     agora = agora or datetime.now()
     notificar = notificar or notificar_padrao
     rng = rng or random
