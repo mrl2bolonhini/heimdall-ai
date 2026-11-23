@@ -162,9 +162,9 @@ Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e 
 | Alerts | `qwen3-vl-instruct` | `banco-pessoal` | `banco_resumo`, `banco_consultar`, `banco_buscar`, `saude_historico`, `get_system_timestamp` | 0,2 |
 | Health | `qwen3-vl-instruct` | `banco-saude` | `saude_historico`, `analise_saude`, `frequencia_cardiaca_resumo`, `ecg_resumo`, `treinos_resumo`, `relatorio_saude`, `exames_resumo`, `exame_historico`, `analise_exames`, `exames_pendentes`, `receitas_encaminhamentos`, `banco_consultar`, `get_system_timestamp` | 0,2 |
 | Finance | `qwen3-vl-instruct` | `banco-financas` | `financas_resumo`, `financas_transacoes`, `financas_orcamentos`, `financas_recorrentes`, `financas_boletos`, `financas_futuros`, `get_system_timestamp` | 0,2 |
-| Código | `deepseek-coder-v2:16b` | nenhuma |  | 0,2 |
+| Code | `deepseek-coder-v2:16b` | nenhuma |  | 0,2 |
 | General | `conversas` | `web-basica` | `search_searxng`, `fetch_url`, `calculate_expression`, `get_system_timestamp` | 0,8 |
-| Notes | `qwen3-vl-instruct` | `mac-admin` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search` | 0,2 |
+| Notes | `qwen3-vl-instruct` | `mac-admin`, `banco-estudos` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search`, `banco_buscar`, `banco_consultar` | 0,2 |
 <!-- /AUTO:MODELOS_CHAT -->
 
 Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta chamada de ferramentas) e contexto de 8192 tokens. Modelo padrão dos fluxos: `qwen3-vl-instruct` (`HEIMDALL_FLOW_MODEL`). Embeddings: `nomic-embed-text`.

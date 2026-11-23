@@ -23,7 +23,8 @@ MEMORIA = ["memory_save", "memory_search", "memory_forget", "rag_temas", "rag_se
 # Conexões em Configurações do administrador, Integrações, Servidores de ferramentas externos. Várias conexões podem apontar para o mesmo servidor
 # com filtros diferentes: é o filtro que limita as funções que cada modelo enxerga (um modelo de 8B escolhe melhor entre 7 funções do que entre 16).
 CONEXOES = [
-    {"id": "banco-pessoal", "nome": "Alerts (banco pessoal)", "descricao": "Banco pessoal em modo leitura: diários oficiais, e-mails, estudos, privacidade, avisos, Second Brain e métricas de saúde simples. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
+    {"id": "banco-pessoal", "nome": "Alerts (banco pessoal)", "descricao": "Banco pessoal em modo leitura: diários oficiais, e-mails, privacidade, avisos, Second Brain e métricas de saúde simples. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
+    {"id": "banco-estudos", "nome": "Notes (estudos do banco)", "descricao": "Só a busca e a consulta ao banco pessoal, para o Notes ler a tabela de estudos dos livros. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": ["banco_buscar", "banco_consultar"]},
     {"id": "banco-saude", "nome": "Health (banco pessoal)", "descricao": "Saúde em modo leitura: histórico por métrica, análises, coração, ECG, treinos e relatório. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
     {"id": "banco-financas", "nome": "Finance (banco pessoal)", "descricao": "Finance em modo leitura: resumo do mês, lançamentos, orçamentos, recorrentes, boletos e pagamentos futuros. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
     {"id": "web-basica", "nome": "Web básica (General)", "descricao": "Só pesquisa na web, leitura de página, cálculo e hora: poucas funções para o General gastar pouco com a lista de ferramentas.", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": WEB_BASICA},
@@ -33,19 +34,19 @@ CONEXOES = [
 # temperatura: valor sugerido no campo Parâmetros avançados. conexao: id da conexão acima (vazio = sem ferramentas).
 MODELOS = [
     {"id": "alerts", "nome": "Alerts", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_dados.txt", "temperatura": 0.2, "conexao": "banco-pessoal",
-     "uso": "diários oficiais, e-mails de serviços públicos, estudos, privacidade, avisos e Second Brain", "nativa": True},
+     "uso": "diários oficiais, e-mails de serviços públicos, privacidade, avisos e Second Brain", "nativa": True},
     {"id": "health", "nome": "Health", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_saude.txt", "temperatura": 0.2, "conexao": "banco-saude",
      "uso": "sono, pulso, variabilidade, treinos, ECG, anomalias, relatórios de saúde, exames de laboratório, receitas e encaminhamentos", "nativa": True},
     {"id": "finance", "nome": "Finance", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_financas.txt", "temperatura": 0.2, "conexao": "banco-financas",
      "uso": "gastos, receitas, categorias, orçamentos, assinaturas, parcelas e boletos do Finance (só leitura)", "nativa": True},
-    {"id": "codigo", "nome": "Código", "base": "deepseek-coder-v2:16b", "prompt": "prompts/prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
+    {"id": "code", "nome": "Code", "base": "deepseek-coder-v2:16b", "prompt": "prompts/prompt_chat_codigo.txt", "temperatura": 0.2, "conexao": "",
      "uso": "programação, sem ferramentas", "nativa": False,
      "obs": "nos seus testes esse modelo não suporta ferramentas no Ollama. O contexto dele é de 8192 tokens e ele sai da memória 30 segundos depois do uso."},
     {"id": "general", "nome": "General", "base": "conversas", "prompt": "prompts/prompt_chat_conversas.txt", "temperatura": 0.8, "conexao": "web-basica",
      "uso": "conversa livre e pesquisa na web quando a pergunta pede (também faz o papel do antigo Curiosidades)", "nativa": True,
      "obs": "na nuvem (HEIMDALL_NUVEM=1) usa o Qwen3 30B; sem a nuvem, o gemma local, que pode não chamar a pesquisa."},
-    {"id": "notes", "nome": "Notes", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
-     "uso": "livros, notas e documentos do estudo e memória pessoal (opcional; antes, Documentos e Memória)", "nativa": True},
+    {"id": "notes", "nome": "Notes", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin,banco-estudos",
+     "uso": "livros, notas, estudos dos livros e documentos, e memória pessoal (opcional; antes, Documentos e Memória)", "nativa": True},
 ]
 
 NOVOS = """OUTROS MODELOS DO LITELLM (não são base de nenhum modelo do chat)
@@ -73,6 +74,11 @@ def _listas_de_ferramentas():
     return grupos, funcs
 
 
+def conexoes_do(m):
+    """Conexões de um modelo: o campo conexao pode ter mais de um id, separados por vírgula."""
+    return [c for c in (conexao(i.strip()) for i in m["conexao"].split(",") if i.strip()) if c]
+
+
 def conexao(cid):
     return next((c for c in CONEXOES if c["id"] == cid), None)
 
@@ -90,8 +96,10 @@ def filtro_texto(c):
 
 
 def funcoes_do_modelo(m):
-    c = conexao(m["conexao"]) if m["conexao"] else None
-    return list(c["funcoes"]) if c else []
+    saida = []
+    for c in conexoes_do(m):
+        saida += [f for f in c["funcoes"] if f not in saida]
+    return saida
 
 
 def problemas():
@@ -119,8 +127,9 @@ def problemas():
             if f not in usadas:
                 erros.append("a função %s do servidor de dados não está em nenhum modelo" % f)
     for m in MODELOS:
-        if m["conexao"] and not conexao(m["conexao"]):
-            erros.append("modelo %s: conexão %s não existe" % (m["nome"], m["conexao"]))
+        for i in [x.strip() for x in m["conexao"].split(",") if x.strip()]:
+            if not conexao(i):
+                erros.append("modelo %s: conexão %s não existe" % (m["nome"], i))
         arq = AQUI / m["prompt"]
         if not arq.exists():
             erros.append("modelo %s: falta %s" % (m["nome"], m["prompt"]))
@@ -164,7 +173,7 @@ def texto_guia():
          "  3. Se um modelo ignorar as ferramentas, confira se a chamada de função está em Nativa e se a conexão do modelo está ligada em Ferramentas.",
          "  4. Na nuvem, o primeiro uso do dia pode demorar alguns segundos; se a nuvem falhar ou o limite de gasto cortar, o LiteLLM usa sozinho o modelo local (o chat só fica mais lento).", "",
          "O QUE VAI PARA A NUVEM COM HEIMDALL_NUVEM=1",
-         "  Alerts, Health, Finance, Notes e Código: gpt-oss-120b (gateway \"heimdall\", teto de gasto). General: Qwen3 30B (HEIMDALL_NUVEM_CONVERSAS_MODELO troca). Os modelos locais ficam como volta. Lembrete: o contexto das conversas, incluindo saúde e finanças nos modelos desses assuntos, passa pela Cloudflare (decisão de 21/11/2026).", "",
+         "  Alerts, Health, Finance, Notes e Code: gpt-oss-120b (gateway \"heimdall\", teto de gasto). General: Qwen3 30B (HEIMDALL_NUVEM_CONVERSAS_MODELO troca). Os modelos locais ficam como volta. Lembrete: o contexto das conversas, incluindo saúde e finanças nos modelos desses assuntos, passa pela Cloudflare (decisão de 21/11/2026).", "",
          "CAMINHO MANUAL (para conferir ou criar à mão). Abaixo, o que cada arquivo contém.", "",
          "Servidores de ferramentas (Configurações do administrador, Integrações, Servidores de ferramentas externos).",
          "Cada conexão tem um filtro que EXCLUI as funções do servidor que não são do seu assunto (formato !funcao1, !funcao2). Como o servidor é compartilhado, assim a função fica bloqueada de verdade e não depende do modelo se comportar.",
@@ -180,9 +189,10 @@ def texto_guia():
         L.append("   Para: " + m["uso"])
         L.append("   Base: " + m["base"])
         L.append("   Prompt: " + m["prompt"])
-        c = conexao(m["conexao"]) if m["conexao"] else None
-        if c:
-            L.append("   Ferramentas: conexão %s (%d funções: %s)" % (c["id"], len(c["funcoes"]), ", ".join(c["funcoes"])))
+        cs = conexoes_do(m)
+        if cs:
+            for c in cs:
+                L.append("   Ferramentas: conexão %s (%d funções: %s)" % (c["id"], len(c["funcoes"]), ", ".join(c["funcoes"])))
             if m["nativa"]:
                 L.append("   Chamada de função: Nativa")
         else:
@@ -204,9 +214,9 @@ def texto_guia():
 def tabela_md():
     linhas = ["| Modelo | Base | Ferramentas (conexão) | Funções | Temperatura |", "|---|---|---|---|---|"]
     for m in MODELOS:
-        c = conexao(m["conexao"]) if m["conexao"] else None
-        linhas.append("| %s | `%s` | %s | %s | %s |" % (m["nome"], m["base"], ("`%s`" % c["id"]) if c else "nenhuma",
-                                                       (", ".join("`%s`" % f for f in c["funcoes"])) if c else "", str(m["temperatura"]).replace(".", ",")))
+        cs = conexoes_do(m)
+        linhas.append("| %s | `%s` | %s | %s | %s |" % (m["nome"], m["base"], ", ".join("`%s`" % c["id"] for c in cs) if cs else "nenhuma",
+                                                       ", ".join("`%s`" % f for f in funcoes_do_modelo(m)), str(m["temperatura"]).replace(".", ",")))
     return "\n".join(linhas)
 
 
@@ -232,7 +242,7 @@ def exportar_modelos():
                                  "memory": False, "builtin_tools": False},
                 "knowledge": [CONHECIMENTO] if m["nome"] == "Notes" else [], "defaultFeatureIds": []}
         if com_ferr:
-            meta["toolIds"] = ["server:mcp:" + m["conexao"]]
+            meta["toolIds"] = ["server:mcp:" + c["id"] for c in conexoes_do(m)]
         params = {"system": (AQUI / m["prompt"]).read_text(encoding="utf-8").strip(), "temperature": m["temperatura"]}
         if com_ferr and m["nativa"]:
             params["function_calling"] = "native"

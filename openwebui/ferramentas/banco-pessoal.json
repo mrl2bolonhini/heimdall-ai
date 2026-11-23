@@ -10,7 +10,7 @@
   "info": {
    "id": "banco-pessoal",
    "name": "Alerts (banco pessoal)",
-   "description": "Banco pessoal em modo leitura: diários oficiais, e-mails, estudos, privacidade, avisos, Second Brain e métricas de saúde simples. Só para o administrador."
+   "description": "Banco pessoal em modo leitura: diários oficiais, e-mails, privacidade, avisos, Second Brain e métricas de saúde simples. Só para o administrador."
   }
  }
 ]

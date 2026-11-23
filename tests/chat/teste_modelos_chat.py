@@ -21,12 +21,16 @@ def confere(nome, ok, detalhe=""):
 
 
 confere("modelos, conexões e prompts consistentes", not mc.problemas(), mc.problemas())
-saude = next(m for m in mc.MODELOS if m["nome"] == "Saúde")
-fin = next(m for m in mc.MODELOS if m["nome"] == "Finanças")
-confere("Saúde não enxerga função de finanças", not any(f.startswith("financas_") for f in mc.funcoes_do_modelo(saude)))
-confere("Finanças não enxerga função de saúde nem consulta livre ao banco", not any(f in mc.funcoes_do_modelo(fin) for f in ("banco_consultar", "saude_historico", "analise_saude")))
-confere("Finanças só lê: nenhuma função de escrita ou pagamento", all(f.startswith("financas_") or f == "get_system_timestamp" for f in mc.funcoes_do_modelo(fin)))
-confere("Código fica sem ferramentas", all(not mc.funcoes_do_modelo(m) for m in mc.MODELOS if m["nome"] == "Código"))
+saude = next(m for m in mc.MODELOS if m["nome"] == "Health")
+fin = next(m for m in mc.MODELOS if m["nome"] == "Finance")
+confere("Health não enxerga função de finanças", not any(f.startswith("financas_") for f in mc.funcoes_do_modelo(saude)))
+confere("Finance não enxerga função de saúde nem consulta livre ao banco", not any(f in mc.funcoes_do_modelo(fin) for f in ("banco_consultar", "saude_historico", "analise_saude")))
+confere("Finance só lê: nenhuma função de escrita ou pagamento", all(f.startswith("financas_") or f == "get_system_timestamp" for f in mc.funcoes_do_modelo(fin)))
+confere("Code fica sem ferramentas", all(not mc.funcoes_do_modelo(m) for m in mc.MODELOS if m["nome"] == "Code"))
+notes = next(m for m in mc.MODELOS if m["nome"] == "Notes")
+alerts = next(m for m in mc.MODELOS if m["nome"] == "Alerts")
+confere("Notes lê os estudos pelo banco (só busca e consulta) além da memória e dos documentos", {"banco_buscar", "banco_consultar", "rag_search", "memory_search"} <= set(mc.funcoes_do_modelo(notes)) and "saude_historico" not in mc.funcoes_do_modelo(notes))
+confere("estudos saiu do Alerts", "estudos" not in alerts["uso"] and "estudos" not in (Path(mc.AQUI) / alerts["prompt"]).read_text(encoding="utf-8").split("Perguntas sobre os estudos")[0])
 conv = [m for m in mc.MODELOS if m["nome"] == "General"][0]
 confere("General só tem pesquisa, leitura de página, cálculo e hora", sorted(mc.funcoes_do_modelo(conv)) == sorted(["search_searxng", "fetch_url", "calculate_expression", "get_system_timestamp"]))
 confere("General tem a base conversas (nuvem ou gemma local)", conv["base"] == "conversas")
@@ -38,7 +42,7 @@ orig = mc.MODELOS
 try:
     mc.MODELOS = [dict(m) for m in orig]
     mc.MODELOS[1]["conexao"] = "banco-financas"
-    confere("detecta modelo ligado à conexão errada", any("Saúde" in e for e in mc.problemas()))
+    confere("detecta modelo ligado à conexão errada", any("Health" in e for e in mc.problemas()))
 finally:
     mc.MODELOS = orig
 

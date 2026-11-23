@@ -1,0 +1,16 @@
+[
+ {
+  "type": "mcp",
+  "url": "http://host.docker.internal:8004/mcp",
+  "spec_type": "url",
+  "spec": "",
+  "path": "openapi.json",
+  "auth_type": "none",
+  "key": "",
+  "info": {
+   "id": "banco-estudos",
+   "name": "Notes (estudos do banco)",
+   "description": "Só a busca e a consulta ao banco pessoal, para o Notes ler a tabela de estudos dos livros. Só para o administrador."
+  }
+ }
+]
