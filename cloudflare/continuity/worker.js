@@ -16,7 +16,7 @@ const PAUSA_SONDA_MS = 30000;        // depois de uma queda, vai direto ao cont�
 const SEM_PROPAGAR = new Set(["/entrar", "/sair"]);   // únicos envios aceitos em modo somente leitura (login e logout; a sessão não grava no banco)
 const SEGREDOS = ["HEIMDALL_CONTINUIDADE_SENHA", "HEIMDALL_R2_ENDPOINT", "HEIMDALL_R2_BUCKET", "HEIMDALL_R2_KEY_ID", "HEIMDALL_R2_SECRET",
   "HEIMDALL_CLOUD_SENHA_HASH", "HEIMDALL_CLOUD_TOTP_SEGREDO", "HEIMDALL_CLOUD_SESSAO_HORAS", "HEIMDALL_CFACCESS_AUD", "HEIMDALL_CFACCESS_EMAILS",
-  "HEIMDALL_CFACCESS_EQUIPE", "HEIMDALL_CFACCESS_CONVIDADOS", "HEIMDALL_CFACCESS_TEAM"];
+  "HEIMDALL_CFACCESS_EQUIPE", "HEIMDALL_CFACCESS_CONVIDADOS"];
 const PORTA_SAUDE = 8080;
 
 let foraAte = 0;   // por isolate: até quando pular a sonda ao Mac
@@ -84,8 +84,8 @@ function b64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length 
 export async function verificarAccess(request, env, buscar = fetch) {
   const jwt = request.headers.get("Cf-Access-Jwt-Assertion") || "";
   const auds = String(env.HEIMDALL_CFACCESS_AUD || "").split(",").map((a) => a.trim()).filter(Boolean);
-  let equipe = String(env.HEIMDALL_CFACCESS_TEAM || "").trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  if (!jwt || !auds.length || !equipe) return false;
+  let equipe = String(env.HEIMDALL_CFACCESS_EQUIPE || "").trim().toLowerCase();   // o mesmo nome do resto do Heimdall: a parte antes de .cloudflareaccess.com
+  if (!jwt || !auds.length || !/^[a-z0-9][a-z0-9-]{0,62}(\.cloudflareaccess\.com)?$/.test(equipe)) return false;
   if (!equipe.includes(".")) equipe += ".cloudflareaccess.com";
   const partes = jwt.split(".");
   if (partes.length !== 3) return false;

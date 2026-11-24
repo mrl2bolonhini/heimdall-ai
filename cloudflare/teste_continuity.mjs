@@ -61,7 +61,7 @@ confere("avisos escapam HTML", !W.aviso('<script>x</script>').includes("<script>
 // --- páginas de fora do ar, painel e Access ---
 macStatus = 200;
 const FORA = JSON.stringify({ "chat.x.tech": "Chat" });
-const envN = (extra = {}) => env({ FORA, PAINEL: "controls.x.tech", HEIMDALL_CFACCESS_AUD: "aud1", HEIMDALL_CFACCESS_TEAM: "equipe", ...extra });
+const envN = (extra = {}) => env({ FORA, PAINEL: "controls.x.tech", HEIMDALL_CFACCESS_AUD: "aud1", HEIMDALL_CFACCESS_EQUIPE: "equipe", ...extra });
 W.reiniciarMemoria();
 r = await W.default.fetch(pedir("https://chat.x.tech/"), envN(), ctx);
 confere("chat com o Mac no ar é repassado", (await r.text()) === "do mac");
@@ -89,6 +89,7 @@ confere("Access: token vencido é recusado", !(await W.verificarAccess(await com
 const outra = await crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["sign", "verify"]);
 const falso = pedir("https://controls.x.tech/", { headers: { "Cf-Access-Jwt-Assertion": await jwt({ aud: ["aud1"], exp: futuro }, outra.privateKey) } });
 confere("Access: assinatura falsa é recusada", !(await W.verificarAccess(falso, eA, buscaCerts)));
+confere("Access: nome de equipe com formato estranho é recusado (nada de endereço fora de cloudflareaccess.com)", !(await W.verificarAccess(await comJwt({ aud: ["aud1"], exp: futuro }), envN({ HEIMDALL_CFACCESS_EQUIPE: "evil.com/x" }), buscaCerts)));
 confere("Access: sem cabeçalho ou sem configuração é recusado", !(await W.verificarAccess(pedir("https://controls.x.tech/"), eA, buscaCerts)) && !(await W.verificarAccess(await comJwt({ aud: ["aud1"], exp: futuro }), envN({ HEIMDALL_CFACCESS_AUD: "" }), buscaCerts)));
 
 // painel

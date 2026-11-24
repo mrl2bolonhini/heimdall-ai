@@ -559,11 +559,13 @@ Exemplos:
 @ update | Traz as novidades do GitHub
 Faz git pull --ff-only da branch atual do projeto e diz se precisa reiniciar ou reinstalar fluxos. Depois recarrega os comandos do heimdall no próprio terminal, então não precisa dar source de novo.
 Opções:
-  -r, --restart        reinicia os serviços em seguida
+  -r, --restart        reinicia os serviços em seguida; se a atualização mudou o app de barra de menus (macapp/), compila o app de novo
+  -a, --app            reinicia os serviços e compila o app sempre
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall update
   heimdall update --restart
+  heimdall update --app
 
 @ docs | Regenera o site e o README
 Roda gerar_docs.py: gera docs/ e as tabelas do README a partir do código.

@@ -109,7 +109,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     mcp) printf '%s\n' "-v=--verify" ;;
     flows) printf '%s\n' "-a=--advanced" "-b=--basic" "-p=--privacy" "-e=--email" ;;
     hook) printf '%s\n' "-i=--install" "-r=--remove" ;;
-    update) printf '%s\n' "-r=--restart" ;;
+    update) printf '%s\n' "-r=--restart" "-a=--app" ;;
     docs) printf '%s\n' "-b=--brand" ;;
     test) printf '%s\n' "-l=--list" "-a=--all" "-r=--run" ;;
     help) printf '%s\n' "-d=--doc" ;;
@@ -452,18 +452,25 @@ heimdall() {
     hook) _heimdall_tr "--install=-
 --remove=--remover" "$@"; _heimdall_sh scripts/instalar_hook_gitops.sh "${_HA[@]}" ;;
     update)
-      local restart=0 branch
+      local restart=0 forcar_app=0 branch antes
       case "$1" in
         "") ;;
         --restart|-r) restart=1 ;;
-        *) echo "Opção desconhecida: $1. Use: heimdall update [--restart]"; return 1 ;;
+        --app|-a) restart=1; forcar_app=1 ;;
+        *) echo "Opção desconhecida: $1. Use: heimdall update [--restart | --app]"; return 1 ;;
       esac
       branch="$(git -C "$HEIMDALL_DIR" rev-parse --abbrev-ref HEAD)"
+      antes="$(git -C "$HEIMDALL_DIR" rev-parse HEAD)"
       echo "Atualizando a branch $branch..."
       git -C "$HEIMDALL_DIR" pull --ff-only origin "$branch" || { echo "O pull falhou; veja a mensagem acima."; return 1; }
       source "$HEIMDALL_DIR/heimdall.zsh" && echo "Comandos do heimdall recarregados neste terminal."
       if [ "$restart" = 1 ]; then
         _heimdall_sh subir.sh --reiniciar
+        # O app de barra de menus só é compilado de novo quando a atualização mudou o app (macapp/ ou o script que o constrói), ou com --app.
+        if [ "$forcar_app" = 1 ] || git -C "$HEIMDALL_DIR" diff --name-only "$antes" HEAD -- macapp scripts/construir_app_mac.sh | grep -q .; then
+          echo "Compilando o app Heimdall..."
+          _heimdall_sh scripts/construir_app_mac.sh || echo "Não consegui compilar o app. Rode depois: heimdall app"
+        fi
       else
         echo "Pronto. Se mudou código de serviço: heimdall restart. Se mudou fluxo do n8n: heimdall flows."
       fi ;;
@@ -546,7 +553,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       mcp) compadd -- --verify ;;
       flows) compadd -- --advanced --basic --privacy --email ;;
       hook) compadd -- --install --remove ;;
-      update) compadd -- --restart ;;
+      update) compadd -- --restart --app ;;
       docs) compadd -- --brand ;;
       help) compadd -- --doc $cmds ;;
       test)

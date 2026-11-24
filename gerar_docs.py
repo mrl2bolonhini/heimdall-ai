@@ -395,6 +395,8 @@ SCRIPTS = [
     ("tests/core/teste_continuidade_entrada.py", "Testa o ponto de entrada do contêiner sem Docker: /health pronto só depois de restaurar, site sobe em modo de leitura, falha de restauração encerra."),
     ("heimdall_nuvempainel.py", "Dados da aba Nuvem do Controls: interruptor da continuidade, data da última cópia e situação dos limites de gasto da Cloudflare (Workers e Durable Objects), lidos pelo token do .env."),
     ("tests/core/teste_nuvempainel.py", "Testa os dados da aba Nuvem sem rede: limites lidos, produtos ignorados, 403 e falta de rede em português, estado sem a senha de continuidade."),
+    (".github/workflows/deploy-continuidade.yml", "Implanta o Worker e o contêiner de continuidade na Cloudflare quando a main avança: testa o Worker, confere os bloqueios de gasto, preserva o interruptor e usa só segredos do repositório."),
+    ("tests/core/teste_workflow_continuidade.py", "Confere o workflow de deploy da continuidade: só na main, teste e trava de gasto antes do deploy, interruptor preservado e nenhum segredo escrito no arquivo."),
     ("cloudflare/teste_continuity.mjs", "Testa o Worker de continuidade: repasse ao Mac, interruptor, failover só com o túnel fora, aviso com data, somente leitura, página de indisponibilidade, página de fora do ar do chat, conferência do token do Access (assinatura, validade e AUD) e a pausa da continuidade pela página de controle."),
     ("tests/core/teste_voz.py", "Testa o dicionário de pronúncia."),
     ("tests/health/teste_saude_dados.py", "Testa as análises de saúde com 200 dias de dados sintéticos, sem tocar no seu banco."),

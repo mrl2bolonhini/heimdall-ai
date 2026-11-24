@@ -1,0 +1,68 @@
+# Implanta a continuidade do Heimdall (Worker + contêiner) na Cloudflare quando a main avança.
+# A main só avança com o sim do dono (CLAUDE.md), então o deploy só acontece depois dessa aprovação.
+# Segredos do repositório (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_DEPLOY_TOKEN   token da Cloudflare para implantar (Workers Scripts e Rotas de Workers: edição; Contêineres: edição)
+#   CLOUDFLARE_ACCOUNT_ID     identificador da conta
+#   HEIMDALL_CF_LEITURA_TOKEN token só de leitura (Faturamento) usado para conferir os limites de gasto antes de implantar
+# Os segredos do Worker (senha da cópia, R2, Access) ficam na Cloudflare e não são reenviados aqui. Os bancos não passam por aqui: a cópia
+# deles sai do Mac (agente) para o R2.
+name: Implantar continuidade
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*.py"
+      - "cloudflare/continuity/**"
+      - ".dockerignore"
+      - "games/**"
+      - "guides/**"
+      - "prompts/**"
+      - "branding/**"
+      - ".github/workflows/deploy-continuidade.yml"
+  workflow_dispatch:
+concurrency:
+  group: deploy-continuidade
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  implantar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Testar o Worker
+        run: node cloudflare/teste_continuity.mjs
+      - name: Conferir os limites de gasto (regra do projeto)
+        env:
+          TOKEN: ${{ secrets.HEIMDALL_CF_LEITURA_TOKEN }}
+          CONTA: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          lista="$(curl -fsS -H "Authorization: Bearer $TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CONTA/billing/spend-policies")"
+          for p in workers durable_objects; do
+            echo "$lista" | jq -e --arg p "$p" '[.result[] | select(.product_id == $p and .action == "usage_block")] | length > 0' > /dev/null \
+              || { echo "Recusado: falta o bloqueio de gasto (usage_block) em $p."; exit 1; }
+          done
+          echo "Bloqueios de gasto conferidos."
+      - name: Ler o interruptor atual do Worker
+        id: interruptor
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
+          CONTA: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Se você desligou a continuidade (heimdall continuity --off), o deploy preserva o desligado; sem leitura, usa ligado (1).
+          atual="$(curl -fsS -H "Authorization: Bearer $TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CONTA/workers/scripts/heimdall-continuidade/settings" \
+            | jq -r '[.result.bindings[]? | select(.name == "CONTINUIDADE") | .text][0] // "1"' 2>/dev/null || echo 1)"
+          case "$atual" in 0|1) ;; *) atual=1 ;; esac
+          echo "valor=$atual" >> "$GITHUB_OUTPUT"
+          echo "CONTINUIDADE atual no Worker: $atual"
+      - name: Implantar o Worker e o contêiner
+        working-directory: cloudflare/continuity
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler deploy --config wrangler.jsonc --var CONTINUIDADE:${{ steps.interruptor.outputs.valor }}
