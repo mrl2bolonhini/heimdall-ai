@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-24 - Plano de migração para servidor
+- Novo guides/migracao_servidor.txt: plano em fases (0 a 7) para hospedar o Heimdall em uma VPS no Brasil, com o servidor como fonte dos dados, o Mac como ponte dos apps da Apple, embeddings na Cloudflare (bge-m3 no Workers AI, a validar), Workers VPC beta como rede privada entre os Workers e o servidor, e chat próprio no lugar do Open WebUI. Cada fase tem interruptor no .env, cópia de volta no Mac e custo conferido contra o teto de US$ 15 da Cloudflare; a VPS entra como item novo de custo. Ainda não implementado.
+- Não testado: contrato e Docker na Locaweb, Workers VPC com a VPS e embeddings no caminho /compat do AI Gateway.
+
 ## 2026-11-24 - Open WebUI em modo enxuto
 - O Open WebUI sobe sem Notas, Automações, geração de imagem, execução de código, interpretador de código, voz local (a ditagem passa a usar a do navegador), títulos automáticos das conversas, etiquetas, sugestões de continuação e autocompletar. Isso poupa memória e evita chamadas de modelo em segundo plano; o chat, a troca de modelo e as ferramentas seguem iguais. HEIMDALL_WEBUI_ENXUTO=0 no .env devolve o comportamento anterior; HEIMDALL_WEBUI_TITULOS=1 mantém só os títulos automáticos.
 - Opcional: HEIMDALL_WEBUI_EMBEDDING=ollama manda os embeddings dos documentos ao Ollama do Mac (poupa cerca de 500 MB); exige ollama pull nomic-embed-text (ou o modelo de HEIMDALL_WEBUI_EMBEDDING_MODELO) e reindexar os documentos já enviados. Fica desligado por padrão.

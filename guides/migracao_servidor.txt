@@ -1,0 +1,90 @@
+Plano de migração do Heimdall para um servidor próprio (VPS)
+
+Status: plano a desenvolver (decisões do usuário em 24/11/2026). Nada deste plano está implementado; cada fase só começa depois do sim do usuário.
+
+1. Objetivo
+Manter o Heimdall no ar sem depender do Mac. Um servidor alugado (VPS) passa a hospedar os serviços, os fluxos e os dados. O Mac deixa de ser a fonte e vira cliente, mantendo uma única função que só ele tem: a ponte com os apps da Apple.
+
+2. Decisões já tomadas (24/11/2026)
+1) O Mac continua como ponte Apple (Notas, Calendário, Lembretes). O servidor chama o agente do Mac por um canal privado; se o Mac estiver fora do ar, o pedido fica em fila e roda quando ele volta, com aviso.
+2) A fonte dos dados passa a ser o servidor. O Mac sincroniza a partir dele. Isso inverte o desenho de guides/continuidade_nuvem.txt, em que o Mac era a fonte e a nuvem só lia.
+3) Os embeddings (busca por significado nos documentos) passam para a nuvem da Cloudflare.
+4) Chat próprio sobre o LiteLLM no lugar do Open WebUI: aguarda a definição de "projeto" (só instrução fixa e modelo, ou também arquivos e histórico separados).
+
+3. Servidor candidato
+Locaweb VPS Linux de 8 GB (4 vCPU, 200 GB), datacenter no Brasil, imagem Docker de um clique, 1 snapshot grátis. Preços do contrato de 24 meses, conferidos em 24/11/2026: R$ 63,90 por mês na promoção, R$ 155,90 de lista e R$ 124,72 na renovação. Não há plano mensal avulso. O SLA da VPS não é informado (os 99,9% divulgados são do Locaweb Cloud, mais caro).
+Dimensionamento medido: contêineres cerca de 1,9 GB e processos do Heimdall cerca de 1,1 GB, ou seja, cerca de 3,1 GB. A medida pode estar subestimada (o LiteLLM, por exemplo). Com 8 GB há folga; 4 GB só serve com o chat próprio e fica apertado.
+Perguntas à Locaweb antes de contratar (tarefa do usuário):
+1) Docker e Docker Compose funcionam sem restrição na VPS?
+2) Existe SLA de disponibilidade escrito para a VPS?
+3) É possível cancelar ou reduzir antes dos 24 meses, e com que multa?
+4) O preço de R$ 63,90 vale para os 24 meses inteiros ou só para o primeiro ano?
+5) Há backup automático além do snapshot grátis, e o que ele custa?
+6) O IP é fixo e há proteção contra ataques de negação de serviço?
+
+4. Custo
+O teto de US$ 15 por mês da Cloudflare continua valendo para Workers, Workers AI, AI Gateway e túnel. A VPS é um item novo, fora desse teto, e a decisão de somá-la ou não ao orçamento é do usuário. Referência: R$ 63,90 são cerca de US$ 10,60 ao câmbio de R$ 6; a renovação de R$ 124,72 são cerca de US$ 20,80.
+Embeddings no Workers AI: o modelo bge-m3 custa US$ 0,012 por milhão de tokens. Reindexar um acervo de 10 milhões de tokens custa cerca de US$ 0,12; o uso diário é de centavos.
+
+5. Peças da Cloudflare
+1) Túnel (cloudflared): continua sendo a entrada dos sites *.heimdall-ai.tech, agora instalado no servidor.
+2) Workers VPC (beta; grátis em todos os planos Workers enquanto durar o beta): é uma rede privada que deixa um Worker chamar um serviço que não está aberto na internet, por um túnel. Não é uma máquina virtual. Serve para o Worker de entrada e os Workers de continuidade falarem com o servidor sem expô-lo. A documentação não diz se funciona com uma VPS de endereço público nem com uma máquina doméstica; testar antes de depender dele. Se não servir, o Worker chama o endereço público do túnel protegido por Cloudflare Access.
+3) Workers AI para embeddings: @cf/baai/bge-m3 (multilíngue, janela de 60.000 tokens, sem retenção de dados) é o candidato; @cf/google/embeddinggemma-300m (beta, mais de 100 idiomas) é a alternativa. O endpoint /v1/embeddings é compatível com a API da OpenAI. A documentação diz que os endpoints OpenAI-compatíveis do Workers AI também funcionam no AI Gateway, mas o suporte a embeddings no caminho /compat do gateway não foi confirmado: validar com uma chamada real antes de ligar.
+4) R2 com chave do cliente: continua guardando cópias cifradas (AES-256-GCM) dos bancos e dos arquivos, agora como o segundo local de cópia do servidor.
+
+6. Fases
+Cada fase tem interruptor no .env, volta para o estado anterior e cópia no Mac antes de qualquer remoção. Nenhuma fase começa sem os alertas de gasto ligados.
+
+Fase 0: pré-requisitos (sem código)
+- Usuário: responder às perguntas à Locaweb, decidir o contrato e o orçamento, e definir o que é "projeto" no chat próprio.
+- Conferir os alertas de gasto da Cloudflare (50% e 80% do teto).
+- Interruptor: não se aplica. Volta: nada mudou.
+
+Fase 1: servidor em paralelo, só leitura
+- Contratar a VPS, endurecer o acesso (chave SSH, sem senha, firewall fechado, atualizações automáticas), instalar Docker e subir os mesmos contêineres e o mesmo código do repositório, com cópia dos bancos a partir do Mac. O Mac segue como fonte; o servidor serve só para testar.
+- Interruptor: HEIMDALL_SERVIDOR=0 (padrão). Volta: desligar o contêiner; o Mac não foi alterado.
+- Critério de saída: todos os sites abrem no servidor com os dados copiados e os testes do repositório passam nele.
+
+Fase 2: embeddings na nuvem
+- Trocar o ingest_docs.py e as buscas do Qdrant para o bge-m3 pelo Workers AI (via gateway se o /compat aceitar embeddings; senão direto), recriar o índice com `ingest_docs.py --reset` (a dimensão muda) e manter o índice antigo (nomic-embed-text no Ollama) como cópia de volta.
+- Interruptor: HEIMDALL_EMBEDDING=nuvem (padrão local). Volta: HEIMDALL_EMBEDDING=local reaponta ao índice antigo, que não é apagado até o usuário confirmar.
+- Medir a qualidade em português (conjunto fixo de perguntas) antes de trocar de vez.
+
+Fase 3: fonte dos dados passa para o servidor
+- Bancos (db/), arquivos (health/, finance/, notas) e fluxos do n8n passam a viver no servidor. O Mac sincroniza uma cópia, nos dois sentidos durante a transição, e só então vira cliente. A cópia cifrada no R2 passa a sair do servidor.
+- Os 14 dos 18 fluxos do n8n que chamam o agente do Mac passam a usar o endereço do agente pelo canal privado.
+- As rotas do agente que só mexem em banco, backup e avisos (/banco/*, /backup/*, /avisos/gravar e parecidas) migram para o servidor; ficam no Mac as que dependem da Apple (/notas/*, /calendario/*, /lembretes/*, saúde HealthKit via Health Auto Export, say, afplay, shortcuts).
+- A análise de segurança (fluxo 19) precisa de decisão: rodar no servidor ou continuar no Mac.
+- Interruptor: HEIMDALL_FONTE=mac|servidor (padrão mac). Volta: voltar a fonte para o Mac com o último estado sincronizado; nada é apagado no Mac.
+
+Fase 4: Mac como ponte Apple
+- O agente no Mac é alcançado pelo servidor por um canal privado (túnel da Cloudflare ou Tailscale; decidir na fase). Com o Mac fora do ar, o pedido fica em fila no servidor e roda quando ele volta, com aviso na interface.
+- Interruptor: HEIMDALL_PONTE_APPLE=1. Volta: o servidor passa a gravar direto no banco sem escrever na Apple, com aviso.
+
+Fase 5: continuidade
+- Os Workers e o contêiner de continuidade já existentes (heimdall_continuidade.py) passam a apontar para o servidor como fonte, e o Mac deixa de ser fonte da cópia. A queda que passa a importar é a do servidor; a nuvem da Cloudflare cobre essa queda em modo reduzido.
+- Interruptor: o atual, HEIMDALL_CONTINUIDADE. Volta: reapontar a fonte para o Mac.
+
+Fase 6: chat próprio
+- Só começa com a definição de "projeto". Substitui o Open WebUI por um chat leve sobre o LiteLLM (criar projeto com instrução fixa e trocar de modelo). Economiza cerca de 650 MB de memória do Open WebUI.
+- Interruptor: HEIMDALL_CHAT=webui|proprio (padrão webui). Volta: religar o Open WebUI, cujo volume de dados não é apagado.
+
+Fase 7: app do iPhone
+- Depois da conta de desenvolvedor da Apple (US$ 99 por ano), o app assume Calendário, Lembretes e Saúde (HealthKit) falando com o servidor, e o Mac deixa de ser necessário para essas funções. Notas não tem API para apps no iOS: continua pelo Mac, pelo Atalhos ou por compartilhar a nota.
+
+7. Segurança e privacidade
+1) Os dados de saúde e finanças ficam cifrados em repouso no servidor (disco cifrado ou cifragem na aplicação) e nas cópias do R2 (chave do cliente).
+2) Datacenter no Brasil ajuda na LGPD; ainda assim, o contrato com a Locaweb deve tratar da operadora de dados.
+3) Acesso ao servidor só por chave SSH, painel dos sites atrás do Cloudflare Access, nenhuma porta aberta além do túnel.
+4) Segredos continuam no .env do servidor e nunca no repositório; a cópia do .env no R2 é cifrada.
+5) Cópias: backup diário dos bancos para o R2 e para o Mac, mais o snapshot da Locaweb antes de cada atualização grande.
+
+8. Riscos conhecidos
+1) A VPS é uma única máquina: sem SLA escrito, ela também pode cair. Por isso a fase 5 mantém a continuidade na Cloudflare.
+2) Contrato de 24 meses sem saída barata: confirmar a multa (pergunta 3).
+3) Workers VPC é beta e pode mudar antes de a versão final sair.
+4) Trocar o modelo de embeddings exige reindexar tudo e pode mudar a qualidade das buscas.
+5) O dimensionamento de 8 GB vem de medida no Mac e pode estar subestimado.
+
+9. Ordem sugerida
+Fase 0 (usuário), fase 1, fase 2 (pode andar em paralelo e antes da contratação, pois só depende da Cloudflare), fases 3 e 4 juntas, fase 5, fase 6 e fase 7 conforme o app do iPhone. Antes de cada fase: alertas ligados, interruptor no .env e teste do que mudou.
