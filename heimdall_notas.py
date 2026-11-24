@@ -529,7 +529,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notes</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
             f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Notes", nav, sair_html=sair)}'
-            f'<main id="principal">{conteudo}</main>{design.rodape()}{js}</body></html>').encode("utf-8")
+            f'<main id="principal">{conteudo}</main>{design.rodape(servico="notas")}{js}</body></html>').encode("utf-8")
 
 
 def pg_entrar(erro: str = "") -> bytes:

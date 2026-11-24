@@ -446,7 +446,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, logado: bool = True) -> b
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Lab</title>{ICONE}<style>{CSS}</style></head><body>'
             f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{cabecalho("Heimdall Lab", nav, sair_html=sair)}'
-            f'<main id="principal">{conteudo}</main>{design.rodape()}{scripts}</body></html>').encode("utf-8")
+            f'<main id="principal">{conteudo}</main>{design.rodape(servico="lab")}{scripts}</body></html>').encode("utf-8")
 
 
 NAV_CLOUD = [("/", "Início"), ("/s3", "S3"), ("/lambda", "Lambda"), ("/glue", "Glue"), ("/athena", "Athena"), ("/console", "Console geral")]

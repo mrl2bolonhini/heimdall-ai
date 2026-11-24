@@ -260,7 +260,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scr
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow">{extra_head}<title>{e(titulo)} - Heimdall Games</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
             f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Games", nav, sair_html=sair)}'
-            f'<main id="principal">{conteudo}</main>{design.rodape()}{scripts}{js}</body></html>').encode("utf-8")
+            f'<main id="principal">{conteudo}</main>{design.rodape(servico="jogos")}{scripts}{js}</body></html>').encode("utf-8")
 
 
 def _lista_categoria(c: tuple) -> str:

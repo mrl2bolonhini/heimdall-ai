@@ -146,7 +146,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Learn</title>{nuvem.ICONE}<style>{CSS}</style></head><body{(' data-csrf="' + e(sess['csrf']) + '"') if sess else ''}>'
             f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Learn", nav, sair_html=sair, ajustes_html=ajustes_html)}'
-            f'<main id="principal">{conteudo}</main>{design.rodape()}{js}</body></html>').encode("utf-8")
+            f'<main id="principal">{conteudo}</main>{design.rodape(servico="learn")}{js}</body></html>').encode("utf-8")
 
 
 ROTAS_PERGUNTAR = re.compile(r"^/((estudos|licoes|exercicios|cards|progresso)\?t=[^&#\s]{1,200})?$")

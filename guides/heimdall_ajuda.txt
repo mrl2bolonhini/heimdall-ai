@@ -390,6 +390,14 @@ Exemplos:
   heimdall usage
   heimdall usage --days 7
 
+@ support | Mensagens enviadas ao suporte pelo formulário de Ajuda e suporte
+Lista as últimas mensagens que os usuários enviaram pelo formulário da página Ajuda e suporte (Heimdall Account), com protocolo, estado do envio e início do texto. O estado enviada indica que o e-mail seguiu para o suporte pelo Cloudflare Email Sending; gravada_sem_envio, que a mensagem ficou só registrada (envio desligado ou falha). O envio por e-mail liga com HEIMDALL_SUPORTE_EMAIL=1, HEIMDALL_SUPORTE_DE e, se quiser outro destino, HEIMDALL_SUPORTE_PARA; as mensagens ficam em db/suporte/mensagens.jsonl.
+Opções:
+  -l, --last           mostra as 10 últimas mensagens
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall support --last
+
 @ notices | Traz as notas antigas de saúde e finanças para a aba Avisos
 Sem opção só mostra o que seria feito. Com --migrate importa para a aba Avisos do Heimdall Health e do Heimdall Finance as notas de saúde e finanças que o Heimdall já gravou no cofre e no app Notas, confere que tudo chegou e só então apaga as originais. O app Notas manda cada nota para "Apagadas recentemente", onde ela fica 30 dias. Só mexe nas pastas do Heimdall (Saúde dentro de Heimdall-ai e Heimdall Finanças). Pode rodar de novo sem duplicar. O macOS pode pedir permissão para o Terminal controlar o app Notas.
 Opções:

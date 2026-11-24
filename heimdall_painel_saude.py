@@ -375,7 +375,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Heimdall Health</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
             f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Health", nav, sair_html=sair)}'
-            f'<main id="principal">{conteudo}</main>{design.rodape()}{scripts}</body></html>').encode("utf-8")
+            f'<main id="principal">{conteudo}</main>{design.rodape(servico="saude")}{scripts}</body></html>').encode("utf-8")
 
 
 def _bloco_perguntar(sess: dict, atual: str) -> str:

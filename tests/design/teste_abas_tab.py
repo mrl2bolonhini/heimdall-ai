@@ -39,10 +39,10 @@ else:
         pg.set_content(pagina)
         pg.focus("#aba-2")
         ordem = []
-        for _ in range(5):
+        for _ in range(8):
             pg.keyboard.press("Tab")
             ordem.append(pg.evaluate("(document.activeElement === document.body ? 'FORA' : (document.activeElement.id || document.activeElement.textContent))"))
-        confere("Tab a partir da aba: painel, o link do item, Voltar para o topo, o fim da página e só então o menu Conta", ordem == ["painel-aba", "Item", "Voltar para o topo", "FORA", "conta"], ordem)
+        confere("Tab a partir da aba: painel, o link do item, os links de Ajuda e políticas, Voltar para o topo, o fim da página e só então o menu Conta", ordem == ["painel-aba", "Item", "Ajuda e suporte", "Política de uso", "Privacidade", "Voltar para o topo", "FORA", "conta"], ordem)
         pg.focus("#aba-2")
         pg.keyboard.press("Tab")
         outline = pg.evaluate("getComputedStyle(document.activeElement).outlineStyle")

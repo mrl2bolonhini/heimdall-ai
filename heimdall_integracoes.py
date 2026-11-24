@@ -111,7 +111,7 @@ def desativar_saude(p: dict, env=None, abrir=None) -> None:
     env = caixa._env() if env is None else env
     st = estado(p, env)
     if not st["pode"]:
-        raise RuntimeError("por enquanto só o dono pode mexer na Saúde")
+        raise RuntimeError("no momento, apenas o dono pode ativar a Saúde")
     caixa.revogar_pessoa(st["usuario"], env, abrir)
     d = _ler()
     d.get(st["usuario"], {}).pop("saude", None)

@@ -996,7 +996,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
         extra = (f'<form class="linha" id="form-recarregar" method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><input type="hidden" name="acao" value="restart">'
                  '<button type="submit" id="recarregar" aria-describedby="desc-recarregar" disabled>Recarregar Heimdall</button> '
                  '<span class="nota" id="desc-recarregar">Sem alterações para carregar.</span></form>')
-    rodape = design.rodape(extra)
+    rodape = design.rodape(extra, "controls")
     todo = ((design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_SEGREDO + SCRIPT_RECARGA + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'

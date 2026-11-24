@@ -199,10 +199,29 @@ def com_subabas(itens: list, atual: str, conteudo: str, rotulo: str = "Subseçõ
 # Abrir uma aba troca só o conteúdo do painel (sem recarregar a página, o foco fica na aba e o leitor de tela ouve "<nome> aberta").
 # Abas marcadas com data-completa (as que têm script próprio, como o Terminal) carregam a página inteira, e só se vai delas ou para elas assim.
 # Exige nonce de script na página.
-def rodape(extra: str = "") -> str:
-    """Fim de toda página: `extra` (botões de ação, se houver) e o link para o topo, para o leitor de tela não ficar num final abrupto.
-    O link leva tabindex=0 para ser parada do Tab também onde o navegador pula links (Safari por padrão): é o fim do percurso por Tab."""
-    return f'<footer class="rodape">{extra}<p><a href="#topo" tabindex="0">Voltar para o topo</a></p></footer>'
+_BASE_AJUDA = []
+
+
+def base_ajuda() -> str:
+    """Endereço do Heimdall Account, onde ficam a ajuda, o suporte e as políticas que o rodapé de todo serviço liga."""
+    if not _BASE_AJUDA:
+        try:
+            import heimdall_usuarios as _u
+            _BASE_AJUDA.append("https://" + _u.host_publico("account"))
+        except Exception:  # noqa: BLE001
+            _BASE_AJUDA.append("https://account.heimdall-ai.tech")
+    return _BASE_AJUDA[0]
+
+
+def rodape(extra: str = "", servico: str = "") -> str:
+    """Fim de toda página: `extra` (botões de ação, se houver), os links de Ajuda e suporte, Política de uso e Privacidade, e o link para o topo, para o leitor de tela
+    não ficar num final abrupto. `servico` é a chave do serviço (finance, saude, notas...): a Ajuda abre já nas perguntas dele.
+    O link do topo leva tabindex=0 para ser parada do Tab também onde o navegador pula links (Safari por padrão): é o fim do percurso por Tab."""
+    b = base_ajuda()
+    q = f"?servico={servico}" if servico else ""
+    links = (f'<nav aria-label="Ajuda e informações"><ul><li><a href="{b}/ajuda{q}">Ajuda e suporte</a></li>'
+             f'<li><a href="{b}/politica-de-uso">Política de uso</a></li><li><a href="{b}/privacidade">Privacidade</a></li></ul></nav>')
+    return f'<footer class="rodape">{extra}{links}<p><a href="#topo" tabindex="0">Voltar para o topo</a></p></footer>'
 
 
 def topo() -> str:
