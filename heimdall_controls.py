@@ -569,6 +569,16 @@ def pg_nuvem(q: dict, sess: dict) -> tuple:
                   f'<p>O teto combinado do projeto é US$ {est["teto"]:.0f} por mês. O valor já gasto no mês está no painel de faturamento da Cloudflare; aqui aparece só a situação de cada limite.</p>')
     else:
         gastos = '<h2>Limites de gasto</h2><p role="status">' + e(g.get("erro", "Nenhum limite encontrado. Rode ./scripts/limites_gasto_cloudflare.sh.")) + "</p>"
+    c = est.get("consumo", {})
+    if c.get("ok"):
+        usd = lambda v: "US$ " + f"{v:.2f}".replace(".", ",")  # noqa: E731
+        lin = "".join(f'<tr><th scope="row">{e(i["servico"])}</th><td>{usd(i["custo"])}</td></tr>' for i in c["itens"])
+        consumo = (f'<h2>Consumo do mês</h2><p role="status">Total no mês: <strong>{usd(c["total"])}</strong> de um teto de {usd(c["teto"])}'
+                   + (". Atenção: perto do teto" if c["total"] >= c["teto"] * 0.8 else "") + ".</p>"
+                   + (f'<table><caption>Consumo faturável do mês por serviço</caption><thead><tr><th scope="col">Serviço</th><th scope="col">Valor</th></tr></thead><tbody>{lin}</tbody></table>' if lin else "<p>Nenhum consumo faturável até agora.</p>"))
+    else:
+        consumo = '<h2>Consumo do mês</h2><p role="status">' + e(c.get("erro", "Consumo indisponível.")) + "</p>"
+    gastos = consumo + gastos
     nuvem_url = e(est["painel"])
     painel = (f'<h2>Página de controle na nuvem</h2><p>Quando o Mac cai, o endereço de controle mostra o estado da nuvem e permite pausar ou retomar o failover. '
               f'Ela também funciona com o Mac no ar, pelo endereço <a href="{nuvem_url}">{nuvem_url}</a>, e exige login pelo Cloudflare Access.</p>')

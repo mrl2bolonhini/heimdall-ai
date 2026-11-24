@@ -56,6 +56,16 @@ def abrir_rede(req, timeout):
 
 confere("sem rede, mensagem em português", not n.politicas(ENV, abrir_rede)["ok"] and "Cloudflare" in n.politicas(ENV, abrir_rede)["erro"])
 e = n.estado({**ENV, "HEIMDALL_CONTINUIDADE": "1"}, abrir_ok)
+def abrir_paygo(req, timeout):
+    visto["url2"], visto["auth2"] = req.full_url, req.get_header("Authorization")
+    return Resp(json.dumps({"result": [{"ServiceName": "Workers Standard", "BilledCost": 5}, {"ServiceName": "Containers", "BilledCost": 1.5},
+                                       {"ServiceName": "Containers", "BilledCost": 0.25}]}).encode())
+
+
+c = n.consumo({**ENV, "HEIMDALL_CF_LEITURA_TOKEN": "leitura"}, abrir_paygo)
+confere("consumo soma por serviço e usa o token de leitura", c["ok"] and abs(c["total"] - 6.75) < 1e-9 and c["itens"][0]["servico"] == "Workers Standard" and visto["auth2"] == "Bearer leitura" and visto["url2"].endswith("/billing/usage/paygo"), c)
+confere("consumo sem token de leitura usa o do .env", n.consumo(ENV, abrir_paygo)["ok"] and visto["auth2"] == "Bearer t")
+confere("consumo: 403 e 404 em português, sem valor inventado", "Faturamento" in n.consumo(ENV, abrir_403)["erro"] and not n.consumo(ENV, lambda r, t: (_ for _ in ()).throw(urllib.error.HTTPError(r.full_url, 404, "x", {}, None)))["ok"])
 confere("estado sem a senha de continuidade avisa e não derruba", e["ligado"] and not e["copia"]["ok"] and "heimdall continuity --prepare" in e["copia"]["erro"] and e["gastos"]["ok"])
 confere("estado desligado por padrão", not n.estado({}, abrir_ok, com_nuvem=False)["ligado"])
 print("\nTUDO OK" if not falhas else f"\n{falhas} FALHA(S)")

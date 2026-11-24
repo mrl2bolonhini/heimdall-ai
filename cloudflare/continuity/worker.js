@@ -22,9 +22,11 @@ const PORTA_SAUDE = 8080;
 let foraAte = 0;   // por isolate: até quando pular a sonda ao Mac
 let contatoGravadoEm = 0;   // por isolate: última vez que o contato com o Mac foi gravado (limita as gravações)
 let pausaCache = { quando: 0, valor: false };   // por isolate: a pausa é lida do Durable Object no máximo a cada 30 s
-export function reiniciarMemoria() { foraAte = 0; contatoGravadoEm = 0; pausaCache = { quando: 0, valor: false }; CERTS.quando = 0; CERTS.chaves = null; }   // para os testes
+export function reiniciarMemoria() { foraAte = 0; contatoGravadoEm = 0; pausaCache = { quando: 0, valor: false }; CERTS.quando = 0; CERTS.chaves = null; CONSUMO.quando = 0; CONSUMO.dados = null; }   // para os testes
 const GRAVAR_CONTATO_A_CADA_MS = 300000;
 const CERTS = { quando: 0, chaves: null };
+const CONSUMO = { quando: 0, dados: null };   // por isolate: o consumo do mês é consultado no máximo a cada 5 min
+const TETO_MENSAL = 15;   // US$ por mês (regra do projeto)
 
 const html = (corpo, status = 200) => new Response(corpo, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -51,6 +53,7 @@ export function aviso(copia) {
 
 const CSS = "body{font-family:-apple-system,system-ui,sans-serif;margin:0;background:#fff;color:#1a1a1a;line-height:1.5}main{max-width:44rem;margin:0 auto;padding:1.5rem}"
   + "a,button{color:#0b57d0;font:inherit}button{padding:.5rem 1rem;border:2px solid #0b57d0;background:#fff;border-radius:.4rem;cursor:pointer}"
+  + "table{border-collapse:collapse}th,td{border:1px solid #888;padding:.3rem .6rem;text-align:left}caption{text-align:left;font-weight:bold}"
   + "a:focus-visible,button:focus-visible{outline:3px solid #b45309;outline-offset:2px}"
   + "@media(prefers-color-scheme:dark){body{background:#121212;color:#eee}a,button{color:#8ab4f8}button{background:#121212;border-color:#8ab4f8}}";
 
@@ -104,7 +107,39 @@ export async function verificarAccess(request, env, buscar = fetch) {
   } catch (e) { return false; }
 }
 
-export function paginaPainel(estado, macNoAr) {
+// Consumo do mês corrente (API de uso faturável da Cloudflare, beta). Usa um token SÓ de leitura (Faturamento: leitura), guardado como segredo do Worker
+// e nunca repassado ao contêiner. Se a API não estiver liberada para a conta ou o token faltar, devolve o motivo em vez de inventar valor.
+export async function consumoMes(env, buscar = fetch) {
+  const token = env.HEIMDALL_CF_LEITURA_TOKEN, conta = env.CLOUDFLARE_ACCOUNT_ID;
+  if (!token || !conta) return { ok: false, erro: "Token de leitura de faturamento não configurado na nuvem." };
+  if (CONSUMO.dados && Date.now() - CONSUMO.quando < 300000) return CONSUMO.dados;
+  let dados;
+  try {
+    const r = await buscar(`https://api.cloudflare.com/client/v4/accounts/${conta}/billing/usage/paygo`, { headers: { Authorization: "Bearer " + token }, signal: AbortSignal.timeout(8000) });
+    if (r.status === 403) dados = { ok: false, erro: "O token de leitura não tem a permissão Faturamento (leitura)." };
+    else if (!r.ok) dados = { ok: false, erro: `A Cloudflare respondeu HTTP ${r.status} à consulta de consumo (a API ainda é beta e pode não estar liberada para a conta).` };
+    else {
+      const linhas = (await r.json()).result || [];
+      const por = {};
+      let total = 0;
+      for (const l of linhas) { const c = Number(l.BilledCost) || 0; por[l.ServiceName || "Outros"] = (por[l.ServiceName || "Outros"] || 0) + c; total += c; }
+      dados = { ok: true, total, itens: Object.entries(por).map(([servico, custo]) => ({ servico, custo })).sort((a, b) => b.custo - a.custo), teto: TETO_MENSAL };
+    }
+  } catch (e) { dados = { ok: false, erro: "Não consegui consultar o consumo agora." }; }
+  CONSUMO.dados = dados; CONSUMO.quando = Date.now();
+  return dados;
+}
+
+const usd = (n) => "US$ " + Number(n).toFixed(2).replace(".", ",");
+
+export function blocoConsumo(c) {
+  if (!c || !c.ok) return `<h2>Consumo do mês</h2><p role="status">${esc((c && c.erro) || "Consumo indisponível.")}</p>`;
+  const linhas = c.itens.map((i) => `<tr><th scope="row">${esc(i.servico)}</th><td>${usd(i.custo)}</td></tr>`).join("");
+  return `<h2>Consumo do mês</h2><p role="status">Total no mês: <strong>${usd(c.total)}</strong> de um teto de ${usd(c.teto)}${c.total >= c.teto * 0.8 ? ". Atenção: perto do teto" : ""}.</p>`
+    + (linhas ? `<table><caption>Consumo faturável do mês por serviço</caption><thead><tr><th scope="col">Serviço</th><th scope="col">Valor</th></tr></thead><tbody>${linhas}</tbody></table>` : "<p>Nenhum consumo faturável até agora.</p>");
+}
+
+export function paginaPainel(estado, macNoAr, consumo) {
   const pausada = !!estado.pausa;
   return pagina("Nuvem do Heimdall",
     `<p role="status">Servidor principal (Mac): <strong>${macNoAr ? "no ar" : "fora do ar"}</strong>. `
@@ -114,7 +149,7 @@ export function paginaPainel(estado, macNoAr) {
     + (pausada ? "Com a continuidade pausada, os sites só são repassados ao Mac e a nuvem não assume." : "Se o Mac cair, os sites de dados passam a ser atendidos pela nuvem, somente para leitura.") + `</p>`
     + `<form method="post" action="/continuidade/pausa"><input type="hidden" name="pausar" value="${pausada ? "0" : "1"}">`
     + `<button type="submit">${pausada ? "Retomar a continuidade" : "Pausar a continuidade"}</button></form>`
-    + `<p>O consumo do mês e o estado da subida estão no Controls do Mac, na aba Nuvem.</p>`);
+    + blocoConsumo(consumo));
 }
 
 const dono = (env) => env.CONTAINER.get(env.CONTAINER.idFromName("principal"));
@@ -141,7 +176,7 @@ async function painel(request, env, macNoAr) {
     pausaCache = { quando: Date.now(), valor };
     return Response.redirect(url.origin + "/continuidade", 303);
   }
-  return paginaPainel(await estadoNuvem(env), macNoAr);
+  return paginaPainel(await estadoNuvem(env), macNoAr, await consumoMes(env, env.BUSCAR || fetch));
 }
 
 export async function viaContainer(original, env, ctx) {

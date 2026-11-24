@@ -49,6 +49,31 @@ def politicas(env: dict = None, abrir=None) -> dict:
     return {"ok": True, "itens": itens}
 
 
+def consumo(env: dict = None, abrir=None) -> dict:
+    """Consumo faturável do mês corrente (API de uso da Cloudflare, beta): {ok, total, itens: [{servico, custo}], teto} ou {ok: False, erro}.
+    Usa o token de leitura HEIMDALL_CF_LEITURA_TOKEN, ou o CLOUDFLARE_API_TOKEN se o de leitura não existir."""
+    e = _env() if env is None else env
+    token = (e.get("HEIMDALL_CF_LEITURA_TOKEN") or e.get("CLOUDFLARE_API_TOKEN") or "").strip()
+    conta = e.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
+    if not token or not conta:
+        return {"ok": False, "erro": "Faltam o token e CLOUDFLARE_ACCOUNT_ID no .env."}
+    req = urllib.request.Request(f"https://api.cloudflare.com/client/v4/accounts/{conta}/billing/usage/paygo", headers={"Authorization": "Bearer " + token})
+    try:
+        with (abrir or _abrir)(req, 20) as r:
+            linhas = json.load(r).get("result") or []
+    except urllib.error.HTTPError as ex:
+        if ex.code == 403:
+            return {"ok": False, "erro": "O token não tem a permissão Faturamento (leitura)."}
+        return {"ok": False, "erro": f"A Cloudflare respondeu HTTP {ex.code} à consulta de consumo (a API ainda é beta e pode não estar liberada para a conta)."}
+    except (OSError, ValueError):
+        return {"ok": False, "erro": "Não consegui consultar o consumo agora."}
+    por: dict = {}
+    for l in linhas:
+        por[l.get("ServiceName") or "Outros"] = por.get(l.get("ServiceName") or "Outros", 0.0) + float(l.get("BilledCost") or 0)
+    itens = sorted(({"servico": k, "custo": v} for k, v in por.items()), key=lambda i: -i["custo"])
+    return {"ok": True, "total": sum(por.values()), "itens": itens, "teto": TETO_MENSAL}
+
+
 def estado(env: dict = None, abrir=None, cliente=None, com_nuvem: bool = True) -> dict:
     """Tudo o que a aba mostra. Cada parte falha sozinha, sem derrubar a página."""
     e = _env() if env is None else env
@@ -58,6 +83,7 @@ def estado(env: dict = None, abrir=None, cliente=None, com_nuvem: bool = True) -
     except Exception as ex:  # a nuvem pode estar fora; a página continua
         saida["copia"] = {"ok": False, "erro": f"Não consegui ler a cópia: {type(ex).__name__}."}
     saida["gastos"] = politicas(e, abrir) if com_nuvem else {"ok": False, "erro": "Consulta desligada."}
+    saida["consumo"] = consumo(e, abrir) if com_nuvem else {"ok": False, "erro": "Consulta desligada."}
     return saida
 
 

@@ -118,5 +118,23 @@ r = await W.default.fetch(pedir("https://controls.x.tech/continuidade"), eA, ctx
 confere("/continuidade sem Access: 403 mesmo com o Mac no ar", r.status === 403);
 r = await W.default.fetch(pedir("https://controls.x.tech/outra", { method: "POST", body: "a=1" }), eA, ctx);
 confere("POST do Controls do Mac passa direto ao Mac", (await r.text()) === "do mac");
+// consumo do mês
+W.reiniciarMemoria();
+const respPaygo = (corpo, status = 200) => async (url, init) => { respPaygo.visto = { url, auth: init.headers.Authorization }; return new Response(JSON.stringify(corpo), { status }); };
+let cm = await W.consumoMes({ HEIMDALL_CF_LEITURA_TOKEN: "tk", CLOUDFLARE_ACCOUNT_ID: "ct" }, respPaygo({ result: [
+  { ServiceName: "Workers Standard", BilledCost: 5 }, { ServiceName: "Containers", BilledCost: 1.25 }, { ServiceName: "Containers", BilledCost: 0.5 }] }));
+confere("consumo: soma por serviço, ordena e traz o teto", cm.ok && cm.total === 6.75 && cm.itens[0].servico === "Workers Standard" && cm.itens[1].custo === 1.75 && cm.teto === 15, JSON.stringify(cm));
+confere("consumo: usa a conta e o token de leitura", respPaygo.visto.url.includes("/accounts/ct/billing/usage/paygo") && respPaygo.visto.auth === "Bearer tk");
+let bl = W.blocoConsumo(cm);
+confere("consumo: bloco com caption, scope, valores em reais-dólar e sem alerta abaixo de 80%", bl.includes("<caption>Consumo faturável") && bl.includes('scope="row">Containers') && bl.includes("US$ 6,75") && !bl.includes("perto do teto"), bl);
+confere("consumo: perto do teto avisa", W.blocoConsumo({ ok: true, total: 13, itens: [], teto: 15 }).includes("perto do teto"));
+W.reiniciarMemoria();
+confere("consumo: sem token explica o que falta", (await W.consumoMes({}, respPaygo({}))).erro.includes("não configurado"));
+W.reiniciarMemoria();
+confere("consumo: 403 vira aviso de permissão", (await W.consumoMes({ HEIMDALL_CF_LEITURA_TOKEN: "tk", CLOUDFLARE_ACCOUNT_ID: "ct" }, respPaygo({}, 403))).erro.includes("Faturamento"));
+W.reiniciarMemoria();
+confere("consumo: API não liberada (404) explica sem inventar valor", (await W.consumoMes({ HEIMDALL_CF_LEITURA_TOKEN: "tk", CLOUDFLARE_ACCOUNT_ID: "ct" }, respPaygo({}, 404))).erro.includes("beta"));
+W.reiniciarMemoria();
+confere("o token de leitura não é repassado ao contêiner", !fonte.slice(fonte.indexOf("const SEGREDOS"), fonte.indexOf("const PORTA_SAUDE")).includes("LEITURA_TOKEN"));
 console.log(falhas ? `${falhas} falha(s)` : "Tudo certo.");
 process.exit(falhas ? 1 : 0);
