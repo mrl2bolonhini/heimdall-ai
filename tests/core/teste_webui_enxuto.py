@@ -62,8 +62,10 @@ import heimdall_config_ajuda as aj
 ajuda = str(getattr(aj, "AJUDA", "")) or (RAIZ / "heimdall_config_ajuda.py").read_text(encoding="utf-8")
 for v in ("HEIMDALL_WEBUI_ENXUTO", "HEIMDALL_WEBUI_TITULOS", "HEIMDALL_WEBUI_EMBEDDING", "HEIMDALL_WEBUI_EMBEDDING_MODELO"):
     confere("a ajuda do .env descreve " + v, v in ajuda)
-for arq in ("README.md", "CHANGELOG.md", "guides/heimdall_ajuda.txt", "gerar_docs.py"):
+for arq in ("CHANGELOG.md", "guides/heimdall_ajuda.txt", "gerar_docs.py"):
     confere(arq + " cita o modo enxuto", "HEIMDALL_WEBUI_ENXUTO" in (RAIZ / arq).read_text(encoding="utf-8"))
+# O README é gerado por gerar_docs.py e mostra a descrição, sem a coluna com o nome da variável.
+confere("README.md descreve o modo enxuto", "modo enxuto" in (RAIZ / "README.md").read_text(encoding="utf-8"))
 
 print(f"\n{falhas} falha(s)")
 _sys.exit(1 if falhas else 0)
