@@ -2,7 +2,7 @@
 # Implanta, desliga e configura a continuidade do Heimdall na Cloudflare (Worker de entrada + contêiner). Lê os segredos do .env; nunca os imprime.
 # Uso: ./scripts/continuidade_nuvem.sh segredos|implantar|desligar|ligar
 #   segredos   envia ao Worker os segredos que o contêiner usa (senha da cópia, R2, login), lidos do .env
-#   implantar  só roda se já existir bloqueio de gasto em Workers e em Durable Objects (regra do projeto) e se a cópia dos bancos estiver no R2
+#   implantar  implanta o Worker e depois envia os segredos; só roda se já existir bloqueio de gasto em Workers e em Durable Objects (regra do projeto) e se a cópia dos bancos estiver no R2
 #   desligar   interruptor: reimplanta com CONTINUIDADE=0 (o Worker só repassa ao Mac; o contêiner nunca liga). Os dados no R2 ficam.
 #   ligar      reimplanta com CONTINUIDADE=1
 cd "$(dirname "$0")/.."
@@ -16,7 +16,14 @@ segredos() {
   for n in $NOMES; do
     v="$(lerenv "$n")"
     [ -n "$v" ] || { echo "pulado (não está no .env): $n"; continue; }
-    printf '%s' "$v" | wr secret put "$n" --config "$CONFIG" >/dev/null && { echo "enviado: $n"; enviados=$((enviados+1)); }
+    if printf '%s' "$v" | wr secret put "$n" --config "$CONFIG" >/dev/null 2>"${TMPDIR:-/tmp}/heimdall-wrangler.err"; then
+      echo "enviado: $n"; enviados=$((enviados+1))
+    else
+      echo "Não consegui gravar o segredo $n."
+      echo "Se o Worker ainda não foi implantado, rode antes: heimdall continuity --deploy (ele implanta e depois envia os segredos)."
+      echo "Confira também o login do Wrangler: npx wrangler whoami (se não estiver logado: npx wrangler login). Detalhes em: ${TMPDIR:-/tmp}/heimdall-wrangler.err"
+      return 1
+    fi
   done
   echo "$enviados segredo(s) enviados ao Worker."
 }
@@ -32,7 +39,7 @@ trava() {
 
 case "$1" in
   segredos) segredos ;;
-  implantar) trava || exit 1; segredos; wr deploy --config "$CONFIG" ;;
+  implantar) trava || exit 1; wr deploy --config "$CONFIG" && segredos ;;   # primeiro o Worker (os segredos só podem ser gravados em um Worker que já existe)
   desligar) wr deploy --config "$CONFIG" --var CONTINUIDADE:0 ;;
   ligar) trava || exit 1; wr deploy --config "$CONFIG" --var CONTINUIDADE:1 ;;
   *) sed -n 2,8p "$0"; exit 2 ;;

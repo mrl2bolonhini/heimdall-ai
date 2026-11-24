@@ -8,6 +8,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Nova aba Nuvem no Controls do Mac: continuidade ligada ou desligada, data da última cópia, limites de gasto da Cloudflare (Workers e Durable Objects) e botões Ligar ou Desligar e Enviar cópia agora.
 - Consumo do mês (API de uso faturável da Cloudflare, beta) na página de controle da nuvem e na aba Nuvem do Controls, com total contra o teto de US$ 15 e aviso a partir de 80%. A nuvem usa um token só de leitura (HEIMDALL_CF_LEITURA_TOKEN: Conta, Faturamento, Leitura), guardado como segredo do Worker e nunca repassado ao contêiner. Se a API não estiver liberada para a conta, a página diz isso e não inventa valor.
 - Avisos da Cloudflare (histórico de notificações da conta: queda, certificado, erro) na aba Nuvem e na página de controle da nuvem, pelo mesmo token de leitura, com a permissão Conta, Notificações, Leitura. Os avisos de gasto da faturamento podem não aparecer aí e continuam chegando por e-mail. heimdall env --set HEIMDALL_CF_LEITURA_TOKEN grava o token sem mostrá-lo.
+- heimdall continuity --deploy agora implanta o Worker e só depois envia os segredos (a Cloudflare recusa segredos em um Worker que ainda não existe); a falha na gravação de um segredo explica o que conferir.
 - Decisão: o chat fica fora da nuvem por ora; avaliar alternativas mais leves ao Open WebUI antes.
 - Testes: cloudflare/teste_continuity.mjs (ampliado), tests/core/teste_nuvempainel.py, tests/controls/teste_controls.py. Não testado: Safari com VoiceOver, implantação e Access reais.
 
