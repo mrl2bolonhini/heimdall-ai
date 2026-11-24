@@ -43,7 +43,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Servidor MCP de dados | 8004 | Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain) e as de consulta do Finance, para o Open WebUI. Escuta só em 127.0.0.1. |
 | SearXNG | 8080 | Mecanismo de busca na web que não rastreia quem pesquisa. |
 | Qdrant | 6333 | Base vetorial: busca por significado nos documentos e nas notas. |
-| Open WebUI | 3000 | Interface de chat usada pelos convidados e pelo dono. |
+| Open WebUI | 3000 | Interface de chat usada pelos convidados e pelo dono. Sobe em modo enxuto (sem Notas, Automações, imagem, código e recursos automáticos) para poupar memória. |
 | Open Terminal | 8002 | Terminal acessível pelo Open WebUI. |
 | n8n | 5678 | Automações e tarefas agendadas. |
 | Agente do Mac | 8003 | Ponte entre o n8n (no Docker) e o app Notas, o Calendário, os Lembretes e a voz do macOS. |

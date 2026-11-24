@@ -11,7 +11,7 @@
 @ up | Sobe todo o ecossistema
 Roda o subir.sh: sobe os serviços, guarda o log da subida e avisa quando tudo estiver no ar. Sem opções sobe com --webui --terminal.
 Opções:
-  -w, --webui      sobe também o Open WebUI (chat, porta 3000)
+  -w, --webui      sobe também o Open WebUI (chat, porta 3000), em modo enxuto: sem Notas, Automações, imagem, código e recursos automáticos (HEIMDALL_WEBUI_ENXUTO=0 no .env devolve tudo; HEIMDALL_WEBUI_TITULOS=1 mantém os títulos das conversas; HEIMDALL_WEBUI_EMBEDDING=ollama poupa mais memória)
   -t, --terminal   sobe o Open Terminal (porta 8002)
   -n, --n8n        sobe o n8n (automações, porta 5678)
   -a, --agent      sobe o agente do Mac (ponte do n8n com Notas e Lembretes, porta 8003)

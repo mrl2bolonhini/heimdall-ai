@@ -12,6 +12,7 @@
 #       (favicon.png, logo.png, splash.png...) são copiados para dentro do contêiner a cada subida.
 #       Extras (opcionais, no .env): HEIMDALL_MONITORING=0 desliga Uptime Kuma e Dozzle;
 #       HEIMDALL_AWS_EMULATOR=auto|moto|localstack|off escolhe o emulador de AWS.
+#       HEIMDALL_WEBUI_ENXUTO=1 (padrão) | 0: Open WebUI sem Notas, Automações, imagem, código e recursos automáticos (HEIMDALL_WEBUI_TITULOS=1 mantém os títulos; HEIMDALL_WEBUI_EMBEDDING=ollama poupa mais memória)
 #       HEIMDALL_AWS_EMULATOR_INICIO=demanda (padrão) | auto: com "demanda", o emulador de AWS (LocalStack ou Moto) já criado não sobe
 #       junto com o Heimdall, para poupar memória; ligue quando for usar: heimdall lab --start (e desligue com heimdall lab --stop).
 #       ./start_heimdall.sh --update   antes de subir, atualiza as imagens Docker (SearXNG,
@@ -758,11 +759,31 @@ if [ "$WANT_WEBUI" = "1" ]; then
             echo "     Open WebUI com login pelo Cloudflare Access (porta só em 127.0.0.1)."
         fi
     fi
+    # Modo enxuto (HEIMDALL_WEBUI_ENXUTO=1, padrão): desliga o que o Open WebUI carrega ou executa sem que o chat precise (Notas,
+    # Automações, geração de imagem, execução de código, títulos/etiquetas/sugestões/autocompletar gerados por modelo e voz local),
+    # para poupar memória e chamadas de modelo em segundo plano. 0 devolve o comportamento anterior. Estas opções são gravadas pelo
+    # Open WebUI na primeira subida: o que já foi alterado no painel de administração dele vale mais que o .env.
+    # HEIMDALL_WEBUI_TITULOS=1 mantém os títulos automáticos das conversas.
+    # HEIMDALL_WEBUI_EMBEDDING=ollama manda os embeddings dos documentos ao Ollama do Mac (poupa cerca de 500 MB); exige
+    # ollama pull nomic-embed-text (ou o modelo de HEIMDALL_WEBUI_EMBEDDING_MODELO) e reindexar os documentos já enviados.
+    WEBUI_ENXUTO=()
+    if [ "${HEIMDALL_WEBUI_ENXUTO:-1}" != "0" ]; then
+        WEBUI_ENXUTO+=(-e ENABLE_NOTES=False -e ENABLE_AUTOMATIONS=False -e ENABLE_IMAGE_GENERATION=False
+            -e ENABLE_CODE_EXECUTION=False -e ENABLE_CODE_INTERPRETER=False -e ENABLE_AUTOCOMPLETE_GENERATION=False
+            -e ENABLE_TAGS_GENERATION=False -e ENABLE_FOLLOW_UP_GENERATION=False -e AUDIO_STT_ENGINE=webapi)
+        [ "${HEIMDALL_WEBUI_TITULOS:-0}" = "1" ] || WEBUI_ENXUTO+=(-e ENABLE_TITLE_GENERATION=False)
+        if [ "${HEIMDALL_WEBUI_EMBEDDING:-}" = "ollama" ]; then
+            WEBUI_ENXUTO+=(-e RAG_EMBEDDING_ENGINE=ollama -e RAG_OLLAMA_BASE_URL=http://host.docker.internal:11434
+                -e RAG_EMBEDDING_MODEL="${HEIMDALL_WEBUI_EMBEDDING_MODELO:-nomic-embed-text}")
+        fi
+        echo "     Open WebUI em modo enxuto (sem Notas, Automações, imagem, código e recursos automáticos)."
+    fi
     docker run -d --name open-webui \
         --network heimdall \
         --add-host=host.docker.internal:host-gateway \
         -p ${WEBUI_BIND}$WEBUI_PORT:8080 \
         ${WEBUI_EXTRA[@]+"${WEBUI_EXTRA[@]}"} \
+        ${WEBUI_ENXUTO[@]+"${WEBUI_ENXUTO[@]}"} \
         -e OPENAI_API_BASE_URL="http://host.docker.internal:$LLM_PORT/v1" \
         -e OPENAI_API_KEY="$LITELLM_MASTER_KEY" \
         -e ENABLE_OLLAMA_API=false \

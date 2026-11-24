@@ -188,7 +188,7 @@ SERVICOS = [
     ("Servidor MCP de dados", "Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain) e as de consulta do Finance, para o Open WebUI. Escuta só em 127.0.0.1.", "8004", "start_heimdall.sh"),
     ("SearXNG", "Mecanismo de busca na web que não rastreia quem pesquisa.", "8080", "start_heimdall.sh (Docker)"),
     ("Qdrant", "Base vetorial: busca por significado nos documentos e nas notas.", "6333", "start_heimdall.sh (Docker)"),
-    ("Open WebUI", "Interface de chat usada pelos convidados e pelo dono.", "3000", "--webui ou HEIMDALL_WEBUI=1"),
+    ("Open WebUI", "Interface de chat usada pelos convidados e pelo dono. Sobe em modo enxuto (sem Notas, Automações, imagem, código e recursos automáticos) para poupar memória.", "3000", "--webui ou HEIMDALL_WEBUI=1 (HEIMDALL_WEBUI_ENXUTO=0 devolve tudo)"),
     ("Open Terminal", "Terminal acessível pelo Open WebUI.", "8002", "--terminal"),
     ("n8n", "Automações e tarefas agendadas.", "5678", "--n8n ou HEIMDALL_N8N=1"),
     ("Agente do Mac", "Ponte entre o n8n (no Docker) e o app Notas, o Calendário, os Lembretes e a voz do macOS.", "8003", "--agente (sobe sozinho com HEIMDALL_AGENTE_TOKEN)"),
