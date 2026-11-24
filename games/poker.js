@@ -1,4 +1,4 @@
-// Poker Texas hold'em, você contra o computador (mano a mano), com fichas de mentira (nunca dinheiro de verdade).
+// Poker Texas hold'em, você contra o computador (um contra um), com fichas virtuais (nunca dinheiro de verdade).
 // Cada um começa com o mesmo número de fichas. As cegas sobem a cada 6 mãos, e a partida acaba quando alguém fica sem fichas.
 // Em cada mão: duas cartas só suas, cinco cartas na mesa (flop de três, turn e river) e quatro rodadas de apostas. Vence a melhor mão de cinco cartas entre as sete.
 // O computador decide pela chance de ganhar (simulada) e pelo preço de pagar; o nível muda o quanto ele aposta, paga e blefa.
@@ -280,7 +280,7 @@
   function falar(m, cmd) { var c = H.som && H.som.cue(m, cmd); if (c) H.som.anunciar(c, m); else H.anunciar(m); campo.disabled = !!e.fim; }
   apBtn.addEventListener("click", function () { falar(comando(e, "apostar " + (valorCampo.value || "x")).msg, "apostar " + (valorCampo.value || "x")); });
   form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
-  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ": cada um começa com " + e.fichas[0] + " fichas de mentira, mano a mano contra o computador. As cegas começam em 5 e 10 e dobram a cada 6 mãos. Diga continuar para dar as cartas. O comando ajuda lista tudo."); }
+  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ": cada um começa com " + e.fichas[0] + " fichas virtuais, um contra um contra o computador. As cegas começam em 5 e 10 e dobram a cada 6 mãos. Diga continuar para dar as cartas. O comando ajuda lista tudo."); }
   novoBtn.addEventListener("click", comecar);
   comecar();
 })(typeof window !== "undefined" ? window : globalThis);

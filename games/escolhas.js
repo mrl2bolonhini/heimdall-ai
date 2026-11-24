@@ -129,7 +129,7 @@
     if (e.dicas <= 0) return { msg: NIVEIS[e.nivel].dicas === 0 ? "No nível difícil não há dicas." : "As dicas acabaram." };
     if (NIVEIS[e.nivel].dicas < 100) e.dicas--;
     var resto = NIVEIS[e.nivel].dicas < 100 ? " Dicas restantes: " + e.dicas + "." : "", m;
-    if (e.cena === "inicio") m = "Não há pegadinha: pegue a barca. Nadar é arriscado.";
+    if (e.cena === "inicio") m = "Não há armadilha nesta etapa: pegue a barca. Nadar é arriscado.";
     else if (e.cena === "rio") {
       var p = proximoRio(e), id = p[0];
       m = id === "sozinho" ? "Atravesse sozinho: assim ninguém fica numa margem com um perigo." : "Leve " + ART[id] + " agora.";

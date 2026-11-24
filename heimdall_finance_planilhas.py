@@ -51,11 +51,11 @@ def _brl(v) -> str:
 def pg_planilhas(con, sess: dict, pasta: Path) -> tuple:
     corpo = ['<p>Importe planilhas (xlsx ou csv) de gastos, investimentos, empréstimos ou qualquer outro assunto. O Heimdall lê o cabeçalho, descobre o que cada coluna é e guarda as linhas num conjunto. '
              'O jeito de ler fica gravado: quando você mandar outra planilha com as mesmas colunas, ou soltar o arquivo na pasta de entrada, as linhas novas entram sozinhas no mesmo conjunto, sem duplicar o que já estava. '
-             'Quando eu não tiver certeza, guardo o arquivo e pergunto aqui embaixo, em vez de chutar. Planilhas de gastos também alimentam as transações, os orçamentos e o resumo.</p>',
+             'Quando a identificação não é segura, o arquivo fica guardado e a pergunta aparece logo abaixo, sem adivinhar. Planilhas de gastos também alimentam as transações, os orçamentos e o resumo.</p>',
              f'<form method="post" action="/planilhas" enctype="multipart/form-data">{_oculto(sess)}'
              '<label for="arquivo">Planilha (xlsx, xlsm, csv)</label><input id="arquivo" name="arquivo" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" required>'
              f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes(list(fp.TIPOS_USUARIO.items()), "", "Deixar o Heimdall decidir")}</select>'
-             '<label for="nome">Nome do conjunto (em branco: uso o nome do arquivo ou o que eu entender)</label><input id="nome" name="nome" type="text" maxlength="60">'
+             '<label for="nome">Nome do conjunto (em branco: usa o nome do arquivo ou o que foi identificado)</label><input id="nome" name="nome" type="text" maxlength="60">'
              '<label><input type="checkbox" name="inverter" value="1"> Nesta planilha de gastos, os gastos vêm com valor positivo</label>'
              '<label><input type="checkbox" name="visao" value="1"> Criar uma visão a partir desta planilha (você escolhe as colunas e a ordem na aba Visões)</label>'
              '<button type="submit">Importar planilha</button></form>']
@@ -217,7 +217,7 @@ def pg_visao(con, q: dict, sess: dict) -> tuple:
 def pg_investimentos(con) -> tuple:
     r = fp.resumo_investimentos(con)
     if not r["itens"]:
-        return "Investimentos", ('<p>Ainda não há investimentos. Importe uma planilha da sua carteira (com colunas como ativo, tipo, quantidade e valor) na página Planilhas, e eu monto o resumo aqui.</p>'
+        return "Investimentos", ('<p>Ainda não há investimentos. Importe uma planilha da sua carteira (com colunas como ativo, tipo, quantidade e valor) na página Planilhas, e o resumo será montado aqui.</p>'
                                  '<p><a href="/planilhas">Ir para Planilhas</a></p>')
     corpo = [f'<p>Posição mais recente de {len(r["itens"])} ativo(s), somando {e(fn.brl(r["total"]))}. Quando a planilha tem coluna de data, uso a linha mais recente de cada ativo; '
              'quando não tem, uso a última importada. Planilhas antigas continuam guardadas no conjunto.</p>']

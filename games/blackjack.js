@@ -1,4 +1,4 @@
-// Blackjack (vinte e um) contra a banca, com créditos de mentira (nunca dinheiro de verdade).
+// Blackjack (vinte e um) contra a banca, com créditos virtuais (nunca dinheiro de verdade).
 // Regras: vence quem chega mais perto de 21 sem passar. Ás vale 11 ou 1; Valete, Dama e Rei valem 10. Blackjack (Ás com carta de 10 nas duas primeiras cartas) paga 3 para 2.
 // A banca compra até 17 e para em qualquer 17. Dá para pedir, parar, dobrar (só nas duas primeiras cartas) e dividir um par (uma vez). Não há seguro nem rendição.
 (function (raiz) {
@@ -215,7 +215,7 @@
   apostarBtn.addEventListener("click", function () { falar(comando(e, "apostar " + apostaSel.value).msg, "apostar " + apostaSel.value); });
   repetirBtn.addEventListener("click", function () { falar(comando(e, "repetir").msg, "repetir"); });
   form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
-  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos de mentira. Escolha o valor e aperte Apostar, ou digite apostar 10. Dica: o comando ajuda lista tudo."); }
+  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos virtuais. Escolha o valor e aperte Apostar, ou digite apostar 10. Dica: o comando ajuda lista tudo."); }
   novoBtn.addEventListener("click", comecar);
   comecar();
 })(typeof window !== "undefined" ? window : globalThis);

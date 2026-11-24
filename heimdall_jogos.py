@@ -118,7 +118,7 @@ CATALOGO += [
       "Comandos: abrir 3 4, marcar 3 4, ler 3 4, linha 3, coluna 4, tudo e resumo. A primeira jogada nunca é uma mina.",
       "Um número diz quantas minas há nas oito casas ao redor."]),
     ("cacaniqueis", "Caça-níqueis", "cacaniqueis.js", "Um painel de três dígitos e um botão Girar: trinca, sequência ou par dão prêmio; o resto perde a aposta.",
-     ["Você começa com créditos de mentira (sem dinheiro de verdade) e escolhe apostar 1, 2 ou 5 por rodada.",
+     ["Você começa com créditos virtuais (sem dinheiro de verdade) e escolhe apostar 1, 2 ou 5 por rodada.",
       "Três dígitos iguais pagam muito; uma sequência, como 1 2 3 ou 9 0 1, paga menos; dois iguais (um par) pagam um prêmio pequeno e comum; qualquer outra coisa perde a aposta. Cerca de três em cada dez rodadas pagam algo.",
       "O botão Ver os prêmios lê a tabela, e Ler o saldo diz como você está."]),
     ("relogios", "A Mansão dos Relógios", "hist_relogios.js", "Aventura de mistério: descubra o que houve com o relojoeiro Heitor.",
@@ -135,25 +135,25 @@ CATALOGO += [
      ["Você lê a cena e responde com o número da escolha, por exemplo 1.",
       "Três provas de lógica: levar uma raposa, uma galinha e o milho para o outro lado do rio; achar a porta certa quando só uma frase é verdadeira; descobrir qual guarda diz a verdade.",
       "Fácil: o jogo avisa antes de um erro, sem perder nada, e há dicas à vontade. Normal: 3 vidas e 3 dicas. Difícil: 1 vida e sem dicas. repetir lê a cena de novo."]),
-    ("blackjack", "Blackjack", "blackjack.js", "Vinte e um contra a banca, com créditos de mentira: pedir, parar, dobrar e dividir.",
+    ("blackjack", "Blackjack", "blackjack.js", "Vinte e um contra a banca, com créditos virtuais: pedir, parar, dobrar e dividir.",
      ["Chegue mais perto de 21 que a banca, sem passar. Ás vale 11 ou 1; Valete, Dama e Rei valem 10. Blackjack (Ás e carta de 10 nas duas primeiras) paga 3 para 2.",
-      "Você aposta créditos de mentira (um número par de 2 a 50), e o jogo lê as suas cartas e a carta aberta da banca. A banca compra até 17 e para em qualquer 17.",
+      "Você aposta créditos virtuais (um número par de 2 a 50), e o jogo lê as suas cartas e a carta aberta da banca. A banca compra até 17 e para em qualquer 17.",
       "Comandos: apostar N (ou repetir), pedir, parar, dobrar, dividir, mao, banca, saldo, tabela, dica. A dica segue a estratégia básica do blackjack."]),
-    ("roleta", "Roleta", "roleta.js", "Roleta com créditos de mentira: aposte em cor, número, dúzia e mais, e mande girar.",
+    ("roleta", "Roleta", "roleta.js", "Roleta com créditos virtuais: aposte em cor, número, dúzia e mais, e mande girar.",
      ["Você faz uma ou mais apostas e manda girar; o jogo lê onde a bola parou e o que cada aposta rendeu.",
       "Apostas: vermelho, preto, par, ímpar, alto, baixo, dúzia 1 a 3, coluna 1 a 3 ou um número de 0 a 36, por exemplo apostar 5 vermelho ou apostar 2 no 17.",
       "Número paga 35 para 1, dúzia e coluna 2 para 1, o resto 1 para 1. Fácil e normal: roleta europeia (um zero). Difícil: americana, com zero e duplo zero.",
       "Comandos: apostar, girar, apostas, limpar, repetir, tabela, histórico, saldo."]),
-    ("bacara", "Bacará", "bacara.js", "Bacará com créditos de mentira: aposte no jogador, na banca ou no empate; o jogo dá as cartas e lê tudo.",
+    ("bacara", "Bacará", "bacara.js", "Bacará com créditos virtuais: aposte no jogador, na banca ou no empate; o jogo dá as cartas e lê tudo.",
      ["Você escolhe o lado (jogador, banca ou empate) e o valor; o jogo dá as cartas, aplica as regras da terceira carta e lê cada passo.",
       "Valores: Ás vale 1, de 2 a 9 valem o número, 10 e figuras valem 0, e a mão vale a soma, ficando só o último dígito. Vence quem chega mais perto de 9.",
       "Jogador e banca pagam 1 para 1 (se a banca vencer com três cartas somando 7, a aposta só é devolvida). Empate paga 8 para 1, e nele as apostas nos outros lados são devolvidas.",
       "Comandos: apostar 10 banca, repetir, tabela, histórico, saldo, dica."]),
-    ("caribenho", "Poker caribenho", "caribenho.js", "Poker contra a banca, com créditos de mentira: aposte o ante, veja as suas cinco cartas e decida entre aumentar e desistir.",
+    ("caribenho", "Poker caribenho", "caribenho.js", "Poker contra a banca, com créditos virtuais: aposte o ante, veja as suas cinco cartas e decida entre aumentar e desistir.",
      ["Você aposta o ante e recebe cinco cartas abertas; a banca recebe cinco e mostra só uma. Depois você decide: desistir (perde o ante) ou aumentar (paga mais duas vezes o ante).",
       "A banca só joga com Ás e Rei ou melhor. Se não jogar, o ante paga 1 para 1 e o aumento volta. Se jogar, vence a melhor mão: o ante paga 1 para 1 e o aumento paga pela sua mão (par 1 para 1, dois pares 2, trinca 3, sequência 4, flush 5, full house 7, quadra 20, straight flush 50, royal flush 100).",
       "Comandos: apostar N (ante de 1 a 25) ou repetir, aumentar, desistir, mao, banca, saldo, tabela, dica. A dica simula as mãos possíveis da banca e diz se vale a pena aumentar."]),
-    ("poker", "Poker Texas hold'em", "poker.js", "Poker mano a mano contra o computador, com fichas de mentira: cartas, mesa e apostas lidas em voz alta.",
+    ("poker", "Poker Texas hold'em", "poker.js", "Poker um contra um contra o computador, com fichas virtuais: cartas, mesa e apostas lidas em voz alta.",
      ["Cada um começa com o mesmo número de fichas. Em cada mão você recebe duas cartas só suas, e a mesa recebe cinco (flop de três, turn e river), com uma rodada de apostas em cada etapa. Vale a melhor mão de cinco cartas entre as sete.",
       "Comandos: continuar (dá as cartas), pagar, passar, apostar N (o total que você terá apostado na rodada, também serve para aumentar), tudo, desistir, mao, fichas, tabela, dica.",
       "As cegas começam em 5 e 10 e dobram a cada 6 mãos; a partida termina quando alguém fica sem fichas. O computador decide pela chance de ganhar e pelo preço de pagar: no fácil ele paga muito e aposta pouco, no difícil aposta com força e às vezes blefa."]),
@@ -164,10 +164,10 @@ CATALOGO += [
       "Aperte Testar o som antes de começar: você deve ouvir um som só no fone esquerdo, um no meio e um só no direito."]),
     ("vilarejo", "Vilarejo Sitiado", "vilarejo.js", "Tiro e exploração em um vilarejo tomado por bandidos: ouça onde os inimigos estão, mire, atire e abra caminho até a prefeitura. Visual de arcade para quem enxerga.",
      ["Você anda com W (norte), D (leste), S (sul) e A (oeste) e olha para onde andou por último. As setas movem a mira, que começa no centro e volta ao centro quando você anda (Q também centraliza). A barra de espaço atira, o Shift direito recarrega e as teclas 1 a 4 escolhem revólver, espingarda, faca e mão livre.",
-      "X pega o item do chão, abre a porta à frente e sobe ou desce a escada. C usa um kit médico. E diz o estado (vida, arma, chaves e onde você está), O descreve o que há à frente e H repete a ajuda. Munição e kits estão espalhados pelo vilarejo: explore, porque ela não sobra.",
-      "O som mostra onde estão os inimigos: o lado no estéreo, o volume é a distância, o grunhido grave é de animal (mire para baixo) e os passos são de gente. Quando a mira passa sobre um inimigo, soa um sinal agudo. Faca e mão livre só acertam quem está colado à sua frente; a espingarda pega vários, mas só de perto.",
+      "X pega o item do chão, abre a porta à frente e sobe ou desce a escada. C usa um kit médico. E diz o estado (vida, arma, chaves e onde você está), L diz onde você está, com o caminho até a prefeitura e as referências por perto, O descreve o que há à frente e H repete a ajuda. Munição e kits estão espalhados pelo vilarejo: explore, porque ela não sobra.",
+      "O som mostra onde estão os inimigos: o lado no estéreo, o volume e o brilho dão a distância; o rosnado e o latido são de cães (mire para baixo), o guincho é de rato, o resmungo e os passos pesados são de bandidos. Tiros, gemidos de quem é atingido, portas, chaves e passos (que mudam com o piso) também são sons de verdade. Perto do riacho ouve-se a água, do lado em que ele está. Quando a mira passa sobre um inimigo, soa um sinal agudo. Faca e mão livre só acertam quem está colado à sua frente; a espingarda pega vários, mas só de perto.",
       "O vilarejo tem um riacho com ponte, plantação, casa, igreja, hospital, delegacia de dois andares e prefeitura. Há portas trancadas e chaves escondidas, e o chefe dos bandidos espera na prefeitura. Níveis: fácil (mais vida, inimigos mais fracos), normal e difícil (pouca vida, inimigos rápidos e certeiros).",
-      "Use fones de ouvido e aperte Testar o som antes de começar. Para quem enxerga, o jogo desenha a cena em primeira pessoa, com mini-mapa e painel de vida e munição, em estilo arcade dos anos 80."]),
+      "As mensagens saem uma de cada vez, na ordem, e o aviso urgente (dano, queda de inimigo, fim) passa na frente. Ajuste o ritmo da narração e o volume dos efeitos antes de começar. Use fones de ouvido e aperte Testar o som antes de começar. Se o leitor de tela abaixa o volume dos sons enquanto fala, desative esse recurso no VoiceOver (opção de reduzir o áudio durante a fala). Para quem enxerga, o jogo desenha a cena em primeira pessoa, com mini-mapa e painel de vida e munição, em estilo arcade dos anos 80."]),
     ("paciencia", "Paciência", "paciencia.js", "Paciência (Klondike) falada: mova as cartas por comando e ouça a mesa lida coluna por coluna.",
      ["Sete colunas, um monte e quatro bases (uma por naipe). O objetivo é levar as 52 cartas para as bases, de Ás a Rei.",
       "Cartas: valor A, 2 a 10, J, Q ou K e naipe C copas, O ouros, P paus ou E espadas, como 7C ou QE (também vale 7 de copas).",
@@ -183,7 +183,7 @@ CATEGORIAS = [
     ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "sonar", "velha", "minas", "gramado"]),
     ("acao", "Ação", "Jogos de reflexo e movimento. O som ajuda a jogar: melhor com fones de ouvido.", ["arqueiro", "labirinto", "vilarejo"]),
     ("cartas", "Cartas", "Jogos de baralho.", ["paciencia", "poker"]),
-    ("cassino", "Cassino", "Jogos de cassino, só com créditos de mentira.", ["cacaniqueis", "blackjack", "roleta", "bacara", "caribenho"]),
+    ("cassino", "Cassino", "Jogos de cassino, só com créditos virtuais.", ["cacaniqueis", "blackjack", "roleta", "bacara", "caribenho"]),
     ("aventuras", "Aventuras de texto", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
 ]
 def _chave(t: str) -> str:
@@ -202,11 +202,14 @@ HISTORIAS = {"relogios", "templo", "orion", "caverna"}
 POR_ID = {j[0]: j for j in CATALOGO}
 for _c in CATEGORIAS:
     _c[3].sort(key=lambda i: _chave(POR_ID[i][1]))
-ARQUIVOS_OK = {"base.js", "som.js", "motor.js"} | {j[2] for j in CATALOGO}
+# Arquivos de apoio que um jogo carrega antes do próprio script (o Vilarejo tem o motor de efeitos sonoros à parte).
+APOIO = {"vilarejo": ["vilarejo_som.js"]}
+ARQUIVOS_OK = {"base.js", "som.js", "motor.js"} | {j[2] for j in CATALOGO} | {a for l in APOIO.values() for a in l}
 
 
 def scripts_do_jogo(jid: str) -> list:
-    return ["base.js", "som.js", POR_ID[jid][2], "motor.js"] if jid in HISTORIAS else ["base.js", "som.js", POR_ID[jid][2]]
+    base = ["base.js", "som.js"] + APOIO.get(jid, [])
+    return base + [POR_ID[jid][2], "motor.js"] if jid in HISTORIAS else base + [POR_ID[jid][2]]
 
 
 def extras() -> list:

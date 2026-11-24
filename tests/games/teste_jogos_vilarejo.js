@@ -187,4 +187,22 @@ t("os sons e a fala existem: todo evento tem tipo, texto e nível de narração"
   let todos = []; for (let i = 0; i < 30 && !e.fim; i++) { todos = todos.concat(V.tick(e)); if (i % 3 === 0) todos = todos.concat(V.atirar(e)); if (i % 5 === 0) todos = todos.concat(V.mirar(e, 1, 0)); }
   todos.forEach(v => { assert.equal(typeof v.t, "string"); assert.equal(typeof v.msg, "string"); assert([1, 2, 3].includes(v.n)); });
 });
+t("onde estou: diz área, rumo, o objetivo e as referências em pontos cardeais, e L/onde funcionam", () => {
+  const e = V.novo("normal", rn(1)); const o = V.onde(e);
+  assert(/Você está no térreo, na margem oeste do riacho, olhando para leste/.test(o), o); assert(/Seu objetivo, a porta da prefeitura, fica 17 passos a leste e 2 passos ao sul/.test(o), o); assert(/Por perto: a ponte do riacho, 2 passos a leste/.test(o), o);
+  assert.equal(msgs(V.comando(e, "onde")), o); assert(/L diz onde você está/.test(V.ajuda()));
+  poe(e, 11, 8, "leste"); e.area = V.areaDe(0, 11, 8); assert(!/Por perto: a ponte do riacho/.test(V.onde(e)), "não repete a área em que você já está");
+  e.andar = 1; poe(e, 15, 12, "sul"); assert(/andar de cima da delegacia/.test(V.onde(e)) && /escada para baixo fica 1 passo a leste/.test(V.onde(e)), V.onde(e));
+});
+t("eventos trazem o que o som precisa: piso do passo, tipo e posição do inimigo atingido ou caído, item pego e porta destrancada", () => {
+  const e = V.novo("normal", rn(1)); sem(e);
+  V.comando(e, "leste"); let r = V.comando(e, "leste"); assert.equal(r[0].piso, "ponte"); poe(e, 3, 3); assert.equal(V.pisoDe(e, 0, 3, 3), "terra"); assert.equal(V.pisoDe(e, 0, 5, 6), "grama"); assert.equal(V.pisoDe(e, 0, 14, 12), "madeira"); assert.equal(V.pisoDe(e, 0, 18, 8), "rua");
+  const e2 = V.novo("normal", rn(2)); sem(e2); poe(e2, 15, 8, "leste"); const m = inim(e2, "bandido", 18, 8); m.hp = 20; e2.mun.revolver.carga = 6;
+  const a = V.atirar(e2).find(v => v.t === "acerto"); assert.equal(a.tipo, "bandido"); assert(a.f === 3 && a.s === 0, JSON.stringify(a));
+  m.hp = 1; const k = V.atirar(e2).find(v => v.t === "morte"); assert.equal(k.tipo, "bandido"); assert(k.f === 3);
+  const e3 = V.novo("normal", rn(3)); sem(e3); poe(e3, 3, 11); assert.equal(V.pegar(e3).find(v => v.t === "pegou").item, "kit");
+  const e4 = V.novo("normal", rn(4)); sem(e4); e4.chaves = ["chave da delegacia"]; poe(e4, 16, 11, "norte"); const pd = V.pegar(e4).find(v => v.t === "porta"); assert(pd && pd.tranca === true);
+  const e5 = V.novo("normal", rn(5)); sem(e5); poe(e5, 16, 9, "sul"); const bl = V.comando(e5, "sul"); assert.equal(bl.find(v => v.t === "bloqueio").porta, "L");
+  const e6 = V.novo("normal", rn(6)); sem(e6); poe(e6, 15, 8, "leste"); inim(e6, "bandido", 19, 8); e6.mun.revolver.carga = 6; e6.mx = 3; const er = V.atirar(e6).find(v => v.t === "erro"); assert.equal(er.tiroErrado, true);
+});
 console.log(`\n${ok} testes`);

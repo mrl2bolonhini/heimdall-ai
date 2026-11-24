@@ -1,4 +1,4 @@
-// Roleta com créditos de mentira (nunca dinheiro de verdade). Você faz uma ou mais apostas e manda girar.
+// Roleta com créditos virtuais (nunca dinheiro de verdade). Você faz uma ou mais apostas e manda girar.
 // Fácil e normal: roleta europeia (0 a 36). Difícil: roleta americana (0, 00 e 1 a 36), que é mais dura para o jogador.
 // Pagamentos: número 35 para 1; dúzia e coluna 2 para 1; vermelho, preto, par, ímpar, alto e baixo 1 para 1. Zero (e 00) perdem as apostas de cor, paridade, alto/baixo, dúzia e coluna.
 (function (raiz) {
@@ -159,7 +159,7 @@
   apBtn.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + tipoSel.value), "apostar"); });
   numBtn.addEventListener("click", function () { falar(comando(e, "apostar " + valorSel.value + " " + (numCampo.value === "" ? "x" : numCampo.value)), "apostar"); });
   form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r, cmd); if (!e.fim) campo.focus(); });
-  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos de mentira, roleta " + (e.duplo ? "americana, com zero e duplo zero" : "europeia, de 0 a 36") + ". Faça suas apostas e depois gire. Exemplo: apostar 5 vermelho. O comando ajuda lista tudo."); }
+  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos virtuais, roleta " + (e.duplo ? "americana, com zero e duplo zero" : "europeia, de 0 a 36") + ". Faça suas apostas e depois gire. Exemplo: apostar 5 vermelho. O comando ajuda lista tudo."); }
   novoBtn.addEventListener("click", comecar);
   comecar();
 })(typeof window !== "undefined" ? window : globalThis);

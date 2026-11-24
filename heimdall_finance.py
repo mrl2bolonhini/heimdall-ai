@@ -380,11 +380,11 @@ def pg_importar(sess: dict) -> tuple:
     if pend:
         hist += "<h2>Arquivos para revisar</h2>" + tabela("Arquivos para revisar", ["Arquivo", "Motivo"], [[e(n), e(m)] for n, m in pend])
     corpo = ('<p>Aceita OFX (a maioria dos bancos oferece em "exportar extrato"), CSV com colunas de data, descrição e valor e PDF de extrato ou de fatura. '
-             'O banco e o tipo (conta ou cartão) são identificados pelo conteúdo e pelo nome do arquivo; se você deixar o nome da conta em branco, uso o que eu identificar. '
+             'O banco e o tipo (conta ou cartão) são identificados pelo conteúdo e pelo nome do arquivo; se o nome da conta ficar em branco, o sistema usa o que foi identificado. '
              'Importar o mesmo arquivo de novo não duplica nada: lançamentos já vistos são pulados.</p>'
              f'<form method="post" action="/importar" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
              '<label for="arquivo">Arquivo do extrato ou da fatura</label><input id="arquivo" name="arquivo" type="file" accept=".ofx,.csv,.txt,.pdf" required>'
-             '<label for="conta">Nome da conta ou do cartão (por exemplo: Itaú conta, Nubank cartão). Deixe em branco para eu identificar.</label><input id="conta" name="conta" type="text" maxlength="60">'
+             '<label for="conta">Nome da conta ou do cartão (por exemplo: Itaú conta, Nubank cartão). Deixe em branco para identificação automática.</label><input id="conta" name="conta" type="text" maxlength="60">'
              '<label><input type="checkbox" name="inverter" value="1"> Neste CSV os gastos vêm com valor positivo (comum em fatura de cartão)</label>'
              '<label><input type="checkbox" name="forcar" value="1"> Importar o PDF mesmo que o total do documento não confira com os lançamentos (só depois de revisar)</label>'
              '<button type="submit">Importar</button></form>'

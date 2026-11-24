@@ -1,7 +1,7 @@
 // Teste da tela do Vilarejo Sitiado com um navegador de mentira: teclas, som, narração e desenho no canvas sem erros.
 const assert = require("assert"), path = require("path");
 let ok = 0; const t = (n, f) => { try { f(); ok++; console.log("ok   " + n); } catch (e) { console.log("FALHOU " + n + "\n     " + (e.stack || e.message)); process.exitCode = 1; } };
-const falas = [], oscilador = [], ouvintes = {}, desenho = { chamadas: 0, textos: [] };
+const falas = [], oscilador = [], fontes = [], ouvintes = {}, desenho = { chamadas: 0, textos: [] };
 function noEl(tag, attrs) {
   const el = { tag, attrs: attrs || {}, filhos: [], style: {}, value: "", textContent: (attrs && attrs.texto) || "", ouvintes: {},
     appendChild(f) { this.filhos.push(f); return f; }, setAttribute(k, v) { this.attrs[k] = v; }, addEventListener(n, f) { (this.ouvintes[n] = this.ouvintes[n] || []).push(f); }, focus() {},
@@ -19,7 +19,9 @@ global.window = undefined;
 global.AudioContext = class { constructor() { this.currentTime = 0; this.sampleRate = 8000; this.state = "running"; this.destination = {}; }
   createOscillator() { return new Osc(); } createGain() { return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {}, value: 0 }, connect(x) { return x; } }; }
   createStereoPanner() { const p = { pan: { value: 0 }, connect(x) { return x; } }; p.pan.__p = p; (global.__pans = global.__pans || []).push(p); return p; }
-  createBuffer(c, n) { return { getChannelData: () => new Float32Array(n) }; } createBufferSource() { return { connect(x) { return x; }, start() {} }; } createBiquadFilter() { return { frequency: {}, connect(x) { return x; } }; } };
+  createBuffer(c, n) { return { getChannelData: () => new Float32Array(n) }; } createBufferSource() { return { playbackRate: { value: 1 }, connect(x) { return x; }, start() { fontes.push(1); }, stop() {} }; } createBiquadFilter() { return { frequency: { value: 0 }, connect(x) { return x; } }; }
+  createDynamicsCompressor() { const p = () => ({ value: 0 }); return { threshold: p(), knee: p(), ratio: p(), attack: p(), release: p(), connect(x) { return x; } }; } };
+require(path.join(__dirname, "..", "..", "games", "vilarejo_som.js"));
 delete require.cache[require.resolve(path.join(__dirname, "..", "..", "games", "vilarejo.js"))];
 require(path.join(__dirname, "..", "..", "games", "vilarejo.js"));
 const V = globalThis.HeimdallVilarejo;
@@ -67,5 +69,27 @@ t("desenhar roda em todos os cenários (dentro, andar de cima, fim) sem erro", (
   ["facil", "normal", "dificil"].forEach(n => { const x = V.novo(n); x.andar = 1; x.x = 16; x.y = 12; assert(x.mapa[1][12][16] === "v"); });
   const antes = desenho.chamadas; botao("Estado").ouvintes.click[0](); botao("Olhar").ouvintes.click[0](); assert(desenho.chamadas >= antes);
   assert(desenho.textos.some(x => /VIDA/.test(x)));
+});
+t("os efeitos são amostras sintetizadas: o tiro toca um buffer em estéreo e o riacho fica de fundo", () => {
+  botao("Iniciar").ouvintes.click[0](); assert(fontes.length >= 1, "o riacho deveria tocar em laço ao iniciar");
+  const antes = fontes.length; tecla(" "); assert(fontes.length > antes, "o tiro deveria tocar uma amostra"); assert(global.__pans.length > 3);
+  const n1 = fontes.length; tecla("w"); assert(fontes.length > n1, "o passo toca uma amostra");
+});
+t("L diz onde você está e o botão Onde estou faz o mesmo, mesmo sem partida", () => {
+  tecla("l"); assert(/Você está no térreo/.test(falas[falas.length - 1]) && /Seu objetivo/.test(falas[falas.length - 1]), falas[falas.length - 1]);
+  assert(botao("Onde estou (L)")); botao("Onde estou (L)").ouvintes.click[0](); assert(/Seu objetivo/.test(falas[falas.length - 1]));
+  assert(achar("select", s => s.attrs.id === "volume").length === 1 && achar("select", s => s.attrs.id === "velocidade").length === 1);
+  assert(/L diz onde você está/.test(campo.attrs["aria-label"]));
+});
+t("narração em fila: um aviso por vez, o urgente passa na frente e o descartável some quando há fila", () => {
+  const anterior = global.setTimeout, agenda = []; global.setTimeout = (f, ms) => { agenda.push({ f, ms }); return agenda.length; }; global.clearTimeout = () => {};
+  const roda = () => { let n = 0; while (agenda.length && n++ < 200) agenda.shift().f(); };
+  try {
+    const antes = falas.length; V.dizer("primeiro", 1); V.dizer("segundo", 1); V.dizer("terceiro", 0); roda();
+    const ditos = falas.slice(antes).filter(Boolean); assert.deepEqual(ditos, ["primeiro", "segundo"], "os avisos saem separados e na ordem; o descartável some: " + JSON.stringify(ditos));
+    V.dizer("a", 1); V.dizer("b", 1); V.dizer("URGENTE", 2); roda(); const f2 = falas.slice(falas.indexOf("segundo") + 1).filter(Boolean); assert.equal(f2[0], "a"); assert(f2.indexOf("URGENTE") >= 0 && f2.indexOf("URGENTE") <= 2, JSON.stringify(f2));
+    const k = falas.length; V.dizer("x", 1); V.dizer("y", 1); V.dizer("resposta", 3); roda(); const f3 = falas.slice(k).filter(Boolean); assert(f3.includes("resposta") && !f3.includes("y"), JSON.stringify(f3));
+    assert(agenda.length === 0);
+  } finally { global.setTimeout = anterior; }
 });
 console.log(`\n${ok} testes`);

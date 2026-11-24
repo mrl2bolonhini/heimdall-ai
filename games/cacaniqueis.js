@@ -1,6 +1,6 @@
 // Caça-níqueis: um painel de três dígitos de 0 a 9 e um botão Girar, como nos painéis de aparelhos de som antigos.
 // Três iguais (trinca) e uma sequência (123, 321, 901, 109...) dão os prêmios grandes; um par (dois números iguais) dá um prêmio pequeno e frequente; o resto perde a aposta.
-// Créditos de mentira, sem dinheiro de verdade. Em média o jogador recebe de volta cerca de 99% do que aposta, e cerca de 30% das rodadas pagam alguma coisa.
+// Créditos virtuais, sem dinheiro de verdade. Em média o jogador recebe de volta cerca de 99% do que aposta, e cerca de 30% das rodadas pagam alguma coisa.
 (function (raiz) {
   "use strict";
   var INICIO = 30;

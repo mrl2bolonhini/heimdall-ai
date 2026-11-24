@@ -129,7 +129,7 @@
     if (erro >= 0) { e.dicasUsadas++; return { msg: "Dica: o número da linha " + (lin(erro) + 1) + ", coluna " + (col(erro) + 1) + " está errado. Apague-o." }; }
     for (i = 0; i < 81; i++) if (!e.atual[i]) { var n = candidatos(e.atual, i).length; if (n < mc) { mc = n; melhor = i; } }
     e.dicasUsadas++; e.pilha.push({ i: melhor, antes: 0 }); e.atual[melhor] = e.solucao[melhor]; e.jogadas++;
-    return checarFim(e, "Dica: na linha " + (lin(melhor) + 1) + ", coluna " + (col(melhor) + 1) + " vai o " + e.solucao[melhor] + ", e eu já coloquei.");
+    return checarFim(e, "Dica: na linha " + (lin(melhor) + 1) + ", coluna " + (col(melhor) + 1) + ", o valor correto é " + e.solucao[melhor] + ", já preenchido.");
   }
   function verificar(e) {
     var erros = [], i;

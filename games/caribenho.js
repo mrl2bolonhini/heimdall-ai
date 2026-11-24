@@ -1,4 +1,4 @@
-// Poker caribenho (Caribbean Stud) contra a banca, com créditos de mentira (nunca dinheiro de verdade).
+// Poker caribenho (Caribbean Stud) contra a banca, com créditos virtuais (nunca dinheiro de verdade).
 // Você aposta o "ante" e recebe cinco cartas abertas; a banca recebe cinco, com só uma aberta. Você desiste (perde o ante) ou aumenta, pagando mais duas vezes o ante.
 // A banca só joga se tiver Ás e Rei ou melhor. Se não tiver, o ante paga 1 para 1 e o aumento volta. Se tiver, vence a melhor mão: o ante paga 1 para 1 e o aumento paga conforme a mão.
 (function (raiz) {
@@ -173,7 +173,7 @@
   function falar(m, cmd) { var c = H.som && H.som.cue(m, cmd); if (c) H.som.anunciar(c, m); else H.anunciar(m); campo.disabled = e.fim; }
   anteBtn.addEventListener("click", function () { falar(comando(e, "apostar " + anteSel.value).msg, "apostar " + anteSel.value); });
   form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
-  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos de mentira. Aposte o ante, por exemplo apostar 5, e depois decida entre aumentar e desistir. O comando ajuda lista tudo."); }
+  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos virtuais. Aposte o ante, por exemplo apostar 5, e depois decida entre aumentar e desistir. O comando ajuda lista tudo."); }
   novoBtn.addEventListener("click", comecar);
   comecar();
 })(typeof window !== "undefined" ? window : globalThis);

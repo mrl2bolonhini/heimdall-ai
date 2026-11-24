@@ -114,6 +114,15 @@
     if (c === "D" || c === "L") return aberta(e, a, x, y);
     return true;
   }
+  // Tipo de piso de um ponto, para o som dos passos.
+  function pisoDe(e, a, x, y) {
+    var c = tile(e, a, x, y);
+    if (c === "=") return "ponte";
+    if (c === "g") return "grama";
+    if (c === ",") return "terra";
+    if (c === "_" || c === "D" || c === "L" || c === "^" || c === "v") return "madeira";
+    return "rua";
+  }
   function inimigoEm(e, a, x, y) {
     for (var i = 0; i < e.inimigos.length; i++) { var m = e.inimigos[i]; if (m.hp > 0 && m.a === a && m.x === x && m.y === y) return m; }
     return null;
@@ -184,10 +193,10 @@
     if (m) { evs.push(ev("bloqueio", nomeInim(m, true) + " bloqueia o caminho, à frente.", 1, { c: "Bloqueado." })); return evs; }
     if (!passavel(e, e.andar, nx, ny)) {
       var msg = c === "D" ? "Porta fechada à frente (" + d + "). Aperte x para abrir." : c === "L" ? "Porta trancada à frente (" + d + "). Aperte x para tentar abrir." : c === "~" ? "O riacho, fundo demais, bloqueia o caminho a " + d + ". Procure a ponte." : c === "T" ? "Árvores fechadas a " + d + "." : "Parede a " + d + ".";
-      evs.push(ev("bloqueio", msg, 1, { c: c === "D" || c === "L" ? "Porta." : "Bloqueado." })); return evs;
+      evs.push(ev("bloqueio", msg, 1, { c: c === "D" || c === "L" ? "Porta." : "Bloqueado.", porta: c === "D" || c === "L" ? c : "" })); return evs;
     }
     e.x = nx; e.y = ny; e.mx = 0; e.my = 0; e.passos++;
-    evs.push(ev("passo", "", 3));
+    evs.push(ev("passo", "", 3, { piso: pisoDe(e, e.andar, e.x, e.y) }));
     chegada(e, evs);
     return evs;
   }
@@ -207,7 +216,8 @@
     m.hp -= d;
     if (m.hp > 0) return false;
     e.mortos++;
-    evs.push(ev("morte", nomeInim(m, true) + " caiu.", 1, { c: "Caiu." }));
+    var pm = relativo(e, m.x, m.y);
+    evs.push(ev("morte", nomeInim(m, true) + " caiu.", 1, { c: "Caiu.", tipo: m.t, f: pm.f, s: pm.s }));
     if (TIPOS[m.t].chefe) { e.fim = "venceu"; evs.push(ev("fim", resultado(e), 1)); }
     return true;
   }
@@ -220,7 +230,7 @@
       if (!m) { evs.push(ev("erro", "Golpeou o ar.", 2, { c: "Ar." })); return evs; }
       e.tiros++; e.acertos++; m.ativo = true;
       var morto = dano(e, m, a.dano, evs);
-      if (!morto) evs.push(ev("acerto", "Acertou " + nomeInim(m) + ".", 2, { c: "Acertou." }));
+      if (!morto) evs.push(ev("acerto", "Acertou " + nomeInim(m) + ".", 2, { c: "Acertou.", tipo: m.t, f: 1, s: 0 }));
       return evs;
     }
     if (e.recarga > 0) { evs.push(ev("seco", "Recarregando. Espere.", 1, { c: "Recarregando." })); return evs; }
@@ -233,12 +243,12 @@
     else alvos = vis.filter(function (v) { return v.f <= 3 && Math.abs(v.col - e.mx) <= 1 && Math.abs(v.linha - e.my) <= 1; });
     if (!alvos.length) {
       var prox = vis[0];
-      evs.push(ev("erro", "Errou." + (prox ? " " + dica(e, prox) : " Não há ninguém à vista."), 1, { c: "Errou." }));
+      evs.push(ev("erro", "Errou." + (prox ? " " + dica(e, prox) : " Não há ninguém à vista."), 1, { c: "Errou.", tiroErrado: true }));
     } else {
       alvos.forEach(function (v) {
         var dm = e.arma === "espingarda" ? (v.f <= 2 ? 5 : 3) : a.dano; e.acertos++;
         var morto = dano(e, v.m, dm, evs);
-        if (!morto) evs.push(ev("acerto", "Acertou " + nomeInim(v.m) + ".", 1, { c: "Acertou." }));
+        if (!morto) evs.push(ev("acerto", "Acertou " + nomeInim(v.m) + ".", 1, { c: "Acertou.", tipo: v.m.t, f: v.f, s: v.s }));
       });
     }
     if (mu.carga === 0 && !e.fim) evs.push(ev("vazia", mu.reserva ? "Arma vazia. Recarregue com Shift direito." : "Arma vazia e sem reserva.", 2, { c: "Vazia." }));
@@ -271,10 +281,10 @@
     if (aqui.length) {
       aqui.forEach(function (i) {
         e.itens.splice(e.itens.indexOf(i), 1);
-        if (i.tipo === "chave") { e.chaves.push(i.nome); evs.push(ev("pegou", "Pegou a " + i.nome + ".", 1, { c: "Pegou." })); }
-        else if (i.tipo === "kit") { e.kits++; evs.push(ev("pegou", "Pegou um kit médico. Você tem " + e.kits + ". Aperte c para usar quando precisar.", 1, { c: "Kit." })); }
-        else if (i.tipo === "municao") { e.mun[i.arma].reserva += i.qtd; evs.push(ev("pegou", "Pegou " + i.nome + ". Reserva: " + e.mun[i.arma].reserva + ".", 1, { c: "Munição." })); }
-        else if (i.tipo === "arma") { e.armas[i.arma] = true; e.mun[i.arma].reserva += i.qtd; evs.push(ev("pegou", "Pegou a " + ARMAS[i.arma].nome + " com " + i.qtd + " cartuchos. Aperte 2 para empunhar.", 1, { c: "Espingarda." })); }
+        if (i.tipo === "chave") { e.chaves.push(i.nome); evs.push(ev("pegou", "Pegou a " + i.nome + ".", 1, { c: "Pegou.", item: "chave" })); }
+        else if (i.tipo === "kit") { e.kits++; evs.push(ev("pegou", "Pegou um kit médico. Você tem " + e.kits + ". Aperte c para usar quando precisar.", 1, { c: "Kit.", item: "kit" })); }
+        else if (i.tipo === "municao") { e.mun[i.arma].reserva += i.qtd; evs.push(ev("pegou", "Pegou " + i.nome + ". Reserva: " + e.mun[i.arma].reserva + ".", 1, { c: "Munição.", item: "municao" })); }
+        else if (i.tipo === "arma") { e.armas[i.arma] = true; e.mun[i.arma].reserva += i.qtd; evs.push(ev("pegou", "Pegou a " + ARMAS[i.arma].nome + " com " + i.qtd + " cartuchos. Aperte 2 para empunhar.", 1, { c: "Espingarda.", item: "arma" })); }
       });
       return evs;
     }
@@ -282,8 +292,8 @@
     if ((c === "D" || c === "L") && !aberta(e, e.andar, fx, fy)) {
       if (c === "L") {
         var nec = TRANCADAS[ch(e.andar, fx, fy)];
-        if (e.chaves.indexOf(nec) < 0) { evs.push(ev("bloqueio", "A porta está trancada. Você precisa da " + nec + ".", 1, { c: "Trancada." })); return evs; }
-        e.abertas[ch(e.andar, fx, fy)] = true; evs.push(ev("porta", "Você destrancou a porta com a " + nec + " e a abriu.", 1, { c: "Aberta." })); acordar(e, 6); return evs;
+        if (e.chaves.indexOf(nec) < 0) { evs.push(ev("bloqueio", "A porta está trancada. Você precisa da " + nec + ".", 1, { c: "Trancada.", porta: "L" })); return evs; }
+        e.abertas[ch(e.andar, fx, fy)] = true; evs.push(ev("porta", "Você destrancou a porta com a " + nec + " e a abriu.", 1, { c: "Aberta.", tranca: true })); acordar(e, 6); return evs;
       }
       e.abertas[ch(e.andar, fx, fy)] = true; evs.push(ev("porta", "Você abriu a porta.", 1, { c: "Aberta." })); return evs;
     }
@@ -314,6 +324,25 @@
     if (perto.length) s += " Por perto: " + perto.map(function (i) { var p = relativo(e, i.x, i.y); return p.f === 0 && p.s === 0 ? i.nome + " aqui" : i.nome + " " + ladoTxt(p.f, p.s) + ", a " + distTxt(p.f, p.s); }).join("; ") + ".";
     return s;
   }
+  // Onde você está: a área, o andar, o rumo e as referências mais próximas, com direção em pontos cardeais e distância em passos.
+  var REFS = [
+    { n: "a ponte do riacho", x: 10, y: 8 }, { n: "a porta da igreja", x: 16, y: 5 }, { n: "a porta do hospital", x: 25, y: 5 }, { n: "a porta da delegacia", x: 16, y: 10 },
+    { n: "a porta da prefeitura", x: 25, y: 10 }, { n: "a porta da casa do fazendeiro", x: 4, y: 10 }, { n: "o centro da plantação", x: 4, y: 2 }
+  ];
+  function rumoTxt(dx, dy) {
+    var p = [];
+    if (dx) p.push(plural(Math.abs(dx), "passo", "passos") + (dx > 0 ? " a leste" : " a oeste"));
+    if (dy) p.push(plural(Math.abs(dy), "passo", "passos") + (dy > 0 ? " ao sul" : " ao norte"));
+    return p.length ? p.join(" e ") : "aqui";
+  }
+  function onde(e) {
+    var s = "Você está " + (e.andar === 1 ? "no andar de cima da delegacia" : "no térreo, na " + e.area) + ", olhando para " + e.dir + ".";
+    if (e.andar === 1) return s + " A escada para baixo fica " + rumoTxt(16 - e.x, 12 - e.y) + ".";
+    var alvo = REFS[4], perto = REFS.filter(function (r) { return r !== alvo; }).map(function (r) { return { r: r, d: Math.abs(r.x - e.x) + Math.abs(r.y - e.y) }; }).filter(function (p) { return p.r.n.indexOf(e.area) < 0; }).sort(function (a, b) { return a.d - b.d; }).slice(0, 2);
+    s += " Seu objetivo, " + alvo.n + ", fica " + rumoTxt(alvo.x - e.x, alvo.y - e.y) + ".";
+    s += " Por perto: " + perto.map(function (p) { return p.r.n + ", " + rumoTxt(p.r.x - e.x, p.r.y - e.y); }).join("; ") + ".";
+    return s;
+  }
   function vivos(e) { return e.inimigos.filter(function (m) { return m.hp > 0; }).length; }
   function status(e) {
     var a = ARMAS[e.arma], mu = e.mun[e.arma];
@@ -326,7 +355,7 @@
   }
   function ajuda() {
     return "Objetivo: libertar o vilarejo derrubando o chefe dos bandidos, na prefeitura. Andar: W norte, D leste, S sul, A oeste. Você olha para onde andou por último. Setas mudam a mira, que começa no centro e volta ao centro quando você anda; Q centraliza. " +
-      "Barra de espaço atira. Shift direito recarrega. Teclas 1 a 4 escolhem revólver, espingarda, faca e mão livre. X pega o item do chão, abre a porta à frente e sobe ou desce a escada. C usa um kit médico. E diz o estado, O descreve o que está à frente, H repete esta ajuda. " +
+      "Barra de espaço atira. Shift direito recarrega. Teclas 1 a 4 escolhem revólver, espingarda, faca e mão livre. X pega o item do chão, abre a porta à frente e sobe ou desce a escada. C usa um kit médico. E diz o estado, L diz onde você está e o caminho até o objetivo, O descreve o que está à frente, H repete esta ajuda. " +
       "O som mostra onde estão os inimigos: o lado no estéreo, o volume é a distância e o tom grave é de animal, que fica abaixo da mira (seta para baixo). Quando a mira passa sobre um inimigo, soa um sinal agudo. Faca e mão livre só acertam quem está colado à sua frente. A espingarda pega vários, mas só de perto.";
   }
   function norm(t) { return String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
@@ -350,6 +379,7 @@
     if (v === "pegar" || v === "x" || v === "abrir" || v === "subir" || v === "descer") return pegar(e);
     if (v === "usar" || v === "c" || v === "curar" || v === "kit") return curar(e);
     if (v === "status" || v === "estado" || v === "e" || v === "vida") return [ev("info", status(e), 1)];
+    if (v === "onde" || v === "local" || v === "posicao") return [ev("info", onde(e), 1)];
     if (v === "olhar" || v === "o") return [ev("info", olhar(e), 1)];
     if (v === "ajuda" || v === "h") return [ev("info", ajuda(), 1)];
     return [ev("erro", "Não entendi. Digite ajuda para ver os comandos.", 1)];
@@ -396,7 +426,7 @@
         if (cheb > tp.alerta) return;
         m.ativo = true;
         var p0 = relativo(e, m.x, m.y);
-        evs.push(ev("alerta", "Você ouve " + nomeInim(m) + " " + ladoTxt(p0.f, p0.s) + ", a " + distTxt(p0.f, p0.s) + ".", 1, { c: TIPOS[m.t].nome.charAt(0).toUpperCase() + TIPOS[m.t].nome.slice(1) + " " + ladoTxt(p0.f, p0.s) + "." }));
+        evs.push(ev("alerta", "Você ouve " + nomeInim(m) + " " + ladoTxt(p0.f, p0.s) + ", a " + distTxt(p0.f, p0.s) + ".", 1, { c: TIPOS[m.t].nome.charAt(0).toUpperCase() + TIPOS[m.t].nome.slice(1) + " " + ladoTxt(p0.f, p0.s) + ".", tipo: m.t, f: p0.f, s: p0.s }));
       }
       if (m.cool > 0) m.cool--;
       if (e.t % tp.vel !== 0) return;
@@ -425,7 +455,7 @@
           if (melhor) { m.x = melhor[0]; m.y = melhor[1]; agiu = true; }
         }
       }
-      if (agiu) { var ps = relativo(e, m.x, m.y), dd = Math.sqrt(ps.f * ps.f + ps.s * ps.s); if (dd <= 9) sons.push({ tipo: m.t, f: ps.f, s: ps.s, d: dd }); }
+      if (agiu) { var ps = relativo(e, m.x, m.y), dd = Math.sqrt(ps.f * ps.f + ps.s * ps.s); if (dd <= 9) sons.push({ tipo: m.t, f: ps.f, s: ps.s, d: dd, piso: pisoDe(e, m.a, m.x, m.y) }); }
     });
     sons.sort(function (a, b) { return a.d - b.d; }).slice(0, 3).forEach(function (s) { evs.push(ev("inimigo", "", 3, s)); });
     // Quem entrou na linha de visão agora é anunciado uma vez.
@@ -442,7 +472,7 @@
   var api = {
     NIVEIS: NIVEIS, ARMAS: ARMAS, TIPOS: TIPOS, LARG: LARG, ALT: ALT, ALCANCE: ALCANCE, ANDAR0: ANDAR0, ITENS0: ITENS0, INIM0: INIM0, INICIO: INICIO, TRANCADAS: TRANCADAS,
     novo: novo, tile: tile, passavel: passavel, transparente: transparente, visiveis: visiveis, relativo: relativo, coluna: coluna, mover: mover, mirar: mirar, centralizar: centralizar,
-    atirar: atirar, recarregar: recarregar, escolher: escolher, pegar: pegar, curar: curar, olhar: olhar, status: status, ajuda: ajuda, comando: comando, aberta: aberta, tick: tick, areaDe: areaDe, resultado: resultado, vivos: vivos, inimigoEm: inimigoEm
+    atirar: atirar, recarregar: recarregar, escolher: escolher, pegar: pegar, curar: curar, olhar: olhar, status: status, onde: onde, ajuda: ajuda, pisoDe: pisoDe, comando: comando, aberta: aberta, tick: tick, areaDe: areaDe, resultado: resultado, vivos: vivos, inimigoEm: inimigoEm
   };
   if (typeof module !== "undefined") module.exports = api;
   if (typeof document === "undefined") return;
@@ -452,80 +482,161 @@
   // Paleta de arcade, só para o desenho do jogo (a página em volta segue o Heimdall Design).
   var P = { ceu: ["#05051a", "#0a0a33", "#14144d", "#20206b"], chao: ["#0b2a12", "#0f3a18"], parede: [200, 70, 40], arvore: [30, 150, 50], porta: [210, 150, 40], trancada: [220, 40, 80], neon: "#39ff14", ciano: "#00e5ff", rosa: "#ff2d95", amarelo: "#ffe600", branco: "#ffffff" };
 
+  // ---- som: amostras sintetizadas (vilarejo_som.js) tocadas em estéreo, com volume e brilho que caem com a distância ----
+  var Som = raiz.HeimdallVilarejoSom, estoque = {}, entrada = null, volume = 1.8, ambiente = null;
+  var VARIACOES = { revolver: 3, espingarda: 2, pistola: 3, dor: 3, morte: 2, resmungo: 4, rosnado: 3, latido: 2, guincho: 3, passo: 4, ricochete: 3, impacto: 3 };
   function audio() {
     if (ctx || semAudio) { if (ctx && ctx.state === "suspended" && ctx.resume) { try { ctx.resume(); } catch (x) { /* segue */ } } return ctx; }
-    try { var AC = raiz.AudioContext || raiz.webkitAudioContext; if (!AC) { semAudio = true; return null; } ctx = new AC(); if (ctx.state === "suspended" && ctx.resume) ctx.resume(); } catch (x) { semAudio = true; ctx = null; }
+    try {
+      var AC = raiz.AudioContext || raiz.webkitAudioContext; if (!AC) { semAudio = true; return null; }
+      ctx = new AC(); if (ctx.state === "suspended" && ctx.resume) ctx.resume();
+      // Cadeia mestre: volume e um compressor, para o tiro soar forte sem estourar quando vários sons se somam.
+      var mestre = ctx.createGain(); mestre.gain.value = volume; entrada = mestre;
+      if (ctx.createDynamicsCompressor) {
+        var comp = ctx.createDynamicsCompressor();
+        try { comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 8; comp.attack.value = 0.002; comp.release.value = 0.2; } catch (y) { /* valores padrão */ }
+        mestre.connect(comp); comp.connect(ctx.destination);
+      } else mestre.connect(ctx.destination);
+    } catch (x) { semAudio = true; ctx = null; }
     return ctx;
   }
   function pan(p, c) { var pn = c.createStereoPanner ? c.createStereoPanner() : null; if (pn) pn.pan.value = Math.max(-1, Math.min(1, p)); return pn; }
-  // Um tom com posição no estéreo (p de -1 a 1), volume e varredura de frequência.
+  function ajustarVolume(v) { volume = v; if (entrada && entrada.gain) entrada.gain.value = v; }
+  function amostra(nome, op, v) {
+    var c = audio(); if (!c || !Som) return null;
+    var k = nome + "|" + ((op && (op.piso || op.tom || op.pitch)) || "") + "|" + v;
+    if (!estoque[k]) {
+      var x = Som.gerar(nome, c.sampleRate, v, op), b = c.createBuffer(1, x.length, c.sampleRate);
+      if (b.copyToChannel) b.copyToChannel(x, 0); else b.getChannelData(0).set(x);
+      estoque[k] = b;
+    }
+    return estoque[k];
+  }
+  // Toca uma amostra: p é a posição no estéreo (-1 a 1), ganho o volume, corte o brilho (passa-baixa), taxa a velocidade (altera o tom) e atraso em segundos.
+  function tocar(nome, o) {
+    o = o || {};
+    var c = audio(); if (!c || !Som) return;
+    try {
+      var v = Math.floor(Math.random() * (VARIACOES[nome] || 2)), b = amostra(nome, o.op, v); if (!b) return;
+      var s = c.createBufferSource(), g = c.createGain(), lp = c.createBiquadFilter(), pn = pan(o.p || 0, c), t0 = c.currentTime + (o.atraso || 0);
+      s.buffer = b; if (o.taxa && s.playbackRate) s.playbackRate.value = o.taxa;
+      g.gain.value = o.ganho == null ? 1 : o.ganho;
+      lp.type = "lowpass"; lp.frequency.value = o.corte || 20000;
+      s.connect(lp); lp.connect(g);
+      if (pn) { g.connect(pn); pn.connect(entrada); } else g.connect(entrada);
+      s.start(t0);
+    } catch (x) { /* sem som */ }
+  }
+  // Tom de interface (mira): um tom curto, com posição e altura que acompanham a mira. Não é efeito de jogo.
   function bip(freq, dur, p, tipo, vol, ate, atraso) {
     var c = audio(); if (!c) return;
     try {
       var t0 = c.currentTime + (atraso || 0), o = c.createOscillator(), g = c.createGain(), pn = pan(p || 0, c);
       o.type = tipo || "sine"; o.frequency.setValueAtTime(freq, t0); if (ate) o.frequency.exponentialRampToValueAtTime(ate, t0 + dur);
       g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol || 0.2), t0 + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-      o.connect(g); if (pn) { g.connect(pn); pn.connect(c.destination); } else g.connect(c.destination);
+      o.connect(g); if (pn) { g.connect(pn); pn.connect(entrada); } else g.connect(entrada);
       o.start(t0); o.stop(t0 + dur + 0.02);
     } catch (x) { /* sem som */ }
   }
-  function ruido(dur, p, vol, freq, atraso) {
-    var c = audio(); if (!c) return;
-    try {
-      var n = Math.max(1, Math.floor(c.sampleRate * dur)), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0), i;
-      for (i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-      var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), pn = pan(p || 0, c), t0 = c.currentTime + (atraso || 0);
-      s.buffer = b; f.type = "bandpass"; f.frequency.value = freq || 1500; g.gain.value = vol || 0.3;
-      s.connect(f); f.connect(g); if (pn) { g.connect(pn); pn.connect(c.destination); } else g.connect(c.destination); s.start(t0);
-    } catch (x) { /* sem som */ }
+  // Posição de uma fonte: pan, volume e brilho a partir de f (à frente) e s (à direita). Perto soa alto e brilhante; longe, baixo e abafado; atrás, mais abafado.
+  function lugar(f, s, forte) {
+    var d = Math.max(1, Math.sqrt(f * f + s * s)), atras = f < 0, g = Math.max(0.14, 1.3 - 0.115 * d) * (forte ? 1.25 : 1), corte = (forte ? 18000 : 15000) / (1 + d * (forte ? 0.22 : 0.45));
+    if (atras) { g *= 0.75; corte *= 0.5; }
+    return { p: s / d, ganho: g, corte: Math.max(1400, corte) };
   }
-  // Som de um inimigo: o lado vem de s/distância, o volume cai com a distância, atrás de você soa mais grave e baixo; animais grunhem em tom grave, pessoas pisam.
-  function somInimigo(v) {
-    var d = Math.max(1, v.d), p = v.s / d, vol = Math.max(0.03, 0.34 - d * 0.034), atras = v.f < 0, k = v.tipo;
-    if (atras) vol *= 0.75;
-    if (k === "rato") { bip(atras ? 600 : 900, 0.07, p, "triangle", vol * 0.8); bip(atras ? 520 : 760, 0.06, p, "triangle", vol * 0.7, 0, 0.09); }
-    else if (k === "cao") { bip(atras ? 110 : 150, 0.22, p, "sawtooth", vol, atras ? 80 : 100); ruido(0.1, p, vol * 0.5, 400); }
-    else { ruido(0.06, p, vol, atras ? 300 : 600); bip(atras ? 90 : 120, 0.08, p, "square", vol * 0.7); }
+  function vozDe(tipo, v, forma) {
+    var l = lugar(v.f || 0, v.s || 0), t = tipo, op = { tom: t === "chefe" ? 0.8 : t === "capanga" ? 0.9 : 1 };
+    if (t === "rato") tocar(forma === "morte" ? "guinchoMorte" : forma === "ataque" ? "ataqueRato" : "guincho", l);
+    else if (t === "cao") tocar(forma === "morte" ? "ganido" : forma === "ataque" ? "latido" : forma === "dor" ? "ganido" : "rosnado", l);
+    else tocar(forma === "morte" ? "morte" : forma === "dor" ? "dor" : "resmungo", Object.assign({ op: op }, l));
+  }
+  function passoDe(v, l) {
+    var tp = v.tipo;
+    if (tp === "rato") tocar("passo", { op: { piso: "terra" }, p: l.p, ganho: l.ganho * 0.5, corte: l.corte, taxa: 1.9 });
+    else if (tp === "cao") tocar("passo", { op: { piso: v.piso }, p: l.p, ganho: l.ganho * 0.7, corte: l.corte, taxa: 1.35 });
+    else tocar("passo", { op: { piso: v.piso }, p: l.p, ganho: l.ganho * 0.9, corte: l.corte, taxa: tp === "chefe" ? 0.82 : 0.95 });
   }
   var SOM = {
-    passo: function () { ruido(0.04, 0, 0.08, 500); },
-    mira: function (v) { bip(700 + (v.my || 0) * 140, 0.06, (v.mx || 0) / 3, "triangle", 0.16); },
-    trava: function (v) { bip(700 + (v.my || 0) * 140, 0.05, (v.mx || 0) / 3, "triangle", 0.16); bip(1760, 0.14, (v.mx || 0) / 3, "square", 0.2, 0, 0.06); },
-    "mira-limite": function () { bip(220, 0.08, 0, "square", 0.1); },
-    tiro: function (v) {
-      if (v.arma === "espingarda") { ruido(0.28, 0, 0.7, 600); bip(110, 0.3, 0, "sawtooth", 0.35, 40); }
-      else { ruido(0.12, 0, 0.5, 1800); bip(420, 0.14, 0, "square", 0.25, 90); }
+    passo: function (v) { tocar("passo", { op: { piso: v.piso }, ganho: 0.55, taxa: 0.93 + Math.random() * 0.14 }); },
+    mira: function (v) { bip(700 + (v.my || 0) * 140, 0.07, (v.mx || 0) / 3, "triangle", 0.28); },
+    trava: function (v) { bip(700 + (v.my || 0) * 140, 0.05, (v.mx || 0) / 3, "triangle", 0.28); bip(1760, 0.14, (v.mx || 0) / 3, "square", 0.3, 0, 0.06); },
+    "mira-limite": function () { tocar("batida", { ganho: 0.35 }); },
+    tiro: function (v) { tocar(v.arma === "espingarda" ? "espingarda" : "revolver", { ganho: 1.3 }); },
+    golpe: function (v) { tocar(v.arma === "faca" ? "faca" : "soco", { ganho: 1 }); },
+    seco: function () { tocar("seco", { ganho: 0.9 }); },
+    recarga: function () { tocar(e.recargaArma === "espingarda" ? "recargaEsp" : "recarga", { ganho: 0.9 }); },
+    recarregou: function () { tocar(e.recargaArma === "espingarda" ? "bombeia" : "recarregou", { ganho: 1 }); },
+    acerto: function (v) {
+      var l = lugar(v.f || 1, v.s || 0, true); tocar("impacto", Object.assign({ op: { pitch: v.tipo === "rato" ? 1.6 : v.tipo === "cao" ? 1.2 : 1 } }, l));
+      raiz.setTimeout(function () { vozDe(v.tipo || "bandido", v, "dor"); }, 90);
     },
-    golpe: function (v) { if (v.arma === "faca") ruido(0.12, 0, 0.3, 4000); else bip(140, 0.1, 0, "sine", 0.3, 70); },
-    seco: function () { bip(1200, 0.03, 0, "square", 0.15); },
-    recarga: function () { ruido(0.05, 0, 0.3, 2500); bip(500, 0.05, 0, "square", 0.12, 0, 0.18); },
-    recarregou: function () { bip(800, 0.06, 0, "square", 0.18); bip(1200, 0.08, 0, "square", 0.18, 0, 0.08); },
-    acerto: function () { bip(300, 0.1, 0, "square", 0.25, 80); },
-    morte: function () { bip(500, 0.35, 0, "sawtooth", 0.25, 60); },
-    erro: function () { bip(160, 0.1, 0, "square", 0.1); },
-    "tiro-inimigo": function (v) { var d = Math.max(1, Math.sqrt(v.f * v.f + v.s * v.s)); ruido(0.1, v.s / d, Math.max(0.06, 0.5 - d * 0.05), 1400); bip(300, 0.12, v.s / d, "square", Math.max(0.05, 0.3 - d * 0.03), 80); },
-    "erro-inimigo": function () { },
-    ataque: function (v) { var d = Math.max(1, Math.sqrt(v.f * v.f + v.s * v.s)); bip(v.tipo === "rato" ? 1000 : 200, 0.08, v.s / d, "sawtooth", 0.25, v.tipo === "rato" ? 700 : 120); },
-    inimigo: somInimigo,
-    dano: function (v) { bip(110, 0.28, (v.s || 0) / Math.max(1, Math.abs(v.s || 0) + Math.abs(v.f || 0)), "sawtooth", 0.4, 55); flash = 3; },
-    alerta: function () { bip(440, 0.08, 0, "triangle", 0.15); },
-    vista: function () { bip(600, 0.06, 0, "triangle", 0.12); },
-    pegou: function () { bip(660, 0.07, 0, "sine", 0.2); bip(990, 0.1, 0, "sine", 0.2, 0, 0.07); },
-    cura: function () { bip(520, 0.1, 0, "sine", 0.2, 900); },
-    porta: function () { ruido(0.2, 0, 0.35, 700); bip(180, 0.18, 0, "triangle", 0.2, 120); },
-    escada: function () { bip(400, 0.16, 0, "sine", 0.18, 800); },
-    bloqueio: function () { bip(150, 0.1, 0, "square", 0.12); },
-    fim: function () { if (e.fim === "venceu") { bip(523, 0.12, 0, "triangle", 0.22); bip(659, 0.12, 0, "triangle", 0.22, 0, 0.12); bip(784, 0.3, 0, "triangle", 0.22, 0, 0.24); } else { bip(330, 0.2, 0, "sawtooth", 0.14); bip(220, 0.4, 0, "sawtooth", 0.14, 0, 0.2); } }
+    morte: function (v) { var l = lugar(v.f || 1, v.s || 0, true); tocar("impacto", l); raiz.setTimeout(function () { vozDe(v.tipo || "bandido", v, "morte"); }, 120); },
+    erro: function (v) { if (v.tiroErrado) tocar("ricochete", { p: (Math.random() - 0.5) * 1.2, ganho: 0.9, atraso: 0.05 }); else if (!v.c) tocar("seco", { ganho: 0.35 }); },
+    "tiro-inimigo": function (v) { var l = lugar(v.f, v.s, true); l.ganho *= 1.1; tocar("pistola", l); },
+    "erro-inimigo": function (v) { tocar("ricochete", { p: Math.max(-1, Math.min(1, (v.s || 0) / 3)), ganho: 1, atraso: 0.12 }); },
+    ataque: function (v) { vozDe(v.tipo, v, "ataque"); },
+    inimigo: function (v) {
+      var l = lugar(v.f, v.s), x = Math.random();
+      if (v.tipo === "rato") { if (x < 0.4) vozDe("rato", v); else passoDe(v, l); }
+      else if (v.tipo === "cao") { if (x < 0.4) vozDe("cao", v); else passoDe(v, l); }
+      else if (x < 0.28) vozDe(v.tipo, v); else passoDe(v, l);
+    },
+    dano: function (v) { tocar("dorJogador", { p: Math.max(-0.8, Math.min(0.8, (v.s || 0) / Math.max(1, Math.abs(v.s || 0) + Math.abs(v.f || 0)))), ganho: 1.3 }); flash = 3; },
+    alerta: function (v) { if (v.tipo) vozDe(v.tipo, v); },
+    pegou: function (v) { tocar(v.item === "chave" ? "pegaChave" : v.item === "kit" ? "pegaKit" : v.item === "arma" ? "pegaArma" : "pegaMunicao", { ganho: 0.9 }); },
+    cura: function () { tocar("cura", { ganho: 0.9 }); },
+    porta: function (v) { if (v.tranca) { tocar("destranca", { ganho: 1 }); tocar("abrePorta", { ganho: 0.9, atraso: 0.7 }); } else tocar("abrePorta", { ganho: 0.9 }); },
+    escada: function (v) { if (v.c === "Subiu." || v.c === "Desceu.") tocar("escada", { op: { sobe: v.c === "Subiu." }, ganho: 0.9 }); },
+    bloqueio: function (v) { tocar(v.porta === "L" ? "portaTrancada" : "batida", { ganho: v.porta === "L" ? 0.9 : 0.6 }); },
+    fim: function () { tocar(e.fim === "venceu" ? "sino" : "derrota", { ganho: 1 }); }
   };
-  var narr = "completa";
+  // Riacho ao fundo: um laço contínuo cujo volume e lado dependem de onde você está e para onde olha. Ajuda a saber onde se está sem ler nada.
+  function ambienteIniciar() {
+    var c = audio(); if (!c || !Som || ambiente || !c.createBufferSource) return;
+    try {
+      var b = amostra("riacho", {}, 0), s = c.createBufferSource(), g = c.createGain(), pn = pan(0, c);
+      s.buffer = b; s.loop = true; g.gain.value = 0; s.connect(g); if (pn) { g.connect(pn); pn.connect(entrada); } else g.connect(entrada); s.start();
+      ambiente = { s: s, g: g, pn: pn };
+    } catch (x) { ambiente = null; }
+  }
+  function ambienteAtualizar() {
+    if (!ambiente || !ambiente.g) return;
+    var dx = Math.abs(e.x - 10.5), p = relativo(e, 10.5, e.y), alvo = e.andar === 0 ? Math.max(0, 0.75 - 0.09 * dx) : 0;
+    try { ambiente.g.gain.value = alvo; if (ambiente.pn) ambiente.pn.pan.value = Math.max(-1, Math.min(1, p.s / Math.max(2, Math.sqrt(p.f * p.f + p.s * p.s)))); } catch (x) { /* sem som */ }
+  }
+  function ambienteParar() { if (ambiente) { try { ambiente.s.stop(); } catch (x) { /* já parou */ } ambiente = null; } }
+
+  // ---- narração em fila: cada aviso é dito por inteiro e na ordem; o urgente passa na frente e o de pouca importância é descartado se há fila ----
+  var narr = "completa", fila = [], falando = false, espera = null, msPorLetra = 55;
+  function seguir() {
+    if (!fila.length) { falando = false; espera = null; return; }
+    var item = fila.shift(); falando = true;
+    H.anunciar(item.t);
+    espera = raiz.setTimeout(seguir, Math.min(9000, 350 + item.t.length * msPorLetra));
+  }
+  // prio: 0 baixa (descartável), 1 normal, 2 urgente (passa na frente e limpa o que não é essencial), 3 resposta a pergunta do jogador (limpa a fila toda).
+  function dizer(texto, prio) {
+    if (!texto) return;
+    var ultimo = fila.length ? fila[fila.length - 1].t : "";
+    if (ultimo === texto) return;
+    if (prio === 0 && (fila.length >= 2 || (falando && fila.length >= 1))) return;
+    if (prio >= 2) {
+      fila = prio === 3 ? [] : fila.filter(function (i) { return i.p >= 2; });
+      if (espera) { raiz.clearTimeout(espera); espera = null; }
+      falando = false; fila.unshift({ t: texto, p: prio }); seguir(); return;
+    }
+    fila.push({ t: texto, p: prio });
+    while (fila.length > 4) { var k = 0; while (k < fila.length - 1 && fila[k].p >= 2) k++; fila.splice(k, 1); }
+    if (!falando) seguir();
+  }
+  var PRIO = { info: 3, dano: 2, fim: 2, morte: 2, alerta: 0, vista: 0, "erro-inimigo": 0, recarregou: 1 };
   function falar(evs) {
-    var partes = [];
     evs.forEach(function (v) {
-      if (!v.msg || (v.n === 3)) return;
-      if (narr === "curta") { if (v.c) partes.push(v.c); else if (v.n === 1) partes.push(v.msg); }
-      else partes.push(v.msg);
+      if (!v.msg || v.n === 3) return;
+      var texto = narr === "curta" ? (v.c || (v.n === 1 ? v.msg : "")) : v.msg;
+      if (v.t === "info") texto = v.msg;
+      dizer(texto, PRIO[v.t] == null ? 1 : PRIO[v.t]);
     });
-    if (partes.length) H.anunciar(partes.join(" "));
   }
   function processar(evs) {
     evs.forEach(function (v) { var f = SOM[v.t]; if (f && !semAudio) f(v); });
@@ -609,51 +720,67 @@
   }
 
   // ---- controles ----
-  var campoTeclas = H.el("input", { id: "teclas", type: "text", autocomplete: "off", spellcheck: "false", "aria-label": "Área de jogo. W A S D andam, setas mudam a mira, espaço atira, Shift direito recarrega, 1 a 4 escolhem a arma, X pega e abre, C usa kit médico, E diz o estado, O descreve, H ajuda. Também dá para digitar comandos e apertar Enter" });
+  var campoTeclas = H.el("input", { id: "teclas", type: "text", autocomplete: "off", spellcheck: "false", "aria-label": "Área de jogo. W A S D andam, setas mudam a mira, espaço atira, Shift direito recarrega, 1 a 4 escolhem a arma, X pega e abre, C usa kit médico, E diz o estado, L diz onde você está, O descreve, H ajuda. Também dá para digitar comandos e apertar Enter" });
   var nivelSel = H.el("select", { id: "nivel" }, Object.keys(NIVEIS).map(function (k) { var n = NIVEIS[k]; return H.el("option", { value: k, texto: n.nome.charAt(0).toUpperCase() + n.nome.slice(1) + (k === "facil" ? ": mais vida e inimigos mais fracos" : k === "normal" ? ": equilibrado" : ": pouca vida, inimigos rápidos e certeiros") }); }));
   nivelSel.value = "normal";
   var falaSel = H.el("select", { id: "fala" }, [["completa", "Completa: descreve tudo"], ["curta", "Curta: só o essencial"]].map(function (o) { return H.el("option", { value: o[0], texto: o[1] }); }));
   falaSel.addEventListener("change", function () { narr = falaSel.value; });
+  var velSel = H.el("select", { id: "velocidade" }, [["70", "Normal"], ["50", "Rápida"], ["35", "Muito rápida"]].map(function (o) { return H.el("option", { value: o[0], texto: o[1] }); }));
+  velSel.value = "50"; msPorLetra = 50;
+  velSel.addEventListener("change", function () { msPorLetra = Number(velSel.value) || 50; });
+  var volSel = H.el("select", { id: "volume" }, [["1", "Normal"], ["1.8", "Alto"], ["3", "Máximo"]].map(function (o) { return H.el("option", { value: o[0], texto: o[1] }); }));
+  volSel.value = "1.8";
+  volSel.addEventListener("change", function () { ajustarVolume(Number(volSel.value) || 1.8); tocar("revolver", { ganho: 1 }); });
   var iniciarBtn = H.el("button", { type: "button", texto: "Iniciar" }), pararBtn = H.el("button", { type: "button", texto: "Parar" }), testeSom = H.el("button", { type: "button", texto: "Testar o som" });
   var comandoCampo = H.el("input", { id: "comando", type: "text", autocomplete: "off", spellcheck: "false", "aria-label": "Comando por texto, como atirar, norte ou status, e Enter" });
   var cv = H.el("canvas", { width: String(W), height: String(HT), "aria-hidden": "true" });
   cv.style.maxWidth = "100%"; cv.style.height = "auto"; cv.style.imageRendering = "pixelated"; cv.style.background = "#000"; cv.style.display = "block";
-  var teclado = H.el("div", { role: "group", "aria-label": "Controles" }, [["Norte", "norte"], ["Oeste", "oeste"], ["Leste", "leste"], ["Sul", "sul"], ["Atirar", "atirar"], ["Recarregar", "recarregar"], ["Pegar, abrir e subir (X)", "pegar"], ["Usar kit médico (C)", "curar"], ["Estado", "status"], ["Olhar", "olhar"], ["Ajuda", "ajuda"]].map(function (x) {
+  var teclado = H.el("div", { role: "group", "aria-label": "Controles" }, [["Norte", "norte"], ["Oeste", "oeste"], ["Leste", "leste"], ["Sul", "sul"], ["Atirar", "atirar"], ["Recarregar", "recarregar"], ["Pegar, abrir e subir (X)", "pegar"], ["Usar kit médico (C)", "curar"], ["Estado", "status"], ["Onde estou (L)", "onde"], ["Olhar", "olhar"], ["Ajuda", "ajuda"]].map(function (x) {
     var b = H.el("button", { type: "button", texto: x[0] }); b.addEventListener("click", function () { acao(x[1]); }); return b;
   }));
-  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, H.el("label", { "for": "fala", texto: "Narração" }), falaSel, iniciarBtn, pararBtn, testeSom, H.el("label", { "for": "teclas", texto: "Área de jogo (teclado)" }), campoTeclas, cv, teclado, H.el("label", { "for": "comando", texto: "Comando por texto" }), comandoCampo].forEach(function (x) { jogo.appendChild(x); });
-  function parar() { rodando = false; if (relogio) { raiz.clearInterval(relogio); relogio = null; } }
+  [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, H.el("label", { "for": "fala", texto: "Narração" }), falaSel, H.el("label", { "for": "velocidade", texto: "Ritmo da narração (quanto o jogo espera entre um aviso e outro)" }), velSel, H.el("label", { "for": "volume", texto: "Volume dos efeitos" }), volSel, iniciarBtn, pararBtn, testeSom, H.el("label", { "for": "teclas", texto: "Área de jogo (teclado)" }), campoTeclas, cv, teclado, H.el("label", { "for": "comando", texto: "Comando por texto" }), comandoCampo].forEach(function (x) { jogo.appendChild(x); });
+  function parar() { rodando = false; if (relogio) { raiz.clearInterval(relogio); relogio = null; } ambienteParar(); }
   function acao(txt) {
-    if (!rodando && !/^(status|olhar|ajuda)$/.test(txt)) { H.anunciar("A partida não está rodando. Aperte Iniciar."); return; }
+    if (!rodando && !/^(status|olhar|ajuda|onde)$/.test(txt)) { H.anunciar("A partida não está rodando. Aperte Iniciar."); return; }
     audio(); processar(comando(e, txt));
   }
-  function passo() { processar(tick(e)); }
+  function passo() {
+    processar(tick(e)); ambienteAtualizar();
+    // Vida baixa: batimentos no fundo, a cada três passos de tempo.
+    if (rodando && e.hp > 0 && e.hp <= e.hpMax * 0.3 && e.t % 3 === 0) tocar("coracao", { ganho: 0.8 });
+  }
   function iniciar() {
-    parar(); e = novo(nivelSel.value); narr = falaSel.value; audio(); rodando = true; desenhar();
-    H.anunciar("Partida iniciada, nível " + e.nome + ". " + (semAudio ? "Seu navegador não tem áudio estéreo, então vou descrever o que aparece. " : "Use fones de ouvido. ") + "Você está na margem oeste do riacho, olhando para leste, com um revólver de 6 balas. Bandidos tomaram o vilarejo: ache a ponte e derrube o chefe, na prefeitura. Aperte H para a ajuda.");
+    parar(); fila = []; falando = false; if (espera) { raiz.clearTimeout(espera); espera = null; }
+    e = novo(nivelSel.value); narr = falaSel.value; msPorLetra = Number(velSel.value) || 50; audio(); ajustarVolume(Number(volSel.value) || 1.8); rodando = true; desenhar(); ambienteIniciar(); ambienteAtualizar();
+    H.anunciar("Partida iniciada, nível " + e.nome + ". " + (semAudio ? "Seu navegador não tem áudio estéreo, então vou descrever o que aparece. " : "Use fones de ouvido. ") + "Você está na margem oeste do riacho, olhando para leste, com um revólver de 6 balas. Bandidos tomaram o vilarejo: ache a ponte e derrube o chefe, na prefeitura, a leste. Aperte L para saber onde você está e H para a ajuda.");
     relogio = raiz.setInterval(passo, NIVEIS[e.nivel].tick); campoTeclas.focus();
   }
   iniciarBtn.addEventListener("click", iniciar);
-  pararBtn.addEventListener("click", function () { parar(); H.anunciar("Partida pausada. " + status(e) + " Aperte Iniciar para recomeçar do zero."); });
+  pararBtn.addEventListener("click", function () { parar(); fila = []; H.anunciar("Partida pausada. " + status(e) + " Aperte Iniciar para recomeçar do zero."); });
   var temposTeste = [];
   testeSom.addEventListener("click", function () {
     var c = audio();
     if (!c) { H.anunciar("Seu navegador não oferece áudio estéreo. O jogo descreve o que acontece em texto."); return; }
     temposTeste.forEach(function (t) { raiz.clearTimeout(t); }); temposTeste = [];
-    function tocar() {
-      somInimigo({ tipo: "bandido", f: 3, s: -3, d: 4 });
-      temposTeste.push(setTimeout(function () { somInimigo({ tipo: "cao", f: 3, s: 0, d: 3 }); }, 900));
-      temposTeste.push(setTimeout(function () { somInimigo({ tipo: "rato", f: 3, s: 3, d: 4 }); }, 1800));
-      temposTeste.push(setTimeout(function () { SOM.tiro({ arma: "revolver" }); }, 2700));
-      temposTeste.push(setTimeout(function () { H.anunciar("Você ouviu passos de bandido só no fone esquerdo, o grunhido grave de um cão no meio, o guincho agudo de um rato só no direito e um tiro de revólver. Se algo veio do lado errado, confira os fones."); }, 3500));
+    function sequencia() {
+      var passos = [
+        function () { tocar("passo", { op: { piso: "rua" }, p: -0.8, ganho: 0.9 }); tocar("resmungo", { op: { tom: 1 }, p: -0.8, ganho: 1, atraso: 0.35 }); },
+        function () { tocar("rosnado", { p: 0, ganho: 1 }); },
+        function () { tocar("guincho", { p: 0.8, ganho: 1 }); },
+        function () { tocar("revolver", { ganho: 1.3 }); },
+        function () { tocar("espingarda", { ganho: 1.3 }); },
+        function () { tocar("dor", { p: 0.5, ganho: 1 }); }
+      ];
+      passos.forEach(function (f, i) { temposTeste.push(setTimeout(f, i * 1500)); });
+      temposTeste.push(setTimeout(function () { H.anunciar("Você ouviu, em ordem: passos e um resmungo de bandido só no fone esquerdo, o rosnado de um cão no centro, o guincho de um rato só no direito, um tiro de revólver, um tiro de espingarda e o gemido de um bandido ferido. Se algo veio do lado errado, confira os fones. Se estiver baixo, aumente o volume dos efeitos."); }, 6 * 1500 + 600));
     }
     if (c.state === "suspended" && c.resume) {
-      var feito = false, ir = function () { if (!feito) { feito = true; tocar(); } };
+      var feito = false, ir = function () { if (!feito) { feito = true; sequencia(); } };
       try { var pr = c.resume(); if (pr && pr.then) pr.then(ir, ir); else ir(); } catch (x) { ir(); }
       temposTeste.push(setTimeout(ir, 500));
-    } else tocar();
+    } else sequencia();
   });
-  var TECLAS = { w: "norte", a: "oeste", s: "sul", d: "leste", ArrowUp: "mira cima", ArrowDown: "mira baixo", ArrowLeft: "mira esquerda", ArrowRight: "mira direita", " ": "atirar", q: "centralizar", x: "pegar", c: "curar", e: "status", o: "olhar", h: "ajuda", "1": "arma 1", "2": "arma 2", "3": "arma 3", "4": "arma 4" };
+  var TECLAS = { w: "norte", a: "oeste", s: "sul", d: "leste", ArrowUp: "mira cima", ArrowDown: "mira baixo", ArrowLeft: "mira esquerda", ArrowRight: "mira direita", " ": "atirar", q: "centralizar", x: "pegar", c: "curar", e: "status", l: "onde", o: "olhar", h: "ajuda", "1": "arma 1", "2": "arma 2", "3": "arma 3", "4": "arma 4" };
   function tecla(ev) {
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return null;
     if (ev.key === "Shift" && ev.code === "ShiftRight") return "recarregar";
@@ -674,5 +801,6 @@
   comandoCampo.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); var v = comandoCampo.value; comandoCampo.value = ""; if (v) acao(v); } });
   desenhar();
   H.anunciar("Vilarejo Sitiado. Use fones de ouvido. Aperte Testar o som para conferir o estéreo e depois Iniciar. O botão Ajuda explica os controles.");
+  api.dizer = dizer;
   raiz.HeimdallVilarejo = api;
 })(typeof window !== "undefined" ? window : globalThis);

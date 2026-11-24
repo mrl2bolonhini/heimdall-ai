@@ -1,4 +1,4 @@
-// Bacará (punto banco) com créditos de mentira (nunca dinheiro de verdade). Você aposta no jogador, na banca ou no empate;
+// Bacará (punto banco) com créditos virtuais (nunca dinheiro de verdade). Você aposta no jogador, na banca ou no empate;
 // o jogo dá as cartas, aplica sozinho as regras da terceira carta e lê tudo. Valores: Ás vale 1, de 2 a 9 valem o número, 10, Valete, Dama e Rei valem 0; a mão vale a soma módulo 10.
 // Pagamentos: jogador 1 para 1; banca 1 para 1, mas devolve a aposta (empate) quando a banca vence com três cartas somando 7; empate 8 para 1; no empate, as apostas no jogador e na banca são devolvidas.
 (function (raiz) {
@@ -128,7 +128,7 @@
   [H.el("label", { "for": "nivel", texto: "Nível" }), nivelSel, novoBtn, H.som ? H.som.botao() : H.el("span"), H.el("label", { "for": "valor", texto: "Valor da aposta" }), valorSel, lados, extras, form].forEach(function (x) { jogo.appendChild(x); });
   function falar(m, cmd) { var c = H.som && H.som.cue(m, cmd); if (c) H.som.anunciar(c, m); else H.anunciar(m); campo.disabled = e.fim; }
   form.addEventListener("submit", function (ev) { ev.preventDefault(); var cmd = campo.value, r = comando(e, cmd); campo.value = ""; falar(r.msg, cmd); if (!e.fim) campo.focus(); });
-  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos de mentira. Escolha o valor e o lado: jogador, banca ou empate. O jogo dá as cartas e lê tudo. Exemplo: apostar 10 banca."); }
+  function comecar() { e = novo(nivelSel.value); campo.disabled = false; H.anunciar("Novo jogo, nível " + e.nome + ", com " + e.saldo + " créditos virtuais. Escolha o valor e o lado: jogador, banca ou empate. O jogo dá as cartas e lê tudo. Exemplo: apostar 10 banca."); }
   novoBtn.addEventListener("click", comecar);
   comecar();
 })(typeof window !== "undefined" ? window : globalThis);
