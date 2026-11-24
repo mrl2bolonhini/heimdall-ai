@@ -20,6 +20,11 @@ const SEGREDOS = ["HEIMDALL_CONTINUIDADE_SENHA", "HEIMDALL_R2_ENDPOINT", "HEIMDA
 const PORTA_SAUDE = 8080;
 
 let foraAte = 0;   // por isolate: até quando pular a sonda ao Mac
+let contatoGravadoEm = 0;   // por isolate: última vez que o contato com o Mac foi gravado (limita as gravações)
+let pausaCache = { quando: 0, valor: false };   // por isolate: a pausa é lida do Durable Object no máximo a cada 30 s
+export function reiniciarMemoria() { foraAte = 0; contatoGravadoEm = 0; pausaCache = { quando: 0, valor: false }; CERTS.quando = 0; CERTS.chaves = null; }   // para os testes
+const GRAVAR_CONTATO_A_CADA_MS = 300000;
+const CERTS = { quando: 0, chaves: null };
 
 const html = (corpo, status = 200) => new Response(corpo, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -42,6 +47,101 @@ export function aviso(copia) {
   if (copia && !isNaN(d)) quando = d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" });
   return `<div class="aviso" role="status">Modo de continuidade: o Heimdall está atendendo pela nuvem enquanto o servidor principal está indisponível. `
     + `As páginas são somente para leitura e mostram os dados de ${esc(quando)}.</div>`;
+}
+
+const CSS = "body{font-family:-apple-system,system-ui,sans-serif;margin:0;background:#fff;color:#1a1a1a;line-height:1.5}main{max-width:44rem;margin:0 auto;padding:1.5rem}"
+  + "a,button{color:#0b57d0;font:inherit}button{padding:.5rem 1rem;border:2px solid #0b57d0;background:#fff;border-radius:.4rem;cursor:pointer}"
+  + "a:focus-visible,button:focus-visible{outline:3px solid #b45309;outline-offset:2px}"
+  + "@media(prefers-color-scheme:dark){body{background:#121212;color:#eee}a,button{color:#8ab4f8}button{background:#121212;border-color:#8ab4f8}}";
+
+function pagina(titulo, corpo, status = 200) {
+  return html(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">`
+    + `<title>${esc(titulo)}</title><style>${CSS}</style></head><body><main><h1>${esc(titulo)}</h1>${corpo}</main></body></html>`, status);
+}
+
+const quandoTexto = (iso) => {
+  const d = new Date(iso);
+  return iso && !isNaN(d) ? d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" }) : "";
+};
+
+// Página dos serviços que dependem do Mac (chat, lab, fluxos): informa a queda, o último contato e o que segue disponível em leitura.
+export function paginaForaDoAr(nome, contato, leitura) {
+  const q = quandoTexto(contato);
+  const links = (leitura || []).map((h) => `<li><a href="https://${esc(h)}/">${esc(h)}</a></li>`).join("");
+  return pagina(`${nome} indisponível no momento`,
+    `<p role="status">O ${esc(nome)} depende do servidor principal, que está fora do ar${q ? `. Último contato: ${esc(q)}` : ""}. `
+    + `Ele volta sozinho quando o servidor principal voltar.</p>`
+    + (links ? `<h2>Disponível em modo somente leitura</h2><ul>${links}</ul>` : ""), 503);
+}
+
+function b64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); }
+
+// Confere o token de identidade do Cloudflare Access (cabeçalho Cf-Access-Jwt-Assertion): assinatura RS256, validade e AUD. Sem configuração, recusa.
+export async function verificarAccess(request, env, buscar = fetch) {
+  const jwt = request.headers.get("Cf-Access-Jwt-Assertion") || "";
+  const auds = String(env.HEIMDALL_CFACCESS_AUD || "").split(",").map((a) => a.trim()).filter(Boolean);
+  let equipe = String(env.HEIMDALL_CFACCESS_TEAM || "").trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  if (!jwt || !auds.length || !equipe) return false;
+  if (!equipe.includes(".")) equipe += ".cloudflareaccess.com";
+  const partes = jwt.split(".");
+  if (partes.length !== 3) return false;
+  try {
+    const cab = JSON.parse(new TextDecoder().decode(b64u(partes[0])));
+    const corpo = JSON.parse(new TextDecoder().decode(b64u(partes[1])));
+    if (cab.alg !== "RS256") return false;
+    if (Date.now() - CERTS.quando > 3600000 || !CERTS.chaves) {
+      const r = await buscar(`https://${equipe}/cdn-cgi/access/certs`);
+      CERTS.chaves = (await r.json()).keys || [];
+      CERTS.quando = Date.now();
+    }
+    const jwk = CERTS.chaves.find((k) => k.kid === cab.kid);
+    if (!jwk) return false;
+    const chave = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+    const ok = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", chave, b64u(partes[2]), new TextEncoder().encode(partes[0] + "." + partes[1]));
+    if (!ok) return false;
+    const aud = Array.isArray(corpo.aud) ? corpo.aud : [corpo.aud];
+    return aud.some((a) => auds.includes(a)) && typeof corpo.exp === "number" && corpo.exp * 1000 > Date.now();
+  } catch (e) { return false; }
+}
+
+export function paginaPainel(estado, macNoAr) {
+  const pausada = !!estado.pausa;
+  return pagina("Nuvem do Heimdall",
+    `<p role="status">Servidor principal (Mac): <strong>${macNoAr ? "no ar" : "fora do ar"}</strong>. `
+    + (estado.contato ? `Último contato: ${esc(quandoTexto(estado.contato))}. ` : "Nenhum contato registrado ainda. ")
+    + (estado.copia ? `Última cópia de dados lida pela nuvem: ${esc(quandoTexto(estado.copia))}.` : "A nuvem ainda não leu nenhuma cópia nesta sessão.") + `</p>`
+    + `<h2>Continuidade</h2><p>Situação: <strong>${pausada ? "pausada" : "ativa"}</strong>. `
+    + (pausada ? "Com a continuidade pausada, os sites só são repassados ao Mac e a nuvem não assume." : "Se o Mac cair, os sites de dados passam a ser atendidos pela nuvem, somente para leitura.") + `</p>`
+    + `<form method="post" action="/continuidade/pausa"><input type="hidden" name="pausar" value="${pausada ? "0" : "1"}">`
+    + `<button type="submit">${pausada ? "Retomar a continuidade" : "Pausar a continuidade"}</button></form>`
+    + `<p>O consumo do mês e o estado da subida estão no Controls do Mac, na aba Nuvem.</p>`);
+}
+
+const dono = (env) => env.CONTAINER.get(env.CONTAINER.idFromName("principal"));
+async function estadoNuvem(env) {
+  try { return await dono(env).estadoNuvem(); } catch (e) { return {}; }
+}
+
+async function pausada(env) {
+  if (Date.now() - pausaCache.quando < 30000) return pausaCache.valor;
+  const e = await estadoNuvem(env);
+  pausaCache = { quando: Date.now(), valor: !!e.pausa };
+  return pausaCache.valor;
+}
+
+async function painel(request, env, macNoAr) {
+  if (!(await verificarAccess(request, env, env.BUSCAR || fetch))) return pagina("Acesso negado", `<p role="alert">Esta página exige login pelo Cloudflare Access.</p>`, 403);
+  const url = new URL(request.url);
+  if (request.method === "POST" && url.pathname === "/continuidade/pausa") {
+    const origem = request.headers.get("Origin");
+    if (request.headers.get("Sec-Fetch-Site") === "cross-site" || (origem && new URL(origem).hostname !== url.hostname))
+      return pagina("Pedido recusado", `<p role="alert">Origem não aceita.</p>`, 403);
+    const valor = (await request.formData()).get("pausar") === "1";
+    await dono(env).definirPausa(valor);
+    pausaCache = { quando: Date.now(), valor };
+    return Response.redirect(url.origin + "/continuidade", 303);
+  }
+  return paginaPainel(await estadoNuvem(env), macNoAr);
 }
 
 export async function viaContainer(original, env, ctx) {
@@ -67,16 +167,36 @@ export async function viaContainer(original, env, ctx) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const host = url.hostname;
     const rotas = JSON.parse(env.ROTAS || "{}");
-    if (env.CONTINUIDADE !== "1" || !rotas[url.hostname]) return fetch(request);   // desligado ou site que não é do Heimdall: só repassa
+    const fora = JSON.parse(env.FORA || "{}");   // sites que dependem do Mac: nome do site -> nome para exibir
+    const eDados = !!rotas[host], eFora = !!fora[host], ePainel = !!env.PAINEL && host === env.PAINEL;
+    if (env.CONTINUIDADE !== "1" || !(eDados || eFora || ePainel)) return fetch(request);   // desligado ou site que não é do Heimdall: só repassa
+    if (!ePainel && (await pausada(env))) return fetch(request);   // continuidade pausada pela página de controle
     const original = request.clone();   // o corpo só pode ser lido uma vez: guarda uma cópia para o contêiner
-    if (Date.now() >= foraAte) {
-      try {
-        const r = await fetch(request, { signal: AbortSignal.timeout(ESPERA_MAC_MS) });
-        if (!FALHAS_DO_MAC.has(r.status)) return r;
-      } catch (e) { /* sem resposta: o Mac está fora */ }
-      foraAte = Date.now() + PAUSA_SONDA_MS;
+    if (ePainel && url.pathname.startsWith("/continuidade")) {   // caminho da nuvem: sempre atendido por aqui, com o Mac no ar ou não
+      let noAr = false;
+      try { noAr = !FALHAS_DO_MAC.has((await fetch(new Request(url.origin + "/", { method: "HEAD" }), { signal: AbortSignal.timeout(ESPERA_MAC_MS) })).status); } catch (e) { /* fora */ }
+      return painel(original, env, noAr);
     }
+    if (ePainel && request.method === "POST") return fetch(request);   // o resto é do Controls do Mac
+    if (!ePainel || request.method === "GET" || request.method === "HEAD") {
+      if (Date.now() >= foraAte) {
+        try {
+          const r = await fetch(request, { signal: AbortSignal.timeout(ESPERA_MAC_MS) });
+          if (!FALHAS_DO_MAC.has(r.status)) {
+            if (Date.now() - contatoGravadoEm > GRAVAR_CONTATO_A_CADA_MS) {   // registra o último contato com o Mac, sem esperar
+              contatoGravadoEm = Date.now();
+              ctx.waitUntil((async () => { try { await env.CONTAINER.get(env.CONTAINER.idFromName("principal")).registrarContato(new Date().toISOString()); } catch (e) { /* sem registro */ } })());
+            }
+            return r;
+          }
+        } catch (e) { /* sem resposta: o Mac está fora */ }
+        foraAte = Date.now() + PAUSA_SONDA_MS;
+      }
+    }
+    if (ePainel) return painel(original, env, false);
+    if (eFora) return paginaForaDoAr(fora[host], (await estadoNuvem(env)).contato, Object.keys(rotas));
     return viaContainer(original, env, ctx);
   },
 };
@@ -87,6 +207,14 @@ export class Continuidade extends DurableObject {
     this.env = env;
     this.pronto = null;
     this.copia = "";
+  }
+
+  // Estado guardado no Durable Object (leve: não liga o contêiner): último contato com o Mac, pausa da continuidade e data da última cópia lida.
+  async registrarContato(iso) { await this.ctx.storage.put("contato", iso); }
+  async definirPausa(valor) { await this.ctx.storage.put("pausa", !!valor); }
+  async estadoNuvem() {
+    const m = await this.ctx.storage.get(["contato", "pausa", "copia"]);
+    return { contato: m.get("contato") || "", pausa: !!m.get("pausa"), copia: m.get("copia") || "" };
   }
 
   segredos() {
@@ -108,7 +236,11 @@ export class Continuidade extends DurableObject {
       for (let i = 0; i < 200; i++) {   // até cerca de 60 s
         try {
           const r = await c.getTcpPort(PORTA_SAUDE).fetch("http://container/health", { signal: AbortSignal.timeout(1000) });
-          if (r.ok) { this.copia = r.headers.get("X-Heimdall-Copia") || ""; return; }
+          if (r.ok) {
+            this.copia = r.headers.get("X-Heimdall-Copia") || "";
+            if (this.copia) await this.ctx.storage.put("copia", this.copia);
+            return;
+          }
         } catch (e) { /* ainda subindo */ }
         await new Promise((ok) => setTimeout(ok, 300));
       }

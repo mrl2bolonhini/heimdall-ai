@@ -211,7 +211,7 @@ confere("serviços: uma chave (role=switch) por serviço, com estado e sem botã
         and 'aria-checked="true"' in corpo and 'aria-checked="false"' in corpo and "Kuma: no ar" in corpo and "Aplicar" not in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo)
 confere("serviços: o próprio Controls não é desligável", "Controls" not in "".join(x["nome"] for x in hsv.catalogo()))
 confere("abas: tablist, tab com aria-selected, painel e atalho",
-        'role="tablist"' in corpo and corpo.count('role="tab"') == 6 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Atalho: Option Shift 1 a" in corpo and "Alt+Shift" not in corpo)
+        'role="tablist"' in corpo and corpo.count('role="tab"') == 7 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Atalho: Option Shift 1 a" in corpo and "Alt+Shift" not in corpo)
 confere("Ajustes é botão no topo e não aba", ">Ajustes</button>" in corpo and "Ajustes</a>" not in corpo.split("<main")[0])
 s_aj, c_aj, _ = req("GET", "/ajustes", cookie=token)
 confere("tela de Ajustes: sem abas de cima, com Voltar ao Controls", s_aj == 200 and 'role="tablist"' not in c_aj and "Voltar ao Controls" in c_aj and 'aria-current="true">Ajustes' in c_aj)
@@ -230,6 +230,33 @@ hcm.consultar = lambda dias=30, **k: {"ok": False, "erro": "O token não tem per
 s, corpo, _ = req("GET", "/monitor", cookie=token)
 confere("monitor: sem permissão, mostra o aviso com role=alert e nenhum valor inventado", s == 200 and 'role="alert"' in corpo and "permissão de ler análises" in corpo and "<caption>" not in corpo)
 hcm.consultar = _orig_consultar
+
+# --- aba Nuvem: continuidade, cópia, limites de gasto (sem rede: tudo trocado por respostas prontas) ---------------------
+import heimdall_nuvempainel as hnp  # noqa: E402
+_orig_estado, _orig_ligar, _orig_enviar = hnp.estado, hnp.ligar, hnp.enviar_agora
+hnp.estado = lambda **k: {"ligado": True, "senha": True, "painel": hnp.PAINEL_NUVEM, "teto": 15.0,
+                          "copia": {"ok": True, "quando": "2026-11-23T23:28:34+00:00", "arquivos": ["db/a.db", "db/b.db"]},
+                          "gastos": {"ok": True, "itens": [{"produto": "Durable Objects (contêiner)", "acao": "Bloqueio", "limite": 5.0, "situacao": "below_limit"}]}}
+s, corpo, _ = req("GET", "/nuvem", cookie=token)
+confere("nuvem: estado, cópia, tabela de limites com caption e scope e um só h1",
+        s == 200 and "Continuidade: <strong>ligada</strong>" in corpo and "(2 bancos)" in corpo and "<caption>Limites de gasto" in corpo and 'scope="row">Durable Objects' in corpo
+        and "US$ 5,00" in corpo and "abaixo do limite" in corpo and "US$ 15 por mês" in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo, corpo[:300])
+confere("nuvem: aparece como aba e com o link da página de controle na nuvem", 'role="tab"' in corpo and ">Nuvem<" in corpo and "controls.heimdall-ai.tech/continuidade" in corpo)
+gravado = []
+hnp.ligar = lambda v: (gravado.append(v), "")[1]
+hnp.enviar_agora = lambda: {"ok": True, "enviados": ["db/a.db"], "iguais": ["db/b.db"]}
+s, _, _ = req("POST", "/nuvem/acao", {"acao": "desligar", "csrf": "errado"}, cookie=token)
+confere("nuvem: ação sem CSRF válido é recusada", s == 403 and gravado == [])
+s, _, _ = req("POST", "/nuvem/acao", {"acao": "desligar", "csrf": CSRF}, cookie=token)
+confere("nuvem: desligar grava o interruptor", s in (302, 303) and gravado == [False])
+s, _, _ = req("POST", "/nuvem/acao", {"acao": "enviar", "csrf": CSRF}, cookie=token)
+s2, corpo2, _ = req("GET", "/nuvem", cookie=token)
+confere("nuvem: enviar cópia mostra o resultado", s in (302, 303) and "Cópia enviada: 1 bancos" in corpo2, corpo2[-400:])
+hnp.estado = lambda **k: {"ligado": False, "senha": False, "painel": hnp.PAINEL_NUVEM, "teto": 15.0, "copia": {"ok": False, "erro": "A senha da continuidade ainda não foi criada."},
+                          "gastos": {"ok": False, "erro": "O token não tem a permissão Faturamento (leitura)."}}
+s, corpo, _ = req("GET", "/nuvem", cookie=token)
+confere("nuvem: sem configuração, mostra os motivos sem inventar valores", s == 200 and "desligada" in corpo and "senha da continuidade" in corpo and "Faturamento" in corpo and "<caption>Limites" not in corpo)
+hnp.estado, hnp.ligar, hnp.enviar_agora = _orig_estado, _orig_ligar, _orig_enviar
 s, corpo, _ = req("GET", "/monitor", cookie=None)
 confere("monitor: exige login", s in (302, 303, 401, 403) or "Entrar" in corpo or "senha" in corpo.lower())
 

@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-23 - Nuvem: página de fora do ar, controle e aba Nuvem
+- O Worker de continuidade agora mostra uma página de fora do ar para o chat, o Lab e o painel de fluxos quando o Mac cai, com o último contato e a lista dos sites que seguem em leitura. O status e o Kuma continuam fora do Worker, porque são eles que avisam da queda.
+- Nova página de controle da nuvem em controls.heimdall-ai.tech/continuidade (também aparece sozinha quando o Mac está fora): estado do Mac, último contato, data da última cópia lida e botão para pausar ou retomar o failover. Exige o login do Cloudflare Access; o Worker confere a assinatura, a validade e o AUD do token, e recusa quando a configuração falta. A pausa fica guardada no Durable Object e não precisa de token da Cloudflare na nuvem.
+- Nova aba Nuvem no Controls do Mac: continuidade ligada ou desligada, data da última cópia, limites de gasto da Cloudflare (Workers e Durable Objects) e botões Ligar ou Desligar e Enviar cópia agora.
+- Decisão: o chat fica fora da nuvem por ora; avaliar alternativas mais leves ao Open WebUI antes.
+- Testes: cloudflare/teste_continuity.mjs (ampliado), tests/core/teste_nuvempainel.py, tests/controls/teste_controls.py. Não testado: Safari com VoiceOver, implantação e Access reais.
+
 ## 2026-11-23 - Variáveis da continuidade no editor do .env
 - HEIMDALL_CONTINUIDADE, HEIMDALL_CONTINUIDADE_SENHA (oculta como segredo) e HEIMDALL_CF_ALERTA_EMAIL agora aparecem no editor de Ajustes do Controls, com descrição.
 

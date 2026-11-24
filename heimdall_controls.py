@@ -62,6 +62,7 @@ import heimdall_config as config  # noqa: E402
 import heimdall_config_ajuda as ajuda  # noqa: E402
 import heimdall_design as design  # noqa: E402
 import heimdall_kuma as kuma  # noqa: E402
+import heimdall_nuvempainel as nuvempainel  # noqa: E402
 import heimdall_servicos as servicos  # noqa: E402
 import heimdall_shell as hshell  # noqa: E402
 import heimdall_usuarios as usuarios
@@ -173,7 +174,7 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/monitor", "Monitor"), ("/usuarios", "Usuários"), ("/manutencao", "Manutenção")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/monitor", "Monitor"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem"), ("/manutencao", "Manutenção")]
 
 _shell = None
 
@@ -531,6 +532,49 @@ def pg_usuarios(q: dict, sess: dict) -> tuple:
     return "Usuários", corpo
 
 
+SITUACAO_LIMITE = {"below_limit": "abaixo do limite", "above_limit": "limite atingido"}
+
+
+def pg_nuvem(q: dict, sess: dict) -> tuple:
+    """Continuidade na nuvem: interruptor, última cópia dos dados, gastos contra o teto mensal e o endereço da página de controle na nuvem."""
+    est = nuvempainel.estado()
+    csrf = e(sess["csrf"])
+    cp = est["copia"]
+    if cp.get("ok"):
+        quando = cp.get("quando", "")
+        try:
+            quando = datetime.fromisoformat(quando).astimezone().strftime("%d/%m/%Y às %H:%M")
+        except ValueError:
+            pass
+        copia = f"Última cópia dos dados na nuvem: {e(quando)} ({len(cp.get('arquivos', []))} bancos)."
+    else:
+        copia = "Cópia dos dados: " + e(cp.get("erro", "ainda não enviada."))
+    ligado = est["ligado"]
+    sit = (f'<p role="status">Continuidade: <strong>{"ligada" if ligado else "desligada"}</strong>. ' + (
+        "O Mac envia as cópias cifradas à nuvem e, se cair, os sites de dados passam a ser atendidos por lá, somente para leitura." if ligado
+        else "Nada é enviado à nuvem e o Heimdall só roda no Mac.") + f' {copia}</p>')
+
+    def botao(acao, rotulo, desc):
+        return (f'<li><form class="linha" method="post" action="/nuvem/acao"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="acao" value="{acao}">'
+                f'<button type="submit" aria-describedby="d-{acao}">{e(rotulo)}</button></form> <span id="d-{acao}">{e(desc)}</span></li>')
+    acoes = ('<h2>Ações</h2><ul class="acoes">'
+             + botao("desligar" if ligado else "ligar", "Desligar a continuidade" if ligado else "Ligar a continuidade",
+                     "Grava HEIMDALL_CONTINUIDADE no .env. Vale já para o envio das cópias; o failover da nuvem tem a sua própria pausa, na página de controle da nuvem abaixo.")
+             + botao("enviar", "Enviar cópia agora", "Envia ao R2 os bancos que mudaram desde a última cópia (exige a continuidade ligada).") + "</ul>")
+    g = est["gastos"]
+    if g.get("ok") and g["itens"]:
+        linhas = "".join(f'<tr><th scope="row">{e(i["produto"])}</th><td>{e(i["acao"])}</td><td>US$ {f"{i['limite']:.2f}".replace(".", ",")}</td><td>{e(SITUACAO_LIMITE.get(i["situacao"], i["situacao"] or "sem dado"))}</td></tr>' for i in g["itens"])
+        gastos = ('<h2>Limites de gasto</h2><table><caption>Limites de gasto da Cloudflare para Workers e contêiner</caption><thead><tr><th scope="col">Produto</th><th scope="col">Tipo</th>'
+                  f'<th scope="col">Limite</th><th scope="col">Situação</th></tr></thead><tbody>{linhas}</tbody></table>'
+                  f'<p>O teto combinado do projeto é US$ {est["teto"]:.0f} por mês. O valor já gasto no mês está no painel de faturamento da Cloudflare; aqui aparece só a situação de cada limite.</p>')
+    else:
+        gastos = '<h2>Limites de gasto</h2><p role="status">' + e(g.get("erro", "Nenhum limite encontrado. Rode ./scripts/limites_gasto_cloudflare.sh.")) + "</p>"
+    nuvem_url = e(est["painel"])
+    painel = (f'<h2>Página de controle na nuvem</h2><p>Quando o Mac cai, o endereço de controle mostra o estado da nuvem e permite pausar ou retomar o failover. '
+              f'Ela também funciona com o Mac no ar, pelo endereço <a href="{nuvem_url}">{nuvem_url}</a>, e exige login pelo Cloudflare Access.</p>')
+    return "Nuvem", sit + acoes + gastos + painel
+
+
 def pg_manutencao(q: dict, sess: dict) -> tuple:
     csrf = e(sess["csrf"])
 
@@ -582,7 +626,7 @@ def pg_monitor(q: dict, sess: dict) -> tuple:
     return "Monitor da Cloudflare", corpo
 
 
-ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/monitor": pg_monitor, "/usuarios": pg_usuarios, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
+ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/monitor": pg_monitor, "/usuarios": pg_usuarios, "/nuvem": pg_nuvem, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
 
 SCRIPT = r"""
 (function(){
@@ -1188,6 +1232,18 @@ class Painel(nuvem.ManipuladorBase):
                 except usuarios.ErroCloudflare as ex:
                     sess["flash"] = ("erro", str(ex))
                 self._ir("/usuarios")
+                return
+            elif rota == "/nuvem/acao":
+                acao = campos.get("acao", "")
+                if acao in ("ligar", "desligar"):
+                    motivo = nuvempainel.ligar(acao == "ligar")
+                    auditar(ip, "nuvem: " + acao, "" if not motivo else "(recusado)")
+                    sess["flash"] = ("erro", motivo) if motivo else ("ok", "Continuidade " + ("ligada" if acao == "ligar" else "desligada") + ". Vale para o envio das cópias já na próxima execução.")
+                elif acao == "enviar":
+                    r = nuvempainel.enviar_agora()
+                    auditar(ip, "nuvem: enviar cópia", "" if r.get("ok") else "(falhou)")
+                    sess["flash"] = (("ok", r.get("aviso") or f"Cópia enviada: {len(r.get('enviados', []))} bancos novos ou alterados, {len(r.get('iguais', []))} iguais.") if r.get("ok") else ("erro", r.get("erro", "Falhou.")))
+                self._ir("/nuvem")
                 return
             elif rota == "/servicos/alternar":
                 self._json(200, self._alternar_servico(campos, ip))
