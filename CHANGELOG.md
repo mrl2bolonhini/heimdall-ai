@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-24 - Roadmap conferido com o que já existe
+- Saíram do roadmap por já estarem prontos: o Learn (fases de 1 a 5, com dados por convidado) e o Notion como destino opcional das notas. Atualizados: Perguntas ao banco pelo chat (ferramentas e 8 modelos criados por heimdall chat --import; falta validar com perguntas reais), migração para a Cloudflare (fase 1 com o LiteLLM já ligada; fase 2 só com a cópia cifrada dos bancos), app do Mac (versão em uso; falta o .pkg e a notarização), continuidade (primeira versão no código, sem implantar), glicemia (regras já existem; falta o dado) e a regra antiga de que saúde e finanças não saem do Mac, que foi abandonada em 21/11/2026.
+- Novo item: dados separados por pessoa nos demais serviços (Notes, News, Games, Chat, site de Saúde e backup de db/pessoas).
+- Não conferido no Mac: o estado real dos modelos do Open WebUI e do app compilado; a conferência foi pelo código e pelo CHANGELOG.
+
 ## 2026-11-24 - Plano de migração para servidor
 - Novo guides/migracao_servidor.txt: plano em fases (0 a 7) para hospedar o Heimdall em uma VPS no Brasil, com o servidor como fonte dos dados, o Mac como ponte dos apps da Apple, embeddings na Cloudflare (bge-m3 no Workers AI, a validar), Workers VPC beta como rede privada entre os Workers e o servidor, e chat próprio no lugar do Open WebUI. Cada fase tem interruptor no .env, cópia de volta no Mac e custo conferido contra o teto de US$ 15 da Cloudflare; a VPS entra como item novo de custo. Ainda não implementado.
 - Não testado: contrato e Docker na Locaweb, Workers VPC com a VPS e embeddings no caminho /compat do AI Gateway.
