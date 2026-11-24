@@ -22,10 +22,11 @@ const PORTA_SAUDE = 8080;
 let foraAte = 0;   // por isolate: até quando pular a sonda ao Mac
 let contatoGravadoEm = 0;   // por isolate: última vez que o contato com o Mac foi gravado (limita as gravações)
 let pausaCache = { quando: 0, valor: false };   // por isolate: a pausa é lida do Durable Object no máximo a cada 30 s
-export function reiniciarMemoria() { foraAte = 0; contatoGravadoEm = 0; pausaCache = { quando: 0, valor: false }; CERTS.quando = 0; CERTS.chaves = null; CONSUMO.quando = 0; CONSUMO.dados = null; }   // para os testes
+export function reiniciarMemoria() { foraAte = 0; contatoGravadoEm = 0; pausaCache = { quando: 0, valor: false }; CERTS.quando = 0; CERTS.chaves = null; CONSUMO.quando = 0; CONSUMO.dados = null; AVISOS.quando = 0; AVISOS.dados = null; }   // para os testes
 const GRAVAR_CONTATO_A_CADA_MS = 300000;
 const CERTS = { quando: 0, chaves: null };
 const CONSUMO = { quando: 0, dados: null };   // por isolate: o consumo do mês é consultado no máximo a cada 5 min
+const AVISOS = { quando: 0, dados: null };
 const TETO_MENSAL = 15;   // US$ por mês (regra do projeto)
 
 const html = (corpo, status = 200) => new Response(corpo, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
@@ -130,6 +131,33 @@ export async function consumoMes(env, buscar = fetch) {
   return dados;
 }
 
+// Últimos avisos enviados pela Cloudflare à conta (histórico de notificações). Mesmo token de leitura (Conta, Notificações, Leitura).
+export async function avisosCloudflare(env, buscar = fetch) {
+  const token = env.HEIMDALL_CF_LEITURA_TOKEN, conta = env.CLOUDFLARE_ACCOUNT_ID;
+  if (!token || !conta) return { ok: false, erro: "Token de leitura não configurado na nuvem." };
+  if (AVISOS.dados && Date.now() - AVISOS.quando < 300000) return AVISOS.dados;
+  let dados;
+  try {
+    const r = await buscar(`https://api.cloudflare.com/client/v4/accounts/${conta}/alerting/v3/history?per_page=15`, { headers: { Authorization: "Bearer " + token }, signal: AbortSignal.timeout(8000) });
+    if (r.status === 403) dados = { ok: false, erro: "O token de leitura não tem a permissão Notificações (leitura)." };
+    else if (!r.ok) dados = { ok: false, erro: `A Cloudflare respondeu HTTP ${r.status} à consulta de avisos.` };
+    else {
+      const itens = ((await r.json()).result || []).map((l) => ({ quando: l.sent || "", nome: l.name || l.alert_type || "Aviso", texto: String(l.alert_body || l.description || "").slice(0, 300) }))
+        .sort((a, b) => (a.quando < b.quando ? 1 : -1)).slice(0, 15);
+      dados = { ok: true, itens };
+    }
+  } catch (e) { dados = { ok: false, erro: "Não consegui consultar os avisos agora." }; }
+  AVISOS.dados = dados; AVISOS.quando = Date.now();
+  return dados;
+}
+
+export function blocoAvisos(a) {
+  if (!a || !a.ok) return `<h2>Avisos da Cloudflare</h2><p role="status">${esc((a && a.erro) || "Avisos indisponíveis.")}</p>`;
+  if (!a.itens.length) return `<h2>Avisos da Cloudflare</h2><p role="status">Nenhum aviso nos últimos dias.</p>`;
+  const linhas = a.itens.map((i) => `<tr><th scope="row">${esc(quandoTexto(i.quando) || i.quando)}</th><td>${esc(i.nome)}</td><td>${esc(i.texto)}</td></tr>`).join("");
+  return `<h2>Avisos da Cloudflare</h2><table><caption>Últimos avisos enviados pela Cloudflare à conta</caption><thead><tr><th scope="col">Data</th><th scope="col">Aviso</th><th scope="col">Mensagem</th></tr></thead><tbody>${linhas}</tbody></table>`;
+}
+
 const usd = (n) => "US$ " + Number(n).toFixed(2).replace(".", ",");
 
 export function blocoConsumo(c) {
@@ -139,7 +167,7 @@ export function blocoConsumo(c) {
     + (linhas ? `<table><caption>Consumo faturável do mês por serviço</caption><thead><tr><th scope="col">Serviço</th><th scope="col">Valor</th></tr></thead><tbody>${linhas}</tbody></table>` : "<p>Nenhum consumo faturável até agora.</p>");
 }
 
-export function paginaPainel(estado, macNoAr, consumo) {
+export function paginaPainel(estado, macNoAr, consumo, avisos) {
   const pausada = !!estado.pausa;
   return pagina("Nuvem do Heimdall",
     `<p role="status">Servidor principal (Mac): <strong>${macNoAr ? "no ar" : "fora do ar"}</strong>. `
@@ -149,7 +177,7 @@ export function paginaPainel(estado, macNoAr, consumo) {
     + (pausada ? "Com a continuidade pausada, os sites só são repassados ao Mac e a nuvem não assume." : "Se o Mac cair, os sites de dados passam a ser atendidos pela nuvem, somente para leitura.") + `</p>`
     + `<form method="post" action="/continuidade/pausa"><input type="hidden" name="pausar" value="${pausada ? "0" : "1"}">`
     + `<button type="submit">${pausada ? "Retomar a continuidade" : "Pausar a continuidade"}</button></form>`
-    + blocoConsumo(consumo));
+    + blocoConsumo(consumo) + blocoAvisos(avisos));
 }
 
 const dono = (env) => env.CONTAINER.get(env.CONTAINER.idFromName("principal"));
@@ -176,7 +204,8 @@ async function painel(request, env, macNoAr) {
     pausaCache = { quando: Date.now(), valor };
     return Response.redirect(url.origin + "/continuidade", 303);
   }
-  return paginaPainel(await estadoNuvem(env), macNoAr, await consumoMes(env, env.BUSCAR || fetch));
+  const buscar = env.BUSCAR || fetch;
+  return paginaPainel(await estadoNuvem(env), macNoAr, await consumoMes(env, buscar), await avisosCloudflare(env, buscar));
 }
 
 export async function viaContainer(original, env, ctx) {

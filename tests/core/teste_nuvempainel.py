@@ -66,6 +66,15 @@ c = n.consumo({**ENV, "HEIMDALL_CF_LEITURA_TOKEN": "leitura"}, abrir_paygo)
 confere("consumo soma por serviço e usa o token de leitura", c["ok"] and abs(c["total"] - 6.75) < 1e-9 and c["itens"][0]["servico"] == "Workers Standard" and visto["auth2"] == "Bearer leitura" and visto["url2"].endswith("/billing/usage/paygo"), c)
 confere("consumo sem token de leitura usa o do .env", n.consumo(ENV, abrir_paygo)["ok"] and visto["auth2"] == "Bearer t")
 confere("consumo: 403 e 404 em português, sem valor inventado", "Faturamento" in n.consumo(ENV, abrir_403)["erro"] and not n.consumo(ENV, lambda r, t: (_ for _ in ()).throw(urllib.error.HTTPError(r.full_url, 404, "x", {}, None)))["ok"])
+def abrir_av(req, timeout):
+    visto["url3"] = req.full_url
+    return Resp(json.dumps({"result": [{"name": "Origem fora", "alert_type": "t", "alert_body": "caiu", "sent": "2026-11-23T21:00:00Z"},
+                                       {"alert_type": "ssl", "sent": "2026-11-23T22:00:00Z"}]}).encode())
+
+
+a = n.avisos(ENV, abrir_av)
+confere("avisos: lê o histórico, ordena do mais novo e limita", a["ok"] and a["itens"][0]["nome"] == "ssl" and a["itens"][1]["texto"] == "caiu" and "/alerting/v3/history" in visto["url3"], a)
+confere("avisos: 403 pede a permissão Notificações; sem token explica", "Notificações" in n.avisos(ENV, abrir_403)["erro"] and not n.avisos({})["ok"])
 confere("estado sem a senha de continuidade avisa e não derruba", e["ligado"] and not e["copia"]["ok"] and "heimdall continuity --prepare" in e["copia"]["erro"] and e["gastos"]["ok"])
 confere("estado desligado por padrão", not n.estado({}, abrir_ok, com_nuvem=False)["ligado"])
 print("\nTUDO OK" if not falhas else f"\n{falhas} FALHA(S)")

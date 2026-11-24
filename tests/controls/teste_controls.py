@@ -237,12 +237,14 @@ _orig_estado, _orig_ligar, _orig_enviar = hnp.estado, hnp.ligar, hnp.enviar_agor
 hnp.estado = lambda **k: {"ligado": True, "senha": True, "painel": hnp.PAINEL_NUVEM, "teto": 15.0,
                           "copia": {"ok": True, "quando": "2026-11-23T23:28:34+00:00", "arquivos": ["db/a.db", "db/b.db"]},
                           "gastos": {"ok": True, "itens": [{"produto": "Durable Objects (contêiner)", "acao": "Bloqueio", "limite": 5.0, "situacao": "below_limit"}]},
+                          "avisos": {"ok": True, "itens": [{"quando": "2026-11-23T21:00:00+00:00", "nome": "Origem fora", "tipo": "t", "texto": "O túnel caiu"}]},
                           "consumo": {"ok": True, "total": 6.75, "teto": 15.0, "itens": [{"servico": "Workers Standard", "custo": 5.0}, {"servico": "Containers", "custo": 1.75}]}}
 s, corpo, _ = req("GET", "/nuvem", cookie=token)
 confere("nuvem: estado, cópia, tabela de limites com caption e scope e um só h1",
         s == 200 and "Continuidade: <strong>ligada</strong>" in corpo and "(2 bancos)" in corpo and "<caption>Limites de gasto" in corpo and 'scope="row">Durable Objects' in corpo
         and "US$ 5,00" in corpo and "abaixo do limite" in corpo and "US$ 15 por mês" in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo, corpo[:300])
 confere("nuvem: consumo do mês com total, teto e tabela", "Total no mês: <strong>US$ 6,75</strong> de um teto de US$ 15,00" in corpo and "<caption>Consumo faturável do mês por serviço" in corpo and 'scope="row">Containers' in corpo and "perto do teto" not in corpo)
+confere("nuvem: avisos da Cloudflare em tabela com caption e scope", "<caption>Últimos avisos enviados pela Cloudflare" in corpo and "Origem fora" in corpo and "O túnel caiu" in corpo)
 confere("nuvem: aparece como aba e com o link da página de controle na nuvem", 'role="tab"' in corpo and ">Nuvem<" in corpo and "controls.heimdall-ai.tech/continuidade" in corpo)
 gravado = []
 hnp.ligar = lambda v: (gravado.append(v), "")[1]

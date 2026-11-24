@@ -74,6 +74,29 @@ def consumo(env: dict = None, abrir=None) -> dict:
     return {"ok": True, "total": sum(por.values()), "itens": itens, "teto": TETO_MENSAL}
 
 
+def avisos(env: dict = None, abrir=None, limite: int = 15) -> dict:
+    """Últimos avisos enviados pela Cloudflare à conta (histórico de notificações: queda, certificado, erro). Token: Conta, Notificações, Leitura."""
+    e = _env() if env is None else env
+    token = (e.get("HEIMDALL_CF_LEITURA_TOKEN") or e.get("CLOUDFLARE_API_TOKEN") or "").strip()
+    conta = e.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
+    if not token or not conta:
+        return {"ok": False, "erro": "Faltam o token e CLOUDFLARE_ACCOUNT_ID no .env."}
+    req = urllib.request.Request(f"https://api.cloudflare.com/client/v4/accounts/{conta}/alerting/v3/history?per_page={limite}", headers={"Authorization": "Bearer " + token})
+    try:
+        with (abrir or _abrir)(req, 20) as r:
+            linhas = json.load(r).get("result") or []
+    except urllib.error.HTTPError as ex:
+        if ex.code == 403:
+            return {"ok": False, "erro": "O token não tem a permissão Notificações (leitura)."}
+        return {"ok": False, "erro": f"A Cloudflare respondeu HTTP {ex.code} à consulta de avisos."}
+    except (OSError, ValueError):
+        return {"ok": False, "erro": "Não consegui consultar os avisos agora."}
+    itens = [{"quando": l.get("sent") or "", "nome": l.get("name") or l.get("alert_type") or "Aviso", "tipo": l.get("alert_type") or "",
+              "texto": (l.get("alert_body") or l.get("description") or "")[:300]} for l in linhas]
+    itens.sort(key=lambda i: i["quando"], reverse=True)
+    return {"ok": True, "itens": itens[:limite]}
+
+
 def estado(env: dict = None, abrir=None, cliente=None, com_nuvem: bool = True) -> dict:
     """Tudo o que a aba mostra. Cada parte falha sozinha, sem derrubar a página."""
     e = _env() if env is None else env
@@ -84,6 +107,7 @@ def estado(env: dict = None, abrir=None, cliente=None, com_nuvem: bool = True) -
         saida["copia"] = {"ok": False, "erro": f"Não consegui ler a cópia: {type(ex).__name__}."}
     saida["gastos"] = politicas(e, abrir) if com_nuvem else {"ok": False, "erro": "Consulta desligada."}
     saida["consumo"] = consumo(e, abrir) if com_nuvem else {"ok": False, "erro": "Consulta desligada."}
+    saida["avisos"] = avisos(e, abrir) if com_nuvem else {"ok": False, "erro": "Consulta desligada."}
     return saida
 
 

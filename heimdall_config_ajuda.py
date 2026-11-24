@@ -29,7 +29,7 @@ DESCRICOES = {
     "HEIMDALL_CLOUD_TOTP_SEGREDO": "Segredo do código de seis dígitos (TOTP) da entrada. Se errar, perde o acesso ao painel.",
     "HEIMDALL_CODE_MODEL": "Modelo usado para escrever código e fluxos.",
     "HEIMDALL_CF_ALERTA_EMAIL": "E-mail que recebe os alertas de gasto da Cloudflare criados pelo script de limites.",
-    "HEIMDALL_CF_LEITURA_TOKEN": "Token da Cloudflare só de leitura (Conta, Faturamento, Leitura) para mostrar o consumo do mês no Controls e na página da nuvem. O mesmo valor vai ao Worker pelo heimdall continuity --secrets.",
+    "HEIMDALL_CF_LEITURA_TOKEN": "Token da Cloudflare só de leitura (Conta, Faturamento, Leitura e Conta, Notificações, Leitura) para mostrar o consumo do mês e os avisos no Controls e na página da nuvem. O mesmo valor vai ao Worker pelo heimdall continuity --secrets.",
     "HEIMDALL_CONTINUIDADE": "1 liga o envio das cópias de continuidade para o R2 (o Heimdall passa a rodar na nuvem quando o Mac cai); 0 (padrão) desliga e não envia nada.",
     "HEIMDALL_CONTINUIDADE_SENHA": "Senha que protege as cópias de continuidade antes de irem ao R2. Guarde também fora do Mac: sem ela a cópia não pode ser lida.",
     "HEIMDALL_CONTROLS_ATRASO_CURSOR": "Atraso, em milissegundos, para o cursor do Terminal acompanhar o texto.",

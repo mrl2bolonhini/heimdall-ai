@@ -578,7 +578,21 @@ def pg_nuvem(q: dict, sess: dict) -> tuple:
                    + (f'<table><caption>Consumo faturável do mês por serviço</caption><thead><tr><th scope="col">Serviço</th><th scope="col">Valor</th></tr></thead><tbody>{lin}</tbody></table>' if lin else "<p>Nenhum consumo faturável até agora.</p>"))
     else:
         consumo = '<h2>Consumo do mês</h2><p role="status">' + e(c.get("erro", "Consumo indisponível.")) + "</p>"
-    gastos = consumo + gastos
+    av = est.get("avisos", {})
+    if av.get("ok") and av["itens"]:
+        def quando(iso):
+            try:
+                return datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
+            except ValueError:
+                return iso
+        lin = "".join(f'<tr><th scope="row">{e(quando(i["quando"]))}</th><td>{e(i["nome"])}</td><td>{e(i["texto"])}</td></tr>' for i in av["itens"])
+        avisos = ('<h2>Avisos da Cloudflare</h2><table><caption>Últimos avisos enviados pela Cloudflare à conta</caption><thead><tr><th scope="col">Data</th><th scope="col">Aviso</th>'
+                  f'<th scope="col">Mensagem</th></tr></thead><tbody>{lin}</tbody></table><p>A Cloudflare guarda o histórico por cerca de 30 dias nos planos Free, Pro e Business.</p>')
+    elif av.get("ok"):
+        avisos = '<h2>Avisos da Cloudflare</h2><p role="status">Nenhum aviso nos últimos dias.</p>'
+    else:
+        avisos = '<h2>Avisos da Cloudflare</h2><p role="status">' + e(av.get("erro", "Avisos indisponíveis.")) + "</p>"
+    gastos = consumo + gastos + avisos
     nuvem_url = e(est["painel"])
     painel = (f'<h2>Página de controle na nuvem</h2><p>Quando o Mac cai, o endereço de controle mostra o estado da nuvem e permite pausar ou retomar o failover. '
               f'Ela também funciona com o Mac no ar, pelo endereço <a href="{nuvem_url}">{nuvem_url}</a>, e exige login pelo Cloudflare Access.</p>')

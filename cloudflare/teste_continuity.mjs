@@ -136,5 +136,20 @@ W.reiniciarMemoria();
 confere("consumo: API não liberada (404) explica sem inventar valor", (await W.consumoMes({ HEIMDALL_CF_LEITURA_TOKEN: "tk", CLOUDFLARE_ACCOUNT_ID: "ct" }, respPaygo({}, 404))).erro.includes("beta"));
 W.reiniciarMemoria();
 confere("o token de leitura não é repassado ao contêiner", !fonte.slice(fonte.indexOf("const SEGREDOS"), fonte.indexOf("const PORTA_SAUDE")).includes("LEITURA_TOKEN"));
+// avisos da Cloudflare
+W.reiniciarMemoria();
+const respAv = (corpo, status = 200) => async (url, init) => { respAv.url = url; return new Response(JSON.stringify(corpo), { status }); };
+const E2 = { HEIMDALL_CF_LEITURA_TOKEN: "tk", CLOUDFLARE_ACCOUNT_ID: "ct" };
+let av = await W.avisosCloudflare(E2, respAv({ result: [
+  { name: "Origem fora", alert_type: "health_check_status_notification", alert_body: "O Mac <b>caiu</b>", sent: "2026-11-23T21:00:00Z" },
+  { alert_type: "universal_ssl_event_type", sent: "2026-11-23T22:00:00Z", description: "Certificado" }] }));
+confere("avisos: lê o histórico, ordena do mais novo e usa o endereço certo", av.ok && av.itens[0].nome === "universal_ssl_event_type" && av.itens[1].nome === "Origem fora" && respAv.url.includes("/accounts/ct/alerting/v3/history"), JSON.stringify(av));
+let ba = W.blocoAvisos(av);
+confere("avisos: tabela com caption e scope, com HTML escapado", ba.includes("<caption>Últimos avisos") && ba.includes('scope="row">') && !ba.includes("<b>caiu") && ba.includes("&lt;b&gt;caiu"), ba);
+confere("avisos: lista vazia e erro explicam sem inventar", W.blocoAvisos({ ok: true, itens: [] }).includes("Nenhum aviso") && W.blocoAvisos({ ok: false, erro: "x" }).includes("x"));
+W.reiniciarMemoria();
+confere("avisos: 403 vira aviso de permissão", (await W.avisosCloudflare(E2, respAv({}, 403))).erro.includes("Notificações"));
+W.reiniciarMemoria();
+confere("avisos: sem token explica o que falta", (await W.avisosCloudflare({}, respAv({}))).erro.includes("não configurado"));
 console.log(falhas ? `${falhas} falha(s)` : "Tudo certo.");
 process.exit(falhas ? 1 : 0);
