@@ -67,6 +67,7 @@ from urllib.parse import parse_qs, urlparse
 import urllib.parse
 
 import heimdall_backup as backup
+import heimdall_continuidade as continuidade
 import heimdall_banco as banco
 import heimdall_exames as exames
 import heimdall_saude as saude
@@ -1557,6 +1558,7 @@ def main() -> int:
     exames.preparar_pasta()
     threading.Thread(target=eventkit.verificar_na_partida, daemon=True).start()   # pede as permissões de Lembretes e Calendário e registra no log
     threading.Thread(target=_vigiar_documentos, daemon=True).start()
+    threading.Thread(target=continuidade.vigiar, daemon=True).start()   # cópia cifrada dos bancos para o R2, só com HEIMDALL_CONTINUIDADE=1
     srv = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Agente do Heimdall em http://{HOST}:{PORT} (cofre: {VAULT})", flush=True)
     try:

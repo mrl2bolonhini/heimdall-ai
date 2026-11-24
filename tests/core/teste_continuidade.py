@@ -69,6 +69,23 @@ banco(raiz / "finance" / "financas.db", ["novo-lancamento"])
 r = hc.enviar(raiz, ENV, s3)
 confere("só o banco que mudou é reenviado", r["enviados"] == ["finance/financas.db"], r)
 
+# envio automático (agente do Mac)
+s3a = S3Falso()
+confere("envio automático desligado não faz nada", hc.uma_rodada(raiz, dict(ENV, HEIMDALL_CONTINUIDADE="0"), s3a) is None and s3a.puts == 0)
+confere("dentro do contêiner de continuidade não envia", hc.uma_rodada(raiz, dict(ENV, HEIMDALL_CONTINUIDADE_MODO="1"), s3a) is None and s3a.puts == 0)
+ra = hc.uma_rodada(raiz, ENV, s3a)
+confere("envio automático manda o que mudou", ra["ok"] and sorted(ra["enviados"]) == ["db/heimdall.db", "finance/financas.db"], ra)
+confere("envio automático seguinte não reenvia o que não mudou", hc.uma_rodada(raiz, ENV, s3a)["enviados"] == [])
+confere("falha no envio automático vira resultado, não exceção", hc.uma_rodada(raiz, dict(ENV, HEIMDALL_CONTINUIDADE_SENHA=""), s3a)["ok"] is False)
+confere("intervalo: padrão 60 min, mínimo 5, máximo 1440, valor ruim volta ao padrão", hc.intervalo_s({}) == 3600 and hc.intervalo_s({"HEIMDALL_CONTINUIDADE_INTERVALO_MIN": "1"}) == 300
+        and hc.intervalo_s({"HEIMDALL_CONTINUIDADE_INTERVALO_MIN": "99999"}) == 86400 and hc.intervalo_s({"HEIMDALL_CONTINUIDADE_INTERVALO_MIN": "x"}) == 3600)
+_dormiu = []
+_real = hc.uma_rodada
+hc.uma_rodada = lambda *a, **k: None   # o laço do teste nunca envia nada de verdade
+hc.vigiar(dormir=_dormiu.append, rodadas=2)
+hc.uma_rodada = _real
+confere("o laço dorme o intervalo entre as rodadas e termina quando pedido", len(_dormiu) == 2 and all(d >= 300 for d in _dormiu), _dormiu)
+
 destino = Path(tempfile.mkdtemp())
 rr = hc.restaurar(destino, ENV, s3)
 con = sqlite3.connect(destino / "finance" / "financas.db")

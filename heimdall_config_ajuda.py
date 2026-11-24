@@ -31,6 +31,7 @@ DESCRICOES = {
     "HEIMDALL_CF_ALERTA_EMAIL": "E-mail que recebe os alertas de gasto da Cloudflare criados pelo script de limites.",
     "HEIMDALL_CF_LEITURA_TOKEN": "Token da Cloudflare só de leitura (Conta, Faturamento, Leitura e Conta, Notificações, Leitura) para mostrar o consumo do mês e os avisos no Controls e na página da nuvem. O mesmo valor vai ao Worker pelo heimdall continuity --secrets.",
     "HEIMDALL_CONTINUIDADE": "1 liga o envio das cópias de continuidade para o R2 (o Heimdall passa a rodar na nuvem quando o Mac cai); 0 (padrão) desliga e não envia nada.",
+    "HEIMDALL_CONTINUIDADE_INTERVALO_MIN": "Minutos entre dois envios automáticos da cópia de continuidade para a nuvem (padrão 60; de 5 a 1440). Só envia os bancos que mudaram.",
     "HEIMDALL_CONTINUIDADE_SENHA": "Senha que protege as cópias de continuidade antes de irem ao R2. Guarde também fora do Mac: sem ela a cópia não pode ser lida.",
     "HEIMDALL_CONTROLS_ATRASO_CURSOR": "Atraso, em milissegundos, para o cursor do Terminal acompanhar o texto.",
     "HEIMDALL_CONTROLS_EXIGE_ACCESS": "1 exige que a entrada venha pelo Cloudflare Access; 0 aceita só a senha.",

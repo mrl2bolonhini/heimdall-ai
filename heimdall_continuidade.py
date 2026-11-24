@@ -21,6 +21,7 @@ import secrets
 import sqlite3
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -172,6 +173,53 @@ def status(env=None, cliente=None) -> dict:
         return {"ok": False, "erro": "configuração incompleta (HEIMDALL_R2_* e HEIMDALL_CONTINUIDADE_SENHA)"}
     m = _ler_manifesto(c, bucket, e["HEIMDALL_CONTINUIDADE_SENHA"])
     return {"ok": bool(m), "quando": m.get("quando", ""), "arquivos": sorted(m.get("arquivos", {}))}
+
+
+INTERVALO_PADRAO_MIN = 60
+
+
+def _env_atual() -> dict:
+    """O ambiente do processo com o que está no .env agora (o agente fica dias no ar: ligar ou desligar pelo Controls vale sem reiniciar)."""
+    e = dict(os.environ)
+    try:
+        import heimdall_config
+        e.update({i["nome"]: i["valor"] for i in heimdall_config.ler()})
+    except Exception:  # noqa: BLE001
+        pass
+    return e
+
+
+def intervalo_s(env=None) -> int:
+    """Segundos entre dois envios automáticos: HEIMDALL_CONTINUIDADE_INTERVALO_MIN (padrão 60; mínimo 5; máximo 1440)."""
+    e = _env_atual() if env is None else env
+    try:
+        m = int(str(e.get("HEIMDALL_CONTINUIDADE_INTERVALO_MIN", INTERVALO_PADRAO_MIN)).strip())
+    except ValueError:
+        m = INTERVALO_PADRAO_MIN
+    return max(5, min(1440, m)) * 60
+
+
+def uma_rodada(raiz: Path = PROJECT_DIR, env=None, cliente=None):
+    """Um envio automático. None quando não cabe (desligado, ou dentro do contêiner de continuidade); senão o resultado de enviar(). Nunca levanta erro."""
+    e = _env_atual() if env is None else env
+    if modo_continuidade(e) or not ligado(e):
+        return None
+    try:
+        return enviar(raiz, e, cliente)
+    except Exception as ex:  # noqa: BLE001 - o envio automático nunca derruba o agente
+        return {"ok": False, "erro": str(ex)[:160]}
+
+
+def vigiar(dormir=time.sleep, rodadas=None) -> None:
+    """Laço do agente do Mac: envia à nuvem só os bancos que mudaram, a cada HEIMDALL_CONTINUIDADE_INTERVALO_MIN minutos, enquanto HEIMDALL_CONTINUIDADE=1."""
+    feitas = 0
+    while rodadas is None or feitas < rodadas:
+        r = uma_rodada()
+        if r is not None and (not r.get("ok") or r.get("enviados")):
+            msg = f"erro: {r.get('erro', '?')}" if not r.get("ok") else f"enviados: {', '.join(r['enviados'])}"
+            sys.stderr.write(f"{time.strftime('%H:%M:%S')} continuidade: {msg}\n")
+        feitas += 1
+        dormir(intervalo_s())
 
 
 def _preparar() -> int:
