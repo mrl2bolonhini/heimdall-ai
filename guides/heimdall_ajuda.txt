@@ -147,12 +147,16 @@ Exemplos:
   heimdall news --now
 
 @ lab | Heimdall Lab, o painel da AWS local
-Abre o painel do emulador de AWS (porta 8010).
+Abre o painel do emulador de AWS (porta 8010). O emulador (LocalStack ou Moto) fica desligado ao subir o Heimdall, para poupar memória: ligue-o com --start quando for usar e desligue com --stop (HEIMDALL_AWS_EMULATOR_INICIO=auto no .env volta a subi-lo sempre).
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
+  -s, --start          liga o emulador de AWS e espera ele responder
+  -p, --stop           desliga o emulador de AWS e libera a memória
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall lab
+  heimdall lab --start
+  heimdall lab --stop
 
 @ health | Painel de saúde e relatórios no terminal
 Sem opção abre o painel de saúde no navegador (porta 8013). Com --open abre uma página dele. Com qualquer outra opção, roda o relatório no terminal. Nada aqui é diagnóstico.

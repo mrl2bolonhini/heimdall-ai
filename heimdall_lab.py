@@ -548,7 +548,7 @@ def pg_entrar(erro: str = "") -> bytes:
 def pg_inicio() -> str:
     s = saude_emulador()
     if not s["ok"]:
-        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. Confira com: docker ps | grep -E "localstack|moto"</p>'
+        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda: ligue-o com heimdall lab --start (ou pelo Controls). Para conferir: docker ps | grep -E "localstack|moto"</p>'
         tabela = ""
     else:
         rodando = sorted(k for k, v in s["servicos"].items() if str(v) in ("running", "ready"))

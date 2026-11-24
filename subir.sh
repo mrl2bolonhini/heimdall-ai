@@ -82,7 +82,10 @@ montar_lista() {
     if [ "$HEIMDALL_N8N" = "1" ] || tem_arg --n8n; then LISTA+=("n8n (automações)|tcp|5678"); fi
     if [ "$HEIMDALL_WEBUI" = "1" ] || tem_arg --webui; then LISTA+=("Open WebUI (chat)|tcp|3000"); fi
     if [ -n "$OPEN_TERMINAL_API_KEY" ] || tem_arg --terminal; then LISTA+=("Open Terminal|tcp|8002"); fi
-    case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Emulador de AWS|tcp|4566") ;; esac
+    # Sob demanda (padrão): se o contêiner do emulador já existe, ele não sobe junto e não entra na espera.
+    EMU_SOB_DEMANDA=0
+    if [ "${HEIMDALL_AWS_EMULATOR_INICIO:-demanda}" = "demanda" ] && docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE '^(localstack|moto)$'; then EMU_SOB_DEMANDA=1; fi
+    case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) [ "$EMU_SOB_DEMANDA" = "1" ] || LISTA+=("Emulador de AWS|tcp|4566") ;; esac
     if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
         case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Heimdall Lab|http|http://127.0.0.1:${HEIMDALL_LAB_PORT:-8010}/saude") ;; esac
         LISTA+=("Heimdall Notes|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")

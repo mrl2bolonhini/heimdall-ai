@@ -446,7 +446,7 @@ def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: boo
 
 # Variáveis que o prefixo não agrupa direito: nome sem HEIMDALL_ -> grupo
 DESTINO = {"ANOMALIAS_LEMBRETE_H": "Health", "AGENDA_DETALHES": "Health", "RENOVACAO_DIAS": "Health", "APPS_FECHAR": "Mac Agent", "AWS_EMULATOR": "AWS Emulator",
-           "LOCALSTACK_DOCKER": "AWS Emulator", "BARK_KEY": "Alertas", "COOKIE_DOMINIO": "Lab", "CODE_MODEL": "Modelos de IA", "FLOW_MODEL": "Modelos de IA",
+           "AWS_EMULATOR_INICIO": "AWS Emulator", "LOCALSTACK_DOCKER": "AWS Emulator", "BARK_KEY": "Alertas", "COOKIE_DOMINIO": "Lab", "CODE_MODEL": "Modelos de IA", "FLOW_MODEL": "Modelos de IA",
            "EMBED_MODEL": "Modelos de IA", "SEGURANCA_MODELO": "Modelos de IA", "ESTUDO_AUDIO": "Voz", "GITHUB_TOKEN": "GitOps", "VAULT_DIR": "Notes",
            "PASTAS_PROPRIAS": "Notes", "SERVICOS_ESPERA_S": "Controls", "TERMINAL_HOST": "Controls", "BASE_DIR": "Gerais", "DATA_DIR": "Gerais", "DB_DIR": "Gerais",
            "KNOWLEDGE_DIR": "Gerais", "PROJECT_DIR": "Gerais", "TZ": "Gerais", "OAB": "Gerais", "BACKUP_DESTINO": "Backup na nuvem (R2)",

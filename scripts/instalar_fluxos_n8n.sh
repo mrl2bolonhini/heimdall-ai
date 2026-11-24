@@ -16,8 +16,8 @@
 #   HEIMDALL_BARK_KEY      chave do Bark (se faltar, o script pergunta)
 #   HEIMDALL_FLOW_MODEL    modelo do LiteLLM usado nos resumos (padrão: qwen3-vl-instruct)
 #   HEIMDALL_KUMA_SLUG     nome (slug) da página de status do Uptime Kuma (padrão: heimdall)
-#   HEIMDALL_ALERT_RAM / HEIMDALL_ALERT_SWAP / HEIMDALL_ALERT_DISK / HEIMDALL_ALERT_DISK_FREE
-#                          limites do alerta do Mac: RAM %, swap em GB, disco %, livre em GB (95/8/90/20)
+#   HEIMDALL_ALERT_RAM / HEIMDALL_ALERT_MEM_FREE / HEIMDALL_ALERT_DISK / HEIMDALL_ALERT_DISK_FREE
+#                          limites do alerta do Mac: RAM %, memória livre mínima % (avisa abaixo dela), disco %, livre em GB (95/30/90/20)
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR" || exit 1
@@ -62,12 +62,12 @@ fi
 MODELO="${HEIMDALL_FLOW_MODEL:-qwen3-vl-instruct}"
 SLUG="${HEIMDALL_KUMA_SLUG:-heimdall}"
 A_RAM="${HEIMDALL_ALERT_RAM:-95}"
-A_SWAP="${HEIMDALL_ALERT_SWAP:-8}"
+A_MEMLIVRE="${HEIMDALL_ALERT_MEM_FREE:-30}"
 A_DISCO="${HEIMDALL_ALERT_DISK:-90}"
 A_LIVRE="${HEIMDALL_ALERT_DISK_FREE:-20}"
 [[ "$MODELO" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "HEIMDALL_FLOW_MODEL tem caracteres inválidos."
 [[ "$SLUG" =~ ^[A-Za-z0-9_-]+$ ]] || fail "HEIMDALL_KUMA_SLUG tem caracteres inválidos."
-for v in "$A_RAM" "$A_SWAP" "$A_DISCO" "$A_LIVRE"; do
+for v in "$A_RAM" "$A_MEMLIVRE" "$A_DISCO" "$A_LIVRE"; do
     [[ "$v" =~ ^[0-9]+$ ]] || fail "os limites do alerta devem ser números inteiros."
 done
 
@@ -85,7 +85,7 @@ trap cleanup EXIT
 
 # --- Aplica as chaves e parâmetros (por variáveis de ambiente, fora da lista de processos) ---
 SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_AGENTE="${HEIMDALL_AGENTE_TOKEN:-}" SUBS_MODELO="$MODELO" SUBS_SLUG="$SLUG" \
-SUBS_RAM="$A_RAM" SUBS_SWAP="$A_SWAP" SUBS_DISCO="$A_DISCO" SUBS_LIVRE="$A_LIVRE" \
+SUBS_RAM="$A_RAM" SUBS_MEMLIVRE="$A_MEMLIVRE" SUBS_DISCO="$A_DISCO" SUBS_LIVRE="$A_LIVRE" \
 "$PY" - "$PROJECT_DIR/flows/basic" "$TMP" <<'PYEOF' || fail "não consegui preparar os fluxos."
 import json, os, pathlib, re, sys
 
@@ -97,7 +97,7 @@ subs = {
     "__MODELO__": os.environ["SUBS_MODELO"],
     "__KUMA_SLUG__": os.environ["SUBS_SLUG"],
     "__ALERTA_RAM__": os.environ["SUBS_RAM"],
-    "__ALERTA_SWAP__": os.environ["SUBS_SWAP"],
+    "__ALERTA_MEM_LIVRE__": os.environ["SUBS_MEMLIVRE"],
     "__ALERTA_DISCO__": os.environ["SUBS_DISCO"],
     "__ALERTA_LIVRE__": os.environ["SUBS_LIVRE"],
 }

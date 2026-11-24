@@ -58,6 +58,19 @@ async def metricas(request: Request) -> JSONResponse:
 
     import psutil
 
+    def memoria_livre_percent(ram) -> int:
+        """Memória livre como o macOS a calcula (a mesma do comando memory_pressure); sem ela, usa o disponível do psutil."""
+        import subprocess
+
+        try:
+            saida = subprocess.run(["sysctl", "-n", "kern.memorystatus_level"], capture_output=True, text=True, timeout=3).stdout.strip()
+            nivel = int(saida)
+            if 0 <= nivel <= 100:
+                return nivel
+        except Exception:
+            pass
+        return round(100 * ram.available / ram.total)
+
     def coletar() -> dict:
         gb = 1024 ** 3
         ram = psutil.virtual_memory()
@@ -66,6 +79,7 @@ async def metricas(request: Request) -> JSONResponse:
         return {
             "cpu_percent": psutil.cpu_percent(interval=0.5),
             "ram_percent": ram.percent,
+            "mem_livre_percent": memoria_livre_percent(ram),
             "ram_used_gb": round(ram.used / gb, 2),
             "ram_total_gb": round(ram.total / gb, 2),
             "swap_used_gb": round(swap.used / gb, 2),

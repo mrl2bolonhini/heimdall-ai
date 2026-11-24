@@ -55,6 +55,29 @@ _heimdall_web() {  # $1 nome, $2 chave (LAB, NOTAS, NEWS, SAUDE_PAINEL, JOGOS, F
   _heimdall_open "$nome" "https://$host$caminho"
 }
 
+_heimdall_emulador() {  # heimdall lab --start|--stop: liga ou desliga o emulador de AWS (sob demanda, para poupar memória)
+  local c achou="" i
+  case "$1" in
+    start)
+      for c in localstack moto; do
+        if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$c"; then achou="$c"; break; fi
+      done
+      if [ -z "$achou" ]; then
+        echo "Ainda não existe emulador de AWS criado. Rode heimdall restart uma vez: na primeira subida ele é criado."
+        return 1
+      fi
+      docker start "$achou" > /dev/null || { echo "Não consegui ligar o emulador de AWS ($achou). Confira se o Docker está no ar: heimdall containers"; return 1; }
+      for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+        if curl -s -o /dev/null -m 2 http://127.0.0.1:4566/ 2>/dev/null; then echo "Emulador de AWS ($achou) no ar em http://localhost:4566. Para desligar: heimdall lab --stop"; return 0; fi
+        sleep 2
+      done
+      echo "O emulador de AWS ($achou) foi ligado, mas ainda não respondeu. Veja: docker logs --tail 30 $achou"; return 1 ;;
+    stop)
+      docker stop localstack moto > /dev/null 2>&1
+      echo "Emulador de AWS desligado. Para ligar de novo: heimdall lab --start" ;;
+  esac
+}
+
 _heimdall_envval() {  # valor do .env ($1), ou o padrão ($2)
   local v
   [ -f "$HEIMDALL_DIR/.env" ] && v="$(grep -E "^$1=" "$HEIMDALL_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
@@ -79,7 +102,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     up|restart) printf '%s\n' "-w=--webui" "-t=--terminal" "-n=--n8n" "-a=--agent" "-i=--ingest" "-d=--docling" "-u=--update" ;;
     logs) printf '%s\n' "-l=--list" "-c=--clean" "-s=--service" ;;
     containers) printf '%s\n' "-a=--all" ;;
-    lab|cloud) printf '%s\n' "-L=--local" ;;
+    lab|cloud) printf '%s\n' "-L=--local" "-s=--start" "-p=--stop" ;;
     chat) printf '%s\n' "-d=--diagnose" "-p=--password" "-e=--email" "-D=--delete-user" "-c=--check" "-m=--models" "-t=--tools" ;;
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  "-L=--local" ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
@@ -260,7 +283,13 @@ heimdall() {
 --queue=--fila
 --now=--uma-vez" "$@"; _heimdall_py heimdall_news.py "${_HA[@]}" ;;
       esac ;;
-    lab|cloud) _heimdall_web "Heimdall Lab" LAB 8010 lab ;;
+    lab|cloud)
+      case "$1" in
+        --start) _heimdall_emulador start ;;
+        --stop) _heimdall_emulador stop ;;
+        "") _heimdall_web "Heimdall Lab" LAB 8010 lab ;;
+        *) echo "Use: heimdall lab [--local] [--start] [--stop]"; return 1 ;;
+      esac ;;
     health)
       case "$1" in
         "") _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health ;;
@@ -530,7 +559,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       controls) if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- terminal services maintenance; else compadd -- --open --local; fi ;;
       games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas vilarejo xadrez
         else compadd -- --local --play --list; fi ;;
-      lab) compadd -- --local ;;
+      lab) compadd -- --local --start --stop ;;
       triage) compadd -- --complete-tests ;;
       notices) compadd -- --migrate ;;
       db) compadd -- --sql ;;

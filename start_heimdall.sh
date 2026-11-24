@@ -12,6 +12,8 @@
 #       (favicon.png, logo.png, splash.png...) são copiados para dentro do contêiner a cada subida.
 #       Extras (opcionais, no .env): HEIMDALL_MONITORING=0 desliga Uptime Kuma e Dozzle;
 #       HEIMDALL_AWS_EMULATOR=auto|moto|localstack|off escolhe o emulador de AWS.
+#       HEIMDALL_AWS_EMULATOR_INICIO=demanda (padrão) | auto: com "demanda", o emulador de AWS (LocalStack ou Moto) já criado não sobe
+#       junto com o Heimdall, para poupar memória; ligue quando for usar: heimdall lab --start (e desligue com heimdall lab --stop).
 #       ./start_heimdall.sh --update   antes de subir, atualiza as imagens Docker (SearXNG,
 #                                      Qdrant e Open WebUI), com backup; também vale HEIMDALL_UPDATE=1 no .env
 
@@ -331,6 +333,8 @@ fi
 
 # Emulador de AWS na porta 4566. HEIMDALL_AWS_EMULATOR=auto (padrão) | moto | localstack | off.
 # auto: usa LocalStack se houver LOCALSTACK_AUTH_TOKEN no .env; senão, usa o Moto (livre, sem conta).
+# HEIMDALL_AWS_EMULATOR_INICIO=demanda (padrão): se o contêiner do emulador já existe, ele fica desligado ao subir e é ligado
+# só quando necessário (heimdall lab --start), porque ocupa de 300 a 700 MB de memória. Na primeira vez, sem contêiner, ele é criado.
 AWS_EMU="${HEIMDALL_AWS_EMULATOR:-auto}"
 if [ "$AWS_EMU" = "auto" ]; then
     if [ -n "$LOCALSTACK_AUTH_TOKEN" ]; then AWS_EMU=localstack; else AWS_EMU=moto; fi
@@ -339,7 +343,14 @@ if [ "$AWS_EMU" = "localstack" ] && [ -z "$LOCALSTACK_AUTH_TOKEN" ]; then
     echo "Aviso: o LocalStack exige conta e LOCALSTACK_AUTH_TOKEN no .env; usando o Moto no lugar."
     AWS_EMU=moto
 fi
+if [ "$AWS_EMU" != "off" ] && [ "${HEIMDALL_AWS_EMULATOR_INICIO:-demanda}" = "demanda" ] \
+    && docker ps -a --format '{{.Names}}' | grep -qE '^(localstack|moto)$'; then
+    AWS_EMU=demanda
+fi
 case "$AWS_EMU" in
+    demanda)
+        docker stop moto localstack > /dev/null 2>&1
+        echo "     Emulador de AWS sob demanda (desligado para poupar memória). Para ligar: heimdall lab --start; para desligar: heimdall lab --stop." ;;
     moto)
         docker rm -f localstack > /dev/null 2>&1
         if docker ps -a --format '{{.Names}}' | grep -qx moto; then
