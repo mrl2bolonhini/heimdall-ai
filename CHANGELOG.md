@@ -10,6 +10,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Avisos da Cloudflare (histórico de notificações da conta: queda, certificado, erro) na aba Nuvem e na página de controle da nuvem, pelo mesmo token de leitura, com a permissão Conta, Notificações, Leitura. Os avisos de gasto da faturamento podem não aparecer aí e continuam chegando por e-mail. heimdall env --set HEIMDALL_CF_LEITURA_TOKEN grava o token sem mostrá-lo.
 - heimdall continuity --deploy agora implanta o Worker e só depois envia os segredos (a Cloudflare recusa segredos em um Worker que ainda não existe); a falha na gravação de um segredo explica o que conferir.
 - heimdall continuity --deploy: a trava usa o Python do Heimdall (antes falhava sem boto3 e dizia que a cópia não existia) e o Wrangler passa a usar o login da conta (npx wrangler login) em vez do CLOUDFLARE_API_TOKEN do shell, que é restrito e não tem permissão de Workers; HEIMDALL_WRANGLER_USAR_TOKEN=1 mantém o token.
+- O Wrangler agora roda dentro de cloudflare/continuity, para não ler o .env da raiz (que tem o CLOUDFLARE_API_TOKEN restrito) e usar o login da conta.
 - Decisão: o chat fica fora da nuvem por ora; avaliar alternativas mais leves ao Open WebUI antes.
 - Testes: cloudflare/teste_continuity.mjs (ampliado), tests/core/teste_nuvempainel.py, tests/controls/teste_controls.py. Não testado: Safari com VoiceOver, implantação e Access reais.
 

@@ -6,14 +6,14 @@
 #   desligar   interruptor: reimplanta com CONTINUIDADE=0 (o Worker só repassa ao Mac; o contêiner nunca liga). Os dados no R2 ficam.
 #   ligar      reimplanta com CONTINUIDADE=1
 cd "$(dirname "$0")/.."
-CONFIG=cloudflare/continuity/wrangler.jsonc
+CONFIG=wrangler.jsonc   # relativo à pasta cloudflare/continuity, onde o Wrangler roda (assim ele não lê o .env da raiz, que tem o CLOUDFLARE_API_TOKEN restrito)
 NOMES="HEIMDALL_CONTINUIDADE_SENHA HEIMDALL_R2_ENDPOINT HEIMDALL_R2_BUCKET HEIMDALL_R2_KEY_ID HEIMDALL_R2_SECRET HEIMDALL_CLOUD_SENHA_HASH HEIMDALL_CLOUD_TOTP_SEGREDO HEIMDALL_CLOUD_SESSAO_HORAS HEIMDALL_CFACCESS_AUD HEIMDALL_CFACCESS_EMAILS HEIMDALL_CFACCESS_EQUIPE HEIMDALL_CFACCESS_CONVIDADOS HEIMDALL_CFACCESS_TEAM HEIMDALL_CF_LEITURA_TOKEN CLOUDFLARE_ACCOUNT_ID"
 lerenv() { grep -E "^$1=" .env 2>/dev/null | tail -1 | cut -d= -f2- | sed -e "s/^['\"]//" -e "s/['\"]$//"; }
 PY=venv/bin/python; [ -x "$PY" ] || PY=python3   # o mesmo Python do Heimdall (tem boto3 e cryptography)
 # O Wrangler usa o login da sua conta (npx wrangler login). O CLOUDFLARE_API_TOKEN do shell é um token restrito (faturamento, análises) e não tem permissão de Workers, por isso é ignorado aqui.
 # Quem preferir um token próprio para implantar: HEIMDALL_WRANGLER_USAR_TOKEN=1 mantém o do shell.
-wr() { if [ "$HEIMDALL_WRANGLER_USAR_TOKEN" = "1" ]; then npx --yes wrangler "$@"; else env -u CLOUDFLARE_API_TOKEN npx --yes wrangler "$@"; fi; }
-logado() { wr whoami 2>&1 | grep -qiE "not authenticated|not logged in" && { echo "O Wrangler não está logado. Rode: env -u CLOUDFLARE_API_TOKEN npx wrangler login (abre o navegador para você autorizar) e tente de novo."; return 1; }; return 0; }
+wr() { if [ "$HEIMDALL_WRANGLER_USAR_TOKEN" = "1" ]; then ( cd cloudflare/continuity && npx --yes wrangler "$@" ); else ( cd cloudflare/continuity && env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_API_KEY npx --yes wrangler "$@" ); fi; }
+logado() { wr whoami 2>&1 | grep -qiE "not authenticated|not logged in" && { echo "O Wrangler não está logado. Rode: (cd ~ && env -u CLOUDFLARE_API_TOKEN npx wrangler login) (abre o navegador para você autorizar) e tente de novo."; return 1; }; return 0; }
 
 segredos() {
   local n v enviados=0
