@@ -86,5 +86,11 @@ confere("o modo continuidade está ligado nos filhos", os.environ.get("HEIMDALL_
 for f in list(entrada.FILHOS.values()):
     f.terminate()
     f.wait(5)
+_di = (RAIZ / ".dockerignore").read_text(encoding="utf-8").splitlines()
+_regras = [l.strip() for l in _di if l.strip() and not l.startswith("#")]
+confere("imagem: o .dockerignore da raiz é lista de permissão (começa por * e deixa .env, bancos e dados fora)",
+        _regras[0] == "*" and "!db" not in _regras and "!finance" not in _regras and "!health" not in _regras and "!brain" not in _regras and "**/.env*" in _regras and "**/*.db" in _regras, _regras)
+confere("imagem: a imagem copia só o que o .dockerignore deixa passar (COPY . /app) e não há ignore ao lado do Dockerfile", "COPY . /app" in (RAIZ / "cloudflare/continuity/Dockerfile").read_text(encoding="utf-8")
+        and not (RAIZ / "cloudflare/continuity/Dockerfile.dockerignore").exists())
 print("\nFALHAS:", falhas)
 os._exit(1 if falhas else 0)

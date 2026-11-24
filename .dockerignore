@@ -1,0 +1,20 @@
+# Contexto de construção da imagem de continuidade (cloudflare/continuity/Dockerfile): a raiz do repositório.
+# Lista de permissão: tudo fica de fora, menos o código e os arquivos estáticos que os sites usam. Dados, bancos, segredos, modelos e
+# cópias (db, finance, health, brain, backups, .env...) nunca entram na imagem, que tem limite de 8 GB.
+*
+!*.py
+!*.md
+!*.txt
+!*.json
+!games
+!guides
+!prompts
+!branding
+!cloudflare
+cloudflare/node_modules
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/*.db
+**/*.sqlite*
+**/.env*
