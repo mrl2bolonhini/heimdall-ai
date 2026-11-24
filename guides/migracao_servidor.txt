@@ -9,7 +9,7 @@ Manter o Heimdall no ar sem depender do Mac. Um servidor alugado (VPS) passa a h
 1) O Mac continua como ponte Apple (Notas, Calendário, Lembretes). O servidor chama o agente do Mac por um canal privado; se o Mac estiver fora do ar, o pedido fica em fila e roda quando ele volta, com aviso.
 2) A fonte dos dados passa a ser o servidor. O Mac sincroniza a partir dele. Isso inverte o desenho de guides/continuidade_nuvem.txt, em que o Mac era a fonte e a nuvem só lia.
 3) Os embeddings (busca por significado nos documentos) passam para a nuvem da Cloudflare.
-4) Chat próprio sobre o LiteLLM no lugar do Open WebUI: aguarda a definição de "projeto" (só instrução fixa e modelo, ou também arquivos e histórico separados).
+4) Chat próprio sobre o LiteLLM no lugar do Open WebUI. Definição de "projeto" (24/11/2026): cada projeto guarda instrução fixa, modelo, artefatos (arquivos e resultados gerados) e histórico de conversas próprios, separados dos demais.
 
 3. Servidor candidato
 Locaweb VPS Linux de 8 GB (4 vCPU, 200 GB), datacenter no Brasil, imagem Docker de um clique, 1 snapshot grátis. Preços do contrato de 24 meses, conferidos em 24/11/2026: R$ 63,90 por mês na promoção, R$ 155,90 de lista e R$ 124,72 na renovação. Não há plano mensal avulso. O SLA da VPS não é informado (os 99,9% divulgados são do Locaweb Cloud, mais caro).
@@ -21,6 +21,11 @@ Perguntas à Locaweb antes de contratar (tarefa do usuário):
 4) O preço de R$ 63,90 vale para os 24 meses inteiros ou só para o primeiro ano?
 5) Há backup automático além do snapshot grátis, e o que ele custa?
 6) O IP é fixo e há proteção contra ataques de negação de serviço?
+Achados de 24/11/2026 (sem contato direto: a pré-venda só atende por telefone, (11) 3544-0480 ou 0800 770 2245, de segunda a sexta, das 8h às 18h; o chat exige login):
+- SLA: páginas de ajuda e relatos indicam 99,5% mensal para a VPS, com desconto na mensalidade quando não cumprido; o SLA de 99,9% é do Locaweb Cloud. Confirmar a VPS por escrito.
+- Cancelamento: o painel permite cancelar, e o valor restante do período pago vira crédito na conta Locaweb. Falta confirmar se há multa no ciclo de 24 meses.
+- Reembolso de 30 dias: o termo promocional lista outros planos (hospedagem, e-mail, revenda); a VPS não consta.
+- Acesso root, IP estático reservado e snapshot gratuito constam das páginas da VPS.
 
 4. Custo
 O teto de US$ 15 por mês da Cloudflare continua valendo para Workers, Workers AI, AI Gateway e túnel. A VPS é um item novo, fora desse teto, e a decisão de somá-la ou não ao orçamento é do usuário. Referência: R$ 63,90 são cerca de US$ 10,60 ao câmbio de R$ 6; a renovação de R$ 124,72 são cerca de US$ 20,80.
@@ -66,7 +71,7 @@ Fase 5: continuidade
 - Interruptor: o atual, HEIMDALL_CONTINUIDADE. Volta: reapontar a fonte para o Mac.
 
 Fase 6: chat próprio
-- Só começa com a definição de "projeto". Substitui o Open WebUI por um chat leve sobre o LiteLLM (criar projeto com instrução fixa e trocar de modelo). Economiza cerca de 650 MB de memória do Open WebUI.
+- Projeto = instrução, modelo, artefatos e histórico separados por projeto (definido em 24/11/2026). Isso exige banco próprio (SQLite) e pasta de arquivos por projeto, com cópia no R2, e dá mais trabalho que um chat só com instrução e modelo. Substitui o Open WebUI por um chat leve sobre o LiteLLM (criar projeto com instrução fixa e trocar de modelo). Economiza cerca de 650 MB de memória do Open WebUI.
 - Interruptor: HEIMDALL_CHAT=webui|proprio (padrão webui). Volta: religar o Open WebUI, cujo volume de dados não é apagado.
 
 Fase 7: app do iPhone
