@@ -5,6 +5,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-24 - Open WebUI em modo enxuto
 - O Open WebUI sobe sem Notas, Automações, geração de imagem, execução de código, interpretador de código, voz local (a ditagem passa a usar a do navegador), títulos automáticos das conversas, etiquetas, sugestões de continuação e autocompletar. Isso poupa memória e evita chamadas de modelo em segundo plano; o chat, a troca de modelo e as ferramentas seguem iguais. HEIMDALL_WEBUI_ENXUTO=0 no .env devolve o comportamento anterior; HEIMDALL_WEBUI_TITULOS=1 mantém só os títulos automáticos.
 - Opcional: HEIMDALL_WEBUI_EMBEDDING=ollama manda os embeddings dos documentos ao Ollama do Mac (poupa cerca de 500 MB); exige ollama pull nomic-embed-text (ou o modelo de HEIMDALL_WEBUI_EMBEDDING_MODELO) e reindexar os documentos já enviados. Fica desligado por padrão.
+- heimdall env --set aceita HEIMDALL_WEBUI_ENXUTO, HEIMDALL_WEBUI_TITULOS (0 ou 1), HEIMDALL_WEBUI_EMBEDDING (ollama) e HEIMDALL_WEBUI_EMBEDDING_MODELO.
 - Atenção: o Open WebUI grava essas opções na primeira subida; o que já foi alterado no painel de administração dele prevalece sobre o .env. Aplique com heimdall update --restart e confira com docker exec open-webui printenv.
 - Testes: tests/core/teste_webui_enxuto.py (novo). Não testado: o Open WebUI real no Docker do Mac, a memória medida antes e depois e o ditado pelo navegador no VoiceOver.
 
