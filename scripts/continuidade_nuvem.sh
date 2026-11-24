@@ -9,7 +9,11 @@ cd "$(dirname "$0")/.."
 CONFIG=cloudflare/continuity/wrangler.jsonc
 NOMES="HEIMDALL_CONTINUIDADE_SENHA HEIMDALL_R2_ENDPOINT HEIMDALL_R2_BUCKET HEIMDALL_R2_KEY_ID HEIMDALL_R2_SECRET HEIMDALL_CLOUD_SENHA_HASH HEIMDALL_CLOUD_TOTP_SEGREDO HEIMDALL_CLOUD_SESSAO_HORAS HEIMDALL_CFACCESS_AUD HEIMDALL_CFACCESS_EMAILS HEIMDALL_CFACCESS_EQUIPE HEIMDALL_CFACCESS_CONVIDADOS HEIMDALL_CFACCESS_TEAM HEIMDALL_CF_LEITURA_TOKEN CLOUDFLARE_ACCOUNT_ID"
 lerenv() { grep -E "^$1=" .env 2>/dev/null | tail -1 | cut -d= -f2- | sed -e "s/^['\"]//" -e "s/['\"]$//"; }
-wr() { npx --yes wrangler "$@"; }
+PY=venv/bin/python; [ -x "$PY" ] || PY=python3   # o mesmo Python do Heimdall (tem boto3 e cryptography)
+# O Wrangler usa o login da sua conta (npx wrangler login). O CLOUDFLARE_API_TOKEN do shell é um token restrito (faturamento, análises) e não tem permissão de Workers, por isso é ignorado aqui.
+# Quem preferir um token próprio para implantar: HEIMDALL_WRANGLER_USAR_TOKEN=1 mantém o do shell.
+wr() { if [ "$HEIMDALL_WRANGLER_USAR_TOKEN" = "1" ]; then npx --yes wrangler "$@"; else env -u CLOUDFLARE_API_TOKEN npx --yes wrangler "$@"; fi; }
+logado() { wr whoami 2>&1 | grep -qiE "not authenticated|not logged in" && { echo "O Wrangler não está logado. Rode: env -u CLOUDFLARE_API_TOKEN npx wrangler login (abre o navegador para você autorizar) e tente de novo."; return 1; }; return 0; }
 
 segredos() {
   local n v enviados=0
@@ -34,13 +38,13 @@ trava() {
   for p in workers durable_objects; do
     echo "$lista" | grep -q "$p usage_block" || { echo "Recusado: falta o bloqueio de gasto (usage_block) em $p. Rode ./scripts/limites_gasto_cloudflare.sh antes."; return 1; }
   done
-  python3 heimdall_continuidade.py status >/dev/null 2>&1 || { echo "Recusado: não achei a cópia dos bancos no R2. Rode: heimdall continuity --send"; return 1; }
+  "$PY" heimdall_continuidade.py status >/dev/null 2>&1 || { echo "Recusado: não achei a cópia dos bancos no R2. Rode: heimdall continuity --send"; return 1; }
 }
 
 case "$1" in
-  segredos) segredos ;;
-  implantar) trava || exit 1; wr deploy --config "$CONFIG" && segredos ;;   # primeiro o Worker (os segredos só podem ser gravados em um Worker que já existe)
-  desligar) wr deploy --config "$CONFIG" --var CONTINUIDADE:0 ;;
-  ligar) trava || exit 1; wr deploy --config "$CONFIG" --var CONTINUIDADE:1 ;;
+  segredos) logado || exit 1; segredos ;;
+  implantar) trava || exit 1; logado || exit 1; wr deploy --config "$CONFIG" && segredos ;;   # primeiro o Worker (os segredos só podem ser gravados em um Worker que já existe)
+  desligar) logado || exit 1; wr deploy --config "$CONFIG" --var CONTINUIDADE:0 ;;
+  ligar) trava || exit 1; logado || exit 1; wr deploy --config "$CONFIG" --var CONTINUIDADE:1 ;;
   *) sed -n 2,8p "$0"; exit 2 ;;
 esac
