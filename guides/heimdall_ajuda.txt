@@ -513,6 +513,7 @@ Opções:
   -h, --help               mostra esta ajuda
 Exemplos:
   heimdall env --set HEIMDALL_R2_SECRET
+  heimdall env --set HEIMDALL_CF_LEITURA_TOKEN
   heimdall env --set HEIMDALL_CFACCESS_EQUIPE mrl2-bolonhini
 
 @ cloudflare | Chave da Cloudflare
