@@ -868,7 +868,9 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:0 0 .3rem;fon
 """
 
 
-NAV = [("/", "Notícias"), ("/estado", "Estado das fontes")]
+# Uma só seção de leitura (Notícias). O estado das fontes é estado técnico: fica em Ajustes, botão no topo (Heimdall Design).
+AJUSTES = "/estado"
+AJUSTES_ITENS = [("/estado", "Estado das fontes"), ("/ajuda", "Ajuda")]
 
 
 def contexto_noticias(categoria: str = "", pergunta: str = "", llm=None) -> str:
@@ -885,17 +887,22 @@ SISTEMA_NEWS = ("Você responde em português do Brasil, em texto corrido ou lis
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
     nav = sair = scripts = ""
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
+    ajustes_html = ""
     if sess:
-        atual = design.aba_da_rota(sess.get("atual", "/"), NAV)
-        nav = design.nav_abas(NAV, atual, "Seções do Heimdall News")
+        rota_atual = (sess.get("atual", "/") or "/").split("?")[0]
+        em_ajustes = rota_atual in dict(AJUSTES_ITENS)
+        ajustes_html = design.botao(AJUSTES, "Ajustes", atual=em_ajustes)
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        extra = perguntar.bloco_html(sess["csrf"], sess["csrf"], sess.get("atual", "/") or "/", "Perguntar sobre as notícias",
-                                     "Pergunte em português, por exemplo: o que saiu sobre economia hoje? O modelo procura nos últimos 30 dias de notícias guardadas, passando por categorias e títulos, e lê só as que servem.") if atual == "/" else ""
-        conteudo = design.com_abas(NAV, atual, conteudo + extra)
+        if em_ajustes:   # tela de Ajustes: sem abas, com botão de voltar
+            conteudo = (f'<div class="acoes-topo">{design.botao("/", "Voltar ao News")}</div>'
+                        + design.com_subabas(AJUSTES_ITENS, rota_atual, conteudo, "Seções dos Ajustes"))
+        else:
+            conteudo += perguntar.bloco_html(sess["csrf"], sess["csrf"], sess.get("atual", "/") or "/", "Perguntar sobre as notícias",
+                                             "Pergunte em português, por exemplo: o que saiu sobre economia hoje? O modelo procura nos últimos 30 dias de notícias guardadas, passando por categorias e títulos, e lê só as que servem.")
         scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall News</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall News", nav, sair_html=sair)}'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall News", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="news")}{scripts}</body></html>').encode("utf-8")
 
 
@@ -1241,6 +1248,9 @@ class News(nuvem.ManipuladorBase):
             self._pagina(status, titulo, corpo, sess)
         elif rota == "/estado":
             self._pagina(200, "Estado das fontes", pg_estado(), sess)
+        elif rota == "/ajuda":
+            import heimdall_ajuda
+            self._pagina(200, "Ajuda", heimdall_ajuda.ajuda_do_servico("news", design.base_ajuda()), sess)
         else:
             self._pagina(404, "Não encontrei", '<p>Esta página não existe.</p><p><a href="/">Voltar às notícias</a></p>', sess)
 

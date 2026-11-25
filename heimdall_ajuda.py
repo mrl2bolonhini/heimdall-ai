@@ -64,7 +64,7 @@ FAQ = {
         ("Mudei uma variável em Ajustes e nada mudou. Por quê?",
          "Salvar grava o valor na hora, mas cada serviço só lê o valor novo ao reiniciar. Use o botão Recarregar Heimdall, no fim da página de Ajustes."),
         ("Como acompanho o gasto da nuvem?",
-         "Na aba Nuvem e na aba Monitor, que mostram o consumo e os limites de gasto configurados."),
+         "Na aba Nuvem, com as subabas Continuidade e Consumo de IA, que mostram o consumo e os limites de gasto configurados."),
     ],
     "finance": [
         ("De onde vêm os dados do Finance?",
@@ -343,6 +343,22 @@ def _faq_html(servico: str) -> str:
         blocos = "".join(f'<h3>{e(q)}</h3><p>{e(a)}</p>' for q, a in itens)
         saida += f'<section aria-labelledby="{tid}"><h2 id="{tid}">Perguntas frequentes: {e(SERVICOS[k])}</h2>{blocos}</section>'
     return saida
+
+
+def ajuda_do_servico(servico: str, base: str = "") -> str:
+    """Conteúdo da subaba Ajuda, dentro dos Ajustes de um serviço: as perguntas frequentes dele e o caminho para a Ajuda e suporte completa
+    (com o formulário de mensagem), no Heimdall Account. `base` é o endereço do Account (design.base_ajuda())."""
+    servico = servico if servico in SERVICOS and servico != "geral" else ""
+    itens = FAQ.get(servico) or []
+    blocos = "".join(f"<h3>{e(q)}</h3><p>{e(a)}</p>" for q, a in itens)
+    perguntas = (f'<section aria-labelledby="ajuda-faq"><h2 id="ajuda-faq">Perguntas frequentes</h2>{blocos}</section>' if blocos
+                 else "<p>Ainda não há perguntas frequentes deste serviço.</p>")
+    q = f"?servico={servico}" if servico else ""
+    destino = f"{base}/ajuda{q}" if base else f"/ajuda{q}"
+    contato = (f'<section aria-labelledby="ajuda-contato"><h2 id="ajuda-contato">Falar com o suporte</h2>'
+               f'<p>Para enviar uma mensagem ao suporte e receber um protocolo, ou para ver as perguntas dos demais serviços, abra a '
+               f'<a href="{e(destino)}">Ajuda e suporte do Heimdall Account</a>.</p></section>')
+    return perguntas + contato
 
 
 # Guia de comandos: as telas dos serviços não ensinam comandos; eles ficam aqui, por sistema operacional.

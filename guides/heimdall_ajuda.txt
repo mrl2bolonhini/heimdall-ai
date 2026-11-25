@@ -389,7 +389,7 @@ Exemplos:
   heimdall ask --local "resuma em duas frases o que é o Heimdall"
 
 @ usage | Consumo e custo da Cloudflare
-Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Monitor do Heimdall Controls. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
+Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Nuvem do Heimdall Controls, subaba Consumo de IA. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
 Opções:
   -d, --days N         período em dias, de 1 a 31 (o padrão é 30)
   -h, --help           mostra esta ajuda

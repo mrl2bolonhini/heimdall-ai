@@ -249,6 +249,10 @@ st, _, cab = pedir("/importar", ck, dados=corpo_m, tipo=tipo_m)
 confere("arquivo ruim volta à tela de importar com mensagem", st == 303 and cab.get("Location") == "/importar")
 st, corpo, _ = pedir("/importar", ck)
 confere("a mensagem de erro aparece uma vez", "Não achei o cabeçalho" in corpo and "Não achei o cabeçalho" not in pedir("/importar", ck)[1], corpo[:200])
+st_aj, corpo_aj, _ = pedir("/ajuda", ck)
+confere("subaba Ajuda nos Ajustes: perguntas do Finance, caminho para o suporte, sem abas de cima e um só h1",
+        st_aj == 200 and "Perguntas frequentes" in corpo_aj and "/ajuda?servico=finance" in corpo_aj and "Voltar ao Finance" in corpo_aj
+        and 'aria-label="Seções do Heimdall Finance"' not in corpo_aj and corpo_aj.count("<h1>") == 1 and ">Ajuda</a>" in corpo_aj, corpo_aj[:600])
 
 try:
     import io as _io

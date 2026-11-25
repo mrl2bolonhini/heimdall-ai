@@ -211,7 +211,7 @@ confere("serviços: uma chave (role=switch) por serviço, com estado e sem botã
         and 'aria-checked="true"' in corpo and 'aria-checked="false"' in corpo and "Kuma: no ar" in corpo and "Aplicar" not in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo)
 confere("serviços: o próprio Controls não é desligável", "Controls" not in "".join(x["nome"] for x in hsv.catalogo()))
 confere("abas: tablist, tab com aria-selected, painel e atalho",
-        'role="tablist"' in corpo and corpo.count('role="tab"') == 7 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Alt+Shift" not in corpo)
+        'role="tablist"' in corpo and corpo.count('role="tab"') == 6 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Alt+Shift" not in corpo)
 confere("Ajustes é botão no topo e não aba", ">Ajustes</button>" in corpo and "Ajustes</a>" not in corpo.split("<main")[0])
 s_aj, c_aj, _ = req("GET", "/ajustes", cookie=token)
 confere("tela de Ajustes: sem abas de cima, com Voltar ao Controls", s_aj == 200 and 'role="tablist"' not in c_aj and "Voltar ao Controls" in c_aj and 'aria-current="true">Ajustes' in c_aj)
@@ -224,8 +224,11 @@ hcm.consultar = lambda dias=30, **k: hcm._resumir([{"count": 3, "sum": {"cost": 
                                                    "dimensions": {"model": "@cf/openai/gpt-oss-120b", "date": "2026-11-21"}}], dias)
 s, corpo, _ = req("GET", "/monitor?dias=7", cookie=token)
 confere("monitor: resumo, tabelas com caption e scope, período atual marcado e um só h1",
-        s == 200 and "Monitor da Cloudflare" in corpo and "<caption>Consumo por modelo</caption>" in corpo and 'scope="row">@cf/openai/gpt-oss-120b' in corpo
+        s == 200 and "Consumo de IA na nuvem" in corpo and "<caption>Consumo por modelo</caption>" in corpo and 'scope="row">@cf/openai/gpt-oss-120b' in corpo
         and "US$ 0.0042" in corpo and 'aria-current="page">7 dias' in corpo and corpo.count("<h1") == 1, [c for c in ("<caption>Consumo por modelo</caption>", 'scope="row">@cf/openai/gpt-oss-120b', "US$ 0.0042", 'aria-current="page">7 dias') if c not in corpo])
+confere("monitor: é a subaba Consumo de IA dentro da aba Nuvem, sem aba Monitor própria",
+        'data-nivel="2"' in corpo and 'aria-selected="true" tabindex="0" aria-controls="painel-subaba">Consumo de IA</a>' in corpo and ">Monitor</a>" not in corpo
+        and 'aria-selected="true"' in corpo.split('data-nivel="2"')[0].split(">Nuvem<")[0][-200:], corpo[:1500])
 hcm.consultar = lambda dias=30, **k: {"ok": False, "erro": "O token não tem permissão de ler análises."}
 s, corpo, _ = req("GET", "/monitor", cookie=token)
 confere("monitor: sem permissão, mostra o aviso com role=alert e nenhum valor inventado", s == 200 and 'role="alert"' in corpo and "permissão de ler análises" in corpo and "<caption>" not in corpo)
@@ -320,7 +323,7 @@ confere("Origin null vindo de outro site (Sec-Fetch-Site) é recusado", s == 403
 s, corpo, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": "errado"}, cookie=token, extra={"Origin": "null"})
 confere("Origin null com token errado continua recusado", s == 403)
 s, corpo, _ = req("GET", "/", cookie=token)
-confere("Visão geral mostra a tabela de versões com legenda", '<caption>Versões do Mac, do Docker e dos serviços</caption>' in corpo and "Python do Heimdall" in corpo and "heimdall doctor --versions" in corpo, corpo[-300:])
+confere("Visão geral mostra a tabela de versões com legenda", '<caption>Versões do Mac, do Docker e dos serviços</caption>' in corpo and "Python do Heimdall" in corpo and "heimdall doctor" not in corpo, corpo[-300:])
 confere("a página inicial é a Visão geral, primeira aba, com a situação dos serviços e a aba Ajustes", s == 200 and corpo.count('aria-selected="true"') == 1 and _re.search(r'aria-selected="true"[^>]*>Visão geral|>Visão geral</a>', corpo)
         and "serviços no ar" in corpo and 'href="/ajustes"' in corpo and "<h1>Visão geral</h1>" in corpo, corpo[:100])
 confere("menu Conta mostra o nome de quem entrou e tem o Sair", "<summary>Conta: Dono</summary>" in corpo and 'action="/sair"' in corpo and "senha e código" in corpo)

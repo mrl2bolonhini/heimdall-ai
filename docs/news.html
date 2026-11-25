@@ -42,7 +42,7 @@
 <li><strong>Cada notícia</strong>: título como cabeçalho, o resumo sempre marcado como "Resumo feito por IA", o link "Leia mais sobre ..." para a matéria original, que abre em uma nova aba (o leitor de tela avisa), e a fonte, a categoria e a hora.</li>
 <li><strong>Títulos em inglês</strong> são traduzidos por IA e sinalizados. Matérias ainda sem resumo mostram o trecho original da fonte, e o resumo entra na atualização seguinte.</li>
 <li><strong>Categorias</strong>: filtro por categoria, com a contagem de cada uma.</li>
-<li><strong>Estado das fontes</strong>: mostra a última atualização, a fila de resumos e cada fonte (ok ou falhou desde quando, avisando se passar de 24 horas fora do ar).</li></ul></section>
+<li><strong>Ajustes</strong> (botão no topo, depois do menu Conta) abre o Estado das fontes: mostra a última atualização, a fila de resumos e cada fonte (ok ou falhou desde quando, avisando se passar de 24 horas fora do ar).</li></ul></section>
 <section aria-labelledby="banco"><h2 id="banco">Banco pessoal</h2>
 <p>Tudo fica 30 dias na tabela noticias do banco pessoal (entra na cópia de segurança criptografada). O site mostra só as últimas 24 horas; o resto serve para consulta, pelo chat ou por SQL. Matérias com mais de 30 dias são apagadas sozinhas.</p></section>
 <section aria-labelledby="rss"><h2 id="rss">Feeds RSS para o iPhone</h2>
@@ -60,7 +60,7 @@
 <p>Com uma chave da Cloudflare no <code>.env</code> (<code>python3 cloudflare_chave.py</code>, depois <code>./subir.sh --reiniciar</code>), o News ganha dois recursos. Só as matérias públicas passam por lá; dados pessoais e de saúde nunca saem do Mac.</p>
 <ul><li><strong>Reserva de resumos:</strong> se o modelo local não responder, o resumo é feito pelo Workers AI (modelo mistral-small-3.1, de 24 bilhões). Limite de 60 por dia, ajustável em <code>HEIMDALL_NEWS_RESERVA_POR_DIA</code>; para desligar, <code>HEIMDALL_NEWS_RESERVA=0</code>.</li>
 <li><strong>Leitura com navegador:</strong> em uma fonte de <code>noticias_fontes.json</code>, <code>"renderizar": true</code> faz a matéria ser lida por um navegador da Cloudflare, para sites que só mostram o texto com JavaScript. Limite de 20 por dia (<code>HEIMDALL_NEWS_RENDER_POR_DIA</code>); se falhar, volta ao jeito normal.</li>
-<li>A página Estado das fontes mostra se a Cloudflare está ligada e quanto foi usado. O token precisa das permissões Workers AI (leitura) e Browser Rendering (edição).</li></ul></section>
+<li>O Estado das fontes, em Ajustes, mostra se a Cloudflare está ligada e quanto foi usado. O token precisa das permissões Workers AI (leitura) e Browser Rendering (edição).</li></ul></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
 <ul><li>Escuta só em 127.0.0.1 e é somente de leitura. Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict, só nomes de site permitidos e todo texto escapado.</li>
 <li>Os feeds RSS só respondem à chave certa; tentativas erradas têm limite próprio e a chave nunca aparece no log.</li>

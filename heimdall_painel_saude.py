@@ -89,7 +89,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 #   Medidas         meus números (sono, recuperação, atividade, treinos, coração e o que registrei: sintomas, humor, medicamentos)
 #   Prontuário      meus documentos de saúde (exames, documentos recebidos, receitas, atestados, laudos, consultas)
 #   Acompanhamento  o que o Heimdall sugere e avisa (sugestões, anomalias, avisos)
-#   Ajustes (botão) perfil de saúde e estado dos dados, na tela sem abas de cima, como nos demais serviços
+#   Ajustes (botão) perfil de saúde, estado dos dados e ajuda, na tela sem abas de cima, como nos demais serviços
 # Cada grupo é (chave, nome da aba, [(rota, nome da subaba)]); a aba aponta para a primeira subaba. Rota nova entra no grupo a que pertence.
 GRUPOS = [("resumo", "Resumo", [("/", "Hoje"), ("/diario", "Dia a dia"), ("/semana", "Semana"), ("/tendencias", "Tendências")]),
           ("medidas", "Medidas", [("/sono", "Sono"), ("/recuperacao", "Recuperação"), ("/atividade", "Atividade"), ("/treinos", "Treinos"), ("/coracao", "Coração e ECG"),
@@ -97,7 +97,7 @@ GRUPOS = [("resumo", "Resumo", [("/", "Hoje"), ("/diario", "Dia a dia"), ("/sema
           ("prontuario", "Prontuário", [("/exames", "Exames"), ("/documentos", "Documentos recebidos"), ("/receitas", "Receitas e encaminhamentos"),
                                         ("/laudos", "Atestados e laudos"), ("/consultas", "Consultas e pedidos")]),
           ("acompanhamento", "Acompanhamento", [("/sugestoes", "Sugestões"), ("/anomalias", "Anomalias"), ("/avisos", "Avisos")]),
-          ("ajustes", "Ajustes", [("/perfil", "Perfil de saúde"), ("/dados", "Estado dos dados")])]
+          ("ajustes", "Ajustes", [("/perfil", "Perfil de saúde"), ("/dados", "Estado dos dados"), ("/ajuda", "Ajuda")])]
 SECOES = [(g[2][0][0], g[1]) for g in GRUPOS if g[0] != "ajustes"]   # as abas de cima; Ajustes é botão
 
 
@@ -578,6 +578,7 @@ ROTAS = {
     "/perfil": pg_perfil,
     "/sugestoes": pg_sugestoes,
     "/dados": pg_dados,
+    "/ajuda": lambda q: ("Ajuda", __import__("heimdall_ajuda").ajuda_do_servico("saude", design.base_ajuda())),
 }
 
 

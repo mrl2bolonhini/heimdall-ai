@@ -174,7 +174,10 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/monitor", "Monitor"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem"), ("/manutencao", "Manutenção")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem"), ("/manutencao", "Manutenção")]
+# Abas com subabas: a rota de cada subaba aponta para a aba de cima a que pertence (lista de abas enxuta do Heimdall Design).
+SUBABAS = {"/nuvem": [("/nuvem", "Continuidade"), ("/monitor", "Consumo de IA")]}
+ABA_DE = {r: aba for aba, itens in SUBABAS.items() for r, _ in itens}
 
 _shell = None
 
@@ -301,7 +304,7 @@ def _bloco_versoes() -> str:
     atencao = ('<p role="status">Atenção: ' + e(" ".join(av)) + "</p>") if av else ""
     return ('<h2>Versões instaladas</h2>' + atencao + '<table><caption>Versões do Mac, do Docker e dos serviços</caption><thead><tr><th scope="col">Item</th><th scope="col">Versão</th>'
             f'<th scope="col">Detalhe</th></tr></thead><tbody>{linhas}</tbody></table>'
-            '<p>A lista é atualizada a cada 10 minutos. Para saber quais têm imagem mais nova no registro, rode <code>heimdall doctor --versions</code> no Terminal.</p>')
+            '<p>A lista é atualizada a cada 10 minutos.</p>')
 
 
 def pg_inicio(q: dict, sess: dict) -> tuple:
@@ -325,9 +328,9 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
     corpo += ("<h2>Para que serve cada aba</h2><ol>"
               '<li><a href="/terminal">Terminal</a>: um shell completo no Mac. A pasta e as variáveis continuam de um comando para o outro, e há atalhos para copiar as últimas saídas.</li>'
               '<li><a href="/servicos">Serviços</a>: uma chave por serviço, para ligar e desligar. O que você desliga continua desligado depois de atualizar e reiniciar.</li>'
-              '<li><a href="/monitor">Monitor</a>: consumo da Cloudflare, com requisições, tokens e custo estimado do modelo grande na nuvem, por modelo e por dia, comparado com o teto de gasto.</li>'
               '<li><a href="/usuarios">Usuários</a>: quem pode entrar em cada serviço. Adiciona e remove convidados, guarda a lista e sincroniza com o Cloudflare Access.</li>'
               '<li><a href="/ajustes">Ajustes</a>: todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar Heimdall, no fim da página, faz isso.</li>'
+              '<li><a href="/nuvem">Nuvem</a>: continuidade quando o Mac fica fora do ar, cópia dos dados, limites de gasto e, na subaba <a href="/monitor">Consumo de IA</a>, as requisições, os tokens e o custo estimado dos modelos na nuvem.</li>'
               '<li><a href="/manutencao">Manutenção</a>: Start, Stop, Update, Restart, status, diagnóstico e logs.</li></ol>')
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando e cada mudança ficam anotados em logs/controls_audit.log, sem a saída nem os valores. '
               'Programas de tela cheia, como vim e top, não funcionam no Terminal: use cat, sed e ps.</p>')
@@ -624,11 +627,11 @@ def pg_monitor(q: dict, sess: dict) -> tuple:
     dias = dias if dias in (1, 7, 30) else 30
     r = cfmonitor.consultar(dias, usar_cache=True)
     ligada = cfmonitor.nuvem.ativo()
-    estado = f"<p>Modelo grande na nuvem: <strong>{'ligado' if ligada else 'desligado'}</strong>. Para mudar, use a aba Ajustes (HEIMDALL_NUVEM, 1 liga e 0 desliga) ou o comando heimdall env --set HEIMDALL_NUVEM.</p>"
+    estado = f"<p>Modelo grande na nuvem: <strong>{'ligado' if ligada else 'desligado'}</strong>. Para mudar, use Ajustes, variável HEIMDALL_NUVEM (1 liga e 0 desliga).</p>"
     filtro = "<p>Período: " + " ".join(
         (f'<strong aria-current="page">{n} dia{"s" if n > 1 else ""}</strong>' if n == dias else f'<a href="/monitor?dias={n}">{n} dia{"s" if n > 1 else ""}</a>') for n in (1, 7, 30)) + "</p>"
     if not r.get("ok"):
-        return "Monitor da Cloudflare", estado + f'<p role="alert">{e(r.get("erro", "Sem dados."))}</p>'
+        return "Consumo de IA na nuvem", estado + f'<p role="alert">{e(r.get("erro", "Sem dados."))}</p>'
     t = r["total"]
     pct = t["custo"] / cfmonitor.TETO_GATEWAY * 100
     resumo = (f"<h2>Resumo dos últimos {dias} dia{'s' if dias > 1 else ''}</h2><ul>"
@@ -646,7 +649,7 @@ def pg_monitor(q: dict, sess: dict) -> tuple:
             'O gateway corta os pedidos ao passar de US$ 10 por mês.</p>')
     corpo = (estado + filtro + resumo + sem + tabela("Consumo por modelo", "Modelo", r["por_modelo"], "modelo")
              + tabela("Consumo por dia, do mais recente ao mais antigo", "Dia", r["por_dia"][:14], "dia") + nota)
-    return "Monitor da Cloudflare", corpo
+    return "Consumo de IA na nuvem", corpo
 
 
 ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/monitor": pg_monitor, "/usuarios": pg_usuarios, "/nuvem": pg_nuvem, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
@@ -979,8 +982,14 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
             nav = " "
             corpo = f'<div class="acoes-topo">{design.botao("/", "Voltar ao Controls")}</div><h1>{e(titulo)}</h1>{{aviso}}{corpo}'
         else:
-            nav = '<nav aria-label="Principal">' + design.abas(SECOES, atual, completas=("/terminal",)) + '</nav>'
-            corpo = design.painel_da_aba(SECOES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}")
+            aba = ABA_DE.get(atual, atual)
+            nav = '<nav aria-label="Principal">' + design.abas(SECOES, aba, completas=("/terminal",)) + '</nav>'
+            interno = f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}"
+            if aba in SUBABAS:   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
+                rotulo = "Seções de " + dict(SECOES)[aba]
+                corpo = design.painel_da_aba(SECOES, aba, design.com_subabas(SUBABAS[aba], atual, interno, rotulo), foco=False)
+            else:
+                corpo = design.painel_da_aba(SECOES, aba, interno)
     else:
         corpo = f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}"
     aviso = ""

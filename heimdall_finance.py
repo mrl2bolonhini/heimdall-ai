@@ -148,7 +148,8 @@ def estrutura(con) -> list:
     grupos += [("tendencias", "Tendências", [("/resumo", "Resumo"), ("/tendencias", "Evolução"), ("/orcamentos", "Orçamentos"), ("/recorrentes", "Contas recorrentes"),
                                             ("/analise", "Análises"), ("/avisos", "Avisos")]),
                ("visoes", "Visões", [("/visoes", "Visões")]),
-               ("ajustes", "Ajustes", [("/importar", "Importar extrato"), ("/planilhas", "Importar planilha"), ("/regras", "Regras"), ("/avisos/config", "Avisos")])]
+               ("ajustes", "Ajustes", [("/importar", "Importar extrato"), ("/planilhas", "Importar planilha"), ("/regras", "Regras"), ("/avisos/config", "Avisos"),
+                                         ("/ajuda", "Ajuda")])]
     return grupos
 
 
@@ -946,6 +947,9 @@ class Finance(nuvem.ManipuladorBase):
             titulo, corpo = pg_recorrentes()
         elif rota == "/regras":
             titulo, corpo = pg_regras(sess)
+        elif rota == "/ajuda":
+            import heimdall_ajuda
+            titulo, corpo = "Ajuda", heimdall_ajuda.ajuda_do_servico("finance", design.base_ajuda())
         elif hfp.eh_rota_get(rota):
             r = hfp.get(banco(), rota, q, sess, DIR_DADOS)
             if not r:

@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Navegação: Controls com 6 abas, Ajustes no News e subaba Ajuda
+- Controls: a aba Monitor passou a ser a subaba Consumo de IA, dentro da aba Nuvem (que ganhou a subaba Continuidade). As abas de cima ficaram em seis: Visão geral, Terminal, Serviços, Usuários, Nuvem e Manutenção. O endereço /monitor continua valendo.
+- News: o Estado das fontes, que é estado técnico, saiu da lista de abas e foi para o botão Ajustes, no topo, depois do menu Conta, com o botão Voltar ao News. A página de notícias ficou sem lista de abas, por ter uma só seção. O endereço /estado continua valendo.
+- Nova subaba Ajuda, por último, dentro dos Ajustes do Finance, do Health e do News: as perguntas frequentes daquele serviço e o caminho para a Ajuda e suporte do Heimdall Account, onde fica o formulário com protocolo.
+- Telas sem comandos de terminal: o aviso do Lab quando o emulador está desligado indica a aba Serviços do Controls; o Controls não mostra mais comandos na lista de versões nem no consumo de IA.
+
 ## 2026-11-25 - Documentos de saúde no relatório da semana
 - O relatório da semana (nota com áudio aos domingos e a página Semana do Heimdall Health) ganhou a seção Documentos de saúde: quantos documentos foram confirmados na semana, por tipo; os resultados de exame fora da faixa de referência do laboratório, com o valor e a referência; os laudos, pelo título (a conclusão fica na aba Prontuário); e as especialidades dos encaminhamentos. CID e diagnóstico não entram.
 - Documentos que aguardam conferência há mais de 3 dias aparecem na mesma seção, com o nome do arquivo e a data de chegada. HEIMDALL_SAUDE_PENDENTE_DIAS muda o prazo.
