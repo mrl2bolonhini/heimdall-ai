@@ -609,6 +609,9 @@ fi
 # --- Heimdall Library (documentos pesquisáveis) ---
 # Desligado por padrão: ligue com HEIMDALL_LIBRARY=1 no .env (heimdall env --set HEIMDALL_LIBRARY 1). Mesmo login do Heimdall Lab.
 if [ "${HEIMDALL_LIBRARY:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
+    if [ "${HEIMDALL_LIBRARY_MOTOR:-interno}" = "paperless" ] && command -v docker > /dev/null 2>&1 && [ -f paperless/docker-compose.yml ]; then
+        docker compose -f paperless/docker-compose.yml --env-file .env up -d > "$(nova_log paperless_debug)" 2>&1 || echo "Aviso: não consegui subir o Paperless-ngx (motor do Library). Veja logs/paperless_debug.log."
+    fi
     if [ -f heimdall_library.py ]; then
         HEIMDALL_LIBRARY_PORT="$LIBRARY_PORT" "$VENV_PYTHON" heimdall_library.py > "$(nova_log library_debug)" 2>&1 &
         COUNTER=0

@@ -40,7 +40,8 @@ def _plural(n: int, um: str, varios: str) -> str:
 
 def _opcoes_tipo(atual: str = "", todos: bool = True) -> str:
     base = '<option value="">Todos os tipos</option>' if todos else ""
-    return base + "".join(f'<option value="{e(t)}"{" selected" if t == atual else ""}>{e(t)}</option>' for t in dados.TIPOS)
+    tipos = list(dados.TIPOS) + ([atual] if atual and atual not in dados.TIPOS else [])   # tipo criado pelo Paperless continua escolhível
+    return base + "".join(f'<option value="{e(t)}"{" selected" if t == atual else ""}>{e(t)}</option>' for t in tipos)
 
 
 def _lista(ctx, rota: str, params: dict, **filtro) -> str:
@@ -92,10 +93,27 @@ def pg_enviar(ctx):
 def pg_entrada(ctx):
     ent = dados.pasta_entrada()
     n = len([p for p in ent.iterdir() if p.is_file() and not p.name.startswith(".")]) if ent.is_dir() else 0
+    if dados.motor() == "paperless":
+        return "Pasta de entrada", f'<p role="status">Pasta de entrada: {e(str(ent))}. Os arquivos colocados nela são importados automaticamente e ficam em A revisar.</p>'
     corpo = (f'<p role="status">Pasta de entrada: {e(str(ent))}. {_plural(n, "arquivo aguardando", "arquivos aguardando")}.</p>'
              '<p>Arquivos colocados nesta pasta são importados ao tocar em Importar agora. Os importados vão para a subpasta done e os recusados para refused.</p>'
              + design.botao_post("/entrada/processar", "Importar agora", ctx.csrf))
     return "Pasta de entrada", corpo
+
+
+def pg_email(ctx):
+    if dados.motor() != "paperless":
+        return "E-mail", '<p role="status">O envio por e-mail usa o motor Paperless-ngx (HEIMDALL_LIBRARY_MOTOR=paperless).</p>'
+    import heimdall_library_paperless as pl
+    est = pl.email_estado()
+    situacao = ("Conta: " + ", ".join(est["contas"]) + ". " + "; ".join(f'regra {r["nome"]} na pasta {r["pasta"]}' + ("" if r["ativa"] else " (desligada)") for r in est["regras"]) + ".") if est["contas"] else "Nenhuma conta de e-mail configurada."
+    form = (f'<form method="post" action="/email/salvar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
+            '<label for="servidor">Servidor IMAP (por exemplo imap.exemplo.com)</label><input id="servidor" name="servidor" type="text" maxlength="100" required>'
+            '<label for="usuario">Endereço de e-mail</label><input id="usuario" name="usuario" type="email" maxlength="120" required autocomplete="off">'
+            '<label for="pasta">Pasta ou marcador a ler</label><input id="pasta" name="pasta" type="text" value="Heimdall" maxlength="60" required>'
+            '<label for="remetente">Só de quem (opcional)</label><input id="remetente" name="remetente" type="text" maxlength="100">'
+            '<button type="submit">Salvar</button></form>')
+    return "E-mail", f'<p role="status">{e(situacao)}</p>{form}'
 
 
 def pg_etiquetas(ctx):
@@ -115,7 +133,7 @@ def pg_documento(ctx):
     d = dados.obter(ctx.p("id"))
     if not d:
         raise dados.ErroLibrary("Documento não encontrado.")
-    meta = [d["tipo"]] + ([d["data_doc"]] if d["data_doc"] else []) + ([d["emissor"]] if d["emissor"] else []) + [d["nome_arquivo"], _tamanho(d["tamanho"])] + (["texto lido por OCR"] if d["por_ocr"] else [])
+    meta = [d["tipo"]] + ([d["data_doc"]] if d["data_doc"] else []) + ([d["emissor"]] if d["emissor"] else []) + ([d["nome_arquivo"]] + ([_tamanho(d["tamanho"])] if d["tamanho"] else [])) + (["texto lido por OCR"] if d["por_ocr"] else [])
     estado = '<p role="status">Sugestão automática ainda não revisada.</p>' if not d["revisado"] else ""
     if d["lixeira"]:
         estado += '<p role="status">Este documento está na lixeira.</p>'
@@ -146,8 +164,9 @@ def baixar(ctx):
 def aj_estado(ctx):
     s = dados.estado()
     ocr = "disponível" if s["tesseract"] else "não instalado (fotos e PDFs escaneados ficam sem texto)"
-    corpo = (f'<p role="status">{_plural(s["documentos"], "documento", "documentos")}, {_tamanho(s["bytes"])} no total. {s["a_revisar"]} a revisar, {s["sem_texto"]} sem texto, {s["lixeira"]} na lixeira.</p>'
-             f'<p>Leitura de texto em imagens (OCR): {e(ocr)}.</p><p>Pasta de entrada: {e(s["entrada"])}.</p>')
+    total = f", {_tamanho(s['bytes'])} no total" if s["bytes"] else ""
+    corpo = (f'<p role="status">{_plural(s["documentos"], "documento", "documentos")}{total}. {s["a_revisar"]} a revisar, {s["sem_texto"]} sem texto, {s["lixeira"]} na lixeira.</p>'
+             f'<p>Motor: {e(s["motor"])}.</p><p>Leitura de texto em imagens (OCR): {e(ocr)}.</p><p>Pasta de entrada: {e(s["entrada"])}.</p>')
     return "Estado", corpo
 
 
@@ -178,6 +197,14 @@ def post_entrada(ctx, campos, arquivos):
     r = dados.processar_entrada(os.environ.get("HEIMDALL_LIBRARY_IA", "1") != "0")
     ctx.flash("ok", f"{_plural(r['novos'], 'documento novo', 'documentos novos')}, {r['repetidos']} repetidos, {r['recusados']} recusados.")
     return "/revisar" if r["novos"] else "/entrada"
+
+
+def post_email(ctx, campos, arquivos):
+    if dados.motor() != "paperless":
+        raise dados.ErroLibrary("O envio por e-mail exige o motor Paperless-ngx.")
+    import heimdall_library_paperless as pl
+    ctx.flash("ok", pl.email_configurar(campos.get("servidor", ""), campos.get("usuario", ""), campos.get("pasta", ""), campos.get("remetente", "")))
+    return "/email"
 
 
 def post_salvar(ctx, campos, arquivos):
@@ -219,15 +246,15 @@ def contexto_perguntar(ctx) -> str:
 
 GRUPOS = [
     ("Documentos", [("/pesquisar", "Pesquisar"), ("/recentes", "Recentes"), ("/revisar", "A revisar")]),
-    ("Adicionar", [("/enviar", "Enviar arquivo"), ("/entrada", "Pasta de entrada")]),
+    ("Adicionar", [("/enviar", "Enviar arquivo"), ("/entrada", "Pasta de entrada"), ("/email", "E-mail")]),
     ("Organização", [("/etiquetas", "Etiquetas"), ("/tipos", "Tipos")]),
 ]
 CFG = web.Config(
     chave="library", nome="Library", porta_env="HEIMDALL_LIBRARY_PORT", porta=8021, hosts="library.heimdall-ai.tech,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
-    get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
+    get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira},
-    post={"/enviar": post_enviar, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
+    post={"/enviar": post_enviar, "/email/salvar": post_email, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
           "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: qual é o vencimento do boleto de energia? o que diz a cláusula de rescisão do contrato? O modelo responde só com os documentos do seu acervo.",

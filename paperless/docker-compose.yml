@@ -1,0 +1,31 @@
+# Paperless-ngx como motor do Heimdall Library. Escuta só em 127.0.0.1:8023 (sem endereço público); o Library fala com ele pela API.
+# Suba com: heimdall library --paperless   (as variáveis vêm do .env da raiz do projeto)
+services:
+  broker:
+    image: docker.io/valkey/valkey:9-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    restart: unless-stopped
+    depends_on:
+      - broker
+    ports:
+      - "127.0.0.1:8023:8000"
+    volumes:
+      - ./data:/usr/src/paperless/data
+      - ./media:/usr/src/paperless/media
+      - ./export:/usr/src/paperless/export
+      - ./consume:/usr/src/paperless/consume
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_SECRET_KEY: ${HEIMDALL_PAPERLESS_SECRET}
+      PAPERLESS_ADMIN_USER: ${HEIMDALL_PAPERLESS_USER:-heimdall}
+      PAPERLESS_ADMIN_PASSWORD: ${HEIMDALL_PAPERLESS_SENHA}
+      PAPERLESS_TIME_ZONE: ${HEIMDALL_PAPERLESS_FUSO:-America/Sao_Paulo}
+      PAPERLESS_OCR_LANGUAGE: por
+      PAPERLESS_OCR_LANGUAGES: por
+      PAPERLESS_CONSUMER_POLLING: 10
+volumes:
+  redisdata:

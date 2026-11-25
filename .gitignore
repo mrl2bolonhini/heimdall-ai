@@ -48,3 +48,9 @@ amostras_bancos/
 
 # Arquivos e pasta de entrada do Heimdall Library (dados do usuário)
 /library/
+
+# Dados do Paperless-ngx (motor do Library)
+/paperless/data/
+/paperless/media/
+/paperless/export/
+/paperless/consume/

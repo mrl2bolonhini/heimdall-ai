@@ -11,6 +11,7 @@ db/people/<id>/library/. Os documentos chegam por envio no site ou pela pasta de
 import contextlib
 import hashlib
 import json
+import os
 import re
 import sqlite3
 import threading
@@ -359,4 +360,26 @@ def estado() -> dict:
         lix = c.execute("SELECT COUNT(*) AS n FROM documentos WHERE lixeira=1").fetchone()["n"]
     import shutil
     return {"documentos": r["n"], "bytes": r["b"], "a_revisar": r["rev"], "sem_texto": r["sem"], "lixeira": lix, "tesseract": bool(shutil.which("tesseract")),
-            "entrada": str(pasta_entrada())}
+            "entrada": str(pasta_entrada()), "motor": "interno"}
+
+
+# ---------------------------------------------------------------- escolha do motor
+def motor() -> str:
+    """"paperless" (HEIMDALL_LIBRARY_MOTOR=paperless, só para o dono) ou "interno". Convidados sempre usam o acervo interno, separado por pessoa."""
+    return "paperless" if os.environ.get("HEIMDALL_LIBRARY_MOTOR", "interno") == "paperless" and banco._PESSOA_DIR.get() is None else "interno"
+
+
+def _despachar(nome: str):
+    interno = globals()[nome]
+
+    def f(*a, **k):
+        if motor() == "paperless":
+            import heimdall_library_paperless as pl
+            return getattr(pl, nome)(*a, **k)
+        return interno(*a, **k)
+    f.__name__, f.__doc__ = nome, interno.__doc__
+    return f
+
+
+for _n in ("adicionar", "processar_entrada", "listar", "obter", "arquivo", "atualizar", "confirmar", "lixeira", "etiquetas_com_contagem", "tipos_com_contagem", "estado", "pasta_entrada"):
+    globals()[_n] = _despachar(_n)

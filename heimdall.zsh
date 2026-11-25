@@ -110,7 +110,8 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     controls) printf '%s\n' "-o=--open" "-L=--local" ;;
     account) printf '%s\n' "-L=--local" ;;
     learn) printf '%s\n' "-L=--local" "-s=--sync" "-m=--migrate" "-a=--apply" ;;
-    trading|library) printf '%s\n' "-L=--local" ;;
+    trading) printf '%s\n' "-L=--local" ;;
+    library) printf '%s\n' "-L=--local" "-P=--paperless" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
@@ -351,7 +352,11 @@ heimdall() {
       esac ;;
     account) _heimdall_web "Heimdall Account" ACCOUNT 8018 account ;;
     trading) _heimdall_web "Heimdall Trading" TRADING 8020 trading ;;
-    library) _heimdall_web "Heimdall Library" LIBRARY 8021 library ;;
+    library)
+      case "$1" in
+        -P|--paperless) bash "$HEIMDALL_DIR/scripts/iniciar_paperless.sh" ;;
+        *) _heimdall_web "Heimdall Library" LIBRARY 8021 library ;;
+      esac ;;
     learn)
       case "$1" in
         "") _heimdall_web "Heimdall Learn" LEARN 8019 learn ;;

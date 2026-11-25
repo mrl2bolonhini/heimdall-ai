@@ -142,10 +142,12 @@ Exemplos:
 Sem opção, abre o acervo de documentos pesquisáveis (porta 8021): envio de PDF, foto, Word e texto, leitura de texto (OCR em imagens), etiquetas sugeridas com revisão e busca em todo o conteúdo. Liga com HEIMDALL_LIBRARY=1 no .env.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
+  -P, --paperless      sobe o Paperless-ngx em Docker (só neste Mac, sem endereço público) e passa a usá-lo como motor do Library: leitura de e-mail e classificação que aprende com as correções; precisa do Docker e de reiniciar depois (heimdall restart)
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall library
   heimdall library --local
+  heimdall library --paperless
 
 @ news | Heimdall News, notícias com resumo de IA
 Sem opção, abre o site de notícias das últimas 24 horas (porta 8012). Com opção, cuida dos feeds RSS, das fontes e da atualização.

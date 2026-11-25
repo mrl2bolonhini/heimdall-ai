@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Library com o Paperless-ngx como motor (opcional)
+- O Library pode usar o Paperless-ngx, rodando em Docker só neste Mac (127.0.0.1:8023, sem login exposto), como motor: ele faz o OCR, guarda os arquivos, lê e-mails por IMAP e classifica; o Library continua sendo a única tela e fala com ele pela API REST. Liga com heimdall library --paperless e desliga com HEIMDALL_LIBRARY_MOTOR=interno (os documentos do Paperless ficam no Docker; os do acervo interno não são tocados).
+- Nova subaba Adicionar > E-mail: conta IMAP e pasta lidas pelo Paperless; os anexos entram em A revisar. A senha de aplicativo vem só do .env (HEIMDALL_LIBRARY_EMAIL_SENHA), nunca do formulário.
+- Classificação que melhora: o que a pessoa corrige ou confirma em A revisar é gravado no Paperless e ensina o classificador dele. Excluir manda para a etiqueta Lixeira; nada é apagado do Paperless.
+- Só o dono usa o Paperless; cada convidado continua com o acervo interno, separado. Funciona em macOS e Linux (no Windows, via WSL com Docker); no iPhone e no Android, pelo navegador.
+
 ## 2026-11-25 - Heimdall Trading (mesa em simulação) e Heimdall Library (documentos pesquisáveis)
 - Trading (porta 8020, trading.heimdall-ai.tech): mesa de operações só em simulação, feita para teclado e leitor de tela. Abas Mesa, Carteira, Ordens (Abertas, Histórico) e Análise (Sinais, Lista); Ajustes com Limites, Cotações, Conta e Ajuda. Nenhuma ordem é enviada a corretora.
 - Trading, regras fixas em código: limite por ordem, limite de perda por dia (bloqueia novas compras, nunca o fechamento de posição), máximo de ordens abertas, taxa por operação e venda só do que existe na carteira. A IA só descreve (sinais objetivos e campo Perguntar) e nunca recomenda comprar ou vender.
