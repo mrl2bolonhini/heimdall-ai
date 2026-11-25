@@ -77,6 +77,9 @@ CREATE TABLE IF NOT EXISTS etiquetas(id INTEGER PRIMARY KEY AUTOINCREMENT, nome 
 CREATE TABLE IF NOT EXISTS doc_etiquetas(doc_id INTEGER, etiqueta_id INTEGER, PRIMARY KEY(doc_id, etiqueta_id));
 CREATE VIRTUAL TABLE IF NOT EXISTS busca USING fts5(titulo, texto, emissor, etiquetas, tokenize='unicode61 remove_diacritics 2');
 """)
+    if "chave_origem" not in [r["name"] for r in c.execute("PRAGMA table_info(documentos)")]:   # bancos criados antes dos apps conectados
+        c.execute("ALTER TABLE documentos ADD COLUMN chave_origem TEXT")
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_chave_origem ON documentos(chave_origem) WHERE chave_origem IS NOT NULL")
     try:
         yield c
         c.commit()
@@ -203,8 +206,10 @@ def sugerir_por_ia(texto: str) -> dict:
 
 
 # ---------------------------------------------------------------- adicionar e consultar
-def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = True) -> dict:
-    """Guarda o arquivo e indexa. Devolve {"id", "novo", "titulo"}. Arquivo repetido devolve o documento que já existe, sem duplicar."""
+def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = True, chave: str = "") -> dict:
+    """Guarda o arquivo e indexa. Devolve {"id", "novo", "titulo"}. Arquivo repetido devolve o documento que já existe, sem duplicar.
+    Com `chave` (item de um app conectado, como uma nota ou um evento), o item é identificado por ela: se mudou, o mesmo documento é atualizado no lugar
+    (sem duplicar versões), e o item já entra como revisado, porque a pessoa não precisa conferir o que vem do próprio app."""
     nome = Path(nome or "documento").name[:150]
     ext = Path(nome).suffix.lower()
     if ext not in EXT_OK:
@@ -214,21 +219,29 @@ def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = Tr
     if len(dados) > LIMITE_BYTES:
         raise ErroLibrary(f"O arquivo passa de {LIMITE_BYTES // (1024 * 1024)} MB.")
     sha = hashlib.sha256(dados).hexdigest()
+    anterior = None
     with _lock, conexao() as c:
         r = c.execute("SELECT id, titulo FROM documentos WHERE sha256=?", (sha,)).fetchone()
         if r:
             return {"id": r["id"], "novo": False, "titulo": r["titulo"]}
+        if chave:
+            anterior = c.execute("SELECT id FROM documentos WHERE chave_origem=?", (chave,)).fetchone()
     texto, ocr = extrair_texto(dados, nome)
     sug = sugerir_por_regras(texto, nome)
-    if usar_ia:
+    if usar_ia and not chave:
         sug.update({k: v for k, v in sugerir_por_ia(texto).items() if v})
     destino = pasta_arquivos() / sha[:2] / sha
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_bytes(dados)
     with _lock, conexao() as c:
-        cur = c.execute("INSERT INTO documentos(titulo, nome_arquivo, sha256, tamanho, texto, por_ocr, data_doc, tipo, emissor, criado, revisado, origem) VALUES(?,?,?,?,?,?,?,?,?,?,0,?)",
+        if anterior:   # o item mudou no app: atualiza o mesmo documento, mantendo etiquetas e revisão da pessoa
+            did = anterior["id"]
+            c.execute("UPDATE documentos SET titulo=?, nome_arquivo=?, sha256=?, tamanho=?, texto=? WHERE id=?", (sug["titulo"], nome, sha, len(dados), texto[:2_000_000], did))
+            _reindexar(c, did)
+            return {"id": did, "novo": False, "atualizado": True, "titulo": sug["titulo"]}
+        cur = c.execute("INSERT INTO documentos(titulo, nome_arquivo, sha256, tamanho, texto, por_ocr, data_doc, tipo, emissor, criado, revisado, origem, chave_origem) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (sug["titulo"], nome, sha, len(dados), texto[:2_000_000], int(ocr), sug.get("data_doc", ""), sug.get("tipo", "Outros"), sug.get("emissor", ""),
-                         datetime.now().isoformat(timespec="seconds"), origem))
+                         datetime.now().isoformat(timespec="seconds"), 1 if chave else 0, origem, chave or None))
         did = cur.lastrowid
         definir_etiquetas(did, sug.get("etiquetas", []), c)
     return {"id": did, "novo": True, "titulo": sug["titulo"]}

@@ -218,7 +218,7 @@ def arquivo(did) -> tuple:
 
 
 # ---------------------------------------------------------------- escrita
-def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = True) -> dict:
+def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = True, chave: str = "") -> dict:   # `chave` (itens de apps) não é usada no Paperless: versões novas entram como documentos novos
     nome = Path(nome or "documento").name[:150]
     ext = Path(nome).suffix.lower()
     if ext not in base.EXT_OK:

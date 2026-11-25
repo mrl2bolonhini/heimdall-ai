@@ -141,11 +141,12 @@ F = f"http://127.0.0.1:{PORTA_F}"
 import heimdall_lab as hc  # noqa: E402
 import heimdall_library as lib  # noqa: E402
 import heimdall_library_dados as dados  # noqa: E402
+import heimdall_conexoes as cx  # noqa: E402
 import heimdall_library_nuvem as nv  # noqa: E402
 import heimdall_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
-nv._PERMITE_HTTP = True
+cx.PERMITE_HTTP = True
 nv.PROVEDORES["dropbox"].update({"auth": "https://auth.exemplo.test/dropbox", "token": F + "/token", "api": F, "conteudo": F})
 nv.PROVEDORES["onedrive"].update({"auth": "https://auth.exemplo.test/onedrive", "token": F + "/token", "api": F})
 hc.SENHA_HASH = hc.hash_senha("senha-de-teste-forte", iteracoes=100_000)
@@ -197,10 +198,10 @@ url, (ok, msg) = conectar("dropbox")
 confere("conecta", ok and nv.situacao()[0]["conectado"], msg)
 bruto = (TMP / "library" / "nuvem.bin").read_bytes()
 confere("tokens cifrados em disco, com permissão 600", b"renov1" not in bruto and b"acesso" not in bruto and oct((TMP / "library" / "nuvem.bin").stat().st_mode)[-3:] == "600")
-estado_ant = dict(nv._PENDENTES)
+estado_ant = dict(cx.PENDENTES)
 s2 = nv.iniciar("dropbox")
 st2 = urllib.parse.parse_qs(urllib.parse.urlparse(s2).query)["state"][0]
-nv._PENDENTES[st2]["expira"] = time.time() - 1
+cx.PENDENTES[st2]["expira"] = time.time() - 1
 confere("state expirado é recusado", nv.concluir(st2, "codigo-bom")[0] is False)
 
 # --- sincronização (Dropbox)
@@ -222,16 +223,16 @@ confere("pasta inexistente vira mensagem na situação, sem derrubar nem importa
 nv.definir_pasta("dropbox", "/Docs")
 
 # --- renovação do token e rotação
-todos = nv._carregar()
+todos = cx.carregar()
 todos["dropbox"]["expira"] = time.time() - 10
-nv._gravar(todos)
+cx.gravar(todos)
 nv.sincronizar("dropbox", usar_ia=False)
-todos = nv._carregar()
+todos = cx.carregar()
 confere("token vencido é renovado e o novo token de renovação é guardado", ESTADO["refresh_usado"] == ["renov1"] and todos["dropbox"]["renovacao"].startswith("renov-"), (ESTADO, todos["dropbox"]["renovacao"]))
 
 # --- autorização revogada
 todos["dropbox"]["expira"] = time.time() - 10
-nv._gravar(todos)
+cx.gravar(todos)
 ESTADO["revogado"] = True
 confere("autorização revogada pede nova conexão", "Conecte de novo" in erro(nv.sincronizar, "dropbox", usar_ia=False))
 sit = nv.situacao()[0]
@@ -249,7 +250,7 @@ confere("download pré-autorizado não leva o token do OneDrive", ESTADO["auth_n
 
 # --- convidado: conexão e acervo separados
 CONV = "p0123456789ab"
-with nv._como(CONV):
+with cx.como(CONV):
     confere("convidado começa sem conexão e sem documentos", not nv.situacao()[0]["conectado"] and dados.listar()[1] == 0)
     conectar("dropbox")
     nv.definir_pasta("dropbox", "")
@@ -257,7 +258,7 @@ with nv._como(CONV):
     confere("convidado importa para o acervo dele", dados.listar()[1] == 2)
     confere("conexão do convidado fica na pasta dele", any((TMP / "db").rglob(f"{CONV}/library/nuvem.bin")))
 confere("a conexão e a pasta do dono não mudaram", nv.situacao()[0]["pasta"] == "/Docs")
-confere("rodada de fundo percorre quem tem conexão", nv.sincronizar_todos()["pessoas"] == 2)
+confere("rodada de fundo percorre quem tem conexão", cx.sincronizar_todos()["pessoas"] == 2)
 
 # --- desconectar
 nv.desconectar("onedrive")
@@ -270,7 +271,7 @@ q = urllib.parse.parse_qs(urllib.parse.urlparse(nv.iniciar("dropbox", escrita=Tr
 confere("pedido com organização inclui o escopo de escrita", "files.content.write" in q["scope"][0], q["scope"])
 confere("OneDrive com organização pede Files.ReadWrite", urllib.parse.parse_qs(urllib.parse.urlparse(nv.iniciar("onedrive", escrita=True)).query)["scope"][0] == "Files.ReadWrite offline_access")
 CONV2 = "pabcdef012345"
-with nv._como(CONV2):
+with cx.como(CONV2):
     conectar("dropbox")
     confere("mover sem permissão de escrita é recusado", "organização" in erro(nv.definir_pasta, "dropbox", "/Docs", True, True))
     ESTADO["escopo"] = "files.content.read"
@@ -355,7 +356,7 @@ csrf2 = re.search(r'data-csrf="([^"]+)"', h).group(1)
 confere("tela do convidado com organização: subpastas e mover marcados, sem botão de permitir", "com organização" in h and re.search(r'name="subpastas"[^>]*checked', h) and re.search(r'name="mover"[^>]*checked', h)
         and "Importados pelo Heimdall" in h and 'for="sub-dropbox"' in h and "Permitir organização" not in h, h[:300])
 s, _, r = req("POST", "/nuvem/pasta", {"csrf": csrf2, "provedor": "dropbox", "pasta": "/Docs"}, tg2)
-with nv._como(CONV2):
+with cx.como(CONV2):
     sit = nv.situacao()[0]
 confere("desmarcar as caixas e salvar desliga subpastas e mover", s == 303 and not sit["subpastas"] and not sit["mover"] and sit["escrita"], sit)
 srv.shutdown()

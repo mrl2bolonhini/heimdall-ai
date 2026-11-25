@@ -147,11 +147,58 @@ def pg_nuvem(ctx):
     return "Nuvem", "".join(blocos)
 
 
+def pg_apps(ctx):
+    import heimdall_library_apps as ap
+    itens = ap.situacao()
+    if not itens:
+        return "Apps", '<p role="status">Nenhum app está disponível. O administrador precisa configurar o aplicativo da Microsoft.</p>'
+    blocos = []
+    for x in itens:
+        n, k = e(x["nome"]), e(x["chave"])
+        marcas = "".join(f'<p><input id="srv-{k}-{e(s)}" name="srv_{e(s)}" type="checkbox" value="1"{" checked" if s in x["servicos"] or not x["servicos"] else ""}>'
+                         f'<label for="srv-{k}-{e(s)}">{e(nome)}</label></p>' for s, nome in x["disponiveis"])
+        escolha = (f'<form method="post" action="/apps/conectar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{k}">'
+                   f'<fieldset><legend>Serviços que o Library pode ler</legend>{marcas}</fieldset>'
+                   f'<button type="submit">{"Alterar serviços" if x["conectado"] else f"Conectar {n}"}</button></form>')
+        if not x["conectado"]:
+            corpo = (f'<p role="status">{n} não conectado. O Library só lê: não altera nem apaga nada no app. Notas, tarefas, eventos e contatos viram documentos de texto no seu acervo, '
+                     'atualizados sozinhos a cada 15 minutos.</p>' + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "") + escolha)
+        else:
+            corpo = (f'<p role="status">{n} conectado: {e(", ".join(x["nomes"]))}. '
+                     + (f'Última sincronização {e(x["ultimo"])}: {e(x["resumo"])}.' if x["ultimo"] else "Ainda não sincronizado.") + "</p>"
+                     + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "") + escolha
+                     + design.botao_post("/apps/sincronizar", "Sincronizar agora", ctx.csrf, {"provedor": x["chave"]})
+                     + design.botao_post("/apps/desconectar", f"Desconectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]}))
+        blocos.append(f"<section><h2>{n}</h2>{corpo}</section>")
+    return "Apps", "".join(blocos)
+
+
+def post_apps_conectar(ctx, campos, arquivos):
+    import heimdall_conexoes as cx
+    prov = cx.PROVEDORES.get(campos.get("provedor", ""), {})
+    servicos = [s for s in prov.get("escopos_servico", {}) if campos.get("srv_" + s) == "1"]
+    return web.Redirecionar(cx.iniciar(campos.get("provedor", ""), False, servicos))
+
+
+def post_apps_sincronizar(ctx, campos, arquivos):
+    import heimdall_library_apps as ap
+    r = ap.sincronizar(campos.get("provedor", ""))
+    ctx.flash("ok", f"{_plural(r['novos'], 'item novo', 'itens novos')}, {r['atualizados']} atualizados, {r['erros']} com erro.")
+    return "/apps"
+
+
+def post_apps_desconectar(ctx, campos, arquivos):
+    import heimdall_conexoes as cx
+    cx.desconectar(campos.get("provedor", ""))
+    ctx.flash("ok", "App desconectado. Os itens já importados continuam no seu acervo.")
+    return "/apps"
+
+
 def retorno_nuvem(q):
     """Retorno do provedor (chega sem cookie; quem vale é o state, de uso único)."""
     import heimdall_library_nuvem as nv
     ok, msg = nv.concluir((q.get("state") or [""])[0], (q.get("code") or [""])[0], (q.get("error") or [""])[0])
-    return "Conexão com a nuvem", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/nuvem", "Voltar ao Library")}</p>'
+    return "Conexão com a nuvem", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/pesquisar", "Voltar ao Library")}</p>'
 
 
 def post_nuvem_conectar(ctx, campos, arquivos):
@@ -310,20 +357,20 @@ def contexto_perguntar(ctx) -> str:
 
 GRUPOS = [
     ("Documentos", [("/pesquisar", "Pesquisar"), ("/recentes", "Recentes"), ("/revisar", "A revisar")]),
-    ("Adicionar", [("/enviar", "Enviar arquivo"), ("/entrada", "Pasta de entrada"), ("/email", "E-mail"), ("/nuvem", "Nuvem")]),
+    ("Adicionar", [("/enviar", "Enviar arquivo"), ("/entrada", "Pasta de entrada"), ("/email", "E-mail"), ("/nuvem", "Nuvem"), ("/apps", "Apps")]),
     ("Organização", [("/etiquetas", "Etiquetas"), ("/tipos", "Tipos")]),
 ]
 CFG = web.Config(
     chave="library", nome="Library", porta_env="HEIMDALL_LIBRARY_PORT", porta=8021, hosts="library.heimdall-ai.tech,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
-    get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
+    get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/apps": pg_apps, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira},
-    post={"/enviar": post_enviar, "/email/salvar": post_email, "/nuvem/conectar": post_nuvem_conectar, "/nuvem/pasta": post_nuvem_pasta, "/nuvem/sincronizar": post_nuvem_sincronizar, "/nuvem/desconectar": post_nuvem_desconectar, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
+    post={"/enviar": post_enviar, "/email/salvar": post_email, "/apps/conectar": post_apps_conectar, "/apps/sincronizar": post_apps_sincronizar, "/apps/desconectar": post_apps_desconectar, "/nuvem/conectar": post_nuvem_conectar, "/nuvem/pasta": post_nuvem_pasta, "/nuvem/sincronizar": post_nuvem_sincronizar, "/nuvem/desconectar": post_nuvem_desconectar, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
           "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: qual é o vencimento do boleto de energia? o que diz a cláusula de rescisão do contrato? O modelo responde só com os documentos do seu acervo.",
     css=CSS, erro=dados.ErroLibrary, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem},
-    ao_iniciar=lambda: __import__("heimdall_library_nuvem").iniciar_sincronizador())
+    ao_iniciar=lambda: (__import__("heimdall_library_nuvem"), __import__("heimdall_library_apps"), __import__("heimdall_conexoes").iniciar_sincronizador()))
 
 
 if __name__ == "__main__":
