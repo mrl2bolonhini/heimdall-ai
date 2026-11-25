@@ -189,6 +189,7 @@ Opções:
   --labs discard ID    joga o documento fora sem gravar nada
   --labs certificates  atestados e afastamentos confirmados (dias, período e CID)
   --labs reports       laudos de imagem e procedimentos confirmados (título e conclusão, ou a análise quando não há conclusão)
+  (Os comandos do Health, por sistema operacional, estão também em Ajuda e suporte, na seção Guia de comandos.)
   --labs suggestions   sugestões de acompanhamento (retorno, exame, perguntas); subcomandos: refresh, all, accept ID [--date AAAA-MM-DD] [--time HH:MM] (com data fixa vira evento no Calendário; sem data, lembrete), dismiss ID, snooze ID DIAS, answer ID TEXTO
   --labs profile       perfil de saúde: condições, cirurgias, alergias, convênio; subcomandos: add TIPO TEXTO, remove ID, done; também em Ajustes, subaba Perfil de saúde, do painel (oferecida no primeiro acesso); fica no banco de cada pessoa
   --labs requests      exames pedidos pelo médico, com o código TUSS (ainda sem resultado)

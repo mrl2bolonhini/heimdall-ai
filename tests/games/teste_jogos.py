@@ -77,7 +77,7 @@ ck = f"{hc.COOKIE}={token}"
 st, corpo, cab = pedir("/", ck)
 confere("categorias são abas: uma aba por categoria, em duas linhas (7 = 4 + 3), com a primeira aberta no início", st == 200 and len(hj.CATALOGO) == 28 and len(hj.CATEGORIAS) == 7
         and corpo.count('role="tab"') == 7 and 'class="l4"' in corpo and all(f'href="/categoria/{c[0]}"' in corpo and c[1] in corpo for c in hj.CATEGORIAS)
-        and f'href="/categoria/{hj.CATEGORIAS[0][0]}" aria-selected="true"' in corpo and "Atalho: Option Shift 1 a 7" in corpo, (st, corpo[:300]))
+        and f'href="/categoria/{hj.CATEGORIAS[0][0]}" aria-selected="true"' in corpo, (st, corpo[:300]))
 confere("o início mostra a apresentação e os jogos da primeira categoria", "Cada aba é uma categoria" in corpo and all(f"/jogo/{i}" in corpo for i in hj.CATEGORIAS[0][3]))
 for c in hj.CATEGORIAS:
     st_c, corpo_c, _ = pedir(f"/categoria/{c[0]}", ck)
@@ -95,7 +95,7 @@ st_j, corpo_j, cab_j = pedir("/jogo/vilarejo", ck)
 confere("página de jogo: aba da categoria aberta, trocar de aba carrega a página inteira, volta para a categoria e conexão da página fechada",
         'href="/categoria/acao" aria-selected="true"' in corpo_j and corpo_j.count(" data-completa>") == 7 and 'href="/categoria/acao">Voltar para Ação' in corpo_j
         and "connect-src 'none'" in cab_j.get("Content-Security-Policy", ""), (st_j, cab_j.get("Content-Security-Policy")))
-confere("abas, atalho Option+Shift+1, voltar ao topo e tema de rodapé no Games", 'role="tablist"' in corpo and "Atalho: Option Shift 1" in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
+confere("abas, atalho Option+Shift+1, voltar ao topo e tema de rodapé no Games", 'role="tablist"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
 confere("sem script embutido no HTML", "<script>" not in corpo and "onclick" not in corpo.lower())
 confere("cabeçalhos de segurança", cab.get("X-Frame-Options") == "DENY" and cab.get("Cache-Control") == "no-store" and "noindex" in cab.get("X-Robots-Tag", ""), cab)
 confere("a página é pt-BR com link de pular e título", 'lang="pt-BR"' in corpo and "Pular para o conteúdo" in corpo and f"<h1>{hj.e(hj.CATEGORIAS[0][1])}</h1>" in corpo)

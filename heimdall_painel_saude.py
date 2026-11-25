@@ -85,13 +85,13 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 """
 
 # Portal de saúde: cada aba responde a uma pergunta do usuário e agrupa o que é do mesmo assunto; a subaba nunca repete o nome da aba.
-#   Resumo          como estou (o panorama com o que pede atenção, hoje, a semana, o diário)
+#   Resumo          como estou, por período (hoje, dia a dia, semana, tendências); a página Hoje abre com o que pede atenção
 #   Medidas         meus números (sono, recuperação, atividade, treinos, coração e o que registrei: sintomas, humor, medicamentos)
 #   Prontuário      meus documentos de saúde (exames, documentos recebidos, receitas, atestados, laudos, consultas)
 #   Acompanhamento  o que o Heimdall sugere e avisa (sugestões, anomalias, avisos)
 #   Ajustes (botão) perfil de saúde e estado dos dados, na tela sem abas de cima, como nos demais serviços
 # Cada grupo é (chave, nome da aba, [(rota, nome da subaba)]); a aba aponta para a primeira subaba. Rota nova entra no grupo a que pertence.
-GRUPOS = [("resumo", "Resumo", [("/", "Panorama"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/diario", "Diário")]),
+GRUPOS = [("resumo", "Resumo", [("/", "Hoje"), ("/diario", "Dia a dia"), ("/semana", "Semana"), ("/tendencias", "Tendências")]),
           ("medidas", "Medidas", [("/sono", "Sono"), ("/recuperacao", "Recuperação"), ("/atividade", "Atividade"), ("/treinos", "Treinos"), ("/coracao", "Coração e ECG"),
                                   ("/eventos", "Sintomas, humor e medicamentos")]),
           ("prontuario", "Prontuário", [("/exames", "Exames"), ("/documentos", "Documentos recebidos"), ("/receitas", "Receitas e encaminhamentos"),
@@ -101,9 +101,13 @@ GRUPOS = [("resumo", "Resumo", [("/", "Panorama"), ("/hoje", "Hoje"), ("/semana"
 SECOES = [(g[2][0][0], g[1]) for g in GRUPOS if g[0] != "ajustes"]   # as abas de cima; Ajustes é botão
 
 
+ALIASES = {"/hoje": "/"}   # endereço antigo da página Hoje
+
+
 def localizar(rota: str) -> tuple:
     """(grupo, rota da subaba) a que a rota pertence, ou (None, "") (página de erro, por exemplo)."""
     rota = rota.split("?")[0] or "/"
+    rota = ALIASES.get(rota, rota)
     for g in GRUPOS:
         for r, _ in g[2]:
             if r == rota:
@@ -114,10 +118,25 @@ def localizar(rota: str) -> tuple:
 # ----------------------------------------------------------------------------------------
 # Texto das análises -> HTML
 # ----------------------------------------------------------------------------------------
+_FRASE_COMANDO = re.compile(r"(?i)heimdall\s+(?:health|finance|news|notes|update|mailbox)\b|\s--labs\b|python3?\s+heimdall_|n[ãa]o\s+[ée]\s+(?:um\s+)?diagn[oó]stic|n[ãa]o\s+diagn[oó]stic")
+
+
+def sem_comandos(texto: str) -> str:
+    """Tira das telas as frases que ensinam comandos de terminal (elas ficam na Ajuda, no Guia de comandos, por sistema operacional) e os avisos de 'não é diagnóstico' (um só, no rodapé)."""
+    saida = []
+    for linha in (texto or "").split("\n"):
+        partes = re.split(r"(?<=[.!?])\s+", linha)
+        mantidas = [x for x in partes if not _FRASE_COMANDO.search(x)]
+        if mantidas or not linha.strip():
+            saida.append(" ".join(mantidas))
+    return "\n".join(saida)
+
+
 def texto_html(texto: str) -> str:
     """Parágrafos em branco separam blocos; uma primeira linha curta terminada em ':' vira subtítulo."""
     saida = []
-    for bloco in re.split(r"\n\s*\n", (texto or "").strip()):
+    texto = sem_comandos((texto or "").replace(saude.AVISO, "").replace(exames.AVISO, ""))
+    for bloco in re.split(r"\n\s*\n", texto.strip()):
         linhas = [l.strip() for l in bloco.split("\n") if l.strip()]
         if not linhas:
             continue
@@ -132,10 +151,11 @@ def secao(titulo: str, texto: str) -> str:
     return (f"<h2>{e(titulo)}</h2>" + texto_html(texto)) if texto and texto.strip() else ""
 
 
-AVISO_HTML = f'<p class="aviso">{e(saude.AVISO)} O painel mostra números do seu histórico no app Saúde; ele não substitui consulta nem exame.</p>'
+AVISO_HTML = ""   # o aviso de que o painel não substitui um profissional aparece uma só vez por página, no rodapé (AVISO_RODAPE)
+AVISO_RODAPE = '<p>As informações deste painel não substituem a avaliação de um profissional de saúde.</p>'
 
 
-AVISO_EXAMES = f'<p class="aviso">{e(exames.AVISO)}</p>'
+AVISO_EXAMES = ""
 
 
 def seletor(rota: str, dias: int, padrao: int) -> str:
@@ -255,16 +275,16 @@ def _atencao() -> str:
 
 
 def pg_inicio(q: dict) -> tuple:
+    """Página Hoje: o que pede atenção, como você está agora e o dia de hoje."""
+    corpo = _atencao() + bloco_atualizar(q) + _resumo_anomalias()
+    corpo += secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1)) or "<p>Ainda não há dados suficientes para comparar os últimos 7 dias.</p>"
+    corpo += secao("Hoje", saude.relatorio_hoje().replace("Hoje:\n", "", 1))
+    return "Hoje", corpo
+
+
+def pg_tendencias(q: dict) -> tuple:
     dias = dias_de(q, 90)
-    corpo = _atencao() + bloco_atualizar(q) + _resumo_anomalias() + (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
-             or "<p>Ainda não há dados suficientes para comparar os últimos 7 dias. Veja o estado dos dados.</p>")
-    corpo += seletor("/", dias, 90) + secao(f"Tendências ({dias} dias)", saude.relatorio_tendencias(dias).split("\n", 1)[-1])
-    corpo += AVISO_HTML
-    return "Panorama", corpo
-
-
-def pg_hoje(q: dict) -> tuple:
-    return "Hoje", texto_html(saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + design.botao("/dados", "Ver o estado dos dados") + AVISO_HTML
+    return "Tendências", seletor("/tendencias", dias, 90) + secao(f"Últimos {dias} dias", saude.relatorio_tendencias(dias).split("\n", 1)[-1])
 
 
 def pg_anomalias(q: dict) -> tuple:
@@ -329,7 +349,7 @@ def pg_exames(q: dict) -> tuple:
         return "Exame: " + nome, corpo
     linhas = exames.ultimos_por_exame()
     if not linhas:
-        return "Exames", "<p>Ainda não há resultados de exames confirmados. Para enviar um, coloque o PDF na pasta de entrada do Mac ou use o atalho do iPhone.</p>" + AVISO_EXAMES
+        return "Exames", f'<p>Ainda não há resultados de exames confirmados. <a href="{design.base_ajuda()}/ajuda?servico=saude#comandos-saude">Como enviar documentos</a>.</p>' + AVISO_EXAMES
     cab = "".join(f'<th scope="col">{c}</th>' for c in ("Exame", "Data", "Resultado", "Referência do laboratório", "Situação", "Histórico"))
     corpo_t = []
     for r in linhas:
@@ -345,8 +365,8 @@ def pg_documentos(q: dict) -> tuple:
     pend = exames.pendentes()
     corpo = ""
     if pend:
-        corpo += (f'<p role="status">{len(pend)} documento(s) aguardam a sua conferência. Para ouvir o que foi lido e confirmar, use no terminal do Mac: '
-                  'heimdall health --labs pending.</p>')
+        corpo += (f'<p role="status">{len(pend)} documento(s) aguardam a sua conferência. '
+                  f'<a href="{design.base_ajuda()}/ajuda?servico=saude#comandos-saude">Como conferir</a>.</p>')
     docs = exames.listar_documentos()
     if docs:
         cab = "".join(f'<th scope="col">{c}</th>' for c in ("Número", "Tipo", "Data", "Situação", "Origem"))
@@ -435,10 +455,7 @@ def pg_perfil(q: dict) -> tuple:
     concluido = bool(clinico._ajuste("perfil_concluido"))
     corpo = ""
     if pendente:
-        corpo += ('<p role="status">Este é o seu primeiro acesso ao Heimdall Health. Informe o que quiser sobre a sua saúde: condições e doenças que você já tem, '
-                  "cirurgias, alergias, o convênio e os médicos de confiança. Nada é obrigatório, e você pode mudar tudo depois.</p>")
-    corpo += ("<p>O perfil fica no seu banco pessoal e ajuda o Heimdall a dar sugestões de acompanhamento mais certas (por exemplo, considerar o convênio ao sugerir "
-              "onde fazer um procedimento). Não é diagnóstico nem orientação sobre remédio.</p>")
+        corpo += '<p role="status">Primeiro acesso: informe o que quiser sobre a sua saúde. Nada é obrigatório e você pode mudar tudo depois.</p>'
     if itens:
         cab = "".join(f'<th scope="col">{c}</th>' for c in ("Tipo", "Informação", "Desde", "Ação"))
         linhas = "".join(f'<tr><th scope="row">{e(clinico.PERFIL_TIPOS.get(r["tipo"], r["tipo"]).capitalize())}</th><td>{e(r["texto"])}</td><td>{e(r["desde"])}</td>'
@@ -462,8 +479,7 @@ def pg_sugestoes(q: dict) -> tuple:
     csrf = (q.get("_csrf") or [""])[0]
     dono = (q.get("_dono") or ["1"])[0] == "1"
     abertas = clinico.listar()
-    corpo = ("<p>Sugestões de acompanhamento a partir dos documentos que você confirmou. São sugestões, nunca diagnóstico nem orientação sobre remédio. Nada vai para o "
-             "Calendário ou para o Lembretes sem você aceitar: o que tem data fixa vira evento no Calendário; o que é algo a fazer vira lembrete.</p>")
+    corpo = ""
     corpo += '<p class="linha-acoes">' + design.botao_post("/sugestoes/atualizar", "Procurar novas sugestões", csrf) + "</p>"
     if not abertas:
         corpo += "<p>Nenhuma sugestão aberta.</p>"
@@ -481,12 +497,12 @@ def pg_sugestoes(q: dict) -> tuple:
                 bloco += "<p>O Calendário e o Lembretes são do dono deste Mac: você pode recusar, adiar ou responder.</p>"
             else:
                 if s["compromisso"]:
-                    destino = f'Aceitar cria um evento no Calendário em {exames._br(s["compromisso"])} (dia inteiro, se você não informar a hora).'
+                    campos = _campo(f"hora-{sid}", "Hora (opcional)", "Formato HH:MM.")
+                    rotulo = f"Aceitar e criar evento em {exames._br(s['compromisso'])}"
                 else:
-                    destino = "Aceitar cria um lembrete. Se você já marcou, informe a data (e a hora) abaixo: vira evento no Calendário."
-                bloco += f"<p>{e(destino)}</p>"
-                campos = (_campo(f"data-{sid}", "Data já marcada (opcional)", "Formato AAAA-MM-DD.") + _campo(f"hora-{sid}", "Hora (opcional)", "Formato HH:MM, por exemplo 14:30."))
-                bloco += _form("/sugestoes/acao", csrf, campos, "Aceitar", {"id": sid, "acao": "aceitar"})
+                    campos = (_campo(f"data-{sid}", "Data já marcada (opcional; cria evento em vez de lembrete)", "Formato AAAA-MM-DD.") + _campo(f"hora-{sid}", "Hora (opcional)", "Formato HH:MM."))
+                    rotulo = "Aceitar e criar lembrete"
+                bloco += _form("/sugestoes/acao", csrf, campos, rotulo, {"id": sid, "acao": "aceitar"})
             bloco += '<p class="linha-acoes">' + design.botao_post("/sugestoes/acao", "Adiar 14 dias", csrf, {"id": sid, "acao": "adiar"}, "Adiar 14 dias: " + s["titulo"]) + "</p>"
         bloco += '<p class="linha-acoes">' + design.botao_post("/sugestoes/acao", "Recusar", csrf, {"id": sid, "acao": "recusar"}, "Recusar: " + s["titulo"]) + "</p>"
         corpo += bloco
@@ -542,7 +558,8 @@ ROTAS_POST = ("/sair", "/avisos/lido", "/perguntar") + ROTAS_CLINICAS
 
 ROTAS = {
     "/": pg_inicio,
-    "/hoje": pg_hoje,
+    "/hoje": pg_inicio,
+    "/tendencias": pg_tendencias,
     "/semana": pg_semana,
     "/anomalias": pg_anomalias,
     "/sono": lambda q: pg_relatorio("Sono", "/sono", saude.relatorio_sono, 90, q, "Poucos dados de sono neste período."),
@@ -591,13 +608,12 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Heimdall Health</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
             f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Health", nav, sair_html=sair, ajustes_html=ajustes_html)}'
-            f'<main id="principal">{conteudo}</main>{design.rodape(servico="saude")}{scripts}</body></html>').encode("utf-8")
+            f'<main id="principal">{conteudo}</main>{design.rodape(AVISO_RODAPE if sess else "", servico="saude")}{scripts}</body></html>').encode("utf-8")
 
 
 def _bloco_perguntar(sess: dict, atual: str) -> str:
     return perguntar.bloco_html(sess["csrf"], sess["csrf"], atual or "/", "Perguntar sobre a sua saúde",
-                                "Pergunte em português, por exemplo: como foi meu sono nesta semana? O modelo responde só com base nos seus dados. "
-                                "Não é diagnóstico.") if atual != "/avisos" else ""
+                                "Pergunte, por exemplo: como foi meu sono nesta semana?") if atual != "/avisos" else ""
 
 
 SISTEMA_SAUDE = ("Você responde em português do Brasil, em texto corrido ou lista numerada simples, sem tabelas nem emojis, porque o usuário usa leitor de tela. "

@@ -49,6 +49,6 @@ confere("as abas trocadas reiniciam o acompanhamento", "window.hdPerguntar" in d
 confere("design.script() leva o script do Perguntar", "perguntar-resp" in design.script())
 
 a = design.abas([("/", "A"), ("/b", "B"), ("/c", "C")], "/b", "Seções")
-confere("abas: sem descrição por aba; uma dica oculta só no conjunto", "aria-describedby=\"atalho-aba-" not in a and 'aria-describedby="atalho-abas"' in a and 'id="atalho-abas" hidden>Atalho: Option Shift 1 a 3' in a and 'class="so-leitor">Atalho' not in a, a)
+confere("abas: sem descrição por aba nem dica oculta no conjunto, e sem aviso falado ao abrir", "atalho-aba" not in a and "aria-describedby" not in a and "aviso-abas" not in a, a)
 print("\n" + ("Tudo certo." if not falhas else f"{falhas} falha(s)."))
 sys.exit(1 if falhas else 0)

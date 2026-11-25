@@ -257,7 +257,7 @@ with sync_playwright() as pw:
     pg.keyboard.press("Enter")
     espera(lambda: pg.evaluate("document.querySelector('[role=tab][aria-selected=true]').textContent === 'Serviços'"))
     confere("Enter abre a aba sem recarregar a página", pg.evaluate("window.marca") == "mesma-pagina" and pg.url.endswith("/servicos"))
-    confere("o foco continua na aba e o leitor ouve o aviso", pg.evaluate("document.activeElement.id") == "aba-3" and espera(lambda: "Serviços aberta" in pg.inner_text("#aviso-abas")))
+    confere("o foco continua na aba e nenhum aviso extra é falado", pg.evaluate("document.activeElement.id") == "aba-3" and pg.locator("#aviso-abas").count() == 0)
     confere("o painel mostra as chaves da aba nova", pg.locator("button[role=switch]").count() >= 20)
     pg.keyboard.press("Alt+Shift+Digit7")
     espera(lambda: pg.evaluate("document.querySelector('[role=tab][aria-selected=true]').textContent === 'Manutenção'"))

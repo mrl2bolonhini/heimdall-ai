@@ -2,8 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Health mais enxuto, Resumo por período e Guia de comandos
+- Resumo agora segue o tempo, sem repetir conceitos: Hoje (abre com "Precisa da sua atenção"), Dia a dia, Semana e Tendências. A antiga página Panorama virou Hoje e as Tendências ganharam página própria. O endereço /hoje continua e leva à página Hoje.
+- Telas sem repetição: o aviso de que o painel não substitui um profissional de saúde aparece uma só vez por página, no rodapé; as frases "não é diagnóstico" dos relatórios e os textos explicativos de Perfil e Sugestões saíram; as telas não mostram mais comandos.
+- Abas de todos os serviços: sem descrição lida pelo leitor de tela e sem o aviso falado "<nome> aberta" ao abrir uma aba. Os atalhos (Option+Shift+número) continuam e estão na Ajuda.
+- Nova seção na Ajuda e suporte: Guia de comandos, com como abrir o terminal no macOS, Linux e Windows, a tabela de comandos do Health (comando heimdall no macOS e Python no Linux e no Windows) e o que fazer no iPhone e no Android. Teste confere que toda opção da tabela existe nos scripts.
+- Regra de vários sistemas (Windows, macOS, iPhone e Android) no CLAUDE.md e no ROADMAP, inclusive para os apps futuros.
+
 ## 2026-11-25 - Health: portal de saúde com abas por assunto
-- O painel foi reorganizado em quatro abas, cada uma com um nome que agrupa o assunto, e subabas que nunca repetem o nome da aba: Resumo (Panorama, Hoje, Semana, Diário), Medidas (Sono, Recuperação, Atividade, Treinos, Coração e ECG, Sintomas, humor e medicamentos), Prontuário (Exames, Documentos recebidos, Receitas e encaminhamentos, Atestados e laudos, Consultas e pedidos) e Acompanhamento (Sugestões, Anomalias, Avisos). Perfil de saúde e Estado dos dados passaram para o botão Ajustes, no topo, como nos outros serviços.
+- O painel foi reorganizado em quatro abas, cada uma com um nome que agrupa o assunto, e subabas que nunca repetem o nome da aba: Resumo (Hoje, Dia a dia, Semana, Tendências), Medidas (Sono, Recuperação, Atividade, Treinos, Coração e ECG, Sintomas, humor e medicamentos), Prontuário (Exames, Documentos recebidos, Receitas e encaminhamentos, Atestados e laudos, Consultas e pedidos) e Acompanhamento (Sugestões, Anomalias, Avisos). Perfil de saúde e Estado dos dados passaram para o botão Ajustes, no topo, como nos outros serviços.
 - O Panorama ganhou "Precisa da sua atenção": documentos para conferir, sugestões abertas, avisos não lidos e dados sem atualização, cada um com um botão. O que não tem pendência não aparece.
 - A página Documentos foi dividida em quatro subabas do Prontuário. Os endereços antigos continuam: /documentos, /perfil, /sugestoes, /dados.
 - Regras no CLAUDE.md para todos os serviços: lista de abas enxuta; o nome da aba agrupa o assunto; subaba nunca repete o nome da aba; perfil, estado técnico e configurações ficam em Ajustes. Também por regra, textos de produto não citam informações pessoais do dono.

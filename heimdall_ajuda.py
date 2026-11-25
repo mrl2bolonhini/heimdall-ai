@@ -345,6 +345,52 @@ def _faq_html(servico: str) -> str:
     return saida
 
 
+# Guia de comandos: as telas dos serviços não ensinam comandos; eles ficam aqui, por sistema operacional.
+# Cada linha é (ação, comando heimdall no macOS, comando em Python para Linux e Windows). No Windows use "py" no lugar de "python3".
+COMANDOS_HEALTH = [
+    ("Ver os documentos aguardando conferência", "heimdall health --labs pending", "python3 heimdall_exames.py --pendentes"),
+    ("Ler o que foi extraído de um documento", "heimdall health --labs read ID", "python3 heimdall_exames.py --ler ID"),
+    ("Confirmar um documento", "heimdall health --labs confirm ID", "python3 heimdall_exames.py --confirmar ID"),
+    ("Confirmar deixando itens de fora", "heimdall health --labs confirm ID --without 3,5", "python3 heimdall_exames.py --confirmar ID --sem 3,5"),
+    ("Descartar um documento", "heimdall health --labs discard ID", "python3 heimdall_exames.py --descartar ID"),
+    ("Importar um arquivo", "heimdall health --labs import ARQUIVO", "python3 heimdall_exames.py --importar ARQUIVO"),
+    ("Listar receitas", "heimdall health --labs prescriptions", "python3 heimdall_exames.py --receitas"),
+    ("Listar encaminhamentos", "heimdall health --labs referrals", "python3 heimdall_exames.py --encaminhamentos"),
+    ("Listar atestados", "heimdall health --labs certificates", "python3 heimdall_exames.py --atestados"),
+    ("Listar laudos", "heimdall health --labs reports", "python3 heimdall_exames.py --laudos"),
+    ("Listar pedidos de exame", "heimdall health --labs requests", "python3 heimdall_exames.py --pedidos"),
+    ("Listar consultas", "heimdall health --labs appointments", "python3 heimdall_exames.py --consultas"),
+    ("Cadastrar uma consulta", "heimdall health --labs appointment --date AAAA-MM-DD --time HH:MM", "python3 heimdall_exames.py --consulta-nova --data AAAA-MM-DD --hora HH:MM"),
+    ("Enviar consultas e renovações ao Calendário", "heimdall health --labs calendar", "python3 heimdall_exames.py --agenda"),
+    ("Ver as sugestões de acompanhamento", "heimdall health --labs suggestions", "python3 heimdall_clinico.py --sugestoes"),
+    ("Aceitar uma sugestão (com --date e --time, vira evento no Calendário)", "heimdall health --labs suggestions accept ID", "python3 heimdall_clinico.py --aceitar ID"),
+    ("Recusar, adiar ou responder uma sugestão", "heimdall health --labs suggestions dismiss ID | snooze ID DIAS | answer ID TEXTO",
+     "python3 heimdall_clinico.py --recusar ID | --adiar ID --dias N | --responder ID --texto TEXTO"),
+    ("Adicionar um item ao perfil de saúde", "heimdall health --labs profile add condition|surgery|allergy|insurance|doctor|other TEXTO",
+     "python3 heimdall_clinico.py --perfil-add condicao|cirurgia|alergia|convenio|medico|outro --texto TEXTO"),
+]
+
+
+def _comandos_html() -> str:
+    cab = "".join(f'<th scope="col">{c}</th>' for c in ("Ação", "macOS (comando heimdall)", "Linux e Windows (Python, na pasta do Heimdall)"))
+    linhas = "".join(f'<tr><th scope="row">{e(a)}</th><td><code>{e(m)}</code></td><td><code>{e(p)}</code></td></tr>' for a, m, p in COMANDOS_HEALTH)
+    return ('<section aria-labelledby="comandos"><h2 id="comandos">Guia de comandos</h2>'
+            '<p>Algumas ações são feitas por comando no computador que hospeda o Heimdall. As telas dos serviços indicam esta página em vez de mostrar comandos.</p>'
+            '<h3>Abrir o terminal</h3><ol>'
+            '<li>macOS: pressione Command+Espaço, digite Terminal e pressione Return.</li>'
+            '<li>Linux: pressione Ctrl+Alt+T, ou abra o aplicativo Terminal.</li>'
+            '<li>Windows: pressione a tecla Windows, digite PowerShell e pressione Enter.</li></ol>'
+            '<p>Em seguida, entre na pasta do Heimdall: <code>cd ~/heimdall-ai</code> no macOS e no Linux; <code>cd $HOME\\heimdall-ai</code> no Windows (PowerShell). '
+            'No macOS o comando <code>heimdall</code> funciona de qualquer pasta. No Windows, use <code>py</code> no lugar de <code>python3</code>.</p>'
+            '<h3 id="comandos-saude">Health: documentos, sugestões e perfil</h3>'
+            f'<table><caption>Comandos do Health por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
+            '<p>Eventos no Calendário e lembretes no app Lembretes dependem do agente do Mac; nos outros sistemas, os itens ficam registrados no Heimdall.</p>'
+            '<h3>iPhone e Android</h3>'
+            '<p>Abra os painéis pelo navegador (Safari no iPhone, Chrome no Android) para consultar os dados, ver sugestões e editar o perfil. '
+            'A conferência de documentos e os demais comandos acima são feitos no computador que hospeda o Heimdall. No iPhone, o botão Atualizar dados agora, '
+            'no Health, abre o app Atalhos.</p></section>')
+
+
 def formulario_suporte(csrf: str, servico: str = "", valores: dict = None) -> str:
     v = valores or {}
     ops_a = "".join(f'<option value="{k}"{" selected" if v.get("assunto") == k else ""}>{e(t)}</option>' for k, t in ASSUNTOS.items())
@@ -364,10 +410,10 @@ def pagina_ajuda(csrf: str, servico: str = "", aviso: str = "", erro: str = "", 
     topo = f'<p role="alert">{e(erro)}</p>' if erro else (f'<p role="status">{e(aviso)}</p>' if aviso else "")
     nome = f" do {SERVICOS[servico]}" if servico else ""
     corpo = (f"<h1>Ajuda e suporte{e(nome)}</h1>{topo}"
-             '<p>Encontre abaixo as perguntas frequentes e, no fim da página, o formulário para falar com o suporte. '
+             '<p>Encontre abaixo as perguntas frequentes, o guia de comandos por sistema operacional e, no fim da página, o formulário para falar com o suporte. '
              f'Documentos: <a href="/termos-de-uso">Termos de Uso</a> e <a href="/politica-de-privacidade">Política de Privacidade</a>.</p>'
              + ('<p><a href="/suporte/mensagens">Mensagens de suporte recebidas (somente dono)</a></p>' if dono else "")
-             + _faq_html(servico) + formulario_suporte(csrf, servico, valores))
+             + _faq_html(servico) + _comandos_html() + formulario_suporte(csrf, servico, valores))
     return "Ajuda e suporte - Heimdall", corpo
 
 

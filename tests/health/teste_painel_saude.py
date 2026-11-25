@@ -105,6 +105,7 @@ def postar(rota, campos, cookie=ck, csrf=None):
 
 
 confere("estrutura: abas de cima agrupam por assunto (4) e Ajustes é botão", [n for _, n in ps.SECOES] == ["Resumo", "Medidas", "Prontuário", "Acompanhamento"] and ps.GRUPOS[-1][0] == "ajustes")
+confere("Resumo em ordem de período: Hoje, Dia a dia, Semana, Tendências", [n for _, n in ps.GRUPOS[0][2]] == ["Hoje", "Dia a dia", "Semana", "Tendências"] and ps.localizar("/hoje")[1] == "/")
 confere("estrutura: subaba nunca tem o nome da aba nem se repete", all(sub != g[1] for g in ps.GRUPOS for _, sub in g[2]) and len({r for g in ps.GRUPOS for r, _ in g[2]}) == sum(len(g[2]) for g in ps.GRUPOS)
         and len({n for g in ps.GRUPOS for _, n in g[2]}) == sum(len(g[2]) for g in ps.GRUPOS))
 st, _, cab = pedir("/", ck)
@@ -127,6 +128,12 @@ confere("perfil: erro de validação vira aviso (alert), não página de erro", 
 st, corpo, _ = pedir("/", ck)
 confere("com itens no perfil o panorama abre, com 'Precisa da sua atenção' e as abas Resumo, Medidas, Prontuário e Acompanhamento",
         st == 200 and "Precisa da sua atenção" in corpo and all(f">{n}<" in corpo for n in ("Resumo", "Medidas", "Prontuário", "Acompanhamento")) and 'aria-label="Seções de Resumo"' in corpo, corpo[:300])
+import re as _re2
+for rota in ("/", "/diario", "/semana", "/tendencias", "/sono", "/coracao", "/exames", "/documentos", "/receitas", "/laudos", "/consultas", "/sugestoes", "/anomalias", "/perfil", "/dados"):
+    st, corpo, _ = pedir(rota, ck)
+    txt = _re2.sub(r"<[^>]+>", " ", corpo)
+    confere(f"página {rota}: sem comando de terminal, sem 'não é diagnóstico' repetido e um só aviso no rodapé", "heimdall health" not in txt and "--labs" not in txt and txt.count("não substituem a avaliação") == 1
+            and "não é diagnóstico" not in txt.lower() and 'class="aviso"' not in corpo and not any(f"{n} aberta" in txt for g in ps.GRUPOS for n in [g[1]] + [x for _, x in g[2]]) and "Atalho:" not in txt, rota)
 for rota in ("/receitas", "/laudos", "/consultas", "/documentos", "/exames", "/anomalias", "/dados"):
     st, corpo, _ = pedir(rota, ck)
     confere(f"página {rota} abre com subabas do grupo", st == 200 and 'data-nivel="2"' in corpo and corpo.count("<h1>") == 1, st)
@@ -139,13 +146,13 @@ _cl.perfil_concluir()
 st, _, _ = pedir("/", ck)
 confere("concluído: a visão geral abre", st == 200, st)
 st, corpo, _ = pedir("/sugestoes", ck)
-confere("página Sugestões abre e explica evento e lembrete", st == 200 and "evento no Calendário" in corpo and "lembrete" in corpo and "Procurar novas sugestões" in corpo, corpo[:300])
+confere("página Sugestões abre, sem texto explicativo, com o botão de procurar", st == 200 and "Procurar novas sugestões" in corpo and "nunca diagnóstico" not in corpo, corpo[:300])
 ex_ = _cl.ex
 ex_._escrever(lambda con: con.execute("INSERT INTO sugestoes_saude (chave, tipo, titulo, motivo, quando, compromisso, acao) VALUES ('pontos|1','consulta','Retirada de pontos em 02/12/2099','m','2099-11-29','2099-12-02','retirada de pontos')"))
 ex_._escrever(lambda con: con.execute("INSERT INTO sugestoes_saude (chave, tipo, titulo, motivo, quando) VALUES ('p|1','pergunta','Como está a fisioterapia','m','2099-01-01')"))
 st, corpo, _ = pedir("/sugestoes", ck)
 confere("sugestão com data fixa diz que vira evento; campos de data e hora têm rótulo; pergunta tem resposta",
-        "cria um evento no Calendário" in corpo and 'for="data-1"' in corpo and 'for="hora-1"' in corpo and "Guardar resposta" in corpo and 'aria-label="Recusar: Retirada de pontos' in corpo, corpo[:600])
+        "Aceitar e criar evento em 02/12/2099" in corpo and 'for="hora-1"' in corpo and "Guardar resposta" in corpo and 'aria-label="Recusar: Retirada de pontos' in corpo, corpo[:600])
 import heimdall_agenda as _ag
 _enviados = []
 _ag.AGENTE = "http://127.0.0.1:1"
@@ -198,7 +205,7 @@ import time as _tm
 st, corpo, cab = pedir("/sono", ck)
 import re as _re
 _n = _re.search(r"script-src 'nonce-([A-Za-z0-9_-]+)'", cab.get("Content-Security-Policy", ""))
-confere("abas no lugar do menu, atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and "Atalho: Option Shift 1 a" in corpo and 'aria-selected="true"' in corpo
+confere("abas no lugar do menu, atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and 'aria-selected="true"' in corpo
         and 'id="topo"' in corpo and 'href="#topo"' in corpo and _n and f'<script nonce="{_n.group(1)}">' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo, corpo[:200])
 confere("campo Perguntar nas telas de dados e não na aba Avisos", 'id="perguntar-t"' in corpo and 'id="perguntar-t"' not in pedir("/avisos", ck)[1])
 _hp.chamar_local = lambda sistema, usuario, modelo="", max_tokens=700, timeout=240: "Seu sono ficou estável."

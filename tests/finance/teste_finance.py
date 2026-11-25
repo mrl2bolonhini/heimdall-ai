@@ -236,7 +236,7 @@ csp = cab.get("Content-Security-Policy", "")
 import re as _re
 _n = _re.search(r"script-src 'nonce-([A-Za-z0-9_-]+)'", csp)
 confere("política de conteúdo: script só com o nonce da página (abas), nada inline sem nonce", "default-src 'none'" in csp and _n and f'<script nonce="{_n.group(1)}">' in corpo and corpo.count("<script") == 1 and "script-src 'unsafe" not in csp, csp)
-confere("abas no lugar do menu de links, atalhos Option+Shift+número e voltar para o topo", 'role="tablist"' in corpo and "Atalho: Option Shift 1 a" in corpo and 'role="tabpanel"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo, corpo[:200])
+confere("abas no lugar do menu de links, atalhos Option+Shift+número e voltar para o topo", 'role="tablist"' in corpo and 'role="tabpanel"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo, corpo[:200])
 confere("cabeçalhos de segurança", cab.get("X-Frame-Options") == "DENY" and cab.get("Cache-Control") == "no-store", cab)
 
 corpo_m, tipo_m = multipart({"csrf": csrf, "conta": "Itaú conta"}, ("jan.ofx", OFX))

@@ -147,7 +147,7 @@ def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = (
         abas_.append(f'<a role="tab" id="aba-{i}" href="{e(rota)}" aria-selected="{"true" if sel else "false"}" tabindex="{0 if sel else -1}" '
                      f'aria-controls="painel-aba"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
     n_abas = min(len(itens), MAX_ABAS)
-    dicas = f'<span id="atalho-abas" hidden>Atalho: Option Shift 1 a {n_abas}</span>' if n_abas > 1 else (f'<span id="atalho-abas" hidden>Atalho: Option Shift 1</span>' if n_abas else "")
+    dicas = ""   # sem descrição das abas: o leitor de tela lê só o nome e se está selecionada; os atalhos estão na Ajuda
     if abas_ and not any('aria-selected="true"' in a for a in abas_):   # a aba aberta está no Mais: a primeira continua alcançável pelo Tab
         abas_[0] = abas_[0].replace('tabindex="-1"', 'tabindex="0"', 1)
     mais = ""
@@ -157,8 +157,8 @@ def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = (
         mais = (f'<details class="mais" id="mais"{" data-atual" if atual_extra else ""}><summary>{e(titulo)}</summary>'
                 f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" hidden>Atalho: Option Shift 0</span>')
     classe = f"l{por_linha(len(itens))}" + (" com-mais" if extras else "")
-    return (f'<div class="abas-bloco"><div role="tablist" class="{classe}" aria-label="{e(rotulo)}"{' aria-describedby="atalho-abas"' if dicas else ""}>' + "".join(abas_)
-            + f'</div>{mais}{dicas}<p id="aviso-abas" class="so-leitor" role="status"></p></div>')
+    return (f'<div class="abas-bloco"><div role="tablist" class="{classe}" aria-label="{e(rotulo)}">' + "".join(abas_)
+            + f'</div>{mais}{dicas}</div>')
 
 
 def painel_da_aba(itens: list, atual: str, conteudo: str, foco: bool = True) -> str:
@@ -181,8 +181,7 @@ def subabas(itens: list, atual: str, rotulo: str = "Subseções", completas: tup
                     f'aria-controls="painel-subaba"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
     if tabs and not any('aria-selected="true"' in t for t in tabs):
         tabs[0] = tabs[0].replace('tabindex="-1"', 'tabindex="0"', 1)
-    return (f'<div role="tablist" class="subabas l{por_linha(len(itens))}" data-nivel="2" aria-label="{e(rotulo)}" aria-describedby="atalho-subabas">' + "".join(tabs)
-            + '</div><span id="atalho-subabas" hidden>Atalho: Option Shift seta para a direita ou para a esquerda</span>')
+    return (f'<div role="tablist" class="subabas l{por_linha(len(itens))}" data-nivel="2" aria-label="{e(rotulo)}">' + "".join(tabs) + '</div>')
 
 
 def painel_da_subaba(itens: list, atual: str, conteudo: str) -> str:
@@ -196,7 +195,7 @@ def com_subabas(itens: list, atual: str, conteudo: str, rotulo: str = "Subseçõ
 
 
 # Setas Esquerda/Direita, Home e End movem o foco entre as abas; Enter ou Espaço abre a aba em foco; Option+Shift+1..9 abre pelo número.
-# Abrir uma aba troca só o conteúdo do painel (sem recarregar a página, o foco fica na aba e o leitor de tela ouve "<nome> aberta").
+# Abrir uma aba troca só o conteúdo do painel (sem recarregar a página, o foco fica na aba; nenhum aviso extra é falado).
 # Abas marcadas com data-completa (as que têm script próprio, como o Terminal) carregam a página inteira, e só se vai delas ou para elas assim.
 # Exige nonce de script na página.
 _BASE_AJUDA = []
@@ -374,7 +373,6 @@ window.hdPerguntar();
 SCRIPT_ABAS = r"""
 (function(){
 var ALVO = {'1': 'painel-aba', '2': 'painel-subaba'};
-var aviso = document.getElementById('aviso-abas');
 function nivel(lista){ return lista.getAttribute('data-nivel') || '1'; }
 function listaDe(el){ return el && el.closest ? el.closest('[role=tablist]') : null; }
 function abasDe(lista){ return Array.prototype.slice.call(lista.querySelectorAll('[role=tab]')); }
@@ -395,7 +393,6 @@ function abrir(a, empurrar){
     abasDe(lista).forEach(function(x){ var s = (x === a); x.setAttribute('aria-selected', s ? 'true' : 'false'); x.tabIndex = s ? 0 : -1; });
     if (window.hdPerguntar) { window.hdPerguntar(); }
     document.title = d.title; if (empurrar) { history.pushState({}, '', a.href); }
-    if (aviso) { aviso.textContent = ''; setTimeout(function(){ aviso.textContent = a.textContent + ' aberta'; }, 50); }
   }).catch(function(){ location.href = a.href; });
 }
 document.addEventListener('click', function(ev){

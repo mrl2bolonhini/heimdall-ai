@@ -236,5 +236,16 @@ fontes = {"controls": "heimdall_controls.py", "finance": "heimdall_finance.py", 
 confere("todos os serviços com página própria passam a chave do serviço ao rodapé", all(f'design.rodape(' in (RAIZ / f).read_text(encoding="utf-8") and (f'"{k}"' in (RAIZ / f).read_text(encoding="utf-8")) for k, f in fontes.items()))
 confere("as chaves do rodapé existem na ajuda", all(k in aj.SERVICOS for k in fontes))
 
+import re as _re
+_t, _c = aj.pagina_ajuda("tok")
+confere("guia de comandos na Ajuda: sistemas, tabela com caption e scope, iPhone e Android", all(x in _c for x in ("macOS", "Linux", "Windows", "iPhone e Android", 'id="comandos-saude"', "<caption>Comandos do Health", 'scope="row"')))
+_ok = True
+for _a, _m, _p in aj.COMANDOS_HEALTH:
+    for _parte in _p.split(" | "):
+        _scr = _re.search(r"(heimdall_\w+\.py)", _p).group(1)
+        _fonte = (RAIZ / _scr).read_text(encoding="utf-8")
+        for _opt in _re.findall(r"--[a-z-]+", _parte):
+            _ok = _ok and f'"{_opt}"' in _fonte
+confere("guia de comandos: toda opção em Python existe no script", _ok)
 print("\nFALHAS:", falhas)
 raise SystemExit(1 if falhas else 0)
