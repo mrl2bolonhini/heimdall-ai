@@ -396,7 +396,7 @@ Opções:
   -l, --last           mostra as 10 últimas mensagens (com o motivo, quando o envio falhou)
   -r, --reply          responde de suporte@ a quem escreveu: heimdall support --reply PROTOCOLO "texto" (para e-mail sem protocolo: --reply - --to endereço "texto")
       --to             endereço de destino quando a resposta não tem protocolo
-  -d, --documents      grava em guides/termos_e_privacidade.txt os Termos de Uso e a Política de Privacidade em texto puro, para ler e revisar
+  -d, --documents      grava em db/juridico dois arquivos de texto, termos_de_uso.txt e politica_de_privacidade.txt, para ler e revisar (os dados do responsável vêm do .env: HEIMDALL_RESPONSAVEL, HEIMDALL_ENCARREGADO e HEIMDALL_FORO)
   -k, --token          cria, com o token atual da Cloudflare, um token só de envio de e-mail e o grava no .env (HEIMDALL_SUPORTE_TOKEN), sem exibi-lo
   -t, --test           envia uma mensagem de teste ao destino do suporte e mostra o motivo se falhar
   -h, --help           mostra esta ajuda

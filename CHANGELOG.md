@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-24 - Termos de Uso e Política de Privacidade reescritos
+- Textos reescritos em estrutura de mercado: Termos de Uso com 14 cláusulas (aceitação e definições, descrição dos serviços, acesso, condutas vedadas, inteligência artificial, saúde e finanças, disponibilidade e suporte, conteúdo do Usuário, propriedade intelectual, limitação de responsabilidade, suspensão, alterações, lei e foro, contato) e Política de Privacidade com 13 seções (controlador e contato, dados tratados, finalidades e bases legais da LGPD, local dos dados, operadores, transferência internacional, inteligência artificial, retenção, direitos, segurança e incidentes, crianças e adolescentes, cookies, alterações). Cada documento é uma página própria (/termos-de-uso e /privacidade), com data de vigência e índice de seções.
+- Os dados do responsável saem do .env, não do código (o repositório é público): HEIMDALL_RESPONSAVEL (nome e documento), HEIMDALL_ENCARREGADO (padrão: o responsável, pelo e-mail do suporte) e HEIMDALL_FORO (padrão: São Paulo). Sem HEIMDALL_RESPONSAVEL, as páginas mostram um marcador. heimdall support --documents grava em db/juridico (fora do GitHub) termos_de_uso.txt e politica_de_privacidade.txt.
+- Testes ampliados em tests/account/teste_ajuda.py.
+
 ## 2026-11-24 - Termos de Uso e texto para leitura
 - A página Política de uso passou a se chamar Termos de Uso (endereço /termos-de-uso, link no rodapé de todos os serviços), junto da Política de Privacidade, no padrão de mercado. Novo heimdall support --documents grava em guides/termos_e_privacidade.txt os dois documentos em texto puro, para ler e revisar.
 

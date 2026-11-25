@@ -123,58 +123,132 @@ FAQ = {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Termos de Uso e Política de privacidade (MINUTA): o texto descreve o que o Heimdall faz hoje; os campos [entre colchetes]
-# dependem do dono do Heimdall e de revisão jurídica antes da publicação.
+# Termos de Uso e Política de Privacidade (MINUTA): o texto descreve o que o Heimdall faz hoje. Os dados de identificação do responsável
+# ficam no .env (HEIMDALL_RESPONSAVEL, HEIMDALL_ENCARREGADO, HEIMDALL_FORO), nunca no código, porque o repositório é público.
 # ---------------------------------------------------------------------------------------------------------------------
-TERMOS_DE_USO = [
-    ("1. Objeto", ["Estes termos regem o uso dos serviços do Heimdall (Controls, Finance, Health, Notes, News, Learn, Games, Lab, Chat e Account), operados por [NOME DO RESPONSÁVEL E DOCUMENTO]. Ao entrar, você declara ter lido e concordado com estes termos e com a Política de Privacidade."]),
-    ("2. Acesso", ["O acesso é pessoal e por convite, mediante autenticação pelo Cloudflare Access com conta Microsoft. Você é responsável por manter sua conta e seus dispositivos seguros e por não compartilhar o acesso com terceiros."]),
-    ("3. Uso permitido", ["Você se compromete a usar os serviços de forma lícita e a não tentar acessar dados de outras pessoas, interferir no funcionamento dos serviços ou testar a segurança deles sem autorização por escrito."]),
-    ("4. Recursos de inteligência artificial", ["Parte dos serviços usa inteligência artificial para resumir, classificar e responder perguntas. As respostas podem conter erros e devem ser conferidas. Elas são informativas e não substituem orientação médica, jurídica, contábil ou financeira."]),
-    ("5. Saúde e finanças", ["As análises de saúde e de finanças são informativas. O Heimdall não realiza diagnóstico nem recomenda tratamento, investimento ou operação financeira, e nenhuma decisão deve ser tomada apenas com base nelas."]),
-    ("6. Disponibilidade", ["Os serviços são oferecidos no estado em que se encontram, sem garantia de disponibilidade contínua. Podem ficar indisponíveis por manutenção, falha de energia, de rede ou de provedores externos, e alguns recursos podem operar em modo reduzido nessas situações."]),
-    ("7. Seus conteúdos", ["Os dados e arquivos que você envia continuam sendo seus. Você nos autoriza a tratá-los apenas para prestar os serviços, conforme a Política de Privacidade."]),
-    ("8. Suspensão e encerramento", ["O acesso pode ser suspenso ou encerrado em caso de descumprimento destes termos ou de risco à segurança. Você pode pedir o encerramento da sua conta e a exclusão dos seus dados pelo suporte."]),
-    ("9. Alterações", ["Estes termos podem ser atualizados. A data da versão vigente aparece no início desta página, e mudanças relevantes serão comunicadas aos usuários."]),
-    ("10. Lei aplicável e foro", ["Aplica-se a legislação brasileira. Fica eleito o foro de [COMARCA A DEFINIR] para resolver conflitos, ressalvados os direitos do consumidor, quando cabíveis."]),
-]
+def _cfg(chave: str, padrao: str = "") -> str:
+    return (os.environ.get(chave) or _env_arquivo(chave) or padrao).strip()
 
-POLITICA_PRIVACIDADE = [
-    ("1. Quem é o controlador dos dados", ["[NOME DO CONTROLADOR], [CPF OU CNPJ], com contato em " + EMAIL_SUPORTE + ". Encarregado pelo tratamento de dados pessoais (art. 41 da LGPD): [A DEFINIR]."]),
-    ("2. Quais dados tratamos", [
-        "Conta: nome e e-mail fornecidos pela sua conta Microsoft no login pelo Cloudflare Access.",
-        "Saúde: medidas do app Saúde do iPhone e do Apple Watch enviadas pelo Health Auto Export, e exames, receitas e encaminhamentos que você envia.",
-        "Finanças: lançamentos, saldos e investimentos das contas conectadas pelo Open Finance (por meio da Pluggy), planilhas, boletos e arquivos que você envia.",
-        "Notas, estudos e preferências: o que você escreve, importa ou configura nos serviços.",
-        "Suporte: o conteúdo das mensagens que você nos envia e seus dados de contato.",
-        "Registros técnicos: horários de acesso e eventos de funcionamento necessários para segurança e diagnóstico."]),
-    ("3. Para que usamos os dados", ["Para prestar os serviços que você usa, mantê-los seguros, responder ao suporte e cumprir obrigações legais. Não vendemos dados pessoais e não os usamos para publicidade."]),
-    ("4. Onde os dados ficam", [
-        "Os serviços são hospedados em um computador do responsável. Cópias cifradas de bancos e arquivos podem ser guardadas na nuvem da Cloudflare (armazenamento R2, com criptografia), para continuidade e recuperação.",
-        "Se a hospedagem passar para um servidor contratado, esta política será atualizada e os usuários serão avisados."]),
-    ("5. Com quem compartilhamos", [
-        "Cloudflare: entrada segura (Access e túnel), armazenamento de cópias, execução de modelos de inteligência artificial e gateway de IA.",
-        "Microsoft: autenticação da sua conta.",
-        "Pluggy: conexão com instituições financeiras pelo Open Finance, mediante a sua autorização.",
-        "Apple: Calendário, Lembretes, Notas e iCloud, quando você usa essas integrações.",
-        "Provedores de modelos de inteligência artificial acessados pelo gateway da Cloudflare, quando a nuvem está ligada. O gateway é configurado para não guardar o conteúdo das conversas.",
-        "Serviço de notificações (Bark): os avisos de saúde levam apenas texto genérico, sem números de saúde.",
-        "Notion: opcional, somente para ideias, contatos e endereços das notas, nunca saúde ou finanças.",
-        "Compartilhamos dados também quando a lei ou uma ordem judicial exigir."]),
-    ("6. Transferência internacional", ["Provedores como a Cloudflare podem tratar dados fora do Brasil. Nesses casos, o tratamento observa os requisitos do art. 33 da LGPD. [CONFERIR AS BASES E CLÁUSULAS ANTES DA PUBLICAÇÃO]"]),
-    ("7. Inteligência artificial", ["Os recursos de inteligência artificial recebem apenas o contexto necessário para responder (por exemplo, os dados da tela em que você pergunta). As respostas podem conter erros e não substituem orientação profissional. Dependendo da configuração, os modelos rodam no computador do responsável ou na nuvem."]),
-    ("8. Por quanto tempo guardamos", ["Guardamos os dados enquanto sua conta existir ou for necessário para os fins acima. A caixa de correio da Cloudflare, usada para receber dados do iPhone, apaga o que não foi retirado em 7 dias. Mensagens de suporte são guardadas pelo tempo necessário ao atendimento e à comprovação de contato. Dados podem ser eliminados a seu pedido, ressalvadas as hipóteses de guarda obrigatória por lei."]),
-    ("9. Seus direitos", ["Conforme o art. 18 da LGPD, você pode pedir confirmação do tratamento, acesso, correção, anonimização, portabilidade, informação sobre compartilhamento, eliminação de dados tratados com consentimento e revogação do consentimento. Para exercer esses direitos, use o formulário de suporte, com o assunto Pedido sobre os meus dados. Você também pode reclamar à Autoridade Nacional de Proteção de Dados."]),
-    ("10. Segurança", ["Adotamos medidas como autenticação em dois fatores pelo Access, criptografia das cópias na nuvem (AES-256-GCM), proteção contra requisições forjadas, acesso restrito por papel e separação dos dados por pessoa nos serviços em que ela já existe. Nenhum sistema é totalmente imune a falhas; em caso de incidente relevante, comunicaremos os afetados e a ANPD conforme a lei."]),
-    ("11. Alterações desta política", ["Esta política pode ser atualizada. A data da versão vigente aparece no início da página, e mudanças relevantes serão comunicadas aos usuários."]),
-]
+
+def responsavel() -> str:
+    return _cfg("HEIMDALL_RESPONSAVEL", "[NOME E DOCUMENTO DO RESPONSÁVEL: defina HEIMDALL_RESPONSAVEL]")
+
+
+def encarregado() -> str:
+    return _cfg("HEIMDALL_ENCARREGADO", f"o próprio responsável, pelo e-mail {EMAIL_SUPORTE}")
+
+
+def foro() -> str:
+    return _cfg("HEIMDALL_FORO", "São Paulo")
+
+
+def data_por_extenso(iso: str = None) -> str:
+    meses = ("janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro")
+    a, m, d = (iso or VERSAO_POLITICA).split("-")
+    return f"{int(d)} de {meses[int(m) - 1]} de {a}"
+
+
+def termos_de_uso() -> list:
+    return [
+        ("1. Aceitação e definições", [
+            f"Estes Termos de Uso regulam o acesso e a utilização dos serviços do Heimdall (Account, Finance, Health, Notes, News, Learn, Games, Lab e Chat), operados por {responsavel()} (\"Responsável\"). "
+            "\"Usuário\" é a pessoa que acessa os serviços mediante convite. Ao entrar, o Usuário declara ter lido e concordado com o quanto se segue, bem como com a Política de Privacidade, que integra estes termos."]),
+        ("2. Descrição dos serviços", [
+            "O Heimdall reúne serviços pessoais de organização e acompanhamento: Account (acesso, integrações, ajuda e suporte), Finance (finanças), Health (saúde), Notes (notas), News (notícias), "
+            "Learn (estudos), Games (jogos), Lab (laboratório de serviços de nuvem) e Chat (conversa com modelos de inteligência artificial). Cada Usuário vê apenas os serviços liberados no seu convite."]),
+        ("3. Acesso e conta", [
+            "O acesso é pessoal e por convite, mediante autenticação pelo Cloudflare Access com conta Microsoft. O Usuário é responsável por manter sua conta e seus dispositivos seguros e por não compartilhar o acesso com terceiros. "
+            "Deve avisar o suporte, sem demora, caso suspeite de uso indevido da sua conta."]),
+        ("4. Uso permitido e condutas vedadas", [
+            "O Usuário se compromete a usar os serviços de forma lícita. É vedado:",
+            "tentar acessar dados de outras pessoas ou áreas para as quais não recebeu acesso;",
+            "interferir no funcionamento dos serviços, contornar a autenticação ou testar a segurança deles sem autorização por escrito;",
+            "enviar conteúdo ilícito ou que viole direitos de terceiros;",
+            "usar os serviços para acesso automatizado em massa ou para fins comerciais não autorizados."]),
+        ("5. Recursos de inteligência artificial", [
+            "Parte dos serviços usa inteligência artificial para resumir, classificar e responder perguntas. As respostas podem conter erros e devem ser conferidas pelo Usuário. "
+            "São informativas e não substituem orientação médica, jurídica, contábil ou financeira."]),
+        ("6. Saúde e finanças", [
+            "As análises de saúde e de finanças são informativas. O Heimdall não realiza diagnóstico nem recomenda tratamento, investimento ou operação financeira, e nenhuma decisão deve ser tomada apenas com base nelas. "
+            "Em caso de urgência médica, procure atendimento imediato."]),
+        ("7. Disponibilidade e suporte", [
+            "Os serviços são oferecidos no estado em que se encontram, sem garantia de disponibilidade contínua. Podem ficar indisponíveis por manutenção, falha de energia, de rede ou de provedores externos, e alguns recursos podem operar em modo reduzido nessas situações. "
+            f"O suporte é prestado pelo formulário da página Ajuda e suporte, que gera um número de protocolo, ou pelo e-mail {EMAIL_SUPORTE}. As respostas são enviadas ao e-mail da conta do Usuário, sem prazo garantido."]),
+        ("8. Conteúdo do Usuário", [
+            "Os dados e arquivos enviados pelo Usuário continuam sendo dele. O Usuário autoriza o Responsável a tratá-los apenas para prestar os serviços, conforme a Política de Privacidade, e declara ter o direito de enviá-los."]),
+        ("9. Propriedade intelectual", [
+            "O software, a interface, os textos e as marcas do Heimdall pertencem ao Responsável ou a seus licenciantes. Estes termos não transferem direitos de propriedade: concedem ao Usuário uma licença pessoal, "
+            "não exclusiva, intransferível e revogável de uso dos serviços enquanto o acesso estiver ativo."]),
+        ("10. Limitação de responsabilidade", [
+            "Na extensão permitida pela lei, e ressalvados os direitos do consumidor, o Responsável não responde por danos decorrentes de indisponibilidade dos serviços, de falhas de provedores externos, "
+            "de erros nas respostas de inteligência artificial, de decisões tomadas com base nas informações exibidas ou do uso indevido da conta pelo próprio Usuário."]),
+        ("11. Suspensão e encerramento", [
+            "O acesso pode ser suspenso ou encerrado em caso de descumprimento destes termos ou de risco à segurança. O Usuário pode pedir o encerramento da sua conta e a exclusão dos seus dados pelo suporte."]),
+        ("12. Alterações", [
+            "Estes termos podem ser atualizados. A data da versão vigente aparece no início desta página, e mudanças relevantes serão comunicadas aos Usuários. O uso dos serviços após a atualização indica concordância com o novo texto."]),
+        ("13. Lei aplicável e foro", [
+            "Aplica-se a legislação brasileira para todos os efeitos desta relação, independentemente de onde se dar o uso dos serviços, quer seja em território nacional ou estrangeiro. "
+            f"Fica eleito o foro de {foro()} para dirimir quaisquer conflitos, ressalvados os direitos do consumidor, quando cabíveis."]),
+        ("14. Contato", [f"Dúvidas sobre estes termos podem ser enviadas pelo formulário de suporte ou para {EMAIL_SUPORTE}."]),
+    ]
+
+
+def politica_privacidade() -> list:
+    return [
+        ("1. Controlador e contato", [
+            f"O controlador dos dados pessoais é {responsavel()}, com contato em {EMAIL_SUPORTE}. Encarregado pelo tratamento de dados pessoais (art. 41 da LGPD): {encarregado()}."]),
+        ("2. Quais dados tratamos", [
+            "Conta: nome e e-mail fornecidos pela conta Microsoft no login pelo Cloudflare Access.",
+            "Saúde: medidas do app Saúde do iPhone e do Apple Watch enviadas pelo Health Auto Export, e exames, receitas e encaminhamentos que o Usuário envia. São dados pessoais sensíveis.",
+            "Finanças: lançamentos, saldos e investimentos das contas conectadas pelo Open Finance (por meio da Pluggy), planilhas, boletos e arquivos que o Usuário envia.",
+            "Notas, estudos e preferências: o que o Usuário escreve, importa ou configura nos serviços.",
+            "Suporte: o conteúdo das mensagens enviadas e os dados de contato.",
+            "Registros técnicos: horários de acesso e eventos de funcionamento necessários para segurança e diagnóstico."]),
+        ("3. Finalidades e bases legais", [
+            "Prestar os serviços contratados e mantê-los em funcionamento: execução de contrato (art. 7, V, da LGPD).",
+            "Tratar dados de saúde e conectar contas financeiras: consentimento do Usuário, dado ao ativar o serviço ou a integração (art. 11, I, e art. 7, I).",
+            "Manter a segurança, prevenir fraudes e diagnosticar falhas: legítimo interesse (art. 7, IX).",
+            "Responder ao suporte e cumprir obrigações legais ou ordens de autoridades: execução de contrato e cumprimento de obrigação legal (art. 7, II e V).",
+            "Os dados não são vendidos, não são usados para publicidade e não são lidos pelo Responsável, exceto o necessário ao suporte e à segurança."]),
+        ("4. Onde os dados ficam", [
+            "Os serviços são hospedados em um servidor local do Responsável. Cópias cifradas de bancos e arquivos podem ser guardadas na nuvem da Cloudflare (armazenamento R2, com criptografia), para continuidade e recuperação.",
+            "Se a hospedagem passar para um servidor contratado, esta política será atualizada e os Usuários serão avisados."]),
+        ("5. Compartilhamento e operadores", [
+            "Cloudflare: entrada segura (Access e túnel), armazenamento de cópias, envio e recebimento de e-mails do suporte, execução de modelos de inteligência artificial e gateway de IA.",
+            "Microsoft: autenticação da conta.",
+            "Pluggy: conexão com instituições financeiras pelo Open Finance, mediante autorização do Usuário.",
+            "Apple: Calendário, Lembretes, Notas e iCloud, quando o Usuário usa essas integrações.",
+            "Provedores de modelos de inteligência artificial acessados pelo gateway da Cloudflare, quando a nuvem está ligada. O gateway é configurado para não guardar o conteúdo das conversas.",
+            "Serviço de notificações (Bark): os avisos de saúde levam apenas texto genérico, sem números de saúde.",
+            "Notion: opcional, somente para ideias, contatos e endereços das notas, nunca saúde ou finanças.",
+            "Os dados também podem ser compartilhados quando a lei ou uma ordem judicial exigir."]),
+        ("6. Transferência internacional", [
+            "Provedores como a Cloudflare podem tratar dados fora do Brasil. Nesses casos, a transferência ocorre com as garantias previstas no art. 33 da LGPD, como as cláusulas contratuais firmadas com os provedores "
+            "(por exemplo, o aditamento de tratamento de dados da Cloudflare) ou, quando necessário, mediante consentimento específico do Usuário."]),
+        ("7. Inteligência artificial", [
+            "Os recursos de inteligência artificial recebem apenas o contexto necessário para responder, como os dados da tela em que o Usuário pergunta. As respostas podem conter erros e não substituem orientação profissional. "
+            "Dependendo da configuração, os modelos rodam no servidor local do Responsável ou na nuvem."]),
+        ("8. Por quanto tempo guardamos", [
+            "Os dados são guardados enquanto a conta existir ou for necessário para as finalidades acima. A caixa de correio da Cloudflare, usada para receber dados do dispositivo móvel, apaga o que não foi retirado em 7 dias. "
+            "Mensagens de suporte são guardadas pelo tempo necessário ao atendimento e à comprovação de contato. Os dados podem ser eliminados a pedido do Usuário, ressalvadas as hipóteses de guarda obrigatória por lei."]),
+        ("9. Direitos do titular", [
+            "Conforme o art. 18 da LGPD, o titular pode pedir confirmação do tratamento, acesso, correção, anonimização, portabilidade, informação sobre compartilhamento, eliminação de dados tratados com consentimento e revogação do consentimento. "
+            "Para exercer esses direitos, use o formulário de suporte, com o assunto Pedido sobre os meus dados. O titular também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD)."]),
+        ("10. Segurança e incidentes", [
+            "São adotadas medidas como autenticação em dois fatores pelo Access, criptografia das cópias na nuvem (AES-256-GCM), proteção contra requisições forjadas, acesso restrito por papel e separação dos dados por pessoa nos serviços em que ela já existe. "
+            "Nenhum sistema é totalmente imune a falhas. Em caso de incidente de segurança que possa acarretar risco ou dano relevante, os titulares afetados e a ANPD serão comunicados, conforme a lei."]),
+        ("11. Crianças e adolescentes", ["Os serviços destinam-se a maiores de 18 anos. O Heimdall não trata intencionalmente dados de crianças e adolescentes."]),
+        ("12. Cookies e armazenamento no navegador", [
+            "São usados apenas cookies e armazenamento essenciais ao funcionamento e à segurança, como o cookie de sessão do Cloudflare Access. Não há cookies de publicidade nem de rastreamento."]),
+        ("13. Alterações desta política", [
+            "Esta política pode ser atualizada. A data da versão vigente aparece no início da página, e mudanças relevantes serão comunicadas aos Usuários."]),
+    ]
 
 
 def aviso_minuta() -> str:
     if os.environ.get("HEIMDALL_POLITICA_APROVADA") == "1" or _env_arquivo("HEIMDALL_POLITICA_APROVADA") == "1":
         return ""
-    return ('<p role="note"><strong>Minuta em revisão.</strong> Este texto ainda não foi aprovado pelo responsável. Os trechos entre colchetes dependem de preenchimento e '
-            "de revisão jurídica antes da publicação.</p>")
+    return ('<p role="note"><strong>Minuta em revisão.</strong> Este texto ainda não foi aprovado pelo responsável e pode mudar antes da publicação.</p>')
 
 
 def _env_arquivo(chave: str) -> str:
@@ -191,43 +265,63 @@ def _env_arquivo(chave: str) -> str:
     return ""
 
 
+def _item_html(texto: str) -> str:
+    return e(texto)
+
+
 def _secoes(titulo_id: str, partes: list) -> str:
+    """Seções numeradas. Texto com um só parágrafo vira parágrafo; com vários, o primeiro vira introdução se terminar em dois-pontos, e os demais, itens de lista."""
     saida = ""
-    for i, (tit, paragrafos) in enumerate(partes):
-        corpo = ""
-        lista = [p for p in paragrafos]
-        if len(lista) > 1:
-            corpo = "<ul>" + "".join(f"<li>{e(p)}</li>" for p in lista) + "</ul>"
+    for i, (tit, ps) in enumerate(partes):
+        if len(ps) == 1:
+            corpo = f"<p>{e(ps[0])}</p>"
+        elif ps[0].endswith(":"):
+            corpo = f"<p>{e(ps[0])}</p><ul>" + "".join(f"<li>{e(p)}</li>" for p in ps[1:]) + "</ul>"
         else:
-            corpo = f"<p>{e(lista[0])}</p>"
+            corpo = "<ul>" + "".join(f"<li>{e(p)}</li>" for p in ps) + "</ul>"
         saida += f'<section aria-labelledby="{titulo_id}-{i}"><h2 id="{titulo_id}-{i}">{e(tit)}</h2>{corpo}</section>'
     return saida
 
 
-def texto_documentos() -> str:
-    """Termos de Uso e Política de Privacidade em texto puro, para leitura e revisão (heimdall support --documents)."""
-    aviso = ""
-    if aviso_minuta():
-        aviso = "MINUTA EM REVISÃO: este texto ainda não foi aprovado pelo responsável. Os trechos entre colchetes dependem de preenchimento e de revisão jurídica antes da publicação.\n\n"
+def _indice(titulo_id: str, partes: list) -> str:
+    itens = "".join(f'<li><a href="#{titulo_id}-{i}">{e(tit)}</a></li>' for i, (tit, _) in enumerate(partes))
+    return f'<nav aria-label="Conteúdo desta página"><h2>Conteúdo</h2><ul>{itens}</ul></nav>'
 
-    def bloco(titulo: str, partes: list) -> str:
-        s = f"{titulo}\nVersão de {VERSAO_POLITICA}\n\n{aviso}"
-        for tit, paragrafos in partes:
-            s += tit + "\n"
-            s += "".join(("- " if len(paragrafos) > 1 else "") + x + "\n" for x in paragrafos) + "\n"
-        return s
-    return bloco("TERMOS DE USO DO HEIMDALL", TERMOS_DE_USO) + "\n" + bloco("POLÍTICA DE PRIVACIDADE DO HEIMDALL", POLITICA_PRIVACIDADE)
+
+def _cabecalho_doc(titulo: str) -> str:
+    return (f"<h1>{e(titulo)}</h1><p>Em vigor desde {e(data_por_extenso())}. Versão de {e(VERSAO_POLITICA)}.</p>{aviso_minuta()}")
+
+
+def texto_documento(qual: str) -> str:
+    """Um dos documentos em texto puro: 'termos' ou 'privacidade'."""
+    titulo, partes = (("TERMOS DE USO DO HEIMDALL", termos_de_uso()) if qual == "termos" else ("POLÍTICA DE PRIVACIDADE DO HEIMDALL", politica_privacidade()))
+    s = f"{titulo}\nEm vigor desde {data_por_extenso()}. Versão de {VERSAO_POLITICA}.\n"
+    if aviso_minuta():
+        s += "MINUTA EM REVISÃO: este texto ainda não foi aprovado pelo responsável e pode mudar antes da publicação.\n"
+    s += "\nConteúdo\n" + "".join(f"{tit}\n" for tit, _ in partes) + "\n"
+    for tit, ps in partes:
+        s += tit + "\n"
+        if len(ps) == 1:
+            s += ps[0] + "\n"
+        elif ps[0].endswith(":"):
+            s += ps[0] + "\n" + "".join(f"- {p}\n" for p in ps[1:])
+        else:
+            s += "".join(f"- {p}\n" for p in ps)
+        s += "\n"
+    return s
 
 
 def pagina_termos_de_uso() -> tuple:
-    corpo = (f"<h1>Termos de Uso</h1><p>Versão de {e(VERSAO_POLITICA)}.</p>{aviso_minuta()}" + _secoes("pu", TERMOS_DE_USO)
-             + f'<p><a href="/privacidade">Política de Privacidade</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
+    p = termos_de_uso()
+    corpo = (_cabecalho_doc("Termos de Uso") + _indice("pu", p) + _secoes("pu", p)
+             + '<p><a href="/privacidade">Política de Privacidade</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
     return "Termos de Uso - Heimdall", corpo
 
 
 def pagina_privacidade() -> tuple:
-    corpo = (f"<h1>Política de Privacidade</h1><p>Versão de {e(VERSAO_POLITICA)}.</p>{aviso_minuta()}" + _secoes("pp", POLITICA_PRIVACIDADE)
-             + f'<p><a href="/termos-de-uso">Termos de Uso</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
+    p = politica_privacidade()
+    corpo = (_cabecalho_doc("Política de Privacidade") + _indice("pp", p) + _secoes("pp", p)
+             + '<p><a href="/termos-de-uso">Termos de Uso</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
     return "Política de Privacidade - Heimdall", corpo
 
 
@@ -534,9 +628,11 @@ def main() -> int:
                 print(f"    motivo: {r['motivo']}")
         return 0
     if "--documentos" in sys.argv:
-        arq = AQUI / "guides" / "termos_e_privacidade.txt"
-        arq.write_text(texto_documentos(), encoding="utf-8")
-        print(f"Termos de Uso e Política de Privacidade gravados em {arq.relative_to(AQUI)}.")
+        pasta = AQUI / "db" / "juridico"
+        pasta.mkdir(parents=True, exist_ok=True)
+        for nome, qual in (("termos_de_uso.txt", "termos"), ("politica_de_privacidade.txt", "privacidade")):
+            (pasta / nome).write_text(texto_documento(qual), encoding="utf-8")
+        print(f"Gravados em {pasta.relative_to(AQUI)}: termos_de_uso.txt e politica_de_privacidade.txt (a pasta db/ não vai para o GitHub).")
         return 0
     if "--responder" in sys.argv:
         a = sys.argv[1:]
