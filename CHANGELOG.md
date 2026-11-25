@@ -5,7 +5,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-25 - Health mais enxuto, Resumo por período e Guia de comandos
 - Resumo agora segue o tempo, sem repetir conceitos: Hoje (abre com "Precisa da sua atenção"), Dia a dia, Semana e Tendências. A antiga página Panorama virou Hoje e as Tendências ganharam página própria. O endereço /hoje continua e leva à página Hoje.
 - Telas sem repetição: o aviso de que o painel não substitui um profissional de saúde aparece uma só vez por página, no rodapé; as frases "não é diagnóstico" dos relatórios e os textos explicativos de Perfil e Sugestões saíram; as telas não mostram mais comandos.
-- Abas de todos os serviços: sem descrição lida pelo leitor de tela e sem o aviso falado "<nome> aberta" ao abrir uma aba. Os atalhos (Option+Shift+número) continuam e estão na Ajuda.
+- Abas de todos os serviços: sem descrição lida pelo leitor de tela e sem o aviso falado "<nome> aberta" ao abrir uma aba. Os atalhos (Option+Shift+número) continuam e estão na Ajuda; o aviso deles saiu da visão geral do Controls.
 - Nova seção na Ajuda e suporte: Guia de comandos, com como abrir o terminal no macOS, Linux e Windows, a tabela de comandos do Health (comando heimdall no macOS e Python no Linux e no Windows) e o que fazer no iPhone e no Android. Teste confere que toda opção da tabela existe nos scripts.
 - Regra de vários sistemas (Windows, macOS, iPhone e Android) no CLAUDE.md e no ROADMAP, inclusive para os apps futuros.
 

@@ -328,8 +328,7 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
               '<li><a href="/monitor">Monitor</a>: consumo da Cloudflare, com requisições, tokens e custo estimado do modelo grande na nuvem, por modelo e por dia, comparado com o teto de gasto.</li>'
               '<li><a href="/usuarios">Usuários</a>: quem pode entrar em cada serviço. Adiciona e remove convidados, guarda a lista e sincroniza com o Cloudflare Access.</li>'
               '<li><a href="/ajustes">Ajustes</a>: todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar Heimdall, no fim da página, faz isso.</li>'
-              '<li><a href="/manutencao">Manutenção</a>: Start, Stop, Update, Restart, status, diagnóstico e logs.</li></ol>'
-              "<p>Setas esquerda e direita movem entre as abas, e Option+Shift+1 a 7 abre cada uma de qualquer ponto da página.</p>")
+              '<li><a href="/manutencao">Manutenção</a>: Start, Stop, Update, Restart, status, diagnóstico e logs.</li></ol>')
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando e cada mudança ficam anotados em logs/controls_audit.log, sem a saída nem os valores. '
               'Programas de tela cheia, como vim e top, não funcionam no Terminal: use cat, sed e ps.</p>')
     return "Visão geral", corpo
