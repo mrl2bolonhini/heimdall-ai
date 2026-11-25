@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-24 - Diagnóstico do envio de e-mail do suporte
+- O estado gravada_sem_envio agora traz o motivo (código HTTP e resposta da Cloudflare, ou as variáveis que faltam), exibido por heimdall support --last. Novo heimdall support --test envia uma mensagem de teste ao destino do suporte e mostra o motivo quando falha. Domínio heimdall-ai.tech ativado no Cloudflare Email Sending; o recebimento (Email Routing) encaminha suporte@ para o Gmail do dono.
+
 ## 2026-11-24 - Ajuda e suporte, políticas no rodapé e textos de produto
 - Novo heimdall_ajuda.py, hospedado no Heimdall Account: perguntas frequentes de todos os serviços (geral, Account, Controls, Finance, Health, Notes, News, Learn, Games, Lab e Chat) em /ajuda, aberta já nas perguntas do serviço de onde você veio (/ajuda?servico=finance); formulário Falar com o suporte com serviço, assunto e mensagem de 10 a 4.000 caracteres, protocolo no formato HMD-AAAAMMDD-XXXXXX, limite de 5 mensagens por hora por pessoa, CSRF e origem conferidos, e texto digitado preservado quando há erro.
 - As mensagens ficam em db/suporte/mensagens.jsonl (permissão 600). Com HEIMDALL_SUPORTE_EMAIL=1, HEIMDALL_SUPORTE_DE (remetente de um domínio ativado no Cloudflare Email Sending) e as chaves da Cloudflare, cada mensagem segue também por e-mail para suporte@heimdall-ai.tech (ou HEIMDALL_SUPORTE_PARA); se o envio falhar, a mensagem continua gravada e a página informa o protocolo e o endereço. heimdall support --last lista as últimas 10.

@@ -14,6 +14,7 @@ import os
 import re
 import secrets
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -315,12 +316,16 @@ def registrar(p: dict, assunto: str, servico: str, mensagem: str, agora: datetim
     return reg
 
 
-def _atualizar_estado(protocolo: str, estado: str) -> None:
+def _atualizar_estado(protocolo: str, estado: str, motivo: str = "") -> None:
     arq = PASTA / "mensagens.jsonl"
     regs = _ler_registros()
     for r in regs:
         if r.get("protocolo") == protocolo:
             r["estado"] = estado
+            if motivo:
+                r["motivo"] = motivo
+            else:
+                r.pop("motivo", None)
     tmp = arq.with_suffix(".tmp")
     tmp.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in regs), encoding="utf-8")
     os.chmod(tmp, 0o600)
@@ -345,6 +350,9 @@ def enviar_email(reg: dict) -> bool:
     """Envia ao suporte pelo Cloudflare Email Sending. Devolve True se a Cloudflare aceitou; qualquer falha deixa a mensagem gravada e devolve False."""
     c = _conf()
     if not envio_configurado(c):
+        faltam = [k for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID") if not c.get(k) or (k == "HEIMDALL_SUPORTE_EMAIL" and c.get(k) != "1")]
+        reg["motivo"] = "Envio desligado ou incompleto: " + ", ".join(faltam)
+        _atualizar_estado(reg["protocolo"], "gravada_sem_envio", reg["motivo"])
         return False
     assunto = f"[{reg['protocolo']}] {ASSUNTOS.get(reg['assunto'], reg['assunto'])} - {SERVICOS.get(reg['servico'], reg['servico'])}"
     texto = (f"Protocolo: {reg['protocolo']}\nData: {reg['data']}\nDe: {reg.get('nome') or '-'} <{reg['email']}>\nServiço: {SERVICOS.get(reg['servico'], reg['servico'])}\n"
@@ -352,12 +360,16 @@ def enviar_email(reg: dict) -> bool:
     corpo = json.dumps({"to": c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE, "from": c["HEIMDALL_SUPORTE_DE"], "subject": assunto, "text": texto}).encode("utf-8")
     req = urllib.request.Request(f"https://api.cloudflare.com/client/v4/accounts/{c['CLOUDFLARE_ACCOUNT_ID']}/email/sending/send", data=corpo, method="POST",
                                  headers={"Authorization": f"Bearer {c['CLOUDFLARE_API_TOKEN']}", "Content-Type": "application/json"})
+    ok, motivo = False, ""
     try:
         with _post(req, 20) as r:
             ok = bool(json.loads(r.read().decode("utf-8", "replace")).get("success"))
-    except Exception:  # noqa: BLE001
-        ok = False
-    _atualizar_estado(reg["protocolo"], "enviada" if ok else "gravada_sem_envio")
+    except urllib.error.HTTPError as e:
+        motivo = f"HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}"
+    except Exception as e:  # noqa: BLE001
+        motivo = f"{type(e).__name__}: {str(e)[:200]}"
+    reg["motivo"] = motivo
+    _atualizar_estado(reg["protocolo"], "enviada" if ok else "gravada_sem_envio", motivo)
     return ok
 
 
@@ -379,7 +391,17 @@ def main() -> int:
     if "--ultimas" in sys.argv:
         for r in _ler_registros()[-10:]:
             print(f"{r['protocolo']}  {r['estado']:18}  {r['email']}  {ASSUNTOS.get(r['assunto'])}  {r['mensagem'][:60]}")
+            if r.get("motivo"):
+                print(f"    motivo: {r['motivo']}")
         return 0
+    if "--testar" in sys.argv:
+        c = _conf()
+        destino = c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE
+        reg, ok = enviar({"email": destino, "nome": "Teste do envio"}, "outro", "geral", "Teste do envio de e-mail do suporte, feito por heimdall support --test.")
+        print(f"Protocolo {reg['protocolo']}: " + ("enviado para " + destino + ". Confira a caixa de entrada e o spam." if ok else "não enviado."))
+        if not ok:
+            print("Motivo: " + (reg.get("motivo") or "não informado"))
+        return 0 if ok else 1
     print(__doc__)
     return 2
 
