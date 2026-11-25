@@ -83,14 +83,17 @@ Plataforma e operação
 3) Dados de saúde e finanças podem ir para a nuvem protegidos (R2 com chave do cliente); a regra antiga de "nunca saem do Mac" foi abandonada em 21/11/2026.
 4) A IA propõe, o usuário decide: nada vira lembrete, evento, pagamento ou operação sem aceite. Sugestões de saúde nunca são diagnóstico nem orientação de dose.
 
-11. Pendências e decisões abertas (ver o ROADMAP para a ordem)
-1) Respostas da Locaweb, contrato e orçamento da VPS; depois fase 1 do servidor.
-2) Fase 2: embeddings no Workers AI, medindo a qualidade em português.
-3) Teste real de queda da continuidade (desligar o Mac de propósito) e acompanhamento do consumo.
-4) Validar os modelos do chat; chat próprio (fase 6).
-5) Revisão de navegação e textos dos demais serviços (Lab, Notes, News, Learn, Games, Controls), incluindo a subaba Ajuda dentro de Ajustes.
-6) Dados por pessoa: backup diário incluir db/people; depois Notes, News, Games e Chat.
-7) Escolha do nome do produto e consulta no INPI.
-8) Cotações de Open Finance: aguardar respostas e decidir entre Meu Pluggy, parceria ou nenhuma mudança.
-9) Estado da main: a main está atrás da develop; só avança com o sim do usuário (conferir com git rev-list --left-right --count origin/main...origin/develop).
+11. Pendências e decisões abertas (ordem completa no ROADMAP)
+Prioridades escolhidas pelo usuário em 25/11/2026, nesta ordem:
+1) Dados por pessoa: backup diário incluir db/people; depois Notes, News, Games e Chat.
+2) Exames no relatório da semana e lembrete de documento pendente.
+3) Revisão de navegação e textos dos demais serviços (Notes, News, Learn, Lab, Controls, Games), com a subaba Ajuda dentro de Ajustes.
+4) Apps da Apple: conta de desenvolvedor; app do Mac assinado, notarizado e com instalador .pkg; depois a primeira versão do app do iPhone.
+A seguir:
+5) Respostas da Locaweb, contrato e orçamento da VPS; fase 2 (embeddings no Workers AI) pode andar antes.
+6) Teste real de queda da continuidade e acompanhamento do consumo.
+7) Validar os modelos do chat; chat próprio na fase 6 do servidor.
+8) Cotações de Open Finance e escolha do nome do produto (INPI): aguardam o usuário.
+Sempre:
+9) Estado da main: só avança com o sim do usuário (conferir com git rev-list --left-right --count origin/main...origin/develop).
 10) Lembrar o que não foi testado: Safari com VoiceOver, TalkBack, comandos em Windows e Linux, subcomandos novos do zsh.

@@ -6,6 +6,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - O roadmap foi conferido com o código e reordenado. Saíram itens já entregues (Termos de Uso e Política de Privacidade publicados; site de Saúde lendo o banco de cada pessoa) e a pesquisa de lojas alternativas para o iPhone, encerrada porque não resolve o custo.
 - Continuidade aparece como implantada (desde 23/11/2026), com o teste de queda real como próximo passo; o servidor próprio está na fase 0, com conta na Locaweb e chamado aberto.
 - Itens juntados: comunicação profissional e Ajuda nos Ajustes entram na revisão de navegação; a fase 2 da migração para a Cloudflare (arquivos no R2) e o chat na nuvem entram nas fases do servidor próprio; a política de dados para clientes entra em Health e Finance para várias pessoas.
+- Prioridades escolhidas pelo usuário: dados por pessoa, exames no relatório da semana, revisão de navegação dos demais serviços e apps da Apple (app do Mac assinado e notarizado, depois o app do iPhone). Servidor, continuidade, validação do chat e respostas pendentes (Open Finance, nome do produto) passam para a etapa A seguir.
 
 ## 2026-11-25 - Contexto do projeto para quem desenvolve
 - Novo guides/contexto_projeto.txt, com o resumo do que foi implementado, debatido e decidido entre 11 e 25/11/2026 (arquitetura, Open WebUI enxuto e chat próprio, servidor e hospedagem, Open Finance e tarefas agendadas, estilo e conceito, time de skills, marca e pendências). O CLAUDE.md manda lê-lo antes de planejar.
