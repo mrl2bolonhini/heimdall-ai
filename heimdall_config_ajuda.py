@@ -139,6 +139,7 @@ DESCRICOES = {
     "HEIMDALL_SAUDE_ATALHO": "Nome do atalho do iPhone que envia dados de saúde ao Heimdall.",
     "HEIMDALL_SAUDE_CONDICOES": "Condições de saúde que o monitor deve acompanhar.",
     "HEIMDALL_SAUDE_LLM_URL": "Endereço do modelo que analisa os dados de saúde.",
+    "HEIMDALL_SAUDE_PENDENTE_DIAS": "Dias sem conferência depois dos quais um documento de saúde aparece no relatório da semana (padrão 3).",
     "HEIMDALL_SAUDE_MODELO": "Nome do modelo que analisa os dados de saúde.",
     "HEIMDALL_SAUDE_ROTA": "Caminho que recebe os dados de saúde enviados pelo iPhone.",
     "HEIMDALL_SAUDE_TOKEN": "Senha que o iPhone usa ao enviar dados de saúde.",

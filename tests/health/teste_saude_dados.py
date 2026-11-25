@@ -259,6 +259,40 @@ confere("relatório geral começa por hoje", hs.relatorio_geral(30).startswith("
 rsem = hs.relatorio_semanal()
 confere("relatório semanal: título, seções, áudio e Bark sem números", rsem["titulo"].startswith("Saúde: semana de ") and "## Como você está agora" in rsem["markdown"] and "Sono" in rsem["audio"]
         and rsem["bark"]["group"] == "saude" and not any(c.isdigit() for c in rsem["bark"]["body"]) and "Avisos" in rsem["bark"]["body"] and "ECG" not in rsem["bark"]["body"] and "sono" not in rsem["bark"]["body"].lower(), str(rsem["bark"]) + rsem["markdown"][:300])
+# documentos de saúde no relatório da semana
+confere("sem documentos, a seção não aparece", hs.relatorio_documentos(7) == "" and "Documentos de saúde" not in rsem["markdown"], hs.relatorio_documentos(7))
+_con = sqlite3.connect(banco.DB_PATH)
+_ag = _dt.now()
+_h = _ag.isoformat(timespec="seconds")
+_velho = (_ag - timedelta(days=5)).isoformat(timespec="seconds")
+_novo = (_ag - timedelta(days=1)).isoformat(timespec="seconds")
+_ant = (_ag - timedelta(days=20)).isoformat(timespec="seconds")
+for _i, (_tp, _est, _cri, _conf, _arq) in enumerate((("exame", "confirmado", _h, _h, "lab.pdf"), ("laudo", "confirmado", _h, _h, "rm.pdf"),
+                                                     ("encaminhamento", "confirmado", _h, _h, "enc.pdf"), ("exame", "confirmado", _ant, _ant, "antigo.pdf"),
+                                                     ("receita", "pendente", _velho, "", "receita-velha.pdf"), ("exame", "pendente", _novo, "", "recente.pdf")), 1):
+    _con.execute("INSERT INTO documentos_saude (id, hash, tipo, arquivo, estado, criado, atualizado, confirmado_em) VALUES (?,?,?,?,?,?,?,?)",
+                 (100 + _i, f"h{_i}", _tp, _arq, _est, _cri, _cri, _conf))
+_dia = _ag.strftime("%Y-%m-%d")
+for _o, (_n, _v, _s, _ref) in enumerate((("Vitamina D", "18", "abaixo", "30 a 100"), ("Hemoglobina", "14", "dentro", "12 a 16"), ("Ferritina", "410", "acima", "30 a 400"))):
+    _con.execute("INSERT INTO exames_resultados (documento_id, dia, chave, nome, valor_texto, unidade, ref_texto, sinal, ordem) VALUES (101,?,?,?,?,?,?,?,?)",
+                 (_dia, _n.lower(), _n, _v, "ng/mL", _ref, _s, _o))
+_con.execute("INSERT INTO exames_resultados (documento_id, dia, chave, nome, valor_texto, sinal, ordem) VALUES (104,?,?,?,?,?,0)", (_dia, "glicose", "Glicose", "130", "acima"))
+_con.execute("INSERT INTO laudos (documento_id, dia, titulo, conclusao) VALUES (102,?,?,?)", (_dia, "Ultrassonografia de abdome", "conclusao-secreta"))
+_con.execute("INSERT INTO encaminhamentos (documento_id, dia, especialidade, cid) VALUES (103,?,?,?)", (_dia, "Fisioterapia", "Z99"))
+_con.commit()
+_con.close()
+rd = hs.relatorio_documentos(7)
+confere("documentos: conta o que foi confirmado na semana", rd.startswith("Documentos de saúde:") and "Confirmados nesta semana:" in rd and "1 exame" in rd and "1 laudo" in rd and "1 encaminhamento" in rd, rd)
+confere("documentos: só os resultados fora da faixa, com valor e referência", "Vitamina D: 18 ng/mL, abaixo da faixa; referência 30 a 100" in rd and "Ferritina" in rd and "Hemoglobina" not in rd, rd)
+confere("documentos: confirmado há mais de uma semana não entra", "Glicose" not in rd, rd)
+confere("documentos: laudo sem a conclusão e encaminhamento sem CID", "Ultrassonografia de abdome" in rd and "conclusao-secreta" not in rd and "Fisioterapia" in rd and "Z99" not in rd, rd)
+confere("documentos: pendente antigo entra, recente não", "receita-velha.pdf" in rd and "recente.pdf" not in rd and "há mais de 3 dias" in rd, rd)
+rsem2 = hs.relatorio_semanal()
+confere("relatório semanal traz a seção de documentos antes do aviso final", "## Documentos de saúde" in rsem2["markdown"] and rsem2["audio"].index("Documentos de saúde") < rsem2["audio"].index(hs.AVISO), rsem2["markdown"][-600:])
+confere("Bark avisa que há documento aguardando, sem nomes nem números", "aguardando a sua conferência" in rsem2["bark"]["body"] and not any(c.isdigit() for c in rsem2["bark"]["body"]) and "receita" not in rsem2["bark"]["body"], rsem2["bark"]["body"])
+os.environ["HEIMDALL_SAUDE_PENDENTE_DIAS"] = "10"
+confere("HEIMDALL_SAUDE_PENDENTE_DIAS muda o prazo do pendente", "receita-velha.pdf" not in hs.relatorio_documentos(7) and hs.documentos_pendentes_antigos() == 0)
+os.environ.pop("HEIMDALL_SAUDE_PENDENTE_DIAS")
 # banco novo e vazio: relatórios não quebram
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "vazio")
 banco.DB_DIR = TMP / "vazio"

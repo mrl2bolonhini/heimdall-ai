@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Documentos de saúde no relatório da semana
+- O relatório da semana (nota com áudio aos domingos e a página Semana do Heimdall Health) ganhou a seção Documentos de saúde: quantos documentos foram confirmados na semana, por tipo; os resultados de exame fora da faixa de referência do laboratório, com o valor e a referência; os laudos, pelo título (a conclusão fica na aba Prontuário); e as especialidades dos encaminhamentos. CID e diagnóstico não entram.
+- Documentos que aguardam conferência há mais de 3 dias aparecem na mesma seção, com o nome do arquivo e a data de chegada. HEIMDALL_SAUDE_PENDENTE_DIAS muda o prazo.
+- O aviso da semana no Bark acrescenta, quando há documento antigo sem conferência, a frase "Há documentos de saúde aguardando a sua conferência", sem nomes nem números.
+- Cada pessoa vê, na página Semana, só os próprios documentos. Funciona em qualquer sistema pelo painel; a nota com áudio continua dependendo do agente do Mac.
+
 ## 2026-11-25 - Cópia de segurança dos dados de cada pessoa
 - A cópia de segurança diária passa a incluir o banco de cada pessoa cadastrada (db/people/<id>/heimdall.db): uma cópia cifrada por pessoa, na subpasta people/<id>/ de cada destino (pasta e R2), com a mesma senha e a mesma retenção, contadas separadamente das do dono. A verificação semanal confere também as cópias de cada pessoa; um banco com problema não impede os outros.
 - A cópia de continuidade na nuvem passa a levar também o banco de cada pessoa (db/people/*/*.db).

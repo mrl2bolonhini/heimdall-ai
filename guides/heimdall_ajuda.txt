@@ -165,7 +165,7 @@ Opções:
   -o, --open PÁGINA    abre uma página do painel: anomalies, today, week, sleep, activity, recovery, heart, workouts, events, diary, labs, documents, data, notices (a aba Avisos: relatórios da semana)
   -t, --today          o que já chegou de hoje
   -n, --now            os últimos 7 dias contra a média dos 90 anteriores
-  -w, --weekly         o relatório da semana
+  -w, --weekly         o relatório da semana (inclui os documentos de saúde confirmados e os que aguardam conferência)
   -a, --anomalies [AAAA-MM-DD]   o que saiu do seu normal (cada medida contra os 30 dias anteriores)
   -y, --analysis                 análise completa por modelo: todas as métricas, correlações, hipóteses, perigos, recomendações e estudos do PubMed; grava na aba Avisos
   -r, --report [DIAS]  análise geral (padrão 30 dias)

@@ -21,7 +21,7 @@ DESENHO ESCOLHIDO (recomendado)
     db/people/<id>/learn.db, notes.db, news.db, games.db ...
     material do Learn de cada convidado: db/people/<id>/knowledge/ (fora do knowledge/ do dono, para a busca nos documentos do dono nunca ver os arquivos dele); áudios em db/people/<id>/audio/
   O <id> é derivado do e-mail (uma sigla do hash dele), sem o e-mail no nome da pasta.
-  O dono mantém os caminhos de hoje (db/learn.db, knowledge/). Assim não há migração nem risco para os seus dados. As pessoas novas entram em db/pessoas/. (Decisão a confirmar: ver o fim.)
+  O dono mantém os caminhos de hoje (db/learn.db, knowledge/). Assim não há migração nem risco para os seus dados. As pessoas novas entram em db/people/. (Decisão a confirmar: ver o fim.)
 
 PONTO ÚNICO DE ESCOLHA DO CAMINHO
   Novo módulo heimdall_pessoas.py: identifica a pessoa da sessão, devolve o id e a pasta de dados de cada serviço para ela. Nenhum serviço monta caminho de dados sozinho depois disto; todos pedem a este módulo. Há um teste que falha se algum módulo de serviço abrir um banco fora dele.

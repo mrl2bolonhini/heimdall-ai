@@ -1579,6 +1579,82 @@ def relatorio_geral(dias: int = 30) -> str:
     return "\n\n".join(p.replace("\n" + AVISO, "").replace(AVISO, "").strip() for p in partes if p) + "\n\n" + AVISO
 
 
+_TIPOS_DOC = {"exame": ("exame", "exames"), "receita": ("receita", "receitas"), "encaminhamento": ("encaminhamento", "encaminhamentos"),
+              "atestado": ("atestado", "atestados"), "laudo": ("laudo", "laudos"), "pedido": ("pedido de exame", "pedidos de exame"),
+              "consulta": ("consulta", "consultas"), "outro": ("outro documento", "outros documentos")}
+
+
+def _contagem(n: int, tipo: str) -> str:
+    um, varios = _TIPOS_DOC.get(tipo, (tipo, tipo))
+    return f"{n} {um if n == 1 else varios}"
+
+
+def _dias_pendente() -> int:
+    """HEIMDALL_SAUDE_PENDENTE_DIAS: depois de quantos dias um documento sem conferência entra no relatório da semana (padrão 3)."""
+    try:
+        return max(1, int(os.environ.get("HEIMDALL_SAUDE_PENDENTE_DIAS", "3")))
+    except ValueError:
+        return 3
+
+
+def relatorio_documentos(dias: int = 7, agora: datetime = None) -> str:
+    """Documentos de saúde da semana: o que foi confirmado, os resultados de exame fora da faixa de referência do laboratório e os documentos
+    que aguardam conferência há mais de alguns dias. Só lê o banco; não traz CID nem diagnóstico. Texto vazio se não houver nada a dizer."""
+    agora = agora or datetime.now()
+    ini = (agora - timedelta(days=dias - 1)).strftime("%Y-%m-%d")
+    limite = (agora - timedelta(days=_dias_pendente())).isoformat(timespec="seconds")
+    try:
+        docs = _ler("SELECT id, tipo FROM documentos_saude WHERE estado = 'confirmado' AND substr(confirmado_em, 1, 10) >= ?", (ini,))
+        pend = _ler("SELECT arquivo, criado FROM documentos_saude WHERE estado = 'pendente' AND criado <= ? ORDER BY criado", (limite,))
+    except Exception:  # noqa: BLE001 - banco antigo sem as tabelas de documentos: o relatório segue sem esta seção
+        return ""
+    linhas = []
+    if docs:
+        por_tipo = {}
+        for d in docs:
+            por_tipo[d["tipo"]] = por_tipo.get(d["tipo"], 0) + 1
+        partes = [_contagem(n, tp) for tp, n in sorted(por_tipo.items(), key=lambda x: (-x[1], x[0]))]
+        linhas.append("Confirmados nesta semana: " + ", ".join(partes) + ".")
+        ids = tuple(d["id"] for d in docs)
+        marcas = ",".join("?" * len(ids))
+        fora = _ler(f"SELECT nome, valor_texto, comparador, unidade, ref_texto, sinal, dia FROM exames_resultados WHERE documento_id IN ({marcas}) "
+                    f"AND sinal IN ('abaixo', 'acima') ORDER BY dia DESC, ordem", ids)
+        if fora:
+            linhas.append(f"Resultados fora da faixa de referência do laboratório ({len(fora)}):")
+            for r in fora[:15]:
+                valor = (r["comparador"] + " " if r["comparador"] else "") + r["valor_texto"] + (" " + r["unidade"] if r["unidade"] else "")
+                ref = f"; referência {r['ref_texto']}" if r["ref_texto"] else ""
+                linhas.append(f"- {r['nome']}: {valor}, {r['sinal']} da faixa{ref} (coleta em {r['dia'][8:10]}/{r['dia'][5:7]}).")
+            if len(fora) > 15:
+                linhas.append(f"- E mais {len(fora) - 15}, na aba Prontuário do Heimdall Health.")
+        elif por_tipo.get("exame"):
+            linhas.append("Nenhum resultado de exame fora da faixa de referência do laboratório.")
+        laudos = _ler(f"SELECT titulo, dia FROM laudos WHERE documento_id IN ({marcas}) ORDER BY dia DESC", ids)
+        for l in laudos[:5]:
+            linhas.append(f"Laudo: {l['titulo'] or 'sem título'}" + (f" ({l['dia'][8:10]}/{l['dia'][5:7]})" if l["dia"] else "") + "; a conclusão está na aba Prontuário.")
+        encs = _ler(f"SELECT especialidade FROM encaminhamentos WHERE documento_id IN ({marcas}) ORDER BY dia DESC", ids)
+        if encs:
+            linhas.append("Encaminhamentos: " + ", ".join(sorted({e["especialidade"] for e in encs})) + ".")
+    if pend:
+        n = len(pend)
+        linhas.append(f"{'Um documento aguarda' if n == 1 else f'{n} documentos aguardam'} a sua conferência há mais de {_dias_pendente()} dias "
+                      "(aba Prontuário, Documentos recebidos):")
+        for d in pend[:10]:
+            linhas.append(f"- {d['arquivo'] or 'documento sem nome'}, recebido em {d['criado'][8:10]}/{d['criado'][5:7]}.")
+    if not linhas:
+        return ""
+    return "Documentos de saúde:\n" + "\n".join(linhas)
+
+
+def documentos_pendentes_antigos() -> int:
+    """Quantos documentos aguardam conferência há mais de HEIMDALL_SAUDE_PENDENTE_DIAS dias."""
+    limite = (datetime.now() - timedelta(days=_dias_pendente())).isoformat(timespec="seconds")
+    try:
+        return len(_ler("SELECT 1 FROM documentos_saude WHERE estado = 'pendente' AND criado <= ?", (limite,)))
+    except Exception:  # noqa: BLE001
+        return 0
+
+
 def relatorio_semanal() -> dict:
     """Relatório da semana para gravar no app Notas (com áudio) e avisar pelo Bark.
     O aviso do Bark leva só uma frase qualitativa, sem números de saúde: ele passa pelo servidor do Bark."""
@@ -1586,6 +1662,9 @@ def relatorio_semanal() -> dict:
     ini = fim - timedelta(days=6)
     titulo = f"Saúde: semana de {ini.strftime('%d/%m')} a {fim.strftime('%d/%m/%Y')}"
     texto = relatorio_geral(7)
+    docs = relatorio_documentos(7)
+    if docs:
+        texto = texto.replace("\n\n" + AVISO, "\n\n" + docs + "\n\n" + AVISO) if texto.endswith(AVISO) else texto + "\n\n" + docs
     blocos = [b.strip() for b in texto.split("\n\n") if b.strip()]
     md = [f"# {titulo}", ""]
     for b in blocos:
@@ -1595,7 +1674,10 @@ def relatorio_semanal() -> dict:
         else:
             md += [*[f"{l}" + "  " for l in linhas], ""]
     # O Bark leva só texto genérico: o veredito e o ECG ficam no relatório, na aba Avisos do Heimdall Health.
-    return {"titulo": titulo, "markdown": "\n".join(md).strip() + "\n", "audio": texto, "bark": {"title": "Heimdall Health: aviso novo", "body": "Abra a aba Avisos do Heimdall Health.",
+    corpo = "Abra a aba Avisos do Heimdall Health."
+    if documentos_pendentes_antigos():
+        corpo += " Há documentos de saúde aguardando a sua conferência."
+    return {"titulo": titulo, "markdown": "\n".join(md).strip() + "\n", "audio": texto, "bark": {"title": "Heimdall Health: aviso novo", "body": corpo,
             "group": "saude", "level": "active"}}
 
 
