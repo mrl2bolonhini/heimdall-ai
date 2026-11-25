@@ -24,6 +24,9 @@ services:
       PAPERLESS_ADMIN_PASSWORD: ${HEIMDALL_PAPERLESS_SENHA}
       PAPERLESS_TIME_ZONE: ${HEIMDALL_PAPERLESS_FUSO:-America/Sao_Paulo}
       PAPERLESS_OCR_LANGUAGE: por
+      # Códigos de barras: folha separadora (PATCHT) divide um lote escaneado em documentos; etiqueta ASN numera o papel. HEIMDALL_PAPERLESS_BARCODES=false desliga.
+      PAPERLESS_CONSUMER_ENABLE_BARCODES: ${HEIMDALL_PAPERLESS_BARCODES:-true}
+      PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: ${HEIMDALL_PAPERLESS_BARCODES:-true}
       PAPERLESS_OCR_LANGUAGES: por
 volumes:
   redisdata:
