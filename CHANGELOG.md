@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-24 - Termos de Uso e texto para leitura
+- A página Política de uso passou a se chamar Termos de Uso (endereço /termos-de-uso, link no rodapé de todos os serviços), junto da Política de Privacidade, no padrão de mercado. Novo heimdall support --documents grava em guides/termos_e_privacidade.txt os dois documentos em texto puro, para ler e revisar.
+
 ## 2026-11-24 - Resposta ao suporte pelo terminal e pelo Account
 - As mensagens do formulário levam o e-mail de quem escreveu como endereço de resposta (reply_to; se a Cloudflare recusar o campo, o envio repete sem ele). Novo heimdall support --reply PROTOCOLO "texto" responde de suporte@ (remetente HEIMDALL_SUPORTE_DE) a quem escreveu, com o assunto Re: [protocolo], e marca a mensagem como respondida; para e-mails sem protocolo, heimdall support --reply - --to endereço "texto".
 - Nova página do Account, só para o dono, em /suporte/mensagens (link na página Ajuda e suporte do dono): lista as 50 últimas mensagens com estado, motivo de falha e respostas anteriores, e um campo de resposta em cada uma (POST /suporte/responder, com Access ou porta local, origem do próprio site e CSRF). Convidados recebem 403.

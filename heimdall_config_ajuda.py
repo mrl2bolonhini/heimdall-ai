@@ -157,7 +157,7 @@ DESCRICOES = {
     "HEIMDALL_SUPORTE_DE": "Endereço remetente das mensagens de suporte, de um domínio já ativado no Cloudflare Email Sending.",
     "HEIMDALL_SUPORTE_TOKEN": "Token da Cloudflare só com a permissão Email Sending, usado no envio do suporte (heimdall support --token cria; sem ele vale o CLOUDFLARE_API_TOKEN).",
     "HEIMDALL_SUPORTE_PARA": "Endereço que recebe as mensagens de suporte (padrão suporte@heimdall-ai.tech).",
-    "HEIMDALL_POLITICA_APROVADA": "1 tira o aviso de minuta das páginas de Política de uso e de Privacidade, depois que o texto for revisado e aprovado.",
+    "HEIMDALL_POLITICA_APROVADA": "1 tira o aviso de minuta das páginas de Termos de Uso e de Privacidade, depois que o texto for revisado e aprovado.",
     "HEIMDALL_WEBUI_ENXUTO": "1 (padrão): o Open WebUI sobe sem Notas, Automações, geração de imagem, execução de código, voz local e recursos automáticos (etiquetas, sugestões, autocompletar), para poupar memória. 0 devolve tudo. O que já foi alterado no painel de administração do Open WebUI prevalece.",
     "HEIMDALL_WEBUI_TITULOS": "1 mantém os títulos automáticos das conversas no modo enxuto do Open WebUI (usam o modelo em segundo plano).",
     "HEIMDALL_WEBUI_EMBEDDING": "ollama manda os embeddings dos documentos do Open WebUI ao Ollama do Mac, poupando cerca de 500 MB. Exige ollama pull do modelo e reindexar os documentos já enviados.",

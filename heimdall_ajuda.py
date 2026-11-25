@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Ajuda e suporte do Heimdall, em um lugar só (hospedado no Heimdall Account): perguntas frequentes de todos os serviços, formulário de suporte
-e as páginas de Política de uso e de Privacidade, que o rodapé de todos os serviços liga (heimdall_design.rodape).
+e as páginas de Termos de Uso e de Privacidade, que o rodapé de todos os serviços liga (heimdall_design.rodape).
 
 Suporte: a mensagem recebe um protocolo, é gravada em db/suporte/mensagens.jsonl (permissão 600) e, se o envio de e-mail estiver configurado, segue para
 o endereço de suporte pelo Cloudflare Email Sending (POST /email/sending/send). Sem a configuração, a mensagem fica só gravada e a página diz isso.
@@ -123,10 +123,10 @@ FAQ = {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Política de uso e Política de privacidade (MINUTA): o texto descreve o que o Heimdall faz hoje; os campos [entre colchetes]
+# Termos de Uso e Política de privacidade (MINUTA): o texto descreve o que o Heimdall faz hoje; os campos [entre colchetes]
 # dependem do dono do Heimdall e de revisão jurídica antes da publicação.
 # ---------------------------------------------------------------------------------------------------------------------
-POLITICA_USO = [
+TERMOS_DE_USO = [
     ("1. Objeto", ["Estes termos regem o uso dos serviços do Heimdall (Controls, Finance, Health, Notes, News, Learn, Games, Lab, Chat e Account), operados por [NOME DO RESPONSÁVEL E DOCUMENTO]. Ao entrar, você declara ter lido e concordado com estes termos e com a Política de Privacidade."]),
     ("2. Acesso", ["O acesso é pessoal e por convite, mediante autenticação pelo Cloudflare Access com conta Microsoft. Você é responsável por manter sua conta e seus dispositivos seguros e por não compartilhar o acesso com terceiros."]),
     ("3. Uso permitido", ["Você se compromete a usar os serviços de forma lícita e a não tentar acessar dados de outras pessoas, interferir no funcionamento dos serviços ou testar a segurança deles sem autorização por escrito."]),
@@ -204,15 +204,30 @@ def _secoes(titulo_id: str, partes: list) -> str:
     return saida
 
 
-def pagina_politica_uso() -> tuple:
-    corpo = (f"<h1>Política de uso</h1><p>Versão de {e(VERSAO_POLITICA)}.</p>{aviso_minuta()}" + _secoes("pu", POLITICA_USO)
+def texto_documentos() -> str:
+    """Termos de Uso e Política de Privacidade em texto puro, para leitura e revisão (heimdall support --documents)."""
+    aviso = ""
+    if aviso_minuta():
+        aviso = "MINUTA EM REVISÃO: este texto ainda não foi aprovado pelo responsável. Os trechos entre colchetes dependem de preenchimento e de revisão jurídica antes da publicação.\n\n"
+
+    def bloco(titulo: str, partes: list) -> str:
+        s = f"{titulo}\nVersão de {VERSAO_POLITICA}\n\n{aviso}"
+        for tit, paragrafos in partes:
+            s += tit + "\n"
+            s += "".join(("- " if len(paragrafos) > 1 else "") + x + "\n" for x in paragrafos) + "\n"
+        return s
+    return bloco("TERMOS DE USO DO HEIMDALL", TERMOS_DE_USO) + "\n" + bloco("POLÍTICA DE PRIVACIDADE DO HEIMDALL", POLITICA_PRIVACIDADE)
+
+
+def pagina_termos_de_uso() -> tuple:
+    corpo = (f"<h1>Termos de Uso</h1><p>Versão de {e(VERSAO_POLITICA)}.</p>{aviso_minuta()}" + _secoes("pu", TERMOS_DE_USO)
              + f'<p><a href="/privacidade">Política de Privacidade</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
-    return "Política de uso - Heimdall", corpo
+    return "Termos de Uso - Heimdall", corpo
 
 
 def pagina_privacidade() -> tuple:
     corpo = (f"<h1>Política de Privacidade</h1><p>Versão de {e(VERSAO_POLITICA)}.</p>{aviso_minuta()}" + _secoes("pp", POLITICA_PRIVACIDADE)
-             + f'<p><a href="/politica-de-uso">Política de uso</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
+             + f'<p><a href="/termos-de-uso">Termos de Uso</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
     return "Política de Privacidade - Heimdall", corpo
 
 
@@ -256,7 +271,7 @@ def pagina_ajuda(csrf: str, servico: str = "", aviso: str = "", erro: str = "", 
     nome = f" do {SERVICOS[servico]}" if servico else ""
     corpo = (f"<h1>Ajuda e suporte{e(nome)}</h1>{topo}"
              '<p>Encontre abaixo as perguntas frequentes e, no fim da página, o formulário para falar com o suporte. '
-             f'Documentos: <a href="/politica-de-uso">Política de uso</a> e <a href="/privacidade">Política de Privacidade</a>.</p>'
+             f'Documentos: <a href="/termos-de-uso">Termos de Uso</a> e <a href="/privacidade">Política de Privacidade</a>.</p>'
              + ('<p><a href="/suporte/mensagens">Mensagens de suporte recebidas (somente dono)</a></p>' if dono else "")
              + _faq_html(servico) + formulario_suporte(csrf, servico, valores))
     return "Ajuda e suporte - Heimdall", corpo
@@ -517,6 +532,11 @@ def main() -> int:
             print(f"{r['protocolo']}  {r['estado']:18}  {r['email']}  {ASSUNTOS.get(r['assunto'])}  {r['mensagem'][:60]}")
             if r.get("motivo"):
                 print(f"    motivo: {r['motivo']}")
+        return 0
+    if "--documentos" in sys.argv:
+        arq = AQUI / "guides" / "termos_e_privacidade.txt"
+        arq.write_text(texto_documentos(), encoding="utf-8")
+        print(f"Termos de Uso e Política de Privacidade gravados em {arq.relative_to(AQUI)}.")
         return 0
     if "--responder" in sys.argv:
         a = sys.argv[1:]

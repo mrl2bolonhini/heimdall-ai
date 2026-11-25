@@ -46,7 +46,7 @@ titulo, corpo = aj.pagina_ajuda("tok", "finance")
 confere("ajuda: um só h1, FAQ do serviço antes do geral e formulário no fim", corpo.count("<h1>") == 1 and corpo.index("Perguntas frequentes: Finance") < corpo.index("Perguntas frequentes: Geral") < corpo.index("Falar com o suporte"))
 confere("ajuda: campos com label e botão de envio", all(f'for="{i}"' in corpo for i in ("s-servico", "s-assunto", "s-msg")) and 'type="submit"' in corpo and 'name="csrf" value="tok"' in corpo)
 confere("ajuda: serviço desconhecido volta ao geral, sem erro", "Perguntas frequentes: Geral" in aj.pagina_ajuda("tok", "<script>")[1] and "<script>" not in aj.pagina_ajuda("tok", "<script>")[1])
-confere("política de uso e de privacidade: um só h1, aviso de minuta e campos a preencher", all(x[1].count("<h1>") == 1 and "Minuta em revisão" in x[1] and "[" in x[1] for x in (aj.pagina_politica_uso(), aj.pagina_privacidade())))
+confere("termos de uso e de privacidade: um só h1, aviso de minuta e campos a preencher", all(x[1].count("<h1>") == 1 and "Minuta em revisão" in x[1] and "[" in x[1] for x in (aj.pagina_termos_de_uso(), aj.pagina_privacidade())))
 confere("privacidade: cita os operadores reais (Cloudflare, Microsoft, Pluggy, Apple, Bark, Notion) e os direitos da LGPD", all(x in aj.pagina_privacidade()[1] for x in ("Cloudflare", "Microsoft", "Pluggy", "Apple", "Bark", "Notion", "art. 18")))
 aj.os.environ["HEIMDALL_POLITICA_APROVADA"] = "1"
 confere("HEIMDALL_POLITICA_APROVADA=1 tira o aviso de minuta", "Minuta em revisão" not in aj.pagina_privacidade()[1])
@@ -140,7 +140,7 @@ def pedir(caminho, jwt=None, origem=None, metodo="GET", corpo=None, host=HOST):
     return r.status, b
 
 
-for caminho in ("/ajuda", "/politica-de-uso", "/privacidade"):
+for caminho in ("/ajuda", "/termos-de-uso", "/privacidade"):
     s, b = pedir(caminho)
     confere(f"{caminho} sem Access: 403", s == 403)
     s, b = pedir(caminho, jwt="tokana")
@@ -224,7 +224,7 @@ for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "CLOUDFLARE_API_TOKEN
 
 # ---- rodapé de todos os serviços ----
 r = design.rodape(servico="finance")
-confere("rodapé: Ajuda e suporte (com o serviço), Política de uso e Privacidade, antes do Voltar para o topo", "/ajuda?servico=finance" in r and "/politica-de-uso" in r and "/privacidade" in r and r.index("Privacidade") < r.index("Voltar para o topo") and 'aria-label="Ajuda e informações"' in r)
+confere("rodapé: Ajuda e suporte (com o serviço), Termos de Uso e Privacidade, antes do Voltar para o topo", "/ajuda?servico=finance" in r and "/termos-de-uso" in r and "/privacidade" in r and r.index("Privacidade") < r.index("Voltar para o topo") and 'aria-label="Ajuda e informações"' in r)
 fontes = {"controls": "heimdall_controls.py", "finance": "heimdall_finance.py", "saude": "heimdall_painel_saude.py", "notas": "heimdall_notas.py", "news": "heimdall_news.py",
           "learn": "heimdall_learn.py", "jogos": "heimdall_jogos.py", "lab": "heimdall_lab.py", "account": "heimdall_account.py"}
 confere("todos os serviços com página própria passam a chave do serviço ao rodapé", all(f'design.rodape(' in (RAIZ / f).read_text(encoding="utf-8") and (f'"{k}"' in (RAIZ / f).read_text(encoding="utf-8")) for k, f in fontes.items()))

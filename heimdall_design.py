@@ -214,13 +214,13 @@ def base_ajuda() -> str:
 
 
 def rodape(extra: str = "", servico: str = "") -> str:
-    """Fim de toda página: `extra` (botões de ação, se houver), os links de Ajuda e suporte, Política de uso e Privacidade, e o link para o topo, para o leitor de tela
+    """Fim de toda página: `extra` (botões de ação, se houver), os links de Ajuda e suporte, Termos de Uso e Privacidade, e o link para o topo, para o leitor de tela
     não ficar num final abrupto. `servico` é a chave do serviço (finance, saude, notas...): a Ajuda abre já nas perguntas dele.
     O link do topo leva tabindex=0 para ser parada do Tab também onde o navegador pula links (Safari por padrão): é o fim do percurso por Tab."""
     b = base_ajuda()
     q = f"?servico={servico}" if servico else ""
     links = (f'<nav aria-label="Ajuda e informações"><ul><li><a href="{b}/ajuda{q}">Ajuda e suporte</a></li>'
-             f'<li><a href="{b}/politica-de-uso">Política de uso</a></li><li><a href="{b}/privacidade">Privacidade</a></li></ul></nav>')
+             f'<li><a href="{b}/termos-de-uso">Termos de Uso</a></li><li><a href="{b}/privacidade">Privacidade</a></li></ul></nav>')
     return f'<footer class="rodape">{extra}{links}<p><a href="#topo" tabindex="0">Voltar para o topo</a></p></footer>'
 
 
