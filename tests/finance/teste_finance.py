@@ -252,7 +252,8 @@ confere("a mensagem de erro aparece uma vez", "Não achei o cabeçalho" in corpo
 st_aj, corpo_aj, _ = pedir("/ajuda", ck)
 confere("subaba Ajuda nos Ajustes: perguntas do Finance, caminho para o suporte, sem abas de cima e um só h1",
         st_aj == 200 and "Perguntas frequentes" in corpo_aj and "/ajuda?servico=finance" in corpo_aj and "Voltar ao Finance" in corpo_aj
-        and 'aria-label="Seções do Heimdall Finance"' not in corpo_aj and corpo_aj.count("<h1>") == 1 and ">Ajuda</a>" in corpo_aj, corpo_aj[:600])
+        and 'aria-label="Seções do Heimdall Finance"' not in corpo_aj and corpo_aj.count("<h1>") == 1 and ">Ajuda</a>" in corpo_aj
+        and 'id="perguntar-t"' not in corpo_aj and 'action="/perguntar"' not in corpo_aj, corpo_aj[:600])
 
 try:
     import io as _io

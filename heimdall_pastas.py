@@ -11,6 +11,7 @@ finance/inbox/importados para imported e revisar para review; os documentos de s
 (entrada para inbox, arquivados para archive, revisar para review).
 """
 import os
+import sys
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -80,7 +81,10 @@ def _juntar(origem: Path, destino: Path) -> None:
     """Move para `destino` o que está em `origem` e ainda não existe lá, item por item. Nunca sobrescreve nem apaga:
     o que existir nos dois lugares fica em `origem`; a pasta só sai se ficar vazia."""
     destino.mkdir(parents=True, exist_ok=True)
-    for item in sorted(origem.iterdir()):
+    # Os arquivos auxiliares do SQLite (-wal, -shm, -journal) vão antes do banco: assim, quando o banco aparece no lugar novo,
+    # as transações dele já estão lá. O que existir nos dois lugares fica na pasta antiga e é anotado no log, para conferência.
+    auxiliar = lambda p: p.name.endswith(("-wal", "-shm", "-journal"))  # noqa: E731
+    for item in sorted(origem.iterdir(), key=lambda p: (not auxiliar(p), p.name)):
         alvo = destino / item.name
         try:
             if item.is_symlink():
@@ -89,8 +93,10 @@ def _juntar(origem: Path, destino: Path) -> None:
                 os.rename(item, alvo)
             elif item.is_dir() and alvo.is_dir():
                 _juntar(item, alvo)
-        except OSError:
-            pass
+            else:
+                sys.stderr.write(f"heimdall_pastas: {item} não foi movido porque {alvo} já existe; os dois foram mantidos\n")
+        except OSError as ex:
+            sys.stderr.write(f"heimdall_pastas: não consegui mover {item}: {ex}\n")
     try:
         origem.rmdir()   # só funciona se estiver vazia
     except OSError:

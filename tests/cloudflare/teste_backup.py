@@ -160,6 +160,26 @@ for i in range(1, 30):
 ok(len(list((pasta / "people" / "convidada-1").glob("*" + B.EXT))) <= 20, "a retenção também poda as cópias da pessoa")
 ok(len([n for n in B.listar(env)[next(iter(B.listar(env)))]]) <= 20, "a retenção do dono continua valendo")
 
+# pessoa nova, ainda sem cópia: a verificação não acusa falha
+with D.da_pessoa("convidada-2"):
+    D.iniciar()
+v = B.verificar(env)
+nova = next(x for k, x in v.items() if "convidada-2" in k)
+ok(nova["ok"] and "próxima cópia" in nova.get("aviso", ""), "pessoa sem cópia ainda não é falha na verificação")
+
+
+class PessoaQuebrada(FakeS3):
+    def put_object(self, Bucket, Key, Body):
+        if Key.startswith("people/"):
+            raise ConnectionError("sem rede")
+        super().put_object(Bucket=Bucket, Key=Key, Body=Body)
+
+
+antes = B.estado()["ultimo_ok"]
+r = B.fazer(dict(env2, HEIMDALL_BACKUP_DESTINO=""), cliente_r2=PessoaQuebrada(), agora=base + timedelta(days=300))
+ok(not r["ok"] and all(x["ok"] for x in r["destinos"]) and not all(p["ok"] for p in r["pessoas"]), "falha só na cópia de uma pessoa: resultado acusa a falha")
+ok(B.estado()["ultimo_ok"] != antes and B.estado()["pessoas_ok"] is False, "a data do último sucesso segue a cópia do dono; a das pessoas fica registrada à parte")
+
 # 7. configuração faltando
 for cfg, trecho in (({}, "SENHA"), ({"HEIMDALL_BACKUP_SENHA": "x"}, "destino")):
     try:

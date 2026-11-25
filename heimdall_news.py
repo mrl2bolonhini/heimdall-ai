@@ -896,7 +896,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
         if em_ajustes:   # tela de Ajustes: sem abas, com botão de voltar
             conteudo = (f'<div class="acoes-topo">{design.botao("/", "Voltar ao News")}</div>'
                         + design.com_subabas(AJUSTES_ITENS, rota_atual, conteudo, "Seções dos Ajustes"))
-        else:
+        elif rota_atual == "/":   # o Perguntar fica só na página de notícias (não nos Ajustes nem na página de erro)
             conteudo += perguntar.bloco_html(sess["csrf"], sess["csrf"], sess.get("atual", "/") or "/", "Perguntar sobre as notícias",
                                              "Pergunte em português, por exemplo: o que saiu sobre economia hoje? O modelo procura nos últimos 30 dias de notícias guardadas, passando por categorias e títulos, e lê só as que servem.")
         scripts = design.script()

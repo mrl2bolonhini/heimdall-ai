@@ -598,7 +598,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
         ajustes_html = design.botao("/perfil", "Ajustes", atual=em_ajustes)
         nav = "" if em_ajustes else design.nav_abas(SECOES, a, "Seções do Heimdall Health")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        interno = conteudo + _bloco_perguntar(sess, atual)
+        interno = conteudo + ("" if atual == "/ajuda" else _bloco_perguntar(sess, atual))   # a Ajuda não tem dados pessoais para perguntar
         if em_ajustes:   # tela sem abas de cima: botão para voltar e as subabas dos ajustes
             conteudo = f'<div class="acoes-topo">{design.botao("/", "Voltar ao Health")}</div>' + design.com_subabas(grupo[2], sub, interno, "Seções dos Ajustes")
         elif grupo and len(grupo[2]) > 1:   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel

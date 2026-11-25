@@ -18,6 +18,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - A cópia de segurança diária passa a incluir o banco de cada pessoa cadastrada (db/people/<id>/heimdall.db): uma cópia cifrada por pessoa, na subpasta people/<id>/ de cada destino (pasta e R2), com a mesma senha e a mesma retenção, contadas separadamente das do dono. A verificação semanal confere também as cópias de cada pessoa; um banco com problema não impede os outros.
 - A cópia de continuidade na nuvem passa a levar também o banco de cada pessoa (db/people/*/*.db).
 - Correção: os dados de cada pessoa ficavam em duas pastas (db/pessoas para o Learn e db/people para o banco pessoal). Agora tudo fica em db/people; na primeira subida, o conteúdo da pasta antiga é juntado ao da nova, pessoa por pessoa, sem sobrescrever nem apagar nada.
+- O aviso de falha (Bark) diz só "banco de uma pessoa", sem o identificador. Pessoa que ainda não tem cópia não gera falha na verificação de domingo, e a data do último sucesso segue a cópia do banco do dono.
 - Funciona em macOS, Linux e Windows (python3 heimdall_backup.py fazer | verificar | listar | restaurar).
 
 ## 2026-11-25 - Roadmap revisado pelo PO

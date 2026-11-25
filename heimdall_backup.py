@@ -271,8 +271,9 @@ def fazer(env=None, cliente_r2=None, agora=None):
                  "destinos": res, "pessoas": das_pessoas, "quando": agora.isoformat(timespec="seconds")}
         est = estado()
         est.update({"ultima_tentativa": saida})
-        if saida["ok"]:
+        if all(r["ok"] for r in res):   # a data do último sucesso segue a cópia do banco do dono; as das pessoas têm resultado próprio
             est["ultimo_ok"] = saida["quando"]
+        est["pessoas_ok"] = all(p["ok"] for p in das_pessoas)
         _grava_estado(est)
         return saida
 
@@ -287,9 +288,12 @@ def listar(env=None, cliente_r2=None):
     return saida
 
 
-def _verificar_destino(d, senha):
+def _verificar_destino(d, senha, nova_ok=False):
+    """`nova_ok`: banco de pessoa ainda sem nenhuma cópia (criado depois da última cópia diária) não é falha; entra na próxima cópia."""
     nomes = d.listar()
     if not nomes:
+        if nova_ok:
+            return {"ok": True, "aviso": "ainda sem cópia; entra na próxima cópia diária"}
         return {"ok": False, "erro": "nenhuma cópia encontrada"}
     try:
         dados = decifrar(d.ler(nomes[-1]), senha)
@@ -318,7 +322,7 @@ def verificar(env=None, cliente_r2=None):
     for d in destinos(e, cliente_r2):
         saida[d.nome] = _verificar_destino(d, senha)
         for p in pessoas():
-            saida[f"{d.nome} / people/{p}"] = _verificar_destino(d.da_pessoa(p), senha)
+            saida[f"{d.nome} / people/{p}"] = _verificar_destino(d.da_pessoa(p), senha, nova_ok=True)
     return saida
 
 

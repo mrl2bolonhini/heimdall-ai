@@ -116,7 +116,8 @@ confere("Perfil fica em Ajustes: tela sem as abas de cima, botão Voltar ao Heal
 st_aj, corpo_aj, _ = pedir("/ajuda", ck)
 confere("subaba Ajuda nos Ajustes: perguntas do Health, caminho para o suporte, sem abas de cima e um só h1",
         st_aj == 200 and "Perguntas frequentes" in corpo_aj and "/ajuda?servico=saude" in corpo_aj and "Voltar ao Health" in corpo_aj
-        and 'aria-label="Seções do Heimdall Health"' not in corpo_aj and corpo_aj.count("<h1>") == 1 and ">Ajuda</a>" in corpo_aj, corpo_aj[:600])
+        and 'aria-label="Seções do Heimdall Health"' not in corpo_aj and corpo_aj.count("<h1>") == 1 and ">Ajuda</a>" in corpo_aj
+        and 'action="/perguntar"' not in corpo_aj, corpo_aj[:600])
 confere("página Perfil: convite, formulário com rótulos, botões de concluir e de preencher depois",
         st == 200 and "primeiro acesso" in corpo and 'for="texto-perfil"' in corpo and 'for="tipo-perfil"' in corpo and "Preencher depois" in corpo and "Não tenho nada a informar" in corpo
         and "Pular para o conteúdo" in corpo and corpo.count("<h1>") == 1, corpo[:400])

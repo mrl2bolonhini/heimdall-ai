@@ -25,7 +25,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 
 def pasta_dados_base() -> Path:
-    """Pasta de dados do dono (db/). A das outras pessoas fica dentro dela, em pessoas/<id>/."""
+    """Pasta de dados do dono (db/). A das outras pessoas fica dentro dela, em people/<id>/."""
     return Path(os.environ.get("HEIMDALL_DB_DIR", str(heimdall_pastas.db(PROJECT_DIR)))).expanduser()
 
 

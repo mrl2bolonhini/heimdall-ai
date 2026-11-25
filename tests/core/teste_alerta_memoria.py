@@ -120,7 +120,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
 # --- Lab: mensagem quando o emulador está desligado
 lab_py = (RAIZ / "heimdall_lab.py").read_text(encoding="utf-8")
-confere("o Lab explica que o emulador é sob demanda e como ligar", "heimdall lab --start" in lab_py)
+confere("o Lab explica que o emulador é sob demanda e onde ligar, sem comando de terminal na tela", "sob demanda" in lab_py and "aba Serviços" in lab_py and "ligue-o com heimdall lab --start" not in lab_py)
 
 print("\nFalhas: %d" % falhas)
 raise SystemExit(1 if falhas else 0)

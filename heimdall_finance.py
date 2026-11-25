@@ -167,7 +167,7 @@ def localizar(grupos: list, rota: str) -> tuple:
 
 
 ROTAS_FIXAS = ["/resumo", "/tendencias", "/orcamentos", "/recorrentes", "/analise", "/avisos", "/transacoes", "/contas", "/futuros", "/boletos", "/cartoes", "/cartoes/fechadas",
-               "/investimentos", "/emprestimos", "/visoes", "/importar", "/planilhas", "/regras", "/avisos/config"]
+               "/investimentos", "/emprestimos", "/visoes", "/importar", "/planilhas", "/regras", "/avisos/config", "/ajuda"]
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
@@ -177,7 +177,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
     scripts = ""
     if sess:
         try:
-            perguntar_html = _bloco_perguntar(sess)
+            perguntar_html = "" if sess.get("atual", "/").split("?")[0] == "/ajuda" else _bloco_perguntar(sess)   # a Ajuda não tem dados pessoais
         except Exception:  # noqa: BLE001  (a página nunca deixa de abrir por causa do campo Perguntar)
             perguntar_html = ""
         grupos = estrutura(banco())
