@@ -98,3 +98,5 @@ A seguir:
 Sempre:
 9) Estado da main: só avança com o sim do usuário (conferir com git rev-list --left-right --count origin/main...origin/develop).
 10) Lembrar o que não foi testado: Safari com VoiceOver, TalkBack, comandos em Windows e Linux, subcomandos novos do zsh.
+
+25/11/2026 (nuvens do Library): decisão do usuário de incluir subpastas (até 5 níveis, opção por pasta) e escrita opcional (conexão com organização; mover o importado para a pasta Importados pelo Heimdall, nunca apagar). Sobre o Notes: o usuário avaliou que tem poucos recursos e que só faria sentido como central de ideias e informações, conectada a vários serviços e apps; a continuidade dele está em revisão (ver ROADMAP).

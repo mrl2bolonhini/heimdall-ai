@@ -125,17 +125,23 @@ def pg_nuvem(ctx):
     for x in itens:
         n = e(x["nome"])
         if not x["conectado"]:
-            corpo = (f'<p role="status">{n} não conectado. A conexão é só de leitura: o Library não altera nem apaga nada na sua nuvem.</p>'
+            corpo = (f'<p role="status">{n} não conectado. Na conexão padrão o Library só lê: não altera nem apaga nada na sua nuvem. A conexão com organização também pede '
+                     'a permissão de escrita, para mover os arquivos já importados para uma pasta de importados. O Library nunca apaga arquivos.</p>'
                      + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "")
-                     + design.botao_post("/nuvem/conectar", f"Conectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]}))
+                     + design.botao_post("/nuvem/conectar", f"Conectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]})
+                     + design.botao_post("/nuvem/conectar", f"Conectar {x['nome']} com organização", ctx.csrf, {"provedor": x["chave"], "escrita": "1"}))
         else:
-            corpo = (f'<p role="status">{n} conectado. Pasta vigiada: {e(x["pasta"] or "raiz")}. '
+            k = e(x["chave"])
+            corpo = (f'<p role="status">{n} conectado ' + ("com organização" if x["escrita"] else "somente para leitura") + f'. Pasta vigiada: {e(x["pasta"] or "raiz")}. '
                      + (f'Última sincronização {e(x["ultimo"])}: {e(x["resumo"])}.' if x["ultimo"] else "Ainda não sincronizado.") + "</p>"
                      + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "")
                      + f'<form method="post" action="/nuvem/pasta"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{e(x["chave"])}">'
                        f'<label for="pasta-{e(x["chave"])}">{e(x["dica"])}</label><input id="pasta-{e(x["chave"])}" name="pasta" type="text" maxlength="200" value="{e(x["pasta"])}">'
-                       '<button type="submit">Salvar pasta</button></form>'
+                       f'<p><input id="sub-{k}" name="subpastas" type="checkbox" value="1"{" checked" if x["subpastas"] else ""}><label for="sub-{k}">Incluir subpastas (até {nv.MAX_PROFUNDIDADE} níveis)</label></p>'
+                       + (f'<p><input id="mov-{k}" name="mover" type="checkbox" value="1"{" checked" if x["mover"] else ""}><label for="mov-{k}">Depois de importar, mover o arquivo para a pasta {e(nv.PASTA_IMPORTADOS)}</label></p>' if x["escrita"] else "")
+                       + '<button type="submit">Salvar pasta</button></form>'
                      + design.botao_post("/nuvem/sincronizar", "Sincronizar agora", ctx.csrf, {"provedor": x["chave"]})
+                     + ("" if x["escrita"] else design.botao_post("/nuvem/conectar", "Permitir organização (pede nova autorização)", ctx.csrf, {"provedor": x["chave"], "escrita": "1"}))
                      + design.botao_post("/nuvem/desconectar", f"Desconectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]}))
         blocos.append(f"<section><h2>{n}</h2>{corpo}</section>")
     return "Nuvem", "".join(blocos)
@@ -150,12 +156,12 @@ def retorno_nuvem(q):
 
 def post_nuvem_conectar(ctx, campos, arquivos):
     import heimdall_library_nuvem as nv
-    return web.Redirecionar(nv.iniciar(campos.get("provedor", "")))
+    return web.Redirecionar(nv.iniciar(campos.get("provedor", ""), campos.get("escrita") == "1"))
 
 
 def post_nuvem_pasta(ctx, campos, arquivos):
     import heimdall_library_nuvem as nv
-    nv.definir_pasta(campos.get("provedor", ""), campos.get("pasta", ""))
+    nv.definir_pasta(campos.get("provedor", ""), campos.get("pasta", ""), campos.get("subpastas") == "1", campos.get("mover") == "1")
     ctx.flash("ok", "Pasta salva. A próxima sincronização usa esta pasta.")
     return "/nuvem"
 
@@ -163,7 +169,7 @@ def post_nuvem_pasta(ctx, campos, arquivos):
 def post_nuvem_sincronizar(ctx, campos, arquivos):
     import heimdall_library_nuvem as nv
     r = nv.sincronizar(campos.get("provedor", ""), os.environ.get("HEIMDALL_LIBRARY_IA", "1") != "0")
-    ctx.flash("ok", f"{_plural(r['novos'], 'documento novo', 'documentos novos')}, {r['repetidos']} repetidos, {r['erros']} com erro.")
+    ctx.flash("ok", f"{_plural(r['novos'], 'documento novo', 'documentos novos')}, {r['repetidos']} repetidos, {r['erros']} com erro" + (f", {r['movidos']} movidos." if r["movidos"] else "."))
     return "/revisar" if r["novos"] else "/nuvem"
 
 

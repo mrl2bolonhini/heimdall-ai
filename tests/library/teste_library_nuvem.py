@@ -22,7 +22,12 @@ os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,lo
                    "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_DROPBOX_ID": "dbx-id", "HEIMDALL_NUVEM_DROPBOX_SEGREDO": "dbx-seg",
                    "HEIMDALL_NUVEM_ONEDRIVE_ID": "od-id", "HEIMDALL_LIBRARY_URL": "https://library.exemplo.test"})
 
-ESTADO = {"tokens": 0, "revogado": False, "auth_no_download": [], "baixados": [], "refresh_usado": []}
+ESTADO = {"tokens": 0, "revogado": False, "auth_no_download": [], "baixados": [], "refresh_usado": [], "escopo": "", "movidos": [], "pastas_criadas": [], "patch": [], "pastas_lidas": []}
+EXTRA = {   # itens que só aparecem na listagem com subpastas
+    "id:5": ("nota_sub.txt", b"Nota dentro da subpasta numero 555", "h5"),
+    "id:6": ("velho.txt", b"Arquivo na pasta de importados numero 666", "h6"),
+    "id:7": ("fundo.txt", b"Arquivo fundo demais numero 777", "h7"),
+}
 ARQUIVOS = {   # id -> (nome, conteudo, marca)
     "id:1": ("recibo_alfa.txt", b"Recibo de pagamento alfa numero 111", "h1"),
     "id:2": ("contrato_beta.txt", b"Contrato beta clausula de rescisao numero 222", "h2"),
@@ -58,7 +63,7 @@ class H(BaseHTTPRequestHandler):
                 if f.get("code") != "codigo-bom" or not f.get("code_verifier"):
                     return self._j({"error": "invalid_grant"}, 400)
                 ESTADO["tokens"] += 1
-                return self._j({"access_token": f"acesso{ESTADO['tokens']}", "refresh_token": "renov1", "expires_in": 3600})
+                return self._j({"access_token": f"acesso{ESTADO['tokens']}", "refresh_token": "renov1", "expires_in": 3600, **({"scope": ESTADO["escopo"]} if ESTADO["escopo"] else {})})
             ESTADO["refresh_usado"].append(f.get("refresh_token"))
             if ESTADO["revogado"]:
                 return self._j({"error": "invalid_grant"}, 400)
@@ -70,24 +75,42 @@ class H(BaseHTTPRequestHandler):
             d = json.loads(corpo)
             if d["path"] not in ("", "/Docs"):
                 return self._j({"error": "path"}, 409)
-            return self._j({"entries": [{".tag": "file", "id": i, "name": n, "size": len(c), "content_hash": m} for i, (n, c, m) in list(ARQUIVOS.items())[:2]], "has_more": True, "cursor": "c1"})
+            extras = [{".tag": "file", "id": i, "name": n, "size": len(c), "content_hash": m, "path_lower": pl} for (i, (n, c, m)), pl in zip(EXTRA.items(), (
+                "/docs/sub/nota_sub.txt", "/docs/importados pelo heimdall/velho.txt", "/docs/a/b/c/d/e/f/fundo.txt"))] if d.get("recursive") else []
+            return self._j({"entries": [{".tag": "file", "id": i, "name": n, "size": len(c), "content_hash": m} for i, (n, c, m) in list(ARQUIVOS.items())[:2]] + extras, "has_more": True, "cursor": "c1"})
+        if u == "/2/files/create_folder_v2":
+            ESTADO["pastas_criadas"].append(json.loads(corpo)["path"])
+            return self._j({}, 200 if len(ESTADO["pastas_criadas"]) == 1 else 409)
+        if u == "/2/files/move_v2":
+            ESTADO["movidos"].append(json.loads(corpo))
+            return self._j({"metadata": {}})
+        if u.startswith("/me/drive/root") and u.endswith("/children"):
+            ESTADO["pastas_criadas"].append(json.loads(corpo)["name"])
+            return self._j({"id": "destino-od"}, 201)
         if u == "/2/files/list_folder/continue":
             return self._j({"entries": [{".tag": "folder", "id": "id:9", "name": "sub"}] + [{".tag": "file", "id": i, "name": n, "size": len(c), "content_hash": m} for i, (n, c, m) in list(ARQUIVOS.items())[2:]], "has_more": False})
         if u == "/2/files/download":
             arg = json.loads(self.headers["Dropbox-API-Arg"])
             ESTADO["baixados"].append(arg["path"])
-            c = ARQUIVOS[arg["path"]][1]
+            c = {**ARQUIVOS, **EXTRA}[arg["path"]][1]
             self.send_response(200)
             self.send_header("Content-Length", str(len(c)))
             self.end_headers()
             return self.wfile.write(c)
         self._j({}, 404)
 
+    def do_PATCH(self):
+        corpo = self._corpo()
+        if not (self.headers.get("Authorization") or "").startswith("Bearer acesso"):
+            return self._j({}, 401)
+        ESTADO["patch"].append((urllib.parse.unquote(urllib.parse.urlparse(self.path).path), json.loads(corpo)))
+        self._j({"id": "x"})
+
     def do_GET(self):
         p = urllib.parse.urlparse(self.path)
         if p.path.startswith("/dl/"):
             ESTADO["auth_no_download"].append(self.headers.get("Authorization"))
-            c = ARQUIVOS[urllib.parse.unquote(p.path[4:])][1]
+            c = {**ARQUIVOS, **EXTRA}[urllib.parse.unquote(p.path[4:])][1]
             self.send_response(200)
             self.send_header("Content-Length", str(len(c)))
             self.end_headers()
@@ -99,7 +122,11 @@ class H(BaseHTTPRequestHandler):
             itens = [{"id": i, "name": n, "size": len(c), "eTag": m, "file": {}} for i, (n, c, m) in ARQUIVOS.items()]
             if pg == "1":
                 return self._j({"value": itens[:2], "@odata.nextLink": f"http://127.0.0.1:{PORTA_F}{p.path}?pagina=2"})
-            return self._j({"value": itens[2:] + [{"id": "pasta", "name": "sub", "folder": {}}]})
+            return self._j({"value": itens[2:] + [{"id": "pasta", "name": "sub", "folder": {}}, {"id": "imp", "name": "Importados pelo Heimdall", "folder": {}}]})
+        m = re.fullmatch(r"/me/drive/items/([^/]+)/children", p.path)
+        if m:
+            ESTADO["pastas_lidas"].append(m.group(1))
+            return self._j({"value": [{"id": "id:5", "name": EXTRA["id:5"][0], "size": len(EXTRA["id:5"][1]), "eTag": "h5", "file": {}}, {"id": "imp", "name": "Importados pelo Heimdall", "folder": {}}]})
         m = re.fullmatch(r"/me/drive/items/(.+)/content", p.path)
         if m:
             return self._j({}, 302, {"Location": f"http://127.0.0.1:{PORTA_F}/dl/{m.group(1)}"})
@@ -141,10 +168,14 @@ def erro(fn, *a, **k):
     return ""
 
 
-def conectar(chave="dropbox", codigo="codigo-bom"):
-    url = nv.iniciar(chave)
+def conectar(chave="dropbox", codigo="codigo-bom", escrita=False):
+    url = nv.iniciar(chave, escrita)
     state = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)["state"][0]
     return url, nv.concluir(state, codigo)
+
+
+def conectar_escrita(chave="dropbox"):
+    return conectar(chave, escrita=True)
 
 
 # --- configuração e OAuth
@@ -232,6 +263,43 @@ confere("rodada de fundo percorre quem tem conexão", nv.sincronizar_todos()["pe
 nv.desconectar("onedrive")
 confere("desconectar apaga o token e mantém os documentos", not [s for s in nv.situacao() if s["chave"] == "onedrive"][0]["conectado"] and dados.listar()[1] == 2)
 
+# --- subpastas e escrita opcional (convidado separado para não mexer nas contagens acima)
+confere("até aqui nada foi movido: a conexão padrão só lê", ESTADO["movidos"] == [] and ESTADO["patch"] == [] and ESTADO["pastas_criadas"] == [])
+confere("provedor sem escopo de escrita no pedido padrão", "write" not in urllib.parse.parse_qs(urllib.parse.urlparse(nv.iniciar("dropbox")).query)["scope"][0])
+q = urllib.parse.parse_qs(urllib.parse.urlparse(nv.iniciar("dropbox", escrita=True)).query)
+confere("pedido com organização inclui o escopo de escrita", "files.content.write" in q["scope"][0], q["scope"])
+confere("OneDrive com organização pede Files.ReadWrite", urllib.parse.parse_qs(urllib.parse.urlparse(nv.iniciar("onedrive", escrita=True)).query)["scope"][0] == "Files.ReadWrite offline_access")
+CONV2 = "pabcdef012345"
+with nv._como(CONV2):
+    conectar("dropbox")
+    confere("mover sem permissão de escrita é recusado", "organização" in erro(nv.definir_pasta, "dropbox", "/Docs", True, True))
+    ESTADO["escopo"] = "files.content.read"
+    url, (ok, msg) = conectar_escrita("dropbox")
+    confere("se o provedor não concedeu a escrita, a conexão fica só de leitura", ok and "somente para leitura" in msg and not nv.situacao()[0]["escrita"], msg)
+    ESTADO["escopo"] = ""
+    url, (ok, msg) = conectar_escrita("dropbox")
+    confere("conecta com organização", ok and "mover arquivos" in msg and nv.situacao()[0]["escrita"], msg)
+    nv.definir_pasta("dropbox", "/Docs", True, True)
+    sit = nv.situacao()[0]
+    confere("situação guarda subpastas e mover", sit["subpastas"] and sit["mover"] and sit["escrita"], sit)
+    r = nv.sincronizar("dropbox", usar_ia=False)
+    confere("Dropbox: importa a subpasta, ignora Importados e o que passa do limite de níveis", r["novos"] == 3 and r["erros"] == 0 and "id:5" in ESTADO["baixados"]
+            and "id:6" not in ESTADO["baixados"] and "id:7" not in ESTADO["baixados"], (r, ESTADO["baixados"]))
+    confere("Dropbox: cada arquivo importado vai para a pasta de importados", r["movidos"] == 3 and [m["from_path"] for m in ESTADO["movidos"]] == ["id:1", "id:2", "id:5"]
+            and all(m["to_path"].startswith("/Docs/Importados pelo Heimdall/") and m["autorename"] for m in ESTADO["movidos"]) and ESTADO["pastas_criadas"] == ["/Docs/Importados pelo Heimdall"], (r, ESTADO))
+    r = nv.sincronizar("dropbox", usar_ia=False)
+    confere("segunda rodada não repete nem move de novo", r["novos"] == 0 and r["movidos"] == 0 and len(ESTADO["movidos"]) == 3, (r, ESTADO["movidos"]))
+    confere("o resumo informa os movidos", "movidos" in nv.situacao()[0]["resumo"])
+    confere("nada é apagado: só há chamadas de mover", ESTADO["patch"] == [])
+    conectar_escrita("onedrive")
+    nv.definir_pasta("onedrive", "Scans", True, True)
+    r = nv.sincronizar("onedrive", usar_ia=False)
+    confere("OneDrive: percorre a subpasta, pula Importados e move com o id da pasta criada", r["novos"] + r["repetidos"] == 3 and r["movidos"] == 3 and r["erros"] == 0
+            and ESTADO["pastas_lidas"] == ["pasta"] and len(ESTADO["patch"]) == 3 and all(b["parentReference"] == {"id": "destino-od"} for _, b in ESTADO["patch"])
+            and ESTADO["pastas_criadas"][-1] == "Importados pelo Heimdall", (r, ESTADO["pastas_lidas"], ESTADO["patch"]))
+    confere("o acervo do convidado tem os três documentos", dados.listar()[1] == 3)
+confere("o dono não foi afetado: continua só leitura e sem mover", nv.situacao()[0]["escrita"] is False and nv.situacao()[0]["mover"] is False and dados.listar()[1] == 2)
+
 # --- telas
 srv = ThreadingHTTPServer(("127.0.0.1", 0), web.criar_manipulador(lib.CFG, {"localhost"}))
 srv.daemon_threads = True
@@ -261,6 +329,10 @@ confere("tela Nuvem: seções por provedor, botões POST e foco no Heimdall Desi
         and "Sincronizar agora" in h and "Desconectar Dropbox" in h and 'for="pasta-dropbox"' in h and "Nuvem" in h, h[:300])
 s, _, r = req("POST", "/nuvem/conectar", {"csrf": "errado", "provedor": "onedrive"}, tk)
 confere("conectar sem CSRF: 403", s == 403)
+confere("tela do dono: Dropbox somente leitura, com a opção de subpastas e o botão para permitir organização", "somente para leitura" in h and 'name="subpastas"' in h and "Permitir organização" in h
+        and 'name="mover"' not in h and "Conectar OneDrive com organização" in h, h[:200])
+s, _, r = req("POST", "/nuvem/conectar", {"csrf": csrf, "provedor": "onedrive", "escrita": "1"}, tk)
+confere("conectar com organização pede o escopo de escrita", s == 303 and "Files.ReadWrite" in (r.getheader("Location") or ""))
 s, _, r = req("POST", "/nuvem/conectar", {"csrf": csrf, "provedor": "onedrive"}, tk)
 loc = r.getheader("Location") or ""
 confere("conectar leva ao provedor (https)", s == 303 and loc.startswith("https://auth.exemplo.test/onedrive?") and "state=" in loc, (s, loc))
@@ -277,6 +349,15 @@ confere("desconectar pela tela", s == 303 and not [x for x in nv.situacao() if x
 tg = hc.nova_sessao("library", CONV)[0]
 s, h, _ = req("GET", "/nuvem", cookie=tg)
 confere("a tela do convidado mostra a conexão dele (Dropbox conectado, OneDrive não)", s == 200 and "Dropbox conectado" in h and "OneDrive não conectado" in h)
+tg2 = hc.nova_sessao("library", CONV2)[0]
+s, h, _ = req("GET", "/nuvem", cookie=tg2)
+csrf2 = re.search(r'data-csrf="([^"]+)"', h).group(1)
+confere("tela do convidado com organização: subpastas e mover marcados, sem botão de permitir", "com organização" in h and re.search(r'name="subpastas"[^>]*checked', h) and re.search(r'name="mover"[^>]*checked', h)
+        and "Importados pelo Heimdall" in h and 'for="sub-dropbox"' in h and "Permitir organização" not in h, h[:300])
+s, _, r = req("POST", "/nuvem/pasta", {"csrf": csrf2, "provedor": "dropbox", "pasta": "/Docs"}, tg2)
+with nv._como(CONV2):
+    sit = nv.situacao()[0]
+confere("desmarcar as caixas e salvar desliga subpastas e mover", s == 303 and not sit["subpastas"] and not sit["mover"] and sit["escrita"], sit)
 srv.shutdown()
 fake.shutdown()
 print("FALHAS:", falhas)
