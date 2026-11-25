@@ -84,15 +84,21 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 .botao{display:inline-block;padding:.7rem 1.2rem;border:2px solid currentColor;border-radius:.5rem;font-weight:700;text-decoration:none}
 """
 
-# Abas e subabas (mesmo padrão do Finance). Cada grupo é (chave, nome da aba, [(rota, nome da subaba)]); a aba aponta para a primeira subaba.
-# A página inicial é a primeira aba. Rota nova: acrescente-a ao grupo a que pertence, em vez de criar mais uma aba.
-GRUPOS = [("geral", "Visão geral", [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/anomalias", "Anomalias"), ("/dados", "Estado dos dados"), ("/avisos", "Avisos")]),
-          ("sono", "Sono e recuperação", [("/sono", "Sono"), ("/recuperacao", "Recuperação")]),
-          ("atividade", "Atividade e coração", [("/atividade", "Atividade"), ("/treinos", "Treinos"), ("/coracao", "Coração e ECG")]),
-          ("registros", "Registros", [("/diario", "Diário"), ("/eventos", "Sintomas, humor e medicamentos")]),
-          ("exames", "Exames e documentos", [("/exames", "Exames"), ("/documentos", "Documentos")]),
-          ("acompanhamento", "Acompanhamento", [("/sugestoes", "Sugestões"), ("/perfil", "Perfil de saúde")])]
-SECOES = [(g[2][0][0], g[1]) for g in GRUPOS]   # as abas de cima
+# Portal de saúde: cada aba responde a uma pergunta do usuário e agrupa o que é do mesmo assunto; a subaba nunca repete o nome da aba.
+#   Resumo          como estou (o panorama com o que pede atenção, hoje, a semana, o diário)
+#   Medidas         meus números (sono, recuperação, atividade, treinos, coração e o que registrei: sintomas, humor, medicamentos)
+#   Prontuário      meus documentos de saúde (exames, documentos recebidos, receitas, atestados, laudos, consultas)
+#   Acompanhamento  o que o Heimdall sugere e avisa (sugestões, anomalias, avisos)
+#   Ajustes (botão) perfil de saúde e estado dos dados, na tela sem abas de cima, como nos demais serviços
+# Cada grupo é (chave, nome da aba, [(rota, nome da subaba)]); a aba aponta para a primeira subaba. Rota nova entra no grupo a que pertence.
+GRUPOS = [("resumo", "Resumo", [("/", "Panorama"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/diario", "Diário")]),
+          ("medidas", "Medidas", [("/sono", "Sono"), ("/recuperacao", "Recuperação"), ("/atividade", "Atividade"), ("/treinos", "Treinos"), ("/coracao", "Coração e ECG"),
+                                  ("/eventos", "Sintomas, humor e medicamentos")]),
+          ("prontuario", "Prontuário", [("/exames", "Exames"), ("/documentos", "Documentos recebidos"), ("/receitas", "Receitas e encaminhamentos"),
+                                        ("/laudos", "Atestados e laudos"), ("/consultas", "Consultas e pedidos")]),
+          ("acompanhamento", "Acompanhamento", [("/sugestoes", "Sugestões"), ("/anomalias", "Anomalias"), ("/avisos", "Avisos")]),
+          ("ajustes", "Ajustes", [("/perfil", "Perfil de saúde"), ("/dados", "Estado dos dados")])]
+SECOES = [(g[2][0][0], g[1]) for g in GRUPOS if g[0] != "ajustes"]   # as abas de cima; Ajustes é botão
 
 
 def localizar(rota: str) -> tuple:
@@ -214,13 +220,47 @@ def _resumo_anomalias() -> str:
         return ""
 
 
+def _atencao() -> str:
+    """O que pede a sua atenção agora, com um botão para cada item. O que não tem pendência não aparece."""
+    itens = []
+    try:
+        n = len(exames.pendentes())
+        if n:
+            itens.append((f"{n} documento(s) aguardam a sua conferência.", "/documentos", "Ver os documentos"))
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        n = len(clinico.listar())
+        if n:
+            itens.append((f"{n} sugestão(ões) de acompanhamento aguardam a sua decisão.", "/sugestoes", "Ver as sugestões"))
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        n = avisos_mod.do_servico("saude").nao_lidos()
+        if n:
+            itens.append((f"{n} aviso(s) não lido(s).", "/avisos", "Ver os avisos"))
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        u = saude._ler("SELECT MAX(dia) AS u FROM saude_diaria")[0]["u"]
+        if u:
+            atraso = (datetime.now().date() - datetime.strptime(u, "%Y-%m-%d").date()).days
+            if atraso > 2:
+                itens.append((f"Os dados do relógio e do iPhone estão há {atraso} dias sem atualização.", "/dados", "Ver o estado dos dados"))
+    except Exception:  # noqa: BLE001
+        pass
+    if not itens:
+        return '<h2>Precisa da sua atenção</h2><p role="status">Nada pede a sua atenção agora.</p>'
+    return ("<h2>Precisa da sua atenção</h2><ul>" + "".join(f"<li><p>{e(t)}</p>{design.botao(r, b)}</li>" for t, r, b in itens) + "</ul>")
+
+
 def pg_inicio(q: dict) -> tuple:
     dias = dias_de(q, 90)
-    corpo = bloco_atualizar(q) + _resumo_anomalias() + secao("Hoje", saude.relatorio_hoje().replace("Hoje:\n", "", 1)) + (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
+    corpo = _atencao() + bloco_atualizar(q) + _resumo_anomalias() + (secao("Como você está agora", saude.relatorio_estado_atual().replace("Como você está agora:\n", "", 1))
              or "<p>Ainda não há dados suficientes para comparar os últimos 7 dias. Veja o estado dos dados.</p>")
     corpo += seletor("/", dias, 90) + secao(f"Tendências ({dias} dias)", saude.relatorio_tendencias(dias).split("\n", 1)[-1])
     corpo += AVISO_HTML
-    return "Visão geral", corpo
+    return "Panorama", corpo
 
 
 def pg_hoje(q: dict) -> tuple:
@@ -301,7 +341,7 @@ def pg_exames(q: dict) -> tuple:
 
 
 def pg_documentos(q: dict) -> tuple:
-    """Documentos recebidos, receitas e encaminhamentos. Confirmar ou descartar só pelo terminal."""
+    """Documentos recebidos e a fila de conferência. Confirmar ou descartar só pelo terminal."""
     pend = exames.pendentes()
     corpo = ""
     if pend:
@@ -315,9 +355,19 @@ def pg_documentos(q: dict) -> tuple:
         corpo += f'<table><caption>Documentos recebidos ({len(docs)})</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
     else:
         corpo += "<p>Nenhum documento recebido ainda.</p>"
-    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + secao("Atestados e afastamentos", exames.relatorio_atestados()) + secao("Laudos de imagem e procedimentos", exames.relatorio_laudos()) + secao("Pedidos de exame", exames.relatorio_pedidos()) + secao("Consultas", exames.relatorio_consultas())
-    corpo += '<p class="linha-acoes">' + design.botao("/sugestoes", "Ver as sugestões de acompanhamento") + design.botao("/perfil", "Abrir o perfil de saúde") + "</p>"
-    return "Documentos", corpo + AVISO_EXAMES
+    return "Documentos recebidos", corpo + AVISO_EXAMES
+
+
+def pg_receitas(q: dict) -> tuple:
+    return "Receitas e encaminhamentos", secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + AVISO_EXAMES
+
+
+def pg_laudos(q: dict) -> tuple:
+    return "Atestados e laudos", secao("Atestados e afastamentos", exames.relatorio_atestados()) + secao("Laudos de imagem e procedimentos", exames.relatorio_laudos()) + AVISO_EXAMES
+
+
+def pg_consultas(q: dict) -> tuple:
+    return "Consultas e pedidos", secao("Consultas", exames.relatorio_consultas()) + secao("Pedidos de exame", exames.relatorio_pedidos()) + AVISO_EXAMES
 
 
 _METRICAS_ESTADO = [("passos", "Passos"), ("sono_total", "Sono"), ("fc_repouso", "Pulso em repouso"), ("hrv", "HRV"), ("resp", "Respiração no sono"),
@@ -404,7 +454,7 @@ def pg_perfil(q: dict) -> tuple:
     if not concluido:
         corpo += ('<h2>Terminou?</h2><p class="linha-acoes">' + design.botao_post("/perfil/concluir", "Concluir o perfil" if itens else "Não tenho nada a informar", csrf)
                   + (design.botao_post("/perfil/adiar", "Preencher depois", csrf) if pendente else "") + "</p>"
-                  + "<p>Concluir encerra o convite do primeiro acesso. Esta página continua na aba Perfil de saúde.</p>")
+                  + "<p>Concluir encerra o convite do primeiro acesso. O perfil continua disponível em Ajustes, na subaba Perfil de saúde.</p>")
     return "Perfil de saúde", corpo
 
 
@@ -462,7 +512,7 @@ def acao_clinica(rota: str, c: dict, dono: bool) -> tuple:
             return "/perfil", ("ok", "Perfil concluído. Você pode mudar quando quiser nesta aba.")
         if rota == "/perfil/adiar":
             r = clinico.perfil_adiar(7)
-            return "/", ("ok", f"Certo. O convite volta em {exames._br(r['volta_em'])}; a aba Perfil de saúde está sempre disponível.")
+            return "/", ("ok", f"Certo. O convite volta em {exames._br(r['volta_em'])}; o perfil continua disponível em Ajustes.")
         if rota == "/sugestoes/atualizar":
             r = clinico.atualizar()
             return "/sugestoes", ("ok", f"{r['novas']} sugestão(ões) nova(s).")
@@ -505,6 +555,9 @@ ROTAS = {
     "/diario": pg_diario,
     "/exames": pg_exames,
     "/documentos": pg_documentos,
+    "/receitas": pg_receitas,
+    "/laudos": pg_laudos,
+    "/consultas": pg_consultas,
     "/perfil": pg_perfil,
     "/sugestoes": pg_sugestoes,
     "/dados": pg_dados,
@@ -519,20 +572,25 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
         sess["flash"] = None
         aviso = f'<p class="{"ok" if tipo == "ok" else "erro"}" role="{"status" if tipo == "ok" else "alert"}">{e(texto)}</p>'
     conteudo = f"<h1>{e(titulo)}</h1>{aviso}{corpo}"
+    ajustes_html = ""
     if sess:
         grupo, sub = localizar(atual)
-        a = grupo[2][0][0] if grupo else ""
-        nav = design.nav_abas(SECOES, a, "Seções do Heimdall Health")
+        em_ajustes = bool(grupo) and grupo[0] == "ajustes"   # Ajustes é botão no topo, à direita, e não aba (padrão do Heimdall Design)
+        a = "" if (em_ajustes or not grupo) else grupo[2][0][0]
+        ajustes_html = design.botao("/perfil", "Ajustes", atual=em_ajustes)
+        nav = "" if em_ajustes else design.nav_abas(SECOES, a, "Seções do Heimdall Health")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         interno = conteudo + _bloco_perguntar(sess, atual)
-        if grupo and len(grupo[2]) > 1:   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
+        if em_ajustes:   # tela sem abas de cima: botão para voltar e as subabas dos ajustes
+            conteudo = f'<div class="acoes-topo">{design.botao("/", "Voltar ao Health")}</div>' + design.com_subabas(grupo[2], sub, interno, "Seções dos Ajustes")
+        elif grupo and len(grupo[2]) > 1:   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
             conteudo = design.com_abas(SECOES, a, design.com_subabas(grupo[2], sub, interno, f"Seções de {grupo[1]}"), foco=False)
         else:
             conteudo = design.com_abas(SECOES, a, interno)
         scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Heimdall Health</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Health", nav, sair_html=sair)}'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Health", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="saude")}{scripts}</body></html>').encode("utf-8")
 
 

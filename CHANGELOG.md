@@ -2,9 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
-## 2026-11-25 - Health: abas agrupadas com subabas
-- As 17 abas do painel de saúde viraram 6, com subabas como no Finance: Visão geral (Visão geral, Hoje, Semana, Anomalias, Estado dos dados, Avisos), Sono e recuperação (Sono, Recuperação), Atividade e coração (Atividade, Treinos, Coração e ECG), Registros (Diário, Sintomas, humor e medicamentos), Exames e documentos (Exames, Documentos) e Acompanhamento (Sugestões, Perfil de saúde). Os endereços das páginas não mudaram.
-- Regra para todos os serviços no CLAUDE.md: lista de abas enxuta e agrupada; os demais serviços têm revisão no ROADMAP. Também por regra, textos de produto (exemplos, ajuda, documentação) não citam informações pessoais do dono; o exemplo do perfil de saúde passou a ser genérico.
+## 2026-11-25 - Health: portal de saúde com abas por assunto
+- O painel foi reorganizado em quatro abas, cada uma com um nome que agrupa o assunto, e subabas que nunca repetem o nome da aba: Resumo (Panorama, Hoje, Semana, Diário), Medidas (Sono, Recuperação, Atividade, Treinos, Coração e ECG, Sintomas, humor e medicamentos), Prontuário (Exames, Documentos recebidos, Receitas e encaminhamentos, Atestados e laudos, Consultas e pedidos) e Acompanhamento (Sugestões, Anomalias, Avisos). Perfil de saúde e Estado dos dados passaram para o botão Ajustes, no topo, como nos outros serviços.
+- O Panorama ganhou "Precisa da sua atenção": documentos para conferir, sugestões abertas, avisos não lidos e dados sem atualização, cada um com um botão. O que não tem pendência não aparece.
+- A página Documentos foi dividida em quatro subabas do Prontuário. Os endereços antigos continuam: /documentos, /perfil, /sugestoes, /dados.
+- Regras no CLAUDE.md para todos os serviços: lista de abas enxuta; o nome da aba agrupa o assunto; subaba nunca repete o nome da aba; perfil, estado técnico e configurações ficam em Ajustes. Também por regra, textos de produto não citam informações pessoais do dono.
 
 ## 2026-11-25 - Memória clínica por pessoa, aba Perfil de saúde e sugestões que viram evento ou lembrete
 - O perfil de saúde e as sugestões ficam no banco de cada pessoa (db/people/<id>/), não no do dono. O painel de saúde agora separa os pedidos por pessoa sem trocar o banco dos outros pedidos (banco.da_pessoa, por pedido); no terminal, heimdall health --labs suggestions e profile aceitam a pessoa pelo script (heimdall_clinico.py --pessoa).

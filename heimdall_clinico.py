@@ -94,7 +94,7 @@ def perfil_pendente(hoje: date = None) -> bool:
 
 
 def perfil_concluir(hoje: date = None) -> dict:
-    """A pessoa terminou de informar (ou não tem nada a informar): o convite deixa de aparecer. A aba Perfil continua disponível."""
+    """A pessoa terminou de informar (ou não tem nada a informar): o convite deixa de aparecer. O Perfil de saúde continua disponível em Ajustes."""
     _definir_ajuste("perfil_concluido", (hoje or date.today()).isoformat())
     return {"concluido": True}
 

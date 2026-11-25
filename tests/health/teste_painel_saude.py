@@ -104,9 +104,14 @@ def postar(rota, campos, cookie=ck, csrf=None):
     return pedir(rota, cookie, dados=_up.urlencode(campos).encode())
 
 
+confere("estrutura: abas de cima agrupam por assunto (4) e Ajustes é botão", [n for _, n in ps.SECOES] == ["Resumo", "Medidas", "Prontuário", "Acompanhamento"] and ps.GRUPOS[-1][0] == "ajustes")
+confere("estrutura: subaba nunca tem o nome da aba nem se repete", all(sub != g[1] for g in ps.GRUPOS for _, sub in g[2]) and len({r for g in ps.GRUPOS for r, _ in g[2]}) == sum(len(g[2]) for g in ps.GRUPOS)
+        and len({n for g in ps.GRUPOS for _, n in g[2]}) == sum(len(g[2]) for g in ps.GRUPOS))
 st, _, cab = pedir("/", ck)
 confere("primeiro acesso: a visão geral leva ao Perfil de saúde", st == 303 and cab.get("Location") == "/perfil", (st, cab))
 st, corpo, _ = pedir("/perfil", ck)
+confere("Perfil fica em Ajustes: tela sem as abas de cima, botão Voltar ao Health e subabas Perfil de saúde e Estado dos dados",
+        'aria-label="Seções dos Ajustes"' in corpo and "Voltar ao Health" in corpo and 'aria-label="Seções do Heimdall Health"' not in corpo and "Estado dos dados" in corpo and ">Ajustes<" in corpo, corpo[:300])
 confere("página Perfil: convite, formulário com rótulos, botões de concluir e de preencher depois",
         st == 200 and "primeiro acesso" in corpo and 'for="texto-perfil"' in corpo and 'for="tipo-perfil"' in corpo and "Preencher depois" in corpo and "Não tenho nada a informar" in corpo
         and "Pular para o conteúdo" in corpo and corpo.count("<h1>") == 1, corpo[:400])
@@ -119,8 +124,12 @@ confere("perfil: item na tabela e aviso de confirmação uma vez", "hipoglicemia
 st, _, cab = postar("/perfil/adicionar", {"tipo": "humor", "texto": "x"})
 st, corpo, _ = pedir("/perfil", ck)
 confere("perfil: erro de validação vira aviso (alert), não página de erro", st == 200 and 'role="alert"' in corpo and "Tipo inválido" in corpo, corpo[:300])
-st, _, cab = pedir("/", ck)
-confere("com itens no perfil a visão geral abre normalmente", st == 200, st)
+st, corpo, _ = pedir("/", ck)
+confere("com itens no perfil o panorama abre, com 'Precisa da sua atenção' e as abas Resumo, Medidas, Prontuário e Acompanhamento",
+        st == 200 and "Precisa da sua atenção" in corpo and all(f">{n}<" in corpo for n in ("Resumo", "Medidas", "Prontuário", "Acompanhamento")) and 'aria-label="Seções de Resumo"' in corpo, corpo[:300])
+for rota in ("/receitas", "/laudos", "/consultas", "/documentos", "/exames", "/anomalias", "/dados"):
+    st, corpo, _ = pedir(rota, ck)
+    confere(f"página {rota} abre com subabas do grupo", st == 200 and 'data-nivel="2"' in corpo and corpo.count("<h1>") == 1, st)
 st, _, cab = postar("/perfil/remover", {"id": str(_cl.perfil_listar()[0]["id"])})
 confere("perfil: remover", st == 303 and not _cl.perfil_listar(), st)
 st, _, cab = postar("/perfil/adiar", {})
