@@ -438,10 +438,16 @@ def pagina(titulo: str, corpo: str, sess: dict = None, logado: bool = True) -> b
     nav = sair = scripts = ""
     conteudo = f"<h1>{e(titulo)}</h1>{aviso}{corpo}"
     if logado and sess:
-        a = design.aba_da_rota(sess.get("atual", "/"), NAV_CLOUD)
+        rota_atual = sess.get("atual", "/").split("?")[0]
+        a = design.aba_da_rota(rota_atual, NAV_CLOUD, {"/glue": "/lambda"})   # Lambda e Glue são subabas de Processamento
         nav = design.nav_abas(NAV_CLOUD, a, "Seções do Heimdall Lab")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        conteudo = design.com_abas(NAV_CLOUD, a, conteudo + (bloco_perguntar(sess) if titulo not in ("Erro", "Não encontrado") else ""))
+        interno = conteudo + (bloco_perguntar(sess) if titulo not in ("Erro", "Não encontrado") else "")
+        if a == "/lambda":   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
+            sub = "/glue" if rota_atual.startswith("/glue") else "/lambda"
+            conteudo = design.com_abas(NAV_CLOUD, a, design.com_subabas(SUBABAS_PROCESSAMENTO, sub, interno, "Seções de Processamento"), foco=False)
+        else:
+            conteudo = design.com_abas(NAV_CLOUD, a, interno)
         scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Lab</title>{ICONE}<style>{CSS}</style></head><body>'
@@ -449,7 +455,9 @@ def pagina(titulo: str, corpo: str, sess: dict = None, logado: bool = True) -> b
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="lab")}{scripts}</body></html>').encode("utf-8")
 
 
-NAV_CLOUD = [("/", "Início"), ("/s3", "S3"), ("/lambda", "Lambda"), ("/glue", "Glue"), ("/athena", "Athena"), ("/console", "Console geral")]
+# No máximo 5 abas (Heimdall Design): Lambda e Glue ficam juntas, como subabas de Processamento.
+NAV_CLOUD = [("/", "Início"), ("/s3", "S3"), ("/lambda", "Processamento"), ("/athena", "Athena"), ("/console", "Console geral")]
+SUBABAS_PROCESSAMENTO = [("/lambda", "Lambda"), ("/glue", "Glue")]
 
 
 # ---- Perguntar (tira dúvidas e ajuda a montar os recursos do emulador) ----

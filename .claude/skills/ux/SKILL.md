@@ -9,7 +9,7 @@ Leia a seção "Heimdall Design" (gerar_docs.py) e o CLAUDE.md. Pense em qualque
 
 ## Perguntas de revisão
 1. **Conceito**: cada aba e subaba tem um assunto claro e distinto? Nome de subaba nunca repete o de aba nem o de outra subaba. A aba nomeia o grupo.
-2. **Lista de abas**: cerca de 6, página inicial na primeira, perfil, estado técnico e configurações em Ajustes (botão no topo), com a subaba Ajuda por último.
+2. **Lista de abas**: no máximo 5 (leitura mais clara e telas menores dos apps móveis), página inicial na primeira, perfil, estado técnico e configurações em Ajustes (botão no topo), com a subaba Ajuda por último.
 3. **Ordem**: segue uma lógica óbvia (por exemplo, tempo: Hoje, Dia a dia, Semana)?
 4. **Enxuta**: sem descrição sob abas, sem avisos repetidos (o de saúde só no rodapé), sem comandos na tela (vão para o Guia de comandos da Ajuda).
 5. **Ação**: link lê, botão age. Rótulos dizem o que acontece.

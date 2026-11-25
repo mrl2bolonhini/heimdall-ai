@@ -14,6 +14,7 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="hd_backup_"))
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "banco")
+os.environ["HEIMDALL_FINANCE_DIR"] = str(TMP / "finance")
 
 import heimdall_backup as B  # noqa: E402
 import heimdall_banco as D  # noqa: E402
@@ -193,11 +194,15 @@ _mini(D.DB_DIR / "learn.db", "estudo-do-dono")
 _mini(D.pasta_pessoas() / "convidada-1" / "learn.db", "estudo-da-convidada")
 (D.DB_DIR / "Estranho.DB").write_text("x")
 ok([x.name for x in B.outros_bancos(D.DB_DIR)] == ["learn.db"], "outros bancos: só *.db de nome simples, sem o heimdall.db")
+(TMP / "finance").mkdir(exist_ok=True)
+_mini(TMP / "finance" / "financas.db", "saldo-do-dono")
+ok([x.name for x in B.bancos_extras_do_dono()] == ["financas.db", "learn.db"], "bancos extras do dono: os da pasta db/ e os da pasta do Finance")
 s3o = FakeS3()
 r = B.fazer(env2, cliente_r2=s3o, agora=base + timedelta(days=400))
-ok(r["ok"] and [x["banco"] for x in r["outros"]] == ["learn.db"] and r["pessoas"][0]["outros"][0]["banco"] == "learn.db", "fazer copia o learn.db do dono e o da pessoa")
+ok(r["ok"] and [x["banco"] for x in r["outros"]] == ["financas.db", "learn.db"] and r["pessoas"][0]["outros"][0]["banco"] == "learn.db", "fazer copia o learn.db do dono e o da pessoa")
 ok(("learn/" + r["nome"]) in s3o.o and ("people/convidada-1/learn/" + r["nome"]) in s3o.o and r["nome"] in s3o.o, "no R2: learn/ e people/<id>/learn/, sem misturar com a cópia principal")
 ok(b"estudo-do-dono" not in s3o.o["learn/" + r["nome"]], "o learn.db vai criptografado")
+ok(("financas/" + r["nome"]) in s3o.o and b"saldo-do-dono" not in s3o.o["financas/" + r["nome"]], "o banco do Finance vai para financas/, criptografado")
 ok((pasta / "learn" / r["nome"]).exists() and (pasta / "people" / "convidada-1" / "learn" / r["nome"]).exists(), "na pasta: learn/ e people/<id>/learn/")
 saida_l = TMP / "restaurado_learn.db"
 B.restaurar(str(pasta / "people" / "convidada-1" / "learn" / r["nome"]), str(saida_l), env)

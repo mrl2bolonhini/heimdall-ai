@@ -122,20 +122,19 @@ def botao_js(id_: str, rotulo: str) -> str:
     return f'<button type="button" id="{e(id_)}">{e(rotulo)}</button>'
 
 
-MAX_ABAS = 9   # Option+Shift+1 a 9 abrem as 9 primeiras abas; as demais ficam no menu Mais (Option+Shift+0)
+MAX_ABAS = 5   # no máximo 5 abas por serviço (decisão de 25/11/2026: leitura mais clara e telas pequenas dos apps móveis). Option+Shift+1 a 5 abrem as abas; o que passar disso fica no menu Mais (Option+Shift+0), rede de segurança: nenhum serviço deve depender dele
 
 
 def por_linha(n: int) -> int:
-    """Abas por linha: até 5 cabem numa linha; de 6 a 9 as duas linhas ficam equilibradas (6 = 3+3, 7 = 4+3, 8 = 4+4, 9 = 5+4); com mais de 9 são 5 + 4 e o menu Mais
-    ocupa o quinto lugar da segunda linha."""
-    return n if n <= 5 else (5 if n > MAX_ABAS else (n + 1) // 2)
+    """Abas por linha: todas numa só linha, no máximo MAX_ABAS (5). O que passa disso vai para o menu Mais, na mesma linha."""
+    return min(n, MAX_ABAS)
 
 
 def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = ()) -> str:
     """Abas de navegação entre páginas (ARIA tablist). Cada aba é um link: ler/ir é link. As setas movem entre as abas e Option+Shift+número
     abre a aba pelo número (o script `SCRIPT_ABAS` faz isso). `itens` é [(rota, nome)]; `atual` é a rota aberta. O painel é o <div role=tabpanel>
     que `painel_da_aba` devolve em volta do conteúdo.
-    Com mais de 9 itens, as 9 primeiras são abas e as outras vão para o menu Mais (um <details>, que funciona sem JavaScript), aberto por
+    Com mais de 5 itens (MAX_ABAS), as 5 primeiras são abas e as outras vão para o menu Mais (um <details>, que funciona sem JavaScript), aberto por
     Option+Shift+0; os itens do Mais são links comuns (abrem a página inteira)."""
     e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
     abas_, extras = [], []
@@ -194,7 +193,7 @@ def com_subabas(itens: list, atual: str, conteudo: str, rotulo: str = "Subseçõ
     return subabas(itens, atual, rotulo, completas) + painel_da_subaba(itens, atual, conteudo)
 
 
-# Setas Esquerda/Direita, Home e End movem o foco entre as abas; Enter ou Espaço abre a aba em foco; Option+Shift+1..9 abre pelo número.
+# Setas Esquerda/Direita, Home e End movem o foco entre as abas; Enter ou Espaço abre a aba em foco; Option+Shift+1..5 abre pelo número.
 # Abrir uma aba troca só o conteúdo do painel (sem recarregar a página, o foco fica na aba; nenhum aviso extra é falado).
 # Abas marcadas com data-completa (as que têm script próprio, como o Terminal) carregam a página inteira, e só se vai delas ou para elas assim.
 # Exige nonce de script na página.

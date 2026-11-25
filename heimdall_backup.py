@@ -8,8 +8,8 @@ criptografa com AES-256-GCM (chave derivada da senha com scrypt) e grava em um o
 Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses.
 O banco de cada pessoa (db/people/<id>/heimdall.db) tem cópias próprias, na subpasta people/<id>/ de cada destino,
 com a mesma senha e a mesma retenção, contadas separadamente das do dono.
-Os demais bancos da mesma pasta (learn.db, avisos_saude.db...) também entram, cada um na subpasta com o nome dele
-(learn/, avisos_saude/; para uma pessoa, people/<id>/learn/). As cópias locais (copies/) não entram.
+Os demais bancos da mesma pasta (learn.db, avisos_saude.db...) e os da pasta do Finance (financas.db, avisos_financas.db) também entram,
+cada um na subpasta com o nome dele (learn/, financas/; para uma pessoa, people/<id>/learn/). As cópias locais (copies/) não entram.
 
 Configuração (no .env, nunca no Git):
     HEIMDALL_BACKUP_SENHA   senha das cópias (gerada por:  python3 heimdall_backup.py preparar)
@@ -229,10 +229,23 @@ def _copia_de_arquivo(arquivo: Path) -> bytes:
         return tmp.read_bytes()
 
 
-def _copias_dos_outros(dests, pasta: Path, nome: str, senha: str, rotulo: str = "") -> list:
-    """Uma cópia cifrada por banco extra da pasta, na subpasta <nome do banco>/ de cada destino. Um banco com problema não impede os outros."""
+def _pasta_finance() -> Path:
+    import heimdall_pastas
+    return Path(os.environ.get("HEIMDALL_FINANCE_DIR") or heimdall_pastas.finance(PROJECT_DIR)).expanduser()
+
+
+def bancos_extras_do_dono() -> list:
+    """Bancos do dono além do heimdall.db: os outros da pasta db/ (learn.db...) e os da pasta do Finance. Nome repetido: vale o da pasta db/."""
+    achados = {}
+    for arq in outros_bancos(banco.DB_DIR) + outros_bancos(_pasta_finance()):
+        achados.setdefault(arq.stem, arq)
+    return sorted(achados.values(), key=lambda a: a.stem)
+
+
+def _copias_dos_outros(dests, arquivos: list, nome: str, senha: str, rotulo: str = "") -> list:
+    """Uma cópia cifrada por banco extra, na subpasta <nome do banco>/ de cada destino. Um banco com problema não impede os outros."""
     saida = []
-    for arq in outros_bancos(pasta):
+    for arq in arquivos:
         sub = arq.stem
         try:
             blob = cifrar(_copia_de_arquivo(arq), senha)
@@ -296,7 +309,7 @@ def _copias_das_pessoas(dests, nome, senha):
             with banco.da_pessoa(p):
                 blob = cifrar(_copia_consistente(), senha)
             res = _enviar([d.da_pessoa(p) for d in dests], nome, blob)
-            extras = _copias_dos_outros([d.da_pessoa(p) for d in dests], banco.pasta_pessoas() / p, nome, senha)
+            extras = _copias_dos_outros([d.da_pessoa(p) for d in dests], outros_bancos(banco.pasta_pessoas() / p), nome, senha)
             saida.append({"pessoa": p, "ok": all(r["ok"] for r in res) and all(x["ok"] for x in extras), "destinos": res, "outros": extras})
         except Exception as ex:  # noqa: BLE001
             saida.append({"pessoa": p, "ok": False, "erro": str(ex)[:200]})
@@ -318,7 +331,7 @@ def fazer(env=None, cliente_r2=None, agora=None):
         nome = f"heimdall-{agora:%Y-%m-%dT%H%M}{EXT}"
         blob = cifrar(_copia_consistente(), senha)
         res = _enviar(dests, nome, blob)
-        outros = _copias_dos_outros(dests, banco.DB_DIR, nome, senha)
+        outros = _copias_dos_outros(dests, bancos_extras_do_dono(), nome, senha)
         das_pessoas = _copias_das_pessoas(dests, nome, senha)
         saida = {"ok": all(r["ok"] for r in res) and all(x["ok"] for x in outros) and all(p["ok"] for p in das_pessoas), "nome": nome, "bytes": len(blob),
                  "destinos": res, "outros": outros, "pessoas": das_pessoas, "quando": agora.isoformat(timespec="seconds")}
@@ -336,7 +349,7 @@ def listar(env=None, cliente_r2=None):
     saida = {}
     for d in destinos(env, cliente_r2):
         saida[d.nome] = d.listar()
-        for arq in outros_bancos(banco.DB_DIR):
+        for arq in bancos_extras_do_dono():
             saida[f"{d.nome} / {arq.stem}"] = d.sub(arq.stem).listar()
         for p in pessoas():
             saida[f"{d.nome} / people/{p}"] = d.da_pessoa(p).listar()
@@ -378,7 +391,7 @@ def verificar(env=None, cliente_r2=None):
     saida = {}
     for d in destinos(e, cliente_r2):
         saida[d.nome] = _verificar_destino(d, senha)
-        for arq in outros_bancos(banco.DB_DIR):   # banco extra criado depois da última cópia diária entra na próxima: não é falha
+        for arq in bancos_extras_do_dono():   # banco extra criado depois da última cópia diária entra na próxima: não é falha
             saida[f"{d.nome} / {arq.stem}"] = _verificar_destino(d.sub(arq.stem), senha, nova_ok=True)
         for p in pessoas():
             saida[f"{d.nome} / people/{p}"] = _verificar_destino(d.da_pessoa(p), senha, nova_ok=True)

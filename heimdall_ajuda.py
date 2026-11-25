@@ -42,7 +42,7 @@ FAQ = {
         ("Como entro nos serviços do Heimdall?",
          "O acesso é pelo Cloudflare Access, com a sua conta Microsoft e a aprovação no Microsoft Authenticator. Depois de entrar, o menu Conta, no alto de qualquer página, leva a todos os serviços a que você tem acesso."),
         ("Como navego com leitor de tela ou só com o teclado?",
-         "Todas as páginas têm o link Pular para o conteúdo no início, um único título principal e abas com setas, Home e End. Option+Shift+1 a 9 abre a aba pelo número. Nos serviços com o campo Perguntar, Option+Shift+P leva ao campo."),
+         "Todas as páginas têm o link Pular para o conteúdo no início, um único título principal e abas com setas, Home e End. Option+Shift+1 a 5 abre a aba pelo número (cada serviço tem no máximo 5 abas). Nos serviços com o campo Perguntar, Option+Shift+P leva ao campo."),
         ("O que é o campo Perguntar e posso confiar nas respostas?",
          "O Perguntar responde com base apenas nos dados da tela em que você está. As respostas são geradas por inteligência artificial e podem conter erros: confira os números e as datas. As respostas não substituem orientação médica, jurídica, contábil ou financeira."),
         ("Quem pode ver os meus dados?",

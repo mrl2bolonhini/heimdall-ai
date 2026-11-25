@@ -221,7 +221,7 @@ confere("depois de 5 falhas vem bloqueio 429", st == 429)
 
 st, _, corpo = req("GET", "/", cookie=cookie)
 confere("início abre com sessão", st == 200 and "Estado do emulador" in corpo and "O emulador está respondendo" in corpo)
-confere("Lab: abas (S3, Lambda, Glue, Athena), atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and '<script nonce="' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
+confere("Lab: abas (no máximo 5), atalho Option+Shift+número, voltar ao topo e script só com nonce", 'role="tablist"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and '<script nonce="' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
 st, _, corpo = req("GET", "/s3", cookie=cookie)
 confere("Lab: a aba S3 fica selecionada em /s3", 'aria-selected="true"' in corpo and ">S3</a>" in corpo and corpo.index('aria-selected="true"') < corpo.index(">S3</a>") + 5)
 confere("S3 lista buckets", st == 200 and "dados" in corpo)
@@ -274,6 +274,9 @@ confere("nome de função inválido é recusado", len([c for c in CHAMADAS if c[
 # ---- Glue ----
 st, _, corpo = req("GET", "/glue", cookie=cookie)
 confere("Glue lista bancos, crawlers e jobs", st == 200 and "vendas" in corpo and "cr1" in corpo and "job1" in corpo and "SUCCEEDED" in corpo)
+confere("Lab: no máximo 5 abas; Lambda e Glue são subabas de Processamento, com a aba de cima marcada e a subaba Glue aberta",
+        corpo.split('data-nivel="2"')[0].count('role="tab"') == 5 and 'aria-label="Seções de Processamento"' in corpo and ">Processamento</a>" in corpo
+        and 'aria-selected="true" tabindex="0" aria-controls="painel-subaba">Glue</a>' in corpo and ">Lambda</a>" in corpo and corpo.count("<h1") == 1, corpo[:700])
 st, _, corpo = req("GET", "/glue/tabelas?banco=vendas", cookie=cookie)
 confere("Glue mostra tabelas com colunas e local", st == 200 and "clientes" in corpo and "id int" in corpo and "s3://dados/clientes/" in corpo)
 st, _, _ = req("GET", "/glue/tabelas?banco=Banco%20Ruim", cookie=cookie)

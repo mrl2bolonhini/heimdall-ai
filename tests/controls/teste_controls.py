@@ -211,7 +211,7 @@ confere("serviços: uma chave (role=switch) por serviço, com estado e sem botã
         and 'aria-checked="true"' in corpo and 'aria-checked="false"' in corpo and "Kuma: no ar" in corpo and "Aplicar" not in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo)
 confere("serviços: o próprio Controls não é desligável", "Controls" not in "".join(x["nome"] for x in hsv.catalogo()))
 confere("abas: tablist, tab com aria-selected, painel e atalho",
-        'role="tablist"' in corpo and corpo.count('role="tab"') == 6 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Alt+Shift" not in corpo)
+        'role="tablist"' in corpo and corpo.split('data-nivel="2"')[0].count('role="tab"') == 5 and 'aria-selected="true"' in corpo and 'aria-label="Seções de Serviços"' in corpo and ">Manutenção</a>" in corpo and 'role="tabpanel"' in corpo and "Alt+Shift" not in corpo)
 confere("Ajustes é botão no topo e não aba", ">Ajustes</button>" in corpo and "Ajustes</a>" not in corpo.split("<main")[0])
 s_aj, c_aj, _ = req("GET", "/ajustes", cookie=token)
 confere("tela de Ajustes: sem abas de cima, com Voltar ao Controls e as subabas Variáveis e Ajuda", s_aj == 200 and c_aj.count('role="tablist"') == 1

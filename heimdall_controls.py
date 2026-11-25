@@ -174,9 +174,10 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem"), ("/manutencao", "Manutenção")]
+SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem")]   # no máximo 5 abas (Heimdall Design)
 # Abas com subabas: a rota de cada subaba aponta para a aba de cima a que pertence (lista de abas enxuta do Heimdall Design).
-SUBABAS = {"/nuvem": [("/nuvem", "Continuidade"), ("/monitor", "Consumo de IA")]}
+SUBABAS = {"/nuvem": [("/nuvem", "Continuidade"), ("/monitor", "Consumo de IA")],
+           "/servicos": [("/servicos", "Ligar e desligar"), ("/manutencao", "Manutenção")]}
 ABA_DE = {r: aba for aba, itens in SUBABAS.items() for r, _ in itens}
 # Ajustes (botão no topo): as variáveis do .env e, por último, a Ajuda. As variáveis têm script próprio: a subaba carrega a página inteira.
 AJUSTES = [("/ajustes", "Variáveis"), ("/ajuda", "Ajuda")]
@@ -330,10 +331,9 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
     corpo += _bloco_versoes()
     corpo += ("<h2>Para que serve cada aba</h2><ol>"
               '<li><a href="/terminal">Terminal</a>: um shell completo no Mac. A pasta e as variáveis continuam de um comando para o outro, e há atalhos para copiar as últimas saídas.</li>'
-              '<li><a href="/servicos">Serviços</a>: uma chave por serviço, para ligar e desligar. O que você desliga continua desligado depois de atualizar e reiniciar.</li>'
+              '<li><a href="/servicos">Serviços</a>: uma chave por serviço, para ligar e desligar (o que você desliga continua desligado depois de atualizar e reiniciar), e a subaba <a href="/manutencao">Manutenção</a>, com Start, Stop, Update, Restart, status, diagnóstico e logs.</li>'
               '<li><a href="/usuarios">Usuários</a>: quem pode entrar em cada serviço. Adiciona e remove convidados, guarda a lista e sincroniza com o Cloudflare Access.</li>'
-              '<li><a href="/nuvem">Nuvem</a>: continuidade quando o Mac fica fora do ar, cópia dos dados, limites de gasto e, na subaba <a href="/monitor">Consumo de IA</a>, as requisições, os tokens e o custo estimado dos modelos na nuvem.</li>'
-              '<li><a href="/manutencao">Manutenção</a>: Start, Stop, Update, Restart, status, diagnóstico e logs.</li></ol>'
+              '<li><a href="/nuvem">Nuvem</a>: continuidade quando o Mac fica fora do ar, cópia dos dados, limites de gasto e, na subaba <a href="/monitor">Consumo de IA</a>, as requisições, os tokens e o custo estimado dos modelos na nuvem.</li></ol>'
               '<p>O botão <a href="/ajustes">Ajustes</a>, no topo, traz todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar Heimdall, no fim da página, faz isso.</p>')
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando e cada mudança ficam anotados em logs/controls_audit.log, sem a saída nem os valores. '
               'Programas de tela cheia, como vim e top, não funcionam no Terminal: use cat, sed e ps.</p>')
