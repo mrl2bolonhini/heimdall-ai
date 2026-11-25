@@ -168,6 +168,60 @@ confere("POST /suporte grande demais: 413", s == 413)
 s, b = pedir("/suporte", jwt="tokana", origem=origem, metodo="POST", corpo=urllib.parse.urlencode({"csrf": tok, "servico": "news", "assunto": "duvida", "mensagem": "<script>alert(1)</script> teste"}))
 confere("mensagem com HTML é gravada como texto (sem executar) e a confirmação não a repete", s == 200 and "<script>alert" not in b)
 
+# ---- resposta de suporte@ (CLI e Account) ----
+for k, v in (("HEIMDALL_SUPORTE_EMAIL", "1"), ("HEIMDALL_SUPORTE_DE", "suporte@heimdall-ai.tech"), ("CLOUDFLARE_API_TOKEN", "tk"), ("CLOUDFLARE_ACCOUNT_ID", "acc")):
+    aj.os.environ[k] = v
+chamadas.clear()
+aj._post = falso
+rr = aj.registrar({"email": "eva@x.com", "nome": "Eva"}, "duvida", "finance", "Como conecto o banco?", agora)
+aj.enviar_email(rr)
+confere("mensagem do formulário leva o e-mail de quem escreveu como reply_to", chamadas[-1][3].get("reply_to") == "eva@x.com")
+ok, msg = aj.responder(rr["protocolo"], "Olá Eva, abra Finance e use Conectar banco.")
+env = chamadas[-1][3]
+confere("responder: envia de suporte@ para quem escreveu, com Re: e protocolo no assunto e reply_to do suporte", ok and env["to"] == "eva@x.com" and env["from"] == "suporte@heimdall-ai.tech" and env["subject"].startswith("Re: [" + rr["protocolo"] + "]") and env["reply_to"] == "suporte@heimdall-ai.tech" and "Conectar banco" in env["text"])
+reg_r = [x for x in aj._ler_registros() if x["protocolo"] == rr["protocolo"]][0]
+confere("responder: o registro vira respondida e guarda o texto", reg_r["estado"] == "respondida" and reg_r["respostas"][0]["texto"].startswith("Olá Eva"))
+confere("responder sem protocolo exige endereço válido", aj.responder("", "texto", "")[0] is False and aj.responder("", "texto", "fulano@x.com")[0] is True and chamadas[-1][3]["to"] == "fulano@x.com")
+confere("responder com texto vazio é recusado", aj.responder(rr["protocolo"], " ")[0] is False)
+n_antes = len(chamadas)
+
+
+def recusa_reply(req, timeout):
+    import urllib.error as ue
+    d = json.loads(req.data)
+    chamadas.append((req.full_url, req.get_method(), req.headers, d))
+    if "reply_to" in d:
+        raise ue.HTTPError(req.full_url, 400, "x", {}, __import__("io").BytesIO(b'{"success":false}'))
+    return Resp(True)
+
+
+aj._post = recusa_reply
+rs = aj.registrar({"email": "gil@x.com"}, "duvida", "geral", "Mensagem com reply_to recusado.", agora)
+confere("se a Cloudflare recusar o reply_to, o envio tenta de novo sem ele", aj.enviar_email(rs) is True and "reply_to" not in chamadas[-1][3] and len(chamadas) == n_antes + 2)
+aj._post = falso
+
+dono_tok = cfa.CABECALHO
+s, b = pedir("/suporte/mensagens", jwt="tokana")
+confere("GET /suporte/mensagens por convidado: 403", s == 403)
+s, b = pedir("/suporte/mensagens", jwt="tokdono")
+confere("GET /suporte/mensagens pelo dono: 200, lista com protocolo, e-mail, formulário de resposta e texto escapado", s == 200 and rr["protocolo"] in b and "eva@x.com" in b and 'action="/suporte/responder"' in b and "<script>alert" not in b and "<h1>" in b)
+s, b = pedir("/ajuda", jwt="tokdono")
+confere("Ajuda do dono traz o link para as mensagens; a do convidado não", s == 200 and "/suporte/mensagens" in b and "/suporte/mensagens" not in pedir("/ajuda", jwt="tokana")[1])
+tok_d = re.search(r'name="csrf" value="([^"]+)"', pedir("/suporte/mensagens", jwt="tokdono")[1]).group(1)
+origem_d = "https://" + HOST
+corpo_r = urllib.parse.urlencode({"csrf": tok_d, "protocolo": rs["protocolo"], "texto": "Resposta pelo Account."})
+chamadas.clear()
+s, b = pedir("/suporte/responder", jwt="tokdono", origem=origem_d, metodo="POST", corpo=corpo_r)
+confere("POST /suporte/responder pelo dono: 200, aviso role=status e envio para quem escreveu", s == 200 and 'role="status"' in b and chamadas and chamadas[-1][3]["to"] == "gil@x.com", b[:200])
+s, b = pedir("/suporte/responder", jwt="tokana", origem=origem_d, metodo="POST", corpo=corpo_r)
+confere("POST /suporte/responder por convidado: 403", s == 403)
+s, b = pedir("/suporte/responder", jwt="tokdono", origem=origem_d, metodo="POST", corpo=corpo_r.replace(tok_d, "errado"))
+confere("POST /suporte/responder com csrf errado: 403", s == 403)
+s, b = pedir("/suporte/responder", jwt="tokdono", origem="https://outro.exemplo", metodo="POST", corpo=corpo_r)
+confere("POST /suporte/responder com origem de outro site: 403", s == 403)
+for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"):
+    aj.os.environ.pop(k, None)
+
 # ---- rodapé de todos os serviços ----
 r = design.rodape(servico="finance")
 confere("rodapé: Ajuda e suporte (com o serviço), Política de uso e Privacidade, antes do Voltar para o topo", "/ajuda?servico=finance" in r and "/politica-de-uso" in r and "/privacidade" in r and r.index("Privacidade") < r.index("Voltar para o topo") and 'aria-label="Ajuda e informações"' in r)

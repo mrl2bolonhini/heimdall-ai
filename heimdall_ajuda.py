@@ -250,13 +250,14 @@ def formulario_suporte(csrf: str, servico: str = "", valores: dict = None) -> st
             '<p><button type="submit">Enviar mensagem</button></p></form></section>')
 
 
-def pagina_ajuda(csrf: str, servico: str = "", aviso: str = "", erro: str = "", valores: dict = None) -> tuple:
+def pagina_ajuda(csrf: str, servico: str = "", aviso: str = "", erro: str = "", valores: dict = None, dono: bool = False) -> tuple:
     servico = servico_valido(servico)
     topo = f'<p role="alert">{e(erro)}</p>' if erro else (f'<p role="status">{e(aviso)}</p>' if aviso else "")
     nome = f" do {SERVICOS[servico]}" if servico else ""
     corpo = (f"<h1>Ajuda e suporte{e(nome)}</h1>{topo}"
              '<p>Encontre abaixo as perguntas frequentes e, no fim da página, o formulário para falar com o suporte. '
              f'Documentos: <a href="/politica-de-uso">Política de uso</a> e <a href="/privacidade">Política de Privacidade</a>.</p>'
+             + ('<p><a href="/suporte/mensagens">Mensagens de suporte recebidas (somente dono)</a></p>' if dono else "")
              + _faq_html(servico) + formulario_suporte(csrf, servico, valores))
     return "Ajuda e suporte - Heimdall", corpo
 
@@ -348,8 +349,37 @@ def _post(req, timeout):
     return urllib.request.urlopen(req, timeout=timeout)
 
 
+def _enviar_cf(c: dict, para: str, assunto: str, texto: str, responder_para: str = "") -> tuple:
+    """Envia um e-mail de texto pelo Cloudflare Email Sending. Devolve (ok, motivo). Se a Cloudflare recusar o reply_to, tenta de novo sem ele."""
+    url = f"https://api.cloudflare.com/client/v4/accounts/{c['CLOUDFLARE_ACCOUNT_ID']}/email/sending/send"
+    cab = {"Authorization": f"Bearer {c['TOKEN_ENVIO']}", "Content-Type": "application/json"}
+    corpo = {"to": para, "from": c["HEIMDALL_SUPORTE_DE"], "subject": assunto, "text": texto}
+    tentativas = [dict(corpo, reply_to=responder_para)] if responder_para else []
+    tentativas.append(corpo)
+    motivo = ""
+    for i, dados in enumerate(tentativas):
+        req = urllib.request.Request(url, data=json.dumps(dados).encode("utf-8"), method="POST", headers=cab)
+        try:
+            with _post(req, 20) as r:
+                if bool(json.loads(r.read().decode("utf-8", "replace")).get("success")):
+                    return True, ""
+                motivo = "A Cloudflare não confirmou o envio."
+        except urllib.error.HTTPError as err:
+            motivo = f"HTTP {err.code}: {err.read().decode('utf-8', 'replace')[:300]}"
+            if err.code == 400 and i == 0 and responder_para:
+                continue  # reply_to recusado: tenta sem
+            return False, motivo
+        except Exception as err:  # noqa: BLE001
+            return False, f"{type(err).__name__}: {str(err)[:200]}"
+    return False, motivo
+
+
+def _email_valido(s: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", s or ""))
+
+
 def enviar_email(reg: dict) -> bool:
-    """Envia ao suporte pelo Cloudflare Email Sending. Devolve True se a Cloudflare aceitou; qualquer falha deixa a mensagem gravada e devolve False."""
+    """Envia ao suporte pelo Cloudflare Email Sending, com o e-mail de quem escreveu como endereço de resposta. Devolve True se a Cloudflare aceitou; qualquer falha deixa a mensagem gravada e devolve False."""
     c = _conf()
     if not envio_configurado(c):
         faltam = [k for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "TOKEN_ENVIO", "CLOUDFLARE_ACCOUNT_ID") if not c.get(k) or (k == "HEIMDALL_SUPORTE_EMAIL" and c.get(k) != "1")]
@@ -359,20 +389,62 @@ def enviar_email(reg: dict) -> bool:
     assunto = f"[{reg['protocolo']}] {ASSUNTOS.get(reg['assunto'], reg['assunto'])} - {SERVICOS.get(reg['servico'], reg['servico'])}"
     texto = (f"Protocolo: {reg['protocolo']}\nData: {reg['data']}\nDe: {reg.get('nome') or '-'} <{reg['email']}>\nServiço: {SERVICOS.get(reg['servico'], reg['servico'])}\n"
              f"Assunto: {ASSUNTOS.get(reg['assunto'], reg['assunto'])}\n\n{reg['mensagem']}\n")
-    corpo = json.dumps({"to": c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE, "from": c["HEIMDALL_SUPORTE_DE"], "subject": assunto, "text": texto}).encode("utf-8")
-    req = urllib.request.Request(f"https://api.cloudflare.com/client/v4/accounts/{c['CLOUDFLARE_ACCOUNT_ID']}/email/sending/send", data=corpo, method="POST",
-                                 headers={"Authorization": f"Bearer {c['TOKEN_ENVIO']}", "Content-Type": "application/json"})
-    ok, motivo = False, ""
-    try:
-        with _post(req, 20) as r:
-            ok = bool(json.loads(r.read().decode("utf-8", "replace")).get("success"))
-    except urllib.error.HTTPError as e:
-        motivo = f"HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}"
-    except Exception as e:  # noqa: BLE001
-        motivo = f"{type(e).__name__}: {str(e)[:200]}"
+    ok, motivo = _enviar_cf(c, c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE, assunto, texto, reg["email"] if _email_valido(reg["email"]) else "")
     reg["motivo"] = motivo
     _atualizar_estado(reg["protocolo"], "enviada" if ok else "gravada_sem_envio", motivo)
     return ok
+
+
+def responder(protocolo: str, texto: str, para: str = "") -> tuple:
+    """Responde de suporte@ (remetente HEIMDALL_SUPORTE_DE) a quem escreveu. Devolve (ok, mensagem). Com protocolo, usa o e-mail gravado; sem protocolo, exige 'para'."""
+    texto = (texto or "").strip()
+    if len(texto) < 2 or len(texto) > MAX_MENSAGEM:
+        return False, f"A resposta precisa ter de 2 a {MAX_MENSAGEM} caracteres."
+    reg = next((r for r in _ler_registros() if r.get("protocolo") == protocolo), None) if protocolo else None
+    destino = para or (reg or {}).get("email", "")
+    if not _email_valido(destino):
+        return False, "Não há um e-mail válido para responder." + (" Informe o endereço." if not reg else " Quem escreveu entrou pela porta local, sem e-mail gravado; informe o endereço.")
+    c = _conf()
+    if not envio_configurado(c):
+        return False, "O envio de e-mail não está configurado (HEIMDALL_SUPORTE_EMAIL, HEIMDALL_SUPORTE_DE e token da Cloudflare)."
+    assunto = f"Re: [{protocolo}] {ASSUNTOS.get((reg or {}).get('assunto'), 'Suporte')}" if protocolo else "Resposta do suporte Heimdall"
+    rodape = f"\n\n--\nSuporte Heimdall\n{EMAIL_SUPORTE}" + (f"\nProtocolo: {protocolo}" if protocolo else "")
+    ok, motivo = _enviar_cf(c, destino, assunto, texto + rodape, EMAIL_SUPORTE)
+    if not ok:
+        return False, "Não foi possível enviar: " + motivo
+    if reg:
+        regs = _ler_registros()
+        for r in regs:
+            if r.get("protocolo") == protocolo:
+                r["estado"] = "respondida"
+                r.setdefault("respostas", []).append({"data": datetime.now().isoformat(timespec="seconds"), "texto": texto})
+        arq = PASTA / "mensagens.jsonl"
+        tmp = arq.with_suffix(".tmp")
+        tmp.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in regs), encoding="utf-8")
+        os.chmod(tmp, 0o600)
+        tmp.replace(arq)
+    return True, f"Resposta enviada para {destino}."
+
+
+def pagina_mensagens(csrf: str, aviso: str = "", erro: str = "") -> tuple:
+    """Lista as mensagens recebidas, com formulário de resposta (somente dono)."""
+    topo = f'<p role="alert">{e(erro)}</p>' if erro else (f'<p role="status">{e(aviso)}</p>' if aviso else "")
+    regs = list(reversed(_ler_registros()))[:50]
+    blocos = []
+    for r in regs:
+        resp = "".join(f'<p>Resposta de {e(x["data"])}: {e(x["texto"])}</p>' for x in r.get("respostas", []))
+        mot = f'<p>Motivo da falha de envio: {e(r["motivo"])}</p>' if r.get("motivo") else ""
+        pode = _email_valido(r.get("email", ""))
+        form = (f'<form method="post" action="/suporte/responder"><input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="protocolo" value="{e(r["protocolo"])}">'
+                f'<p><label for="r-{e(r["protocolo"])}">Resposta para {e(r["email"])}</label><br>'
+                f'<textarea id="r-{e(r["protocolo"])}" name="texto" rows="5" cols="60" maxlength="{MAX_MENSAGEM}" required></textarea></p>'
+                '<p><button type="submit">Enviar resposta</button></p></form>') if pode else "<p>Sem e-mail gravado para responder (mensagem enviada pela porta local).</p>"
+        blocos.append(f'<section aria-labelledby="m-{e(r["protocolo"])}"><h2 id="m-{e(r["protocolo"])}">{e(r["protocolo"])}</h2>'
+                      f'<p>{e(r["data"])}. De {e(r.get("nome") or "-")} ({e(r["email"])}). {e(SERVICOS.get(r["servico"], r["servico"]))}, {e(ASSUNTOS.get(r["assunto"], r["assunto"]))}. Estado: {e(r["estado"])}.</p>'
+                      f'<p>{e(r["mensagem"])}</p>{mot}{resp}{form}</section>')
+    corpo = (f'<h1>Mensagens de suporte</h1>{topo}<p>Somente o dono vê esta página. As respostas saem de {e(EMAIL_SUPORTE)} para o e-mail de quem escreveu. '
+             f'<a href="/ajuda">Voltar para Ajuda e suporte</a>.</p>' + ("".join(blocos) or "<p>Nenhuma mensagem recebida ainda.</p>"))
+    return "Mensagens de suporte - Heimdall", corpo
 
 
 def enviar(p: dict, assunto: str, servico: str, mensagem: str) -> tuple:
@@ -446,6 +518,18 @@ def main() -> int:
             if r.get("motivo"):
                 print(f"    motivo: {r['motivo']}")
         return 0
+    if "--responder" in sys.argv:
+        a = sys.argv[1:]
+        def _v(op):
+            return a[a.index(op) + 1] if op in a and a.index(op) + 1 < len(a) else ""
+        proto, para = _v("--responder"), _v("--para")
+        texto = " ".join(x for x in a if x not in ("--responder", "--para", proto, para))
+        if proto.startswith("--") or not texto:
+            print('Uso: heimdall support --reply PROTOCOLO "texto da resposta"   (ou --reply - --to endereco "texto", para e-mails sem protocolo)')
+            return 2
+        ok, msg = responder("" if proto == "-" else proto, texto, para)
+        print(msg)
+        return 0 if ok else 1
     if "--token" in sys.argv:
         return criar_token_envio()
     if "--testar" in sys.argv:

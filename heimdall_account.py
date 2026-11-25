@@ -227,15 +227,20 @@ class Account(nuvem.ManipuladorBase):
             if not p or (host not in LOCAIS and not p.get("access")):
                 return self._responder(401, json.dumps({"logado": False}).encode(), "application/json", cors=True)
             return self._responder(200, json.dumps(dados_quem(p), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8", cors=True)
-        if caminho not in ("/", "/integracoes", "/ajuda", "/politica-de-uso", "/privacidade"):
+        if caminho not in ("/", "/integracoes", "/ajuda", "/politica-de-uso", "/privacidade", "/suporte/mensagens"):
             return self._responder(404, "Não encontrado.".encode(), "text/plain; charset=utf-8")
         if not p or (host not in LOCAIS and not p.get("access")):
             return self._responder(403, "Entre pelo Cloudflare Access.".encode(), "text/plain; charset=utf-8")
         nonce = secrets.token_urlsafe(12)
+        if caminho == "/suporte/mensagens":
+            if p.get("papel") != "dono":
+                return self._responder(403, "Esta página é do dono do Heimdall.".encode(), "text/plain; charset=utf-8")
+            titulo, corpo = ajuda.pagina_mensagens(integ.csrf(p))
+            return self._html(_documento(titulo, corpo, nonce), nonce)
         if caminho in ("/ajuda", "/politica-de-uso", "/privacidade"):
             if caminho == "/ajuda":
                 q = urllib.parse.parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
-                titulo, corpo = ajuda.pagina_ajuda(integ.csrf(p), (q.get("servico") or [""])[0])
+                titulo, corpo = ajuda.pagina_ajuda(integ.csrf(p), (q.get("servico") or [""])[0], dono=p.get("papel") == "dono")
             else:
                 titulo, corpo = ajuda.pagina_politica_uso() if caminho == "/politica-de-uso" else ajuda.pagina_privacidade()
             return self._html(_documento(titulo, corpo, nonce), nonce)
@@ -254,6 +259,8 @@ class Account(nuvem.ManipuladorBase):
         acoes = {"/integracoes/saude/ativar": integ.ativar_saude, "/integracoes/saude/desativar": integ.desativar_saude}
         if caminho == "/suporte":
             return self._suporte(host)
+        if caminho == "/suporte/responder":
+            return self._suporte_responder(host)
         if caminho not in acoes:
             return self._responder(404, "Não encontrado.".encode(), "text/plain; charset=utf-8")
         p = self._quem()
@@ -310,7 +317,34 @@ def _suporte_post(self, host: str) -> None:
     self._html(_documento(titulo, corpo, nonce), nonce)
 
 
+def _suporte_responder_post(self, host: str) -> None:
+    """POST /suporte/responder: só o dono; responde de suporte@ a quem escreveu. Mesmas exigências: Access ou porta local, origem do próprio site e csrf."""
+    p = self._quem()
+    if not p or (host not in LOCAIS and not p.get("access")):
+        return self._responder(403, "Entre pelo Cloudflare Access.".encode(), "text/plain; charset=utf-8")
+    if p.get("papel") != "dono":
+        return self._responder(403, "Esta ação é do dono do Heimdall.".encode(), "text/plain; charset=utf-8")
+    origem = urllib.parse.urlparse(self.headers.get("Origin") or "").hostname or ""
+    if origem.lower() != host:
+        return self._responder(403, "Origem não permitida.".encode(), "text/plain; charset=utf-8")
+    try:
+        n = int(self.headers.get("Content-Length") or 0)
+    except ValueError:
+        n = -1
+    if not 0 <= n <= 16384:
+        return self._responder(413, "Pedido grande demais.".encode(), "text/plain; charset=utf-8")
+    campos = urllib.parse.parse_qs(self.rfile.read(n).decode("utf-8", "replace"))
+    campo = lambda k: (campos.get(k) or [""])[0]  # noqa: E731
+    if not integ.csrf_ok(p, campo("csrf")):
+        return self._responder(403, "Formulário vencido ou inválido: abra a página de novo.".encode(), "text/plain; charset=utf-8")
+    nonce = secrets.token_urlsafe(12)
+    ok, msg = ajuda.responder(campo("protocolo"), campo("texto"))
+    titulo, corpo = ajuda.pagina_mensagens(integ.csrf(p), aviso=msg if ok else "", erro="" if ok else msg)
+    self._html(_documento(titulo, corpo, nonce), nonce, 200 if ok else 400)
+
+
 Account._suporte = _suporte_post
+Account._suporte_responder = _suporte_responder_post
 
 
 def main() -> None:

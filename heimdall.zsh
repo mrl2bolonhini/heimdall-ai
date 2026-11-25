@@ -128,7 +128,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     urls) printf '%s\n' "-p=--public" "-c=--check" ;;
     app) printf '%s\n' "-l=--login" "-r=--remove-login" ;;
     usage) printf '%s\n' "-d=--days" ;;
-    support) printf '%s\n' "-l=--last" "-t=--test" "-k=--token" ;;
+    support) printf '%s\n' "-l=--last" "-t=--test" "-k=--token" "-r=--reply" ;;
     ask) printf '%s\n' "-l=--local" "-c=--cloud" ;;
     mcp) printf '%s\n' "-v=--verify" ;;
     flows) printf '%s\n' "-a=--advanced" "-b=--basic" "-p=--privacy" "-e=--email" ;;
@@ -416,7 +416,9 @@ heimdall() {
 --cloud=-" "$@"; _heimdall_py heimdall_ask.py "${_HA[@]}" ;;
     usage) _heimdall_tr "--days=--dias" "$@"; _heimdall_py heimdall_cfmonitor.py "${_HA[@]}" ;;
     support) _heimdall_tr "--last=--ultimas
---test=--testar" "$@"; _heimdall_py heimdall_ajuda.py "${_HA[@]}" ;;
+--test=--testar
+--reply=--responder
+--to=--para" "$@"; _heimdall_py heimdall_ajuda.py "${_HA[@]}" ;;
     notices) _heimdall_tr "--migrate=--executar" "$@"; _heimdall_py migrar_avisos.py "${_HA[@]}" ;;
     doctor)
       _heimdall_tr "--memory=--memoria
@@ -581,7 +583,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       urls) compadd -- --public --check ;;
       app) compadd -- --login --remove-login ;;
       usage) compadd -- --days ;;
-      support) compadd -- --last --test --token ;;
+      support) compadd -- --last --test --token --reply --to ;;
       ask) compadd -- --local --cloud ;;
       mcp) compadd -- --verify ;;
       flows) compadd -- --advanced --basic --privacy --email ;;

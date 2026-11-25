@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-24 - Resposta ao suporte pelo terminal e pelo Account
+- As mensagens do formulário levam o e-mail de quem escreveu como endereço de resposta (reply_to; se a Cloudflare recusar o campo, o envio repete sem ele). Novo heimdall support --reply PROTOCOLO "texto" responde de suporte@ (remetente HEIMDALL_SUPORTE_DE) a quem escreveu, com o assunto Re: [protocolo], e marca a mensagem como respondida; para e-mails sem protocolo, heimdall support --reply - --to endereço "texto".
+- Nova página do Account, só para o dono, em /suporte/mensagens (link na página Ajuda e suporte do dono): lista as 50 últimas mensagens com estado, motivo de falha e respostas anteriores, e um campo de resposta em cada uma (POST /suporte/responder, com Access ou porta local, origem do próprio site e CSRF). Convidados recebem 403.
+- Testes novos em tests/account/teste_ajuda.py. Não testado: o envio real e se o Email Sending aceita reply_to.
+
 ## 2026-11-24 - Diagnóstico do envio de e-mail do suporte
 - O estado gravada_sem_envio agora traz o motivo (código HTTP e resposta da Cloudflare, ou as variáveis que faltam), exibido por heimdall support --last. Novo heimdall support --test envia uma mensagem de teste ao destino do suporte e mostra o motivo quando falha. Novo heimdall support --token cria, com o token atual da Cloudflare (precisa de API Tokens: Edit), um token só com a permissão Email Sending e o grava no .env como HEIMDALL_SUPORTE_TOKEN, sem exibi-lo; o envio usa esse token e, na falta dele, o CLOUDFLARE_API_TOKEN. Domínio heimdall-ai.tech ativado no Cloudflare Email Sending; o recebimento (Email Routing) encaminha suporte@ para o Gmail do dono.
 
