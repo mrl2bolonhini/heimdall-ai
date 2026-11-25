@@ -18,7 +18,10 @@ from collections import namedtuple
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
+import contextlib
+
 import heimdall_ajuda as ajuda
+import heimdall_banco as banco
 import heimdall_design as design
 import heimdall_lab as nuvem
 import heimdall_perguntar as perguntar
@@ -273,7 +276,9 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
                 if metodo == "GET" and rota in cfg.aliases:   # rota antiga: 301 para a canônica, mantendo os parâmetros
                     self._ir(cfg.aliases[rota] + (("?" + url.query) if url.query else ""), status=301)
                     return
-                with pessoas.definir(sess.get("pessoa") or pessoas.DONO):
+                quem = sess.get("pessoa") or pessoas.DONO
+                # Os dados (heimdall_banco) e a pessoa (heimdall_pessoas) mudam juntos: convidado nunca enxerga os dados do dono.
+                with pessoas.definir(quem), (contextlib.nullcontext() if pessoas.e_dono(quem) else banco.da_pessoa(quem)):
                     if metodo == "POST":
                         self._post(rota, token, sess)
                     else:

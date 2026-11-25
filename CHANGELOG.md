@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Correção de segurança: convidados no Trading e no Library
+- Corrigido: nos sites Trading e Library, a sessão de um convidado usava o banco do dono (o acervo de documentos e a conta simulada), porque a base web trocava a pessoa mas não os dados. Agora os dados mudam junto com a pessoa: cada convidado tem o seu library.db e o seu trading.db em db/people/<id>/. Testes de regressão nos dois sites. Quem liberou Trading ou Library a convidados antes desta correção deve considerar que eles podem ter visto os dados do dono.
+
 ## 2026-11-25 - Library com o Paperless-ngx como motor (opcional)
 - O Library pode usar o Paperless-ngx, rodando em Docker só neste Mac (127.0.0.1:8023, sem login exposto), como motor: ele faz o OCR, guarda os arquivos, lê e-mails por IMAP e classifica; o Library continua sendo a única tela e fala com ele pela API REST. Liga com heimdall library --paperless e desliga com HEIMDALL_LIBRARY_MOTOR=interno (os documentos do Paperless ficam no Docker; os do acervo interno não são tocados).
 - Nova subaba Adicionar > E-mail: conta IMAP e pasta lidas pelo Paperless; os anexos entram em A revisar. A senha de aplicativo vem só do .env (HEIMDALL_LIBRARY_EMAIL_SENHA), nunca do formulário.

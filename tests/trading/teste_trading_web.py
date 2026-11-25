@@ -125,6 +125,11 @@ confere("Perguntar aceita", s == 303 and r.getheader("Location") == "/carteira" 
 c = tr.contexto_perguntar(None)
 confere("contexto do Perguntar: conta, limites e simulação", "Conta simulada" in c and "Limites:" in c and "R$ 50.000,00" in c)
 confere("formato de dinheiro", tr.brl(1234.5) == "R$ 1.234,50" and tr.brl(-5) == "-R$ 5,00")
+# convidado: conta simulada própria (regressão: antes o convidado enxergava a conta do dono)
+tg = hc.nova_sessao("trading", "p0123456789ab")[0]
+sg, hg, _ = req("GET", "/carteira", tg)
+confere("convidado abre a própria carteira", sg == 200, sg)
+confere("conta do convidado fica na pasta dele, e não na do dono", any((TMP / "db").rglob("p0123456789ab/trading.db")), list((TMP / "db").rglob("*.db")))
 confere("rota inexistente: 404", req("GET", "/nada", cookie=tk)[0] == 404)
 print("FALHAS:", falhas)
 sys.exit(1 if falhas else 0)
