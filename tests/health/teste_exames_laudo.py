@@ -285,5 +285,23 @@ ex.confirmar(r2["id"])
 ur2 = sql("SELECT dia FROM exames_resultados WHERE chave = 'ureia' ORDER BY dia")
 confere("histórico repetido em outro laudo não duplica o dia", [x["dia"] for x in ur2] == ["2021-07-15", "2026-11-20", "2026-11-21"], ur2)
 
+# Laudo antigo, com menos exames, enviado depois do novo: substitui o valor que só veio do histórico, sem duplicar o dia
+ANTIGO = """
+Gênero: Masculino                                                 DN: 10/03/1986 | 35 anos
+ DATA COLETA/RECEBIMENTO: 15/07/2021 07:14
+   RESULTADO | INTERVALO DE REFERÊNCIA
+   Ureia                                                       30 mg/dL                                                         17 a 48 mg/dL
+   Glicose                                                     86 mg/dL                                                         70 a 99 mg/dL
+"""
+ex.texto_do_arquivo = lambda dados, nome: (ANTIGO, False)
+r3 = ex.registrar(b"%PDF-1.4 laudo antigo", "antigo.pdf")
+ex.confirmar(r3["id"])
+u3 = sql("SELECT dia, fonte, ref_texto, sinal FROM exames_resultados WHERE chave = 'ureia' AND dia = '2021-07-15'")
+confere("laudo antigo: o dia do histórico não fica duplicado e ganha referência e sinal", len(u3) == 1 and u3[0]["fonte"] == "regra" and u3[0]["sinal"] == "dentro", u3)
+g3 = sql("SELECT dia, fonte FROM exames_resultados WHERE chave = 'glicemia_jejum' ORDER BY dia")
+confere("laudo antigo: exame que o laudo novo não trazia entra normalmente", [x["dia"] for x in g3] == ["2021-07-15"], g3)
+t3 = sql("SELECT COUNT(*) n FROM exames_resultados WHERE chave = 'tsh'")[0]["n"]
+confere("laudo antigo com menos exames não apaga nem altera o que ele não traz", t3 == 2 and sql("SELECT COUNT(*) n FROM exames_resultados WHERE chave = 'vitamina_d'")[0]["n"] == 4)
+
 print("\n" + ("TUDO OK" if not falhas else f"{falhas} FALHA(S)"))
 sys.exit(1 if falhas else 0)

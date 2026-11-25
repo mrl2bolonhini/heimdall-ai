@@ -1508,6 +1508,8 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
             ordem = {}
             for r in itens:
                 ordem[r["chave"]] = ordem.get(r["chave"], 0) + 1
+                # Um valor que veio só do bloco "Histórico" de um laudo mais novo cede lugar ao laudo original do mesmo dia (com referência e sinal).
+                con.execute("DELETE FROM exames_resultados WHERE chave = ? AND dia = ? AND fonte = 'historico'", (r["chave"], dia))
                 con.execute(
                     "INSERT INTO exames_resultados (documento_id, dia, chave, nome, nome_original, grupo, valor, valor_texto, comparador, unidade, ref_texto, ref_min, ref_max, sinal, catalogado, fonte, ordem) "
                     "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",

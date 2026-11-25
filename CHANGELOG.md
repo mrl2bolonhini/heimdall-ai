@@ -10,6 +10,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Notas, comentários, referências bibliográficas, rodapé de página e o local de execução deixam de virar resultados (frases terminadas em "de", "a" ou "=" também não). Testosterona total repetida no laudo entra uma vez.
 - Blocos de Histórico: os valores anteriores entram com a data própria e a fonte "historico" (o resultado atual não se repete e um dia que o banco já tem para aquele exame não é duplicado). O resumo da conferência e o histórico do exame mostram esses valores.
 - Novos exames no catálogo: VPM, capacidade latente de ligação do ferro, prolactina, SHBG, testosterona livre e biodisponível calculadas, PSA livre e o leucograma completo; sinônimos para cálcio ionizado, vitamina B-12 e capacidade total de fixação do ferro.
+- Laudo antigo enviado depois de um mais novo: se o dia já existe só como valor de histórico, o valor do laudo original (com referência e sinal) substitui o do histórico, sem duplicar; exames que o laudo antigo não traz não são tocados.
 - Teste novo, com laudo inteiramente fictício no mesmo formato: tests/health/teste_exames_laudo.py. Para reler o laudo que já estava pendente: heimdall health --labs discard ID e solte o PDF de novo em health/inbox. Não testado: a leitura do PDF real no Mac (o texto do PDF foi lido aqui e dá os 52 exames) e o OCR.
 
 ## 2026-11-24 - Termos de Uso e Política de Privacidade reescritos
