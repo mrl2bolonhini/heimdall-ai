@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Versões do que roda no Mac: macOS, Python, Docker, Ollama, LiteLLM, o próprio Heimdall e cada serviço em contêiner.
 
-Usado por `heimdall doctor --versions` (com comparação com a imagem mais nova no registro) e pela Visão geral do Controls (só as versões, sem rede).
+Usado por `heimdall doctor --versions` (com comparação com a imagem mais nova no registro) e pelo Resumo do Controls (só as versões, sem rede).
 Só lê: docker inspect/exec de comandos de versão, sw_vers, git. Cada item falha em silêncio quando o comando não existe.
 """
 import json

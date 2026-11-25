@@ -456,7 +456,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, logado: bool = True) -> b
 
 
 # No máximo 5 abas (Heimdall Design): Lambda e Glue ficam juntas, como subabas de Processamento.
-NAV_CLOUD = [("/", "Início"), ("/s3", "S3"), ("/lambda", "Processamento"), ("/athena", "Athena"), ("/console", "Console geral")]
+NAV_CLOUD = [("/", "Início"), ("/s3", "S3"), ("/lambda", "Processamento"), ("/athena", "Athena"), ("/console", "Console")]
 SUBABAS_PROCESSAMENTO = [("/lambda", "Lambda"), ("/glue", "Glue")]
 
 
@@ -464,7 +464,7 @@ SUBABAS_PROCESSAMENTO = [("/lambda", "Lambda"), ("/glue", "Glue")]
 ROTAS_PERGUNTAR = re.compile(r"^(/|/s3|/s3/b|/lambda|/glue|/glue/tabelas|/athena|/athena/resultado|/console)(\?[A-Za-z0-9_=&%.+-]{0,300})?$")
 
 SISTEMA_CLOUD = (
-    "Você é o assistente do laboratório de dados do Heimdall: um emulador de AWS (LocalStack ou Moto) com este site para usá-lo (abas S3, Lambda, Glue, Athena e Console geral). "
+    "Você é o assistente do laboratório de dados do Heimdall: um emulador de AWS (LocalStack ou Moto) com este site para usá-lo (abas Início, S3, Processamento com as subabas Lambda e Glue, Athena e Console). "
     "O usuário estuda engenharia e arquitetura de dados com serviços AWS e usa leitor de tela. Responda em português do Brasil, em texto corrido ou lista numerada simples, "
     "sem tabelas, sem emojis e sem formatação visual. Pode usar o seu conhecimento geral de AWS, SQL, Python, Spark e engenharia de dados para tirar dúvidas e ajudar a construir "
     "recursos no emulador. Ao ajudar a construir algo, diga o caminho completo: qual aba do site usar e o que preencher em cada campo, ou o comando da AWS CLI com --endpoint-url, "
@@ -475,7 +475,7 @@ SISTEMA_CLOUD = (
 MANUAL_CLOUD = (
     "COMO ESTE SITE FUNCIONA: S3 cria buckets e envia, baixa e apaga arquivos (até HEIMDALL_LAB_MAX_MB). Lambda cria função Python a partir de código colado (runtime python3.12 ou 3.13, handler arquivo.função), "
     "executa com um evento em JSON e apaga. Glue cria bancos de dados, tabelas (csv, json ou parquet apontando para uma pasta s3://), crawlers e jobs. Athena roda SQL sobre as tabelas do Glue e guarda o resultado no bucket "
-    "athena-resultados. Console geral chama qualquer operação de qualquer serviço (DynamoDB, SQS, SNS, Kinesis, IAM, CloudFormation e outros) com o nome do serviço, a operação e os parâmetros em JSON. "
+    "athena-resultados. Console chama qualquer operação de qualquer serviço (DynamoDB, SQS, SNS, Kinesis, IAM, CloudFormation e outros) com o nome do serviço, a operação e os parâmetros em JSON. "
     f"Endereço do emulador: {ENDPOINT}; chave de acesso e chave secreta: test; região: {REGIAO}.")
 
 
@@ -576,7 +576,7 @@ def pg_inicio() -> str:
             '<li><a href="/lambda">Lambda</a>: criar uma função a partir de código, executar e apagar.</li>'
             '<li><a href="/glue">Glue</a>: bancos de dados, tabelas, crawlers e jobs do catálogo de dados.</li>'
             '<li><a href="/athena">Athena</a>: consultas SQL sobre os arquivos do S3, usando as tabelas do Glue.</li>'
-            '<li><a href="/console">Console geral</a>: qualquer operação de qualquer serviço (DynamoDB, SQS, SNS, Kinesis, IAM, CloudFormation e outros).</li></ol>'
+            '<li><a href="/console">Console</a>: qualquer operação de qualquer serviço (DynamoDB, SQS, SNS, Kinesis, IAM, CloudFormation e outros).</li></ol>'
             '<h2>Roteiro de estudo: do arquivo à consulta</h2><ol><li>No S3, crie um bucket e envie um arquivo CSV.</li>'
             '<li>No Glue, crie um banco de dados.</li><li>No Glue, abra o banco e crie uma tabela apontando para a pasta do S3 onde está o CSV.</li>'
             '<li>No Athena, escolha o banco e rode um SELECT na tabela.</li></ol>')
@@ -861,7 +861,7 @@ def pg_athena(sess: dict, sql: str = "SHOW DATABASES", banco: str = "default", q
     return form + res + hist
 
 
-# ---- Console geral ----
+# ---- Console ----
 EXEMPLOS = [
     ("S3: listar buckets", "s3", "list_buckets", "{}"),
     ("DynamoDB: criar tabela clientes", "dynamodb", "create_table", '{"TableName":"clientes","KeySchema":[{"AttributeName":"id","KeyType":"HASH"}],"AttributeDefinitions":[{"AttributeName":"id","AttributeType":"S"}],"BillingMode":"PAY_PER_REQUEST"}'),
@@ -1096,7 +1096,7 @@ class Painel(ManipuladorBase):
         elif rota == "/athena/resultado":
             self._enviar(200, pagina("Athena", pg_athena(sess, qid=valida(ID_CONSULTA_RE, p("id"), "identificador da consulta")), sess))
         elif rota == "/console":
-            self._enviar(200, pagina("Console geral", pg_console(sess, p("servico", "s3"), p("operacao"), p("parametros", "{}")), sess))
+            self._enviar(200, pagina("Console", pg_console(sess, p("servico", "s3"), p("operacao"), p("parametros", "{}")), sess))
         else:
             self._enviar(404, pagina("Não encontrado", '<p><a href="/">Voltar ao início</a></p>', sess))
 
@@ -1321,7 +1321,7 @@ class Painel(ManipuladorBase):
             erro = str(ex)
         except Exception as ex:  # noqa: BLE001
             erro = f"{type(ex).__name__}: {str(ex)[:1500]}"
-        self._enviar(200, pagina("Console geral", pg_console(sess, servico, op, par, resultado, erro), sess))
+        self._enviar(200, pagina("Console", pg_console(sess, servico, op, par, resultado, erro), sess))
 
 
 # ----------------------------------------------------------------------------------------

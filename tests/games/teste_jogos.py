@@ -75,8 +75,8 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 token, sess = hc.nova_sessao()
 ck = f"{hc.COOKIE}={token}"
 st, corpo, cab = pedir("/", ck)
-confere("categorias são abas: uma aba por categoria, numa só linha (no máximo 5), com a primeira aberta no início", st == 200 and len(hj.CATALOGO) == 28 and len(hj.CATEGORIAS) == 4
-        and corpo.count('role="tab"') == 4 and 'class="l4"' in corpo and all(f'href="/categoria/{c[0]}"' in corpo and c[1] in corpo for c in hj.CATEGORIAS)
+confere("categorias são abas: uma aba por categoria, numa só linha (no máximo 5), com a primeira aberta no início", st == 200 and len(hj.CATALOGO) == 28 and len(hj.CATEGORIAS) == 5
+        and corpo.count('role="tab"') == 5 and 'class="l5"' in corpo and "Mais" not in corpo.split("<main")[0] and all(f'href="/categoria/{c[0]}"' in corpo and c[1] in corpo for c in hj.CATEGORIAS)
         and f'href="/categoria/{hj.CATEGORIAS[0][0]}" aria-selected="true"' in corpo, (st, corpo[:300]))
 confere("o início mostra a apresentação e os jogos da primeira categoria", "Cada aba é uma categoria" in corpo and all(f"/jogo/{i}" in corpo for i in hj.CATEGORIAS[0][3]))
 for c in hj.CATEGORIAS:
@@ -93,7 +93,7 @@ import re as _re_n
 confere("política de conteúdo só deixa script do próprio site e o das abas (com nonce)", _re_n.search(r"script-src 'nonce-[A-Za-z0-9_-]+' 'self'", csp) and "default-src 'none'" in csp and "connect-src 'self'" in csp and "unsafe-eval" not in csp, csp)
 st_j, corpo_j, cab_j = pedir("/jogo/vilarejo", ck)
 confere("página de jogo: aba da categoria aberta, trocar de aba carrega a página inteira, volta para a categoria e conexão da página fechada",
-        'href="/categoria/aventuras" aria-selected="true"' in corpo_j and corpo_j.count(" data-completa>") == 4 and 'href="/categoria/aventuras">Voltar para Ação e aventuras' in corpo_j
+        'href="/categoria/acao" aria-selected="true"' in corpo_j and corpo_j.count(" data-completa>") == 5 and 'href="/categoria/acao">Voltar para Ação' in corpo_j
         and "connect-src 'none'" in cab_j.get("Content-Security-Policy", ""), (st_j, cab_j.get("Content-Security-Policy")))
 confere("abas, atalho Option+Shift+1, voltar ao topo e tema de rodapé no Games", 'role="tablist"' in corpo and 'id="topo"' in corpo and 'href="#topo"' in corpo and "<nav aria-label=\"Principal\"><ul>" not in corpo)
 confere("sem script embutido no HTML", "<script>" not in corpo and "onclick" not in corpo.lower())
@@ -134,17 +134,20 @@ ex = hj.extras()
 confere("extras aceitam só http e https", [x[0] for x in ex] == ["Terceiro", "Outro"], ex)
 token2, _ = hc.nova_sessao()
 st, corpo, _ = pedir("/outros", f"{hc.COOKIE}={token2}")
-confere("extras aparecem na aba Outros jogos (a quinta, a última), sem o endereço perigoso", st == 200 and 'href="http://localhost:8015"' in corpo and "javascript:" not in corpo
-        and 'href="/outros" aria-selected="true"' in corpo and corpo.count('role="tab"') == 5 and 'class="l5"' in corpo, (st, corpo[-500:]))
+corpo_cab = corpo.split("<main")[0]
+confere("com extras são 6 itens: 4 abas e o menu Mais na quinta posição (Lógica e Outros), nunca mais de 5 posições; sem o endereço perigoso",
+        st == 200 and 'href="http://localhost:8015"' in corpo and "javascript:" not in corpo and corpo_cab.count('role="tab"') == 4 and 'id="mais"' in corpo_cab
+        and 'href="/categoria/logica"' in corpo_cab.split('id="mais"')[1] and 'href="/outros"' in corpo_cab.split('id="mais"')[1] and "Mais, aba aberta: Outros" in corpo_cab, (st, corpo_cab[-700:]))
 os.environ.pop("HEIMDALL_JOGOS_EXTRAS")
-for _antigo, _novo, _jogo in (("cassino", "cassino", "blackjack"), ("cartas", "cassino", "poker"), ("acao", "aventuras", "vilarejo"), ("audio", "aventuras", "vilarejo"),
+for _antigo, _novo, _jogo in (("cassino", "cassino", "blackjack"), ("cartas", "cassino", "poker"), ("acao", "acao", "vilarejo"), ("audio", "acao", "vilarejo"), ("tabuleiro", "estrategia", "xadrez"),
                               ("palavras", "logica", "forca"), ("numeros", "logica", "sudoku")):
     st_c, corpo_c, _ = pedir(f"/categoria/{_antigo}", f"{hc.COOKIE}={token2}")
     confere(f"endereço antigo /categoria/{_antigo} abre a aba nova ({_novo}) com os jogos dela", st_c == 200 and f'href="/categoria/{_novo}" aria-selected="true"' in corpo_c and f"/jogo/{_jogo}" in corpo_c)
 st_c, corpo_c, _ = pedir("/categoria/cassino", f"{hc.COOKIE}={token2}")
-confere("Cassino traz só os jogos de azar e de cartas de aposta; a paciência foi para Palavras e lógica", "/jogo/poker" in corpo_c and "/jogo/roleta" in corpo_c and "/jogo/paciencia" not in corpo_c)
-confere("nenhum serviço de abas passa de 5 abas por padrão", len(hj.nav_jogos()) <= 5)
-confere("sem extras não há aba Outros jogos nem a rota", pedir("/outros", f"{hc.COOKIE}={token2}")[0] == 404 and 'href="/outros"' not in pedir("/", f"{hc.COOKIE}={token2}")[1])
+confere("Cassino traz só os jogos de azar e de cartas de aposta; a paciência foi para Lógica", "/jogo/poker" in corpo_c and "/jogo/roleta" in corpo_c and "/jogo/paciencia" not in corpo_c)
+confere("nomes das abas com uma palavra só e em ordem alfabética", all(" " not in c[1] for c in hj.CATEGORIAS) and [c[1] for c in hj.CATEGORIAS] == ["Ação", "Aventuras", "Cassino", "Estratégia", "Lógica"])
+confere("sem extras, as 5 categorias ocupam as 5 posições", len(hj.nav_jogos()) == 5)
+confere("sem extras não há aba Outros nem a rota", pedir("/outros", f"{hc.COOKIE}={token2}")[0] == 404 and 'href="/outros"' not in pedir("/", f"{hc.COOKIE}={token2}")[1])
 os.environ.pop("HEIMDALL_JOGOS_EXTRAS", None)
 
 for arq in ("tests/games/teste_jogos_logica.js", "tests/games/teste_jogos_ui.js"):

@@ -27,7 +27,7 @@ O backlog do Heimdall é o ROADMAP.md (Em andamento, Depois, Ideias em avaliaç�
 - Texto de produto: profissional, neutro, sem dados pessoais do dono.
 - Evento versus lembrete (heimdall_agenda.py).
 - Telas enxutas: sem explicações repetidas, sem comandos na tela.
-- Lista de abas enxuta (no máximo 5), Ajustes como botão.
+- Lista de abas enxuta (no máximo 5 posições, nome de uma palavra), Ajustes como botão.
 - Interruptor no .env e plano de volta para tudo que usa a nuvem.
 
 ## Formato

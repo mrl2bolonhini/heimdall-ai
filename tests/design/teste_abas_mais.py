@@ -22,15 +22,16 @@ def confere(nome, cond, detalhe=""):
 itens = [(f"/r{i}", f"Nome{i}") for i in range(1, 13)]
 h = d.abas(itens, "/r2")
 confere("até 5 itens: sem Mais", "<details" not in d.abas(itens[:5], "/r2") and d.abas(itens[:5], "/r2").count('role="tab"') == 5)
-confere("o padrão é no máximo 5 abas", d.MAX_ABAS == 5)
-confere("12 itens: 5 abas, Mais com 7 links, atalhos de 1 a 5 mais o 0", h.count('role="tab"') == 5 and 'id="mais"' in h and h.count("<li><a") == 7 and "Option Shift 10" not in h, h)
+confere("o padrão é no máximo 5 posições", d.MAX_ABAS == 5)
+confere("6 itens: 4 abas e o Mais na quinta posição, com 2 links (nunca passa de 5)", d.abas(itens[:6], "/r1").count('role="tab"') == 4 and d.abas(itens[:6], "/r1").count("<li><a") == 2)
+confere("12 itens: 4 abas, Mais com 8 links e atalho Option Shift 5 ou 0", h.count('role="tab"') == 4 and 'id="mais"' in h and h.count("<li><a") == 8 and "Option Shift 5 ou 0" in h, h)
 h2 = d.abas(itens, "/r11")
 confere("aba aberta dentro do Mais: resumo diz qual, link marcado, e uma aba continua alcançável pelo Tab", "Mais, aba aberta: Nome11" in h2 and 'aria-current="page"' in h2 and 'tabindex="0"' in h2 and 'aria-selected="true"' not in h2, h2)
 confere("o painel da aba do Mais é rotulado pelo link", 'aria-labelledby="aba-11"' in d.painel_da_aba(itens, "/r11", "x"))
 confere("o resumo do Mais é um <summary> (funciona sem JavaScript)", "<summary" in h and "<button" not in h)
 
-confere("quantidade por linha: todas numa só linha, no máximo 5; mais que isso vira Mais",
-        [d.por_linha(n) for n in (3, 4, 5, 6, 12)] == [3, 4, 5, 5, 5])
+confere("quantidade por linha: até 5 abas; com mais itens, 4 abas e o Mais completa as 5 posições",
+        [d.por_linha(n) for n in (3, 4, 5, 6, 12)] == [3, 4, 5, 4, 4] and [d.limite_abas(n) for n in (5, 6)] == [5, 4])
 confere("a lista de abas leva a classe da linha e com-mais só com o menu", 'class="l3"' in d.abas(itens[:3], "/r1") and "com-mais" in h and "com-mais" not in d.abas(itens[:5], "/r1"))
 
 try:
@@ -47,17 +48,20 @@ else:
         pg.keyboard.press("Alt+Shift+Digit0")
         aberto = pg.evaluate("document.getElementById('mais').open")
         foco = pg.evaluate("document.activeElement && document.activeElement.textContent")
-        confere("Option+Shift+0 abre o Mais e leva o foco ao primeiro item", aberto and foco == "Nome6", (aberto, foco))
+        confere("Option+Shift+0 abre o Mais e leva o foco ao primeiro item", aberto and foco == "Nome5", (aberto, foco))
         pg.keyboard.press("Escape")
         confere("Esc fecha o Mais e devolve o foco ao resumo", not pg.evaluate("document.getElementById('mais').open") and pg.evaluate("document.activeElement.tagName") == "SUMMARY")
         pg.keyboard.press("Alt+Shift+Digit0")
         pg.keyboard.press("Alt+Shift+Digit0")
         confere("Option+Shift+0 de novo fecha", not pg.evaluate("document.getElementById('mais').open"))
+        pg.keyboard.press("Alt+Shift+Digit0")   # fecha, para testar o atalho da quinta posição
+        pg.keyboard.press("Alt+Shift+Digit5")
+        confere("Option+Shift+5 também abre o Mais (a quinta posição)", pg.evaluate("document.getElementById('mais').open") and pg.evaluate("document.activeElement.textContent") == "Nome5")
         pg2 = nav.new_page(viewport={"width": 1000, "height": 700})
         pg2.set_content('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>t</title><style>' + d.CSS + '</style></head><body>' + d.abas(itens, "/r1") + "</body></html>")
         caixas = pg2.evaluate("Array.from(document.querySelectorAll('[role=tab],summary')).map(function(x){var r=x.getBoundingClientRect();return [Math.round(r.left),Math.round(r.top)]})")
         topos = sorted({c[1] for c in caixas})
-        confere("12 itens: as 5 abas e o Mais ficam na mesma linha, o Mais depois das abas", len(topos) == 1 and caixas[5][0] > caixas[4][0], caixas)
+        confere("12 itens: as 4 abas e o Mais ficam na mesma linha, o Mais na quinta posição, depois das abas", len(topos) == 1 and caixas[4][0] > caixas[3][0], caixas)
         pg2.set_content('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>t</title><style>' + d.CSS + '</style></head><body>' + d.abas(itens[:5], "/r1") + "</body></html>")
         caixas = pg2.evaluate("Array.from(document.querySelectorAll('[role=tab]')).map(function(x){var r=x.getBoundingClientRect();return [Math.round(r.left),Math.round(r.top)]})")
         confere("5 abas: todas numa só linha", len({c[1] for c in caixas}) == 1 and len(caixas) == 5, caixas)

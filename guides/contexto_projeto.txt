@@ -61,7 +61,7 @@ Plataforma e operação
 
 7. Estilo e conceito (Heimdall Design)
 1) Fonte única: heimdall_design.py e a página de Design (gerar_docs.py). Link lê, botão age. Nada de cor, fonte ou foco definido só numa página.
-2) Lista de abas enxuta (no máximo 5, decisão de 25/11/2026), agrupada por assunto, com subabas; o nome da aba agrupa o assunto e a subaba nunca repete o nome da aba nem de outra subaba. Perfil, estado técnico dos dados e configurações ficam em Ajustes.
+2) Lista de abas enxuta (no máximo 5 posições, com o menu Mais como a quinta quando passar disso; nome de aba com uma palavra só; decisão de 25/11/2026), agrupada por assunto, com subabas; o nome da aba agrupa o assunto e a subaba nunca repete o nome da aba nem de outra subaba. Perfil, estado técnico dos dados e configurações ficam em Ajustes.
 3) Telas enxutas: sem descrições, sem avisos repetidos, sem comandos de terminal; Guia de comandos na Ajuda traz o equivalente por sistema (macOS, Linux, Windows) e o que fazer no iPhone e no Android.
 4) Texto de produto: profissional, claro, objetivo, neutro e sem dados do dono. Textos antigos são ajustados ao serem mexidos (ainda há restos, por exemplo no fluxo de digest hiperpersonalizado).
 5) Comandos do terminal: nomes em inglês; opções com dois hífens e forma curta; heimdall.zsh traduz para scripts com opções em português.

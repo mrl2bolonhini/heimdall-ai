@@ -43,7 +43,7 @@ Todos seguem o mesmo padrão dos atuais: arquivo em games/, lógica testada em N
 13. Poker Caribenho [FEITO: Poker caribenho]
    Contra a banca, com cinco cartas e uma aposta de bônus; o jogo lê a mão e a carta aberta da banca e diz quando dá para pagar a aposta dobrada. Créditos virtuais.
 
-Ordem sugerida para os jogos de cassino: blackjack, roleta, bacará, poker caribenho e, por último, o poker. Todos são só de entretenimento, com créditos virtuais, e ficam na categoria Cartas e cassino (o poker também).
+Ordem sugerida para os jogos de cassino: blackjack, roleta, bacará, poker caribenho e, por último, o poker. Todos são só de entretenimento, com créditos virtuais, e ficam na categoria Cassino.
 
 Observações
 - Jogos de terceiros do boletim Audiogames.net não foram testados e não têm licença aberta confirmada. Por isso a ideia é fazer versões nossas, nunca copiar.

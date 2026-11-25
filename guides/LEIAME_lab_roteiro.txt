@@ -37,7 +37,7 @@ ROTEIRO 3: PRÓXIMOS PASSOS PARA ESTUDAR
 
 1. Troque o CSV por Parquet e compare o tamanho dos arquivos e o resultado das consultas.
 2. Crie um job no Glue, execute e veja a situação da última execução na página do Glue.
-3. Use o Console geral para o que não tem página própria. Exemplos prontos já estão na página: DynamoDB (criar tabela, gravar item, ler), SQS (criar fila), Kinesis (criar stream).
+3. Use o Console para o que não tem página própria. Exemplos prontos já estão na página: DynamoDB (criar tabela, gravar item, ler), SQS (criar fila), Kinesis (criar stream).
 4. Monte um fluxo completo: um evento cai no S3, uma função Lambda processa e o resultado vira tabela no Athena.
 
 REFERÊNCIA RÁPIDA

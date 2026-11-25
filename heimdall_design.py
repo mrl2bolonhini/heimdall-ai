@@ -77,7 +77,7 @@ details.conta{max-width:22rem;margin:.5rem 0 0 auto;padding:.3rem .6rem;border:1
 details.grupo{border:1px solid var(--linha);margin:.5rem 0;padding:.3rem .8rem}details.grupo summary{cursor:pointer;font-weight:700;min-height:2.75rem}
 ul.acoes{list-style:none;padding:0}ul.acoes li{margin:.6rem 0}ul.acoes button{margin:0 .8rem 0 0;min-width:11rem}
 [role=tablist]{display:flex;flex-wrap:wrap;gap:.25rem;margin:.4rem 0 1rem;border-bottom:1px solid var(--linha)}
-.abas-bloco{display:grid;grid-template-columns:repeat(5,1fr)}.abas-bloco>[role=tablist]{grid-area:1/1/2/-1;margin-bottom:.4rem}
+.abas-bloco{display:grid;grid-template-columns:repeat(5,1fr)}.abas-bloco>[role=tablist]{grid-area:1/1/2/-1;margin-bottom:.4rem}.abas-bloco>[role=tablist].com-mais{grid-area:1/1/2/5}
 .abas-bloco>details.mais{grid-area:1/5;align-self:end;margin:0 0 .4rem;position:relative;z-index:2}.abas-bloco>details.mais summary{display:block;width:100%;text-align:center}
 .abas-bloco>details.mais ul{position:absolute;top:100%;right:0;min-width:100%;margin:0}
 [role=tablist] [role=tab]{flex:1 1 auto;text-align:center}[role=tablist].l3 [role=tab]{flex-basis:calc(33.333% - .25rem)}[role=tablist].l4 [role=tab]{flex-basis:calc(25% - .25rem)}[role=tablist].l5 [role=tab]{flex-basis:calc(20% - .25rem)}
@@ -122,39 +122,44 @@ def botao_js(id_: str, rotulo: str) -> str:
     return f'<button type="button" id="{e(id_)}">{e(rotulo)}</button>'
 
 
-MAX_ABAS = 5   # no máximo 5 abas por serviço (decisão de 25/11/2026: leitura mais clara e telas pequenas dos apps móveis). Option+Shift+1 a 5 abrem as abas; o que passar disso fica no menu Mais (Option+Shift+0), rede de segurança: nenhum serviço deve depender dele
+MAX_ABAS = 5   # no máximo 5 posições de abas por serviço (decisão de 25/11/2026: leitura mais clara e telas pequenas dos apps móveis). Passou de 5 itens: 4 abas e o menu Mais na quinta posição (Option+Shift+5 ou 0 o abrem); nunca passa de 5
+
+
+def limite_abas(n: int) -> int:
+    """Quantas abas de verdade para `n` itens: todas, até MAX_ABAS; passando disso, uma a menos, porque o menu Mais ocupa a quinta posição."""
+    return n if n <= MAX_ABAS else MAX_ABAS - 1
 
 
 def por_linha(n: int) -> int:
-    """Abas por linha: todas numa só linha, no máximo MAX_ABAS (5). O que passa disso vai para o menu Mais, na mesma linha."""
-    return min(n, MAX_ABAS)
+    """Abas por linha: todas numa só linha, no máximo MAX_ABAS (5) posições. Com o menu Mais, são MAX_ABAS - 1 abas e o Mais completa a linha."""
+    return limite_abas(n)
 
 
 def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = ()) -> str:
     """Abas de navegação entre páginas (ARIA tablist). Cada aba é um link: ler/ir é link. As setas movem entre as abas e Option+Shift+número
     abre a aba pelo número (o script `SCRIPT_ABAS` faz isso). `itens` é [(rota, nome)]; `atual` é a rota aberta. O painel é o <div role=tabpanel>
     que `painel_da_aba` devolve em volta do conteúdo.
-    Com mais de 5 itens (MAX_ABAS), as 5 primeiras são abas e as outras vão para o menu Mais (um <details>, que funciona sem JavaScript), aberto por
+    Com mais de 5 itens (MAX_ABAS), as 4 primeiras são abas e as outras vão para o menu Mais, que ocupa a quinta posição (um <details>, que funciona sem JavaScript), aberto por
     Option+Shift+0; os itens do Mais são links comuns (abrem a página inteira)."""
     e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
     abas_, extras = [], []
+    limite = limite_abas(len(itens))
     for i, (rota, nome) in enumerate(itens, 1):
         sel = rota == atual
-        if i > MAX_ABAS:
+        if i > limite:
             extras.append(f'<li><a id="aba-{i}" href="{e(rota)}"{" aria-current=\"page\"" if sel else ""}>{e(nome)}</a></li>')
             continue
         abas_.append(f'<a role="tab" id="aba-{i}" href="{e(rota)}" aria-selected="{"true" if sel else "false"}" tabindex="{0 if sel else -1}" '
                      f'aria-controls="painel-aba"{" data-completa" if rota in completas else ""}>{e(nome)}</a>')
-    n_abas = min(len(itens), MAX_ABAS)
     dicas = ""   # sem descrição das abas: o leitor de tela lê só o nome e se está selecionada; os atalhos estão na Ajuda
     if abas_ and not any('aria-selected="true"' in a for a in abas_):   # a aba aberta está no Mais: a primeira continua alcançável pelo Tab
         abas_[0] = abas_[0].replace('tabindex="-1"', 'tabindex="0"', 1)
     mais = ""
     if extras:
-        atual_extra = next((n for r, n in itens[MAX_ABAS:] if r == atual), "")
+        atual_extra = next((n for r, n in itens[limite:] if r == atual), "")
         titulo = f"Mais, aba aberta: {atual_extra}" if atual_extra else "Mais"
         mais = (f'<details class="mais" id="mais"{" data-atual" if atual_extra else ""}><summary>{e(titulo)}</summary>'
-                f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" hidden>Atalho: Option Shift 0</span>')
+                f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" hidden>Atalho: Option Shift {limite + 1} ou 0</span>')
     classe = f"l{por_linha(len(itens))}" + (" com-mais" if extras else "")
     return (f'<div class="abas-bloco"><div role="tablist" class="{classe}" aria-label="{e(rotulo)}">' + "".join(abas_)
             + f'</div>{mais}{dicas}</div>')
@@ -428,7 +433,14 @@ document.addEventListener('keydown', function(ev){
   }
   var m = /^Digit([1-9])$/.exec(ev.code); if (!m) { return; }
   var top = principal(); if (!top) { return; }
-  var a = abasDe(top)[parseInt(m[1], 10) - 1]; if (a) { ev.preventDefault(); a.click(); }
+  var n = parseInt(m[1], 10), todas = abasDe(top), a = todas[n - 1];
+  if (a) { ev.preventDefault(); a.click(); return; }
+  var mais5 = document.getElementById('mais');   // o Mais ocupa a posição seguinte à da última aba (a quinta)
+  if (mais5 && n === todas.length + 1) {
+    ev.preventDefault();
+    if (mais5.open) { mais5.open = false; mais5.querySelector('summary').focus(); return; }
+    mais5.open = true; var l5 = mais5.querySelector('a'); if (l5) { l5.focus(); }
+  }
 });
 })();
 """

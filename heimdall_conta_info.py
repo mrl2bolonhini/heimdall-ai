@@ -8,7 +8,7 @@ INFO = {
     "lab": {
         "oque": "Painel web do emulador de AWS do Heimdall, com S3, Lambda, Glue, Athena e um console geral, para estudar e testar sem custo.",
         "como": ["Entre pelo Cloudflare Access, com a sua conta Microsoft e a aprovação no Authenticator.",
-                 "Escolha na barra do alto o serviço da AWS que quer usar: S3, Lambda, Glue, Athena ou Console geral.",
+                 "Escolha na barra do alto o serviço da AWS que quer usar: S3, Lambda, Glue, Athena ou Console.",
                  "Nada precisa ser configurado: os recursos ficam em um emulador local, sem custo na AWS."],
     },
     "notas": {

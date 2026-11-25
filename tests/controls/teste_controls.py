@@ -328,9 +328,9 @@ confere("Origin null vindo de outro site (Sec-Fetch-Site) é recusado", s == 403
 s, corpo, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": "errado"}, cookie=token, extra={"Origin": "null"})
 confere("Origin null com token errado continua recusado", s == 403)
 s, corpo, _ = req("GET", "/", cookie=token)
-confere("Visão geral mostra a tabela de versões com legenda", '<caption>Versões do Mac, do Docker e dos serviços</caption>' in corpo and "Python do Heimdall" in corpo and "heimdall doctor" not in corpo, corpo[-300:])
-confere("a página inicial é a Visão geral, primeira aba, com a situação dos serviços e a aba Ajustes", s == 200 and corpo.count('aria-selected="true"') == 1 and _re.search(r'aria-selected="true"[^>]*>Visão geral|>Visão geral</a>', corpo)
-        and "serviços no ar" in corpo and 'href="/ajustes"' in corpo and "<h1>Visão geral</h1>" in corpo, corpo[:100])
+confere("Resumo mostra a tabela de versões com legenda", '<caption>Versões do Mac, do Docker e dos serviços</caption>' in corpo and "Python do Heimdall" in corpo and "heimdall doctor" not in corpo, corpo[-300:])
+confere("a página inicial é o Resumo, primeira aba, com a situação dos serviços e a aba Ajustes", s == 200 and corpo.count('aria-selected="true"') == 1 and _re.search(r'aria-selected="true"[^>]*>Resumo|>Resumo</a>', corpo)
+        and "serviços no ar" in corpo and 'href="/ajustes"' in corpo and "<h1>Resumo</h1>" in corpo, corpo[:100])
 confere("menu Conta mostra o nome de quem entrou e tem o Sair", "<summary>Conta: Dono</summary>" in corpo and 'action="/sair"' in corpo and "senha e código" in corpo)
 tk2, _ = hc.nova_sessao("*")
 csrf2 = hc.sessao_valida(tk2, hcx.SERVICO)["csrf"]

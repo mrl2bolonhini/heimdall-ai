@@ -174,7 +174,7 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem")]   # no máximo 5 abas (Heimdall Design)
+SECOES = [("/", "Resumo"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem")]   # no máximo 5 abas (Heimdall Design)
 # Abas com subabas: a rota de cada subaba aponta para a aba de cima a que pertence (lista de abas enxuta do Heimdall Design).
 SUBABAS = {"/nuvem": [("/nuvem", "Continuidade"), ("/monitor", "Consumo de IA")],
            "/servicos": [("/servicos", "Ligar e desligar"), ("/manutencao", "Manutenção")]}
@@ -337,7 +337,7 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
               '<p>O botão <a href="/ajustes">Ajustes</a>, no topo, traz todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar Heimdall, no fim da página, faz isso.</p>')
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando e cada mudança ficam anotados em logs/controls_audit.log, sem a saída nem os valores. '
               'Programas de tela cheia, como vim e top, não funcionam no Terminal: use cat, sed e ps.</p>')
-    return "Visão geral", corpo
+    return "Resumo", corpo
 
 
 def pg_terminal(q: dict, sess: dict) -> tuple:

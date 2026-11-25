@@ -2,15 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
-## 2026-11-25 - No máximo 5 abas por serviço, Games em 4 categorias e banco do Finance na cópia diária
-- Regra do Heimdall Design: no máximo 5 abas por serviço, para uma leitura mais clara e para telas menores dos apps móveis. O que passar disso vai para o menu Mais (rede de segurança), e os atalhos Option+Shift+1 a 5 abrem as abas.
-- Games: as categorias passam a ser Ação e aventuras (jogos de ação e aventuras de texto), Cassino (só os jogos de azar: poker, blackjack, bacará, poker caribenho, caça-níqueis e roleta), Palavras e lógica (inclui a paciência) e Tabuleiro e estratégia, mais Outros jogos quando houver. Os endereços antigos das categorias continuam valendo.
-- Controls: cinco abas (Visão geral, Terminal, Serviços, Usuários e Nuvem); Manutenção virou subaba de Serviços, ao lado de Ligar e desligar.
-- Lab: cinco abas (Início, S3, Processamento, Athena e Console geral); Lambda e Glue viraram subabas de Processamento.
+## 2026-11-25 - No máximo 5 posições de abas, nomes de uma palavra e Games em 5 categorias
+- Regra do Heimdall Design: no máximo 5 posições de abas por serviço, para uma leitura mais clara e para telas menores dos apps móveis. Com mais de 5 itens, o design mostra 4 abas e o menu Mais na quinta posição (Option+Shift+5 ou 0 o abrem), então nunca passa de 5. Os atalhos Option+Shift+1 a 5 abrem as abas.
+- Nome de aba com uma palavra só (as subabas podem ter mais): o Controls passou a ter Resumo no lugar de Visão geral e o Lab, Console no lugar de Console geral.
+- Games: cinco categorias, em ordem alfabética: Ação, Aventuras, Cassino (só jogos de azar: poker, blackjack, bacará, poker caribenho, caça-níqueis e roleta), Estratégia e Lógica (palavras, números e a paciência). Com jogos de terceiros no .env, são 6 itens: o menu Mais, na quinta posição, guarda Lógica e Outros. Os endereços antigos das categorias continuam valendo.
+- Controls: cinco abas (Resumo, Terminal, Serviços, Usuários e Nuvem); Manutenção virou subaba de Serviços, ao lado de Ligar e desligar.
+- Lab: cinco abas (Início, S3, Processamento, Athena e Console); Lambda e Glue viraram subabas de Processamento.
 - Cópia diária: o banco do Finance (financas.db e avisos_financas.db) também entra, cada um na subpasta com o nome dele.
 
-## 2026-11-25 - Games e Guia de comandos de administração
-- Games: Cartas e Cassino foram juntados (reorganizado na entrada acima).
+## 2026-11-25 - Guia de comandos de administração
 - Guia de comandos (Ajuda e suporte, no Heimdall Account): nova tabela Administração, com ver as versões instaladas, o diagnóstico e ligar e desligar o emulador de AWS do Lab, para macOS, Linux e Windows. O aviso do Lab com o emulador desligado e a lista de versões do Controls ligam a essa tabela.
 
 ## 2026-11-25 - Navegação: Controls com 6 abas, Ajustes no News e subaba Ajuda

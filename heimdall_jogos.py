@@ -178,13 +178,14 @@ CATALOGO += [
 ]
 # Categorias: (id, título, descrição, jogos). A página inicial lista as categorias e cada uma tem a sua página com os jogos.
 CATEGORIAS = [
-    # Quatro categorias (mais a aba Outros jogos, se houver): o Heimdall Design pede no máximo 5 abas por serviço.
-    ("aventuras", "Ação e aventuras", "Jogos de reflexo e movimento e histórias em que você digita comandos e explora. O som ajuda a jogar: melhor com fones de ouvido.",
-     ["arqueiro", "labirinto", "vilarejo", "aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
+    # Nomes de uma palavra, em ordem alfabética. Cinco categorias ocupam as 5 posições de abas; com a aba Outros jogos passam de 5 itens e o menu Mais
+    # (quinta posição) guarda as duas últimas (Heimdall Design: nunca mais de 5 posições).
+    ("acao", "Ação", "Jogos de reflexo e movimento. O som ajuda a jogar: melhor com fones de ouvido.", ["arqueiro", "labirinto", "vilarejo"]),
+    ("aventuras", "Aventuras", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
     ("cassino", "Cassino", "Jogos de azar e de cartas, só com créditos virtuais.", ["poker", "blackjack", "bacara", "caribenho", "cacaniqueis", "roleta"]),
-    ("logica", "Palavras e lógica", "Palavras, números, códigos e quebra-cabeças de raciocínio, inclusive a paciência.",
+    ("estrategia", "Estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "sonar", "velha", "minas", "gramado"]),
+    ("logica", "Lógica", "Palavras, números, códigos e quebra-cabeças de raciocínio, inclusive a paciência.",
      ["forca", "cincoletras", "senha", "numero", "sudoku", "2048", "paciencia"]),
-    ("tabuleiro", "Tabuleiro e estratégia", "Jogos de tabuleiro, contra o computador.", ["xadrez", "naval", "sonar", "velha", "minas", "gramado"]),
 ]
 def _chave(t: str) -> str:
     """Chave de ordem alfabética: sem acentos, sem maiúsculas e sem o artigo inicial (A, O, As, Os)."""
@@ -197,7 +198,7 @@ CATEGORIAS.sort(key=lambda c: _chave(c[1]))
 GRUPOS = [(t, ids) for _, t, _, ids in CATEGORIAS]
 POR_CATEGORIA = {c[0]: c for c in CATEGORIAS}
 # Endereços antigos das categorias (juntadas em 25/11/2026), para quem guardou o link
-for _antigo, _novo in (("audio", "aventuras"), ("acao", "aventuras"), ("cartas", "cassino"), ("palavras", "logica"), ("numeros", "logica")):
+for _antigo, _novo in (("audio", "acao"), ("cartas", "cassino"), ("palavras", "logica"), ("numeros", "logica"), ("tabuleiro", "estrategia")):
     POR_CATEGORIA[_antigo] = POR_CATEGORIA[_novo]
 # Aventuras do motor: a página carrega a história e depois o motor (a ordem importa) e diz ao motor qual história abrir.
 HISTORIAS = {"relogios", "templo", "orion", "caverna"}
@@ -236,9 +237,9 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 
 
 def nav_jogos() -> list:
-    """Abas do Games: uma por categoria (em ordem alfabética) e, se há jogos hospedados por você, a aba Outros jogos. No máximo 5 abas (4 categorias e Outros jogos)."""
+    """Abas do Games: uma por categoria (em ordem alfabética) e, se há jogos hospedados por você, a aba Outros jogos. No máximo 5 posições: 5 categorias, ou 4 abas e o menu Mais (quando há Outros jogos)."""
     itens = [(f"/categoria/{cid}", t) for cid, t, _, _ in CATEGORIAS]
-    return itens + ([("/outros", "Outros jogos")] if extras() else [])
+    return itens + ([("/outros", "Outros")] if extras() else [])
 
 
 def aba_do_jogo(jid: str) -> str:
