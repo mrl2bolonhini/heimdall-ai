@@ -9,6 +9,7 @@ Arquivo: HEIMDALL_DB_DIR/heimdall.db (padrão: ./banco/heimdall.db). Cópia diá
 Leitura livre só por SELECT (consulta_sql): conexão somente leitura + autorizador que recusa qualquer outra coisa.
 """
 import contextlib
+import contextvars
 import heimdall_pastas
 import json
 import os
@@ -368,6 +369,11 @@ CREATE TABLE IF NOT EXISTS perfil_clinico (
     UNIQUE (tipo, texto)
 );
 
+CREATE TABLE IF NOT EXISTS perfil_ajustes (
+    chave TEXT PRIMARY KEY,                     -- perfil_concluido (data em que a pessoa concluiu) ou perfil_adiado (data até a qual o convite não volta)
+    valor TEXT NOT NULL DEFAULT ''
+);
+
 CREATE TABLE IF NOT EXISTS sugestoes_saude (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     chave TEXT NOT NULL UNIQUE,                 -- a mesma sugestão nunca aparece duas vezes, nem depois de recusada
@@ -380,7 +386,9 @@ CREATE TABLE IF NOT EXISTS sugestoes_saude (
     estado TEXT NOT NULL DEFAULT 'aberta',      -- aberta, aceita, recusada, adiada, respondida
     resposta TEXT NOT NULL DEFAULT '',
     criado TEXT NOT NULL DEFAULT '',
-    atualizado TEXT NOT NULL DEFAULT ''
+    atualizado TEXT NOT NULL DEFAULT '',
+    compromisso TEXT NOT NULL DEFAULT '',       -- AAAA-MM-DD quando a sugestão é um compromisso de data fixa (vira evento no Calendário)
+    acao TEXT NOT NULL DEFAULT ''               -- nome curto da ação, para o título da agenda (sem remédio nem CID)
 );
 
 CREATE TABLE IF NOT EXISTS agenda_saude (
@@ -445,16 +453,47 @@ def pessoa(nome: str, padrao: str = ""):
             DB_DIR, DB_PATH = antes
 
 
+_PESSOA_DIR = contextvars.ContextVar("heimdall_pessoa_dir", default=None)
+
+
+def pasta_em_uso() -> Path:
+    """Pasta do banco em uso: a da pessoa dentro de da_pessoa() (só neste pedido), senão DB_DIR."""
+    return _PESSOA_DIR.get() or DB_DIR
+
+
+def caminho() -> Path:
+    """Arquivo do banco em uso (o da pessoa dentro de da_pessoa(), senão DB_PATH)."""
+    d = _PESSOA_DIR.get()
+    return (d / "heimdall.db") if d else DB_PATH
+
+
+@contextlib.contextmanager
+def da_pessoa(nome: str, padrao: str = "dono"):
+    """Como pessoa(), mas seguro para servidor com vários pedidos ao mesmo tempo: a troca vale só para o pedido (thread) que a fez, sem mexer nas
+    variáveis do módulo. Nome vazio, igual a `padrao` ou "dono" usa o banco do dono. Nome fora do padrão a-z, 0-9 e hífen levanta ValueError."""
+    if not nome or nome in (padrao, "dono"):
+        yield
+        return
+    destino = pasta_da_pessoa(nome)
+    destino.mkdir(parents=True, exist_ok=True)
+    os.chmod(destino, 0o700)
+    marca = _PESSOA_DIR.set(destino)
+    try:
+        yield
+    finally:
+        _PESSOA_DIR.reset(marca)
+
+
 def _agora() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 def conectar(somente_leitura: bool = False) -> sqlite3.Connection:
     if somente_leitura:
-        con = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, timeout=10)
+        con = sqlite3.connect(f"file:{caminho()}?mode=ro", uri=True, timeout=10)
     else:
-        DB_DIR.mkdir(parents=True, exist_ok=True)
-        con = sqlite3.connect(DB_PATH, timeout=10)
+        pasta_em_uso().mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(caminho(), timeout=10)
         con.execute("PRAGMA journal_mode=WAL")
     con.row_factory = sqlite3.Row
     return con
@@ -466,7 +505,7 @@ def iniciar() -> None:
         con = conectar()
         try:
             con.executescript(ESQUEMA)
-            for tabela, coluna in (("receitas", "quantidade"), ("encaminhamentos", "cid"), ("laudos", "achados")):     # bancos criados antes destas colunas
+            for tabela, coluna in (("receitas", "quantidade"), ("encaminhamentos", "cid"), ("laudos", "achados"), ("sugestoes_saude", "compromisso"), ("sugestoes_saude", "acao")):     # bancos criados antes destas colunas
                 if coluna not in [r[1] for r in con.execute(f"PRAGMA table_info({tabela})")]:
                     con.execute(f"ALTER TABLE {tabela} ADD COLUMN {coluna} TEXT NOT NULL DEFAULT ''")
             if "lembrete" not in [r[1] for r in con.execute("PRAGMA table_info(triagem)")]:   # bancos criados antes desta coluna
@@ -478,7 +517,7 @@ def iniciar() -> None:
 
 
 def _copia_diaria() -> None:
-    destino = heimdall_pastas.migrar(DB_DIR, "copias", "copies")
+    destino = heimdall_pastas.migrar(pasta_em_uso(), "copias", "copies")
     try:
         destino.mkdir(parents=True, exist_ok=True)
         hoje = destino / f"heimdall-{datetime.now():%Y-%m-%d}.db"
@@ -560,7 +599,7 @@ _UNIDADES_KJ = ("kj", "kilojoule", "kilojoules")
 
 def normalizar_energia() -> int:
     """Converte para kcal o que ficou gravado em kJ (a energia em repouso chegava em kJ e era lida como kcal). Idempotente: depois da conversão a unidade vira kcal."""
-    if not DB_PATH.exists():
+    if not caminho().exists():
         return 0
     with _trava:
         con = conectar()
@@ -588,7 +627,7 @@ def consulta_sql(sql: str, limite: int = 200, params: tuple = ()) -> dict:
     if not re.match(r"(?is)^(select|with)\b", sql) or ";" in sql:
         raise PermissionError("só é permitido um único SELECT")
     limite = max(1, min(int(limite), 1000))
-    if not DB_PATH.exists():
+    if not caminho().exists():
         iniciar()
     con = conectar(somente_leitura=True)
     try:
@@ -610,7 +649,7 @@ def consulta_sql(sql: str, limite: int = 200, params: tuple = ()) -> dict:
 
 def resumo() -> dict:
     """Contagens e período de cada tabela (para conferir se o banco está recebendo dados)."""
-    if not DB_PATH.exists():
+    if not caminho().exists():
         iniciar()
     con = conectar(somente_leitura=True)
     try:

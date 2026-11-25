@@ -95,6 +95,77 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 
 token, sess = hc.nova_sessao()
 ck = f"{ps.COOKIE}={token}"
+import heimdall_clinico as _cl
+import urllib.parse as _up
+
+
+def postar(rota, campos, cookie=ck, csrf=None):
+    campos = dict(campos, csrf=sess["csrf"] if csrf is None else csrf)
+    return pedir(rota, cookie, dados=_up.urlencode(campos).encode())
+
+
+st, _, cab = pedir("/", ck)
+confere("primeiro acesso: a visão geral leva ao Perfil de saúde", st == 303 and cab.get("Location") == "/perfil", (st, cab))
+st, corpo, _ = pedir("/perfil", ck)
+confere("página Perfil: convite, formulário com rótulos, botões de concluir e de preencher depois",
+        st == 200 and "primeiro acesso" in corpo and 'for="texto-perfil"' in corpo and 'for="tipo-perfil"' in corpo and "Preencher depois" in corpo and "Não tenho nada a informar" in corpo
+        and "Pular para o conteúdo" in corpo and corpo.count("<h1>") == 1, corpo[:400])
+st, _, cab = postar("/perfil/adicionar", {"tipo": "condicao", "texto": "hipoglicemia", "desde": "2020"}, csrf="errado")
+confere("perfil: gravar com token errado é recusado", st == 403 and not _cl.perfil_listar(), st)
+st, _, cab = postar("/perfil/adicionar", {"tipo": "condicao", "texto": "hipoglicemia", "desde": "2020"})
+confere("perfil: adicionar grava e volta ao Perfil", st == 303 and cab.get("Location") == "/perfil" and len(_cl.perfil_listar()) == 1, (st, cab))
+st, corpo, _ = pedir("/perfil", ck)
+confere("perfil: item na tabela e aviso de confirmação uma vez", "hipoglicemia" in corpo and 'role="status"' in corpo and "Adicionado ao perfil" in corpo and "Adicionado ao perfil" not in pedir("/perfil", ck)[1], corpo[:300])
+st, _, cab = postar("/perfil/adicionar", {"tipo": "humor", "texto": "x"})
+st, corpo, _ = pedir("/perfil", ck)
+confere("perfil: erro de validação vira aviso (alert), não página de erro", st == 200 and 'role="alert"' in corpo and "Tipo inválido" in corpo, corpo[:300])
+st, _, cab = pedir("/", ck)
+confere("com itens no perfil a visão geral abre normalmente", st == 200, st)
+st, _, cab = postar("/perfil/remover", {"id": str(_cl.perfil_listar()[0]["id"])})
+confere("perfil: remover", st == 303 and not _cl.perfil_listar(), st)
+st, _, cab = postar("/perfil/adiar", {})
+st, _, _ = pedir("/", ck)
+confere("preencher depois: a visão geral abre por alguns dias", st == 200, st)
+_cl.perfil_concluir()
+st, _, _ = pedir("/", ck)
+confere("concluído: a visão geral abre", st == 200, st)
+st, corpo, _ = pedir("/sugestoes", ck)
+confere("página Sugestões abre e explica evento e lembrete", st == 200 and "evento no Calendário" in corpo and "lembrete" in corpo and "Procurar novas sugestões" in corpo, corpo[:300])
+ex_ = _cl.ex
+ex_._escrever(lambda con: con.execute("INSERT INTO sugestoes_saude (chave, tipo, titulo, motivo, quando, compromisso, acao) VALUES ('pontos|1','consulta','Retirada de pontos em 02/12/2099','m','2099-11-29','2099-12-02','retirada de pontos')"))
+ex_._escrever(lambda con: con.execute("INSERT INTO sugestoes_saude (chave, tipo, titulo, motivo, quando) VALUES ('p|1','pergunta','Como está a fisioterapia','m','2099-01-01')"))
+st, corpo, _ = pedir("/sugestoes", ck)
+confere("sugestão com data fixa diz que vira evento; campos de data e hora têm rótulo; pergunta tem resposta",
+        "cria um evento no Calendário" in corpo and 'for="data-1"' in corpo and 'for="hora-1"' in corpo and "Guardar resposta" in corpo and 'aria-label="Recusar: Retirada de pontos' in corpo, corpo[:600])
+import heimdall_agenda as _ag
+_enviados = []
+_ag.AGENTE = "http://127.0.0.1:1"
+_orig = _ag.enviar
+_ag.enviar = lambda tipo, dado, post=None: (_enviados.append((tipo, dado)) or (True, "ok"))
+st, _, cab = postar("/sugestoes/acao", {"id": "1", "acao": "aceitar", "data": "", "hora": ""})
+confere("aceitar pelo painel cria evento (tipo de agenda de evento) com a data do documento", st == 303 and _enviados and _enviados[0][0] == "sugestao_saude_evento" and _enviados[0][1]["data"] == "2099-12-02", _enviados)
+st, corpo, _ = pedir("/sugestoes", ck)
+confere("aviso diz que criou o evento", "Evento criado no Calendário para 02/12/2099" in corpo, corpo[:300])
+st, _, cab = postar("/sugestoes/acao", {"id": "2", "acao": "responder", "texto": "Fiz 8 sessões."})
+confere("responder pelo painel", st == 303 and "Fiz 8 sessões" in _cl.relatorio_sugestoes(todas=True), st)
+_ag.enviar = _orig
+st, _, cab = postar("/sugestoes/acao", {"id": "999", "acao": "recusar"})
+st, corpo, _ = pedir("/sugestoes", ck)
+confere("sugestão inexistente vira aviso", 'role="alert"' in corpo, corpo[:200])
+
+# cada pessoa no seu banco: sessão de convidado (escopo saude) lê e grava só no banco dela
+_tk, _ss = hc.nova_sessao("saude", "p0123456789ab")
+_ck2 = f"{ps.COOKIE}={_tk}"
+st, _, cab = pedir("/", _ck2)
+confere("convidado: primeiro acesso dele (banco novo) também leva ao Perfil", st == 303 and cab.get("Location") == "/perfil", (st, cab))
+_cp = dict(csrf=_ss["csrf"], tipo="alergia", texto="dipirona")
+st, _, _ = pedir("/perfil/adicionar", _ck2, dados=_up.urlencode(_cp).encode())
+confere("convidado: o perfil dele vai para db/people/<id>/ e não aparece no do dono",
+        st == 303 and not [r for r in _cl.perfil_listar() if r["texto"] == "dipirona"] and "dipirona" in pedir("/perfil", _ck2)[1]
+        and (ps.banco.pasta_da_pessoa("p0123456789ab") / "heimdall.db").exists(), st)
+_cp = dict(csrf=_ss["csrf"], id="1", acao="aceitar")
+st, _, _ = pedir("/sugestoes/acao", _ck2, dados=_up.urlencode(_cp).encode())
+confere("convidado: não cria evento nem lembrete no Mac do dono", not _enviados[1:], _enviados)
 for rota, esperado in (("/", "Como você está agora"), ("/hoje", "Hoje"), ("/semana", "Saúde: semana de"), ("/sono", "noites com dado"), ("/atividade", "Passos"), ("/recuperacao", "Recuperação"), ("/anomalias", "Anomalias"),
                        ("/coracao", "Frequência"), ("/treinos", "Treinos"), ("/eventos", "Sintomas"), ("/diario", "Valores por dia"), ("/dados", "Último dia com dado")):
     st, corpo, cab = pedir(rota, ck)
@@ -111,7 +182,7 @@ confere("estado dos dados mostra em dia", "em dia" in corpo and "passos" not in 
 st, corpo, _ = pedir("/nao-existe", ck)
 confere("página inexistente dá 404", st == 404, st)
 st, corpo, _ = pedir("/semana", ck, dados=b"x=1")
-confere("POST fora de /sair e /avisos/lido é recusado (somente leitura)", st == 405, st)
+confere("POST fora das rotas de gravação é recusado", st == 405, st)
 import heimdall_avisos as _av
 import heimdall_perguntar as _hp
 import time as _tm

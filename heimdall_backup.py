@@ -180,7 +180,7 @@ def estado():
 
 
 def _copia_consistente() -> bytes:
-    if not banco.DB_PATH.exists():
+    if not banco.caminho().exists():
         raise RuntimeError("o banco ainda não existe; nada para copiar")
     with tempfile.TemporaryDirectory() as d:
         tmp = Path(d) / "copia.db"

@@ -4,7 +4,8 @@ leitor de tela, as análises do heimdall_saude.py: como você está agora, tend�
 ECG, treinos, sintomas/humor/medicamentos, o relatório da semana, o diário dos últimos dias e o estado dos dados
 (para você ver se a exportação contínua do iPhone está chegando).
 
-Somente leitura: o painel nunca grava nada no banco.
+Quase somente leitura: as análises nunca gravam nada. As únicas gravações são pedidas por botão (POST com token): o perfil de saúde, as sugestões
+de acompanhamento (aceitar, recusar, adiar, responder), o "lido" dos avisos e o Perguntar. Cada pessoa lê e grava só no banco dela (db/people/<id>/).
 
 Segurança (os dados de saúde podem ficar acessíveis de fora, então tem as mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
@@ -84,7 +85,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 """
 
 SECOES = [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"), ("/anomalias", "Anomalias"),
-          ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/exames", "Exames"), ("/documentos", "Documentos"), ("/dados", "Estado dos dados"), ("/avisos", "Avisos")]
+          ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/exames", "Exames"), ("/documentos", "Documentos"), ("/perfil", "Perfil de saúde"), ("/sugestoes", "Sugestões"), ("/dados", "Estado dos dados"), ("/avisos", "Avisos")]
 
 
 # ----------------------------------------------------------------------------------------
@@ -297,7 +298,8 @@ def pg_documentos(q: dict) -> tuple:
         corpo += f'<table><caption>Documentos recebidos ({len(docs)})</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
     else:
         corpo += "<p>Nenhum documento recebido ainda.</p>"
-    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + secao("Atestados e afastamentos", exames.relatorio_atestados()) + secao("Laudos de imagem e procedimentos", exames.relatorio_laudos()) + secao("Sugestões de acompanhamento", clinico.relatorio_sugestoes()) + secao("Perfil de saúde", clinico.relatorio_perfil()) + secao("Pedidos de exame", exames.relatorio_pedidos()) + secao("Consultas", exames.relatorio_consultas())
+    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + secao("Atestados e afastamentos", exames.relatorio_atestados()) + secao("Laudos de imagem e procedimentos", exames.relatorio_laudos()) + secao("Pedidos de exame", exames.relatorio_pedidos()) + secao("Consultas", exames.relatorio_consultas())
+    corpo += '<p class="linha-acoes">' + design.botao("/sugestoes", "Ver as sugestões de acompanhamento") + design.botao("/perfil", "Abrir o perfil de saúde") + "</p>"
     return "Documentos", corpo + AVISO_EXAMES
 
 
@@ -345,6 +347,132 @@ def pg_dados(q: dict) -> tuple:
     return "Estado dos dados", marca + aviso + bloco_atualizar(q) + intro + tabela
 
 
+# ----------------------------------------------------------------------------------------
+# Perfil de saúde e sugestões de acompanhamento (gravam no banco da pessoa, por botão com token)
+# ----------------------------------------------------------------------------------------
+def _form(rota: str, csrf: str, campos: str, rotulo: str, ocultos: dict = None) -> str:
+    oc = "".join(f'<input type="hidden" name="{e(k)}" value="{e(v)}">' for k, v in (ocultos or {}).items())
+    return (f'<form method="post" action="{e(rota)}"><input type="hidden" name="csrf" value="{e(csrf)}">{oc}{campos}'
+            f'<button type="submit">{e(rotulo)}</button></form>')
+
+
+def _campo(id_: str, rotulo: str, dica: str = "", valor: str = "") -> str:
+    return (f'<p><label for="{e(id_)}">{e(rotulo)}</label><input type="text" id="{e(id_)}" name="{e(id_.split("-")[0])}" value="{e(valor)}" autocomplete="off"'
+            + (f' aria-describedby="{e(id_)}-d"><span id="{e(id_)}-d"> {e(dica)}</span>' if dica else ">") + "</p>")
+
+
+def pg_perfil(q: dict) -> tuple:
+    csrf = (q.get("_csrf") or [""])[0]
+    itens = clinico.perfil_listar()
+    pendente = clinico.perfil_pendente()
+    concluido = bool(clinico._ajuste("perfil_concluido"))
+    corpo = ""
+    if pendente:
+        corpo += ('<p role="status">Este é o seu primeiro acesso ao Heimdall Health. Informe o que quiser sobre a sua saúde: condições e doenças que você já tem, '
+                  "cirurgias, alergias, o convênio e os médicos de confiança. Nada é obrigatório, e você pode mudar tudo depois.</p>")
+    corpo += ("<p>O perfil fica no seu banco pessoal e ajuda o Heimdall a dar sugestões de acompanhamento mais certas (por exemplo, considerar o convênio ao sugerir "
+              "onde fazer um procedimento). Não é diagnóstico nem orientação sobre remédio.</p>")
+    if itens:
+        cab = "".join(f'<th scope="col">{c}</th>' for c in ("Tipo", "Informação", "Desde", "Ação"))
+        linhas = "".join(f'<tr><th scope="row">{e(clinico.PERFIL_TIPOS.get(r["tipo"], r["tipo"]).capitalize())}</th><td>{e(r["texto"])}</td><td>{e(r["desde"])}</td>'
+                         f'<td>{design.botao_post("/perfil/remover", "Remover", csrf, {"id": r["id"]}, "Remover do perfil: " + r["texto"])}</td></tr>' for r in itens)
+        corpo += f'<table><caption>Itens do perfil ({len(itens)})</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
+    else:
+        corpo += "<p>O perfil ainda está vazio.</p>"
+    opcoes = "".join(f'<option value="{e(k)}">{e(v.capitalize())}</option>' for k, v in clinico.PERFIL_TIPOS.items())
+    campos = (f'<p><label for="tipo-perfil">Tipo</label><select id="tipo-perfil" name="tipo">{opcoes}</select></p>'
+              + _campo("texto-perfil", "Informação", "Por exemplo: hipoglicemia, cirurgia no joelho esquerdo, dipirona, ou o nome do convênio.")
+              + _campo("desde-perfil", "Desde quando (opcional)", "Formato AAAA ou AAAA-MM-DD."))
+    corpo += "<h2>Adicionar ao perfil</h2>" + _form("/perfil/adicionar", csrf, campos, "Adicionar")
+    if not concluido:
+        corpo += ('<h2>Terminou?</h2><p class="linha-acoes">' + design.botao_post("/perfil/concluir", "Concluir o perfil" if itens else "Não tenho nada a informar", csrf)
+                  + (design.botao_post("/perfil/adiar", "Preencher depois", csrf) if pendente else "") + "</p>"
+                  + "<p>Concluir encerra o convite do primeiro acesso. Esta página continua na aba Perfil de saúde.</p>")
+    return "Perfil de saúde", corpo
+
+
+def pg_sugestoes(q: dict) -> tuple:
+    csrf = (q.get("_csrf") or [""])[0]
+    dono = (q.get("_dono") or ["1"])[0] == "1"
+    abertas = clinico.listar()
+    corpo = ("<p>Sugestões de acompanhamento a partir dos documentos que você confirmou. São sugestões, nunca diagnóstico nem orientação sobre remédio. Nada vai para o "
+             "Calendário ou para o Lembretes sem você aceitar: o que tem data fixa vira evento no Calendário; o que é algo a fazer vira lembrete.</p>")
+    corpo += '<p class="linha-acoes">' + design.botao_post("/sugestoes/atualizar", "Procurar novas sugestões", csrf) + "</p>"
+    if not abertas:
+        corpo += "<p>Nenhuma sugestão aberta.</p>"
+    for s in abertas:
+        sid = s["id"]
+        tag = " (proposta pela IA)" if s["origem"] == "modelo" else ""
+        bloco = f'<h2>{e(s["titulo"])}{tag}</h2><p>{e(s["motivo"])}</p>'
+        if s["quando"]:
+            bloco += f'<p>Para: {e(exames._br(s["quando"]))}.</p>'
+        if s["tipo"] == "pergunta":
+            bloco += _form("/sugestoes/acao", csrf, _campo(f"texto-{sid}", "Sua resposta (opcional)"), "Guardar resposta", {"id": sid, "acao": "responder"})
+            bloco += '<p class="linha-acoes">' + design.botao_post("/sugestoes/acao", "Marcar como vista", csrf, {"id": sid, "acao": "aceitar"}, "Marcar como vista: " + s["titulo"]) + "</p>"
+        else:
+            if not dono:
+                bloco += "<p>O Calendário e o Lembretes são do dono deste Mac: você pode recusar, adiar ou responder.</p>"
+            else:
+                if s["compromisso"]:
+                    destino = f'Aceitar cria um evento no Calendário em {exames._br(s["compromisso"])} (dia inteiro, se você não informar a hora).'
+                else:
+                    destino = "Aceitar cria um lembrete. Se você já marcou, informe a data (e a hora) abaixo: vira evento no Calendário."
+                bloco += f"<p>{e(destino)}</p>"
+                campos = (_campo(f"data-{sid}", "Data já marcada (opcional)", "Formato AAAA-MM-DD.") + _campo(f"hora-{sid}", "Hora (opcional)", "Formato HH:MM, por exemplo 14:30."))
+                bloco += _form("/sugestoes/acao", csrf, campos, "Aceitar", {"id": sid, "acao": "aceitar"})
+            bloco += '<p class="linha-acoes">' + design.botao_post("/sugestoes/acao", "Adiar 14 dias", csrf, {"id": sid, "acao": "adiar"}, "Adiar 14 dias: " + s["titulo"]) + "</p>"
+        bloco += '<p class="linha-acoes">' + design.botao_post("/sugestoes/acao", "Recusar", csrf, {"id": sid, "acao": "recusar"}, "Recusar: " + s["titulo"]) + "</p>"
+        corpo += bloco
+    tratadas = [s for s in clinico.listar(todas=True) if s["estado"] != "aberta"]
+    if tratadas:
+        cab = "".join(f'<th scope="col">{c}</th>' for c in ("Número", "Sugestão", "Situação"))
+        linhas = "".join(f'<tr><th scope="row">{s["id"]}</th><td>{e(s["titulo"])}</td><td>{e(s["estado"])}</td></tr>' for s in tratadas[:30])
+        corpo += f'<table><caption>Sugestões já tratadas ({len(tratadas)})</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
+    return "Sugestões de acompanhamento", corpo
+
+
+def acao_clinica(rota: str, c: dict, dono: bool) -> tuple:
+    """Executa a gravação pedida por botão. Devolve (rota de volta, ("ok"|"erro", texto)). Erros de validação viram aviso, nunca página de erro."""
+    try:
+        if rota == "/perfil/adicionar":
+            r = clinico.perfil_adicionar(c.get("tipo", ""), c.get("texto", ""), c.get("desde", "").strip())
+            return "/perfil", ("ok", f"Adicionado ao perfil: {r['texto']}.")
+        if rota == "/perfil/remover":
+            clinico.perfil_remover(int(c.get("id", "0") or 0))
+            return "/perfil", ("ok", "Removido do perfil.")
+        if rota == "/perfil/concluir":
+            clinico.perfil_concluir()
+            return "/perfil", ("ok", "Perfil concluído. Você pode mudar quando quiser nesta aba.")
+        if rota == "/perfil/adiar":
+            r = clinico.perfil_adiar(7)
+            return "/", ("ok", f"Certo. O convite volta em {exames._br(r['volta_em'])}; a aba Perfil de saúde está sempre disponível.")
+        if rota == "/sugestoes/atualizar":
+            r = clinico.atualizar()
+            return "/sugestoes", ("ok", f"{r['novas']} sugestão(ões) nova(s).")
+        sid, acao = int(c.get("id", "0") or 0), c.get("acao", "")
+        if acao == "aceitar":
+            sug = clinico._sug(sid)
+            if sug["tipo"] != "pergunta" and not dono:
+                return "/sugestoes", ("erro", "O Calendário e o Lembretes são do dono deste Mac. Recuse, adie ou responda.")
+            r = clinico.aceitar(sid, data=c.get("data", "").strip(), hora=c.get("hora", "").strip())
+            return "/sugestoes", ("ok" if (r.get("evento") or r.get("lembrete") or sug["tipo"] == "pergunta") else "erro", r["texto"])
+        if acao == "recusar":
+            clinico.recusar(sid)
+            return "/sugestoes", ("ok", "Sugestão recusada; ela não volta a aparecer.")
+        if acao == "adiar":
+            r = clinico.adiar(sid, 14)
+            return "/sugestoes", ("ok", f"Adiada; volta em {exames._br(r['volta_em'])}.")
+        if acao == "responder":
+            clinico.responder(sid, c.get("texto", ""))
+            return "/sugestoes", ("ok", "Resposta guardada.")
+        return "/sugestoes", ("erro", "Ação desconhecida.")
+    except (clinico.ErroClinico, exames.ErroExames, ValueError) as err:
+        return ("/perfil" if rota.startswith("/perfil") else "/sugestoes"), ("erro", str(err)[:300])
+
+
+ROTAS_CLINICAS = ("/perfil/adicionar", "/perfil/remover", "/perfil/concluir", "/perfil/adiar", "/sugestoes/atualizar", "/sugestoes/acao")
+ROTAS_POST = ("/sair", "/avisos/lido", "/perguntar") + ROTAS_CLINICAS
+
 ROTAS = {
     "/": pg_inicio,
     "/hoje": pg_hoje,
@@ -360,13 +488,20 @@ ROTAS = {
     "/diario": pg_diario,
     "/exames": pg_exames,
     "/documentos": pg_documentos,
+    "/perfil": pg_perfil,
+    "/sugestoes": pg_sugestoes,
     "/dados": pg_dados,
 }
 
 
 def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarregar: str = "") -> bytes:
     nav = sair = scripts = ""
-    conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
+    aviso = ""
+    if sess and sess.get("flash"):
+        tipo, texto = sess["flash"]
+        sess["flash"] = None
+        aviso = f'<p class="{"ok" if tipo == "ok" else "erro"}" role="{"status" if tipo == "ok" else "alert"}">{e(texto)}</p>'
+    conteudo = f"<h1>{e(titulo)}</h1>{aviso}{corpo}"
     if sess:
         a = design.aba_da_rota(atual, SECOES)
         nav = design.nav_abas(SECOES, a, "Seções do Heimdall Health")
@@ -396,7 +531,7 @@ def contexto_saude() -> str:
     partes = []
     for nome, f in (("Hoje", saude.relatorio_hoje), ("Como você está agora", saude.relatorio_estado_atual), ("Tendências de 90 dias", lambda: saude.relatorio_tendencias(90)),
                     ("Sono de 30 dias", lambda: saude.relatorio_sono(30)), ("Atividade de 30 dias", lambda: saude.relatorio_atividade(30)),
-                    ("Recuperação", lambda: saude.relatorio_recuperacao(30)), ("Sinais fora do normal", lambda: __import__("heimdall_anomalias").relatorio())):
+                    ("Recuperação", lambda: saude.relatorio_recuperacao(30)), ("Perfil de saúde", clinico.relatorio_perfil), ("Sinais fora do normal", lambda: __import__("heimdall_anomalias").relatorio())):
         try:
             partes.append(f"## {nome}\n{f()}")
         except Exception:  # noqa: BLE001
@@ -479,7 +614,7 @@ class Painel(nuvem.ManipuladorBase):
             return
         url = urlparse(self.path)
         rota, q = url.path, parse_qs(url.query)
-        for k in ("_iphone", "_base"):
+        for k in ("_iphone", "_base", "_csrf", "_dono"):
             q.pop(k, None)
         ua = (self.headers.get("User-Agent") or "")
         if "iPhone" in ua or "iPad" in ua:
@@ -498,48 +633,66 @@ class Painel(nuvem.ManipuladorBase):
             if not sess:
                 self._ir("/entrar")
                 return
-            if metodo == "POST":
-                if rota not in ("/sair", "/avisos/lido", "/perguntar"):
-                    self._enviar(405, pagina("Não permitido", "<p>Este painel é somente de leitura.</p>", sess))
-                    return
-                n = min(int(self.headers.get("Content-Length") or 0), 4096)
-                campos = {k: v[0] for k, v in parse_qs(self.rfile.read(n).decode("utf-8", "replace")).items()}
-                if not secrets.compare_digest(campos.get("csrf", ""), sess["csrf"]):
-                    self._enviar(403, pagina("Pedido recusado", "<p>Token de segurança inválido. Volte e tente de novo.</p>", sess))
-                    return
-                if rota == "/perguntar":   # só consulta o modelo local; nenhum dado de saúde é alterado
-                    q_ = " ".join(campos.get("pergunta", "").split())[:300]
-                    volta = campos.get("volta", "/") if campos.get("volta", "/").split("?")[0] in ROTAS or campos.get("volta") == "/avisos" else "/"
-                    if len(q_) >= 3:
-                        ctx = contexto_saude()
-                        perguntar.iniciar(sess["csrf"], "pergunta", lambda: perguntar.guardar_resposta(sess["csrf"], q_, perguntar.responder(ctx, q_, SISTEMA_SAUDE)), q_)
-                    self._ir(volta)
-                    return
-                if rota == "/avisos/lido":   # só muda o "lido" do aviso; nenhum dado de saúde é alterado
-                    av = avisos_mod.do_servico("saude")
-                    if campos.get("id") == "todos":
-                        av.marcar_todos()
-                    elif campos.get("id", "").isdigit():
-                        av.marcar(int(campos["id"]))
-                    self._ir("/avisos")
-                    return
-                nuvem.encerrar_sessao(token)
-                self._ir("/entrar", [self._cookie("", apagar=True)])
+            pessoa = sess.get("pessoa", "dono")
+            if not pessoa and rota != "/sair":   # sessão de convidado antiga, sem a pessoa dentro: não dá para saber de quem são os dados
+                self._enviar(403, pagina("Entre de novo", "<p>Esta sessão é antiga. Saia e entre de novo para ver os seus dados.</p>", sess))
                 return
-            if rota == "/avisos":
-                self._enviar(200, pagina("Avisos", avisos_mod.pagina(avisos_mod.do_servico("saude").listar(), sess["csrf"]), sess, rota))
-                return
-            funcao = ROTAS.get(rota)
-            if not funcao:
-                self._enviar(404, pagina("Não encontrei", '<p>Esta página não existe.</p><p><a href="/">Voltar à visão geral</a></p>', sess))
-                return
-            titulo, corpo = funcao(q)
-            recarregar = ""
-            m = re.match(r"<!--recarregar:(\d+)-->", corpo)
-            if m:
-                corpo = corpo[m.end():]
-                recarregar = f'<meta http-equiv="refresh" content="{int(m.group(1))};url=/dados?atualizado={int((q.get("atualizado") or ["0"])[0])}&v=1">'
-            self._enviar(200, pagina(titulo, corpo, sess, rota, recarregar))
+            with banco.da_pessoa(pessoa):   # cada pessoa lê e grava só no banco dela (db/people/<id>/); o do dono é o de sempre
+                if metodo == "POST":
+                    if rota not in ROTAS_POST:
+                        self._enviar(405, pagina("Não permitido", "<p>Esta ação não existe neste painel.</p>", sess))
+                        return
+                    n = min(int(self.headers.get("Content-Length") or 0), 4096)
+                    campos = {k: v[0] for k, v in parse_qs(self.rfile.read(n).decode("utf-8", "replace")).items()}
+                    if not secrets.compare_digest(campos.get("csrf", ""), sess["csrf"]):
+                        self._enviar(403, pagina("Pedido recusado", "<p>Token de segurança inválido. Volte e tente de novo.</p>", sess))
+                        return
+                    if rota in ROTAS_CLINICAS:   # grava só no banco desta pessoa; o token csrf já foi conferido
+                        volta, sess["flash"] = acao_clinica(rota, campos, pessoa == "dono")
+                        self._ir(volta)
+                        return
+                    if rota == "/perguntar":   # só consulta o modelo local; nenhum dado de saúde é alterado
+                        q_ = " ".join(campos.get("pergunta", "").split())[:300]
+                        volta = campos.get("volta", "/") if campos.get("volta", "/").split("?")[0] in ROTAS or campos.get("volta") == "/avisos" else "/"
+                        if len(q_) >= 3:
+                            ctx = contexto_saude()
+                            perguntar.iniciar(sess["csrf"], "pergunta", lambda: perguntar.guardar_resposta(sess["csrf"], q_, perguntar.responder(ctx, q_, SISTEMA_SAUDE)), q_)
+                        self._ir(volta)
+                        return
+                    if rota == "/avisos/lido":   # só muda o "lido" do aviso; nenhum dado de saúde é alterado
+                        av = avisos_mod.do_servico("saude")
+                        if campos.get("id") == "todos":
+                            av.marcar_todos()
+                        elif campos.get("id", "").isdigit():
+                            av.marcar(int(campos["id"]))
+                        self._ir("/avisos")
+                        return
+                    nuvem.encerrar_sessao(token)
+                    self._ir("/entrar", [self._cookie("", apagar=True)])
+                    return
+                if metodo == "GET" and rota == "/":   # primeiro acesso: o perfil de saúde é pedido logo na entrada
+                    try:
+                        if clinico.perfil_pendente():
+                            self._ir("/perfil")
+                            return
+                    except Exception:  # noqa: BLE001 - o convite nunca impede a visão geral
+                        pass
+                if rota == "/avisos":
+                    self._enviar(200, pagina("Avisos", avisos_mod.pagina(avisos_mod.do_servico("saude").listar(), sess["csrf"]), sess, rota))
+                    return
+                funcao = ROTAS.get(rota)
+                if not funcao:
+                    self._enviar(404, pagina("Não encontrei", '<p>Esta página não existe.</p><p><a href="/">Voltar à visão geral</a></p>', sess))
+                    return
+                q["_csrf"] = [sess["csrf"]]
+                q["_dono"] = ["1" if pessoa == "dono" else "0"]
+                titulo, corpo = funcao(q)
+                recarregar = ""
+                m = re.match(r"<!--recarregar:(\d+)-->", corpo)
+                if m:
+                    corpo = corpo[m.end():]
+                    recarregar = f'<meta http-equiv="refresh" content="{int(m.group(1))};url=/dados?atualizado={int((q.get("atualizado") or ["0"])[0])}&v=1">'
+                self._enviar(200, pagina(titulo, corpo, sess, rota, recarregar))
         except Exception as ex:  # noqa: BLE001
             sys.stderr.write(f"{time.strftime('%H:%M:%S')} erro em {rota}: {type(ex).__name__}: {str(ex)[:200]}\n")
             self._enviar(500, pagina("Erro", '<p class="erro" role="alert">Não consegui abrir esta página.</p><p><a href="/">Voltar</a></p>', sess))

@@ -76,6 +76,35 @@ def perfil_remover(pid: int) -> dict:
     return {"removido": int(pid)}
 
 
+def _ajuste(chave: str) -> str:
+    r = ex._ler("SELECT valor FROM perfil_ajustes WHERE chave = ?", (chave,))
+    return r[0]["valor"] if r else ""
+
+
+def _definir_ajuste(chave: str, valor: str) -> None:
+    ex._escrever(lambda con: con.execute("INSERT INTO perfil_ajustes (chave, valor) VALUES (?,?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor", (chave, valor)))
+
+
+def perfil_pendente(hoje: date = None) -> bool:
+    """True no primeiro acesso: o perfil está vazio, a pessoa nunca o concluiu e não o adiou. A tela de Perfil é oferecida logo na entrada."""
+    hoje = hoje or date.today()
+    if perfil_listar() or _ajuste("perfil_concluido"):
+        return False
+    return _ajuste("perfil_adiado") <= hoje.isoformat()
+
+
+def perfil_concluir(hoje: date = None) -> dict:
+    """A pessoa terminou de informar (ou não tem nada a informar): o convite deixa de aparecer. A aba Perfil continua disponível."""
+    _definir_ajuste("perfil_concluido", (hoje or date.today()).isoformat())
+    return {"concluido": True}
+
+
+def perfil_adiar(dias: int = 7, hoje: date = None) -> dict:
+    volta = ((hoje or date.today()) + timedelta(days=max(1, min(int(dias), 90)))).isoformat()
+    _definir_ajuste("perfil_adiado", volta)
+    return {"volta_em": volta}
+
+
 def relatorio_perfil() -> str:
     rows = perfil_listar()
     if not rows:
@@ -159,9 +188,9 @@ def _limpo(t, tam: int = 600) -> str:
     return re.sub(r"\s+", " ", t).strip()[:tam]
 
 
-def _cand(chave, tipo, titulo, motivo, quando="", base=()):
+def _cand(chave, tipo, titulo, motivo, quando="", base=(), compromisso="", acao=""):
     return {"chave": chave, "tipo": tipo, "titulo": _limpo(titulo, 160), "motivo": _limpo(motivo, 600), "quando": quando,
-            "base": sorted({int(b) for b in base if b}), "origem": "regra"}
+            "base": sorted({int(b) for b in base if b}), "origem": "regra", "compromisso": compromisso, "acao": acao}
 
 
 def _regras(f: dict, hoje: date) -> list:
@@ -255,7 +284,8 @@ def _regras(f: dict, hoje: date) -> list:
                  else " Se você tem convênio, também pode ser feito em clínica ou hospital particular; registre o convênio no perfil para eu considerar isso.")
         cands.append(_cand(f"pontos|{e['documento_id']}", "consulta", f"Retirada de pontos em {br(alvo.isoformat())}",
                            f"O encaminhamento pede a retirada de pontos em {br(alvo.isoformat())} e cita a UBS, mas o local pode ser outro serviço." + extra,
-                           max(alvo - timedelta(days=3), hoje).isoformat(), [e["documento_id"]]))
+                           max(alvo - timedelta(days=3), hoje).isoformat(), [e["documento_id"]],
+                           compromisso=alvo.isoformat(), acao="retirada de pontos"))
     # 5. perfil vazio
     if not f["perfil"] and (f["receitas"] or f["atestados"] or f["encaminhamentos"] or f["laudos"]):
         cands.append(_cand("perfil|vazio", "pergunta", "Registrar o perfil de saúde",
@@ -356,11 +386,11 @@ def atualizar(hoje: date = None, com_modelo: bool = True) -> dict:
     def grava(con):
         for c in cands:      # sugestão de regra ainda aberta acompanha os documentos novos (por exemplo, mais uma receita do mesmo dia)
             if c["chave"] in existentes and c["origem"] == "regra":
-                con.execute("UPDATE sugestoes_saude SET titulo=?, motivo=?, quando=?, base=?, atualizado=? WHERE chave=? AND estado='aberta' AND origem='regra'",
-                            (c["titulo"], c["motivo"], c["quando"], json.dumps(c["base"]), agora, c["chave"]))
+                con.execute("UPDATE sugestoes_saude SET titulo=?, motivo=?, quando=?, base=?, compromisso=?, acao=?, atualizado=? WHERE chave=? AND estado='aberta' AND origem='regra'",
+                            (c["titulo"], c["motivo"], c["quando"], json.dumps(c["base"]), c.get("compromisso", ""), c.get("acao", ""), agora, c["chave"]))
         for c in novas:
-            con.execute("INSERT OR IGNORE INTO sugestoes_saude (chave, tipo, titulo, motivo, quando, base, origem, estado, criado, atualizado) VALUES (?,?,?,?,?,?,?,'aberta',?,?)",
-                        (c["chave"], c["tipo"], c["titulo"], c["motivo"], c["quando"], json.dumps(c["base"]), c["origem"], agora, agora))
+            con.execute("INSERT OR IGNORE INTO sugestoes_saude (chave, tipo, titulo, motivo, quando, base, origem, estado, criado, atualizado, compromisso, acao) VALUES (?,?,?,?,?,?,?,'aberta',?,?,?,?)",
+                        (c["chave"], c["tipo"], c["titulo"], c["motivo"], c["quando"], json.dumps(c["base"]), c["origem"], agora, agora, c.get("compromisso", ""), c.get("acao", "")))
         # a sugestão aberta que as regras não geram mais (receita renovada, pergunta já respondida por novos documentos) sai da lista
         vivas = {c["chave"] for c in cands}
         for r in con.execute("SELECT id, chave FROM sugestoes_saude WHERE estado = 'aberta' AND origem LIKE 'regra%'").fetchall():
@@ -390,6 +420,10 @@ def _sug(sid: int) -> dict:
 
 def _linha(s: dict) -> str:
     quando = f" Para: {ex._br(s['quando'])}." if s["quando"] else ""
+    if s.get("compromisso"):
+        quando += f" Compromisso em {ex._br(s['compromisso'])}: ao aceitar, vira evento no Calendário."
+    elif s["tipo"] in ("consulta", "exame"):
+        quando += " Ao aceitar, vira lembrete; se você já marcou, informe a data e vira evento no Calendário."
     tag = " (proposta pela IA)" if s["origem"] == "modelo" else ""
     estado = "" if s["estado"] == "aberta" else f" [{s['estado']}]"
     return f"{s['id']}. {s['titulo']}{tag}{estado}. {s['motivo']}{quando}" + (f" Sua resposta: {s['resposta']}" if s["resposta"] and s["estado"] == "respondida" else "")
@@ -404,7 +438,25 @@ def relatorio_sugestoes(todas: bool = False) -> str:
     return "\n".join([cab] + [_linha(r) for r in rows] + ([ajuda] if not todas else []))
 
 
-def aceitar(sid: int, post=None, hoje: date = None) -> dict:
+def _titulo_agenda(s: dict) -> str:
+    """O título que vai à agenda (e à nuvem da Apple) diz só a ação; remédio, CID e motivo ficam no Heimdall."""
+    if s.get("acao"):
+        return "Heimdall Saúde: " + s["acao"]
+    return "Heimdall Saúde: marcar consulta" if s["tipo"] == "consulta" else "Heimdall Saúde: fazer exame"
+
+
+def destino_da_sugestao(s: dict, data: str = "", hoje: date = None) -> str:
+    """Evento ou lembrete, conforme o caso: com data fixa (a do próprio documento ou a que o usuário informa, por exemplo da consulta já marcada) é evento
+    no Calendário; sem data fixa é lembrete (algo a fazer, que se marca como feito). Pergunta não vai à agenda."""
+    hoje = hoje or date.today()
+    if s["tipo"] == "pergunta":
+        return ""
+    fixa = data or s.get("compromisso") or ""
+    return "evento" if fixa and fixa >= hoje.isoformat() else "lembrete"
+
+
+def aceitar(sid: int, post=None, hoje: date = None, data: str = "", hora: str = "") -> dict:
+    """Aceita a sugestão. `data` (AAAA-MM-DD) e `hora` (HH:MM) opcionais: quem já marcou a consulta informa quando, e ela vira evento no Calendário."""
     s = _sug(sid)
     if s["estado"] not in ("aberta", "adiada"):
         raise ErroClinico(f"A sugestão {sid} está {s['estado']}.")
@@ -412,15 +464,31 @@ def aceitar(sid: int, post=None, hoje: date = None) -> dict:
     agora = ex._agora()
     if s["tipo"] == "pergunta":
         ex._escrever(lambda con: con.execute("UPDATE sugestoes_saude SET estado='aceita', atualizado=? WHERE id=?", (agora, s["id"])))
-        return {"id": s["id"], "lembrete": False, "texto": "Pergunta registrada como vista. Para guardar a resposta: heimdall health --labs suggestions answer ID TEXTO."}
-    quando = s["quando"] if s["quando"] and s["quando"] >= hoje.isoformat() else hoje.isoformat()
-    # o título que vai ao Lembretes (e à nuvem da Apple) diz só a ação; remédio, CID e motivo ficam no Heimdall
-    titulo = "Heimdall Saúde: marcar consulta" if s["tipo"] == "consulta" else "Heimdall Saúde: fazer exame"
-    ok, msg = agenda.enviar("sugestao_saude", {"titulo": titulo, "vencimento": quando, "hora": 9,
-                                                "notas": "Criado pelo Heimdall a partir de uma sugestão que você aceitou. Detalhes: heimdall health --labs suggestions."}, post)
+        return {"id": s["id"], "lembrete": False, "evento": False, "texto": "Pergunta registrada como vista. Para guardar a resposta: heimdall health --labs suggestions answer ID TEXTO."}
+    if data and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", data):
+        raise ErroClinico("A data é AAAA-MM-DD.")
+    if data and data < hoje.isoformat():
+        raise ErroClinico("A data informada já passou.")
+    if hora and not re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", hora):
+        raise ErroClinico("A hora é HH:MM, por exemplo 14:30.")
+    dest = destino_da_sugestao(s, data, hoje)
+    titulo = _titulo_agenda(s)
+    notas = "Criado pelo Heimdall a partir de uma sugestão que você aceitou. Detalhes: heimdall health --labs suggestions."
+    if dest == "evento":
+        dia = data or s["compromisso"]
+        dado = {"titulo": titulo, "data": dia, "duracao_min": 60, "alertas_min_antes": [60, 1440], "notas": notas}
+        if hora:
+            dado["hora"] = hora
+        ok, msg = agenda.enviar("sugestao_saude_evento", dado, post)
+        feito = f"Evento criado no Calendário para {ex._br(dia)}" + (f" às {hora}" if hora else " (dia inteiro)") + "."
+    else:
+        dia = s["quando"] if s["quando"] and s["quando"] >= hoje.isoformat() else hoje.isoformat()
+        ok, msg = agenda.enviar("sugestao_saude", {"titulo": titulo, "vencimento": dia, "hora": 9, "notas": notas}, post)
+        feito = f"Lembrete criado para {ex._br(dia)}."
     if ok:
         ex._escrever(lambda con: con.execute("UPDATE sugestoes_saude SET estado='aceita', atualizado=? WHERE id=?", (agora, s["id"])))
-    return {"id": s["id"], "lembrete": ok, "texto": f"Lembrete criado para {ex._br(quando)}." if ok else f"Não criei o lembrete ({msg}). A sugestão continua aberta."}
+    return {"id": s["id"], "evento": ok and dest == "evento", "lembrete": ok and dest == "lembrete", "destino": dest, "dia": dia,
+            "texto": feito if ok else f"Não criei o {dest} ({msg}). A sugestão continua aberta."}
 
 
 def recusar(sid: int) -> dict:
@@ -466,37 +534,50 @@ def main() -> None:
     ap.add_argument("--perfil-add", dest="perfil_add")
     ap.add_argument("--perfil-rm", dest="perfil_rm", type=int)
     ap.add_argument("--desde", default="")
+    ap.add_argument("--data", default="", help="com --aceitar: AAAA-MM-DD da consulta ou compromisso já marcado (vira evento no Calendário)")
+    ap.add_argument("--hora", default="", help="com --aceitar --data: HH:MM")
+    ap.add_argument("--pessoa", default="", help="banco de outra pessoa (db/people/<nome>); sem ele vale o seu")
+    ap.add_argument("--perfil-concluir", dest="perfil_concluir", action="store_true")
     a = ap.parse_args()
+    import heimdall_banco as banco
     try:
-        if a.atualizar:
-            r = atualizar()
-            print(f"{r['novas']} sugestão(ões) nova(s).")
-            for x in r["avisos"]:
-                print("Atenção: " + x)
-            print(relatorio_sugestoes())
-        elif a.aceitar:
-            print(aceitar(a.aceitar)["texto"])
-        elif a.recusar:
-            recusar(a.recusar)
-            print("Sugestão recusada; ela não volta a aparecer.")
-        elif a.adiar:
-            print(f"Adiada; volta em {ex._br(adiar(a.adiar, a.dias)['volta_em'])}.")
-        elif a.responder:
-            responder(a.responder, a.texto)
-            print("Resposta guardada.")
-        elif a.perfil_add:
-            r = perfil_adicionar(a.perfil_add, a.texto, a.desde)
-            print(f"Registrado: {PERFIL_TIPOS[r['tipo']]}: {r['texto']}.")
-        elif a.perfil_rm:
-            perfil_remover(a.perfil_rm)
-            print("Removido do perfil.")
-        elif a.perfil:
-            print(relatorio_perfil())
-        else:
-            print(relatorio_sugestoes(a.todas))
-    except (ErroClinico, ex.ErroExames) as e:
+        with banco.pessoa(a.pessoa):
+            _executar(a)
+    except (ErroClinico, ex.ErroExames, ValueError) as e:
         print(str(e), file=sys.stderr)
         sys.exit(1)
+
+
+def _executar(a) -> None:
+    if a.atualizar:
+        r = atualizar()
+        print(f"{r['novas']} sugestão(ões) nova(s).")
+        for x in r["avisos"]:
+            print("Atenção: " + x)
+        print(relatorio_sugestoes())
+    elif a.aceitar:
+        print(aceitar(a.aceitar, data=a.data, hora=a.hora)["texto"])
+    elif a.recusar:
+        recusar(a.recusar)
+        print("Sugestão recusada; ela não volta a aparecer.")
+    elif a.adiar:
+        print(f"Adiada; volta em {ex._br(adiar(a.adiar, a.dias)['volta_em'])}.")
+    elif a.responder:
+        responder(a.responder, a.texto)
+        print("Resposta guardada.")
+    elif a.perfil_add:
+        r = perfil_adicionar(a.perfil_add, a.texto, a.desde)
+        print(f"Registrado: {PERFIL_TIPOS[r['tipo']]}: {r['texto']}.")
+    elif a.perfil_rm:
+        perfil_remover(a.perfil_rm)
+        print("Removido do perfil.")
+    elif a.perfil_concluir:
+        perfil_concluir()
+        print("Perfil marcado como concluído.")
+    elif a.perfil:
+        print(relatorio_perfil())
+    else:
+        print(relatorio_sugestoes(a.todas))
 
 
 if __name__ == "__main__":

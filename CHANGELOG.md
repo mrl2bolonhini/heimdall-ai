@@ -2,6 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Memória clínica por pessoa, aba Perfil de saúde e sugestões que viram evento ou lembrete
+- O perfil de saúde e as sugestões ficam no banco de cada pessoa (db/people/<id>/), não no do dono. O painel de saúde agora separa os pedidos por pessoa sem trocar o banco dos outros pedidos (banco.da_pessoa, por pedido); no terminal, heimdall health --labs suggestions e profile aceitam a pessoa pelo script (heimdall_clinico.py --pessoa).
+- Nova aba Perfil de saúde no painel: lista, adiciona e remove itens (condição, cirurgia, alergia, convênio, médico, outra informação) por botão, com rótulos para leitor de tela. No primeiro acesso a visão geral leva ao Perfil, com o convite; "Concluir" (ou "Não tenho nada a informar") encerra o convite e "Preencher depois" o adia por 7 dias. A aba continua disponível sempre.
+- Nova aba Sugestões: aceitar, recusar, adiar 14 dias, responder e procurar novas sugestões, tudo por botão com token. O Perguntar ganhou o perfil no contexto.
+- Evento ou lembrete, conforme o caso: sugestão com data fixa (por exemplo retirada de pontos, a data vem do encaminhamento) vira EVENTO no Calendário (dia inteiro, ou com hora); quem já marcou a consulta informa a data e a hora (heimdall health --labs suggestions accept ID --date AAAA-MM-DD --time HH:MM, ou os campos da aba) e vira evento; sem data fixa vira LEMBRETE. Pergunta não vai para a agenda. O título diz só a ação (sem remédio nem CID). Tipo novo de agenda: sugestao_saude_evento (heimdall_agenda.py).
+- Convidados não criam evento nem lembrete: o Calendário e o Lembretes são do dono do Mac. Eles podem recusar, adiar e responder.
+- heimdall health --labs profile done marca o perfil como concluído. Bancos já criados ganham sozinhos as colunas novas e a tabela de ajustes do perfil.
+- Testes ampliados: tests/health/teste_clinico.py e tests/health/teste_painel_saude.py.
+
 ## 2026-11-25 - Memória clínica: perfil de saúde e sugestões de acompanhamento
 - Perfil de saúde: você registra o que quiser (condições e doenças, cirurgias, alergias, convênio, médicos de confiança), nada é obrigatório. heimdall health --labs profile, profile add condition|surgery|allergy|insurance|doctor|other TEXTO e profile remove ID. Fica só no Mac, e o chat do Health enxerga.
 - Sugestões de acompanhamento: ao confirmar um documento, o Heimdall procura o que vale conversar com o médico. Hoje: retorno e renovação antes de acabar o remédio de acompanhamento (a data vem da quantidade e da posologia da receita, com aviso do cálculo); pergunta sobre fisioterapia quando há atestado com CID de joelho (M23) sem encaminhamento, e sobre as sessões quando há; retorno ao ortopedista depois de pós-operatório de joelho sem consulta marcada; exames de um pedido que ainda não têm resultado; retirada de pontos com data futura, lembrando que o local citado (UBS) pode ser outro serviço e considerando o convênio do perfil; e o convite para preencher o perfil.

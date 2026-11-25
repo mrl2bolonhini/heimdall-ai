@@ -192,16 +192,21 @@ _heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos,
     certificates) _heimdall_py heimdall_exames.py --atestados ;;
     reports) _heimdall_py heimdall_exames.py --laudos ;;
     requests) _heimdall_py heimdall_exames.py --pedidos ;;
-    suggestions)   # sugestões de acompanhamento: nada vira lembrete sem accept
+    suggestions)   # sugestões de acompanhamento: nada vira lembrete ou evento sem accept
       case "${_HA[1]:-}" in
         refresh) _heimdall_py heimdall_clinico.py --atualizar ;;
         all) _heimdall_py heimdall_clinico.py --sugestoes --todas ;;
-        accept) _heimdall_py heimdall_clinico.py --aceitar "${_HA[2]:-0}" ;;
+        accept)   # com --date (e --time) o compromisso já marcado vira evento no Calendário; sem data, conforme o caso: evento ou lembrete
+          local _a=("${(@)_HA[3,-1]}") _o=() _i
+          for ((_i=1; _i<=${#_a}; _i++)); do
+            case "${_a[_i]}" in --date) _o+=(--data "${_a[_i+1]:-}"); ((_i++)) ;; --time) _o+=(--hora "${_a[_i+1]:-}"); ((_i++)) ;; esac
+          done
+          _heimdall_py heimdall_clinico.py --aceitar "${_HA[2]:-0}" "${_o[@]}" ;;
         dismiss) _heimdall_py heimdall_clinico.py --recusar "${_HA[2]:-0}" ;;
         snooze) _heimdall_py heimdall_clinico.py --adiar "${_HA[2]:-0}" --dias "${_HA[3]:-14}" ;;
         answer) _heimdall_py heimdall_clinico.py --responder "${_HA[2]:-0}" --texto "${(j: :)_HA[3,-1]}" ;;
         "") _heimdall_py heimdall_clinico.py --sugestoes ;;
-        *) echo "Use: heimdall health --labs suggestions [refresh|all|accept ID|dismiss ID|snooze ID DAYS|answer ID TEXT]" ;;
+        *) echo "Use: heimdall health --labs suggestions [refresh|all|accept ID [--date AAAA-MM-DD] [--time HH:MM]|dismiss ID|snooze ID DAYS|answer ID TEXT]" ;;
       esac ;;
     profile)   # perfil de saúde: condições, cirurgias, alergias, convênio
       case "${_HA[1]:-}" in
@@ -210,8 +215,9 @@ _heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos,
           case "$_t" in condition) _t=condicao ;; surgery) _t=cirurgia ;; allergy) _t=alergia ;; insurance) _t=convenio ;; doctor) _t=medico ;; other) _t=outro ;; esac
           _heimdall_py heimdall_clinico.py --perfil-add "$_t" --texto "${(j: :)_HA[3,-1]}" ;;
         remove) _heimdall_py heimdall_clinico.py --perfil-rm "${_HA[2]:-0}" ;;
+        done) _heimdall_py heimdall_clinico.py --perfil-concluir ;;
         "") _heimdall_py heimdall_clinico.py --perfil ;;
-        *) echo "Use: heimdall health --labs profile [add condition|surgery|allergy|insurance|doctor|other TEXT|remove ID]" ;;
+        *) echo "Use: heimdall health --labs profile [add condition|surgery|allergy|insurance|doctor|other TEXT|remove ID|done]" ;;
       esac ;;
     appointments) _heimdall_py heimdall_exames.py --consultas ;;
     appointment) _heimdall_py heimdall_exames.py --consulta-nova "${_HA[@]}" ;;

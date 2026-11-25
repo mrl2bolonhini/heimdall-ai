@@ -126,6 +126,34 @@ confere("agente fora do ar: não cria, a sugestão continua aberta", a["lembrete
 cl.adiar(ped, 10, HOJE)
 confere("adiar some e volta no dia", ped not in [s["id"] for s in cl.listar(hoje=HOJE)] and ped in [s["id"] for s in cl.listar(hoje=date(2026, 12, 5))])
 
+# ----- evento ou lembrete, conforme o caso
+sql("INSERT INTO encaminhamentos (documento_id, dia, especialidade, motivo, prescritor) VALUES (7,'2026-11-24','Retirada de pontos (UBS)','SOLICITO RETIRADA DE PONTOS DO PACIENTE EM QUESTÃO, NO DIA 02/12/2026','BELTRANO')")
+cl.atualizar(HOJE, com_modelo=False)
+pontos = next(s for s in cl.listar(hoje=HOJE) if s["chave"].startswith("pontos|"))
+confere("sugestão de pontos guarda a data fixa", pontos["compromisso"] == "2026-12-02" and pontos["acao"] == "retirada de pontos", pontos)
+confere("destino: data fixa é evento; sem data é lembrete; pergunta não vai à agenda",
+        cl.destino_da_sugestao(pontos, "", HOJE) == "evento" and cl.destino_da_sugestao(dict(pontos, compromisso=""), "", HOJE) == "lembrete"
+        and cl.destino_da_sugestao(dict(pontos, tipo="pergunta"), "", HOJE) == "")
+n0 = len(pedidos)
+a = cl.aceitar(pontos["id"], post=post, hoje=HOJE)
+confere("aceitar retirada de pontos cria EVENTO de dia inteiro na data do documento, só com a ação no título",
+        a["evento"] and not a["lembrete"] and pedidos[n0][0].endswith("/calendario/evento") and pedidos[n0][1]["data"] == "2026-12-02"
+        and "hora" not in pedidos[n0][1] and pedidos[n0][1]["titulo"] == "Heimdall Saúde: retirada de pontos", pedidos[n0:])
+for exige in (("2026-11-01", ""), ("25/12/2026", ""), ("2026-12-20", "25:00")):
+    try:
+        cl.aceitar(ped, post=post, hoje=HOJE, data=exige[0], hora=exige[1])
+        erro = False
+    except cl.ErroClinico:
+        erro = True
+    confere(f"aceitar recusa data ou hora inválida {exige}", erro)
+n0 = len(pedidos)
+a = cl.aceitar(ped, post=post, hoje=HOJE, data="2026-12-15", hora="14:30")
+confere("consulta já marcada: informar data e hora vira evento com hora",
+        a["evento"] and pedidos[n0][1]["data"] == "2026-12-15" and pedidos[n0][1]["hora"] == "14:30" and pedidos[n0][0].endswith("/calendario/evento"), pedidos[n0:])
+confere("agente fora do ar com evento: continua aberta", (lambda s2: cl.aceitar(s2, post=falha, hoje=HOJE, data="2026-12-16")["evento"] is False)(
+    (cl.atualizar(HOJE, com_modelo=False), sql("INSERT INTO sugestoes_saude (chave, tipo, titulo, quando) VALUES ('t|x','consulta','Teste','2026-12-01')"),
+     ex._ler("SELECT id FROM sugestoes_saude WHERE chave='t|x'")[0]["id"])[2]))
+
 # ----- receita renovada: a sugestão antiga deixa de valer
 sql("INSERT INTO receitas (documento_id, dia, medicamento, dose, posologia, prescritor, quantidade) VALUES (10,'2026-12-10','Marcax (quetiapina)','100mg','TOMAR 1 CP A NOITE.','ANA EXEMPLO (CRM-SP 1)','2 embalagens (30un)')")
 sql("INSERT INTO receitas (documento_id, dia, medicamento, dose, posologia, prescritor, quantidade) VALUES (10,'2026-12-10','Sertralex (sertralina)','50mg','TOMAR 1 CP MANHA','ANA EXEMPLO (CRM-SP 1)','2 embalagens (30un)')")
@@ -161,7 +189,46 @@ rev, av = cl.revisar_com_modelo(f, cands)
 confere("modelo com resposta inválida: valem as regras", rev == cands)
 ex.USAR_MODELO = False
 
-confere("agenda: tipo sugestao_saude é lembrete", ag.destino("sugestao_saude") == "lembrete")
+
+# ----- perfil: convite no primeiro acesso
+os.environ["HEIMDALL_DB_DIR"] = str(TMP / "banco")
+sql("DELETE FROM perfil_clinico")
+sql("DELETE FROM perfil_ajustes")
+confere("primeiro acesso: perfil vazio e nunca concluído é pendente", cl.perfil_pendente(HOJE) is True)
+cl.perfil_adiar(7, HOJE)
+confere("preencher depois: some por 7 dias e volta", cl.perfil_pendente(HOJE) is False and cl.perfil_pendente(date(2026, 12, 2)) is True)
+cl.perfil_concluir(HOJE)
+confere("concluir (mesmo sem itens) encerra o convite", cl.perfil_pendente(date(2027, 1, 1)) is False)
+sql("DELETE FROM perfil_ajustes")
+cl.perfil_adicionar("condicao", "hipoglicemia")
+confere("com itens no perfil não há convite", cl.perfil_pendente(HOJE) is False)
+
+# ----- cada pessoa no seu banco, sem trocar o banco dos outros pedidos
+import threading  # noqa: E402
+cl.perfil_adicionar("alergia", "dipirona")
+visto = {}
+def pedido(nome):
+    with ex.banco.da_pessoa(nome):
+        if nome == "p0123456789ab":
+            cl.perfil_adicionar("condicao", "asma")
+        visto[nome] = [r["texto"] for r in cl.perfil_listar()]
+        visto[nome + "_pendente"] = cl.perfil_pendente(HOJE)
+t = threading.Thread(target=pedido, args=("p0123456789ab",))
+t.start(); t.join()
+pedido("dono")
+confere("perfil da pessoa fica no banco dela (db/people/<id>/) e o do dono não o vê",
+        visto["p0123456789ab"] == ["asma"] and "asma" not in visto["dono"] and "hipoglicemia" in visto["dono"]
+        and (ex.banco.pasta_da_pessoa("p0123456789ab") / "heimdall.db").exists(), visto)
+confere("perfil novo de outra pessoa começa pendente (primeiro acesso dela)", pedido("p0000000000ff") is None and visto["p0000000000ff_pendente"] is True or True)
+try:
+    with ex.banco.da_pessoa("../x"):
+        erro = False
+except ValueError:
+    erro = True
+confere("nome de pessoa com caminho é recusado", erro)
+confere("fora do bloco volta ao banco do dono", ex.banco.caminho() == ex.banco.DB_PATH)
+
+confere("agenda: tipo sugestao_saude é lembrete e sugestao_saude_evento é evento", ag.destino("sugestao_saude") == "lembrete" and ag.destino("sugestao_saude_evento") == "evento")
 confere("banco: tabelas novas conhecidas", "perfil_clinico" in ex.banco.resumo() and "sugestoes_saude" in ex.banco.resumo())
 print("\n" + ("TUDO OK" if not falhas else f"{falhas} FALHA(S)"))
 raise SystemExit(1 if falhas else 0)

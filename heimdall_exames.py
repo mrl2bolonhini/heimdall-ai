@@ -1799,7 +1799,7 @@ def _agora() -> str:
 
 
 def _ler(sql: str, params: tuple = ()) -> list:
-    if not banco.DB_PATH.exists():
+    if not banco.caminho().exists():
         banco.iniciar()
     con = banco.conectar(somente_leitura=True)
     try:

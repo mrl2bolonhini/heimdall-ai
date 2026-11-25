@@ -252,7 +252,7 @@ def _upsert(tabela: str, chave: str, linhas: list) -> int:
 
 
 def _garantir_banco() -> None:
-    if not banco.DB_PATH.exists():
+    if not banco.caminho().exists():
         banco.iniciar()
     else:
         with banco._trava:
