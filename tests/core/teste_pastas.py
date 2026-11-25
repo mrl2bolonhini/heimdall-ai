@@ -79,7 +79,7 @@ for antigo in ("importados", "revisar"):
     (d7 / "inbox" / antigo / "x.csv").write_text(antigo)
 confere("finance: importados vira imported", hp.finance_imported(d7 / "inbox") == d7 / "inbox" / "imported" and (d7 / "inbox" / "imported" / "x.csv").exists())
 confere("finance: revisar vira review", hp.finance_review(d7 / "inbox") == d7 / "inbox" / "review" and (d7 / "inbox" / "review" / "x.csv").exists())
-confere("health/ está no .gitignore", "health/" in (RAIZ / ".gitignore").read_text().splitlines())
+confere("health/ está no .gitignore", "/health/" in (RAIZ / ".gitignore").read_text().splitlines())
 
 # organização do repositório
 soltos = [p.name for p in RAIZ.iterdir() if p.is_file() and (p.name.startswith(("teste_", "test_")) or p.name.startswith("LEIAME_") or p.name.startswith("prompt_chat_"))]
