@@ -39,7 +39,7 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News
 - Arquivo novo: guia vai para `guides/`, script para `scripts/` (com `cd "$(dirname "$0")/.."` no começo) e teste para `tests/<serviço>/`.
 
 ## Time de desenvolvimento (skills em `.claude/skills/`, decisão do usuário em 25/11/2026)
-- Papéis: `po`, `tech-lead`, `ux`, `qa-funcional` e `qa-acessibilidade`; o comando `/time <demanda>` aciona os necessários (`--so po,ux` limita; `--analisar` só analisa). Arquiteto de soluções e arquiteto de dados entram quando a demanda pedir. Nova regra de projeto vale também para a skill do papel que a aplica.
+- Papéis: `po`, `tech-lead`, `ux`, `qa-funcional` e `qa-acessibilidade`; o comando `/time <demanda>` aciona os necessários (`--so po,ux` limita; `--analisar` só analisa). O `po` é dono do backlog (o ROADMAP.md): compara cada demanda com o que existe, alerta prioridades e propõe a ordem, que só muda com a aprovação do usuário. Arquiteto de soluções e arquiteto de dados entram quando a demanda pedir. Nova regra de projeto vale também para a skill do papel que a aplica.
 - Os papéis propõem e executam, mas a decisão é do usuário. A revisão de QA roda com contexto separado. Nenhum papel substitui o teste real no Safari com VoiceOver (e TalkBack no Android): diga sempre o que não foi testado.
 - Acessibilidade para todos, sem exageros: o essencial para leitor de tela e teclado, sem anúncios nem rótulos redundantes.
 

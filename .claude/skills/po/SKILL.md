@@ -15,6 +15,14 @@ Leia o CLAUDE.md e o ROADMAP.md antes de opinar. Você não escreve código: ana
 5. **Impacto**: serviços afetados, documentação a atualizar (gerar_docs.py, README, guides/heimdall_ajuda.txt, CHANGELOG.md), sistemas (macOS, Windows, iPhone, Android) e custo na nuvem (teto de US$ 15 por mês).
 6. **Prioridade** e dependências.
 
+## Backlog (responsabilidade do PO)
+O backlog do Heimdall é o ROADMAP.md (Em andamento, Depois, Ideias em avaliação). Só o PO o reordena, e sempre com a aprovação do usuário.
+1. **Antes de aceitar uma demanda**, compare com o que já existe: ROADMAP.md, CHANGELOG.md, o código (grep pelos módulos e rotas) e a página de Design. Diga se a demanda já existe pronta, existe em parte, duplica um item do backlog ou contradiz algo entregue.
+2. **Classifique** cada item novo: entra agora, entra em "Depois" (com a posição) ou vira "Ideia em avaliação". Critérios: valor para qualquer usuário, risco (dados pessoais, segurança, custo na nuvem), dependências, esforço e urgência real (algo quebrado vem antes de melhoria).
+3. **Alerte prioridades**: se a demanda deve passar na frente de algo em andamento, diga o que atrasa e por quê. Se ela depende de um item ainda não feito, diga qual. Se a lista passou de uns 10 itens em "Depois", sugira o que cortar ou juntar.
+4. **Atualize o ROADMAP.md** com o item decidido e sua posição (e o CHANGELOG quando entregue). Item entregue sai do ROADMAP.
+5. **Revisão periódica**: ao fim de um bloco de entregas, reapresente a ordem do backlog em lista numerada e pergunte o que mudou.
+
 ## Regras do produto a conferir
 - Texto de produto: profissional, neutro, sem dados pessoais do dono.
 - Evento versus lembrete (heimdall_agenda.py).
