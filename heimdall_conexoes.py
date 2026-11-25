@@ -58,6 +58,13 @@ PROVEDORES = {
     "todoist": {"grupo": "apps", "nome": "Todoist", "auth": "https://app.todoist.com/oauth/authorize", "token": "https://todoist.com/oauth/access_token", "escopo": "",
                 "extra": {}, "api": "https://api.todoist.com/api/v1", "sep": ",", "simples": True, "sem_renovacao": True,
                 "escopos_servico": {"tarefas": "data:read"}, "nomes_servico": {"tarefas": "Tarefas do Todoist"}},
+    # Google: OAuth 2.0 com PKCE e acesso offline; escopos de leitura de Agenda, Tarefas e Contatos (a Agenda e os Contatos são escopos sensíveis: exigem verificação do Google antes de abrir para outras pessoas)
+    "google": {"grupo": "apps", "nome": "Google", "auth": "https://accounts.google.com/o/oauth2/v2/auth", "token": "https://oauth2.googleapis.com/token", "escopo": "",
+               "extra": {"access_type": "offline", "prompt": "consent"}, "api": "https://www.googleapis.com",
+               "bases": {"agenda": "https://www.googleapis.com/calendar/v3", "tarefas": "https://tasks.googleapis.com/tasks/v1", "contatos": "https://people.googleapis.com/v1"},
+               "escopos_servico": {"agenda": "https://www.googleapis.com/auth/calendar.readonly", "tarefas": "https://www.googleapis.com/auth/tasks.readonly",
+                                   "contatos": "https://www.googleapis.com/auth/contacts.readonly"},
+               "nomes_servico": {"agenda": "Google Agenda (calendário principal)", "tarefas": "Google Tarefas", "contatos": "Google Contatos"}},
     # Notion: integração pública (OAuth 2.0 sem PKCE, sem escopos: a pessoa escolhe as páginas no seletor do Notion); troca de token com autenticação básica e corpo JSON
     "notion": {"grupo": "apps", "nome": "Notion", "auth": "https://api.notion.com/v1/oauth/authorize", "token": "https://api.notion.com/v1/oauth/token", "escopo": "",
                "extra": {"owner": "user"}, "api": "https://api.notion.com/v1", "sem_pkce": True, "basico": True, "sem_escopo": True, "sem_renovacao": True,

@@ -3,7 +3,7 @@
 
 Provedores: Microsoft (OneNote, Microsoft To Do, Microsoft Planner, Calendário e Contatos do Outlook), pela Microsoft Graph, com permissões delegadas de leitura
 (Notes.Read, Tasks.Read, Calendars.Read, Contacts.Read) pedidas só para os serviços que a pessoa marcar (o Planner só existe em conta de trabalho ou escola);
-Notion (páginas que a pessoa compartilhar na autorização); Todoist (tarefas ativas, escopo data:read); Trello (cartões dos quadros abertos, escopo read). Funciona em qualquer sistema, porque a leitura é feita pelo
+Google (Agenda principal, Tarefas e Contatos, escopos de leitura); Notion (páginas que a pessoa compartilhar na autorização); Todoist (tarefas ativas, escopo data:read); Trello (cartões dos quadros abertos, escopo read). Funciona em qualquer sistema, porque a leitura é feita pelo
 servidor: a pessoa só autoriza uma vez no navegador.
 
 Cada nota, tarefa, cartão, evento ou contato vira um documento de texto (Markdown) no acervo da pessoa, pesquisável junto com os demais e disponível ao Perguntar.
@@ -303,8 +303,68 @@ def _ler_notion(token: str, api: str, vistos: dict):
             return
 
 
+# ---------------------------------------------------------------- Google (Agenda, Tarefas e Contatos)
+def _google_paginas(url: str, token: str, campo: str):
+    pagina = ""
+    for _ in range(MAX_PAGINAS):
+        r = cx.json_get(url + ("&" if "?" in url else "?") + (("pageToken=" + urllib.parse.quote(pagina)) if pagina else "alt=json"), token)
+        yield from r.get(campo, [])
+        pagina = r.get("nextPageToken") or ""
+        if not pagina:
+            return
+
+
+def _gdata(x: dict) -> str:
+    return _data(x.get("dateTime") or x.get("date") or "") + (" (dia inteiro)" if x.get("date") and not x.get("dateTime") else "")
+
+
+def _ler_google_agenda(token: str, api: str, vistos: dict):
+    base_ = cx.PROVEDORES["google"]["bases"]["agenda"]
+    agora = datetime.now(timezone.utc)
+    de, ate = (agora - timedelta(days=JANELA_AGENDA[0])).strftime("%Y-%m-%dT%H:%M:%SZ"), (agora + timedelta(days=JANELA_AGENDA[1])).strftime("%Y-%m-%dT%H:%M:%SZ")
+    url = base_ + "/calendars/primary/events?" + urllib.parse.urlencode({"timeMin": de, "timeMax": ate, "singleEvents": "true", "orderBy": "startTime", "maxResults": 250})
+    for x in _google_paginas(url, token, "items"):
+        if x.get("status") == "cancelled":
+            continue
+        titulo = _limpo(x.get("summary")) or "Evento sem título"
+        ini = _gdata(x.get("start") or {})
+        org = _limpo((x.get("organizer") or {}).get("displayName") or (x.get("organizer") or {}).get("email"))
+        yield {"id": x["id"], "marca": x.get("updated", ""), "nome": _nome_arquivo("Evento", titulo, f" {ini[:10]}"),
+               "texto": (f"# {titulo}\n\nOrigem: Google Agenda\nInício: {ini}\nFim: {_gdata(x.get('end') or {})}\n" + (f"Local: {_limpo(x.get('location'))}\n" if x.get("location") else "")
+                         + (f"Organizador: {org}\n" if org else "") + (f"\n{_limpo(x.get('description'), 2000)}\n" if x.get("description") else ""))}
+
+
+def _ler_google_tarefas(token: str, api: str, vistos: dict):
+    base_ = cx.PROVEDORES["google"]["bases"]["tarefas"]
+    for lista in _google_paginas(base_ + "/users/@me/lists?maxResults=100", token, "items"):
+        url = base_ + f"/lists/{urllib.parse.quote(lista['id'])}/tasks?" + urllib.parse.urlencode({"showCompleted": "true", "showHidden": "false", "maxResults": 100})
+        for x in _google_paginas(url, token, "items"):
+            titulo = _limpo(x.get("title"))
+            if not titulo and not x.get("notes"):
+                continue
+            titulo = titulo or "Tarefa sem título"
+            yield {"id": x["id"], "marca": x.get("updated", ""), "nome": _nome_arquivo("Tarefa", titulo),
+                   "texto": (f"# {titulo}\n\nOrigem: Google Tarefas · lista {_limpo(lista.get('title'))}\nSituação: {'concluída' if x.get('status') == 'completed' else 'a fazer'}\n"
+                             + (f"Prazo: {_data(x['due'])}\n" if x.get("due") else "") + (f"\n{(x.get('notes') or '').strip()}\n" if (x.get("notes") or "").strip() else ""))}
+
+
+def _ler_google_contatos(token: str, api: str, vistos: dict):
+    base_ = cx.PROVEDORES["google"]["bases"]["contatos"]
+    url = base_ + "/people/me/connections?" + urllib.parse.urlencode({"personFields": "names,emailAddresses,phoneNumbers,organizations,biographies", "pageSize": 200})
+    for x in _google_paginas(url, token, "connections"):
+        nome = _limpo(((x.get("names") or [{}])[0]).get("displayName")) or "Contato sem nome"
+        emails = ", ".join(_limpo(e.get("value")) for e in x.get("emailAddresses", []) if e.get("value"))
+        fones = ", ".join(_limpo(t.get("value")) for t in x.get("phoneNumbers", []) if t.get("value"))
+        org = (x.get("organizations") or [{}])[0]
+        nota = _limpo(((x.get("biographies") or [{}])[0]).get("value"), 2000)
+        yield {"id": x["resourceName"], "marca": x.get("etag", ""), "nome": _nome_arquivo("Contato", nome),
+               "texto": (f"# {nome}\n\nOrigem: Google Contatos\n" + (f"Empresa: {_limpo(org.get('name'))}\n" if org.get("name") else "") + (f"Cargo: {_limpo(org.get('title'))}\n" if org.get("title") else "")
+                         + (f"E-mail: {emails}\n" if emails else "") + (f"Telefone: {fones}\n" if fones else "") + (f"\n{nota}\n" if nota else ""))}
+
+
 LEITORES = {"microsoft": {"notas": _ler_notas, "tarefas": _ler_tarefas, "planner": _ler_planner, "agenda": _ler_agenda, "contatos": _ler_contatos},
-            "todoist": {"tarefas": _ler_todoist}, "trello": {"quadros": _ler_trello}, "notion": {"paginas": _ler_notion}}
+            "todoist": {"tarefas": _ler_todoist}, "trello": {"quadros": _ler_trello}, "notion": {"paginas": _ler_notion},
+            "google": {"agenda": _ler_google_agenda, "tarefas": _ler_google_tarefas, "contatos": _ler_google_contatos}}
 
 
 # ---------------------------------------------------------------- tela e sincronização
