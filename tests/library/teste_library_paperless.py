@@ -15,16 +15,17 @@ from urllib.parse import parse_qs, urlparse
 TMP = _Path(tempfile.mkdtemp())
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
 
-BD = {"tags": {}, "document_types": {}, "correspondents": {}, "docs": {}, "mail_accounts": {}, "mail_rules": {}, "prox": 1, "pedidos": []}
+BD = {"tags": {}, "document_types": {}, "correspondents": {}, "docs": {}, "mail_accounts": {}, "mail_rules": {}, "prox": 1, "pedidos": [],
+      "users": {"heimdall": {"id": 1, "username": "heimdall", "password": "segredo", "is_superuser": True}}}
 
 
-def novo_id(tipo):
+def novo_id():
     BD["prox"] += 1
     return BD["prox"]
 
 
-def ordem(nome):
-    return next((i for i, x in BD[nome].items()), None)
+def visivel(obj, eu):
+    return eu["is_superuser"] or obj.get("owner") in (None, eu["id"])   # como no Paperless: o superusuário vê tudo
 
 
 class H(BaseHTTPRequestHandler):
@@ -44,10 +45,11 @@ class H(BaseHTTPRequestHandler):
         return self.rfile.read(n) if n else b""
 
     def _auth(self):
-        if self.headers.get("Authorization") != "Token tok123":
+        h = self.headers.get("Authorization") or ""
+        u = BD["users"].get(h[len("Token tok-"):]) if h.startswith("Token tok-") else None
+        if not u:
             self._json({"detail": "nao"}, 401)
-            return False
-        return True
+        return u
 
     def do_POST(self):
         u = urlparse(self.path)
@@ -55,26 +57,35 @@ class H(BaseHTTPRequestHandler):
         BD["pedidos"].append(("POST", u.path))
         if u.path == "/api/token/":
             d = json.loads(corpo)
-            if d.get("username") == "heimdall" and d.get("password") == "segredo":
-                return self._json({"token": "tok123"})
+            usr = BD["users"].get(d.get("username"))
+            if usr and usr["password"] == d.get("password"):
+                return self._json({"token": "tok-" + usr["username"]})
             return self._json({"non_field_errors": ["x"]}, 400)
-        if not self._auth():
+        eu = self._auth()
+        if not eu:
             return
+        if u.path == "/api/users/":
+            if not eu["is_superuser"]:
+                return self._json({}, 403)
+            d = json.loads(corpo)
+            novo = {"id": novo_id(), "is_superuser": bool(d.get("is_superuser")), **{k: d[k] for k in ("username", "password", "user_permissions")}}
+            BD["users"][d["username"]] = novo
+            return self._json({"id": novo["id"], "username": novo["username"]}, 201)
         m = re.fullmatch(r"/api/(tags|document_types|correspondents|mail_accounts|mail_rules)/", u.path)
         if m:
             d = json.loads(corpo)
-            i = novo_id(m.group(1))
-            BD[m.group(1)][i] = {"id": i, "document_count": 0, **d}
+            i = novo_id()
+            BD[m.group(1)][i] = {"id": i, "document_count": 0, **d, "owner": d.get("owner") or eu["id"]}
             return self._json(BD[m.group(1)][i], 201)
         if u.path == "/api/documents/post_document/":
             if b"duplicado" in corpo:
                 BD["tarefa"] = {"status": "FAILURE", "result": "It is a duplicate of x", "related_document": None}
             else:
-                i = novo_id("docs")
+                i = novo_id()
                 tag = int(re.search(rb'name="tags"\r\n\r\n(\d+)', corpo).group(1))
                 nome = re.search(rb'filename="([^"]+)"', corpo).group(1).decode()
                 BD["docs"][i] = {"id": i, "title": nome.rsplit(".", 1)[0], "content": "Texto lido do contrato com a Empresa Alfa", "tags": [tag], "document_type": None, "correspondent": None,
-                                 "created": "2026-11-25", "added": "2026-11-25T10:00:00Z", "original_file_name": nome, "bytes": corpo.split(b"\r\n\r\n", 2)[-1]}
+                                 "created": "2026-11-25", "added": "2026-11-25T10:00:00Z", "original_file_name": nome, "owner": eu["id"], "bytes": corpo.split(b"\r\n\r\n", 2)[-1]}
                 BD["tarefa"] = {"status": "SUCCESS", "related_document": i, "result": "ok"}
             return self._json("uuid-1")
         self._json({}, 404)
@@ -83,11 +94,14 @@ class H(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         corpo = json.loads(self._corpo() or b"{}")
         BD["pedidos"].append(("PATCH", u.path))
-        if not self._auth():
+        eu = self._auth()
+        if not eu:
             return
         m = re.fullmatch(r"/api/(documents|mail_accounts|mail_rules)/(\d+)/", u.path)
         if m:
-            alvo = BD[m.group(1) if m.group(1) != "documents" else "docs"][int(m.group(2))]
+            alvo = BD[m.group(1) if m.group(1) != "documents" else "docs"].get(int(m.group(2)))
+            if not alvo or not visivel(alvo, eu):
+                return self._json({}, 404)
             alvo.update(corpo)
             return self._json({k: v for k, v in alvo.items() if k != "bytes"})
         self._json({}, 404)
@@ -96,11 +110,15 @@ class H(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         BD["pedidos"].append(("GET", u.path, q))
-        if not self._auth():
+        eu = self._auth()
+        if not eu:
             return
+        if u.path == "/api/users/":
+            r = [{"id": x["id"], "username": x["username"]} for x in BD["users"].values() if x["username"] == q.get("username", x["username"])]
+            return self._json({"count": len(r), "next": None, "results": r})
         m = re.fullmatch(r"/api/(tags|document_types|correspondents|mail_accounts|mail_rules)/", u.path)
         if m:
-            itens = list(BD[m.group(1)].values())
+            itens = [x for x in BD[m.group(1)].values() if visivel(x, eu)]
             if m.group(1) == "tags":
                 for t in itens:
                     t["document_count"] = sum(1 for d in BD["docs"].values() if t["id"] in d["tags"])
@@ -111,7 +129,9 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/api/tasks/":
             return self._json([BD["tarefa"]])
         if u.path == "/api/documents/":
-            docs = list(BD["docs"].values())
+            docs = [d for d in BD["docs"].values() if visivel(d, eu)]
+            if "owner__id" in q:
+                docs = [d for d in docs if d["owner"] == int(q["owner__id"])]
             if "tags__id__all" in q:
                 tem = [int(x) for x in q["tags__id__all"].split(",")]
                 docs = [d for d in docs if all(t in d["tags"] for t in tem)]
@@ -128,7 +148,7 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"detail": "x"}, 404)
             return self._json({"count": len(docs), "next": None, "results": [{k: v for k, v in d.items() if k != "bytes"} for d in pg]})
         m = re.fullmatch(r"/api/documents/(\d+)/(download/)?", u.path)
-        if m and int(m.group(1)) in BD["docs"]:
+        if m and int(m.group(1)) in BD["docs"] and visivel(BD["docs"][int(m.group(1))], eu):
             d = BD["docs"][int(m.group(1))]
             if m.group(2):
                 self.send_response(200)
@@ -145,6 +165,7 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 os.environ["HEIMDALL_PAPERLESS_URL"] = f"http://127.0.0.1:{srv.server_address[1]}"
 os.environ["HEIMDALL_PAPERLESS_USER"] = "heimdall"
 os.environ["HEIMDALL_PAPERLESS_SENHA"] = "segredo"
+os.environ["HEIMDALL_PAPERLESS_SECRET"] = "chave-de-teste"
 os.environ["HEIMDALL_LIBRARY_MOTOR"] = "paperless"
 
 import heimdall_banco as banco  # noqa: E402
@@ -172,16 +193,14 @@ def erro(fn, *a, **k):
 
 # --- escolha do motor
 confere("dono usa o Paperless", L.motor() == "paperless")
-marca = banco._PESSOA_DIR.set(TMP / "convidado")
-confere("convidado usa o acervo interno", L.motor() == "interno")
-banco._PESSOA_DIR.reset(marca)
+confere("convidado também usa o Paperless, com usuário próprio", L.motor() == "paperless")
 os.environ["HEIMDALL_LIBRARY_MOTOR"] = "interno"
 confere("interruptor devolve o motor interno", L.motor() == "interno")
 os.environ["HEIMDALL_LIBRARY_MOTOR"] = "paperless"
 
 # --- senha errada
 os.environ["HEIMDALL_PAPERLESS_SENHA"] = "errada"
-P._estado["token"] = ""
+P._estado["tokens"].clear()
 confere("senha recusada vira mensagem clara", "recusou" in erro(L.estado))
 os.environ["HEIMDALL_PAPERLESS_SENHA"] = "segredo"
 
@@ -252,6 +271,31 @@ P.email_configurar("imap.exemplo.com", "pessoa@exemplo.com", "Outra", "")
 confere("repetir atualiza em vez de duplicar", len(BD["mail_accounts"]) == 1 and len(BD["mail_rules"]) == 1 and next(iter(BD["mail_rules"].values()))["folder"] == "Outra")
 est = P.email_estado()
 confere("estado do e-mail lista conta e regra e não mostra a senha", est["contas"] == ["Heimdall pessoa@exemplo.com"] and est["regras"][0]["pasta"] == "Outra" and "senha-app" not in json.dumps(est))
+
+# --- convidado: usuário próprio, só vê o que é dele, e o dono não mistura
+marca = banco._PESSOA_DIR.set(TMP / "people" / "ana")
+confere("convidado começa sem documentos", L.listar()[1] == 0 and L.estado()["documentos"] == 0)
+rc = L.adicionar("segredo_ana.pdf", b"%PDF ana", usar_ia=False)
+confere("usuário do convidado criado sem exclusão nem e-mail", "heimdall-ana" in BD["users"] and not BD["users"]["heimdall-ana"]["is_superuser"]
+        and "delete_document" not in BD["users"]["heimdall-ana"]["user_permissions"] and not any("mail" in x for x in BD["users"]["heimdall-ana"]["user_permissions"]), BD["users"].get("heimdall-ana"))
+confere("convidado vê o próprio documento", L.listar()[1] == 1 and L.obter(rc["id"])["titulo"] == "segredo_ana")
+confere("convidado não vê documento do dono", L.obter(did) == {} and L.arquivo(did) == ("", b""))
+confere("convidado não altera documento do dono", "não encontrado" in erro(L.atualizar, did, "Invasão", "", "", "", ""))
+confere("convidado não confirma nem exclui documento do dono", "não encontrado" in erro(L.confirmar, did) and "não encontrado" in erro(L.lixeira, did))
+confere("documento do dono continua intacto", BD["docs"][did]["title"] == "Contrato Alfa" and not any(t["name"] == "Lixeira" and t["id"] in BD["docs"][did]["tags"] for t in BD["tags"].values()))
+confere("etiquetas do convidado são só dele", all(x["nome"] != "trabalho" for x in L.etiquetas_com_contagem()))
+confere("e-mail é só do dono", "dono" in erro(P.email_configurar, "imap.exemplo.com", "ana@exemplo.com", "Heimdall") and not P.email_disponivel())
+ent = L.pasta_entrada()
+confere("pasta de entrada do convidado é a própria", "people" in str(ent) or "library" in str(ent), ent)
+ent.mkdir(parents=True, exist_ok=True)
+(ent / "nota.txt").write_bytes(b"texto da ana")
+confere("importar da pasta envia ao Paperless do convidado", L.processar_entrada(usar_ia=False)["novos"] == 1 and L.listar()[1] == 2)
+banco._PESSOA_DIR.reset(marca)
+docs, n = L.listar()
+confere("dono não vê documentos do convidado", n == 1 and all(d["titulo"] != "segredo_ana" for d in docs) and L.obter(rc["id"]) == {}, (docs, n))
+confere("dono não vê as etiquetas do convidado", L.estado()["documentos"] == 1 and L.estado()["a_revisar"] == 0)
+n_tags_a_revisar = [t for t in BD["tags"].values() if t["name"] == "A revisar"]
+confere("cada pessoa tem a sua etiqueta A revisar", len(n_tags_a_revisar) == 2 and len({t["owner"] for t in n_tags_a_revisar}) == 2, n_tags_a_revisar)
 
 srv.shutdown()
 print(f"\n{falhas} falha(s)")

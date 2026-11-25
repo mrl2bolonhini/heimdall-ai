@@ -364,13 +364,16 @@ def estado() -> dict:
 
 
 # ---------------------------------------------------------------- escolha do motor
+ORIGINAIS = {}   # funções do acervo interno, para o motor Paperless reaproveitar (pasta própria e importação da pasta de entrada dos convidados)
+
+
 def motor() -> str:
-    """"paperless" (HEIMDALL_LIBRARY_MOTOR=paperless, só para o dono) ou "interno". Convidados sempre usam o acervo interno, separado por pessoa."""
-    return "paperless" if os.environ.get("HEIMDALL_LIBRARY_MOTOR", "interno") == "paperless" and banco._PESSOA_DIR.get() is None else "interno"
+    """"paperless" (HEIMDALL_LIBRARY_MOTOR=paperless) ou "interno". No Paperless, cada pessoa tem o seu usuário e só vê o que é dela."""
+    return "paperless" if os.environ.get("HEIMDALL_LIBRARY_MOTOR", "interno") == "paperless" else "interno"
 
 
 def _despachar(nome: str):
-    interno = globals()[nome]
+    interno = ORIGINAIS[nome] = globals()[nome]
 
     def f(*a, **k):
         if motor() == "paperless":

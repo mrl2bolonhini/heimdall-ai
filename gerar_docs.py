@@ -302,7 +302,7 @@ SCRIPTS = [
     ("tests/trading/teste_trading_web.py", "Testa o site do Trading: login, CSRF, abas, ordens e rejeições, fechar posição, cancelar, lista, Ajustes, atalhos e Perguntar."),
     ("heimdall_library_dados.py", "Dados do Library: arquivos por hash, texto e OCR, busca SQLite FTS5 sem acento, sugestão de tipo, data e etiquetas por regras e pela IA com revisão, lixeira e pasta de entrada."),
     ("heimdall_library.py", "Heimdall Library (porta 8021): acervo pesquisável com as abas Documentos, Adicionar e Organização, detalhe com revisão e download, e Ajustes (Estado, Lixeira, Ajuda)."),
-    ("heimdall_library_paperless.py", "Motor opcional do Library: o Paperless-ngx (Docker, só em 127.0.0.1) faz OCR, guarda os arquivos, lê e-mail por IMAP e classifica; o Library fala com ele pela API REST. Só para o dono; convidados usam o acervo interno."),
+    ("heimdall_library_paperless.py", "Motor opcional do Library: o Paperless-ngx (Docker, só em 127.0.0.1) faz OCR, guarda os arquivos, lê e-mail por IMAP e classifica; o Library fala com ele pela API REST. Um usuário do Paperless por pessoa, com filtro por dono."),
     ("paperless/docker-compose.yml", "Paperless-ngx e Valkey em Docker, em 127.0.0.1:8023; as variáveis vêm do .env."),
     ("scripts/iniciar_paperless.sh", "Gera a chave e a senha do Paperless no .env, sobe o Docker e liga HEIMDALL_LIBRARY_MOTOR=paperless (heimdall library --paperless)."),
     ("tests/library/teste_library_paperless.py", "Testa o motor Paperless contra um servidor falso da API: envio, duplicado, busca, correção, confirmação, lixeira, e-mail com senha só do .env e escolha do motor."),

@@ -93,7 +93,7 @@ def pg_enviar(ctx):
 def pg_entrada(ctx):
     ent = dados.pasta_entrada()
     n = len([p for p in ent.iterdir() if p.is_file() and not p.name.startswith(".")]) if ent.is_dir() else 0
-    if dados.motor() == "paperless":
+    if dados.motor() == "paperless" and __import__("heimdall_library_paperless").email_disponivel():   # só o dono tem pasta acompanhada pelo Paperless
         return "Pasta de entrada", f'<p role="status">Pasta de entrada: {e(str(ent))}. Os arquivos colocados nela são importados automaticamente e ficam em A revisar.</p>'
     corpo = (f'<p role="status">Pasta de entrada: {e(str(ent))}. {_plural(n, "arquivo aguardando", "arquivos aguardando")}.</p>'
              '<p>Arquivos colocados nesta pasta são importados ao tocar em Importar agora. Os importados vão para a subpasta done e os recusados para refused.</p>'
@@ -105,6 +105,8 @@ def pg_email(ctx):
     if dados.motor() != "paperless":
         return "E-mail", '<p role="status">O envio por e-mail usa o motor Paperless-ngx (HEIMDALL_LIBRARY_MOTOR=paperless).</p>'
     import heimdall_library_paperless as pl
+    if not pl.email_disponivel():
+        return "E-mail", '<p role="status">A leitura de e-mail está disponível só para o dono por enquanto.</p>'
     est = pl.email_estado()
     situacao = ("Conta: " + ", ".join(est["contas"]) + ". " + "; ".join(f'regra {r["nome"]} na pasta {r["pasta"]}' + ("" if r["ativa"] else " (desligada)") for r in est["regras"]) + ".") if est["contas"] else "Nenhuma conta de e-mail configurada."
     form = (f'<form method="post" action="/email/salvar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
