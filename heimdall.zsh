@@ -415,7 +415,8 @@ heimdall() {
     ask) _heimdall_tr "--local=-
 --cloud=-" "$@"; _heimdall_py heimdall_ask.py "${_HA[@]}" ;;
     usage) _heimdall_tr "--days=--dias" "$@"; _heimdall_py heimdall_cfmonitor.py "${_HA[@]}" ;;
-    support) _heimdall_tr "--last=--ultimas" "--test=--testar" "$@"; _heimdall_py heimdall_ajuda.py "${_HA[@]}" ;;
+    support) _heimdall_tr "--last=--ultimas
+--test=--testar" "$@"; _heimdall_py heimdall_ajuda.py "${_HA[@]}" ;;
     notices) _heimdall_tr "--migrate=--executar" "$@"; _heimdall_py migrar_avisos.py "${_HA[@]}" ;;
     doctor)
       _heimdall_tr "--memory=--memoria
