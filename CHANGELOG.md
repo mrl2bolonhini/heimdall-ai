@@ -3,11 +3,13 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-25 - No máximo 5 posições de abas, nomes de uma palavra e Games em 5 categorias
-- Regra do Heimdall Design: no máximo 5 posições de abas por serviço, para uma leitura mais clara e para telas menores dos apps móveis. Com mais de 5 itens, o design mostra 4 abas e o menu Mais na quinta posição (Option+Shift+5 ou 0 o abrem), então nunca passa de 5. Os atalhos Option+Shift+1 a 5 abrem as abas.
+- Regra do Heimdall Design: no máximo 5 posições de abas por serviço, para uma leitura mais clara e para telas menores dos apps móveis. Com mais de 5 itens, o design mostra 4 abas e o menu Mais na quinta posição, então nunca passa de 5. Os atalhos Option+Shift+1 a 5 abrem as abas.
 - Nome de aba com uma palavra só (as subabas podem ter mais): o Controls passou a ter Resumo no lugar de Visão geral e o Lab, Console no lugar de Console geral.
-- Games: cinco categorias, em ordem alfabética: Ação, Aventuras, Cassino (só jogos de azar: poker, blackjack, bacará, poker caribenho, caça-níqueis e roleta), Estratégia e Lógica (palavras, números e a paciência). Com jogos de terceiros no .env, são 6 itens: o menu Mais, na quinta posição, guarda Lógica e Outros. Os endereços antigos das categorias continuam valendo.
+- Games: cinco categorias, em ordem alfabética: Ação, Aventuras, Cassino (só jogos de azar: poker, blackjack, bacará, poker caribenho, caça-níqueis e roleta), Estratégia e Lógica (palavras, números e a paciência). Os jogos extras de terceiros (HEIMDALL_JOGOS_EXTRAS) ficam no item Extras do menu Mais: com eles são 6 itens, e o Mais, na quinta posição, guarda Lógica e Extras (a página Outros jogos passou a se chamar Extras, em /extras). Os endereços antigos das categorias continuam valendo.
 - Controls: cinco abas (Resumo, Terminal, Serviços, Usuários e Nuvem); Manutenção virou subaba de Serviços, ao lado de Ligar e desligar.
 - Lab: cinco abas (Início, S3, Processamento, Athena e Console); Lambda e Glue viraram subabas de Processamento.
+- Atalhos de teclado nas duas formas: o Guia de comandos da Ajuda ganhou a tabela Atalhos de teclado, com a forma do macOS (Option+Shift, Control) e a do Windows e Linux (Alt+Shift, Ctrl) para cada ação, e os textos de ajuda do Perguntar, do Notes, do Controls e das abas citam as duas. O código já funcionava nos três sistemas, porque usa a tecla Alt. O menu Mais tem um só atalho, Option+Shift+5 (Alt+Shift+5); o 0 antigo deixou de existir.
+- Rotas sempre atualizadas: a rota nova é a canônica e a antiga redireciona (301) para ela. No Games, /categoria/cartas, /categoria/acao e as demais antigas, e /outros (agora /extras); no Health, /hoje (agora /). Regra no CLAUDE.md.
 - Cópia diária: o banco do Finance (financas.db e avisos_financas.db) também entra, cada um na subpasta com o nome dele.
 
 ## 2026-11-25 - Guia de comandos de administração

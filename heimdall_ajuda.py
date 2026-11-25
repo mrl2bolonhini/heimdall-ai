@@ -42,7 +42,7 @@ FAQ = {
         ("Como entro nos serviços do Heimdall?",
          "O acesso é pelo Cloudflare Access, com a sua conta Microsoft e a aprovação no Microsoft Authenticator. Depois de entrar, o menu Conta, no alto de qualquer página, leva a todos os serviços a que você tem acesso."),
         ("Como navego com leitor de tela ou só com o teclado?",
-         "Todas as páginas têm o link Pular para o conteúdo no início, um único título principal e abas com setas, Home e End. Option+Shift+1 a 5 abre a aba pelo número (cada serviço tem no máximo 5 posições; se a quinta for o menu Mais, o mesmo atalho o abre). Nos serviços com o campo Perguntar, Option+Shift+P leva ao campo."),
+         "Todas as páginas têm o link Pular para o conteúdo no início, um único título principal e abas com setas, Home e End. Option+Shift+1 a 5 abre a aba pelo número no macOS, e Alt+Shift+1 a 5 no Windows e no Linux (cada serviço tem no máximo 5 posições; se a quinta for o menu Mais, o mesmo atalho o abre). Nos serviços com o campo Perguntar, Option+Shift+P (Alt+Shift+P no Windows e no Linux) leva ao campo. A tabela completa está no Guia de comandos."),
         ("O que é o campo Perguntar e posso confiar nas respostas?",
          "O Perguntar responde com base apenas nos dados da tela em que você está. As respostas são geradas por inteligência artificial e podem conter erros: confira os números e as datas. As respostas não substituem orientação médica, jurídica, contábil ou financeira."),
         ("Quem pode ver os meus dados?",
@@ -394,6 +394,35 @@ COMANDOS_ADMIN = [
     ("Desligar o emulador de AWS", "heimdall lab --stop", "docker stop localstack moto"),
 ]
 
+# Atalhos de teclado: um só atalho por ação, com a forma do macOS e a do Windows e Linux (Option vira Alt; Control vira Ctrl; o resto é igual).
+ATALHOS = [
+    ("Abrir a aba pelo número (de 1 a 5)", "Option+Shift+1 a 5", "Alt+Shift+1 a 5"),
+    ("Abrir ou fechar o menu Mais (a quinta posição, quando há mais de 5 itens; Esc também fecha)", "Option+Shift+5", "Alt+Shift+5"),
+    ("Passar para a subaba anterior ou seguinte", "Option+Shift+seta esquerda ou direita", "Alt+Shift+seta esquerda ou direita"),
+    ("Ir ao campo Perguntar", "Option+Shift+P", "Alt+Shift+P"),
+    ("Controls, Terminal: voltar ao campo do terminal", "Option+Shift+T", "Alt+Shift+T"),
+    ("Controls, Terminal: ir à lista de atalhos", "Option+Shift+H", "Alt+Shift+H"),
+    ("Controls, Terminal: completar comando ou arquivo", "Control+I", "Ctrl+I"),
+    ("Controls, Terminal: interromper o programa", "Control+C ou Option+Shift+I", "Ctrl+C ou Alt+Shift+I"),
+    ("Controls, Terminal: limpar as saídas", "Control+L ou Option+Shift+L", "Ctrl+L ou Alt+Shift+L"),
+    ("Controls, Terminal: reiniciar o shell", "Option+Shift+R", "Alt+Shift+R"),
+    ("Controls, Terminal: copiar a última saída", "Option+Shift+C", "Alt+Shift+C"),
+    ("Controls, Terminal: copiar as últimas 1 a 9 saídas", "Control+Shift+1 a 9", "Ctrl+Shift+1 a 9"),
+    ("Controls, Terminal: copiar todas as saídas", "Control+Shift+0", "Ctrl+Shift+0"),
+    ("Controls, Terminal: ir ao início da última saída", "Option+Shift+U", "Alt+Shift+U"),
+    ("Controls, Terminal: ler o começo da última saída", "Option+Shift+O", "Alt+Shift+O"),
+    ("Controls, Terminal: comando anterior ou seguinte do histórico", "Option+Shift+P ou Option+Shift+N", "Alt+Shift+P ou Alt+Shift+N"),
+]
+
+
+def _atalhos_html() -> str:
+    linhas = "".join(f'<tr><th scope="row">{e(a)}</th><td><kbd>{e(m)}</kbd></td><td><kbd>{e(w)}</kbd></td></tr>' for a, m, w in ATALHOS)
+    return ('<h3 id="atalhos">Atalhos de teclado</h3>'
+            f'<table><caption>Atalhos de teclado por sistema</caption><thead><tr><th scope="col">Ação</th><th scope="col">macOS</th><th scope="col">Windows e Linux</th></tr></thead><tbody>{linhas}</tbody></table>'
+            '<p>Cada ação tem um só atalho. A tecla Option do Mac corresponde à Alt no Windows e no Linux. Se o sistema ou o leitor de tela já usar uma combinação '
+            '(por exemplo, Alt+Shift para trocar o idioma do teclado no Windows), altere a combinação do sistema. No iPhone e no Android os atalhos só valem com teclado físico; '
+            'na tela, use os botões e as abas.</p>')
+
 
 def _comandos_html() -> str:
     cab = "".join(f'<th scope="col">{c}</th>' for c in ("Ação", "macOS (comando heimdall)", "Linux e Windows (Python, na pasta do Heimdall)"))
@@ -414,6 +443,7 @@ def _comandos_html() -> str:
             f'<table><caption>Comandos de administração por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas_admin}</tbody></table>'
             '<p>No Heimdall Controls, a aba Terminal executa esses comandos no computador que hospeda o Heimdall e mostra a saída na própria página; '
             'a aba Serviços liga e desliga o emulador por uma chave, e a aba Manutenção tem os botões Status e Diagnóstico.</p>'
+            + _atalhos_html() +
             '<h3>iPhone e Android</h3>'
             '<p>Abra os painéis pelo navegador (Safari no iPhone, Chrome no Android) para consultar os dados, ver sugestões e editar o perfil. '
             'A conferência de documentos e os demais comandos acima são feitos no computador que hospeda o Heimdall. No iPhone, o botão Atualizar dados agora, '

@@ -178,7 +178,7 @@ CATALOGO += [
 ]
 # Categorias: (id, título, descrição, jogos). A página inicial lista as categorias e cada uma tem a sua página com os jogos.
 CATEGORIAS = [
-    # Nomes de uma palavra, em ordem alfabética. Cinco categorias ocupam as 5 posições de abas; com a aba Outros jogos passam de 5 itens e o menu Mais
+    # Nomes de uma palavra, em ordem alfabética. Cinco categorias ocupam as 5 posições de abas; com os jogos extras de terceiros passam de 5 itens e o menu Mais
     # (quinta posição) guarda as duas últimas (Heimdall Design: nunca mais de 5 posições).
     ("acao", "Ação", "Jogos de reflexo e movimento. O som ajuda a jogar: melhor com fones de ouvido.", ["arqueiro", "labirinto", "vilarejo"]),
     ("aventuras", "Aventuras", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
@@ -216,7 +216,7 @@ def scripts_do_jogo(jid: str) -> list:
 
 
 def extras() -> list:
-    """Outros jogos hospedados por você (HEIMDALL_JOGOS_EXTRAS): só endereços http e https."""
+    """Jogos extras, de terceiros, hospedados por você (HEIMDALL_JOGOS_EXTRAS): só endereços http e https."""
     saida = []
     for item in os.environ.get("HEIMDALL_JOGOS_EXTRAS", "").split(";"):
         p = [x.strip() for x in item.split("|")]
@@ -237,9 +237,9 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 
 
 def nav_jogos() -> list:
-    """Abas do Games: uma por categoria (em ordem alfabética) e, se há jogos hospedados por você, a aba Outros jogos. No máximo 5 posições: 5 categorias, ou 4 abas e o menu Mais (quando há Outros jogos)."""
+    """Abas do Games: uma por categoria (em ordem alfabética) e, se há jogos extras de terceiros, o item Extras, que fica no menu Mais. No máximo 5 posições: 5 categorias, ou 4 abas e o menu Mais (quando há Outros jogos)."""
     itens = [(f"/categoria/{cid}", t) for cid, t, _, _ in CATEGORIAS]
-    return itens + ([("/outros", "Outros")] if extras() else [])
+    return itens + ([("/extras", "Extras")] if extras() else [])
 
 
 def aba_do_jogo(jid: str) -> str:
@@ -293,7 +293,18 @@ def pg_outros():
     if not ex:
         return None
     lista = '<ul class="lista-jogos">' + "".join(f'<li><a href="{e(u)}">{e(n)}</a>' + (f": {e(d)}" if d else "") + "</li>" for n, u, d in ex) + "</ul>"
-    return "Outros jogos", f"<p>Jogos hospedados por você, fora do Heimdall Games.</p>{lista}", []
+    return "Extras", f"<p>Jogos de terceiros, hospedados por você, fora do Heimdall Games.</p>{lista}", []
+
+
+def rota_canonica(rota: str) -> str:
+    """A rota atual de uma rota antiga: /categoria/<antigo> vai para a categoria que a absorveu e /outros para /extras. As demais não mudam.
+    Regra do projeto: rota nova é a canônica e a antiga redireciona (301) para ela."""
+    if rota == "/outros":
+        return "/extras"
+    m = re.fullmatch(r"/categoria/([a-z0-9]+)", rota)
+    if m and m.group(1) in POR_CATEGORIA and POR_CATEGORIA[m.group(1)][0] != m.group(1):
+        return f"/categoria/{POR_CATEGORIA[m.group(1)][0]}"
+    return rota
 
 
 def pg_jogo(jid: str):
@@ -355,6 +366,9 @@ class Jogos(nuvem.ManipuladorBase):
 
     def _ir(self, destino: str, extra: list = None) -> None:
         self._enviar(303, b"", extra=[("Location", destino)] + (extra or []))
+
+    def _ir_permanente(self, destino: str) -> None:
+        self._enviar(301, b"", extra=[("Location", destino)])
 
     def _sessao(self):
         c = SimpleCookie()
@@ -419,12 +433,16 @@ class Jogos(nuvem.ManipuladorBase):
                 titulo, corpo, scripts = pg_inicio()
                 self._enviar(200, pagina(titulo, corpo, sess, scripts_=scripts, atual=nav_jogos()[0][0]))
                 return
-            if rota == "/outros":
+            canonica = rota_canonica(rota)
+            if canonica != rota:   # rota antiga: redireciona de forma permanente para a atual, para o endereço sempre estar em dia
+                self._ir_permanente(canonica)
+                return
+            if rota == "/extras":
                 ro = pg_outros()
                 if not ro:
-                    self._enviar(404, pagina("Não encontrei", '<p>Não há outros jogos configurados.</p>' + design.botao("/", "Ver as categorias"), sess))
+                    self._enviar(404, pagina("Não encontrei", '<p>Não há jogos extras configurados.</p>' + design.botao("/", "Ver as categorias"), sess))
                     return
-                self._enviar(200, pagina(ro[0], ro[1], sess, scripts_=ro[2], atual="/outros"))
+                self._enviar(200, pagina(ro[0], ro[1], sess, scripts_=ro[2], atual="/extras"))
                 return
             mc = re.fullmatch(r"/categoria/([a-z0-9]+)", rota)
             if mc:

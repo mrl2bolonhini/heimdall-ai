@@ -256,6 +256,11 @@ for _a, _m, _p in aj.COMANDOS_ADMIN:
             _ok2 = _ok2 and (f'"--{_opt}"' in _fonte or f'"{_opt}"' in _fonte)
     for _opt in _re.findall(r"heimdall (\w+)", _m):
         _ok2 = _ok2 and f"    {_opt})" in (RAIZ / "heimdall.zsh").read_text(encoding="utf-8") or f"{_opt}|" in (RAIZ / "heimdall.zsh").read_text(encoding="utf-8")
+confere("atalhos de teclado: tabela com caption e scope, com a forma do macOS e a do Windows e Linux em cada linha",
+        'id="atalhos"' in _c and "<caption>Atalhos de teclado por sistema" in _c and 'Windows e Linux</th>' in _c and len(aj.ATALHOS) >= 10 and all(a and m and w for a, m, w in aj.ATALHOS))
+confere("atalhos: a forma do Windows e Linux é a do macOS com Option por Alt e Control por Ctrl (nada mais muda)",
+        all(m.replace("Option", "Alt").replace("Control", "Ctrl") == w for _a2, m, w in aj.ATALHOS), [w for _a2, m, w in aj.ATALHOS if m.replace("Option", "Alt").replace("Control", "Ctrl") != w])
+confere("atalhos: o menu Mais tem um só atalho (5), sem o 0 antigo", sum("menu Mais" in a for a, _m, _w in aj.ATALHOS) == 1 and "Option+Shift+0" not in _c and "Alt+Shift+0" not in _c)
 confere("guia de comandos: tabela de administração com caption, e toda opção existe no script ou no heimdall.zsh",
         _ok2 and 'id="comandos-admin"' in _c and "<caption>Comandos de administração" in _c)
 print("\nFALHAS:", falhas)

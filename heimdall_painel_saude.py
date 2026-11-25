@@ -101,7 +101,7 @@ GRUPOS = [("resumo", "Resumo", [("/", "Hoje"), ("/diario", "Dia a dia"), ("/sema
 SECOES = [(g[2][0][0], g[1]) for g in GRUPOS if g[0] != "ajustes"]   # as abas de cima; Ajustes é botão
 
 
-ALIASES = {"/hoje": "/"}   # endereço antigo da página Hoje
+ALIASES = {"/hoje": "/"}   # endereço antigo da página Hoje: redireciona (301) para a rota atual, regra "rotas sempre atualizadas"
 
 
 def localizar(rota: str) -> tuple:
@@ -216,7 +216,7 @@ def estado_atualizacao(q: dict) -> tuple:
     ult = ultima_gravacao()
     if ult and ult >= pedido:
         return (f'<p class="ok" role="status">Dados atualizados. Última gravação às {ult.astimezone().strftime("%H:%M")}.</p>'
-                + design.botao("/", "Ver a visão geral") + design.botao("/hoje", "Ver hoje")), 0
+                + design.botao("/", "Ver hoje")), 0
     espera = time.time() - int(t)
     if espera < ESPERA_DADOS:
         deNovo = f"/dados?atualizado={e(t)}&v=1"
@@ -558,7 +558,6 @@ ROTAS_POST = ("/sair", "/avisos/lido", "/perguntar") + ROTAS_CLINICAS
 
 ROTAS = {
     "/": pg_inicio,
-    "/hoje": pg_inicio,
     "/tendencias": pg_tendencias,
     "/semana": pg_semana,
     "/anomalias": pg_anomalias,
@@ -776,6 +775,9 @@ class Painel(nuvem.ManipuladorBase):
                         pass
                 if rota == "/avisos":
                     self._enviar(200, pagina("Avisos", avisos_mod.pagina(avisos_mod.do_servico("saude").listar(), sess["csrf"]), sess, rota))
+                    return
+                if rota in ALIASES:   # rota antiga: redireciona de forma permanente para a atual
+                    self._enviar(301, b"", extra=[("Location", ALIASES[rota])])
                     return
                 funcao = ROTAS.get(rota)
                 if not funcao:

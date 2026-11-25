@@ -122,7 +122,7 @@ def botao_js(id_: str, rotulo: str) -> str:
     return f'<button type="button" id="{e(id_)}">{e(rotulo)}</button>'
 
 
-MAX_ABAS = 5   # no máximo 5 posições de abas por serviço (decisão de 25/11/2026: leitura mais clara e telas pequenas dos apps móveis). Passou de 5 itens: 4 abas e o menu Mais na quinta posição (Option+Shift+5 ou 0 o abrem); nunca passa de 5
+MAX_ABAS = 5   # no máximo 5 posições de abas por serviço (decisão de 25/11/2026: leitura mais clara e telas pequenas dos apps móveis). Passou de 5 itens: 4 abas e o menu Mais na quinta posição (um só atalho o abre: Option+Shift+5 no macOS, Alt+Shift+5 no Windows e no Linux); nunca passa de 5
 
 
 def limite_abas(n: int) -> int:
@@ -136,11 +136,11 @@ def por_linha(n: int) -> int:
 
 
 def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = ()) -> str:
-    """Abas de navegação entre páginas (ARIA tablist). Cada aba é um link: ler/ir é link. As setas movem entre as abas e Option+Shift+número
+    """Abas de navegação entre páginas (ARIA tablist). Cada aba é um link: ler/ir é link. As setas movem entre as abas e Option+Shift+número (Alt+Shift+número no Windows e no Linux)
     abre a aba pelo número (o script `SCRIPT_ABAS` faz isso). `itens` é [(rota, nome)]; `atual` é a rota aberta. O painel é o <div role=tabpanel>
     que `painel_da_aba` devolve em volta do conteúdo.
     Com mais de 5 itens (MAX_ABAS), as 4 primeiras são abas e as outras vão para o menu Mais, que ocupa a quinta posição (um <details>, que funciona sem JavaScript), aberto por
-    Option+Shift+0; os itens do Mais são links comuns (abrem a página inteira)."""
+    Option+Shift+5 (Alt+Shift+5 no Windows e no Linux), o único atalho dele; os itens do Mais são links comuns (abrem a página inteira)."""
     e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
     abas_, extras = [], []
     limite = limite_abas(len(itens))
@@ -159,7 +159,7 @@ def abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = (
         atual_extra = next((n for r, n in itens[limite:] if r == atual), "")
         titulo = f"Mais, aba aberta: {atual_extra}" if atual_extra else "Mais"
         mais = (f'<details class="mais" id="mais"{" data-atual" if atual_extra else ""}><summary>{e(titulo)}</summary>'
-                f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" hidden>Atalho: Option Shift {limite + 1} ou 0</span>')
+                f'<ul aria-label="Outras abas">{"".join(extras)}</ul></details><span id="atalho-mais" hidden>Atalho: Option Shift {limite + 1} no macOS, ou Alt Shift {limite + 1} no Windows e no Linux</span>')
     classe = f"l{por_linha(len(itens))}" + (" com-mais" if extras else "")
     return (f'<div class="abas-bloco"><div role="tablist" class="{classe}" aria-label="{e(rotulo)}">' + "".join(abas_)
             + f'</div>{mais}{dicas}</div>')
@@ -424,18 +424,11 @@ document.addEventListener('keydown', function(ev){
     var as = abasDe(sub), i = as.indexOf(atual(sub)); if (i < 0) { i = 0; }
     ev.preventDefault(); as[(i + (ev.code === 'ArrowRight' ? 1 : as.length - 1)) % as.length].click(); return;
   }
-  if (ev.code === 'Digit0') {   // menu Mais: abre e põe o foco no primeiro item; de novo, fecha
-    var mais = document.getElementById('mais'); if (!mais) { return; }
-    ev.preventDefault();
-    if (mais.open) { mais.open = false; mais.querySelector('summary').focus(); return; }
-    mais.open = true; var l = mais.querySelector('a'); if (l) { l.focus(); }
-    return;
-  }
   var m = /^Digit([1-9])$/.exec(ev.code); if (!m) { return; }
   var top = principal(); if (!top) { return; }
   var n = parseInt(m[1], 10), todas = abasDe(top), a = todas[n - 1];
   if (a) { ev.preventDefault(); a.click(); return; }
-  var mais5 = document.getElementById('mais');   // o Mais ocupa a posição seguinte à da última aba (a quinta)
+  var mais5 = document.getElementById('mais');   // o Mais ocupa a quinta posição: é o único atalho dele
   if (mais5 && n === todas.length + 1) {
     ev.preventDefault();
     if (mais5.open) { mais5.open = false; mais5.querySelector('summary').focus(); return; }

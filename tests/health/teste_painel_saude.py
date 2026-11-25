@@ -187,7 +187,9 @@ confere("convidado: o perfil dele vai para db/people/<id>/ e não aparece no do 
 _cp = dict(csrf=_ss["csrf"], id="1", acao="aceitar")
 st, _, _ = pedir("/sugestoes/acao", _ck2, dados=_up.urlencode(_cp).encode())
 confere("convidado: não cria evento nem lembrete no Mac do dono", not _enviados[1:], _enviados)
-for rota, esperado in (("/", "Como você está agora"), ("/hoje", "Hoje"), ("/semana", "Saúde: semana de"), ("/sono", "noites com dado"), ("/atividade", "Passos"), ("/recuperacao", "Recuperação"), ("/anomalias", "Anomalias"),
+st, _, cab = pedir("/hoje", ck)
+confere("rota antiga /hoje redireciona (301) para a atual /", st == 301 and cab.get("Location") == "/", (st, cab.get("Location")))
+for rota, esperado in (("/", "Como você está agora"), ("/semana", "Saúde: semana de"), ("/sono", "noites com dado"), ("/atividade", "Passos"), ("/recuperacao", "Recuperação"), ("/anomalias", "Anomalias"),
                        ("/coracao", "Frequência"), ("/treinos", "Treinos"), ("/eventos", "Sintomas"), ("/diario", "Valores por dia"), ("/dados", "Último dia com dado")):
     st, corpo, cab = pedir(rota, ck)
     confere(f"página {rota}", st == 200 and esperado in corpo and "Pular para o conteúdo" in corpo, (st, corpo[:300]))

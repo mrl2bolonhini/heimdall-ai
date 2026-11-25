@@ -133,21 +133,29 @@ os.environ["HEIMDALL_JOGOS_EXTRAS"] = "Terceiro|http://localhost:8015|Quebra-cab
 ex = hj.extras()
 confere("extras aceitam só http e https", [x[0] for x in ex] == ["Terceiro", "Outro"], ex)
 token2, _ = hc.nova_sessao()
-st, corpo, _ = pedir("/outros", f"{hc.COOKIE}={token2}")
+st, corpo, _ = pedir("/extras", f"{hc.COOKIE}={token2}")
 corpo_cab = corpo.split("<main")[0]
 confere("com extras são 6 itens: 4 abas e o menu Mais na quinta posição (Lógica e Outros), nunca mais de 5 posições; sem o endereço perigoso",
         st == 200 and 'href="http://localhost:8015"' in corpo and "javascript:" not in corpo and corpo_cab.count('role="tab"') == 4 and 'id="mais"' in corpo_cab
-        and 'href="/categoria/logica"' in corpo_cab.split('id="mais"')[1] and 'href="/outros"' in corpo_cab.split('id="mais"')[1] and "Mais, aba aberta: Outros" in corpo_cab, (st, corpo_cab[-700:]))
+        and 'href="/categoria/logica"' in corpo_cab.split('id="mais"')[1] and 'href="/extras"' in corpo_cab.split('id="mais"')[1] and "Mais, aba aberta: Extras" in corpo_cab, (st, corpo_cab[-700:]))
 os.environ.pop("HEIMDALL_JOGOS_EXTRAS")
-for _antigo, _novo, _jogo in (("cassino", "cassino", "blackjack"), ("cartas", "cassino", "poker"), ("acao", "acao", "vilarejo"), ("audio", "acao", "vilarejo"), ("tabuleiro", "estrategia", "xadrez"),
+for _antigo, _novo, _jogo in (("cartas", "cassino", "poker"), ("acao", "acao", "vilarejo"), ("audio", "acao", "vilarejo"), ("tabuleiro", "estrategia", "xadrez"),
                               ("palavras", "logica", "forca"), ("numeros", "logica", "sudoku")):
-    st_c, corpo_c, _ = pedir(f"/categoria/{_antigo}", f"{hc.COOKIE}={token2}")
-    confere(f"endereço antigo /categoria/{_antigo} abre a aba nova ({_novo}) com os jogos dela", st_c == 200 and f'href="/categoria/{_novo}" aria-selected="true"' in corpo_c and f"/jogo/{_jogo}" in corpo_c)
+    st_c, _, cab_c = pedir(f"/categoria/{_antigo}", f"{hc.COOKIE}={token2}")
+    if _antigo == _novo:   # ainda é a rota atual: abre
+        confere(f"/categoria/{_antigo} é rota atual e abre", st_c == 200)
+        continue
+    confere(f"rota antiga /categoria/{_antigo} redireciona (301) para a atual /categoria/{_novo}", st_c == 301 and cab_c.get("Location") == f"/categoria/{_novo}", (st_c, cab_c.get("Location")))
+    st_c, corpo_c, _ = pedir(f"/categoria/{_novo}", f"{hc.COOKIE}={token2}")
+    confere(f"a rota atual /categoria/{_novo} abre com os jogos dela e a aba marcada", st_c == 200 and f'href="/categoria/{_novo}" aria-selected="true"' in corpo_c and f"/jogo/{_jogo}" in corpo_c)
+confere("todas as rotas de categoria listadas nas abas são canônicas", all(hj.rota_canonica(r) == r for r, _ in hj.nav_jogos()) and hj.rota_canonica("/outros") == "/extras")
 st_c, corpo_c, _ = pedir("/categoria/cassino", f"{hc.COOKIE}={token2}")
 confere("Cassino traz só os jogos de azar e de cartas de aposta; a paciência foi para Lógica", "/jogo/poker" in corpo_c and "/jogo/roleta" in corpo_c and "/jogo/paciencia" not in corpo_c)
 confere("nomes das abas com uma palavra só e em ordem alfabética", all(" " not in c[1] for c in hj.CATEGORIAS) and [c[1] for c in hj.CATEGORIAS] == ["Ação", "Aventuras", "Cassino", "Estratégia", "Lógica"])
 confere("sem extras, as 5 categorias ocupam as 5 posições", len(hj.nav_jogos()) == 5)
-confere("sem extras não há aba Outros nem a rota", pedir("/outros", f"{hc.COOKIE}={token2}")[0] == 404 and 'href="/outros"' not in pedir("/", f"{hc.COOKIE}={token2}")[1])
+st_o, _, cab_o = pedir("/outros", f"{hc.COOKIE}={token2}")
+confere("a rota antiga /outros redireciona (301) para /extras", st_o == 301 and cab_o.get("Location") == "/extras", (st_o, cab_o.get("Location")))
+confere("sem extras não há item Extras nem a rota", pedir("/extras", f"{hc.COOKIE}={token2}")[0] == 404 and 'href="/extras"' not in pedir("/", f"{hc.COOKIE}={token2}")[1])
 os.environ.pop("HEIMDALL_JOGOS_EXTRAS", None)
 
 for arq in ("tests/games/teste_jogos_logica.js", "tests/games/teste_jogos_ui.js"):

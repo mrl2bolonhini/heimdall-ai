@@ -175,7 +175,7 @@ def respostas(dono: str) -> list:
         return [dict(x) for x in _respostas.get(dono, [])]
 
 
-ATALHOS = "Atalho Option Shift P leva ao campo. Enter envia a pergunta; Shift Enter pula linha."
+ATALHOS = "Atalho Option Shift P no macOS, ou Alt Shift P no Windows e no Linux, leva ao campo. Enter envia a pergunta; Shift Enter pula linha."
 CAMPO = '<textarea id="pergunta" name="pergunta" rows="3" maxlength="400" data-pergunta data-envia autocomplete="off"></textarea>'
 
 
