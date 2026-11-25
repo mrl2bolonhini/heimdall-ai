@@ -61,7 +61,7 @@ def perfil_adicionar(tipo: str, texto: str, desde: str = "") -> dict:
         raise ErroClinico("Tipo inválido. Use: " + ", ".join(PERFIL_TIPOS) + ".")
     texto = ex._limpo(texto, 200)
     if len(texto) < 2:
-        raise ErroClinico("Escreva a informação (por exemplo: hipoglicemia, ou o nome do convênio).")
+        raise ErroClinico("Escreva a informação (por exemplo: asma, uma alergia ou o nome do convênio).")
     if desde and not re.fullmatch(r"\d{4}(?:-\d{2}-\d{2})?", desde):
         raise ErroClinico("A data de início é AAAA ou AAAA-MM-DD.")
     ex._escrever(lambda con: con.execute("INSERT OR IGNORE INTO perfil_clinico (tipo, texto, desde, fonte, criado) VALUES (?,?,?,?,?)",

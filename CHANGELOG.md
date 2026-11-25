@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Health: abas agrupadas com subabas
+- As 17 abas do painel de saúde viraram 6, com subabas como no Finance: Visão geral (Visão geral, Hoje, Semana, Anomalias, Estado dos dados, Avisos), Sono e recuperação (Sono, Recuperação), Atividade e coração (Atividade, Treinos, Coração e ECG), Registros (Diário, Sintomas, humor e medicamentos), Exames e documentos (Exames, Documentos) e Acompanhamento (Sugestões, Perfil de saúde). Os endereços das páginas não mudaram.
+- Regra para todos os serviços no CLAUDE.md: lista de abas enxuta e agrupada; os demais serviços têm revisão no ROADMAP. Também por regra, textos de produto (exemplos, ajuda, documentação) não citam informações pessoais do dono; o exemplo do perfil de saúde passou a ser genérico.
+
 ## 2026-11-25 - Memória clínica por pessoa, aba Perfil de saúde e sugestões que viram evento ou lembrete
 - O perfil de saúde e as sugestões ficam no banco de cada pessoa (db/people/<id>/), não no do dono. O painel de saúde agora separa os pedidos por pessoa sem trocar o banco dos outros pedidos (banco.da_pessoa, por pedido); no terminal, heimdall health --labs suggestions e profile aceitam a pessoa pelo script (heimdall_clinico.py --pessoa).
 - Nova aba Perfil de saúde no painel: lista, adiciona e remove itens (condição, cirurgia, alergia, convênio, médico, outra informação) por botão, com rótulos para leitor de tela. No primeiro acesso a visão geral leva ao Perfil, com o convite; "Concluir" (ou "Não tenho nada a informar") encerra o convite e "Preencher depois" o adia por 7 dias. A aba continua disponível sempre.

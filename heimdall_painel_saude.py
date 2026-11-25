@@ -84,8 +84,25 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 .botao{display:inline-block;padding:.7rem 1.2rem;border:2px solid currentColor;border-radius:.5rem;font-weight:700;text-decoration:none}
 """
 
-SECOES = [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/sono", "Sono"), ("/atividade", "Atividade"), ("/recuperacao", "Recuperação"), ("/anomalias", "Anomalias"),
-          ("/coracao", "Coração e ECG"), ("/treinos", "Treinos"), ("/eventos", "Sintomas, humor e medicamentos"), ("/diario", "Diário"), ("/exames", "Exames"), ("/documentos", "Documentos"), ("/perfil", "Perfil de saúde"), ("/sugestoes", "Sugestões"), ("/dados", "Estado dos dados"), ("/avisos", "Avisos")]
+# Abas e subabas (mesmo padrão do Finance). Cada grupo é (chave, nome da aba, [(rota, nome da subaba)]); a aba aponta para a primeira subaba.
+# A página inicial é a primeira aba. Rota nova: acrescente-a ao grupo a que pertence, em vez de criar mais uma aba.
+GRUPOS = [("geral", "Visão geral", [("/", "Visão geral"), ("/hoje", "Hoje"), ("/semana", "Semana"), ("/anomalias", "Anomalias"), ("/dados", "Estado dos dados"), ("/avisos", "Avisos")]),
+          ("sono", "Sono e recuperação", [("/sono", "Sono"), ("/recuperacao", "Recuperação")]),
+          ("atividade", "Atividade e coração", [("/atividade", "Atividade"), ("/treinos", "Treinos"), ("/coracao", "Coração e ECG")]),
+          ("registros", "Registros", [("/diario", "Diário"), ("/eventos", "Sintomas, humor e medicamentos")]),
+          ("exames", "Exames e documentos", [("/exames", "Exames"), ("/documentos", "Documentos")]),
+          ("acompanhamento", "Acompanhamento", [("/sugestoes", "Sugestões"), ("/perfil", "Perfil de saúde")])]
+SECOES = [(g[2][0][0], g[1]) for g in GRUPOS]   # as abas de cima
+
+
+def localizar(rota: str) -> tuple:
+    """(grupo, rota da subaba) a que a rota pertence, ou (None, "") (página de erro, por exemplo)."""
+    rota = rota.split("?")[0] or "/"
+    for g in GRUPOS:
+        for r, _ in g[2]:
+            if r == rota:
+                return g, r
+    return None, ""
 
 
 # ----------------------------------------------------------------------------------------
@@ -381,7 +398,7 @@ def pg_perfil(q: dict) -> tuple:
         corpo += "<p>O perfil ainda está vazio.</p>"
     opcoes = "".join(f'<option value="{e(k)}">{e(v.capitalize())}</option>' for k, v in clinico.PERFIL_TIPOS.items())
     campos = (f'<p><label for="tipo-perfil">Tipo</label><select id="tipo-perfil" name="tipo">{opcoes}</select></p>'
-              + _campo("texto-perfil", "Informação", "Por exemplo: hipoglicemia, cirurgia no joelho esquerdo, dipirona, ou o nome do convênio.")
+              + _campo("texto-perfil", "Informação", "Por exemplo: asma, uma cirurgia anterior, uma alergia ou o nome do convênio.")
               + _campo("desde-perfil", "Desde quando (opcional)", "Formato AAAA ou AAAA-MM-DD."))
     corpo += "<h2>Adicionar ao perfil</h2>" + _form("/perfil/adicionar", csrf, campos, "Adicionar")
     if not concluido:
@@ -503,10 +520,15 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
         aviso = f'<p class="{"ok" if tipo == "ok" else "erro"}" role="{"status" if tipo == "ok" else "alert"}">{e(texto)}</p>'
     conteudo = f"<h1>{e(titulo)}</h1>{aviso}{corpo}"
     if sess:
-        a = design.aba_da_rota(atual, SECOES)
+        grupo, sub = localizar(atual)
+        a = grupo[2][0][0] if grupo else ""
         nav = design.nav_abas(SECOES, a, "Seções do Heimdall Health")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        conteudo = design.com_abas(SECOES, a, conteudo + _bloco_perguntar(sess, atual))
+        interno = conteudo + _bloco_perguntar(sess, atual)
+        if grupo and len(grupo[2]) > 1:   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
+            conteudo = design.com_abas(SECOES, a, design.com_subabas(grupo[2], sub, interno, f"Seções de {grupo[1]}"), foco=False)
+        else:
+            conteudo = design.com_abas(SECOES, a, interno)
         scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Heimdall Health</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
