@@ -31,6 +31,8 @@ Não é diagnóstico nem substitui o seu médico.
 """
 import argparse
 import hashlib
+import html
+import io
 import json
 import os
 import re
@@ -43,6 +45,7 @@ import tempfile
 import threading
 import unicodedata
 import urllib.request
+import zipfile
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -72,15 +75,16 @@ carregar_env()
 import heimdall_banco as banco  # noqa: E402
 import heimdall_pastas  # noqa: E402
 import heimdall_agenda as agenda  # noqa: E402  (evento do Calendário ou lembrete: a regra única)
+import heimdall_nuvem as nuvem  # noqa: E402  (modelo da Cloudflare, com interruptor HEIMDALL_NUVEM)
 
 DIR = Path(os.environ.get("HEIMDALL_EXAMES_DIR", str(heimdall_pastas.health(PROJECT_DIR, banco.DB_DIR)))).expanduser()
 MAX_BYTES = 25 * 1024 * 1024
-EXT_OK = {".pdf", ".png", ".jpg", ".jpeg", ".heic"}
+EXT_OK = {".pdf", ".png", ".jpg", ".jpeg", ".heic", ".tif", ".tiff", ".bmp", ".webp", ".txt", ".docx"}
 USAR_MODELO = os.environ.get("HEIMDALL_EXAMES_LLM", "1") != "0"
 LLM_URL = os.environ.get("HEIMDALL_SAUDE_LLM_URL", os.environ.get("HEIMDALL_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions"))
 LLM_MODELO = os.environ.get("HEIMDALL_EXAMES_MODELO", os.environ.get("HEIMDALL_SAUDE_MODELO", os.environ.get("HEIMDALL_NEWS_MODELO", "gemma3-4b")))
 AVISO = "Isto é a leitura de um documento, não um diagnóstico nem uma interpretação médica. Confira com o documento original e com o seu médico."
-_abridor_local = urllib.request.build_opener(urllib.request.ProxyHandler({}))   # só o LiteLLM desta máquina: dado de saúde nunca sai do Mac
+_abridor_local = urllib.request.build_opener(urllib.request.ProxyHandler({}))   # o modelo local (LiteLLM desta máquina); a nuvem passa por heimdall_nuvem
 _TRAVA = threading.Lock()
 _DO_IPHONE = set()    # nomes de arquivos que chegaram pela rota do agente (só para registrar a origem; some ao reiniciar)
 
@@ -370,10 +374,10 @@ def _ocr(dados: bytes, nome: str) -> str:
         else:
             origem = d / ("foto" + ext)
             origem.write_bytes(dados)
-            if ext == ".heic":
+            if ext in (".heic", ".webp"):
                 sips = shutil.which("sips")
                 if not sips:
-                    raise ErroExames("Foto HEIC: no Mac o comando sips a converte; fora do Mac, converta para JPG antes de enviar.")
+                    raise ErroExames(f"Imagem {ext[1:].upper()}: no Mac o comando sips a converte; fora do Mac, converta para JPG antes de enviar.")
                 destino = d / "foto.png"
                 subprocess.run([sips, "-s", "format", "png", str(origem), "--out", str(destino)], capture_output=True, timeout=60)
                 origem = destino
@@ -395,12 +399,38 @@ def _ocr(dados: bytes, nome: str) -> str:
     return txt
 
 
+def _texto_docx(dados: bytes) -> str:
+    """Texto de um .docx (Word): lê o word/document.xml; células de tabela ficam separadas por espaços, para as regras de coluna."""
+    try:
+        z = zipfile.ZipFile(io.BytesIO(dados))
+        info = z.getinfo("word/document.xml")
+        if info.file_size > 30_000_000:
+            raise ErroExames("O documento Word é grande demais para ler.")
+        xml = z.read("word/document.xml").decode("utf-8", "replace")
+    except (zipfile.BadZipFile, KeyError):
+        raise ErroExames("Não consegui abrir o arquivo .docx (ele parece corrompido ou não é um documento Word).")
+    xml = re.sub(r"</w:p>|<w:br[^>]*/>", "\n", xml)
+    xml = re.sub(r"<w:tab/>|</w:tc>", "   ", xml)
+    return html.unescape(re.sub(r"<[^>]+>", "", xml))
+
+
 def texto_do_arquivo(dados: bytes, nome: str) -> tuple:
     """(texto, por_ocr). PDF com texto é lido direto; imagem e PDF escaneado passam por OCR.
     PDF com pouco texto tenta o OCR, mas se ele falhar fica com o que a leitura direta achou."""
     ext = Path(nome).suffix.lower()
     if ext not in EXT_OK:
-        raise ErroExames(f"Formato não suportado ({ext or 'sem extensão'}). Envie PDF, JPG, PNG ou HEIC.")
+        raise ErroExames(f"Formato não suportado ({ext or 'sem extensão'}). Envie PDF, JPG, PNG, HEIC, TIFF, WEBP, TXT ou DOCX.")
+    if ext in (".txt", ".docx"):
+        if ext == ".docx":
+            txt = _texto_docx(dados)
+        else:
+            try:
+                txt = dados.decode("utf-8")
+            except UnicodeDecodeError:
+                txt = dados.decode("latin-1", "replace")
+        if len(re.findall(r"[A-Za-zÀ-ú]{3,}", txt)) < 8:
+            raise ErroExames("O arquivo não tem texto suficiente para ler.")
+        return txt, False
     direto = ""
     if ext == ".pdf":
         try:
@@ -436,7 +466,7 @@ def achar_data(texto: str) -> str:
                 if v:
                     return v
     for linha in texto.splitlines()[:80]:
-        if re.search(r"nasc|idade|validade|vencimento", linha, re.I):
+        if re.search(r"nasc|\bidade\b|validade|vencimento", linha, re.I):
             continue
         for g in _DATA.finditer(linha):
             v = _data_iso(*g.groups())
@@ -472,7 +502,15 @@ def classificar(texto: str, n_resultados: int = 0) -> str:
     receita = sum(p in n for p in ("receita", "uso oral", "uso topico", "via oral", "comprimido", "capsula", "posologia", "tomar", "prescricao", "gotas", "caixa", "uso continuo"))
     enc = sum(p in n for p in ("encaminho", "encaminhamento", "solicito avaliacao", "para avaliacao", "referencia e contrarreferencia", "avaliacao com", "especialista", "parecer"))
     cons = sum(p in n for p in ("consulta", "agendad", "marcad", "horario", "comparec", "confirmacao", "retorno", "antecedencia"))
-    melhor = max(("exame", exame), ("receita", receita), ("encaminhamento", enc), ("consulta", cons), key=lambda x: x[1])
+    atest = sum(p in n for p in ("atestado", "afastamento", "afastar", "licenca medica", "repouso", "incapacidade", "esteve sob", "dias de repouso"))
+    atest += 2 if re.search(r"\bcid\b", n) else 0
+    atest += 1 if re.search(r"\bcid\s*10\b", n) or _CID_LISTA.search(texto) else 0
+    modal = sum(1 for _, pad in MODALIDADES if re.search(pad, n))
+    laudo = (2 * modal + sum(p in n for p in _ESTRUTURA_LAUDO)) if modal and n_resultados < 8 else 0
+    if laudo >= 3 and laudo >= exame - 1:
+        exame = 0
+    melhor = max(("exame", exame), ("receita", receita), ("encaminhamento", enc), ("consulta", cons), ("atestado", atest if atest >= 3 else 0),
+                 ("laudo", laudo if laudo >= 3 else 0), key=lambda x: x[1])
     return melhor[0] if melhor[1] >= 2 else "outro"
 
 
@@ -774,7 +812,7 @@ def _novo(nome, valor, cmp, un, ref) -> dict:
             "espera_tabela": bool(_REMETE_TABELA.search(ref or "")) and not _tem_faixa(ref or "")}
 
 
-def _registros_do_laudo(texto: str) -> list:
+def _registros_do_laudo(texto: str, diag: dict = None) -> list:
     """Percorre o laudo linha a linha e devolve a lista de registros. Cada registro é um resultado com a tabela de referência e o histórico
     que o seguem. Notas, referências bibliográficas, rodapés e tabelas não viram resultados."""
     linhas = texto.splitlines()
@@ -876,6 +914,8 @@ def _registros_do_laudo(texto: str) -> list:
             continue
         r = _linha_de_resultado(l, linhas[i - 2] if i >= 2 else "")
         if not r:
+            if diag is not None and any(_unidade_da_cauda(l[m.end():])[0] for m in _VAL.finditer(l)):
+                diag["sobras"] = diag.get("sobras", 0) + 1       # linha com valor e unidade que nenhuma regra aproveitou
             continue
         nome, valor, cmp, un, resto = r
         ref = resto
@@ -924,9 +964,39 @@ def ler_resultados_regra(texto: str) -> list:
 # --------------------------------------------------------------------------------------------
 # Modelo local (opcional): só propõe; o que não aparece no texto é descartado
 # --------------------------------------------------------------------------------------------
+def _minimizar(texto: str) -> str:
+    """Tira do texto o que identifica a pessoa e não ajuda a ler o documento (CPF, RG, telefone, e-mail, números longos, nome do paciente)
+    antes de mandá-lo à nuvem. É uma redução de dados, não uma anonimização completa: nomes de médicos e datas ficam, porque a leitura precisa deles."""
+    t = re.sub(r"(?<![\d.,/])\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?![\d])", "[CPF]", texto)
+    t = re.sub(r"[\w.+\-]+@[\w\-]+(?:\.[\w\-]+)+", "[EMAIL]", t)
+    t = re.sub(r"(?<![\d.,/])\(?\d{2}\)?\s?\d{4,5}-\d{4}(?![\d])", "[TEL]", t)
+    t = re.sub(r"(?<![\d.,/])\d{9,}(?![\d])", "[NUM]", t)
+    linhas = []
+    for l in t.splitlines():
+        if "[CPF]" in l and len(l) <= 160:
+            l = re.sub(r"^.*?(?=CPF|\[CPF\])", "", l) if re.search(r"(?i)\bcpf\b", l) else l
+        l = re.sub(r"(?i)^(\s*(?:nome(?:\s+do\s+paciente)?|paciente|cliente|benefici[aá]rio)\s*:\s*).+$", r"\1[NOME]", l)
+        linhas.append(l)
+    return "\n".join(linhas)
+
+
+_THINK = re.compile(r"(?is)<think>.*?</think>")
+
+
 def _modelo(prompt: str, max_tokens: int = 1400) -> str:
+    """Resposta de um modelo para ler documentos. Primeiro a nuvem (heimdall_nuvem, só com HEIMDALL_NUVEM=1 e sem HEIMDALL_EXAMES_NUVEM=0,
+    e com o texto reduzido por _minimizar); se ela estiver desligada ou falhar, o modelo local. Vazio quando nenhum dos dois responde."""
     if not USAR_MODELO:
         return ""
+    if os.environ.get("HEIMDALL_EXAMES_NUVEM", "1") != "0" and nuvem.ativo():
+        try:
+            r = nuvem.chat("Você lê documentos médicos em português do Brasil e devolve só o JSON pedido.\n/no_think", _minimizar(prompt), max_tokens=max_tokens,
+                           timeout=150, modelo=nuvem.modelo_perguntar(), folga=300)
+            r = _THINK.sub("", r or "").strip()
+            if r:
+                return r
+        except Exception:  # noqa: BLE001 - nuvem desligada, sem rede ou recusou: vale o modelo local
+            pass
     corpo = json.dumps({"model": LLM_MODELO, "temperature": 0, "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]}).encode()
     cab = {"Content-Type": "application/json"}
     if os.environ.get("LITELLM_MASTER_KEY"):
@@ -1020,11 +1090,22 @@ def ler_resultados_modelo(texto: str) -> tuple:
     return saida, descartados
 
 
-def extrair_exames(texto: str) -> tuple:
+def ia_ajuda(texto: str, regra: list, descartados: list, ocr: bool = False) -> bool:
+    """A leitura por regras basta? Chama o modelo quando ela achou quase nada, quando o texto veio de OCR (que troca números), quando descartou
+    leituras suspeitas ou quando sobraram linhas com valor e unidade que nenhuma regra aproveitou (formato que as regras não conhecem).
+    Notas, tabelas de referência e blocos de histórico não contam como sobra."""
+    if len(regra) < 3 or ocr or len(descartados) >= 2:
+        return True
+    diag = {}
+    _registros_do_laudo(texto, diag)
+    return diag.get("sobras", 0) >= 3
+
+
+def extrair_exames(texto: str, ocr: bool = False) -> tuple:
     regra, desc = ler_resultados_regra(texto)
     avisos = []
     modelo, desc_m = ([], [])
-    if USAR_MODELO and len(regra) < 3:
+    if USAR_MODELO and ia_ajuda(texto, regra, desc, ocr):
         modelo, desc_m = ler_resultados_modelo(texto)
     por_chave = {(r["chave"], r["valor_texto"]): r for r in regra}
     for m in modelo:
@@ -1214,6 +1295,219 @@ def achar_validade(texto: str, dia: str) -> str:
 
 
 # --------------------------------------------------------------------------------------------
+# Atestados (afastamento com CID) e laudos de imagem ou procedimento
+# --------------------------------------------------------------------------------------------
+_CID_CODIGO = r"[A-TV-Z]\d{2}(?:\.\d{1,2})?"
+_CID_LISTA = re.compile(rf"(?i)\bCID(?:\s*-?\s*10)?\s*[:\-–]?\s*(?P<l>{_CID_CODIGO}(?:\s*(?:,|;|/|\be\b|\bou\b)\s*{_CID_CODIGO})*)")
+_DIAS_PADROES = (
+    re.compile(r"(?i)(?:afastamento|afastar|afastad[oa]|repouso|licen[cç]a|dispensa|inapt[oa]|incapacidade)[^\n.]{0,70}?\b(\d{1,3})\s*(?:\([^)]{0,40}\)\s*)?dias?\b"),
+    re.compile(r"(?i)\b(\d{1,3})\s*(?:\([^)]{0,40}\)\s*)?dias?\s+(?:corridos\s+)?(?:de\s+|para\s+)?(?:afastamento|repouso|licen[cç]a|descanso|atestado)"),
+    re.compile(r"(?i)\bpor\s+(\d{1,3})\s*(?:\([^)]{0,40}\)\s*)?dias?\b"),
+    re.compile(r"(?i)\bpelo\s+per[ií]odo\s+de\s+(\d{1,3})\s*(?:\([^)]{0,40}\)\s*)?dias?\b"),
+)
+MODALIDADES = (
+    ("ultrassonografia", r"ultrassonografia|ultrassom|ultra-som|ecografia|\busg\b"),
+    ("ressonância magnética", r"resson[aâ]ncia|\brnm\b"),
+    ("tomografia", r"tomografia|angiotomografia"),
+    ("radiografia", r"radiografia|raios?\s*-?x\b|\brx\b"),
+    ("ecocardiograma", r"ecocardiograma|ecodopplercardiograma"),
+    ("eletrocardiograma", r"eletrocardiograma|\becg\b|\bholter\b|teste\s+ergom[eé]trico|ergometria"),
+    ("mamografia", r"mamografia"),
+    ("densitometria óssea", r"densitometria"),
+    ("endoscopia", r"endoscopia|colonoscopia|colonosc[oó]pia"),
+    ("cintilografia", r"cintilografia|\bpet\b"),
+    ("espirometria", r"espirometria"),
+    ("polissonografia", r"polissonografia"),
+    ("audiometria", r"audiometria"),
+    ("doppler", r"\bdoppler\b"),
+)
+_ESTRUTURA_LAUDO = ("conclusao", "impressao diagnostica", "achados", "tecnica", "indicacao clinica", "analise", "descricao", "comparacao")
+PROMPT_TIPO = (_ANTI_INJECAO +
+               "Diga que tipo de documento de saúde é este texto: exame (resultados numéricos de laboratório), receita, encaminhamento, "
+               "consulta (agendamento ou confirmação), atestado (atestado, afastamento ou licença médica), laudo (de exame de imagem ou procedimento: "
+               "ultrassom, ressonância, radiografia, ecocardiograma, endoscopia...) ou outro.\n"
+               'Formato: {"tipo": "exame"}\n\nTEXTO:\n')
+PROMPT_ATESTADO = (_ANTI_INJECAO +
+                   "Extraia deste atestado médico: os dias de afastamento, a data de início e de fim e o CID-10. Copie do texto, sem calcular nem inventar; "
+                   "omita o que não estiver escrito. Datas no formato dd/mm/aaaa.\n"
+                   'Formato: {"dias": "10", "inicio": "20/11/2026", "fim": "29/11/2026", "cid": "M23", "cid_texto": "...", "medico": "..."}\n\nTEXTO:\n')
+PROMPT_LAUDO = (_ANTI_INJECAO +
+                "Extraia deste laudo: o nome do exame (título) e a CONCLUSÃO ou impressão diagnóstica, copiada literalmente, sem resumir nem acrescentar nada. "
+                "Se não houver conclusão escrita, deixe-a vazia.\n"
+                'Formato: {"titulo": "...", "conclusao": "..."}\n\nTEXTO:\n')
+
+
+def classificar_ia(texto: str) -> str:
+    r = _json_do_modelo(_modelo(PROMPT_TIPO + texto[:3500], 60))
+    t = str(r.get("tipo", "")).strip().lower() if isinstance(r, dict) else ""
+    return t if t in ("exame", "receita", "encaminhamento", "consulta", "atestado", "laudo") else "outro"
+
+
+def _datas_do_trecho(trecho: str) -> list:
+    return [d for d in (_data_iso(*g.groups(), futuro=True) for g in _DATA.finditer(trecho)) if d]
+
+
+def ler_atestado_regra(texto: str, dia_doc: str = "") -> list:
+    cids, vistos = [], set()
+    for m in _CID_LISTA.finditer(texto):
+        for c in re.findall(_CID_CODIGO, m.group("l").upper()):
+            if c not in vistos:
+                vistos.add(c)
+                cids.append((c, _limpo((re.search(re.escape(c) + r"\s*[-–:]\s*([^\n]{3,80})", m.string[m.start():m.start() + 200]) or [None, ""])[1], 80)))
+    dias = None
+    for pad in _DIAS_PADROES:
+        m = pad.search(texto)
+        if m and 1 <= int(m.group(1)) <= 730:
+            dias = int(m.group(1))
+            break
+    inicio = fim = ""
+    m = re.search(r"(?i)(?:a\s+partir\s+(?:de|do\s+dia)|per[ií]odo\s+de|do\s+dia|de)\s+(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4})\s*(?:a|at[eé]|ao\s+dia|-)\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4})", texto)
+    if m:
+        d = _datas_do_trecho(m.group(1) + " " + m.group(2))
+        if len(d) == 2 and d[0] <= d[1]:
+            inicio, fim = d
+    if not inicio:
+        m = re.search(r"(?i)a\s+partir\s+(?:de|do\s+dia)\s+(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4})", texto)
+        if m:
+            d = _datas_do_trecho(m.group(1))
+            inicio = d[0] if d else ""
+    if not inicio and dias and dia_doc:
+        inicio = dia_doc
+    if inicio and dias and not fim:
+        fim = (date.fromisoformat(inicio) + timedelta(days=dias - 1)).isoformat()
+    if dias is None and inicio and fim:
+        dias = (date.fromisoformat(fim) - date.fromisoformat(inicio)).days + 1
+    obs = ""
+    m = re.search(r"(?i)[^\n]{0,60}(?:afast|repouso|licen[cç]a)[^\n]{0,100}", texto)
+    if m:
+        obs = _limpo(m.group(0), 140)
+    medico = achar_prescritor(texto)
+    if not (cids or dias):
+        return []
+    base = {"dia": dia_doc, "inicio": inicio, "fim": fim, "dias": dias, "medico": medico, "observacao": obs}
+    return [dict(base, cid=c, cid_texto=t) for c, t in (cids or [("", "")])]
+
+
+def _no_texto_literal(valor: str, texto_norm: str) -> bool:
+    return bool(valor) and _norm(valor) in texto_norm
+
+
+def ler_atestado_modelo(texto: str, dia_doc: str = "") -> list:
+    r = _json_do_modelo(_modelo(PROMPT_ATESTADO + texto[:5000], 300))
+    if not isinstance(r, dict):
+        return []
+    tn = _norm(texto)
+    cid = re.sub(r"\s+", "", str(r.get("cid", "")).upper())
+    if not re.fullmatch(_CID_CODIGO, cid) or cid.lower() not in texto.lower().replace(" ", ""):
+        cid = ""
+    dias = None
+    d = re.sub(r"\D", "", str(r.get("dias", "")))
+    if d and 1 <= int(d) <= 730 and re.search(rf"(?<!\d){int(d)}(?!\d)", texto):
+        dias = int(d)
+    inicio = fim = ""
+    for campo in ("inicio", "fim"):
+        v = str(r.get(campo, ""))
+        g = _DATA.search(v)
+        iso = _data_iso(*g.groups(), futuro=True) if g else ""
+        if iso and re.search(rf"(?<!\d){int(g.group(1))}\s*[/.\-]\s*{int(g.group(2))}\s*[/.\-]\s*(?:{g.group(3)})", texto):
+            if campo == "inicio":
+                inicio = iso
+            else:
+                fim = iso
+    if not (cid or dias):
+        return []
+    if inicio and dias and not fim:
+        fim = (date.fromisoformat(inicio) + timedelta(days=dias - 1)).isoformat()
+    cid_texto = _limpo(r.get("cid_texto", ""), 80) if _no_texto_literal(str(r.get("cid_texto", "")), tn) else ""
+    return [{"dia": dia_doc, "inicio": inicio or dia_doc, "fim": fim, "dias": dias, "medico": achar_prescritor(texto), "observacao": "", "cid": cid, "cid_texto": cid_texto}]
+
+
+def extrair_atestados(texto: str, dia_doc: str = "") -> tuple:
+    avisos = []
+    r = ler_atestado_regra(texto, dia_doc)
+    completo = r and all(x["cid"] for x in r) and r[0]["dias"]
+    if USAR_MODELO and not completo:
+        m = ler_atestado_modelo(texto, dia_doc)
+        if m and not r:
+            r = m
+        elif m and r:
+            for x in r:      # o modelo só completa o que as regras não viram, e só com o que está no texto
+                x["dias"] = x["dias"] or m[0]["dias"]
+                x["fim"] = x["fim"] or m[0]["fim"]
+                x["inicio"] = x["inicio"] or m[0]["inicio"]
+                if not x["cid"] and m[0]["cid"]:
+                    x["cid"] = m[0]["cid"]
+                    x["cid_texto"] = m[0]["cid_texto"]
+    if r and not any(x["cid"] for x in r):
+        avisos.append("O atestado não traz o CID. Guardei só os dias de afastamento.")
+    if r and r[0]["dias"] and r[0]["fim"] and not re.search(_norm(_br(r[0]["fim"])), _norm(texto)):
+        avisos.append("O dia final do afastamento foi calculado a partir dos dias informados; confira com o documento.")
+    return r, avisos
+
+
+def _modalidade_do_texto(texto: str) -> tuple:
+    topo = "\n".join(l for l in texto.splitlines() if l.strip())[:3000]
+    melhor = None
+    for nome, pad in MODALIDADES:
+        m = re.search(pad, topo, re.I)
+        if m and (melhor is None or m.start() < melhor[0]):
+            melhor = (m.start(), nome, m)
+    if not melhor:
+        return "", ""
+    for l in topo.splitlines()[:60]:
+        if re.search(MODALIDADES[[n for n, _ in MODALIDADES].index(melhor[1])][1], l, re.I) and 6 <= len(l.strip()) <= 100:
+            return melhor[1], _limpo(re.sub(r"(?i)^\s*laudo\s*(?:de|do)?\s*:?\s*", "", l), 100)
+    return melhor[1], melhor[1].capitalize()
+
+
+_FIM_DA_CONCLUSAO = re.compile(r"(?i)^\s*(?:dr\.?|dra\.?|m[eé]dic[oa]|crm|assinad|respons[aá]vel|data\b|liberad|laudado|atenciosamente|observa[cç][aã]o|obs\b)")
+
+
+def ler_laudo_regra(texto: str) -> list:
+    modalidade, titulo = _modalidade_do_texto(texto)
+    if not modalidade:
+        return []
+    linhas = texto.splitlines()
+    concl = ""
+    for i, l in enumerate(linhas):
+        m = re.match(r"(?i)^\s*(conclus[aã]o|impress[aã]o\s+diagn[oó]stica|impress[aã]o|opini[aã]o|parecer)\s*[:\-]?\s*(.*)$", l)
+        if m:
+            partes = [m.group(2).strip()] if m.group(2).strip() else []
+            for j in range(i + 1, min(i + 25, len(linhas))):
+                t = linhas[j].strip()
+                if _FIM_DA_CONCLUSAO.match(t):
+                    break
+                if t:
+                    partes.append(t)
+                if sum(len(x) for x in partes) > 900:
+                    break
+            concl = _limpo(" ".join(partes), 900)
+            break
+    return [{"modalidade": modalidade, "titulo": titulo, "conclusao": concl, "medico": achar_prescritor(texto)}]
+
+
+def extrair_laudos(texto: str) -> tuple:
+    avisos = []
+    r = ler_laudo_regra(texto)
+    if USAR_MODELO and (not r or not r[0]["conclusao"]):
+        m = _json_do_modelo(_modelo(PROMPT_LAUDO + texto[:6000], 600))
+        if isinstance(m, dict):
+            concl = _limpo(m.get("conclusao", ""), 900)
+            tn = _norm(texto)
+            if concl and _norm(concl) in tn:      # a conclusão tem que estar escrita no documento, palavra por palavra
+                if not r:
+                    mod, tit = _modalidade_do_texto(texto)
+                    r = [{"modalidade": mod or "outro", "titulo": _limpo(m.get("titulo", ""), 100) or tit or "Laudo", "conclusao": concl, "medico": achar_prescritor(texto)}]
+                else:
+                    r[0]["conclusao"] = concl
+            elif concl:
+                avisos.append("O modelo propôs uma conclusão que não está escrita no laudo; ignorei.")
+    if r and not r[0]["conclusao"]:
+        avisos.append("Não achei a conclusão do laudo; guardei só o título.")
+    return r, avisos
+
+
+# --------------------------------------------------------------------------------------------
 # Extração completa de um documento
 # --------------------------------------------------------------------------------------------
 def extrair(texto: str, ocr: bool = False) -> dict:
@@ -1221,9 +1515,13 @@ def extrair(texto: str, ocr: bool = False) -> dict:
     regra, desc = ler_resultados_regra(texto)
     tipo = classificar(texto, len(regra))
     out = {"tipo": tipo, "dia": achar_data(texto), "emissor": "", "solicitante": "", "ocr": ocr,
-           "resultados": [], "receitas": [], "encaminhamentos": [], "consultas": [], "descartados": [], "avisos": []}
+           "resultados": [], "receitas": [], "encaminhamentos": [], "consultas": [], "atestados": [], "laudos": [], "descartados": [], "avisos": []}
+    if tipo == "outro" and USAR_MODELO:
+        tipo = out["tipo"] = classificar_ia(texto)
+        if tipo != "outro":
+            out["avisos"].append(f"O tipo do documento ({_TIPO_PT.get(tipo, tipo)}) foi indicado pelo modelo, não pelas regras; confira.")
     if tipo == "exame":
-        resultados, descartados, avisos = extrair_exames(texto)
+        resultados, descartados, avisos = extrair_exames(texto, ocr)
         out["emissor"], out["solicitante"] = achar_emissor(texto), achar_solicitante(texto)
         out["resultados"], out["descartados"] = resultados, descartados
         if not resultados:
@@ -1249,13 +1547,23 @@ def extrair(texto: str, ocr: bool = False) -> dict:
         if out["consultas"]:
             out["dia"] = out["consultas"][0]["dia"]
         out["emissor"] = achar_prescritor(texto)
+    elif tipo == "atestado":
+        out["atestados"], avisos = extrair_atestados(texto, out["dia"])
+        out["emissor"] = achar_prescritor(texto)
+        if not out["atestados"]:
+            avisos.append("Não identifiquei dias de afastamento nem CID neste atestado.")
+    elif tipo == "laudo":
+        out["laudos"], avisos = extrair_laudos(texto)
+        out["emissor"] = achar_prescritor(texto)
+        if not out["laudos"]:
+            avisos.append("Não identifiquei o tipo de exame deste laudo.")
     else:
-        avisos.append("Não consegui dizer se é exame, receita, encaminhamento ou consulta; guardei o arquivo sem dados.")
+        avisos.append("Não consegui dizer se é exame, receita, encaminhamento, consulta, atestado ou laudo; guardei o arquivo sem dados.")
     if not out["dia"]:
         avisos.append("Não achei a data do documento; ao confirmar, informe com --date AAAA-MM-DD.")
     if ocr:
         avisos.append("O texto veio de reconhecimento de imagem, que pode trocar números: confira cada valor com o documento.")
-    out["avisos"] = avisos
+    out["avisos"] = out["avisos"] + avisos
     return out
 
 
@@ -1380,7 +1688,7 @@ def processar_entrada(origem: str = "pasta") -> list:
     return saida
 
 
-_MAGIA = ((b"%PDF", ".pdf"), (b"\x89PNG", ".png"), (b"\xff\xd8\xff", ".jpg"))
+_MAGIA = ((b"%PDF", ".pdf"), (b"\x89PNG", ".png"), (b"\xff\xd8\xff", ".jpg"), (b"II*\x00", ".tiff"), (b"MM\x00*", ".tiff"))
 
 
 def receber(dados: bytes, nome: str) -> dict:
@@ -1390,8 +1698,12 @@ def receber(dados: bytes, nome: str) -> dict:
     ext = next((e for m, e in _MAGIA if dados.startswith(m)), "")
     if not ext and dados[4:12] in (b"ftypheic", b"ftypheix", b"ftypmif1", b"ftypheim", b"ftyphevc"):
         ext = ".heic"
+    if not ext and dados[:4] == b"RIFF" and dados[8:12] == b"WEBP":
+        ext = ".webp"
+    if not ext and dados[:4] == b"PK\x03\x04" and b"word/" in dados[:4000]:
+        ext = ".docx"
     if not ext:
-        raise ErroExames("O arquivo não parece PDF, JPG, PNG nem HEIC.")
+        raise ErroExames("O arquivo não parece PDF, JPG, PNG, HEIC, TIFF, WEBP nem DOCX.")
     base = re.sub(r"[^A-Za-z0-9._ \-]", "_", Path(nome or "documento").stem)[:60].strip(" ._") or "documento"
     entrada = preparar_pasta()
     destino = entrada / f"{base}{ext}"
@@ -1411,7 +1723,8 @@ def receber(dados: bytes, nome: str) -> dict:
 # --------------------------------------------------------------------------------------------
 # Conferência, confirmação e descarte
 # --------------------------------------------------------------------------------------------
-_TIPO_PT = {"consulta": "consulta marcada", "exame": "exame de laboratório", "receita": "receita", "encaminhamento": "encaminhamento", "outro": "documento sem tipo identificado"}
+_TIPO_PT = {"consulta": "consulta marcada", "exame": "exame de laboratório", "receita": "receita", "encaminhamento": "encaminhamento", "atestado": "atestado médico",
+            "laudo": "laudo de imagem ou procedimento", "outro": "documento sem tipo identificado"}
 
 
 def _doc(doc_id: int) -> dict:
@@ -1434,6 +1747,24 @@ def _linha_resultado(r: dict) -> str:
     if r.get("historico"):
         partes.append("valores anteriores no laudo: " + ", ".join(f"{_br(h['dia'])} {h['valor_texto']}" for h in r["historico"]))
     return "; ".join(partes)
+
+
+def _linha_atestado(a: dict) -> str:
+    partes = ["Afastamento" + (f" de {a['dias']} dia(s)" if a.get("dias") else "")]
+    if a.get("inicio"):
+        partes.append(f"a partir de {_br(a['inicio'])}" + (f" até {_br(a['fim'])}" if a.get("fim") else ""))
+    partes.append(f"CID {a['cid']}" + (f" ({a['cid_texto']})" if a.get("cid_texto") else "") if a.get("cid") else "sem CID no documento")
+    if a.get("medico"):
+        partes.append(a["medico"])
+    return ", ".join(partes) + "."
+
+
+def _linha_laudo(l: dict) -> str:
+    t = f"{l.get('titulo') or l.get('modalidade') or 'Laudo'}"
+    if l.get("medico"):
+        t += f", {l['medico']}"
+    t += ". Conclusão: " + (l["conclusao"] if l.get("conclusao") else "não encontrada no laudo")
+    return t.rstrip(".") + "."
 
 
 def resumo_documento(doc_id: int) -> str:
@@ -1472,6 +1803,12 @@ def resumo_documento(doc_id: int) -> str:
     elif d["tipo"] == "encaminhamento":
         for i, e in enumerate(ext.get("encaminhamentos", []), 1):
             linhas.append(f"Item {i}. {e['especialidade']}" + (f". Motivo: {e['motivo']}" if e["motivo"] else "") + ".")
+    elif d["tipo"] == "atestado":
+        for i, a in enumerate(ext.get("atestados", []), 1):
+            linhas.append(f"Item {i}. {_linha_atestado(a)}")
+    elif d["tipo"] == "laudo":
+        for i, l in enumerate(ext.get("laudos", []), 1):
+            linhas.append(f"Item {i}. {_linha_laudo(l)}")
     if ext.get("descartados"):
         linhas.append("Não incluí por não conseguir confirmar no texto:")
         linhas += [f"{x['texto']}: {x['motivo']}." for x in ext["descartados"][:15]]
@@ -1499,7 +1836,7 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", dia or ""):
         raise ErroExames("Falta a data do documento. Use: heimdall health --labs confirm ID --date AAAA-MM-DD")
     sem = set(int(x) for x in (sem or []))
-    chave_lista = {"exame": "resultados", "receita": "receitas", "encaminhamento": "encaminhamentos", "consulta": "consultas"}.get(d["tipo"])
+    chave_lista = {"exame": "resultados", "receita": "receitas", "encaminhamento": "encaminhamentos", "consulta": "consultas", "atestado": "atestados", "laudo": "laudos"}.get(d["tipo"])
     itens = [x for i, x in enumerate(ext.get(chave_lista, []) if chave_lista else [], 1) if i not in sem]
     agora = _agora()
 
@@ -1536,6 +1873,14 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
             for r in itens:
                 con.execute("INSERT OR IGNORE INTO encaminhamentos (documento_id, dia, especialidade, motivo, prescritor, validade) VALUES (?,?,?,?,?,?)",
                             (d["id"], dia, r["especialidade"], r["motivo"], r.get("prescritor", ""), r.get("validade", "")))
+        elif d["tipo"] == "atestado":
+            for r in itens:
+                con.execute("INSERT OR IGNORE INTO atestados (documento_id, dia, inicio, fim, dias, cid, cid_texto, medico, observacao) VALUES (?,?,?,?,?,?,?,?,?)",
+                            (d["id"], dia, r.get("inicio", ""), r.get("fim", ""), r.get("dias"), r.get("cid", ""), r.get("cid_texto", ""), r.get("medico", ""), r.get("observacao", "")))
+        elif d["tipo"] == "laudo":
+            for r in itens:
+                con.execute("INSERT OR IGNORE INTO laudos (documento_id, dia, modalidade, titulo, conclusao, medico) VALUES (?,?,?,?,?,?)",
+                            (d["id"], dia, r.get("modalidade", ""), r.get("titulo", ""), r.get("conclusao", ""), r.get("medico", "")))
         elif d["tipo"] == "consulta":
             for r in itens:
                 con.execute("INSERT OR IGNORE INTO consultas (documento_id, dia, hora, medico, especialidade, local) VALUES (?,?,?,?,?,?)",
@@ -1783,6 +2128,20 @@ def relatorio_receitas() -> str:
     return "\n".join(linhas)
 
 
+def relatorio_atestados() -> str:
+    rows = _ler("SELECT * FROM atestados ORDER BY dia DESC, id")
+    if not rows:
+        return "Ainda não há atestados confirmados."
+    return "\n".join([f"{len(rows)} registro(s) de atestado confirmados:"] + [f"{_br(r['dia'])}: {_linha_atestado(r)}" for r in rows])
+
+
+def relatorio_laudos() -> str:
+    rows = _ler("SELECT * FROM laudos ORDER BY dia DESC, id")
+    if not rows:
+        return "Ainda não há laudos confirmados."
+    return "\n".join([f"{len(rows)} laudo(s) confirmados:"] + [f"{_br(r['dia'])}: {_linha_laudo(r)}" for r in rows])
+
+
 def relatorio_encaminhamentos() -> str:
     rows = _ler("SELECT * FROM encaminhamentos ORDER BY dia DESC, id")
     if not rows:
@@ -1843,7 +2202,7 @@ def gerar_token(env=None) -> str:
 # Linha de comando
 # --------------------------------------------------------------------------------------------
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Documentos clínicos do Heimdall (exames, receitas, encaminhamentos)")
+    ap = argparse.ArgumentParser(description="Documentos clínicos do Heimdall (exames, receitas, encaminhamentos, atestados, laudos)")
     ap.add_argument("--pasta", action="store_true", help="lê o que estiver na pasta de entrada")
     ap.add_argument("--importar", nargs="+", metavar="ARQUIVO")
     ap.add_argument("--pendentes", action="store_true")
@@ -1864,6 +2223,8 @@ def main() -> int:
     ap.add_argument("--local", default="")
     ap.add_argument("--agenda", action="store_true", help="leva ao Calendário o que ainda não foi")
     ap.add_argument("--encaminhamentos", action="store_true")
+    ap.add_argument("--atestados", action="store_true")
+    ap.add_argument("--laudos", action="store_true")
     ap.add_argument("--dias", type=int, default=730)
     ap.add_argument("--documentos", action="store_true", help="lista os documentos recebidos")
     ap.add_argument("--gerar-token", action="store_true")
@@ -1918,6 +2279,10 @@ def main() -> int:
             print(relatorio_receitas())
         elif a.encaminhamentos:
             print(relatorio_encaminhamentos())
+        elif a.atestados:
+            print(relatorio_atestados())
+        elif a.laudos:
+            print(relatorio_laudos())
         elif a.documentos:
             for d in listar_documentos():
                 print(f"{d['id']}: {_TIPO_PT.get(d['tipo'], d['tipo'])}, {_br(d['dia'])}, {d['estado']}")

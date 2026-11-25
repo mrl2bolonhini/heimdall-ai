@@ -317,6 +317,33 @@ CREATE TABLE IF NOT EXISTS consultas (
 );
 CREATE INDEX IF NOT EXISTS ix_consultas_dia ON consultas (dia);
 
+CREATE TABLE IF NOT EXISTS atestados (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documento_id INTEGER NOT NULL,
+    dia TEXT NOT NULL DEFAULT '',               -- data do atestado
+    inicio TEXT NOT NULL DEFAULT '',            -- primeiro dia de afastamento, quando o documento informa
+    fim TEXT NOT NULL DEFAULT '',               -- último dia (informado ou calculado a partir dos dias)
+    dias INTEGER,                               -- dias de afastamento ou repouso
+    cid TEXT NOT NULL DEFAULT '',               -- código CID-10 como está no documento (M23, F32.1...)
+    cid_texto TEXT NOT NULL DEFAULT '',         -- descrição que o próprio documento traz junto do código, se houver
+    medico TEXT NOT NULL DEFAULT '',
+    observacao TEXT NOT NULL DEFAULT '',
+    UNIQUE (documento_id, cid, inicio)
+);
+CREATE INDEX IF NOT EXISTS ix_atestados_dia ON atestados (dia);
+
+CREATE TABLE IF NOT EXISTS laudos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documento_id INTEGER NOT NULL,
+    dia TEXT NOT NULL DEFAULT '',
+    modalidade TEXT NOT NULL DEFAULT '',        -- ultrassonografia, ressonância magnética, radiografia, tomografia, ecocardiograma...
+    titulo TEXT NOT NULL DEFAULT '',            -- nome do exame como está no laudo (por exemplo: Ressonância magnética do joelho direito)
+    conclusao TEXT NOT NULL DEFAULT '',         -- conclusão ou impressão diagnóstica, copiada do laudo
+    medico TEXT NOT NULL DEFAULT '',
+    UNIQUE (documento_id, titulo)
+);
+CREATE INDEX IF NOT EXISTS ix_laudos_dia ON laudos (dia);
+
 CREATE TABLE IF NOT EXISTS agenda_saude (
     chave TEXT PRIMARY KEY,                     -- tipo|origem|dia: o mesmo item nunca vira dois eventos
     tipo TEXT NOT NULL,                         -- consulta, renovacao_receita (ver heimdall_agenda.DESTINOS)
@@ -569,6 +596,8 @@ def resumo() -> dict:
         saida["receitas"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM receitas").fetchone()))
         saida["consultas"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM consultas").fetchone()))
         saida["encaminhamentos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM encaminhamentos").fetchone()))
+        saida["atestados"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM atestados").fetchone()))
+        saida["laudos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM laudos").fetchone()))
         return saida
     finally:
         con.close()
@@ -597,7 +626,7 @@ def tabelas_para_modelo() -> str:
         "cada ECG do Apple Watch; classificacao é a da Apple (ritmo sinusal, fibrilação atrial, inconclusivo...); as medidas de batimento são do Heimdall, não diagnóstico.\n"
         "fc_hora(dia, hora, fc_min, fc_media, fc_max, leituras): frequência cardíaca por hora do dia.\n"
         "saude_eventos(id, tipo, dia, inicio, titulo, valor, texto): sintomas, humor (valor de -1 a 1), medicamentos, avisos de frequência cardíaca e ciclo.\n"
-        "documentos_saude(id, tipo, arquivo, dia, emissor, solicitante, origem, estado, avisos): exames, receitas e encaminhamentos enviados pelo usuário; "
+        "documentos_saude(id, tipo, arquivo, dia, emissor, solicitante, origem, estado, avisos): exames, receitas, encaminhamentos, atestados e laudos enviados pelo usuário; "
         "estado: pendente (aguarda conferência), confirmado ou descartado. Só os confirmados têm dados nas tabelas abaixo.\n"
         "exames_resultados(documento_id, dia, chave, nome, nome_original, grupo, valor, valor_texto, comparador, unidade, ref_texto, ref_min, ref_max, sinal, fonte): "
         "cada resultado de exame de sangue ou laboratório (chave canônica: vitamina_d, hemoglobina, glicemia_jejum...); sinal: abaixo, dentro, acima ou vazio; "
@@ -605,6 +634,8 @@ def tabelas_para_modelo() -> str:
         "receitas(documento_id, dia, medicamento, dose, posologia, duracao, prescritor, validade): medicamentos das receitas confirmadas.\n"
         "encaminhamentos(documento_id, dia, especialidade, motivo, prescritor, validade): encaminhamentos médicos confirmados.\n"
         "consultas(documento_id, dia, hora, medico, especialidade, local): consultas médicas marcadas.\n"
+        "atestados(documento_id, dia, inicio, fim, dias, cid, cid_texto, medico, observacao): atestados e afastamentos confirmados, com o CID-10 como está no documento.\n"
+        "laudos(documento_id, dia, modalidade, titulo, conclusao, medico): laudos de imagem e de procedimentos (ultrassom, ressonância, radiografia, ecocardiograma...) confirmados.\n"
         "Dentro do SQL, sem_acento(coluna) devolve o texto em minúsculas e sem acento (use em buscas: WHERE sem_acento(titulo) LIKE '%coracao%')."
     )
 

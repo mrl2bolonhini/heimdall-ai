@@ -168,7 +168,7 @@ _heimdall_doc() {  # o Safari recusa file:// fora da área permitida; por isso o
   _heimdall_open "Documento do comando heimdall" "http://localhost:$porta/comando-heimdall.html"
 }
 
-_heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos e consultas
+_heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos, atestados, laudos e consultas
   local _sub="$1"; [ $# -gt 0 ] && shift
   _heimdall_tr "--without=--sem
 --date=--data
@@ -189,13 +189,15 @@ _heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos 
     analysis) _heimdall_py heimdall_exames.py --analise "${_HA[@]}" ;;
     prescriptions) _heimdall_py heimdall_exames.py --receitas ;;
     referrals) _heimdall_py heimdall_exames.py --encaminhamentos ;;
+    certificates) _heimdall_py heimdall_exames.py --atestados ;;
+    reports) _heimdall_py heimdall_exames.py --laudos ;;
     appointments) _heimdall_py heimdall_exames.py --consultas ;;
     appointment) _heimdall_py heimdall_exames.py --consulta-nova "${_HA[@]}" ;;
     calendar) _heimdall_py heimdall_exames.py --agenda ;;
     documents) _heimdall_py heimdall_exames.py --documentos ;;
     token) _heimdall_py heimdall_exames.py --gerar-token ;;
     --open) _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health /exames ;;
-    *) echo "Use: heimdall health --labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
+    *) echo "Use: heimdall health --labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|certificates|reports|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
   esac
 }
 
@@ -559,7 +561,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data notices
-        elif [[ ${words[CURRENT-1]} == --labs ]]; then compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals appointments appointment calendar documents token --open
+        elif [[ ${words[CURRENT-1]} == --labs ]]; then compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals certificates reports appointments appointment calendar documents token --open
         elif (( ${words[(Ie)--labs]} )); then compadd -- --without --date --time --doctor --specialty --place
         else compadd -- --local --labs --open --today --now --weekly --anomalies --analysis --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
       controls) if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- terminal services maintenance; else compadd -- --open --local; fi ;;

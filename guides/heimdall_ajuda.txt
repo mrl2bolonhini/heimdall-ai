@@ -187,6 +187,8 @@ Opções:
                        laudos com tabela de referência (jejum, risco, idade, sexo) usam a faixa do seu sexo e idade, lidos do cabeçalho do laudo; metas por risco não recebem sinal; valores do bloco Histórico entram com a data deles
   --labs confirm ID [--without 2,5] [--date AAAA-MM-DD]   grava os itens (deixa de fora os números de --without) e leva consultas e renovações ao Calendário
   --labs discard ID    joga o documento fora sem gravar nada
+  --labs certificates  atestados e afastamentos confirmados (dias, período e CID)
+  --labs reports       laudos de imagem e procedimentos confirmados (título e conclusão)
   --labs folder        lê agora o que estiver na pasta de entrada
   --labs import FILE...   lê arquivos de qualquer pasta
   --labs result NAME   histórico de um exame, com o que o relógio mostrou antes de cada coleta

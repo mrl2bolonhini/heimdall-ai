@@ -59,6 +59,7 @@ DESCRICOES = {
     "HEIMDALL_EVENTKIT": "Liga ou desliga o acesso do agente à agenda e aos lembretes do Mac.",
     "HEIMDALL_EXAMES_DIR": "Pasta onde ficam os exames enviados.",
     "HEIMDALL_EXAMES_LLM": "Endereço do modelo que lê os exames.",
+    "HEIMDALL_EXAMES_NUVEM": "0 mantém a leitura dos documentos de saúde só no Mac, sem usar a nuvem do Heimdall como apoio.",
     "HEIMDALL_EXAMES_MODELO": "Nome do modelo que lê os exames.",
     "HEIMDALL_EXAMES_TOKEN": "Senha do serviço de exames.",
     "HEIMDALL_FINANCE_CHAT": "0 desliga o chat do Finance.",

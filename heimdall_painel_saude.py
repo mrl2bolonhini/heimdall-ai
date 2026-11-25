@@ -296,7 +296,7 @@ def pg_documentos(q: dict) -> tuple:
         corpo += f'<table><caption>Documentos recebidos ({len(docs)})</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
     else:
         corpo += "<p>Nenhum documento recebido ainda.</p>"
-    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + secao("Consultas", exames.relatorio_consultas())
+    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + secao("Atestados e afastamentos", exames.relatorio_atestados()) + secao("Laudos de imagem e procedimentos", exames.relatorio_laudos()) + secao("Consultas", exames.relatorio_consultas())
     return "Documentos", corpo + AVISO_EXAMES
 
 
