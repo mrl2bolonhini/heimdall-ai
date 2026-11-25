@@ -289,6 +289,7 @@ CREATE TABLE IF NOT EXISTS receitas (
     duracao TEXT NOT NULL DEFAULT '',
     prescritor TEXT NOT NULL DEFAULT '',
     validade TEXT NOT NULL DEFAULT '',          -- AAAA-MM-DD, quando a receita informa ou dá para calcular
+    quantidade TEXT NOT NULL DEFAULT '',        -- como está na receita (2 embalagens de 30 comprimidos)
     UNIQUE (documento_id, medicamento, dose)
 );
 CREATE INDEX IF NOT EXISTS ix_receitas_dia ON receitas (dia);
@@ -301,6 +302,7 @@ CREATE TABLE IF NOT EXISTS encaminhamentos (
     motivo TEXT NOT NULL DEFAULT '',
     prescritor TEXT NOT NULL DEFAULT '',
     validade TEXT NOT NULL DEFAULT '',
+    cid TEXT NOT NULL DEFAULT '',               -- CID-10 como está no documento, quando há
     UNIQUE (documento_id, especialidade)
 );
 CREATE INDEX IF NOT EXISTS ix_encaminhamentos_dia ON encaminhamentos (dia);
@@ -339,10 +341,22 @@ CREATE TABLE IF NOT EXISTS laudos (
     modalidade TEXT NOT NULL DEFAULT '',        -- ultrassonografia, ressonância magnética, radiografia, tomografia, ecocardiograma...
     titulo TEXT NOT NULL DEFAULT '',            -- nome do exame como está no laudo (por exemplo: Ressonância magnética do joelho direito)
     conclusao TEXT NOT NULL DEFAULT '',         -- conclusão ou impressão diagnóstica, copiada do laudo
+    achados TEXT NOT NULL DEFAULT '',           -- a análise ou os achados, copiados do laudo (laudos sem conclusão escrita)
     medico TEXT NOT NULL DEFAULT '',
     UNIQUE (documento_id, titulo)
 );
 CREATE INDEX IF NOT EXISTS ix_laudos_dia ON laudos (dia);
+
+CREATE TABLE IF NOT EXISTS pedidos_exame (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    documento_id INTEGER NOT NULL,
+    dia TEXT NOT NULL DEFAULT '',
+    exame TEXT NOT NULL,                        -- como está no pedido (Hemograma completo, Ferritina...)
+    tuss TEXT NOT NULL DEFAULT '',              -- código TUSS do procedimento, quando o pedido traz
+    medico TEXT NOT NULL DEFAULT '',
+    UNIQUE (documento_id, exame)
+);
+CREATE INDEX IF NOT EXISTS ix_pedidos_dia ON pedidos_exame (dia);
 
 CREATE TABLE IF NOT EXISTS agenda_saude (
     chave TEXT PRIMARY KEY,                     -- tipo|origem|dia: o mesmo item nunca vira dois eventos
@@ -427,6 +441,9 @@ def iniciar() -> None:
         con = conectar()
         try:
             con.executescript(ESQUEMA)
+            for tabela, coluna in (("receitas", "quantidade"), ("encaminhamentos", "cid"), ("laudos", "achados")):     # bancos criados antes destas colunas
+                if coluna not in [r[1] for r in con.execute(f"PRAGMA table_info({tabela})")]:
+                    con.execute(f"ALTER TABLE {tabela} ADD COLUMN {coluna} TEXT NOT NULL DEFAULT ''")
             if "lembrete" not in [r[1] for r in con.execute("PRAGMA table_info(triagem)")]:   # bancos criados antes desta coluna
                 con.execute("ALTER TABLE triagem ADD COLUMN lembrete INTEGER NOT NULL DEFAULT 1")
             con.commit()
@@ -598,6 +615,7 @@ def resumo() -> dict:
         saida["encaminhamentos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM encaminhamentos").fetchone()))
         saida["atestados"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM atestados").fetchone()))
         saida["laudos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM laudos").fetchone()))
+        saida["pedidos_exame"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM pedidos_exame").fetchone()))
         return saida
     finally:
         con.close()
@@ -632,10 +650,11 @@ def tabelas_para_modelo() -> str:
         "cada resultado de exame de sangue ou laboratório (chave canônica: vitamina_d, hemoglobina, glicemia_jejum...); sinal: abaixo, dentro, acima ou vazio; "
         "ref_texto é a referência do laboratório como está no documento.\n"
         "receitas(documento_id, dia, medicamento, dose, posologia, duracao, prescritor, validade): medicamentos das receitas confirmadas.\n"
-        "encaminhamentos(documento_id, dia, especialidade, motivo, prescritor, validade): encaminhamentos médicos confirmados.\n"
+        "encaminhamentos(documento_id, dia, especialidade, motivo, prescritor, validade, cid): encaminhamentos médicos confirmados.\n"
         "consultas(documento_id, dia, hora, medico, especialidade, local): consultas médicas marcadas.\n"
         "atestados(documento_id, dia, inicio, fim, dias, cid, cid_texto, medico, observacao): atestados e afastamentos confirmados, com o CID-10 como está no documento.\n"
-        "laudos(documento_id, dia, modalidade, titulo, conclusao, medico): laudos de imagem e de procedimentos (ultrassom, ressonância, radiografia, ecocardiograma...) confirmados.\n"
+        "laudos(documento_id, dia, modalidade, titulo, conclusao, achados, medico): laudos de imagem e de procedimentos (ultrassom, ressonância, radiografia, ecocardiograma...) confirmados.\n"
+        "pedidos_exame(documento_id, dia, exame, tuss, medico): exames pedidos pelo médico (ainda sem resultado), com o código TUSS.\n"
         "Dentro do SQL, sem_acento(coluna) devolve o texto em minúsculas e sem acento (use em buscas: WHERE sem_acento(titulo) LIKE '%coracao%')."
     )
 

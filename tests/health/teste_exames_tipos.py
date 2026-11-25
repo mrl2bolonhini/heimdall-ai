@@ -111,7 +111,7 @@ respostas.append(json.dumps({"dias": "10", "cid": "F32.1", "inicio": "03/11/2026
 ia = ex.ler_atestado_modelo(SOLTO, "2026-11-03")
 confere("IA: o CID escrito no texto passa; dias por extenso ('dez') não são aceitos como número", ia and ia[0]["cid"] == "F32.1" and ia[0]["dias"] is None, ia)
 respostas.append(json.dumps({"titulo": "RM", "conclusao": "Rotura total do ligamento cruzado."}))
-r, av = ex.extrair_laudos("Clínica X\nRessonância magnética do joelho\nAchados: edema.\nDr. Zé CRM-SP 1")
+r, av = ex.extrair_laudos("Clínica X\nRessonância magnética do joelho\nEdema.\nDr. Zé CRM-SP 1")
 confere("IA: conclusão que não está no laudo é ignorada, com aviso", r and r[0]["conclusao"] == "" and any("não está escrita" in x for x in av), (r, av))
 respostas.append(json.dumps({"titulo": "RM joelho", "conclusao": "Edema ósseo discreto."}))
 r, av = ex.extrair_laudos("Clínica X\nRessonância magnética do joelho\nResumo do exame: Edema ósseo discreto.\nDr. Zé CRM-SP 1")
@@ -222,6 +222,115 @@ except ex.ErroExames as e:
     erro = "TXT" in str(e) and "DOCX" in str(e)
 confere("formato desconhecido: a mensagem lista os aceitos", erro)
 confere("iPhone: reconhece WEBP, TIFF e DOCX pelo conteúdo", all(ex.receber(d, n)["arquivo"] for d, n in ((b"RIFF\x00\x00\x00\x00WEBPxxxx", "a"), (b"II*\x00xxxxxxxx", "b"), (docx_com(["Texto de teste longo aqui"]), "c"))))
+
+# ----- documentos digitais (Memed): receita, encaminhamento em texto livre, atestado com CID sozinho, pedido de exame, laudo sem conclusão
+RECEITA = """                    DRA ANA EXEMPLO
+                    CRM: 11111 SP
+Nome: FULANO DE TAL
+CPF: 000.000.000-00      Data e hora: 16/11/2026 - 16:51:58 (GMT-3)
+
+1. Marcax 100mg, Comprimido revestido (30un) Fabricante                         2 embalagens
+    Hemifumarato de substanciax 100mg
+
+    TOMAR 1 CP A NOITE.
+
+                   MEMED - Acesso à sua receita digital via QR Code
+                   Assinado digitalmente por ANA EXEMPLO - CRM 11111 SP
+            RECEITA DE CONTROLE ESPECIAL
+  PRESCRIÇÃO
+  Nome do medicamento ou substância: Marcax 100mg
+  Concentração: Hemifumarato de substanciax 100mg
+  Quantidade: 2 embalagens (30un)
+  Posologia: TOMAR 1 CP A NOITE.
+"""
+x = ex.extrair(RECEITA, False)
+confere("receita digital: um só item, com marca, princípio ativo, quantidade e posologia (sem repetir a segunda via)",
+        len(x["receitas"]) == 1 and x["receitas"][0]["medicamento"] == "Marcax (hemifumarato de substanciax)" and x["receitas"][0]["quantidade"] == "2 embalagens (30un)"
+        and x["receitas"][0]["posologia"] == "TOMAR 1 CP A NOITE." and x["tipo"] == "receita", x["receitas"])
+confere("receita digital: prescritor com UF depois do número", x["emissor"] == "ANA EXEMPLO (CRM-SP 11111)", x["emissor"])
+
+ENC = """Nome: FULANO DE TAL
+CPF: Não há CPF cadastrado       Data e hora: 13/07/2026 - 12:34:11 (GMT-3)
+
+Encaminhamento
+
+10 SESSÕES DE FISIOTERAPIA
+
+HD = PÓS OP. DE RECONSTRUÇÃO DO LCA DE JOELHO D .
+
+M23
+
+   MEMED - Acesso à sua receita digital via QR Code
+   Assinado digitalmente por BELTRANO EXEMPLO - CRM 22222 SP
+"""
+x = ex.extrair(ENC, False)
+e = x["encaminhamentos"][0] if x["encaminhamentos"] else {}
+confere("encaminhamento em texto livre: especialidade, motivo e CID", x["tipo"] == "encaminhamento" and e.get("especialidade") == "Fisioterapia" and e.get("cid") == "M23"
+        and "10 SESSÕES" in e.get("motivo", "") and "hipótese diagnóstica" in e.get("motivo", ""), x["encaminhamentos"])
+confere("encaminhamento: o médico vem da assinatura digital", x["emissor"] == "BELTRANO EXEMPLO (CRM-SP 22222)", x["emissor"])
+x = ex.extrair("Encaminhamento\n\nUBS\n\nSOLICITO RETIRADA DE PONTOS DO PACIENTE EM QUESTÃO, NO DIA 17/07/2026\n\nGRATO\n\nMEMED - x\n", False)
+confere("encaminhamento: retirada de pontos na UBS, sem 'GRATO'", x["encaminhamentos"] and x["encaminhamentos"][0]["especialidade"] == "Retirada de pontos (UBS)" and "GRATO" not in x["encaminhamentos"][0]["motivo"], x["encaminhamentos"])
+
+ATEST2 = """Data e hora: 13/07/2026 - 12:35:29 (GMT-3)
+
+Atestado
+
+ATESTADO MÉDICO
+
+O PACIENTE EM QUESTÃO, DEVE FICAR AFASTADO DO TRABALHO, DE 08/07/2026 A
+21/07/2026.
+
+M23
+
+ATT.
+   Assinado digitalmente por BELTRANO EXEMPLO - CRM 22222 SP
+"""
+x = ex.extrair(ATEST2, False)
+a = x["atestados"][0] if x["atestados"] else {}
+confere("atestado digital: período em duas linhas, CID sozinho na linha e dias calculados", x["tipo"] == "atestado" and a.get("cid") == "M23" and a.get("inicio") == "2026-07-08"
+        and a.get("fim") == "2026-07-21" and a.get("dias") == 14, x["atestados"])
+
+PEDIDO = """DRA ANA EXEMPLO
+CRM: 11111 SP
+Pedido de Exame
+
+Hemograma completo                                              TUSS: 40304361
+
+Ferritina                                                       TUSS: 40316270
+
+Hemograma completo                                              TUSS: 40304361
+"""
+x = ex.extrair(PEDIDO, False)
+confere("pedido de exame: lista sem repetir, com TUSS, e não é resultado", x["tipo"] == "pedido" and [p["exame"] for p in x["pedidos"]] == ["Hemograma completo", "Ferritina"]
+        and x["pedidos"][0]["tuss"] == "40304361" and not x["resultados"], x["pedidos"])
+r = ex.registrar(PEDIDO.replace("Pedido de Exame", "Pedido de Exame\nData: 17/08/2026").encode("utf-8"), "pedido.txt")
+confere("pedido: registra como pedido, resume e confirma na tabela própria", r["tipo"] == "pedido" and "Hemograma completo (TUSS 40304361)" in ex.resumo_documento(r["id"]), r)
+ex.confirmar(r["id"])
+confere("pedido: guardado e listado", len(ex._ler("SELECT * FROM pedidos_exame")) == 2 and "Ferritina" in ex.relatorio_pedidos())
+
+LAUDO2 = """Protocolo:   000000000000          Data: 18/4/2026
+Nome:        FULANO DE TAL         Unidade: CENTRO MODELO
+
+                RESSONÂNCIA MAGNÉTICA DO JOELHO DIREITO
+
+Indicação clínica: dor.
+Técnica: Realizadas sequências FSE.
+
+Análise:
+Condropatia patelar com irregularidades superficiais.
+Meniscos sem evidências de lesões.
+
+                                DR. ALFREDO EXEMPLO
+                                CRM-11111
+
+                      Este laudo foi assinado eletronicamente
+"""
+x = ex.extrair(LAUDO2, False)
+l = x["laudos"][0] if x["laudos"] else {}
+confere("laudo sem conclusão: guarda a análise inteira e avisa", l.get("conclusao") == "" and "Meniscos sem evidências de lesões." in l.get("achados", "") and "DR." not in l.get("achados", "")
+        and any("não traz conclusão" in a for a in x["avisos"]), (l, x["avisos"]))
+confere("laudo: médico pela linha 'DR.', sem o CRM colado ao nome", l.get("medico") == "ALFREDO EXEMPLO (CRM 11111)", l.get("medico"))
+confere("'drenagem' não vira o Dr.", ex.achar_prescritor("Demais vias de drenagem dos seios pérvias. (CRM 131103)") == "(CRM 131103)", ex.achar_prescritor("Demais vias de drenagem dos seios pérvias. (CRM 131103)"))
 
 print("\n" + ("TUDO OK" if not falhas else f"{falhas} FALHA(S)"))
 sys.exit(1 if falhas else 0)

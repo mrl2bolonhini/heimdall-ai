@@ -2,6 +2,17 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Leitor: documentos digitais da Memed, pedido de exame e laudos sem conclusão
+- Ajustado a partir de 16 documentos reais (receitas, encaminhamentos, atestado, pedido de exames e laudos de imagem). Antes, encaminhamentos, atestado e pedido de exames caíam em "documento sem tipo identificado" e cada receita saía duplicada.
+- Receita digital: um item por medicamento, com a marca e o princípio ativo, a dose, a posologia e a quantidade (2 embalagens de 30 comprimidos); a segunda via de controle especial que vem no mesmo arquivo não repete o item.
+- Encaminhamento em texto livre: especialidade (fisioterapia, ou "Retirada de pontos (UBS)"), o pedido, a hipótese diagnóstica e o CID.
+- Atestado digital: período escrito em duas linhas e CID sozinho na linha (M23) são lidos; os dias são calculados do período.
+- Pedido de exame (novo tipo): lista dos exames pedidos com o código TUSS, guardada à parte, sem virar resultado. Consulta: heimdall health --labs requests e a página Documentos do painel de saúde.
+- Laudo de imagem sem conclusão escrita: a análise inteira é guardada como está no documento, com aviso (antes ficava só o título). Quando há conclusão, ela continua sendo a que aparece.
+- Médico: o nome vem da linha "DR. NOME", da assinatura digital ou do cabeçalho, com o CRM e a UF (CRM-SP 79025); "drenagem" deixou de ser lida como "Dr.", e o CRM e o texto vizinho não se colam mais ao nome.
+- Bancos já criados ganham sozinhos as colunas novas (quantidade da receita, CID do encaminhamento, achados do laudo) e a tabela de pedidos.
+- Testes ampliados em tests/health/teste_exames_tipos.py com documentos fictícios no mesmo formato.
+
 ## 2026-11-25 - Leitor de exames: laudos antigos e documentos escaneados
 - Corrigido a partir de laudos de 2021 (PDF de texto e versão escaneada): letras ligadas do PDF ("ﬁ" em Neutróﬁlos e Bibliograﬁa) voltam a duas letras; leucograma e proteinograma (albumina, globulinas) leem a coluna do absoluto em /µL e g/dL, inclusive nomes com número (Alfa1); "VHS 1ª hora" deixa de ler o 1 como resultado e passa a ler 12 mm; insulina em mU/L; "10^6/µ L" vira 10^6/µL; "VEM" é VCM.
 - Fora do lugar: linhas das tabelas de metas por risco (LDL-C Baixo, Não-HDL-C Baixo) não viram resultado; a bibliografia da vitamina D não vira um segundo resultado; a glicose média estimada (calculada da HbA1c) é um exame próprio, não a glicemia de jejum; leucócitos e hemácias do sedimento da urina têm chave própria e não se misturam com o hemograma; percentual acima de 100 % é descartado.

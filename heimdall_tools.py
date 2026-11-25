@@ -1017,7 +1017,7 @@ def receitas_encaminhamentos() -> str:
     """Receitas, encaminhamentos, atestados (afastamentos com CID), laudos de imagem e consultas médicas confirmados pelo usuário: medicamentos com dose e posologia, especialidades encaminhadas, dias de afastamento e CID, conclusão dos laudos, validade quando o documento informa e consultas marcadas (que também ficam no Calendário). Só leitura."""
     try:
         m = _exames_mod()
-        return _BANCO_AVISO + "\n" + m.relatorio_receitas() + "\n\n" + m.relatorio_encaminhamentos() + "\n\n" + m.relatorio_atestados() + "\n\n" + m.relatorio_laudos() + "\n\n" + m.relatorio_consultas()
+        return _BANCO_AVISO + "\n" + m.relatorio_receitas() + "\n\n" + m.relatorio_encaminhamentos() + "\n\n" + m.relatorio_atestados() + "\n\n" + m.relatorio_laudos() + "\n\n" + m.relatorio_pedidos() + "\n\n" + m.relatorio_consultas()
     except Exception as e:  # noqa: BLE001
         return f"Não consegui ler receitas e encaminhamentos: {e}"
 

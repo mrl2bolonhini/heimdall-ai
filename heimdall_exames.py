@@ -543,11 +543,20 @@ def achar_emissor(texto: str) -> str:
     return _limpo(m.group(1), 70) if m else ""
 
 
+_NOME_MED = r"[A-ZÀ-Ú](?!RM\b)[\wÀ-ú.'\-]*(?:[ \t]+[A-ZÀ-Ú](?!RM\b)[\wÀ-ú.'\-]*){0,4}"
+
+
 def achar_prescritor(texto: str) -> str:
-    m = re.search(r"(?i)\b(?:dr|dra|doutor|doutora)\.?\s*:?\s*([A-ZÀ-Ú][\wÀ-ú.'\-]+(?:\s+[A-ZÀ-Ú][\wÀ-ú.'\-]+){0,4})", texto)
+    """Nome e CRM de quem assinou: linha 'DR(A). NOME', ou a assinatura digital ('Assinado digitalmente por NOME - CRM 123 SP'), ou 'Dr. NOME' no meio do texto."""
+    m = re.search(r"(?im)^[ \t]*(?:dr|dra|doutor|doutora)(?![A-Za-zÀ-ú])\.?[ \t]*:?[ \t]*(" + _NOME_MED + r")[ \t]*$", texto)
+    if not m:
+        m = re.search(r"(?i)assinado\s+digitalmente\s+por\s+((?-i:" + _NOME_MED + r"))\s*[-–]", texto)
+    if not m:
+        m = re.search(r"(?i)\b(?:dr|dra|doutor|doutora)(?![A-Za-zÀ-ú])\.?[ \t]*:?[ \t]*((?-i:" + _NOME_MED + r"))", texto)
     nome = _limpo(m.group(1), 60) if m else ""
-    c = re.search(r"(?i)\bCRM[\s\-/:]*([A-Z]{2})?[\s\-/:]*(\d{3,7})", texto)
-    crm = ("CRM" + (f"-{c.group(1).upper()}" if c.group(1) else "") + f" {c.group(2)}") if c else ""
+    c = re.search(r"(?i)\bCRM[\s\-/:]*(?-i:([A-Z]{2})\b)?[\s\-/:]*(\d{3,7})(?:[ \t]+(?-i:([A-Z]{2})\b))?", texto)
+    uf = (c.group(1) or c.group(3) or "") if c else ""
+    crm = ("CRM" + (f"-{uf.upper()}" if uf else "") + f" {c.group(2)}") if c else ""
     return " ".join(x for x in (nome, f"({crm})" if crm else "") if x)
 
 
@@ -566,11 +575,18 @@ def classificar(texto: str, n_resultados: int = 0) -> str:
     atest = sum(p in n for p in ("atestado", "afastamento", "afastar", "licenca medica", "repouso", "incapacidade", "esteve sob", "dias de repouso"))
     atest += 2 if re.search(r"\bcid\b", n) else 0
     atest += 1 if re.search(r"\bcid\s*10\b", n) or _CID_LISTA.search(texto) else 0
+    enc += 3 if re.search(r"(?im)^\s*encaminhamento\s*$", texto) else 0
+    atest += 3 if re.search(r"(?im)^\s*atestado(?:\s+m[eé]dico)?\s*$", texto) else 0
+    atest += 1 if "afastado" in n else 0
+    atest += 1 if _CID_SOZINHO.search(texto) and atest else 0
+    pedido = (3 if re.search(r"(?im)^\s*pedidos?\s+de\s+exames?\s*$", texto) else 0) + (2 if len(re.findall(r"\btuss\b", n)) >= 2 else 0)
     modal = sum(1 for _, pad in MODALIDADES if re.search(pad, n))
     laudo = (2 * modal + sum(p in n for p in _ESTRUTURA_LAUDO)) if modal and n_resultados < 8 else 0
     if laudo >= 3 and laudo >= exame - 1:
         exame = 0
-    melhor = max(("exame", exame), ("receita", receita), ("encaminhamento", enc), ("consulta", cons), ("atestado", atest if atest >= 3 else 0),
+    if pedido >= 3:
+        exame = 0
+    melhor = max(("exame", exame), ("receita", receita), ("encaminhamento", enc), ("pedido", pedido if pedido >= 3 else 0), ("consulta", cons), ("atestado", atest if atest >= 3 else 0),
                  ("laudo", laudo if laudo >= 3 else 0), key=lambda x: x[1])
     return melhor[0] if melhor[1] >= 2 else "outro"
 
@@ -1219,8 +1235,45 @@ def _no_texto(trecho: str, texto_norm: str) -> bool:
     return bool(t) and t in texto_norm
 
 
+_UNID_DOSE = r"(?:mg|mcg|µg|ug|g|ml|ui|%)"
+_MEMED_ITEM = re.compile(rf"(?i)^\s*\d{{1,2}}\s*[.)]\s+(?P<nome>[A-Za-zÀ-ú][^,\n]*?)\s+(?P<dose>\d+(?:[.,]\d+)?\s*{_UNID_DOSE}(?:\s*/\s*(?:ml|dose|comprimido|cp))?)\s*(?:,|\s{{3,}}|$)(?P<resto>.*)$")
+_POSOLOGIA = re.compile(r"(?i)\b(tomar|usar|aplicar|ingerir|administrar|1\s+comprimido|\d+\s+comprimidos?|\d+\s+gotas|a cada|\d+\s*/\s*\d+\s*h|de\s+\d+\s+em\s+\d+|1x|2x|3x|ao dia|por dia|manh[ãa]|noite|jejum)")
+
+
+def _receitas_memed(linhas: list) -> list:
+    """Receita digital (Memed): '1. Marca 100mg, forma (30un) Fabricante    2 embalagens', na linha de baixo o princípio ativo e depois a posologia."""
+    saida = []
+    for i, l in enumerate(linhas):
+        m = _MEMED_ITEM.match(l)
+        if not m:
+            continue
+        marca = _limpo(m.group("nome"), 60)
+        dose = _limpo(m.group("dose"), 30)
+        resto = m.group("resto")
+        q = re.search(r"(?i)(\d+)\s+(embalagens?|caixas?|frascos?|cartelas?|unidades?|ampolas?|bisnagas?)\s*$", resto.strip())
+        un = re.search(r"\((\d+\s*(?:un|comprimidos?|c[aá]psulas?|ml))\)", resto, re.I)
+        quantidade = _limpo(" ".join(x for x in ((f"{q.group(1)} {q.group(2)}" if q else ""), (f"({un.group(1)})" if un else "")) if x), 40)
+        principio, posologia = "", ""
+        resto_l = [x for x in linhas[i + 1:i + 7] if x]
+        for x in resto_l[:3]:
+            mp = re.match(rf"(?i)^([A-Za-zÀ-ú][A-Za-zÀ-ú ,]+?)\s+\d+(?:[.,]\d+)?\s*{_UNID_DOSE}\b", x)
+            if mp and not _POSOLOGIA.search(x):
+                principio = _limpo(mp.group(1), 60)
+                break
+        for x in resto_l:
+            if _MEMED_ITEM.match(x):
+                break
+            if _POSOLOGIA.search(x):
+                posologia = _limpo(x, 160)
+                break
+        nome = f"{marca} ({principio.lower()})" if principio and _norm(principio) != _norm(marca) else marca
+        saida.append({"medicamento": nome, "dose": dose, "posologia": posologia, "duracao": "", "quantidade": quantidade})
+    return saida
+
+
 def ler_receitas_regra(texto: str) -> list:
     linhas = [l.strip() for l in texto.splitlines()]
+    memed = _receitas_memed(linhas)
     saida = []
     for i, l in enumerate(linhas):
         m = re.match(r"^(?:\d{1,2}\s*[).\-]\s*)?([A-Za-zÀ-ú][A-Za-zÀ-ú0-9 ().+\-]{2,48}?)\s+(\d+(?:[.,]\d+)?\s*(?:mg|mcg|µg|ug|g|ml|ui|%)(?:\s*/\s*(?:ml|dose|comprimido|cp))?)\b(.*)$", l, re.I)
@@ -1235,8 +1288,11 @@ def ler_receitas_regra(texto: str) -> list:
             if re.search(r"(?i)\b(tomar|usar|aplicar|ingerir|administrar|1\s+comprimido|\d+\s+comprimidos?|\d+\s+gotas|a cada|\d+\s*/\s*\d+\s*h|de\s+\d+\s+em\s+\d+|1x|2x|3x|ao dia|por dia|manh[ãa]|noite|jejum)", prox or ""):
                 posologia = _limpo(prox, 160)
                 break
-        saida.append({"medicamento": _limpo(nome, 60), "dose": _limpo(m.group(2), 30), "posologia": posologia, "duracao": ""})
-    return saida
+        dose = _limpo(m.group(2), 30)
+        if any(_norm(dose) == _norm(x["dose"]) and (_norm(nome) in _norm(x["medicamento"]) or _norm(x["medicamento"]).startswith(_norm(nome))) for x in memed):
+            continue                  # a segunda via da mesma receita (formulário de controle especial) repete marca e princípio ativo
+        saida.append({"medicamento": _limpo(nome, 60), "dose": dose, "posologia": posologia, "duracao": "", "quantidade": ""})
+    return memed + saida
 
 
 def extrair_receitas(texto: str) -> tuple:
@@ -1283,7 +1339,58 @@ ESPECIALIDADES = [
 ]
 
 
+def ler_pedido_exame(texto: str) -> list:
+    """Pedido de exames (lista com código TUSS). É o que o médico pediu, não resultado."""
+    medico = achar_prescritor(texto)
+    saida, vistos = [], set()
+    for l in texto.splitlines():
+        m = re.match(r"(?i)^\s*(?P<nome>\S.{2,90}?)\s{2,}TUSS\s*:?\s*(?P<c>\d{6,10})\s*$", l)
+        if m and _norm(m.group("nome")) not in vistos:
+            vistos.add(_norm(m.group("nome")))
+            saida.append({"exame": _limpo(m.group("nome"), 90), "tuss": m.group("c"), "medico": medico})
+    return saida
+
+
+def ler_encaminhamento_livre(texto: str) -> list:
+    """Encaminhamento digital em texto livre (Memed): título 'Encaminhamento', destino curto (UBS), o pedido, 'HD = hipótese' e o CID sozinho numa linha."""
+    linhas = [l.strip() for l in texto.splitlines()]
+    ini = next((k for k, l in enumerate(linhas) if re.fullmatch(r"(?i)encaminhamento", l)), None)
+    if ini is None:
+        return []
+    corpo = []
+    for l in linhas[ini + 1:]:
+        if re.match(r"(?i)(memed|assinado\s+digitalmente|\*?para\s+validar|att\b|grato|atenciosamente|obrigad)", l):
+            break
+        if l:
+            corpo.append(l)
+    cid = hip = destino = ""
+    pedido = []
+    for l in corpo:
+        mc = _CID_SOZINHO.match(l)
+        mh = re.match(r"(?i)^(?:HD|hip[oó]tese\s+diagn[oó]stica)\s*[=:]\s*(.+)$", l)
+        if mc:
+            cid = mc.group(1).upper()
+        elif mh:
+            hip = _limpo(mh.group(1), 140).rstrip(" .")
+        elif len(l.split()) <= 3 and re.fullmatch(r"[A-ZÀ-Ú0-9 ./\-]{2,30}", l) and not destino and not pedido:
+            destino = l
+        else:
+            pedido.append(_limpo(l, 160))
+    if not (pedido or hip or cid):
+        return []
+    base = " ".join(pedido + [hip])
+    esp = next((n for n, p in ESPECIALIDADES if re.search(p, _norm(base))), "")
+    if not esp and re.search(r"retirada\s+de\s+pontos", _norm(base)):
+        esp = "Retirada de pontos" + (f" ({destino})" if destino else "")
+    esp = esp or destino or _limpo(pedido[0] if pedido else "Encaminhamento", 60)
+    motivo = _limpo("; ".join(x.rstrip(" .") for x in pedido) + (f"; hipótese diagnóstica: {hip}" if hip else ""), 300)
+    return [{"especialidade": esp, "motivo": motivo, "cid": cid}]
+
+
 def ler_encaminhamentos_regra(texto: str) -> list:
+    livre = ler_encaminhamento_livre(texto)
+    if livre:
+        return livre
     linhas = texto.splitlines()
     achados = []
     for nome, pad in ESPECIALIDADES:
@@ -1299,7 +1406,7 @@ def ler_encaminhamentos_regra(texto: str) -> list:
     else:
         m = re.search(r"(?i)(solicito (?:avalia[cç][aã]o|parecer)[^\n]{3,200})", texto)
         motivo = _limpo(m.group(1), 200) if m else ""
-    return [{"especialidade": a, "motivo": motivo} for a in achados[:4]]
+    return [{"especialidade": a, "motivo": motivo, "cid": ""} for a in achados[:4]]
 
 
 def extrair_encaminhamentos(texto: str) -> tuple:
@@ -1385,6 +1492,7 @@ def achar_validade(texto: str, dia: str) -> str:
 # --------------------------------------------------------------------------------------------
 _CID_CODIGO = r"[A-TV-Z]\d{2}(?:\.\d{1,2})?"
 _CID_LISTA = re.compile(rf"(?i)\bCID(?:\s*-?\s*10)?\s*[:\-–]?\s*(?P<l>{_CID_CODIGO}(?:\s*(?:,|;|/|\be\b|\bou\b)\s*{_CID_CODIGO})*)")
+_CID_SOZINHO = re.compile(rf"(?m)^[ \t]*(?:CID[ \t]*[:\-]?[ \t]*)?({_CID_CODIGO})[ \t]*\.?[ \t]*$")
 _DIAS_PADROES = (
     re.compile(r"(?i)(?:afastamento|afastar|afastad[oa]|repouso|licen[cç]a|dispensa|inapt[oa]|incapacidade)[^\n.]{0,70}?\b(\d{1,3})\s*(?:\([^)]{0,40}\)\s*)?dias?\b"),
     re.compile(r"(?i)\b(\d{1,3})\s*(?:\([^)]{0,40}\)\s*)?dias?\s+(?:corridos\s+)?(?:de\s+|para\s+)?(?:afastamento|repouso|licen[cç]a|descanso|atestado)"),
@@ -1410,7 +1518,7 @@ MODALIDADES = (
 _ESTRUTURA_LAUDO = ("conclusao", "impressao diagnostica", "achados", "tecnica", "indicacao clinica", "analise", "descricao", "comparacao")
 PROMPT_TIPO = (_ANTI_INJECAO +
                "Diga que tipo de documento de saúde é este texto: exame (resultados numéricos de laboratório), receita, encaminhamento, "
-               "consulta (agendamento ou confirmação), atestado (atestado, afastamento ou licença médica), laudo (de exame de imagem ou procedimento: "
+               "consulta (agendamento ou confirmação), pedido (pedido de exames, com lista do que fazer), atestado (atestado, afastamento ou licença médica), laudo (de exame de imagem ou procedimento: "
                "ultrassom, ressonância, radiografia, ecocardiograma, endoscopia...) ou outro.\n"
                'Formato: {"tipo": "exame"}\n\nTEXTO:\n')
 PROMPT_ATESTADO = (_ANTI_INJECAO +
@@ -1426,7 +1534,7 @@ PROMPT_LAUDO = (_ANTI_INJECAO +
 def classificar_ia(texto: str) -> str:
     r = _json_do_modelo(_modelo(PROMPT_TIPO + texto[:3500], 60))
     t = str(r.get("tipo", "")).strip().lower() if isinstance(r, dict) else ""
-    return t if t in ("exame", "receita", "encaminhamento", "consulta", "atestado", "laudo") else "outro"
+    return t if t in ("exame", "receita", "encaminhamento", "consulta", "atestado", "laudo", "pedido") else "outro"
 
 
 def _datas_do_trecho(trecho: str) -> list:
@@ -1440,6 +1548,11 @@ def ler_atestado_regra(texto: str, dia_doc: str = "") -> list:
             if c not in vistos:
                 vistos.add(c)
                 cids.append((c, _limpo((re.search(re.escape(c) + r"\s*[-–:]\s*([^\n]{3,80})", m.string[m.start():m.start() + 200]) or [None, ""])[1], 80)))
+    if not cids:
+        for m in _CID_SOZINHO.finditer(texto):
+            if m.group(1).upper() not in vistos:
+                vistos.add(m.group(1).upper())
+                cids.append((m.group(1).upper(), ""))
     dias = None
     for pad in _DIAS_PADROES:
         m = pad.search(texto)
@@ -1464,9 +1577,9 @@ def ler_atestado_regra(texto: str, dia_doc: str = "") -> list:
     if dias is None and inicio and fim:
         dias = (date.fromisoformat(fim) - date.fromisoformat(inicio)).days + 1
     obs = ""
-    m = re.search(r"(?i)[^\n]{0,60}(?:afast|repouso|licen[cç]a)[^\n]{0,100}", texto)
+    m = re.search(r"(?i)[^\n.]{0,60}(?:afast|repouso|licen[cç]a)[^.]{0,120}\.?", texto)
     if m:
-        obs = _limpo(m.group(0), 140)
+        obs = _limpo(re.sub(r"\s+", " ", m.group(0)), 160)
     medico = achar_prescritor(texto)
     if not (cids or dias):
         return []
@@ -1549,6 +1662,23 @@ def _modalidade_do_texto(texto: str) -> tuple:
 _FIM_DA_CONCLUSAO = re.compile(r"(?i)^\s*(?:dr\.?|dra\.?|m[eé]dic[oa]|crm|assinad|respons[aá]vel|data\b|liberad|laudado|atenciosamente|observa[cç][aã]o|obs\b)")
 
 
+_FIM_DO_LAUDO = re.compile(r"(?i)^\s*(?:dr|dra|doutor|doutora)(?![A-Za-zÀ-ú])|^\s*CRM\b|^\s*este\s+laudo|^\s*p[aá]gina\s+\d|^\s*assinado")
+
+
+def _achados_do_laudo(linhas: list) -> str:
+    for i, l in enumerate(linhas):
+        m = re.match(r"(?i)^\s*(?:an[aá]lise|achados|descri[cç][aã]o|relat[oó]rio|resultado)\s*[:\-]\s*(.*)$", l)
+        if m:
+            partes = [m.group(1).strip()] if m.group(1).strip() else []
+            for t in linhas[i + 1:]:
+                if _FIM_DO_LAUDO.match(t):
+                    break
+                if t.strip():
+                    partes.append(re.sub(r"\s{2,}", " ", t.strip()))
+            return _limpo(" ".join(partes), 3000)
+    return ""
+
+
 def ler_laudo_regra(texto: str) -> list:
     modalidade, titulo = _modalidade_do_texto(texto)
     if not modalidade:
@@ -1569,13 +1699,13 @@ def ler_laudo_regra(texto: str) -> list:
                     break
             concl = _limpo(" ".join(partes), 900)
             break
-    return [{"modalidade": modalidade, "titulo": titulo, "conclusao": concl, "medico": achar_prescritor(texto)}]
+    return [{"modalidade": modalidade, "titulo": titulo, "conclusao": concl, "achados": _achados_do_laudo(linhas), "medico": achar_prescritor(texto)}]
 
 
 def extrair_laudos(texto: str) -> tuple:
     avisos = []
     r = ler_laudo_regra(texto)
-    if USAR_MODELO and (not r or not r[0]["conclusao"]):
+    if USAR_MODELO and (not r or not (r[0]["conclusao"] or r[0].get("achados"))):
         m = _json_do_modelo(_modelo(PROMPT_LAUDO + texto[:6000], 600))
         if isinstance(m, dict):
             concl = _limpo(m.get("conclusao", ""), 900)
@@ -1583,13 +1713,14 @@ def extrair_laudos(texto: str) -> tuple:
             if concl and _norm(concl) in tn:      # a conclusão tem que estar escrita no documento, palavra por palavra
                 if not r:
                     mod, tit = _modalidade_do_texto(texto)
-                    r = [{"modalidade": mod or "outro", "titulo": _limpo(m.get("titulo", ""), 100) or tit or "Laudo", "conclusao": concl, "medico": achar_prescritor(texto)}]
+                    r = [{"modalidade": mod or "outro", "titulo": _limpo(m.get("titulo", ""), 100) or tit or "Laudo", "conclusao": concl, "achados": "", "medico": achar_prescritor(texto)}]
                 else:
                     r[0]["conclusao"] = concl
             elif concl:
                 avisos.append("O modelo propôs uma conclusão que não está escrita no laudo; ignorei.")
     if r and not r[0]["conclusao"]:
-        avisos.append("Não achei a conclusão do laudo; guardei só o título.")
+        avisos.append("Este laudo não traz conclusão escrita; guardei a análise, como está no documento." if r[0].get("achados")
+                      else "Não achei a conclusão do laudo; guardei só o título.")
     return r, avisos
 
 
@@ -1604,7 +1735,7 @@ def extrair(texto: str, ocr: bool = False) -> dict:
     regra, desc = ler_resultados_regra(texto)
     tipo = classificar(texto, len(regra))
     out = {"tipo": tipo, "dia": achar_data(texto), "emissor": "", "solicitante": "", "ocr": ocr,
-           "resultados": [], "receitas": [], "encaminhamentos": [], "consultas": [], "atestados": [], "laudos": [], "descartados": [], "avisos": []}
+           "resultados": [], "receitas": [], "encaminhamentos": [], "consultas": [], "atestados": [], "laudos": [], "pedidos": [], "descartados": [], "avisos": []}
     if tipo == "outro" and USAR_MODELO:
         tipo = out["tipo"] = classificar_ia(texto)
         if tipo != "outro":
@@ -1631,6 +1762,10 @@ def extrair(texto: str, ocr: bool = False) -> dict:
             e["prescritor"], e["validade"] = out["emissor"], v
         if not out["encaminhamentos"]:
             avisos.append("Não identifiquei a especialidade deste encaminhamento.")
+    elif tipo == "pedido":
+        out["pedidos"] = ler_pedido_exame(texto)
+        out["emissor"] = achar_prescritor(texto)
+        avisos = [] if out["pedidos"] else ["Não identifiquei os exames pedidos."]
     elif tipo == "consulta":
         out["consultas"], avisos = ler_consultas_regra(texto)
         if out["consultas"]:
@@ -1718,7 +1853,7 @@ def registrar(dados: bytes, nome: str, origem: str = "pasta") -> dict:
     texto, ocr = texto_do_arquivo(dados, nome)
     ext = extrair(texto, ocr)
     agora = _agora()
-    n_itens = len(ext["resultados"]) + len(ext["receitas"]) + len(ext["encaminhamentos"])
+    n_itens = sum(len(ext[k]) for k in ("resultados", "receitas", "encaminhamentos", "consultas", "atestados", "laudos", "pedidos"))
 
     def grava(con):
         cur = con.execute(
@@ -1813,7 +1948,7 @@ def receber(dados: bytes, nome: str) -> dict:
 # Conferência, confirmação e descarte
 # --------------------------------------------------------------------------------------------
 _TIPO_PT = {"consulta": "consulta marcada", "exame": "exame de laboratório", "receita": "receita", "encaminhamento": "encaminhamento", "atestado": "atestado médico",
-            "laudo": "laudo de imagem ou procedimento", "outro": "documento sem tipo identificado"}
+            "laudo": "laudo de imagem ou procedimento", "pedido": "pedido de exame", "outro": "documento sem tipo identificado"}
 
 
 def _doc(doc_id: int) -> dict:
@@ -1852,7 +1987,12 @@ def _linha_laudo(l: dict) -> str:
     t = f"{l.get('titulo') or l.get('modalidade') or 'Laudo'}"
     if l.get("medico"):
         t += f", {l['medico']}"
-    t += ". Conclusão: " + (l["conclusao"] if l.get("conclusao") else "não encontrada no laudo")
+    if l.get("conclusao"):
+        t += ". Conclusão: " + l["conclusao"]
+    elif l.get("achados"):
+        t += ". Sem conclusão escrita; análise: " + (l["achados"] if len(l["achados"]) <= 500 else l["achados"][:500].rsplit(" ", 1)[0] + " (continua no documento)")
+    else:
+        t += ". Conclusão: não encontrada no laudo"
     return t.rstrip(".") + "."
 
 
@@ -1882,8 +2022,8 @@ def resumo_documento(doc_id: int) -> str:
                 linhas += [f"Item {i}. {_linha_resultado(r)}." for i, r in grupo]
     elif d["tipo"] == "receita":
         for i, r in enumerate(ext.get("receitas", []), 1):
-            linhas.append(f"Item {i}. {r['medicamento']}" + (f", {r['dose']}" if r["dose"] else "") + (f". {r['posologia']}" if r["posologia"] else "")
-                          + (f". Validade {_br(r['validade'])}" if r.get("validade") else "") + ".")
+            linhas.append(f"Item {i}. {r['medicamento']}" + (f", {r['dose']}" if r["dose"] else "") + (f". {r['posologia'].rstrip('.')}" if r["posologia"] else "")
+                          + (f". Quantidade: {r['quantidade']}" if r.get("quantidade") else "") + (f". Validade {_br(r['validade'])}" if r.get("validade") else "") + ".")
     elif d["tipo"] == "consulta":
         for i, c in enumerate(ext.get("consultas", []), 1):
             linhas.append(f"Item {i}. Consulta em {_br(c['dia'])}" + (f" às {c['hora']}" if c["hora"] else "") + (f", {c['especialidade']}" if c["especialidade"] else "")
@@ -1891,13 +2031,16 @@ def resumo_documento(doc_id: int) -> str:
         linhas.append("Ao confirmar, a consulta vai para o Calendário como evento.")
     elif d["tipo"] == "encaminhamento":
         for i, e in enumerate(ext.get("encaminhamentos", []), 1):
-            linhas.append(f"Item {i}. {e['especialidade']}" + (f". Motivo: {e['motivo']}" if e["motivo"] else "") + ".")
+            linhas.append(f"Item {i}. {e['especialidade']}" + (f". Motivo: {e['motivo']}" if e["motivo"] else "") + (f". CID {e['cid']}" if e.get("cid") else "") + ".")
     elif d["tipo"] == "atestado":
         for i, a in enumerate(ext.get("atestados", []), 1):
             linhas.append(f"Item {i}. {_linha_atestado(a)}")
     elif d["tipo"] == "laudo":
         for i, l in enumerate(ext.get("laudos", []), 1):
             linhas.append(f"Item {i}. {_linha_laudo(l)}")
+    elif d["tipo"] == "pedido":
+        for i, p_ in enumerate(ext.get("pedidos", []), 1):
+            linhas.append(f"Item {i}. {p_['exame']}" + (f" (TUSS {p_['tuss']})" if p_.get("tuss") else "") + ".")
     if ext.get("descartados"):
         linhas.append("Não incluí por não conseguir confirmar no texto:")
         linhas += [f"{x['texto']}: {x['motivo']}." for x in ext["descartados"][:15]]
@@ -1925,7 +2068,7 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", dia or ""):
         raise ErroExames("Falta a data do documento. Use: heimdall health --labs confirm ID --date AAAA-MM-DD")
     sem = set(int(x) for x in (sem or []))
-    chave_lista = {"exame": "resultados", "receita": "receitas", "encaminhamento": "encaminhamentos", "consulta": "consultas", "atestado": "atestados", "laudo": "laudos"}.get(d["tipo"])
+    chave_lista = {"exame": "resultados", "receita": "receitas", "encaminhamento": "encaminhamentos", "consulta": "consultas", "atestado": "atestados", "laudo": "laudos", "pedido": "pedidos"}.get(d["tipo"])
     itens = [x for i, x in enumerate(ext.get(chave_lista, []) if chave_lista else [], 1) if i not in sem]
     agora = _agora()
 
@@ -1956,20 +2099,24 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
                          None, None, "", r["catalogado"], "historico", ordem[r["chave"]]))
         elif d["tipo"] == "receita":
             for r in itens:
-                con.execute("INSERT OR IGNORE INTO receitas (documento_id, dia, medicamento, dose, posologia, duracao, prescritor, validade) VALUES (?,?,?,?,?,?,?,?)",
-                            (d["id"], dia, r["medicamento"], r["dose"], r["posologia"], r.get("duracao", ""), r.get("prescritor", ""), r.get("validade", "")))
+                con.execute("INSERT OR IGNORE INTO receitas (documento_id, dia, medicamento, dose, posologia, duracao, prescritor, validade, quantidade) VALUES (?,?,?,?,?,?,?,?,?)",
+                            (d["id"], dia, r["medicamento"], r["dose"], r["posologia"], r.get("duracao", ""), r.get("prescritor", ""), r.get("validade", ""), r.get("quantidade", "")))
         elif d["tipo"] == "encaminhamento":
             for r in itens:
-                con.execute("INSERT OR IGNORE INTO encaminhamentos (documento_id, dia, especialidade, motivo, prescritor, validade) VALUES (?,?,?,?,?,?)",
-                            (d["id"], dia, r["especialidade"], r["motivo"], r.get("prescritor", ""), r.get("validade", "")))
+                con.execute("INSERT OR IGNORE INTO encaminhamentos (documento_id, dia, especialidade, motivo, prescritor, validade, cid) VALUES (?,?,?,?,?,?,?)",
+                            (d["id"], dia, r["especialidade"], r["motivo"], r.get("prescritor", ""), r.get("validade", ""), r.get("cid", "")))
         elif d["tipo"] == "atestado":
             for r in itens:
                 con.execute("INSERT OR IGNORE INTO atestados (documento_id, dia, inicio, fim, dias, cid, cid_texto, medico, observacao) VALUES (?,?,?,?,?,?,?,?,?)",
                             (d["id"], dia, r.get("inicio", ""), r.get("fim", ""), r.get("dias"), r.get("cid", ""), r.get("cid_texto", ""), r.get("medico", ""), r.get("observacao", "")))
         elif d["tipo"] == "laudo":
             for r in itens:
-                con.execute("INSERT OR IGNORE INTO laudos (documento_id, dia, modalidade, titulo, conclusao, medico) VALUES (?,?,?,?,?,?)",
-                            (d["id"], dia, r.get("modalidade", ""), r.get("titulo", ""), r.get("conclusao", ""), r.get("medico", "")))
+                con.execute("INSERT OR IGNORE INTO laudos (documento_id, dia, modalidade, titulo, conclusao, achados, medico) VALUES (?,?,?,?,?,?,?)",
+                            (d["id"], dia, r.get("modalidade", ""), r.get("titulo", ""), r.get("conclusao", ""), r.get("achados", ""), r.get("medico", "")))
+        elif d["tipo"] == "pedido":
+            for r in itens:
+                con.execute("INSERT OR IGNORE INTO pedidos_exame (documento_id, dia, exame, tuss, medico) VALUES (?,?,?,?,?)",
+                            (d["id"], dia, r["exame"], r.get("tuss", ""), r.get("medico", "")))
         elif d["tipo"] == "consulta":
             for r in itens:
                 con.execute("INSERT OR IGNORE INTO consultas (documento_id, dia, hora, medico, especialidade, local) VALUES (?,?,?,?,?,?)",
@@ -2210,7 +2357,7 @@ def relatorio_receitas() -> str:
     hoje = date.today().isoformat()
     linhas = [f"{len(rows)} medicamento(s) em receitas confirmadas:"]
     for r in rows:
-        t = f"{_br(r['dia'])}: {r['medicamento']}" + (f", {r['dose']}" if r["dose"] else "") + (f". {r['posologia']}" if r["posologia"] else "")
+        t = f"{_br(r['dia'])}: {r['medicamento']}" + (f", {r['dose']}" if r["dose"] else "") + (f". {r['posologia'].rstrip('.')}" if r["posologia"] else "") + (f". Quantidade: {r['quantidade']}" if r.get("quantidade") else "")
         if r["validade"]:
             t += f". Validade {_br(r['validade'])}" + (" (vencida)" if r["validade"] < hoje else "")
         linhas.append(t + ".")
@@ -2231,6 +2378,13 @@ def relatorio_laudos() -> str:
     return "\n".join([f"{len(rows)} laudo(s) confirmados:"] + [f"{_br(r['dia'])}: {_linha_laudo(r)}" for r in rows])
 
 
+def relatorio_pedidos() -> str:
+    rows = _ler("SELECT * FROM pedidos_exame ORDER BY dia DESC, id")
+    if not rows:
+        return "Ainda não há pedidos de exame confirmados."
+    return "\n".join([f"{len(rows)} exame(s) pedido(s):"] + [f"{_br(r['dia'])}: {r['exame']}" + (f" (TUSS {r['tuss']})" if r["tuss"] else "") + "." for r in rows])
+
+
 def relatorio_encaminhamentos() -> str:
     rows = _ler("SELECT * FROM encaminhamentos ORDER BY dia DESC, id")
     if not rows:
@@ -2238,7 +2392,7 @@ def relatorio_encaminhamentos() -> str:
     hoje = date.today().isoformat()
     linhas = [f"{len(rows)} encaminhamento(s) confirmado(s):"]
     for r in rows:
-        t = f"{_br(r['dia'])}: {r['especialidade']}" + (f". Motivo: {r['motivo']}" if r["motivo"] else "")
+        t = f"{_br(r['dia'])}: {r['especialidade']}" + (f". Motivo: {r['motivo']}" if r["motivo"] else "") + (f". CID {r['cid']}" if r.get("cid") else "")
         if r["validade"]:
             t += f". Validade {_br(r['validade'])}" + (" (vencido)" if r["validade"] < hoje else "")
         linhas.append(t + ".")
@@ -2314,6 +2468,7 @@ def main() -> int:
     ap.add_argument("--encaminhamentos", action="store_true")
     ap.add_argument("--atestados", action="store_true")
     ap.add_argument("--laudos", action="store_true")
+    ap.add_argument("--pedidos", action="store_true")
     ap.add_argument("--dias", type=int, default=730)
     ap.add_argument("--documentos", action="store_true", help="lista os documentos recebidos")
     ap.add_argument("--gerar-token", action="store_true")
@@ -2372,6 +2527,8 @@ def main() -> int:
             print(relatorio_atestados())
         elif a.laudos:
             print(relatorio_laudos())
+        elif a.pedidos:
+            print(relatorio_pedidos())
         elif a.documentos:
             for d in listar_documentos():
                 print(f"{d['id']}: {_TIPO_PT.get(d['tipo'], d['tipo'])}, {_br(d['dia'])}, {d['estado']}")
