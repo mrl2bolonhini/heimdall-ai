@@ -178,6 +178,8 @@ SECOES = [("/", "Visão geral"), ("/terminal", "Terminal"), ("/servicos", "Servi
 # Abas com subabas: a rota de cada subaba aponta para a aba de cima a que pertence (lista de abas enxuta do Heimdall Design).
 SUBABAS = {"/nuvem": [("/nuvem", "Continuidade"), ("/monitor", "Consumo de IA")]}
 ABA_DE = {r: aba for aba, itens in SUBABAS.items() for r, _ in itens}
+# Ajustes (botão no topo): as variáveis do .env e, por último, a Ajuda. As variáveis têm script próprio: a subaba carrega a página inteira.
+AJUSTES = [("/ajustes", "Variáveis"), ("/ajuda", "Ajuda")]
 
 _shell = None
 
@@ -652,7 +654,8 @@ def pg_monitor(q: dict, sess: dict) -> tuple:
     return "Consumo de IA na nuvem", corpo
 
 
-ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/monitor": pg_monitor, "/usuarios": pg_usuarios, "/nuvem": pg_nuvem, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao}
+ROTAS = {"/": pg_inicio, "/terminal": pg_terminal, "/servicos": pg_servicos, "/monitor": pg_monitor, "/usuarios": pg_usuarios, "/nuvem": pg_nuvem, "/ajustes": pg_configuracoes, "/manutencao": pg_manutencao,
+         "/ajuda": lambda q, sess: ("Ajuda", __import__("heimdall_ajuda").ajuda_do_servico("controls", design.base_ajuda()))}
 
 SCRIPT = r"""
 (function(){
@@ -976,11 +979,12 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     nav = sair = ajustes_html = ""
     if sess:
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        em_ajustes = atual == "/ajustes"   # Ajustes é botão no topo, à direita, e não aba (padrão do Heimdall Design)
+        em_ajustes = atual in dict(AJUSTES)   # Ajustes é botão no topo, à direita, e não aba (padrão do Heimdall Design)
         ajustes_html = design.botao("/ajustes", "Ajustes", atual=em_ajustes)
         if em_ajustes:
             nav = " "
-            corpo = f'<div class="acoes-topo">{design.botao("/", "Voltar ao Controls")}</div><h1>{e(titulo)}</h1>{{aviso}}{corpo}'
+            corpo = (f'<div class="acoes-topo">{design.botao("/", "Voltar ao Controls")}</div>'
+                     + design.com_subabas(AJUSTES, atual, f"<h1>{e(titulo)}</h1>{{aviso}}{corpo}", "Seções dos Ajustes", completas=("/ajustes",)))
         else:
             aba = ABA_DE.get(atual, atual)
             nav = '<nav aria-label="Principal">' + design.abas(SECOES, aba, completas=("/terminal",)) + '</nav>'

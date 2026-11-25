@@ -87,7 +87,7 @@ Plataforma e operação
 Prioridades escolhidas pelo usuário em 25/11/2026, nesta ordem:
 1) Dados por pessoa: backup diário incluir db/people; depois Notes, News, Games e Chat.
 2) Exames no relatório da semana e lembrete de documento pendente.
-3) Revisão de navegação e textos dos demais serviços. Feito em 25/11/2026: Controls com 6 abas (Monitor virou a subaba Consumo de IA da aba Nuvem), News com o Estado das fontes em Ajustes, telas do Lab e do Controls sem comandos de terminal, subaba Ajuda nos Ajustes de Finance, Health, News e Learn. Falta: Ajuda nos Ajustes do Controls, decidir as abas do Games e revisar textos de erro e aviso serviço por serviço.
+3) Revisão de navegação e textos dos demais serviços. Feito em 25/11/2026: Controls com 6 abas (Monitor virou a subaba Consumo de IA da aba Nuvem), News com o Estado das fontes em Ajustes, telas do Lab e do Controls sem comandos de terminal, subaba Ajuda nos Ajustes de Finance, Health, News, Learn e Controls. Falta: decidir as abas do Games e revisar textos de erro e aviso serviço por serviço.
 4) Apps da Apple: conta de desenvolvedor; app do Mac assinado, notarizado e com instalador .pkg; depois a primeira versão do app do iPhone.
 A seguir:
 5) Respostas da Locaweb, contrato e orçamento da VPS; fase 2 (embeddings no Workers AI) pode andar antes.

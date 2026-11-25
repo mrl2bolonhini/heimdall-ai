@@ -5,7 +5,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-25 - Navegação: Controls com 6 abas, Ajustes no News e subaba Ajuda
 - Controls: a aba Monitor passou a ser a subaba Consumo de IA, dentro da aba Nuvem (que ganhou a subaba Continuidade). As abas de cima ficaram em seis: Visão geral, Terminal, Serviços, Usuários, Nuvem e Manutenção. O endereço /monitor continua valendo.
 - News: o Estado das fontes, que é estado técnico, saiu da lista de abas e foi para o botão Ajustes, no topo, depois do menu Conta, com o botão Voltar ao News. A página de notícias ficou sem lista de abas, por ter uma só seção. O endereço /estado continua valendo.
-- Nova subaba Ajuda, por último, dentro dos Ajustes do Finance, do Health, do News e do Learn (no Learn, os Ajustes ganharam as subabas Configurações e Ajuda): as perguntas frequentes daquele serviço e o caminho para a Ajuda e suporte do Heimdall Account, onde fica o formulário com protocolo.
+- Nova subaba Ajuda, por último, dentro dos Ajustes do Finance, do Health, do News, do Learn e do Controls (no Learn, os Ajustes ganharam as subabas Configurações e Ajuda; no Controls, Variáveis e Ajuda): as perguntas frequentes daquele serviço e o caminho para a Ajuda e suporte do Heimdall Account, onde fica o formulário com protocolo.
 - Telas sem comandos de terminal: o aviso do Lab quando o emulador está desligado indica a aba Serviços do Controls; o Controls não mostra mais comandos na lista de versões nem no consumo de IA.
 
 ## 2026-11-25 - Documentos de saúde no relatório da semana

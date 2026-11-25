@@ -214,7 +214,12 @@ confere("abas: tablist, tab com aria-selected, painel e atalho",
         'role="tablist"' in corpo and corpo.count('role="tab"') == 6 and 'aria-selected="true"' in corpo and 'role="tabpanel"' in corpo and "Alt+Shift" not in corpo)
 confere("Ajustes é botão no topo e não aba", ">Ajustes</button>" in corpo and "Ajustes</a>" not in corpo.split("<main")[0])
 s_aj, c_aj, _ = req("GET", "/ajustes", cookie=token)
-confere("tela de Ajustes: sem abas de cima, com Voltar ao Controls", s_aj == 200 and 'role="tablist"' not in c_aj and "Voltar ao Controls" in c_aj and 'aria-current="true">Ajustes' in c_aj)
+confere("tela de Ajustes: sem abas de cima, com Voltar ao Controls e as subabas Variáveis e Ajuda", s_aj == 200 and c_aj.count('role="tablist"') == 1
+        and 'aria-label="Seções dos Ajustes"' in c_aj and "Voltar ao Controls" in c_aj and 'aria-current="true">Ajustes' in c_aj and ">Ajuda</a>" in c_aj and c_aj.count("<h1") == 1)
+s_ah, c_ah, _ = req("GET", "/ajuda", cookie=token)
+confere("subaba Ajuda do Controls: perguntas do Controls e caminho para o suporte, Ajustes marcado no topo",
+        s_ah == 200 and "/ajuda?servico=controls" in c_ah and "Falar com o suporte" in c_ah and 'aria-current="true">Ajustes' in c_ah
+        and 'aria-selected="true" tabindex="0" aria-controls="painel-subaba">Ajuda</a>' in c_ah and c_ah.count("<h1") == 1, c_ah[:600])
 confere("abas: o Terminal carrega a página inteira (data-completa)", corpo.count(" data-completa>") == 1)
 confere("abas e chaves: os scripts vão com nonce", "ArrowRight" in corpo and "/servicos/alternar" in corpo and "nonce=" in corpo)
 # --- aba Monitor: consumo da Cloudflare (sem rede: a consulta é trocada por uma resposta pronta) ---------------------
