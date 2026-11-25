@@ -7,7 +7,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 
 ## 2026-11-24 - Resposta ao suporte pelo terminal e pelo Account
 - As mensagens do formulário levam o e-mail de quem escreveu como endereço de resposta (reply_to; se a Cloudflare recusar o campo, o envio repete sem ele). Novo heimdall support --reply PROTOCOLO "texto" responde de suporte@ (remetente HEIMDALL_SUPORTE_DE) a quem escreveu, com o assunto Re: [protocolo], e marca a mensagem como respondida; para e-mails sem protocolo, heimdall support --reply - --to endereço "texto".
-- Nova página do Account, só para o dono, em /suporte/mensagens (link na página Ajuda e suporte do dono): lista as 50 últimas mensagens com estado, motivo de falha e respostas anteriores, e um campo de resposta em cada uma (POST /suporte/responder, com Access ou porta local, origem do próprio site e CSRF). Convidados recebem 403.
+- Nova página do Account, só para o dono, em /suporte/mensagens (link na página Ajuda e suporte do dono): lista as 50 últimas mensagens com estado, motivo de falha e respostas anteriores, e um campo de resposta em cada uma (POST /suporte/responder, com Access ou porta local, origem do próprio site e CSRF). Convidados não veem o link e, se digitarem o endereço, recebem 404, como se a página não existisse.
 - Testes novos em tests/account/teste_ajuda.py. Não testado: o envio real e se o Email Sending aceita reply_to.
 
 ## 2026-11-24 - Diagnóstico do envio de e-mail do suporte

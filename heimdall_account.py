@@ -234,7 +234,7 @@ class Account(nuvem.ManipuladorBase):
         nonce = secrets.token_urlsafe(12)
         if caminho == "/suporte/mensagens":
             if p.get("papel") != "dono":
-                return self._responder(403, "Esta página é do dono do Heimdall.".encode(), "text/plain; charset=utf-8")
+                return self._responder(404, "Não encontrado.".encode(), "text/plain; charset=utf-8")
             titulo, corpo = ajuda.pagina_mensagens(integ.csrf(p))
             return self._html(_documento(titulo, corpo, nonce), nonce)
         if caminho in ("/ajuda", "/termos-de-uso", "/privacidade"):
@@ -323,7 +323,7 @@ def _suporte_responder_post(self, host: str) -> None:
     if not p or (host not in LOCAIS and not p.get("access")):
         return self._responder(403, "Entre pelo Cloudflare Access.".encode(), "text/plain; charset=utf-8")
     if p.get("papel") != "dono":
-        return self._responder(403, "Esta ação é do dono do Heimdall.".encode(), "text/plain; charset=utf-8")
+        return self._responder(404, "Não encontrado.".encode(), "text/plain; charset=utf-8")
     origem = urllib.parse.urlparse(self.headers.get("Origin") or "").hostname or ""
     if origem.lower() != host:
         return self._responder(403, "Origem não permitida.".encode(), "text/plain; charset=utf-8")

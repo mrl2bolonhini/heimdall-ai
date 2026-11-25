@@ -202,7 +202,7 @@ aj._post = falso
 
 dono_tok = cfa.CABECALHO
 s, b = pedir("/suporte/mensagens", jwt="tokana")
-confere("GET /suporte/mensagens por convidado: 403", s == 403)
+confere("GET /suporte/mensagens por convidado: 404, como se a página não existisse", s == 404)
 s, b = pedir("/suporte/mensagens", jwt="tokdono")
 confere("GET /suporte/mensagens pelo dono: 200, lista com protocolo, e-mail, formulário de resposta e texto escapado", s == 200 and rr["protocolo"] in b and "eva@x.com" in b and 'action="/suporte/responder"' in b and "<script>alert" not in b and "<h1>" in b)
 s, b = pedir("/ajuda", jwt="tokdono")
@@ -214,7 +214,7 @@ chamadas.clear()
 s, b = pedir("/suporte/responder", jwt="tokdono", origem=origem_d, metodo="POST", corpo=corpo_r)
 confere("POST /suporte/responder pelo dono: 200, aviso role=status e envio para quem escreveu", s == 200 and 'role="status"' in b and chamadas and chamadas[-1][3]["to"] == "gil@x.com", b[:200])
 s, b = pedir("/suporte/responder", jwt="tokana", origem=origem_d, metodo="POST", corpo=corpo_r)
-confere("POST /suporte/responder por convidado: 403", s == 403)
+confere("POST /suporte/responder por convidado: 404, sem enviar nada", s == 404)
 s, b = pedir("/suporte/responder", jwt="tokdono", origem=origem_d, metodo="POST", corpo=corpo_r.replace(tok_d, "errado"))
 confere("POST /suporte/responder com csrf errado: 403", s == 403)
 s, b = pedir("/suporte/responder", jwt="tokdono", origem="https://outro.exemplo", metodo="POST", corpo=corpo_r)
