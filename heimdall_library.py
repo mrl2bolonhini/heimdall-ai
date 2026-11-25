@@ -116,6 +116,64 @@ def pg_email(ctx):
     return "E-mail", f'<p role="status">{e(situacao)}</p>{form}'
 
 
+def pg_nuvem(ctx):
+    import heimdall_library_nuvem as nv
+    itens = nv.situacao()
+    if not itens:
+        return "Nuvem", '<p role="status">Nenhum serviço de nuvem está disponível. O administrador precisa configurar o Dropbox ou o OneDrive.</p>'
+    blocos = []
+    for x in itens:
+        n = e(x["nome"])
+        if not x["conectado"]:
+            corpo = (f'<p role="status">{n} não conectado. A conexão é só de leitura: o Library não altera nem apaga nada na sua nuvem.</p>'
+                     + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "")
+                     + design.botao_post("/nuvem/conectar", f"Conectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]}))
+        else:
+            corpo = (f'<p role="status">{n} conectado. Pasta vigiada: {e(x["pasta"] or "raiz")}. '
+                     + (f'Última sincronização {e(x["ultimo"])}: {e(x["resumo"])}.' if x["ultimo"] else "Ainda não sincronizado.") + "</p>"
+                     + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "")
+                     + f'<form method="post" action="/nuvem/pasta"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{e(x["chave"])}">'
+                       f'<label for="pasta-{e(x["chave"])}">{e(x["dica"])}</label><input id="pasta-{e(x["chave"])}" name="pasta" type="text" maxlength="200" value="{e(x["pasta"])}">'
+                       '<button type="submit">Salvar pasta</button></form>'
+                     + design.botao_post("/nuvem/sincronizar", "Sincronizar agora", ctx.csrf, {"provedor": x["chave"]})
+                     + design.botao_post("/nuvem/desconectar", f"Desconectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]}))
+        blocos.append(f"<section><h2>{n}</h2>{corpo}</section>")
+    return "Nuvem", "".join(blocos)
+
+
+def retorno_nuvem(q):
+    """Retorno do provedor (chega sem cookie; quem vale é o state, de uso único)."""
+    import heimdall_library_nuvem as nv
+    ok, msg = nv.concluir((q.get("state") or [""])[0], (q.get("code") or [""])[0], (q.get("error") or [""])[0])
+    return "Conexão com a nuvem", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/nuvem", "Voltar ao Library")}</p>'
+
+
+def post_nuvem_conectar(ctx, campos, arquivos):
+    import heimdall_library_nuvem as nv
+    return web.Redirecionar(nv.iniciar(campos.get("provedor", "")))
+
+
+def post_nuvem_pasta(ctx, campos, arquivos):
+    import heimdall_library_nuvem as nv
+    nv.definir_pasta(campos.get("provedor", ""), campos.get("pasta", ""))
+    ctx.flash("ok", "Pasta salva. A próxima sincronização usa esta pasta.")
+    return "/nuvem"
+
+
+def post_nuvem_sincronizar(ctx, campos, arquivos):
+    import heimdall_library_nuvem as nv
+    r = nv.sincronizar(campos.get("provedor", ""), os.environ.get("HEIMDALL_LIBRARY_IA", "1") != "0")
+    ctx.flash("ok", f"{_plural(r['novos'], 'documento novo', 'documentos novos')}, {r['repetidos']} repetidos, {r['erros']} com erro.")
+    return "/revisar" if r["novos"] else "/nuvem"
+
+
+def post_nuvem_desconectar(ctx, campos, arquivos):
+    import heimdall_library_nuvem as nv
+    nv.desconectar(campos.get("provedor", ""))
+    ctx.flash("ok", "Nuvem desconectada. Os documentos já importados continuam no seu acervo.")
+    return "/nuvem"
+
+
 def pg_etiquetas(ctx):
     itens = dados.etiquetas_com_contagem()
     if not itens:
@@ -246,19 +304,20 @@ def contexto_perguntar(ctx) -> str:
 
 GRUPOS = [
     ("Documentos", [("/pesquisar", "Pesquisar"), ("/recentes", "Recentes"), ("/revisar", "A revisar")]),
-    ("Adicionar", [("/enviar", "Enviar arquivo"), ("/entrada", "Pasta de entrada"), ("/email", "E-mail")]),
+    ("Adicionar", [("/enviar", "Enviar arquivo"), ("/entrada", "Pasta de entrada"), ("/email", "E-mail"), ("/nuvem", "Nuvem")]),
     ("Organização", [("/etiquetas", "Etiquetas"), ("/tipos", "Tipos")]),
 ]
 CFG = web.Config(
     chave="library", nome="Library", porta_env="HEIMDALL_LIBRARY_PORT", porta=8021, hosts="library.heimdall-ai.tech,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
-    get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
+    get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira},
-    post={"/enviar": post_enviar, "/email/salvar": post_email, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
+    post={"/enviar": post_enviar, "/email/salvar": post_email, "/nuvem/conectar": post_nuvem_conectar, "/nuvem/pasta": post_nuvem_pasta, "/nuvem/sincronizar": post_nuvem_sincronizar, "/nuvem/desconectar": post_nuvem_desconectar, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
           "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: qual é o vencimento do boleto de energia? o que diz a cláusula de rescisão do contrato? O modelo responde só com os documentos do seu acervo.",
-    css=CSS, erro=dados.ErroLibrary, pertence={"/documento": "/pesquisar"})
+    css=CSS, erro=dados.ErroLibrary, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem},
+    ao_iniciar=lambda: __import__("heimdall_library_nuvem").iniciar_sincronizador())
 
 
 if __name__ == "__main__":

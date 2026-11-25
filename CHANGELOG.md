@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Library: conexão com Dropbox e OneDrive
+- Nova subaba Adicionar > Nuvem: cada pessoa conecta o próprio Dropbox ou OneDrive (OAuth 2.0 com PKCE, só leitura) e escolhe uma pasta; a cada 15 minutos (HEIMDALL_NUVEM_INTERVALO) o Library importa os arquivos novos ou alterados para o acervo dela, com o motor interno ou o Paperless. Também há Sincronizar agora e Desconectar (o documento já importado fica).
+- Os tokens ficam cifrados (AES-GCM) em library/nuvem.bin de cada pessoa, com permissão 600; o retorno do provedor é validado por state de uso único ligado à pessoa. O administrador registra o aplicativo em cada provedor, cadastra https://library.heimdall-ai.tech/nuvem/retorno e grava HEIMDALL_NUVEM_<PROVEDOR>_ID e _SEGREDO no .env. HEIMDALL_NUVEM=0 desliga a sincronização.
+- Não há iCloud (a Apple não oferece acesso a aplicativos de terceiros) nem Google Drive e Box por enquanto. Testado só com provedores falsos: falta conferir com contas reais.
+
 ## 2026-11-25 - Correção de segurança: convidados no Trading e no Library
 - Corrigido: nos sites Trading e Library, a sessão de um convidado usava o banco do dono (o acervo de documentos e a conta simulada), porque a base web trocava a pessoa mas não os dados. Agora os dados mudam junto com a pessoa: cada convidado tem o seu library.db e o seu trading.db em db/people/<id>/. Testes de regressão nos dois sites. Quem liberou Trading ou Library a convidados antes desta correção deve considerar que eles podem ter visto os dados do dono.
 

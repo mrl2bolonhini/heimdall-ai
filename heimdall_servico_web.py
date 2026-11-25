@@ -73,6 +73,7 @@ def ler_multipart(tipo_conteudo: str, corpo: bytes) -> tuple:
     return campos, arquivos
 
 
+Redirecionar = namedtuple("Redirecionar", "url")   # resposta de uma ação: leva a um endereço https externo (ex.: autorização OAuth); só o código do serviço a cria
 Arquivo = namedtuple("Arquivo", "nome tipo dados")   # resposta de download: a tela devolve isto no lugar de (titulo, corpo)
 
 
@@ -85,12 +86,13 @@ class Config:
 
     def __init__(self, chave: str, nome: str, porta_env: str, porta: int, hosts: str, abas: list, ajustes: list, get: dict, post: dict,
                  aliases: dict = None, sistema_perguntar: str = "", contexto_perguntar=None, dica_perguntar: str = "", max_post: int = 20000, ao_iniciar=None,
-                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None):
+                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None):
         self.chave, self.nome, self.porta_env, self.porta, self.hosts = chave, nome, porta_env, porta, hosts
         self.abas, self.ajustes, self.get, self.post = abas, ajustes, get, post
         self.aliases = aliases or {}
         self.sistema_perguntar, self.contexto_perguntar, self.dica_perguntar = sistema_perguntar, contexto_perguntar, dica_perguntar
         self.max_post, self.ao_iniciar, self.css, self.script_pagina, self.erro = max_post, ao_iniciar, css, script_pagina, erro
+        self.publicas = publicas or {}   # {rota GET sem sessão: func(q) -> (titulo, corpo)}; só para retornos de terceiros (OAuth), que chegam sem o cookie
         self.pertence = pertence or {}   # {rota que não é aba: rota da aba a destacar}, como /documento dentro de Documentos
         assert len(abas) <= design.MAX_ABAS, "mais abas do que o Heimdall Design permite"
         self.prefixo = f"HEIMDALL_{chave.upper()}_"
@@ -269,6 +271,10 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
                 if rota == "/entrar":
                     self._entrar(metodo)
                     return
+                if metodo == "GET" and rota in cfg.publicas:
+                    titulo_p, corpo_p = cfg.publicas[rota](q)
+                    self._pagina(200, titulo_p, corpo_p, None, rota)
+                    return
                 token, sess = self._sessao()
                 if not sess:
                     self._ir("/entrar")
@@ -379,6 +385,11 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
                 self._ir(destino)
                 return
             destino = cfg.post[rota](ctx, campos, arquivos) or cfg.abas[0][1][0][0]
+            if isinstance(destino, Redirecionar):
+                if destino.url.startswith("https://") and not any(c in destino.url for c in "\r\n"):
+                    self._ir(destino.url)
+                    return
+                destino = "/"
             if not destino.startswith("/") or destino.startswith("//"):
                 destino = "/"
             self._ir(destino)

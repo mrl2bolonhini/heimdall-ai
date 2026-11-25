@@ -115,6 +115,8 @@ FAQ = {
          "Nunca. Os sinais descrevem de forma objetiva o movimento recente do preço, e o campo Perguntar explica os números da conta. A decisão é sempre sua, e nada aqui é aconselhamento financeiro."),
     ],
     "library": [
+        ("Como conecto o Dropbox ou o OneDrive?",
+         "Em Adicionar, na subaba Nuvem, toque em Conectar no serviço desejado e autorize no site do provedor. A conexão é só de leitura: o Library não altera, move nem apaga nada na sua nuvem. Depois informe a pasta a vigiar. A cada 15 minutos o Library importa os arquivos novos ou alterados dessa pasta (sem subpastas) para o seu acervo, e você pode tocar em Sincronizar agora. Cada pessoa conecta a própria conta e só enxerga os próprios documentos. Desconectar apaga o acesso; os documentos já importados continuam no acervo. O iCloud Drive não oferece acesso a aplicativos de terceiros, e o Google Drive e o Box ainda não estão disponíveis."),
         ("Como o leitor de códigos de barras funciona?",
          "Com o motor Paperless-ngx, o Library lê códigos de barras nos arquivos enviados. Uma folha separadora com o código PATCHT divide um lote escaneado em vários documentos, e uma etiqueta ASN numera o papel para localizá-lo depois. Sem códigos de barras, nada é dividido. Desligue com HEIMDALL_PAPERLESS_BARCODES=false."),
         ("Que arquivos posso enviar?",
