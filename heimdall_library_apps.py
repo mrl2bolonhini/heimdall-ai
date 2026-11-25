@@ -3,7 +3,7 @@
 
 Provedores: Microsoft (OneNote, Microsoft To Do, Microsoft Planner, Calendário e Contatos do Outlook), pela Microsoft Graph, com permissões delegadas de leitura
 (Notes.Read, Tasks.Read, Calendars.Read, Contacts.Read) pedidas só para os serviços que a pessoa marcar (o Planner só existe em conta de trabalho ou escola);
-Todoist (tarefas ativas, escopo data:read); Trello (cartões dos quadros abertos, escopo read). Funciona em qualquer sistema, porque a leitura é feita pelo
+Notion (páginas que a pessoa compartilhar na autorização); Todoist (tarefas ativas, escopo data:read); Trello (cartões dos quadros abertos, escopo read). Funciona em qualquer sistema, porque a leitura é feita pelo
 servidor: a pessoa só autoriza uma vez no navegador.
 
 Cada nota, tarefa, cartão, evento ou contato vira um documento de texto (Markdown) no acervo da pessoa, pesquisável junto com os demais e disponível ao Perguntar.
@@ -213,8 +213,98 @@ def _ler_trello(token: str, api: str, vistos: dict):
                              + (f"Etiquetas: {etiquetas}\n" if etiquetas else "") + (f"\n{(x.get('desc') or '').strip()[:5000]}\n" if (x.get("desc") or "").strip() else ""))}
 
 
+# ---------------------------------------------------------------- Notion
+PAUSA_NOTION = 0.34          # o Notion aceita cerca de 3 pedidos por segundo
+MAX_BLOCOS_NOTION = 800      # blocos lidos por página
+PROFUNDIDADE_NOTION = 3
+TEXTO_BLOCOS = {"paragraph": "", "heading_1": "# ", "heading_2": "## ", "heading_3": "### ", "bulleted_list_item": "- ", "numbered_list_item": "1. ", "quote": "> ",
+                "callout": "", "toggle": "", "to_do": "- [ ] "}
+
+
+def _rich(lista) -> str:
+    return "".join((t.get("plain_text") or "") for t in (lista or []))
+
+
+def _notion_chamar(metodo: str, url: str, token: str, corpo: dict = None) -> dict:
+    time.sleep(PAUSA_NOTION)
+    cab = {"Authorization": "Bearer " + token, "Accept": "application/json", **cx.PROVEDORES["notion"]["cab_api"]}
+    dados_ = None
+    if corpo is not None:
+        cab["Content-Type"], dados_ = "application/json", json.dumps(corpo).encode()
+    st, _, b = cx.http(metodo, url, cab, dados_)
+    if st == 429:
+        raise ErroLibrary("O Notion pediu para esperar. Tentarei de novo na próxima rodada.")
+    if st != 200:
+        raise ErroLibrary(f"O provedor recusou a leitura (código {st}).")
+    try:
+        return json.loads(b or b"{}")
+    except ValueError:
+        raise ErroLibrary("Resposta inesperada do provedor.") from None
+
+
+def _blocos_notion(token: str, api: str, bloco: str, linhas: list, contador: list, nivel: int = 0) -> None:
+    cursor = ""
+    while contador[0] < MAX_BLOCOS_NOTION:
+        r = _notion_chamar("GET", api + f"/blocks/{urllib.parse.quote(bloco)}/children?page_size=100" + (("&start_cursor=" + urllib.parse.quote(cursor)) if cursor else ""), token)
+        for b in r.get("results", []):
+            contador[0] += 1
+            tipo = b.get("type", "")
+            dado = b.get(tipo) or {}
+            recuo = "  " * nivel
+            if tipo in TEXTO_BLOCOS:
+                texto = _rich(dado.get("rich_text"))
+                prefixo = ("- [x] " if dado.get("checked") else "- [ ] ") if tipo == "to_do" else TEXTO_BLOCOS[tipo]
+                if texto:
+                    linhas.append(recuo + prefixo + texto)
+            elif tipo == "code":
+                linhas.append(recuo + _rich(dado.get("rich_text")))
+            elif tipo == "table_row":
+                linhas.append(recuo + " | ".join(_rich(c) for c in dado.get("cells", [])))
+            elif tipo == "child_page":
+                linhas.append(recuo + "Subpágina: " + _limpo(dado.get("title")))
+            elif tipo in ("bookmark", "embed", "link_preview"):
+                linhas.append(recuo + _limpo(dado.get("url"), 300))
+            if b.get("has_children") and nivel < PROFUNDIDADE_NOTION and tipo != "child_page":
+                _blocos_notion(token, api, b["id"], linhas, contador, nivel + 1)
+        cursor = r.get("next_cursor") or ""
+        if not (r.get("has_more") and cursor):
+            return
+
+
+def _titulo_notion(pagina: dict) -> str:
+    for v in (pagina.get("properties") or {}).values():
+        if v.get("type") == "title":
+            return _limpo(_rich(v.get("title")))
+    return ""
+
+
+def _ler_notion(token: str, api: str, vistos: dict):
+    """Páginas que a pessoa compartilhou com a integração (inclusive linhas de bancos de dados). O conteúdo só é baixado se a página mudou."""
+    cursor = ""
+    for _ in range(MAX_PAGINAS):
+        r = _notion_chamar("POST", api + "/search", token, {"filter": {"property": "object", "value": "page"}, "page_size": 100, **({"start_cursor": cursor} if cursor else {})})
+        for x in r.get("results", []):
+            if x.get("archived") or x.get("in_trash"):
+                continue
+            marca = x.get("last_edited_time", "")
+            if vistos.get(x["id"]) == marca and marca:
+                yield {"id": x["id"], "marca": marca, "nome": "", "texto": ""}
+                continue
+            titulo = _titulo_notion(x) or "Página sem título"
+            linhas = []
+            try:
+                _blocos_notion(token, api, x["id"], linhas, [0])
+            except ErroLibrary:
+                continue   # página sem conteúdo legível agora: tenta de novo na próxima rodada
+            yield {"id": x["id"], "marca": marca, "nome": _nome_arquivo("Página", titulo),
+                   "texto": f"# {titulo}\n\nOrigem: Notion\nEditada em: {_data(marca)}\n\n" + "\n".join(linhas) + "\n"}
+        cursor = r.get("next_cursor") or ""
+        if not (r.get("has_more") and cursor):
+            return
+
+
 LEITORES = {"microsoft": {"notas": _ler_notas, "tarefas": _ler_tarefas, "planner": _ler_planner, "agenda": _ler_agenda, "contatos": _ler_contatos},
-            "todoist": {"tarefas": _ler_todoist}, "trello": {"quadros": _ler_trello}}
+            "todoist": {"tarefas": _ler_todoist}, "trello": {"quadros": _ler_trello}, "notion": {"paginas": _ler_notion}}
 
 
 # ---------------------------------------------------------------- tela e sincronização

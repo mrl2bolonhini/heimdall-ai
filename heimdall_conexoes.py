@@ -58,6 +58,10 @@ PROVEDORES = {
     "todoist": {"grupo": "apps", "nome": "Todoist", "auth": "https://app.todoist.com/oauth/authorize", "token": "https://todoist.com/oauth/access_token", "escopo": "",
                 "extra": {}, "api": "https://api.todoist.com/api/v1", "sep": ",", "simples": True, "sem_renovacao": True,
                 "escopos_servico": {"tarefas": "data:read"}, "nomes_servico": {"tarefas": "Tarefas do Todoist"}},
+    # Notion: integração pública (OAuth 2.0 sem PKCE, sem escopos: a pessoa escolhe as páginas no seletor do Notion); troca de token com autenticação básica e corpo JSON
+    "notion": {"grupo": "apps", "nome": "Notion", "auth": "https://api.notion.com/v1/oauth/authorize", "token": "https://api.notion.com/v1/oauth/token", "escopo": "",
+               "extra": {"owner": "user"}, "api": "https://api.notion.com/v1", "sem_pkce": True, "basico": True, "sem_escopo": True, "sem_renovacao": True,
+               "cab_api": {"Notion-Version": "2022-06-28"}, "escopos_servico": {"paginas": ""}, "nomes_servico": {"paginas": "Páginas do Notion que você compartilhar"}},
     # Trello: fluxo próprio (o token volta no fragmento do endereço; a página de retorno o entrega por POST), a chave de API do administrador vale como ID
     "trello": {"grupo": "apps", "nome": "Trello", "auth": "https://trello.com/1/authorize", "token": "", "escopo": "", "extra": {}, "api": "https://api.trello.com/1",
                "fluxo": "trello", "sem_renovacao": True, "escopos_servico": {"quadros": "read"}, "nomes_servico": {"quadros": "Cartões do Trello"}},
@@ -177,8 +181,13 @@ def json_get(url: str, token: str, cab: dict = None) -> dict:
         raise ErroLibrary("Resposta inesperada do provedor.") from None
 
 
-def _form(url: str, campos: dict) -> dict:
-    st, _, b = http("POST", url, {"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"}, urllib.parse.urlencode(campos).encode())
+def _form(url: str, campos: dict, basico: tuple = None, cab_extra: dict = None) -> dict:
+    """POST do token. Com `basico` (id, segredo) usa autenticação básica e corpo JSON, como o Notion; senão, formulário."""
+    if basico:
+        cred = base64.b64encode(f"{basico[0]}:{basico[1]}".encode()).decode()
+        st, _, b = http("POST", url, {"Content-Type": "application/json", "Accept": "application/json", "Authorization": "Basic " + cred, **(cab_extra or {})}, json.dumps(campos).encode())
+    else:
+        st, _, b = http("POST", url, {"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json", **(cab_extra or {})}, urllib.parse.urlencode(campos).encode())
     try:
         r = json.loads(b or b"{}")
     except ValueError:
@@ -225,8 +234,11 @@ def iniciar(chave: str, escrita: bool = False, servicos=None) -> str:
     if prov.get("simples"):
         params = {"client_id": cid, "state": state, "scope": escopo_de(chave, escrita, servicos), **prov["extra"]}
         return prov["auth"] + "?" + urllib.parse.urlencode(params, safe=":,")
-    params = {"client_id": cid, "response_type": "code", "redirect_uri": url_retorno(), "state": state, "scope": escopo_de(chave, escrita, servicos),
-              "code_challenge": desafio, "code_challenge_method": "S256", **prov["extra"]}
+    params = {"client_id": cid, "response_type": "code", "redirect_uri": url_retorno(), "state": state, **prov["extra"]}
+    if not prov.get("sem_escopo"):
+        params["scope"] = escopo_de(chave, escrita, servicos)
+    if not prov.get("sem_pkce"):
+        params.update({"code_challenge": desafio, "code_challenge_method": "S256"})
     return prov["auth"] + "?" + urllib.parse.urlencode(params)
 
 
@@ -246,6 +258,11 @@ def concluir(state: str, code: str, erro: str = "") -> tuple:
             r = _form(prov["token"], {"client_id": cid, "client_secret": seg, "code": code})
             if "_erro" not in r and prov.get("sem_renovacao"):
                 r.setdefault("refresh_token", "sem-renovacao")   # token sem expiração: o marcador só diz que há conexão
+                r.setdefault("expires_in", 10 * 365 * 86400)
+        elif prov.get("basico"):
+            r = _form(prov["token"], {"grant_type": "authorization_code", "code": code, "redirect_uri": url_retorno()}, (cid, seg), prov.get("cab_api"))
+            if "_erro" not in r and prov.get("sem_renovacao"):
+                r.setdefault("refresh_token", "sem-renovacao")   # integração sem expiração: o marcador só diz que há conexão
                 r.setdefault("expires_in", 10 * 365 * 86400)
         else:
             r = _form(prov["token"], {"grant_type": "authorization_code", "code": code, "redirect_uri": url_retorno(), "client_id": cid,
@@ -316,8 +333,11 @@ def acesso(chave: str, todos: dict) -> str:
         return est["acesso"]
     prov = PROVEDORES[chave]
     cid, seg = credenciais(chave)
-    r = _form(prov["token"], {"grant_type": "refresh_token", "refresh_token": est["renovacao"], "client_id": cid, **({"client_secret": seg} if seg else {}),
-                              **({"scope": escopo_de(chave, est.get("escrita", False), est.get("servicos"))} if "login.microsoftonline" in prov["token"] else {})})
+    if prov.get("basico"):
+        r = _form(prov["token"], {"grant_type": "refresh_token", "refresh_token": est["renovacao"]}, (cid, seg), prov.get("cab_api"))
+    else:
+        r = _form(prov["token"], {"grant_type": "refresh_token", "refresh_token": est["renovacao"], "client_id": cid, **({"client_secret": seg} if seg else {}),
+                                  **({"scope": escopo_de(chave, est.get("escrita", False), est.get("servicos"))} if "login.microsoftonline" in prov["token"] else {})})
     if "_erro" in r:
         if r["_erro"] in ("invalid_grant", "http 400", "http 401"):
             est.update({"acesso": "", "renovacao": "", "erro": "A autorização expirou ou foi revogada. Conecte de novo."})
