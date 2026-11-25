@@ -100,7 +100,7 @@ def _norm(s) -> str:
 
 def _limpo(s, tam: int = 70) -> str:
     """Texto vindo de documento para exibição: só letras, números e pontuação simples, para não carregar ordens escondidas."""
-    s = re.sub(r"[^\w\s().,%/+\-ºª°µμ³²<>≤≥:;=]", " ", str(s or ""), flags=re.UNICODE)
+    s = re.sub(r"[^\w\s().,%/+\-ºª°µμ³²^<>≤≥:;=]", " ", str(s or ""), flags=re.UNICODE)
     return re.sub(r"\s+", " ", s).strip()[:tam]
 
 
@@ -158,6 +158,17 @@ ANALITOS = [
     ("rdw", "RDW", "Hemograma", "%", ["rdw", "rdw cv"], (8, 40)),
     ("leucocitos", "Leucócitos", "Hemograma", "/mm³", ["leucocitos", "leucocitos totais", "globulos brancos", "contagem de leucocitos"], (300, 200000)),
     ("plaquetas", "Plaquetas", "Hemograma", "/mm³", ["plaquetas", "contagem de plaquetas"], (5, 2000000)),
+    ("vpm", "VPM (volume plaquetário médio)", "Hemograma", "fL", ["vpm", "volume plaquetario medio"], (3, 25)),
+    ("neutrofilos", "Neutrófilos (%)", "Hemograma", "%", ["neutrofilos", "neutrofilos segmentados"], (0, 100)),
+    ("eosinofilos", "Eosinófilos (%)", "Hemograma", "%", ["eosinofilos"], (0, 100)),
+    ("basofilos", "Basófilos (%)", "Hemograma", "%", ["basofilos"], (0, 100)),
+    ("linfocitos", "Linfócitos (%)", "Hemograma", "%", ["linfocitos", "linfocitos tipicos"], (0, 100)),
+    ("monocitos", "Monócitos (%)", "Hemograma", "%", ["monocitos"], (0, 100)),
+    ("neutrofilos_abs", "Neutrófilos (absoluto)", "Hemograma", "/µL", ["neutrofilos absolutos", "neutrofilos abs"], (0, 100000)),
+    ("eosinofilos_abs", "Eosinófilos (absoluto)", "Hemograma", "/µL", ["eosinofilos absolutos", "eosinofilos abs"], (0, 100000)),
+    ("basofilos_abs", "Basófilos (absoluto)", "Hemograma", "/µL", ["basofilos absolutos", "basofilos abs"], (0, 100000)),
+    ("linfocitos_abs", "Linfócitos (absoluto)", "Hemograma", "/µL", ["linfocitos absolutos", "linfocitos abs"], (0, 100000)),
+    ("monocitos_abs", "Monócitos (absoluto)", "Hemograma", "/µL", ["monocitos absolutos", "monocitos abs"], (0, 100000)),
     # Glicose e insulina
     ("glicemia_jejum", "Glicemia de jejum", "Glicose e insulina", "mg/dL", ["glicose", "glicemia", "glicemia de jejum", "glicose em jejum", "glicose jejum", "glicemia jejum"], (10, 1500)),
     ("hemoglobina_glicada", "Hemoglobina glicada (HbA1c)", "Glicose e insulina", "%", ["hemoglobina glicada", "hba1c", "hemoglobina glicosilada", "hemoglobina a1c", "hb a1c"], (3, 20)),
@@ -168,7 +179,7 @@ ANALITOS = [
     ("hdl", "HDL colesterol", "Lipídios", "mg/dL", ["hdl", "hdl colesterol", "colesterol hdl"], (5, 200)),
     ("ldl", "LDL colesterol", "Lipídios", "mg/dL", ["ldl", "ldl colesterol", "colesterol ldl"], (5, 600)),
     ("vldl", "VLDL colesterol", "Lipídios", "mg/dL", ["vldl", "vldl colesterol", "colesterol vldl"], (1, 500)),
-    ("nao_hdl", "Colesterol não HDL", "Lipídios", "mg/dL", ["colesterol nao hdl", "nao hdl", "colesterol nao hdl"], (10, 700)),
+    ("nao_hdl", "Colesterol não HDL", "Lipídios", "mg/dL", ["colesterol nao hdl", "nao hdl colesterol", "nao hdl"], (10, 700)),
     ("triglicerideos", "Triglicerídeos", "Lipídios", "mg/dL", ["triglicerides", "triglicerideos", "triglicerideo"], (10, 6000)),
     # Rins e ácido úrico
     ("creatinina", "Creatinina", "Rins", "mg/dL", ["creatinina", "creatinina serica"], (0.1, 25)),
@@ -193,7 +204,7 @@ ANALITOS = [
     # Vitaminas
     ("vitamina_d", "Vitamina D (25-hidroxi)", "Vitaminas", "ng/mL", ["vitamina d", "25 hidroxivitamina d", "25 hidroxi vitamina d", "25 oh vitamina d", "vitamina d 25 hidroxi",
                                                                       "25 hidroxicolecalciferol", "vitamina d3"], (1, 400)),
-    ("vitamina_b12", "Vitamina B12", "Vitaminas", "pg/mL", ["vitamina b12", "cobalamina", "b12"], (30, 10000)),
+    ("vitamina_b12", "Vitamina B12", "Vitaminas", "pg/mL", ["vitamina b12", "vitamina b 12", "cobalamina", "b12", "b 12"], (30, 10000)),
     ("acido_folico", "Ácido fólico", "Vitaminas", "ng/mL", ["acido folico", "folato", "folatos", "folato serico"], (0.3, 100)),
     ("vitamina_a", "Vitamina A", "Vitaminas", "µg/dL", ["vitamina a", "retinol"], (1, 300)),
     ("vitamina_c", "Vitamina C", "Vitaminas", "mg/dL", ["vitamina c", "acido ascorbico"], (0.01, 10)),
@@ -204,10 +215,11 @@ ANALITOS = [
     ("ferritina", "Ferritina", "Ferro", "ng/mL", ["ferritina"], (0.5, 10000)),
     ("transferrina", "Transferrina", "Ferro", "mg/dL", ["transferrina"], (50, 600)),
     ("saturacao_transferrina", "Saturação da transferrina", "Ferro", "%", ["saturacao de transferrina", "indice de saturacao da transferrina", "saturacao da transferrina"], (1, 100)),
-    ("ctlf", "Capacidade total de ligação do ferro", "Ferro", "µg/dL", ["capacidade total de ligacao do ferro", "ctlf", "tibc"], (50, 900)),
+    ("ctlf", "Capacidade total de ligação do ferro", "Ferro", "µg/dL", ["capacidade total de ligacao do ferro", "capacidade total de fixacao do ferro", "ctlf", "tibc"], (50, 900)),
+    ("clf", "Capacidade latente de ligação do ferro", "Ferro", "µg/dL", ["capacidade latente de ligacao do ferro", "capacidade latente de fixacao do ferro", "capacidade de fixacao latente do ferro", "capacidade de ligacao latente do ferro", "clf"], (20, 800)),
     # Eletrólitos e minerais
     ("calcio", "Cálcio", "Eletrólitos e minerais", "mg/dL", ["calcio", "calcio total", "calcio serico"], (3, 20)),
-    ("calcio_ionico", "Cálcio iônico", "Eletrólitos e minerais", "mmol/L", ["calcio ionico"], (0.3, 3)),
+    ("calcio_ionico", "Cálcio iônico", "Eletrólitos e minerais", "mmol/L", ["calcio ionico", "calcio ionizado"], (0.3, 3)),
     ("magnesio", "Magnésio", "Eletrólitos e minerais", "mg/dL", ["magnesio", "magnesio serico"], (0.3, 8)),
     ("sodio", "Sódio", "Eletrólitos e minerais", "mEq/L", ["sodio", "sodio serico"], (100, 180)),
     ("potassio", "Potássio", "Eletrólitos e minerais", "mEq/L", ["potassio", "potassio serico"], (1.5, 10)),
@@ -219,8 +231,13 @@ ANALITOS = [
     ("homocisteina", "Homocisteína", "Inflamação", "µmol/L", ["homocisteina"], (1, 200)),
     # Hormônios
     ("testosterona_total", "Testosterona total", "Hormônios", "ng/dL", ["testosterona total", "testosterona"], (1, 3000)),
+    ("testosterona_livre", "Testosterona livre (calculada)", "Hormônios", "ng/dL", ["testosterona livre calculada", "testosterona livre"], (0.1, 500)),
+    ("testosterona_biodisponivel", "Testosterona biodisponível (calculada)", "Hormônios", "ng/dL", ["testosterona biodisponivel calculada", "testosterona biodisponivel"], (1, 3000)),
+    ("shbg", "SHBG", "Hormônios", "nmol/L", ["shbg", "globulina transportadora de hormonios sexuais"], (1, 400)),
+    ("prolactina", "Prolactina", "Hormônios", "ng/mL", ["prolactina"], (0.5, 1000)),
     ("cortisol", "Cortisol", "Hormônios", "µg/dL", ["cortisol", "cortisol basal", "cortisol serico"], (0.2, 120)),
-    ("psa_total", "PSA total", "Hormônios", "ng/mL", ["psa total", "psa", "antigeno prostatico especifico"], (0.005, 5000)),
+    ("psa_total", "PSA total", "Hormônios", "ng/mL", ["psa total", "psa", "antigeno prostatico especifico", "antigeno prostatico especifico total"], (0.005, 5000)),
+    ("psa_livre", "PSA livre", "Hormônios", "ng/mL", ["psa livre", "antigeno prostatico especifico livre"], (0.005, 5000)),
 ]
 _POR_CHAVE = {a[0]: a for a in ANALITOS}
 _SINONIMOS = sorted(((s, a[0]) for a in ANALITOS for s in a[4]), key=lambda x: -len(x[0]))
@@ -289,8 +306,8 @@ def parse_ref(txt: str):
     resto = t
     for m in reversed(ranges):
         resto = resto[:m.start()] + " " + resto[m.end():]
-    baixos = list(re.finditer(rf"(?:>=?|≥|maior que|superior a|acima de|mais de)\s*({_NUM})", resto))
-    altos = list(re.finditer(rf"(?:<=?|≤|menor que|inferior a|abaixo de|até|ate)\s*({_NUM})", resto))
+    baixos = list(re.finditer(rf"(?:>=?|≥|maior(?: ou igual)? (?:que|a)|superior(?: ou igual)? a|acima de|mais de)\s*({_NUM})", resto))
+    altos = list(re.finditer(rf"(?:<=?|≤|menor(?: ou igual)? (?:que|a)|inferior(?: ou igual)? a|abaixo de|até|ate)\s*({_NUM})", resto))
     if len(ranges) + len(baixos) + len(altos) != 1:
         return None, None
     try:
@@ -464,17 +481,87 @@ def classificar(texto: str, n_resultados: int = 0) -> str:
 # --------------------------------------------------------------------------------------------
 _VAL = re.compile(rf"(?<![\w/.,])(?P<cmp>[<>]=?|[≤≥])?\s*(?P<v>{_NUM})(?![\d])")
 _PROIBIDAS = ("pagina", "crm", "cpf", "telefone", "protocolo", "nascimento", "idade", "cep", "cnpj", "fone", "fax", "convenio", "carteira",
-              "pedido", "requisicao", "paciente", "coletado", "liberado", "emissao", "endereco", "rua ", "avenida", "senha", "valido ate", "nota fiscal")
+              "pedido", "requisicao", "paciente", "coletado", "liberado", "emissao", "endereco", "rua", "avenida", "senha", "valido ate", "nota fiscal",
+              "genero", "solicitante", "cnes", "fap", "rg", "dn", "token", "hash", "atendimento", "laudo")
+# Palavra inteira no início: "idade" barra "Idade: 40", mas não "Capacidade total de fixação do ferro".
+_PROIBIDAS_RE = re.compile(r"(?<![a-z0-9])(?:" + "|".join(re.escape(p) for p in _PROIBIDAS) + r")(?![a-z])")
 _INICIO_REF = re.compile(r"(?i)^\s*(?:valor(?:es)?\s+de\s+refer[eê]ncia|refer[eê]ncia|ref\.?|desej[aá]vel|normal|valor\s+esperado)\s*[:\-]?\s*")
+# Frase corrida (nota, rodapé) termina em preposição, conjunção, comparação ou sinal de igual; nome de exame não.
+_FIM_DE_FRASE = re.compile(r"(?i)(?:\b(?:de|da|do|em|ou|que|com|para|por|na|no|ate|até)|"
+                           r"\b(?:inferior|superior|superiores|inferiores|menor|maior|acima|abaixo)(?:\s+ou\s+igual)?(?:\s+(?:a|de|que))?)\s*$|=\s*$")
+_META = re.compile(r"(?i)^\s*\(?\s*(?:material|m[eé]todo)\s*:")
+_TITULO_NOTA = re.compile(r"(?i)^\s*(?:(?:notas?|observa[cç][aã]o|observa[cç][oõ]es|coment[aá]rios?)\s*:|"
+                          r"(?:refer[eê]ncias?(?:\s+bibliogr[aá]ficas?)?|fontes?|bibliografia|coment[aá]rios?|notas?)\s*:?\s*$|local\s+de\s+execu[cç][aã]o)")
+_TITULO_TABELA = re.compile(r"(?i)^\s*tabela\s+de\s+refer[eê]ncia\b")
+_HISTORICO = re.compile(r"(?i)^\s*hist[oó]rico\s+(?P<nome>\S.*)$")
+_FORTE = re.compile(r"^\s*\S.{1,70}?\s{3,}(?:[<>≤≥]=?\s*)?\d")
+_REMETE_TABELA = re.compile(r"(?i)\b(?:vide|tabela|confira|abaixo|notas?)\b")
+_REF_SOLTA = re.compile(rf"(?i)^\s*(?:(?:(?:inferior|superior|menor|maior)(?:\s+ou\s+igual)?\s+(?:a|que)|at[eé]|acima\s+de|abaixo\s+de|de|[<>≤≥]=?)\s*(?:{_NUM})\b.*|"
+                        rf"(?:{_NUM})\s*(?:a|à|até|-|–)\s*(?:{_NUM})\b.*)$")
+_LEUCO_BASE = ("neutrofilos", "eosinofilos", "basofilos", "linfocitos", "monocitos")
+_LEUCOGRAMA = re.compile(rf"^\s*(?P<nome>[A-Za-zÀ-ú][A-Za-zÀ-ú ]{{2,28}}?)[\s.:]+(?P<p>{_NUM})\s*%\s+(?P<a>{_NUM})\s*/\s*(?P<u>[µμu]L|mm3|mm³)\s+"
+                         rf"(?P<rp>[^%]*?%)\s+(?P<ra>\S.*)$")
+_CAB_RESULTADO = re.compile(r"\s")
+
+
+def _cabecalho_de_resultados(s: str) -> bool:
+    c = _CAB_RESULTADO.sub("", _norm(s))
+    return "resultado" in c and "intervalodereferencia" in c
 
 
 def _nome_valido(nome: str) -> bool:
     letras = len(re.findall(r"[A-Za-zÀ-ú]", nome))
     n = _norm(nome)
-    return 3 <= letras and len(nome) <= 70 and not any(p in n for p in _PROIBIDAS) and not re.fullmatch(r"[\d\W]+", nome)
+    return (3 <= letras and len(nome) <= 70 and not _PROIBIDAS_RE.search(n) and not re.fullmatch(r"[\d\W]+", nome)
+            and (nome.count("(") > nome.count(")") or not _FIM_DE_FRASE.search(nome.strip())))
 
 
-def _montar(nome_original: str, valor_texto: str, cmp: str, unidade: str, ref_texto: str, fonte: str):
+def _perfil_do_documento(texto: str) -> tuple:
+    """(sexo 'm'/'f'/'' , idade em anos ou None) do cabeçalho, só para escolher a faixa de referência; nada disso é guardado."""
+    sexo = ""
+    m = re.search(r"(?i)(?:g[eê]nero|sexo)\s*:\s*(masculino|feminino|m|f)\b", texto)
+    if m:
+        sexo = "m" if m.group(1).lower().startswith("m") else "f"
+    idade = None
+    ref = None
+    try:
+        ref = date.fromisoformat(achar_data(texto)) if achar_data(texto) else date.today()
+    except ValueError:
+        ref = date.today()
+    m = re.search(r"(?i)(?:\bDN|data\s+de\s+nascimento|nascimento)\s*:?\s*(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})", texto)
+    if m:
+        try:
+            nasc = date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+            idade = ref.year - nasc.year - ((ref.month, ref.day) < (nasc.month, nasc.day))
+        except ValueError:
+            idade = None
+    if idade is None:
+        m = re.search(r"(?i)\b(\d{1,3})\s*anos\b", texto[:1500])
+        if m:
+            idade = int(m.group(1))
+    if idade is not None and not 0 <= idade <= 120:
+        idade = None
+    return sexo, idade
+
+
+def _ajustar_chave(chave, valor: float, unidade: str):
+    """Leucograma: 'Neutrófilos' em % e 'Neutrófilos' em /µL são exames diferentes."""
+    if chave in _LEUCO_BASE and (("/" in (unidade or "")) or (not unidade and valor > 100)):
+        return chave + "_abs"
+    return chave
+
+
+def _sinal_varios(valor: float, cmp: str, refs: list) -> str:
+    """Sinal quando há mais de uma referência possível (com e sem jejum): só vale se todas concordam."""
+    sinais = set()
+    for r in refs:
+        a, b = parse_ref(r)
+        sinais.add(calcular_sinal(valor, cmp, a, b) if (a is not None or b is not None) else "")
+    return sinais.pop() if len(sinais) == 1 else ""
+
+
+def _montar(nome_original: str, valor_texto: str, cmp: str, unidade: str, ref_texto: str, fonte: str, alternativas: list = None,
+            sem_sinal: bool = False, ref_calculo: str = None):
     """Monta o resultado. Devolve (linha, None) ou (None, motivo) quando o valor é impossível ou ilegível."""
     nome_original = _limpo(nome_original, 70)
     try:
@@ -482,18 +569,49 @@ def _montar(nome_original: str, valor_texto: str, cmp: str, unidade: str, ref_te
     except ValueError:
         return None, f"valor ilegível: {_limpo(valor_texto, 20)}"
     chave = achar_analito(nome_original)
+    chave = _ajustar_chave(chave, valor, unidade) if chave else None
     cat = _POR_CHAVE.get(chave) if chave else None
     if cat and not (cat[5][0] <= valor <= cat[5][1]):
         return None, f"{cat[1]}: {_limpo(valor_texto, 20)} é um valor impossível para este exame (erro de leitura?)"
     ref_texto = _limpo(_INICIO_REF.sub("", ref_texto or ""), 140)
-    rmin, rmax = parse_ref(ref_texto)
+    rmin, rmax = parse_ref(_INICIO_REF.sub("", ref_calculo) if ref_calculo is not None else ref_texto)
     cmp = "<" if cmp in ("<", "<=", "≤") else ">" if cmp in (">", ">=", "≥") else ""
+    if sem_sinal:
+        sinal = ""
+    elif alternativas:
+        rmin, rmax = None, None
+        sinal = _sinal_varios(valor, cmp, alternativas)
+    else:
+        sinal = calcular_sinal(valor, cmp, rmin, rmax)
     return {
         "chave": chave or _norm(nome_original).replace(" ", "_")[:50], "nome": cat[1] if cat else nome_original, "nome_original": nome_original,
         "grupo": cat[2] if cat else "Outros", "valor": valor, "valor_texto": _limpo(valor_texto, 20), "comparador": cmp,
         "unidade": _limpo(unidade, 20), "ref_texto": ref_texto, "ref_min": rmin, "ref_max": rmax,
-        "sinal": calcular_sinal(valor, cmp, rmin, rmax), "catalogado": 1 if cat else 0, "fonte": fonte,
+        "sinal": sinal, "catalogado": 1 if cat else 0, "fonte": fonte,
     }, None
+
+
+_UNIDADE_POTENCIA = re.compile(r"\s{0,3}(?P<u>(?:x\s*)?10\s*\^\s*\d+\s*/\s*[A-Za-zµμ]{1,3}\d?)")
+
+
+def _unidade_da_cauda(cauda: str) -> tuple:
+    """(unidade, resto) no começo de `cauda`. Reconhece também potências como 10^6/µL."""
+    mp = _UNIDADE_POTENCIA.match(cauda)
+    if mp:
+        un = _unidade(re.sub(r"\s+", "", mp.group("u")))
+        if un:
+            return un, cauda[mp.end():]
+    mu = re.match(r"\s{0,3}(?P<u>[A-Za-zµμ%/][A-Za-zµμ%/0-9^³²*.\-,]{0,19})", cauda)
+    un, resto = "", cauda
+    if mu:
+        un = _unidade(re.sub(r"\s*/\s*", "/", mu.group("u")))
+        if un:
+            resto = cauda[mu.end():]
+            m2 = re.match(r"\s*/\s*([A-Za-zµμ0-9³²]{1,8})", resto)
+            if m2 and "/" not in un and _unidade(un + "/" + m2.group(1)):
+                un = un + "/" + m2.group(1)
+                resto = resto[m2.end():]
+    return un, resto
 
 
 def _linha_de_resultado(linha: str, anterior: str = ""):
@@ -509,22 +627,13 @@ def _linha_de_resultado(linha: str, anterior: str = ""):
         if any(a <= m.start() < b or a < m.end() <= b for a, b in marcas):
             continue
         nome = re.sub(r"[\s.:\-–_|*]+$", "", l[:m.start()]).strip()
-        nome = re.sub(r"^[\s\d]{1,4}[).\-]\s*", "", nome)
+        nome = re.sub(r"^\s*\d{1,2}\s*(?:[).]\s*|-\s+)", "", nome)     # numeração de lista ("1) Hemoglobina"), nunca o 25 de "25-Hidroxi"
         if _norm(nome) in ("resultado", "resultados", "valor", "valores", "") and anterior:
             nome = re.sub(r"[\s.:\-–_|*]+$", "", anterior).strip()
         if not _nome_valido(nome):
             continue
         cauda = l[m.end():]
-        mu = re.match(r"\s{0,3}(?P<u>[A-Za-zµμ%/][A-Za-zµμ%/0-9^³²*.\-,]{0,19})", cauda)
-        un, resto = "", cauda
-        if mu:
-            un = _unidade(re.sub(r"\s*/\s*", "/", mu.group("u")))
-            if un:
-                resto = cauda[mu.end():]
-                m2 = re.match(r"\s*/\s*([A-Za-zµμ0-9³²]{1,8})", resto)
-                if m2 and "/" not in un and _unidade(un + "/" + m2.group(1)):
-                    un = un + "/" + m2.group(1)
-                    resto = resto[m2.end():]
+        un, resto = _unidade_da_cauda(cauda)
         achado = (nome, m.group("v"), (m.group("cmp") or ""), un, resto.strip())
         if un:
             return achado
@@ -533,25 +642,281 @@ def _linha_de_resultado(linha: str, anterior: str = ""):
     return sem_unidade
 
 
-def ler_resultados_regra(texto: str) -> list:
+def _valor_sem_nome(linha: str):
+    """Layout em que a linha traz só 'valor unidade   referência' e o nome vem depois (Ferritina, Vitamina B12): (valor, cmp, unidade, resto) ou None."""
+    m = re.match(rf"\s*(?P<cmp>[<>]=?|[≤≥])?\s*(?P<v>{_NUM})(?![\d])", linha)
+    if not m:
+        return None
+    un, resto = _unidade_da_cauda(linha[m.end():])
+    if not un:
+        return None
+    return m.group("v"), (m.group("cmp") or ""), un, resto.strip()
+
+
+def _linhas_do_historico(linhas: list, i: int, atual_valor: str) -> tuple:
+    """Depois de 'Histórico X': linha 'Data  d1  d2' e linha 'Resultado  v1  v2'. Devolve (lista de {dia, valor, valor_texto}, próximo índice).
+    O último par é o resultado atual do laudo e não entra."""
+    datas, valores, j = [], [], i
+    while j < len(linhas) and j <= i + 6:
+        s = linhas[j].strip()
+        if s and not datas and re.match(r"(?i)^data\b", s):
+            datas = [_data_iso(*g.groups(), futuro=False) for g in _DATA.finditer(s)]
+        elif s and datas and re.match(r"(?i)^resultados?\b", s):
+            valores = [(g.group("v")) for g in _VAL.finditer(_DATA.sub(" ", s[re.match(r"(?i)^resultados?", s).end():]))]
+            j += 1
+            break
+        j += 1
+    saida = []
+    if datas and valores and len(datas) == len(valores):
+        pares = list(zip(datas, valores))
+        if pares and pares[-1][1] == atual_valor:
+            pares = pares[:-1]
+        for dia, v in pares:
+            try:
+                _num(v)
+            except ValueError:
+                continue
+            if dia:
+                saida.append({"dia": dia, "valor": _num(v), "valor_texto": _limpo(v, 20)})
+    return saida, j
+
+
+def _faixa_de_idade(rotulo: str):
+    r = _norm(rotulo)
+    m = re.search(r"(\d+) a (\d+) anos?", r)
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    m = re.search(r"(?:superior|maior|acima)(?: ou igual)?(?: a| de) (\d+) anos?", r)
+    if m:
+        return int(m.group(1)), 200
+    m = re.search(r"(?:inferior|menor|abaixo)(?: a| de) (\d+) anos?", r)
+    if m:
+        return 0, int(m.group(1)) - 1
+    m = re.search(r"(\d+) anos?", r)
+    if m:
+        return int(m.group(1)), int(m.group(1))
+    return None
+
+
+def _tem_faixa(ref: str) -> bool:
+    return any(x is not None for x in parse_ref(re.sub(r"(?i)^\s*(?:de\s+)?", "", ref or "")))
+
+
+_ROTULO_RISCO = {"intermediario": "intermediário"}
+
+
+def _resolver_tabela(linhas: list, sexo: str, idade) -> dict:
+    """Tabelas 'Vide intervalo abaixo' (jejum, meta por risco, idade, sexo). `linhas` = [(seção de sexo, rótulo, referência)].
+    Devolve {'ref': texto, 'alternativas': [...], 'sem_sinal': bool}: escolhe a faixa pelo sexo e idade do cabeçalho; metas por risco nunca
+    recebem sinal (dependem do risco que o médico estimou); com e sem jejum só dão sinal quando as duas faixas concordam."""
+    if not linhas:
+        return {"ref": "", "alternativas": None, "sem_sinal": False}
+    jejum = {}
+    risco, idades, outras = [], [], []
+    for secao, rot, ref in linhas:
+        n = _norm(rot)
+        if re.search(r"\bcom jejum\b", n):
+            jejum["com"] = ref
+        elif re.search(r"\bsem jejum\b", n):
+            jejum["sem"] = ref
+        elif re.fullmatch(r"(?:extremo|muito alto|alto|intermediario|baixo)", n):
+            risco.append((n, ref))
+        elif _faixa_de_idade(rot):
+            idades.append((secao, rot, ref))
+        else:
+            outras.append((secao, rot, ref))
+    if jejum:
+        com, sem = jejum.get("com", ""), jejum.get("sem", "")
+        if com and sem and _norm(com) == _norm(sem):
+            return {"ref": f"{com} (com ou sem jejum)", "alternativas": None, "sem_sinal": False}
+        if com and sem:
+            return {"ref": f"{com} (com jejum); {sem} (sem jejum)", "alternativas": [com, sem], "sem_sinal": False}
+        ref = com or sem
+        return {"ref": f"{ref} ({'com' if com else 'sem'} jejum)", "alternativas": None, "sem_sinal": False}
+    if risco:
+        itens, unidade = [], ""
+        for n, ref in risco:
+            m = re.search(rf"(?i)(?P<op>inferior|menor|<|superior|maior|>)\w*\s*(?:a|que)?\s*(?P<v>{_NUM})\s*(?P<u>\S+)?", ref)
+            if not m:
+                continue
+            sinal = "<" if m.group("op").lower().startswith(("inf", "men", "<")) else ">"
+            itens.append(f"{_ROTULO_RISCO.get(n, n)} {sinal}{m.group('v')}")
+            unidade = unidade or (m.group("u") or "")
+        if itens:
+            return {"ref": f"Meta conforme o risco cardiovascular: {', '.join(itens)} {unidade}".strip(), "alternativas": None, "sem_sinal": True}
+    if idades:
+        achadas = []
+        for secao, rot, ref in idades:
+            if secao and sexo and secao != sexo:
+                continue
+            if secao and not sexo:
+                continue
+            f = _faixa_de_idade(rot)
+            if idade is not None and f and f[0] <= idade <= f[1]:
+                achadas.append((rot, ref))
+        if achadas and any(_tem_faixa(r) for _, r in achadas):
+            rot, ref = next((x for x in achadas if _tem_faixa(x[1])), achadas[0])
+            texto = ref
+            if re.search(r"(?i)popula[cç][aã]o", rot):
+                texto = f"{ref} ({_limpo(rot, 50).lower()})"
+            extras = [r for secao, r, ref2 in idades if re.search(r"(?i)grupos? de risco", r) and _norm(r) != _norm(rot) and _tem_faixa(ref2)]
+            if extras:
+                rx = next(((r, ref2) for secao, r, ref2 in idades if re.search(r"(?i)grupos? de risco", r) and _norm(r) != _norm(rot)), None)
+                if rx:
+                    texto += f"; grupos de risco: {rx[1]}"
+            return {"ref": texto, "alternativas": None, "sem_sinal": False, "base": ref}
+        return {"ref": "Depende de idade e sexo; consulte o laudo", "alternativas": None, "sem_sinal": True}
+    return {"ref": "", "alternativas": None, "sem_sinal": False}
+
+
+def _novo(nome, valor, cmp, un, ref) -> dict:
+    return {"nome": nome, "valor": valor, "cmp": cmp, "un": un, "ref": ref, "tabela": [], "secao": "", "historico": [], "extra": False,
+            "espera_tabela": bool(_REMETE_TABELA.search(ref or "")) and not _tem_faixa(ref or "")}
+
+
+def _registros_do_laudo(texto: str) -> list:
+    """Percorre o laudo linha a linha e devolve a lista de registros. Cada registro é um resultado com a tabela de referência e o histórico
+    que o seguem. Notas, referências bibliográficas, rodapés e tabelas não viram resultados."""
     linhas = texto.splitlines()
-    saida, descartados, vistos = [], [], set()
-    for i, l in enumerate(linhas):
-        r = _linha_de_resultado(l, linhas[i - 1] if i else "")
+    n = len(linhas)
+    regs = []
+    atual = None
+    modo_nota = False
+    apos_cab = False
+    ref_pendente = ""
+    i = 0
+    while i < n:
+        l = linhas[i]
+        s = l.strip()
+        i += 1
+        if not s:
+            continue
+        if _cabecalho_de_resultados(s):
+            modo_nota, apos_cab, ref_pendente = False, True, ""
+            continue
+        era_apos_cab, apos_cab = apos_cab, False
+        mh = _HISTORICO.match(s)
+        if mh:
+            modo_nota = False
+            alvo = atual
+            k = achar_analito(mh.group("nome"))
+            if k:
+                for r in reversed(regs[-8:]):
+                    if achar_analito(r["nome"]) == k:
+                        alvo = r
+                        break
+            hist, i = _linhas_do_historico(linhas, i, alvo["valor"] if alvo else "")
+            if alvo is not None and hist:
+                alvo["historico"] = hist
+            if atual is not None:
+                atual["espera_tabela"] = False
+            continue
+        if _TITULO_NOTA.match(s):
+            modo_nota = True
+            if atual is not None:
+                atual["espera_tabela"] = False
+            continue
+        if modo_nota:
+            if not _FORTE.match(l):
+                continue
+            modo_nota = False
+        if _META.match(s):
+            continue
+        if _TITULO_TABELA.match(s):
+            if atual is not None:
+                atual["espera_tabela"] = True
+            continue
+        if atual is not None and atual["espera_tabela"]:
+            if re.match(r"(?i)^\s*(?:n[aã]o\s+apresenta|sem\s+valor)", s):
+                atual["sem_ref"] = True
+                continue
+            mr = re.match(r"^(?P<rot>[^:]{1,100}?)\s*:\s*(?P<ref>.*)$", s)
+            if mr and not mr.group("ref").strip():     # título dentro da tabela ("Sexo Masculino:", "Risco cardiovascular ... meta:")
+                rot = mr.group("rot")
+                if re.search(r"(?i)\bmasculino\b", rot):
+                    atual["secao"] = "m"
+                elif re.search(r"(?i)\bfeminino\b", rot):
+                    atual["secao"] = "f"
+                continue
+            if mr and achar_analito(mr.group("rot")) is None:
+                atual["tabela"].append((atual["secao"], mr.group("rot").strip(), mr.group("ref").strip()))
+                continue
+            atual["espera_tabela"] = False
+        ml = _LEUCOGRAMA.match(l)
+        if ml:
+            base = ml.group("nome").strip()
+            un = "/" + ml.group("u").replace("μ", "µ").replace("u", "µ") if ml.group("u").lower().startswith(("u", "µ", "μ")) else "/" + ml.group("u")
+            if _norm(base) not in ("leucocitos", "leucocitos totais", "total"):
+                regs.append(_novo(base, ml.group("p"), "", "%", ml.group("rp")))
+                regs.append(_novo(base + " absolutos", ml.group("a"), "", un, ml.group("ra")))
+            else:                                  # no total, a coluna de % é sempre 100 %: só o valor absoluto interessa
+                regs.append(_novo(base, ml.group("a"), "", un, ml.group("ra")))
+            atual = regs[-1]
+            continue
+        if era_apos_cab:
+            vsn = _valor_sem_nome(s)
+            if vsn:
+                nome = ""
+                j = i
+                while j < n and j <= i + 6:
+                    t = linhas[j].strip()
+                    j += 1
+                    if not t or _META.match(t):
+                        continue
+                    if re.search(r"[A-Za-zÀ-ú]{3,}", t) and not _cabecalho_de_resultados(t):
+                        nome = t
+                    break
+                if nome and _nome_valido(nome):
+                    atual = _novo(nome, vsn[0], vsn[1], vsn[2], vsn[3])
+                    regs.append(atual)
+                    i = j
+                    continue
+        if _REF_SOLTA.match(s) and len(s) <= 60 and _linha_de_resultado(l) is None:
+            ref_pendente = s
+            continue
+        r = _linha_de_resultado(l, linhas[i - 2] if i >= 2 else "")
         if not r:
             continue
         nome, valor, cmp, un, resto = r
         ref = resto
-        if len(_norm(ref)) < 3 and i + 1 < len(linhas) and _INICIO_REF.match(linhas[i + 1]):
-            ref = linhas[i + 1]
-        linha, motivo = _montar(nome, valor, cmp, un, ref, "regra")
+        if len(_norm(ref)) < 3 and ref_pendente:
+            ref = ref_pendente
+        elif len(_norm(ref)) < 3 and i < n and _INICIO_REF.match(linhas[i]):
+            ref = linhas[i]
+        elif len(_norm(ref)) < 3 and i < n and _REF_SOLTA.match(linhas[i].strip()) and _linha_de_resultado(linhas[i]) is None:
+            ref = linhas[i].strip()
+            i += 1
+        ref_pendente = ""
+        if nome.count("(") > nome.count(")") and i < n and linhas[i].strip() and not _META.match(linhas[i]):
+            cont = linhas[i].strip()
+            if ")" in cont and len(cont) <= 60 and not re.search(r"\d", cont):
+                nome = f"{nome} {cont}"
+                i += 1
+        atual = _novo(nome, valor, cmp, un, ref)
+        regs.append(atual)
+    return regs
+
+
+def ler_resultados_regra(texto: str) -> list:
+    sexo, idade = _perfil_do_documento(texto)
+    saida, descartados, vistos = [], [], set()
+    for reg in _registros_do_laudo(texto):
+        ref, alternativas, sem_sinal, base = reg["ref"], None, False, None
+        if reg["tabela"]:
+            t = _resolver_tabela(reg["tabela"], sexo, idade)
+            ref, alternativas, sem_sinal, base = t["ref"], t["alternativas"], t["sem_sinal"], t.get("base")
+        elif (reg.get("sem_ref") or _REMETE_TABELA.search(ref or "")) and not _tem_faixa(ref or ""):
+            ref, sem_sinal = "Sem intervalo numérico definido no laudo; consulte as notas", True
+        linha, motivo = _montar(reg["nome"], reg["valor"], reg["cmp"], reg["un"], ref, "regra", alternativas, sem_sinal, base)
         if motivo:
-            descartados.append({"texto": f"{_limpo(nome, 40)} {_limpo(valor, 12)}", "motivo": motivo})
+            descartados.append({"texto": f"{_limpo(reg['nome'], 40)} {_limpo(reg['valor'], 12)}", "motivo": motivo})
             continue
         k = (linha["chave"], linha["valor_texto"], linha["unidade"])
         if k in vistos:
             continue
         vistos.add(k)
+        if reg["historico"]:
+            linha["historico"] = [h for h in reg["historico"] if h["valor"] is not None]
         saida.append(linha)
     return saida, descartados
 
@@ -1066,6 +1431,8 @@ def _linha_resultado(r: dict) -> str:
     partes.append(_sinal_pt(r["sinal"]))
     if r["ref_texto"]:
         partes.append(f"referência do laboratório: {r['ref_texto']}")
+    if r.get("historico"):
+        partes.append("valores anteriores no laudo: " + ", ".join(f"{_br(h['dia'])} {h['valor_texto']}" for h in r["historico"]))
     return "; ".join(partes)
 
 
@@ -1146,6 +1513,19 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
                     "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     (d["id"], dia, r["chave"], r["nome"], r["nome_original"], r["grupo"], r["valor"], r["valor_texto"], r["comparador"], r["unidade"], r["ref_texto"],
                      r["ref_min"], r["ref_max"], r["sinal"], r["catalogado"], r["fonte"], ordem[r["chave"]]))
+                # Valores anteriores que o laudo traz no bloco "Histórico": entram com a data própria e a fonte "historico",
+                # sem repetir um dia que o banco já tem para o mesmo exame (por exemplo, o laudo antigo enviado em outro momento).
+                for h in r.get("historico") or []:
+                    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", h.get("dia", "")) or h["dia"] == dia:
+                        continue
+                    if con.execute("SELECT 1 FROM exames_resultados WHERE chave = ? AND dia = ? LIMIT 1", (r["chave"], h["dia"])).fetchone():
+                        continue
+                    ordem[r["chave"]] += 1
+                    con.execute(
+                        "INSERT INTO exames_resultados (documento_id, dia, chave, nome, nome_original, grupo, valor, valor_texto, comparador, unidade, ref_texto, ref_min, ref_max, sinal, catalogado, fonte, ordem) "
+                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        (d["id"], h["dia"], r["chave"], r["nome"], r["nome_original"], r["grupo"], h["valor"], h["valor_texto"], "", r["unidade"], "",
+                         None, None, "", r["catalogado"], "historico", ordem[r["chave"]]))
         elif d["tipo"] == "receita":
             for r in itens:
                 con.execute("INSERT OR IGNORE INTO receitas (documento_id, dia, medicamento, dose, posologia, duracao, prescritor, validade) VALUES (?,?,?,?,?,?,?,?)",

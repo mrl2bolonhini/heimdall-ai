@@ -184,6 +184,7 @@ Opções:
   --labs summary       (ou só --labs) o último resultado de cada exame confirmado
   --labs pending       documentos lidos que aguardam a sua conferência
   --labs read ID       conta o que foi lido no documento, item por item, com numeração
+                       laudos com tabela de referência (jejum, risco, idade, sexo) usam a faixa do seu sexo e idade, lidos do cabeçalho do laudo; metas por risco não recebem sinal; valores do bloco Histórico entram com a data deles
   --labs confirm ID [--without 2,5] [--date AAAA-MM-DD]   grava os itens (deixa de fora os números de --without) e leva consultas e renovações ao Calendário
   --labs discard ID    joga o documento fora sem gravar nada
   --labs folder        lê agora o que estiver na pasta de entrada
