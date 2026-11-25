@@ -58,6 +58,10 @@ PROVEDORES = {
     "todoist": {"grupo": "apps", "nome": "Todoist", "auth": "https://app.todoist.com/oauth/authorize", "token": "https://todoist.com/oauth/access_token", "escopo": "",
                 "extra": {}, "api": "https://api.todoist.com/api/v1", "sep": ",", "simples": True, "sem_renovacao": True,
                 "escopos_servico": {"tarefas": "data:read"}, "nomes_servico": {"tarefas": "Tarefas do Todoist"}},
+    # iCloud: não há OAuth; a agenda e os contatos são lidos por CalDAV e CardDAV com o Apple ID e uma senha de aplicativo (gerada pela pessoa em account.apple.com, exige verificação em duas etapas)
+    "icloud": {"grupo": "apps", "nome": "iCloud", "fluxo": "senha", "sem_credencial": True, "sem_renovacao": True, "auth": "", "token": "", "escopo": "", "extra": {}, "api": "",
+               "bases": {"agenda": "https://caldav.icloud.com/", "contatos": "https://contacts.icloud.com/"},
+               "escopos_servico": {"agenda": "", "contatos": ""}, "nomes_servico": {"agenda": "Calendário do iCloud", "contatos": "Contatos do iCloud"}},
     # Google: OAuth 2.0 com PKCE e acesso offline; escopos de leitura de Agenda, Tarefas e Contatos (a Agenda e os Contatos são escopos sensíveis: exigem verificação do Google antes de abrir para outras pessoas)
     "google": {"grupo": "apps", "nome": "Google", "auth": "https://accounts.google.com/o/oauth2/v2/auth", "token": "https://oauth2.googleapis.com/token", "escopo": "",
                "extra": {"access_type": "offline", "prompt": "consent"}, "api": "https://www.googleapis.com",
@@ -86,7 +90,7 @@ def credenciais(chave: str) -> tuple:
 
 
 def configurados(grupo: str = "") -> list:
-    return [k for k, v in PROVEDORES.items() if (not grupo or v["grupo"] == grupo) and credenciais(k)[0]]
+    return [k for k, v in PROVEDORES.items() if (not grupo or v["grupo"] == grupo) and (credenciais(k)[0] or v.get("sem_credencial"))]
 
 
 def url_retorno() -> str:
@@ -217,6 +221,8 @@ def iniciar(chave: str, escrita: bool = False, servicos=None) -> str:
     """Endereço do provedor para a pessoa autorizar (com `escrita`, também a permissão de mover arquivos; `servicos` escolhe o que ler nos provedores de apps).
     Grava o state e o verificador PKCE na memória, ligados à pessoa de agora."""
     prov = PROVEDORES.get(chave)
+    if prov and prov.get("fluxo") == "senha":
+        raise ErroLibrary("Este provedor se conecta com o Apple ID e uma senha de aplicativo, não por autorização no site.")
     cid, _seg = credenciais(chave) if prov else ("", "")
     if not prov or not cid:
         raise ErroLibrary("Este provedor não está configurado pelo administrador.")

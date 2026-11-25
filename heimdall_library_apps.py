@@ -3,13 +3,14 @@
 
 Provedores: Microsoft (OneNote, Microsoft To Do, Microsoft Planner, Calendário e Contatos do Outlook), pela Microsoft Graph, com permissões delegadas de leitura
 (Notes.Read, Tasks.Read, Calendars.Read, Contacts.Read) pedidas só para os serviços que a pessoa marcar (o Planner só existe em conta de trabalho ou escola);
-Google (Agenda principal, Tarefas e Contatos, escopos de leitura); Notion (páginas que a pessoa compartilhar na autorização); Todoist (tarefas ativas, escopo data:read); Trello (cartões dos quadros abertos, escopo read). Funciona em qualquer sistema, porque a leitura é feita pelo
+iCloud (agenda e contatos por CalDAV e CardDAV, com Apple ID e senha de aplicativo); Google (Agenda principal, Tarefas e Contatos, escopos de leitura); Notion (páginas que a pessoa compartilhar na autorização); Todoist (tarefas ativas, escopo data:read); Trello (cartões dos quadros abertos, escopo read). Funciona em qualquer sistema, porque a leitura é feita pelo
 servidor: a pessoa só autoriza uma vez no navegador.
 
 Cada nota, tarefa, cartão, evento ou contato vira um documento de texto (Markdown) no acervo da pessoa, pesquisável junto com os demais e disponível ao Perguntar.
 O item é identificado por provedor, serviço e id: se mudar no app, o mesmo documento é atualizado, sem duplicar. Só leitura; nada é alterado no app.
 A autorização, os tokens cifrados e a rodada de fundo vêm de heimdall_conexoes.py.
 """
+import base64
 import hashlib
 import html
 import html.parser
@@ -17,6 +18,7 @@ import json
 import re
 import time
 import urllib.parse
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 
 import heimdall_conexoes as cx
@@ -362,8 +364,183 @@ def _ler_google_contatos(token: str, api: str, vistos: dict):
                          + (f"E-mail: {emails}\n" if emails else "") + (f"Telefone: {fones}\n" if fones else "") + (f"\n{nota}\n" if nota else ""))}
 
 
+# ---------------------------------------------------------------- iCloud (CalDAV e CardDAV com senha de aplicativo)
+NS_D, NS_C, NS_CARD = "{DAV:}", "{urn:ietf:params:xml:ns:caldav}", "{urn:ietf:params:xml:ns:carddav}"
+
+
+def _dav(metodo: str, url: str, cred: str, corpo: str, profundidade: str = "0") -> ET.Element:
+    st, _, b = cx.http(metodo, url, {"Authorization": "Basic " + cred, "Depth": profundidade, "Content-Type": "application/xml; charset=utf-8"}, corpo.encode(), limite=8 * 1024 * 1024, seguir=False)
+    if st == 401:
+        raise ErroLibrary("O provedor recusou a leitura (código 401).")
+    if st not in (200, 207):
+        raise ErroLibrary(f"O provedor recusou a leitura (código {st}).")
+    try:
+        return ET.fromstring(b)
+    except ET.ParseError:
+        raise ErroLibrary("Resposta inesperada do provedor.") from None
+
+
+def _href(base_: str, href: str) -> str:
+    """Endereço vindo do servidor, aceito só no mesmo servidor ou em outro servidor do iCloud (nunca em um domínio de fora)."""
+    url = urllib.parse.urljoin(base_, (href or "").strip())
+    h, hb = urllib.parse.urlparse(url).hostname or "", urllib.parse.urlparse(base_).hostname or ""
+    if h != hb and not (h.endswith(".icloud.com") and hb.endswith("icloud.com")):
+        raise ErroLibrary("Resposta inesperada do provedor.")
+    return url
+
+
+def _dav_casa(base_: str, cred: str, propriedade: str, ns: str) -> str:
+    r = _dav("PROPFIND", base_, cred, '<d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>')
+    el = r.find(f".//{NS_D}current-user-principal/{NS_D}href")
+    if el is None or not (el.text or "").strip():
+        raise ErroLibrary("Resposta inesperada do provedor.")
+    principal = _href(base_, el.text)
+    r = _dav("PROPFIND", principal, cred, f'<d:propfind xmlns:d="DAV:" xmlns:x="{ns[1:-1]}"><d:prop><x:{propriedade}/></d:prop></d:propfind>')
+    el = r.find(f".//{ns}{propriedade}/{NS_D}href")
+    if el is None or not (el.text or "").strip():
+        raise ErroLibrary("Resposta inesperada do provedor.")
+    return _href(principal, el.text)
+
+
+def _colecoes(casa: str, cred: str, tipo: str, ns: str) -> list:
+    r = _dav("PROPFIND", casa, cred, '<d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop><d:resourcetype/><c:supported-calendar-component-set/></d:prop></d:propfind>', "1")
+    saida = []
+    for resp in r.findall(f"{NS_D}response"):
+        if resp.find(f".//{NS_D}resourcetype/{ns}{tipo}") is None:
+            continue
+        comps = [c.get("name") for c in resp.findall(f".//{NS_C}comp")]
+        if comps and "VEVENT" not in comps and tipo == "calendar":
+            continue   # lista de lembretes (VTODO): o iCloud não dá acesso aos Lembretes no formato novo
+        saida.append(_href(casa, resp.findtext(f"{NS_D}href") or ""))
+    return saida
+
+
+def _objetos(colecao: str, cred: str, corpo: str, campo: str):
+    r = _dav("REPORT", colecao, cred, corpo, "1")
+    for resp in r.findall(f"{NS_D}response"):
+        dado = resp.findtext(f".//{campo}")
+        if dado:
+            yield (resp.findtext(f"{NS_D}href") or "").strip(), (resp.findtext(f".//{NS_D}getetag") or "").strip(), dado
+
+
+def _linhas(texto: str) -> list:
+    return re.sub(r"\r?\n[ \t]", "", texto).splitlines()   # desdobra as linhas longas (RFC 5545 e 6350)
+
+
+def _desescapa(v: str) -> str:
+    return v.replace("\\n", "\n").replace("\\N", "\n").replace("\\,", ",").replace("\\;", ";").replace("\\\\", "\\")
+
+
+def _propriedades(texto: str) -> list:
+    saida = []
+    for ln in _linhas(texto):
+        if ":" not in ln:
+            continue
+        cab, _, valor = ln.partition(":")
+        partes = cab.split(";")
+        nome = partes[0].rsplit(".", 1)[-1].upper()   # contatos agrupam como item1.EMAIL
+        params = {p.split("=", 1)[0].upper(): p.split("=", 1)[1] for p in partes[1:] if "=" in p}
+        saida.append((nome, params, valor))
+    return saida
+
+
+def _data_ics(valor: str, params: dict) -> str:
+    v = valor.strip()
+    if re.fullmatch(r"\d{8}", v):
+        return f"{v[:4]}-{v[4:6]}-{v[6:8]} (dia inteiro)"
+    m = re.fullmatch(r"(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})\d{0,2}(Z?)", v)
+    if not m:
+        return v
+    return f"{m[1]}-{m[2]}-{m[3]} {m[4]}:{m[5]}" + (" (UTC)" if m[6] else f" ({params['TZID']})" if params.get("TZID") else "")
+
+
+def _evento_ics(texto: str):
+    props, dentro, cur = [], False, []
+    for nome, params, valor in _propriedades(texto):
+        if nome == "BEGIN" and valor.strip().upper() == "VEVENT":
+            dentro, cur = True, []
+        elif nome == "END" and valor.strip().upper() == "VEVENT":
+            if dentro and not any(n == "RECURRENCE-ID" for n, _p, _v in cur):
+                return cur
+            dentro = False
+        elif dentro:
+            cur.append((nome, params, valor))
+    return None
+
+
+def _ler_icloud_agenda(cred: str, api: str, vistos: dict):
+    base_ = cx.PROVEDORES["icloud"]["bases"]["agenda"]
+    casa = _dav_casa(base_, cred, "calendar-home-set", NS_C)
+    agora = datetime.now(timezone.utc)
+    de, ate = (agora - timedelta(days=JANELA_AGENDA[0])).strftime("%Y%m%dT%H%M%SZ"), (agora + timedelta(days=JANELA_AGENDA[1])).strftime("%Y%m%dT%H%M%SZ")
+    corpo = ('<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop><d:getetag/><c:calendar-data/></d:prop><c:filter><c:comp-filter name="VCALENDAR">'
+             f'<c:comp-filter name="VEVENT"><c:time-range start="{de}" end="{ate}"/></c:comp-filter></c:comp-filter></c:filter></c:calendar-query>')
+    for col in _colecoes(casa, cred, "calendar", NS_C):
+        for href, etag, dado in _objetos(col, cred, corpo, f"{NS_C}calendar-data"):
+            ev = _evento_ics(dado)
+            if ev is None:
+                continue
+            d = {}
+            for n, p, v in ev:
+                d.setdefault(n, (p, v))
+            if (d.get("STATUS") or ({}, ""))[1].strip().upper() == "CANCELLED":
+                continue
+            titulo = _limpo(_desescapa(d.get("SUMMARY", ({}, ""))[1])) or "Evento sem título"
+            ini = _data_ics(d["DTSTART"][1], d["DTSTART"][0]) if "DTSTART" in d else ""
+            fim = _data_ics(d["DTEND"][1], d["DTEND"][0]) if "DTEND" in d else ""
+            local, nota = _limpo(_desescapa(d.get("LOCATION", ({}, ""))[1])), _limpo(_desescapa(d.get("DESCRIPTION", ({}, ""))[1]), 2000)
+            yield {"id": href, "marca": etag or hashlib.sha256(dado.encode()).hexdigest()[:20], "nome": _nome_arquivo("Evento", titulo, f" {ini[:10]}"),
+                   "texto": (f"# {titulo}\n\nOrigem: Calendário do iCloud\nInício: {ini}\n" + (f"Fim: {fim}\n" if fim else "") + (f"Local: {local}\n" if local else "")
+                             + ("Repete: sim\n" if "RRULE" in d else "") + (f"\n{nota}\n" if nota else ""))}
+
+
+def _ler_icloud_contatos(cred: str, api: str, vistos: dict):
+    base_ = cx.PROVEDORES["icloud"]["bases"]["contatos"]
+    casa = _dav_casa(base_, cred, "addressbook-home-set", NS_CARD)
+    corpo = ('<card:addressbook-query xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav"><d:prop><d:getetag/><card:address-data/></d:prop></card:addressbook-query>')
+    for col in _colecoes(casa, cred, "addressbook", NS_CARD):
+        for href, etag, dado in _objetos(col, cred, corpo, f"{NS_CARD}address-data"):
+            props = _propriedades(dado)
+            primeiro = lambda n: next((_desescapa(v) for nome, _p, v in props if nome == n and v.strip()), "")   # noqa: E731
+            nome = _limpo(primeiro("FN")) or _limpo(primeiro("N").replace(";", " ")) or "Contato sem nome"
+            emails = ", ".join(_limpo(_desescapa(v)) for n, _p, v in props if n == "EMAIL" and v.strip())
+            fones = ", ".join(_limpo(_desescapa(v)) for n, _p, v in props if n == "TEL" and v.strip())
+            org, cargo, nota = _limpo(primeiro("ORG").replace(";", " ")), _limpo(primeiro("TITLE")), _limpo(primeiro("NOTE"), 2000)
+            yield {"id": href, "marca": etag or hashlib.sha256(dado.encode()).hexdigest()[:20], "nome": _nome_arquivo("Contato", nome),
+                   "texto": (f"# {nome}\n\nOrigem: Contatos do iCloud\n" + (f"Empresa: {org}\n" if org else "") + (f"Cargo: {cargo}\n" if cargo else "")
+                             + (f"E-mail: {emails}\n" if emails else "") + (f"Telefone: {fones}\n" if fones else "") + (f"\n{nota}\n" if nota else ""))}
+
+
+def conectar_senha(chave: str, usuario: str, senha: str, servicos: list) -> str:
+    """Conecta um provedor sem OAuth (iCloud): confere o Apple ID e a senha de aplicativo no servidor e guarda as credenciais cifradas, ligadas à pessoa de agora."""
+    prov = cx.PROVEDORES.get(chave)
+    if not prov or prov.get("fluxo") != "senha":
+        raise ErroLibrary("Este provedor não usa senha de aplicativo.")
+    servicos = [s for s in dict.fromkeys(servicos or []) if s in prov["escopos_servico"]]
+    if not servicos:
+        raise ErroLibrary("Escolha pelo menos um serviço para conectar.")
+    usuario, senha = (usuario or "").strip(), re.sub(r"\s", "", senha or "")
+    if not re.fullmatch(r"[^@\s]{1,100}@[^@\s]{1,150}", usuario) or not (8 <= len(senha) <= 64):
+        raise ErroLibrary("Informe o Apple ID (e-mail) e a senha de aplicativo.")
+    cred = base64.b64encode(f"{usuario}:{senha}".encode()).decode()
+    try:
+        for serv in servicos:
+            _dav("PROPFIND", prov["bases"][serv], cred, '<d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>')
+    except ErroLibrary as ex:
+        if "código 401" in str(ex):
+            raise ErroLibrary("O Apple ID ou a senha de aplicativo não foram aceitos. Gere uma senha de aplicativo em account.apple.com (Entrada e segurança) e use-a aqui, nunca a senha do Apple ID.") from None
+        raise
+    with cx.LOCK:
+        todos = cx.carregar()
+        todos[chave] = {**todos.get(chave, {}), "acesso": cred, "renovacao": "senha-de-aplicativo", "expira": time.time() + 10 * 365 * 86400, "escrita": False,
+                        "servicos": servicos, "usuario": usuario, "erro": ""}
+        cx.gravar(todos)
+    return f"{prov['nome']} conectado ({', '.join(prov['nomes_servico'][s] for s in servicos)}). A sincronização é automática."
+
+
 LEITORES = {"microsoft": {"notas": _ler_notas, "tarefas": _ler_tarefas, "planner": _ler_planner, "agenda": _ler_agenda, "contatos": _ler_contatos},
             "todoist": {"tarefas": _ler_todoist}, "trello": {"quadros": _ler_trello}, "notion": {"paginas": _ler_notion},
+            "icloud": {"agenda": _ler_icloud_agenda, "contatos": _ler_icloud_contatos},
             "google": {"agenda": _ler_google_agenda, "tarefas": _ler_google_tarefas, "contatos": _ler_google_contatos}}
 
 
@@ -380,7 +557,7 @@ def situacao() -> list:
         nomes = cx.PROVEDORES[k]["nomes_servico"]
         saida.append({"chave": k, "nome": cx.PROVEDORES[k]["nome"], "conectado": bool(e.get("renovacao")), "servicos": list(e.get("servicos", [])),
                       "nomes": [nomes[s] for s in e.get("servicos", []) if s in nomes], "disponiveis": list(nomes.items()), "ultimo": e.get("ultimo", ""),
-                      "resumo": e.get("resumo", ""), "erro": e.get("erro", "")})
+                      "resumo": e.get("resumo", ""), "erro": e.get("erro", ""), "fluxo": cx.PROVEDORES[k].get("fluxo", ""), "usuario": e.get("usuario", "")})
     return saida
 
 

@@ -151,12 +151,33 @@ def pg_apps(ctx):
     import heimdall_library_apps as ap
     itens = ap.situacao()
     if not itens:
-        return "Apps", '<p role="status">Nenhum app está disponível. O administrador precisa configurar o aplicativo de pelo menos um provedor (Microsoft, Todoist ou Trello).</p>'
+        return "Apps", '<p role="status">Nenhum app está disponível. O administrador precisa configurar o aplicativo de pelo menos um provedor (Microsoft, Google, Notion, Todoist, Trello ou iCloud).</p>'
     blocos = []
     for x in itens:
         n, k = e(x["nome"]), e(x["chave"])
         marcas = "".join(f'<p><input id="srv-{k}-{e(s)}" name="srv_{e(s)}" type="checkbox" value="1"{" checked" if s in x["servicos"] or not x["servicos"] else ""}>'
                          f'<label for="srv-{k}-{e(s)}">{e(nome)}</label></p>' for s, nome in x["disponiveis"])
+        if x.get("fluxo") == "senha":   # iCloud: Apple ID e senha de aplicativo, sem autorização no site do provedor
+            marcas_s = "".join(f'<p><input id="srv-{k}-{e(sv)}" name="srv_{e(sv)}" type="checkbox" value="1"{" checked" if sv in x["servicos"] or not x["servicos"] else ""}>'
+                               f'<label for="srv-{k}-{e(sv)}">{e(nm)}</label></p>' for sv, nm in x["disponiveis"])
+            guia = ("<p>O iCloud não tem autorização por site: você cria uma senha de aplicativo em account.apple.com, em Entrada e segurança, Senhas de aplicativo (exige a verificação em duas etapas; "
+                    "funciona pelo navegador em qualquer sistema) e informa aqui o Apple ID e essa senha. Nunca use a senha do Apple ID. A senha fica cifrada e é usada só para ler; o Library não altera nada. "
+                    "Os Lembretes no formato novo do iCloud não têm acesso externo.</p>")
+            form = (f'<form method="post" action="/apps/senha"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{k}">'
+                    f'<p><label for="icl-usuario">Apple ID (e-mail)</label><br><input id="icl-usuario" name="usuario" type="email" autocomplete="off" required value="{e(x["usuario"])}"></p>'
+                    f'<p><label for="icl-senha">Senha de aplicativo</label><br><input id="icl-senha" name="senha" type="password" autocomplete="off" required></p>'
+                    f'<fieldset><legend>Serviços que o Library pode ler</legend>{marcas_s}</fieldset>'
+                    f'<button type="submit">{"Atualizar conexão" if x["conectado"] else f"Conectar {n}"}</button></form>')
+            if x["conectado"]:
+                corpo = (f'<p role="status">{n} conectado como {e(x["usuario"])}: {e(", ".join(x["nomes"]))}. '
+                         + (f'Última sincronização {e(x["ultimo"])}: {e(x["resumo"])}.' if x["ultimo"] else "Ainda não sincronizado.") + "</p>"
+                         + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "") + form
+                         + design.botao_post("/apps/sincronizar", "Sincronizar agora", ctx.csrf, {"provedor": x["chave"]})
+                         + design.botao_post("/apps/desconectar", f"Desconectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]}))
+            else:
+                corpo = f'<p role="status">{n} não conectado.</p>' + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "") + guia + form
+            blocos.append(f"<section><h2>{n}</h2>{corpo}</section>")
+            continue
         escolha = (f'<form method="post" action="/apps/conectar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{k}">'
                    f'<fieldset><legend>Serviços que o Library pode ler</legend>{marcas}</fieldset>'
                    f'<button type="submit">{"Alterar serviços" if x["conectado"] else f"Conectar {n}"}</button></form>')
@@ -178,6 +199,15 @@ def post_apps_conectar(ctx, campos, arquivos):
     prov = cx.PROVEDORES.get(campos.get("provedor", ""), {})
     servicos = [s for s in prov.get("escopos_servico", {}) if campos.get("srv_" + s) == "1"]
     return web.Redirecionar(cx.iniciar(campos.get("provedor", ""), False, servicos))
+
+
+def post_apps_senha(ctx, campos, arquivos):
+    import heimdall_conexoes as cx
+    import heimdall_library_apps as ap
+    prov = cx.PROVEDORES.get(campos.get("provedor", ""), {})
+    servicos = [sv for sv in prov.get("escopos_servico", {}) if campos.get("srv_" + sv) == "1"]
+    ctx.flash("ok", ap.conectar_senha(campos.get("provedor", ""), campos.get("usuario", ""), campos.get("senha", ""), servicos))
+    return "/apps"
 
 
 def post_apps_sincronizar(ctx, campos, arquivos):
@@ -386,7 +416,7 @@ CFG = web.Config(
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
     get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/apps": pg_apps, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira},
-    post={"/enviar": post_enviar, "/email/salvar": post_email, "/apps/conectar": post_apps_conectar, "/apps/sincronizar": post_apps_sincronizar, "/apps/desconectar": post_apps_desconectar, "/nuvem/conectar": post_nuvem_conectar, "/nuvem/pasta": post_nuvem_pasta, "/nuvem/sincronizar": post_nuvem_sincronizar, "/nuvem/desconectar": post_nuvem_desconectar, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
+    post={"/enviar": post_enviar, "/email/salvar": post_email, "/apps/conectar": post_apps_conectar, "/apps/senha": post_apps_senha, "/apps/sincronizar": post_apps_sincronizar, "/apps/desconectar": post_apps_desconectar, "/nuvem/conectar": post_nuvem_conectar, "/nuvem/pasta": post_nuvem_pasta, "/nuvem/sincronizar": post_nuvem_sincronizar, "/nuvem/desconectar": post_nuvem_desconectar, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
           "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: qual é o vencimento do boleto de energia? o que diz a cláusula de rescisão do contrato? O modelo responde só com os documentos do seu acervo.",
