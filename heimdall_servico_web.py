@@ -86,13 +86,14 @@ class Config:
 
     def __init__(self, chave: str, nome: str, porta_env: str, porta: int, hosts: str, abas: list, ajustes: list, get: dict, post: dict,
                  aliases: dict = None, sistema_perguntar: str = "", contexto_perguntar=None, dica_perguntar: str = "", max_post: int = 20000, ao_iniciar=None,
-                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None):
+                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None, publicas_post: dict = None):
         self.chave, self.nome, self.porta_env, self.porta, self.hosts = chave, nome, porta_env, porta, hosts
         self.abas, self.ajustes, self.get, self.post = abas, ajustes, get, post
         self.aliases = aliases or {}
         self.sistema_perguntar, self.contexto_perguntar, self.dica_perguntar = sistema_perguntar, contexto_perguntar, dica_perguntar
         self.max_post, self.ao_iniciar, self.css, self.script_pagina, self.erro = max_post, ao_iniciar, css, script_pagina, erro
-        self.publicas = publicas or {}   # {rota GET sem sessão: func(q) -> (titulo, corpo)}; só para retornos de terceiros (OAuth), que chegam sem o cookie
+        self.publicas = publicas or {}   # {rota GET sem sessão: func(q) -> (titulo, corpo) ou (titulo, corpo, script)}; só para retornos de terceiros (OAuth), que chegam sem o cookie
+        self.publicas_post = publicas_post or {}   # {rota POST sem sessão: func(campos) -> (titulo, corpo)}; só para o passo final de um retorno de terceiros (o state de uso único vale como credencial)
         self.pertence = pertence or {}   # {rota que não é aba: rota da aba a destacar}, como /documento dentro de Documentos
         assert len(abas) <= design.MAX_ABAS, "mais abas do que o Heimdall Design permite"
         self.prefixo = f"HEIMDALL_{chave.upper()}_"
@@ -136,7 +137,7 @@ def _grupo_da_rota(cfg: Config, rota: str):
     return None, None
 
 
-def pagina(cfg: Config, titulo: str, corpo: str, sess: dict = None, rota: str = "", nonce: str = "") -> bytes:
+def pagina(cfg: Config, titulo: str, corpo: str, sess: dict = None, rota: str = "", nonce: str = "", script_publico: str = "") -> bytes:
     """Página no Heimdall Design: abas de cima (grupos), subabas do grupo, botão Ajustes (tela sem abas de cima) e rodapé."""
     nav = sair = abas_js = ajustes_html = ""
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
@@ -162,7 +163,7 @@ def pagina(cfg: Config, titulo: str, corpo: str, sess: dict = None, rota: str = 
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
                 '<button type="submit">Sair</button></form>')
         abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_PERGUNTAR
-    extra = cfg.script_pagina(rota) if (cfg.script_pagina and sess) else ""
+    extra = cfg.script_pagina(rota) if (cfg.script_pagina and sess) else script_publico
     js = f'<script nonce="{e(nonce)}">{abas_js}{extra}</script>' if (abas_js or extra) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall {e(cfg.nome)}</title>{nuvem.ICONE}<style>{nuvem.CSS}{cfg.css}</style></head>'
@@ -227,9 +228,9 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
         def _ir(self, destino: str, extra: list = None, status: int = 303) -> None:
             self._enviar(status, b"", extra=[("Location", destino)] + (extra or []))
 
-        def _pagina(self, status: int, titulo: str, corpo: str, sess: dict = None, rota: str = "") -> None:
-            nonce = secrets.token_urlsafe(12) if sess else ""
-            self._enviar(status, pagina(cfg, titulo, corpo, sess, rota, nonce), nonce=nonce)
+        def _pagina(self, status: int, titulo: str, corpo: str, sess: dict = None, rota: str = "", script_publico: str = "") -> None:
+            nonce = secrets.token_urlsafe(12) if (sess or script_publico) else ""
+            self._enviar(status, pagina(cfg, titulo, corpo, sess, rota, nonce, script_publico), nonce=nonce)
 
         def _sessao(self):
             c = SimpleCookie()
@@ -272,7 +273,13 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
                     self._entrar(metodo)
                     return
                 if metodo == "GET" and rota in cfg.publicas:
-                    titulo_p, corpo_p = cfg.publicas[rota](q)
+                    r_p = cfg.publicas[rota](q)
+                    self._pagina(200, r_p[0], r_p[1], None, rota, r_p[2] if len(r_p) > 2 else "")
+                    return
+                if metodo == "POST" and rota in cfg.publicas_post:
+                    n_p = min(int(self.headers.get("Content-Length") or 0), 8192)
+                    campos_p = {k: v[0] for k, v in parse_qs(self.rfile.read(n_p).decode("utf-8", "replace"), keep_blank_values=True).items()}
+                    titulo_p, corpo_p = cfg.publicas_post[rota](campos_p)
                     self._pagina(200, titulo_p, corpo_p, None, rota)
                     return
                 token, sess = self._sessao()

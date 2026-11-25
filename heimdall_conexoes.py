@@ -20,6 +20,7 @@ import contextlib
 import hashlib
 import json
 import os
+import re
 import secrets
 import threading
 import time
@@ -50,8 +51,16 @@ PROVEDORES = {
     "microsoft": {"grupo": "apps", "nome": "Microsoft", "auth": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
                   "token": "https://login.microsoftonline.com/common/oauth2/v2.0/token", "escopo": "offline_access", "extra": {"response_mode": "query"},
                   "api": "https://graph.microsoft.com/v1.0", "credencial": "ONEDRIVE",   # o mesmo aplicativo registrado para o OneDrive
-                  "escopos_servico": {"notas": "Notes.Read", "tarefas": "Tasks.Read", "agenda": "Calendars.Read", "contatos": "Contacts.Read"},
-                  "nomes_servico": {"notas": "OneNote", "tarefas": "Microsoft To Do", "agenda": "Calendário do Outlook", "contatos": "Contatos do Outlook"}},
+                  "escopos_servico": {"notas": "Notes.Read", "tarefas": "Tasks.Read", "planner": "Tasks.Read", "agenda": "Calendars.Read", "contatos": "Contacts.Read"},
+                  "nomes_servico": {"notas": "OneNote", "tarefas": "Microsoft To Do", "planner": "Microsoft Planner (só conta de trabalho ou escola)", "agenda": "Calendário do Outlook",
+                                    "contatos": "Contatos do Outlook"}},
+    # Todoist: OAuth 2.0 sem PKCE, escopos separados por vírgula, token sem expiração e sem renovação (a pessoa revoga em Todoist > Configurações > Integrações)
+    "todoist": {"grupo": "apps", "nome": "Todoist", "auth": "https://app.todoist.com/oauth/authorize", "token": "https://todoist.com/oauth/access_token", "escopo": "",
+                "extra": {}, "api": "https://api.todoist.com/api/v1", "sep": ",", "simples": True, "sem_renovacao": True,
+                "escopos_servico": {"tarefas": "data:read"}, "nomes_servico": {"tarefas": "Tarefas do Todoist"}},
+    # Trello: fluxo próprio (o token volta no fragmento do endereço; a página de retorno o entrega por POST), a chave de API do administrador vale como ID
+    "trello": {"grupo": "apps", "nome": "Trello", "auth": "https://trello.com/1/authorize", "token": "", "escopo": "", "extra": {}, "api": "https://api.trello.com/1",
+               "fluxo": "trello", "sem_renovacao": True, "escopos_servico": {"quadros": "read"}, "nomes_servico": {"quadros": "Cartões do Trello"}},
 }
 
 
@@ -184,7 +193,7 @@ def escopo_de(chave: str, escrita: bool = False, servicos=None) -> str:
     prov = PROVEDORES[chave]
     if "escopos_servico" in prov:
         partes = [prov["escopo"]] + [prov["escopos_servico"][s] for s in (servicos or []) if s in prov["escopos_servico"]]
-        return " ".join(partes)
+        return prov.get("sep", " ").join(dict.fromkeys(x for x in partes if x))   # sem repetir (To Do e Planner usam o mesmo escopo)
     return prov["escopo_escrita" if escrita else "escopo"]
 
 
@@ -209,6 +218,13 @@ def iniciar(chave: str, escrita: bool = False, servicos=None) -> str:
         if len(PENDENTES) > 500:
             raise ErroLibrary("Muitas conexões em andamento. Tente de novo em alguns minutos.")
         PENDENTES[state] = {"pessoa": pessoas.atual(), "provedor": chave, "verifier": verifier, "escrita": bool(escrita), "servicos": servicos or [], "expira": agora + 600}
+    if prov.get("fluxo") == "trello":   # o Trello não usa state nem código: o state vai no endereço de retorno e o token volta no fragmento
+        params = {"key": cid, "name": "Heimdall Library", "scope": escopo_de(chave, escrita, servicos), "expiration": "never", "response_type": "token",
+                  "callback_method": "fragment", "return_url": url_retorno() + "?" + urllib.parse.urlencode({"state": state})}
+        return prov["auth"] + "?" + urllib.parse.urlencode(params)
+    if prov.get("simples"):
+        params = {"client_id": cid, "state": state, "scope": escopo_de(chave, escrita, servicos), **prov["extra"]}
+        return prov["auth"] + "?" + urllib.parse.urlencode(params, safe=":,")
     params = {"client_id": cid, "response_type": "code", "redirect_uri": url_retorno(), "state": state, "scope": escopo_de(chave, escrita, servicos),
               "code_challenge": desafio, "code_challenge_method": "S256", **prov["extra"]}
     return prov["auth"] + "?" + urllib.parse.urlencode(params)
@@ -226,8 +242,14 @@ def concluir(state: str, code: str, erro: str = "") -> tuple:
     prov = PROVEDORES[chave]
     cid, seg = credenciais(chave)
     try:
-        r = _form(prov["token"], {"grant_type": "authorization_code", "code": code, "redirect_uri": url_retorno(), "client_id": cid,
-                                  **({"client_secret": seg} if seg else {}), "code_verifier": pend["verifier"]})
+        if prov.get("simples"):
+            r = _form(prov["token"], {"client_id": cid, "client_secret": seg, "code": code})
+            if "_erro" not in r and prov.get("sem_renovacao"):
+                r.setdefault("refresh_token", "sem-renovacao")   # token sem expiração: o marcador só diz que há conexão
+                r.setdefault("expires_in", 10 * 365 * 86400)
+        else:
+            r = _form(prov["token"], {"grant_type": "authorization_code", "code": code, "redirect_uri": url_retorno(), "client_id": cid,
+                                      **({"client_secret": seg} if seg else {}), "code_verifier": pend["verifier"]})
         if "_erro" in r or not r.get("refresh_token"):
             return False, "O provedor não concluiu a autorização. Confira os dados do aplicativo com o administrador."
         # a escrita só vale se o provedor confirmou o escopo (quando ele informa os escopos concedidos)
@@ -246,6 +268,43 @@ def concluir(state: str, code: str, erro: str = "") -> tuple:
     if prov["grupo"] == "apps":
         return True, f"{prov['nome']} conectado ({', '.join(prov['nomes_servico'][s] for s in pend['servicos'])}). A sincronização é automática."
     return True, f"{prov['nome']} conectado" + (" com permissão para mover arquivos" if escrita else " somente para leitura") + ". Informe a pasta a vigiar e toque em Sincronizar agora."
+
+
+def provedor_do_state(state: str) -> str:
+    """Provedor de uma autorização em andamento (sem consumir o state); vazio se não existir ou tiver expirado."""
+    with _lock_pend:
+        pend = PENDENTES.get(state or "")
+    return pend["provedor"] if pend and pend["expira"] >= time.time() else ""
+
+
+def concluir_token(state: str, token: str) -> tuple:
+    """Fecha a autorização dos provedores em que o token volta direto (Trello): (ok, mensagem). O state de uso único é a credencial; o token é conferido no provedor antes de ser guardado."""
+    with _lock_pend:
+        pend = PENDENTES.pop(state or "", None)
+    if not pend or pend["expira"] < time.time() or PROVEDORES.get(pend["provedor"], {}).get("fluxo") != "trello":
+        return False, "Esta autorização expirou ou já foi usada. Volte ao Library e conecte de novo."
+    token = (token or "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9_\-]{16,200}", token):
+        return False, "A autorização não foi concluída. Volte ao Library e tente de novo."
+    chave = pend["provedor"]
+    prov = PROVEDORES[chave]
+    try:
+        st, _, _b = http("GET", prov["api"] + "/members/me?fields=id", {"Authorization": cab_trello(token), "Accept": "application/json"})
+        if st != 200:
+            return False, "O Trello não confirmou a autorização. Volte ao Library e tente de novo."
+        with como(pend["pessoa"]), LOCK:
+            todos = carregar()
+            todos[chave] = {**todos.get(chave, {}), "acesso": token, "renovacao": "sem-renovacao", "expira": time.time() + 10 * 365 * 86400, "escrita": False,
+                            "servicos": pend["servicos"], "erro": ""}
+            gravar(todos)
+    except ErroLibrary as ex:
+        return False, str(ex)
+    return True, f"{prov['nome']} conectado ({', '.join(prov['nomes_servico'][s] for s in pend['servicos'])}). A sincronização é automática."
+
+
+def cab_trello(token: str) -> str:
+    """Cabeçalho de autenticação do Trello (a chave de API do administrador e o token da pessoa, sem pôr o token no endereço)."""
+    return f'OAuth oauth_consumer_key="{credenciais("trello")[0]}", oauth_token="{token}"'
 
 
 def acesso(chave: str, todos: dict) -> str:

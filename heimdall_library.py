@@ -151,7 +151,7 @@ def pg_apps(ctx):
     import heimdall_library_apps as ap
     itens = ap.situacao()
     if not itens:
-        return "Apps", '<p role="status">Nenhum app está disponível. O administrador precisa configurar o aplicativo da Microsoft.</p>'
+        return "Apps", '<p role="status">Nenhum app está disponível. O administrador precisa configurar o aplicativo de pelo menos um provedor (Microsoft, Todoist ou Trello).</p>'
     blocos = []
     for x in itens:
         n, k = e(x["nome"]), e(x["chave"])
@@ -194,11 +194,32 @@ def post_apps_desconectar(ctx, campos, arquivos):
     return "/apps"
 
 
+SCRIPT_TRELLO = ("var t=new URLSearchParams(location.hash.slice(1)).get('token');"
+                 "if(t){document.getElementById('tk').value=t;history.replaceState(null,'',location.pathname);document.getElementById('f').submit();}"
+                 "else{document.getElementById('sem').hidden=false;document.getElementById('ok').hidden=true;}")
+
+
 def retorno_nuvem(q):
     """Retorno do provedor (chega sem cookie; quem vale é o state, de uso único)."""
+    import heimdall_conexoes as cx
     import heimdall_library_nuvem as nv
+    estado = (q.get("state") or [""])[0]
+    if cx.provedor_do_state(estado) and cx.PROVEDORES[cx.provedor_do_state(estado)].get("fluxo") == "trello":
+        # O Trello devolve o token no fragmento do endereço, que o servidor não recebe: esta página o lê e o entrega por POST (o token nunca vai para o endereço do servidor).
+        corpo = (f'<p id="ok" role="status">Concluindo a conexão com o Trello.</p><p id="sem" role="alert" hidden>O Trello não devolveu a autorização. Volte ao Library e conecte de novo.</p>'
+                 f'<noscript><p role="alert">Esta etapa precisa de JavaScript ativo no navegador. Ative-o e conecte de novo.</p></noscript>'
+                 f'<form id="f" method="post" action="/nuvem/trello"><input type="hidden" name="state" value="{e(estado)}"><input id="tk" type="hidden" name="token" value=""></form>'
+                 f'<p>{design.botao("/pesquisar", "Voltar ao Library")}</p>')
+        return "Conexão com o Trello", corpo, SCRIPT_TRELLO
     ok, msg = nv.concluir((q.get("state") or [""])[0], (q.get("code") or [""])[0], (q.get("error") or [""])[0])
     return "Conexão com a nuvem", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/pesquisar", "Voltar ao Library")}</p>'
+
+
+def post_trello_publico(campos):
+    """Passo final da conexão com o Trello (sem cookie: o state de uso único é a credencial)."""
+    import heimdall_conexoes as cx
+    ok, msg = cx.concluir_token(campos.get("state", ""), campos.get("token", ""))
+    return "Conexão com o Trello", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/apps", "Voltar ao Library")}</p>'
 
 
 def post_nuvem_conectar(ctx, campos, arquivos):
@@ -369,7 +390,7 @@ CFG = web.Config(
           "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: qual é o vencimento do boleto de energia? o que diz a cláusula de rescisão do contrato? O modelo responde só com os documentos do seu acervo.",
-    css=CSS, erro=dados.ErroLibrary, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem},
+    css=CSS, erro=dados.ErroLibrary, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem}, publicas_post={"/nuvem/trello": post_trello_publico},
     ao_iniciar=lambda: (__import__("heimdall_library_nuvem"), __import__("heimdall_library_apps"), __import__("heimdall_conexoes").iniciar_sincronizador()))
 
 

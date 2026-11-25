@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """Heimdall Library: apps conectados por conta (notas, tarefas, agenda e contatos), com leitura automática.
 
-Primeiro provedor: Microsoft (OneNote, Microsoft To Do, Calendário e Contatos do Outlook), pela Microsoft Graph, com permissões delegadas de leitura
-(Notes.Read, Tasks.Read, Calendars.Read, Contacts.Read) pedidas só para os serviços que a pessoa marcar. Funciona com conta pessoal e de trabalho ou escola,
-em qualquer sistema, porque a leitura é feita pelo servidor: a pessoa só autoriza uma vez no navegador.
+Provedores: Microsoft (OneNote, Microsoft To Do, Microsoft Planner, Calendário e Contatos do Outlook), pela Microsoft Graph, com permissões delegadas de leitura
+(Notes.Read, Tasks.Read, Calendars.Read, Contacts.Read) pedidas só para os serviços que a pessoa marcar (o Planner só existe em conta de trabalho ou escola);
+Todoist (tarefas ativas, escopo data:read); Trello (cartões dos quadros abertos, escopo read). Funciona em qualquer sistema, porque a leitura é feita pelo
+servidor: a pessoa só autoriza uma vez no navegador.
 
-Cada nota, tarefa, evento ou contato vira um documento de texto (Markdown) no acervo da pessoa, pesquisável junto com os demais e disponível ao Perguntar.
+Cada nota, tarefa, cartão, evento ou contato vira um documento de texto (Markdown) no acervo da pessoa, pesquisável junto com os demais e disponível ao Perguntar.
 O item é identificado por provedor, serviço e id: se mudar no app, o mesmo documento é atualizado, sem duplicar. Só leitura; nada é alterado no app.
 A autorização, os tokens cifrados e a rodada de fundo vêm de heimdall_conexoes.py.
 """
+import hashlib
 import html
 import html.parser
+import json
 import re
 import time
 import urllib.parse
@@ -85,8 +88,11 @@ def _paginar(url: str, token: str, cab: dict = None):
             return
 
 
-def _ler_notas(token: str, api: str):
+def _ler_notas(token: str, api: str, vistos: dict):
     for x in _paginar(api + "/me/onenote/pages?$top=100", token):
+        if vistos.get(x["id"]) == x.get("lastModifiedDateTime") and x.get("lastModifiedDateTime"):
+            yield {"id": x["id"], "marca": x["lastModifiedDateTime"], "nome": "", "texto": ""}   # sem mudança: não baixa o conteúdo de novo
+            continue
         st, _, b = cx.http("GET", api + "/me/onenote/pages/" + urllib.parse.quote(x["id"]) + "/content", {"Authorization": "Bearer " + token, "Accept": "text/html"})
         if st != 200:
             continue   # página sem conteúdo legível: tenta de novo na próxima rodada
@@ -97,7 +103,7 @@ def _ler_notas(token: str, api: str):
                "texto": f"# {titulo}\n\nOrigem: OneNote{' · ' + secao if secao else ''}\nAtualizada em: {_data(x.get('lastModifiedDateTime'))}\n\n{corpo}\n"}
 
 
-def _ler_tarefas(token: str, api: str):
+def _ler_tarefas(token: str, api: str, vistos: dict):
     for lista in _paginar(api + "/me/todo/lists", token):
         for x in _paginar(api + "/me/todo/lists/" + urllib.parse.quote(lista["id"]) + "/tasks?$top=100", token):
             titulo = _limpo(x.get("title")) or "Tarefa sem título"
@@ -110,7 +116,7 @@ def _ler_tarefas(token: str, api: str):
                              + (f"Importância: {x['importance']}\n" if x.get("importance") not in (None, "normal") else "") + (f"\n{detalhe}\n" if detalhe else ""))}
 
 
-def _ler_agenda(token: str, api: str):
+def _ler_agenda(token: str, api: str, vistos: dict):
     agora = datetime.now(timezone.utc)
     de, ate = (agora - timedelta(days=JANELA_AGENDA[0])).strftime("%Y-%m-%dT%H:%M:%SZ"), (agora + timedelta(days=JANELA_AGENDA[1])).strftime("%Y-%m-%dT%H:%M:%SZ")
     url = (api + "/me/calendarView?" + urllib.parse.urlencode({"startDateTime": de, "endDateTime": ate, "$top": 100,
@@ -125,7 +131,7 @@ def _ler_agenda(token: str, api: str):
                          + (f"Local: {local}\n" if local else "") + (f"Organizador: {org}\n" if org else "") + (f"\n{_limpo(x.get('bodyPreview'), 2000)}\n" if x.get("bodyPreview") else ""))}
 
 
-def _ler_contatos(token: str, api: str):
+def _ler_contatos(token: str, api: str, vistos: dict):
     url = api + "/me/contacts?" + urllib.parse.urlencode({"$top": 100, "$select": "id,displayName,emailAddresses,mobilePhone,businessPhones,homePhones,companyName,jobTitle,lastModifiedDateTime,personalNotes"})
     for x in _paginar(url, token):
         nome = _limpo(x.get("displayName")) or "Contato sem nome"
@@ -137,7 +143,78 @@ def _ler_contatos(token: str, api: str):
                          + (f"Telefone: {fones}\n" if fones else "") + (f"\n{_limpo(x.get('personalNotes'), 2000)}\n" if x.get("personalNotes") else ""))}
 
 
-LEITORES = {"notas": _ler_notas, "tarefas": _ler_tarefas, "agenda": _ler_agenda, "contatos": _ler_contatos}
+def _ler_planner(token: str, api: str, vistos: dict):
+    """Tarefas atribuídas à pessoa no Microsoft Planner. A Graph só permite com conta de trabalho ou escola; conta pessoal recebe recusa."""
+    try:
+        planos = {p["id"]: _limpo(p.get("title")) for p in _paginar(api + "/me/planner/plans", token)}
+        tarefas = list(_paginar(api + "/me/planner/tasks", token))
+    except ErroLibrary:
+        raise ErroLibrary("O Planner só está disponível com conta Microsoft de trabalho ou escola.") from None
+    for x in tarefas:
+        marca = x.get("@odata.etag") or x.get("createdDateTime", "")
+        titulo = _limpo(x.get("title")) or "Tarefa sem título"
+        if vistos.get(x["id"]) == marca and marca:
+            yield {"id": x["id"], "marca": marca, "nome": "", "texto": ""}
+            continue
+        detalhe, itens = "", []
+        try:
+            d = cx.json_get(api + "/planner/tasks/" + urllib.parse.quote(x["id"]) + "/details", token)
+            detalhe = (d.get("description") or "").strip()
+            itens = [(_limpo(v.get("title")), bool(v.get("isChecked"))) for v in (d.get("checklist") or {}).values() if v.get("title")]
+        except ErroLibrary:
+            pass   # sem detalhes agora: o título e o prazo já valem
+        pct = int(x.get("percentComplete") or 0)
+        yield {"id": x["id"], "marca": marca, "nome": _nome_arquivo("Tarefa", titulo),
+               "texto": (f"# {titulo}\n\nOrigem: Microsoft Planner · plano {planos.get(x.get('planId'), '')}\nSituação: {'concluída' if pct == 100 else 'em andamento' if pct else 'a fazer'}\n"
+                         + (f"Prazo: {_data(x.get('dueDateTime'))}\n" if x.get("dueDateTime") else "") + (f"\n{detalhe}\n" if detalhe else "")
+                         + ("\nLista de verificação:\n" + "\n".join(f"- [{'x' if ok else ' '}] {t}" for t, ok in itens) + "\n" if itens else ""))}
+
+
+# ---------------------------------------------------------------- Todoist
+def _todoist_paginas(url: str, token: str):
+    cursor = ""
+    for _ in range(MAX_PAGINAS):
+        r = cx.json_get(url + ("&" if "?" in url else "?") + "limit=200" + (("&cursor=" + urllib.parse.quote(cursor)) if cursor else ""), token)
+        yield from r.get("results", [])
+        cursor = r.get("next_cursor") or ""
+        if not cursor:
+            return
+
+
+PRIORIDADE_TODOIST = {4: "urgente", 3: "alta", 2: "média"}
+
+
+def _ler_todoist(token: str, api: str, vistos: dict):
+    projetos = {p["id"]: _limpo(p.get("name")) for p in _todoist_paginas(api + "/projects", token)}
+    for x in _todoist_paginas(api + "/tasks", token):
+        titulo = _limpo(x.get("content")) or "Tarefa sem título"
+        due = x.get("due") or {}
+        prazo = _limpo(due.get("string") or due.get("date"), 80)
+        marca = hashlib.sha256(json.dumps([x.get("content"), x.get("description"), due, x.get("project_id"), x.get("labels"), x.get("priority"), x.get("checked")], sort_keys=True).encode()).hexdigest()[:20]
+        yield {"id": str(x["id"]), "marca": marca, "nome": _nome_arquivo("Tarefa", titulo),
+               "texto": (f"# {titulo}\n\nOrigem: Todoist · projeto {projetos.get(x.get('project_id'), '')}\nSituação: {'concluída' if x.get('checked') else 'a fazer'}\n"
+                         + (f"Prazo: {prazo}\n" if prazo else "") + (f"Prioridade: {PRIORIDADE_TODOIST[x['priority']]}\n" if x.get("priority") in PRIORIDADE_TODOIST else "")
+                         + (f"Etiquetas: {', '.join(_limpo(l, 40) for l in x['labels'])}\n" if x.get("labels") else "") + (f"\n{(x.get('description') or '').strip()}\n" if (x.get("description") or "").strip() else ""))}
+
+
+# ---------------------------------------------------------------- Trello
+def _ler_trello(token: str, api: str, vistos: dict):
+    cab = {"Authorization": cx.cab_trello(token)}
+    quadros = cx.json_get(api + "/members/me/boards?" + urllib.parse.urlencode({"filter": "open", "fields": "name"}), "", cab)
+    for q in quadros if isinstance(quadros, list) else []:
+        listas = {l["id"]: _limpo(l.get("name")) for l in cx.json_get(api + f"/boards/{urllib.parse.quote(q['id'])}/lists?" + urllib.parse.urlencode({"filter": "open", "fields": "name"}), "", cab)}
+        cartoes = cx.json_get(api + f"/boards/{urllib.parse.quote(q['id'])}/cards?" + urllib.parse.urlencode({"filter": "open", "fields": "name,desc,due,dueComplete,idList,dateLastActivity,labels"}), "", cab)
+        for x in cartoes:
+            titulo = _limpo(x.get("name")) or "Cartão sem título"
+            etiquetas = ", ".join(_limpo(l.get("name") or l.get("color"), 40) for l in x.get("labels", []) if l.get("name") or l.get("color"))
+            yield {"id": x["id"], "marca": x.get("dateLastActivity", ""), "nome": _nome_arquivo("Cartão", titulo),
+                   "texto": (f"# {titulo}\n\nOrigem: Trello · quadro {_limpo(q.get('name'))} · lista {listas.get(x.get('idList'), '')}\n"
+                             + (f"Prazo: {_data(x.get('due'))}{' (concluído)' if x.get('dueComplete') else ''}\n" if x.get("due") else "")
+                             + (f"Etiquetas: {etiquetas}\n" if etiquetas else "") + (f"\n{(x.get('desc') or '').strip()[:5000]}\n" if (x.get("desc") or "").strip() else ""))}
+
+
+LEITORES = {"microsoft": {"notas": _ler_notas, "tarefas": _ler_tarefas, "planner": _ler_planner, "agenda": _ler_agenda, "contatos": _ler_contatos},
+            "todoist": {"tarefas": _ler_todoist}, "trello": {"quadros": _ler_trello}}
 
 
 # ---------------------------------------------------------------- tela e sincronização
@@ -174,14 +251,14 @@ def sincronizar(chave: str, usar_ia: bool = False) -> dict:
         for serv in est.get("servicos", []):
             vistos = todos_vistos.setdefault(serv, {})
             try:
-                for it in LEITORES[serv](token, api):
+                for it in LEITORES[chave][serv](token, api, vistos):
                     if vistos.get(it["id"]) == it["marca"] and it["marca"]:
                         continue
                     if feitos >= MAX_POR_RODADA:
                         break
                     feitos += 1
                     try:
-                        r = base.adicionar(it["nome"], it["texto"].encode("utf-8"), "microsoft-" + serv, usar_ia, chave=f"{chave}:{serv}:{it['id']}")
+                        r = base.adicionar(it["nome"], it["texto"].encode("utf-8"), f"{chave}-{serv}", usar_ia, chave=f"{chave}:{serv}:{it['id']}")
                         res["novos" if r.get("novo") else "atualizados" if r.get("atualizado") else "repetidos"] += 1
                         vistos[it["id"]] = it["marca"]
                     except ErroLibrary:
@@ -189,6 +266,9 @@ def sincronizar(chave: str, usar_ia: bool = False) -> dict:
             except ErroLibrary as ex:
                 res["erros"] += 1
                 falhas.append(f"{cx.PROVEDORES[chave]['nomes_servico'][serv]}: {ex}")
+        if cx.PROVEDORES[chave].get("sem_renovacao") and any("código 401" in f for f in falhas):   # token revogado pela pessoa no app: pede nova conexão
+            est.update({"acesso": "", "renovacao": "", "erro": "A autorização foi revogada no app. Conecte de novo."})
+            falhas = [est["erro"]]
         est["erro"] = " ".join(falhas)
         est["ultimo"] = time.strftime("%d/%m/%Y %H:%M")
         est["resumo"] = f"{res['novos']} novos, {res['atualizados']} atualizados, {res['erros']} com erro"
