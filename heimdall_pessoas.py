@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Dados separados por pessoa: quem é a pessoa da requisição e onde ficam os dados dela.
 
-Cada pessoa que entra por convite (Cloudflare Access) tem uma pasta própria, db/pessoas/<id>/, com um banco por serviço (learn.db...), e a
+Cada pessoa que entra por convite (Cloudflare Access) tem uma pasta própria, db/people/<id>/ (a mesma do banco pessoal dela, heimdall_banco), com um banco por serviço (learn.db...), e a
 sua pasta de material (knowledge/) fora da pasta do dono, para a busca nos documentos do dono nunca enxergar os arquivos dela. O dono mantém
 os caminhos de sempre (sem migração). O <id> sai do e-mail (hash), então o e-mail não aparece em nome de pasta.
 
@@ -14,6 +14,8 @@ import hashlib
 import os
 import re
 from pathlib import Path
+
+import heimdall_pastas
 
 DONO = "dono"
 ID_RE = re.compile(r"^p[0-9a-f]{12}$")
@@ -78,13 +80,14 @@ def e_dono(pessoa: str = "") -> bool:
 
 
 def raiz(base_db: Path, pessoa: str = "") -> Path:
-    """Pasta de dados da pessoa. Dono (ou recurso desligado): a pasta de sempre. Convidado: <base_db>/pessoas/<id>/ (permissão só do dono do Mac)."""
+    """Pasta de dados da pessoa. Dono (ou recurso desligado): a pasta de sempre. Convidado: <base_db>/people/<id>/ (permissão só do dono do Mac).
+    A antiga <base_db>/pessoas/ é juntada a people/ por heimdall_pastas.people, sem apagar nada."""
     p = pessoa or atual()
     if e_dono(p):
         return base_db
     if not valido(p):
         raise ErroPessoa("pessoa inválida")
-    pasta = Path(base_db) / "pessoas" / p
+    pasta = heimdall_pastas.people(Path(base_db)) / p
     pasta.mkdir(parents=True, exist_ok=True)
     try:
         os.chmod(pasta.parent, 0o700)
@@ -98,7 +101,7 @@ def existentes(base_db: Path) -> list:
     """O dono e as pessoas que já têm pasta, para tarefas que percorrem todo mundo (a agenda do Learn)."""
     saida = [DONO]
     if ativo():
-        d = Path(base_db) / "pessoas"
-        if d.is_dir():
+        d = heimdall_pastas.people(Path(base_db)) if (Path(base_db) / "pessoas").exists() or (Path(base_db) / "people").exists() else None
+        if d and d.is_dir():
             saida += sorted(x.name for x in d.iterdir() if x.is_dir() and ID_RE.match(x.name) and not x.is_symlink())
     return saida

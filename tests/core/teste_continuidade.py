@@ -55,6 +55,12 @@ banco(raiz / "db" / "heimdall.db", ["segredo-de-saude-123"])
 banco(raiz / "finance" / "financas.db", ["saldo-9999"])
 (raiz / "db" / "leia.txt").write_text("fora")
 confere("arquivos da cópia: só bancos e configurações de avisos", hc.arquivos(raiz) == ["db/heimdall.db", "finance/financas.db"], hc.arquivos(raiz))
+raiz_p = Path(tempfile.mkdtemp())
+banco(raiz_p / "db" / "heimdall.db", ["dono"])
+banco(raiz_p / "db" / "people" / "convidada-1" / "heimdall.db", ["dado-da-convidada"])
+banco(raiz_p / "db" / "people" / "convidada-1" / "copies" / "heimdall-2026-11-25.db", ["copia-local"])
+confere("o banco de cada pessoa entra na cópia; as cópias locais dela, não",
+        hc.arquivos(raiz_p) == ["db/heimdall.db", "db/people/convidada-1/heimdall.db"], hc.arquivos(raiz_p))
 
 r = hc.enviar(raiz, dict(ENV, HEIMDALL_CONTINUIDADE="0"), S3Falso())
 confere("interruptor desligado não envia nada", r.get("desligado") is True)

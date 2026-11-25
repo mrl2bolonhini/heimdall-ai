@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Cópia de segurança dos dados de cada pessoa
+- A cópia de segurança diária passa a incluir o banco de cada pessoa cadastrada (db/people/<id>/heimdall.db): uma cópia cifrada por pessoa, na subpasta people/<id>/ de cada destino (pasta e R2), com a mesma senha e a mesma retenção, contadas separadamente das do dono. A verificação semanal confere também as cópias de cada pessoa; um banco com problema não impede os outros.
+- A cópia de continuidade na nuvem passa a levar também o banco de cada pessoa (db/people/*/*.db).
+- Correção: os dados de cada pessoa ficavam em duas pastas (db/pessoas para o Learn e db/people para o banco pessoal). Agora tudo fica em db/people; na primeira subida, o conteúdo da pasta antiga é juntado ao da nova, pessoa por pessoa, sem sobrescrever nem apagar nada.
+- Funciona em macOS, Linux e Windows (python3 heimdall_backup.py fazer | verificar | listar | restaurar).
+
 ## 2026-11-25 - Roadmap revisado pelo PO
 - O roadmap foi conferido com o código e reordenado. Saíram itens já entregues (Termos de Uso e Política de Privacidade publicados; site de Saúde lendo o banco de cada pessoa) e a pesquisa de lojas alternativas para o iPhone, encerrada porque não resolve o custo.
 - Continuidade aparece como implantada (desde 23/11/2026), com o teste de queda real como próximo passo; o servidor próprio está na fase 0, com conta na Locaweb e chamado aberto.

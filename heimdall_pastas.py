@@ -76,9 +76,46 @@ def db_alerts(raiz: Path = AQUI) -> Path:
     return migrar(db(raiz), "avisos_mac", "alerts")
 
 
+def _juntar(origem: Path, destino: Path) -> None:
+    """Move para `destino` o que está em `origem` e ainda não existe lá, item por item. Nunca sobrescreve nem apaga:
+    o que existir nos dois lugares fica em `origem`; a pasta só sai se ficar vazia."""
+    destino.mkdir(parents=True, exist_ok=True)
+    for item in sorted(origem.iterdir()):
+        alvo = destino / item.name
+        try:
+            if item.is_symlink():
+                continue
+            if not alvo.exists():
+                os.rename(item, alvo)
+            elif item.is_dir() and alvo.is_dir():
+                _juntar(item, alvo)
+        except OSError:
+            pass
+    try:
+        origem.rmdir()   # só funciona se estiver vazia
+    except OSError:
+        pass
+
+
+def people(base_db: Path) -> Path:
+    """Pasta dos dados de cada pessoa, dentro da pasta de dados do dono: <base_db>/people/. Era <base_db>/pessoas/.
+    Se só a antiga existir, é renomeada (a permissão 0700 vai junto). Se as duas existirem (o Learn gravava em pessoas/ e o banco em people/),
+    o conteúdo da antiga é juntado ao da nova, pessoa por pessoa, sem sobrescrever nem apagar nada."""
+    base_db = Path(base_db)
+    n = migrar(base_db, "pessoas", "people")
+    a = base_db / "pessoas"
+    if n != a and a.is_dir() and not a.is_symlink():
+        _juntar(a, n)
+    try:
+        os.chmod(n, 0o700) if n.is_dir() else None
+    except OSError:
+        pass
+    return n
+
+
 def db_people(raiz: Path = AQUI) -> Path:
     """Banco de cada pessoa (permissão 0700 preservada: é o mesmo diretório). Era db/pessoas/."""
-    return migrar(db(raiz), "pessoas", "people")
+    return people(db(raiz))
 
 
 def health(raiz: Path = AQUI, db_dir: Path = None) -> Path:

@@ -129,7 +129,38 @@ res = {x["destino"].split()[0]: x for x in r["destinos"]}
 ok(not r["ok"] and res["R2"]["ok"] is False and res["pasta"]["ok"] is True, "R2 fora do ar: a pasta continua sendo gravada e o resultado acusa falha")
 ok(B.estado()["ultima_tentativa"]["ok"] is False and B.estado()["ultimo_ok"], "estado guarda a falha sem apagar o último sucesso")
 
-# 6. configuração faltando
+# 6. bancos das pessoas: cópia própria em people/<id>/, separada da do dono e com a mesma retenção
+with D.da_pessoa("convidada-1"):
+    D.iniciar()
+    c = D.conectar()
+    c.execute("INSERT INTO triagem (id, criado, fonte, nivel, titulo, resumo, atualizado) VALUES ('p1','2026-11-11','justica','alto','Da convidada','r','2026-11-11')")
+    c.commit()
+    c.close()
+(D.pasta_pessoas() / "Nome Invalido").mkdir(parents=True, exist_ok=True)   # pasta fora do padrão: ignorada
+ok(B.pessoas() == ["convidada-1"], "acha só as pessoas com banco e nome válido")
+s3p = FakeS3()
+r = B.fazer(env2, cliente_r2=s3p, agora=base + timedelta(days=200))
+ok(r["ok"] and r["pessoas"] and r["pessoas"][0]["pessoa"] == "convidada-1" and r["pessoas"][0]["ok"], "fazer inclui a cópia da pessoa")
+chave = "people/convidada-1/" + r["nome"]
+ok(chave in s3p.o and r["nome"] in s3p.o, "no R2, a cópia da pessoa fica em people/<id>/ e a do dono na raiz")
+ok(b"Da convidada" not in s3p.o[chave], "a cópia da pessoa vai criptografada")
+ok((pasta / "people" / "convidada-1" / r["nome"]).exists(), "na pasta, a cópia da pessoa fica em people/<id>/")
+saida_p = TMP / "restaurado_pessoa.db"
+B.restaurar(str(pasta / "people" / "convidada-1" / r["nome"]), str(saida_p), env)
+titulos = [x[0] for x in sqlite3.connect(saida_p).execute("SELECT titulo FROM triagem")]
+ok(titulos == ["Da convidada"], "a cópia da pessoa restaura só os dados dela")
+titulos_dono = [x[0] for x in sqlite3.connect(TMP / "restaurado.db").execute("SELECT titulo FROM triagem")]
+ok("Da convidada" not in titulos_dono, "a cópia do dono não traz os dados da pessoa")
+v = B.verificar(env2, cliente_r2=s3p)
+ok(any("people/convidada-1" in k for k in v) and all(x["ok"] for k, x in v.items() if "people/" in k), "verificar confere as cópias da pessoa")
+l = B.listar(env2, cliente_r2=s3p)
+ok(all(not n.startswith("people/") for k, ns in l.items() for n in ns), "listar devolve nomes sem o prefixo da pessoa")
+for i in range(1, 30):
+    B.fazer(env, agora=base + timedelta(days=200 + i))
+ok(len(list((pasta / "people" / "convidada-1").glob("*" + B.EXT))) <= 20, "a retenção também poda as cópias da pessoa")
+ok(len([n for n in B.listar(env)[next(iter(B.listar(env)))]]) <= 20, "a retenção do dono continua valendo")
+
+# 7. configuração faltando
 for cfg, trecho in (({}, "SENHA"), ({"HEIMDALL_BACKUP_SENHA": "x"}, "destino")):
     try:
         B.fazer(cfg)

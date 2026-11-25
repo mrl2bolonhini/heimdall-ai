@@ -81,6 +81,22 @@ confere("finance: importados vira imported", hp.finance_imported(d7 / "inbox") =
 confere("finance: revisar vira review", hp.finance_review(d7 / "inbox") == d7 / "inbox" / "review" and (d7 / "inbox" / "review" / "x.csv").exists())
 confere("health/ está no .gitignore", "/health/" in (RAIZ / ".gitignore").read_text().splitlines())
 
+# pessoas/ e people/ ao mesmo tempo (o Learn gravava em pessoas/, o banco em people/): junta sem sobrescrever nem apagar
+d6 = Path(tempfile.mkdtemp())
+(d6 / "pessoas" / "pa" / "knowledge").mkdir(parents=True)
+(d6 / "pessoas" / "pa" / "learn.db").write_text("learn-da-pa")
+(d6 / "pessoas" / "pa" / "knowledge" / "m.md").write_text("material")
+(d6 / "pessoas" / "pa" / "heimdall.db").write_text("versao-antiga")
+(d6 / "pessoas" / "pb").mkdir()
+(d6 / "pessoas" / "pb" / "learn.db").write_text("learn-da-pb")
+(d6 / "people" / "pa").mkdir(parents=True)
+(d6 / "people" / "pa" / "heimdall.db").write_text("versao-nova")
+r = hp.people(d6)
+confere("people: as duas pastas viram uma, em people/", r == d6 / "people" and (r / "pa" / "learn.db").read_text() == "learn-da-pa" and (r / "pb" / "learn.db").read_text() == "learn-da-pb" and (r / "pa" / "knowledge" / "m.md").exists())
+confere("people: o que existe nos dois lugares não é sobrescrito nem apagado", (r / "pa" / "heimdall.db").read_text() == "versao-nova" and (d6 / "pessoas" / "pa" / "heimdall.db").read_text() == "versao-antiga")
+confere("people: permissão 0700", stat.S_IMODE(r.stat().st_mode) == 0o700)
+hp.people(d6)
+confere("people: rodar de novo não muda nada", (d6 / "pessoas" / "pa" / "heimdall.db").exists() and (r / "pa" / "heimdall.db").read_text() == "versao-nova")
 # organização do repositório
 soltos = [p.name for p in RAIZ.iterdir() if p.is_file() and (p.name.startswith(("teste_", "test_")) or p.name.startswith("LEIAME_") or p.name.startswith("prompt_chat_"))]
 confere("nenhum teste, guia LEIAME ou prompt solto na raiz", not soltos, ", ".join(soltos))

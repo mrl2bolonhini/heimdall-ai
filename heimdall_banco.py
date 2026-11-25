@@ -425,11 +425,20 @@ _NOME_PESSOA = re.compile(r"^[a-z0-9-]{1,32}$")
 _troca = threading.RLock()
 
 
+def nome_de_pessoa_valido(nome: str) -> bool:
+    return bool(_NOME_PESSOA.match(nome or ""))
+
+
+def pasta_pessoas() -> Path:
+    """Pasta que guarda os bancos das pessoas (db/people/)."""
+    return heimdall_pastas.people(_RAIZ)
+
+
 def pasta_da_pessoa(nome: str) -> Path:
     """Pasta do banco de uma pessoa (db/people/<nome>/). Só a-z, 0-9 e hífen: nada de ../."""
     if not _NOME_PESSOA.match(nome or ""):
         raise ValueError("nome de pessoa inválido")
-    return heimdall_pastas.migrar(_RAIZ, "pessoas", "people") / nome
+    return heimdall_pastas.people(_RAIZ) / nome
 
 
 @contextlib.contextmanager

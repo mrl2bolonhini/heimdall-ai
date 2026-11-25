@@ -8,7 +8,7 @@ No Mac (HEIMDALL_CONTINUIDADE=1 no .env liga; =0 desliga e não envia nada):
 No contêiner (a imagem chama sozinha na subida):
     python3 heimdall_continuidade.py restaurar [PASTA]   baixa e decifra a última cópia para PASTA (padrão: a pasta do projeto)
 
-Como funciona: cada banco SQLite (db/*.db, finance/*.db) vira uma cópia consistente (SQLite .backup, com conferência de integridade),
+Como funciona: cada banco SQLite (db/*.db, db/people/*/*.db, finance/*.db) vira uma cópia consistente (SQLite .backup, com conferência de integridade),
 é cifrado no próprio Mac (a senha HEIMDALL_CONTINUIDADE_SENHA nunca vai ao R2) e gravado em continuidade/. Um manifesto cifrado lista os
 arquivos, o tamanho e a soma de conferência de cada um. Na restauração toda soma é conferida antes de gravar; nada que já exista é apagado.
 A nuvem só lê esta cópia: o Mac continua sendo a fonte (as alterações feitas na nuvem durante uma queda entram na fase do diário de alterações).
@@ -28,7 +28,7 @@ from pathlib import Path
 import heimdall_backup as backup
 
 PROJECT_DIR = Path(__file__).resolve().parent
-PADROES = ("db/*.db", "finance/*.db", "db/avisos_config_*.json", "finance/avisos_config_*.json")
+PADROES = ("db/*.db", "db/people/*/*.db", "finance/*.db", "db/avisos_config_*.json", "finance/avisos_config_*.json")
 PREFIXO = "continuidade/"
 MANIFESTO = PREFIXO + "manifesto.hdcn"
 

@@ -89,11 +89,11 @@ confere("pastas com o mesmo nome são independentes (categoria diferente)", d.ob
 
 # arquivos no lugar certo
 multipart("ana", "segredos-da-ana", "ana.md", "Texto secreto da Ana")
-ka = TMP / "db" / "pessoas" / ANA / "knowledge" / "segredos-da-ana" / "ana.md"
+ka = TMP / "db" / "people" / ANA / "knowledge" / "segredos-da-ana" / "ana.md"
 confere("arquivo da Ana fica na pasta dela, fora de knowledge/ do dono", ka.is_file() and not list((TMP / "knowledge").rglob("ana.md")))
 confere("a pasta da Ana não está dentro de knowledge/ (a busca do dono não a vê)", not (TMP / "knowledge" / "pessoas").exists() and not (TMP / "knowledge" / "segredos-da-ana").exists())
-confere("a Ana tem o banco dela e o dono o dele", (TMP / "db" / "pessoas" / ANA / "learn.db").is_file() and (TMP / "db" / "learn.db").is_file())
-confere("permissão da pasta da Ana é só do dono do Mac", oct((TMP / "db" / "pessoas" / ANA).stat().st_mode & 0o777) == "0o700")
+confere("a Ana tem o banco dela e o dono o dele", (TMP / "db" / "people" / ANA / "learn.db").is_file() and (TMP / "db" / "learn.db").is_file())
+confere("permissão da pasta da Ana é só do dono do Mac", oct((TMP / "db" / "people" / ANA).stat().st_mode & 0o777) == "0o700")
 _, p, _ = req("ana", "GET", "/pasta?c=segredos-da-ana")
 confere("a Ana vê o documento dela", "ana.md" in p)
 st, p, _ = req("beto", "GET", "/pasta?c=segredos-da-ana")
@@ -101,9 +101,9 @@ confere("o Beto abrindo o caminho da pasta da Ana não vê nada", "ana.md" not i
 st, p, _ = req("dono", "GET", "/pasta?c=segredos-da-ana")
 confere("o dono abrindo o caminho da pasta da Ana não vê nada", "ana.md" not in p)
 st, _, r = multipart("beto", "segredos-da-ana", "intruso.md", "x")
-confere("o Beto não consegue importar na pasta da Ana", not (TMP / "db" / "pessoas" / ANA / "knowledge" / "segredos-da-ana" / "intruso.md").exists() and not list((TMP / "db").rglob("intruso.md")))
+confere("o Beto não consegue importar na pasta da Ana", not (TMP / "db" / "people" / ANA / "knowledge" / "segredos-da-ana" / "intruso.md").exists() and not list((TMP / "db").rglob("intruso.md")))
 st, _, _ = post("beto", "/ajustes/arquivar", {"c": "segredos-da-ana", "confirmar": "1"})
-confere("o Beto não consegue arquivar a pasta da Ana", ka.is_file() and (TMP / "db" / "pessoas" / ANA / "learn.db").is_file())
+confere("o Beto não consegue arquivar a pasta da Ana", ka.is_file() and (TMP / "db" / "people" / ANA / "learn.db").is_file())
 
 # ajustes e agenda por pessoa
 post("ana", "/ajustes/definir", {"chave": "agenda", "valor": "0"})
@@ -117,8 +117,8 @@ confere("agenda por pessoa", ag_ana == 2 and ca.obter_agenda("comum")["cards_dia
 
 # agenda percorre as pessoas, sem avisos para convidado
 confere("a agenda enxerga o dono e as pessoas que já usaram o Learn", pe.existentes(d.pasta_dados_base()) == ["dono", *sorted([ANA, BETO])])
-(TMP / "db" / "pessoas" / ANA / "knowledge" / "comum").mkdir(parents=True, exist_ok=True)
-(TMP / "db" / "pessoas" / ANA / "knowledge" / "comum" / "m.md").write_text("Texto de estudo da Ana sobre programação e funções. " * 20, encoding="utf-8")
+(TMP / "db" / "people" / ANA / "knowledge" / "comum").mkdir(parents=True, exist_ok=True)
+(TMP / "db" / "people" / ANA / "knowledge" / "comum" / "m.md").write_text("Texto de estudo da Ana sobre programação e funções. " * 20, encoding="utf-8")
 avisos = []
 with pe.definir(ANA):
     d.definir_ajuste("agenda", "1")

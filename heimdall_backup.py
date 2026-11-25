@@ -6,6 +6,8 @@ criptografa com AES-256-GCM (chave derivada da senha com scrypt) e grava em um o
   - uma pasta (por exemplo no iCloud Drive: o Mac já sincroniza para fora dele);
   - um bucket do Cloudflare R2 (API compatível com S3, via boto3).
 Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses.
+O banco de cada pessoa (db/people/<id>/heimdall.db) tem cópias próprias, na subpasta people/<id>/ de cada destino,
+com a mesma senha e a mesma retenção, contadas separadamente das do dono.
 
 Configuração (no .env, nunca no Git):
     HEIMDALL_BACKUP_SENHA   senha das cópias (gerada por:  python3 heimdall_backup.py preparar)
@@ -90,9 +92,14 @@ def reter(nomes):
 # ---------------------------------------------------------------- destinos
 
 class DestinoPasta:
-    def __init__(self, pasta):
+    def __init__(self, pasta, sub=""):
         self.nome = f"pasta {pasta}"
-        self.pasta = Path(pasta).expanduser()
+        self.pasta = Path(pasta).expanduser() / sub if sub else Path(pasta).expanduser()
+
+    def da_pessoa(self, pessoa):
+        d = DestinoPasta.__new__(DestinoPasta)
+        d.nome, d.pasta = self.nome, self.pasta / "people" / pessoa
+        return d
 
     def enviar(self, nome, blob):
         self.pasta.mkdir(parents=True, exist_ok=True)
@@ -114,32 +121,38 @@ class DestinoR2:
     def __init__(self, cfg, cliente=None):
         self.nome = f"R2 {cfg['bucket']}"
         self.bucket = cfg["bucket"]
+        self.prefixo = ""
         if cliente is None:
             import boto3
             cliente = boto3.client("s3", endpoint_url=cfg["endpoint"], aws_access_key_id=cfg["key_id"],
                                    aws_secret_access_key=cfg["secret"], region_name="auto")
         self.c = cliente
 
+    def da_pessoa(self, pessoa):
+        d = DestinoR2.__new__(DestinoR2)
+        d.nome, d.bucket, d.c, d.prefixo = self.nome, self.bucket, self.c, f"people/{pessoa}/"
+        return d
+
     def enviar(self, nome, blob):
-        self.c.put_object(Bucket=self.bucket, Key=nome, Body=blob)
+        self.c.put_object(Bucket=self.bucket, Key=self.prefixo + nome, Body=blob)
 
     def listar(self):
         nomes, token = [], None
         while True:
-            kw = {"Bucket": self.bucket, "Prefix": "heimdall-"}
+            kw = {"Bucket": self.bucket, "Prefix": self.prefixo + "heimdall-"}
             if token:
                 kw["ContinuationToken"] = token
             r = self.c.list_objects_v2(**kw)
-            nomes += [o["Key"] for o in r.get("Contents", []) if o["Key"].endswith(EXT)]
+            nomes += [o["Key"][len(self.prefixo):] for o in r.get("Contents", []) if o["Key"].endswith(EXT)]
             if not r.get("IsTruncated"):
                 return sorted(nomes)
             token = r.get("NextContinuationToken")
 
     def ler(self, nome):
-        return self.c.get_object(Bucket=self.bucket, Key=nome)["Body"].read()
+        return self.c.get_object(Bucket=self.bucket, Key=self.prefixo + nome)["Body"].read()
 
     def apagar(self, nome):
-        self.c.delete_object(Bucket=self.bucket, Key=nome)
+        self.c.delete_object(Bucket=self.bucket, Key=self.prefixo + nome)
 
 
 def _env(env=None):
@@ -199,8 +212,48 @@ def _copia_consistente() -> bytes:
         return tmp.read_bytes()
 
 
+def pessoas() -> list:
+    """Identificadores das pessoas que já têm banco próprio (db/people/<id>/heimdall.db), em ordem."""
+    raiz = banco.pasta_pessoas()
+    if not raiz.is_dir():
+        return []
+    return sorted(p.name for p in raiz.iterdir() if banco.nome_de_pessoa_valido(p.name) and (p / "heimdall.db").is_file())
+
+
+def _enviar(dests, nome, blob):
+    res = []
+    for d in dests:
+        try:
+            d.enviar(nome, blob)
+            if d.ler(nome) != blob:   # confere o que foi gravado
+                raise RuntimeError("o arquivo gravado não confere com o enviado")
+            manter = reter(d.listar())
+            for velho in d.listar():
+                if velho not in manter:
+                    d.apagar(velho)
+            res.append({"destino": d.nome, "ok": True})
+        except Exception as ex:  # noqa: BLE001 - um destino com problema não pode impedir os outros
+            res.append({"destino": d.nome, "ok": False, "erro": str(ex)[:200]})
+    return res
+
+
+def _copias_das_pessoas(dests, nome, senha):
+    """Uma cópia cifrada por pessoa, na subpasta people/<id>/ de cada destino. Um banco com problema não impede os outros."""
+    saida = []
+    for p in pessoas():
+        try:
+            with banco.da_pessoa(p):
+                blob = cifrar(_copia_consistente(), senha)
+            res = _enviar([d.da_pessoa(p) for d in dests], nome, blob)
+            saida.append({"pessoa": p, "ok": all(r["ok"] for r in res), "destinos": res})
+        except Exception as ex:  # noqa: BLE001
+            saida.append({"pessoa": p, "ok": False, "erro": str(ex)[:200]})
+    return saida
+
+
 def fazer(env=None, cliente_r2=None, agora=None):
-    """Faz a cópia e envia a todos os destinos. Devolve {ok, nome, destinos:[{destino, ok, erro?}]}; ok só se TODOS deram certo."""
+    """Faz a cópia do banco do dono e do banco de cada pessoa e envia a todos os destinos.
+    Devolve {ok, nome, destinos:[{destino, ok, erro?}], pessoas:[{pessoa, ok, ...}]}; ok só se TUDO deu certo."""
     e = _env(env)
     senha = e.get("HEIMDALL_BACKUP_SENHA", "")
     if not senha:
@@ -212,21 +265,10 @@ def fazer(env=None, cliente_r2=None, agora=None):
         agora = agora or datetime.now()
         nome = f"heimdall-{agora:%Y-%m-%dT%H%M}{EXT}"
         blob = cifrar(_copia_consistente(), senha)
-        res = []
-        for d in dests:
-            try:
-                d.enviar(nome, blob)
-                if d.ler(nome) != blob:   # confere o que foi gravado
-                    raise RuntimeError("o arquivo gravado não confere com o enviado")
-                manter = reter(d.listar())
-                for velho in d.listar():
-                    if velho not in manter:
-                        d.apagar(velho)
-                res.append({"destino": d.nome, "ok": True})
-            except Exception as ex:  # noqa: BLE001 - um destino com problema não pode impedir os outros
-                res.append({"destino": d.nome, "ok": False, "erro": str(ex)[:200]})
-        saida = {"ok": all(r["ok"] for r in res), "nome": nome, "bytes": len(blob), "destinos": res,
-                 "quando": agora.isoformat(timespec="seconds")}
+        res = _enviar(dests, nome, blob)
+        das_pessoas = _copias_das_pessoas(dests, nome, senha)
+        saida = {"ok": all(r["ok"] for r in res) and all(p["ok"] for p in das_pessoas), "nome": nome, "bytes": len(blob),
+                 "destinos": res, "pessoas": das_pessoas, "quando": agora.isoformat(timespec="seconds")}
         est = estado()
         est.update({"ultima_tentativa": saida})
         if saida["ok"]:
@@ -236,36 +278,47 @@ def fazer(env=None, cliente_r2=None, agora=None):
 
 
 def listar(env=None, cliente_r2=None):
-    return {d.nome: d.listar() for d in destinos(env, cliente_r2)}
+    """Cópias do dono por destino; as de cada pessoa aparecem como "<destino> / people/<id>"."""
+    saida = {}
+    for d in destinos(env, cliente_r2):
+        saida[d.nome] = d.listar()
+        for p in pessoas():
+            saida[f"{d.nome} / people/{p}"] = d.da_pessoa(p).listar()
+    return saida
+
+
+def _verificar_destino(d, senha):
+    nomes = d.listar()
+    if not nomes:
+        return {"ok": False, "erro": "nenhuma cópia encontrada"}
+    try:
+        dados = decifrar(d.ler(nomes[-1]), senha)
+        with tempfile.TemporaryDirectory() as t:
+            p = Path(t) / "v.db"
+            p.write_bytes(dados)
+            con = sqlite3.connect(p)
+            try:
+                integ = con.execute("PRAGMA integrity_check").fetchone()[0]
+                tabelas = {r[0]: con.execute(f'SELECT COUNT(*) FROM "{r[0]}"').fetchone()[0]
+                           for r in con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
+            finally:
+                con.close()
+        return {"ok": integ == "ok", "copia": nomes[-1], "integridade": integ, "linhas_por_tabela": tabelas}
+    except Exception as ex:  # noqa: BLE001
+        return {"ok": False, "copia": nomes[-1], "erro": str(ex)[:200]}
 
 
 def verificar(env=None, cliente_r2=None):
-    """Baixa a cópia mais recente de cada destino, decifra e confere a integridade e as tabelas."""
+    """Baixa a cópia mais recente de cada destino (a do dono e a de cada pessoa), decifra e confere a integridade e as tabelas."""
     e = _env(env)
     senha = e.get("HEIMDALL_BACKUP_SENHA", "")
     if not senha:
         raise RuntimeError("falta HEIMDALL_BACKUP_SENHA no .env")
     saida = {}
     for d in destinos(e, cliente_r2):
-        nomes = d.listar()
-        if not nomes:
-            saida[d.nome] = {"ok": False, "erro": "nenhuma cópia encontrada"}
-            continue
-        try:
-            dados = decifrar(d.ler(nomes[-1]), senha)
-            with tempfile.TemporaryDirectory() as t:
-                p = Path(t) / "v.db"
-                p.write_bytes(dados)
-                con = sqlite3.connect(p)
-                try:
-                    integ = con.execute("PRAGMA integrity_check").fetchone()[0]
-                    tabelas = {r[0]: con.execute(f'SELECT COUNT(*) FROM "{r[0]}"').fetchone()[0]
-                               for r in con.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
-                finally:
-                    con.close()
-            saida[d.nome] = {"ok": integ == "ok", "copia": nomes[-1], "integridade": integ, "linhas_por_tabela": tabelas}
-        except Exception as ex:  # noqa: BLE001
-            saida[d.nome] = {"ok": False, "copia": nomes[-1], "erro": str(ex)[:200]}
+        saida[d.nome] = _verificar_destino(d, senha)
+        for p in pessoas():
+            saida[f"{d.nome} / people/{p}"] = _verificar_destino(d.da_pessoa(p), senha)
     return saida
 
 

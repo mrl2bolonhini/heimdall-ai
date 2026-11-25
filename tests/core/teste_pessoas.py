@@ -38,10 +38,10 @@ for ruim in ("", "sem-arroba", None):
 confere("ids forjados não valem", not pe.valido("../x") and not pe.valido("p123") and not pe.valido("P" + "0" * 12) and pe.valido("dono"))
 confere("sem nada definido, é o dono, com o caminho de sempre", pe.atual() == "dono" and pe.raiz(base) == base)
 with pe.definir(ana):
-    confere("com a pessoa definida, o caminho é o dela (db/pessoas/<id>)", pe.atual() == ana and pe.raiz(base) == base / "pessoas" / ana and (base / "pessoas" / ana).is_dir())
-    confere("permissão só do dono do Mac", oct((base / "pessoas" / ana).stat().st_mode & 0o777) == "0o700")
+    confere("com a pessoa definida, o caminho é o dela (db/people/<id>)", pe.atual() == ana and pe.raiz(base) == base / "people" / ana and (base / "people" / ana).is_dir())
+    confere("permissão só do dono do Mac", oct((base / "people" / ana).stat().st_mode & 0o777) == "0o700")
     with pe.definir(beto):
-        confere("blocos aninhados trocam e voltam", pe.atual() == beto and pe.raiz(base) == base / "pessoas" / beto)
+        confere("blocos aninhados trocam e voltam", pe.atual() == beto and pe.raiz(base) == base / "people" / beto)
     confere("volta para a anterior", pe.atual() == ana)
 confere("fora do bloco volta ao dono", pe.atual() == "dono")
 try:
@@ -72,7 +72,7 @@ confere("thread sem vínculo cai no dono (nunca em outra pessoa)", sem == ["dono
 
 # listar
 confere("existentes: dono e as pastas válidas", pe.existentes(base) == ["dono", *sorted([ana, beto])] or pe.existentes(base) == ["dono", ana])
-(base / "pessoas" / "lixo").mkdir()
+(base / "people" / "lixo").mkdir()
 confere("pasta com nome fora do padrão é ignorada", "lixo" not in pe.existentes(base))
 
 # desligado

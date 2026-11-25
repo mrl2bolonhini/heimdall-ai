@@ -18,8 +18,8 @@ DESENHO ESCOLHIDO (recomendado)
   5. O código já é um banco por serviço: a mudança é onde o arquivo mora.
 
   Layout:
-    db/pessoas/<id>/learn.db, notes.db, news.db, games.db ...
-    material do Learn de cada convidado: db/pessoas/<id>/knowledge/ (fora do knowledge/ do dono, para a busca nos documentos do dono nunca ver os arquivos dele); áudios em db/pessoas/<id>/audio/
+    db/people/<id>/learn.db, notes.db, news.db, games.db ...
+    material do Learn de cada convidado: db/people/<id>/knowledge/ (fora do knowledge/ do dono, para a busca nos documentos do dono nunca ver os arquivos dele); áudios em db/people/<id>/audio/
   O <id> é derivado do e-mail (uma sigla do hash dele), sem o e-mail no nome da pasta.
   O dono mantém os caminhos de hoje (db/learn.db, knowledge/). Assim não há migração nem risco para os seus dados. As pessoas novas entram em db/pessoas/. (Decisão a confirmar: ver o fim.)
 
@@ -32,10 +32,10 @@ FASES
   2. Lab, Notes, News e Games: mesmo tratamento, um serviço por vez.
   3. Chat: o Open WebUI já tem usuários próprios. A memória e a busca nos documentos (Qdrant) passam a uma coleção por pessoa, e as ferramentas MCP recebem a pessoa. Fase maior, depende de como o Open WebUI repassa o usuário às ferramentas.
   4. Health, Finance e os demais, só do dono hoje: seguem do dono. Se um dia forem abertos a outras pessoas, entram no mesmo modelo, com cuidado extra (dados sensíveis, chave por pessoa).
-  5. Ciclo de vida: exportar os dados de uma pessoa, apagar os dados de uma pessoa a pedido, cópia de segurança por pessoa (heimdall_backup.py) e aba Usuários do Controls mostrando o espaço usado.
+  5. Ciclo de vida: exportar os dados de uma pessoa, apagar os dados de uma pessoa a pedido, cópia de segurança por pessoa (heimdall_backup.py; feita em 25/11/2026 para o heimdall.db de cada pessoa) e aba Usuários do Controls mostrando o espaço usado.
 
 QUESTÕES QUE PRECISAM DE DECISÃO
-  1. Dono nos caminhos de hoje (recomendado) ou mover tudo para db/pessoas/<dono>/ também? Mover deixa tudo igual, mas exige migração dos seus dados.
+  1. Dono nos caminhos de hoje (recomendado) ou mover tudo para db/people/<dono>/ também? Mover deixa tudo igual, mas exige migração dos seus dados.
   2. Avisos do Learn para convidados: o aviso do Mac é só do dono, e o Bark é do seu iPhone. Convidado ficaria sem aviso até existir um canal próprio (e-mail ou push do app). Até lá, só o dono recebe avisos.
   3. Custo dos modelos: o teto de US$ 15 por mês é um só. Com várias pessoas, convém uma cota por pessoa e por dia para ninguém consumir o teto dos outros.
   4. Quando a pessoa entra sem Cloudflare Access (login local no Mac), ela é sempre o dono.
