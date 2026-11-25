@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Roadmap revisado pelo PO
+- O roadmap foi conferido com o código e reordenado. Saíram itens já entregues (Termos de Uso e Política de Privacidade publicados; site de Saúde lendo o banco de cada pessoa) e a pesquisa de lojas alternativas para o iPhone, encerrada porque não resolve o custo.
+- Continuidade aparece como implantada (desde 23/11/2026), com o teste de queda real como próximo passo; o servidor próprio está na fase 0, com conta na Locaweb e chamado aberto.
+- Itens juntados: comunicação profissional e Ajuda nos Ajustes entram na revisão de navegação; a fase 2 da migração para a Cloudflare (arquivos no R2) e o chat na nuvem entram nas fases do servidor próprio; a política de dados para clientes entra em Health e Finance para várias pessoas.
+
 ## 2026-11-25 - Time de desenvolvimento com skills
 - Cinco papéis em `.claude/skills/` (PO, tech lead, UX, QA funcional e QA de acessibilidade) e o comando `/time` para acioná-los conforme a demanda. Regras no CLAUDE.md. O PO cuida do backlog (o ROADMAP): compara cada demanda com o que existe, alerta prioridades e propõe a ordem; `/time --backlog` pede só essa análise.
 

@@ -1,6 +1,6 @@
 Continuidade do Heimdall na nuvem quando o Mac fica fora do ar
 
-Status: plano a desenvolver (decisões do usuário em 23/11/2026: só entra em ação quando o Mac cai; gravar dados na nuvem é aceito, inclusive saúde e finanças).
+Status: implantada em 23/11/2026, falta o teste de queda real e o diário de alterações (decisões do usuário em 23/11/2026: só entra em ação quando o Mac cai; gravar dados na nuvem é aceito, inclusive saúde e finanças).
 
 1. Objetivo
 Quando o Mac ficar sem energia ou sem rede, os sites do Heimdall (Finance, Health, Notes, News, Learn, Games, Lab, Controls) e os fluxos essenciais continuam funcionando na nuvem, sem custo enquanto o Mac está no ar. Quando o Mac volta, ele reassume e os dados feitos na nuvem voltam para ele.

@@ -1,6 +1,6 @@
 Plano de migração do Heimdall para um servidor próprio (VPS)
 
-Status: plano a desenvolver (decisões do usuário em 24/11/2026). Nada deste plano está implementado; cada fase só começa depois do sim do usuário.
+Status: fase 0 em andamento (decisões do usuário em 24/11/2026). Em 25/11/2026 a conta na Locaweb foi criada e o chamado com as perguntas abaixo foi aberto; falta registrar as respostas e decidir contrato e orçamento. Nenhuma fase com código começou; cada uma só começa depois do sim do usuário.
 
 1. Objetivo
 Manter o Heimdall no ar sem depender do Mac. Um servidor alugado (VPS) passa a hospedar os serviços, os fluxos e os dados. O Mac deixa de ser a fonte e vira cliente, mantendo uma única função que só ele tem: a ponte com os apps da Apple.
