@@ -7,6 +7,9 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Continuidade aparece como implantada (desde 23/11/2026), com o teste de queda real como próximo passo; o servidor próprio está na fase 0, com conta na Locaweb e chamado aberto.
 - Itens juntados: comunicação profissional e Ajuda nos Ajustes entram na revisão de navegação; a fase 2 da migração para a Cloudflare (arquivos no R2) e o chat na nuvem entram nas fases do servidor próprio; a política de dados para clientes entra em Health e Finance para várias pessoas.
 
+## 2026-11-25 - Contexto do projeto para quem desenvolve
+- Novo guides/contexto_projeto.txt, com o resumo do que foi implementado, debatido e decidido entre 11 e 25/11/2026 (arquitetura, Open WebUI enxuto e chat próprio, servidor e hospedagem, Open Finance e tarefas agendadas, estilo e conceito, time de skills, marca e pendências). O CLAUDE.md manda lê-lo antes de planejar.
+
 ## 2026-11-25 - Time de desenvolvimento com skills
 - Cinco papéis em `.claude/skills/` (PO, tech lead, UX, QA funcional e QA de acessibilidade) e o comando `/time` para acioná-los conforme a demanda. Regras no CLAUDE.md. O PO cuida do backlog (o ROADMAP): compara cada demanda com o que existe, alerta prioridades e propõe a ordem; `/time --backlog` pede só essa análise.
 

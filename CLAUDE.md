@@ -1,5 +1,8 @@
 # Regras do repositório Heimdall-ai
 
+## Contexto
+- Antes de planejar qualquer demanda, leia `guides/contexto_projeto.txt`: resumo do que foi implementado, debatido e decidido (Open WebUI enxuto e chat próprio, servidor e Locaweb, Open Finance e tarefas agendadas, estilo e conceito, time de skills, nome do produto). Ao fechar um bloco de decisões novas, atualize esse arquivo.
+
 ## Heimdall Design (obrigatório em toda atualização de interface)
 Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News, Saúde, Jogos, Finance), leia a página de Design
 (gerada em gerar_docs.py, seção "Heimdall Design") e siga-a. A fonte única de cores, tipografia, medidas, foco e botão é `heimdall_design.py`.

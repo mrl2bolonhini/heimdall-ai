@@ -1,0 +1,96 @@
+CONTEXTO DO PROJETO PARA QUEM DESENVOLVE (Claude Code e demais colaboradores)
+
+Atualizado em 25/11/2026. Resume o que foi implementado, debatido e decidido entre 11 e 25/11/2026. Leia junto com o CLAUDE.md (regras fixas), o ROADMAP.md (backlog, dono: o PO) e o CHANGELOG.md (o que já foi entregue). Este arquivo não guarda dados pessoais do dono: o repositório é público. Onde houver conflito, valem o CLAUDE.md e a decisão mais recente do usuário.
+
+1. O que é o Heimdall
+1) Um assistente pessoal que organiza finanças, cuida da saúde, entretém com jogos, alimenta com notícias e ensina com estudos. O nome atual é provisório (ver item 9).
+2) Foi pensado para virar produto comercial (decisão de 23/11/2026): texto profissional, sem dados do dono, pensando em qualquer usuário e em Windows, macOS, iPhone e Android.
+3) O dono é cego e usa VoiceOver. A acessibilidade vale para todos, sem exageros: o essencial para leitor de tela e teclado, sem anúncios nem rótulos redundantes.
+4) Dados pessoais só no banco e no .env do dono. Segredo nunca é colado: o usuário roda um comando de terminal que lê o valor (heimdall env --set, que lê a área de transferência).
+
+2. Arquitetura hoje
+1) Hospedagem: um Mac (Mac Studio) roda tudo: Ollama (modelos locais), LiteLLM (porta 9000), servidores MCP (8000 só do Mac, 8001 público, 8004 só o banco pessoal em 127.0.0.1), agente do Mac (8003, ponte com Notas, Calendário e Lembretes), n8n (fluxos, em Docker), Qdrant (busca por significado), SearXNG, Open WebUI (chat), Uptime Kuma (status) e os sites Python em heimdall-ai.tech: Lab (antes Cloud), Notes, News, Health, Games, Finance, Learn, Controls e Account.
+2) Acesso: túnel da Cloudflare com Cloudflare Access (login por Microsoft Authenticator, com push) e Tailscale para o iPhone. A mesma senha vale em todos os serviços.
+3) Nuvem: Cloudflare Workers Paid. Continuidade implantada em 23/11/2026: Worker, contêiner, cópia cifrada dos bancos no R2 e deploy automático quando a main avança. Quando o Mac cai, os serviços seguem em modo reduzido na Cloudflare.
+4) Limite de gasto da Cloudflare: US$ 15 por mês, com alertas ligados antes de cada fase. Toda fase tem interruptor no .env e cópia no Mac antes de qualquer remoção.
+5) Fluxo de git: trabalha-se na develop; a main só avança com o sim explícito do usuário e por fast-forward. Depois de cada entrega: heimdall update --restart (ou sem reinício, conforme o caso) e dizer o que não foi testado.
+6) Desenvolvimento na assinatura Pro do Claude, não na API (a API é cobrada à parte; o usuário desistiu dela por isso).
+
+3. O que foi implementado (22 a 25/11/2026)
+Serviços e interface
+1) Learn: plataforma de estudos por tema, com lições, voz, cartões, agenda, exercícios e progresso; estudos saíram do Notes (que ficou só com triagem e diários).
+2) Cloud virou Lab (módulo, variáveis do .env com migração, comando, app do Mac, docs e testes).
+3) Finance em abas com subabas; Games com categorias em abas e o jogo Vilarejo Sitiado; News com Perguntar em camadas.
+4) Perguntar: campo de pergunta ao fim de cada aba nos serviços com dados pessoais, com modelo leve da nuvem (Qwen3 30B sem raciocínio), resposta em estilo de chat; regra no CLAUDE.md.
+5) Ajustes é um botão no topo (depois do menu Conta), nunca uma aba. Ajuda e suporte, Termos de Uso e Política de Privacidade ficam no Account e no rodapé de todo serviço. suporte@ recebe pelo Cloudflare Email Routing; heimdall support configura envio e teste.
+6) Menu Conta antes de Ajustes na ordem do Tab; página inicial é sempre a primeira aba.
+Health (25/11/2026)
+1) Leitor de documentos de saúde com IA de apoio (exames, receitas, encaminhamentos, atestados, laudos; PDF, imagem, TXT, DOCX, WEBP, TIFF) com conferência literal contra o texto e confirmação do usuário.
+2) Memória clínica: perfil de saúde e sugestões de acompanhamento gravados no banco de cada pessoa (banco.da_pessoa), pedidos no primeiro acesso, sugestões que viram evento (data fixa) ou lembrete (algo a fazer) só quando o usuário aceita.
+3) Portal em quatro abas por assunto: Resumo (Hoje, Dia a dia, Semana, Tendências), Medidas, Prontuário e Acompanhamento; Ajustes (Perfil de saúde, Estado dos dados) é botão.
+4) Telas enxutas: sem descrição sob as abas, sem aviso falado ao abrir aba, aviso de profissional de saúde só uma vez por página no rodapé, nenhum comando de terminal na tela (vão para o Guia de comandos da Ajuda, por sistema operacional).
+Plataforma e operação
+1) Dados separados por pessoa (fundação, Learn e Health já separam; plano em guides/dados_por_pessoa_plano.txt).
+2) Pastas padronizadas em inglês (db, brain, qdrant, macapp, inbox, sheets, health) com poda automática dos backups.
+3) Alerta de memória pela memória livre; emulador de AWS (LocalStack) sob demanda.
+4) Controls: terminal web acessível e aba Nuvem com consumo do mês e avisos da Cloudflare.
+5) Time de desenvolvimento em skills (item 8).
+
+4. Open WebUI enxuto e chat próprio
+1) O usuário acha o Open WebUI cheio de funções que não usa; basta criar projetos e trocar o modelo.
+2) Entregue em 24/11/2026: modo enxuto (HEIMDALL_WEBUI_ENXUTO), sem Notas, Automações, geração de imagem, execução de código, voz local, títulos automáticos, etiquetas, sugestões e autocompletar. Poupa memória e chamadas de modelo em segundo plano. heimdall env --set aceita as variáveis do modo enxuto.
+3) Modelos do chat criados pela API (heimdall chat --models/--import/--tools): General (une Conversas e Curiosidades), Alerts, Notes, Health, Finance, Code e demais, com filtros de ferramentas por modelo. Falta validar cada modelo com perguntas reais; um modelo local já inventou números quando não tinha a ferramenta.
+4) Decisão: o chat próprio e mínimo, sobre o LiteLLM, substitui o Open WebUI na fase 6 do plano de servidor. Definição de "projeto": instrução fixa, modelo, artefatos (arquivos e resultados gerados) e histórico de conversas próprios, separados por projeto. Exige banco SQLite e pasta por projeto, com cópia no R2. Interruptor HEIMDALL_CHAT=webui|proprio; o volume do Open WebUI não é apagado. O chat não roda na nuvem por ora.
+
+5. Hospedagem: servidor próprio (VPS) e Locaweb
+1) Objetivo: manter o Heimdall no ar sem depender do Mac. Plano completo em guides/migracao_servidor.txt (fases 0 a 7, riscos, custos, segurança).
+2) Decisões de 24/11/2026: o Mac continua como ponte Apple (Notas, Calendário, Lembretes); a fonte dos dados passa a ser o servidor e o Mac vira cliente; embeddings vão para o Workers AI da Cloudflare (bge-m3); a Cloudflare citada como "VPS" era Workers VPC (beta), que é rede privada para Workers e não uma máquina.
+3) Candidato: Locaweb VPS Linux 8 GB (4 vCPU, 200 GB), datacenter no Brasil, Docker de um clique. Contrato de 24 meses sem plano mensal: R$ 63,90 por mês na promoção, R$ 124,72 na renovação. O dólar está perto de R$ 6; o teto de US$ 15 equivale a uns R$ 90. A VPS fica fora do teto da Cloudflare e somá-la ou não ao orçamento é decisão do usuário.
+4) Estado em 25/11/2026: conta criada na Locaweb e chamado aberto com seis perguntas (Docker, SLA escrito, multa antes de 24 meses, se o preço vale 24 meses, backup, IP fixo e proteção contra ataques). Faltam as respostas; contratação e perguntas à Locaweb ficam com o usuário. Nenhuma tarefa agendada acompanha essa resposta (ver item 6).
+5) Também foram considerados Google Cloud, Azure e AWS (levantamento de hospedagem grátis e paga em 24/11/2026). A decisão ficou com a VPS.
+6) Fase 2 (embeddings na nuvem) pode andar antes da contratação, pois só depende da Cloudflare.
+
+6. Tarefas agendadas e Open Finance
+1) Open Finance: o Heimdall usa o Meu Pluggy (plano pessoal gratuito, 5 conexões, atualização a cada 24 h, consentimento de 1 ano por banco) pelo comando heimdall finance --sync, somente leitura. O plano comercial da Pluggy (a partir de R$ 2.500 por mês) foi considerado caro demais.
+2) Para um app com o próprio uso e de 5 a 20 convidados, o usuário pediu cotação e dúvidas técnicas em 22/11/2026 a Tecnospeed, Klavi, Belvo e Pluggy (por e-mail e formulário, usando suporte@ como endereço de resposta). Perguntas: plano e preço para pequeno volume e por conexão extra, se pessoa física pode contratar, dados cobertos (contas, cartões, investimentos, empréstimos), consentimento, ambiente de testes, LGPD e retenção, SLA e documentação. A Quanto saiu da lista (certificado vencido no site).
+3) Tarefa agendada existente: "Acompanhar cotações de Open Finance", todo dia às 17h47 (horário de São Paulo), sem sessão persistente. Ela lê no Gmail (inclusive spam) as respostas das quatro empresas e as mensagens para o endereço de suporte, lê as threads inteiras e gera um documento (Docs) com tabela por empresa (situação, preço mensal, preço por conexão extra, exige CNPJ, dados cobertos, consentimento, ambiente de testes, LGPD, SLA, data), resumo por empresa e uma conclusão com a opção mais viável e o que falta perguntar. Ela só lê: nunca responde, envia nem aceita nada. Rodou com sucesso em 24/11/2026.
+4) Não existe tarefa agendada para a Locaweb. Se o usuário quiser, criar uma igual, só de leitura, para as respostas do chamado.
+5) Ideia em avaliação (guides/fintech_plano.txt): produto financeiro próprio por parceria com instituição receptora do Open Finance (Resolução Conjunta nº 21/2026). Abrir instituição autorizada foi descartado (capital mínimo de R$ 1 a 2 milhões). Depende de Health e Finance para várias pessoas.
+6) Regras do Finance mantidas: o Heimdall nunca paga, move dinheiro nem executa operações; análises não dão dica de investimento; só visão de competência e de caixa, sem somar a fatura de terceiros.
+7) Tarefas agendadas anteriores do ecossistema (fluxos do n8n, no Mac): relatórios das 6h, 8h e 10h, estudos, diários oficiais com retentativa até 24 h, triagem forçada pelo app Lembretes, cópia de segurança cifrada diária (iCloud e R2) e revisões de segurança. Os fluxos continuam no Mac até a fase 3 do servidor.
+
+7. Estilo e conceito (Heimdall Design)
+1) Fonte única: heimdall_design.py e a página de Design (gerar_docs.py). Link lê, botão age. Nada de cor, fonte ou foco definido só numa página.
+2) Lista de abas enxuta (cerca de 6), agrupada por assunto, com subabas; o nome da aba agrupa o assunto e a subaba nunca repete o nome da aba nem de outra subaba. Perfil, estado técnico dos dados e configurações ficam em Ajustes.
+3) Telas enxutas: sem descrições, sem avisos repetidos, sem comandos de terminal; Guia de comandos na Ajuda traz o equivalente por sistema (macOS, Linux, Windows) e o que fazer no iPhone e no Android.
+4) Texto de produto: profissional, claro, objetivo, neutro e sem dados do dono. Textos antigos são ajustados ao serem mexidos (ainda há restos, por exemplo no fluxo de digest hiperpersonalizado).
+5) Comandos do terminal: nomes em inglês; opções com dois hífens e forma curta; heimdall.zsh traduz para scripts com opções em português.
+6) Evento versus lembrete: evento é data e hora ou data fixa (Calendário); lembrete é algo a fazer (app Lembretes). Tabela em heimdall_agenda.py.
+7) Vários sistemas: Windows, macOS, iPhone e Android entram em toda decisão. O comando heimdall é do zsh; o equivalente em Python serve nos três sistemas. Dependência do Mac (agente da Apple) registra alternativa no ROADMAP.
+
+8. Time de desenvolvimento (skills)
+1) Cinco papéis em .claude/skills/: po, tech-lead, ux, qa-funcional e qa-acessibilidade. O comando /time <demanda> aciona os necessários (--so po,ux limita; --analisar só analisa; --backlog roda só o PO).
+2) O PO é dono do backlog (ROADMAP.md): compara a demanda com o que existe, alerta prioridades e propõe a ordem, que só muda com a aprovação do usuário. Arquitetos de soluções e de dados entram quando a demanda pedir.
+3) A revisão de QA roda em contexto separado. Nenhum papel substitui o teste real no Safari com VoiceOver (e TalkBack no Android).
+
+9. Marca e nome do produto
+1) O nome Heimdall pode mudar. Critérios fixos: curto, de preferência duas sílabas, bom como prefixo dos serviços; sem vogal no começo; sem "h" nem "w"; "k" só junto de vogal; sem duplo sentido nem som parecido com palavra em português; uma opção holandesa é bem-vinda.
+2) Favoritos em 24/11/2026: Baken, Bantay e Sandigan (sem decisão). O usuário fará a consulta de marca no INPI (classes 9, 35, 41 e 42) e checou domínios e GitHub pelo terminal. Prumo foi achado sem graça. Não usar a voz Luciana para testar pronúncia.
+
+10. Segurança e privacidade (lições)
+1) Já houve chave do LiteLLM exposta no histórico do git: rotacionada e limpa. Nunca versionar segredo; o repositório é público.
+2) Login pelo Microsoft Authenticator com usuário e senha antes do push, para estranhos nunca dispararem notificação. Erro AADSTS90023 no Safari do iPhone após três tentativas: foi só orientação, sem código.
+3) Dados de saúde e finanças podem ir para a nuvem protegidos (R2 com chave do cliente); a regra antiga de "nunca saem do Mac" foi abandonada em 21/11/2026.
+4) A IA propõe, o usuário decide: nada vira lembrete, evento, pagamento ou operação sem aceite. Sugestões de saúde nunca são diagnóstico nem orientação de dose.
+
+11. Pendências e decisões abertas (ver o ROADMAP para a ordem)
+1) Respostas da Locaweb, contrato e orçamento da VPS; depois fase 1 do servidor.
+2) Fase 2: embeddings no Workers AI, medindo a qualidade em português.
+3) Teste real de queda da continuidade (desligar o Mac de propósito) e acompanhamento do consumo.
+4) Validar os modelos do chat; chat próprio (fase 6).
+5) Revisão de navegação e textos dos demais serviços (Lab, Notes, News, Learn, Games, Controls), incluindo a subaba Ajuda dentro de Ajustes.
+6) Dados por pessoa: backup diário incluir db/people; depois Notes, News, Games e Chat.
+7) Escolha do nome do produto e consulta no INPI.
+8) Cotações de Open Finance: aguardar respostas e decidir entre Meu Pluggy, parceria ou nenhuma mudança.
+9) Estado da main: a main está atrás da develop; só avança com o sim do usuário (conferir com git rev-list --left-right --count origin/main...origin/develop).
+10) Lembrar o que não foi testado: Safari com VoiceOver, TalkBack, comandos em Windows e Linux, subcomandos novos do zsh.
