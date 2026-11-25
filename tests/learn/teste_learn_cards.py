@@ -201,7 +201,8 @@ confere("tema aleatório: abas Estudos, Cards e Progresso, sem Lições nem Exer
 _, ab, _ = req("GET", "/licoes?t=ingles")
 confere("tema sequencial: abas Lições, Exercícios, Cards e Progresso, sem Estudos", all(x in ab for x in ("Lições", "Exercícios", "Cards", "Progresso")) and ">Estudos</a>" not in ab.split("</nav>")[0])
 _, aj, _ = req("GET", "/ajustes?t=dados")
-confere("Ajustes carrega tela sem abas, com Voltar ao tema", "<div role=\"tablist\"" not in aj and "Voltar ao tema" in aj and "Trocar de tema" in aj)
+confere("Ajustes carrega tela sem as abas de cima (só as subabas dos Ajustes), com Voltar ao tema", 'aria-label="Seções do tema' not in aj and aj.count('role="tablist"') == 1
+        and 'aria-label="Seções dos Ajustes"' in aj and "Voltar ao tema" in aj and "Trocar de tema" in aj)
 confere("início: botões Novo estudo e Ajustes no topo, sem tipos nem categorias, com Resumo em texto", "Novo estudo" in corpo and "Ajustes" in corpo and "Tipos de estudo" not in corpo and "<h2>Categorias" not in corpo and "<h2>Resumo</h2>" in corpo and "cadastrado" in corpo and "documento" in corpo and "consulta" in corpo)
 _, aj0, _ = req("GET", "/ajustes")
 confere("os tipos e suas regras moraram nos Ajustes", "Tipos de estudo e suas regras" in aj0)

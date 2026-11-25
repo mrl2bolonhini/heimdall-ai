@@ -136,6 +136,11 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
         else:
             botoes = design.botao("/", "Voltar aos temas")
         nav = f'<div class="acoes-topo">{botoes}</div>'
+        if aba == "ajustes":   # Ajustes: tela sem abas de cima, com as subabas Configurações e Ajuda
+            sufixo = f"?t={quote(tema)}" if tema else ""
+            itens_aj = [("/ajustes" + sufixo, "Configurações"), ("/ajustes/ajuda" + sufixo, "Ajuda")]
+            atual_aj = itens_aj[1][0] if sess.get("sub") == "ajuda" else itens_aj[0][0]
+            conteudo = design.com_subabas(itens_aj, atual_aj, conteudo, "Seções dos Ajustes")
         if tema and aba and aba != "ajustes":
             itens = abas_do_tema(tema)
             nav += design.nav_abas(itens, aba, f"Seções do tema {dados.nome_bonito(tema)}")
@@ -723,7 +728,7 @@ class Learn(nuvem.ManipuladorBase):
 
     def _get(self, rota: str, q: dict, sess: dict) -> None:
         p = lambda k: (q.get(k) or [""])[0]  # noqa: E731
-        sess["tema"], sess["aba"] = "", ""   # a sessão guarda o último valor: cada página diz o seu
+        sess["tema"], sess["aba"], sess["sub"] = "", "", ""   # a sessão guarda o último valor: cada página diz o seu
         tema = p("t")
         if tema and not dados.obter_pasta(tema):
             raise dados.ErroLearn("Tema não encontrado.")
@@ -761,10 +766,14 @@ class Learn(nuvem.ManipuladorBase):
             else:
                 self._pagina(200, "Progresso", com_perguntar(sess, pg_progresso(sess, tema), tema), sess)
         elif rota == "/ajustes":
-            sess["tema"], sess["aba"] = tema, "ajustes"
+            sess["tema"], sess["aba"], sess["sub"] = tema, "ajustes", ""
             self._pagina(200, "Ajustes", pg_ajustes(sess, tema), sess)
+        elif rota == "/ajustes/ajuda":
+            import heimdall_ajuda
+            sess["tema"], sess["aba"], sess["sub"] = tema, "ajustes", "ajuda"
+            self._pagina(200, "Ajuda", heimdall_ajuda.ajuda_do_servico("learn", design.base_ajuda()), sess)
         elif rota == "/ajustes/arquivar":
-            sess["tema"], sess["aba"] = topo(p("c")), "ajustes"
+            sess["tema"], sess["aba"], sess["sub"] = topo(p("c")), "ajustes", ""
             self._pagina(200, "Arquivar pasta", pg_arquivar(sess, p("c")), sess)
         elif rota == "/licao":
             titulo, corpo = pg_licao(sess, int(p("id") or 0)) if p("id").isdigit() else (_ for _ in ()).throw(dados.ErroLearn("Lição não encontrada."))

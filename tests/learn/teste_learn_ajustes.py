@@ -119,6 +119,14 @@ confere("aba Ajustes existe e mostra o estado e as pastas com formulário de age
 ids = re.findall(r'<(?:select|input) id="([^"]+)"', corpo)
 confere("ids dos campos são únicos na página", len(ids) == len(set(ids)) and all(f'for="{i}"' in corpo for i in ids if i.startswith(("cards_dia", "horario", "licao_dia"))))
 confere("Ajustes está entre as abas e Nova pasta continua fora delas", ">Ajustes<" in corpo and 'href="/nova"' not in corpo)
+confere("Ajustes tem as subabas Configurações e Ajuda, com Configurações aberta", 'aria-label="Seções dos Ajustes"' in corpo
+        and 'aria-selected="true" tabindex="0" aria-controls="painel-subaba">Configurações</a>' in corpo and ">Ajuda</a>" in corpo and corpo.count("<h1") == 1, corpo[:800])
+st_aj, corpo_aj, _ = req("GET", "/ajustes/ajuda")
+confere("subaba Ajuda: perguntas do Learn e caminho para o suporte, com Ajuda aberta e Ajustes marcado no topo",
+        st_aj == 200 and "/ajuda?servico=learn" in corpo_aj and "Falar com o suporte" in corpo_aj and 'aria-selected="true" tabindex="0" aria-controls="painel-subaba">Ajuda</a>' in corpo_aj
+        and 'aria-current="true">Ajustes' in corpo_aj and corpo_aj.count("<h1") == 1, corpo_aj[:800])
+st_aj, corpo_aj, _ = req("GET", "/")
+confere("depois da Ajuda, a página inicial não carrega a subaba de Ajustes", 'aria-label="Seções dos Ajustes"' not in corpo_aj)
 st, _, _ = post("/ajustes/definir", {"csrf": "x", "chave": "agenda", "valor": "0"})
 confere("ajuste sem csrf é recusado", st == 403)
 st, _, r = post("/ajustes/definir", {"csrf": csrf, "chave": "agenda", "valor": "0"})
