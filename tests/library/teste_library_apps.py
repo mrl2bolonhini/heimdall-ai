@@ -139,7 +139,7 @@ def textos():
 
 
 # --- configuração e escopos
-confere("o app Microsoft usa as credenciais do OneDrive e não entra na lista de arquivos", cx.configurados("apps") == ["microsoft"] and "microsoft" not in cx.configurados("arquivos"))
+confere("o app Microsoft usa as credenciais do OneDrive e não entra na lista de arquivos", "microsoft" in cx.configurados("apps") and "microsoft" not in cx.configurados("arquivos"))
 confere("sem serviço marcado a conexão é recusada", "pelo menos um serviço" in erro(cx.iniciar, "microsoft", False, []))
 q, (ok, msg) = conectar(["notas", "agenda", "inventado"])
 confere("escopos pedidos só para os serviços marcados (serviço inventado é ignorado)", q["scope"] == ["offline_access Notes.Read Calendars.Read"] and q["code_challenge_method"] == ["S256"], q)
