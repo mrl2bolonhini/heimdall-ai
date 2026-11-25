@@ -156,7 +156,7 @@ ANALITOS = [
     ("hemoglobina", "Hemoglobina", "Hemograma", "g/dL", ["hemoglobina", "hb"], (2, 26)),
     ("hematocrito", "Hematócrito", "Hemograma", "%", ["hematocrito", "ht"], (8, 75)),
     ("hemacias", "Hemácias", "Hemograma", "milhões/mm³", ["hemacias", "eritrocitos", "contagem de hemacias"], (1, 10)),
-    ("vcm", "VCM", "Hemograma", "fL", ["vcm", "volume corpuscular medio"], (40, 160)),
+    ("vcm", "VCM", "Hemograma", "fL", ["vcm", "vem", "volume corpuscular medio"], (40, 160)),
     ("hcm", "HCM", "Hemograma", "pg", ["hcm", "hemoglobina corpuscular media"], (10, 60)),
     ("chcm", "CHCM", "Hemograma", "g/dL", ["chcm", "concentracao de hemoglobina corpuscular media"], (20, 45)),
     ("rdw", "RDW", "Hemograma", "%", ["rdw", "rdw cv"], (8, 40)),
@@ -175,6 +175,9 @@ ANALITOS = [
     ("monocitos_abs", "Monócitos (absoluto)", "Hemograma", "/µL", ["monocitos absolutos", "monocitos abs"], (0, 100000)),
     # Glicose e insulina
     ("glicemia_jejum", "Glicemia de jejum", "Glicose e insulina", "mg/dL", ["glicose", "glicemia", "glicemia de jejum", "glicose em jejum", "glicose jejum", "glicemia jejum"], (10, 1500)),
+    ("glicose_media_estimada", "Glicose média estimada (calculada da HbA1c)", "Glicose e insulina", "mg/dL", ["glicose media estimada", "glicemia media estimada", "gme"], (10, 1500)),
+    ("urina_leucocitos", "Leucócitos na urina (sedimento)", "Urina", "/mL", ["urina leucocitos"], (0, 100000000)),
+    ("urina_hemacias", "Hemácias na urina (sedimento)", "Urina", "/mL", ["urina hemacias"], (0, 100000000)),
     ("hemoglobina_glicada", "Hemoglobina glicada (HbA1c)", "Glicose e insulina", "%", ["hemoglobina glicada", "hba1c", "hemoglobina glicosilada", "hemoglobina a1c", "hb a1c"], (3, 20)),
     ("insulina", "Insulina", "Glicose e insulina", "µUI/mL", ["insulina", "insulina basal", "insulina jejum", "insulina em jejum"], (0.1, 1000)),
     ("peptideo_c", "Peptídeo C", "Glicose e insulina", "ng/mL", ["peptideo c"], (0.05, 50)),
@@ -250,6 +253,64 @@ for _a in ANALITOS:
     _NOME_CHAVE[_norm(_a[1])] = _a[0]
 
 
+_LIGADURAS = str.maketrans({"\ufb00": "ff", "\ufb01": "fi", "\ufb02": "fl", "\ufb03": "ffi", "\ufb04": "ffl"})
+
+
+def _lig(texto: str) -> str:
+    """PDFs trazem 'ﬁ' e 'ﬂ' como um caractere só (Neutróﬁlos, Bibliograﬁa); volta a duas letras para as regras e o catálogo enxergarem a palavra."""
+    t = texto.translate(_LIGADURAS)
+    t = re.sub(r"([µμ])\s+L\b", r"\1L", t)                      # "10^6/µ L" -> "10^6/µL"
+    return re.sub(r"\b([12])\s*[ªº](?=\s|$)", lambda m: {"1": "primeira", "2": "segunda"}[m.group(1)], t)   # "VHS 1ª hora": o 1 não é o resultado
+
+
+def _limpa_ocr(texto: str) -> str:
+    """Conserta no texto de OCR o que o reconhecimento costuma errar sem mudar nenhum valor: a bolinha da legenda lida como 'O' ou 'Q', as barras
+    de coluna lidas como '|]', o µ lido como 'y' e a unidade colada no número. Vírgulas perdidas não são consertadas aqui (ver _pos_ocr)."""
+    t = re.sub(r"\s*\|\]|\s\|\s", " ", texto)
+    t = re.sub(r"(?<=\s)(?:OQ|O|Q|©|●|○)(?=\s+\d)", "", t)
+    t = re.sub(r"(\d,\d{2})10[A^]?6\s*/\s*[uµμy]\s*L", r"\1 10^6/µL", t)
+    t = re.sub(r"10[4A^]?6\s*/\s*[uµμy]\s*L", "10^6/µL", t)
+    t = re.sub(r"/\s*[uyμµ]\s*L\b", "/µL", t)
+    t = re.sub(r"(\d)(g/dL|mg/dL|ng/mL|ng/dL|pg/mL|U/L|mU/L|UI/L|fL|pg|%)(?![A-Za-z])", r"\1 \2", t, flags=re.I)
+    return t
+
+
+_REF_LIMPA = re.compile(rf"(?i)^\s*(?:(?:de\s+)?(?:{_NUM})\s*(?:a|à|-|–|—)\s*(?:{_NUM})|(?:(?:inferior|superior|menor|maior)(?:\s+ou\s+igual)?\s+(?:a|que)|at[eé]|[<>≤≥]=?)\s*(?:{_NUM}))"
+                        rf"\s*[A-Za-zµμ%/0-9^³.]{{0,16}}\s*(?:[(;].*)?$")
+
+
+def _pos_ocr(resultados: list) -> list:
+    """Em texto de OCR, tira o sinal (abaixo/dentro/acima) quando a faixa de referência não foi lida de forma limpa ou quando o valor parece ter
+    perdido a vírgula, e avisa. O valor em si nunca é trocado: a conferência com o documento é do usuário."""
+    avisos = []
+    for r in resultados:
+        if r.get("fonte") not in ("regra", "ambos") or not r.get("sinal"):
+            continue
+        ref = (r.get("ref_texto") or "").strip()
+        sem_virgula = bool(re.fullmatch(r"\d{2,4}", re.sub(r"[.\s]", "", r.get("valor_texto", ""))) and "," not in r.get("valor_texto", ""))
+        lo, hi, v = r.get("ref_min"), r.get("ref_max"), r.get("valor")
+        if sem_virgula and v is not None and hi is not None and lo is not None and v > hi and lo <= v / 10 <= hi and "." not in r["valor_texto"]:
+            avisos.append(f"{r['nome']}: o valor {r['valor_texto']} pode ser {str(v / 10).replace('.', ',')} (a vírgula pode ter se perdido no reconhecimento de imagem); conferi sem o sinal.")
+            r["sinal"] = ""
+        elif not _REF_LIMPA.match(ref):
+            avisos.append(f"{r['nome']}: a faixa de referência não ficou legível no reconhecimento de imagem; deixei sem sinal.")
+            r["sinal"] = ""
+    por_chave = {r["chave"]: r for r in resultados}
+    for r in resultados:                       # percentual × total tem que bater com o valor absoluto (leucograma e proteinograma)
+        if not r["chave"].endswith("_absolutos"):
+            continue
+        base = por_chave.get(r["chave"][:-len("_absolutos")])
+        total = por_chave.get("leucocitos" if r["unidade"].startswith("/") else "proteinas_totais")
+        if not base or not total or not total.get("valor") or r.get("valor") is None or base.get("valor") is None or base.get("unidade") != "%":
+            continue
+        esperado = r["valor"] / total["valor"] * 100
+        if esperado > 0 and abs(base["valor"] - esperado) / esperado > 0.2:
+            dica = f"; deve ser cerca de {str(round(esperado, 1)).replace('.', ',')} %"
+            avisos.append(f"{base['nome']}: o percentual {base['valor_texto']} não bate com o valor absoluto {r['valor_texto']}{dica}. Confira com o documento.")
+            base["sinal"] = ""
+    return avisos
+
+
 def achar_analito(nome: str):
     """Chave do catálogo para um nome como aparece no documento (a maior correspondência vence), ou None."""
     n = _norm(nome)
@@ -281,10 +342,10 @@ def resolver_exame(texto: str):
 # --------------------------------------------------------------------------------------------
 # Unidades e referências
 # --------------------------------------------------------------------------------------------
-_UN_NUM = {"g", "mg", "ug", "ng", "pg", "kg", "ui", "iu", "u", "mui", "miu", "uui", "uiu", "mmol", "umol", "nmol", "pmol", "meq", "mosm", "fl",
+_UN_NUM = {"g", "mg", "ug", "ng", "pg", "kg", "ui", "iu", "u", "mui", "miu", "mu", "uui", "uiu", "mmol", "umol", "nmol", "pmol", "meq", "mosm", "fl",
            "ml", "dl", "l", "ul", "mm", "cel", "mil", "milhoes", "mcg", "mcui", "mcu"}
 _UN_DEN = {"dl", "l", "ml", "ul", "mm3", "mm", "min", "h", "hora", "g", "kg", "100ml", "campo", "min/1.73m2", "1.73m2", "1,73m2", "mm2"}
-_UN_SOLTA = {"%", "fl", "pg", "seg", "segundos", "s"}
+_UN_SOLTA = {"%", "fl", "pg", "seg", "segundos", "s", "mm"}
 
 
 def _unidade(tok: str) -> str:
@@ -529,7 +590,7 @@ _FIM_DE_FRASE = re.compile(r"(?i)(?:\b(?:de|da|do|em|ou|que|com|para|por|na|no|a
                            r"\b(?:inferior|superior|superiores|inferiores|menor|maior|acima|abaixo)(?:\s+ou\s+igual)?(?:\s+(?:a|de|que))?)\s*$|=\s*$")
 _META = re.compile(r"(?i)^\s*\(?\s*(?:material|m[eé]todo)\s*:")
 _TITULO_NOTA = re.compile(r"(?i)^\s*(?:(?:notas?|observa[cç][aã]o|observa[cç][oõ]es|coment[aá]rios?)\s*:|"
-                          r"(?:refer[eê]ncias?(?:\s+bibliogr[aá]ficas?)?|fontes?|bibliografia|coment[aá]rios?|notas?)\s*:?\s*$|local\s+de\s+execu[cç][aã]o)")
+                          r"(?:refer[eê]ncias?(?:\s+bibliogr[aá]ficas?)?|fontes?|bibliografia|coment[aá]rios?|notas?)\s*:?\s*$|bibliografia\s*:|refer[eê]ncias?\s+bibliogr[aá]ficas?\s*:|local\s+de\s+execu[cç][aã]o)")
 _TITULO_TABELA = re.compile(r"(?i)^\s*tabela\s+de\s+refer[eê]ncia\b")
 _HISTORICO = re.compile(r"(?i)^\s*hist[oó]rico\s+(?P<nome>\S.*)$")
 _FORTE = re.compile(r"^\s*\S.{1,70}?\s{3,}(?:[<>≤≥]=?\s*)?\d")
@@ -537,7 +598,7 @@ _REMETE_TABELA = re.compile(r"(?i)\b(?:vide|tabela|confira|abaixo|notas?)\b")
 _REF_SOLTA = re.compile(rf"(?i)^\s*(?:(?:(?:inferior|superior|menor|maior)(?:\s+ou\s+igual)?\s+(?:a|que)|at[eé]|acima\s+de|abaixo\s+de|de|[<>≤≥]=?)\s*(?:{_NUM})\b.*|"
                         rf"(?:{_NUM})\s*(?:a|à|até|-|–)\s*(?:{_NUM})\b.*)$")
 _LEUCO_BASE = ("neutrofilos", "eosinofilos", "basofilos", "linfocitos", "monocitos")
-_LEUCOGRAMA = re.compile(rf"^\s*(?P<nome>[A-Za-zÀ-ú][A-Za-zÀ-ú ]{{2,28}}?)[\s.:]+(?P<p>{_NUM})\s*%\s+(?P<a>{_NUM})\s*/\s*(?P<u>[µμu]L|mm3|mm³)\s+"
+_LEUCOGRAMA = re.compile(rf"^\s*(?P<nome>[A-Za-zÀ-ú][A-Za-zÀ-ú0-9 ]{{2,28}}?)[\s.:]+(?P<p>{_NUM})\s*%\s+(?P<a>{_NUM})\s*(?:/\s*(?P<u>[µμu]L|mm3|mm³)|(?P<g>g/dL))\s+"
                          rf"(?P<rp>[^%]*?%)\s+(?P<ra>\S.*)$")
 _CAB_RESULTADO = re.compile(r"\s")
 
@@ -547,7 +608,12 @@ def _cabecalho_de_resultados(s: str) -> bool:
     return "resultado" in c and "intervalodereferencia" in c
 
 
+_FIM_DE_RISCO = re.compile(r"(?i)\b(?:baixo|intermedi[aá]rio|alto|muito\s+alto)\s*$")
+
+
 def _nome_valido(nome: str) -> bool:
+    if _FIM_DE_RISCO.search(nome.strip()):          # linha da tabela de metas por risco ("LDL-C  Baixo  <130"), não um resultado
+        return False
     letras = len(re.findall(r"[A-Za-zÀ-ú]", nome))
     n = _norm(nome)
     return (3 <= letras and len(nome) <= 70 and not _PROIBIDAS_RE.search(n) and not re.fullmatch(r"[\d\W]+", nome)
@@ -611,6 +677,8 @@ def _montar(nome_original: str, valor_texto: str, cmp: str, unidade: str, ref_te
     cat = _POR_CHAVE.get(chave) if chave else None
     if cat and not (cat[5][0] <= valor <= cat[5][1]):
         return None, f"{cat[1]}: {_limpo(valor_texto, 20)} é um valor impossível para este exame (erro de leitura?)"
+    if not cat and unidade.strip() == "%" and valor > 100:
+        return None, f"{_limpo(nome_original, 40)}: {_limpo(valor_texto, 20)} % é impossível (passa de 100 %; erro de leitura?)"
     ref_texto = _limpo(_INICIO_REF.sub("", ref_texto or ""), 140)
     rmin, rmax = parse_ref(_INICIO_REF.sub("", ref_calculo) if ref_calculo is not None else ref_texto)
     cmp = "<" if cmp in ("<", "<=", "≤") else ">" if cmp in (">", ">=", "≥") else ""
@@ -815,9 +883,10 @@ def _novo(nome, valor, cmp, un, ref) -> dict:
 def _registros_do_laudo(texto: str, diag: dict = None) -> list:
     """Percorre o laudo linha a linha e devolve a lista de registros. Cada registro é um resultado com a tabela de referência e o histórico
     que o seguem. Notas, referências bibliográficas, rodapés e tabelas não viram resultados."""
-    linhas = texto.splitlines()
+    linhas = _lig(texto).splitlines()
     n = len(linhas)
     regs = []
+    marcados, em_urina, urina_antes = 0, False, False
     atual = None
     modo_nota = False
     apos_cab = False
@@ -827,8 +896,15 @@ def _registros_do_laudo(texto: str, diag: dict = None) -> list:
         l = linhas[i]
         s = l.strip()
         i += 1
+        for r_ in regs[marcados:]:
+            r_["urina"] = urina_antes
+        marcados, urina_antes = len(regs), em_urina
         if not s:
             continue
+        if re.match(r"(?i)^\s*(?:urina\b|exame\s+de\s+urina|sedimento\b|eas\b)", s):
+            em_urina = True
+        elif re.match(r"(?i)^\s*(?:liberado\s+por|respons[aá]vel\s*:)", s):
+            em_urina = False
         if _cabecalho_de_resultados(s):
             modo_nota, apos_cab, ref_pendente = False, True, ""
             continue
@@ -883,8 +959,13 @@ def _registros_do_laudo(texto: str, diag: dict = None) -> list:
         ml = _LEUCOGRAMA.match(l)
         if ml:
             base = ml.group("nome").strip()
-            un = "/" + ml.group("u").replace("μ", "µ").replace("u", "µ") if ml.group("u").lower().startswith(("u", "µ", "μ")) else "/" + ml.group("u")
-            if _norm(base) not in ("leucocitos", "leucocitos totais", "total"):
+            if ml.group("g"):
+                un = "g/dL"
+            else:
+                un = "/" + ml.group("u").replace("μ", "µ").replace("u", "µ") if ml.group("u").lower().startswith(("u", "µ", "μ")) else "/" + ml.group("u")
+            if _norm(base) in ("albumina", "proteinas totais"):
+                regs.append(_novo(base, ml.group("a"), "", un, ml.group("ra")))     # no proteinograma, o valor de uso é o absoluto, em g/dL
+            elif _norm(base) not in ("leucocitos", "leucocitos totais", "total"):
                 regs.append(_novo(base, ml.group("p"), "", "%", ml.group("rp")))
                 regs.append(_novo(base + " absolutos", ml.group("a"), "", un, ml.group("ra")))
             else:                                  # no total, a coluna de % é sempre 100 %: só o valor absoluto interessa
@@ -934,6 +1015,8 @@ def _registros_do_laudo(texto: str, diag: dict = None) -> list:
                 i += 1
         atual = _novo(nome, valor, cmp, un, ref)
         regs.append(atual)
+    for r_ in regs[marcados:]:
+        r_["urina"] = urina_antes
     return regs
 
 
@@ -947,7 +1030,8 @@ def ler_resultados_regra(texto: str) -> list:
             ref, alternativas, sem_sinal, base = t["ref"], t["alternativas"], t["sem_sinal"], t.get("base")
         elif (reg.get("sem_ref") or _REMETE_TABELA.search(ref or "")) and not _tem_faixa(ref or ""):
             ref, sem_sinal = "Sem intervalo numérico definido no laudo; consulte as notas", True
-        linha, motivo = _montar(reg["nome"], reg["valor"], reg["cmp"], reg["un"], ref, "regra", alternativas, sem_sinal, base)
+        nome_reg = ("Urina " + reg["nome"]) if reg.get("urina") and achar_analito("urina " + reg["nome"]) else reg["nome"]
+        linha, motivo = _montar(nome_reg, reg["valor"], reg["cmp"], reg["un"], ref, "regra", alternativas, sem_sinal, base)
         if motivo:
             descartados.append({"texto": f"{_limpo(reg['nome'], 40)} {_limpo(reg['valor'], 12)}", "motivo": motivo})
             continue
@@ -1119,6 +1203,8 @@ def extrair_exames(texto: str, ocr: bool = False) -> tuple:
             continue
         regra.append(m)
         por_chave[k] = m
+    if ocr:
+        avisos += _pos_ocr(regra)
     return regra, desc + desc_m, avisos
 
 
@@ -1511,6 +1597,9 @@ def extrair_laudos(texto: str) -> tuple:
 # Extração completa de um documento
 # --------------------------------------------------------------------------------------------
 def extrair(texto: str, ocr: bool = False) -> dict:
+    texto = _lig(texto)
+    if ocr:
+        texto = _limpa_ocr(texto)
     resultados, descartados, avisos = [], [], []
     regra, desc = ler_resultados_regra(texto)
     tipo = classificar(texto, len(regra))

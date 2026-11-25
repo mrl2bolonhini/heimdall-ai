@@ -2,6 +2,12 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Leitor de exames: laudos antigos e documentos escaneados
+- Corrigido a partir de laudos de 2021 (PDF de texto e versão escaneada): letras ligadas do PDF ("ﬁ" em Neutróﬁlos e Bibliograﬁa) voltam a duas letras; leucograma e proteinograma (albumina, globulinas) leem a coluna do absoluto em /µL e g/dL, inclusive nomes com número (Alfa1); "VHS 1ª hora" deixa de ler o 1 como resultado e passa a ler 12 mm; insulina em mU/L; "10^6/µ L" vira 10^6/µL; "VEM" é VCM.
+- Fora do lugar: linhas das tabelas de metas por risco (LDL-C Baixo, Não-HDL-C Baixo) não viram resultado; a bibliografia da vitamina D não vira um segundo resultado; a glicose média estimada (calculada da HbA1c) é um exame próprio, não a glicemia de jejum; leucócitos e hemácias do sedimento da urina têm chave própria e não se misturam com o hemograma; percentual acima de 100 % é descartado.
+- Documentos escaneados (OCR): o texto é limpo de marcas que o reconhecimento inventa (bolinha da legenda lida como "O", barras de coluna, µ lido como "y"). O valor lido nunca é trocado. Sem sinal (abaixo, dentro, acima) ficam os resultados cuja faixa de referência não saiu legível e os percentuais que não batem com o valor absoluto, com aviso (ex.: "47 %" para 0,32 g/dL, que deve ser cerca de 4,7 %).
+- Teste novo: tests/health/teste_exames_ocr.py. Não testado: OCR de outros aparelhos e celulares; a leitura do PDF escaneado foi verificada aqui com o tesseract em inglês e português.
+
 ## 2026-11-25 - Leitor com IA, atestados, laudos de imagem e mais formatos
 - Novos tipos de documento: atestado médico (dias de afastamento, início, fim, CID-10 e médico; um registro por CID; o fim é calculado quando o documento só traz os dias, com aviso) e laudo de imagem ou procedimento (ressonância, tomografia, ultrassom, raio-X, endoscopia e outros, com título e conclusão). Ambos passam pela mesma conferência dos exames e só são guardados depois que você confirma. Consulta pelo terminal: heimdall health --labs certificates e heimdall health --labs reports; a página Documentos do painel de saúde ganhou as seções Atestados e afastamentos e Laudos de imagem e procedimentos, e o chat enxerga os dois.
 - Formatos aceitos: PDF, imagem (PNG, JPG, HEIC, TIFF, BMP, WEBP), TXT e DOCX. O tipo do arquivo é conferido pelo conteúdo, não só pela extensão.
