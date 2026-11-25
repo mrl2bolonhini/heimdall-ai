@@ -209,7 +209,7 @@ def politica_privacidade() -> list:
             "Tratar dados de saúde e conectar contas financeiras: consentimento do Usuário, dado ao ativar o serviço ou a integração (art. 11, I, e art. 7, I).",
             "Manter a segurança, prevenir fraudes e diagnosticar falhas: legítimo interesse (art. 7, IX).",
             "Responder ao suporte e cumprir obrigações legais ou ordens de autoridades: execução de contrato e cumprimento de obrigação legal (art. 7, II e V).",
-            "Os dados não são vendidos, não são usados para publicidade e não são lidos pelo Responsável, exceto o necessário ao suporte e à segurança."]),
+            "Os dados dos serviços (saúde, finanças, notas e demais conteúdos do Usuário) não são vendidos, não são usados para publicidade e não são lidos pelo Responsável."]),
         ("4. Onde os dados ficam", [
             "Os serviços são hospedados em um servidor local do Responsável. Cópias cifradas de bancos e arquivos podem ser guardadas na nuvem da Cloudflare (armazenamento R2, com criptografia), para continuidade e recuperação.",
             "Se a hospedagem passar para um servidor contratado, esta política será atualizada e os Usuários serão avisados."]),
