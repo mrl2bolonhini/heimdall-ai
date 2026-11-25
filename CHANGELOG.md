@@ -2,6 +2,9 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Time de desenvolvimento com skills
+- Cinco papéis em `.claude/skills/` (PO, tech lead, UX, QA funcional e QA de acessibilidade) e o comando `/time` para acioná-los conforme a demanda. Regras no CLAUDE.md.
+
 ## 2026-11-25 - Health mais enxuto, Resumo por período e Guia de comandos
 - Resumo agora segue o tempo, sem repetir conceitos: Hoje (abre com "Precisa da sua atenção"), Dia a dia, Semana e Tendências. A antiga página Panorama virou Hoje e as Tendências ganharam página própria. O endereço /hoje continua e leva à página Hoje.
 - Telas sem repetição: o aviso de que o painel não substitui um profissional de saúde aparece uma só vez por página, no rodapé; as frases "não é diagnóstico" dos relatórios e os textos explicativos de Perfil e Sugestões saíram; as telas não mostram mais comandos.

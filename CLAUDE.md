@@ -38,6 +38,11 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News
 - Na raiz ficam só: os módulos Python (importam uns aos outros), `subir.sh`, `start_heimdall.sh`, `start_ecosystem.sh` e `heimdall.zsh` (os LaunchAgents do Mac apontam para eles: não mover), os arquivos de configuração e README, CHANGELOG, ROADMAP e CLAUDE.
 - Arquivo novo: guia vai para `guides/`, script para `scripts/` (com `cd "$(dirname "$0")/.."` no começo) e teste para `tests/<serviço>/`.
 
+## Time de desenvolvimento (skills em `.claude/skills/`, decisão do usuário em 25/11/2026)
+- Papéis: `po`, `tech-lead`, `ux`, `qa-funcional` e `qa-acessibilidade`; o comando `/time <demanda>` aciona os necessários (`--so po,ux` limita; `--analisar` só analisa). Arquiteto de soluções e arquiteto de dados entram quando a demanda pedir. Nova regra de projeto vale também para a skill do papel que a aplica.
+- Os papéis propõem e executam, mas a decisão é do usuário. A revisão de QA roda com contexto separado. Nenhum papel substitui o teste real no Safari com VoiceOver (e TalkBack no Android): diga sempre o que não foi testado.
+- Acessibilidade para todos, sem exageros: o essencial para leitor de tela e teclado, sem anúncios nem rótulos redundantes.
+
 ## Outras regras fixas
 - O Heimdall passa a ser pensado como possível produto comercial (decisão do usuário em 23/11/2026). Todo texto dentro do Heimdall (interface, mensagens de erro e aviso, ajuda, documentação, notificações) segue comunicação profissional voltada a produto: clara, objetiva, neutra e consistente, sem gíria nem tom pessoal ou de bastidor, nomeando o que o usuário pode fazer. Texto que já existe é ajustado ao ser mexido.
 - Continuidade (decisão do usuário em 23/11/2026): quando o Mac fica fora do ar (queda de energia, por exemplo), serviços e fluxos precisam continuar na nuvem. Ver o item de continuidade no ROADMAP; toda fase segue as regras de interruptor no .env e de limite de gasto.
