@@ -128,7 +128,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     urls) printf '%s\n' "-p=--public" "-c=--check" ;;
     app) printf '%s\n' "-l=--login" "-r=--remove-login" ;;
     usage) printf '%s\n' "-d=--days" ;;
-    support) printf '%s\n' "-l=--last" "-t=--test" ;;
+    support) printf '%s\n' "-l=--last" "-t=--test" "-k=--token" ;;
     ask) printf '%s\n' "-l=--local" "-c=--cloud" ;;
     mcp) printf '%s\n' "-v=--verify" ;;
     flows) printf '%s\n' "-a=--advanced" "-b=--basic" "-p=--privacy" "-e=--email" ;;
@@ -581,7 +581,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       urls) compadd -- --public --check ;;
       app) compadd -- --login --remove-login ;;
       usage) compadd -- --days ;;
-      support) compadd -- --last --test ;;
+      support) compadd -- --last --test --token ;;
       ask) compadd -- --local --cloud ;;
       mcp) compadd -- --verify ;;
       flows) compadd -- --advanced --basic --privacy --email ;;

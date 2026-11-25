@@ -394,10 +394,12 @@ Exemplos:
 Lista as últimas mensagens que os usuários enviaram pelo formulário da página Ajuda e suporte (Heimdall Account), com protocolo, estado do envio e início do texto. O estado enviada indica que o e-mail seguiu para o suporte pelo Cloudflare Email Sending; gravada_sem_envio, que a mensagem ficou só registrada (envio desligado ou falha). O envio por e-mail liga com HEIMDALL_SUPORTE_EMAIL=1, HEIMDALL_SUPORTE_DE e, se quiser outro destino, HEIMDALL_SUPORTE_PARA; as mensagens ficam em db/suporte/mensagens.jsonl.
 Opções:
   -l, --last           mostra as 10 últimas mensagens (com o motivo, quando o envio falhou)
+  -k, --token          cria, com o token atual da Cloudflare, um token só de envio de e-mail e o grava no .env (HEIMDALL_SUPORTE_TOKEN), sem exibi-lo
   -t, --test           envia uma mensagem de teste ao destino do suporte e mostra o motivo se falhar
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall support --last
+  heimdall support --token
   heimdall support --test
 
 @ notices | Traz as notas antigas de saúde e finanças para a aba Avisos

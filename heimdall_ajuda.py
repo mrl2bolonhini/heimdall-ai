@@ -333,13 +333,15 @@ def _atualizar_estado(protocolo: str, estado: str, motivo: str = "") -> None:
 
 
 def _conf() -> dict:
-    ch = ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "HEIMDALL_SUPORTE_PARA", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
-    return {k: (os.environ.get(k) or _env_arquivo(k)) for k in ch}
+    ch = ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "HEIMDALL_SUPORTE_PARA", "HEIMDALL_SUPORTE_TOKEN", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+    c = {k: (os.environ.get(k) or _env_arquivo(k)) for k in ch}
+    c["TOKEN_ENVIO"] = c.get("HEIMDALL_SUPORTE_TOKEN") or c.get("CLOUDFLARE_API_TOKEN") or ""
+    return c
 
 
 def envio_configurado(c: dict = None) -> bool:
     c = c if c is not None else _conf()
-    return c.get("HEIMDALL_SUPORTE_EMAIL") == "1" and bool(c.get("HEIMDALL_SUPORTE_DE")) and bool(c.get("CLOUDFLARE_API_TOKEN")) and bool(c.get("CLOUDFLARE_ACCOUNT_ID"))
+    return c.get("HEIMDALL_SUPORTE_EMAIL") == "1" and bool(c.get("HEIMDALL_SUPORTE_DE")) and bool(c.get("TOKEN_ENVIO")) and bool(c.get("CLOUDFLARE_ACCOUNT_ID"))
 
 
 def _post(req, timeout):
@@ -350,7 +352,7 @@ def enviar_email(reg: dict) -> bool:
     """Envia ao suporte pelo Cloudflare Email Sending. Devolve True se a Cloudflare aceitou; qualquer falha deixa a mensagem gravada e devolve False."""
     c = _conf()
     if not envio_configurado(c):
-        faltam = [k for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID") if not c.get(k) or (k == "HEIMDALL_SUPORTE_EMAIL" and c.get(k) != "1")]
+        faltam = [k for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "TOKEN_ENVIO", "CLOUDFLARE_ACCOUNT_ID") if not c.get(k) or (k == "HEIMDALL_SUPORTE_EMAIL" and c.get(k) != "1")]
         reg["motivo"] = "Envio desligado ou incompleto: " + ", ".join(faltam)
         _atualizar_estado(reg["protocolo"], "gravada_sem_envio", reg["motivo"])
         return False
@@ -359,7 +361,7 @@ def enviar_email(reg: dict) -> bool:
              f"Assunto: {ASSUNTOS.get(reg['assunto'], reg['assunto'])}\n\n{reg['mensagem']}\n")
     corpo = json.dumps({"to": c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE, "from": c["HEIMDALL_SUPORTE_DE"], "subject": assunto, "text": texto}).encode("utf-8")
     req = urllib.request.Request(f"https://api.cloudflare.com/client/v4/accounts/{c['CLOUDFLARE_ACCOUNT_ID']}/email/sending/send", data=corpo, method="POST",
-                                 headers={"Authorization": f"Bearer {c['CLOUDFLARE_API_TOKEN']}", "Content-Type": "application/json"})
+                                 headers={"Authorization": f"Bearer {c['TOKEN_ENVIO']}", "Content-Type": "application/json"})
     ok, motivo = False, ""
     try:
         with _post(req, 20) as r:
@@ -386,6 +388,56 @@ def mensagem_de_confirmacao(reg: dict, enviado: bool) -> str:
     return base + f" Ela foi registrada, mas o envio por e-mail não está ativo agora. Se for urgente, escreva para {EMAIL_SUPORTE} informando o protocolo."
 
 
+def _api(metodo: str, caminho: str, token: str, corpo=None) -> dict:
+    req = urllib.request.Request("https://api.cloudflare.com/client/v4" + caminho, method=metodo, data=(json.dumps(corpo).encode("utf-8") if corpo is not None else None),
+                                 headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    try:
+        with _post(req, 25) as r:
+            return json.loads(r.read().decode("utf-8", "replace"))
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read().decode("utf-8", "replace"))
+        except ValueError:
+            return {"success": False, "errors": [{"message": f"HTTP {e.code}"}]}
+
+
+def _gravar_no_env(chave: str, valor: str) -> None:
+    arq = AQUI / ".env"
+    linhas = [ln for ln in (arq.read_text(encoding="utf-8").splitlines() if arq.exists() else []) if not ln.startswith(chave + "=")]
+    linhas.append(f"{chave}='{valor}'")
+    tmp = arq.with_suffix(".novo")
+    tmp.write_text("\n".join(linhas) + "\n", encoding="utf-8")
+    os.chmod(tmp, 0o600)
+    tmp.replace(arq)
+
+
+def criar_token_envio() -> int:
+    """Cria, com o token atual da Cloudflare, um token só com a permissão Email Sending e o grava no .env (HEIMDALL_SUPORTE_TOKEN), sem exibi-lo."""
+    c = _conf()
+    base, conta = c.get("CLOUDFLARE_API_TOKEN"), c.get("CLOUDFLARE_ACCOUNT_ID")
+    if not base or not conta:
+        print("Faltam CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID no .env.")
+        return 1
+    g = _api("GET", "/user/tokens/permission_groups", base)
+    if not g.get("success"):
+        print("O token atual da Cloudflare não pode criar tokens (falta a permissão API Tokens: Edit). Motivo: " + "; ".join(e.get("message", "") for e in g.get("errors", [])))
+        print("Alternativa: no painel, Perfil, Tokens de API, Criar token personalizado, permissão Conta, Email Sending, Edit; depois copie o valor e rode: bash scripts/guardar_no_env.sh HEIMDALL_SUPORTE_TOKEN")
+        return 1
+    grupos = [x for x in g["result"] if "email sending" in x.get("name", "").lower() and "account" in " ".join(x.get("scopes", [])).lower()]
+    escolhido = next((x for x in grupos if re.search(r"write|edit", x["name"], re.I)), None)
+    if not escolhido:
+        print("A Cloudflare não lista a permissão Email Sending para este token. Grupos de e-mail encontrados: " + ", ".join(x["name"] for x in g["result"] if "email" in x.get("name", "").lower()))
+        return 1
+    corpo = {"name": "Heimdall - envio de e-mail do suporte", "policies": [{"effect": "allow", "resources": {f"com.cloudflare.api.account.{conta}": "*"}, "permission_groups": [{"id": escolhido["id"]}]}]}
+    r = _api("POST", "/user/tokens", base, corpo)
+    if not r.get("success") or not r.get("result", {}).get("value"):
+        print("Não foi possível criar o token: " + "; ".join(e.get("message", "") for e in r.get("errors", [])))
+        return 1
+    _gravar_no_env("HEIMDALL_SUPORTE_TOKEN", r["result"]["value"])
+    print(f"Token criado com a permissão '{escolhido['name']}' e gravado no .env como HEIMDALL_SUPORTE_TOKEN (não é exibido). Rode: heimdall support --test")
+    return 0
+
+
 def main() -> int:
     import sys
     if "--ultimas" in sys.argv:
@@ -394,6 +446,8 @@ def main() -> int:
             if r.get("motivo"):
                 print(f"    motivo: {r['motivo']}")
         return 0
+    if "--token" in sys.argv:
+        return criar_token_envio()
     if "--testar" in sys.argv:
         c = _conf()
         destino = c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE

@@ -155,6 +155,7 @@ DESCRICOES = {
     "HEIMDALL_WEBUI_ACCESS_HEADER": "Cabeçalho em que o Access manda o e-mail de quem entrou (padrão Cf-Access-Authenticated-User-Email).",
     "HEIMDALL_SUPORTE_EMAIL": "1 liga o envio das mensagens de suporte por e-mail (Cloudflare Email Sending); 0 (padrão) só grava as mensagens em db/suporte.",
     "HEIMDALL_SUPORTE_DE": "Endereço remetente das mensagens de suporte, de um domínio já ativado no Cloudflare Email Sending.",
+    "HEIMDALL_SUPORTE_TOKEN": "Token da Cloudflare só com a permissão Email Sending, usado no envio do suporte (heimdall support --token cria; sem ele vale o CLOUDFLARE_API_TOKEN).",
     "HEIMDALL_SUPORTE_PARA": "Endereço que recebe as mensagens de suporte (padrão suporte@heimdall-ai.tech).",
     "HEIMDALL_POLITICA_APROVADA": "1 tira o aviso de minuta das páginas de Política de uso e de Privacidade, depois que o texto for revisado e aprovado.",
     "HEIMDALL_WEBUI_ENXUTO": "1 (padrão): o Open WebUI sobe sem Notas, Automações, geração de imagem, execução de código, voz local e recursos automáticos (etiquetas, sugestões, autocompletar), para poupar memória. 0 devolve tudo. O que já foi alterado no painel de administração do Open WebUI prevalece.",
