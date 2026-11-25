@@ -29,6 +29,7 @@ DESTINOS = {
     "verificar_prazo": (LEMBRETE, "conferir o comunicado oficial, com hora, até você concluir", "heimdall_email_oficial.py"),
     "evento_nota": (EVENTO, "compromisso com data (e hora) achado numa nota escrita no Heimdall Notes", "heimdall_catalogo.py: nota catalogada pela IA local"),
     "lembrete_nota": (LEMBRETE, "algo a fazer, com data, achado numa nota escrita no Heimdall Notes", "heimdall_catalogo.py: nota catalogada pela IA local"),
+    "sugestao_saude": (LEMBRETE, "algo a fazer sugerido pelo Heimdall Health (marcar retorno, pedir renovação); só depois que você aceita a sugestão", "heimdall_clinico.py: sugestão aceita"),
     "triagem": (LEMBRETE, "item importante que pede decisão; você conclui, reclassifica ou adia", "heimdall_triagem.py (lista Heimdall: Triagem)"),
 }
 

@@ -189,6 +189,8 @@ Opções:
   --labs discard ID    joga o documento fora sem gravar nada
   --labs certificates  atestados e afastamentos confirmados (dias, período e CID)
   --labs reports       laudos de imagem e procedimentos confirmados (título e conclusão, ou a análise quando não há conclusão)
+  --labs suggestions   sugestões de acompanhamento (retorno, exame, perguntas); subcomandos: refresh, all, accept ID, dismiss ID, snooze ID DIAS, answer ID TEXTO
+  --labs profile       perfil de saúde: condições, cirurgias, alergias, convênio; subcomandos: add TIPO TEXTO, remove ID
   --labs requests      exames pedidos pelo médico, com o código TUSS (ainda sem resultado)
   --labs folder        lê agora o que estiver na pasta de entrada
   --labs import FILE...   lê arquivos de qualquer pasta

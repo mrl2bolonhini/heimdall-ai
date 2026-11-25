@@ -2125,7 +2125,12 @@ def confirmar(doc_id: int, dia: str = "", sem: list = None) -> dict:
 
     _escrever(grava)
     ag = sincronizar_agenda() if d["tipo"] in ("receita", "consulta") else {}
-    return {"id": d["id"], "tipo": d["tipo"], "guardados": len(itens), "deixados_de_fora": len(ext.get(chave_lista, []) if chave_lista else []) - len(itens), "dia": dia, "agenda": ag}
+    try:                                   # a memória clínica procura sugestões novas; falha dela nunca desfaz a confirmação
+        import heimdall_clinico
+        sug = heimdall_clinico.atualizar()["novas"]
+    except Exception:  # noqa: BLE001
+        sug = 0
+    return {"id": d["id"], "tipo": d["tipo"], "sugestoes": sug, "guardados": len(itens), "deixados_de_fora": len(ext.get(chave_lista, []) if chave_lista else []) - len(itens), "dia": dia, "agenda": ag}
 
 
 def descartar(doc_id: int) -> dict:
@@ -2507,6 +2512,8 @@ def main() -> int:
             print(f"Documento {r['id']} confirmado em {_br(r['dia'])}: {r['guardados']} item(ns) guardado(s)" + (f", {r['deixados_de_fora']} deixado(s) de fora" if r["deixados_de_fora"] else "") + ".")
             if r.get("agenda"):
                 print(texto_agenda(r["agenda"]))
+            if r.get("sugestoes"):
+                print(f"{r['sugestoes']} sugestão(ões) nova(s) de acompanhamento. Para ver: heimdall health --labs suggestions")
         elif a.descartar:
             print(f"Documento {descartar(a.descartar)['id']} descartado.")
         elif a.exame:

@@ -62,6 +62,7 @@ import heimdall_saude as saude  # noqa: E402  (as análises)
 import heimdall_perguntar as perguntar  # noqa: E402  (campo Perguntar, só com o modelo local)
 import heimdall_avisos as avisos_mod  # noqa: E402  (aba Avisos: relatórios que antes iam para o app Notas)
 import heimdall_exames as exames  # noqa: E402  (exames, receitas e encaminhamentos já confirmados)
+import heimdall_clinico as clinico  # noqa: E402  (perfil de saúde e sugestões de acompanhamento)
 
 HOST = os.environ.get("HEIMDALL_SAUDE_PAINEL_HOST", "127.0.0.1")
 try:
@@ -296,7 +297,7 @@ def pg_documentos(q: dict) -> tuple:
         corpo += f'<table><caption>Documentos recebidos ({len(docs)})</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
     else:
         corpo += "<p>Nenhum documento recebido ainda.</p>"
-    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + secao("Atestados e afastamentos", exames.relatorio_atestados()) + secao("Laudos de imagem e procedimentos", exames.relatorio_laudos()) + secao("Pedidos de exame", exames.relatorio_pedidos()) + secao("Consultas", exames.relatorio_consultas())
+    corpo += secao("Receitas", exames.relatorio_receitas()) + secao("Encaminhamentos", exames.relatorio_encaminhamentos()) + secao("Atestados e afastamentos", exames.relatorio_atestados()) + secao("Laudos de imagem e procedimentos", exames.relatorio_laudos()) + secao("Sugestões de acompanhamento", clinico.relatorio_sugestoes()) + secao("Perfil de saúde", clinico.relatorio_perfil()) + secao("Pedidos de exame", exames.relatorio_pedidos()) + secao("Consultas", exames.relatorio_consultas())
     return "Documentos", corpo + AVISO_EXAMES
 
 

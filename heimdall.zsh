@@ -192,13 +192,34 @@ _heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos,
     certificates) _heimdall_py heimdall_exames.py --atestados ;;
     reports) _heimdall_py heimdall_exames.py --laudos ;;
     requests) _heimdall_py heimdall_exames.py --pedidos ;;
+    suggestions)   # sugestões de acompanhamento: nada vira lembrete sem accept
+      case "${_HA[1]:-}" in
+        refresh) _heimdall_py heimdall_clinico.py --atualizar ;;
+        all) _heimdall_py heimdall_clinico.py --sugestoes --todas ;;
+        accept) _heimdall_py heimdall_clinico.py --aceitar "${_HA[2]:-0}" ;;
+        dismiss) _heimdall_py heimdall_clinico.py --recusar "${_HA[2]:-0}" ;;
+        snooze) _heimdall_py heimdall_clinico.py --adiar "${_HA[2]:-0}" --dias "${_HA[3]:-14}" ;;
+        answer) _heimdall_py heimdall_clinico.py --responder "${_HA[2]:-0}" --texto "${(j: :)_HA[3,-1]}" ;;
+        "") _heimdall_py heimdall_clinico.py --sugestoes ;;
+        *) echo "Use: heimdall health --labs suggestions [refresh|all|accept ID|dismiss ID|snooze ID DAYS|answer ID TEXT]" ;;
+      esac ;;
+    profile)   # perfil de saúde: condições, cirurgias, alergias, convênio
+      case "${_HA[1]:-}" in
+        add)
+          local _t="${_HA[2]:-}"
+          case "$_t" in condition) _t=condicao ;; surgery) _t=cirurgia ;; allergy) _t=alergia ;; insurance) _t=convenio ;; doctor) _t=medico ;; other) _t=outro ;; esac
+          _heimdall_py heimdall_clinico.py --perfil-add "$_t" --texto "${(j: :)_HA[3,-1]}" ;;
+        remove) _heimdall_py heimdall_clinico.py --perfil-rm "${_HA[2]:-0}" ;;
+        "") _heimdall_py heimdall_clinico.py --perfil ;;
+        *) echo "Use: heimdall health --labs profile [add condition|surgery|allergy|insurance|doctor|other TEXT|remove ID]" ;;
+      esac ;;
     appointments) _heimdall_py heimdall_exames.py --consultas ;;
     appointment) _heimdall_py heimdall_exames.py --consulta-nova "${_HA[@]}" ;;
     calendar) _heimdall_py heimdall_exames.py --agenda ;;
     documents) _heimdall_py heimdall_exames.py --documentos ;;
     token) _heimdall_py heimdall_exames.py --gerar-token ;;
     --open) _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health /exames ;;
-    *) echo "Use: heimdall health --labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|certificates|reports|requests|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
+    *) echo "Use: heimdall health --labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|certificates|reports|requests|suggestions|profile|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
   esac
 }
 
@@ -562,7 +583,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data notices
-        elif [[ ${words[CURRENT-1]} == --labs ]]; then compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals requests certificates reports appointments appointment calendar documents token --open
+        elif [[ ${words[CURRENT-1]} == --labs ]]; then compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals requests suggestions profile certificates reports appointments appointment calendar documents token --open
         elif (( ${words[(Ie)--labs]} )); then compadd -- --without --date --time --doctor --specialty --place
         else compadd -- --local --labs --open --today --now --weekly --anomalies --analysis --report --sleep --activity --recovery --trends --workouts --ecg --fc --import --import-n8n; fi ;;
       controls) if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- terminal services maintenance; else compadd -- --open --local; fi ;;

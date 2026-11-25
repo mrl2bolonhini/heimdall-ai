@@ -2,6 +2,13 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Memória clínica: perfil de saúde e sugestões de acompanhamento
+- Perfil de saúde: você registra o que quiser (condições e doenças, cirurgias, alergias, convênio, médicos de confiança), nada é obrigatório. heimdall health --labs profile, profile add condition|surgery|allergy|insurance|doctor|other TEXTO e profile remove ID. Fica só no Mac, e o chat do Health enxerga.
+- Sugestões de acompanhamento: ao confirmar um documento, o Heimdall procura o que vale conversar com o médico. Hoje: retorno e renovação antes de acabar o remédio de acompanhamento (a data vem da quantidade e da posologia da receita, com aviso do cálculo); pergunta sobre fisioterapia quando há atestado com CID de joelho (M23) sem encaminhamento, e sobre as sessões quando há; retorno ao ortopedista depois de pós-operatório de joelho sem consulta marcada; exames de um pedido que ainda não têm resultado; retirada de pontos com data futura, lembrando que o local citado (UBS) pode ser outro serviço e considerando o convênio do perfil; e o convite para preencher o perfil.
+- Uma IA (nuvem, com o modelo local de reserva) revisa o texto das sugestões considerando o perfil e as sutilezas dos documentos, pode não manter uma sugestão (com aviso) e pode propor até 3 novas. Tudo o que ela devolve é conferido: o documento citado precisa existir, e texto sobre dose, suspensão ou diagnóstico é descartado. Sem IA, as regras valem sozinhas.
+- Você decide: suggestions accept ID (consulta e exame viram lembrete no app Lembretes, com título que só diz a ação, sem remédio nem CID), dismiss ID (não volta), snooze ID DIAS (volta depois), answer ID TEXTO (perguntas, a resposta fica guardada). Sugestões são para conversar com o médico; nunca diagnóstico nem orientação sobre dose.
+- A página Documentos do painel de saúde mostra as sugestões e o perfil. Teste novo: tests/health/teste_clinico.py.
+
 ## 2026-11-25 - Leitor: documentos digitais da Memed, pedido de exame e laudos sem conclusão
 - Ajustado a partir de 16 documentos reais (receitas, encaminhamentos, atestado, pedido de exames e laudos de imagem). Antes, encaminhamentos, atestado e pedido de exames caíam em "documento sem tipo identificado" e cada receita saía duplicada.
 - Receita digital: um item por medicamento, com a marca e o princípio ativo, a dose, a posologia e a quantidade (2 embalagens de 30 comprimidos); a segunda via de controle especial que vem no mesmo arquivo não repete o item.

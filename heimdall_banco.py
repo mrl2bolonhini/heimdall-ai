@@ -358,6 +358,31 @@ CREATE TABLE IF NOT EXISTS pedidos_exame (
 );
 CREATE INDEX IF NOT EXISTS ix_pedidos_dia ON pedidos_exame (dia);
 
+CREATE TABLE IF NOT EXISTS perfil_clinico (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo TEXT NOT NULL,                         -- condicao, cirurgia, alergia, convenio, medico, outro
+    texto TEXT NOT NULL,                        -- como o usuário escreveu
+    desde TEXT NOT NULL DEFAULT '',             -- AAAA-MM-DD ou AAAA, quando o usuário informa
+    fonte TEXT NOT NULL DEFAULT 'usuario',
+    criado TEXT NOT NULL DEFAULT '',
+    UNIQUE (tipo, texto)
+);
+
+CREATE TABLE IF NOT EXISTS sugestoes_saude (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chave TEXT NOT NULL UNIQUE,                 -- a mesma sugestão nunca aparece duas vezes, nem depois de recusada
+    tipo TEXT NOT NULL,                         -- consulta, exame, pergunta
+    titulo TEXT NOT NULL,
+    motivo TEXT NOT NULL DEFAULT '',
+    quando TEXT NOT NULL DEFAULT '',            -- AAAA-MM-DD sugerido para agir
+    base TEXT NOT NULL DEFAULT '[]',            -- ids dos documentos de onde veio
+    origem TEXT NOT NULL DEFAULT 'regra',       -- regra ou modelo
+    estado TEXT NOT NULL DEFAULT 'aberta',      -- aberta, aceita, recusada, adiada, respondida
+    resposta TEXT NOT NULL DEFAULT '',
+    criado TEXT NOT NULL DEFAULT '',
+    atualizado TEXT NOT NULL DEFAULT ''
+);
+
 CREATE TABLE IF NOT EXISTS agenda_saude (
     chave TEXT PRIMARY KEY,                     -- tipo|origem|dia: o mesmo item nunca vira dois eventos
     tipo TEXT NOT NULL,                         -- consulta, renovacao_receita (ver heimdall_agenda.DESTINOS)
@@ -615,6 +640,8 @@ def resumo() -> dict:
         saida["encaminhamentos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM encaminhamentos").fetchone()))
         saida["atestados"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM atestados").fetchone()))
         saida["laudos"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM laudos").fetchone()))
+        saida["perfil_clinico"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(criado), MAX(criado) FROM perfil_clinico").fetchone()))
+        saida["sugestoes_saude"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(criado), MAX(criado) FROM sugestoes_saude").fetchone()))
         saida["pedidos_exame"] = dict(zip(("linhas", "de", "ate"), con.execute("SELECT COUNT(*), MIN(dia), MAX(dia) FROM pedidos_exame").fetchone()))
         return saida
     finally:
@@ -655,6 +682,8 @@ def tabelas_para_modelo() -> str:
         "atestados(documento_id, dia, inicio, fim, dias, cid, cid_texto, medico, observacao): atestados e afastamentos confirmados, com o CID-10 como está no documento.\n"
         "laudos(documento_id, dia, modalidade, titulo, conclusao, achados, medico): laudos de imagem e de procedimentos (ultrassom, ressonância, radiografia, ecocardiograma...) confirmados.\n"
         "pedidos_exame(documento_id, dia, exame, tuss, medico): exames pedidos pelo médico (ainda sem resultado), com o código TUSS.\n"
+        "perfil_clinico(tipo, texto, desde): informações básicas que o usuário registrou (condicao, cirurgia, alergia, convenio, medico, outro).\n"
+        "sugestoes_saude(tipo, titulo, motivo, quando, estado, resposta): sugestões de acompanhamento (retorno, exame, pergunta); só viram lembrete depois que o usuário aceita.\n"
         "Dentro do SQL, sem_acento(coluna) devolve o texto em minúsculas e sem acento (use em buscas: WHERE sem_acento(titulo) LIKE '%coracao%')."
     )
 
