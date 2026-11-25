@@ -18,6 +18,6 @@ for k, v in novos.items():
         linhas = [f"{k}={v}" if l.startswith(k + "=") else l for l in linhas]
 open(".env", "w", encoding="utf-8").write("\n".join(linhas) + "\n")
 PY
-mkdir -p paperless/data paperless/media paperless/export paperless/consume
+mkdir -p paperless/data paperless/media paperless/export
 docker compose -f paperless/docker-compose.yml --env-file .env up -d || { echo "Não consegui subir o Paperless-ngx; veja a mensagem acima."; exit 1; }
 echo "Paperless-ngx no ar em 127.0.0.1:8023 (a primeira subida leva alguns minutos). Reinicie o Library: heimdall restart"

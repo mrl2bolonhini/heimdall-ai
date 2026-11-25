@@ -4,10 +4,10 @@
 O Paperless-ngx roda em Docker neste Mac, escutando só em 127.0.0.1, sem login exposto: o Library é a única tela e fala com ele pela API REST (token).
 O Paperless faz o OCR, guarda os arquivos, lê e-mails (regras IMAP) e classifica; a classificação aprende com as correções que a pessoa grava em "A revisar".
 Estas funções têm os mesmos nomes e formatos de heimdall_library_dados.py, que as chama no lugar das internas quando o motor é o Paperless (para todos:
-cada convidado ganha um usuário próprio no Paperless e o Library filtra tudo por dono; o e-mail é só do dono).
+cada pessoa, dono incluído, tem um usuário comum no Paperless e o Library filtra tudo por dono, por privacidade (LGPD); a conta de administração só cria usuários).
 
 Convenções: a etiqueta "A revisar" marca o que ainda não foi confirmado; a etiqueta "Lixeira" marca o que foi excluído pelo Library (nada é apagado do Paperless).
-Variáveis: HEIMDALL_PAPERLESS_URL (http://127.0.0.1:8023), HEIMDALL_PAPERLESS_USER (heimdall), HEIMDALL_PAPERLESS_SENHA, HEIMDALL_LIBRARY_EMAIL_SENHA (senha de aplicativo do e-mail).
+Variáveis: HEIMDALL_PAPERLESS_URL (http://127.0.0.1:8023), HEIMDALL_PAPERLESS_USER e HEIMDALL_PAPERLESS_SENHA (administração: só cria usuários), HEIMDALL_PAPERLESS_SECRET (deriva a senha de cada pessoa), HEIMDALL_LIBRARY_EMAIL_SENHA (senha de e-mail do dono, opcional).
 """
 import json
 import os
@@ -26,25 +26,24 @@ PROJECT_DIR = Path(__file__).resolve().parent
 TAG_REVISAR, TAG_LIXEIRA = "A revisar", "Lixeira"
 SISTEMA = (TAG_REVISAR, TAG_LIXEIRA)
 _estado = {"tokens": {}, "ids": {}}   # token e id de usuário por nome de usuário do Paperless
-PERMISSOES_CONVIDADO = [f"{a}_{o}" for o in ("document", "tag", "documenttype", "correspondent") for a in ("view", "add", "change")]   # sem exclusão e sem e-mail
+PERMISSOES = [f"{a}_{o}" for o in ("document", "tag", "documenttype", "correspondent", "mailaccount", "mailrule") for a in ("view", "add", "change")]   # sem exclusão
 
 
 def _pessoa() -> str:
-    """Nome do convidado em atendimento (vazio para o dono)."""
+    """Nome do convidado em atendimento (vazio para o dono). O dono também tem usuário próprio, comum: a conta de administração do Paperless só cria usuários e consulta ids, nunca lê documentos."""
     d = base.banco._PESSOA_DIR.get()
     return d.name if d else ""
 
 
 def _usuario() -> str:
-    p = _pessoa()
-    return f"heimdall-{p}" if p else os.environ.get("HEIMDALL_PAPERLESS_USER", "heimdall")
+    return f"heimdall-{_pessoa() or 'dono'}"
 
 
-def _senha_convidado(pessoa: str) -> str:
+def _senha_pessoa(pessoa: str) -> str:
     """Senha derivada da chave do Paperless: não precisa ser guardada em lugar nenhum."""
     import hashlib
     import hmac
-    return hmac.new(os.environ.get("HEIMDALL_PAPERLESS_SECRET", "").encode(), f"convidado:{pessoa}".encode(), hashlib.sha256).hexdigest()[:40]
+    return hmac.new(os.environ.get("HEIMDALL_PAPERLESS_SECRET", "").encode(), f"pessoa:{pessoa}".encode(), hashlib.sha256).hexdigest()[:40]
 
 
 def _url() -> str:
@@ -52,9 +51,7 @@ def _url() -> str:
 
 
 def pasta_entrada() -> Path:
-    if _pessoa():
-        return base.ORIGINAIS["pasta_entrada"]()   # convidado: pasta própria; o Library envia os arquivos ao Paperless
-    return PROJECT_DIR / "paperless" / "consume"
+    return base.ORIGINAIS["pasta_entrada"]()   # pasta própria de cada pessoa; o Library envia os arquivos ao Paperless dela (nada fica numa pasta comum)
 
 
 def _login(usuario: str, senha: str) -> str:
@@ -63,23 +60,23 @@ def _login(usuario: str, senha: str) -> str:
         return json.loads(r.read())["token"]
 
 
-def _token(renovar: bool = False, dono: bool = False) -> str:
-    """Token do usuário em atendimento: o dono usa a conta do .env; cada convidado, a sua, criada na primeira vez (com a senha derivada)."""
-    pessoa = "" if dono else _pessoa()
-    usuario = os.environ.get("HEIMDALL_PAPERLESS_USER", "heimdall") if not pessoa else f"heimdall-{pessoa}"
+def _token(renovar: bool = False, admin: bool = False) -> str:
+    """Token do usuário em atendimento. Cada pessoa (dono e convidados) tem o seu usuário comum, criado na primeira vez pela conta de administração do .env (que só serve para isso)."""
+    pessoa = _pessoa() or "dono"
+    usuario = os.environ.get("HEIMDALL_PAPERLESS_USER", "heimdall") if admin else f"heimdall-{pessoa}"
     if _estado["tokens"].get(usuario) and not renovar:
         return _estado["tokens"][usuario]
-    senha = os.environ.get("HEIMDALL_PAPERLESS_SENHA", "") if not pessoa else _senha_convidado(pessoa)
-    if not senha or (pessoa and not os.environ.get("HEIMDALL_PAPERLESS_SECRET")):
+    senha = os.environ.get("HEIMDALL_PAPERLESS_SENHA", "") if admin else _senha_pessoa(pessoa)
+    if not senha or not os.environ.get("HEIMDALL_PAPERLESS_SECRET"):
         raise ErroLibrary("Faltam a senha ou a chave do Paperless-ngx no .env (HEIMDALL_PAPERLESS_SENHA, HEIMDALL_PAPERLESS_SECRET).")
     try:
         try:
             _estado["tokens"][usuario] = _login(usuario, senha)
         except urllib.error.HTTPError:
-            if not pessoa:
+            if admin:
                 raise
             _req("POST", "/api/users/", corpo={"username": usuario, "password": senha, "is_active": True, "is_staff": False, "is_superuser": False,
-                                              "user_permissions": PERMISSOES_CONVIDADO}, dono=True)
+                                              "user_permissions": PERMISSOES}, admin=True)
             _estado["tokens"][usuario] = _login(usuario, senha)
     except urllib.error.HTTPError:
         raise ErroLibrary("O Paperless-ngx recusou o usuário ou a senha configurados no .env.") from None
@@ -93,7 +90,7 @@ def _meu_id() -> int:
     usuario = _usuario()
     if usuario not in _estado["ids"]:
         _token()   # cria o usuário do convidado na primeira vez
-        r = _req("GET", "/api/users/", {"username": usuario}, dono=True)
+        r = _req("GET", "/api/users/", {"username": usuario}, admin=True)
         achado = [u for u in (r.get("results", []) if isinstance(r, dict) else []) if u.get("username") == usuario]
         if not achado:
             raise ErroLibrary("O Paperless-ngx não encontrou o usuário do Library.")
@@ -101,10 +98,10 @@ def _meu_id() -> int:
     return _estado["ids"][usuario]
 
 
-def _req(metodo: str, caminho: str, params: dict = None, corpo=None, bruto: bytes = None, tipo: str = "", timeout: int = 40, _de_novo: bool = True, dono: bool = False):
+def _req(metodo: str, caminho: str, params: dict = None, corpo=None, bruto: bytes = None, tipo: str = "", timeout: int = 40, _de_novo: bool = True, admin: bool = False):
     url = _url() + caminho + (("?" + urllib.parse.urlencode(params, doseq=True)) if params else "")
     dados = bruto if bruto is not None else (json.dumps(corpo).encode() if corpo is not None else None)
-    cab = {"Authorization": "Token " + _token(dono=dono), "Accept": "application/json"}
+    cab = {"Authorization": "Token " + _token(admin=admin), "Accept": "application/json"}
     if dados is not None:
         cab["Content-Type"] = tipo or "application/json"
     try:
@@ -113,8 +110,8 @@ def _req(metodo: str, caminho: str, params: dict = None, corpo=None, bruto: byte
             return json.loads(b) if "json" in (r.headers.get("Content-Type") or "") else b
     except urllib.error.HTTPError as ex:
         if ex.code == 401 and _de_novo:
-            _token(renovar=True, dono=dono)
-            return _req(metodo, caminho, params, corpo, bruto, tipo, timeout, False, dono)
+            _token(renovar=True, admin=admin)
+            return _req(metodo, caminho, params, corpo, bruto, tipo, timeout, False, admin)
         raise ErroLibrary(f"O Paperless-ngx recusou o pedido ({ex.code}).") from None
     except (urllib.error.URLError, OSError):
         raise ErroLibrary("O Paperless-ngx não respondeu. Confira se ele está ligado.") from None
@@ -256,9 +253,7 @@ def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = Tr
 
 
 def processar_entrada(usar_ia: bool = True) -> dict:
-    if _pessoa():
-        return base.ORIGINAIS["processar_entrada"](usar_ia)
-    return {"novos": 0, "repetidos": 0, "recusados": 0}   # o Paperless acompanha a pasta do dono sozinho
+    return base.ORIGINAIS["processar_entrada"](usar_ia)
 
 
 def _tags_do(did: int) -> list:
@@ -327,33 +322,32 @@ def estado() -> dict:
 
 
 # ---------------------------------------------------------------- e-mail
-def email_disponivel() -> bool:
-    return not _pessoa()   # a senha de e-mail do .env é do dono
-
-
 def email_estado() -> dict:
-    contas = [x["name"] for x in _todos("/api/mail_accounts/")]
-    regras = [{"nome": x["name"], "pasta": x.get("folder", ""), "ativa": bool(x.get("enabled", True))} for x in _todos("/api/mail_rules/")]
+    contas = [x["name"] for x in _todos("/api/mail_accounts/") if x.get("owner") == _meu_id()]
+    regras = [{"nome": x["name"], "pasta": x.get("folder", ""), "ativa": bool(x.get("enabled", True))} for x in _todos("/api/mail_rules/") if x.get("owner") == _meu_id()]
     return {"contas": contas, "regras": regras}
 
 
-def email_configurar(servidor: str, usuario: str, pasta: str, remetente: str = "") -> str:
-    """Cria (ou atualiza) a conta IMAP e a regra que lê só os anexos da pasta indicada. A senha vem do .env, nunca do formulário."""
-    if _pessoa():
-        raise ErroLibrary("A leitura de e-mail está disponível só para o dono por enquanto.")
+def senha_do_env() -> bool:
+    """O dono pode usar a senha de aplicativo do .env em vez de digitá-la; convidados digitam a própria."""
+    return not _pessoa() and bool(os.environ.get("HEIMDALL_LIBRARY_EMAIL_SENHA"))
+
+
+def email_configurar(servidor: str, usuario: str, pasta: str, remetente: str = "", senha: str = "") -> str:
+    """Cria (ou atualiza) a conta IMAP e a regra da pessoa, que lê só os anexos da pasta indicada. A senha de aplicativo fica só no Paperless (nunca é mostrada de volta)."""
     servidor, usuario, pasta, remetente = servidor.strip().lower(), usuario.strip(), (pasta or "Heimdall").strip(), remetente.strip()
     if not re.fullmatch(r"[a-z0-9.-]{3,100}", servidor) or "@" not in usuario or len(usuario) > 120 or not re.fullmatch(r"[\w .\-/À-ÿ]{1,60}", pasta):
         raise ErroLibrary("Confira o servidor IMAP (por exemplo imap.exemplo.com), o endereço de e-mail e o nome da pasta.")
-    senha = os.environ.get("HEIMDALL_LIBRARY_EMAIL_SENHA", "")
-    if not senha:
-        raise ErroLibrary("Falta a senha de aplicativo do e-mail no .env. A Ajuda do Library explica como gravá-la.")
+    senha = (senha or "").strip() or (os.environ.get("HEIMDALL_LIBRARY_EMAIL_SENHA", "") if not _pessoa() else "")
+    if not senha or len(senha) > 200:
+        raise ErroLibrary("Informe a senha de aplicativo do e-mail (gerada no provedor de e-mail; não use a senha principal).")
     nome_conta = f"Heimdall {usuario}"
-    conta = {"name": nome_conta, "imap_server": servidor, "imap_port": 993, "imap_security": 2, "username": usuario, "password": senha, "character_set": "UTF-8", "account_type": 1}
-    conta["owner"] = _meu_id()
-    existente = next((x for x in _todos("/api/mail_accounts/") if x["name"] == nome_conta), None)
+    meu = _meu_id()
+    conta = {"name": nome_conta, "imap_server": servidor, "imap_port": 993, "imap_security": 2, "username": usuario, "password": senha, "character_set": "UTF-8", "account_type": 1, "owner": meu}
+    existente = next((x for x in _todos("/api/mail_accounts/") if x["name"] == nome_conta and x.get("owner") == meu), None)
     cid = (_req("PATCH", f"/api/mail_accounts/{existente['id']}/", corpo=conta) if existente else _req("POST", "/api/mail_accounts/", corpo=conta))["id"]
     regra = {"name": "Heimdall: documentos por e-mail", "account": cid, "enabled": True, "folder": pasta, "filter_from": remetente or None, "maximum_age": 30, "action": 3,
-             "attachment_type": 1, "consumption_scope": 1, "order": 1, "owner": _meu_id(), "assign_title_from": 2, "assign_tags": [_id_por_nome("tags", TAG_REVISAR)]}
-    r = next((x for x in _todos("/api/mail_rules/") if x["name"] == regra["name"]), None)
+             "attachment_type": 1, "consumption_scope": 1, "order": 1, "owner": meu, "assign_title_from": 2, "assign_tags": [_id_por_nome("tags", TAG_REVISAR)]}
+    r = next((x for x in _todos("/api/mail_rules/") if x["name"] == regra["name"] and x.get("owner") == meu), None)
     _req("PATCH", f"/api/mail_rules/{r['id']}/", corpo=regra) if r else _req("POST", "/api/mail_rules/", corpo=regra)
     return f"E-mail configurado: os anexos da pasta {pasta} de {usuario} serão importados e ficarão em A revisar."

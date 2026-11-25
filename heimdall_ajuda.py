@@ -122,7 +122,7 @@ FAQ = {
         ("O que significa A revisar?",
          "Ao receber um documento, o Library sugere título, tipo, data, emissor e etiquetas. Enquanto você não confirmar ou corrigir, o documento fica em A revisar. Nada é apagado: excluir manda para a lixeira, em Ajustes."),
         ("Como o Library importa documentos por e-mail?",
-         "Com o motor Paperless-ngx ligado, em Adicionar, na subaba E-mail, informe o servidor IMAP, o seu endereço e a pasta (ou marcador) que o Library deve ler. Só os anexos dessa pasta são importados e ficam em A revisar. A senha de aplicativo do e-mail nunca é digitada na tela: ela é gravada no .env pelo comando heimdall env --set HEIMDALL_LIBRARY_EMAIL_SENHA, que lê a área de transferência."),
+         "Com o motor Paperless-ngx ligado, em Adicionar, na subaba E-mail, informe o servidor IMAP, o seu endereço e a pasta (ou marcador) que o Library deve ler. Só os anexos dessa pasta são importados e ficam em A revisar. Informe também a senha de aplicativo, gerada no provedor de e-mail (não use a senha principal): ela fica guardada só no Paperless e nunca é mostrada de volta. Cada pessoa conecta o próprio e-mail e só enxerga os próprios documentos; nem o dono do Heimdall vê os documentos dos convidados."),
         ("Como a classificação melhora com o tempo?",
          "Com o motor Paperless-ngx, cada correção de título, tipo, emissor ou etiquetas gravada em A revisar ensina o classificador, que roda no próprio computador e é treinado de hora em hora. Quanto mais documentos você confirma, mais acertos ele tem."),
         ("O texto de fotos e PDFs escaneados não aparece. O que fazer?",

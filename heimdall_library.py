@@ -93,8 +93,6 @@ def pg_enviar(ctx):
 def pg_entrada(ctx):
     ent = dados.pasta_entrada()
     n = len([p for p in ent.iterdir() if p.is_file() and not p.name.startswith(".")]) if ent.is_dir() else 0
-    if dados.motor() == "paperless" and __import__("heimdall_library_paperless").email_disponivel():   # só o dono tem pasta acompanhada pelo Paperless
-        return "Pasta de entrada", f'<p role="status">Pasta de entrada: {e(str(ent))}. Os arquivos colocados nela são importados automaticamente e ficam em A revisar.</p>'
     corpo = (f'<p role="status">Pasta de entrada: {e(str(ent))}. {_plural(n, "arquivo aguardando", "arquivos aguardando")}.</p>'
              '<p>Arquivos colocados nesta pasta são importados ao tocar em Importar agora. Os importados vão para a subpasta done e os recusados para refused.</p>'
              + design.botao_post("/entrada/processar", "Importar agora", ctx.csrf))
@@ -105,14 +103,14 @@ def pg_email(ctx):
     if dados.motor() != "paperless":
         return "E-mail", '<p role="status">O envio por e-mail usa o motor Paperless-ngx (HEIMDALL_LIBRARY_MOTOR=paperless).</p>'
     import heimdall_library_paperless as pl
-    if not pl.email_disponivel():
-        return "E-mail", '<p role="status">A leitura de e-mail está disponível só para o dono por enquanto.</p>'
     est = pl.email_estado()
     situacao = ("Conta: " + ", ".join(est["contas"]) + ". " + "; ".join(f'regra {r["nome"]} na pasta {r["pasta"]}' + ("" if r["ativa"] else " (desligada)") for r in est["regras"]) + ".") if est["contas"] else "Nenhuma conta de e-mail configurada."
     form = (f'<form method="post" action="/email/salvar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
             '<label for="servidor">Servidor IMAP (por exemplo imap.exemplo.com)</label><input id="servidor" name="servidor" type="text" maxlength="100" required>'
             '<label for="usuario">Endereço de e-mail</label><input id="usuario" name="usuario" type="email" maxlength="120" required autocomplete="off">'
             '<label for="pasta">Pasta ou marcador a ler</label><input id="pasta" name="pasta" type="text" value="Heimdall" maxlength="60" required>'
+            + ('<label for="senha">Senha de aplicativo (opcional: se ficar em branco, vale a senha configurada pelo administrador)</label>' if pl.senha_do_env() else '<label for="senha">Senha de aplicativo do e-mail (gerada no provedor; não use a senha principal)</label>')
+            + '<input id="senha" name="senha" type="password" maxlength="200" autocomplete="off"' + ("" if pl.senha_do_env() else " required") + '>'
             '<label for="remetente">Só de quem (opcional)</label><input id="remetente" name="remetente" type="text" maxlength="100">'
             '<button type="submit">Salvar</button></form>')
     return "E-mail", f'<p role="status">{e(situacao)}</p>{form}'
@@ -205,7 +203,7 @@ def post_email(ctx, campos, arquivos):
     if dados.motor() != "paperless":
         raise dados.ErroLibrary("O envio por e-mail exige o motor Paperless-ngx.")
     import heimdall_library_paperless as pl
-    ctx.flash("ok", pl.email_configurar(campos.get("servidor", ""), campos.get("usuario", ""), campos.get("pasta", ""), campos.get("remetente", "")))
+    ctx.flash("ok", pl.email_configurar(campos.get("servidor", ""), campos.get("usuario", ""), campos.get("pasta", ""), campos.get("remetente", ""), campos.get("senha", "")))
     return "/email"
 
 
