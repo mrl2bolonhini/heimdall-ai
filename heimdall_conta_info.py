@@ -38,6 +38,20 @@ INFO = {
                  "A partir do material, o Learn gera perguntas, lições e cards, e você responde por texto ou por voz."],
         "so_dono": True,
     },
+    "trading": {
+        "oque": "Mesa de operações em simulação, feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, limite por ordem e limite de perda por dia. Nenhuma ordem é enviada a corretora.",
+        "como": ["Na Mesa, informe o código do ativo, a quantidade e o tipo da ordem, e use Comprar ou Vender. Os atalhos da Mesa estão no Guia de comandos, na Ajuda.",
+                 "Em Ajustes, defina os limites, a fonte das cotações (simulada, manual ou brapi) e o caixa inicial da conta simulada.",
+                 "A IA só descreve os números e os movimentos recentes: nunca recomenda comprar ou vender. Quem decide é você."],
+        "so_dono": False,
+    },
+    "library": {
+        "oque": "Documentos pesquisáveis: envie PDF, foto, Word ou texto, e o Library lê o texto (com OCR em imagens), sugere título, tipo e etiquetas e permite pesquisar em tudo.",
+        "como": ["Em Adicionar, envie arquivos pelo navegador ou coloque-os na pasta de entrada.",
+                 "Em Documentos, pesquise por qualquer palavra do texto, do título, do emissor ou das etiquetas; a busca ignora acentos.",
+                 "Documentos novos ficam em A revisar até você confirmar ou corrigir as sugestões. Excluir manda para a lixeira."],
+        "so_dono": False,
+    },
     "jogos": {
         "oque": "Jogos leves no navegador, feitos para leitor de tela: forca, jogo da velha, xadrez, sudoku, 2048, batalha naval, aventuras de texto e outros.",
         "como": ["Abra o serviço e escolha o jogo na lista.",

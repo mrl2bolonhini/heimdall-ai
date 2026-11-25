@@ -33,7 +33,7 @@ ASSUNTOS = {"duvida": "Dúvida de uso", "problema": "Problema ou erro", "sugesta
 SERVICOS = {
     "geral": "Geral",
     "account": "Account", "controls": "Controls", "finance": "Finance", "saude": "Health", "notas": "Notes", "news": "News",
-    "learn": "Learn", "jogos": "Games", "lab": "Lab", "chat": "Chat",
+    "learn": "Learn", "trading": "Trading", "library": "Library", "jogos": "Games", "lab": "Lab", "chat": "Chat",
 }
 
 # Perguntas frequentes: uma lista de (pergunta, resposta) por serviço. Linguagem de produto: clara, objetiva e neutra.
@@ -101,6 +101,28 @@ FAQ = {
          "Em pastas aleatórias, o Learn sorteia trechos para perguntas e respostas. Em pastas sequenciais, gera lições crescentes com exercícios. Em Ajustes você define quantos cards e lições recebe por dia e se quer notificações."),
         ("Meu áudio fica guardado?",
          "Por padrão, não: o áudio da sua resposta é apagado depois de transcrito. A opção de guardá-lo fica nos Ajustes do Learn."),
+    ],
+    "trading": [
+        ("O Trading faz operações de verdade?",
+         "Não. É uma mesa em simulação: nenhuma ordem é enviada a corretora e nenhum dinheiro real é usado. A conta simulada começa com um caixa inicial que você define em Ajustes, na aba Conta."),
+        ("Como envio uma ordem?",
+         "Na Mesa, informe o código do ativo, a quantidade e o tipo (a mercado ou limitada) e use Comprar ou Vender. A ordem a mercado executa ao preço atual; a limitada fica aberta até o preço alcançar o limite. Os atalhos de teclado da Mesa estão no Guia de comandos."),
+        ("Para que servem os limites?",
+         "O limite por ordem recusa ordens grandes demais, o limite de perda por dia bloqueia novas compras quando o resultado do dia passa dele, e o máximo de ordens abertas evita acúmulo. As ordens recusadas aparecem no Histórico com o motivo. Fechar posição nunca é bloqueado pelos limites."),
+        ("De onde vêm as cotações?",
+         "Em Ajustes, na aba Cotações, você escolhe a fonte: simulada (preços gerados, sem internet), manual (você informa o preço de cada ativo) ou brapi (cotações da B3, com token configurado no .env)."),
+        ("A inteligência artificial recomenda comprar ou vender?",
+         "Nunca. Os sinais descrevem de forma objetiva o movimento recente do preço, e o campo Perguntar explica os números da conta. A decisão é sempre sua, e nada aqui é aconselhamento financeiro."),
+    ],
+    "library": [
+        ("Que arquivos posso enviar?",
+         "PDF (com texto ou escaneado), fotos (JPG, PNG, HEIC, TIFF, WEBP), Word (DOCX), texto, Markdown e CSV, até 30 MB por arquivo. O mesmo arquivo nunca entra duas vezes."),
+        ("Como funciona a pesquisa?",
+         "O Library lê o texto de cada documento e pesquisa em todo o conteúdo, no título, no emissor e nas etiquetas. A busca ignora acentos e maiúsculas e encontra palavras pelo começo."),
+        ("O que significa A revisar?",
+         "Ao receber um documento, o Library sugere título, tipo, data, emissor e etiquetas. Enquanto você não confirmar ou corrigir, o documento fica em A revisar. Nada é apagado: excluir manda para a lixeira, em Ajustes."),
+        ("O texto de fotos e PDFs escaneados não aparece. O que fazer?",
+         "A leitura de texto em imagens (OCR) depende do Tesseract instalado no computador que hospeda o Heimdall. Sem ele, o arquivo é guardado e pode ser baixado, mas não é pesquisável pelo conteúdo. Em Ajustes, o Estado informa se o OCR está disponível."),
     ],
     "jogos": [
         ("Os jogos funcionam com leitor de tela?",
@@ -412,6 +434,11 @@ ATALHOS = [
     ("Controls, Terminal: ir ao início da última saída", "Option+Shift+U", "Alt+Shift+U"),
     ("Controls, Terminal: ler o começo da última saída", "Option+Shift+O", "Alt+Shift+O"),
     ("Controls, Terminal: comando anterior ou seguinte do histórico", "Option+Shift+P ou Option+Shift+N", "Alt+Shift+P ou Alt+Shift+N"),
+    ("Trading, Mesa: comprar", "Option+Shift+B", "Alt+Shift+B"),
+    ("Trading, Mesa: vender", "Option+Shift+S", "Alt+Shift+S"),
+    ("Trading, Mesa: fechar a posição do ativo", "Option+Shift+F", "Alt+Shift+F"),
+    ("Trading, Mesa: cancelar as ordens abertas", "Option+Shift+X", "Alt+Shift+X"),
+    ("Trading, Mesa: ir ao campo do ativo", "Option+Shift+Q", "Alt+Shift+Q"),
 ]
 
 

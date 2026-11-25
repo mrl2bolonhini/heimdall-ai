@@ -23,6 +23,8 @@ SERVICOS = {
     "lab": ("Lab", "HEIMDALL_LAB_HOSTS", "lab", True),
     "notas": ("Notes", "HEIMDALL_NOTAS_HOSTS", "notes", False),   # triagem, diários e privacidade: só do dono (os estudos foram para o Learn)
     "learn": ("Learn", "HEIMDALL_LEARN_HOSTS", "learn", True),
+    "trading": ("Trading", "HEIMDALL_TRADING_HOSTS", "trading", True),
+    "library": ("Library", "HEIMDALL_LIBRARY_HOSTS", "library", True),
     "news": ("News", "HEIMDALL_NEWS_HOSTS", "news", True),
     "jogos": ("Games", "HEIMDALL_JOGOS_HOSTS", "games", True),
     "chat": ("Chat (Open WebUI)", "HEIMDALL_WEBUI_HOST", "chat", True),

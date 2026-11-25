@@ -2,6 +2,15 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Heimdall Trading (mesa em simulação) e Heimdall Library (documentos pesquisáveis)
+- Trading (porta 8020, trading.heimdall-ai.tech): mesa de operações só em simulação, feita para teclado e leitor de tela. Abas Mesa, Carteira, Ordens (Abertas, Histórico) e Análise (Sinais, Lista); Ajustes com Limites, Cotações, Conta e Ajuda. Nenhuma ordem é enviada a corretora.
+- Trading, regras fixas em código: limite por ordem, limite de perda por dia (bloqueia novas compras, nunca o fechamento de posição), máximo de ordens abertas, taxa por operação e venda só do que existe na carteira. A IA só descreve (sinais objetivos e campo Perguntar) e nunca recomenda comprar ou vender.
+- Trading, cotações: simulada (sem internet), manual (você informa o preço) ou brapi (B3, token opcional em HEIMDALL_TRADING_BRAPI_TOKEN). Atalhos da Mesa nas duas formas: Option+Shift (macOS) ou Alt+Shift (Windows e Linux) com B comprar, S vender, F fechar posição, X cancelar ordens abertas e Q ir ao campo do ativo, na tabela do Guia de comandos.
+- Library (porta 8021, library.heimdall-ai.tech): acervo de documentos pesquisáveis. Abas Documentos (Pesquisar, Recentes, A revisar), Adicionar (Enviar arquivo, Pasta de entrada) e Organização (Etiquetas, Tipos); Ajustes com Estado, Lixeira e Ajuda.
+- Library: lê o texto de PDF, DOCX, TXT, MD e CSV e, com o Tesseract instalado, de fotos e PDFs escaneados (OCR). A busca ignora acentos e maiúsculas. Tipo, data, emissor e etiquetas são sugeridos por regras e pelo modelo leve (validados) e o documento fica em A revisar até a pessoa confirmar. O mesmo arquivo não entra duas vezes e excluir manda para a lixeira.
+- Os dois serviços usam a nova base web (heimdall_servico_web.py), têm o campo Perguntar, dados por pessoa, interruptores HEIMDALL_TRADING e HEIMDALL_LIBRARY (desligados por padrão), comandos heimdall trading e heimdall library, perguntas frequentes na Ajuda e entrada no menu Conta.
+- Os bancos library.db e trading.db entram na cópia diária. Os arquivos originais do Library (pasta library/) ainda não entram: registrado no ROADMAP.
+
 ## 2026-11-25 - No máximo 5 posições de abas, nomes de uma palavra e Games em 5 categorias
 - Regra do Heimdall Design: no máximo 5 posições de abas por serviço, para uma leitura mais clara e para telas menores dos apps móveis. Com mais de 5 itens, o design mostra 4 abas e o menu Mais na quinta posição, então nunca passa de 5. Os atalhos Option+Shift+1 a 5 abrem as abas.
 - Nome de aba com uma palavra só (as subabas podem ter mais): o Controls passou a ter Resumo no lugar de Visão geral e o Lab, Console no lugar de Console geral.

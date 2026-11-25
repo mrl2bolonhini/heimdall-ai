@@ -110,6 +110,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     controls) printf '%s\n' "-o=--open" "-L=--local" ;;
     account) printf '%s\n' "-L=--local" ;;
     learn) printf '%s\n' "-L=--local" "-s=--sync" "-m=--migrate" "-a=--apply" ;;
+    trading|library) printf '%s\n' "-L=--local" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
     triage) printf '%s\n' "-c=--complete-tests" ;;
@@ -247,7 +248,7 @@ heimdall() {
   done
   _HLOCAL=0
   case "$cmd" in
-    lab|cloud|notes|learn|news|health|games|finance|controls|account)
+    lab|cloud|notes|learn|trading|library|news|health|games|finance|controls|account)
       local _x _n=()
       for _x in "$@"; do
         if [ "$_x" = "--local" ]; then _HLOCAL=1; else _n+=("$_x"); fi
@@ -349,6 +350,8 @@ heimdall() {
           _heimdall_py heimdall_saude.py "${_HA[@]}" ;;
       esac ;;
     account) _heimdall_web "Heimdall Account" ACCOUNT 8018 account ;;
+    trading) _heimdall_web "Heimdall Trading" TRADING 8020 trading ;;
+    library) _heimdall_web "Heimdall Library" LIBRARY 8021 library ;;
     learn)
       case "$1" in
         "") _heimdall_web "Heimdall Learn" LEARN 8019 learn ;;
@@ -423,6 +426,8 @@ heimdall() {
       echo "chat: http://localhost:3000"
       echo "notes: http://localhost:$(_heimdall_port HEIMDALL_NOTAS_PORT 8011)"
       echo "learn: http://localhost:$(_heimdall_port HEIMDALL_LEARN_PORT 8019)"
+      echo "trading: http://localhost:$(_heimdall_port HEIMDALL_TRADING_PORT 8020)"
+      echo "library: http://localhost:$(_heimdall_port HEIMDALL_LIBRARY_PORT 8021)"
       echo "news: http://localhost:$(_heimdall_port HEIMDALL_NEWS_PORT 8012)"
       echo "lab: http://localhost:$(_heimdall_port HEIMDALL_LAB_PORT "$(_heimdall_port HEIMDALL_CLOUD_PORT 8010)")"
       echo "health: http://localhost:$(_heimdall_port HEIMDALL_SAUDE_PAINEL_PORT 8013)"
@@ -575,7 +580,7 @@ heimdall() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes learn news lab health games finance controls account n8n kuma dozzle urls triage notices notion cloudai mailbox app ask usage support db doctor backup continuity mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes learn trading library news lab health games finance controls account n8n kuma dozzle urls triage notices notion cloudai mailbox app ask usage support db doctor backup continuity mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -583,7 +588,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     fi
     case ${words[2]} in
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
-      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent lab notes learn news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
+      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent lab notes learn trading library news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
       chat) compadd -- --diagnose --password --email --delete-user --tools --models --import --check ;;
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
       notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;

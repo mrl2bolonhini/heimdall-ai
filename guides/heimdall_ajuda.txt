@@ -129,6 +129,24 @@ Exemplos:
   heimdall learn --migrate
   heimdall learn --migrate --apply
 
+@ trading | Heimdall Trading, mesa de operações em simulação
+Sem opção, abre a mesa de operações em simulação (porta 8020): cotação, ordens a mercado e limitadas, carteira, histórico e sinais descritivos do movimento recente. Nenhuma ordem é enviada a corretora; os limites por ordem e de perda por dia ficam em Ajustes. Liga com HEIMDALL_TRADING=1 no .env.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall trading
+  heimdall trading --local
+
+@ library | Heimdall Library, documentos pesquisáveis
+Sem opção, abre o acervo de documentos pesquisáveis (porta 8021): envio de PDF, foto, Word e texto, leitura de texto (OCR em imagens), etiquetas sugeridas com revisão e busca em todo o conteúdo. Liga com HEIMDALL_LIBRARY=1 no .env.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
+  -h, --help           mostra esta ajuda
+Exemplos:
+  heimdall library
+  heimdall library --local
+
 @ news | Heimdall News, notícias com resumo de IA
 Sem opção, abre o site de notícias das últimas 24 horas (porta 8012). Com opção, cuida dos feeds RSS, das fontes e da atualização.
 Opções:

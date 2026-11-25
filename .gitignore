@@ -45,3 +45,6 @@ dados_financas/  # nome antigo da pasta do Finance (migrada para finance/ na pri
 # Extratos e faturas de amostra (nunca vão para o git)
 amostras_bancos/
 /health/
+
+# Arquivos e pasta de entrada do Heimdall Library (dados do usuário)
+/library/

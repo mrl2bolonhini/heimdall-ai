@@ -9,7 +9,7 @@ Atualizado em 25/11/2026. Resume o que foi implementado, debatido e decidido ent
 4) Dados pessoais só no banco e no .env do dono. Segredo nunca é colado: o usuário roda um comando de terminal que lê o valor (heimdall env --set, que lê a área de transferência).
 
 2. Arquitetura hoje
-1) Hospedagem: um Mac (Mac Studio) roda tudo: Ollama (modelos locais), LiteLLM (porta 9000), servidores MCP (8000 só do Mac, 8001 público, 8004 só o banco pessoal em 127.0.0.1), agente do Mac (8003, ponte com Notas, Calendário e Lembretes), n8n (fluxos, em Docker), Qdrant (busca por significado), SearXNG, Open WebUI (chat), Uptime Kuma (status) e os sites Python em heimdall-ai.tech: Lab (antes Cloud), Notes, News, Health, Games, Finance, Learn, Controls e Account.
+1) Hospedagem: um Mac (Mac Studio) roda tudo: Ollama (modelos locais), LiteLLM (porta 9000), servidores MCP (8000 só do Mac, 8001 público, 8004 só o banco pessoal em 127.0.0.1), agente do Mac (8003, ponte com Notas, Calendário e Lembretes), n8n (fluxos, em Docker), Qdrant (busca por significado), SearXNG, Open WebUI (chat), Uptime Kuma (status) e os sites Python em heimdall-ai.tech: Lab (antes Cloud), Notes, News, Health, Games, Finance, Learn, Trading, Library, Controls e Account.
 2) Acesso: túnel da Cloudflare com Cloudflare Access (login por Microsoft Authenticator, com push) e Tailscale para o iPhone. A mesma senha vale em todos os serviços.
 3) Nuvem: Cloudflare Workers Paid. Continuidade implantada em 23/11/2026: Worker, contêiner, cópia cifrada dos bancos no R2 e deploy automático quando a main avança. Quando o Mac cai, os serviços seguem em modo reduzido na Cloudflare.
 4) Limite de gasto da Cloudflare: US$ 15 por mês, com alertas ligados antes de cada fase. Toda fase tem interruptor no .env e cópia no Mac antes de qualquer remoção.
@@ -17,6 +17,7 @@ Atualizado em 25/11/2026. Resume o que foi implementado, debatido e decidido ent
 6) Desenvolvimento na assinatura Pro do Claude, não na API (a API é cobrada à parte; o usuário desistiu dela por isso).
 
 3. O que foi implementado (22 a 25/11/2026)
+0) Trading (porta 8020, trading.heimdall-ai.tech) e Library (porta 8021, library.heimdall-ai.tech), feitos em 25/11/2026 numa sessão do chat (não do Code), sobre a nova base heimdall_servico_web.py. Trading: mesa SÓ em simulação (motor em heimdall_trading_motor.py, limites por ordem e de perda por dia, cotações simulada, manual ou brapi, sinais descritivos, a IA nunca recomenda). Library: acervo pesquisável próprio (SQLite FTS5, OCR com Tesseract, etiquetas sugeridas com revisão) no lugar do Paperless-ngx, decisão tomada para manter um só login, dados por pessoa e o Heimdall Design; conector opcional ao Paperless-ngx fica no ROADMAP. Ligam com HEIMDALL_TRADING=1 e HEIMDALL_LIBRARY=1. Falta: rota de túnel, DNS e Access dos dois subdomínios, cópia dos arquivos da Library no R2 e continuidade na nuvem.
 Serviços e interface
 1) Learn: plataforma de estudos por tema, com lições, voz, cartões, agenda, exercícios e progresso; estudos saíram do Notes (que ficou só com triagem e diários).
 2) Cloud virou Lab (módulo, variáveis do .env com migração, comando, app do Mac, docs e testes).
