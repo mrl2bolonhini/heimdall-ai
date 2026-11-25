@@ -220,7 +220,7 @@ def rodape(extra: str = "", servico: str = "") -> str:
     b = base_ajuda()
     q = f"?servico={servico}" if servico else ""
     links = (f'<nav aria-label="Ajuda e informações"><ul><li><a href="{b}/ajuda{q}">Ajuda e suporte</a></li>'
-             f'<li><a href="{b}/termos-de-uso">Termos de Uso</a></li><li><a href="{b}/privacidade">Privacidade</a></li></ul></nav>')
+             f'<li><a href="{b}/termos-de-uso">Termos de Uso</a></li><li><a href="{b}/politica-de-privacidade">Privacidade</a></li></ul></nav>')
     return f'<footer class="rodape">{extra}{links}<p><a href="#topo" tabindex="0">Voltar para o topo</a></p></footer>'
 
 

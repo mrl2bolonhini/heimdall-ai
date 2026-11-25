@@ -146,7 +146,7 @@ def pedir(caminho, jwt=None, origem=None, metodo="GET", corpo=None, host=HOST):
     return r.status, b
 
 
-for caminho in ("/ajuda", "/termos-de-uso", "/privacidade"):
+for caminho in ("/ajuda", "/termos-de-uso", "/politica-de-privacidade"):
     s, b = pedir(caminho)
     confere(f"{caminho} sem Access: 403", s == 403)
     s, b = pedir(caminho, jwt="tokana")
@@ -230,7 +230,7 @@ for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "CLOUDFLARE_API_TOKEN
 
 # ---- rodapé de todos os serviços ----
 r = design.rodape(servico="finance")
-confere("rodapé: Ajuda e suporte (com o serviço), Termos de Uso e Privacidade, antes do Voltar para o topo", "/ajuda?servico=finance" in r and "/termos-de-uso" in r and "/privacidade" in r and r.index("Privacidade") < r.index("Voltar para o topo") and 'aria-label="Ajuda e informações"' in r)
+confere("rodapé: Ajuda e suporte (com o serviço), Termos de Uso e Privacidade, antes do Voltar para o topo", "/ajuda?servico=finance" in r and "/termos-de-uso" in r and "/politica-de-privacidade" in r and r.index("Privacidade") < r.index("Voltar para o topo") and 'aria-label="Ajuda e informações"' in r)
 fontes = {"controls": "heimdall_controls.py", "finance": "heimdall_finance.py", "saude": "heimdall_painel_saude.py", "notas": "heimdall_notas.py", "news": "heimdall_news.py",
           "learn": "heimdall_learn.py", "jogos": "heimdall_jogos.py", "lab": "heimdall_lab.py", "account": "heimdall_account.py"}
 confere("todos os serviços com página própria passam a chave do serviço ao rodapé", all(f'design.rodape(' in (RAIZ / f).read_text(encoding="utf-8") and (f'"{k}"' in (RAIZ / f).read_text(encoding="utf-8")) for k, f in fontes.items()))

@@ -227,7 +227,7 @@ class Account(nuvem.ManipuladorBase):
             if not p or (host not in LOCAIS and not p.get("access")):
                 return self._responder(401, json.dumps({"logado": False}).encode(), "application/json", cors=True)
             return self._responder(200, json.dumps(dados_quem(p), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8", cors=True)
-        if caminho not in ("/", "/integracoes", "/ajuda", "/termos-de-uso", "/privacidade", "/suporte/mensagens"):
+        if caminho not in ("/", "/integracoes", "/ajuda", "/termos-de-uso", "/politica-de-privacidade", "/suporte/mensagens"):
             return self._responder(404, "Não encontrado.".encode(), "text/plain; charset=utf-8")
         if not p or (host not in LOCAIS and not p.get("access")):
             return self._responder(403, "Entre pelo Cloudflare Access.".encode(), "text/plain; charset=utf-8")
@@ -237,7 +237,7 @@ class Account(nuvem.ManipuladorBase):
                 return self._responder(404, "Não encontrado.".encode(), "text/plain; charset=utf-8")
             titulo, corpo = ajuda.pagina_mensagens(integ.csrf(p))
             return self._html(_documento(titulo, corpo, nonce), nonce)
-        if caminho in ("/ajuda", "/termos-de-uso", "/privacidade"):
+        if caminho in ("/ajuda", "/termos-de-uso", "/politica-de-privacidade"):
             if caminho == "/ajuda":
                 q = urllib.parse.parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
                 titulo, corpo = ajuda.pagina_ajuda(integ.csrf(p), (q.get("servico") or [""])[0], dono=p.get("papel") == "dono")

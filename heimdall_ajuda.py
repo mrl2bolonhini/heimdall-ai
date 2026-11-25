@@ -314,7 +314,7 @@ def texto_documento(qual: str) -> str:
 def pagina_termos_de_uso() -> tuple:
     p = termos_de_uso()
     corpo = (_cabecalho_doc("Termos de Uso") + _indice("pu", p) + _secoes("pu", p)
-             + '<p><a href="/privacidade">Política de Privacidade</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
+             + '<p><a href="/politica-de-privacidade">Política de Privacidade</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
     return "Termos de Uso - Heimdall", corpo
 
 
@@ -365,7 +365,7 @@ def pagina_ajuda(csrf: str, servico: str = "", aviso: str = "", erro: str = "", 
     nome = f" do {SERVICOS[servico]}" if servico else ""
     corpo = (f"<h1>Ajuda e suporte{e(nome)}</h1>{topo}"
              '<p>Encontre abaixo as perguntas frequentes e, no fim da página, o formulário para falar com o suporte. '
-             f'Documentos: <a href="/termos-de-uso">Termos de Uso</a> e <a href="/privacidade">Política de Privacidade</a>.</p>'
+             f'Documentos: <a href="/termos-de-uso">Termos de Uso</a> e <a href="/politica-de-privacidade">Política de Privacidade</a>.</p>'
              + ('<p><a href="/suporte/mensagens">Mensagens de suporte recebidas (somente dono)</a></p>' if dono else "")
              + _faq_html(servico) + formulario_suporte(csrf, servico, valores))
     return "Ajuda e suporte - Heimdall", corpo
