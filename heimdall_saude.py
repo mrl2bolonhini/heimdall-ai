@@ -1605,7 +1605,7 @@ def relatorio_documentos(dias: int = 7, agora: datetime = None) -> str:
     limite = (agora - timedelta(days=_dias_pendente())).isoformat(timespec="seconds")
     try:
         docs = _ler("SELECT id, tipo FROM documentos_saude WHERE estado = 'confirmado' AND substr(confirmado_em, 1, 10) >= ?", (ini,))
-        pend = _ler("SELECT arquivo, criado FROM documentos_saude WHERE estado = 'pendente' AND criado <= ? ORDER BY criado", (limite,))
+        pend = _ler("SELECT tipo, criado FROM documentos_saude WHERE estado = 'pendente' AND criado <= ? ORDER BY criado", (limite,))
     except Exception:  # noqa: BLE001 - banco antigo sem as tabelas de documentos: o relatório segue sem esta seção
         return ""
     linhas = []
@@ -1640,7 +1640,10 @@ def relatorio_documentos(dias: int = 7, agora: datetime = None) -> str:
         linhas.append(f"{'Um documento aguarda' if n == 1 else f'{n} documentos aguardam'} a sua conferência há mais de {_dias_pendente()} dias "
                       "(aba Prontuário, Documentos recebidos):")
         for d in pend[:10]:
-            linhas.append(f"- {d['arquivo'] or 'documento sem nome'}, recebido em {d['criado'][8:10]}/{d['criado'][5:7]}.")
+            # Só o tipo e a data: o nome do arquivo pode trazer nome de pessoa ou de exame, e o relatório vai para o app Notas e para o áudio.
+            tipo = _TIPOS_DOC.get(d["tipo"], ("documento", ""))[0]
+            tipo = "documento" if tipo == "outro documento" else tipo
+            linhas.append(f"- {tipo[0].upper() + tipo[1:]}, chegou em {d['criado'][8:10]}/{d['criado'][5:7]}.")
     if not linhas:
         return ""
     return "Documentos de saúde:\n" + "\n".join(linhas)

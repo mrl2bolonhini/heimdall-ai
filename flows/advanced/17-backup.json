@@ -77,7 +77,7 @@
     0
    ],
    "parameters": {
-    "jsCode": "// Falha em qualquer destino (do banco do dono ou do de uma pessoa) derruba o fluxo, e o aviso de falha do Heimdall chega pelo Bark.\n// O aviso nunca leva o identificador da pessoa: diz só \"banco de uma pessoa\".\nconst j = $input.first().json || {};\nif (j.ok !== true) {\n  const falhos = (j.destinos || []).filter(d => !d.ok).map(d => d.destino + ': ' + (d.erro || 'falhou'));\n  const pessoas = (j.pessoas || []).filter(p => !p.ok);\n  if (pessoas.length) falhos.push(pessoas.length === 1 ? 'banco de uma pessoa não copiado' : pessoas.length + ' bancos de pessoas não copiados');\n  throw new Error('A cópia de segurança do banco não foi concluída. ' + (falhos.join('; ') || String(j.erro || 'sem resposta do agente')).slice(0, 300));\n}\nreturn [{ json: j }];"
+    "jsCode": "// Falha em qualquer destino (do banco do dono ou do de uma pessoa) derruba o fluxo, e o aviso de falha do Heimdall chega pelo Bark.\n// O aviso nunca leva o identificador da pessoa: diz só \"banco de uma pessoa\".\nconst j = $input.first().json || {};\nif (j.ok !== true) {\n  const falhos = (j.destinos || []).filter(d => !d.ok).map(d => d.destino + ': ' + (d.erro || 'falhou'));\n  (j.outros || []).filter(o => !o.ok).forEach(o => falhos.push(o.banco + ': ' + (o.erro || 'falhou')));\n  const pessoas = (j.pessoas || []).filter(p => !p.ok);\n  if (pessoas.length) falhos.push(pessoas.length === 1 ? 'banco de uma pessoa não copiado' : pessoas.length + ' bancos de pessoas não copiados');\n  throw new Error('A cópia de segurança do banco não foi concluída. ' + (falhos.join('; ') || String(j.erro || 'sem resposta do agente')).slice(0, 300));\n}\nreturn [{ json: j }];"
    }
   },
   {

@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-25 - Games com 6 abas e Guia de comandos de administração
+- Games: as categorias Cartas e Cassino viraram uma só, Cartas e cassino (paciência, poker, blackjack, bacará, poker caribenho, caça-níqueis e roleta, só com créditos virtuais). As abas ficaram em seis, em duas linhas de três. O endereço antigo /categoria/cassino continua valendo.
+- Guia de comandos (Ajuda e suporte, no Heimdall Account): nova tabela Administração, com ver as versões instaladas, o diagnóstico e ligar e desligar o emulador de AWS do Lab, para macOS, Linux e Windows. O aviso do Lab com o emulador desligado e a lista de versões do Controls ligam a essa tabela.
+
 ## 2026-11-25 - Navegação: Controls com 6 abas, Ajustes no News e subaba Ajuda
 - Controls: a aba Monitor passou a ser a subaba Consumo de IA, dentro da aba Nuvem (que ganhou a subaba Continuidade). As abas de cima ficaram em seis: Visão geral, Terminal, Serviços, Usuários, Nuvem e Manutenção. O endereço /monitor continua valendo.
 - News: o Estado das fontes, que é estado técnico, saiu da lista de abas e foi para o botão Ajustes, no topo, depois do menu Conta, com o botão Voltar ao News. A página de notícias ficou sem lista de abas, por ter uma só seção. O endereço /estado continua valendo.
@@ -10,12 +14,13 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 
 ## 2026-11-25 - Documentos de saúde no relatório da semana
 - O relatório da semana (nota com áudio aos domingos e a página Semana do Heimdall Health) ganhou a seção Documentos de saúde: quantos documentos foram confirmados na semana, por tipo; os resultados de exame fora da faixa de referência do laboratório, com o valor e a referência; os laudos, pelo título (a conclusão fica na aba Prontuário); e as especialidades dos encaminhamentos. CID e diagnóstico não entram.
-- Documentos que aguardam conferência há mais de 3 dias aparecem na mesma seção, com o nome do arquivo e a data de chegada. HEIMDALL_SAUDE_PENDENTE_DIAS muda o prazo.
+- Documentos que aguardam conferência há mais de 3 dias aparecem na mesma seção, com o tipo e a data de chegada (o nome do arquivo não entra, porque pode trazer nome de pessoa ou de exame). HEIMDALL_SAUDE_PENDENTE_DIAS muda o prazo.
 - O aviso da semana no Bark acrescenta, quando há documento antigo sem conferência, a frase "Há documentos de saúde aguardando a sua conferência", sem nomes nem números.
 - Cada pessoa vê, na página Semana, só os próprios documentos. Funciona em qualquer sistema pelo painel; a nota com áudio continua dependendo do agente do Mac.
 
 ## 2026-11-25 - Cópia de segurança dos dados de cada pessoa
 - A cópia de segurança diária passa a incluir o banco de cada pessoa cadastrada (db/people/<id>/heimdall.db): uma cópia cifrada por pessoa, na subpasta people/<id>/ de cada destino (pasta e R2), com a mesma senha e a mesma retenção, contadas separadamente das do dono. A verificação semanal confere também as cópias de cada pessoa; um banco com problema não impede os outros.
+- Os demais bancos da pasta db/ (o do Learn, por exemplo), do dono e de cada pessoa, também entram na cópia diária, cada um na subpasta com o nome dele (learn/, people/<id>/learn/).
 - A cópia de continuidade na nuvem passa a levar também o banco de cada pessoa (db/people/*/*.db).
 - Correção: os dados de cada pessoa ficavam em duas pastas (db/pessoas para o Learn e db/people para o banco pessoal). Agora tudo fica em db/people; na primeira subida, o conteúdo da pasta antiga é juntado ao da nova, pessoa por pessoa, sem sobrescrever nem apagar nada.
 - O aviso de falha (Bark) diz só "banco de uma pessoa", sem o identificador. Pessoa que ainda não tem cópia não gera falha na verificação de domingo, e a data do último sucesso segue a cópia do banco do dono.

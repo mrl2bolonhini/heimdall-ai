@@ -386,10 +386,19 @@ COMANDOS_HEALTH = [
      "python3 heimdall_clinico.py --perfil-add condicao|cirurgia|alergia|convenio|medico|outro --texto TEXTO"),
 ]
 
+# Administração (Controls e Lab): o que as telas não ensinam. A terceira coluna vale para Linux e Windows (com Docker instalado).
+COMANDOS_ADMIN = [
+    ("Ver as versões instaladas e se há imagem mais nova no registro", "heimdall doctor --versions", "python3 diagnostico.py --versoes"),
+    ("Diagnóstico completo (memória, disco, Docker e modelos)", "heimdall doctor", "python3 diagnostico.py"),
+    ("Ligar o emulador de AWS usado pelo Lab", "heimdall lab --start", "docker start localstack (ou docker start moto)"),
+    ("Desligar o emulador de AWS", "heimdall lab --stop", "docker stop localstack moto"),
+]
+
 
 def _comandos_html() -> str:
     cab = "".join(f'<th scope="col">{c}</th>' for c in ("Ação", "macOS (comando heimdall)", "Linux e Windows (Python, na pasta do Heimdall)"))
     linhas = "".join(f'<tr><th scope="row">{e(a)}</th><td><code>{e(m)}</code></td><td><code>{e(p)}</code></td></tr>' for a, m, p in COMANDOS_HEALTH)
+    linhas_admin = "".join(f'<tr><th scope="row">{e(a)}</th><td><code>{e(m)}</code></td><td><code>{e(p)}</code></td></tr>' for a, m, p in COMANDOS_ADMIN)
     return ('<section aria-labelledby="comandos"><h2 id="comandos">Guia de comandos</h2>'
             '<p>Algumas ações são feitas por comando no computador que hospeda o Heimdall. As telas dos serviços indicam esta página em vez de mostrar comandos.</p>'
             '<h3>Abrir o terminal</h3><ol>'
@@ -401,6 +410,10 @@ def _comandos_html() -> str:
             '<h3 id="comandos-saude">Health: documentos, sugestões e perfil</h3>'
             f'<table><caption>Comandos do Health por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
             '<p>Eventos no Calendário e lembretes no app Lembretes dependem do agente do Mac; nos outros sistemas, os itens ficam registrados no Heimdall.</p>'
+            '<h3 id="comandos-admin">Administração: versões e emulador do Lab</h3>'
+            f'<table><caption>Comandos de administração por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas_admin}</tbody></table>'
+            '<p>No Heimdall Controls, a aba Terminal executa esses comandos no computador que hospeda o Heimdall e mostra a saída na própria página; '
+            'a aba Serviços liga e desliga o emulador por uma chave, e a aba Manutenção tem os botões Status e Diagnóstico.</p>'
             '<h3>iPhone e Android</h3>'
             '<p>Abra os painéis pelo navegador (Safari no iPhone, Chrome no Android) para consultar os dados, ver sugestões e editar o perfil. '
             'A conferência de documentos e os demais comandos acima são feitos no computador que hospeda o Heimdall. No iPhone, o botão Atualizar dados agora, '

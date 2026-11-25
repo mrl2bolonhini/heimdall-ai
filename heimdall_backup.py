@@ -8,6 +8,8 @@ criptografa com AES-256-GCM (chave derivada da senha com scrypt) e grava em um o
 Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses.
 O banco de cada pessoa (db/people/<id>/heimdall.db) tem cópias próprias, na subpasta people/<id>/ de cada destino,
 com a mesma senha e a mesma retenção, contadas separadamente das do dono.
+Os demais bancos da mesma pasta (learn.db, avisos_saude.db...) também entram, cada um na subpasta com o nome dele
+(learn/, avisos_saude/; para uma pessoa, people/<id>/learn/). As cópias locais (copies/) não entram.
 
 Configuração (no .env, nunca no Git):
     HEIMDALL_BACKUP_SENHA   senha das cópias (gerada por:  python3 heimdall_backup.py preparar)
@@ -96,10 +98,13 @@ class DestinoPasta:
         self.nome = f"pasta {pasta}"
         self.pasta = Path(pasta).expanduser() / sub if sub else Path(pasta).expanduser()
 
-    def da_pessoa(self, pessoa):
+    def sub(self, caminho):
         d = DestinoPasta.__new__(DestinoPasta)
-        d.nome, d.pasta = self.nome, self.pasta / "people" / pessoa
+        d.nome, d.pasta = self.nome, self.pasta / caminho
         return d
+
+    def da_pessoa(self, pessoa):
+        return self.sub(f"people/{pessoa}")
 
     def enviar(self, nome, blob):
         self.pasta.mkdir(parents=True, exist_ok=True)
@@ -128,10 +133,13 @@ class DestinoR2:
                                    aws_secret_access_key=cfg["secret"], region_name="auto")
         self.c = cliente
 
-    def da_pessoa(self, pessoa):
+    def sub(self, caminho):
         d = DestinoR2.__new__(DestinoR2)
-        d.nome, d.bucket, d.c, d.prefixo = self.nome, self.bucket, self.c, f"people/{pessoa}/"
+        d.nome, d.bucket, d.c, d.prefixo = self.nome, self.bucket, self.c, self.prefixo + caminho.strip("/") + "/"
         return d
+
+    def da_pessoa(self, pessoa):
+        return self.sub(f"people/{pessoa}")
 
     def enviar(self, nome, blob):
         self.c.put_object(Bucket=self.bucket, Key=self.prefixo + nome, Body=blob)
@@ -192,6 +200,49 @@ def estado():
         return {"ultimo_ok": None}
 
 
+_NOME_BANCO = re.compile(r"^[a-z0-9_]{1,40}\.db$")
+
+
+def outros_bancos(pasta: Path) -> list:
+    """Bancos SQLite da pasta além do heimdall.db (learn.db, avisos_saude.db...), em ordem. Só nomes simples; nada de subpastas."""
+    if not Path(pasta).is_dir():
+        return []
+    return sorted(p for p in Path(pasta).iterdir() if p.is_file() and not p.is_symlink() and _NOME_BANCO.match(p.name) and p.name != "heimdall.db")
+
+
+def _copia_de_arquivo(arquivo: Path) -> bytes:
+    """Cópia consistente e conferida de um banco SQLite qualquer, aberto só para leitura."""
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d) / "copia.db"
+        origem = sqlite3.connect(f"file:{arquivo}?mode=ro", uri=True, timeout=10)
+        try:
+            dest = sqlite3.connect(tmp)
+            try:
+                origem.backup(dest)
+                ok = dest.execute("PRAGMA integrity_check").fetchone()[0]
+            finally:
+                dest.close()
+        finally:
+            origem.close()
+        if ok != "ok":
+            raise RuntimeError(f"{arquivo.name} falhou na conferência de integridade: {ok}")
+        return tmp.read_bytes()
+
+
+def _copias_dos_outros(dests, pasta: Path, nome: str, senha: str, rotulo: str = "") -> list:
+    """Uma cópia cifrada por banco extra da pasta, na subpasta <nome do banco>/ de cada destino. Um banco com problema não impede os outros."""
+    saida = []
+    for arq in outros_bancos(pasta):
+        sub = arq.stem
+        try:
+            blob = cifrar(_copia_de_arquivo(arq), senha)
+            res = _enviar([d.sub(sub) for d in dests], nome, blob)
+            saida.append({"banco": (rotulo + "/" if rotulo else "") + arq.name, "ok": all(r["ok"] for r in res), "destinos": res})
+        except Exception as ex:  # noqa: BLE001
+            saida.append({"banco": (rotulo + "/" if rotulo else "") + arq.name, "ok": False, "erro": str(ex)[:200]})
+    return saida
+
+
 def _copia_consistente() -> bytes:
     if not banco.caminho().exists():
         raise RuntimeError("o banco ainda não existe; nada para copiar")
@@ -245,7 +296,8 @@ def _copias_das_pessoas(dests, nome, senha):
             with banco.da_pessoa(p):
                 blob = cifrar(_copia_consistente(), senha)
             res = _enviar([d.da_pessoa(p) for d in dests], nome, blob)
-            saida.append({"pessoa": p, "ok": all(r["ok"] for r in res), "destinos": res})
+            extras = _copias_dos_outros([d.da_pessoa(p) for d in dests], banco.pasta_pessoas() / p, nome, senha)
+            saida.append({"pessoa": p, "ok": all(r["ok"] for r in res) and all(x["ok"] for x in extras), "destinos": res, "outros": extras})
         except Exception as ex:  # noqa: BLE001
             saida.append({"pessoa": p, "ok": False, "erro": str(ex)[:200]})
     return saida
@@ -266,12 +318,13 @@ def fazer(env=None, cliente_r2=None, agora=None):
         nome = f"heimdall-{agora:%Y-%m-%dT%H%M}{EXT}"
         blob = cifrar(_copia_consistente(), senha)
         res = _enviar(dests, nome, blob)
+        outros = _copias_dos_outros(dests, banco.DB_DIR, nome, senha)
         das_pessoas = _copias_das_pessoas(dests, nome, senha)
-        saida = {"ok": all(r["ok"] for r in res) and all(p["ok"] for p in das_pessoas), "nome": nome, "bytes": len(blob),
-                 "destinos": res, "pessoas": das_pessoas, "quando": agora.isoformat(timespec="seconds")}
+        saida = {"ok": all(r["ok"] for r in res) and all(x["ok"] for x in outros) and all(p["ok"] for p in das_pessoas), "nome": nome, "bytes": len(blob),
+                 "destinos": res, "outros": outros, "pessoas": das_pessoas, "quando": agora.isoformat(timespec="seconds")}
         est = estado()
         est.update({"ultima_tentativa": saida})
-        if all(r["ok"] for r in res):   # a data do último sucesso segue a cópia do banco do dono; as das pessoas têm resultado próprio
+        if all(r["ok"] for r in res) and all(x["ok"] for x in outros):   # a data do último sucesso segue os bancos do dono; os das pessoas têm resultado próprio
             est["ultimo_ok"] = saida["quando"]
         est["pessoas_ok"] = all(p["ok"] for p in das_pessoas)
         _grava_estado(est)
@@ -283,8 +336,12 @@ def listar(env=None, cliente_r2=None):
     saida = {}
     for d in destinos(env, cliente_r2):
         saida[d.nome] = d.listar()
+        for arq in outros_bancos(banco.DB_DIR):
+            saida[f"{d.nome} / {arq.stem}"] = d.sub(arq.stem).listar()
         for p in pessoas():
             saida[f"{d.nome} / people/{p}"] = d.da_pessoa(p).listar()
+            for arq in outros_bancos(banco.pasta_pessoas() / p):
+                saida[f"{d.nome} / people/{p}/{arq.stem}"] = d.da_pessoa(p).sub(arq.stem).listar()
     return saida
 
 
@@ -321,8 +378,12 @@ def verificar(env=None, cliente_r2=None):
     saida = {}
     for d in destinos(e, cliente_r2):
         saida[d.nome] = _verificar_destino(d, senha)
+        for arq in outros_bancos(banco.DB_DIR):   # banco extra criado depois da última cópia diária entra na próxima: não é falha
+            saida[f"{d.nome} / {arq.stem}"] = _verificar_destino(d.sub(arq.stem), senha, nova_ok=True)
         for p in pessoas():
             saida[f"{d.nome} / people/{p}"] = _verificar_destino(d.da_pessoa(p), senha, nova_ok=True)
+            for arq in outros_bancos(banco.pasta_pessoas() / p):
+                saida[f"{d.nome} / people/{p}/{arq.stem}"] = _verificar_destino(d.da_pessoa(p).sub(arq.stem), senha, nova_ok=True)
     return saida
 
 

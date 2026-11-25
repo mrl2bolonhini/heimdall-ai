@@ -465,7 +465,7 @@ Exemplos:
   heimdall continuity --status
 
 @ backup | Cópia de segurança criptografada do banco
-Tira uma cópia consistente do banco, criptografa (AES-256-GCM) e grava na pasta ou no bucket R2 configurados no .env. Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses. O banco de cada pessoa cadastrada tem cópias próprias, na subpasta people/<id>/ do mesmo destino, com a mesma senha e a mesma retenção.
+Tira uma cópia consistente do banco, criptografa (AES-256-GCM) e grava na pasta ou no bucket R2 configurados no .env. Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses. O banco de cada pessoa cadastrada tem cópias próprias, na subpasta people/<id>/ do mesmo destino, com a mesma senha e a mesma retenção. Os demais bancos da pasta db/ (o do Learn, por exemplo) também entram, cada um na subpasta com o nome dele (learn/, e people/<id>/learn/ para uma pessoa).
 Opções:
   -p, --prepare        cria a senha da cópia e confere os destinos
   -P, --password       mostra a senha da cópia guardada no .env

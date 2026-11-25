@@ -286,12 +286,13 @@ confere("documentos: conta o que foi confirmado na semana", rd.startswith("Docum
 confere("documentos: só os resultados fora da faixa, com valor e referência", "Vitamina D: 18 ng/mL, abaixo da faixa; referência 30 a 100" in rd and "Ferritina" in rd and "Hemoglobina" not in rd, rd)
 confere("documentos: confirmado há mais de uma semana não entra", "Glicose" not in rd, rd)
 confere("documentos: laudo sem a conclusão e encaminhamento sem CID", "Ultrassonografia de abdome" in rd and "conclusao-secreta" not in rd and "Fisioterapia" in rd and "Z99" not in rd, rd)
-confere("documentos: pendente antigo entra, recente não", "receita-velha.pdf" in rd and "recente.pdf" not in rd and "há mais de 3 dias" in rd, rd)
+confere("documentos: pendente antigo entra pelo tipo e pela data, sem o nome do arquivo; o recente não entra",
+        "- Receita, chegou em" in rd and "receita-velha.pdf" not in rd and "recente.pdf" not in rd and "há mais de 3 dias" in rd and rd.count("chegou em") == 1, rd)
 rsem2 = hs.relatorio_semanal()
 confere("relatório semanal traz a seção de documentos antes do aviso final", "## Documentos de saúde" in rsem2["markdown"] and rsem2["audio"].index("Documentos de saúde") < rsem2["audio"].index(hs.AVISO), rsem2["markdown"][-600:])
 confere("Bark avisa que há documento aguardando, sem nomes nem números", "aguardando a sua conferência" in rsem2["bark"]["body"] and not any(c.isdigit() for c in rsem2["bark"]["body"]) and "receita" not in rsem2["bark"]["body"], rsem2["bark"]["body"])
 os.environ["HEIMDALL_SAUDE_PENDENTE_DIAS"] = "10"
-confere("HEIMDALL_SAUDE_PENDENTE_DIAS muda o prazo do pendente", "receita-velha.pdf" not in hs.relatorio_documentos(7) and hs.documentos_pendentes_antigos() == 0)
+confere("HEIMDALL_SAUDE_PENDENTE_DIAS muda o prazo do pendente", "aguarda" not in hs.relatorio_documentos(7) and hs.documentos_pendentes_antigos() == 0)
 os.environ.pop("HEIMDALL_SAUDE_PENDENTE_DIAS")
 # banco novo e vazio: relatórios não quebram
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "vazio")

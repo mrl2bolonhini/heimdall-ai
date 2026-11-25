@@ -180,6 +180,32 @@ r = B.fazer(dict(env2, HEIMDALL_BACKUP_DESTINO=""), cliente_r2=PessoaQuebrada(),
 ok(not r["ok"] and all(x["ok"] for x in r["destinos"]) and not all(p["ok"] for p in r["pessoas"]), "falha só na cópia de uma pessoa: resultado acusa a falha")
 ok(B.estado()["ultimo_ok"] != antes and B.estado()["pessoas_ok"] is False, "a data do último sucesso segue a cópia do dono; a das pessoas fica registrada à parte")
 
+# outros bancos da pasta (learn.db...): cópia própria na subpasta com o nome do banco, do dono e de cada pessoa
+def _mini(caminho, valor):
+    c = sqlite3.connect(caminho)
+    c.execute("CREATE TABLE IF NOT EXISTS t (v TEXT)")
+    c.execute("INSERT INTO t VALUES (?)", (valor,))
+    c.commit()
+    c.close()
+
+
+_mini(D.DB_DIR / "learn.db", "estudo-do-dono")
+_mini(D.pasta_pessoas() / "convidada-1" / "learn.db", "estudo-da-convidada")
+(D.DB_DIR / "Estranho.DB").write_text("x")
+ok([x.name for x in B.outros_bancos(D.DB_DIR)] == ["learn.db"], "outros bancos: só *.db de nome simples, sem o heimdall.db")
+s3o = FakeS3()
+r = B.fazer(env2, cliente_r2=s3o, agora=base + timedelta(days=400))
+ok(r["ok"] and [x["banco"] for x in r["outros"]] == ["learn.db"] and r["pessoas"][0]["outros"][0]["banco"] == "learn.db", "fazer copia o learn.db do dono e o da pessoa")
+ok(("learn/" + r["nome"]) in s3o.o and ("people/convidada-1/learn/" + r["nome"]) in s3o.o and r["nome"] in s3o.o, "no R2: learn/ e people/<id>/learn/, sem misturar com a cópia principal")
+ok(b"estudo-do-dono" not in s3o.o["learn/" + r["nome"]], "o learn.db vai criptografado")
+ok((pasta / "learn" / r["nome"]).exists() and (pasta / "people" / "convidada-1" / "learn" / r["nome"]).exists(), "na pasta: learn/ e people/<id>/learn/")
+saida_l = TMP / "restaurado_learn.db"
+B.restaurar(str(pasta / "people" / "convidada-1" / "learn" / r["nome"]), str(saida_l), env)
+ok([x[0] for x in sqlite3.connect(saida_l).execute("SELECT v FROM t")] == ["estudo-da-convidada"], "o learn.db da pessoa restaura só os dados dela")
+v = B.verificar(env2, cliente_r2=s3o)
+ok(all(x["ok"] for x in v.values()) and any(k.endswith(" / learn") for k in v) and any(k.endswith("people/convidada-1/learn") for k in v), "verificar confere os outros bancos")
+ok(all(not n.startswith(("learn/", "people/")) for n in B.listar(env2, cliente_r2=s3o)[next(iter(B.listar(env2, cliente_r2=s3o)))]), "a lista principal não mistura os outros bancos")
+
 # 7. configuração faltando
 for cfg, trecho in (({}, "SENHA"), ({"HEIMDALL_BACKUP_SENHA": "x"}, "destino")):
     try:

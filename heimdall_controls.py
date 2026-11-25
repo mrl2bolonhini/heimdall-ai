@@ -306,7 +306,8 @@ def _bloco_versoes() -> str:
     atencao = ('<p role="status">Atenção: ' + e(" ".join(av)) + "</p>") if av else ""
     return ('<h2>Versões instaladas</h2>' + atencao + '<table><caption>Versões do Mac, do Docker e dos serviços</caption><thead><tr><th scope="col">Item</th><th scope="col">Versão</th>'
             f'<th scope="col">Detalhe</th></tr></thead><tbody>{linhas}</tbody></table>'
-            '<p>A lista é atualizada a cada 10 minutos.</p>')
+            f'<p>A lista é atualizada a cada 10 minutos. Para comparar com as imagens mais novas do registro, veja o <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; '
+            'na aba Terminal, a saída aparece na própria página.</p>')
 
 
 def pg_inicio(q: dict, sess: dict) -> tuple:

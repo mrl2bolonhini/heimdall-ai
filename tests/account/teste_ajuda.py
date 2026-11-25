@@ -247,5 +247,16 @@ for _a, _m, _p in aj.COMANDOS_HEALTH:
         for _opt in _re.findall(r"--[a-z-]+", _parte):
             _ok = _ok and f'"{_opt}"' in _fonte
 confere("guia de comandos: toda opção em Python existe no script", _ok)
+_ok2 = True
+for _a, _m, _p in aj.COMANDOS_ADMIN:
+    _s = _re.search(r"(\w+\.py)", _p)
+    if _s:
+        _fonte = (RAIZ / _s.group(1)).read_text(encoding="utf-8")
+        for _opt in _re.findall(r"--([a-z-]+)", _p):
+            _ok2 = _ok2 and (f'"--{_opt}"' in _fonte or f'"{_opt}"' in _fonte)
+    for _opt in _re.findall(r"heimdall (\w+)", _m):
+        _ok2 = _ok2 and f"    {_opt})" in (RAIZ / "heimdall.zsh").read_text(encoding="utf-8") or f"{_opt}|" in (RAIZ / "heimdall.zsh").read_text(encoding="utf-8")
+confere("guia de comandos: tabela de administração com caption, e toda opção existe no script ou no heimdall.zsh",
+        _ok2 and 'id="comandos-admin"' in _c and "<caption>Comandos de administração" in _c)
 print("\nFALHAS:", falhas)
 raise SystemExit(1 if falhas else 0)
