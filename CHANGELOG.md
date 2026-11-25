@@ -9,6 +9,7 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 - Library (porta 8021, library.heimdall-ai.tech): acervo de documentos pesquisáveis. Abas Documentos (Pesquisar, Recentes, A revisar), Adicionar (Enviar arquivo, Pasta de entrada) e Organização (Etiquetas, Tipos); Ajustes com Estado, Lixeira e Ajuda.
 - Library: lê o texto de PDF, DOCX, TXT, MD e CSV e, com o Tesseract instalado, de fotos e PDFs escaneados (OCR). A busca ignora acentos e maiúsculas. Tipo, data, emissor e etiquetas são sugeridos por regras e pelo modelo leve (validados) e o documento fica em A revisar até a pessoa confirmar. O mesmo arquivo não entra duas vezes e excluir manda para a lixeira.
 - Os dois serviços usam a nova base web (heimdall_servico_web.py), têm o campo Perguntar, dados por pessoa, interruptores HEIMDALL_TRADING e HEIMDALL_LIBRARY (desligados por padrão), comandos heimdall trading e heimdall library, perguntas frequentes na Ajuda e entrada no menu Conta.
+- Trading: a fonte padrão das cotações passou a ser a real (B3, pela brapi); HEIMDALL_TRADING_FONTE=simulada ou manual muda o padrão, e Ajustes troca por pessoa. Os endereços trading e library foram acrescentados ao túnel, ao DNS e ao Cloudflare Access.
 - Os bancos library.db e trading.db entram na cópia diária. Os arquivos originais do Library (pasta library/) ainda não entram: registrado no ROADMAP.
 
 ## 2026-11-25 - No máximo 5 posições de abas, nomes de uma palavra e Games em 5 categorias

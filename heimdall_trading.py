@@ -7,7 +7,7 @@ Abas: Mesa, Carteira, Ordens (Abertas, Histórico), Análise (Sinais, Lista). Aj
 Atalhos da Mesa (Option+Shift no macOS, Alt+Shift no Windows e no Linux): B comprar, S vender, F fechar posição, X cancelar ordens abertas, Q ir ao campo do ativo.
 
 Variáveis: HEIMDALL_TRADING (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), HEIMDALL_TRADING_PORT (8020), HEIMDALL_TRADING_HOST (127.0.0.1),
-HEIMDALL_TRADING_HOSTS (trading.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_TRADING_BRAPI_TOKEN (cotações reais da B3 pela brapi, opcional).
+HEIMDALL_TRADING_HOSTS (trading.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_TRADING_FONTE (brapi, padrão, com cotações reais da B3; simulada ou manual), HEIMDALL_TRADING_BRAPI_TOKEN (opcional).
 
     python3 heimdall_trading.py
 

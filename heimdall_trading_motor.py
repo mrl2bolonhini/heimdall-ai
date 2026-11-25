@@ -29,7 +29,7 @@ import heimdall_banco as banco
 TICKER = re.compile(r"^[A-Z0-9]{1,10}$")
 CAIXA_INICIAL = 100000.0
 PADROES = {"caixa_inicial": CAIXA_INICIAL, "caixa": CAIXA_INICIAL, "limite_ordem": 10000.0, "limite_perda_dia": 2000.0, "max_ordens": 20,
-           "taxa_pct": 0.0, "fonte": "simulada"}
+           "taxa_pct": 0.0, "fonte": os.environ.get("HEIMDALL_TRADING_FONTE", "brapi")}   # padrão: cotações reais da B3 (brapi); HEIMDALL_TRADING_FONTE=simulada volta aos preços gerados
 FONTES = ("simulada", "manual", "brapi")
 _lock = threading.RLock()
 

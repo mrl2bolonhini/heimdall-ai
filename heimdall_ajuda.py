@@ -110,7 +110,7 @@ FAQ = {
         ("Para que servem os limites?",
          "O limite por ordem recusa ordens grandes demais, o limite de perda por dia bloqueia novas compras quando o resultado do dia passa dele, e o máximo de ordens abertas evita acúmulo. As ordens recusadas aparecem no Histórico com o motivo. Fechar posição nunca é bloqueado pelos limites."),
         ("De onde vêm as cotações?",
-         "Em Ajustes, na aba Cotações, você escolhe a fonte: simulada (preços gerados, sem internet), manual (você informa o preço de cada ativo) ou brapi (cotações da B3, com token configurado no .env)."),
+         "Por padrão, as cotações são reais, da B3, pela brapi (um token em HEIMDALL_TRADING_BRAPI_TOKEN no .env amplia o acesso). Em Ajustes, na aba Cotações, você pode trocar a fonte por simulada (preços gerados, sem internet) ou manual (você informa o preço de cada ativo)."),
         ("A inteligência artificial recomenda comprar ou vender?",
          "Nunca. Os sinais descrevem de forma objetiva o movimento recente do preço, e o campo Perguntar explica os números da conta. A decisão é sempre sua, e nada aqui é aconselhamento financeiro."),
     ],

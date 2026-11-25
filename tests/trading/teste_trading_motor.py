@@ -11,6 +11,7 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp())
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
+os.environ["HEIMDALL_TRADING_FONTE"] = "simulada"
 
 import heimdall_trading_motor as m  # noqa: E402
 
