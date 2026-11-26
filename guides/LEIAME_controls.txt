@@ -1,4 +1,4 @@
-Studio Controls: central de controle (terminal, serviços, manutenção)
+Controls: central de controle (terminal, serviços, manutenção)
 
 O que é: um painel em controls.heimdall-ai.tech (e em http://localhost:8017) com o Terminal, que é um shell de verdade no Mac, e a página Serviços. Quem entra manda no Mac, então a entrada tem várias camadas e só o dono passa.
 

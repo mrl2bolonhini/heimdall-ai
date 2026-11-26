@@ -96,9 +96,9 @@ montar_lista() {
         LISTA+=("Studio Health|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
         LISTA+=("Studio Games|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")
         LISTA+=("Studio Finance|http|http://127.0.0.1:${HEIMDALL_FINANCE_PORT:-8016}/saude")
-        LISTA+=("Studio Controls|http|http://127.0.0.1:${HEIMDALL_CONTROLS_PORT:-8017}/saude")
+        LISTA+=("Controls|http|http://127.0.0.1:${HEIMDALL_CONTROLS_PORT:-8017}/saude")
     fi
-    [ -f heimdall_account.py ] && LISTA+=("Studio Account|http|http://127.0.0.1:${HEIMDALL_ACCOUNT_PORT:-8018}/saude")
+    [ -f heimdall_account.py ] && LISTA+=("Account|http|http://127.0.0.1:${HEIMDALL_ACCOUNT_PORT:-8018}/saude")
 }
 
 esta_no_ar() {  # $1 = tipo, $2 = alvo

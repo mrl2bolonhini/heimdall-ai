@@ -237,7 +237,7 @@ Exemplos:
   studio health --labs result vitamina d
   studio health --labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia
 
-@ account | Studio Account, a porta de entrada do ecossistema: tour dos serviços de cada pessoa
+@ account | Account, a porta de entrada do ecossistema: tour dos serviços de cada pessoa
 Abre o tour dos serviços (porta 8018; de fora, account.heimdall-ai.tech, pelo Cloudflare Access). Cada pessoa vê só os serviços a que tem acesso, com link, o que cada um faz e como configurar; o texto fica em heimdall_conta_info.py. O mesmo endereço responde /quem.json, que o site heimdall-ai.tech usa para mostrar "Entrar" ou o nome e os serviços de quem já entrou. O menu Conta, em todos os serviços, lista os mesmos links. A página Integrações (/integracoes) liga a Saúde do iPhone: o botão Ativar gera o token da pessoa e mostra o endereço e o passo a passo para o app Health Auto Export (precisa da caixa de correio ligada; por enquanto só o dono ativa). Notas, Lembretes e Calendário por conta Apple ou Google estão em preparação. Com --local abre o endereço deste Mac.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost) em vez do endereço público
@@ -246,7 +246,7 @@ Exemplos:
   studio account
   studio account -L
 
-@ controls | Studio Controls, central de controle: terminal, serviços ligados e desligados, manutenção
+@ controls | Controls, central de controle: terminal, serviços ligados e desligados, manutenção
 Abre o painel de administração (porta 8017; de fora, controls.heimdall-ai.tech). O Terminal é um shell completo que roda no Mac com as suas permissões: a pasta e as variáveis continuam de um comando para o outro, o campo mostra só o último comando, com a saída logo abaixo (os anteriores ficam em Histórico), Tab completa comandos, arquivos e pastas (use Ctrl+I; o Tab move o foco), e o que você digita enquanto um programa pergunta vai direto para ele. Atalhos de teclado: Ctrl+C interrompe, Ctrl+L limpa, Option+Shift+C copia a última saída, Option+Shift+1 a 9 copia as últimas N, Option+Shift+U leva o cursor ao início da última saída, Option+Shift+R reinicia o shell, Option+Shift+H mostra a lista. Ao terminar um comando, o leitor de tela fala a situação e a saída inteira (Control para a fala). A aba Serviços mostra o que está no ar, com uma chave por serviço, e a subaba Manutenção tem botões para atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra (Cloudflare Access com o Authenticator, ou senha e código de 6 dígitos) e cada comando fica anotado em logs/controls_audit.log, sem a saída. Programas de tela cheia, como vim e top, não funcionam.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
@@ -409,7 +409,7 @@ Exemplos:
   studio ask --local "resuma em duas frases o que é o StudioLibre"
 
 @ usage | Consumo e custo da Cloudflare
-Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Nuvem do Studio Controls, subaba Consumo de IA. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
+Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Nuvem do Controls, subaba Consumo de IA. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
 Opções:
   -d, --days N         período em dias, de 1 a 31 (o padrão é 30)
   -h, --help           mostra esta ajuda
@@ -418,7 +418,7 @@ Exemplos:
   studio usage --days 7
 
 @ support | Mensagens enviadas ao suporte pelo formulário de Ajuda e suporte
-Lista as últimas mensagens que os usuários enviaram pelo formulário da página Ajuda e suporte (Studio Account), com protocolo, estado do envio e início do texto. O estado enviada indica que o e-mail seguiu para o suporte pelo Cloudflare Email Sending; gravada_sem_envio, que a mensagem ficou só registrada (envio desligado ou falha). O envio por e-mail liga com HEIMDALL_SUPORTE_EMAIL=1, HEIMDALL_SUPORTE_DE e, se quiser outro destino, HEIMDALL_SUPORTE_PARA; as mensagens ficam em db/suporte/mensagens.jsonl.
+Lista as últimas mensagens que os usuários enviaram pelo formulário da página Ajuda e suporte (Account), com protocolo, estado do envio e início do texto. O estado enviada indica que o e-mail seguiu para o suporte pelo Cloudflare Email Sending; gravada_sem_envio, que a mensagem ficou só registrada (envio desligado ou falha). O envio por e-mail liga com HEIMDALL_SUPORTE_EMAIL=1, HEIMDALL_SUPORTE_DE e, se quiser outro destino, HEIMDALL_SUPORTE_PARA; as mensagens ficam em db/suporte/mensagens.jsonl.
 Opções:
   -l, --last           mostra as 10 últimas mensagens (com o motivo, quando o envio falhou)
   -r, --reply          responde de suporte@ a quem escreveu: studio support --reply PROTOCOLO "texto" (para e-mail sem protocolo: --reply - --to endereço "texto")

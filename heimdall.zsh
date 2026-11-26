@@ -1,8 +1,12 @@
 # Comando unificado do ecossistema Heimdall-ai (zsh). Carregado pelo ~/.zshrc com:
 #     source ~/heimdall-ai/heimdall.zsh
-# Pasta do projeto: STUDIO_DIR ou HEIMDALL_DIR (padrão ~/heimdall-ai). Digite "studio" sem nada para ver todos os comandos. O nome antigo, heimdall, continua funcionando como apelido.
+# Pasta do projeto: STUDIO_DIR ou HEIMDALL_DIR (padrão ~/studioapps; se não existir, ~/heimdall-ai). Digite "studio" sem nada para ver todos os comandos. O nome antigo, heimdall, continua funcionando como apelido.
 
-: "${HEIMDALL_DIR:=${STUDIO_DIR:-$HOME/heimdall-ai}}"
+if [ -z "${HEIMDALL_DIR:-}" ]; then   # pasta do projeto: STUDIO_DIR, senão ~/studioapps (nome novo), senão ~/heimdall-ai (nome antigo)
+  if [ -n "${STUDIO_DIR:-}" ]; then HEIMDALL_DIR="$STUDIO_DIR"
+  elif [ -d "$HOME/studioapps" ]; then HEIMDALL_DIR="$HOME/studioapps"
+  else HEIMDALL_DIR="$HOME/heimdall-ai"; fi
+fi
 
 _heimdall_py() {  # script Python do projeto, com o Python do venv, na pasta do projeto, sem mudar a pasta do seu terminal
   local py="$HEIMDALL_DIR/venv/bin/python"
@@ -350,7 +354,7 @@ studio() {
 --import=--importar" "$@"
           _heimdall_py heimdall_saude.py "${_HA[@]}" ;;
       esac ;;
-    account) _heimdall_web "Studio Account" ACCOUNT 8018 account ;;
+    account) _heimdall_web "Account" ACCOUNT 8018 account ;;
     trading) _heimdall_web "Studio Trading" TRADING 8020 trading ;;
     library|memory)   # library é o nome antigo do memory e continua valendo
       case "$1" in
@@ -375,7 +379,7 @@ studio() {
       case "$1" in
         ""|--open)
           case "$2" in terminal) pg=/terminal ;; services) pg=/servicos ;; maintenance) pg=/manutencao ;; settings) pg=/ajustes ;; "") pg="" ;; *) pg="/$2" ;; esac
-          _heimdall_web "Studio Controls" CONTROLS 8017 controls "$pg" ;;
+          _heimdall_web "Controls" CONTROLS 8017 controls "$pg" ;;
         *) echo "Use: studio controls [--open [terminal|services|settings|maintenance]] [--local]"; return 1 ;;
       esac ;;
     finance)

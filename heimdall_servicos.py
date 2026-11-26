@@ -73,7 +73,7 @@ def catalogo() -> list:
          "porta_env": "HEIMDALL_JOGOS_PORT", "log": "jogos_debug"},
         {"id": "finance", "nome": "Finance", "porta": _porta("HEIMDALL_FINANCE_PORT", 8016), "tipo": "py", "script": ["heimdall_finance.py"],
          "porta_env": "HEIMDALL_FINANCE_PORT", "log": "finance_debug"},
-        {"id": "account", "nome": "Studio Account", "apelidos": ["conta", "account"], "porta": _porta("HEIMDALL_ACCOUNT_PORT", 8018), "tipo": "py", "script": ["heimdall_account.py"],
+        {"id": "account", "nome": "Account", "apelidos": ["conta", "account"], "porta": _porta("HEIMDALL_ACCOUNT_PORT", 8018), "tipo": "py", "script": ["heimdall_account.py"],
          "porta_env": "HEIMDALL_ACCOUNT_PORT", "log": "account_debug"},
         {"id": "kuma", "nome": "Uptime Kuma", "porta": 3001, "tipo": "docker", "alvo": ["uptime-kuma"], "kuma": False},
         {"id": "dozzle", "nome": "Dozzle", "porta": 8081, "tipo": "docker", "alvo": ["dozzle"]},

@@ -37,13 +37,13 @@ def h(tok):
 
 m = c.menu("Studio News", cabecalhos=h("tokdono"))
 confere("dono: nome e e-mail no resumo e no texto", "Conta: Murillo Bolonhini" in m and "Murillo Bolonhini (dono@x.com)" in m, m)
-confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Studio Lab<", ">Studio Notes<", ">Studio Games<", ">Studio Controls<", ">Studio Health<", ">Studio Finance<", ">Studio Flows<", ">Studio Status<", ">Studio Chat<", ">Studio Account<")) and "Open WebUI" not in m and "Uptime Kuma" not in m and "Notas" not in m and "Saúde" not in m and "Jogos" not in m, m)
+confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Studio Lab<", ">Studio Notes<", ">Studio Games<", ">Controls<", ">Studio Health<", ">Studio Finance<", ">Flows<", ">Status<", ">Chat<", ">Account<")) and "Open WebUI" not in m and "Uptime Kuma" not in m and "Notas" not in m and "Saúde" not in m and "Jogos" not in m, m)
 import heimdall_conta as _c
 confere("lista em ordem alfabética pelo nome real", [_c.NOMES[k] for k in _c.ORDEM] == sorted(_c.NOMES.values(), key=str.lower))
 confere("serviço atual marcado, sem link duplicado", 'aria-current="page">Studio News (você está aqui)' in m and m.count(">Studio News<") == 0, m)
 confere("Kuma abre no painel (/dashboard)", "https://status.heimdall-ai.tech/dashboard" in m, m)
 g = c.menu("Studio Games", cabecalhos=h("tokana"))
-confere("convidado: só o que foi liberado e é convidável (Saúde fica de fora, mesmo na lista)", ">Studio News<" in g and "Studio Games (você está aqui)" in g and ">Studio Account<" in g and "Saúde" not in g and "Controls" not in g and "Finance" not in g and "Uptime" not in g, g)
+confere("convidado: só o que foi liberado e é convidável (Saúde fica de fora, mesmo na lista)", ">Studio News<" in g and "Studio Games (você está aqui)" in g and ">Account<" in g and "Saúde" not in g and "Controls" not in g and "Finance" not in g and "Uptime" not in g, g)
 confere("convidado: nome mostrado", "Conta: Ana Souza" in g)
 x = c.menu("", cabecalhos=h("tokxss"))
 confere("nome vindo da Microsoft é escapado", "<script>" not in x and "&lt;script&gt;" in x, x)

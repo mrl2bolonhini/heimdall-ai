@@ -37,7 +37,7 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 ORIGEM = f"http://127.0.0.1:{srv.server_address[1]}"
 CORS = {"Access-Control-Allow-Origin": ORIGEM, "Access-Control-Allow-Credentials": "true", "Content-Type": "application/json"}
 LOGADO = {"logado": True, "nome": "Ana <b>Souza</b>", "email": "ana@x.com", "papel": "convidado",
-          "servicos": [{"nome": "Studio Account", "url": "https://account.heimdall-ai.tech/"}, {"nome": "Studio Games", "url": "https://games.heimdall-ai.tech/"},
+          "servicos": [{"nome": "Account", "url": "https://account.heimdall-ai.tech/"}, {"nome": "Studio Games", "url": "https://games.heimdall-ai.tech/"},
                        {"nome": "Mal", "url": "javascript:alert(1)"}]}
 
 

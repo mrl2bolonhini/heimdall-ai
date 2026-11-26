@@ -556,7 +556,7 @@ def pg_entrar(erro: str = "") -> bytes:
 def pg_inicio() -> str:
     s = saude_emulador()
     if not s["ok"]:
-        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda e está desligado agora. Quem administra o StudioLibre pode ligá-lo no Studio Controls, aba Serviços, ou pelo <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; depois, recarregue esta página.</p>'
+        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda e está desligado agora. Quem administra o StudioLibre pode ligá-lo no Controls, aba Serviços, ou pelo <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; depois, recarregue esta página.</p>'
         tabela = ""
     else:
         rodando = sorted(k for k, v in s["servicos"].items() if str(v) in ("running", "ready"))

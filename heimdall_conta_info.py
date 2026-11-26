@@ -74,23 +74,23 @@ INFO = {
         "so_dono": True,
     },
     "chat": {
-        "oque": "Studio Chat: conversa com modelos de inteligência artificial, locais ou da nuvem conforme a configuração do dono, com histórico e ferramentas. Tecnologia: Open WebUI.",
+        "oque": "Chat: conversa com modelos de inteligência artificial, locais ou da nuvem conforme a configuração do dono, com histórico e ferramentas. Tecnologia: Open WebUI.",
         "como": ["Abra o serviço: a entrada é automática, pelo e-mail da sua conta Microsoft.",
                  "Escolha o modelo no alto da conversa e escreva a mensagem.",
                  "Uma conta é criada na primeira entrada; o dono pode ajustar o que ela vê."],
     },
     "flows": {
-        "oque": "Studio Flows: automações e agendamentos do Heimdall, como o resumo de e-mails e a chegada dos dados de saúde. Tecnologia: n8n.",
+        "oque": "Flows: automações e agendamentos do Heimdall, como o resumo de e-mails e a chegada dos dados de saúde. Tecnologia: n8n.",
         "como": ["Entre pelo Cloudflare Access e depois pelo login próprio do n8n, que o programa não deixa desligar.",
                  "Abra o fluxo desejado para ver ou editar os passos.",
                  "Mudanças nos fluxos do repositório são aplicadas pelo dono com studio flows."],
         "so_dono": True,
     },
     "status": {
-        "oque": "Studio Status: monitora se os serviços do Heimdall estão no ar e avisa quando algum cai. Tecnologia: Uptime Kuma.",
+        "oque": "Status: monitora se os serviços do Heimdall estão no ar e avisa quando algum cai. Tecnologia: Uptime Kuma.",
         "como": ["Abra o serviço: ele entra direto no painel.",
                  "Cada monitor mostra a disponibilidade; em Configurações ficam as notificações e a aparência.",
-                 "Pausar e retomar serviços também se faz na aba Serviços do Studio Controls."],
+                 "Pausar e retomar serviços também se faz na aba Serviços do Controls."],
         "so_dono": True,
     },
 }

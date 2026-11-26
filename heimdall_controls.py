@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Studio Controls (controls.heimdall-ai.tech): terminal completo e acessível e painel de serviços, para administrar o StudioLibre pelo navegador.
+"""Controls (controls.heimdall-ai.tech): terminal completo e acessível e painel de serviços, para administrar o StudioLibre pelo navegador.
 
 O terminal roda no Mac, com as permissões do seu usuário (heimdall_shell.py): a pasta e as variáveis continuam entre os comandos, programas que
 perguntam algo recebem a resposta pelo campo "Resposta ao programa", e há botões para interromper e para copiar a última saída ou as últimas N saídas.
@@ -1013,8 +1013,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     todo = ((design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_SEGREDO + SCRIPT_RECARGA + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'
-            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio Controls", nav, sair_html=sair, ajustes_html=ajustes_html)}'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'
+            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Controls", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{corpo}</main>{rodape}{js}<!--/email_off--></body></html>').encode("utf-8")
 
 
@@ -1425,11 +1425,11 @@ class Painel(nuvem.ManipuladorBase):
 
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Studio Controls não sobe. Rode: python3 heimdall_acesso.py --tudo")
+        sys.exit("Sem senha e código configurados o Controls não sobe. Rode: python3 heimdall_acesso.py --tudo")
     servicos.iniciar_vigia()
     srv = ThreadingHTTPServer((HOST, PORT), Painel)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Controls em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Controls em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

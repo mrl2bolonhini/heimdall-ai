@@ -21,10 +21,10 @@ NOME_TTL, FALHA_TTL = 3600, 600
 
 # nome no cabeçalho de marca -> chave do serviço em heimdall_usuarios.SERVICOS
 CHAVES = {"Studio Lab": "lab", "Studio Notes": "notas", "Studio Learn": "learn", "Studio Trading": "trading", "Studio Memory": "memory", "Heimdall Library": "memory", "Studio News": "news", "Studio Health": "saude", "Studio Games": "jogos",
-          "Studio Finance": "finance", "Studio Controls": "controls", "Studio Account": "account"}
+          "Studio Finance": "finance", "Controls": "controls", "Account": "account"}
 # Nomes reais, como cada serviço se chama (nunca traduzidos): é o que o menu e a página Account mostram, em vez dos rótulos do catálogo de usuários.
 NOMES = {"lab": "Studio Lab", "notas": "Studio Notes", "learn": "Studio Learn", "trading": "Studio Trading", "memory": "Studio Memory", "news": "Studio News", "saude": "Studio Health", "jogos": "Studio Games", "finance": "Studio Finance",
-         "controls": "Studio Controls", "chat": "Studio Chat", "flows": "Studio Flows", "status": "Studio Status", "account": "Studio Account"}
+         "controls": "Controls", "chat": "Chat", "flows": "Flows", "status": "Status", "account": "Account"}
 ORDEM = sorted(NOMES, key=lambda k: NOMES[k].lower())  # ordem alfabética pelo nome real
 CAMINHOS = {"status": "/dashboard"}  # o Kuma abre no painel, onde há o menu dele e as Configurações
 

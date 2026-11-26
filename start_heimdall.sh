@@ -667,12 +667,12 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
     fi
 fi
 
-# --- Studio Controls (terminal completo e painel de serviços): mesmo login do Studio Lab ---
+# --- Controls (terminal completo e painel de serviços): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare (controls.heimdall-ai.tech), atrás do Cloudflare Access. Quem entra manda no Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_controls.py ]; then
         if nc -z localhost $CONTROLS_PORT > /dev/null 2>&1; then
-            echo "     Studio Controls já estava no ar (foi ele quem pediu esta subida)."
+            echo "     Controls já estava no ar (foi ele quem pediu esta subida)."
         else
             HEIMDALL_CONTROLS_PORT="$CONTROLS_PORT" HEIMDALL_DIR="$(pwd)" "$VENV_PYTHON" heimdall_controls.py > "$(nova_log controls_debug)" 2>&1 &
         fi
@@ -681,11 +681,11 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Studio Controls não respondeu em 10s. Veja logs/controls_debug.log."
+                echo "Aviso: o Controls não respondeu em 10s. Veja logs/controls_debug.log."
                 break
             fi
         done
-        echo "     Studio Controls em http://localhost:$CONTROLS_PORT"
+        echo "     Controls em http://localhost:$CONTROLS_PORT"
     fi
 fi
 
@@ -707,7 +707,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
     fi
 fi
 
-# --- Studio Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa e a identidade que o site heimdall-ai.tech mostra ---
+# --- Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa e a identidade que o site heimdall-ai.tech mostra ---
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare, com o Access na frente. Não precisa de senha: só atende quem o Access aprovou.
 if [ -f heimdall_account.py ]; then
     HEIMDALL_ACCOUNT_PORT="$ACCOUNT_PORT" "$VENV_PYTHON" heimdall_account.py > "$(nova_log account_debug)" 2>&1 &
@@ -716,11 +716,11 @@ if [ -f heimdall_account.py ]; then
         sleep 1
         COUNTER=$((COUNTER+1))
         if [ $COUNTER -gt 10 ]; then
-            echo "Aviso: o servidor Studio Account não respondeu em 10s. Veja logs/account_debug.log."
+            echo "Aviso: o servidor Account não respondeu em 10s. Veja logs/account_debug.log."
             break
         fi
     done
-    echo "     Studio Account em http://localhost:$ACCOUNT_PORT"
+    echo "     Account em http://localhost:$ACCOUNT_PORT"
 fi
 
 # --- Studio Finance (extratos, categorias e tendências): mesmo login do Studio Lab ---

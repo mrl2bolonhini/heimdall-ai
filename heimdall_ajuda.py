@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ajuda e suporte do StudioLibre, em um lugar só (hospedado no Studio Account): perguntas frequentes de todos os serviços, formulário de suporte
+"""Ajuda e suporte do StudioLibre, em um lugar só (hospedado no Account): perguntas frequentes de todos os serviços, formulário de suporte
 e as páginas de Termos de Uso e de Privacidade, que o rodapé de todos os serviços liga (heimdall_design.rodape).
 
 Suporte: a mensagem recebe um protocolo, é gravada em db/suporte/mensagens.jsonl (permissão 600) e, se o envio de e-mail estiver configurado, segue para
@@ -379,7 +379,7 @@ def _faq_html(servico: str) -> str:
 
 def ajuda_do_servico(servico: str, base: str = "") -> str:
     """Conteúdo da subaba Ajuda, dentro dos Ajustes de um serviço: as perguntas frequentes dele e o caminho para a Ajuda e suporte completa
-    (com o formulário de mensagem), no Studio Account. `base` é o endereço do Account (design.base_ajuda())."""
+    (com o formulário de mensagem), no Account. `base` é o endereço do Account (design.base_ajuda())."""
     servico = servico if servico in SERVICOS and servico != "geral" else ""
     itens = FAQ.get(servico) or []
     blocos = "".join(f"<h3>{e(q)}</h3><p>{e(a)}</p>" for q, a in itens)
@@ -389,7 +389,7 @@ def ajuda_do_servico(servico: str, base: str = "") -> str:
     destino = f"{base}/ajuda{q}" if base else f"/ajuda{q}"
     contato = (f'<section aria-labelledby="ajuda-contato"><h2 id="ajuda-contato">Falar com o suporte</h2>'
                f'<p>Para enviar uma mensagem ao suporte e receber um protocolo, ou para ver as perguntas dos demais serviços, abra a '
-               f'<a href="{e(destino)}">Ajuda e suporte do Studio Account</a>.</p></section>')
+               f'<a href="{e(destino)}">Ajuda e suporte do Account</a>.</p></section>')
     return perguntas + contato
 
 
@@ -478,7 +478,7 @@ def _comandos_html() -> str:
             '<p>Eventos no Calendário e lembretes no app Lembretes dependem do agente do Mac; nos outros sistemas, os itens ficam registrados no StudioLibre.</p>'
             '<h3 id="comandos-admin">Administração: versões e emulador do Lab</h3>'
             f'<table><caption>Comandos de administração por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas_admin}</tbody></table>'
-            '<p>No Studio Controls, a aba Terminal executa esses comandos no computador que hospeda o StudioLibre e mostra a saída na própria página; '
+            '<p>No Controls, a aba Terminal executa esses comandos no computador que hospeda o StudioLibre e mostra a saída na própria página; '
             'a aba Serviços liga e desliga o emulador por uma chave, e a aba Manutenção tem os botões Status e Diagnóstico.</p>'
             + _atalhos_html() +
             '<h3>iPhone e Android</h3>'

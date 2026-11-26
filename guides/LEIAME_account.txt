@@ -1,16 +1,16 @@
-Studio Account (account.heimdall-ai.tech)
+Account (account.heimdall-ai.tech)
 
 O que é: a porta de entrada do ecossistema. Quem entra pelo Cloudflare Access (conta Microsoft + Authenticator) vê um tour dos serviços do Heimdall a que tem acesso: link para cada um, o que faz e como configurar. O texto de cada serviço fica em heimdall_conta_info.py (um lugar só, para acrescentar serviços e, no futuro, explicar o multiusuário de Health e Finance).
 
 Quem vê o quê: o dono vê todos os serviços; o convidado, só os liberados para ele na aba Usuários do Controls (Lab, Notes, News, Games, Chat). Todo e-mail de dono ou convidado entra no Account, sem escolher.
 
-Os nomes dos serviços aparecem sempre como eles se chamam (Studio Lab, Studio Notes, Studio News, Studio Health, Studio Games, Studio Finance, Studio Controls, Studio Chat, Studio Flows, Studio Status, Studio Account), sem tradução. A tabela está em heimdall_conta.py (NOMES).
+Os nomes dos serviços aparecem sempre como eles se chamam (Studio Lab, Studio Notes, Studio News, Studio Health, Studio Games, Studio Finance, Controls, Chat, Flows, Status, Account), sem tradução. A tabela está em heimdall_conta.py (NOMES).
 
 Menu Conta: o mesmo no alto de Lab, Notas, News, Saúde, Jogos, Finance e Controls: nome e e-mail, como entrou e links dos serviços.
 
 Site (heimdall-ai.tech): todas as páginas mostram "Entrar no Heimdall" quando não há login. Com login, mostra "Conta: nome" com os serviços. Ela pergunta a account.heimdall-ai.tech/quem.json com os cookies do Access. Como o cookie é do endereço account, o login conta depois de abrir o Account uma vez (clicando em Entrar); vale pelo tempo da sessão do Access (8 horas). Só os sites de HEIMDALL_ACCOUNT_ORIGENS podem perguntar.
 
-Como foi montado na Cloudflare (já feito): aplicativo "Studio Account" no Access para account.heimdall-ai.tech, política "Heimdall: Account" (e-mails dos donos e convidados, com Authenticator), registro DNS account apontando para o túnel heimdall, e a rota do túnel para http://localhost:8018.
+Como foi montado na Cloudflare (já feito): aplicativo "Account" no Access para account.heimdall-ai.tech, política "Heimdall: Account" (e-mails dos donos e convidados, com Authenticator), registro DNS account apontando para o túnel heimdall, e a rota do túnel para http://localhost:8018.
 
 No Mac, uma vez:
 1. studio update --restart

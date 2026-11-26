@@ -3,7 +3,7 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-26 - Nomes Studio nas telas e comando studio
-- Os serviços passam a se chamar Studio Health, Studio Finance, Studio Games, Studio Memory, Studio Notes, Studio News, Studio Learn, Studio Lab, Studio Account, Studio Controls, Studio Chat, Studio Flows, Studio Status e Studio Trading; o conjunto aparece como StudioLibre na ajuda, nos termos, no site e no README.
+- Os produtos passam a se chamar Studio Health, Studio Finance, Studio Games, Studio Memory, Studio Notes, Studio News, Studio Learn, Studio Lab e Studio Trading; os serviços de apoio (Account, Controls, Flows, Status e Chat) não levam o prefixo. O conjunto aparece como StudioLibre na ajuda, nos termos, no site e no README.
 - O comando do terminal agora é `studio` (por exemplo, `studio update --restart`). O comando `heimdall` continua funcionando como apelido durante a transição. A pasta do projeto pode ser indicada por STUDIO_DIR (HEIMDALL_DIR continua valendo).
 - Nada muda nos dados: calendário, listas de Lembretes, pastas do Notas, variáveis do .env, módulos e pastas do Mac seguem com os nomes atuais. O plano das próximas etapas está em guides/renomeacao_studio.txt.
 - O teste do comando passou a conferir o apelido heimdall e aceitar os nomes antigos library e cloud.

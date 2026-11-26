@@ -50,6 +50,15 @@ for n in nomes:
         rc, out = bash(f"studio {n} {flag}")
         ok = rc == 0 and out.startswith(f"studio {n} - ") and "-h, --help" in out and out.count("\nstudio ") <= 3
         confere(f"studio {n} {flag}", ok, out[:200])
+# pasta padrão: STUDIO_DIR, senão ~/studioapps, senão ~/heimdall-ai
+_h = Path(tempfile.mkdtemp())
+def _dir(prep):
+    r = subprocess.run(["bash", "-c", f'export HOME="{_h}"; unset HEIMDALL_DIR STUDIO_DIR; {prep}; source "{AQUI}/heimdall.zsh"; echo "$HEIMDALL_DIR"'], capture_output=True, text=True, timeout=60)
+    return r.stdout.strip()
+confere("pasta padrão sem nenhuma pasta nova: ~/heimdall-ai", _dir("true") == f"{_h}/heimdall-ai")
+(_h / "studioapps").mkdir()
+confere("pasta padrão com ~/studioapps: usa a nova", _dir("true") == f"{_h}/studioapps")
+confere("STUDIO_DIR manda sobre as duas", _dir("export STUDIO_DIR=/tmp/outra") == "/tmp/outra")
 rc, out = bash("heimdall help health")
 confere("o apelido heimdall continua funcionando e chama o studio", rc == 0 and out.startswith("studio health - "), out[:100])
 rc, out = bash("studio help health")

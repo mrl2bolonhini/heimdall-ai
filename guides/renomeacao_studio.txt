@@ -15,3 +15,8 @@ Fase 4 (Cloudflare, com limite de gasto e plano de volta): subdomínios em studi
 Fase 5: página Marca, CHANGELOG, CLAUDE.md e guias; mensagem de despedida do nome antigo.
 
 Fora do escopo desta renomeação: logomarca e cores (decisão de design à parte); consulta ao INPI (com o usuário).
+
+Decisões complementares (26/11/2026)
+1) Serviços x produtos: produtos levam o prefixo Studio (Health, Finance, Games, Learn, Memory, Notes, News, Trading, Lab); serviços de apoio não (Account, Controls, Flows, Status, Chat). O Design continua como Studio Design (documentação do sistema de design). Lab e Chat foram classificados pelo Claude: Lab como produto (ferramenta de estudo de AWS) e Chat como serviço (interface de uma ferramenta de terceiros, como Flows e Status). Se o usuário preferir o contrário, a mudança é só de texto.
+2) Subdomínios sem prefixo: health.studiolibre.io etc. (fase 4).
+3) Pasta do Mac: ~/heimdall-ai vira ~/studioapps. Cuidados antes de mover: (a) parar os serviços (studio stop); (b) o venv guarda caminhos absolutos e precisa ser recriado na pasta nova; (c) os LaunchAgents do Mac apontam para a pasta antiga e precisam ser reinstalados (subir.sh, agente, app do Mac); (d) a linha source do ~/.zshrc e o HEIMDALL_DIR, se existir, passam para o caminho novo; (e) o Docker (Paperless, Qdrant, n8n) usa volumes relativos à pasta: conferir com docker compose config; (f) depois de mover, rodar studio doctor. Só depois da fase 3b e com uma cópia de segurança. O texto dos guias que cita ~/heimdall-ai troca junto com a mudança real.

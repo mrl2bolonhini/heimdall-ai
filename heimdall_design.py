@@ -206,7 +206,7 @@ _BASE_AJUDA = []
 
 
 def base_ajuda() -> str:
-    """Endereço do Studio Account, onde ficam a ajuda, o suporte e as políticas que o rodapé de todo serviço liga."""
+    """Endereço do Account, onde ficam a ajuda, o suporte e as políticas que o rodapé de todo serviço liga."""
     if not _BASE_AJUDA:
         try:
             import heimdall_usuarios as _u

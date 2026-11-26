@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dados da aba Nuvem do Studio Controls: continuidade (interruptor e última cópia), políticas de gasto da Cloudflare e o endereço da
+"""Dados da aba Nuvem do Controls: continuidade (interruptor e última cópia), políticas de gasto da Cloudflare e o endereço da
 página de controle na nuvem. Só lê; quem muda o interruptor é o Controls, pelo heimdall_config."""
 import json
 import urllib.error
