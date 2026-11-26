@@ -24,6 +24,7 @@ import io
 import json
 import math
 import os
+import heimdall_envcompat as _envcompat
 import re
 import statistics
 import struct
@@ -51,6 +52,7 @@ def carregar_env() -> None:
         if not linha or linha.startswith("#") or "=" not in linha:
             continue
         chave, valor = (x.strip() for x in linha.split("=", 1))
+        chave = _envcompat.interno(chave)
         if chave == "HEIMDALL_DB_DIR" or chave.startswith("HEIMDALL_SAUDE_"):
             if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
                 valor = valor[1:-1]

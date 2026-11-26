@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-26 - Variáveis STUDIO_ aceitas no .env
+- O arquivo .env agora aceita nomes com o prefixo STUDIO_ (por exemplo, STUDIO_LAB_PORT) com o mesmo efeito dos nomes HEIMDALL_ atuais; se os dois existirem, vale STUDIO_. Nenhum nome antigo precisa ser trocado e o .env não é alterado.
+- Vale para os serviços, para os scripts de inicialização e para a tela Ajustes do Controls, que mostra e edita a variável pelo nome em uso.
+- Nomes compartilhados com a Cloudflare e com o GitHub Actions seguem para uma etapa posterior, junto com o novo deploy.
+
 ## 2026-11-26 - Nomes Studio nas telas e comando studio
 - Os produtos passam a se chamar Studio Health, Studio Finance, Studio Games, Studio Memory, Studio Notes, Studio News, Studio Learn, Studio Lab e Studio Trading; os serviços de apoio (Account, Controls, Flows, Status e Chat) não levam o prefixo. O conjunto aparece como StudioLibre na ajuda, nos termos, no site e no README.
 - O comando do terminal agora é `studio` (por exemplo, `studio update --restart`). O comando `heimdall` continua funcionando como apelido durante a transição. A pasta do projeto pode ser indicada por STUDIO_DIR (HEIMDALL_DIR continua valendo).

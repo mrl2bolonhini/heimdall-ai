@@ -31,6 +31,7 @@ import html
 import heimdall_pastas
 import mimetypes
 import os
+import heimdall_envcompat as _envcompat
 import re
 import secrets
 import sys
@@ -59,6 +60,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
+        chave = _envcompat.interno(chave)
         if chave.startswith("HEIMDALL_BIBLIOTECA_"):  # nome antigo das variáveis: continua valendo
             chave = "HEIMDALL_NOTAS_" + chave[len("HEIMDALL_BIBLIOTECA_"):]
         elif not (chave.startswith("HEIMDALL_NOTAS_") or chave in ("HEIMDALL_VAULT_DIR", "HEIMDALL_KNOWLEDGE_DIR", "HEIMDALL_LEARN")):

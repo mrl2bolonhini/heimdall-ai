@@ -7,6 +7,7 @@ cookie HttpOnly, HTML sempre escapado, limite de tamanho do pedido, dados separa
 """
 import html
 import os
+import heimdall_envcompat as _envcompat
 import secrets
 import sys
 import time
@@ -50,6 +51,7 @@ def carregar_env(prefixo: str, legado: str = "") -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
+        chave = _envcompat.interno(chave)
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
         if chave.startswith(prefixo) or chave in ("HEIMDALL_DB_DIR",):

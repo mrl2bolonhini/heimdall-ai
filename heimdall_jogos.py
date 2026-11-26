@@ -21,6 +21,7 @@ HEIMDALL_JOGOS_HOSTS (games.heimdall-ai.tech,localhost,127.0.0.1) e HEIMDALL_JOG
 import unicodedata
 import html
 import os
+import heimdall_envcompat as _envcompat
 import re
 import secrets
 import sys
@@ -48,6 +49,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
+        chave = _envcompat.interno(chave)
         if not chave.startswith("HEIMDALL_JOGOS_"):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":

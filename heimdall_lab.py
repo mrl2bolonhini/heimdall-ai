@@ -36,6 +36,7 @@ import html
 import io
 import json
 import os
+import heimdall_envcompat as _envcompat
 import re
 import secrets
 import struct
@@ -72,6 +73,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
+        chave = _envcompat.interno(chave)
         if not chave.startswith("HEIMDALL_LAB_"):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":

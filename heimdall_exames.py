@@ -35,6 +35,7 @@ import html
 import io
 import json
 import os
+import heimdall_envcompat as _envcompat
 import re
 import secrets
 import shutil
@@ -65,6 +66,7 @@ def carregar_env() -> None:
         if not linha or linha.startswith("#") or "=" not in linha:
             continue
         chave, valor = (x.strip() for x in linha.split("=", 1))
+        chave = _envcompat.interno(chave)
         if chave in ("HEIMDALL_DB_DIR", "LITELLM_MASTER_KEY") or chave.startswith(("HEIMDALL_SAUDE_", "HEIMDALL_EXAMES_")):
             if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
                 valor = valor[1:-1]

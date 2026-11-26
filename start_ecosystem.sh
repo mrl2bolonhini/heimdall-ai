@@ -13,6 +13,7 @@ echo "=== [Heimdall System Boot] ==="
 # --- Chave mestra do LiteLLM (guardada em .env, nunca no YAML) ---
 if [ -f .env ]; then
     set -a; source .env; set +a
+    source "$PROJECT_DIR/scripts/studio_env.sh"
 fi
 if [ -z "$LITELLM_MASTER_KEY" ]; then
     LITELLM_MASTER_KEY="sk-$(openssl rand -hex 24)"

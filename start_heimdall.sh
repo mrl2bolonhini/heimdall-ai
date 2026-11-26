@@ -85,6 +85,7 @@ if [ -f .env ]; then
     # O Cloud virou Lab: troca no .env os nomes antigos (HEIMDALL_CLOUD_PORT etc.) pelos novos, com cópia em .env.bak
     "$VENV_PYTHON" -c "import heimdall_config as c; t = c.renomear_antigas(); print('Nomes do Lab atualizados no .env:', ', '.join(t)) if t else None" 2>/dev/null
     set -a; source .env; set +a
+    source "$PROJECT_DIR/scripts/studio_env.sh"
     LAB_PORT="${HEIMDALL_LAB_PORT:-${HEIMDALL_CLOUD_PORT:-8010}}"
 fi
 # Acrescenta uma linha ao .env sem colar na última (se o arquivo não terminar em quebra de linha).

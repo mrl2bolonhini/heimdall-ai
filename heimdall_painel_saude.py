@@ -20,6 +20,7 @@ HEIMDALL_SAUDE_PAINEL_HOSTS (health.heimdall-ai.tech,localhost,127.0.0.1).
 """
 import html
 import os
+import heimdall_envcompat as _envcompat
 import re
 import secrets
 import sys
@@ -47,6 +48,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
+        chave = _envcompat.interno(chave)
         if not (chave.startswith("HEIMDALL_SAUDE_PAINEL_") or chave == "HEIMDALL_DB_DIR"):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":

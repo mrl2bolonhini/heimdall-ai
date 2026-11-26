@@ -12,6 +12,8 @@ import threading
 import time
 from pathlib import Path
 
+import heimdall_envcompat as _envcompat
+
 PROJECT_DIR = Path(__file__).resolve().parent
 ARQUIVO = PROJECT_DIR / ".env"
 NOME_OK = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,99}$")
@@ -39,7 +41,7 @@ def ler() -> list:
         if not t or t.startswith("#") or "=" not in t:
             continue
         nome, valor = t.split("=", 1)
-        nome = nome.strip()
+        nome = _envcompat.interno(nome.strip())
         if NOME_OK.match(nome):
             achadas.pop(nome, None)  # a última define; mantém a posição da última
             achadas[nome] = _valor_limpo(valor)
@@ -90,7 +92,7 @@ def _e_do_nome(linha: str, nome: str) -> bool:
     t = linha.strip()
     if t.startswith("export "):
         t = t[7:].strip()
-    return t.split("=", 1)[0].strip() == nome and "=" in t and not t.startswith("#")
+    return _envcompat.interno(t.split("=", 1)[0].strip()) == _envcompat.interno(nome) and "=" in t and not t.startswith("#")
 
 
 def salvar(nome: str, valor: str) -> str:

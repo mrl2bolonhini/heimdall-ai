@@ -56,6 +56,7 @@ if [ -f .env ]; then
     # shellcheck disable=SC1091
     . ./.env > /dev/null 2>&1
     set +a
+    . ./scripts/studio_env.sh
 fi
 
 ARGS=("$@")
