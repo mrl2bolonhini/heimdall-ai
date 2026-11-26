@@ -77,21 +77,21 @@ def simbolo_svg(classe="", titulo=None, olho_claro="var(--sclera, #ffffff)", pup
 
 
 def simbolo_arquivo():
-    return simbolo_svg(titulo="Heimdall-ai", olho_claro="#ffffff", pupila="#0c1530")
+    return simbolo_svg(titulo="StudioLibre", olho_claro="#ffffff", pupila="#0c1530")
 
 
 def simbolo_mono():
     arcos = "".join(f'<path d="M{50 - r} 46A{r} {r} 0 0 1 {50 + r} 46" fill="none" stroke="currentColor" stroke-width="6" opacity="{o}"/>' for r, o in zip([45, 38.5, 32, 25.5, 19, 12.5], [.35, .5, .65, .8, .9, 1]))
-    return ('<svg viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" role="img"><title>Heimdall-ai (uma cor)</title>' + arcos
+    return ('<svg viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" role="img"><title>StudioLibre (uma cor)</title>' + arcos
             + '<ellipse cx="50" cy="46" rx="17" ry="9" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="50" cy="46" r="5.2" fill="currentColor"/></svg>')
 
 
 def logo_arquivo(escuro=False):
     tinta = "#e9effc" if escuro else "#0c1530"
-    return (f'<svg viewBox="0 -4 330 62" xmlns="http://www.w3.org/2000/svg" role="img"><title>Heimdall-ai</title>'
+    return (f'<svg viewBox="0 -4 330 62" xmlns="http://www.w3.org/2000/svg" role="img"><title>StudioLibre</title>'
             + '<g>' + _arcos(50, 46, [45, 38.5, 32, 25.5, 19, 12.5], 6, BANDAS)
             + f'<ellipse cx="50" cy="46" rx="17" ry="9" fill="{"#e9effc" if escuro else "#ffffff"}"/><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="{"#080d1f" if escuro else "#0c1530"}"/></g>'
-            + f'<text x="112" y="44" font-family="\'Iowan Old Style\',\'Palatino Linotype\',Palatino,\'Book Antiqua\',Georgia,serif" font-size="40" font-weight="700" letter-spacing="-0.5" fill="{tinta}">Heimdall-ai</text></svg>')
+            + f'<text x="112" y="44" font-family="\'Iowan Old Style\',\'Palatino Linotype\',Palatino,\'Book Antiqua\',Georgia,serif" font-size="40" font-weight="700" letter-spacing="-0.5" fill="{tinta}">StudioLibre</text></svg>')
 
 
 def favicon_svg():
@@ -116,7 +116,7 @@ def diagrama():
     L = {"interface": "#42a5f5", "acesso": "#26c6da", "modelos": "#1e88e5", "ferr": "#93d2fa", "auto": "#ffc107"}
     seta = lambda d: f'<path d="{d}" class="ar" marker-end="url(#ponta)"/>'
     s = ('<svg viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dg-t dg-d">'
-         '<title id="dg-t">Mapa do Heimdall-ai</title>'
+         '<title id="dg-t">Mapa do StudioLibre</title>'
          '<desc id="dg-d">Na linha de cima, a conversa: você usa o Open WebUI, que fala com o LiteLLM, que usa os modelos do Ollama, os servidores MCP e as bases de documentos e de busca. '
          'Na linha de baixo, as automações: o n8n usa o LiteLLM, aciona o agente do Mac, que grava nos aplicativos do Mac, e avisa no iPhone pelo Bark. O iPhone e o Apple Watch mandam os dados de saúde, pelo Health Auto Export, ao n8n; o agente os grava no banco pessoal, que alimenta os painéis web de Notas, News, Saúde e Lab.</desc>'
          '<defs><marker id="ponta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="am"/></marker></defs>'
@@ -321,14 +321,14 @@ JS = """/* Gerado por gerar_docs.py (docs_tema.py). Tema, copiar comando e olho 
       var det = document.createElement('details'), sum = el('summary', 'Conta: ' + d.nome), cx = document.createElement('div'), ul = document.createElement('ul');
       cx.className = 'caixa';
       cx.appendChild(el('p', 'Conectado como ' + d.nome + (d.email && d.email !== d.nome ? ' (' + d.email + ')' : '') + '.'));
-      cx.appendChild(el('p', 'Serviços do Heimdall'));
+      cx.appendChild(el('p', 'Serviços do StudioLibre'));
       (d.servicos || []).forEach(function (s) {
         if (!/^https:\/\//.test(s.url || '')) return;
         var a = el('a', s.nome); a.href = s.url; ul.appendChild(el('li', '', a));
       });
-      ul.setAttribute('aria-label', 'Serviços do Heimdall');
+      ul.setAttribute('aria-label', 'Serviços do StudioLibre');
       cx.appendChild(ul);
-      var sai = el('a', 'Sair do Heimdall'); sai.href = base + 'cdn-cgi/access/logout';
+      var sai = el('a', 'Sair do StudioLibre'); sai.href = base + 'cdn-cgi/access/logout';
       cx.appendChild(el('p', '', sai));
       det.appendChild(sum); det.appendChild(cx);
       det.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && det.open) { det.open = false; sum.focus(); } });
@@ -387,9 +387,9 @@ CONTA_URL = "https://account.heimdall-ai.tech/"
 
 def pagina(arquivo, titulo, descricao, corpo, home=False):
     # Em todas as páginas do site (menos a 404): "Entrar" (sem login) ou, com login, o nome e os serviços da pessoa; o heimdall.js pergunta a CONTA_URL + quem.json.
-    conta = f'<div class="conta-site" id="conta-site" data-url="{CONTA_URL}"><a href="{CONTA_URL}">Entrar no Heimdall</a></div>' if arquivo != "404.html" else ""
+    conta = f'<div class="conta-site" id="conta-site" data-url="{CONTA_URL}"><a href="{CONTA_URL}">Entrar no StudioLibre</a></div>' if arquivo != "404.html" else ""
     menu = "".join('<li><a href="%s"%s>%s</a></li>' % (a, ' aria-current="page"' if a == arquivo else "", H(t)) for a, t, _ in PAGINAS)
-    nome = "Heimdall-ai: IA que roda em casa" if arquivo == "index.html" else titulo + " · Heimdall-ai"
+    nome = "StudioLibre: IA que roda em casa" if arquivo == "index.html" else titulo + " · Heimdall-ai"
     url = SITE if arquivo == "index.html" else SITE + arquivo
     if home:
         principal = corpo
@@ -408,12 +408,12 @@ def pagina(arquivo, titulo, descricao, corpo, home=False):
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
-<meta property="og:site_name" content="Heimdall-ai">
+<meta property="og:site_name" content="StudioLibre">
 <meta property="og:title" content="{H(nome)}">
 <meta property="og:description" content="{H(descricao)}">
 <meta property="og:url" content="{H(url)}">
 <meta property="og:image" content="{SITE}og.png">
-<meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
+<meta property="og:image:alt" content="StudioLibre: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
 <meta name="twitter:card" content="summary_large_image">
 <script>try{{var t=localStorage.getItem('tema');if(t)document.documentElement.setAttribute('data-theme',t)}}catch(e){{}}</script>
 <link rel="stylesheet" href="style.css">
@@ -421,7 +421,7 @@ def pagina(arquivo, titulo, descricao, corpo, home=False):
 <body>
 <a class="skip" href="#conteudo">Ir para o conteúdo</a>
 <header class="top"><div class="wrap"><div class="barra">
-<a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial">{simbolo_svg()}<span>Heimdall-ai</span></a>
+<a class="marca" href="index.html" aria-label="StudioLibre, página inicial">{simbolo_svg()}<span>StudioLibre</span></a>
 <span class="gap"></span>
 <nav class="menu" aria-label="Páginas do site"><ul>{menu}</ul></nav>
 <div class="ferram">{conta}<button type="button" id="tema">Tema escuro</button></div>
@@ -430,7 +430,7 @@ def pagina(arquivo, titulo, descricao, corpo, home=False):
 {principal}
 </div></main>
 <footer><div class="wrap"><div class="linha">
-<div><a class="marca" href="index.html" aria-label="Heimdall-ai, página inicial">{simbolo_svg()}<span>Heimdall-ai</span></a>
+<div><a class="marca" href="index.html" aria-label="StudioLibre, página inicial">{simbolo_svg()}<span>StudioLibre</span></a>
 <p>&copy; 2026 {H(AUTOR)}. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
 <div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:{EMAIL}">{EMAIL}</a></li><li><a href="{LINKEDIN}">LinkedIn de {H(AUTOR)}</a></li></ul></div>
 <ul aria-label="Links do rodapé"><li><a href="{REPO}">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
@@ -465,7 +465,7 @@ def tabela(legenda, cab, linhas):
 def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
     return f"""
 <div class="hero"><div>
-<h1>Heimdall-ai</h1>
+<h1>StudioLibre</h1>
 <p class="lead">Inteligência Artificial que roda em casa: modelos locais, ferramentas que fazem coisas de verdade e automações que avisam no iPhone.</p>
 <p class="muted nota">Projeto de {H(AUTOR)}. O chat é privado, por convite; o código e esta documentação são abertos.</p>
 <div class="acoes"><a class="btn" href="arquitetura.html">Ver como funciona</a><a class="btn sec" href="{REPO}">Código no GitHub</a></div>
@@ -484,7 +484,7 @@ def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
 <li class="porta" style="--cor:#93d2fa"><h3><a href="{REPO}">Código</a></h3><p>Repositório do projeto no GitHub.</p><p class="quem">Público</p></li>
 </ul></section>
 <section class="faixa" aria-labelledby="proposito"><div class="dois"><h2 id="proposito">Por que existe</h2><div>
-<p>Heimdall, na mitologia nórdica, guarda Bifröst, a ponte em arco-íris que liga os mundos. O projeto leva o nome dele: um assistente que vigia e conecta as ferramentas de quem o criou.</p>
+<p>StudioLibre, na mitologia nórdica, guarda Bifröst, a ponte em arco-íris que liga os mundos. O projeto leva o nome dele: um assistente que vigia e conecta as ferramentas de quem o criou.</p>
 <p>Os modelos rodam no próprio Mac, e não em serviços de terceiros. Eles ganham ferramentas reais (busca na web, arquivos, documentos, memória, Notas e Calendário) e rotinas automáticas: resumos, estudo, vigilância de privacidade e avisos no iPhone.</p>
 <p>Foi pensado para quem usa leitor de tela: tudo se opera por texto e comandos, e as automações entregam notas e áudio.</p></div></div></section>
 <section class="faixa" aria-labelledby="empresa"><div class="dois"><h2 id="empresa">StudioLibre</h2><div>
@@ -528,7 +528,7 @@ def corpo_marca():
 <h3>Como os aplicativos se chamam</h3>
 <p>O nome da empresa vem primeiro e o complemento diz o que o aplicativo faz: StudioLibre Memory (ideias e informações), StudioLibre Health (saúde), StudioLibre Finance (finanças) e StudioLibre Games (jogos). Um aplicativo novo segue o mesmo modelo. No navegador, cada aplicativo tem o seu endereço, no formato <code>aplicativo.studiolibre.io</code>, como <code>memory.studiolibre.io</code>.</p>
 <h3>Endereços</h3>
-<p>O domínio principal é <code>studiolibre.io</code>. O <code>studiolibre.app</code> fica reservado para os aplicativos. A troca dos endereços acontece por etapas, e os endereços atuais continuam respondendo e redirecionam para os novos quando cada etapa termina. Até lá, o símbolo e o nome Heimdall seguem nas telas.</p></section>
+<p>O domínio principal é <code>studiolibre.io</code>. O <code>studiolibre.app</code> fica reservado para os aplicativos. A troca dos endereços acontece por etapas, e os endereços atuais continuam respondendo e redirecionam para os novos quando cada etapa termina. Até lá, o símbolo e o nome StudioLibre seguem nas telas.</p></section>
 <section aria-labelledby="simbolo"><h2 id="simbolo">Símbolo e logotipo</h2>
 <p>O símbolo é a ponte Bifröst vista de frente: seis faixas em azul e dourado e, no centro, o olho de quem vigia. O olho acompanha o ponteiro na página inicial.</p>
 <div class="amostras">

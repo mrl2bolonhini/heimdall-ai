@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Teste do bloco de conta das páginas do site (docs/index.html + heimdall.js) no navegador, com o account.heimdall-ai.tech de mentira.
-Sem login (redirecionamento do Access ou 401): fica o link "Entrar no Heimdall". Com login: nome, e-mail e links dos serviços, sem executar HTML vindo do servidor."""
+Sem login (redirecionamento do Access ou 401): fica o link "Entrar no StudioLibre". Com login: nome, e-mail e links dos serviços, sem executar HTML vindo do servidor."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
@@ -71,11 +71,11 @@ confere("logado: sem erro de JavaScript", er == [], str(er))
 confere("as outras páginas do site também têm o bloco de conta", sem)
 
 h, t, av, ln, b, er, _, _ = rodar(lambda r: r.fulfill(status=302, headers={"Location": "https://eq.cloudflareaccess.com/cdn-cgi/access/login/x"}))
-confere("sem login (redirecionamento do Access): continua o link Entrar", "Entrar no Heimdall" in t and ln == ["https://account.heimdall-ai.tech/"] and av == "", f"{t} {ln}")
+confere("sem login (redirecionamento do Access): continua o link Entrar", "Entrar no StudioLibre" in t and ln == ["https://account.heimdall-ai.tech/"] and av == "", f"{t} {ln}")
 h, t, av, ln, b, er, _, _ = rodar(lambda r: r.fulfill(status=401, headers=CORS, body=json.dumps({"logado": False})))
-confere("sem login (401): continua o link Entrar", "Entrar no Heimdall" in t and "Conta:" not in t)
+confere("sem login (401): continua o link Entrar", "Entrar no StudioLibre" in t and "Conta:" not in t)
 h, t, av, ln, b, er, _, _ = rodar(lambda r: r.abort())
-confere("sem rede: continua o link Entrar e não dá erro", "Entrar no Heimdall" in t and er == [], str(er))
+confere("sem rede: continua o link Entrar e não dá erro", "Entrar no StudioLibre" in t and er == [], str(er))
 srv.shutdown()
 print("\nFALHAS: %d" % falhas if falhas else "\nTUDO OK")
 sys.exit(1 if falhas else 0)

@@ -90,11 +90,11 @@ def pagina_tour(p: dict, nonce: str) -> bytes:
         i = f"s-{chave}"
         passos = "".join(f"<li>{e(x)}</li>" for x in d["como"])
         extra = f"<p>{e(d['multiusuario'])}</p>" if d.get("multiusuario") else ""
-        aviso = "<p>Este serviço é do dono do Heimdall.</p>" if d.get("so_dono") and p.get("papel") == "dono" else ""
+        aviso = "<p>Este serviço é do dono do StudioLibre.</p>" if d.get("so_dono") and p.get("papel") == "dono" else ""
         blocos.append(f'<section aria-labelledby="{i}"><h2 id="{i}">{e(nome)}</h2><p>{e(d["oque"])}</p><p>Como configurar e usar</p><ol>{passos}</ol>{extra}{aviso}'
                       f'<p><a href="{e(url)}">Abrir {e(nome)}</a></p></section>')
     saudacao = e(p.get("nome") or p.get("email") or "Dono")
-    corpo = (f'<h1>Seus serviços do Heimdall</h1><p>Olá, {saudacao}. Aqui estão os serviços do Heimdall a que você tem acesso, com um link para cada um, o que ele faz '
+    corpo = (f'<h1>Seus serviços do StudioLibre</h1><p>Olá, {saudacao}. Aqui estão os serviços do StudioLibre a que você tem acesso, com um link para cada um, o que ele faz '
              f'e como configurar. O menu Conta, no alto de qualquer página, leva a todos eles.</p>' + ("".join(blocos) or "<p>Nenhum serviço liberado ainda. Fale com o dono.</p>"))
     return _documento("Seus serviços - Studio Account", corpo, nonce)
 
@@ -114,7 +114,7 @@ def _passos_hae(url: str) -> str:
              f"No campo de endereço (URL), coloque: {url}",
              "Método: POST. Formato: JSON. Escolha as métricas de saúde e, se quiser, os treinos.",
              "Em cabeçalhos (headers), acrescente o nome Authorization com o valor Bearer, um espaço e o token mostrado nesta página.",
-             "Salve e rode a automação uma vez. No Mac, heimdall mailbox pull importa o que chegou; o Heimdall também busca sozinho de tempos em tempos."]
+             "Salve e rode a automação uma vez. No Mac, heimdall mailbox pull importa o que chegou; o StudioLibre também busca sozinho de tempos em tempos."]
     return "<ol>" + "".join(f"<li>{e(x)}</li>" for x in itens) + "</ol>"
 
 
@@ -137,7 +137,7 @@ def pagina_integracoes(p: dict, nonce: str, token: str = "", aviso: str = "", er
         if s["ativa"]:
             estado_txt = f'Ativa desde {e(s["desde"])}. Ativar de novo troca o token.'
         elif not st["pode"]:
-            estado_txt = "Ainda não disponível para a sua conta: falta o armazenamento por pessoa. Por enquanto só o dono do Heimdall pode ligar a Saúde."
+            estado_txt = "Ainda não disponível para a sua conta: falta o armazenamento por pessoa. Por enquanto só o dono do StudioLibre pode ligar a Saúde."
         elif not st["caixa"]:
             estado_txt = "A caixa de correio está desligada. No terminal do Mac: heimdall mailbox start, depois heimdall env --set HEIMDALL_CAIXA 1."
         else:
@@ -147,24 +147,24 @@ def pagina_integracoes(p: dict, nonce: str, token: str = "", aviso: str = "", er
             acoes = design.botao_post("/integracoes/saude/ativar", "Trocar o token da Saúde" if s["ativa"] else "Ativar a Saúde", tok, None, "Gerar o token da integração de Saúde")
             if s["ativa"]:
                 acoes += design.botao_post("/integracoes/saude/desativar", "Desativar a Saúde", tok, None, "Desativar a integração de Saúde e invalidar o token")
-        saude = (f'<section aria-labelledby="i-saude"><h2 id="i-saude">Saúde</h2><p>Envia os dados do app Saúde do iPhone para o Heimdall, pelo app Health Auto Export, '
+        saude = (f'<section aria-labelledby="i-saude"><h2 id="i-saude">Saúde</h2><p>Envia os dados do app Saúde do iPhone para o StudioLibre, pelo app Health Auto Export, '
                  f'passando pela caixa de correio da Cloudflare. Não é criptografia de ponta a ponta: a Cloudflare consegue ler o que está na caixa em trânsito, e o que sobra some em 7 dias.</p>'
                  f'<p>Estado: {estado_txt}</p>{acoes}</section>')
     prep = []
-    for chave, texto in (("notas", "Ler as suas notas a partir da conta Apple (iCloud) ou Google. Você poderá escolher as pastas, ou deixar o Heimdall buscar sozinho."),
+    for chave, texto in (("notas", "Ler as suas notas a partir da conta Apple (iCloud) ou Google. Você poderá escolher as pastas, ou deixar o StudioLibre buscar sozinho."),
                          ("lembretes", "Sincronizar lembretes com a conta Apple ou Google."),
                          ("calendario", "Sincronizar eventos com a conta Apple ou Google.")):
         n = st["itens"][chave]["nome"]
         prep.append(f'<section aria-labelledby="i-{chave}"><h2 id="i-{chave}">{e(n)}</h2><p>{e(texto)}</p><p>Estado: em preparação. Falta o armazenamento por pessoa e a ligação com a conta Apple ou Google. '
                     f'Para o dono, o Mac já lê Notas, Lembretes e Calendário do iCloud pelo agente da Apple.</p></section>')
-    corpo = (f'<h1>Integrações da sua conta</h1>{topo}<p>Aqui você liga o Heimdall aos apps e contas que usa. Cada integração mostra o estado e o que fazer. '
+    corpo = (f'<h1>Integrações da sua conta</h1>{topo}<p>Aqui você liga o StudioLibre aos apps e contas que usa. Cada integração mostra o estado e o que fazer. '
              f'Android: por enquanto só Calendário e Tarefas, pela conta Google, quando essa integração ficar pronta; a Saúde do Android precisa de um app próprio, que ainda não existe.</p>'
              + saude + "".join(prep))
     return _documento("Integrações - Studio Account", corpo, nonce)
 
 
 class Account(nuvem.ManipuladorBase):
-    server_version = "Heimdall"
+    server_version = "StudioLibre"
     sys_version = ""
 
     def log_message(self, fmt, *args):

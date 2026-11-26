@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Base web dos serviços novos do Heimdall (Trading, Memory): login, sessão, CSRF, páginas no Studio Design, Ajustes, Perguntar e multipart.
+"""Base web dos serviços novos do StudioLibre (Trading, Memory): login, sessão, CSRF, páginas no Studio Design, Ajustes, Perguntar e multipart.
 
 Cada serviço descreve a si mesmo com `Config` (abas e subabas, Ajustes, rotas GET e POST, rotas antigas com 301, texto do Perguntar) e chama `servir(cfg)`.
 Segurança: só 127.0.0.1 (HEIMDALL_<X>_HOST), só nomes de site permitidos, login por senha e código de 6 dígitos ou Cloudflare Access, CSRF em todo POST,
@@ -175,9 +175,9 @@ def pagina(cfg: Config, titulo: str, corpo: str, sess: dict = None, rota: str = 
     extra = cfg.script_pagina(rota) if (cfg.script_pagina and sess) else script_publico
     js = f'<script nonce="{e(nonce)}">{abas_js}{extra}</script>' if (abas_js or extra) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall {e(cfg.nome)}</title>{nuvem.ICONE}<style>{nuvem.CSS}{cfg.css}</style></head>'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio {e(cfg.nome)}</title>{nuvem.ICONE}<style>{nuvem.CSS}{cfg.css}</style></head>'
             f'<body{(" data-csrf=" + chr(34) + e(sess["csrf"]) + chr(34)) if sess else ""}>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall " + cfg.nome, nav, sair_html=sair, ajustes_html=ajustes_html)}'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio " + cfg.nome, nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico=cfg.chave)}{js}</body></html>').encode("utf-8")
 
 
@@ -205,7 +205,7 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
     rotas_perguntar = set(cfg.rotas_abas())
 
     class Manipulador(nuvem.ManipuladorBase):
-        server_version = "Heimdall" + cfg.nome
+        server_version = "Studio" + cfg.nome
         sys_version = ""
         protocol_version = "HTTP/1.0"
 
@@ -422,12 +422,12 @@ def servir(cfg: Config) -> None:
     port = int(os.environ.get(cfg.porta_env, str(cfg.porta)))
     hosts_ok = {h.strip().lower() for h in os.environ.get(cfg.prefixo + "HOSTS", cfg.hosts).split(",") if h.strip()} | set(cfg.hosts_legados)
     if not (nuvem.SENHA_HASH and nuvem.TOTP_SEGREDO):
-        sys.exit(f"Sem senha e código configurados o Heimdall {cfg.nome} não sobe. Rode: python3 heimdall_acesso.py --tudo")
+        sys.exit(f"Sem senha e código configurados o Studio {cfg.nome} não sobe. Rode: python3 heimdall_acesso.py --tudo")
     if cfg.ao_iniciar:
         cfg.ao_iniciar()
     srv = ThreadingHTTPServer((host_env, port), criar_manipulador(cfg, hosts_ok))
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall {cfg.nome} em http://{host_env}:{port} (sites permitidos: {', '.join(sorted(hosts_ok))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio {cfg.nome} em http://{host_env}:{port} (sites permitidos: {', '.join(sorted(hosts_ok))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

@@ -1,4 +1,4 @@
-"""Studio Design: o padrão de interface igual em todos os sites do Heimdall.
+"""Studio Design: o padrão de interface igual em todos os sites do StudioLibre.
 
 Regra de ouro (feita para leitor de tela e teclado):
   - LINK leva a outro lugar para LER: menu, "Voltar", o nome de um item em lista ou tabela, "Leia mais", links dentro de texto.

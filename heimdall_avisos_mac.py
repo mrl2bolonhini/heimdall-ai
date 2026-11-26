@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Avisos nativos no Mac: o Heimdall grava o aviso completo numa pasta local e o app do Mac mostra como notificação do macOS.
+"""Avisos nativos no Mac: o StudioLibre grava o aviso completo numa pasta local e o app do Mac mostra como notificação do macOS.
 
 O Bark entrega ao iPhone com texto genérico (o texto passa por um servidor de terceiros). No Mac não há esse limite: o aviso fica só em
 `db/alerts/` (permissão 700) e é lido pelo app, que o apaga depois de mostrar. Campos no estilo do Bark: title, body, group, level.
@@ -35,7 +35,7 @@ def publicar(aviso: dict) -> bool:
     if not titulo and not corpo:
         return False
     nivel = str(aviso.get("level") or "active")
-    item = {"titulo": titulo or "Heimdall", "corpo": corpo, "grupo": str(aviso.get("group") or "heimdall")[:40],
+    item = {"titulo": titulo or "StudioLibre", "corpo": corpo, "grupo": str(aviso.get("group") or "heimdall")[:40],
             "nivel": nivel if nivel in NIVEIS else "active", "criado": time.time()}
     try:
         p = pasta()

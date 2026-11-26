@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Painel web do emulador de AWS (LocalStack ou Moto) do Heimdall.
+"""Painel web do emulador de AWS (LocalStack ou Moto) do StudioLibre.
 
 Serve páginas simples (texto, títulos, tabelas e formulários, bons para leitor de tela) para usar o emulador
 pelo navegador: S3 (buckets e arquivos), Lambda (criar, executar, apagar), Glue, Athena e um console geral que chama qualquer
@@ -556,7 +556,7 @@ def pg_entrar(erro: str = "") -> bytes:
 def pg_inicio() -> str:
     s = saude_emulador()
     if not s["ok"]:
-        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda e está desligado agora. Quem administra o Heimdall pode ligá-lo no Studio Controls, aba Serviços, ou pelo <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; depois, recarregue esta página.</p>'
+        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda e está desligado agora. Quem administra o StudioLibre pode ligá-lo no Studio Controls, aba Serviços, ou pelo <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; depois, recarregue esta página.</p>'
         tabela = ""
     else:
         rodando = sorted(k for k, v in s["servicos"].items() if str(v) in ("running", "ready"))
@@ -943,7 +943,7 @@ class ManipuladorBase(BaseHTTPRequestHandler):
 
 
 class Painel(ManipuladorBase):
-    server_version = "HeimdallLab"
+    server_version = "StudioLab"
     sys_version = ""
     protocol_version = "HTTP/1.0"  # fecha a conexão a cada resposta
 
@@ -1348,7 +1348,7 @@ def novo_segredo_totp() -> str:
 def mostrar_segredo(segredo: str) -> None:
     grupos = " ".join(segredo[i:i + 4] for i in range(0, len(segredo), 4))
     print("\nCódigo de verificação de 6 dígitos (TOTP). Cadastre no app Senhas da Apple:")
-    print("1. Abra o item que você usa para o login do Heimdall (lab, notes e news usam o mesmo código) e apague o código de verificação antigo.")
+    print("1. Abra o item que você usa para o login do StudioLibre (lab, notes e news usam o mesmo código) e apague o código de verificação antigo.")
     print("2. Escolha adicionar código de verificação e depois inserir a chave de configuração (o nome exato do botão varia com a versão do sistema).")
     print("3. Digite a chave abaixo, que gera 6 dígitos, troca a cada 30 segundos e usa SHA-1:")
     print("   " + grupos)
@@ -1367,7 +1367,7 @@ def aplicar_no_webui(senha: str) -> None:
         return
     r = subprocess.run(["bash", str(script), "--stdin"], input=senha + "\n", text=True)
     if r.returncode != 0:
-        print("Open WebUI: a troca não foi concluída (veja a mensagem acima). A senha dos serviços Heimdall já foi gravada.")
+        print("Open WebUI: a troca não foi concluída (veja a mensagem acima). A senha dos serviços StudioLibre já foi gravada.")
 
 
 def aplicar_no_kuma() -> None:
@@ -1387,14 +1387,14 @@ def aplicar_no_kuma() -> None:
         return
     r = subprocess.run(["docker", "exec", "-it", "uptime-kuma", "npm", "run", "reset-password"])
     if r.returncode != 0:
-        print("Uptime Kuma: a troca não foi concluída. A senha dos serviços Heimdall já foi gravada.")
+        print("Uptime Kuma: a troca não foi concluída. A senha dos serviços StudioLibre já foi gravada.")
 
 
 def definir_acesso(modo: str) -> None:
-    """Senha e código de 6 dígitos de todos os serviços Heimdall com login (Lab, Notas e News). modo: tudo, senha ou codigo."""
+    """Senha e código de 6 dígitos de todos os serviços StudioLibre com login (Lab, Notas e News). modo: tudo, senha ou codigo."""
     pares = {}
     if modo in ("tudo", "senha"):
-        s1 = getpass.getpass("Nova senha do Heimdall (mínimo 14 caracteres; não aparece na tela): ")
+        s1 = getpass.getpass("Nova senha do StudioLibre (mínimo 14 caracteres; não aparece na tela): ")
         if len(s1) < 14:
             sys.exit("Senha curta demais. Use pelo menos 14 caracteres (uma frase longa serve). Nada foi gravado.")
         if getpass.getpass("Repita a senha: ") != s1:
@@ -1422,7 +1422,7 @@ def definir_senha(so_codigo: bool) -> None:   # mantido por compatibilidade
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Painel web do emulador de AWS do Heimdall")
+    ap = argparse.ArgumentParser(description="Painel web do emulador de AWS do StudioLibre")
     ap.add_argument("--definir-senha", action="store_true", help="define a senha e gera o código TOTP, gravando no .env")
     ap.add_argument("--novo-codigo", action="store_true", help="gera só um novo código TOTP")
     args = ap.parse_args()

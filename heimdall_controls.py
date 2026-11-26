@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Studio Controls (controls.heimdall-ai.tech): terminal completo e acessível e painel de serviços, para administrar o Heimdall pelo navegador.
+"""Studio Controls (controls.heimdall-ai.tech): terminal completo e acessível e painel de serviços, para administrar o StudioLibre pelo navegador.
 
 O terminal roda no Mac, com as permissões do seu usuário (heimdall_shell.py): a pasta e as variáveis continuam entre os comandos, programas que
 perguntam algo recebem a resposta pelo campo "Resposta ao programa", e há botões para interromper e para copiar a última saída ou as últimas N saídas.
@@ -334,7 +334,7 @@ def pg_inicio(q: dict, sess: dict) -> tuple:
               '<li><a href="/servicos">Serviços</a>: uma chave por serviço, para ligar e desligar (o que você desliga continua desligado depois de atualizar e reiniciar), e a subaba <a href="/manutencao">Manutenção</a>, com Start, Stop, Update, Restart, status, diagnóstico e logs.</li>'
               '<li><a href="/usuarios">Usuários</a>: quem pode entrar em cada serviço. Adiciona e remove convidados, guarda a lista e sincroniza com o Cloudflare Access.</li>'
               '<li><a href="/nuvem">Nuvem</a>: continuidade quando o Mac fica fora do ar, cópia dos dados, limites de gasto e, na subaba <a href="/monitor">Consumo de IA</a>, as requisições, os tokens e o custo estimado dos modelos na nuvem.</li></ol>'
-              '<p>O botão <a href="/ajustes">Ajustes</a>, no topo, traz todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar Heimdall, no fim da página, faz isso.</p>')
+              '<p>O botão <a href="/ajustes">Ajustes</a>, no topo, traz todas as variáveis do .env, com explicação, para ver e mudar. Salvar grava na hora; o serviço só lê o valor novo ao reiniciar, e o botão Recarregar StudioLibre, no fim da página, faz isso.</p>')
     corpo += ('<p class="aviso">Quem entra aqui manda no Mac. Cada comando e cada mudança ficam anotados em logs/controls_audit.log, sem a saída nem os valores. '
               'Programas de tela cheia, como vim e top, não funcionam no Terminal: use cat, sed e ps.</p>')
     return "Resumo", corpo
@@ -365,7 +365,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         ''+design.botao_js("bt-ler","Ler o começo da última saída (Option+Shift+O)")+''
         ''+design.botao_js("bt-limpar","Limpar as saídas (Ctrl+L)")+''
         ''+design.botao_js("bt-reiniciar","Reiniciar o shell (Option+Shift+R)")+'</div>'
-        '<p>Reiniciar o shell fecha o atual e abre outro limpo, na pasta do Heimdall.</p>'
+        '<p>Reiniciar o shell fecha o atual e abre outro limpo, na pasta do StudioLibre.</p>'
         '<div id="area-copia" hidden><label for="texto-copia">Se o navegador não deixar copiar sozinho, selecione tudo neste campo (Command+A no Mac, Ctrl+A no Windows e no Linux) e copie (Command+C no Mac, Ctrl+C no Windows e no Linux)</label>'
         '<textarea id="texto-copia" readonly></textarea></div></section>'
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
@@ -490,7 +490,7 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
         resumo = f"{nome}: {len(d)} no .env" + (f", {len(f)} opções sem valor" if f else "")
         interno = ((f"<h3>No .env</h3><ul class=\"chaves\">{''.join(d)}</ul>") if d else "") + ((f"<h3>Opções ainda sem valor</h3><ul class=\"chaves\">{''.join(f)}</ul>") if f else "")
         blocos.append(f'<details class="grupo"><summary>{e(resumo)}</summary>{interno}</details>')
-    corpo = ("<p>Aqui ficam todas as configurações do Heimdall, as que estão no arquivo .env e as outras opções que o código aceita, em grupos por serviço: abra o grupo para ver as variáveis. "
+    corpo = ("<p>Aqui ficam todas as configurações do StudioLibre, as que estão no arquivo .env e as outras opções que o código aceita, em grupos por serviço: abra o grupo para ver as variáveis. "
              "Os valores aparecem por inteiro, inclusive senhas e chaves: só quem entrou neste painel vê. Salvar grava na hora, mas cada serviço só lê o valor novo quando for reiniciado "
              "(aba Serviços) ou quando você reiniciar tudo (aba Manutenção). Antes de cada mudança o arquivo é copiado para .env.bak. "
              "Cuidado com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO: se errar, você perde o acesso a este painel.</p>"
@@ -519,7 +519,7 @@ def pg_usuarios(q: dict, sess: dict) -> tuple:
     caixas = "".join(f'<label><input type="checkbox" name="servico" value="{k}"> {e(v[0])}</label> ' for k, v in usuarios.SERVICOS.items() if v[3])
     falta = usuarios.configurado()
     if falta:
-        cf = f'<p class="nota">Cloudflare ainda não configurado: {e(falta)}. Sem isso a lista só vale no Heimdall; o Access não é alterado.</p>'
+        cf = f'<p class="nota">Cloudflare ainda não configurado: {e(falta)}. Sem isso a lista só vale no StudioLibre; o Access não é alterado.</p>'
     else:
         cf = (f'<form class="linha" method="post" action="/usuarios/cloudflare"><input type="hidden" name="csrf" value="{csrf}">'
               '<button type="submit" name="acao" value="ver" aria-describedby="d-cf-ver">Ver o que vai mudar</button> <span id="d-cf-ver">Só consulta a Cloudflare e mostra o plano.</span></form>'
@@ -527,7 +527,7 @@ def pg_usuarios(q: dict, sess: dict) -> tuple:
               '<button type="submit" name="acao" value="aplicar" aria-describedby="d-cf-ap">Aplicar no Cloudflare</button> <span id="d-cf-ap">Cria ou atualiza as políticas e os aplicativos e revoga as sessões de quem saiu.</span></form>')
     marca = '<span data-mudou hidden></span>' if sess.pop("_mudou_usuarios", False) else ""
     corpo = (marca + "<p>Os donos entram em todos os serviços. Convidados entram só nos que você marcar. Health, Finance e Controls são só de donos e não aparecem na escolha. "
-             "A lista fica no .env e vale no Heimdall depois de reiniciar (o botão Recarregar Heimdall, no fim da página, faz isso).</p>"
+             "A lista fica no .env e vale no StudioLibre depois de reiniciar (o botão Recarregar StudioLibre, no fim da página, faz isso).</p>"
              f"<h2>Donos</h2><p>{e(', '.join(st['donos']) or 'nenhum dono cadastrado (HEIMDALL_CFACCESS_EMAILS em Ajustes)')}</p>"
              f"<h2>Convidados</h2>{tabela}"
              f'<h2>Adicionar ou trocar um convidado</h2><form method="post" action="/usuarios/adicionar"><input type="hidden" name="csrf" value="{csrf}">'
@@ -557,7 +557,7 @@ def pg_nuvem(q: dict, sess: dict) -> tuple:
     ligado = est["ligado"]
     sit = (f'<p role="status">Continuidade: <strong>{"ligada" if ligado else "desligada"}</strong>. ' + (
         "O Mac envia as cópias cifradas à nuvem e, se cair, os sites de dados passam a ser atendidos por lá, somente para leitura." if ligado
-        else "Nada é enviado à nuvem e o Heimdall só roda no Mac.") + f' {copia}</p>')
+        else "Nada é enviado à nuvem e o StudioLibre só roda no Mac.") + f' {copia}</p>')
 
     def botao(acao, rotulo, desc):
         return (f'<li><form class="linha" method="post" action="/nuvem/acao"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="acao" value="{acao}">'
@@ -618,7 +618,7 @@ def pg_manutencao(q: dict, sess: dict) -> tuple:
     log = ('<form method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="' + csrf + '"><input type="hidden" name="acao" value="log">'
            '<label for="servico-log">Log do serviço</label><select id="servico-log" name="servico">' + opcoes + '</select><button type="submit">Exibir log</button></form>')
     corpo = ('<p>O resultado dos comandos aparece na aba Terminal. Update e restart e Restart também reiniciam este painel: depois, espere cerca de um minuto e recarregue a página.</p>'
-             f'<h2>Heimdall</h2><ul class="acoes">{ciclo}</ul><h2>Informações</h2><ul class="acoes">{info}</ul>{log}')
+             f'<h2>StudioLibre</h2><ul class="acoes">{ciclo}</ul><h2>Informações</h2><ul class="acoes">{info}</ul>{log}')
     return "Manutenção", corpo
 
 
@@ -928,7 +928,7 @@ document.addEventListener('click', function(ev){
 """
 
 
-# Botão "Recarregar Heimdall" do rodapé: desabilitado até uma configuração mudar (evento heimdall:mudou). Guarda o estado na sessão do navegador.
+# Botão "Recarregar StudioLibre" do rodapé: desabilitado até uma configuração mudar (evento heimdall:mudou). Guarda o estado na sessão do navegador.
 SCRIPT_RECARGA = r"""
 (function(){
 var b = function(){ return document.getElementById('recarregar'); };
@@ -1007,7 +1007,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     extra = ""
     if sess:
         extra = (f'<form class="linha" id="form-recarregar" method="post" action="/manutencao/acao"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><input type="hidden" name="acao" value="restart">'
-                 '<button type="submit" id="recarregar" aria-describedby="desc-recarregar" disabled>Recarregar Heimdall</button> '
+                 '<button type="submit" id="recarregar" aria-describedby="desc-recarregar" disabled>Recarregar StudioLibre</button> '
                  '<span class="nota" id="desc-recarregar">Sem alterações para carregar.</span></form>')
     rodape = design.rodape(extra, "controls")
     todo = ((design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_SEGREDO + SCRIPT_RECARGA + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
@@ -1032,7 +1032,7 @@ def pg_entrar(erro: str = "") -> bytes:
 # Servidor
 # ----------------------------------------------------------------------------------------
 class Painel(nuvem.ManipuladorBase):
-    server_version = "HeimdallControls"
+    server_version = "StudioControls"
     sys_version = ""
     protocol_version = "HTTP/1.0"
 
@@ -1246,7 +1246,7 @@ class Painel(nuvem.ManipuladorBase):
             elif rota == "/usuarios/adicionar":
                 motivo = usuarios.definir(campos.get("email", ""), getattr(self, "_multi", {}).get("servico", []))
                 auditar(ip, "usuários: salvar convidado", campos.get("email", "") + ("" if not motivo else " (recusado)"))
-                sess["flash"] = ("erro", motivo) if motivo else ("ok", f"{campos.get('email', '').strip().lower()} salvo. Para valer no Cloudflare, use Aplicar no Cloudflare; no Heimdall, Recarregar Heimdall.")
+                sess["flash"] = ("erro", motivo) if motivo else ("ok", f"{campos.get('email', '').strip().lower()} salvo. Para valer no Cloudflare, use Aplicar no Cloudflare; no StudioLibre, Recarregar StudioLibre.")
                 sess["_mudou_usuarios"] = not motivo
                 self._ir("/usuarios")
                 return

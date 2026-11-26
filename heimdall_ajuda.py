@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ajuda e suporte do Heimdall, em um lugar só (hospedado no Studio Account): perguntas frequentes de todos os serviços, formulário de suporte
+"""Ajuda e suporte do StudioLibre, em um lugar só (hospedado no Studio Account): perguntas frequentes de todos os serviços, formulário de suporte
 e as páginas de Termos de Uso e de Privacidade, que o rodapé de todos os serviços liga (heimdall_design.rodape).
 
 Suporte: a mensagem recebe um protocolo, é gravada em db/suporte/mensagens.jsonl (permissão 600) e, se o envio de e-mail estiver configurado, segue para
@@ -39,20 +39,20 @@ SERVICOS = {
 # Perguntas frequentes: uma lista de (pergunta, resposta) por serviço. Linguagem de produto: clara, objetiva e neutra.
 FAQ = {
     "geral": [
-        ("Como entro nos serviços do Heimdall?",
+        ("Como entro nos serviços do StudioLibre?",
          "O acesso é pelo Cloudflare Access, com a sua conta Microsoft e a aprovação no Microsoft Authenticator. Depois de entrar, o menu Conta, no alto de qualquer página, leva a todos os serviços a que você tem acesso."),
         ("Como navego com leitor de tela ou só com o teclado?",
          "Todas as páginas têm o link Pular para o conteúdo no início, um único título principal e abas com setas, Home e End. Option+Shift+1 a 5 abre a aba pelo número no macOS, e Alt+Shift+1 a 5 no Windows e no Linux (cada serviço tem no máximo 5 posições; se a quinta for o menu Mais, o mesmo atalho o abre). Nos serviços com o campo Perguntar, Option+Shift+P (Alt+Shift+P no Windows e no Linux) leva ao campo. A tabela completa está no Guia de comandos."),
         ("O que é o campo Perguntar e posso confiar nas respostas?",
          "O Perguntar responde com base apenas nos dados da tela em que você está. As respostas são geradas por inteligência artificial e podem conter erros: confira os números e as datas. As respostas não substituem orientação médica, jurídica, contábil ou financeira."),
         ("Quem pode ver os meus dados?",
-         "Cada pessoa vê os próprios dados nos serviços que já separam os dados por pessoa. O dono do Heimdall administra o ambiente. O texto completo está na Política de Privacidade, ligada no rodapé de todas as páginas."),
+         "Cada pessoa vê os próprios dados nos serviços que já separam os dados por pessoa. O dono do StudioLibre administra o ambiente. O texto completo está na Política de Privacidade, ligada no rodapé de todas as páginas."),
         ("Como falo com o suporte?",
          "Use o formulário desta página, em Falar com o suporte. Você recebe um número de protocolo para acompanhar o atendimento. Não inclua senhas, chaves nem números de cartão na mensagem."),
     ],
     "account": [
         ("Para que serve o Account?",
-         "É a porta de entrada: mostra os serviços liberados para você, com um passo a passo de cada um, e reúne as Integrações, onde você liga o Heimdall aos seus aplicativos."),
+         "É a porta de entrada: mostra os serviços liberados para você, com um passo a passo de cada um, e reúne as Integrações, onde você liga o StudioLibre aos seus aplicativos."),
         ("Como ligo a Saúde do iPhone?",
          "Em Integrações, ative a Saúde, copie o token mostrado (ele aparece uma vez) e configure o app Health Auto Export no iPhone com o endereço e o token indicados na página."),
         ("Perdi o token da Saúde. O que faço?",
@@ -62,7 +62,7 @@ FAQ = {
         ("O que posso fazer no Controls?",
          "Ligar, parar e reiniciar os serviços, acompanhar o consumo da nuvem, gerenciar usuários e editar as variáveis do ambiente em Ajustes. O Controls é exclusivo do dono."),
         ("Mudei uma variável em Ajustes e nada mudou. Por quê?",
-         "Salvar grava o valor na hora, mas cada serviço só lê o valor novo ao reiniciar. Use o botão Recarregar Heimdall, no fim da página de Ajustes."),
+         "Salvar grava o valor na hora, mas cada serviço só lê o valor novo ao reiniciar. Use o botão Recarregar StudioLibre, no fim da página de Ajustes."),
         ("Como acompanho o gasto da nuvem?",
          "Na aba Nuvem, com as subabas Continuidade e Consumo de IA, que mostram o consumo e os limites de gasto configurados."),
     ],
@@ -76,7 +76,7 @@ FAQ = {
     ],
     "saude": [
         ("De onde vêm os dados do Health?",
-         "Do app Saúde do iPhone e do Apple Watch, enviados pelo Health Auto Export, e dos exames, receitas e encaminhamentos que você envia ao Heimdall."),
+         "Do app Saúde do iPhone e do Apple Watch, enviados pelo Health Auto Export, e dos exames, receitas e encaminhamentos que você envia ao StudioLibre."),
         ("O Health faz diagnóstico?",
          "Não. As análises, os alertas e o relatório semanal são informativos e comparam suas medidas com o seu padrão recente. Em caso de sintoma ou dúvida, procure um profissional de saúde."),
         ("Por que um exame ficou pendente?",
@@ -116,7 +116,7 @@ FAQ = {
     ],
     "memory": [
         ("Como conecto o Dropbox ou o OneDrive?",
-         "Em Adicionar, na subaba Nuvem, toque em Conectar no serviço desejado e autorize no site do provedor. Há duas formas de conectar. A padrão é só de leitura: o Memory não altera, move nem apaga nada na sua nuvem. A conexão com organização pede também a permissão de escrita e permite mover cada arquivo importado para a pasta Importados pelo Heimdall, dentro da pasta vigiada; o Memory nunca apaga arquivos. Depois informe a pasta a vigiar e, se quiser, marque Incluir subpastas (até 5 níveis) e, na conexão com organização, o movimento dos importados. A cada 15 minutos o Memory importa os arquivos novos ou alterados para o seu acervo, e você pode tocar em Sincronizar agora. Arquivos que estão na pasta Importados não são importados de novo. Para retirar a permissão de escrita, desconecte, conecte de novo pela forma padrão e, se quiser, remova o acesso do Heimdall nas configurações de segurança do Dropbox ou da conta Microsoft. Cada pessoa conecta a própria conta e só enxerga os próprios documentos. Desconectar apaga o acesso; os documentos já importados continuam no acervo. O iCloud Drive não oferece acesso a aplicativos de terceiros, e o Google Drive e o Box ainda não estão disponíveis."),
+         "Em Adicionar, na subaba Nuvem, toque em Conectar no serviço desejado e autorize no site do provedor. Há duas formas de conectar. A padrão é só de leitura: o Memory não altera, move nem apaga nada na sua nuvem. A conexão com organização pede também a permissão de escrita e permite mover cada arquivo importado para a pasta Importados pelo StudioLibre, dentro da pasta vigiada; o Memory nunca apaga arquivos. Depois informe a pasta a vigiar e, se quiser, marque Incluir subpastas (até 5 níveis) e, na conexão com organização, o movimento dos importados. A cada 15 minutos o Memory importa os arquivos novos ou alterados para o seu acervo, e você pode tocar em Sincronizar agora. Arquivos que estão na pasta Importados não são importados de novo. Para retirar a permissão de escrita, desconecte, conecte de novo pela forma padrão e, se quiser, remova o acesso do StudioLibre nas configurações de segurança do Dropbox ou da conta Microsoft. Cada pessoa conecta a própria conta e só enxerga os próprios documentos. Desconectar apaga o acesso; os documentos já importados continuam no acervo. O iCloud Drive não oferece acesso a aplicativos de terceiros, e o Google Drive e o Box ainda não estão disponíveis."),
         ("Como conecto o OneNote, o Microsoft To Do, o Planner, o Calendário, os Contatos, o Google, o iCloud, o Notion, o Todoist e o Trello?",
          "Em Adicionar, na subaba Apps, marque os serviços da Microsoft que o Memory pode ler e toque em Conectar Microsoft. Você autoriza uma vez no site da Microsoft, com conta pessoal ou de trabalho ou escola, e a leitura passa a ser automática, a cada 15 minutos. Cada nota, tarefa, evento (de 30 dias atrás a 180 dias à frente) e contato vira um documento de texto no seu acervo, pesquisável junto com os demais e disponível no Perguntar. Se o item mudar no app, o mesmo documento é atualizado. O Memory só lê: não altera nada no app. O Microsoft Planner só existe em conta Microsoft de trabalho ou escola; em conta pessoal ele é recusado e os outros serviços continuam. O iCloud não tem autorização por site: crie uma senha de aplicativo em account.apple.com, em Entrada e segurança (exige a verificação em duas etapas e funciona pelo navegador em qualquer sistema), e informe o Apple ID e essa senha na subaba Apps; nunca use a senha do Apple ID. O Memory lê o Calendário e os Contatos do iCloud, não os Lembretes. O Google (Agenda principal, Tarefas e Contatos), o Notion, o Todoist e o Trello têm a própria seção. No Notion, você escolhe na autorização quais páginas compartilhar e o Memory lê só elas; para incluir outras, conecte de novo e marque-as. Em todas: toque em Conectar e autorize no site do serviço; o Memory lê as tarefas ativas do Todoist e os cartões dos quadros abertos do Trello. Se você revogar o acesso no app, o Memory pede para conectar de novo. Para mudar os serviços, marque de novo e toque em Alterar serviços. Funciona em qualquer sistema, porque a leitura é feita pelo servidor. Apple Notas, Bear e Google Keep não têm acesso por conta e ainda não estão disponíveis."),
         ("Como o leitor de códigos de barras funciona?",
@@ -128,11 +128,11 @@ FAQ = {
         ("O que significa A revisar?",
          "Ao receber um documento, o Memory sugere título, tipo, data, emissor e etiquetas. Enquanto você não confirmar ou corrigir, o documento fica em A revisar. Nada é apagado: excluir manda para a lixeira, em Ajustes."),
         ("Como o Memory importa documentos por e-mail?",
-         "Com o motor Paperless-ngx ligado, em Adicionar, na subaba E-mail, informe o servidor IMAP, o seu endereço e a pasta (ou marcador) que o Memory deve ler. Só os anexos dessa pasta são importados e ficam em A revisar. Informe também a senha de aplicativo, gerada no provedor de e-mail (não use a senha principal): ela fica guardada só no Paperless e nunca é mostrada de volta. Cada pessoa conecta o próprio e-mail e só enxerga os próprios documentos; nem o dono do Heimdall vê os documentos dos convidados."),
+         "Com o motor Paperless-ngx ligado, em Adicionar, na subaba E-mail, informe o servidor IMAP, o seu endereço e a pasta (ou marcador) que o Memory deve ler. Só os anexos dessa pasta são importados e ficam em A revisar. Informe também a senha de aplicativo, gerada no provedor de e-mail (não use a senha principal): ela fica guardada só no Paperless e nunca é mostrada de volta. Cada pessoa conecta o próprio e-mail e só enxerga os próprios documentos; nem o dono do StudioLibre vê os documentos dos convidados."),
         ("Como a classificação melhora com o tempo?",
          "Com o motor Paperless-ngx, cada correção de título, tipo, emissor ou etiquetas gravada em A revisar ensina o classificador, que roda no próprio computador e é treinado de hora em hora. Quanto mais documentos você confirma, mais acertos ele tem."),
         ("O texto de fotos e PDFs escaneados não aparece. O que fazer?",
-         "A leitura de texto em imagens (OCR) depende do Tesseract instalado no computador que hospeda o Heimdall. Sem ele, o arquivo é guardado e pode ser baixado, mas não é pesquisável pelo conteúdo. Em Ajustes, o Estado informa se o OCR está disponível."),
+         "A leitura de texto em imagens (OCR) depende do Tesseract instalado no computador que hospeda o StudioLibre. Sem ele, o arquivo é guardado e pode ser baixado, mas não é pesquisável pelo conteúdo. Em Ajustes, o Estado informa se o OCR está disponível."),
     ],
     "jogos": [
         ("Os jogos funcionam com leitor de tela?",
@@ -155,7 +155,7 @@ FAQ = {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Termos de Uso e Política de Privacidade (MINUTA): o texto descreve o que o Heimdall faz hoje. Os dados de identificação do responsável
+# Termos de Uso e Política de Privacidade (MINUTA): o texto descreve o que o StudioLibre faz hoje. Os dados de identificação do responsável
 # ficam no .env (HEIMDALL_RESPONSAVEL, HEIMDALL_ENCARREGADO, HEIMDALL_FORO), nunca no código, porque o repositório é público.
 # ---------------------------------------------------------------------------------------------------------------------
 def _cfg(chave: str, padrao: str = "") -> str:
@@ -183,10 +183,10 @@ def data_por_extenso(iso: str = None) -> str:
 def termos_de_uso() -> list:
     return [
         ("1. Aceitação e definições", [
-            f"Estes Termos de Uso regulam o acesso e a utilização dos serviços do Heimdall (Account, Finance, Health, Notes, News, Learn, Games, Lab e Chat), operados por {responsavel()} (\"Responsável\"). "
+            f"Estes Termos de Uso regulam o acesso e a utilização dos serviços do StudioLibre (Account, Finance, Health, Notes, News, Learn, Games, Lab e Chat), operados por {responsavel()} (\"Responsável\"). "
             "\"Usuário\" é a pessoa que acessa os serviços mediante convite. Ao entrar, o Usuário declara ter lido e concordado com o quanto se segue, bem como com a Política de Privacidade, que integra estes termos."]),
         ("2. Descrição dos serviços", [
-            "O Heimdall reúne serviços pessoais de organização e acompanhamento: Account (acesso, integrações, ajuda e suporte), Finance (finanças), Health (saúde), Notes (notas), News (notícias), "
+            "O StudioLibre reúne serviços pessoais de organização e acompanhamento: Account (acesso, integrações, ajuda e suporte), Finance (finanças), Health (saúde), Notes (notas), News (notícias), "
             "Learn (estudos), Games (jogos), Lab (laboratório de serviços de nuvem) e Chat (conversa com modelos de inteligência artificial). Cada Usuário vê apenas os serviços liberados no seu convite."]),
         ("3. Acesso e conta", [
             "O acesso é pessoal e por convite, mediante autenticação pelo Cloudflare Access com conta Microsoft. O Usuário é responsável por manter sua conta e seus dispositivos seguros e por não compartilhar o acesso com terceiros. "
@@ -201,7 +201,7 @@ def termos_de_uso() -> list:
             "Parte dos serviços usa inteligência artificial para resumir, classificar e responder perguntas. As respostas podem conter erros e devem ser conferidas pelo Usuário. "
             "São informativas e não substituem orientação médica, jurídica, contábil ou financeira."]),
         ("6. Saúde e finanças", [
-            "As análises de saúde e de finanças são informativas. O Heimdall não realiza diagnóstico nem recomenda tratamento, investimento ou operação financeira, e nenhuma decisão deve ser tomada apenas com base nelas. "
+            "As análises de saúde e de finanças são informativas. O StudioLibre não realiza diagnóstico nem recomenda tratamento, investimento ou operação financeira, e nenhuma decisão deve ser tomada apenas com base nelas. "
             "Em caso de urgência médica, procure atendimento imediato."]),
         ("7. Disponibilidade e suporte", [
             "Os serviços são oferecidos no estado em que se encontram, sem garantia de disponibilidade contínua. Podem ficar indisponíveis por manutenção, falha de energia, de rede ou de provedores externos, e alguns recursos podem operar em modo reduzido nessas situações. "
@@ -209,7 +209,7 @@ def termos_de_uso() -> list:
         ("8. Conteúdo do Usuário", [
             "Os dados e arquivos enviados pelo Usuário continuam sendo dele. O Usuário autoriza o Responsável a tratá-los apenas para prestar os serviços, conforme a Política de Privacidade, e declara ter o direito de enviá-los."]),
         ("9. Propriedade intelectual", [
-            "O software, a interface, os textos e as marcas do Heimdall pertencem ao Responsável ou a seus licenciantes. Estes termos não transferem direitos de propriedade: concedem ao Usuário uma licença pessoal, "
+            "O software, a interface, os textos e as marcas do StudioLibre pertencem ao Responsável ou a seus licenciantes. Estes termos não transferem direitos de propriedade: concedem ao Usuário uma licença pessoal, "
             "não exclusiva, intransferível e revogável de uso dos serviços enquanto o acesso estiver ativo."]),
         ("10. Limitação de responsabilidade", [
             "Na extensão permitida pela lei, e ressalvados os direitos do consumidor, o Responsável não responde por danos decorrentes de indisponibilidade dos serviços, de falhas de provedores externos, "
@@ -269,7 +269,7 @@ def politica_privacidade() -> list:
         ("10. Segurança e incidentes", [
             "São adotadas medidas como autenticação em dois fatores pelo Access, criptografia das cópias na nuvem (AES-256-GCM), proteção contra requisições forjadas, acesso restrito por papel e separação dos dados por pessoa nos serviços em que ela já existe. "
             "Nenhum sistema é totalmente imune a falhas. Em caso de incidente de segurança que possa acarretar risco ou dano relevante, os titulares afetados e a ANPD serão comunicados, conforme a lei."]),
-        ("11. Crianças e adolescentes", ["Os serviços destinam-se a maiores de 18 anos. O Heimdall não trata intencionalmente dados de crianças e adolescentes."]),
+        ("11. Crianças e adolescentes", ["Os serviços destinam-se a maiores de 18 anos. O StudioLibre não trata intencionalmente dados de crianças e adolescentes."]),
         ("12. Cookies e armazenamento no navegador", [
             "São usados apenas cookies e armazenamento essenciais ao funcionamento e à segurança, como o cookie de sessão do Cloudflare Access. Não há cookies de publicidade nem de rastreamento."]),
         ("13. Alterações desta política", [
@@ -347,14 +347,14 @@ def pagina_termos_de_uso() -> tuple:
     p = termos_de_uso()
     corpo = (_cabecalho_doc("Termos de Uso") + _indice("pu", p) + _secoes("pu", p)
              + '<p><a href="/politica-de-privacidade">Política de Privacidade</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
-    return "Termos de Uso - Heimdall", corpo
+    return "Termos de Uso - StudioLibre", corpo
 
 
 def pagina_privacidade() -> tuple:
     p = politica_privacidade()
     corpo = (_cabecalho_doc("Política de Privacidade") + _indice("pp", p) + _secoes("pp", p)
              + '<p><a href="/termos-de-uso">Termos de Uso</a> · <a href="/ajuda">Ajuda e suporte</a></p>')
-    return "Política de Privacidade - Heimdall", corpo
+    return "Política de Privacidade - StudioLibre", corpo
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -462,11 +462,11 @@ def _atalhos_html() -> str:
 
 
 def _comandos_html() -> str:
-    cab = "".join(f'<th scope="col">{c}</th>' for c in ("Ação", "macOS (comando heimdall)", "Linux e Windows (Python, na pasta do Heimdall)"))
+    cab = "".join(f'<th scope="col">{c}</th>' for c in ("Ação", "macOS (comando heimdall)", "Linux e Windows (Python, na pasta do StudioLibre)"))
     linhas = "".join(f'<tr><th scope="row">{e(a)}</th><td><code>{e(m)}</code></td><td><code>{e(p)}</code></td></tr>' for a, m, p in COMANDOS_HEALTH)
     linhas_admin = "".join(f'<tr><th scope="row">{e(a)}</th><td><code>{e(m)}</code></td><td><code>{e(p)}</code></td></tr>' for a, m, p in COMANDOS_ADMIN)
     return ('<section aria-labelledby="comandos"><h2 id="comandos">Guia de comandos</h2>'
-            '<p>Algumas ações são feitas por comando no computador que hospeda o Heimdall. As telas dos serviços indicam esta página em vez de mostrar comandos.</p>'
+            '<p>Algumas ações são feitas por comando no computador que hospeda o StudioLibre. As telas dos serviços indicam esta página em vez de mostrar comandos.</p>'
             '<h3>Abrir o terminal</h3><ol>'
             '<li>macOS: pressione Command+Espaço, digite Terminal e pressione Return.</li>'
             '<li>Linux: pressione Ctrl+Alt+T, ou abra o aplicativo Terminal.</li>'
@@ -475,15 +475,15 @@ def _comandos_html() -> str:
             'No macOS o comando <code>heimdall</code> funciona de qualquer pasta. No Windows, use <code>py</code> no lugar de <code>python3</code>.</p>'
             '<h3 id="comandos-saude">Health: documentos, sugestões e perfil</h3>'
             f'<table><caption>Comandos do Health por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
-            '<p>Eventos no Calendário e lembretes no app Lembretes dependem do agente do Mac; nos outros sistemas, os itens ficam registrados no Heimdall.</p>'
+            '<p>Eventos no Calendário e lembretes no app Lembretes dependem do agente do Mac; nos outros sistemas, os itens ficam registrados no StudioLibre.</p>'
             '<h3 id="comandos-admin">Administração: versões e emulador do Lab</h3>'
             f'<table><caption>Comandos de administração por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas_admin}</tbody></table>'
-            '<p>No Studio Controls, a aba Terminal executa esses comandos no computador que hospeda o Heimdall e mostra a saída na própria página; '
+            '<p>No Studio Controls, a aba Terminal executa esses comandos no computador que hospeda o StudioLibre e mostra a saída na própria página; '
             'a aba Serviços liga e desliga o emulador por uma chave, e a aba Manutenção tem os botões Status e Diagnóstico.</p>'
             + _atalhos_html() +
             '<h3>iPhone e Android</h3>'
             '<p>Abra os painéis pelo navegador (Safari no iPhone, Chrome no Android) para consultar os dados, ver sugestões e editar o perfil. '
-            'A conferência de documentos e os demais comandos acima são feitos no computador que hospeda o Heimdall. No iPhone, o botão Atualizar dados agora, '
+            'A conferência de documentos e os demais comandos acima são feitos no computador que hospeda o StudioLibre. No iPhone, o botão Atualizar dados agora, '
             'no Health, abre o app Atalhos.</p></section>')
 
 
@@ -510,7 +510,7 @@ def pagina_ajuda(csrf: str, servico: str = "", aviso: str = "", erro: str = "", 
              f'Documentos: <a href="/termos-de-uso">Termos de Uso</a> e <a href="/politica-de-privacidade">Política de Privacidade</a>.</p>'
              + ('<p><a href="/suporte/mensagens">Mensagens de suporte recebidas (somente dono)</a></p>' if dono else "")
              + _faq_html(servico) + _comandos_html() + formulario_suporte(csrf, servico, valores))
-    return "Ajuda e suporte - Heimdall", corpo
+    return "Ajuda e suporte - StudioLibre", corpo
 
 
 # ---- Suporte: gravar e enviar ----
@@ -658,8 +658,8 @@ def responder(protocolo: str, texto: str, para: str = "") -> tuple:
     c = _conf()
     if not envio_configurado(c):
         return False, "O envio de e-mail não está configurado (HEIMDALL_SUPORTE_EMAIL, HEIMDALL_SUPORTE_DE e token da Cloudflare)."
-    assunto = f"Re: [{protocolo}] {ASSUNTOS.get((reg or {}).get('assunto'), 'Suporte')}" if protocolo else "Resposta do suporte Heimdall"
-    rodape = f"\n\n--\nSuporte Heimdall\n{EMAIL_SUPORTE}" + (f"\nProtocolo: {protocolo}" if protocolo else "")
+    assunto = f"Re: [{protocolo}] {ASSUNTOS.get((reg or {}).get('assunto'), 'Suporte')}" if protocolo else "Resposta do suporte StudioLibre"
+    rodape = f"\n\n--\nSuporte StudioLibre\n{EMAIL_SUPORTE}" + (f"\nProtocolo: {protocolo}" if protocolo else "")
     ok, motivo = _enviar_cf(c, destino, assunto, texto + rodape, EMAIL_SUPORTE)
     if not ok:
         return False, "Não foi possível enviar: " + motivo
@@ -695,7 +695,7 @@ def pagina_mensagens(csrf: str, aviso: str = "", erro: str = "") -> tuple:
                       f'<p>{e(r["mensagem"])}</p>{mot}{resp}{form}</section>')
     corpo = (f'<h1>Mensagens de suporte</h1>{topo}<p>Somente o dono vê esta página. As respostas saem de {e(EMAIL_SUPORTE)} para o e-mail de quem escreveu. '
              f'<a href="/ajuda">Voltar para Ajuda e suporte</a>.</p>' + ("".join(blocos) or "<p>Nenhuma mensagem recebida ainda.</p>"))
-    return "Mensagens de suporte - Heimdall", corpo
+    return "Mensagens de suporte - StudioLibre", corpo
 
 
 def enviar(p: dict, assunto: str, servico: str, mensagem: str) -> tuple:
@@ -751,7 +751,7 @@ def criar_token_envio() -> int:
     if not escolhido:
         print("A Cloudflare não lista a permissão Email Sending para este token. Grupos de e-mail encontrados: " + ", ".join(x["name"] for x in g["result"] if "email" in x.get("name", "").lower()))
         return 1
-    corpo = {"name": "Heimdall - envio de e-mail do suporte", "policies": [{"effect": "allow", "resources": {f"com.cloudflare.api.account.{conta}": "*"}, "permission_groups": [{"id": escolhido["id"]}]}]}
+    corpo = {"name": "StudioLibre - envio de e-mail do suporte", "policies": [{"effect": "allow", "resources": {f"com.cloudflare.api.account.{conta}": "*"}, "permission_groups": [{"id": escolhido["id"]}]}]}
     r = _api("POST", "/user/tokens", base, corpo)
     if not r.get("success") or not r.get("result", {}).get("value"):
         print("Não foi possível criar o token: " + "; ".join(e.get("message", "") for e in r.get("errors", [])))

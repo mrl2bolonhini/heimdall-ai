@@ -105,9 +105,9 @@ Exemplos:
 Sem opção abre o site de notas e áudios (porta 8011). As opções são manutenção do Second Brain e das pastas do app Notas.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
-  -m, --clean-mirrors  limpa o que o Second Brain criou por engano a partir de notas do próprio Heimdall
+  -m, --clean-mirrors  limpa o que o Second Brain criou por engano a partir de notas do próprio StudioLibre
   -p, --clean-private  apaga o que o Second Brain guardou de notas que depois foram para uma pasta privada
-  -o, --move-old       conta as notas das pastas antigas; com --run, move-as para as subpastas de Heimdall-ai
+  -o, --move-old       conta as notas das pastas antigas; com --run, move-as para as subpastas de StudioLibre
   -r, --run            com --move-old, executa de verdade (sem isto só conta)
   -h, --help           mostra esta ajuda
 Exemplos:
@@ -139,7 +139,7 @@ Exemplos:
   heimdall trading --local
 
 @ memory | Studio Memory, documentos pesquisáveis
-Sem opção, abre o acervo de documentos pesquisáveis (porta 8021): envio de PDF, foto, Word e texto, leitura de texto (OCR em imagens), etiquetas sugeridas com revisão e busca em todo o conteúdo. Liga com HEIMDALL_MEMORY=1 no .env. Cada pessoa pode conectar o próprio Dropbox ou OneDrive (somente leitura) na subaba Nuvem; o administrador registra o aplicativo no provedor, cadastra o endereço de retorno https://memory.heimdall-ai.tech/nuvem/retorno e grava HEIMDALL_NUVEM_DROPBOX_ID, HEIMDALL_NUVEM_DROPBOX_SEGREDO, HEIMDALL_NUVEM_ONEDRIVE_ID e HEIMDALL_NUVEM_ONEDRIVE_SEGREDO no .env (heimdall env --set). Em Adicionar > Apps, cada pessoa conecta a conta Microsoft (OneNote, To Do, Planner em conta de trabalho ou escola, Calendário e Contatos), o Google (Agenda, Tarefas e Contatos), o iCloud (Calendário e Contatos, com senha de aplicativo, sem configuração do administrador), o Notion, o Todoist e o Trello, e o Memory lê tudo sozinho, para qualquer sistema (administrador: HEIMDALL_NUVEM_GOOGLE_ID e _SEGREDO; HEIMDALL_NUVEM_NOTION_ID e _SEGREDO; HEIMDALL_NUVEM_TODOIST_ID e _SEGREDO; HEIMDALL_NUVEM_TRELLO_ID com a chave de API); em Adicionar > Nuvem, Dropbox e OneDrive, com subpastas e, se a pessoa permitir, mover o importado para a pasta Importados pelo Heimdall.
+Sem opção, abre o acervo de documentos pesquisáveis (porta 8021): envio de PDF, foto, Word e texto, leitura de texto (OCR em imagens), etiquetas sugeridas com revisão e busca em todo o conteúdo. Liga com HEIMDALL_MEMORY=1 no .env. Cada pessoa pode conectar o próprio Dropbox ou OneDrive (somente leitura) na subaba Nuvem; o administrador registra o aplicativo no provedor, cadastra o endereço de retorno https://memory.heimdall-ai.tech/nuvem/retorno e grava HEIMDALL_NUVEM_DROPBOX_ID, HEIMDALL_NUVEM_DROPBOX_SEGREDO, HEIMDALL_NUVEM_ONEDRIVE_ID e HEIMDALL_NUVEM_ONEDRIVE_SEGREDO no .env (heimdall env --set). Em Adicionar > Apps, cada pessoa conecta a conta Microsoft (OneNote, To Do, Planner em conta de trabalho ou escola, Calendário e Contatos), o Google (Agenda, Tarefas e Contatos), o iCloud (Calendário e Contatos, com senha de aplicativo, sem configuração do administrador), o Notion, o Todoist e o Trello, e o Memory lê tudo sozinho, para qualquer sistema (administrador: HEIMDALL_NUVEM_GOOGLE_ID e _SEGREDO; HEIMDALL_NUVEM_NOTION_ID e _SEGREDO; HEIMDALL_NUVEM_TODOIST_ID e _SEGREDO; HEIMDALL_NUVEM_TRELLO_ID com a chave de API); em Adicionar > Nuvem, Dropbox e OneDrive, com subpastas e, se a pessoa permitir, mover o importado para a pasta Importados pelo StudioLibre.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
   -P, --paperless      sobe o Paperless-ngx em Docker (só neste Mac, sem endereço público) e passa a usá-lo como motor do Memory: leitura de e-mail e classificação que aprende com as correções; precisa do Docker e de reiniciar depois (heimdall restart)
@@ -167,7 +167,7 @@ Exemplos:
   heimdall news --now
 
 @ lab | Studio Lab, o painel da AWS local
-Abre o painel do emulador de AWS (porta 8010). O emulador (LocalStack ou Moto) fica desligado ao subir o Heimdall, para poupar memória: ligue-o com --start quando for usar e desligue com --stop (HEIMDALL_AWS_EMULATOR_INICIO=auto no .env volta a subi-lo sempre).
+Abre o painel do emulador de AWS (porta 8010). O emulador (LocalStack ou Moto) fica desligado ao subir o StudioLibre, para poupar memória: ligue-o com --start quando for usar e desligue com --stop (HEIMDALL_AWS_EMULATOR_INICIO=auto no .env volta a subi-lo sempre).
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
   -s, --start          liga o emulador de AWS e espera ele responder
@@ -273,7 +273,7 @@ Exemplos:
   heimdall games -e --status
 
 @ finance | Studio Finance, suas finanças em páginas de texto
-Abre o painel financeiro no navegador (porta 8016; de fora, finance.heimdall-ai.tech). Você importa extratos do banco e faturas do cartão em OFX, CSV ou PDF; o painel identifica o banco (Nubank, Itaú, Mercado Pago) e se é conta ou cartão, classifica os gastos por categoria com regras que você ajusta (ao corrigir uma categoria, a regra nasce sozinha), mostra o resumo do mês com variação sobre o mês anterior, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara. Abas que os dados criam: com o Pluggy o Heimdall lê também saldos, limites e faturas de cartão, investimentos (e suas movimentações) e empréstimos e financiamentos, guardados com uma foto por dia (a identidade fica de fora). Aparecem sozinhas as abas Contas (extratos), Cartões (faturas), Investimentos e uma aba para cada tipo de crédito que existir nos dados: Financiamento de veículo, Financiamento imobiliário, Consignado, Empréstimo pessoal e Outros (mais Todas as dívidas quando há mais de um tipo). Dívidas de planilha entram nas mesmas abas. Como as abas variam, os atalhos Option+Shift+número mudam de lugar quando uma aba nova aparece. Planilhas: as abas Planilhas e Visões aceitam xlsx e csv. O Heimdall lê o cabeçalho, descobre o tipo (gastos, investimentos, empréstimos ou outro assunto) e o que cada coluna é, e guarda o jeito de ler: a próxima planilha com as mesmas colunas, enviada pelo site ou solta na pasta sheets (heimdall finance --folder mostra o caminho), entra sozinha no mesmo conjunto sem duplicar. Quando não tem certeza, guarda o arquivo e pergunta em Planilhas. Gastos também entram nas transações. Em cada conjunto você cria visões: escolhe as colunas, a ordem delas (botões Mover para cima e para baixo), ordenação, filtro e agrupamento com soma; ficam gravadas e mostram também as linhas que chegarem depois. Para decidir as colunas, o cabeçalho e as 5 primeiras linhas vão ao modelo de linguagem (o grande da nuvem se HEIMDALL_NUVEM=1; HEIMDALL_FINANCE_PLANILHAS_NUVEM=0 mantém no modelo local). Tudo em tabelas para leitor de tela. Os dados ficam só no Mac, na pasta finance (fora do git), e nunca vão para a Cloudflare nem para modelo de fora. Usa o mesmo login do Lab.
+Abre o painel financeiro no navegador (porta 8016; de fora, finance.heimdall-ai.tech). Você importa extratos do banco e faturas do cartão em OFX, CSV ou PDF; o painel identifica o banco (Nubank, Itaú, Mercado Pago) e se é conta ou cartão, classifica os gastos por categoria com regras que você ajusta (ao corrigir uma categoria, a regra nasce sozinha), mostra o resumo do mês com variação sobre o mês anterior, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara. Abas que os dados criam: com o Pluggy o StudioLibre lê também saldos, limites e faturas de cartão, investimentos (e suas movimentações) e empréstimos e financiamentos, guardados com uma foto por dia (a identidade fica de fora). Aparecem sozinhas as abas Contas (extratos), Cartões (faturas), Investimentos e uma aba para cada tipo de crédito que existir nos dados: Financiamento de veículo, Financiamento imobiliário, Consignado, Empréstimo pessoal e Outros (mais Todas as dívidas quando há mais de um tipo). Dívidas de planilha entram nas mesmas abas. Como as abas variam, os atalhos Option+Shift+número mudam de lugar quando uma aba nova aparece. Planilhas: as abas Planilhas e Visões aceitam xlsx e csv. O StudioLibre lê o cabeçalho, descobre o tipo (gastos, investimentos, empréstimos ou outro assunto) e o que cada coluna é, e guarda o jeito de ler: a próxima planilha com as mesmas colunas, enviada pelo site ou solta na pasta sheets (heimdall finance --folder mostra o caminho), entra sozinha no mesmo conjunto sem duplicar. Quando não tem certeza, guarda o arquivo e pergunta em Planilhas. Gastos também entram nas transações. Em cada conjunto você cria visões: escolhe as colunas, a ordem delas (botões Mover para cima e para baixo), ordenação, filtro e agrupamento com soma; ficam gravadas e mostram também as linhas que chegarem depois. Para decidir as colunas, o cabeçalho e as 5 primeiras linhas vão ao modelo de linguagem (o grande da nuvem se HEIMDALL_NUVEM=1; HEIMDALL_FINANCE_PLANILHAS_NUVEM=0 mantém no modelo local). Tudo em tabelas para leitor de tela. Os dados ficam só no Mac, na pasta finance (fora do git), e nunca vão para a Cloudflare nem para modelo de fora. Usa o mesmo login do Lab.
 O Finance tem abas com subabas: Extratos (Transações, Contas, Pagamentos futuros e Boletos), Cartões (Fatura aberta e Faturas fechadas), Patrimônio (Investimentos e Dívidas, com uma subaba por tipo de crédito; só aparece com dados), Tendências (Resumo, Evolução, Orçamentos, Contas recorrentes, Análises e Avisos) e Visões (criar e ver visões personalizadas). Ajustes é um botão no topo, à direita, depois do menu Conta, e abre as subabas Importar extrato, Importar planilha, Regras e Avisos (liga ou desliga a notificação no iPhone). Ao importar uma planilha, marque a opção para criar uma visão a partir dela. Tab vai da aba à subaba e ao conteúdo; as setas trocam de subaba.
 PDF: o texto é lido e o total do documento (por exemplo "Total da fatura") é conferido com a soma dos lançamentos. Só o que confere é importado sozinho; o resto vai para review. A pasta de entrada (finance/inbox) é vigiada a cada minuto: solte lá os arquivos; o que importar vai para importados e o que deixar dúvida vai para revisar, com o motivo. Arquivo duplicado não é importado e é apagado; o motivo some quando o arquivo é revisado.
 Opções:
@@ -310,7 +310,7 @@ Opções:
   --dedupe             mostra (e, com --force, apaga) lançamentos do Pluggy que repetem extrato ou fatura já importados (mesma conta, dia e valor)
   --standardize-names  renomeia sozinho, com o histórico, as contas do Pluggy para o padrão (Banco conta corrente, Banco cartão de crédito), sem digitar nomes
   --rename-account "ATUAL=NOVO"  troca o nome de uma conta já importada por extrato, com todo o histórico (faça antes da primeira sincronização)
-  -P, --person NOME    com --bill, de quem é o boleto (por exemplo, a noiva ou a filha); a pessoa é cadastrada na hora. Só o nome, nunca CPF. Sem isso, o Heimdall tenta achar o pagador no PDF
+  -P, --person NOME    com --bill, de quem é o boleto (por exemplo, a noiva ou a filha); a pessoa é cadastrada na hora. Só o nome, nunca CPF. Sem isso, o StudioLibre tenta achar o pagador no PDF
   -r, --retry          devolve tudo de review para a entrada e importa de novo (use depois de uma atualização do leitor); o motivo antigo some
 Exemplos:
   heimdall finance
@@ -371,7 +371,7 @@ Exemplos:
   heimdall notion
 
 @ cloudai | Modelo grande na nuvem (gpt-oss-120b)
-Mostra se o modelo grande da Cloudflare está ligado e, se estiver, faz uma pergunta de teste. Com o interruptor ligado, as perguntas do Heimdall (Notes, Finance e os demais que usam o Perguntar) vão primeiro à nuvem, pelo gateway de IA com teto de US$ 10 por mês e sem guardar o conteúdo; se a nuvem falhar, voltam sozinhas ao modelo local. Não precisa reiniciar.
+Mostra se o modelo grande da Cloudflare está ligado e, se estiver, faz uma pergunta de teste. Com o interruptor ligado, as perguntas do StudioLibre (Notes, Finance e os demais que usam o Perguntar) vão primeiro à nuvem, pelo gateway de IA com teto de US$ 10 por mês e sem guardar o conteúdo; se a nuvem falhar, voltam sozinhas ao modelo local. Não precisa reiniciar.
 O campo Perguntar dos sites usa, com a nuvem ligada, o Qwen3 30B sem raciocínio (HEIMDALL_NUVEM_PERGUNTAR_MODELO troca) e, se a nuvem falhar ou estiver desligada, o modelo local; Option+Shift+P leva ao campo, Enter envia e Shift+Enter pula linha. O Perguntar do News enxerga os 30 dias de notícias do banco: o modelo escolhe categorias, depois títulos, e só as notícias que servem são lidas, o que poupa tokens. O Lab também tem o Perguntar: ele enxerga o que existe no emulador (buckets, funções, bancos, tabelas, consultas) e ajuda a montar recursos e tirar dúvidas de AWS, sem executar nada. O chat do Open WebUI também usa a nuvem (modelos Alerts, Health, Finance, General, Notes e Code), com o modelo local como volta automática; o Conversas usa o Qwen3 30B (HEIMDALL_NUVEM_CONVERSAS_MODELO troca) e pesquisa na web; HEIMDALL_NUVEM_CHAT muda a lista de modelos do chat na nuvem. Para o chat valer, reinicie o LiteLLM (heimdall restart). Para ligar: heimdall env --set HEIMDALL_NUVEM 1. Para voltar ao que era: heimdall env --set HEIMDALL_NUVEM 0. A chave é a do News (heimdall cloudflare), com a permissão AI Gateway (Lido, Executar e Editar).
 Opções:
   -h, --help           mostra esta ajuda
@@ -388,8 +388,8 @@ Exemplos:
   heimdall mailbox add ana
   heimdall mailbox pull
 
-@ app | App do Heimdall na barra de menus do Mac
-Compila neste Mac o app de barra de menus do Heimdall e o instala em ~/Applications/Heimdall.app, com assinatura local gratuita (sem conta de desenvolvedor). O app é um app normal (ícone no Dock, Command+Tab e barra de menus do alto com Arquivo, Edição, Visualizar, Abrir e Janela; os comandos do sistema, como ligar, reiniciar, parar, estado, nuvem, sincronização e atualizar, ficam em Arquivo) e abre o Chat ao iniciar; fechar a janela não o encerra, e ele continua com o ícone Heimdall na barra de estado, com: três linhas de estado (serviços, modelo de IA, celulares) e itens que se habilitam conforme o estado (Ligar só com os serviços desligados; Reiniciar e Parar só com eles ligados); abrir Controls, Notes, Learn, News, Health, Games, Finance, Lab, Account e Chat, cada um numa janela própria do app (sem navegador), em ordem alfabética, com atalhos Command+0 (Account) e Command+1 a 9 (Chat, Lab, Controls, Finance, Games, Health, Learn, News, Notes; Status e Flows sem atalho); comando para cadastrar as pastas de estudo novas do Learn; Configurações (Command+vírgula) para escolher o serviço que abre ao iniciar, iniciar com o Mac e ligar os serviços ao abrir; consumo da nuvem; sincronização com os celulares (também sozinha, de 10 em 10 minutos); ligar ou desligar a nuvem e a sincronização; atualizar o Heimdall. Menus nativos, que o VoiceOver lê. Precisa das ferramentas de linha de comando da Apple; se faltarem, o comando diz para rodar xcode-select --install. Rode de novo depois de um heimdall update que mude o app.
+@ app | App do StudioLibre na barra de menus do Mac
+Compila neste Mac o app de barra de menus do StudioLibre e o instala em ~/Applications/Heimdall.app, com assinatura local gratuita (sem conta de desenvolvedor). O app é um app normal (ícone no Dock, Command+Tab e barra de menus do alto com Arquivo, Edição, Visualizar, Abrir e Janela; os comandos do sistema, como ligar, reiniciar, parar, estado, nuvem, sincronização e atualizar, ficam em Arquivo) e abre o Chat ao iniciar; fechar a janela não o encerra, e ele continua com o ícone StudioLibre na barra de estado, com: três linhas de estado (serviços, modelo de IA, celulares) e itens que se habilitam conforme o estado (Ligar só com os serviços desligados; Reiniciar e Parar só com eles ligados); abrir Controls, Notes, Learn, News, Health, Games, Finance, Lab, Account e Chat, cada um numa janela própria do app (sem navegador), em ordem alfabética, com atalhos Command+0 (Account) e Command+1 a 9 (Chat, Lab, Controls, Finance, Games, Health, Learn, News, Notes; Status e Flows sem atalho); comando para cadastrar as pastas de estudo novas do Learn; Configurações (Command+vírgula) para escolher o serviço que abre ao iniciar, iniciar com o Mac e ligar os serviços ao abrir; consumo da nuvem; sincronização com os celulares (também sozinha, de 10 em 10 minutos); ligar ou desligar a nuvem e a sincronização; atualizar o StudioLibre. Menus nativos, que o VoiceOver lê. Precisa das ferramentas de linha de comando da Apple; se faltarem, o comando diz para rodar xcode-select --install. Rode de novo depois de um heimdall update que mude o app.
 Opções:
   -l, --login          abre o app sozinho quando você entra no Mac
   -r, --remove-login   deixa de abrir sozinho
@@ -406,7 +406,7 @@ Opções:
   -h, --help           mostra esta ajuda
 Exemplos:
   heimdall ask "o que é um índice no banco de dados?"
-  heimdall ask --local "resuma em duas frases o que é o Heimdall"
+  heimdall ask --local "resuma em duas frases o que é o StudioLibre"
 
 @ usage | Consumo e custo da Cloudflare
 Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Nuvem do Studio Controls, subaba Consumo de IA. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
@@ -435,7 +435,7 @@ Exemplos:
   heimdall support --test
 
 @ notices | Traz as notas antigas de saúde e finanças para a aba Avisos
-Sem opção só mostra o que seria feito. Com --migrate importa para a aba Avisos do Studio Health e do Studio Finance as notas de saúde e finanças que o Heimdall já gravou no cofre e no app Notas, confere que tudo chegou e só então apaga as originais. O app Notas manda cada nota para "Apagadas recentemente", onde ela fica 30 dias. Só mexe nas pastas do Heimdall (Saúde dentro de Heimdall-ai e Heimdall Finanças). Pode rodar de novo sem duplicar. O macOS pode pedir permissão para o Terminal controlar o app Notas.
+Sem opção só mostra o que seria feito. Com --migrate importa para a aba Avisos do Studio Health e do Studio Finance as notas de saúde e finanças que o StudioLibre já gravou no cofre e no app Notas, confere que tudo chegou e só então apaga as originais. O app Notas manda cada nota para "Apagadas recentemente", onde ela fica 30 dias. Só mexe nas pastas do StudioLibre (Saúde dentro de StudioLibre e Heimdall Finanças). Pode rodar de novo sem duplicar. O macOS pode pedir permissão para o Terminal controlar o app Notas.
 Opções:
   -m, --migrate        importa, confere e apaga (sem esta opção, só mostra o que seria feito)
   -h, --help           mostra esta ajuda
@@ -459,7 +459,7 @@ Opções:
   -d, --disk           espaço livre, modelos do Ollama e Docker
   -k, --docker         memória e processador de cada contêiner
   -o, --ollama         modelos carregados na memória pelo Ollama
-  -s, --services       memória de cada serviço do Heimdall que está no ar
+  -s, --services       memória de cada serviço do StudioLibre que está no ar
   -t, --top N          quantos programas listar nos mais usados (padrão 8)
   -h, --help           mostra esta ajuda
 Exemplos:
@@ -524,12 +524,12 @@ Exemplos:
   heimdall access --verify
 
 @ voice | Dicionário de pronúncia
-Sem opção e com um texto, mostra como o texto fica depois das trocas de pronúncia (como "Heimdall" por "Háimdal").
+Sem opção e com um texto, mostra como o texto fica depois das trocas de pronúncia (como "StudioLibre" por "Háimdal").
 Opções:
   -i, --import ARQUIVO.csv   traz as pronúncias do VoiceOver para pronuncias.local.txt
   -h, --help           mostra esta ajuda
 Exemplos:
-  heimdall voice Heimdall
+  heimdall voice StudioLibre
   heimdall voice --import pronuncias.csv
 
 @ listen | Áudios de estudo
@@ -661,9 +661,9 @@ Exemplos:
 
 Avisos no Mac
   Os avisos que vão ao iPhone pelo Bark também aparecem no Mac como notificações do macOS, com o texto completo (o Bark do iPhone continua genérico).
-  O app do Mac mostra as notificações; na primeira vez o macOS pede permissão. Liga e desliga em Heimdall, Configurações. No .env: HEIMDALL_AVISOS_MAC=0 desliga de vez.
+  O app do Mac mostra as notificações; na primeira vez o macOS pede permissão. Liga e desliga em StudioLibre, Configurações. No .env: HEIMDALL_AVISOS_MAC=0 desliga de vez.
 
 Analista de saúde
-  Depois que chegam dados de saúde (no máximo uma vez por dia), o Heimdall roda um analista: o modelo olha todas as métricas, cruza umas com as outras e com treinos, sintomas e exames, levanta hipóteses com grau de probabilidade, aponta perigos e recomendações e cita resumos de estudos do PubMed.
+  Depois que chegam dados de saúde (no máximo uma vez por dia), o StudioLibre roda um analista: o modelo olha todas as métricas, cruza umas com as outras e com treinos, sintomas e exames, levanta hipóteses com grau de probabilidade, aponta perigos e recomendações e cita resumos de estudos do PubMed.
   O resultado fica na aba Avisos do Studio Health. Só avisa no Mac e no iPhone quando há algo que merece atenção, e no domingo. A decisão de procurar um médico é sua.
   A busca no PubMed leva só termos genéricos, nunca os seus valores. No .env: HEIMDALL_SAUDE_ANALISTA=0 desliga; HEIMDALL_SAUDE_LITERATURA=0 não consulta o PubMed; com HEIMDALL_NUVEM=1 o analista usa o gpt-oss-120b da nuvem (HEIMDALL_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local); HEIMDALL_SAUDE_ANALISTA_MODELO e HEIMDALL_SAUDE_ANALISTA_URL trocam o modelo local; HEIMDALL_SAUDE_CONDICOES diz as condições a acompanhar.

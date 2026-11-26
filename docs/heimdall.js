@@ -33,14 +33,14 @@
       var det = document.createElement('details'), sum = el('summary', 'Conta: ' + d.nome), cx = document.createElement('div'), ul = document.createElement('ul');
       cx.className = 'caixa';
       cx.appendChild(el('p', 'Conectado como ' + d.nome + (d.email && d.email !== d.nome ? ' (' + d.email + ')' : '') + '.'));
-      cx.appendChild(el('p', 'Serviços do Heimdall'));
+      cx.appendChild(el('p', 'Serviços do StudioLibre'));
       (d.servicos || []).forEach(function (s) {
         if (!/^https:\/\//.test(s.url || '')) return;
         var a = el('a', s.nome); a.href = s.url; ul.appendChild(el('li', '', a));
       });
-      ul.setAttribute('aria-label', 'Serviços do Heimdall');
+      ul.setAttribute('aria-label', 'Serviços do StudioLibre');
       cx.appendChild(ul);
-      var sai = el('a', 'Sair do Heimdall'); sai.href = base + 'cdn-cgi/access/logout';
+      var sai = el('a', 'Sair do StudioLibre'); sai.href = base + 'cdn-cgi/access/logout';
       cx.appendChild(el('p', '', sai));
       det.appendChild(sum); det.appendChild(cx);
       det.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && det.open) { det.open = false; sum.focus(); } });

@@ -156,7 +156,7 @@ def bark_ligado(servico: str) -> bool:
 
 def texto_bark(servico: str, quantos: int = 1) -> dict:
     """Texto do Bark para um aviso novo: genérico, sem título, valor, nome ou número do conteúdo."""
-    nome = SERVICOS.get(servico, "Heimdall")
+    nome = SERVICOS.get(servico, "StudioLibre")
     return {"title": f"{nome}: aviso novo" if quantos == 1 else f"{nome}: {quantos} avisos novos", "body": f"Abra a aba Avisos do {nome}.",
             "group": servico, "level": "active"}
 
