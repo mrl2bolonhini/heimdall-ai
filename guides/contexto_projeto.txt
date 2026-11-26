@@ -75,8 +75,9 @@ Plataforma e operação
 3) A revisão de QA roda em contexto separado. Nenhum papel substitui o teste real no Safari com VoiceOver (e TalkBack no Android).
 
 9. Marca e nome do produto
-1) O nome Heimdall pode mudar. Critérios fixos: curto, de preferência duas sílabas, bom como prefixo dos serviços; sem vogal no começo; sem "h" nem "w"; "k" só junto de vogal; sem duplo sentido nem som parecido com palavra em português; uma opção holandesa é bem-vinda.
-2) Favoritos em 24/11/2026: Baken, Bantay e Sandigan (sem decisão). O usuário fará a consulta de marca no INPI (classes 9, 35, 41 e 42) e checou domínios e GitHub pelo terminal. Prumo foi achado sem graça. Não usar a voz Luciana para testar pronúncia.
+1) Decisão do usuário em 26/11/2026: StudioLibre é o nome da empresa (domínios studiolibre.io e studiolibre.app, mesma conta da Cloudflare; usar studiolibre.io em todo o projeto). Os apps e as telas levam o radical Studio no começo: Studio Health, Studio Finance, Studio Games, Studio Memory (e os demais serviços no mesmo padrão). O comando do terminal passa a ser `studio` (o usuário aceita alterar o comando do Android Studio na máquina dele, se for preciso). Prefixo das variáveis de ambiente: STUDIO_ (proposto pelo Claude, a partir do mesmo radical). Substitui os critérios e os favoritos de nome de 24/11/2026 (Baken, Bantay, Sandigan).
+2) O repositório foi transferido para a organização studiolibre no GitHub (studiolibre/heimdall-ai); o endereço antigo redireciona. A renomeação do restante (código, comando, variáveis, Cloudflare, textos) segue o plano em guides/renomeacao_studio.txt.
+3) Risco de marca registrado na consulta ao INPI: LIBRE em vigor na classe 42 (Abbott, software de saúde). "Studio" sozinho é um termo comum e fraco como marca; a força está em StudioLibre. A consulta do INPI para StudioLibre segue com o usuário.
 
 10. Segurança e privacidade (lições)
 1) Já houve chave do LiteLLM exposta no histórico do git: rotacionada e limpa. Nunca versionar segredo; o repositório é público.

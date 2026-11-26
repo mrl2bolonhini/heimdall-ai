@@ -23,7 +23,7 @@ AQUI = Path(__file__).resolve().parent
 DOCS = AQUI / "docs"
 DOMINIO = "heimdall-ai.tech"
 AUTOR = "Murillo Bolonhini Cita"
-GH_USUARIO = "mrl2bolonhini"
+GH_USUARIO = "studiolibre"
 H = lambda s: html.escape(str(s), quote=True)
 
 # ---------------------------------------------------------------------------------------------------------
@@ -892,7 +892,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>No Glue, crie um banco de dados.</li>
 <li>No Glue, crie uma tabela apontando para a pasta do S3, com as colunas e os tipos.</li>
 <li>No Athena, escolha o banco e rode um SELECT na tabela.</li></ol>
-<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/mrl2bolonhini/heimdall-ai/blob/main/guides/LEIAME_lab_roteiro.txt">guides/LEIAME_lab_roteiro.txt</a>.</p></section>
+<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/studiolibre/heimdall-ai/blob/main/guides/LEIAME_lab_roteiro.txt">guides/LEIAME_lab_roteiro.txt</a>.</p></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
 <ul><li>O painel escuta só em 127.0.0.1. A porta do emulador nunca é exposta, porque ela não tem senha.</li>
 <li>Entrada com senha (guardada só como hash PBKDF2) e código de 6 dígitos (TOTP), que não pode ser reaproveitado.</li>

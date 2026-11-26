@@ -4,7 +4,7 @@ Este guia leva o conteúdo de docs/ ao GitHub Pages e aponta o domínio, pelo Cl
 
 ## 0. Antes de tudo: plano do GitHub
 
-O repositório mrl2bolonhini/heimdall-ai é privado. GitHub Pages em repositório privado só funciona em plano pago (Pro, Team ou Enterprise). No plano gratuito há duas saídas: assinar o Pro, ou publicar docs/ pelo Cloudflare Pages (seção "Alternativa" no fim). Uma terceira saída é tornar o repositório público (Settings, General, Danger Zone, Change visibility), o que libera o Pages de graça. O código já não traz dados pessoais (caminhos, IPs e e-mail vêm de variáveis); antes de abrir, confira o histórico: `git log --all --oneline -- .env` deve vir vazio, e `git log --all -p | grep -ciE "api_key|token|senha"` não deve mostrar chave real. Nada em .env, knowledge/, qdrant/ e backups pode estar versionado.
+O repositório studiolibre/heimdall-ai é privado. GitHub Pages em repositório privado só funciona em plano pago (Pro, Team ou Enterprise). No plano gratuito há duas saídas: assinar o Pro, ou publicar docs/ pelo Cloudflare Pages (seção "Alternativa" no fim). Uma terceira saída é tornar o repositório público (Settings, General, Danger Zone, Change visibility), o que libera o Pages de graça. O código já não traz dados pessoais (caminhos, IPs e e-mail vêm de variáveis); antes de abrir, confira o histórico: `git log --all --oneline -- .env` deve vir vazio, e `git log --all -p | grep -ciE "api_key|token|senha"` não deve mostrar chave real. Nada em .env, knowledge/, qdrant/ e backups pode estar versionado.
 
 A página publicada é pública mesmo que o repositório seja privado. A documentação gerada não contém chaves nem dados pessoais; confira com `grep -ril "token\|senha" docs/` antes de publicar.
 
@@ -29,7 +29,7 @@ O domínio hoje tem um Worker (heimdall-site) com domínio customizado. Primeiro
 Depois, em Cloudflare, DNS, Records, crie:
 
 1. Quatro registros A para o nome heimdall-ai.tech (ou @): 185.199.108.153, 185.199.109.153, 185.199.110.153 e 185.199.111.153.
-2. Um registro CNAME com nome www apontando para mrl2bolonhini.github.io.
+2. Um registro CNAME com nome www apontando para studiolibre.github.io.
 3. Deixe todos com Proxy status em "DNS only" (nuvem cinza) até o GitHub emitir o certificado. Depois, se quiser, ligue o proxy e use SSL/TLS no modo Full.
 
 Não mexa nos registros de chat e uptime: eles continuam apontando para o túnel.

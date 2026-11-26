@@ -74,7 +74,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 
 ## Instalação
 
-1. Clone o repositório e entre na pasta: `git clone https://github.com/mrl2bolonhini/heimdall-ai.git ~/heimdall-ai && cd ~/heimdall-ai`.
+1. Clone o repositório e entre na pasta: `git clone https://github.com/studiolibre/heimdall-ai.git ~/heimdall-ai && cd ~/heimdall-ai`.
 2. Crie o ambiente Python em `venv` (o `start_heimdall.sh` o usa): `python3.12 -m venv venv`, e instale nele os pacotes que os scripts importam: fastmcp, litellm com proxy, feedparser, psutil, pypdf, requests, starlette, pyyaml e youtube-transcript-api.
 3. Crie o arquivo `.env` com as chaves (nunca vai para o repositório) e proteja-o: `chmod 600 .env`. As variáveis estão descritas no cabeçalho de `start_heimdall.sh`.
 4. Coloque os documentos pessoais em `knowledge/`, uma subpasta por tema.

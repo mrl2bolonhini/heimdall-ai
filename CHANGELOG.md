@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-26 - Repositório na organização StudioLibre e plano de renomeação
+- O repositório agora está em studiolibre/heimdall-ai: README, guia de publicação das páginas e gerador do site usam o novo endereço, e o site foi regenerado.
+- Nomes decididos: StudioLibre (empresa); Studio Health, Studio Finance, Studio Games e Studio Memory (apps e telas); comando `studio`; variáveis STUDIO_. O plano em fases está em guides/renomeacao_studio.txt; nada muda ainda no comando nem nas variáveis atuais.
+
 ## 2026-11-26 - Nome StudioLibre no site e domínio studiolibre.io
 - A página Marca do site ganhou a seção "O nome StudioLibre": o significado das duas metades (studio e libre), cinco princípios que o projeto já segue (acessível desde o começo, aberto e documentado, dados de quem os tem, IA que descreve e a pessoa decide, para qualquer sistema), o modelo de nome dos aplicativos (StudioLibre Memory, Health, Finance, Games) e os endereços. A página inicial ganhou um bloco curto que leva a essa seção.
 - Decisão: studiolibre.io é o domínio de todo o projeto e studiolibre.app fica reservado para os aplicativos. Os dois já estão registrados. Os endereços atuais (heimdall-ai.tech) continuam valendo; a troca acontece em etapa própria, com redirecionamento 301 dos antigos para os novos (veja o ROADMAP).
