@@ -55,7 +55,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
 | Studio Learn | 8019 | Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Studio Lab. |
 | Studio Trading | 8020 | Mesa de operações em simulação (porta 8020), feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, histórico, sinais descritivos, limites por ordem e de perda por dia. Nenhuma ordem é enviada a corretora. |
-| Studio Memory | 8021 | Documentos pesquisáveis (porta 8021): envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende. |
+| Studio Memory | 8021 | Documentos pesquisáveis (porta 8021 por padrão; se o sistema já a usa, defina HEIMDALL_MEMORY_PORT no .env): envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende. |
 | Studio Notes | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
 | Studio News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
 | Studio Games | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
@@ -74,7 +74,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 
 ## Instalação
 
-1. Clone o repositório e entre na pasta: `git clone https://github.com/studiolibre/heimdall-ai.git ~/heimdall-ai && cd ~/heimdall-ai`.
+1. Clone o repositório e entre na pasta: `git clone https://github.com/studiolibre/StudioApps.git ~/StudioApps && cd ~/StudioApps`.
 2. Crie o ambiente Python em `venv` (o `start_heimdall.sh` o usa): `python3.12 -m venv venv`, e instale nele os pacotes que os scripts importam: fastmcp, litellm com proxy, feedparser, psutil, pypdf, requests, starlette, pyyaml e youtube-transcript-api.
 3. Crie o arquivo `.env` com as chaves (nunca vai para o repositório) e proteja-o: `chmod 600 .env`. As variáveis estão descritas no cabeçalho de `start_heimdall.sh`.
 4. Coloque os documentos pessoais em `knowledge/`, uma subpasta por tema.

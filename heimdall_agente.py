@@ -577,11 +577,24 @@ def _consultar_notas_agora(quieto: int):
     return False, None
 
 
+SO_COM_NOTAS_ABERTO = os.environ.get("HEIMDALL_NOTAS_ABRIR_APP", "0") != "1"   # 1 devolve o comportamento antigo (abre o Notas para consultar)
+
+
+def _notas_aberto() -> bool:
+    """True se o app Notas já está aberto. Consultar com o app fechado o abriria e o traria para a frente da tela."""
+    try:
+        return subprocess.run(["pgrep", "-x", "Notes"], capture_output=True, timeout=5).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return True   # sem como saber: mantém o comportamento de consultar
+
+
 def notas_alteradas(desde: float, quieto: int, limite: int) -> list[dict]:
     global _verificado_mtime, _ultima_varredura
     consultar, m_antes = _consultar_notas_agora(quieto)
     if not consultar:
         return []
+    if SO_COM_NOTAS_ABERTO and not _gravacao_nova.is_set() and not _notas_aberto():
+        return []   # app fechado: não abre o Notas só para consultar; a consulta acontece quando o usuário abrir o app
     notas = _listar_alteradas(desde, quieto, limite)
     _gravacao_nova.clear()   # só depois de a consulta dar certo; se falhar, a próxima tenta de novo
     _ultima_varredura = time.time()

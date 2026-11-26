@@ -198,7 +198,7 @@ SERVICOS = [
     ("Emulador de AWS (Moto ou LocalStack)", "Para testar código de AWS sem custo.", "4566", "start_heimdall.sh (HEIMDALL_AWS_EMULATOR; sob demanda por padrão: studio lab --start liga e --stop desliga; HEIMDALL_AWS_EMULATOR_INICIO=auto sobe sempre)"),
     ("Studio Learn", "Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Studio Lab.", "8019", "desligado por padrão: HEIMDALL_LEARN=1 no .env, com senha e código configurados"),
     ("Studio Trading", "Mesa de operações em simulação (porta 8020), feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, histórico, sinais descritivos, limites por ordem e de perda por dia. Nenhuma ordem é enviada a corretora.", "8020", "start_heimdall.sh (liga com HEIMDALL_TRADING=1)"),
-    ("Studio Memory", "Documentos pesquisáveis (porta 8021): envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende.", "8021", "start_heimdall.sh (liga com HEIMDALL_MEMORY=1)"),
+    ("Studio Memory", "Documentos pesquisáveis (porta 8021 por padrão; se o sistema já a usa, defina HEIMDALL_MEMORY_PORT no .env): envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende.", "8021", "start_heimdall.sh (liga com HEIMDALL_MEMORY=1)"),
     ("Studio Notes", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Studio News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Studio Games", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
@@ -632,7 +632,7 @@ def pagina_comando_heimdall():
 <section aria-labelledby="instalar"><h2 id="instalar">Instalar</h2>
 <ol><li>Na pasta do projeto: <code>bash scripts/instalar_comando_heimdall.sh</code>. Ele faz cópia do ~/.zshrc, remove uma função heimdall antiga e liga o heimdall.zsh do projeto.</li>
 <li>Depois: <code>source ~/.zshrc</code>. A partir daí o comando se atualiza com <code>studio update</code>.</li>
-<li>Se o projeto não estiver em ~/heimdall-ai, defina HEIMDALL_DIR no ~/.zshrc antes da linha do source.</li></ol></section>
+<li>Se o projeto não estiver em ~/StudioApps, defina HEIMDALL_DIR no ~/.zshrc antes da linha do source.</li></ol></section>
 <section aria-labelledby="indice"><h2 id="indice">Todos os comandos</h2><ul>{indice}</ul></section>
 {"".join(corpo)}
 """
@@ -858,7 +858,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
     out["comando-heimdall.html"] = pagina("comando-heimdall.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções, com a forma longa e a curta de cada uma.", pagina_comando_heimdall())
     out["comandos.html"] = pagina("comandos.html", "Comandos", "Comandos para subir, testar, instalar e manter o StudioLibre.", f"""
 <h1>Comandos</h1>
-<p>Todos os comandos são executados no Terminal, na pasta do projeto (<code>~/heimdall-ai</code>). Em cada um há um botão para copiar. Se for colar, confira que nada além do comando entrou na linha.</p>
+<p>Todos os comandos são executados no Terminal, na pasta do projeto (<code>~/StudioApps</code>). Em cada um há um botão para copiar. Se for colar, confira que nada além do comando entrou na linha.</p>
 {cm}
 <section aria-labelledby="opcoes"><h2 id="opcoes">Opções do start_heimdall.sh</h2><details><summary>Texto de ajuda do script</summary><ul>{op}</ul></details></section>
 <section aria-labelledby="prob"><h2 id="prob">Problemas conhecidos</h2>{pr}</section>
@@ -892,7 +892,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>No Glue, crie um banco de dados.</li>
 <li>No Glue, crie uma tabela apontando para a pasta do S3, com as colunas e os tipos.</li>
 <li>No Athena, escolha o banco e rode um SELECT na tabela.</li></ol>
-<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/studiolibre/heimdall-ai/blob/main/guides/LEIAME_lab_roteiro.txt">guides/LEIAME_lab_roteiro.txt</a>.</p></section>
+<p>O roteiro completo, com exemplos, o teste do Lambda e a solução de problemas, está em <a href="https://github.com/studiolibre/StudioApps/blob/main/guides/LEIAME_lab_roteiro.txt">guides/LEIAME_lab_roteiro.txt</a>.</p></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
 <ul><li>O painel escuta só em 127.0.0.1. A porta do emulador nunca é exposta, porque ela não tem senha.</li>
 <li>Entrada com senha (guardada só como hash PBKDF2) e código de 6 dígitos (TOTP), que não pode ser reaproveitado.</li>

@@ -58,7 +58,7 @@ O mesmo instalador agora importa dois fluxos a mais.
 3. Checagem mensal (dia 1, às 10h). Lembrete pelo Bark para abrir por conta própria o Meu INSS, o FGTS, a Carteira de Trabalho Digital, o Registrato e o Serasa. Esses serviços exigem login e bloqueiam acesso automático, então a checagem é sua, guiada pelo lembrete.
 4. O endereço do DOU e o formato da página podem mudar sem aviso. Esta parte não pôde ser testada com a internet real, só com respostas simuladas. Se o aviso disser que o DOU "mudou de formato", me mande essa mensagem.
 
-Como instalar: copie a pasta flows/monitor/ e o scripts/instalar_monitor_privacidade.sh para ~/heimdall-ai e rode:
+Como instalar: copie a pasta flows/monitor/ e o scripts/instalar_monitor_privacidade.sh para ~/StudioApps e rode:
   bash scripts/instalar_monitor_privacidade.sh --reconfigurar
 Teste dos diários, digitado em uma linha:
   docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdDiario00000001 2>&1 | tail -20
@@ -66,7 +66,7 @@ Teste dos diários, digitado em uma linha:
 =====================================================================
 ATUALIZAÇÃO: VIGIA DE E-MAIL DE SERVIÇOS PÚBLICOS (Gmail)
 =====================================================================
-Arquivos: heimdall_email_oficial.py e scripts/instalar_email_oficial.sh (copie os dois para ~/heimdall-ai, ao lado do .env).
+Arquivos: heimdall_email_oficial.py e scripts/instalar_email_oficial.sh (copie os dois para ~/StudioApps, ao lado do .env).
 
 O que faz, a cada hora, só lendo (nada é marcado como lido, movido ou apagado):
 1. Procura nos últimos 3 dias, na caixa de entrada e no spam, e-mails de ou sobre: INSS, gov.br, FGTS e Caixa, Carteira de Trabalho e seguro-desemprego, Receita Federal e CPF, Serasa e SPC, Banco Central e Registrato, Detran e multas, tribunais e intimações, prefeitura e Estado de SP, título de eleitor, Conecte SUS e Correios. Qualquer domínio gov.br ou jus.br conta como oficial. Para incluir outros, acrescente no .env: HEIMDALL_EMAIL_DOMINIOS_EXTRA='dominio1.com.br,dominio2.com.br'.
@@ -92,7 +92,7 @@ Cuidados:
 =====================================================================
 CORREÇÕES E AGENDA (lembretes e eventos)
 =====================================================================
-Arquivos desta atualização: heimdall_agente.py, heimdall_email_oficial.py e a pasta flows/monitor/ (cópia para ~/heimdall-ai, por cima).
+Arquivos desta atualização: heimdall_agente.py, heimdall_email_oficial.py e a pasta flows/monitor/ (cópia para ~/StudioApps, por cima).
 
 O que mudou:
 1. Erro do e-mail ("'ascii' codec can't encode character"): a busca no Gmail continha palavras com acento. Agora a consulta sai só em ASCII, mantendo o OR em maiúsculas que o Gmail exige.
@@ -104,7 +104,7 @@ O que mudou:
    O prazo vem do resumo do modelo local e só vale se for uma data real entre hoje e dois anos à frente. Nada é criado para e-mails suspeitos (golpes) nem para remetentes não oficiais. Não duplica: título igual na mesma data não é criado de novo. Se o calendário "Heimdall" for novo, ele sincroniza com o iPhone se a conta padrão do Calendário for o iCloud.
 
 Como aplicar, no Terminal, na pasta do projeto, um comando por vez:
-1. Copie os arquivos para ~/heimdall-ai (por cima).
+1. Copie os arquivos para ~/StudioApps (por cima).
 2. Reinicie o agente do Mac, que carrega as rotas novas: pkill -f heimdall_agente.py  e depois suba o sistema como de costume (o start_heimdall.sh sobe o agente).
 3. Dê as permissões do Calendário e dos Lembretes, uma vez: python3 heimdall_agente.py --teste
    O macOS pede para autorizar o Terminal a controlar o Calendário e os Lembretes. Com o VoiceOver, o aviso aparece como janela; ative o botão OK ou Permitir. Se perder o aviso: Ajustes do Sistema > Privacidade e Segurança > Automação.
@@ -122,7 +122,7 @@ PASTAS DO NOTAS COM NOMES PRÓPRIOS E PROTEÇÃO DA PASTA PRIVADA
 2. Pasta privada: antes só valia o nome exato "Privado". Uma pasta chamada ".privado" (com ponto) passava batida e suas notas iam para o Cérebro. Agora a comparação ignora maiúsculas, acentos, espaços e pontos no começo: ".privado", "Privado" e " PRIVADO " são a mesma pasta, com as subpastas. Outras pastas privadas: HEIMDALL_NOTAS_PRIVADAS="Privado,Diário" no .env.
 
 Como aplicar (um comando por vez, na pasta do projeto):
-1. Copie os arquivos para ~/heimdall-ai, por cima, e reinicie o agente: pkill -f heimdall_agente.py  e suba o sistema como de costume.
+1. Copie os arquivos para ~/StudioApps, por cima, e reinicie o agente: pkill -f heimdall_agente.py  e suba o sistema como de costume.
 2. Confira a proteção: python3 heimdall_agente.py --teste
    A linha do passo 1 deve dizer "Pastas privadas encontradas: .privado, ..." com pelo menos uma nota protegida. Se disser nenhuma, me mande a linha.
 3. Reinstale os fluxos: bash scripts/instalar_automacoes_avancadas.sh  e  bash scripts/instalar_monitor_privacidade.sh --reconfigurar

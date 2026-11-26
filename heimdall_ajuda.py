@@ -471,7 +471,7 @@ def _comandos_html() -> str:
             '<li>macOS: pressione Command+Espaço, digite Terminal e pressione Return.</li>'
             '<li>Linux: pressione Ctrl+Alt+T, ou abra o aplicativo Terminal.</li>'
             '<li>Windows: pressione a tecla Windows, digite PowerShell e pressione Enter.</li></ol>'
-            '<p>Em seguida, entre na pasta do Heimdall: <code>cd ~/heimdall-ai</code> no macOS e no Linux; <code>cd $HOME\\heimdall-ai</code> no Windows (PowerShell). '
+            '<p>Em seguida, entre na pasta do Heimdall: <code>cd ~/StudioApps</code> no macOS e no Linux; <code>cd $HOME\\heimdall-ai</code> no Windows (PowerShell). '
             'No macOS o comando <code>heimdall</code> funciona de qualquer pasta. No Windows, use <code>py</code> no lugar de <code>python3</code>.</p>'
             '<h3 id="comandos-saude">Health: documentos, sugestões e perfil</h3>'
             f'<table><caption>Comandos do Health por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'

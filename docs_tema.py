@@ -8,7 +8,7 @@ import re
 
 DOMINIO = "heimdall-ai.tech"
 AUTOR = "Murillo Bolonhini Cita"
-REPO = "https://github.com/studiolibre/heimdall-ai"
+REPO = "https://github.com/studiolibre/StudioApps"
 EMAIL = "suporte@heimdall-ai.tech"
 LINKEDIN = "https://www.linkedin.com/in/murillobolonhinicita"
 ACESSOS = {

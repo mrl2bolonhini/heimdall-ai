@@ -1,7 +1,7 @@
 AUTOMAÇÕES AVANÇADAS DO HEIMDALL-AI
 ===================================
 
-Conteúdo do pacote (tudo vai para a pasta ~/heimdall-ai, por cima dos arquivos atuais):
+Conteúdo do pacote (tudo vai para a pasta ~/StudioApps, por cima dos arquivos atuais):
 1. heimdall_agente.py: agente do Mac. Ponte entre o n8n (no Docker) e o app Notas. Só usa a biblioteca padrão do Python.
 2. start_heimdall.sh: versão atualizada. Sobe o agente sozinho quando HEIMDALL_AGENTE_TOKEN existe no .env (ou com --agente).
 3. scripts/instalar_automacoes_avancadas.sh: instala os três fluxos no n8n e confere as dependências.
@@ -11,8 +11,8 @@ Conteúdo do pacote (tudo vai para a pasta ~/heimdall-ai, por cima dos arquivos 
 PASSO A PASSO
 -------------
 1. Copie os arquivos e dê permissão de execução:
-   unzip -o ~/Downloads/automacoes_avancadas.zip -d ~/heimdall-ai
-   cd ~/heimdall-ai
+   unzip -o ~/Downloads/automacoes_avancadas.zip -d ~/StudioApps
+   cd ~/StudioApps
    chmod +x start_heimdall.sh scripts/instalar_automacoes_avancadas.sh scripts/instalar_hook_gitops.sh
 
 2. Garanta o modelo de embeddings (uma vez): ollama pull nomic-embed-text
@@ -78,7 +78,7 @@ Second Brain
   3. O modelo extrai tags, conceitos, entidades, conexões (complementa, contradiz, relacionada, duplica) e lacunas.
   4. Grava a nota ESPELHO "Second Brain: <título>" na pasta "Second Brain" do app Notas, com cabeçalho YAML (tags,
      conceitos, entidades), links [[Nota Correlata]], lacunas e perguntas. Grava também o .md de verdade, com frontmatter
-     YAML, em ~/heimdall-ai/brain/heimdall-cerebro/ (pode ser aberto no Obsidian).
+     YAML, em ~/StudioApps/brain/heimdall-cerebro/ (pode ser aberto no Obsidian).
   5. Indexa a nota na base vetorial e, se achar uma contradição ou falhar ao gravar, avisa pelo Bark.
   Por que espelho e não edição da nota original: o app Notas não tem frontmatter YAML e editar a nota enquanto você
   escreve, ou durante a sincronização com o iPhone, pode gerar conflitos. As suas notas nunca são alteradas: o agente só
@@ -113,7 +113,7 @@ SEGURANÇA
 1. As chaves (LiteLLM, Bark, GitHub, tokens) ficam dentro dos fluxos no volume do n8n e no .env (permissão 600). Não as cole em conversas.
 2. O token do GitHub deve ser fine-grained, só dos repositórios escolhidos. O fluxo nunca faz push direto na branch principal:
    só cria branch nova e PR em rascunho.
-3. O agente do Mac lê qualquer nota, mas só escreve em pastas "Heimdall*" e só grava arquivos dentro de ~/heimdall-ai/brain.
+3. O agente do Mac lê qualquer nota, mas só escreve em pastas "Heimdall*" e só grava arquivos dentro de ~/StudioApps/brain.
 4. O conteúdo das suas notas e dos seus commits só passa por modelos locais (Ollama via LiteLLM). O que sai da máquina:
    consultas à API do GitHub (o código já está lá), leitura dos feeds e das matérias, e o aviso do Bark.
 
@@ -151,13 +151,13 @@ A cada execução:
 O Second Brain analisa todas as suas notas: as que você escreve, os estudos, o digest, os diários oficiais, o monitor de privacidade e o resumo de saúde, para ligar uma notícia a um estudo, um hábito a um padrão de saúde, uma lei nova a um processo seu. Ficam de fora só os próprios espelhos dele (pasta Second Brain) e as pastas que você marcou como privadas. Tudo roda nos modelos locais do seu Mac. O espelho de cada nota é gravado em Heimdall-ai > Second Brain; a pasta antiga Cérebro guarda os espelhos de antes.
 
 Como aplicar (um comando por vez, na pasta do projeto):
-1. Copie heimdall_agente.py e a pasta flows/advanced para ~/heimdall-ai, por cima.
+1. Copie heimdall_agente.py e a pasta flows/advanced para ~/StudioApps, por cima.
 2. Apague o fluxo antigo, para o instalador antigo não o recolocar: rm flows/basic/2-pergunta-de-estudo.json
 3. Reinicie o agente: pkill -f heimdall_agente.py  e suba o sistema como de costume.
 4. Reinstale: bash scripts/instalar_automacoes_avancadas.sh
 5. Teste agora, sem esperar o horário: docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdEstudoDiario01 2>&1 | tail -20
    A nota aparece no Notas, na pasta do tema. O áudio leva alguns segundos a mais.
-6. Se o áudio não anexar, ele fica em ~/heimdall-ai/brain/<tema>/audio/ e o Bark não diz "Áudio anexado". Me avise.
+6. Se o áudio não anexar, ele fica em ~/StudioApps/brain/<tema>/audio/ e o Bark não diz "Áudio anexado". Me avise.
 
 ATUALIZAÇÃO DO ESTUDO: UMA NOTA POR TEMA, TÍTULO SEM REPETIÇÃO E COMO OUVIR O ÁUDIO
 1. Cada execução (6h, 13h e 20h) agora cria uma nota para CADA tema (cada subpasta de knowledge/), cada uma na pasta do seu tema. Um único aviso no Bark resume todas, com a pergunta de cada tema, sem as respostas. Se um tema falhar, os outros seguem e o aviso diz qual faltou e por quê. Com mais de 15 temas, cada execução cobre 15 e gira o grupo na seguinte.
@@ -165,8 +165,8 @@ ATUALIZAÇÃO DO ESTUDO: UMA NOTA POR TEMA, TÍTULO SEM REPETIÇÃO E COMO OUVIR
 3. Onde fica o áudio:
    a. Na própria nota: logo abaixo do título há uma linha "Áudio desta leitura: é o anexo no fim desta nota, arquivo ....m4a". O anexo fica no fim da nota. No iPhone, com o VoiceOver, vá ao fim da nota, ache o item de anexo e dê dois toques; abre um player, e dois toques em Reproduzir toca. No Mac, com o VoiceOver, vá ao fim da nota, ache o anexo, aperte Control+Option+Espaço para abrir e depois Espaço no player.
    b. Sem depender da nota: no Terminal, na pasta do projeto, bash scripts/ouvir_estudo.sh toca o áudio mais recente na hora; bash scripts/ouvir_estudo.sh 3 toca os três mais recentes; bash scripts/ouvir_estudo.sh --lista mostra os caminhos. Control+C para.
-   c. O arquivo também fica em ~/heimdall-ai/brain/<tema>/audio/.
-4. Como aplicar: copie heimdall_agente.py, scripts/ouvir_estudo.sh e flows/advanced para ~/heimdall-ai (por cima); pkill -f heimdall_agente.py e suba o sistema como de costume; bash scripts/instalar_automacoes_avancadas.sh. Teste: docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdEstudoDiario01 2>&1 | tail -20
+   c. O arquivo também fica em ~/StudioApps/brain/<tema>/audio/.
+4. Como aplicar: copie heimdall_agente.py, scripts/ouvir_estudo.sh e flows/advanced para ~/StudioApps (por cima); pkill -f heimdall_agente.py e suba o sistema como de costume; bash scripts/instalar_automacoes_avancadas.sh. Teste: docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdEstudoDiario01 2>&1 | tail -20
 
 AJUSTES DE VOZ E DE TÍTULO
 1. Título repetido: o app Notas coloca o nome da nota como primeira linha quando recebe nome e corpo juntos, e o corpo já começava pelo título. Agora a nota é criada só com o corpo (o título vira a primeira linha). Vale para todas as notas do Heimdall. Notas já criadas continuam como estão.
