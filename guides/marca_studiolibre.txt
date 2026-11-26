@@ -54,3 +54,34 @@ Perguntas em aberto:
 1) O nome studiolibre está livre como organização no GitHub?
 2) Qual das três direções de símbolo (ponte aberta, anel aberto, monograma SL) o usuário quer levar a um designer?
 3) O aplicativo de saúde fica com StudioLibre Health ou com nome próprio?
+
+6. ADENDO DE 26/11/2026 (respostas às perguntas do usuário)
+
+6.1. A ideia do anel aberto
+1) O anel é o estúdio: um espaço delimitado onde as coisas são feitas e ganham foco. A abertura é o "libre": o anel não se fecha, então nada fica preso dentro dele. É a entrada e a saída: os dados entram, podem ser levados embora, e o programa pode ser entendido e trocado.
+2) O ponto dourado fica no vão, metade dentro e metade fora. Representa a pessoa, a ideia ou o dado em movimento, passando pela abertura. Também guarda um fio com a marca atual: o dourado é o antigo olho do Heimdall, reduzido a um ponto.
+3) Em uma cor a forma continua legível (anel mais ponto), serve em 16 por 16 pixels e como ícone de aplicativo. Cada aplicativo pode trocar só a cor do anel ou do ponto, mantendo o desenho.
+4) Cuidados: o anel aberto é uma forma comum (lembra um C, um ícone de energia ou de recarregar). Precisa de busca de semelhança antes de ir a um designer; a posição da abertura, a espessura do traço e a posição do ponto são o que o tornam próprio.
+
+6.2. Cores, comparadas com apps semelhantes
+Método: distância de cor (CIE76, aproximada; abaixo de 10 é quase igual, abaixo de 20 é próxima) entre as nossas cores e as de marcas do mesmo campo. Os valores das outras marcas vêm de sites agregadores (brandcolorcode, brandpalettes, logo.dev, shadcn.io), não de manuais oficiais, e alguns divergem entre si (o roxo do Nubank aparece como #820AD1, #8D0DE3 e #8A05BE). Itaú, Mobills, Organizze, Apple Saúde e o Google Health (que reúne azul, verde, amarelo e vermelho) não tiveram valor confiável nesta busca e ficam sem comparação.
+1) Azul da ponte (#42a5f5): quase igual ao azul corporativo da Abbott (#009CDE; distância 10) e próximo do azul do Notion (#097FE8; 22).
+2) Azul profundo (#1e88e5): quase igual ao azul do Notion (distância 9) e próximo do azul da Abbott (17).
+3) Turquesa (#26c6da): quase igual ao ciano do Fitbit (#00B0B9; distância 10). No campo da saúde e do bem-estar é a cor mais ocupada.
+4) Gelo (#93d2fa): sem coincidência próxima.
+5) Ouro (#ffc107): sem coincidência próxima nas marcas consultadas.
+6) Roxo (Nubank) e verde-limão (Evernote) ficam longe de toda a paleta.
+Leitura: a base azul, em especial no aplicativo de saúde, é a mais disputada (Abbott e Fitbit), e o azul sozinho não diferencia a StudioLibre. O ouro é o elemento próprio da marca.
+Proposta, para o designer testar: manter o ouro como assinatura; trocar o azul principal da marca por um tom mais escuro e menos comum no campo, como um índigo (por exemplo #3949ab: distância de 43 da Abbott, 78 do Fitbit, 24 do Notion; contraste 7,1 para 1 sobre o Papel); usar o turquesa só como acento secundário e nunca como cor principal do aplicativo de saúde; dar a cada aplicativo uma cor de acento própria, dentro da mesma família. O índigo tem pouco contraste sobre a Noite (2,5 para 1), então no tema escuro ele serve para formas, não para texto: o texto continua em Névoa. Toda cor escolhida passa pelos testes de contraste do Heimdall Design antes de entrar.
+
+6.3. Nome do aplicativo de saúde
+1) StudioLibre Health: segue o padrão dos outros (Memory, Finance, Games), com complemento em inglês, igual aos endereços e às pastas do projeto. É descritivo e fraco como marca isolada, mas a força vem do StudioLibre.
+2) StudioLibre your Health: não recomendado. Mistura as línguas dentro do nome, quebra o padrão "StudioLibre mais um substantivo", é difícil de falar e de escrever em endereço, e "your health" é uma expressão descritiva que não protege nada.
+3) Outro idioma: Saúde (em português, é também o nome do app da Apple no Brasil, de onde o Heimdall lê dados, o que confunde); Salud (espanhol; combina com a palavra Libre, que não é portuguesa, mas é um terceiro idioma no nome); Vita (latim, curto e internacional, mas comum em outros produtos). Mudar o idioma só do app de saúde quebra o padrão sem resolver o risco, que vem da palavra Libre.
+4) Recomendação do papel marca: manter StudioLibre Health. O risco com a Abbott é tratado por análise de especialista e pelo desenho e pelas cores próprios, não pelo idioma. Se o especialista desaconselhar, a saída é um nome próprio para o app, com a menção "da StudioLibre".
+5) A busca de anterioridade no INPI para "StudioLibre Health" e para as finalistas pode ser feita a pedido.
+
+6.4. Organização no GitHub
+1) A criação de organização no GitHub não pode ser feita por esta sessão: não há API para isso em conta pessoal e a sessão só alcança o repositório atual. Passos para o usuário, em texto e com teclado: abrir github.com/organizations/plan; escolher o plano gratuito; no nome da organização digitar studiolibre (o formulário diz se está livre); informar o e-mail de contato; marcar "My personal account" como dona; aceitar os termos e criar.
+2) Depois: no repositório mrl2bolonhini/heimdall-ai, Settings, Danger Zone, Transfer ownership, destino studiolibre. Avisar a sessão, que atualiza o REPO do docs_tema.py, os guias e confere o deploy, e o Mac roda `git remote set-url origin https://github.com/studiolibre/heimdall-ai.git`.
+
