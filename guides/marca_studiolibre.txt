@@ -1,0 +1,56 @@
+StudioLibre: análise de marca, de UX e do repositório (26/11/2026)
+
+Documento de decisão. Os papéis ux e marca propõem; a decisão é do usuário. Nada aqui foi aplicado às telas, ao logotipo ou às cores.
+
+1. SITUAÇÃO
+
+1) Nome: StudioLibre (empresa e conjunto de aplicativos), com complemento por aplicativo (StudioLibre Memory, Health, Finance, Games).
+2) Domínios registrados, na mesma conta da Cloudflare do heimdall-ai.tech: studiolibre.io (principal) e studiolibre.app (reservado).
+3) Símbolo atual: a ponte Bifröst vista de frente, com seis faixas (#bfe3fb, #93d2fa, #42a5f5, #26c6da, #1e88e5, #ffc107) e um olho dourado no centro. Conta a história do nome Heimdall (o guardião da ponte). A paleta tem Noite, Papel, Tinta, Névoa, Gelo, Azul da ponte, Azul profundo, Turquesa e Ouro do olhar, com contrastes medidos.
+4) Onde a identidade visual vive: heimdall_design.py (cores, fonte única de todos os serviços), docs_tema.py (PALETA, BANDAS e o símbolo do site), heimdall_lab.SIMBOLO (cabeçalho dos serviços), arquivos do site (logo.svg, logo-escuro.svg, simbolo.svg, simbolo-uma-cor.svg, favicon.svg, apple-touch-icon.png, og.png), ícone do app do Mac (macapp) e Pages/index.html.
+
+2. VISÃO DO UX
+
+1) O símbolo atual deixa de contar a história do nome. Ponte e olho dizem Heimdall; StudioLibre pede outra ideia (liberdade, estúdio, abertura). Se o nome mudar nas telas e o símbolo ficar, a marca nova nasce com um desenho que não a explica.
+2) Trocar cores é barato (uma fonte única, heimdall_design.py) e trocar o símbolo é médio (cerca de dez arquivos). O custo real é a confusão do usuário: nome, endereço e visual mudando ao mesmo tempo. Ordem recomendada: primeiro o domínio e os endereços, depois o nome nas telas, por último o logotipo e as cores, cada um numa entrega própria.
+3) Acessibilidade: o símbolo já é decorativo (escondido do leitor de tela) e o nome vem em texto, então trocar o desenho não afeta o VoiceOver. O que pode piorar é o contraste: toda cor nova passa pelo mesmo teste (texto a 4,5 para 1, bordas de campo a 3 para 1, nos dois temas). Dourado e tons claros só como marcação, nunca como cor de texto sobre fundo claro (regra atual da página Marca).
+4) Consistência entre serviços: todas as telas leem as mesmas variáveis. A mudança de cor entra só no heimdall_design.py, na página de Design e na página Marca, nunca numa página isolada.
+5) Telas pequenas e apps móveis: o símbolo novo precisa ser legível em 16 por 16 pixels (aba do navegador) e em ícone de app (1024 por 1024), em uma cor e sem depender de gradiente ou de detalhe fino. O olho atual perde a leitura em tamanho pequeno.
+6) Migração: favicon e ícone do app mudam o aspecto na barra de abas e na tela inicial do iPhone e do Android; avisar na versão que troca. O site antigo e o novo convivem com redirecionamento 301.
+7) Texto: o nome do produto nas telas muda de "Heimdall X" para "StudioLibre X" só quando a troca de nome terminar, com a ajuda, o FAQ, os Termos e a Política de Privacidade atualizados juntos (o responsável pelos dados e o nome do serviço devem bater em todos).
+
+3. VISÃO DA MARCA (marketing e design de marca)
+
+1) Força do nome. StudioLibre é fácil de escrever e de lembrar, soa bem em português e é entendido sem tradução. O ponto fraco é a palavra "libre": é comum no software livre (LibreOffice e outros) e, na saúde, está associada à linha de monitoramento de glicose da Abbott, conforme a consulta ao INPI de 26/11/2026. Como parte distintiva é fraca por si só; a força vem de StudioLibre inteiro, sempre escrito junto.
+2) Modelo nome-mãe mais complemento. Funciona quando o nome-mãe é forte e os complementos descrevem a função, como já se pretende. Para o aplicativo de saúde, o risco é maior (campo regulado, sobreposição com Libre da Abbott). Opções, para decidir depois da análise de especialista: manter StudioLibre Health; usar um nome próprio para saúde, com a menção "da StudioLibre"; ou adiar o nome público de saúde.
+3) Posicionamento em uma frase: aplicativos acessíveis e abertos, que deixam a pessoa no controle dos próprios dados. É o que o projeto já faz (leitor de tela primeiro, código aberto, cópia local e interruptor de volta), e é o que diferencia de produtos genéricos. Sugestões de assinatura, a escolher ou descartar: "Ferramentas livres, feitas para todos"; "Livre para escolher, aberto para entender"; "Seus dados, suas regras". Nenhuma deve entrar no site sem a decisão do usuário.
+4) Tom de voz: profissional, claro e neutro (regra do projeto), com a identidade do nome: verbos de escolha e de controle (levar, escolher, conferir), sem promessa vazia nem gíria.
+5) Símbolo: três direções, descritas em palavras.
+   a) Ponte aberta. Mantém a ponte de seis faixas, mas com o arco partido no alto (um vão) e sem o olho: a abertura representa o "libre" e a continuidade com a marca atual facilita a migração. Cores: as mesmas faixas. Vantagem: transição suave. Risco: ainda lembra a mitologia e não fala de estúdio.
+   b) Anel aberto. Um círculo grosso com uma abertura à direita, e dentro dele um ponto dourado no vão. Passa a ideia de liberdade sem amarras (o anel que não fecha) e de foco. Cores: azul profundo (#1e88e5) no anel e ouro (#ffc107) no ponto. Vantagem: simples, legível em 16 por 16 e em uma cor. Risco: forma comum, precisa de busca de semelhança.
+   c) Monograma SL. As letras S e L ligadas por um único traço contínuo, com o traço final aberto. Fala do nome e do ofício (estúdio). Vantagem: memorável e próprio. Risco: exige desenho de letra cuidadoso; fica pior em tamanho muito pequeno.
+   Recomendação do papel marca: a opção b (anel aberto) para a marca-mãe, por ser simples, ligada ao significado de libre e a que melhor atende o item 5 do UX; o monograma pode ser o ícone secundário dos aplicativos.
+6) Paleta: manter a base azul e o dourado só como acento. Vantagens: continuidade, confiança (finanças e saúde) e contrastes já medidos. Verificar antes de adotar: se a combinação azul e dourado se confunde com marcas do mesmo campo, sobretudo na saúde, e se há ganho em dar a cada aplicativo uma cor de acento própria (Memory, Health, Finance, Games) dentro da mesma família, o que ajudaria a reconhecer o aplicativo.
+7) O que não foi verificado: busca de marcas fora do INPI, semelhança visual com marcas conhecidas, teste do símbolo com pessoas, cores de concorrentes. Para o desenho final e o depósito de marca, contratar designer de marca e especialista em propriedade industrial; este documento serve de briefing.
+
+4. REPOSITÓRIO NO GITHUB
+
+Opções:
+1) Repositório novo, vazio. Perde o histórico de commits, os links antigos e as configurações. Não recomendado.
+2) Renomear o repositório atual (mrl2bolonhini/heimdall-ai). Mantém histórico, issues e Actions; o GitHub redireciona o endereço antigo. Os clones locais (o Mac) precisam de `git remote set-url origin <endereço novo>`.
+3) Criar uma organização StudioLibre no GitHub e transferir o repositório para ela (studiolibre/heimdall-ai). Dá à empresa uma presença própria, separa o projeto da conta pessoal, aceita vários repositórios no futuro e mantém histórico, redirecionamento e Actions. Organização para código público é gratuita.
+Recomendação: opção 3, em dois tempos: transferir agora para a organização, mantendo o nome do repositório; renomear o repositório só quando o nome StudioLibre chegar às telas. Antes: conferir se o nome studiolibre está livre no GitHub (github.com/studiolibre), porque a consulta não é possível a partir daqui. Depois de transferir: atualizar o remote do Mac (`git remote set-url origin https://github.com/studiolibre/heimdall-ai.git`), o endereço do repositório no REPO do docs_tema.py, nos guias e nos segredos do workflow de deploy; a publicação do site e o deploy da continuidade continuam, mas precisam ser conferidos uma vez.
+Um repositório por aplicativo não se justifica agora: o código compartilha módulos e testes na raiz.
+
+5. PROPOSTA DE ORDEM (para aprovação do usuário)
+
+1) Etapas de código do domínio (variável única, cookie de sessão), sem mexer na Cloudflare.
+2) Cloudflare: rotas do túnel, DNS, aplicativos do Access, Worker da continuidade e Pages do site, com redirecionamento 301 dos endereços antigos.
+3) Organização e transferência do repositório.
+4) Nome StudioLibre nas telas, na ajuda, nos Termos e na Política de Privacidade.
+5) Logotipo e cores, com briefing a designer e especialista de marca; análise de marca no INPI antes de depositar.
+
+Perguntas em aberto:
+1) O nome studiolibre está livre como organização no GitHub?
+2) Qual das três direções de símbolo (ponte aberta, anel aberto, monograma SL) o usuário quer levar a um designer?
+3) O aplicativo de saúde fica com StudioLibre Health ou com nome próprio?

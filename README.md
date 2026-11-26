@@ -2,6 +2,8 @@
 
 Assistente de Inteligência Artificial que roda no próprio Mac, com ferramentas (MCP), base de conhecimento pessoal e automações (n8n). Desenvolvido por Murillo Bolonhini Cita. O chat é privado e o acesso é por convite; o código é aberto à leitura, mas os dados ficam no Mac do autor.
 
+StudioLibre é o nome da empresa e do conjunto de aplicativos (StudioLibre Memory, Health, Finance, Games), com o domínio studiolibre.io; os endereços e o nome nas telas mudam por etapas (ROADMAP), e hoje os serviços seguem em heimdall-ai.tech com o nome Heimdall. O significado do nome está na página Marca do site; a análise de marca e de repositório está em guides/marca_studiolibre.txt.
+
 Documentação publicada: https://heimdall-ai.tech (gerada da pasta docs/ pelo GitHub Pages).
 
 Este README é mantido junto com o código. As tabelas entre marcadores `AUTO` são geradas por `python3 gerar_docs.py`; não as edite à mão.

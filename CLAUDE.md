@@ -45,9 +45,13 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News
 - Arquivo novo: guia vai para `guides/`, script para `scripts/` (com `cd "$(dirname "$0")/.."` no começo) e teste para `tests/<serviço>/`.
 
 ## Time de desenvolvimento (skills em `.claude/skills/`, decisão do usuário em 25/11/2026)
-- Papéis: `po`, `tech-lead`, `ux`, `qa-funcional` e `qa-acessibilidade`; o comando `/time <demanda>` aciona os necessários (`--so po,ux` limita; `--analisar` só analisa). O `po` é dono do backlog (o ROADMAP.md): compara cada demanda com o que existe, alerta prioridades e propõe a ordem, que só muda com a aprovação do usuário. Arquiteto de soluções e arquiteto de dados entram quando a demanda pedir. Nova regra de projeto vale também para a skill do papel que a aplica.
+- Papéis: `po`, `tech-lead`, `ux`, `marca` (nome, logotipo, paleta e tom de voz; decisão do usuário em 26/11/2026), `qa-funcional` e `qa-acessibilidade`; o comando `/time <demanda>` aciona os necessários (`--so po,ux` limita; `--analisar` só analisa). O `po` é dono do backlog (o ROADMAP.md): compara cada demanda com o que existe, alerta prioridades e propõe a ordem, que só muda com a aprovação do usuário. Arquiteto de soluções e arquiteto de dados entram quando a demanda pedir. Nova regra de projeto vale também para a skill do papel que a aplica.
 - Os papéis propõem e executam, mas a decisão é do usuário. A revisão de QA roda com contexto separado. Nenhum papel substitui o teste real no Safari com VoiceOver (e TalkBack no Android): diga sempre o que não foi testado.
 - Acessibilidade para todos, sem exageros: o essencial para leitor de tela e teclado, sem anúncios nem rótulos redundantes.
+
+## Nome e marca (decisão do usuário em 26/11/2026)
+- A empresa e o conjunto de aplicativos se chamam StudioLibre (escreve-se junto); cada aplicativo leva um complemento (StudioLibre Memory, Health, Finance, Games). O domínio de todo o projeto é studiolibre.io (studiolibre.app reservado); a troca dos endereços segue as etapas do ROADMAP e os endereços antigos continuam respondendo. Enquanto a troca não termina, as telas mantêm o nome e o símbolo Heimdall.
+- Mudança de logotipo ou de cores só depois da análise dos papéis `ux` e `marca` (`guides/marca_studiolibre.txt`) e da decisão do usuário; nunca junto com a troca de domínio. Nome em texto de produto: "StudioLibre" (nunca "Studio Libre" nem "STUDIOLIBRE"). Não afirmar que a marca está registrada.
 
 ## Outras regras fixas
 - Trading é só simulação (decisão do usuário em 25/11/2026): nenhuma ordem vai a corretora; a execução é código com regras fixas e limites; a IA descreve números e movimentos e nunca recomenda comprar ou vender. Serviço novo com telas simples nasce sobre `heimdall_servico_web.py` (Trading e Memory são os exemplos).

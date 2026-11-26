@@ -5,6 +5,9 @@ Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recur
 ## 2026-11-26 - Nome StudioLibre no site e domínio studiolibre.io
 - A página Marca do site ganhou a seção "O nome StudioLibre": o significado das duas metades (studio e libre), cinco princípios que o projeto já segue (acessível desde o começo, aberto e documentado, dados de quem os tem, IA que descreve e a pessoa decide, para qualquer sistema), o modelo de nome dos aplicativos (StudioLibre Memory, Health, Finance, Games) e os endereços. A página inicial ganhou um bloco curto que leva a essa seção.
 - Decisão: studiolibre.io é o domínio de todo o projeto e studiolibre.app fica reservado para os aplicativos. Os dois já estão registrados. Os endereços atuais (heimdall-ai.tech) continuam valendo; a troca acontece em etapa própria, com redirecionamento 301 dos antigos para os novos (veja o ROADMAP).
+- Novo papel do time, `marca` (nome, logotipo, paleta e tom de voz), acionado pelo /time quando a demanda mexe na identidade. Regra "Nome e marca" no CLAUDE.md: logotipo e cores só mudam depois da análise do UX e da marca e da decisão do usuário, nunca junto com a troca de domínio.
+- Novo guia guides/marca_studiolibre.txt: visão do UX e da marca sobre trocar logotipo e cores (três direções de símbolo descritas em palavras, paleta, tom de voz, nome do app de saúde), opções para o repositório no GitHub (recomendado: organização StudioLibre com transferência do repositório atual) e a ordem proposta das etapas.
+- O nome foi registrado no README, no CLAUDE.md, no ROADMAP e no contexto do projeto. Nada mudou nas telas, no logotipo nem nas cores.
 - Não testado: a leitura da nova seção com VoiceOver no Safari.
 
 ## 2026-11-26 - O Library passa a se chamar Memory
