@@ -5,13 +5,12 @@ Decisões (26/11/2026): empresa StudioLibre; apps e telas Studio Health, Studio 
 Princípio: nada que roda hoje no Mac pode quebrar. Cada fase se desliga ou volta atrás, e o nome antigo continua funcionando como alternativa durante a transição.
 
 Fase 1 (feita): endereço do GitHub trocado de mrl2bolonhini para studiolibre no README, nos guias e no gerador do site; site regenerado.
-Fase 2: renomear o repositório no GitHub; atualizar o endereço remoto das cópias locais (git remote set-url origin); GitHub Pages: o registro CNAME www passa a apontar para studiolibre.github.io (hoje aponta para o usuário antigo).
-Fase 3 (código, em blocos pequenos, com testes a cada bloco):
- 1. Texto visível: Heimdall vira Studio nos nomes de tela, menu, ajuda, FAQ, notificações e documentação (gerar_docs.py, README, CHANGELOG). Os nomes de serviço passam a Studio Health etc.
- 2. Variáveis: STUDIO_* passa a valer, e HEIMDALL_* continua lida como alternativa (uma função única de leitura; aviso de uso do nome antigo no diagnóstico).
- 3. Comando: `studio` no heimdall.zsh, com `heimdall` como apelido temporário; instalador atualiza o ~/.zshrc.
- 4. Arquivos e módulos: heimdall_*.py, start_heimdall.sh e macapp/Heimdall.swift. Os LaunchAgents apontam para subir.sh, start_heimdall.sh e heimdall.zsh: mover só com reinstalação dos agentes e deixar os nomes antigos como redirecionadores.
- 5. Pastas de dados do Mac: migração automática em heimdall_pastas.py, sem apagar dados. Nome do contêiner Docker e dos bancos só com cópia de volta antes.
+Fase 2 (feita em parte: o DNS do www já aponta para studiolibre.github.io; falta renomear o repositório para StudioApps, que só o dono da organização consegue fazer em Settings): renomear o repositório no GitHub; atualizar o endereço remoto das cópias locais (git remote set-url origin); GitHub Pages: o registro CNAME www passa a apontar para studiolibre.github.io (hoje aponta para o usuário antigo).
+Fase 3 (código), em blocos pequenos com testes a cada bloco:
+ Bloco 1, texto visível (feito em 26/11/2026): nomes de serviço Studio Health, Finance, Games, Memory, Notes, News, Learn, Lab, Account, Controls, Chat, Flows, Status, Trading e Design; StudioLibre na prosa de produto (ajuda, termos, site, README). Preservados de propósito: calendário e lista "Heimdall", lista "Heimdall: Triagem", pastas do Notas, políticas do Access, nomes de contêiner e de modelo, cabeçalhos X-Heimdall-*, o app Heimdall.app e o histórico do CHANGELOG.
+ Bloco 3, comando (feito em 26/11/2026): `studio` é a função principal do heimdall.zsh e `heimdall` continua como apelido; ajuda, documentação e testes usam `studio`. STUDIO_DIR vale como alternativa a HEIMDALL_DIR.
+ Bloco 2, variáveis STUDIO_* (adiado, fase 3b): os carregadores de .env filtram por prefixo, o Docker (Paperless) lê o .env direto e alguns nomes são combinados com o Worker e com os segredos do GitHub Actions. Fazer sem validar no Mac poderia derrubar o login dos serviços. Plano: script idempotente de migração do .env (acrescenta STUDIO_X a partir de HEIMDALL_X, sem apagar nada), chamado pelo subir.sh, pelo start_heimdall.sh e pelo `studio update`; carregadores aceitando os dois prefixos; nomes combinados com a Cloudflare (CLOUD_SENHA_HASH, TOTP_SEGREDO, CFACCESS_*, R2_*, portas, CONTINUIDADE_*) só na fase 4, junto com o novo deploy do Worker.
+ Blocos 4 e 5, módulos, arquivos e pastas de dados (adiado, fase 3b): heimdall_*.py, start_heimdall.sh, macapp/Heimdall.swift e as pastas do Mac, com migração automática, reinstalação dos LaunchAgents e nomes antigos como redirecionadores.
 Fase 4 (Cloudflare, com limite de gasto e plano de volta): subdomínios em studiolibre.io (health, finance, games, memory etc.); os endereços de heimdall-ai.tech redirecionam; túnel, aplicativos do Access, roteamento de e-mail (suporte@), bucket do R2 e Workers; deploy da continuidade.
 Fase 5: página Marca, CHANGELOG, CLAUDE.md e guias; mensagem de despedida do nome antigo.
 
