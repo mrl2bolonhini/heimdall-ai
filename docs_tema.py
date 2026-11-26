@@ -368,7 +368,7 @@ PAGINAS = [
     ("comando-heimdall.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções"),
     ("novidades.html", "Novidades", "Histórico de recursos"),
     ("roadmap.html", "Roadmap", "Próximos recursos"),
-    ("marca.html", "Marca", "Logotipo, cores e tipografia"),
+    ("marca.html", "Marca", "O nome StudioLibre, logotipo, cores e tipografia"),
     ("design.html", "Design", "Heimdall Design: o padrão de interface igual em todos os sites"),
 ]
 SITE = "https://" + DOMINIO + "/"
@@ -487,6 +487,9 @@ def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
 <p>Heimdall, na mitologia nórdica, guarda Bifröst, a ponte em arco-íris que liga os mundos. O projeto leva o nome dele: um assistente que vigia e conecta as ferramentas de quem o criou.</p>
 <p>Os modelos rodam no próprio Mac, e não em serviços de terceiros. Eles ganham ferramentas reais (busca na web, arquivos, documentos, memória, Notas e Calendário) e rotinas automáticas: resumos, estudo, vigilância de privacidade e avisos no iPhone.</p>
 <p>Foi pensado para quem usa leitor de tela: tudo se opera por texto e comandos, e as automações entregam notas e áudio.</p></div></div></section>
+<section class="faixa" aria-labelledby="empresa"><div class="dois"><h2 id="empresa">StudioLibre</h2><div>
+<p>StudioLibre é o nome da empresa e do conjunto de aplicativos: um estúdio livre de amarras e de ideias prontas, onde cada aplicativo leva o seu complemento (Memory, Health, Finance, Games).</p>
+<p><a href="marca.html#nome">Ler o significado do nome e os princípios</a>.</p></div></div></section>
 <section class="faixa" aria-labelledby="mapa"><h2 id="mapa">Como as peças se ligam</h2>
 {diagrama()}
 <p><a href="arquitetura.html">Ler a arquitetura completa</a>, com serviços, portas e princípios de privacidade.</p></section>
@@ -507,6 +510,25 @@ def corpo_marca():
         linhas.append((f'<span class="cor" style="background:{hexa}" aria-hidden="true"></span>{H(nome)}', f"<code>{hexa}</code>", H(uso), f"{c1:.1f}:1", f"{c2:.1f}:1"))
     return f"""
 <h1>Marca</h1>
+<section aria-labelledby="nome"><h2 id="nome">O nome StudioLibre</h2>
+<p>StudioLibre é o nome da empresa e do conjunto de aplicativos. Escreve-se junto, com S e L maiúsculos. O nome tem duas metades, e cada uma diz uma parte do que o projeto quer ser.</p>
+<ol>
+<li><strong>Studio</strong> é o lugar onde se constrói: ofício, ideias que ganham forma, trabalho que se refaz até ficar bom. O projeto é feito por quem o usa, em ciclos curtos, com decisões registradas.</li>
+<li><strong>Libre</strong> vem do software livre e quer dizer livre mesmo, sem amarras: de quem fornece o serviço, de um sistema operacional, de um jeito único de usar e de conceitos antigos sobre o que um programa deve ser.</li>
+</ol>
+<p>Juntos, o nome descreve um estúdio livre de amarras e de ideias prontas. Libertar não significa abrir mão de cuidado: a liberdade aqui é a de escolher, de levar os dados embora e de entender o que o programa faz.</p>
+<h3>Princípios</h3>
+<ol>
+<li><strong>Acessível desde o começo.</strong> Cada tela é pensada para leitor de tela e teclado, e a acessibilidade entra no projeto antes do visual, nunca como ajuste final.</li>
+<li><strong>Aberto e documentado.</strong> O código fica no GitHub e cada recurso novo atualiza a documentação, o histórico de mudanças e o roteiro.</li>
+<li><strong>Os dados são de quem os tem.</strong> Há sempre cópia local, todo recurso de nuvem tem um interruptor que devolve o comportamento anterior e nada é apagado sem confirmação.</li>
+<li><strong>A IA descreve e a pessoa decide.</strong> Sugestões só viram lembrete, evento ou ação depois de aceitas, e o que a IA propõe é conferido contra os documentos.</li>
+<li><strong>Para qualquer sistema.</strong> Windows, macOS, iPhone e Android entram em toda decisão, com passos para cada um.</li>
+</ol>
+<h3>Como os aplicativos se chamam</h3>
+<p>O nome da empresa vem primeiro e o complemento diz o que o aplicativo faz: StudioLibre Memory (ideias e informações), StudioLibre Health (saúde), StudioLibre Finance (finanças) e StudioLibre Games (jogos). Um aplicativo novo segue o mesmo modelo. No navegador, cada aplicativo tem o seu endereço, no formato <code>aplicativo.studiolibre.io</code>, como <code>memory.studiolibre.io</code>.</p>
+<h3>Endereços</h3>
+<p>O domínio principal é <code>studiolibre.io</code>. O <code>studiolibre.app</code> fica reservado para os aplicativos. A troca dos endereços acontece por etapas, e os endereços atuais continuam respondendo e redirecionam para os novos quando cada etapa termina. Até lá, o símbolo e o nome Heimdall seguem nas telas.</p></section>
 <section aria-labelledby="simbolo"><h2 id="simbolo">Símbolo e logotipo</h2>
 <p>O símbolo é a ponte Bifröst vista de frente: seis faixas em azul e dourado e, no centro, o olho de quem vigia. O olho acompanha o ponteiro na página inicial.</p>
 <div class="amostras">

@@ -712,7 +712,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Campo de terminal (<code>textarea class="terminal"</code>, e <code>terminal historico</code> para o histórico) e linha de ações (<code>linha-acoes</code>): área de texto monoespaçada que ocupa 60% da altura da tela, quebra linhas longas e mantém a fonte do corpo. Rótulos curtos ("Terminal", "Histórico"), sem títulos extras antes do campo, foco e cursor no fim ao entrar, e avisos falados por uma região role="alert" que se repete mesmo com texto igual. Nasceram no Controls e funcionaram com leitor de tela.</li>
 <li>Se precisar de algo que o Heimdall Design ainda não tem (uma cor, um componente), acrescente aqui primeiro, no <code>heimdall_design.py</code>, e documente nesta página, em vez de criar um estilo só naquele site.</li></ol></section>
 """)
-    out["marca.html"] = pagina("marca.html", "Marca", "Logotipo, cores e tipografia do Heimdall-ai.", corpo_marca())
+    out["marca.html"] = pagina("marca.html", "Marca", "O nome StudioLibre, o logotipo, as cores e a tipografia do Heimdall-ai.", corpo_marca())
 
     # ---- arquitetura
     linhas = [(H(n), H(f), "<code>%s</code>" % p, H(c)) for n, f, p, c in SERVICOS]

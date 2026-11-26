@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-26 - Nome StudioLibre no site e domínio studiolibre.io
+- A página Marca do site ganhou a seção "O nome StudioLibre": o significado das duas metades (studio e libre), cinco princípios que o projeto já segue (acessível desde o começo, aberto e documentado, dados de quem os tem, IA que descreve e a pessoa decide, para qualquer sistema), o modelo de nome dos aplicativos (StudioLibre Memory, Health, Finance, Games) e os endereços. A página inicial ganhou um bloco curto que leva a essa seção.
+- Decisão: studiolibre.io é o domínio de todo o projeto e studiolibre.app fica reservado para os aplicativos. Os dois já estão registrados. Os endereços atuais (heimdall-ai.tech) continuam valendo; a troca acontece em etapa própria, com redirecionamento 301 dos antigos para os novos (veja o ROADMAP).
+- Não testado: a leitura da nova seção com VoiceOver no Safari.
+
 ## 2026-11-26 - O Library passa a se chamar Memory
 - O serviço de acervo, antes Heimdall Library, passa a se chamar Heimdall Memory (o nome descreve o que ele faz: guarda e liga as informações das contas e dos documentos). O endereço padrão é memory.heimdall-ai.tech, a porta continua 8021 e o comando do terminal passa a ser `heimdall memory` (`heimdall library` continua funcionando).
 - Compatibilidade: o .env antigo não precisa de edição. As variáveis HEIMDALL_LIBRARY_* (porta, endereços, limite de tamanho, motor, URL pública) e o interruptor HEIMDALL_LIBRARY=1 valem como HEIMDALL_MEMORY_*; se as duas existirem, a nova manda. O endereço antigo (library.heimdall-ai.tech) continua respondendo e, quando HEIMDALL_MEMORY_URL aponta para o novo endereço, redireciona (301) para ele, mantendo caminho e parâmetros.
