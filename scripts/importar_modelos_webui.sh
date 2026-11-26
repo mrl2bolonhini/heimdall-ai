@@ -13,7 +13,7 @@
 #
 # A chave da API vem de HEIMDALL_WEBUI_API_KEY no .env; se não houver, o script pergunta sem mostrar na tela e não grava.
 # Crie a chave no Open WebUI: Configurações, Conta, Chaves de API, Criar (conta administradora). Copie-a com Command+C e grave com
-# heimdall env --set HEIMDALL_WEBUI_API_KEY (lê a área de transferência, sem mostrar). A chave nunca é impressa.
+# studio env --set HEIMDALL_WEBUI_API_KEY (lê a área de transferência, sem mostrar). A chave nunca é impressa.
 # Conexão com o mesmo ID é atualizada no lugar (as outras conexões ficam como estão); modelo com o mesmo id é atualizado. Nada é apagado.
 cd "$(dirname "$0")/.." || exit 1
 python3 - "$@" <<'PY'
@@ -63,7 +63,7 @@ def chamar(metodo, caminho, corpo=None):
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode("utf-8", "replace")[:300]
     except OSError as e:
-        sys.exit(f"Não consegui falar com {base}: {e}. O Open WebUI está no ar? (heimdall chat --diagnose)")
+        sys.exit(f"Não consegui falar com {base}: {e}. O Open WebUI está no ar? (studio chat --diagnose)")
 
 
 ok = falhas = 0

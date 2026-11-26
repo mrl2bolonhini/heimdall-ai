@@ -1,6 +1,6 @@
 // Heimdall para o Mac: app de barra de menus. Roda em segundo plano, sem ícone no Dock, e chama o comando `heimdall` por baixo.
 // Menus nativos (VoiceOver lê tudo), resultados em janelas de aviso comuns, e os sites do Heimdall abrem em janelas próprias do app (WebKit, o motor do Safari; sem navegador e sem Electron). Não guarda segredo nenhum: quem tem as chaves é o .env.
-// Compilado no seu Mac por scripts/construir_app_mac.sh (heimdall app).
+// Compilado no seu Mac por scripts/construir_app_mac.sh (studio app).
 import AppKit
 import Foundation
 import UserNotifications
@@ -656,7 +656,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
 
     @objc func mudouLigar() { UserDefaults.standard.set(caixaLigar.state == .on, forKey: "ligarAoAbrir") }
 
-    /// Iniciar ao ligar o Mac: cria ou apaga o mesmo LaunchAgent que o heimdall app --entrar cria. Vale a partir do próximo login.
+    /// Iniciar ao ligar o Mac: cria ou apaga o mesmo LaunchAgent que o studio app --entrar cria. Vale a partir do próximo login.
     @objc func mudouEntrada() {
         if caixaEntrar.state == .on {
             let executavel = Bundle.main.executablePath ?? (NSHomeDirectory() + "/Applications/Heimdall.app/Contents/MacOS/Heimdall")

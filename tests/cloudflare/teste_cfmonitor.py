@@ -76,7 +76,7 @@ confere("erro de GraphQL por autorização vira o mesmo aviso", not erro["ok"] a
 erro = cm.consultar(30, env=ENV, abrir=lambda q, t: (_ for _ in ()).throw(OSError("sem rede")), agora=AGORA)
 confere("rede fora: mensagem curta", not erro["ok"] and "OSError" in erro["erro"])
 erro = cm.consultar(30, env={}, abrir=abrir_ok, agora=AGORA)
-confere("sem chave no .env: manda rodar heimdall cloudflare", not erro["ok"] and "heimdall cloudflare" in erro["erro"])
+confere("sem chave no .env: manda rodar studio cloudflare", not erro["ok"] and "studio cloudflare" in erro["erro"])
 confere("texto com erro mostra o erro", "Account Analytics" in cm.texto(cm.consultar(30, env=ENV, abrir=abrir_403, agora=AGORA), ligada=False))
 
 print("\nFALHAS:", falhas)

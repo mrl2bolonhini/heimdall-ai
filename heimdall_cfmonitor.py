@@ -37,7 +37,7 @@ def consultar(dias: int = 30, env: dict = None, abrir=None, agora: datetime = No
     e = env if env is not None else nuvem._env()
     token, conta = e.get("CLOUDFLARE_API_TOKEN", ""), e.get("CLOUDFLARE_ACCOUNT_ID", "")
     if not token or not conta:
-        return {"ok": False, "erro": "Falta a chave da Cloudflare no .env. Rode heimdall cloudflare."}
+        return {"ok": False, "erro": "Falta a chave da Cloudflare no .env. Rode studio cloudflare."}
     chave = (conta, dias)
     if usar_cache and chave in _cache and time.time() - _cache[chave][0] < 60:
         return _cache[chave][1]

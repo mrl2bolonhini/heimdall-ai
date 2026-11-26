@@ -144,7 +144,7 @@ FAQ = {
         ("O que é o Lab?",
          "Um ambiente de estudo de AWS que usa um emulador no Mac do dono: S3, Lambda, Glue, Athena e um console geral. Nada é criado na AWS real nem gera custo."),
         ("O emulador não responde. O que faço?",
-         "O emulador sobe sob demanda. No terminal do Mac, execute heimdall lab --start e aguarde a resposta."),
+         "O emulador sobe sob demanda. No terminal do Mac, execute studio lab --start e aguarde a resposta."),
     ],
     "chat": [
         ("Como troco de modelo ou crio um projeto?",
@@ -396,34 +396,34 @@ def ajuda_do_servico(servico: str, base: str = "") -> str:
 # Guia de comandos: as telas dos serviços não ensinam comandos; eles ficam aqui, por sistema operacional.
 # Cada linha é (ação, comando heimdall no macOS, comando em Python para Linux e Windows). No Windows use "py" no lugar de "python3".
 COMANDOS_HEALTH = [
-    ("Ver os documentos aguardando conferência", "heimdall health --labs pending", "python3 heimdall_exames.py --pendentes"),
-    ("Ler o que foi extraído de um documento", "heimdall health --labs read ID", "python3 heimdall_exames.py --ler ID"),
-    ("Confirmar um documento", "heimdall health --labs confirm ID", "python3 heimdall_exames.py --confirmar ID"),
-    ("Confirmar deixando itens de fora", "heimdall health --labs confirm ID --without 3,5", "python3 heimdall_exames.py --confirmar ID --sem 3,5"),
-    ("Descartar um documento", "heimdall health --labs discard ID", "python3 heimdall_exames.py --descartar ID"),
-    ("Importar um arquivo", "heimdall health --labs import ARQUIVO", "python3 heimdall_exames.py --importar ARQUIVO"),
-    ("Listar receitas", "heimdall health --labs prescriptions", "python3 heimdall_exames.py --receitas"),
-    ("Listar encaminhamentos", "heimdall health --labs referrals", "python3 heimdall_exames.py --encaminhamentos"),
-    ("Listar atestados", "heimdall health --labs certificates", "python3 heimdall_exames.py --atestados"),
-    ("Listar laudos", "heimdall health --labs reports", "python3 heimdall_exames.py --laudos"),
-    ("Listar pedidos de exame", "heimdall health --labs requests", "python3 heimdall_exames.py --pedidos"),
-    ("Listar consultas", "heimdall health --labs appointments", "python3 heimdall_exames.py --consultas"),
-    ("Cadastrar uma consulta", "heimdall health --labs appointment --date AAAA-MM-DD --time HH:MM", "python3 heimdall_exames.py --consulta-nova --data AAAA-MM-DD --hora HH:MM"),
-    ("Enviar consultas e renovações ao Calendário", "heimdall health --labs calendar", "python3 heimdall_exames.py --agenda"),
-    ("Ver as sugestões de acompanhamento", "heimdall health --labs suggestions", "python3 heimdall_clinico.py --sugestoes"),
-    ("Aceitar uma sugestão (com --date e --time, vira evento no Calendário)", "heimdall health --labs suggestions accept ID", "python3 heimdall_clinico.py --aceitar ID"),
-    ("Recusar, adiar ou responder uma sugestão", "heimdall health --labs suggestions dismiss ID | snooze ID DIAS | answer ID TEXTO",
+    ("Ver os documentos aguardando conferência", "studio health --labs pending", "python3 heimdall_exames.py --pendentes"),
+    ("Ler o que foi extraído de um documento", "studio health --labs read ID", "python3 heimdall_exames.py --ler ID"),
+    ("Confirmar um documento", "studio health --labs confirm ID", "python3 heimdall_exames.py --confirmar ID"),
+    ("Confirmar deixando itens de fora", "studio health --labs confirm ID --without 3,5", "python3 heimdall_exames.py --confirmar ID --sem 3,5"),
+    ("Descartar um documento", "studio health --labs discard ID", "python3 heimdall_exames.py --descartar ID"),
+    ("Importar um arquivo", "studio health --labs import ARQUIVO", "python3 heimdall_exames.py --importar ARQUIVO"),
+    ("Listar receitas", "studio health --labs prescriptions", "python3 heimdall_exames.py --receitas"),
+    ("Listar encaminhamentos", "studio health --labs referrals", "python3 heimdall_exames.py --encaminhamentos"),
+    ("Listar atestados", "studio health --labs certificates", "python3 heimdall_exames.py --atestados"),
+    ("Listar laudos", "studio health --labs reports", "python3 heimdall_exames.py --laudos"),
+    ("Listar pedidos de exame", "studio health --labs requests", "python3 heimdall_exames.py --pedidos"),
+    ("Listar consultas", "studio health --labs appointments", "python3 heimdall_exames.py --consultas"),
+    ("Cadastrar uma consulta", "studio health --labs appointment --date AAAA-MM-DD --time HH:MM", "python3 heimdall_exames.py --consulta-nova --data AAAA-MM-DD --hora HH:MM"),
+    ("Enviar consultas e renovações ao Calendário", "studio health --labs calendar", "python3 heimdall_exames.py --agenda"),
+    ("Ver as sugestões de acompanhamento", "studio health --labs suggestions", "python3 heimdall_clinico.py --sugestoes"),
+    ("Aceitar uma sugestão (com --date e --time, vira evento no Calendário)", "studio health --labs suggestions accept ID", "python3 heimdall_clinico.py --aceitar ID"),
+    ("Recusar, adiar ou responder uma sugestão", "studio health --labs suggestions dismiss ID | snooze ID DIAS | answer ID TEXTO",
      "python3 heimdall_clinico.py --recusar ID | --adiar ID --dias N | --responder ID --texto TEXTO"),
-    ("Adicionar um item ao perfil de saúde", "heimdall health --labs profile add condition|surgery|allergy|insurance|doctor|other TEXTO",
+    ("Adicionar um item ao perfil de saúde", "studio health --labs profile add condition|surgery|allergy|insurance|doctor|other TEXTO",
      "python3 heimdall_clinico.py --perfil-add condicao|cirurgia|alergia|convenio|medico|outro --texto TEXTO"),
 ]
 
 # Administração (Controls e Lab): o que as telas não ensinam. A terceira coluna vale para Linux e Windows (com Docker instalado).
 COMANDOS_ADMIN = [
-    ("Ver as versões instaladas e se há imagem mais nova no registro", "heimdall doctor --versions", "python3 diagnostico.py --versoes"),
-    ("Diagnóstico completo (memória, disco, Docker e modelos)", "heimdall doctor", "python3 diagnostico.py"),
-    ("Ligar o emulador de AWS usado pelo Lab", "heimdall lab --start", "docker start localstack (ou docker start moto)"),
-    ("Desligar o emulador de AWS", "heimdall lab --stop", "docker stop localstack moto"),
+    ("Ver as versões instaladas e se há imagem mais nova no registro", "studio doctor --versions", "python3 diagnostico.py --versoes"),
+    ("Diagnóstico completo (memória, disco, Docker e modelos)", "studio doctor", "python3 diagnostico.py"),
+    ("Ligar o emulador de AWS usado pelo Lab", "studio lab --start", "docker start localstack (ou docker start moto)"),
+    ("Desligar o emulador de AWS", "studio lab --stop", "docker stop localstack moto"),
 ]
 
 # Atalhos de teclado: um só atalho por ação, com a forma do macOS e a do Windows e Linux (Option vira Alt; Control vira Ctrl; o resto é igual).
@@ -757,7 +757,7 @@ def criar_token_envio() -> int:
         print("Não foi possível criar o token: " + "; ".join(e.get("message", "") for e in r.get("errors", [])))
         return 1
     _gravar_no_env("HEIMDALL_SUPORTE_TOKEN", r["result"]["value"])
-    print(f"Token criado com a permissão '{escolhido['name']}' e gravado no .env como HEIMDALL_SUPORTE_TOKEN (não é exibido). Rode: heimdall support --test")
+    print(f"Token criado com a permissão '{escolhido['name']}' e gravado no .env como HEIMDALL_SUPORTE_TOKEN (não é exibido). Rode: studio support --test")
     return 0
 
 
@@ -783,7 +783,7 @@ def main() -> int:
         proto, para = _v("--responder"), _v("--para")
         texto = " ".join(x for x in a if x not in ("--responder", "--para", proto, para))
         if proto.startswith("--") or not texto:
-            print('Uso: heimdall support --reply PROTOCOLO "texto da resposta"   (ou --reply - --to endereco "texto", para e-mails sem protocolo)')
+            print('Uso: studio support --reply PROTOCOLO "texto da resposta"   (ou --reply - --to endereco "texto", para e-mails sem protocolo)')
             return 2
         ok, msg = responder("" if proto == "-" else proto, texto, para)
         print(msg)
@@ -793,7 +793,7 @@ def main() -> int:
     if "--testar" in sys.argv:
         c = _conf()
         destino = c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE
-        reg, ok = enviar({"email": destino, "nome": "Teste do envio"}, "outro", "geral", "Teste do envio de e-mail do suporte, feito por heimdall support --test.")
+        reg, ok = enviar({"email": destino, "nome": "Teste do envio"}, "outro", "geral", "Teste do envio de e-mail do suporte, feito por studio support --test.")
         print(f"Protocolo {reg['protocolo']}: " + ("enviado para " + destino + ". Confira a caixa de entrada e o spam." if ok else "não enviado."))
         if not ok:
             print("Motivo: " + (reg.get("motivo") or "não informado"))

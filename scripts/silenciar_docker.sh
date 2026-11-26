@@ -9,7 +9,7 @@ if [ -f "$PASTA/settings-store.json" ]; then ARQ="$PASTA/settings-store.json"; C
 elif [ -f "$PASTA/settings.json" ]; then ARQ="$PASTA/settings.json"; CHAVE="openUIOnStartupDisabled"
 else echo "Não achei a configuração do Docker Desktop em $PASTA. Abra o Docker uma vez e tente de novo."; exit 1; fi
 if [ -z "$DOCKER_CONFIG_PASTA" ] && pgrep -x "Docker Desktop" >/dev/null 2>&1; then
-  echo "O Docker Desktop está aberto. Feche-o (menu do Docker, Quit Docker Desktop), rode este comando e abra de novo com: heimdall up"; exit 1
+  echo "O Docker Desktop está aberto. Feche-o (menu do Docker, Quit Docker Desktop), rode este comando e abra de novo com: studio up"; exit 1
 fi
 cp "$ARQ" "$ARQ.heimdall-bak" || exit 1
 python3 - "$ARQ" "$CHAVE" "$DESFAZER" <<'PYEOF' || { echo "Não consegui alterar. A cópia está em $ARQ.heimdall-bak"; exit 1; }

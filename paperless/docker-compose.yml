@@ -1,5 +1,5 @@
 # Paperless-ngx como motor do Studio Memory. Escuta só em 127.0.0.1:8023 (sem endereço público); o Memory fala com ele pela API.
-# Suba com: heimdall memory --paperless   (as variáveis vêm do .env da raiz do projeto)
+# Suba com: studio memory --paperless   (as variáveis vêm do .env da raiz do projeto)
 services:
   broker:
     image: docker.io/valkey/valkey:9-alpine

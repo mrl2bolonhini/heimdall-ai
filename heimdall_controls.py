@@ -387,11 +387,11 @@ LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data"
            "saude_painel": "Health", "jogos": "Games", "finance": "Finance", "controls": "Controls", "ingest": "Ingest"}
 # ação -> (rótulo, comando, o que faz). Só estas viram botão; o texto livre vai pelo terminal. Start e Stop têm código próprio.
 ACOES = {
-    "update": ("Update", "heimdall update", "Baixa a versão nova, sem reiniciar."),
-    "update_restart": ("Update e restart", "heimdall update --restart", "Baixa a versão nova e reinicia tudo."),
-    "restart": ("Restart", "heimdall restart", "Reinicia todos os serviços."),
-    "status": ("Status", "heimdall status", "Mostra o que está no ar."),
-    "doctor": ("Diagnóstico", "heimdall doctor", "Verifica memória, disco, Docker e Ollama."),
+    "update": ("Update", "studio update", "Baixa a versão nova, sem reiniciar."),
+    "update_restart": ("Update e restart", "studio update --restart", "Baixa a versão nova e reinicia tudo."),
+    "restart": ("Restart", "studio restart", "Reinicia todos os serviços."),
+    "status": ("Status", "studio status", "Mostra o que está no ar."),
+    "doctor": ("Diagnóstico", "studio doctor", "Verifica memória, disco, Docker e Ollama."),
 }
 
 

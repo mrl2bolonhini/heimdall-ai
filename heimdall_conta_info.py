@@ -83,7 +83,7 @@ INFO = {
         "oque": "Studio Flows: automações e agendamentos do Heimdall, como o resumo de e-mails e a chegada dos dados de saúde. Tecnologia: n8n.",
         "como": ["Entre pelo Cloudflare Access e depois pelo login próprio do n8n, que o programa não deixa desligar.",
                  "Abra o fluxo desejado para ver ou editar os passos.",
-                 "Mudanças nos fluxos do repositório são aplicadas pelo dono com heimdall flows."],
+                 "Mudanças nos fluxos do repositório são aplicadas pelo dono com studio flows."],
         "so_dono": True,
     },
     "status": {

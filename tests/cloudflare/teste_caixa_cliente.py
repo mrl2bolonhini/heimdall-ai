@@ -70,7 +70,7 @@ try:
     cx.iniciar({}, abrir=caixa_falsa([], []), gravar=lambda p: None)
     confere("start sem chave da Cloudflare falha", False)
 except RuntimeError as e:
-    confere("start sem chave da Cloudflare falha com mensagem clara", "heimdall cloudflare" in str(e))
+    confere("start sem chave da Cloudflare falha com mensagem clara", "studio cloudflare" in str(e))
 
 log = []
 confere("add devolve o token da pessoa", cx.criar_pessoa("ana", ENV, abrir=caixa_falsa([], log)) == "hc_ana")
@@ -80,7 +80,7 @@ try:
     cx.criar_pessoa("ana", {}, abrir=caixa_falsa([], []))
     confere("sem token de dono falha", False)
 except RuntimeError as e:
-    confere("sem token de dono falha com mensagem clara", "heimdall mailbox start" in str(e))
+    confere("sem token de dono falha com mensagem clara", "studio mailbox start" in str(e))
 
 with tempfile.TemporaryDirectory() as d:
     itens = [{"id": "1700000000000-aaaaaaaaaaaa", "usuario": "ana", "tipo": "saude", "dados": {"passos": 5}},

@@ -137,7 +137,7 @@ import re as _re2
 for rota in ("/", "/diario", "/semana", "/tendencias", "/sono", "/coracao", "/exames", "/documentos", "/receitas", "/laudos", "/consultas", "/sugestoes", "/anomalias", "/perfil", "/dados"):
     st, corpo, _ = pedir(rota, ck)
     txt = _re2.sub(r"<[^>]+>", " ", corpo)
-    confere(f"página {rota}: sem comando de terminal, sem 'não é diagnóstico' repetido e um só aviso no rodapé", "heimdall health" not in txt and "--labs" not in txt and txt.count("não substituem a avaliação") == 1
+    confere(f"página {rota}: sem comando de terminal, sem 'não é diagnóstico' repetido e um só aviso no rodapé", "studio health" not in txt and "--labs" not in txt and txt.count("não substituem a avaliação") == 1
             and "não é diagnóstico" not in txt.lower() and 'class="aviso"' not in corpo and not any(f"{n} aberta" in txt for g in ps.GRUPOS for n in [g[1]] + [x for _, x in g[2]]) and "Atalho:" not in txt, rota)
 for rota in ("/receitas", "/laudos", "/consultas", "/documentos", "/exames", "/anomalias", "/dados"):
     st, corpo, _ = pedir(rota, ck)

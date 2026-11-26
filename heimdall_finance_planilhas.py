@@ -78,7 +78,7 @@ def pg_planilhas(con, sess: dict, pasta: Path) -> tuple:
         corpo.append("<h2>Conjuntos</h2>" + tabela("Conjuntos de planilhas", ["Nome", "Tipo", "Linhas", "Última importação"], linhas, {2}))
     else:
         corpo.append("<p>Ainda não há conjuntos. Importe a primeira planilha acima.</p>")
-    corpo.append(f'<p class="sub">Você também pode soltar planilhas na pasta sheets, dentro da pasta de dados do Finance: a cada minuto o Heimdall importa o que entender e deixa as dúvidas aqui. No terminal: heimdall finance --folder.</p>')
+    corpo.append(f'<p class="sub">Você também pode soltar planilhas na pasta sheets, dentro da pasta de dados do Finance: a cada minuto o Heimdall importa o que entender e deixa as dúvidas aqui. No terminal: studio finance --folder.</p>')
     return "Planilhas", "".join(corpo)
 
 
@@ -242,7 +242,7 @@ def pg_emprestimos(con, categoria: str = "") -> tuple:
     titulo = fp.CATEGORIAS_CREDITO.get(categoria, "Dívidas e financiamentos")
     r = fp.resumo_emprestimos(con, categoria)
     if not r["itens"]:
-        return titulo, ('<p>Ainda não há dados aqui. O Heimdall cria esta aba sozinho quando encontra o tipo de crédito nos dados do Pluggy (heimdall finance --sync) ou numa planilha de dívidas '
+        return titulo, ('<p>Ainda não há dados aqui. O Heimdall cria esta aba sozinho quando encontra o tipo de crédito nos dados do Pluggy (studio finance --sync) ou numa planilha de dívidas '
                         '(com colunas como contrato, saldo devedor, parcela e taxa) importada em Planilhas.</p><p><a href="/planilhas">Ir para Planilhas</a></p>')
     corpo = [f'<p>{len(r["itens"])} contrato(s): saldo devedor total de {e(fn.brl(r["saldo"]))}'
              + (f' e parcelas que somam {e(fn.brl(r["parcelas"]))} por mês' if r["parcelas"] else "") + ".</p>"]

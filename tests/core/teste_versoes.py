@@ -56,7 +56,7 @@ sem = {i["nome"]: i for i in v.coletar(atualizacoes=False, run=falso())}
 confere("sem rede não compara", all(i["estado"] == "" for i in sem.values()))
 confere("sem Docker não quebra e ainda mostra o resto", {i["nome"] for i in v.coletar(run=falso(sem_docker=True))} >= {"macOS", "Ollama", "Heimdall-ai (código)"})
 linhas = "\n".join(v.texto(list(it.values())))
-confere("texto: avisa o que tem imagem mais nova", "heimdall restart --update" in linhas and "Open WebUI (chat): 0.6.9" in linhas, linhas)
+confere("texto: avisa o que tem imagem mais nova", "studio restart --update" in linhas and "Open WebUI (chat): 0.6.9" in linhas, linhas)
 av = v.avisos(list(it.values()))
 confere("aviso: imagem mais nova no registro (Open WebUI)", any("Open WebUI" in a and "mais nova no registro" in a for a in av), str(av))
 confere("aviso: contêiner rodando em imagem antiga (n8n)", any("n8n" in a and "imagem antiga" in a for a in av), str(av))

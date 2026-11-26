@@ -2,7 +2,7 @@
 """Confere o app de barra de menus do Mac sem compilar (aqui não há Swift): arquivos, plist, chaves balanceadas, regras de segurança e do projeto.
 
     python3 tests/agent/teste_app_mac.py
-A compilação de verdade acontece no Mac: heimdall app.
+A compilação de verdade acontece no Mac: studio app.
 """
 import sys as _sys
 from pathlib import Path as _Path
@@ -46,16 +46,16 @@ confere("Swift: Imprimir usa printOperation do WebKit (NSView não tem print)", 
 confere("Swift: reativa pelo sistema se o app não ficar ativo e tem diagnóstico das janelas nos dois menus", "reativarPeloSistema" in swift and "openApplication(at:" in swift and swift.count("Diagnóstico das janelas") >= 3 and "func diagnostico" in swift)
 confere("app em português: Info.plist com pt-BR e o script cria pt-BR.lproj (itens do sistema nos menus saem em português)", pl.get("CFBundleDevelopmentRegion") == "pt-BR" and "pt-BR" in pl.get("CFBundleLocalizations", []) and "pt-BR.lproj" in open("scripts/construir_app_mac.sh", encoding="utf-8").read())
 confere("Swift: atalhos dos sites em ordem alfabética: Account Command+0; Chat 1, Controls 2, Finance 3, Games 4, Health 5, Lab 6, Learn 7, News 8, Notes 9; Status e Flows sem atalho; menus ordenados", "func teclaDoSite" in swift and 'if nome == "Account" { return "0" }' in swift and '.filter { $0 != "Account" && $0 != "Flows" }.sorted()' in swift and "teclaDoSite(par.0)" in swift and "localizedStandardCompare" in swift)
-confere("Swift: Learn no menu Abrir e comando para cadastrar as pastas de estudo (heimdall learn --sync) nos dois menus", '("learn", "Learn")' in swift and 'func sincronizarLearn' in swift and '["learn", "--sync"]' in swift and swift.count("sincronizarLearn") >= 3)
+confere("Swift: Learn no menu Abrir e comando para cadastrar as pastas de estudo (studio learn --sync) nos dois menus", '("learn", "Learn")' in swift and 'func sincronizarLearn' in swift and '["learn", "--sync"]' in swift and swift.count("sincronizarLearn") >= 3)
 confere("Swift: o zoom normal saiu de Command+0 (que abre o Account) e foi para Option+Command+0", '"Tamanho normal", #selector(zoomNormal), "0")' in swift and "[.command, .option]" in swift)
 confere("Swift: menu Heimdall com Sobre, Configurações (Command+vírgula), Ocultar e Sair", all(t in swift for t in ('"Sobre o Heimdall"', '"Configurações…", #selector(abrirConfiguracoes), ","', '"Ocultar o Heimdall"', '"Mostrar tudo"', '"Sair do Heimdall"')))
 confere("Swift: Configurações com serviço inicial, iniciar com o Mac (LaunchAgent) e ligar serviços ao abrir; também no menu de estado", all(t in swift for t in ("mudouServicoInicial", "mudouEntrada", "mudouLigar", "agenteDeEntrada", '"servicoInicial"', '"ligarAoAbrir"', "setAccessibilityLabel(\"Serviço que abre ao iniciar o app\")")) and swift.count("abrirConfiguracoes") >= 3)
-confere("Swift: o LaunchAgent das Configurações é o mesmo do heimdall app --entrar (mesmo rótulo e caminho)", "tech.heimdall.menu" in swift and "tech.heimdall.menu" in open("scripts/construir_app_mac.sh", encoding="utf-8").read() and "RunAtLoad" in swift)
+confere("Swift: o LaunchAgent das Configurações é o mesmo do studio app --entrar (mesmo rótulo e caminho)", "tech.heimdall.menu" in swift and "tech.heimdall.menu" in open("scripts/construir_app_mac.sh", encoding="utf-8").read() and "RunAtLoad" in swift)
 confere("Info.plist: só https (sem exceção de rede local nem carregamento aberto)", "NSAppTransportSecurity" not in pl)
 confere("Swift: todos os sites abrem pelos endereços públicos (Cloudflare Access), não por localhost", '["urls", "--public"]' in swift and "localhost" not in swift)
 confere("Swift: abre o Chat sozinho uma vez, fechar a janela não encerra o app e o Dock reabre o Chat", "abrirJanelaInicial" in swift and "applicationShouldTerminateAfterLastWindowClosed" in swift and "return false" in swift and "applicationShouldHandleReopen" in swift)
 confere("Swift: itens habilitados pelo estado (Ligar só com tudo desligado; Reiniciar e Parar só com tudo ligado)", "validateMenuItem" in swift and "return !ocupado && !todosLigados()" in swift and "return !ocupado && algumLigado()" in swift)
-confere("Swift: o estado olha a porta de cada serviço (lista de heimdall urls) e mostra quem está fora do ar", 'rodarHeimdall(["urls"])' in swift and "func situacao()" in swift and "Fora do ar" in swift and "de \\(abertos.count + fechados.count) ligados" in swift)
+confere("Swift: o estado olha a porta de cada serviço (lista de studio urls) e mostra quem está fora do ar", 'rodarHeimdall(["urls"])' in swift and "func situacao()" in swift and "Fora do ar" in swift and "de \\(abertos.count + fechados.count) ligados" in swift)
 confere("Swift: linhas de estado e grupos Abrir serviço, Nuvem e Celulares no menu de estado", all(t in swift for t in ("menuNeedsUpdate", 'grupo(menu, "Abrir serviço")', 'grupo(menu, "Nuvem (Cloudflare)")', 'grupo(menu, "Celulares")')))
 confere("Swift: o app só lê interruptores e a porta do .env, nunca chaves", all(c in swift for c in ("HEIMDALL_NUVEM", "HEIMDALL_CAIXA", "HEIMDALL_CONTROLS_PORT")) and "TOKEN" not in swift)
 confere("Swift: rótulo de acessibilidade na barra de menus", "setAccessibilityLabel" in swift)

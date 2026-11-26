@@ -103,7 +103,7 @@ def configurado() -> str:
     """"" se há token e conta; senão o que falta."""
     env = {**_env(), **{k: v for k, v in os.environ.items() if k.startswith(("HEIMDALL_CLOUDFLARE", "CLOUDFLARE"))}}
     if not env.get("HEIMDALL_CLOUDFLARE_ACCESS_TOKEN"):
-        return "falta HEIMDALL_CLOUDFLARE_ACCESS_TOKEN no .env (heimdall env --set HEIMDALL_CLOUDFLARE_ACCESS_TOKEN)"
+        return "falta HEIMDALL_CLOUDFLARE_ACCESS_TOKEN no .env (studio env --set HEIMDALL_CLOUDFLARE_ACCESS_TOKEN)"
     if not re.fullmatch(r"[0-9a-f]{32}", env.get("CLOUDFLARE_ACCOUNT_ID", "")):
         return "falta CLOUDFLARE_ACCOUNT_ID (32 letras e números) em Ajustes"
     return ""

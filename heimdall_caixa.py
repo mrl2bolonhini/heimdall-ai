@@ -78,7 +78,7 @@ def pedido(metodo, rota, corpo=None, token=None, extra=None, env=None, abrir=Non
 def _dono(env):
     t = env.get("HEIMDALL_CAIXA_TOKEN", "")
     if not t:
-        raise RuntimeError("falta o token de dono: rode heimdall mailbox start")
+        raise RuntimeError("falta o token de dono: rode studio mailbox start")
     return t
 
 
@@ -86,7 +86,7 @@ def iniciar(env=None, abrir=None, gravar=None) -> str:
     env = _env() if env is None else env
     cf = env.get("CLOUDFLARE_API_TOKEN", "")
     if not cf:
-        raise RuntimeError("falta a chave da Cloudflare: rode heimdall cloudflare")
+        raise RuntimeError("falta a chave da Cloudflare: rode studio cloudflare")
     r = pedido("POST", "/v1/iniciar", extra={"x-cf-token": cf}, env=env, abrir=abrir)
     token = r.get("token", "")
     if not token:
@@ -175,7 +175,7 @@ def main(argv=None) -> int:
     env = _env()
     try:
         if cmd == "status":
-            print("Caixa de correio: " + ("LIGADA." if ativa(env) else "DESLIGADA (HEIMDALL_CAIXA=1 liga, depois de rodar heimdall mailbox start)."))
+            print("Caixa de correio: " + ("LIGADA." if ativa(env) else "DESLIGADA (HEIMDALL_CAIXA=1 liga, depois de rodar studio mailbox start)."))
             if env.get("HEIMDALL_CAIXA_TOKEN"):
                 try:
                     n = len(pedido("GET", "/v1/entrada", token=env["HEIMDALL_CAIXA_TOKEN"], env=env).get("itens", []))
@@ -184,10 +184,10 @@ def main(argv=None) -> int:
                     print(f"Problema: {e}.")
                     return 1
             else:
-                print("Ainda sem token de dono. Rode: heimdall mailbox start")
+                print("Ainda sem token de dono. Rode: studio mailbox start")
         elif cmd == "start":
             iniciar(env)
-            print("Token de dono criado e gravado no .env. Para ligar: heimdall env --set HEIMDALL_CAIXA 1")
+            print("Token de dono criado e gravado no .env. Para ligar: studio env --set HEIMDALL_CAIXA 1")
         elif cmd == "add" and len(a) == 2:
             t = criar_pessoa(a[1], env)
             if _copiar(t):
@@ -199,7 +199,7 @@ def main(argv=None) -> int:
             print(f"Pessoa {a[1]}: {n} token(s) revogado(s).")
         elif cmd == "pull":
             if not ativa(env):
-                print("Caixa desligada: nada a fazer. Para ligar: heimdall env --set HEIMDALL_CAIXA 1")
+                print("Caixa desligada: nada a fazer. Para ligar: studio env --set HEIMDALL_CAIXA 1")
                 return 0
             r = puxar(env, tratar=lambda it: tratar_padrao(it, env))
             print(f"Recebidos {r['recebidos']}, apagados da caixa {r['apagados']}, falhas {r['falhas']}. Cópias em db/mailbox/.")

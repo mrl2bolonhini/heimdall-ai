@@ -37,13 +37,13 @@ def main() -> None:
         modo = args.pop(0)[2:]
     pergunta = " ".join(args).strip()
     if not pergunta:
-        sys.exit('Escreva a pergunta, por exemplo: heimdall ask "o que é um índice no banco de dados?"')
+        sys.exit('Escreva a pergunta, por exemplo: studio ask "o que é um índice no banco de dados?"')
     try:
         resposta, quem, aviso = perguntar_ao_modelo(pergunta, modo)
     except RuntimeError as ex:
-        sys.exit(f"A nuvem não respondeu ({ex}). Tente sem --cloud para usar o modelo local, ou rode heimdall cloudai.")
+        sys.exit(f"A nuvem não respondeu ({ex}). Tente sem --cloud para usar o modelo local, ou rode studio cloudai.")
     except Exception as ex:  # noqa: BLE001  (modelo local desligado, LiteLLM fora do ar...)
-        sys.exit(f"O modelo local não respondeu ({type(ex).__name__}). Confira com heimdall status.")
+        sys.exit(f"O modelo local não respondeu ({type(ex).__name__}). Confira com studio status.")
     if aviso:
         print(aviso)
     print(resposta)

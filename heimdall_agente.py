@@ -1503,7 +1503,7 @@ def _ler_documentos() -> None:
         falhos = [r for r in rs if not r.get("ok")]
         if novos:
             triagem.enviar_bark({"title": "Saúde: documento para conferir", "group": "saude", "level": "active",
-                                 "body": f"{len(novos)} documento(s) lido(s). Para ouvir o que foi lido: heimdall health --labs pending."})
+                                 "body": f"{len(novos)} documento(s) lido(s). Para ouvir o que foi lido: studio health --labs pending."})
         if falhos:
             triagem.enviar_bark({"title": "Saúde: documento não lido", "group": "saude", "level": "active",
                                  "body": f"{len(falhos)} documento(s) não puderam ser lidos e estão na pasta health/review, com o motivo."})

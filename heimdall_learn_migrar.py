@@ -221,7 +221,7 @@ def texto_resumo(r: dict) -> str:
     linhas += [f"  {pasta}: {n}" for pasta, n in sorted(r["por_pasta"].items())]
     linhas += [f"Aviso: {a}" for a in r["avisos"][:20]]
     if not r["aplicado"]:
-        linhas.append("Nada foi gravado. Para importar: heimdall learn --migrate --apply")
+        linhas.append("Nada foi gravado. Para importar: studio learn --migrate --apply")
     else:
         linhas.append("Nada foi apagado: as notas e os áudios originais continuam no cofre (brain/).")
     return "\n".join(linhas)

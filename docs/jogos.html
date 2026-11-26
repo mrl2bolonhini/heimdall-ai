@@ -34,7 +34,7 @@
 <h1>Studio Games</h1>
 <p>Jogos leves para jogar no navegador, pensados para leitor de tela. Tudo é botão, campo de texto ou lista, e cada jogada é descrita em voz alta por uma região aria-live. O servidor não guarda nada: só entrega as páginas.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
-<ol><li>No próprio computador: <code>heimdall games</code> abre o endereço público pelo Cloudflare Access; <code>heimdall games --local</code> (ou <code>-L</code>) abre http://localhost:8014 direto neste Mac, depois de subir o sistema.</li>
+<ol><li>No próprio computador: <code>studio games</code> abre o endereço público pelo Cloudflare Access; <code>studio games --local</code> (ou <code>-L</code>) abre http://localhost:8014 direto neste Mac, depois de subir o sistema.</li>
 <li>De fora de casa: games.heimdall-ai.tech, pelo túnel Cloudflare (veja Colocar no ar, abaixo).</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Lab, do Notas, do News e do Saúde.</li></ol></section>
 <section aria-labelledby="lista"><h2 id="lista">Os jogos</h2>
@@ -75,14 +75,14 @@
 <h3>Sons de apoio</h3>
 <p><strong>Sons de apoio:</strong> todos os jogos (exceto o Arqueiro, que tem o seu próprio som) tocam sons curtos como recurso de acessibilidade: ficha ao apostar, carta ao dar, a bola da roleta, os rolos do caça-níqueis, acerto e erro, o tiro e a água da batalha naval, a peça e a captura do xadrez, os passos no gramado e um som para ganhou, perdeu, empate ou estouro. A fala espera o som terminar. O botão Sons, no começo de cada jogo, liga e desliga tudo, e a escolha fica gravada no navegador.</p>
 <p>As aventuras A Caverna dos Ecos, A Mansão dos Relógios, Estação Orion e O Templo Submerso rodam no mesmo motor (games/motor.js) e têm três níveis, que você escolhe antes de recomeçar: <strong>fácil</strong> (dicas à vontade e sem limite de passos), <strong>normal</strong> (3 dicas e limite de passos folgado) e <strong>difícil</strong> (sem dicas, limite apertado, enigmas a mais e perigos que acabam a partida, como andar no escuro). Comandos: olhar, ir norte/sul/leste/oeste/subir/descer, pegar, largar, examinar, usar ITEM, usar ITEM em ALGO, dar ITEM a ALGUÉM, falar com ALGUÉM, digitar CÓDIGO em ALGO, empurrar, puxar, girar, abrir, inventário, objetivo, mapa, dica, tempo, salvar, carregar e recomeçar. Salvar guarda a partida só neste navegador.</p>
-<p>Cada jogo está em um arquivo da pasta games/, em JavaScript sem dependências. As histórias do motor são só dados (games/hist_*.js), então dá para criar a sua copiando uma delas; o teste tests/games/teste_historias.js confere as referências e joga a solução em cada nível. Para abrir um jogo direto: <code>heimdall games --play xadrez</code>.</p></section>
+<p>Cada jogo está em um arquivo da pasta games/, em JavaScript sem dependências. As histórias do motor são só dados (games/hist_*.js), então dá para criar a sua copiando uma delas; o teste tests/games/teste_historias.js confere as referências e joga a solução em cada nível. Para abrir um jogo direto: <code>studio games --play xadrez</code>.</p></section>
 <section aria-labelledby="terceiros"><h2 id="terceiros">Jogos de terceiros</h2>
 <p>O StudioLibre só lista jogos de terceiros que tenham versão em português ou permitam tradução. Por isso o Enigma (em inglês e espanhol) e o PlayAural (sem português) foram retirados, e hoje nenhum jogo de terceiros é instalado. Se aparecer um que atenda a esse critério, ele pode ser listado em HEIMDALL_JOGOS_EXTRAS, como descrito em Outros jogos, abaixo.</p></section>
 <section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
-<ol><li>Atualize e reinicie: <code>heimdall update --restart</code>. O servidor sobe sozinho quando há senha e código no .env.</li>
+<ol><li>Atualize e reinicie: <code>studio update --restart</code>. O servidor sobe sozinho quando há senha e código no .env.</li>
 <li>Conferir: <code>curl -s http://localhost:8014/saude</code> deve responder ok.</li>
 <li>Para acessar de fora, no painel da Cloudflare (Zero Trust, Redes, Túneis, o seu túnel, Public Hostnames), adicione o nome games.heimdall-ai.tech apontando para o serviço HTTP localhost:8014. O DNS é criado junto.</li>
-<li>Se algo falhar: <code>heimdall logs --service games</code></li></ol></section>
+<li>Se algo falhar: <code>studio logs --service games</code></li></ol></section>
 <section aria-labelledby="mais"><h2 id="mais">Extras de terceiros</h2>
 <p>O portal também lista, no item Extras do menu Mais, jogos de terceiros que você hospeda à parte. Para listar um jogo hospedado por você, e só se ele tiver versão em português ou permitir tradução, ponha-o em HEIMDALL_JOGOS_EXTRAS no .env, no formato Nome|endereço|descrição, separados por ponto e vírgula, e reinicie. Só endereços http e https são aceitos.</p></section>
 <section aria-labelledby="seg"><h2 id="seg">Segurança</h2>

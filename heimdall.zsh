@@ -1,8 +1,8 @@
 # Comando unificado do ecossistema Heimdall-ai (zsh). Carregado pelo ~/.zshrc com:
 #     source ~/heimdall-ai/heimdall.zsh
-# Pasta do projeto: HEIMDALL_DIR (padrão ~/heimdall-ai). Digite "heimdall" sem nada para ver todos os comandos.
+# Pasta do projeto: STUDIO_DIR ou HEIMDALL_DIR (padrão ~/heimdall-ai). Digite "studio" sem nada para ver todos os comandos. O nome antigo, heimdall, continua funcionando como apelido.
 
-: "${HEIMDALL_DIR:=$HOME/heimdall-ai}"
+: "${HEIMDALL_DIR:=${STUDIO_DIR:-$HOME/heimdall-ai}}"
 
 _heimdall_py() {  # script Python do projeto, com o Python do venv, na pasta do projeto, sem mudar a pasta do seu terminal
   local py="$HEIMDALL_DIR/venv/bin/python"
@@ -55,7 +55,7 @@ _heimdall_web() {  # $1 nome, $2 chave (LAB, NOTAS, NEWS, SAUDE_PAINEL, JOGOS, F
   _heimdall_open "$nome" "https://$host$caminho"
 }
 
-_heimdall_emulador() {  # heimdall lab --start|--stop: liga ou desliga o emulador de AWS (sob demanda, para poupar memória)
+_heimdall_emulador() {  # studio lab --start|--stop: liga ou desliga o emulador de AWS (sob demanda, para poupar memória)
   local c achou="" i
   case "$1" in
     start)
@@ -63,18 +63,18 @@ _heimdall_emulador() {  # heimdall lab --start|--stop: liga ou desliga o emulado
         if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$c"; then achou="$c"; break; fi
       done
       if [ -z "$achou" ]; then
-        echo "Ainda não existe emulador de AWS criado. Rode heimdall restart uma vez: na primeira subida ele é criado."
+        echo "Ainda não existe emulador de AWS criado. Rode studio restart uma vez: na primeira subida ele é criado."
         return 1
       fi
-      docker start "$achou" > /dev/null || { echo "Não consegui ligar o emulador de AWS ($achou). Confira se o Docker está no ar: heimdall containers"; return 1; }
+      docker start "$achou" > /dev/null || { echo "Não consegui ligar o emulador de AWS ($achou). Confira se o Docker está no ar: studio containers"; return 1; }
       for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-        if curl -s -o /dev/null -m 2 http://127.0.0.1:4566/ 2>/dev/null; then echo "Emulador de AWS ($achou) no ar em http://localhost:4566. Para desligar: heimdall lab --stop"; return 0; fi
+        if curl -s -o /dev/null -m 2 http://127.0.0.1:4566/ 2>/dev/null; then echo "Emulador de AWS ($achou) no ar em http://localhost:4566. Para desligar: studio lab --stop"; return 0; fi
         sleep 2
       done
       echo "O emulador de AWS ($achou) foi ligado, mas ainda não respondeu. Veja: docker logs --tail 30 $achou"; return 1 ;;
     stop)
       docker stop localstack moto > /dev/null 2>&1
-      echo "Emulador de AWS desligado. Para ligar de novo: heimdall lab --start" ;;
+      echo "Emulador de AWS desligado. Para ligar de novo: studio lab --start" ;;
   esac
 }
 
@@ -147,21 +147,21 @@ _heimdall_ajuda_arquivo() { echo "$HEIMDALL_DIR/guides/heimdall_ajuda.txt"; }
 
 _heimdall_overview() {  # lista os comandos, um por linha
   echo "Uso: heimdall COMANDO [--opção ...]. Para as variações de um comando: heimdall COMANDO --help (ou -h)."
-  echo "Todas as opções têm a forma curta de uma letra. Documento completo no navegador: heimdall help --doc"
+  echo "Todas as opções têm a forma curta de uma letra. Documento completo no navegador: studio help --doc"
   echo
   awk -F' [|] ' '/^@ /{sub(/^@ /,"",$1); printf "  %-12s %s\n",$1,$2}' "$(_heimdall_ajuda_arquivo)"
 }
 
 _heimdall_usage() {  # ajuda de um comando só
   local out
-  out="$(awk -v n="$1" '/^@ /{split($0,a," [|] "); nm=substr(a[1],3); if(nm==n){p=1; print "heimdall " nm " - " a[2]; next} else p=0} p' "$(_heimdall_ajuda_arquivo)")"
-  if [ -z "$out" ]; then echo "Sem ajuda para: $1. Veja os comandos com: heimdall help"; return 1; fi
+  out="$(awk -v n="$1" '/^@ /{split($0,a," [|] "); nm=substr(a[1],3); if(nm==n){p=1; print "studio " nm " - " a[2]; next} else p=0} p' "$(_heimdall_ajuda_arquivo)")"
+  if [ -z "$out" ]; then echo "Sem ajuda para: $1. Veja os comandos com: studio help"; return 1; fi
   printf '%s\n' "$out"
 }
 
 _heimdall_doc() {  # o Safari recusa file:// fora da área permitida; por isso o documento é servido por um servidor local mínimo (porta 8099, só 127.0.0.1)
   local dir="$HEIMDALL_DIR/docs" porta=8099
-  if [ ! -f "$dir/comando-heimdall.html" ]; then echo "Não achei $dir/comando-heimdall.html. Rode: heimdall update   (ou: heimdall docs)"; return 1; fi
+  if [ ! -f "$dir/comando-heimdall.html" ]; then echo "Não achei $dir/comando-heimdall.html. Rode: studio update   (ou: studio docs)"; return 1; fi
   if ! nc -z 127.0.0.1 "$porta" > /dev/null 2>&1; then
     local py; py="$(command -v python3)"
     ( cd "$dir" && nohup "$py" -m http.server "$porta" --bind 127.0.0.1 > /dev/null 2>&1 & ) > /dev/null 2>&1
@@ -170,7 +170,7 @@ _heimdall_doc() {  # o Safari recusa file:// fora da área permitida; por isso o
   _heimdall_open "Documento do comando heimdall" "http://localhost:$porta/comando-heimdall.html"
 }
 
-_heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos, atestados, laudos e consultas
+_heimdall_labs() {  # studio health --labs: exames, receitas, encaminhamentos, atestados, laudos e consultas
   local _sub="$1"; [ $# -gt 0 ] && shift
   _heimdall_tr "--without=--sem
 --date=--data
@@ -208,7 +208,7 @@ _heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos,
         snooze) _heimdall_py heimdall_clinico.py --adiar "${_HA[2]:-0}" --dias "${_HA[3]:-14}" ;;
         answer) _heimdall_py heimdall_clinico.py --responder "${_HA[2]:-0}" --texto "${(j: :)_HA[3,-1]}" ;;
         "") _heimdall_py heimdall_clinico.py --sugestoes ;;
-        *) echo "Use: heimdall health --labs suggestions [refresh|all|accept ID [--date AAAA-MM-DD] [--time HH:MM]|dismiss ID|snooze ID DAYS|answer ID TEXT]" ;;
+        *) echo "Use: studio health --labs suggestions [refresh|all|accept ID [--date AAAA-MM-DD] [--time HH:MM]|dismiss ID|snooze ID DAYS|answer ID TEXT]" ;;
       esac ;;
     profile)   # perfil de saúde: condições, cirurgias, alergias, convênio
       case "${_HA[1]:-}" in
@@ -219,7 +219,7 @@ _heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos,
         remove) _heimdall_py heimdall_clinico.py --perfil-rm "${_HA[2]:-0}" ;;
         done) _heimdall_py heimdall_clinico.py --perfil-concluir ;;
         "") _heimdall_py heimdall_clinico.py --perfil ;;
-        *) echo "Use: heimdall health --labs profile [add condition|surgery|allergy|insurance|doctor|other TEXT|remove ID|done]" ;;
+        *) echo "Use: studio health --labs profile [add condition|surgery|allergy|insurance|doctor|other TEXT|remove ID|done]" ;;
       esac ;;
     appointments) _heimdall_py heimdall_exames.py --consultas ;;
     appointment) _heimdall_py heimdall_exames.py --consulta-nova "${_HA[@]}" ;;
@@ -227,11 +227,11 @@ _heimdall_labs() {  # heimdall health --labs: exames, receitas, encaminhamentos,
     documents) _heimdall_py heimdall_exames.py --documentos ;;
     token) _heimdall_py heimdall_exames.py --gerar-token ;;
     --open) _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health /exames ;;
-    *) echo "Use: heimdall health --labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|certificates|reports|requests|suggestions|profile|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
+    *) echo "Use: studio health --labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|certificates|reports|requests|suggestions|profile|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
   esac
 }
 
-heimdall() {
+studio() {
   local cmd="$1"
   [ $# -gt 0 ] && shift
   if [ ! -d "$HEIMDALL_DIR" ] && [ "$cmd" != "dir" ]; then
@@ -269,7 +269,7 @@ heimdall() {
     stop)
       echo "Parando os serviços do Mac (o Docker continua)..."
       _heimdall_stop_ports
-      echo "Parado. Para subir de novo: heimdall up" ;;
+      echo "Parado. Para subir de novo: studio up" ;;
     status) _heimdall_sh subir.sh --status ;;
     logs)
       case "$1" in
@@ -282,7 +282,7 @@ heimdall() {
             finance) a=finance ;; mcp-public) a=mcp_public ;; mcp-data) a=mcp_dados ;; *) a="$2" ;;
           esac
           _heimdall_sh subir.sh --log "$a" ;;
-        *) echo "Use: heimdall logs [--list] [--clean] [--service NOME]"; return 1 ;;
+        *) echo "Use: studio logs [--list] [--clean] [--service NOME]"; return 1 ;;
       esac ;;
     containers) docker ps "$@" ;;
     models) ollama list "$@" ;;
@@ -298,7 +298,7 @@ heimdall() {
         --models) shift; _heimdall_sh scripts/importar_modelos_webui.sh --models "$@" ;;
         --tools) shift; _heimdall_sh scripts/importar_modelos_webui.sh --tools "$@" ;;
         --import) shift; _heimdall_sh scripts/importar_modelos_webui.sh "$@" ;;
-        *) echo "Use: heimdall chat [--diagnose] [--password] [--email] [--delete-user] [--tools] [--models] [--import] [--check]"; return 1 ;;
+        *) echo "Use: studio chat [--diagnose] [--password] [--email] [--delete-user] [--tools] [--models] [--import] [--check]"; return 1 ;;
       esac ;;
     notes)
       case "$1" in
@@ -306,7 +306,7 @@ heimdall() {
         --clean-mirrors) shift; _heimdall_py limpar_espelhos.py "$@" ;;
         --clean-private) shift; _heimdall_py limpar_privadas.py "$@" ;;
         --move-old) shift; _heimdall_tr "--run=--executar" "$@"; _heimdall_py mover_notas_antigas.py "${_HA[@]}" ;;
-        *) echo "Use: heimdall notes [--clean-mirrors] [--clean-private] [--move-old [--run]]"; return 1 ;;
+        *) echo "Use: studio notes [--clean-mirrors] [--clean-private] [--move-old [--run]]"; return 1 ;;
       esac ;;
     news)
       case "$1" in
@@ -321,7 +321,7 @@ heimdall() {
         --start) _heimdall_emulador start ;;
         --stop) _heimdall_emulador stop ;;
         "") _heimdall_web "Studio Lab" LAB 8010 lab ;;
-        *) echo "Use: heimdall lab [--local] [--start] [--stop]"; return 1 ;;
+        *) echo "Use: studio lab [--local] [--start] [--stop]"; return 1 ;;
       esac ;;
     health)
       case "$1" in
@@ -362,21 +362,21 @@ heimdall() {
         "") _heimdall_web "Studio Learn" LEARN 8019 learn ;;
         -s|--sync) _heimdall_py heimdall_learn_dados.py --sincronizar ;;
         -m|--migrate) shift; _heimdall_tr "--apply=--aplicar" "$@"; _heimdall_py heimdall_learn_migrar.py "${_HA[@]}" ;;
-        *) echo "Use: heimdall learn [--sync] [--migrate [--apply]] [--local]"; return 1 ;;
+        *) echo "Use: studio learn [--sync] [--migrate [--apply]] [--local]"; return 1 ;;
       esac ;;
     games)
       case "$1" in
         "") _heimdall_web "Studio Games" JOGOS 8014 games ;;
         --play) _heimdall_web "Jogo $2" JOGOS 8014 games "/jogo/$2" ;;
-        --list) printf '%s\n' "2048 (heimdall games --play 2048)" "Arqueiro de áudio (heimdall games --play arqueiro)" "Bacará (heimdall games --play bacara)" "Batalha naval (heimdall games --play naval)" "Blackjack (heimdall games --play blackjack)" "Caça-níqueis (heimdall games --play cacaniqueis)" "Campo minado (heimdall games --play minas)" "A Caverna dos Ecos (heimdall games --play caverna)" "Cinco letras (heimdall games --play cincoletras)" "Estação Orion (heimdall games --play orion)" "O Farol Apagado (heimdall games --play aventura)" "Forca (heimdall games --play forca)" "Gramado (heimdall games --play gramado)" "Jogo da velha (heimdall games --play velha)" "Labirinto (heimdall games --play labirinto)" "A Mansão dos Relógios (heimdall games --play relogios)" "Número secreto (heimdall games --play numero)" "Paciência (heimdall games --play paciencia)" "Poker caribenho (heimdall games --play caribenho)" "Poker Texas hold'em (heimdall games --play poker)" "Roleta (heimdall games --play roleta)" "Senha (heimdall games --play senha)" "Sonar (heimdall games --play sonar)" "Sudoku (heimdall games --play sudoku)" "O Templo Submerso (heimdall games --play templo)" "A Travessia das Três Provas (heimdall games --play escolhas)" "Vilarejo Sitiado (heimdall games --play vilarejo)" "Xadrez (heimdall games --play xadrez)" ;;
-        *) echo "Use: heimdall games [--play JOGO] [--list]"; return 1 ;;
+        --list) printf '%s\n' "2048 (studio games --play 2048)" "Arqueiro de áudio (studio games --play arqueiro)" "Bacará (studio games --play bacara)" "Batalha naval (studio games --play naval)" "Blackjack (studio games --play blackjack)" "Caça-níqueis (studio games --play cacaniqueis)" "Campo minado (studio games --play minas)" "A Caverna dos Ecos (studio games --play caverna)" "Cinco letras (studio games --play cincoletras)" "Estação Orion (studio games --play orion)" "O Farol Apagado (studio games --play aventura)" "Forca (studio games --play forca)" "Gramado (studio games --play gramado)" "Jogo da velha (studio games --play velha)" "Labirinto (studio games --play labirinto)" "A Mansão dos Relógios (studio games --play relogios)" "Número secreto (studio games --play numero)" "Paciência (studio games --play paciencia)" "Poker caribenho (studio games --play caribenho)" "Poker Texas hold'em (studio games --play poker)" "Roleta (studio games --play roleta)" "Senha (studio games --play senha)" "Sonar (studio games --play sonar)" "Sudoku (studio games --play sudoku)" "O Templo Submerso (studio games --play templo)" "A Travessia das Três Provas (studio games --play escolhas)" "Vilarejo Sitiado (studio games --play vilarejo)" "Xadrez (studio games --play xadrez)" ;;
+        *) echo "Use: studio games [--play JOGO] [--list]"; return 1 ;;
       esac ;;
     controls)
       case "$1" in
         ""|--open)
           case "$2" in terminal) pg=/terminal ;; services) pg=/servicos ;; maintenance) pg=/manutencao ;; settings) pg=/ajustes ;; "") pg="" ;; *) pg="/$2" ;; esac
           _heimdall_web "Studio Controls" CONTROLS 8017 controls "$pg" ;;
-        *) echo "Use: heimdall controls [--open [terminal|services|settings|maintenance]] [--local]"; return 1 ;;
+        *) echo "Use: studio controls [--open [terminal|services|settings|maintenance]] [--local]"; return 1 ;;
       esac ;;
     finance)
       case "$1" in
@@ -522,7 +522,7 @@ heimdall() {
         --basic) shift; _heimdall_sh scripts/instalar_fluxos_n8n.sh "$@" ;;
         --privacy) shift; _heimdall_sh scripts/instalar_monitor_privacidade.sh "$@" ;;
         --email) shift; _heimdall_sh scripts/instalar_email_oficial.sh "$@" ;;
-        *) echo "Use: heimdall flows [--advanced] [--basic] [--privacy] [--email]"; return 1 ;;
+        *) echo "Use: studio flows [--advanced] [--basic] [--privacy] [--email]"; return 1 ;;
       esac ;;
     hook) _heimdall_tr "--install=-
 --remove=--remover" "$@"; _heimdall_sh scripts/instalar_hook_gitops.sh "${_HA[@]}" ;;
@@ -532,7 +532,7 @@ heimdall() {
         "") ;;
         --restart|-r) restart=1 ;;
         --app|-a) restart=1; forcar_app=1 ;;
-        *) echo "Opção desconhecida: $1. Use: heimdall update [--restart | --app]"; return 1 ;;
+        *) echo "Opção desconhecida: $1. Use: studio update [--restart | --app]"; return 1 ;;
       esac
       branch="$(git -C "$HEIMDALL_DIR" rev-parse --abbrev-ref HEAD)"
       antes="$(git -C "$HEIMDALL_DIR" rev-parse HEAD)"
@@ -544,16 +544,16 @@ heimdall() {
         # O app de barra de menus só é compilado de novo quando a atualização mudou o app (macapp/ ou o script que o constrói), ou com --app.
         if [ "$forcar_app" = 1 ] || git -C "$HEIMDALL_DIR" diff --name-only "$antes" HEAD -- macapp scripts/construir_app_mac.sh | grep -q .; then
           echo "Compilando o app Heimdall..."
-          _heimdall_sh scripts/construir_app_mac.sh || echo "Não consegui compilar o app. Rode depois: heimdall app"
+          _heimdall_sh scripts/construir_app_mac.sh || echo "Não consegui compilar o app. Rode depois: studio app"
         fi
       else
-        echo "Pronto. Se mudou código de serviço: heimdall restart. Se mudou fluxo do n8n: heimdall flows."
+        echo "Pronto. Se mudou código de serviço: studio restart. Se mudou fluxo do n8n: studio flows."
       fi ;;
     docs)
       case "$1" in
         "") _heimdall_py gerar_docs.py ;;
         --brand) _heimdall_py gerar_marca_png.py ;;
-        *) echo "Use: heimdall docs [--brand]"; return 1 ;;
+        *) echo "Use: studio docs [--brand]"; return 1 ;;
       esac ;;
     test)
       case "$1" in
@@ -571,13 +571,13 @@ heimdall() {
           if [ -f "$HEIMDALL_DIR/teste_$a.py" ]; then _heimdall_py "teste_$a.py" "$@"
           elif [ -f "$HEIMDALL_DIR/teste_$a.sh" ]; then _heimdall_sh "teste_$a.sh" "$@"
           elif [ -f "$HEIMDALL_DIR/test_$a.py" ]; then _heimdall_py "test_$a.py" "$@"
-          else echo "Teste desconhecido. Veja a lista com: heimdall test --list"; return 1; fi ;;
-        *) echo "Use: heimdall test [--list] [--all] [--run NOME]"; return 1 ;;
+          else echo "Teste desconhecido. Veja a lista com: studio test --list"; return 1; fi ;;
+        *) echo "Use: studio test [--list] [--all] [--run NOME]"; return 1 ;;
       esac ;;
     dir) echo "$HEIMDALL_DIR" ;;
     cd) cd "$HEIMDALL_DIR" ;;
 
-    *) echo "Comando desconhecido: $cmd. Veja os comandos com: heimdall help"; return 1 ;;
+    *) echo "Comando desconhecido: $cmd. Veja os comandos com: studio help"; return 1 ;;
   esac
 }
 
@@ -638,5 +638,8 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     esac
     compadd -- --help
   }
-  compdef _heimdall_complete heimdall
+  compdef _heimdall_complete studio heimdall
 fi
+
+# Apelido da transição: o comando antigo continua funcionando e chama o novo.
+heimdall() { studio "$@"; }

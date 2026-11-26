@@ -114,7 +114,7 @@ def _passos_hae(url: str) -> str:
              f"No campo de endereço (URL), coloque: {url}",
              "Método: POST. Formato: JSON. Escolha as métricas de saúde e, se quiser, os treinos.",
              "Em cabeçalhos (headers), acrescente o nome Authorization com o valor Bearer, um espaço e o token mostrado nesta página.",
-             "Salve e rode a automação uma vez. No Mac, heimdall mailbox pull importa o que chegou; o StudioLibre também busca sozinho de tempos em tempos."]
+             "Salve e rode a automação uma vez. No Mac, studio mailbox pull importa o que chegou; o StudioLibre também busca sozinho de tempos em tempos."]
     return "<ol>" + "".join(f"<li>{e(x)}</li>" for x in itens) + "</ol>"
 
 
@@ -139,7 +139,7 @@ def pagina_integracoes(p: dict, nonce: str, token: str = "", aviso: str = "", er
         elif not st["pode"]:
             estado_txt = "Ainda não disponível para a sua conta: falta o armazenamento por pessoa. Por enquanto só o dono do StudioLibre pode ligar a Saúde."
         elif not st["caixa"]:
-            estado_txt = "A caixa de correio está desligada. No terminal do Mac: heimdall mailbox start, depois heimdall env --set HEIMDALL_CAIXA 1."
+            estado_txt = "A caixa de correio está desligada. No terminal do Mac: studio mailbox start, depois studio env --set HEIMDALL_CAIXA 1."
         else:
             estado_txt = "Ainda não ativada."
         acoes = ""

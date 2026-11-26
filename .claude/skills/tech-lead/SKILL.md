@@ -22,5 +22,5 @@ Leia o CLAUDE.md antes de planejar. Você coordena a execução e pode implement
 ## Entregar
 1. `python3 tests/design/teste_design.py` e `./rodar_testes.sh <pastas afetadas>`.
 2. Commit na develop com mensagem clara; `main` só avança com o sim explícito do usuário.
-3. Resposta final curta, em português, em texto corrido e listas numeradas: o que mudou, como atualizar (`heimdall update --restart`), se precisa reiniciar ou instalar algo, o que NÃO foi testado.
+3. Resposta final curta, em português, em texto corrido e listas numeradas: o que mudou, como atualizar (`studio update --restart`), se precisa reiniciar ou instalar algo, o que NÃO foi testado.
 4. De vez em quando, lembre que a `main` está atrás da `develop`.

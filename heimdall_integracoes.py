@@ -2,7 +2,7 @@
 """Integrações da conta: o que cada pessoa liga ao Heimdall a partir do menu Conta (account.heimdall-ai.tech/integracoes).
 
 Hoje só a Saúde está pronta, e só para o dono: o app Health Auto Export do iPhone envia os dados à caixa de correio da Cloudflare
-(endereço /v1/hae) com o token da pessoa; o Mac busca (heimdall mailbox pull) e importa para o banco de saúde. Notas, Lembretes e Calendário
+(endereço /v1/hae) com o token da pessoa; o Mac busca (studio mailbox pull) e importa para o banco de saúde. Notas, Lembretes e Calendário
 (conta Apple ou Google) aparecem como "em preparação": falta o armazenamento por pessoa, e ninguém além do dono tem onde guardar esses dados.
 
 O estado fica em db/integracoes.json (permissão só do dono): quem ativou o quê e quando. O token nunca é guardado aqui; só a caixa guarda o hash.
@@ -94,7 +94,7 @@ def ativar_saude(p: dict, env=None, abrir=None) -> str:
     if not st["pode"]:
         raise RuntimeError("por enquanto só o dono pode ativar a Saúde; falta o armazenamento por pessoa")
     if not st["caixa"]:
-        raise RuntimeError("a caixa de correio está desligada: rode heimdall mailbox start e depois heimdall env --set HEIMDALL_CAIXA 1")
+        raise RuntimeError("a caixa de correio está desligada: rode studio mailbox start e depois studio env --set HEIMDALL_CAIXA 1")
     u = st["usuario"]
     try:
         caixa.revogar_pessoa(u, env, abrir)  # trocar o token: o antigo deixa de valer

@@ -7,9 +7,9 @@ Como liga e desliga:
   - "py": script Python do Heimdall. Desliga encerrando quem escuta na porta; liga com o python do venv, a porta no ambiente e o log em logs/.
   - "docker": contêiner. Desliga com docker stop e liga com docker start (o contêiner precisa existir: a primeira vez é do start_heimdall.sh).
   - "cmd": comando próprio (LiteLLM, Ollama).
-  - sem "liga": só desliga aqui; para ligar de novo use heimdall restart.
+  - sem "liga": só desliga aqui; para ligar de novo use studio restart.
 O que você desligou fica em .heimdall_desligados.json. Um vigia (reconciliar) confere de 30 em 30 segundos e derruba de novo o que
-deveria estar desligado, por exemplo depois de um "heimdall update --restart", mas só depois de a subida terminar (3 minutos), para
+deveria estar desligado, por exemplo depois de um "studio update --restart", mas só depois de a subida terminar (3 minutos), para
 não atrapalhar a espera do start_heimdall.sh. Ligar um serviço tira ele da lista de desligados.
 O Controls não aparece como desligável: desligá-lo cortaria o acesso ao painel.
 """
@@ -97,7 +97,7 @@ def parar_tudo() -> list:
 
 
 def iniciar_tudo() -> tuple:
-    """Sobe o Heimdall inteiro como o heimdall up (subir.sh), sem esperar. A saída vai para logs/controls_manutencao.log."""
+    """Sobe o Heimdall inteiro como o studio up (subir.sh), sem esperar. A saída vai para logs/controls_manutencao.log."""
     script = PROJECT_DIR / "subir.sh"
     if not script.exists():
         return False, "subir.sh não encontrado"
@@ -222,14 +222,14 @@ def ligar(s: dict) -> tuple:
     if s["tipo"] == "docker":
         ex = _existentes(s["alvo"])
         if not ex:
-            return False, "o contêiner ainda não foi criado: rode heimdall restart uma vez com este serviço ligado"
+            return False, "o contêiner ainda não foi criado: rode studio restart uma vez com este serviço ligado"
         rc, out = _rodar(["docker", "start"] + ex, 60)
         return rc == 0, "ligado" if rc == 0 else out[-200:]
     cmd = s.get("liga")
     if s["tipo"] == "py" and s.get("script"):
         cmd = [sys.executable or "python3"] + s["script"]
     if not cmd:
-        return False, "este serviço só liga com: heimdall restart"
+        return False, "este serviço só liga com: studio restart"
     env = _ambiente()
     env["HEIMDALL_DIR"] = str(PROJECT_DIR)
     if s.get("porta_env"):

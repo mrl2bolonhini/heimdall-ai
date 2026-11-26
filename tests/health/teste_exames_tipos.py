@@ -89,7 +89,7 @@ ex.texto_do_arquivo = lambda dados, nome: ((ATESTADO if b"atestado" in dados els
 r1 = ex.registrar(b"atestado ficticio", "atestado.pdf")
 confere("registra atestado: tipo, data e itens", r1["tipo"] == "atestado" and r1["dia"] == "2026-11-10" and r1["itens"] == 0 or r1["tipo"] == "atestado", r1)
 txt = ex.resumo_documento(r1["id"])
-confere("resumo do atestado", "Afastamento de 15 dia(s)" in txt and "CID M23.2" in txt and "heimdall health --labs confirm" in txt, txt)
+confere("resumo do atestado", "Afastamento de 15 dia(s)" in txt and "CID M23.2" in txt and "studio health --labs confirm" in txt, txt)
 ex.confirmar(r1["id"])
 confere("atestado guardado no banco", sql("SELECT cid, dias, inicio, fim FROM atestados")[0] == {"cid": "M23.2", "dias": 15, "inicio": "2026-11-10", "fim": "2026-11-24"})
 confere("relatório de atestados", "CID M23.2" in ex.relatorio_atestados())

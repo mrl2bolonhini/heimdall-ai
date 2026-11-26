@@ -25,7 +25,7 @@ ORIGINAL = AQUI / "litellm_config.yaml"
 EFETIVO = heimdall_pastas.db(AQUI) / "litellm_config_efetivo.yaml"
 PADRAO_CHAT = "qwen3-vl-instruct,deepseek-coder-v2:16b,conversas"
 # O Conversas tem modelo próprio na nuvem: o Qwen3 30B custa bem menos por token que o gpt-oss e o Mistral (confira os preços no Workers AI),
-# aceita ferramentas e não recusa tanto. Outro modelo: heimdall env --set HEIMDALL_NUVEM_CONVERSAS_MODELO "workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct"
+# aceita ferramentas e não recusa tanto. Outro modelo: studio env --set HEIMDALL_NUVEM_CONVERSAS_MODELO "workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct"
 MODELO_CONVERSAS = "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8"
 CHAVES_EXTRA = ("HEIMDALL_NUVEM_CHAT", "HEIMDALL_NUVEM_CONVERSAS_MODELO")
 

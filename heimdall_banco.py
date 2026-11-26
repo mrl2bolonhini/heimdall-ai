@@ -445,7 +445,7 @@ def pasta_da_pessoa(nome: str) -> Path:
 def pessoa(nome: str, padrao: str = ""):
     """Dentro do bloco, TODO o módulo (e quem usa banco.DB_PATH) trabalha no banco da pessoa: db/people/<nome>/heimdall.db, com cópia diária própria.
     Se `nome` for o do dono (`padrao`) ou vazio, nada muda e vale o banco de sempre. Troca variáveis do módulo: use só em processo próprio
-    (o heimdall mailbox pull), nunca dentro do agente, que atende vários pedidos ao mesmo tempo."""
+    (o studio mailbox pull), nunca dentro do agente, que atende vários pedidos ao mesmo tempo."""
     global DB_DIR, DB_PATH
     if not nome or nome == padrao:
         yield

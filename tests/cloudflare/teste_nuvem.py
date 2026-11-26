@@ -133,7 +133,7 @@ try:
 finally:
     pg.nuvem.ativo, pg.nuvem.chat, pg.urllib.request.urlopen = orig_ativo, orig_chat, orig_urlopen
 
-# --- heimdall ask: nuvem ou local, com aviso ---------------------------------------------------------------
+# --- studio ask: nuvem ou local, com aviso ---------------------------------------------------------------
 import heimdall_ask as ask  # noqa: E402
 _ativo0 = ask.nuvem.ativo
 try:

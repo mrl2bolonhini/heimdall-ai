@@ -328,7 +328,7 @@ confere("Origin null vindo de outro site (Sec-Fetch-Site) é recusado", s == 403
 s, corpo, _ = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": "errado"}, cookie=token, extra={"Origin": "null"})
 confere("Origin null com token errado continua recusado", s == 403)
 s, corpo, _ = req("GET", "/", cookie=token)
-confere("Resumo mostra a tabela de versões com legenda", '<caption>Versões do Mac, do Docker e dos serviços</caption>' in corpo and "Python do Heimdall" in corpo and "heimdall doctor" not in corpo, corpo[-300:])
+confere("Resumo mostra a tabela de versões com legenda", '<caption>Versões do Mac, do Docker e dos serviços</caption>' in corpo and "Python do Heimdall" in corpo and "studio doctor" not in corpo, corpo[-300:])
 confere("a página inicial é o Resumo, primeira aba, com a situação dos serviços e a aba Ajustes", s == 200 and corpo.count('aria-selected="true"') == 1 and _re.search(r'aria-selected="true"[^>]*>Resumo|>Resumo</a>', corpo)
         and "serviços no ar" in corpo and 'href="/ajustes"' in corpo and "<h1>Resumo</h1>" in corpo, corpo[:100])
 confere("menu Conta mostra o nome de quem entrou e tem o Sair", "<summary>Conta: Dono</summary>" in corpo and 'action="/sair"' in corpo and "senha e código" in corpo)
@@ -355,7 +355,7 @@ s, _, r = req("POST", "/manutencao/acao", {"acao": "inventada", "csrf": CSRF}, c
 confere("ação desconhecida não executa nada", s == 303)
 s, _, r = req("POST", "/manutencao/acao", {"acao": "log", "servico": "mcp; rm -rf /", "csrf": CSRF}, cookie=token)
 confere("serviço do log fora da lista é recusado", s == 303)
-confere("a lista de ações não aceita comando livre", all(v[1].startswith(("heimdall ", "./subir.sh")) for v in hcx.ACOES.values()))
+confere("a lista de ações não aceita comando livre", all(v[1].startswith(("studio ", "./subir.sh")) for v in hcx.ACOES.values()))
 
 # --- limpar e reiniciar
 s, _, _ = req("POST", "/terminal/limpar", {"csrf": CSRF}, cookie=token, extra={"X-Heimdall-Ajax": "1"})

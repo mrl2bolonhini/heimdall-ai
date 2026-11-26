@@ -14,7 +14,7 @@
 #       HEIMDALL_AWS_EMULATOR=auto|moto|localstack|off escolhe o emulador de AWS.
 #       HEIMDALL_WEBUI_ENXUTO=1 (padrão) | 0: Open WebUI sem Notas, Automações, imagem, código e recursos automáticos (HEIMDALL_WEBUI_TITULOS=1 mantém os títulos; HEIMDALL_WEBUI_EMBEDDING=ollama poupa mais memória)
 #       HEIMDALL_AWS_EMULATOR_INICIO=demanda (padrão) | auto: com "demanda", o emulador de AWS (LocalStack ou Moto) já criado não sobe
-#       junto com o Heimdall, para poupar memória; ligue quando for usar: heimdall lab --start (e desligue com heimdall lab --stop).
+#       junto com o Heimdall, para poupar memória; ligue quando for usar: studio lab --start (e desligue com studio lab --stop).
 #       ./start_heimdall.sh --update   antes de subir, atualiza as imagens Docker (SearXNG,
 #                                      Qdrant e Open WebUI), com backup; também vale HEIMDALL_UPDATE=1 no .env
 
@@ -339,7 +339,7 @@ fi
 # Emulador de AWS na porta 4566. HEIMDALL_AWS_EMULATOR=auto (padrão) | moto | localstack | off.
 # auto: usa LocalStack se houver LOCALSTACK_AUTH_TOKEN no .env; senão, usa o Moto (livre, sem conta).
 # HEIMDALL_AWS_EMULATOR_INICIO=demanda (padrão): se o contêiner do emulador já existe, ele fica desligado ao subir e é ligado
-# só quando necessário (heimdall lab --start), porque ocupa de 300 a 700 MB de memória. Na primeira vez, sem contêiner, ele é criado.
+# só quando necessário (studio lab --start), porque ocupa de 300 a 700 MB de memória. Na primeira vez, sem contêiner, ele é criado.
 AWS_EMU="${HEIMDALL_AWS_EMULATOR:-auto}"
 if [ "$AWS_EMU" = "auto" ]; then
     if [ -n "$LOCALSTACK_AUTH_TOKEN" ]; then AWS_EMU=localstack; else AWS_EMU=moto; fi
@@ -355,7 +355,7 @@ fi
 case "$AWS_EMU" in
     demanda)
         docker stop moto localstack > /dev/null 2>&1
-        echo "     Emulador de AWS sob demanda (desligado para poupar memória). Para ligar: heimdall lab --start; para desligar: heimdall lab --stop." ;;
+        echo "     Emulador de AWS sob demanda (desligado para poupar memória). Para ligar: studio lab --start; para desligar: studio lab --stop." ;;
     moto)
         docker rm -f localstack > /dev/null 2>&1
         if docker ps -a --format '{{.Names}}' | grep -qx moto; then
@@ -571,7 +571,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
 fi
 
 # --- Studio Learn (plataforma de estudos; fase 1: pastas com categoria e tipo, importação de documentos) ---
-# Desligado por padrão: ligue com HEIMDALL_LEARN=1 no .env (heimdall env --set HEIMDALL_LEARN 1). Mesmo login do Studio Lab.
+# Desligado por padrão: ligue com HEIMDALL_LEARN=1 no .env (studio env --set HEIMDALL_LEARN 1). Mesmo login do Studio Lab.
 if [ "${HEIMDALL_LEARN:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_learn.py ]; then
         HEIMDALL_LEARN_PORT="$LEARN_PORT" "$VENV_PYTHON" heimdall_learn.py > "$(nova_log learn_debug)" 2>&1 &
@@ -589,7 +589,7 @@ if [ "${HEIMDALL_LEARN:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ 
 fi
 
 # --- Studio Trading (mesa de operações em simulação) ---
-# Desligado por padrão: ligue com HEIMDALL_TRADING=1 no .env (heimdall env --set HEIMDALL_TRADING 1). Mesmo login do Studio Lab.
+# Desligado por padrão: ligue com HEIMDALL_TRADING=1 no .env (studio env --set HEIMDALL_TRADING 1). Mesmo login do Studio Lab.
 if [ "${HEIMDALL_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_trading.py ]; then
         HEIMDALL_TRADING_PORT="$TRADING_PORT" "$VENV_PYTHON" heimdall_trading.py > "$(nova_log trading_debug)" 2>&1 &
@@ -607,7 +607,7 @@ if [ "${HEIMDALL_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && 
 fi
 
 # --- Studio Memory (acervo pesquisável; antes se chamava Library) ---
-# Desligado por padrão: ligue com HEIMDALL_MEMORY=1 no .env (heimdall env --set HEIMDALL_MEMORY 1; o nome antigo HEIMDALL_LIBRARY=1 continua valendo). Mesmo login do Studio Lab.
+# Desligado por padrão: ligue com HEIMDALL_MEMORY=1 no .env (studio env --set HEIMDALL_MEMORY 1; o nome antigo HEIMDALL_LIBRARY=1 continua valendo). Mesmo login do Studio Lab.
 if [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ "${HEIMDALL_MEMORY_MOTOR:-${HEIMDALL_LIBRARY_MOTOR:-interno}}" = "paperless" ] && command -v docker > /dev/null 2>&1 && [ -f paperless/docker-compose.yml ]; then
         docker compose -f paperless/docker-compose.yml --env-file .env up -d > "$(nova_log paperless_debug)" 2>&1 || echo "Aviso: não consegui subir o Paperless-ngx (motor do Memory). Veja logs/paperless_debug.log."
@@ -879,6 +879,6 @@ LITELLM_PID=$!
 trap 'kill $MCP_PID $MCP_PUBLIC_PID $MCP_DADOS_PID $TERMINAL_PID $AGENTE_PID $LITELLM_PID 2>/dev/null' EXIT INT TERM
 wait $LITELLM_PID
 # Se o LiteLLM saiu (desligado de propósito no Controls, ou caiu), o script continua de pé: os outros serviços seguem no ar.
-# "heimdall restart" e "heimdall stop" encerram este script do mesmo jeito.
-echo "LiteLLM parou. Os demais serviços continuam no ar; religue o LiteLLM pelo Controls ou use: heimdall restart"
+# "studio restart" e "studio stop" encerram este script do mesmo jeito.
+echo "LiteLLM parou. Os demais serviços continuam no ar; religue o LiteLLM pelo Controls ou use: studio restart"
 while true; do sleep 30; done

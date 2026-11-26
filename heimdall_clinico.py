@@ -109,7 +109,7 @@ def relatorio_perfil() -> str:
     rows = perfil_listar()
     if not rows:
         return ("O perfil de saúde está vazio. Registre o que quiser (nada é obrigatório): "
-                "heimdall health --labs profile add condition|surgery|allergy|insurance|doctor|other TEXTO")
+                "studio health --labs profile add condition|surgery|allergy|insurance|doctor|other TEXTO")
     linhas = ["Perfil de saúde:"]
     for r in rows:
         linhas.append(f"{r['id']}. {PERFIL_TIPOS.get(r['tipo'], r['tipo']).capitalize()}: {r['texto']}" + (f" (desde {r['desde']})" if r["desde"] else "") + ".")
@@ -290,7 +290,7 @@ def _regras(f: dict, hoje: date) -> list:
     if not f["perfil"] and (f["receitas"] or f["atestados"] or f["encaminhamentos"] or f["laudos"]):
         cands.append(_cand("perfil|vazio", "pergunta", "Registrar o perfil de saúde",
                            "O perfil ainda está vazio. Condições e doenças que você já tem, cirurgias, alergias e o convênio ajudam o Heimdall a dar sugestões mais certas. "
-                           "Nada é obrigatório: heimdall health --labs profile add TIPO TEXTO.", hoje.isoformat(), []))
+                           "Nada é obrigatório: studio health --labs profile add TIPO TEXTO.", hoje.isoformat(), []))
     return cands
 
 
@@ -414,7 +414,7 @@ def listar(todas: bool = False, hoje: date = None) -> list:
 def _sug(sid: int) -> dict:
     r = ex._ler("SELECT * FROM sugestoes_saude WHERE id = ?", (int(sid),))
     if not r:
-        raise ErroClinico(f"Não há sugestão {sid}. Veja a lista: heimdall health --labs suggestions")
+        raise ErroClinico(f"Não há sugestão {sid}. Veja a lista: studio health --labs suggestions")
     return r[0]
 
 
@@ -432,9 +432,9 @@ def _linha(s: dict) -> str:
 def relatorio_sugestoes(todas: bool = False) -> str:
     rows = listar(todas)
     if not rows:
-        return "Nenhuma sugestão aberta. Para procurar de novo: heimdall health --labs suggestions refresh"
+        return "Nenhuma sugestão aberta. Para procurar de novo: studio health --labs suggestions refresh"
     cab = f"{len(rows)} sugestão(ões)" + ("" if todas else " aberta(s)") + ". São sugestões para conversar com o médico, não diagnóstico."
-    ajuda = ("Para cada uma: heimdall health --labs suggestions accept ID (vira lembrete), dismiss ID (não mostrar mais), snooze ID DIAS, answer ID TEXTO (perguntas).")
+    ajuda = ("Para cada uma: studio health --labs suggestions accept ID (vira lembrete), dismiss ID (não mostrar mais), snooze ID DIAS, answer ID TEXTO (perguntas).")
     return "\n".join([cab] + [_linha(r) for r in rows] + ([ajuda] if not todas else []))
 
 
@@ -464,7 +464,7 @@ def aceitar(sid: int, post=None, hoje: date = None, data: str = "", hora: str = 
     agora = ex._agora()
     if s["tipo"] == "pergunta":
         ex._escrever(lambda con: con.execute("UPDATE sugestoes_saude SET estado='aceita', atualizado=? WHERE id=?", (agora, s["id"])))
-        return {"id": s["id"], "lembrete": False, "evento": False, "texto": "Pergunta registrada como vista. Para guardar a resposta: heimdall health --labs suggestions answer ID TEXTO."}
+        return {"id": s["id"], "lembrete": False, "evento": False, "texto": "Pergunta registrada como vista. Para guardar a resposta: studio health --labs suggestions answer ID TEXTO."}
     if data and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", data):
         raise ErroClinico("A data é AAAA-MM-DD.")
     if data and data < hoje.isoformat():
@@ -473,7 +473,7 @@ def aceitar(sid: int, post=None, hoje: date = None, data: str = "", hora: str = 
         raise ErroClinico("A hora é HH:MM, por exemplo 14:30.")
     dest = destino_da_sugestao(s, data, hoje)
     titulo = _titulo_agenda(s)
-    notas = "Criado pelo Heimdall a partir de uma sugestão que você aceitou. Detalhes: heimdall health --labs suggestions."
+    notas = "Criado pelo Heimdall a partir de uma sugestão que você aceitou. Detalhes: studio health --labs suggestions."
     if dest == "evento":
         dia = data or s["compromisso"]
         dado = {"titulo": titulo, "data": dia, "duracao_min": 60, "alertas_min_antes": [60, 1440], "notas": notas}

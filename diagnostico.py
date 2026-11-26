@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diagnóstico de desempenho do Mac (heimdall doctor): memória, processador, disco, Docker, Ollama e serviços do Heimdall.
+"""Diagnóstico de desempenho do Mac (studio doctor): memória, processador, disco, Docker, Ollama e serviços do Heimdall.
 
 Só lê informações do sistema (vm_stat, ps, df, docker stats, ollama ps...). Não mostra linhas de comando nem argumentos de processo,
 só o nome do programa ou do script, para nada sensível aparecer. Cada parte falha em silêncio quando o comando não existe.
@@ -250,7 +250,7 @@ def docker(achados: list) -> list:
     out.append(f"{len(cont)} contêineres usando {gb(total)} de memória ao todo:")
     out += [f"  {i}. {c['nome']}: memória {c['mem']}, processador {c['cpu']}" for i, c in enumerate(sorted(cont, key=lambda c: _mem_texto_para_bytes(c["mem"]), reverse=True), 1)]
     if total > 4 * GB:
-        achados.append(f"Os contêineres do Docker usam {gb(total)} de memória; veja se todos são necessários (heimdall containers).")
+        achados.append(f"Os contêineres do Docker usam {gb(total)} de memória; veja se todos são necessários (studio containers).")
     return out
 
 

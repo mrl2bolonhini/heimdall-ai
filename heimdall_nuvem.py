@@ -94,13 +94,13 @@ def main() -> None:
     e = _env()
     if not ativo(e):
         print("Nuvem DESLIGADA (HEIMDALL_NUVEM não é 1, ou falta a chave da Cloudflare). Os modelos locais seguem em uso.")
-        print("Para ligar: heimdall env --set HEIMDALL_NUVEM 1")
+        print("Para ligar: studio env --set HEIMDALL_NUVEM 1")
         return
     print("Nuvem LIGADA. Modelo:", e.get("HEIMDALL_NUVEM_MODELO") or MODELO_PADRAO)
     try:
         print("Teste:", chat("Responda em português, em uma frase curta.", "Diga que está funcionando.", max_tokens=60))
     except RuntimeError as ex:
-        sys.exit(f"Teste falhou ({ex}). Se estava ligada, os apps usam o modelo local. Para desligar: heimdall env --set HEIMDALL_NUVEM 0")
+        sys.exit(f"Teste falhou ({ex}). Se estava ligada, os apps usam o modelo local. Para desligar: studio env --set HEIMDALL_NUVEM 0")
 
 
 if __name__ == "__main__":

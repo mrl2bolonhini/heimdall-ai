@@ -24,7 +24,7 @@ segredos() {
       echo "enviado: $n"; enviados=$((enviados+1))
     else
       echo "Não consegui gravar o segredo $n."
-      echo "Se o Worker ainda não foi implantado, rode antes: heimdall continuity --deploy (ele implanta e depois envia os segredos)."
+      echo "Se o Worker ainda não foi implantado, rode antes: studio continuity --deploy (ele implanta e depois envia os segredos)."
       echo "Confira também o login do Wrangler: npx wrangler whoami (se não estiver logado: npx wrangler login). Detalhes em: ${TMPDIR:-/tmp}/heimdall-wrangler.err"
       return 1
     fi
@@ -38,7 +38,7 @@ trava() {
   for p in workers durable_objects; do
     echo "$lista" | grep -q "$p usage_block" || { echo "Recusado: falta o bloqueio de gasto (usage_block) em $p. Rode ./scripts/limites_gasto_cloudflare.sh antes."; return 1; }
   done
-  "$PY" heimdall_continuidade.py status >/dev/null 2>&1 || { echo "Recusado: não achei a cópia dos bancos no R2. Rode: heimdall continuity --send"; return 1; }
+  "$PY" heimdall_continuidade.py status >/dev/null 2>&1 || { echo "Recusado: não achei a cópia dos bancos no R2. Rode: studio continuity --send"; return 1; }
 }
 
 case "$1" in

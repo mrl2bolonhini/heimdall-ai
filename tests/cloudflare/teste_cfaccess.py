@@ -247,7 +247,7 @@ st, _, _ = pedir("/", {"Cookie": ck_ana})
 confere("sessão antiga de convidado vale enquanto durar a sessão (derrubar: trocar a senha ou o código)", st == 200)
 os.environ.pop("HEIMDALL_CFACCESS_CONVIDADOS")
 
-# heimdall env --set grava as variáveis do Access sem a área de transferência e recusa segredos na linha de comando
+# studio env --set grava as variáveis do Access sem a área de transferência e recusa segredos na linha de comando
 import shutil
 import subprocess
 import tempfile

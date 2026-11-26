@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Comandos de terminal do Studio Finance para arquivos (heimdall finance --inspect, --preview, --import, --inbox, --folder).
+"""Comandos de terminal do Studio Finance para arquivos (studio finance --inspect, --preview, --import, --inbox, --folder).
 
     python3 financas_cli.py --inspecionar ARQUIVO [--linhas N]   mostra só a estrutura (letras viram x, números viram 9) e copia para a área de transferência
     python3 financas_cli.py --explicar ARQUIVO [--linhas N]       mostra, linha por linha e de forma anônima, o que o leitor de PDF fez com cada linha
@@ -144,7 +144,7 @@ def main() -> None:
             print("\nPrimeiros lançamentos lidos:")
             for it in an["itens"][:15]:
                 print(f"{fn.data_br(it['data'])}  {fn.brl(it['valor'], True):>14}  {it['descricao'][:60]}")
-            print("\nNada foi gravado. Para importar: heimdall finance --import ARQUIVO" + ("" if an["conta"] else " --account NOME"))
+            print("\nNada foi gravado. Para importar: studio finance --import ARQUIVO" + ("" if an["conta"] else " --account NOME"))
         elif a.importar:
             dados, nome = _ler(a.importar)
             con = _banco()
@@ -170,7 +170,7 @@ def main() -> None:
                     fb.adicionar_pessoa(con, a.pessoa)
                 idb, novo = fb.registrar(con, b, beneficiario, arquivo, None, dono)
                 print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario or b.get("beneficiario", ""), "dono": dono}))
-            print("\nO Heimdall não paga nada: só guarda a conta a pagar. Veja em heimdall finance, página Boletos, ou com heimdall finance --bills.")
+            print("\nO Heimdall não paga nada: só guarda a conta a pagar. Veja em studio finance, página Boletos, ou com studio finance --bills.")
         elif a.guardar_pluggy:
             import financas_pluggy as fpl
             print(fpl.guardar_chave(a.guardar_pluggy, _colar()))
@@ -238,7 +238,7 @@ def main() -> None:
             for c in r["contas"]:
                 print(f"{c['conta']}: {c['lancamentos']} lançamento(s), {c['alterados'] or 0} com categoria escolhida por você.")
             if not a.forcar:
-                print("Nada foi apagado. Para apagar esses lançamentos e ler tudo de novo pelo Pluggy, rode: heimdall finance --redo-from-pluggy --force")
+                print("Nada foi apagado. Para apagar esses lançamentos e ler tudo de novo pelo Pluggy, rode: studio finance --redo-from-pluggy --force")
             else:
                 print(f"Cópia do banco guardada em: {r['backup']}")
                 for c in r["sincronizado"]["contas"]:
@@ -257,7 +257,7 @@ def main() -> None:
             elif a.forcar:
                 print(f"Apaguei {sum(achados.values())} lançamento(s) do Pluggy repetidos; os de extrato ficam. Rode de novo para conferir.")
             else:
-                print("Nada foi apagado. Para apagar os do Pluggy repetidos, rode: heimdall finance --dedupe --force")
+                print("Nada foi apagado. Para apagar os do Pluggy repetidos, rode: studio finance --dedupe --force")
         elif a.padronizar_nomes:
             import financas_pluggy as fpl
             cfg = fpl.credenciais()
@@ -292,7 +292,7 @@ def main() -> None:
             import financas_pluggy as fpl
             cfg = fpl.credenciais()
             if not cfg:
-                sys.exit("Faltam chaves do Pluggy no .env. Guarde as três, copiando cada uma antes: heimdall finance --guardar-pluggy id; depois segredo; depois itens.")
+                sys.exit("Faltam chaves do Pluggy no .env. Guarde as três, copiando cada uma antes: studio finance --guardar-pluggy id; depois segredo; depois itens.")
             con = _banco()
             arq = DIR_DADOS / "pluggy_estado.json"
             estado = fpl.ler_estado(arq)
@@ -307,8 +307,8 @@ def main() -> None:
                     print(f"Conta {n} passa a se chamar {nome.strip()[:60]} no Finance.")
                 fpl.gravar_estado(arq, estado)
                 for i, c in enumerate(contas, 1):
-                    print(f"{i}. {c['tipo']} {c['rotulo']}" + (f", {c['subtipo']}" if c.get("subtipo") else "") + (f", final {c['final']}" if c["final"] else "") + (f", saldo {c['saldo']:.2f}".replace(".", ",") if c.get("saldo") is not None else "") + f". No Finance: {c['nome']}." + (f" Atenção: já existe no Finance a conta \"{c['existente']}\" (de extrato); para manter o histórico, rode antes: heimdall finance --renomear-conta \"{c['existente']}={c['nome']}\"." if c.get("existente") else ""))
-                print("\nPara trocar o nome: heimdall finance --sincronizar --nomear 2=\"Itaú conta\" (use o nome de uma conta já importada por extrato para não duplicar).")
+                    print(f"{i}. {c['tipo']} {c['rotulo']}" + (f", {c['subtipo']}" if c.get("subtipo") else "") + (f", final {c['final']}" if c["final"] else "") + (f", saldo {c['saldo']:.2f}".replace(".", ",") if c.get("saldo") is not None else "") + f". No Finance: {c['nome']}." + (f" Atenção: já existe no Finance a conta \"{c['existente']}\" (de extrato); para manter o histórico, rode antes: studio finance --renomear-conta \"{c['existente']}={c['nome']}\"." if c.get("existente") else ""))
+                print("\nPara trocar o nome: studio finance --sincronizar --nomear 2=\"Itaú conta\" (use o nome de uma conta já importada por extrato para não duplicar).")
             else:
                 desde = None
                 if a.desde:
@@ -318,7 +318,7 @@ def main() -> None:
                         sys.exit("Use a data no formato AAAA-MM-DD, por exemplo 2026-01-01.")
                 if a.simular:
                     if not desde:
-                        sys.exit("Use com a data de início, por exemplo: heimdall finance --sincronizar --simular --desde 2024-01-01")
+                        sys.exit("Use com a data de início, por exemplo: studio finance --sincronizar --simular --desde 2024-01-01")
                     for r in fpl.simular(con, cfg, arq, desde):
                         antigo = con.execute("SELECT MIN(data) AS d FROM transacoes WHERE conta=?", (r["conta"],)).fetchone()["d"]
                         print(f"{r['conta']}: o Pluggy devolveu {r['recebidas']} lançamento(s), de {fn.data_br(r['primeira']) if r['primeira'] else 'nenhum'} a {fn.data_br(r['ultima']) if r['ultima'] else 'nenhum'}. No Finance hoje o mais antigo é {fn.data_br(antigo) if antigo else 'nenhum'}.")

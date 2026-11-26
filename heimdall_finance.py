@@ -390,7 +390,7 @@ def pg_importar(sess: dict) -> tuple:
              '<label><input type="checkbox" name="forcar" value="1"> Importar o PDF mesmo que o total do documento não confira com os lançamentos (só depois de revisar)</label>'
              '<button type="submit">Importar</button></form>'
              '<p class="sub">Dica: extrato de conta e fatura de cartão devem ser importados com nomes de conta diferentes. O pagamento da fatura na conta vira "Pagamento de fatura" e não conta como despesa, porque os gastos já aparecem na fatura. '
-             'Você também pode soltar os arquivos na pasta de entrada (heimdall finance --folder): o Heimdall importa sozinho o que conferir e separa o que deixar dúvida.</p>' + hist)
+             'Você também pode soltar os arquivos na pasta de entrada (studio finance --folder): o Heimdall importa sozinho o que conferir e separa o que deixar dúvida.</p>' + hist)
     return "Importar extrato", corpo + _bloco_pluggy(sess)
 
 
@@ -399,7 +399,7 @@ def _bloco_pluggy(sess: dict) -> str:
     cfg = fpl.credenciais()
     if not cfg:
         return ('<h2>Conexão automática com os bancos</h2><p>Ainda não está ligada. Com o plano pessoal gratuito do Meu Pluggy, o Heimdall baixa sozinho as contas e transações dos bancos que você autorizar '
-                '(somente leitura; os dados passam pelos servidores do Pluggy). No terminal: heimdall finance --guardar-pluggy id, depois segredo, depois itens, copiando cada valor antes.</p>')
+                '(somente leitura; os dados passam pelos servidores do Pluggy). No terminal: studio finance --guardar-pluggy id, depois segredo, depois itens, copiando cada valor antes.</p>')
     est = fpl.ler_estado(DIR_DADOS / "pluggy_estado.json")
     corpo = ['<h2>Conexão automática com os bancos</h2>']
     for a in est.get("avisos", []):

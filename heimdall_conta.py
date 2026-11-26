@@ -111,7 +111,7 @@ def menu(atual: str = "", logado_local: bool = False, sair_html: str = "", cabec
 
 
 def urls_publicas() -> list:
-    """[(nome do serviço, endereço público)] de todos os serviços, com os nomes de heimdall urls (controls, notes, health...). É o que o app do Mac abre."""
+    """[(nome do serviço, endereço público)] de todos os serviços, com os nomes de studio urls (controls, notes, health...). É o que o app do Mac abre."""
     import heimdall_usuarios as u
     return [(u.SERVICOS[k][2], url) for k, _, url in servicos_da({"papel": "dono"})]
 

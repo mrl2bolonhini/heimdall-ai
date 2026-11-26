@@ -8,7 +8,7 @@ genérico de linhas "data, descrição, valor". Como cada banco monta o PDF de u
 com os totais que o próprio documento cita (por exemplo "Total da fatura"). Só o que confere é importado sozinho;
 o resto vai para a pasta "review" ou pede confirmação sua.
 
-Inspeção anônima (heimdall finance --inspect ARQUIVO): mostra só a estrutura do arquivo, com todas as letras trocadas
+Inspeção anônima (studio finance --inspect ARQUIVO): mostra só a estrutura do arquivo, com todas as letras trocadas
 por x e todos os números por 9, menos um vocabulário de rótulos de extrato (data, valor, total, fatura...). Serve para
 me mostrar o layout do seu banco sem que nenhum nome, valor ou número de conta saia do seu Mac.
 """
@@ -512,7 +512,7 @@ def ler_pdf(dados: bytes, nome: str = "") -> tuple:
     banco, tipo = detectar(texto, nome)
     itens, info = ler_pdf_texto(texto, tipo)
     if not itens:
-        raise ERRO("Li o PDF, mas não achei linhas com data e valor. Rode 'heimdall finance --inspect ARQUIVO' e me mostre a estrutura.")
+        raise ERRO("Li o PDF, mas não achei linhas com data e valor. Rode 'studio finance --inspect ARQUIVO' e me mostre a estrutura.")
     info.update({"banco": banco, "conta_sugerida": nome_da_conta(banco, tipo)})
     return itens, info
 

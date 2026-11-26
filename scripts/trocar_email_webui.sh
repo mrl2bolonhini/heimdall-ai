@@ -67,4 +67,4 @@ RC=$?
 religar
 [ "$RC" = "0" ] || fail "a troca não foi concluída. A cópia de segurança está em $ARQ."
 echo "Pronto. O Open WebUI voltou a subir; a senha continua a mesma. Cópia de segurança: $ARQ (apague quando não precisar mais)."
-echo "Se for ligar o login pelo Access: HEIMDALL_WEBUI_ACCESS='1' em Ajustes, depois heimdall chat --check e heimdall update --restart."
+echo "Se for ligar o login pelo Access: HEIMDALL_WEBUI_ACCESS='1' em Ajustes, depois studio chat --check e studio update --restart."

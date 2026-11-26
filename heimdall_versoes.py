@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Versões do que roda no Mac: macOS, Python, Docker, Ollama, LiteLLM, o próprio Heimdall e cada serviço em contêiner.
 
-Usado por `heimdall doctor --versions` (com comparação com a imagem mais nova no registro) e pelo Resumo do Controls (só as versões, sem rede).
+Usado por `studio doctor --versions` (com comparação com a imagem mais nova no registro) e pelo Resumo do Controls (só as versões, sem rede).
 Só lê: docker inspect/exec de comandos de versão, sw_vers, git. Cada item falha em silêncio quando o comando não existe.
 """
 import json
@@ -81,7 +81,7 @@ def _conteiner(nome: str, atualizacoes: bool, run=run) -> dict:
     if not versao and rotulo_ver and rotulo_ver not in ("<no value>", "main", "latest"):
         versao = rotulo_ver
     atual = run(["docker", "image", "inspect", "-f", "{{.Id}}", imagem])
-    aviso = (f"{rotulo} está rodando numa imagem antiga: já existe uma mais nova baixada no Mac. Reinicie com heimdall restart para usá-la."
+    aviso = (f"{rotulo} está rodando numa imagem antiga: já existe uma mais nova baixada no Mac. Reinicie com studio restart para usá-la."
              if atual and atual != imagem_id else "")
     criada = run(["docker", "image", "inspect", "-f", "{{.Created}}", imagem_id]) or ""
     detalhe = f"imagem {imagem}" + (f", criada em {criada[:10]}" if criada else "")
@@ -132,7 +132,7 @@ def avisos(itens: list) -> list:
     out = []
     for i in itens:
         if i.get("estado") == "desatualizada":
-            out.append(f"{i['nome']} tem imagem mais nova no registro. Atualize com heimdall restart --update.")
+            out.append(f"{i['nome']} tem imagem mais nova no registro. Atualize com studio restart --update.")
         if i.get("aviso"):
             out.append(i["aviso"])
         if i["versao"].startswith("versão não informada"):
@@ -144,7 +144,7 @@ def texto(itens: list) -> list:
     """Linhas para o terminal."""
     out = ["Versões instaladas"]
     for i in itens:
-        extra = " ".join(x for x in (f"({i['detalhe']})" if i["detalhe"] else "", {"atualizada": "[na versão mais nova]", "desatualizada": "[há imagem mais nova: heimdall restart --update]"}.get(i["estado"], "")) if x)
+        extra = " ".join(x for x in (f"({i['detalhe']})" if i["detalhe"] else "", {"atualizada": "[na versão mais nova]", "desatualizada": "[há imagem mais nova: studio restart --update]"}.get(i["estado"], "")) if x)
         out.append(f"  {i['nome']}: {i['versao']}" + (f" {extra}" if extra else ""))
     return out
 

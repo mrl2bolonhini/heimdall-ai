@@ -5,9 +5,9 @@ Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. N�
 Serve para quem ainda não importou nada. Todos os arquivos estão em ~/heimdall-ai/openwebui/. Tudo leva uns 15 minutos. Os passos são de teclado e de terminal, pensados para o VoiceOver.
 
 ANTES DE COMEÇAR
-  1. Atualize o Heimdall e reinicie: heimdall update --restart. Isso sobe o LiteLLM, que é de onde o Open WebUI tira a lista de modelos.
-  2. Para o chat responder pela nuvem (rápido), ligue o interruptor e reinicie: heimdall env --set HEIMDALL_NUVEM 1, depois heimdall restart. Confira com heimdall cloudai. Sem a nuvem, o chat usa os modelos locais do Ollama e fica lento. Para voltar ao local: heimdall env --set HEIMDALL_NUVEM 0 e heimdall restart.
-  3. Abra o Open WebUI (porta 3000, ou o endereço do seu acesso) e entre como administrador. Em Workspace, Modelos, a lista deve mostrar os modelos do LiteLLM (qwen3-vl-instruct, conversas, deepseek-coder-v2:16b e os outros). Se estiver vazia, o LiteLLM não subiu: rode heimdall status.
+  1. Atualize o Heimdall e reinicie: studio update --restart. Isso sobe o LiteLLM, que é de onde o Open WebUI tira a lista de modelos.
+  2. Para o chat responder pela nuvem (rápido), ligue o interruptor e reinicie: studio env --set HEIMDALL_NUVEM 1, depois studio restart. Confira com studio cloudai. Sem a nuvem, o chat usa os modelos locais do Ollama e fica lento. Para voltar ao local: studio env --set HEIMDALL_NUVEM 0 e studio restart.
+  3. Abra o Open WebUI (porta 3000, ou o endereço do seu acesso) e entre como administrador. Em Workspace, Modelos, a lista deve mostrar os modelos do LiteLLM (qwen3-vl-instruct, conversas, deepseek-coder-v2:16b e os outros). Se estiver vazia, o LiteLLM não subiu: rode studio status.
 
 PASSO 1: AS CONEXÕES DE FERRAMENTAS (6 arquivos)
   1. Abra Configurações do administrador, Integrações, Servidores de ferramentas externos.
@@ -16,7 +16,7 @@ PASSO 1: AS CONEXÕES DE FERRAMENTAS (6 arquivos)
   4. Salve cada conexão e use o botão de verificar conexão. As que usam o servidor de dados (porta 8004) e o do Mac (porta 8000) só respondem com o Heimdall ligado.
 
 PASSO 2: OS MODELOS (7)
-  0. Atalho: crie uma chave em Configurações, Conta, Chaves de API (conta administradora) e rode heimdall chat --import; ele cria ou atualiza as conexões de ferramentas (já com o filtro de funções) e os 7 modelos com os prompts padrão, sem importar arquivo nem colar filtro. Só as conexões: heimdall chat --tools; só os modelos: heimdall chat --models. A chave pode ficar em HEIMDALL_WEBUI_API_KEY no .env ou ser digitada na hora.
+  0. Atalho: crie uma chave em Configurações, Conta, Chaves de API (conta administradora) e rode studio chat --import; ele cria ou atualiza as conexões de ferramentas (já com o filtro de funções) e os 7 modelos com os prompts padrão, sem importar arquivo nem colar filtro. Só as conexões: studio chat --tools; só os modelos: studio chat --models. A chave pode ficar em HEIMDALL_WEBUI_API_KEY no .env ou ser digitada na hora.
   1. Ou abra Workspace, Modelos, Importar, e escolha openwebui/modelos_importar.json (todos de uma vez). Se só o primeiro entrar, importe um por um os arquivos de openwebui/modelos/ (alerts.json, health.json, finance.json, code.json, general.json, learn.json, notes.json).
   2. Os modelos entram só para o administrador, de propósito: eles mexem em saúde, finanças e dados pessoais. Para o convidado usar algum, dê o acesso modelo a modelo, e só aos que não tocam dados pessoais (Curiosidades, Conversas, Código).
   3. Cada modelo já chega com o prompt, a temperatura, a conexão de ferramentas e a chamada de função Nativa. Confira uma vez abrindo o modelo para editar. Se a importação recusar o arquivo, diga a mensagem de erro e eu ajusto o formato.
@@ -126,6 +126,6 @@ AJUSTES EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)
   Nos que têm ferramentas, deixe a chamada de função em Nativa. O contexto (8192 nos modelos locais) e o tempo na memória já vêm do litellm_config.yaml; na nuvem o General usa o contexto de 32 mil tokens do Qwen3.
 
 OUTROS MODELOS DO LITELLM (não são base de nenhum modelo do chat)
-  llama-3.1-8b: aceita ferramentas e respondeu bem em português. É o modelo local padrão do Perguntar (heimdall ask e os sites, quando a nuvem está desligada ou falha). Nenhum modelo do chat o usa. Compare-o com o qwen3-vl-instruct antes de trocar algum modelo do chat; um segundo modelo de 8B alternando faz a memória trocar de modelo a cada mudança de chat.
+  llama-3.1-8b: aceita ferramentas e respondeu bem em português. É o modelo local padrão do Perguntar (studio ask e os sites, quando a nuvem está desligada ou falha). Nenhum modelo do chat o usa. Compare-o com o qwen3-vl-instruct antes de trocar algum modelo do chat; um segundo modelo de 8B alternando faz a memória trocar de modelo a cada mudança de chat.
   dolphin3-cyber-8b: só texto (sem ferramentas). Já trabalha nas tarefas programadas de segurança; no chat só faria sentido para analisar um texto colado.
   gemma3-4b: usado nos resumos do News; é pequeno e rápido, serve para conversas curtas sem tirar o qwen3-vl-instruct da memória.

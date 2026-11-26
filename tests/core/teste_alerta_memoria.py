@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do alerta de memória do Mac (fluxo 4 do n8n) e do emulador de AWS sob demanda (heimdall lab --start/--stop)."""
+"""Teste do alerta de memória do Mac (fluxo 4 do n8n) e do emulador de AWS sob demanda (studio lab --start/--stop)."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
@@ -81,7 +81,7 @@ confere("start_heimdall.sh tem o modo sob demanda e só o aplica se o contêiner
 confere("no modo sob demanda o emulador é parado, não criado", re.search(r"demanda\)\s*\n\s*docker stop moto localstack", start) is not None)
 confere("subir.sh não espera o emulador quando ele está sob demanda", "EMU_SOB_DEMANDA" in subir and '[ "$EMU_SOB_DEMANDA" = "1" ] || LISTA+=("Emulador de AWS|tcp|4566")' in subir)
 
-# --- comando heimdall lab --start / --stop com um docker de mentira
+# --- comando studio lab --start / --stop com um docker de mentira
 with tempfile.TemporaryDirectory() as tmp:
     tmp = Path(tmp)
     bin_ = tmp / "bin"
@@ -100,7 +100,7 @@ with tempfile.TemporaryDirectory() as tmp:
     def lab(args, contêineres):
         env = {**os.environ, "PATH": f"{bin_}:{os.environ['PATH']}", "FAKE_LOG": str(log), "FAKE_CONTAINERS": contêineres, "HEIMDALL_DIR": str(RAIZ)}
         log.write_text("")
-        r = subprocess.run(["bash", "-c", f'source "{RAIZ}/heimdall.zsh"; heimdall lab {args}'], capture_output=True, text=True, timeout=60, env=env)
+        r = subprocess.run(["bash", "-c", f'source "{RAIZ}/heimdall.zsh"; studio lab {args}'], capture_output=True, text=True, timeout=60, env=env)
         return r.returncode, r.stdout + r.stderr, log.read_text()
 
     rc, out, dlog = lab("--start", "localstack")
@@ -116,11 +116,11 @@ with tempfile.TemporaryDirectory() as tmp:
     rc, out, dlog = lab("-p", "localstack")
     confere("a forma curta -p vale como --stop", "stop localstack moto" in dlog.splitlines(), (rc, out, dlog))
     rc, out, dlog = lab("--nada", "localstack")
-    confere("opção desconhecida mostra o uso", rc != 0 and "heimdall lab [--local] [--start] [--stop]" in out, (rc, out))
+    confere("opção desconhecida mostra o uso", rc != 0 and "studio lab [--local] [--start] [--stop]" in out, (rc, out))
 
 # --- Lab: mensagem quando o emulador está desligado
 lab_py = (RAIZ / "heimdall_lab.py").read_text(encoding="utf-8")
-confere("o Lab explica que o emulador é sob demanda e onde ligar, sem comando de terminal na tela", "sob demanda" in lab_py and "aba Serviços" in lab_py and "ligue-o com heimdall lab --start" not in lab_py)
+confere("o Lab explica que o emulador é sob demanda e onde ligar, sem comando de terminal na tela", "sob demanda" in lab_py and "aba Serviços" in lab_py and "ligue-o com studio lab --start" not in lab_py)
 
 print("\nFalhas: %d" % falhas)
 raise SystemExit(1 if falhas else 0)

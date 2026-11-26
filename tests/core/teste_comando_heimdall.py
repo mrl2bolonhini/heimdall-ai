@@ -39,23 +39,25 @@ for linha in (AQUI / "guides/heimdall_ajuda.txt").read_text(encoding="utf-8").sp
         atual["opcoes"].append((m.group(1), m.group(2)))
 nomes = [s["nome"] for s in secoes]
 codigo = (AQUI / "heimdall.zsh").read_text(encoding="utf-8")
-no_case = set(re.findall(r"^    ([a-z0-9]+)(?:\||\))", codigo.split("heimdall() {")[1].split("# Completar")[0], re.M))
+no_case = {x for g in re.findall(r"^    ([a-z0-9|]+)\)", codigo.split("studio() {")[1].split("# Completar")[0], re.M) for x in g.split("|")}
 confere("há seção de ajuda para os 52 comandos", len(nomes) == 52, len(nomes))
-confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help"}, (set(nomes) - no_case, no_case - set(nomes)))
+confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help", "library", "cloud"}  # library e cloud são nomes antigos que continuam valendo (memory e lab), (set(nomes) - no_case, no_case - set(nomes)))
 
 # --- --help e -h em todos os comandos mostram só aquele comando
 for n in nomes:
     for flag in ("--help", "-h"):
-        rc, out = bash(f"heimdall {n} {flag}")
-        ok = rc == 0 and out.startswith(f"heimdall {n} - ") and "-h, --help" in out and out.count("\nheimdall ") <= 3
-        confere(f"heimdall {n} {flag}", ok, out[:200])
+        rc, out = bash(f"studio {n} {flag}")
+        ok = rc == 0 and out.startswith(f"studio {n} - ") and "-h, --help" in out and out.count("\nstudio ") <= 3
+        confere(f"studio {n} {flag}", ok, out[:200])
 rc, out = bash("heimdall help health")
-confere("help COMANDO mostra a ajuda do comando", out.startswith("heimdall health - "), out[:100])
-rc, out = bash("heimdall help")
+confere("o apelido heimdall continua funcionando e chama o studio", rc == 0 and out.startswith("studio health - "), out[:100])
+rc, out = bash("studio help health")
+confere("help COMANDO mostra a ajuda do comando", out.startswith("studio health - "), out[:100])
+rc, out = bash("studio help")
 confere("help lista todos os comandos", all(f"  {n} " in out for n in nomes), out[:200])
-rc, out = bash("heimdall -h")
-confere("heimdall -h lista os comandos", "heimdall COMANDO" in out)
-rc, out = bash("heimdall help nada")
+rc, out = bash("studio -h")
+confere("studio -h lista os comandos", "heimdall COMANDO" in out)
+rc, out = bash("studio help nada")
 confere("help de comando desconhecido falha com aviso", rc != 0 and "Sem ajuda" in out, out)
 
 # --- toda opção curta documentada vira a longa
@@ -94,16 +96,16 @@ with tempfile.TemporaryDirectory() as d:
     for cmd, esperado in casos:
         rc, out = bash(f"heimdall {cmd}", d)
         confere(f"heimdall {cmd}", esperado in out, out[:200])
-    rc, out = bash("heimdall help --doc", d)
+    rc, out = bash("studio help --doc", d)
     confere("help --doc sem o arquivo avisa", rc != 0 and "comando-heimdall.html" in out, out)
     (Path(d) / "docs").mkdir()
     (Path(d) / "docs" / "comando-heimdall.html").write_text("<html></html>")
-    rc, out = bash("heimdall help --doc", d)
+    rc, out = bash("studio help --doc", d)
     confere("help --doc abre o documento por http, não por file://", "http://localhost:8099/comando-heimdall.html" in out and "file://" not in out, out)
-    rc, out = bash("heimdall help -d", d)
+    rc, out = bash("studio help -d", d)
     confere("help -d abre o documento", "comando-heimdall.html" in out, out)
-    rc, out = bash("heimdall --doc", d)
-    confere("heimdall --doc abre o documento", "comando-heimdall.html" in out, out)
+    rc, out = bash("studio --doc", d)
+    confere("studio --doc abre o documento", "comando-heimdall.html" in out, out)
 
 confere("a página do documento existe no site", (AQUI / "docs" / "comando-heimdall.html").exists())
 print("\nFALHAS:", falhas)

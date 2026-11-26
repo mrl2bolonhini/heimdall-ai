@@ -184,7 +184,7 @@ class Cliente:
         return _com_tentativas(self.http, "GET", caminho, params, None, self.chave())
 
     def atualizar_item(self, item_id: str) -> dict:
-        """Pede ao Pluggy que releia o banco agora (PATCH /items/ID). Só é chamado por heimdall finance --sync --agora."""
+        """Pede ao Pluggy que releia o banco agora (PATCH /items/ID). Só é chamado por studio finance --sync --agora."""
         return _com_tentativas(self.http, "PATCH", f"/items/{item_id}", None, {}, self.chave())
 
     def contas(self, item_id: str) -> list:
@@ -755,7 +755,7 @@ def definir_parcela_fixa(estado: dict, trecho: str, texto: str, hoje: date = Non
     if valor <= 0 or not (1 <= atual <= total):
         raise ErroPluggy("O valor deve ser maior que zero e a parcela atual não pode passar do total.")
     if not g.get("fechamento"):
-        raise ErroPluggy("Cadastre antes o fechamento do cartão, por exemplo: heimdall finance --fechamento mercado=9")
+        raise ErroPluggy("Cadastre antes o fechamento do cartão, por exemplo: studio finance --fechamento mercado=9")
     lista = [f for f in g.get("parcelas_fixas", []) if f.get("valor") != valor]
     lista.append({"valor": valor, "atual": atual, "total": total, "ciclo": fc.indice_ciclo(hoje, g["fechamento"])})
     g["parcelas_fixas"] = lista
@@ -842,7 +842,7 @@ def refazer_pelo_pluggy(con, cfg: dict, estado_arq: Path, desde: date, pasta_bac
     estado = ler_estado(estado_arq)
     nomes = sorted({g["nome"] for g in estado.get("contas", {}).values() if g.get("nome")})
     if not nomes:
-        raise ErroPluggy("Ainda não há contas do Pluggy guardadas; rode antes: heimdall finance --sincronizar")
+        raise ErroPluggy("Ainda não há contas do Pluggy guardadas; rode antes: studio finance --sincronizar")
     marcas = ",".join("?" * len(nomes))
     resumo = [{"conta": r["conta"], "lancamentos": r["n"], "alterados": r["m"]} for r in con.execute(
         f"SELECT conta, COUNT(*) AS n, SUM(manual) AS m FROM transacoes WHERE conta IN ({marcas}) GROUP BY conta ORDER BY conta", nomes)]
@@ -879,4 +879,4 @@ def executar(con, cfg: dict, estado_arq: Path, desde: date = None, hoje: date = 
 
 
 if __name__ == "__main__":
-    sys.exit("Use: heimdall finance --sincronizar")
+    sys.exit("Use: studio finance --sincronizar")

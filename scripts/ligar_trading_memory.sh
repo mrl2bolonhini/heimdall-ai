@@ -32,4 +32,4 @@ if [ -n "$T" ]; then
     echo "Token da brapi gravado."
 fi
 unset T
-echo "Pronto. Rode: heimdall restart"
+echo "Pronto. Rode: studio restart"

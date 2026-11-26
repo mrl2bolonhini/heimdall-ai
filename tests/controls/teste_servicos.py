@@ -75,7 +75,7 @@ hsv.desligar(falso)
 ok, msg = hsv.aplicar("inexistente", True)
 confere("serviço desconhecido é recusado", not ok)
 sem_liga = {"id": "x", "nome": "X", "porta": porta_livre(), "tipo": "py", "script": None}
-confere("serviço sem como ligar explica o caminho", hsv.ligar(sem_liga)[0] is False and "heimdall restart" in hsv.ligar(sem_liga)[1])
+confere("serviço sem como ligar explica o caminho", hsv.ligar(sem_liga)[0] is False and "studio restart" in hsv.ligar(sem_liga)[1])
 
 # --- Kuma: leitura da página de status
 PAGINA = {"publicGroupList": [{"monitorList": [{"id": 1, "name": "Lab (8010)"}, {"id": 2, "name": "Notas"}, {"id": 3, "name": "Jogos"}]}]}

@@ -2,7 +2,7 @@
 """Cliente mínimo do Notion para o Studio Notes: ideias, contatos e endereços vão para três bancos de dados do Notion.
 
 Regra de privacidade (ROADMAP): o Notion só recebe notas comuns. Saúde e finanças nunca vão para lá (quem decide é heimdall_catalogo.py).
-Configuração no .env (nunca colada em conversa; o comando `heimdall notion` grava e confere):
+Configuração no .env (nunca colada em conversa; o comando `studio notion` grava e confere):
   HEIMDALL_NOTION_TOKEN           token da integração interna do Notion
   HEIMDALL_NOTION_DB_IDEIAS       id do banco de dados de ideias
   HEIMDALL_NOTION_DB_CONTATOS     id do banco de dados de contatos
@@ -78,7 +78,7 @@ def criar(tipo: str, titulo: str, texto: str, http=None) -> tuple:
     if tipo not in BANCOS:
         return False, "tipo sem banco no Notion"
     if not configurado(tipo):
-        return False, "o Notion não está configurado (rode: heimdall notion)"
+        return False, "o Notion não está configurado (rode: studio notion)"
     try:
         banco = id_do_banco(tipo)
         col = _titulo_do_banco(banco, http)
@@ -102,7 +102,7 @@ def arquivar(pagina_id: str, http=None) -> tuple:
 
 
 def verificar(http=None) -> list:
-    """Para `heimdall notion`: uma linha por banco, dizendo se o token enxerga o banco."""
+    """Para `studio notion`: uma linha por banco, dizendo se o token enxerga o banco."""
     out = []
     for tipo in BANCOS:
         if not _env("HEIMDALL_NOTION_TOKEN"):

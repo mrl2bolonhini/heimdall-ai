@@ -102,7 +102,7 @@ def estado(env: dict = None, abrir=None, cliente=None, com_nuvem: bool = True) -
     e = _env() if env is None else env
     saida = {"ligado": continuidade.ligado(e), "senha": bool(e.get("HEIMDALL_CONTINUIDADE_SENHA")), "painel": PAINEL_NUVEM, "teto": TETO_MENSAL}
     try:
-        saida["copia"] = continuidade.status({**e, "HEIMDALL_CONTINUIDADE": "1"}, cliente) if saida["senha"] else {"ok": False, "erro": "A senha da continuidade ainda não foi criada (heimdall continuity --prepare)."}
+        saida["copia"] = continuidade.status({**e, "HEIMDALL_CONTINUIDADE": "1"}, cliente) if saida["senha"] else {"ok": False, "erro": "A senha da continuidade ainda não foi criada (studio continuity --prepare)."}
     except Exception as ex:  # a nuvem pode estar fora; a página continua
         saida["copia"] = {"ok": False, "erro": f"Não consegui ler a cópia: {type(ex).__name__}."}
     saida["gastos"] = politicas(e, abrir) if com_nuvem else {"ok": False, "erro": "Consulta desligada."}

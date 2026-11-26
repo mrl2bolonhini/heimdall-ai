@@ -91,7 +91,7 @@ def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
     hoje = hoje or date.today()
     contas = [g for g in (estado.get("contas") or {}).values() if g.get("nome")]
     if not contas:
-        return "Ainda não há saldos: rode antes heimdall finance --sync."
+        return "Ainda não há saldos: rode antes studio finance --sync."
     linhas, disponivel, devido, sem = [], 0, 0, 0
     ordem = sorted(contas, key=lambda g: ((g.get("tipo") or "").upper() == "CREDIT", g["nome"]))
     for i, g in enumerate(ordem, 1):
@@ -123,7 +123,7 @@ def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
                 d = fatura_detalhada(con, g["nome"], g["fechamento"], hoje, cr.get("parcelas_abertas"), cr.get("sem_fatura"), cr.get("recorrente"),
                                     parcelas_fixas_da_fatura(g["parcelas_fixas"], hoje, g["fechamento"]) if g.get("parcelas_fixas") else None)
                 if d["parcelas"] is None:
-                    parc = "; as parcelas de compras antigas ainda não foram lidas, rode heimdall finance --sync"
+                    parc = "; as parcelas de compras antigas ainda não foram lidas, rode studio finance --sync"
                 elif d["parcelas"]:
                     parc = f", mais {len(d['parcelas'])} parcela(s) de compras antigas: {_real(sum(p['valor'] for p in d['parcelas']))}"
                 else:
@@ -132,7 +132,7 @@ def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
                     parc += ", mais " + " e ".join(f"{_real(f['valor'])} da parcela {f['parcela']} de {f['total']} que o banco não lista" for f in d["fixas"])
                 elif d["recorrente"]:
                     parc += (f", mais {_real(d['recorrente']['valor'])} de valor fixo que o banco não lista como lançamento (repetido em {d['recorrente']['n']} faturas; "
-                             "para o programa saber quando acaba, rode heimdall finance --parcela-fixa NOME=VALOR:PARCELA/TOTAL)")
+                             "para o programa saber quando acaba, rode studio finance --parcela-fixa NOME=VALOR:PARCELA/TOTAL)")
                 rotulo = "lançamentos ainda sem fatura, o mais antigo de" if d["sem_fatura"] else "compras desde"
                 fat = f"fatura em aberto estimada em {_real(d['total'])} ({rotulo} {fn.data_br(d['inicio'].isoformat())}: {_real(d['compras'])}{parc}); " + ("" if not fat else "além disso, " + fat)
             linhas.append(f"{i}. {g['nome']}: {fat}usado do limite (saldo devedor total, com parcelas futuras) de {_real(s)}" + (" (" + ", ".join(extra) + ")" if extra else "") + ".")
@@ -154,7 +154,7 @@ def texto_saldos(estado: dict, con=None, hoje: date = None) -> str:
     saida.append(f"Total nas contas: {_real(disponivel)}. Total usado dos limites dos cartões: {_real(devido)}. Diferença: {_real(disponivel - devido)}.")
     saida.append("O banco só atualiza limite, disponível e faturas a cada 24 horas pelo Meu Pluggy; se você mudou algo agora há pouco, esses valores podem estar defasados.")
     if sem:
-        saida.append(f"{sem} conta(s) sem saldo informado; rode heimdall finance --sync para atualizar.")
+        saida.append(f"{sem} conta(s) sem saldo informado; rode studio finance --sync para atualizar.")
     return "\n".join(saida)
 
 

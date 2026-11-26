@@ -75,7 +75,7 @@ def abrir_av(req, timeout):
 a = n.avisos(ENV, abrir_av)
 confere("avisos: lê o histórico, ordena do mais novo e limita", a["ok"] and a["itens"][0]["nome"] == "ssl" and a["itens"][1]["texto"] == "caiu" and "/alerting/v3/history" in visto["url3"], a)
 confere("avisos: 403 pede a permissão Notificações; sem token explica", "Notificações" in n.avisos(ENV, abrir_403)["erro"] and not n.avisos({})["ok"])
-confere("estado sem a senha de continuidade avisa e não derruba", e["ligado"] and not e["copia"]["ok"] and "heimdall continuity --prepare" in e["copia"]["erro"] and e["gastos"]["ok"])
+confere("estado sem a senha de continuidade avisa e não derruba", e["ligado"] and not e["copia"]["ok"] and "studio continuity --prepare" in e["copia"]["erro"] and e["gastos"]["ok"])
 confere("estado desligado por padrão", not n.estado({}, abrir_ok, com_nuvem=False)["ligado"])
 print("\nTUDO OK" if not falhas else f"\n{falhas} FALHA(S)")
 sys.exit(1 if falhas else 0)

@@ -67,14 +67,14 @@ ATENÇÃO, O QUE NÃO PODE FICAR ATRÁS DO ACCESS
 PARTE C. LIGAR NO HEIMDALL
 --------------------------
 1. Gravar os valores no .env, sem colar nada em arquivo à mão:
-     heimdall env --set HEIMDALL_CFACCESS_EQUIPE
-     heimdall env --set HEIMDALL_CFACCESS_AUD
-     heimdall env --set HEIMDALL_CFACCESS_EMAILS
-     heimdall env --set HEIMDALL_CFACCESS_CONVIDADOS   (só se for liberar mais alguém)
+     studio env --set HEIMDALL_CFACCESS_EQUIPE
+     studio env --set HEIMDALL_CFACCESS_AUD
+     studio env --set HEIMDALL_CFACCESS_EMAILS
+     studio env --set HEIMDALL_CFACCESS_CONVIDADOS   (só se for liberar mais alguém)
    (a equipe é só o nome; o AUD são as duas tags copiadas, separadas por vírgula; os e-mails são o do seu usuário da Microsoft).
 2. Conferir: python3 heimdall_cfaccess.py --status
    Deve dizer "LIGADA" e "ok, 1 chave(s)" nos certificados do Cloudflare.
-3. Reiniciar: heimdall update --restart (ou ./subir.sh --reiniciar). Isto não exige instalador.
+3. Reiniciar: studio update --restart (ou ./subir.sh --reiniciar). Isto não exige instalador.
 4. Teste: abra games.heimdall-ai.tech. Deve ir ao login da Microsoft, mandar a notificação e entrar direto nos jogos. Se o --status disser que está desligada ou se o login cair na tela de senha e código, a reserva continua funcionando.
 5. Sobre "Sair": com o Access ligado, o botão Sair do painel encerra a sessão do painel, mas o Access ainda reconhece você e entra de novo sozinho. Para sair de verdade, abra NOMEDAEQUIPE.cloudflareaccess.com/cdn-cgi/access/logout.
 
