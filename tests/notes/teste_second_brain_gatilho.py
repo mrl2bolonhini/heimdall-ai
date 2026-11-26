@@ -104,7 +104,7 @@ confere("gravação do Heimdall com Notas fechado: consulta", rodar() > 0)
 aberto[0] = False
 ag.SO_COM_NOTAS_ABERTO = False
 mtime[0] = time.time() - 300
-confere("HEIMDALL_NOTAS_ABRIR_APP=1 devolve o comportamento antigo", rodar() > 0)
+confere("STUDIO_NOTAS_ABRIR_APP=1 devolve o comportamento antigo", rodar() > 0)
 
 print("\nTUDO OK" if not falhas else f"\nFALHAS: {falhas}")
 sys.exit(1 if falhas else 0)

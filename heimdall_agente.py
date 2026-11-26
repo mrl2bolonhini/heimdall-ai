@@ -577,7 +577,7 @@ def _consultar_notas_agora(quieto: int):
     return False, None
 
 
-SO_COM_NOTAS_ABERTO = os.environ.get("HEIMDALL_NOTAS_ABRIR_APP", "0") != "1"   # 1 devolve o comportamento antigo (abre o Notas para consultar)
+SO_COM_NOTAS_ABERTO = os.environ.get("STUDIO_NOTAS_ABRIR_APP", "0") != "1"   # 1 devolve o comportamento antigo (abre o Notas para consultar)
 
 
 def _notas_aberto() -> bool:

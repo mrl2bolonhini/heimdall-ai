@@ -3,9 +3,8 @@
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-26 - Notas não abre sozinho e novos endereços do repositório
-- O agente do Mac deixou de abrir o app Notas só para consultar notas alteradas: com o app fechado, a consulta espera o usuário abri-lo. Gravações feitas pelo próprio Studio Notes continuam funcionando. HEIMDALL_NOTAS_ABRIR_APP=1 devolve o comportamento anterior.
+- O agente do Mac deixou de abrir o app Notas só para consultar notas alteradas: com o app fechado, a consulta espera o usuário abri-lo. Gravações feitas pelo próprio Studio Notes continuam funcionando. a opção STUDIO_NOTAS_ABRIR_APP=1 devolve o comportamento anterior.
 - O repositório passou a se chamar StudioApps (studiolibre/StudioApps): README, site e guias usam o novo endereço e a pasta ~/StudioApps.
-- Ajuda do Studio Memory: a porta 8021 é a padrão; se o sistema já a usa, HEIMDALL_MEMORY_PORT no .env define outra.
 
 ## 2026-11-26 - Variáveis STUDIO_ aceitas no .env
 - O arquivo .env agora aceita nomes com o prefixo STUDIO_ (por exemplo, STUDIO_LAB_PORT) com o mesmo efeito dos nomes HEIMDALL_ atuais; se os dois existirem, vale STUDIO_. Nenhum nome antigo precisa ser trocado e o .env não é alterado.
