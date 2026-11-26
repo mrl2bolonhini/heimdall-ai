@@ -45,8 +45,8 @@ INFO = {
                  "A IA só descreve os números e os movimentos recentes: nunca recomenda comprar ou vender. Quem decide é você."],
         "so_dono": False,
     },
-    "library": {
-        "oque": "Documentos pesquisáveis: envie PDF, foto, Word ou texto, e o Library lê o texto (com OCR em imagens), sugere título, tipo e etiquetas e permite pesquisar em tudo.",
+    "memory": {
+        "oque": "Documentos pesquisáveis: envie PDF, foto, Word ou texto, e o Memory lê o texto (com OCR em imagens), sugere título, tipo e etiquetas e permite pesquisar em tudo.",
         "como": ["Em Adicionar, envie arquivos pelo navegador ou coloque-os na pasta de entrada.",
                  "Em Documentos, pesquise por qualquer palavra do texto, do título, do emissor ou das etiquetas; a busca ignora acentos.",
                  "Documentos novos ficam em A revisar até você confirmar ou corrigir as sugestões. Excluir manda para a lixeira."],

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Heimdall Library: acervo de documentos pesquisáveis (envio, leitura de texto com OCR, etiquetas e busca).
+"""Heimdall Memory: acervo de documentos pesquisáveis (envio, leitura de texto com OCR, etiquetas e busca).
 
-Telas no Heimdall Design, sobre `heimdall_servico_web.py`; os dados ficam em `heimdall_library_dados.py`.
+Telas no Heimdall Design, sobre `heimdall_servico_web.py`; os dados ficam em `heimdall_memory_dados.py`.
 Abas: Documentos (Pesquisar, Recentes, A revisar), Adicionar (Enviar arquivo, Pasta de entrada), Organização (Etiquetas, Tipos). Ajustes: Estado, Lixeira, Ajuda.
 
-Variáveis: HEIMDALL_LIBRARY (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), HEIMDALL_LIBRARY_PORT (8021), HEIMDALL_LIBRARY_HOST (127.0.0.1),
-HEIMDALL_LIBRARY_HOSTS (library.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_LIBRARY_MAX_MB (30; limite por arquivo), HEIMDALL_LIBRARY_IA (0 desliga as sugestões do modelo).
+Variáveis: HEIMDALL_MEMORY (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), HEIMDALL_MEMORY_PORT (8021), HEIMDALL_MEMORY_HOST (127.0.0.1),
+HEIMDALL_MEMORY_HOSTS (memory.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_MEMORY_MAX_MB (30; limite por arquivo), HEIMDALL_MEMORY_IA (0 desliga as sugestões do modelo).
 
-    python3 heimdall_library.py
+    python3 heimdall_memory.py
 
 Funciona em macOS, Linux e Windows (OCR de foto e de PDF escaneado exige o Tesseract instalado; sem ele o arquivo é guardado sem texto).
 """
@@ -15,10 +15,10 @@ import os
 
 import heimdall_servico_web as web
 
-web.carregar_env("HEIMDALL_LIBRARY_")
+web.carregar_env("HEIMDALL_MEMORY_", legado="HEIMDALL_LIBRARY_")
 
 import heimdall_design as design  # noqa: E402
-import heimdall_library_dados as dados  # noqa: E402
+import heimdall_memory_dados as dados  # noqa: E402
 import heimdall_paginacao as pag  # noqa: E402
 
 e = web.e
@@ -83,7 +83,7 @@ def pg_revisar(ctx):
 
 
 def pg_enviar(ctx):
-    mb = int(os.environ.get("HEIMDALL_LIBRARY_MAX_MB", "30"))
+    mb = int(os.environ.get("HEIMDALL_MEMORY_MAX_MB", "30"))
     form = (f'<form method="post" action="/enviar" enctype="multipart/form-data"><label for="arquivos">Arquivos (PDF, foto, DOCX, TXT, MD ou CSV, até {mb} MB cada)</label>'
             f'<input id="arquivos" name="arquivos" type="file" multiple required><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
             '<button type="submit">Enviar</button></form>')
@@ -101,8 +101,8 @@ def pg_entrada(ctx):
 
 def pg_email(ctx):
     if dados.motor() != "paperless":
-        return "E-mail", '<p role="status">O envio por e-mail usa o motor Paperless-ngx (HEIMDALL_LIBRARY_MOTOR=paperless).</p>'
-    import heimdall_library_paperless as pl
+        return "E-mail", '<p role="status">O envio por e-mail usa o motor Paperless-ngx (HEIMDALL_MEMORY_MOTOR=paperless).</p>'
+    import heimdall_memory_paperless as pl
     est = pl.email_estado()
     situacao = ("Conta: " + ", ".join(est["contas"]) + ". " + "; ".join(f'regra {r["nome"]} na pasta {r["pasta"]}' + ("" if r["ativa"] else " (desligada)") for r in est["regras"]) + ".") if est["contas"] else "Nenhuma conta de e-mail configurada."
     form = (f'<form method="post" action="/email/salvar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
@@ -117,7 +117,7 @@ def pg_email(ctx):
 
 
 def pg_nuvem(ctx):
-    import heimdall_library_nuvem as nv
+    import heimdall_memory_nuvem as nv
     itens = nv.situacao()
     if not itens:
         return "Nuvem", '<p role="status">Nenhum serviço de nuvem está disponível. O administrador precisa configurar o Dropbox ou o OneDrive.</p>'
@@ -125,8 +125,8 @@ def pg_nuvem(ctx):
     for x in itens:
         n = e(x["nome"])
         if not x["conectado"]:
-            corpo = (f'<p role="status">{n} não conectado. Na conexão padrão o Library só lê: não altera nem apaga nada na sua nuvem. A conexão com organização também pede '
-                     'a permissão de escrita, para mover os arquivos já importados para uma pasta de importados. O Library nunca apaga arquivos.</p>'
+            corpo = (f'<p role="status">{n} não conectado. Na conexão padrão o Memory só lê: não altera nem apaga nada na sua nuvem. A conexão com organização também pede '
+                     'a permissão de escrita, para mover os arquivos já importados para uma pasta de importados. O Memory nunca apaga arquivos.</p>'
                      + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "")
                      + design.botao_post("/nuvem/conectar", f"Conectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]})
                      + design.botao_post("/nuvem/conectar", f"Conectar {x['nome']} com organização", ctx.csrf, {"provedor": x["chave"], "escrita": "1"}))
@@ -148,7 +148,7 @@ def pg_nuvem(ctx):
 
 
 def pg_apps(ctx):
-    import heimdall_library_apps as ap
+    import heimdall_memory_apps as ap
     itens = ap.situacao()
     if not itens:
         return "Apps", '<p role="status">Nenhum app está disponível. O administrador precisa configurar o aplicativo de pelo menos um provedor (Microsoft, Google, Notion, Todoist, Trello ou iCloud).</p>'
@@ -161,12 +161,12 @@ def pg_apps(ctx):
             marcas_s = "".join(f'<p><input id="srv-{k}-{e(sv)}" name="srv_{e(sv)}" type="checkbox" value="1"{" checked" if sv in x["servicos"] or not x["servicos"] else ""}>'
                                f'<label for="srv-{k}-{e(sv)}">{e(nm)}</label></p>' for sv, nm in x["disponiveis"])
             guia = ("<p>O iCloud não tem autorização por site: você cria uma senha de aplicativo em account.apple.com, em Entrada e segurança, Senhas de aplicativo (exige a verificação em duas etapas; "
-                    "funciona pelo navegador em qualquer sistema) e informa aqui o Apple ID e essa senha. Nunca use a senha do Apple ID. A senha fica cifrada e é usada só para ler; o Library não altera nada. "
+                    "funciona pelo navegador em qualquer sistema) e informa aqui o Apple ID e essa senha. Nunca use a senha do Apple ID. A senha fica cifrada e é usada só para ler; o Memory não altera nada. "
                     "Os Lembretes no formato novo do iCloud não têm acesso externo.</p>")
             form = (f'<form method="post" action="/apps/senha"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{k}">'
                     f'<p><label for="icl-usuario">Apple ID (e-mail)</label><br><input id="icl-usuario" name="usuario" type="email" autocomplete="off" required value="{e(x["usuario"])}"></p>'
                     f'<p><label for="icl-senha">Senha de aplicativo</label><br><input id="icl-senha" name="senha" type="password" autocomplete="off" required></p>'
-                    f'<fieldset><legend>Serviços que o Library pode ler</legend>{marcas_s}</fieldset>'
+                    f'<fieldset><legend>Serviços que o Memory pode ler</legend>{marcas_s}</fieldset>'
                     f'<button type="submit">{"Atualizar conexão" if x["conectado"] else f"Conectar {n}"}</button></form>')
             if x["conectado"]:
                 corpo = (f'<p role="status">{n} conectado como {e(x["usuario"])}: {e(", ".join(x["nomes"]))}. '
@@ -179,10 +179,10 @@ def pg_apps(ctx):
             blocos.append(f"<section><h2>{n}</h2>{corpo}</section>")
             continue
         escolha = (f'<form method="post" action="/apps/conectar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{k}">'
-                   f'<fieldset><legend>Serviços que o Library pode ler</legend>{marcas}</fieldset>'
+                   f'<fieldset><legend>Serviços que o Memory pode ler</legend>{marcas}</fieldset>'
                    f'<button type="submit">{"Alterar serviços" if x["conectado"] else f"Conectar {n}"}</button></form>')
         if not x["conectado"]:
-            corpo = (f'<p role="status">{n} não conectado. O Library só lê: não altera nem apaga nada no app. Notas, tarefas, eventos e contatos viram documentos de texto no seu acervo, '
+            corpo = (f'<p role="status">{n} não conectado. O Memory só lê: não altera nem apaga nada no app. Notas, tarefas, eventos e contatos viram documentos de texto no seu acervo, '
                      'atualizados sozinhos a cada 15 minutos.</p>' + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "") + escolha)
         else:
             corpo = (f'<p role="status">{n} conectado: {e(", ".join(x["nomes"]))}. '
@@ -203,7 +203,7 @@ def post_apps_conectar(ctx, campos, arquivos):
 
 def post_apps_senha(ctx, campos, arquivos):
     import heimdall_conexoes as cx
-    import heimdall_library_apps as ap
+    import heimdall_memory_apps as ap
     prov = cx.PROVEDORES.get(campos.get("provedor", ""), {})
     servicos = [sv for sv in prov.get("escopos_servico", {}) if campos.get("srv_" + sv) == "1"]
     ctx.flash("ok", ap.conectar_senha(campos.get("provedor", ""), campos.get("usuario", ""), campos.get("senha", ""), servicos))
@@ -211,7 +211,7 @@ def post_apps_senha(ctx, campos, arquivos):
 
 
 def post_apps_sincronizar(ctx, campos, arquivos):
-    import heimdall_library_apps as ap
+    import heimdall_memory_apps as ap
     r = ap.sincronizar(campos.get("provedor", ""))
     ctx.flash("ok", f"{_plural(r['novos'], 'item novo', 'itens novos')}, {r['atualizados']} atualizados, {r['erros']} com erro.")
     return "/apps"
@@ -232,47 +232,47 @@ SCRIPT_TRELLO = ("var t=new URLSearchParams(location.hash.slice(1)).get('token')
 def retorno_nuvem(q):
     """Retorno do provedor (chega sem cookie; quem vale é o state, de uso único)."""
     import heimdall_conexoes as cx
-    import heimdall_library_nuvem as nv
+    import heimdall_memory_nuvem as nv
     estado = (q.get("state") or [""])[0]
     if cx.provedor_do_state(estado) and cx.PROVEDORES[cx.provedor_do_state(estado)].get("fluxo") == "trello":
         # O Trello devolve o token no fragmento do endereço, que o servidor não recebe: esta página o lê e o entrega por POST (o token nunca vai para o endereço do servidor).
-        corpo = (f'<p id="ok" role="status">Concluindo a conexão com o Trello.</p><p id="sem" role="alert" hidden>O Trello não devolveu a autorização. Volte ao Library e conecte de novo.</p>'
+        corpo = (f'<p id="ok" role="status">Concluindo a conexão com o Trello.</p><p id="sem" role="alert" hidden>O Trello não devolveu a autorização. Volte ao Memory e conecte de novo.</p>'
                  f'<noscript><p role="alert">Esta etapa precisa de JavaScript ativo no navegador. Ative-o e conecte de novo.</p></noscript>'
                  f'<form id="f" method="post" action="/nuvem/trello"><input type="hidden" name="state" value="{e(estado)}"><input id="tk" type="hidden" name="token" value=""></form>'
-                 f'<p>{design.botao("/pesquisar", "Voltar ao Library")}</p>')
+                 f'<p>{design.botao("/pesquisar", "Voltar ao Memory")}</p>')
         return "Conexão com o Trello", corpo, SCRIPT_TRELLO
     ok, msg = nv.concluir((q.get("state") or [""])[0], (q.get("code") or [""])[0], (q.get("error") or [""])[0])
-    return "Conexão com a nuvem", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/pesquisar", "Voltar ao Library")}</p>'
+    return "Conexão com a nuvem", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/pesquisar", "Voltar ao Memory")}</p>'
 
 
 def post_trello_publico(campos):
     """Passo final da conexão com o Trello (sem cookie: o state de uso único é a credencial)."""
     import heimdall_conexoes as cx
     ok, msg = cx.concluir_token(campos.get("state", ""), campos.get("token", ""))
-    return "Conexão com o Trello", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/apps", "Voltar ao Library")}</p>'
+    return "Conexão com o Trello", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/apps", "Voltar ao Memory")}</p>'
 
 
 def post_nuvem_conectar(ctx, campos, arquivos):
-    import heimdall_library_nuvem as nv
+    import heimdall_memory_nuvem as nv
     return web.Redirecionar(nv.iniciar(campos.get("provedor", ""), campos.get("escrita") == "1"))
 
 
 def post_nuvem_pasta(ctx, campos, arquivos):
-    import heimdall_library_nuvem as nv
+    import heimdall_memory_nuvem as nv
     nv.definir_pasta(campos.get("provedor", ""), campos.get("pasta", ""), campos.get("subpastas") == "1", campos.get("mover") == "1")
     ctx.flash("ok", "Pasta salva. A próxima sincronização usa esta pasta.")
     return "/nuvem"
 
 
 def post_nuvem_sincronizar(ctx, campos, arquivos):
-    import heimdall_library_nuvem as nv
-    r = nv.sincronizar(campos.get("provedor", ""), os.environ.get("HEIMDALL_LIBRARY_IA", "1") != "0")
+    import heimdall_memory_nuvem as nv
+    r = nv.sincronizar(campos.get("provedor", ""), os.environ.get("HEIMDALL_MEMORY_IA", "1") != "0")
     ctx.flash("ok", f"{_plural(r['novos'], 'documento novo', 'documentos novos')}, {r['repetidos']} repetidos, {r['erros']} com erro" + (f", {r['movidos']} movidos." if r["movidos"] else "."))
     return "/revisar" if r["novos"] else "/nuvem"
 
 
 def post_nuvem_desconectar(ctx, campos, arquivos):
-    import heimdall_library_nuvem as nv
+    import heimdall_memory_nuvem as nv
     nv.desconectar(campos.get("provedor", ""))
     ctx.flash("ok", "Nuvem desconectada. Os documentos já importados continuam no seu acervo.")
     return "/nuvem"
@@ -294,7 +294,7 @@ def pg_tipos(ctx):
 def pg_documento(ctx):
     d = dados.obter(ctx.p("id"))
     if not d:
-        raise dados.ErroLibrary("Documento não encontrado.")
+        raise dados.ErroMemory("Documento não encontrado.")
     meta = [d["tipo"]] + ([d["data_doc"]] if d["data_doc"] else []) + ([d["emissor"]] if d["emissor"] else []) + ([d["nome_arquivo"]] + ([_tamanho(d["tamanho"])] if d["tamanho"] else [])) + (["texto lido por OCR"] if d["por_ocr"] else [])
     estado = '<p role="status">Sugestão automática ainda não revisada.</p>' if not d["revisado"] else ""
     if d["lixeira"]:
@@ -319,7 +319,7 @@ def pg_documento(ctx):
 def baixar(ctx):
     nome, conteudo = dados.arquivo(ctx.p("id"))
     if not nome:
-        raise dados.ErroLibrary("Arquivo não encontrado.")
+        raise dados.ErroMemory("Arquivo não encontrado.")
     return web.Arquivo(nome, "application/octet-stream", conteudo)
 
 
@@ -344,9 +344,9 @@ def aj_lixeira(ctx):
 # ---------------------------------------------------------------- ações
 def post_enviar(ctx, campos, arquivos):
     if not arquivos:
-        raise dados.ErroLibrary("Escolha ao menos um arquivo.")
+        raise dados.ErroMemory("Escolha ao menos um arquivo.")
     novos = repetidos = 0
-    usar_ia = os.environ.get("HEIMDALL_LIBRARY_IA", "1") != "0"
+    usar_ia = os.environ.get("HEIMDALL_MEMORY_IA", "1") != "0"
     for nome, conteudo in arquivos[:20]:
         r = dados.adicionar(nome, conteudo, "envio", usar_ia)
         novos += r["novo"]
@@ -356,15 +356,15 @@ def post_enviar(ctx, campos, arquivos):
 
 
 def post_entrada(ctx, campos, arquivos):
-    r = dados.processar_entrada(os.environ.get("HEIMDALL_LIBRARY_IA", "1") != "0")
+    r = dados.processar_entrada(os.environ.get("HEIMDALL_MEMORY_IA", "1") != "0")
     ctx.flash("ok", f"{_plural(r['novos'], 'documento novo', 'documentos novos')}, {r['repetidos']} repetidos, {r['recusados']} recusados.")
     return "/revisar" if r["novos"] else "/entrada"
 
 
 def post_email(ctx, campos, arquivos):
     if dados.motor() != "paperless":
-        raise dados.ErroLibrary("O envio por e-mail exige o motor Paperless-ngx.")
-    import heimdall_library_paperless as pl
+        raise dados.ErroMemory("O envio por e-mail exige o motor Paperless-ngx.")
+    import heimdall_memory_paperless as pl
     ctx.flash("ok", pl.email_configurar(campos.get("servidor", ""), campos.get("usuario", ""), campos.get("pasta", ""), campos.get("remetente", ""), campos.get("senha", "")))
     return "/email"
 
@@ -412,7 +412,7 @@ GRUPOS = [
     ("Organização", [("/etiquetas", "Etiquetas"), ("/tipos", "Tipos")]),
 ]
 CFG = web.Config(
-    chave="library", nome="Library", porta_env="HEIMDALL_LIBRARY_PORT", porta=8021, hosts="library.heimdall-ai.tech,localhost,127.0.0.1",
+    chave="memory", nome="Memory", porta_env="HEIMDALL_MEMORY_PORT", porta=8021, hosts="memory.heimdall-ai.tech,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
     get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/apps": pg_apps, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira},
@@ -420,8 +420,8 @@ CFG = web.Config(
           "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: qual é o vencimento do boleto de energia? o que diz a cláusula de rescisão do contrato? O modelo responde só com os documentos do seu acervo.",
-    css=CSS, erro=dados.ErroLibrary, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem}, publicas_post={"/nuvem/trello": post_trello_publico},
-    ao_iniciar=lambda: (__import__("heimdall_library_nuvem"), __import__("heimdall_library_apps"), __import__("heimdall_conexoes").iniciar_sincronizador()))
+    css=CSS, hosts_legados="library.heimdall-ai.tech", erro=dados.ErroMemory, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem}, publicas_post={"/nuvem/trello": post_trello_publico},
+    ao_iniciar=lambda: (__import__("heimdall_memory_nuvem"), __import__("heimdall_memory_apps"), __import__("heimdall_conexoes").iniciar_sincronizador()))
 
 
 if __name__ == "__main__":

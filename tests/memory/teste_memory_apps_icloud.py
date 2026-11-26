@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o conector do iCloud do Library contra servidores CalDAV e CardDAV simulados: conexão com Apple ID e senha de aplicativo (conferida no servidor, guardada cifrada),
+"""Testa o conector do iCloud do Memory contra servidores CalDAV e CardDAV simulados: conexão com Apple ID e senha de aplicativo (conferida no servidor, guardada cifrada),
 descoberta de principal e coleções, eventos (iCalendar) e contatos (vCard) em texto, lista de lembretes ignorada, atualização no lugar, endereço de fora recusado e revogação."""
 import sys as _sys
 from pathlib import Path as _Path
@@ -17,8 +17,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="icloud_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_LIBRARY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_LIBRARY_URL": "https://library.exemplo.test"})
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
+                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
 SENHA = "abcd-efgh-ijkl-mnop"
 ESTADO = {"revogado": False, "etag_evento": "ev-e1", "titulo": "Consulta de rotina", "fora": False}
 CRED_OK = "Basic " + base64.b64encode(f"maria@icloud.com:{SENHA}".encode()).decode()
@@ -92,9 +92,9 @@ F = f"http://127.0.0.1:{PORTA}"
 
 import heimdall_conexoes as cx  # noqa: E402
 import heimdall_lab as hc  # noqa: E402
-import heimdall_library as lib  # noqa: E402
-import heimdall_library_apps as ap  # noqa: E402
-import heimdall_library_dados as dados  # noqa: E402
+import heimdall_memory as lib  # noqa: E402
+import heimdall_memory_apps as ap  # noqa: E402
+import heimdall_memory_dados as dados  # noqa: E402
 import heimdall_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
@@ -115,7 +115,7 @@ def confere(nome, ok, extra=""):
 def erro(fn, *a, **k):
     try:
         fn(*a, **k)
-    except dados.ErroLibrary as ex:
+    except dados.ErroMemory as ex:
         return str(ex)
     return ""
 
@@ -134,7 +134,7 @@ confere("senha de aplicativo errada: mensagem clara, sem expor a senha, e nada �
 msg = ap.conectar_senha("icloud", "maria@icloud.com", SENHA, ["agenda", "contatos", "inventado"])
 sit = [x for x in ap.situacao() if x["chave"] == "icloud"][0]
 confere("conecta (senha com hifens aceita) e mostra o Apple ID e os serviços", "iCloud conectado" in msg and sit["conectado"] and sit["usuario"] == "maria@icloud.com" and sit["servicos"] == ["agenda", "contatos"], (msg, sit))
-bruto = (TMP / "library" / "nuvem.bin").read_bytes()
+bruto = (TMP / "memory" / "nuvem.bin").read_bytes()
 confere("credenciais cifradas em disco", b"maria@icloud" not in bruto and SENHA.encode() not in bruto and base64.b64encode(f"maria@icloud.com:{SENHA}".encode()) not in bruto)
 r = ap.sincronizar("icloud")
 ev, ct = texto_de("Consulta"), texto_de("Ana Lima")

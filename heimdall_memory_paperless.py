@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Heimdall Library com o Paperless-ngx como motor (HEIMDALL_LIBRARY_MOTOR=paperless).
+"""Heimdall Memory com o Paperless-ngx como motor (HEIMDALL_MEMORY_MOTOR=paperless).
 
-O Paperless-ngx roda em Docker neste Mac, escutando só em 127.0.0.1, sem login exposto: o Library é a única tela e fala com ele pela API REST (token).
+O Paperless-ngx roda em Docker neste Mac, escutando só em 127.0.0.1, sem login exposto: o Memory é a única tela e fala com ele pela API REST (token).
 O Paperless faz o OCR, guarda os arquivos, lê e-mails (regras IMAP) e classifica; a classificação aprende com as correções que a pessoa grava em "A revisar".
-Estas funções têm os mesmos nomes e formatos de heimdall_library_dados.py, que as chama no lugar das internas quando o motor é o Paperless (para todos:
-cada pessoa, dono incluído, tem um usuário comum no Paperless e o Library filtra tudo por dono, por privacidade (LGPD); a conta de administração só cria usuários).
+Estas funções têm os mesmos nomes e formatos de heimdall_memory_dados.py, que as chama no lugar das internas quando o motor é o Paperless (para todos:
+cada pessoa, dono incluído, tem um usuário comum no Paperless e o Memory filtra tudo por dono, por privacidade (LGPD); a conta de administração só cria usuários).
 
-Convenções: a etiqueta "A revisar" marca o que ainda não foi confirmado; a etiqueta "Lixeira" marca o que foi excluído pelo Library (nada é apagado do Paperless).
-Variáveis: HEIMDALL_PAPERLESS_URL (http://127.0.0.1:8023), HEIMDALL_PAPERLESS_USER e HEIMDALL_PAPERLESS_SENHA (administração: só cria usuários), HEIMDALL_PAPERLESS_SECRET (deriva a senha de cada pessoa), HEIMDALL_LIBRARY_EMAIL_SENHA (senha de e-mail do dono, opcional).
+Convenções: a etiqueta "A revisar" marca o que ainda não foi confirmado; a etiqueta "Lixeira" marca o que foi excluído pelo Memory (nada é apagado do Paperless).
+Variáveis: HEIMDALL_PAPERLESS_URL (http://127.0.0.1:8023), HEIMDALL_PAPERLESS_USER e HEIMDALL_PAPERLESS_SENHA (administração: só cria usuários), HEIMDALL_PAPERLESS_SECRET (deriva a senha de cada pessoa), HEIMDALL_MEMORY_EMAIL_SENHA (senha de e-mail do dono, opcional).
 """
 import json
 import os
@@ -19,9 +19,9 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-import heimdall_library_dados as base
+import heimdall_memory_dados as base
 
-ErroLibrary = base.ErroLibrary
+ErroMemory = base.ErroMemory
 PROJECT_DIR = Path(__file__).resolve().parent
 TAG_REVISAR, TAG_LIXEIRA = "A revisar", "Lixeira"
 SISTEMA = (TAG_REVISAR, TAG_LIXEIRA)
@@ -51,7 +51,7 @@ def _url() -> str:
 
 
 def pasta_entrada() -> Path:
-    return base.ORIGINAIS["pasta_entrada"]()   # pasta própria de cada pessoa; o Library envia os arquivos ao Paperless dela (nada fica numa pasta comum)
+    return base.ORIGINAIS["pasta_entrada"]()   # pasta própria de cada pessoa; o Memory envia os arquivos ao Paperless dela (nada fica numa pasta comum)
 
 
 def _login(usuario: str, senha: str) -> str:
@@ -68,7 +68,7 @@ def _token(renovar: bool = False, admin: bool = False) -> str:
         return _estado["tokens"][usuario]
     senha = os.environ.get("HEIMDALL_PAPERLESS_SENHA", "") if admin else _senha_pessoa(pessoa)
     if not senha or not os.environ.get("HEIMDALL_PAPERLESS_SECRET"):
-        raise ErroLibrary("Faltam a senha ou a chave do Paperless-ngx no .env (HEIMDALL_PAPERLESS_SENHA, HEIMDALL_PAPERLESS_SECRET).")
+        raise ErroMemory("Faltam a senha ou a chave do Paperless-ngx no .env (HEIMDALL_PAPERLESS_SENHA, HEIMDALL_PAPERLESS_SECRET).")
     try:
         try:
             _estado["tokens"][usuario] = _login(usuario, senha)
@@ -79,21 +79,21 @@ def _token(renovar: bool = False, admin: bool = False) -> str:
                                               "user_permissions": PERMISSOES}, admin=True)
             _estado["tokens"][usuario] = _login(usuario, senha)
     except urllib.error.HTTPError:
-        raise ErroLibrary("O Paperless-ngx recusou o usuário ou a senha configurados no .env.") from None
+        raise ErroMemory("O Paperless-ngx recusou o usuário ou a senha configurados no .env.") from None
     except (urllib.error.URLError, OSError, ValueError, KeyError):
-        raise ErroLibrary("O Paperless-ngx não respondeu. Confira se ele está ligado.") from None
+        raise ErroMemory("O Paperless-ngx não respondeu. Confira se ele está ligado.") from None
     return _estado["tokens"][usuario]
 
 
 def _meu_id() -> int:
-    """Id do usuário em atendimento no Paperless. Tudo que o Library mostra ou grava leva esse dono: o dono (superusuário) vê tudo no Paperless, então o filtro é do Library."""
+    """Id do usuário em atendimento no Paperless. Tudo que o Memory mostra ou grava leva esse dono: o dono (superusuário) vê tudo no Paperless, então o filtro é do Memory."""
     usuario = _usuario()
     if usuario not in _estado["ids"]:
         _token()   # cria o usuário do convidado na primeira vez
         r = _req("GET", "/api/users/", {"username": usuario}, admin=True)
         achado = [u for u in (r.get("results", []) if isinstance(r, dict) else []) if u.get("username") == usuario]
         if not achado:
-            raise ErroLibrary("O Paperless-ngx não encontrou o usuário do Library.")
+            raise ErroMemory("O Paperless-ngx não encontrou o usuário do Memory.")
         _estado["ids"][usuario] = achado[0]["id"]
     return _estado["ids"][usuario]
 
@@ -112,9 +112,9 @@ def _req(metodo: str, caminho: str, params: dict = None, corpo=None, bruto: byte
         if ex.code == 401 and _de_novo:
             _token(renovar=True, admin=admin)
             return _req(metodo, caminho, params, corpo, bruto, tipo, timeout, False, admin)
-        raise ErroLibrary(f"O Paperless-ngx recusou o pedido ({ex.code}).") from None
+        raise ErroMemory(f"O Paperless-ngx recusou o pedido ({ex.code}).") from None
     except (urllib.error.URLError, OSError):
-        raise ErroLibrary("O Paperless-ngx não respondeu. Confira se ele está ligado.") from None
+        raise ErroMemory("O Paperless-ngx não respondeu. Confira se ele está ligado.") from None
 
 
 def _todos(caminho: str, params: dict = None) -> list:
@@ -188,7 +188,7 @@ def listar(q: str = "", tipo: str = "", etiqueta: str = "", so_revisar: bool = F
         p["ordering"] = "-created"
     try:
         r = _req("GET", "/api/documents/", p)
-    except ErroLibrary as ex:
+    except ErroMemory as ex:
         if "404" in str(ex):   # página além do fim
             return [], 0
         raise
@@ -200,7 +200,7 @@ def obter(did) -> dict:
         return {}
     try:
         d = _req("GET", f"/api/documents/{int(did)}/")
-    except ErroLibrary:
+    except ErroMemory:
         return {}
     if d.get("owner") != _meu_id():
         return {}   # documento de outra pessoa
@@ -213,7 +213,7 @@ def arquivo(did) -> tuple:
         return "", b""
     try:
         return d["nome_arquivo"] or f"documento-{d['id']}", _req("GET", f"/api/documents/{d['id']}/download/", {"original": "true"}, timeout=120)
-    except ErroLibrary:
+    except ErroMemory:
         return "", b""
 
 
@@ -222,11 +222,11 @@ def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = Tr
     nome = Path(nome or "documento").name[:150]
     ext = Path(nome).suffix.lower()
     if ext not in base.EXT_OK:
-        raise ErroLibrary(f"Formato não aceito ({ext or 'sem extensão'}). Envie PDF, foto (JPG, PNG, HEIC, TIFF, WEBP), DOCX, TXT, MD ou CSV.")
+        raise ErroMemory(f"Formato não aceito ({ext or 'sem extensão'}). Envie PDF, foto (JPG, PNG, HEIC, TIFF, WEBP), DOCX, TXT, MD ou CSV.")
     if not dados:
-        raise ErroLibrary("O arquivo está vazio.")
+        raise ErroMemory("O arquivo está vazio.")
     if len(dados) > base.LIMITE_BYTES:
-        raise ErroLibrary(f"O arquivo passa de {base.LIMITE_BYTES // (1024 * 1024)} MB.")
+        raise ErroMemory(f"O arquivo passa de {base.LIMITE_BYTES // (1024 * 1024)} MB.")
     rid = _id_por_nome("tags", TAG_REVISAR)
     lim = uuid.uuid4().hex
     seguro = nome.replace('"', "_").replace("\r", "_").replace("\n", "_")
@@ -247,7 +247,7 @@ def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = Tr
         if st in ("FAILURE", "REVOKED"):
             if "duplicate" in str(t.get("result") or "").lower():
                 return {"id": 0, "novo": False, "titulo": titulo}
-            raise ErroLibrary("O Paperless-ngx não conseguiu ler este arquivo.")
+            raise ErroMemory("O Paperless-ngx não conseguiu ler este arquivo.")
         time.sleep(1.5)
     return {"id": 0, "novo": True, "titulo": titulo}   # ainda processando: aparece em A revisar quando terminar
 
@@ -263,14 +263,14 @@ def _tags_do(did: int) -> list:
 def atualizar(did, titulo: str, tipo: str, data_doc: str, emissor: str, etiquetas: str) -> None:
     titulo = " ".join((titulo or "").split())[:100]
     if len(titulo) < 2:
-        raise ErroLibrary("O título precisa de pelo menos 2 caracteres.")
+        raise ErroMemory("O título precisa de pelo menos 2 caracteres.")
     tipo = " ".join((tipo or "").split())[:60]
     data_doc = (data_doc or "").strip()
     if data_doc and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", data_doc):
-        raise ErroLibrary("Use a data no formato AAAA-MM-DD, por exemplo 2026-11-25.")
+        raise ErroMemory("Use a data no formato AAAA-MM-DD, por exemplo 2026-11-25.")
     atual = obter(did)
     if not atual:
-        raise ErroLibrary("Documento não encontrado.")
+        raise ErroMemory("Documento não encontrado.")
     tags = _mapa("tags")
     sistema = [i for i, x in tags.items() if x["name"] == TAG_LIXEIRA and i in _tags_do(did)]   # salvar confirma (tira A revisar), como no acervo interno; não restaura da lixeira
     ids = []
@@ -285,7 +285,7 @@ def atualizar(did, titulo: str, tipo: str, data_doc: str, emissor: str, etiqueta
 
 def _mudar_tag(did, nome: str, adicionar_: bool) -> None:
     if not obter(did):
-        raise ErroLibrary("Documento não encontrado.")
+        raise ErroMemory("Documento não encontrado.")
     tid = _id_por_nome("tags", nome)
     atuais = set(_tags_do(did))
     atuais = atuais | {tid} if adicionar_ else atuais - {tid}
@@ -330,17 +330,17 @@ def email_estado() -> dict:
 
 def senha_do_env() -> bool:
     """O dono pode usar a senha de aplicativo do .env em vez de digitá-la; convidados digitam a própria."""
-    return not _pessoa() and bool(os.environ.get("HEIMDALL_LIBRARY_EMAIL_SENHA"))
+    return not _pessoa() and bool(os.environ.get("HEIMDALL_MEMORY_EMAIL_SENHA"))
 
 
 def email_configurar(servidor: str, usuario: str, pasta: str, remetente: str = "", senha: str = "") -> str:
     """Cria (ou atualiza) a conta IMAP e a regra da pessoa, que lê só os anexos da pasta indicada. A senha de aplicativo fica só no Paperless (nunca é mostrada de volta)."""
     servidor, usuario, pasta, remetente = servidor.strip().lower(), usuario.strip(), (pasta or "Heimdall").strip(), remetente.strip()
     if not re.fullmatch(r"[a-z0-9.-]{3,100}", servidor) or "@" not in usuario or len(usuario) > 120 or not re.fullmatch(r"[\w .\-/À-ÿ]{1,60}", pasta):
-        raise ErroLibrary("Confira o servidor IMAP (por exemplo imap.exemplo.com), o endereço de e-mail e o nome da pasta.")
-    senha = (senha or "").strip() or (os.environ.get("HEIMDALL_LIBRARY_EMAIL_SENHA", "") if not _pessoa() else "")
+        raise ErroMemory("Confira o servidor IMAP (por exemplo imap.exemplo.com), o endereço de e-mail e o nome da pasta.")
+    senha = (senha or "").strip() or (os.environ.get("HEIMDALL_MEMORY_EMAIL_SENHA", "") if not _pessoa() else "")
     if not senha or len(senha) > 200:
-        raise ErroLibrary("Informe a senha de aplicativo do e-mail (gerada no provedor de e-mail; não use a senha principal).")
+        raise ErroMemory("Informe a senha de aplicativo do e-mail (gerada no provedor de e-mail; não use a senha principal).")
     nome_conta = f"Heimdall {usuario}"
     meu = _meu_id()
     conta = {"name": nome_conta, "imap_server": servidor, "imap_port": 993, "imap_security": 2, "username": usuario, "password": senha, "character_set": "UTF-8", "account_type": 1, "owner": meu}

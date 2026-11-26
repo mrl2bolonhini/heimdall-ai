@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Library: apps conectados por conta (notas, tarefas, agenda e contatos), com leitura automática.
+"""Heimdall Memory: apps conectados por conta (notas, tarefas, agenda e contatos), com leitura automática.
 
 Provedores: Microsoft (OneNote, Microsoft To Do, Microsoft Planner, Calendário e Contatos do Outlook), pela Microsoft Graph, com permissões delegadas de leitura
 (Notes.Read, Tasks.Read, Calendars.Read, Contacts.Read) pedidas só para os serviços que a pessoa marcar (o Planner só existe em conta de trabalho ou escola);
@@ -22,9 +22,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 
 import heimdall_conexoes as cx
-import heimdall_library_dados as base
+import heimdall_memory_dados as base
 
-ErroLibrary = base.ErroLibrary
+ErroMemory = base.ErroMemory
 MAX_POR_RODADA = 300      # itens novos ou alterados por rodada (o resto fica para a próxima)
 MAX_PAGINAS = 10          # páginas de 100 itens por serviço
 JANELA_AGENDA = (30, 180)  # dias para trás e para frente
@@ -150,8 +150,8 @@ def _ler_planner(token: str, api: str, vistos: dict):
     try:
         planos = {p["id"]: _limpo(p.get("title")) for p in _paginar(api + "/me/planner/plans", token)}
         tarefas = list(_paginar(api + "/me/planner/tasks", token))
-    except ErroLibrary:
-        raise ErroLibrary("O Planner só está disponível com conta Microsoft de trabalho ou escola.") from None
+    except ErroMemory:
+        raise ErroMemory("O Planner só está disponível com conta Microsoft de trabalho ou escola.") from None
     for x in tarefas:
         marca = x.get("@odata.etag") or x.get("createdDateTime", "")
         titulo = _limpo(x.get("title")) or "Tarefa sem título"
@@ -163,7 +163,7 @@ def _ler_planner(token: str, api: str, vistos: dict):
             d = cx.json_get(api + "/planner/tasks/" + urllib.parse.quote(x["id"]) + "/details", token)
             detalhe = (d.get("description") or "").strip()
             itens = [(_limpo(v.get("title")), bool(v.get("isChecked"))) for v in (d.get("checklist") or {}).values() if v.get("title")]
-        except ErroLibrary:
+        except ErroMemory:
             pass   # sem detalhes agora: o título e o prazo já valem
         pct = int(x.get("percentComplete") or 0)
         yield {"id": x["id"], "marca": marca, "nome": _nome_arquivo("Tarefa", titulo),
@@ -235,13 +235,13 @@ def _notion_chamar(metodo: str, url: str, token: str, corpo: dict = None) -> dic
         cab["Content-Type"], dados_ = "application/json", json.dumps(corpo).encode()
     st, _, b = cx.http(metodo, url, cab, dados_)
     if st == 429:
-        raise ErroLibrary("O Notion pediu para esperar. Tentarei de novo na próxima rodada.")
+        raise ErroMemory("O Notion pediu para esperar. Tentarei de novo na próxima rodada.")
     if st != 200:
-        raise ErroLibrary(f"O provedor recusou a leitura (código {st}).")
+        raise ErroMemory(f"O provedor recusou a leitura (código {st}).")
     try:
         return json.loads(b or b"{}")
     except ValueError:
-        raise ErroLibrary("Resposta inesperada do provedor.") from None
+        raise ErroMemory("Resposta inesperada do provedor.") from None
 
 
 def _blocos_notion(token: str, api: str, bloco: str, linhas: list, contador: list, nivel: int = 0) -> None:
@@ -296,7 +296,7 @@ def _ler_notion(token: str, api: str, vistos: dict):
             linhas = []
             try:
                 _blocos_notion(token, api, x["id"], linhas, [0])
-            except ErroLibrary:
+            except ErroMemory:
                 continue   # página sem conteúdo legível agora: tenta de novo na próxima rodada
             yield {"id": x["id"], "marca": marca, "nome": _nome_arquivo("Página", titulo),
                    "texto": f"# {titulo}\n\nOrigem: Notion\nEditada em: {_data(marca)}\n\n" + "\n".join(linhas) + "\n"}
@@ -371,13 +371,13 @@ NS_D, NS_C, NS_CARD = "{DAV:}", "{urn:ietf:params:xml:ns:caldav}", "{urn:ietf:pa
 def _dav(metodo: str, url: str, cred: str, corpo: str, profundidade: str = "0") -> ET.Element:
     st, _, b = cx.http(metodo, url, {"Authorization": "Basic " + cred, "Depth": profundidade, "Content-Type": "application/xml; charset=utf-8"}, corpo.encode(), limite=8 * 1024 * 1024, seguir=False)
     if st == 401:
-        raise ErroLibrary("O provedor recusou a leitura (código 401).")
+        raise ErroMemory("O provedor recusou a leitura (código 401).")
     if st not in (200, 207):
-        raise ErroLibrary(f"O provedor recusou a leitura (código {st}).")
+        raise ErroMemory(f"O provedor recusou a leitura (código {st}).")
     try:
         return ET.fromstring(b)
     except ET.ParseError:
-        raise ErroLibrary("Resposta inesperada do provedor.") from None
+        raise ErroMemory("Resposta inesperada do provedor.") from None
 
 
 def _href(base_: str, href: str) -> str:
@@ -385,7 +385,7 @@ def _href(base_: str, href: str) -> str:
     url = urllib.parse.urljoin(base_, (href or "").strip())
     h, hb = urllib.parse.urlparse(url).hostname or "", urllib.parse.urlparse(base_).hostname or ""
     if h != hb and not (h.endswith(".icloud.com") and hb.endswith("icloud.com")):
-        raise ErroLibrary("Resposta inesperada do provedor.")
+        raise ErroMemory("Resposta inesperada do provedor.")
     return url
 
 
@@ -393,12 +393,12 @@ def _dav_casa(base_: str, cred: str, propriedade: str, ns: str) -> str:
     r = _dav("PROPFIND", base_, cred, '<d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>')
     el = r.find(f".//{NS_D}current-user-principal/{NS_D}href")
     if el is None or not (el.text or "").strip():
-        raise ErroLibrary("Resposta inesperada do provedor.")
+        raise ErroMemory("Resposta inesperada do provedor.")
     principal = _href(base_, el.text)
     r = _dav("PROPFIND", principal, cred, f'<d:propfind xmlns:d="DAV:" xmlns:x="{ns[1:-1]}"><d:prop><x:{propriedade}/></d:prop></d:propfind>')
     el = r.find(f".//{ns}{propriedade}/{NS_D}href")
     if el is None or not (el.text or "").strip():
-        raise ErroLibrary("Resposta inesperada do provedor.")
+        raise ErroMemory("Resposta inesperada do provedor.")
     return _href(principal, el.text)
 
 
@@ -515,20 +515,20 @@ def conectar_senha(chave: str, usuario: str, senha: str, servicos: list) -> str:
     """Conecta um provedor sem OAuth (iCloud): confere o Apple ID e a senha de aplicativo no servidor e guarda as credenciais cifradas, ligadas à pessoa de agora."""
     prov = cx.PROVEDORES.get(chave)
     if not prov or prov.get("fluxo") != "senha":
-        raise ErroLibrary("Este provedor não usa senha de aplicativo.")
+        raise ErroMemory("Este provedor não usa senha de aplicativo.")
     servicos = [s for s in dict.fromkeys(servicos or []) if s in prov["escopos_servico"]]
     if not servicos:
-        raise ErroLibrary("Escolha pelo menos um serviço para conectar.")
+        raise ErroMemory("Escolha pelo menos um serviço para conectar.")
     usuario, senha = (usuario or "").strip(), re.sub(r"\s", "", senha or "")
     if not re.fullmatch(r"[^@\s]{1,100}@[^@\s]{1,150}", usuario) or not (8 <= len(senha) <= 64):
-        raise ErroLibrary("Informe o Apple ID (e-mail) e a senha de aplicativo.")
+        raise ErroMemory("Informe o Apple ID (e-mail) e a senha de aplicativo.")
     cred = base64.b64encode(f"{usuario}:{senha}".encode()).decode()
     try:
         for serv in servicos:
             _dav("PROPFIND", prov["bases"][serv], cred, '<d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>')
-    except ErroLibrary as ex:
+    except ErroMemory as ex:
         if "código 401" in str(ex):
-            raise ErroLibrary("O Apple ID ou a senha de aplicativo não foram aceitos. Gere uma senha de aplicativo em account.apple.com (Entrada e segurança) e use-a aqui, nunca a senha do Apple ID.") from None
+            raise ErroMemory("O Apple ID ou a senha de aplicativo não foram aceitos. Gere uma senha de aplicativo em account.apple.com (Entrada e segurança) e use-a aqui, nunca a senha do Apple ID.") from None
         raise
     with cx.LOCK:
         todos = cx.carregar()
@@ -564,14 +564,14 @@ def situacao() -> list:
 def sincronizar(chave: str, usar_ia: bool = False) -> dict:
     """Lê os serviços conectados da pessoa de agora e grava no acervo só o que é novo ou mudou. Devolve as contagens."""
     if chave not in cx.PROVEDORES or chave not in cx.configurados("apps"):
-        raise ErroLibrary("Este provedor não está configurado pelo administrador.")
+        raise ErroMemory("Este provedor não está configurado pelo administrador.")
     res = {"novos": 0, "atualizados": 0, "repetidos": 0, "erros": 0}
     api = cx.PROVEDORES[chave]["api"]
     with cx.LOCK:
         todos = cx.carregar()
         est = todos.get(chave)
         if not est:
-            raise ErroLibrary("Conecte o provedor antes de sincronizar.")
+            raise ErroMemory("Conecte o provedor antes de sincronizar.")
         token = cx.acesso(chave, todos)
         todos_vistos = est.setdefault("vistos_apps", {})
         falhas, feitos = [], 0
@@ -588,9 +588,9 @@ def sincronizar(chave: str, usar_ia: bool = False) -> dict:
                         r = base.adicionar(it["nome"], it["texto"].encode("utf-8"), f"{chave}-{serv}", usar_ia, chave=f"{chave}:{serv}:{it['id']}")
                         res["novos" if r.get("novo") else "atualizados" if r.get("atualizado") else "repetidos"] += 1
                         vistos[it["id"]] = it["marca"]
-                    except ErroLibrary:
+                    except ErroMemory:
                         res["erros"] += 1
-            except ErroLibrary as ex:
+            except ErroMemory as ex:
                 res["erros"] += 1
                 falhas.append(f"{cx.PROVEDORES[chave]['nomes_servico'][serv]}: {ex}")
         if cx.PROVEDORES[chave].get("sem_renovacao") and any("código 401" in f for f in falhas):   # token revogado pela pessoa no app: pede nova conexão

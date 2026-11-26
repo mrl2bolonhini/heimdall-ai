@@ -51,7 +51,7 @@ NOTAS_PORT="${HEIMDALL_NOTAS_PORT:-8011}"
 NEWS_PORT="${HEIMDALL_NEWS_PORT:-8012}"
 LEARN_PORT="${HEIMDALL_LEARN_PORT:-8019}"
 TRADING_PORT="${HEIMDALL_TRADING_PORT:-8020}"
-LIBRARY_PORT="${HEIMDALL_LIBRARY_PORT:-8021}"
+MEMORY_PORT="${HEIMDALL_MEMORY_PORT:-${HEIMDALL_LIBRARY_PORT:-8021}}"   # HEIMDALL_LIBRARY_PORT: nome antigo, ainda aceito
 SAUDE_PAINEL_PORT="${HEIMDALL_SAUDE_PAINEL_PORT:-8013}"
 CONTROLS_PORT="${HEIMDALL_CONTROLS_PORT:-8017}"
 JOGOS_PORT="${HEIMDALL_JOGOS_PORT:-8014}"
@@ -135,7 +135,7 @@ lsof -ti:$NOTAS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NEWS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LEARN_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$TRADING_PORT | xargs kill -9 2>/dev/null
-lsof -ti:$LIBRARY_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$MEMORY_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$SAUDE_PAINEL_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$CONTROLS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$JOGOS_PORT | xargs kill -9 2>/dev/null
@@ -553,7 +553,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] 
 fi
 
 # --- Heimdall Notes (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Lab ---
-# Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (library.heimdall-ai.tech).
+# Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (memory.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_notas.py ]; then
         HEIMDALL_NOTAS_PORT="$NOTAS_PORT" "$VENV_PYTHON" heimdall_notas.py > "$(nova_log notas_debug)" 2>&1 &
@@ -606,24 +606,24 @@ if [ "${HEIMDALL_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && 
     fi
 fi
 
-# --- Heimdall Library (documentos pesquisáveis) ---
-# Desligado por padrão: ligue com HEIMDALL_LIBRARY=1 no .env (heimdall env --set HEIMDALL_LIBRARY 1). Mesmo login do Heimdall Lab.
-if [ "${HEIMDALL_LIBRARY:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ "${HEIMDALL_LIBRARY_MOTOR:-interno}" = "paperless" ] && command -v docker > /dev/null 2>&1 && [ -f paperless/docker-compose.yml ]; then
-        docker compose -f paperless/docker-compose.yml --env-file .env up -d > "$(nova_log paperless_debug)" 2>&1 || echo "Aviso: não consegui subir o Paperless-ngx (motor do Library). Veja logs/paperless_debug.log."
+# --- Heimdall Memory (acervo pesquisável; antes se chamava Library) ---
+# Desligado por padrão: ligue com HEIMDALL_MEMORY=1 no .env (heimdall env --set HEIMDALL_MEMORY 1; o nome antigo HEIMDALL_LIBRARY=1 continua valendo). Mesmo login do Heimdall Lab.
+if [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
+    if [ "${HEIMDALL_MEMORY_MOTOR:-${HEIMDALL_LIBRARY_MOTOR:-interno}}" = "paperless" ] && command -v docker > /dev/null 2>&1 && [ -f paperless/docker-compose.yml ]; then
+        docker compose -f paperless/docker-compose.yml --env-file .env up -d > "$(nova_log paperless_debug)" 2>&1 || echo "Aviso: não consegui subir o Paperless-ngx (motor do Memory). Veja logs/paperless_debug.log."
     fi
-    if [ -f heimdall_library.py ]; then
-        HEIMDALL_LIBRARY_PORT="$LIBRARY_PORT" "$VENV_PYTHON" heimdall_library.py > "$(nova_log library_debug)" 2>&1 &
+    if [ -f heimdall_memory.py ]; then
+        HEIMDALL_MEMORY_PORT="$MEMORY_PORT" "$VENV_PYTHON" heimdall_memory.py > "$(nova_log memory_debug)" 2>&1 &
         COUNTER=0
-        while ! nc -z localhost $LIBRARY_PORT > /dev/null 2>&1; do
+        while ! nc -z localhost $MEMORY_PORT > /dev/null 2>&1; do
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Library não respondeu em 10s. Veja logs/library_debug.log."
+                echo "Aviso: o Heimdall Memory não respondeu em 10s. Veja logs/memory_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Library (documentos pesquisáveis) em http://localhost:$LIBRARY_PORT"
+        echo "     Heimdall Memory (acervo pesquisável) em http://localhost:$MEMORY_PORT"
     fi
 fi
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o site do Heimdall Library: login, CSRF, abas e Ajustes no Heimdall Design, envio multipart, busca, revisão, download, lixeira e Perguntar."""
+"""Testa o site do Heimdall Memory: login, CSRF, abas e Ajustes no Heimdall Design, envio multipart, busca, revisão, download, lixeira e Perguntar."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
@@ -14,11 +14,11 @@ import urllib.parse
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
-TMP = Path(tempfile.mkdtemp(prefix="library_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_LIBRARY_IA": "0"})
+TMP = Path(tempfile.mkdtemp(prefix="memory_"))
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0"})
 import heimdall_lab as hc  # noqa: E402
-import heimdall_library as lib  # noqa: E402
-import heimdall_library_dados as dados  # noqa: E402
+import heimdall_memory as lib  # noqa: E402
+import heimdall_memory_dados as dados  # noqa: E402
 import heimdall_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
@@ -157,7 +157,7 @@ ctx = web.Ctx({"pergunta": ["qual o vencimento do boleto"]}, {"csrf": "c"}, "/pe
 c = lib.contexto_perguntar(ctx)
 confere("contexto do Perguntar traz os documentos e o trecho do boleto", "Acervo: 2 documentos" in c and "Vencimento 10/12/2026" in c and "Contrato Alfa" in c)
 # convidado: acervo separado do dono (regressão: antes o convidado enxergava o acervo do dono)
-tg = hc.nova_sessao("library", "p0123456789ab")[0]
+tg = hc.nova_sessao("memory", "p0123456789ab")[0]
 sg, hg, _ = req("GET", "/pesquisar", cookie=tg)
 confere("convidado entra e não vê documentos do dono", sg == 200 and "contrato alfa" not in txt(hg).lower() and "Nenhum documento" in txt(req("GET", "/pesquisar?q=contrato", cookie=tg)[1]))
 csrf_g = re.search(r'data-csrf="([^"]+)"', txt(hg)).group(1)

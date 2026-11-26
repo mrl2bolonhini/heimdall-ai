@@ -46,10 +46,11 @@ dados_financas/  # nome antigo da pasta do Finance (migrada para finance/ na pri
 amostras_bancos/
 /health/
 
-# Arquivos e pasta de entrada do Heimdall Library (dados do usuário)
+# Arquivos e pasta de entrada do Heimdall Memory (dados do usuário); library/ é o nome antigo da pasta, ignorado até a migração
+/memory/
 /library/
 
-# Dados do Paperless-ngx (motor do Library)
+# Dados do Paperless-ngx (motor do Memory)
 /paperless/data/
 /paperless/media/
 /paperless/export/

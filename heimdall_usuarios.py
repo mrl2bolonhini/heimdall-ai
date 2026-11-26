@@ -24,7 +24,7 @@ SERVICOS = {
     "notas": ("Notes", "HEIMDALL_NOTAS_HOSTS", "notes", False),   # triagem, diários e privacidade: só do dono (os estudos foram para o Learn)
     "learn": ("Learn", "HEIMDALL_LEARN_HOSTS", "learn", True),
     "trading": ("Trading", "HEIMDALL_TRADING_HOSTS", "trading", True),
-    "library": ("Library", "HEIMDALL_LIBRARY_HOSTS", "library", True),
+    "memory": ("Memory", "HEIMDALL_MEMORY_HOSTS", "memory", True),
     "news": ("News", "HEIMDALL_NEWS_HOSTS", "news", True),
     "jogos": ("Games", "HEIMDALL_JOGOS_HOSTS", "games", True),
     "chat": ("Chat (Open WebUI)", "HEIMDALL_WEBUI_HOST", "chat", True),
@@ -36,6 +36,7 @@ SERVICOS = {
     "account": ("Account", "HEIMDALL_ACCOUNT_HOSTS", "account", False),  # tour dos serviços: entram todos os e-mails (donos e convidados), sem escolher
 }
 PREFIXO = "Heimdall: "
+CHAVES_ANTIGAS = {"library": "memory"}   # nomes antigos de serviço no .env (o Library virou Memory em 26/11/2026)
 
 
 def _env() -> dict:
@@ -53,7 +54,7 @@ def situacao() -> dict:
     for item in env.get("HEIMDALL_CFACCESS_CONVIDADOS", "").split(";"):
         if "=" in item:
             e, s = item.split("=", 1)
-            sv = sorted({x.strip().lower() for x in s.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", x.strip().lower()) and SERVICOS.get(x.strip().lower(), (0, 0, 0, True))[3]})
+            sv = sorted({CHAVES_ANTIGAS.get(x.strip().lower(), x.strip().lower()) for x in s.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", x.strip().lower()) and SERVICOS.get(CHAVES_ANTIGAS.get(x.strip().lower(), x.strip().lower()), (0, 0, 0, True))[3]})
             if e.strip() and sv:
                 conv[e.strip().lower()] = sv
     return {"donos": _lista(env.get("HEIMDALL_CFACCESS_EMAILS", "")), "convidados": conv}

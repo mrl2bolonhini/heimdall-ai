@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o conector do Notion do Library contra um Notion simulado: autorização sem PKCE e sem escopos (owner=user), troca de código com autenticação básica e corpo JSON,
+"""Testa o conector do Notion do Memory contra um Notion simulado: autorização sem PKCE e sem escopos (owner=user), troca de código com autenticação básica e corpo JSON,
 leitura das páginas compartilhadas (busca paginada, blocos aninhados e paginados, tabela, tarefa), conteúdo só baixado quando a página muda e revogação."""
 import sys as _sys
 from pathlib import Path as _Path
@@ -16,8 +16,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="notion_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_LIBRARY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_NOTION_ID": "nt-id", "HEIMDALL_NUVEM_NOTION_SEGREDO": "nt-seg", "HEIMDALL_LIBRARY_URL": "https://library.exemplo.test"})
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
+                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_NOTION_ID": "nt-id", "HEIMDALL_NUVEM_NOTION_SEGREDO": "nt-seg", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
 ESTADO = {"revogado": False, "blocos": 0, "form": None, "versao": "", "editada": "2026-11-20T10:00:00.000Z"}
 
 
@@ -86,8 +86,8 @@ threading.Thread(target=fake.serve_forever, daemon=True).start()
 F = f"http://127.0.0.1:{PORTA}"
 
 import heimdall_conexoes as cx  # noqa: E402
-import heimdall_library_apps as ap  # noqa: E402
-import heimdall_library_dados as dados  # noqa: E402
+import heimdall_memory_apps as ap  # noqa: E402
+import heimdall_memory_dados as dados  # noqa: E402
 
 dados.PROJECT_DIR = TMP
 cx.PERMITE_HTTP = True
@@ -112,10 +112,10 @@ confere("Notion aparece como app configurado", "notion" in cx.configurados("apps
 url = cx.iniciar("notion", False, ["paginas"])
 q = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
 confere("endereço: authorize do Notion, owner=user, state, sem PKCE e sem escopo", url.startswith("https://api.notion.com/v1/oauth/authorize?") and q["owner"] == ["user"] and q["response_type"] == ["code"]
-        and "code_challenge" not in q and "scope" not in q and q["redirect_uri"] == ["https://library.exemplo.test/nuvem/retorno"], url)
+        and "code_challenge" not in q and "scope" not in q and q["redirect_uri"] == ["https://memory.exemplo.test/nuvem/retorno"], url)
 ok, msg = cx.concluir(q["state"][0], "codigo-bom")
-confere("conecta (autenticação básica, corpo JSON sem segredo)", ok and "Notion" in msg and ESTADO["form"][1] == {"grant_type": "authorization_code", "code": "codigo-bom", "redirect_uri": "https://library.exemplo.test/nuvem/retorno"}, (msg, ESTADO["form"]))
-confere("token cifrado em disco", b"ntn_token1" not in (TMP / "library" / "nuvem.bin").read_bytes())
+confere("conecta (autenticação básica, corpo JSON sem segredo)", ok and "Notion" in msg and ESTADO["form"][1] == {"grant_type": "authorization_code", "code": "codigo-bom", "redirect_uri": "https://memory.exemplo.test/nuvem/retorno"}, (msg, ESTADO["form"]))
+confere("token cifrado em disco", b"ntn_token1" not in (TMP / "memory" / "nuvem.bin").read_bytes())
 r = ap.sincronizar("notion")
 t = texto_de("Plano da mudança")
 confere("importa as páginas das duas páginas de busca e ignora a arquivada", r["novos"] == 2 and r["erros"] == 0 and not texto_de("Arquivada") and texto_de("Linha do banco"), r)

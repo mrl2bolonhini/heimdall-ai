@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa a conexão do Library com apps por conta (Microsoft: OneNote, To Do, Calendário e Contatos): escopos pedidos só para os serviços marcados,
+"""Testa a conexão do Memory com apps por conta (Microsoft: OneNote, To Do, Calendário e Contatos): escopos pedidos só para os serviços marcados,
 conversão de cada item em documento de texto, atualização no lugar (sem duplicar), serviço recusado sem derrubar os outros, isolamento por pessoa,
 revogação e as telas /apps, contra uma Microsoft Graph simulada."""
 import sys as _sys
@@ -18,8 +18,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="apps_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_LIBRARY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_ONEDRIVE_ID": "app-ms-id", "HEIMDALL_LIBRARY_URL": "https://library.exemplo.test"})
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
+                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_ONEDRIVE_ID": "app-ms-id", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
 
 ESTADO = {"revogado": False, "recusar": set(), "tokens": 0, "chamadas": []}
 NOTAS = {   # id -> (título, html, marca)
@@ -100,9 +100,9 @@ F = f"http://127.0.0.1:{PORTA}"
 
 import heimdall_conexoes as cx  # noqa: E402
 import heimdall_lab as hc  # noqa: E402
-import heimdall_library as lib  # noqa: E402
-import heimdall_library_apps as ap  # noqa: E402
-import heimdall_library_dados as dados  # noqa: E402
+import heimdall_memory as lib  # noqa: E402
+import heimdall_memory_apps as ap  # noqa: E402
+import heimdall_memory_dados as dados  # noqa: E402
 import heimdall_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
@@ -123,7 +123,7 @@ def confere(nome, ok, extra=""):
 def erro(fn, *a, **k):
     try:
         fn(*a, **k)
-    except dados.ErroLibrary as ex:
+    except dados.ErroMemory as ex:
         return str(ex)
     return ""
 
@@ -144,7 +144,7 @@ confere("sem serviço marcado a conexão é recusada", "pelo menos um serviço" 
 q, (ok, msg) = conectar(["notas", "agenda", "inventado"])
 confere("escopos pedidos só para os serviços marcados (serviço inventado é ignorado)", q["scope"] == ["offline_access Notes.Read Calendars.Read"] and q["code_challenge_method"] == ["S256"], q)
 confere("conecta e a mensagem lista os serviços", ok and "OneNote" in msg and "Calendário do Outlook" in msg and "Tasks" not in msg, msg)
-bruto = (TMP / "library" / "nuvem.bin").read_bytes()
+bruto = (TMP / "memory" / "nuvem.bin").read_bytes()
 confere("token cifrado em disco", b"renov" not in bruto and b"acesso" not in bruto)
 sit = ap.situacao()[0]
 confere("situação: conectado e com os serviços escolhidos", sit["conectado"] and sit["servicos"] == ["notas", "agenda"] and sit["nomes"] == ["OneNote", "Calendário do Outlook"], sit)
@@ -234,7 +234,7 @@ s, _, r = req("POST", "/apps/conectar", {"csrf": csrf, "provedor": "microsoft"},
 confere("conectar sem marcar serviço não vai ao provedor", s != 303 or "auth.exemplo.test" not in (r.getheader("Location") or ""), (s, r.getheader("Location")))
 state = urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)["state"][0]
 s, h, _ = req("GET", f"/nuvem/retorno?state={state}&code=codigo-bom")
-confere("retorno sem cookie conclui a conexão com os serviços escolhidos", s == 200 and "OneNote" in h and "Voltar ao Library" in h, h[-300:])
+confere("retorno sem cookie conclui a conexão com os serviços escolhidos", s == 200 and "OneNote" in h and "Voltar ao Memory" in h, h[-300:])
 s, h, _ = req("GET", "/apps", cookie=tk)
 confere("depois de conectar: serviços, Sincronizar agora, Desconectar e Alterar serviços", "Microsoft conectado: OneNote, Microsoft To Do" in h and "Sincronizar agora" in h and "Desconectar Microsoft" in h and "Alterar serviços" in h, h[:400])
 s, _, r = req("POST", "/apps/sincronizar", {"csrf": csrf, "provedor": "microsoft"}, tk)

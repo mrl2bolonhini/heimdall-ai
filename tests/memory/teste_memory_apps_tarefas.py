@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa os conectores de tarefas e quadros do Library contra servidores simulados: Microsoft Planner (conta de trabalho ou escola; conta pessoal recusada),
+"""Testa os conectores de tarefas e quadros do Memory contra servidores simulados: Microsoft Planner (conta de trabalho ou escola; conta pessoal recusada),
 Todoist (OAuth sem PKCE, token sem expiração, revogação) e Trello (token no fragmento entregue por POST, chave de API no cabeçalho, state de uso único)."""
 import sys as _sys
 from pathlib import Path as _Path
@@ -17,9 +17,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="apps2_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_LIBRARY_IA": "0",
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
                    "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_ONEDRIVE_ID": "app-ms-id", "HEIMDALL_NUVEM_TODOIST_ID": "todo-id",
-                   "HEIMDALL_NUVEM_TODOIST_SEGREDO": "todo-seg", "HEIMDALL_NUVEM_TRELLO_ID": "chave-trello-publica", "HEIMDALL_LIBRARY_URL": "https://library.exemplo.test"})
+                   "HEIMDALL_NUVEM_TODOIST_SEGREDO": "todo-seg", "HEIMDALL_NUVEM_TRELLO_ID": "chave-trello-publica", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
 
 TOKEN_TRELLO = "ATTA" + "a1b2c3d4" * 8
 ESTADO = {"pessoal": False, "todoist_revogado": False, "token_todoist": "tdst-token-1", "detalhes": 0, "form_todoist": None, "marca_plano": '"etag-1"'}
@@ -101,9 +101,9 @@ F = f"http://127.0.0.1:{PORTA}"
 
 import heimdall_conexoes as cx  # noqa: E402
 import heimdall_lab as hc  # noqa: E402
-import heimdall_library as lib  # noqa: E402
-import heimdall_library_apps as ap  # noqa: E402
-import heimdall_library_dados as dados  # noqa: E402
+import heimdall_memory as lib  # noqa: E402
+import heimdall_memory_apps as ap  # noqa: E402
+import heimdall_memory_dados as dados  # noqa: E402
 import heimdall_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
@@ -126,7 +126,7 @@ def confere(nome, ok, extra=""):
 def erro(fn, *a, **k):
     try:
         fn(*a, **k)
-    except dados.ErroLibrary as ex:
+    except dados.ErroMemory as ex:
         return str(ex)
     return ""
 
@@ -170,7 +170,7 @@ confere("Todoist: endereço, escopo data:read e state, sem PKCE nem redirect_uri
 ok, msg = cx.concluir(q["state"][0], "codigo-bom")
 confere("Todoist conecta (token sem renovação)", ok and "Todoist" in msg, msg)
 confere("o token enviado ao provedor usa o segredo do administrador e não o verificador PKCE", ESTADO["form_todoist"].get("client_secret") == "todo-seg" and "code_verifier" not in ESTADO["form_todoist"], ESTADO["form_todoist"])
-bruto = (TMP / "library" / "nuvem.bin").read_bytes()
+bruto = (TMP / "memory" / "nuvem.bin").read_bytes()
 confere("token do Todoist cifrado em disco", b"tdst-token" not in bruto)
 r = ap.sincronizar("todoist")
 t1, t3 = texto_de("Renovar o seguro"), texto_de("lâmpada")
@@ -196,7 +196,7 @@ q = urllib.parse.parse_qs(u.query)
 ret = urllib.parse.urlparse(q["return_url"][0])
 state = urllib.parse.parse_qs(ret.query)["state"][0]
 confere("Trello: endereço com chave, escopo read, token por fragmento e state no retorno", url.startswith("https://trello.com/1/authorize?") and q["key"] == ["chave-trello-publica"] and q["scope"] == ["read"]
-        and q["response_type"] == ["token"] and q["callback_method"] == ["fragment"] and ret.path == "/nuvem/retorno" and ret.netloc == "library.exemplo.test", url)
+        and q["response_type"] == ["token"] and q["callback_method"] == ["fragment"] and ret.path == "/nuvem/retorno" and ret.netloc == "memory.exemplo.test", url)
 confere("Trello exige escolher o serviço", "pelo menos um serviço" in erro(cx.iniciar, "trello", False, []))
 
 # telas e retorno com POST público
@@ -237,7 +237,7 @@ s, h, _ = req("POST", "/nuvem/trello", {"state": state3, "token": TOKEN_TRELLO})
 confere("token confirmado pelo Trello conecta", s == 200 and "Trello conectado" in h and [x for x in ap.situacao() if x["chave"] == "trello"][0]["conectado"], h[-300:])
 s, h, _ = req("POST", "/nuvem/trello", {"state": state3, "token": TOKEN_TRELLO})
 confere("o mesmo state não vale duas vezes", "expirou ou já foi usada" in h)
-confere("token do Trello cifrado em disco", TOKEN_TRELLO.encode() not in (TMP / "library" / "nuvem.bin").read_bytes())
+confere("token do Trello cifrado em disco", TOKEN_TRELLO.encode() not in (TMP / "memory" / "nuvem.bin").read_bytes())
 r = ap.sincronizar("trello")
 t = texto_de("Revisar contrato")
 confere("cartão vira documento com quadro, lista, prazo, etiqueta e descrição (token só no cabeçalho)",

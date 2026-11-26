@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Heimdall Library, parte de dados: acervo de documentos pesquisáveis.
+"""Heimdall Memory, parte de dados: acervo de documentos pesquisáveis.
 
-Cada pessoa tem o seu acervo: banco db/library.db (do dono) ou db/people/<id>/library.db, e os arquivos na pasta library/ (do dono) ou
-db/people/<id>/library/. Os documentos chegam por envio no site ou pela pasta de entrada (library/inbox). Para cada um o Library:
+Cada pessoa tem o seu acervo: banco db/library.db (do dono) ou db/people/<id>/library.db, e os arquivos na pasta memory/ (do dono) ou
+db/people/<id>/memory/. Os documentos chegam por envio no site ou pela pasta de entrada (memory/inbox). Para cada um o Memory:
   1. guarda o arquivo (nome pelo hash, então o mesmo arquivo nunca entra duas vezes);
   2. extrai o texto (PDF com texto, PDF escaneado e foto por OCR, DOCX, TXT, MD, CSV) e indexa para a busca (SQLite FTS5, sem acento);
   3. sugere título, tipo, data, emissor e etiquetas por regras e, se houver modelo, pela IA; a sugestão fica marcada "a revisar"
@@ -20,6 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 import heimdall_banco as banco
+import heimdall_pastas
 
 PROJECT_DIR = Path(__file__).resolve().parent
 LIMITE_BYTES = 30 * 1024 * 1024
@@ -43,14 +44,14 @@ REGRAS_TIPO = {
 _lock = threading.RLock()
 
 
-class ErroLibrary(Exception):
+class ErroMemory(Exception):
     """Erro de validação com mensagem própria para o usuário."""
 
 
 def pasta_base() -> Path:
-    """Pasta de arquivos da pessoa em uso: library/ na raiz (dono) ou <pasta da pessoa>/library/."""
+    """Pasta de arquivos da pessoa em uso: memory/ na raiz (dono) ou <pasta da pessoa>/memory/."""
     d = banco._PESSOA_DIR.get()
-    return (d / "library") if d else (PROJECT_DIR / "library")
+    return heimdall_pastas.migrar(d or PROJECT_DIR, "library", "memory")   # o Library virou Memory: a pasta antiga é renomeada na primeira vez, sem copiar nem apagar
 
 
 def pasta_arquivos() -> Path:
@@ -106,7 +107,7 @@ def _reindexar(c, did: int) -> None:
 def validar_etiqueta(nome: str) -> str:
     n = " ".join((nome or "").split())[:30]
     if not re.fullmatch(r"[\wÀ-ÿ][\wÀ-ÿ .\-]{0,29}", n):
-        raise ErroLibrary("Use etiquetas de até 30 letras, números, espaço, ponto ou hífen.")
+        raise ErroMemory("Use etiquetas de até 30 letras, números, espaço, ponto ou hífen.")
     return n
 
 
@@ -118,7 +119,7 @@ def definir_etiquetas(did: int, nomes: list, c=None) -> None:
     for n in nomes:
         try:
             v = validar_etiqueta(n)
-        except ErroLibrary:
+        except ErroMemory:
             continue
         if v.lower() not in [x.lower() for x in limpos]:
             limpos.append(v)
@@ -184,7 +185,7 @@ def validar_sugestao_ia(bruto: str, texto: str) -> dict:
         for x in j["etiquetas"][:6]:
             try:
                 et.append(validar_etiqueta(str(x)))
-            except ErroLibrary:
+            except ErroMemory:
                 pass
         out["etiquetas"] = et
     return out
@@ -213,11 +214,11 @@ def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = Tr
     nome = Path(nome or "documento").name[:150]
     ext = Path(nome).suffix.lower()
     if ext not in EXT_OK:
-        raise ErroLibrary(f"Formato não aceito ({ext or 'sem extensão'}). Envie PDF, foto (JPG, PNG, HEIC, TIFF, WEBP), DOCX, TXT, MD ou CSV.")
+        raise ErroMemory(f"Formato não aceito ({ext or 'sem extensão'}). Envie PDF, foto (JPG, PNG, HEIC, TIFF, WEBP), DOCX, TXT, MD ou CSV.")
     if not dados:
-        raise ErroLibrary("O arquivo está vazio.")
+        raise ErroMemory("O arquivo está vazio.")
     if len(dados) > LIMITE_BYTES:
-        raise ErroLibrary(f"O arquivo passa de {LIMITE_BYTES // (1024 * 1024)} MB.")
+        raise ErroMemory(f"O arquivo passa de {LIMITE_BYTES // (1024 * 1024)} MB.")
     sha = hashlib.sha256(dados).hexdigest()
     anterior = None
     with _lock, conexao() as c:
@@ -248,7 +249,7 @@ def adicionar(nome: str, dados: bytes, origem: str = "envio", usar_ia: bool = Tr
 
 
 def processar_entrada(usar_ia: bool = True) -> dict:
-    """Importa os arquivos da pasta de entrada e os move para library/inbox/done (ou recusados/, com o motivo)."""
+    """Importa os arquivos da pasta de entrada e os move para memory/inbox/done (ou recusados/, com o motivo)."""
     ent = pasta_entrada()
     res = {"novos": 0, "repetidos": 0, "recusados": 0}
     if not ent.is_dir():
@@ -258,7 +259,7 @@ def processar_entrada(usar_ia: bool = True) -> dict:
             r = adicionar(f.name, f.read_bytes(), "pasta", usar_ia)
             res["novos" if r["novo"] else "repetidos"] += 1
             sub = "done"
-        except (ErroLibrary, OSError):
+        except (ErroMemory, OSError):
             res["recusados"] += 1
             sub = "refused"
         (ent / sub).mkdir(exist_ok=True)
@@ -332,15 +333,15 @@ def atualizar(did, titulo: str, tipo: str, data_doc: str, emissor: str, etiqueta
     """Salva a revisão da pessoa e marca o documento como revisado."""
     titulo = " ".join((titulo or "").split())[:100]
     if len(titulo) < 2:
-        raise ErroLibrary("O título precisa de pelo menos 2 caracteres.")
+        raise ErroMemory("O título precisa de pelo menos 2 caracteres.")
     if tipo not in TIPOS:
-        raise ErroLibrary("Tipo de documento desconhecido.")
+        raise ErroMemory("Tipo de documento desconhecido.")
     data_doc = (data_doc or "").strip()
     if data_doc and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", data_doc):
-        raise ErroLibrary("Use a data no formato AAAA-MM-DD, por exemplo 2026-11-25.")
+        raise ErroMemory("Use a data no formato AAAA-MM-DD, por exemplo 2026-11-25.")
     with _lock, conexao() as c:
         if not c.execute("SELECT 1 FROM documentos WHERE id=?", (int(did),)).fetchone():
-            raise ErroLibrary("Documento não encontrado.")
+            raise ErroMemory("Documento não encontrado.")
         c.execute("UPDATE documentos SET titulo=?, tipo=?, data_doc=?, emissor=?, revisado=1 WHERE id=?", (titulo, tipo, data_doc, " ".join((emissor or "").split())[:80], int(did)))
         definir_etiquetas(int(did), [x for x in re.split(r"[,;]", etiquetas or "") if x.strip()], c)
 
@@ -381,8 +382,8 @@ ORIGINAIS = {}   # funções do acervo interno, para o motor Paperless reaprovei
 
 
 def motor() -> str:
-    """"paperless" (HEIMDALL_LIBRARY_MOTOR=paperless) ou "interno". No Paperless, cada pessoa tem o seu usuário e só vê o que é dela."""
-    return "paperless" if os.environ.get("HEIMDALL_LIBRARY_MOTOR", "interno") == "paperless" else "interno"
+    """"paperless" (HEIMDALL_MEMORY_MOTOR=paperless) ou "interno". No Paperless, cada pessoa tem o seu usuário e só vê o que é dela."""
+    return "paperless" if os.environ.get("HEIMDALL_MEMORY_MOTOR", "interno") == "paperless" else "interno"
 
 
 def _despachar(nome: str):
@@ -390,7 +391,7 @@ def _despachar(nome: str):
 
     def f(*a, **k):
         if motor() == "paperless":
-            import heimdall_library_paperless as pl
+            import heimdall_memory_paperless as pl
             return getattr(pl, nome)(*a, **k)
         return interno(*a, **k)
     f.__name__, f.__doc__ = nome, interno.__doc__

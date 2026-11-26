@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Heimdall Conexões: base comum das conexões de cada pessoa com serviços externos por conta (OAuth 2.0 com PKCE).
 
-Usada pelo Library (arquivos em nuvem: heimdall_library_nuvem.py; notas, tarefas, agenda e contatos: heimdall_library_apps.py). Como tudo roda no
+Usada pelo Memory (arquivos em nuvem: heimdall_memory_nuvem.py; notas, tarefas, agenda e contatos: heimdall_memory_apps.py). Como tudo roda no
 servidor e a pessoa só autoriza no navegador, funciona para quem usa Windows, Linux, macOS, Android ou iPhone.
 
 O que esta base cuida (os módulos de cada grupo só dizem o que ler):
   - registro de provedores (PROVEDORES) e das credenciais do administrador no .env (HEIMDALL_NUVEM_<CHAVE>_ID e _SEGREDO);
-  - armazenamento cifrado por pessoa (library/nuvem.bin, AES-GCM, permissão 600; sem o pacote cryptography a conexão é recusada);
+  - armazenamento cifrado por pessoa (memory/nuvem.bin, AES-GCM, permissão 600; sem o pacote cryptography a conexão é recusada);
   - OAuth: autorização com state de uso único (10 minutos, ligado à pessoa) e PKCE S256, troca do código, renovação do token com rotação,
     revogação detectada (pede nova conexão);
   - HTTP seguro (só https; redirecionamentos seguidos à mão e sem o token);
@@ -29,10 +29,10 @@ import urllib.parse
 import urllib.request
 
 import heimdall_banco as banco
-import heimdall_library_dados as base
+import heimdall_memory_dados as base
 import heimdall_pessoas as pessoas
 
-ErroLibrary = base.ErroLibrary
+ErroMemory = base.ErroMemory
 LOCK = threading.RLock()
 _lock_pend = threading.Lock()   # só para o state do OAuth: nunca espera uma sincronização longa
 PENDENTES = {}                  # state -> {pessoa, provedor, verifier, escrita, servicos, expira}
@@ -94,17 +94,17 @@ def configurados(grupo: str = "") -> list:
 
 
 def url_retorno() -> str:
-    return os.environ.get("HEIMDALL_LIBRARY_URL", "https://library.heimdall-ai.tech").rstrip("/") + "/nuvem/retorno"
+    return (os.environ.get("HEIMDALL_MEMORY_URL") or os.environ.get("HEIMDALL_LIBRARY_URL") or "https://memory.heimdall-ai.tech").rstrip("/") + "/nuvem/retorno"
 
 
 def _aead():
     try:
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     except ImportError:
-        raise ErroLibrary("A conexão com a nuvem precisa do pacote cryptography instalado neste servidor.") from None
+        raise ErroMemory("A conexão com a nuvem precisa do pacote cryptography instalado neste servidor.") from None
     segredo = os.environ.get("HEIMDALL_NUVEM_CHAVE") or os.environ.get("HEIMDALL_PAPERLESS_SECRET", "")
     if not segredo:
-        raise ErroLibrary("Falta a chave de cifragem da conexão com a nuvem no .env (HEIMDALL_NUVEM_CHAVE).")
+        raise ErroMemory("Falta a chave de cifragem da conexão com a nuvem no .env (HEIMDALL_NUVEM_CHAVE).")
     return AESGCM(hashlib.sha256(b"heimdall-nuvem-v1\0" + segredo.encode()).digest())
 
 
@@ -119,10 +119,10 @@ def carregar() -> dict:
     try:
         b = f.read_bytes()
         return json.loads(_aead().decrypt(b[:12], b[12:], b"nuvem"))
-    except ErroLibrary:
+    except ErroMemory:
         raise
     except Exception:  # noqa: BLE001
-        raise ErroLibrary("Não consegui ler as conexões com a nuvem desta pessoa. Conecte de novo.") from None
+        raise ErroMemory("Não consegui ler as conexões com a nuvem desta pessoa. Conecte de novo.") from None
 
 
 def gravar(dados: dict) -> None:
@@ -150,7 +150,7 @@ class _SemRedirecionar(urllib.request.HTTPRedirectHandler):
 
 def _checa_url(url: str) -> None:
     if not (url.startswith("https://") or (PERMITE_HTTP and url.startswith("http://127.0.0.1"))):
-        raise ErroLibrary("Endereço de provedor não permitido.")
+        raise ErroMemory("Endereço de provedor não permitido.")
 
 
 def http(metodo: str, url: str, cab: dict = None, corpo: bytes = None, limite: int = 2 * 1024 * 1024, seguir: bool = True, timeout: int = 40) -> tuple:
@@ -163,7 +163,7 @@ def http(metodo: str, url: str, cab: dict = None, corpo: bytes = None, limite: i
             with urllib.request.build_opener(_SemRedirecionar).open(req, timeout=timeout) as r:
                 dados = r.read(limite + 1)
                 if len(dados) > limite:
-                    raise ErroLibrary("Resposta grande demais.")
+                    raise ErroMemory("Resposta grande demais.")
                 return r.status, r.headers, dados
         except urllib.error.HTTPError as ex:
             if ex.code in (301, 302, 303, 307, 308) and seguir and ex.headers.get("Location"):
@@ -175,21 +175,21 @@ def http(metodo: str, url: str, cab: dict = None, corpo: bytes = None, limite: i
                 continue
             return ex.code, ex.headers, ex.read(4096)
         except (urllib.error.URLError, OSError):
-            raise ErroLibrary("O provedor não respondeu. Tente de novo em alguns minutos.") from None
-    raise ErroLibrary("Redirecionamentos demais.")
+            raise ErroMemory("O provedor não respondeu. Tente de novo em alguns minutos.") from None
+    raise ErroMemory("Redirecionamentos demais.")
 
 
 def json_get(url: str, token: str, cab: dict = None) -> dict:
-    """GET autenticado que devolve o JSON; erro do provedor vira ErroLibrary sem expor o corpo."""
+    """GET autenticado que devolve o JSON; erro do provedor vira ErroMemory sem expor o corpo."""
     st, _, b = http("GET", url, {"Authorization": "Bearer " + token, "Accept": "application/json", **(cab or {})})
     if st == 429:
-        raise ErroLibrary("O provedor pediu para esperar. Tentarei de novo na próxima rodada.")
+        raise ErroMemory("O provedor pediu para esperar. Tentarei de novo na próxima rodada.")
     if st != 200:
-        raise ErroLibrary(f"O provedor recusou a leitura (código {st}).")
+        raise ErroMemory(f"O provedor recusou a leitura (código {st}).")
     try:
         return json.loads(b or b"{}")
     except ValueError:
-        raise ErroLibrary("Resposta inesperada do provedor.") from None
+        raise ErroMemory("Resposta inesperada do provedor.") from None
 
 
 def _form(url: str, campos: dict, basico: tuple = None, cab_extra: dict = None) -> dict:
@@ -222,14 +222,14 @@ def iniciar(chave: str, escrita: bool = False, servicos=None) -> str:
     Grava o state e o verificador PKCE na memória, ligados à pessoa de agora."""
     prov = PROVEDORES.get(chave)
     if prov and prov.get("fluxo") == "senha":
-        raise ErroLibrary("Este provedor se conecta com o Apple ID e uma senha de aplicativo, não por autorização no site.")
+        raise ErroMemory("Este provedor se conecta com o Apple ID e uma senha de aplicativo, não por autorização no site.")
     cid, _seg = credenciais(chave) if prov else ("", "")
     if not prov or not cid:
-        raise ErroLibrary("Este provedor não está configurado pelo administrador.")
+        raise ErroMemory("Este provedor não está configurado pelo administrador.")
     if "escopos_servico" in prov:
         servicos = [s for s in dict.fromkeys(servicos or []) if s in prov["escopos_servico"]]
         if not servicos:
-            raise ErroLibrary("Escolha pelo menos um serviço para conectar.")
+            raise ErroMemory("Escolha pelo menos um serviço para conectar.")
     _aead()   # falha cedo se não houver como cifrar
     state, verifier = secrets.token_urlsafe(24), secrets.token_urlsafe(48)
     desafio = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip("=")
@@ -238,10 +238,10 @@ def iniciar(chave: str, escrita: bool = False, servicos=None) -> str:
         for k in [k for k, v in PENDENTES.items() if v["expira"] < agora]:
             del PENDENTES[k]
         if len(PENDENTES) > 500:
-            raise ErroLibrary("Muitas conexões em andamento. Tente de novo em alguns minutos.")
+            raise ErroMemory("Muitas conexões em andamento. Tente de novo em alguns minutos.")
         PENDENTES[state] = {"pessoa": pessoas.atual(), "provedor": chave, "verifier": verifier, "escrita": bool(escrita), "servicos": servicos or [], "expira": agora + 600}
     if prov.get("fluxo") == "trello":   # o Trello não usa state nem código: o state vai no endereço de retorno e o token volta no fragmento
-        params = {"key": cid, "name": "Heimdall Library", "scope": escopo_de(chave, escrita, servicos), "expiration": "never", "response_type": "token",
+        params = {"key": cid, "name": "Heimdall Memory", "scope": escopo_de(chave, escrita, servicos), "expiration": "never", "response_type": "token",
                   "callback_method": "fragment", "return_url": url_retorno() + "?" + urllib.parse.urlencode({"state": state})}
         return prov["auth"] + "?" + urllib.parse.urlencode(params)
     if prov.get("simples"):
@@ -260,9 +260,9 @@ def concluir(state: str, code: str, erro: str = "") -> tuple:
     with _lock_pend:
         pend = PENDENTES.pop(state or "", None)
     if not pend or pend["expira"] < time.time():
-        return False, "Esta autorização expirou ou já foi usada. Volte ao Library e conecte de novo."
+        return False, "Esta autorização expirou ou já foi usada. Volte ao Memory e conecte de novo."
     if erro or not code or len(code) > 2000:
-        return False, "A autorização não foi concluída. Volte ao Library e tente de novo."
+        return False, "A autorização não foi concluída. Volte ao Memory e tente de novo."
     chave = pend["provedor"]
     prov = PROVEDORES[chave]
     cid, seg = credenciais(chave)
@@ -293,7 +293,7 @@ def concluir(state: str, code: str, erro: str = "") -> tuple:
                 novo["servicos"] = pend["servicos"]
             todos[chave] = novo
             gravar(todos)
-    except ErroLibrary as ex:
+    except ErroMemory as ex:
         return False, str(ex)
     if prov["grupo"] == "apps":
         return True, f"{prov['nome']} conectado ({', '.join(prov['nomes_servico'][s] for s in pend['servicos'])}). A sincronização é automática."
@@ -312,22 +312,22 @@ def concluir_token(state: str, token: str) -> tuple:
     with _lock_pend:
         pend = PENDENTES.pop(state or "", None)
     if not pend or pend["expira"] < time.time() or PROVEDORES.get(pend["provedor"], {}).get("fluxo") != "trello":
-        return False, "Esta autorização expirou ou já foi usada. Volte ao Library e conecte de novo."
+        return False, "Esta autorização expirou ou já foi usada. Volte ao Memory e conecte de novo."
     token = (token or "").strip()
     if not re.fullmatch(r"[A-Za-z0-9_\-]{16,200}", token):
-        return False, "A autorização não foi concluída. Volte ao Library e tente de novo."
+        return False, "A autorização não foi concluída. Volte ao Memory e tente de novo."
     chave = pend["provedor"]
     prov = PROVEDORES[chave]
     try:
         st, _, _b = http("GET", prov["api"] + "/members/me?fields=id", {"Authorization": cab_trello(token), "Accept": "application/json"})
         if st != 200:
-            return False, "O Trello não confirmou a autorização. Volte ao Library e tente de novo."
+            return False, "O Trello não confirmou a autorização. Volte ao Memory e tente de novo."
         with como(pend["pessoa"]), LOCK:
             todos = carregar()
             todos[chave] = {**todos.get(chave, {}), "acesso": token, "renovacao": "sem-renovacao", "expira": time.time() + 10 * 365 * 86400, "escrita": False,
                             "servicos": pend["servicos"], "erro": ""}
             gravar(todos)
-    except ErroLibrary as ex:
+    except ErroMemory as ex:
         return False, str(ex)
     return True, f"{prov['nome']} conectado ({', '.join(prov['nomes_servico'][s] for s in pend['servicos'])}). A sincronização é automática."
 
@@ -341,7 +341,7 @@ def acesso(chave: str, todos: dict) -> str:
     """Token de acesso válido da pessoa de agora; renova com o token de renovação e guarda o novo."""
     est = todos.get(chave)
     if not est or not est.get("renovacao"):
-        raise ErroLibrary("Conecte o provedor antes de sincronizar.")
+        raise ErroMemory("Conecte o provedor antes de sincronizar.")
     if est.get("acesso") and est.get("expira", 0) > time.time() + 60:
         return est["acesso"]
     prov = PROVEDORES[chave]
@@ -355,8 +355,8 @@ def acesso(chave: str, todos: dict) -> str:
         if r["_erro"] in ("invalid_grant", "http 400", "http 401"):
             est.update({"acesso": "", "renovacao": "", "erro": "A autorização expirou ou foi revogada. Conecte de novo."})
             gravar(todos)
-            raise ErroLibrary(est["erro"])
-        raise ErroLibrary("Não consegui renovar o acesso agora. Tentarei de novo na próxima rodada.")
+            raise ErroMemory(est["erro"])
+        raise ErroMemory("Não consegui renovar o acesso agora. Tentarei de novo na próxima rodada.")
     est["acesso"], est["expira"] = r["access_token"], time.time() + int(r.get("expires_in", 3600))
     if r.get("refresh_token"):
         est["renovacao"] = r["refresh_token"]   # o provedor pode trocar o token de renovação a cada uso
@@ -398,7 +398,7 @@ def sincronizar_todos() -> dict:
                 for k in conectados:
                     try:
                         total["novos"] += SINCRONIZADORES[PROVEDORES[k]["grupo"]](k).get("novos", 0)
-                    except (ErroLibrary, KeyError):
+                    except (ErroMemory, KeyError):
                         continue
                 if conectados:
                     total["pessoas"] += 1
@@ -408,7 +408,7 @@ def sincronizar_todos() -> dict:
 
 
 def iniciar_sincronizador() -> None:
-    """Thread de fundo do Library. HEIMDALL_NUVEM=0 desliga; sem provedor configurado, não faz nada."""
+    """Thread de fundo do Memory. HEIMDALL_NUVEM=0 desliga; sem provedor configurado, não faz nada."""
     if os.environ.get("HEIMDALL_NUVEM", "1") == "0" or not configurados():
         return
     intervalo = max(60, int(os.environ.get("HEIMDALL_NUVEM_INTERVALO", "900") or 900))
@@ -421,4 +421,4 @@ def iniciar_sincronizador() -> None:
             except Exception:  # noqa: BLE001
                 pass
             time.sleep(intervalo)
-    threading.Thread(target=laco, daemon=True, name="library-conexoes").start()
+    threading.Thread(target=laco, daemon=True, name="memory-conexoes").start()

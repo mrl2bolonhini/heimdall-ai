@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Base web dos serviços novos do Heimdall (Trading, Library): login, sessão, CSRF, páginas no Heimdall Design, Ajustes, Perguntar e multipart.
+"""Base web dos serviços novos do Heimdall (Trading, Memory): login, sessão, CSRF, páginas no Heimdall Design, Ajustes, Perguntar e multipart.
 
 Cada serviço descreve a si mesmo com `Config` (abas e subabas, Ajustes, rotas GET e POST, rotas antigas com 301, texto do Perguntar) e chama `servir(cfg)`.
 Segurança: só 127.0.0.1 (HEIMDALL_<X>_HOST), só nomes de site permitidos, login por senha e código de 6 dígitos ou Cloudflare Access, CSRF em todo POST,
@@ -32,12 +32,16 @@ COOKIE = nuvem.COOKIE
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 
 
-def carregar_env(prefixo: str) -> None:
-    """Lê do .env só as variáveis do serviço (HEIMDALL_<X>_*) e as de pasta de dados."""
+def carregar_env(prefixo: str, legado: str = "") -> None:
+    """Lê do .env só as variáveis do serviço (HEIMDALL_<X>_*) e as de pasta de dados.
+
+    legado: prefixo antigo do serviço renomeado (HEIMDALL_LIBRARY_ para o Memory). As variáveis com o prefixo antigo valem como as novas;
+    se as duas existirem, a nova manda. Assim o .env de quem atualiza continua funcionando sem edição."""
     try:
         linhas = (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines()
     except OSError:
         return
+    novas, antigas = {}, {}
     for linha in linhas:
         linha = linha.strip()
         if linha.startswith("export "):
@@ -46,10 +50,13 @@ def carregar_env(prefixo: str) -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        if not (chave.startswith(prefixo) or chave in ("HEIMDALL_DB_DIR",)):
-            continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
+        if chave.startswith(prefixo) or chave in ("HEIMDALL_DB_DIR",):
+            novas[chave] = valor
+        elif legado and chave.startswith(legado):
+            antigas[prefixo + chave[len(legado):]] = valor
+    for chave, valor in {**antigas, **novas}.items():
         os.environ.setdefault(chave, valor)
 
 
@@ -86,7 +93,8 @@ class Config:
 
     def __init__(self, chave: str, nome: str, porta_env: str, porta: int, hosts: str, abas: list, ajustes: list, get: dict, post: dict,
                  aliases: dict = None, sistema_perguntar: str = "", contexto_perguntar=None, dica_perguntar: str = "", max_post: int = 20000, ao_iniciar=None,
-                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None, publicas_post: dict = None):
+                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None, publicas_post: dict = None,
+                 hosts_legados: str = ""):
         self.chave, self.nome, self.porta_env, self.porta, self.hosts = chave, nome, porta_env, porta, hosts
         self.abas, self.ajustes, self.get, self.post = abas, ajustes, get, post
         self.aliases = aliases or {}
@@ -94,6 +102,7 @@ class Config:
         self.max_post, self.ao_iniciar, self.css, self.script_pagina, self.erro = max_post, ao_iniciar, css, script_pagina, erro
         self.publicas = publicas or {}   # {rota GET sem sessão: func(q) -> (titulo, corpo) ou (titulo, corpo, script)}; só para retornos de terceiros (OAuth), que chegam sem o cookie
         self.publicas_post = publicas_post or {}   # {rota POST sem sessão: func(campos) -> (titulo, corpo)}; só para o passo final de um retorno de terceiros (o state de uso único vale como credencial)
+        self.hosts_legados = {h.strip().lower() for h in hosts_legados.split(",") if h.strip()}   # endereços de antes de uma troca de nome: continuam respondendo e, com <PREFIXO>URL no .env, redirecionam (301) para o novo
         self.pertence = pertence or {}   # {rota que não é aba: rota da aba a destacar}, como /documento dentro de Documentos
         assert len(abas) <= design.MAX_ABAS, "mais abas do que o Heimdall Design permite"
         self.prefixo = f"HEIMDALL_{chave.upper()}_"
@@ -267,6 +276,10 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
             if rota == "/saude":
                 self._enviar(200, b"ok", "text/plain; charset=utf-8")
                 return
+            base_nova = os.environ.get(cfg.prefixo + "URL", "").strip().rstrip("/")
+            if host in cfg.hosts_legados and metodo in ("GET", "HEAD") and base_nova.startswith("https://") and (urlparse(base_nova).hostname or "") not in cfg.hosts_legados:
+                self._ir(base_nova + self.path, status=301)   # endereço antigo: 301 para o novo (só quando o novo está configurado em <PREFIXO>URL)
+                return
             sess = None
             try:
                 if rota == "/entrar":
@@ -407,7 +420,7 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
 def servir(cfg: Config) -> None:
     host_env = os.environ.get(cfg.prefixo + "HOST", "127.0.0.1")
     port = int(os.environ.get(cfg.porta_env, str(cfg.porta)))
-    hosts_ok = {h.strip().lower() for h in os.environ.get(cfg.prefixo + "HOSTS", cfg.hosts).split(",") if h.strip()}
+    hosts_ok = {h.strip().lower() for h in os.environ.get(cfg.prefixo + "HOSTS", cfg.hosts).split(",") if h.strip()} | set(cfg.hosts_legados)
     if not (nuvem.SENHA_HASH and nuvem.TOTP_SEGREDO):
         sys.exit(f"Sem senha e código configurados o Heimdall {cfg.nome} não sobe. Rode: python3 heimdall_acesso.py --tudo")
     if cfg.ao_iniciar:

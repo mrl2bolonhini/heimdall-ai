@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa os dados do Heimdall Library: envio, duplicado, busca sem acento, revisão, etiquetas, lixeira, pasta de entrada e sugestão da IA."""
+"""Testa os dados do Heimdall Memory: envio, duplicado, busca sem acento, revisão, etiquetas, lixeira, pasta de entrada e sugestão da IA."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
@@ -12,7 +12,7 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp())
 os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
 
-import heimdall_library_dados as L  # noqa: E402
+import heimdall_memory_dados as L  # noqa: E402
 import heimdall_banco as banco  # noqa: E402
 
 L.PROJECT_DIR = TMP
@@ -29,7 +29,7 @@ def confere(nome, ok, extra=""):
 def erro(fn, *a, **k):
     try:
         fn(*a, **k)
-    except L.ErroLibrary as ex:
+    except L.ErroMemory as ex:
         return str(ex)
     return ""
 

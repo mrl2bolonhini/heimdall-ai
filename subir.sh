@@ -5,7 +5,7 @@
 #   ./subir.sh --update           sobe com os argumentos que você passar (os mesmos do start_heimdall.sh)
 #   ./subir.sh --status           só confere agora o que está no ar, sem subir nada
 #   ./subir.sh --log              mostra as últimas 40 linhas do log da subida atual
-#   ./subir.sh --log notas        idem, do serviço indicado (mcp, mcp_public, mcp_dados, agente, lab, notas, learn, trading, library, news, saude_painel, jogos, account, finance, controls, open_terminal, ingest)
+#   ./subir.sh --log notas        idem, do serviço indicado (mcp, mcp_public, mcp_dados, agente, lab, notas, learn, trading, memory, news, saude_painel, jogos, account, finance, controls, open_terminal, ingest)
 #   ./subir.sh --logs             lista os logs em logs/
 #   ./subir.sh --limpar           apaga os logs antigos que ficavam soltos na pasta do projeto (agora ficam em logs/)
 #   ./subir.sh --reiniciar [args] encerra a subida em andamento e sobe de novo
@@ -42,7 +42,7 @@ case "$1" in
     --logs) ls -lt "$LOGS" 2> /dev/null | tail -n +2 || echo "Ainda não há logs."; exit 0 ;;
     --limpar)
         n=0
-        for f in mcp_debug mcp_public_debug mcp_dados_debug agente_debug lab_debug notas_debug learn_debug trading_debug library_debug biblioteca_debug open_terminal ingest; do
+        for f in mcp_debug mcp_public_debug mcp_dados_debug agente_debug lab_debug notas_debug learn_debug trading_debug memory_debug library_debug biblioteca_debug open_terminal ingest; do
             if [ -f "$PROJECT_DIR/$f.log" ] && [ ! -L "$PROJECT_DIR/$f.log" ]; then rm -f "$PROJECT_DIR/$f.log" && n=$((n+1)) && echo "Apagado: $f.log"; fi
         done
         echo "$n arquivo(s) de log antigo apagado(s). Os logs atuais estão em logs/."
@@ -91,7 +91,7 @@ montar_lista() {
         LISTA+=("Heimdall Notes|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")
         [ "${HEIMDALL_LEARN:-0}" = "1" ] && LISTA+=("Heimdall Learn|http|http://127.0.0.1:${HEIMDALL_LEARN_PORT:-8019}/saude")
         [ "${HEIMDALL_TRADING:-0}" = "1" ] && LISTA+=("Heimdall Trading|http|http://127.0.0.1:${HEIMDALL_TRADING_PORT:-8020}/saude")
-        [ "${HEIMDALL_LIBRARY:-0}" = "1" ] && LISTA+=("Heimdall Library|http|http://127.0.0.1:${HEIMDALL_LIBRARY_PORT:-8021}/saude")
+        [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && LISTA+=("Heimdall Memory|http|http://127.0.0.1:${HEIMDALL_MEMORY_PORT:-${HEIMDALL_LIBRARY_PORT:-8021}}/saude")
         LISTA+=("Heimdall News|http|http://127.0.0.1:${HEIMDALL_NEWS_PORT:-8012}/saude")
         LISTA+=("Heimdall Health|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
         LISTA+=("Heimdall Games|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")

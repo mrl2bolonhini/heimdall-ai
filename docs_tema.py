@@ -22,7 +22,7 @@ ACESSOS = {
     "jogos": "https://games.heimdall-ai.tech",
     "learn": "https://learn.heimdall-ai.tech",
     "trading": "https://trading.heimdall-ai.tech",
-    "library": "https://library.heimdall-ai.tech",
+    "memory": "https://memory.heimdall-ai.tech",
     "finance": "https://finance.heimdall-ai.tech",
 }
 H = lambda s: html.escape(str(s), quote=True)

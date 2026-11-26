@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o conector do Google do Library contra serviços simulados (Agenda, Tarefas e Contatos): escopos de leitura só para os serviços marcados, acesso offline com PKCE,
+"""Testa o conector do Google do Memory contra serviços simulados (Agenda, Tarefas e Contatos): escopos de leitura só para os serviços marcados, acesso offline com PKCE,
 paginação, eventos cancelados ignorados, atualização no lugar, renovação do token e revogação (invalid_grant)."""
 import sys as _sys
 from pathlib import Path as _Path
@@ -16,8 +16,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="google_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_LIBRARY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_GOOGLE_ID": "g-id", "HEIMDALL_NUVEM_GOOGLE_SEGREDO": "g-seg", "HEIMDALL_LIBRARY_URL": "https://library.exemplo.test"})
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
+                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_GOOGLE_ID": "g-id", "HEIMDALL_NUVEM_GOOGLE_SEGREDO": "g-seg", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
 ESTADO = {"tokens": 0, "revogado": False, "chamadas": [], "etag": "e1", "form": None}
 
 
@@ -80,8 +80,8 @@ threading.Thread(target=fake.serve_forever, daemon=True).start()
 F = f"http://127.0.0.1:{PORTA}"
 
 import heimdall_conexoes as cx  # noqa: E402
-import heimdall_library_apps as ap  # noqa: E402
-import heimdall_library_dados as dados  # noqa: E402
+import heimdall_memory_apps as ap  # noqa: E402
+import heimdall_memory_dados as dados  # noqa: E402
 
 dados.PROJECT_DIR = TMP
 cx.PERMITE_HTTP = True
@@ -110,7 +110,7 @@ confere("endereço: acesso offline, consentimento, PKCE e só os escopos marcado
 ok, msg = cx.concluir(q["state"][0], "codigo-bom")
 confere("conecta e lista os serviços", ok and "Google Agenda" in msg and "Google Contatos" in msg and "Tarefas" not in msg, msg)
 confere("o token usa o segredo do administrador e o verificador PKCE", ESTADO["form"].get("client_secret") == "g-seg" and ESTADO["form"].get("code_verifier"), ESTADO["form"])
-confere("tokens cifrados em disco", b"g-renov" not in (TMP / "library" / "nuvem.bin").read_bytes())
+confere("tokens cifrados em disco", b"g-renov" not in (TMP / "memory" / "nuvem.bin").read_bytes())
 time.sleep(1.1)   # o primeiro token vale 1 s: força a renovação
 r = ap.sincronizar("google")
 ev, ct = texto_de("Audiência"), texto_de("João")
@@ -135,7 +135,7 @@ ESTADO["revogado"] = True
 try:
     ap.sincronizar("google")
     erro = ""
-except dados.ErroLibrary as ex:
+except dados.ErroMemory as ex:
     erro = str(ex)
 sit = [x for x in ap.situacao() if x["chave"] == "google"][0]
 confere("acesso revogado (invalid_grant) pede nova conexão", "Conecte de novo" in erro and not sit["conectado"], (erro, sit))

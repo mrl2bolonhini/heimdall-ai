@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa a conexão do Library com Dropbox e OneDrive: OAuth (state, PKCE, uso único), tokens cifrados por pessoa, renovação, sincronização só de leitura,
+"""Testa a conexão do Memory com Dropbox e OneDrive: OAuth (state, PKCE, uso único), tokens cifrados por pessoa, renovação, sincronização só de leitura,
 isolamento entre pessoas e as telas /nuvem, contra provedores falsos."""
 import sys as _sys
 from pathlib import Path as _Path
@@ -18,9 +18,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="nuvem_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_LIBRARY_IA": "0",
+os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
                    "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_DROPBOX_ID": "dbx-id", "HEIMDALL_NUVEM_DROPBOX_SEGREDO": "dbx-seg",
-                   "HEIMDALL_NUVEM_ONEDRIVE_ID": "od-id", "HEIMDALL_LIBRARY_URL": "https://library.exemplo.test"})
+                   "HEIMDALL_NUVEM_ONEDRIVE_ID": "od-id", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
 
 ESTADO = {"tokens": 0, "revogado": False, "auth_no_download": [], "baixados": [], "refresh_usado": [], "escopo": "", "movidos": [], "pastas_criadas": [], "patch": [], "pastas_lidas": []}
 EXTRA = {   # itens que só aparecem na listagem com subpastas
@@ -139,10 +139,10 @@ threading.Thread(target=fake.serve_forever, daemon=True).start()
 F = f"http://127.0.0.1:{PORTA_F}"
 
 import heimdall_lab as hc  # noqa: E402
-import heimdall_library as lib  # noqa: E402
-import heimdall_library_dados as dados  # noqa: E402
+import heimdall_memory as lib  # noqa: E402
+import heimdall_memory_dados as dados  # noqa: E402
 import heimdall_conexoes as cx  # noqa: E402
-import heimdall_library_nuvem as nv  # noqa: E402
+import heimdall_memory_nuvem as nv  # noqa: E402
 import heimdall_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
@@ -164,7 +164,7 @@ def confere(nome, ok, extra=""):
 def erro(fn, *a, **k):
     try:
         fn(*a, **k)
-    except dados.ErroLibrary as ex:
+    except dados.ErroMemory as ex:
         return str(ex)
     return ""
 
@@ -183,7 +183,7 @@ def conectar_escrita(chave="dropbox"):
 confere("só provedores com credencial aparecem", nv.configurados() == ["dropbox", "onedrive"])
 url = nv.iniciar("dropbox")
 q = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
-confere("autorização: cliente, retorno, PKCE S256, escopo de leitura e token de renovação", q["client_id"] == ["dbx-id"] and q["redirect_uri"] == ["https://library.exemplo.test/nuvem/retorno"]
+confere("autorização: cliente, retorno, PKCE S256, escopo de leitura e token de renovação", q["client_id"] == ["dbx-id"] and q["redirect_uri"] == ["https://memory.exemplo.test/nuvem/retorno"]
         and q["code_challenge_method"] == ["S256"] and len(q["code_challenge"][0]) >= 43 and q["token_access_type"] == ["offline"] and "files.content.read" in q["scope"][0]
         and "write" not in q["scope"][0], q)
 confere("OneDrive pede offline_access e Files.Read", "Files.Read offline_access" == urllib.parse.parse_qs(urllib.parse.urlparse(nv.iniciar("onedrive")).query)["scope"][0])
@@ -196,8 +196,8 @@ url, (ok, msg) = conectar("dropbox", "codigo-ruim")
 confere("código recusado pelo provedor não conecta", not ok and not nv.situacao()[0]["conectado"], msg)
 url, (ok, msg) = conectar("dropbox")
 confere("conecta", ok and nv.situacao()[0]["conectado"], msg)
-bruto = (TMP / "library" / "nuvem.bin").read_bytes()
-confere("tokens cifrados em disco, com permissão 600", b"renov1" not in bruto and b"acesso" not in bruto and oct((TMP / "library" / "nuvem.bin").stat().st_mode)[-3:] == "600")
+bruto = (TMP / "memory" / "nuvem.bin").read_bytes()
+confere("tokens cifrados em disco, com permissão 600", b"renov1" not in bruto and b"acesso" not in bruto and oct((TMP / "memory" / "nuvem.bin").stat().st_mode)[-3:] == "600")
 estado_ant = dict(cx.PENDENTES)
 s2 = nv.iniciar("dropbox")
 st2 = urllib.parse.parse_qs(urllib.parse.urlparse(s2).query)["state"][0]
@@ -256,7 +256,7 @@ with cx.como(CONV):
     nv.definir_pasta("dropbox", "")
     nv.sincronizar("dropbox", usar_ia=False)
     confere("convidado importa para o acervo dele", dados.listar()[1] == 2)
-    confere("conexão do convidado fica na pasta dele", any((TMP / "db").rglob(f"{CONV}/library/nuvem.bin")))
+    confere("conexão do convidado fica na pasta dele", any((TMP / "db").rglob(f"{CONV}/memory/nuvem.bin")))
 confere("a conexão e a pasta do dono não mudaram", nv.situacao()[0]["pasta"] == "/Docs")
 confere("rodada de fundo percorre quem tem conexão", cx.sincronizar_todos()["pessoas"] == 2)
 
@@ -339,7 +339,7 @@ loc = r.getheader("Location") or ""
 confere("conectar leva ao provedor (https)", s == 303 and loc.startswith("https://auth.exemplo.test/onedrive?") and "state=" in loc, (s, loc))
 state = urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)["state"][0]
 s, h, _ = req("GET", f"/nuvem/retorno?state={state}&code=codigo-bom")
-confere("retorno sem cookie conclui a conexão", s == 200 and "conectado" in h and "Voltar ao Library" in h, h[-300:])
+confere("retorno sem cookie conclui a conexão", s == 200 and "conectado" in h and "Voltar ao Memory" in h, h[-300:])
 confere("a conexão foi gravada para o dono", [x for x in nv.situacao() if x["chave"] == "onedrive"][0]["conectado"])
 s, _, r = req("POST", "/nuvem/pasta", {"csrf": csrf, "provedor": "onedrive", "pasta": "Scans"}, tk)
 confere("salvar pasta", s == 303 and r.getheader("Location") == "/nuvem")
@@ -347,10 +347,10 @@ s, _, r = req("POST", "/nuvem/sincronizar", {"csrf": csrf, "provedor": "onedrive
 confere("sincronizar pela tela", s == 303)
 s, _, r = req("POST", "/nuvem/desconectar", {"csrf": csrf, "provedor": "onedrive"}, tk)
 confere("desconectar pela tela", s == 303 and not [x for x in nv.situacao() if x["chave"] == "onedrive"][0]["conectado"])
-tg = hc.nova_sessao("library", CONV)[0]
+tg = hc.nova_sessao("memory", CONV)[0]
 s, h, _ = req("GET", "/nuvem", cookie=tg)
 confere("a tela do convidado mostra a conexão dele (Dropbox conectado, OneDrive não)", s == 200 and "Dropbox conectado" in h and "OneDrive não conectado" in h)
-tg2 = hc.nova_sessao("library", CONV2)[0]
+tg2 = hc.nova_sessao("memory", CONV2)[0]
 s, h, _ = req("GET", "/nuvem", cookie=tg2)
 csrf2 = re.search(r'data-csrf="([^"]+)"', h).group(1)
 confere("tela do convidado com organização: subpastas e mover marcados, sem botão de permitir", "com organização" in h and re.search(r'name="subpastas"[^>]*checked', h) and re.search(r'name="mover"[^>]*checked', h)

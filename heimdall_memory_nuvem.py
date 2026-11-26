@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Heimdall Library: conexão de cada pessoa com o próprio armazenamento em nuvem (Dropbox e OneDrive), com importação automática.
+"""Heimdall Memory: conexão de cada pessoa com o próprio armazenamento em nuvem (Dropbox e OneDrive), com importação automática.
 
 Fluxo: a pessoa toca em Conectar, autoriza no site do provedor (OAuth 2.0, código de autorização com PKCE) e informa a pasta a vigiar. A cada
-HEIMDALL_NUVEM_INTERVALO segundos (padrão 900) o Library lista a pasta, baixa só os arquivos novos ou alterados e os envia ao acervo da pessoa
-(heimdall_library_dados.adicionar: motor interno ou Paperless). Por padrão a conexão é só de leitura. Opções por pasta: incluir subpastas (até
+HEIMDALL_NUVEM_INTERVALO segundos (padrão 900) o Memory lista a pasta, baixa só os arquivos novos ou alterados e os envia ao acervo da pessoa
+(heimdall_memory_dados.adicionar: motor interno ou Paperless). Por padrão a conexão é só de leitura. Opções por pasta: incluir subpastas (até
 MAX_PROFUNDIDADE níveis) e, só se a pessoa tiver autorizado a escrita, mover cada arquivo já importado para a pasta "Importados pelo Heimdall" dentro
-da pasta vigiada. O Library nunca apaga arquivos da nuvem e nunca importa de novo o que está na pasta Importados.
+da pasta vigiada. O Memory nunca apaga arquivos da nuvem e nunca importa de novo o que está na pasta Importados.
 
-Privacidade: cada pessoa tem o seu arquivo de conexão (library/nuvem.bin, cifrado com AES-GCM, permissão 600) e só a sincronização dela mexe nele.
+Privacidade: cada pessoa tem o seu arquivo de conexão (memory/nuvem.bin, cifrado com AES-GCM, permissão 600) e só a sincronização dela mexe nele.
 O estado (`state`) do OAuth fica na memória do servidor, ligado à pessoa que iniciou, vale por 10 minutos e só uma vez.
-Configuração do administrador (.env): HEIMDALL_NUVEM_<DROPBOX|ONEDRIVE>_ID e _SEGREDO; HEIMDALL_LIBRARY_URL (padrão https://library.heimdall-ai.tech)
+Configuração do administrador (.env): HEIMDALL_NUVEM_<DROPBOX|ONEDRIVE>_ID e _SEGREDO; HEIMDALL_MEMORY_URL (padrão https://memory.heimdall-ai.tech)
 para o endereço de retorno <URL>/nuvem/retorno, que precisa estar cadastrado no aplicativo do provedor. HEIMDALL_NUVEM=0 desliga a sincronização.
 Usa a biblioteca padrão e `cryptography` (AESGCM, já usada nas cópias de segurança); sem ela, a conexão é recusada em vez de gravar token em texto aberto.
 """
@@ -20,15 +20,15 @@ import time
 import urllib.parse
 
 import heimdall_conexoes as cx
-import heimdall_library_dados as base
+import heimdall_memory_dados as base
 
-ErroLibrary = base.ErroLibrary
+ErroMemory = base.ErroMemory
 MAX_POR_RODADA = 50
 MAX_PROFUNDIDADE = 5      # níveis de subpasta abaixo da pasta vigiada
 MAX_PASTAS = 200          # pastas percorridas por rodada (OneDrive lista pasta a pasta)
 PASTA_IMPORTADOS = "Importados pelo Heimdall"
 PROVEDORES = cx.PROVEDORES   # mesmo registro da base de conexões (os testes ajustam os endereços por aqui)
-# a autorização (OAuth) é da base comum; estes nomes ficam aqui porque o Library chama o módulo de nuvem
+# a autorização (OAuth) é da base comum; estes nomes ficam aqui porque o Memory chama o módulo de nuvem
 iniciar, concluir, desconectar = cx.iniciar, cx.concluir, cx.desconectar
 
 
@@ -50,7 +50,7 @@ def _listar(chave: str, token: str, pasta: str, subpastas: bool = False):
         for _ in range(50):
             st, _, b = cx.http("POST", url, {**aut, "Content-Type": "application/json"}, json.dumps(corpo).encode())
             if st != 200:
-                raise ErroLibrary("Não consegui abrir a pasta no Dropbox. Confira o caminho informado.")
+                raise ErroMemory("Não consegui abrir a pasta no Dropbox. Confira o caminho informado.")
             r = json.loads(b)
             for x in r.get("entries", []):
                 if x.get(".tag") != "file":
@@ -74,7 +74,7 @@ def _listar(chave: str, token: str, pasta: str, subpastas: bool = False):
             for _ in range(50):
                 st, _, b = cx.http("GET", url, aut)
                 if st != 200:
-                    raise ErroLibrary("Não consegui abrir a pasta no OneDrive. Confira o caminho informado.")
+                    raise ErroMemory("Não consegui abrir a pasta no OneDrive. Confira o caminho informado.")
                 r = json.loads(b)
                 for x in r.get("value", []):
                     if "file" in x:
@@ -95,7 +95,7 @@ def _destino(chave: str, token: str, pasta: str) -> str:
         caminho = ("/" + p if p else "") + "/" + PASTA_IMPORTADOS
         st, _, _ = cx.http("POST", prov["api"] + "/2/files/create_folder_v2", aut, json.dumps({"path": caminho, "autorename": False}).encode())
         if st not in (200, 409):   # 409: a pasta já existe
-            raise ErroLibrary("Não consegui preparar a pasta de importados no Dropbox.")
+            raise ErroMemory("Não consegui preparar a pasta de importados no Dropbox.")
         return caminho
     caminho = (p + "/" if p else "") + PASTA_IMPORTADOS
     st, _, b = cx.http("GET", prov["api"] + "/me/drive/root:/" + urllib.parse.quote(caminho), aut)
@@ -103,7 +103,7 @@ def _destino(chave: str, token: str, pasta: str) -> str:
         pai = prov["api"] + ("/me/drive/root:/" + urllib.parse.quote(p) + ":/children" if p else "/me/drive/root/children")
         st, _, b = cx.http("POST", pai, aut, json.dumps({"name": PASTA_IMPORTADOS, "folder": {}, "@microsoft.graph.conflictBehavior": "fail"}).encode())
     if st not in (200, 201):
-        raise ErroLibrary("Não consegui preparar a pasta de importados no OneDrive.")
+        raise ErroMemory("Não consegui preparar a pasta de importados no OneDrive.")
     return json.loads(b)["id"]
 
 
@@ -128,7 +128,7 @@ def _baixar(chave: str, token: str, item: dict) -> bytes:
     else:
         st, _, b = cx.http("GET", prov["api"] + "/me/drive/items/" + urllib.parse.quote(item["id"]) + "/content", aut, limite=base.LIMITE_BYTES, timeout=120)
     if st != 200:
-        raise ErroLibrary("Não consegui baixar o arquivo.")
+        raise ErroMemory("Não consegui baixar o arquivo.")
     return b
 
 
@@ -147,13 +147,13 @@ def situacao() -> list:
 def definir_pasta(chave: str, pasta: str, subpastas: bool = False, mover: bool = False) -> None:
     pasta = " ".join((pasta or "").split())[:200]
     if re.search(r"[\x00-\x1f]|\.\./|^\.\.$", pasta):
-        raise ErroLibrary("Caminho de pasta inválido.")
+        raise ErroMemory("Caminho de pasta inválido.")
     with cx.LOCK:
         todos = cx.carregar()
         if not todos.get(chave, {}).get("renovacao"):
-            raise ErroLibrary("Conecte o provedor antes de escolher a pasta.")
+            raise ErroMemory("Conecte o provedor antes de escolher a pasta.")
         if mover and not todos[chave].get("escrita"):
-            raise ErroLibrary("Para mover arquivos, conecte com a permissão de organização.")
+            raise ErroMemory("Para mover arquivos, conecte com a permissão de organização.")
         if todos[chave].get("pasta") != pasta:
             todos[chave]["vistos"] = {}   # outra pasta: recomeça a lista de arquivos já importados
         todos[chave]["pasta"] = pasta
@@ -164,13 +164,13 @@ def definir_pasta(chave: str, pasta: str, subpastas: bool = False, mover: bool =
 def sincronizar(chave: str, usar_ia: bool = True) -> dict:
     """Importa os arquivos novos ou alterados da pasta da pessoa de agora. Devolve as contagens."""
     if chave not in PROVEDORES or chave not in configurados():
-        raise ErroLibrary("Este provedor não está configurado pelo administrador.")
+        raise ErroMemory("Este provedor não está configurado pelo administrador.")
     res = {"novos": 0, "repetidos": 0, "ignorados": 0, "erros": 0, "movidos": 0}
     with cx.LOCK:
         todos = cx.carregar()
         est = todos.get(chave)
         if not est:
-            raise ErroLibrary("Conecte o provedor antes de sincronizar.")
+            raise ErroMemory("Conecte o provedor antes de sincronizar.")
         token = cx.acesso(chave, todos)
         vistos = est.setdefault("vistos", {})
         feitos, destino = 0, None
@@ -194,16 +194,16 @@ def sincronizar(chave: str, usar_ia: bool = True) -> dict:
                         try:
                             destino = destino or _destino(chave, token, est.get("pasta", ""))
                             res["movidos"] += 1 if _mover(chave, token, item, destino) else 0
-                        except ErroLibrary:
+                        except ErroMemory:
                             pass   # o documento já está no acervo; só não foi movido
-                except ErroLibrary as ex:
+                except ErroMemory as ex:
                     if "Formato" in str(ex) or "vazio" in str(ex) or "passa de" in str(ex):
                         vistos[item["id"]] = item["marca"]   # não adianta tentar de novo
                         res["ignorados"] += 1
                     else:
                         res["erros"] += 1
             est["erro"] = ""
-        except ErroLibrary as ex:
+        except ErroMemory as ex:
             est["erro"] = str(ex)
             res["erros"] += 1
         est["ultimo"] = time.strftime("%d/%m/%Y %H:%M")

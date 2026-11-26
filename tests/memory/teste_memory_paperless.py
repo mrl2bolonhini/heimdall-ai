@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o motor Paperless-ngx do Library contra um servidor falso que imita a API REST: token, etiquetas, tipos, emissores, documentos, envio, tarefas, e-mail e a escolha do motor."""
+"""Testa o motor Paperless-ngx do Memory contra um servidor falso que imita a API REST: token, etiquetas, tipos, emissores, documentos, envio, tarefas, e-mail e a escolha do motor."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
@@ -166,11 +166,11 @@ os.environ["HEIMDALL_PAPERLESS_URL"] = f"http://127.0.0.1:{srv.server_address[1]
 os.environ["HEIMDALL_PAPERLESS_USER"] = "heimdall"
 os.environ["HEIMDALL_PAPERLESS_SENHA"] = "segredo"
 os.environ["HEIMDALL_PAPERLESS_SECRET"] = "chave-de-teste"
-os.environ["HEIMDALL_LIBRARY_MOTOR"] = "paperless"
+os.environ["HEIMDALL_MEMORY_MOTOR"] = "paperless"
 
 import heimdall_banco as banco  # noqa: E402
-import heimdall_library_dados as L  # noqa: E402
-import heimdall_library_paperless as P  # noqa: E402
+import heimdall_memory_dados as L  # noqa: E402
+import heimdall_memory_paperless as P  # noqa: E402
 
 L.PROJECT_DIR = TMP
 falhas = 0
@@ -186,7 +186,7 @@ def confere(nome, ok, extra=""):
 def erro(fn, *a, **k):
     try:
         fn(*a, **k)
-    except L.ErroLibrary as ex:
+    except L.ErroMemory as ex:
         return str(ex)
     return ""
 
@@ -194,9 +194,9 @@ def erro(fn, *a, **k):
 # --- escolha do motor
 confere("dono usa o Paperless", L.motor() == "paperless")
 confere("convidado também usa o Paperless, com usuário próprio", L.motor() == "paperless")
-os.environ["HEIMDALL_LIBRARY_MOTOR"] = "interno"
+os.environ["HEIMDALL_MEMORY_MOTOR"] = "interno"
 confere("interruptor devolve o motor interno", L.motor() == "interno")
-os.environ["HEIMDALL_LIBRARY_MOTOR"] = "paperless"
+os.environ["HEIMDALL_MEMORY_MOTOR"] = "paperless"
 
 # --- senha errada
 os.environ["HEIMDALL_PAPERLESS_SENHA"] = "errada"
@@ -258,14 +258,14 @@ confere("estado mostra o motor", e["motor"] == "Paperless-ngx" and e["documentos
 ent0 = L.pasta_entrada()
 ent0.mkdir(parents=True, exist_ok=True)
 (ent0 / "nota_dono.txt").write_bytes(b"texto do dono")
-confere("pasta de entrada do dono é própria e o Library envia ao Paperless", "consume" not in str(ent0) and L.processar_entrada(usar_ia=False)["novos"] == 1 and L.listar()[1] == 2)
+confere("pasta de entrada do dono é própria e o Memory envia ao Paperless", "consume" not in str(ent0) and L.processar_entrada(usar_ia=False)["novos"] == 1 and L.listar()[1] == 2)
 confere("dono tem usuário comum, sem exclusão, e o administrador não é dono dos documentos", "heimdall-dono" in BD["users"] and not BD["users"]["heimdall-dono"]["is_superuser"]
         and "delete_document" not in BD["users"]["heimdall-dono"]["user_permissions"] and BD["docs"][did]["owner"] == BD["users"]["heimdall-dono"]["id"] != 1)
 
 # --- e-mail: a senha vem só do .env
-os.environ.pop("HEIMDALL_LIBRARY_EMAIL_SENHA", None)
+os.environ.pop("HEIMDALL_MEMORY_EMAIL_SENHA", None)
 confere("sem senha, e-mail é recusado", "senha de aplicativo" in erro(P.email_configurar, "imap.exemplo.com", "pessoa@exemplo.com", "Heimdall"))
-os.environ["HEIMDALL_LIBRARY_EMAIL_SENHA"] = "senha-app"
+os.environ["HEIMDALL_MEMORY_EMAIL_SENHA"] = "senha-app"
 confere("servidor inválido é recusado", "Confira" in erro(P.email_configurar, "x y", "pessoa@exemplo.com", "Heimdall"))
 msg = P.email_configurar("IMAP.exemplo.com", "pessoa@exemplo.com", "Heimdall", "")
 conta = next(iter(BD["mail_accounts"].values()))
@@ -290,7 +290,7 @@ confere("convidado não altera documento do dono", "não encontrado" in erro(L.a
 confere("convidado não confirma nem exclui documento do dono", "não encontrado" in erro(L.confirmar, did) and "não encontrado" in erro(L.lixeira, did))
 confere("documento do dono continua intacto", BD["docs"][did]["title"] == "Contrato Alfa" and not any(t["name"] == "Lixeira" and t["id"] in BD["docs"][did]["tags"] for t in BD["tags"].values()))
 confere("etiquetas do convidado são só dele", all(x["nome"] != "trabalho" for x in L.etiquetas_com_contagem()))
-os.environ["HEIMDALL_LIBRARY_EMAIL_SENHA"] = "senha-do-dono"
+os.environ["HEIMDALL_MEMORY_EMAIL_SENHA"] = "senha-do-dono"
 confere("convidado não herda a senha de e-mail do dono", "senha de aplicativo" in erro(P.email_configurar, "imap.exemplo.com", "ana@exemplo.com", "Heimdall") and not P.senha_do_env())
 P.email_configurar("imap.exemplo.com", "ana@exemplo.com", "Ana", "", "senha-da-ana")
 ana = BD["users"]["heimdall-ana"]["id"]
@@ -299,7 +299,7 @@ confere("convidado conecta o próprio e-mail, com a própria senha, em conta del
         and next(r for r in BD["mail_rules"].values() if r["owner"] == ana)["folder"] == "Ana")
 confere("convidado vê só a própria conta de e-mail e sem a senha", P.email_estado()["contas"] == ["Heimdall ana@exemplo.com"] and "senha" not in json.dumps(P.email_estado()))
 ent = L.pasta_entrada()
-confere("pasta de entrada do convidado é a própria", "people" in str(ent) or "library" in str(ent), ent)
+confere("pasta de entrada do convidado é a própria", "people" in str(ent) or "memory" in str(ent), ent)
 ent.mkdir(parents=True, exist_ok=True)
 (ent / "nota.txt").write_bytes(b"texto da ana")
 confere("importar da pasta envia ao Paperless do convidado", L.processar_entrada(usar_ia=False)["novos"] == 1 and L.listar()[1] == 2)

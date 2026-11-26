@@ -60,7 +60,7 @@ confere("/saude", req("GET", "/saude")[:2] == (200, "ok"))
 confere("host fora da lista: 421", req("GET", "/", host="evil.example")[0] == 421)
 confere("sem sessão: entrada", req("GET", "/mesa")[0] == 303)
 tk = hc.nova_sessao()[0]
-confere("sessão de outro serviço não entra", req("GET", "/mesa", cookie=hc.nova_sessao("library")[0])[0] == 303)
+confere("sessão de outro serviço não entra", req("GET", "/mesa", cookie=hc.nova_sessao("memory")[0])[0] == 303)
 s, h, r = req("GET", "/mesa?t=ABCD3", tk)
 csrf = re.search(r'data-csrf="([^"]+)"', h).group(1)
 confere("mesa: design (h1 único, pular, abas, Ajustes, Perguntar, aviso de simulação)", s == 200 and h.count("<h1") == 1 and "Pular para o conteúdo" in h and 'aria-label="Principal"' in h
