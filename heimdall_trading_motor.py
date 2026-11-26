@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Trading, motor da mesa de operações em SIMULAÇÃO (sem dinheiro nem mercado reais).
+"""Studio Trading, motor da mesa de operações em SIMULAÇÃO (sem dinheiro nem mercado reais).
 
 Regras fixas, em código (a IA avisa, quem decide é o usuário, e nenhuma ordem sai sem ele):
   1. Só simulação: caixa virtual, nenhuma corretora, nenhuma ordem real.

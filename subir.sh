@@ -87,18 +87,18 @@ montar_lista() {
     if [ "${HEIMDALL_AWS_EMULATOR_INICIO:-demanda}" = "demanda" ] && docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE '^(localstack|moto)$'; then EMU_SOB_DEMANDA=1; fi
     case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) [ "$EMU_SOB_DEMANDA" = "1" ] || LISTA+=("Emulador de AWS|tcp|4566") ;; esac
     if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-        case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Heimdall Lab|http|http://127.0.0.1:${HEIMDALL_LAB_PORT:-8010}/saude") ;; esac
-        LISTA+=("Heimdall Notes|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")
-        [ "${HEIMDALL_LEARN:-0}" = "1" ] && LISTA+=("Heimdall Learn|http|http://127.0.0.1:${HEIMDALL_LEARN_PORT:-8019}/saude")
-        [ "${HEIMDALL_TRADING:-0}" = "1" ] && LISTA+=("Heimdall Trading|http|http://127.0.0.1:${HEIMDALL_TRADING_PORT:-8020}/saude")
-        [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && LISTA+=("Heimdall Memory|http|http://127.0.0.1:${HEIMDALL_MEMORY_PORT:-${HEIMDALL_LIBRARY_PORT:-8021}}/saude")
-        LISTA+=("Heimdall News|http|http://127.0.0.1:${HEIMDALL_NEWS_PORT:-8012}/saude")
-        LISTA+=("Heimdall Health|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
-        LISTA+=("Heimdall Games|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")
-        LISTA+=("Heimdall Finance|http|http://127.0.0.1:${HEIMDALL_FINANCE_PORT:-8016}/saude")
-        LISTA+=("Heimdall Controls|http|http://127.0.0.1:${HEIMDALL_CONTROLS_PORT:-8017}/saude")
+        case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Studio Lab|http|http://127.0.0.1:${HEIMDALL_LAB_PORT:-8010}/saude") ;; esac
+        LISTA+=("Studio Notes|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")
+        [ "${HEIMDALL_LEARN:-0}" = "1" ] && LISTA+=("Studio Learn|http|http://127.0.0.1:${HEIMDALL_LEARN_PORT:-8019}/saude")
+        [ "${HEIMDALL_TRADING:-0}" = "1" ] && LISTA+=("Studio Trading|http|http://127.0.0.1:${HEIMDALL_TRADING_PORT:-8020}/saude")
+        [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && LISTA+=("Studio Memory|http|http://127.0.0.1:${HEIMDALL_MEMORY_PORT:-${HEIMDALL_LIBRARY_PORT:-8021}}/saude")
+        LISTA+=("Studio News|http|http://127.0.0.1:${HEIMDALL_NEWS_PORT:-8012}/saude")
+        LISTA+=("Studio Health|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
+        LISTA+=("Studio Games|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")
+        LISTA+=("Studio Finance|http|http://127.0.0.1:${HEIMDALL_FINANCE_PORT:-8016}/saude")
+        LISTA+=("Studio Controls|http|http://127.0.0.1:${HEIMDALL_CONTROLS_PORT:-8017}/saude")
     fi
-    [ -f heimdall_account.py ] && LISTA+=("Heimdall Account|http|http://127.0.0.1:${HEIMDALL_ACCOUNT_PORT:-8018}/saude")
+    [ -f heimdall_account.py ] && LISTA+=("Studio Account|http|http://127.0.0.1:${HEIMDALL_ACCOUNT_PORT:-8018}/saude")
 }
 
 esta_no_ar() {  # $1 = tipo, $2 = alvo

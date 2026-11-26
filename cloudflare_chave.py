@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Grava no .env a chave da Cloudflare que liga dois recursos do Heimdall News (só notícias públicas):
+"""Grava no .env a chave da Cloudflare que liga dois recursos do Studio News (só notícias públicas):
 a reserva de resumos no Workers AI e a leitura de páginas com navegador (Browser Rendering).
 
     python3 cloudflare_chave.py            grava a chave no .env

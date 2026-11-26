@@ -440,7 +440,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, logado: bool = True) -> b
     if logado and sess:
         rota_atual = sess.get("atual", "/").split("?")[0]
         a = design.aba_da_rota(rota_atual, NAV_CLOUD, {"/glue": "/lambda"})   # Lambda e Glue são subabas de Processamento
-        nav = design.nav_abas(NAV_CLOUD, a, "Seções do Heimdall Lab")
+        nav = design.nav_abas(NAV_CLOUD, a, "Seções do Studio Lab")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         interno = conteudo + (bloco_perguntar(sess) if titulo not in ("Erro", "Não encontrado") else "")
         if a == "/lambda":   # subabas: a aba de cima não é parada do Tab, a subaba é a primeira parada do painel
@@ -450,12 +450,12 @@ def pagina(titulo: str, corpo: str, sess: dict = None, logado: bool = True) -> b
             conteudo = design.com_abas(NAV_CLOUD, a, interno)
         scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Lab</title>{ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{cabecalho("Heimdall Lab", nav, sair_html=sair)}'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio Lab</title>{ICONE}<style>{CSS}</style></head><body>'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{cabecalho("Studio Lab", nav, sair_html=sair)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="lab")}{scripts}</body></html>').encode("utf-8")
 
 
-# No máximo 5 abas (Heimdall Design): Lambda e Glue ficam juntas, como subabas de Processamento.
+# No máximo 5 abas (Studio Design): Lambda e Glue ficam juntas, como subabas de Processamento.
 NAV_CLOUD = [("/", "Início"), ("/s3", "S3"), ("/lambda", "Processamento"), ("/athena", "Athena"), ("/console", "Console")]
 SUBABAS_PROCESSAMENTO = [("/lambda", "Lambda"), ("/glue", "Glue")]
 
@@ -556,7 +556,7 @@ def pg_entrar(erro: str = "") -> bytes:
 def pg_inicio() -> str:
     s = saude_emulador()
     if not s["ok"]:
-        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda e está desligado agora. Quem administra o Heimdall pode ligá-lo no Heimdall Controls, aba Serviços, ou pelo <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; depois, recarregue esta página.</p>'
+        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda e está desligado agora. Quem administra o Heimdall pode ligá-lo no Studio Controls, aba Serviços, ou pelo <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; depois, recarregue esta página.</p>'
         tabela = ""
     else:
         rodando = sorted(k for k, v in s["servicos"].items() if str(v) in ("running", "ready"))
@@ -1410,7 +1410,7 @@ def definir_acesso(modo: str) -> None:
         print("O código de 6 dígitos continua o mesmo.")
     if segredo:
         mostrar_segredo(segredo)
-    print("\nA senha e o código valem para o Heimdall Lab, o Heimdall Notes e o Heimdall News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
+    print("\nA senha e o código valem para o Studio Lab, o Studio Notes e o Studio News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
     if modo in ("tudo", "senha"):
         aplicar_no_webui(s1)
         aplicar_no_kuma()
@@ -1433,7 +1433,7 @@ def main() -> None:
         sys.exit("Sem senha e código configurados o painel não sobe. Rode: python3 heimdall_acesso.py --tudo")
     srv = ThreadingHTTPServer((HOST, PORT), Painel)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Lab em http://{HOST}:{PORT} (emulador em {ENDPOINT}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Lab em http://{HOST}:{PORT} (emulador em {ENDPOINT}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

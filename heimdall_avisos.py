@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Avisos de cada serviço sensível (Heimdall Health e Heimdall Finance): relatórios e análises que antes iam para o app Notas.
+"""Avisos de cada serviço sensível (Studio Health e Studio Finance): relatórios e análises que antes iam para o app Notas.
 
 Agora ficam num banco local de cada serviço, só no Mac, e aparecem na aba Avisos do próprio serviço. O Notes (e o Notion, no futuro) nunca recebem
 saúde nem finanças. O Bark continua avisando, mas só com texto genérico ("há um aviso novo"): `texto_bark` monta esse texto.
@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-SERVICOS = {"saude": "Heimdall Health", "financas": "Heimdall Finance"}
+SERVICOS = {"saude": "Studio Health", "financas": "Studio Finance"}
 PASTAS_SENSIVEIS = {"Saúde": "saude", "Saude": "saude", "Heimdall Finanças": "financas", "Finanças": "financas", "Financas": "financas"}
 _trava = threading.Lock()
 MAX_TITULO, MAX_TEXTO, MAX_AVISOS = 200, 20000, 500
@@ -108,7 +108,7 @@ class Avisos:
 
 
 def do_servico(servico: str) -> "Avisos":
-    """Os avisos de um serviço, no lugar certo: saúde fica ao lado do banco pessoal; finanças, na pasta de dados do Heimdall Finance (HEIMDALL_FINANCE_DIR)."""
+    """Os avisos de um serviço, no lugar certo: saúde fica ao lado do banco pessoal; finanças, na pasta de dados do Studio Finance (HEIMDALL_FINANCE_DIR)."""
     import os
     if servico == "saude":
         import heimdall_banco

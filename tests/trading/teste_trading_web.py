@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o site do Heimdall Trading: login, CSRF, abas, ordens e rejeições, fechar posição, cancelar, lista, Ajustes (limites, fonte, preço manual, zerar), atalhos e Perguntar."""
+"""Testa o site do Studio Trading: login, CSRF, abas, ordens e rejeições, fechar posição, cancelar, lista, Ajustes (limites, fonte, preço manual, zerar), atalhos e Perguntar."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Design · Heimdall-ai</title>
-<meta name="description" content="Heimdall Design: cores, tipografia, componentes, acessibilidade e o passo a passo para criar páginas dos sites do Heimdall.">
+<meta name="description" content="Studio Design: cores, tipografia, componentes, acessibilidade e o passo a passo para criar páginas dos sites do Heimdall.">
 <meta name="theme-color" content="#080d1f">
 <link rel="canonical" href="https://heimdall-ai.tech/design.html">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -13,7 +13,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Heimdall-ai">
 <meta property="og:title" content="Design · Heimdall-ai">
-<meta property="og:description" content="Heimdall Design: cores, tipografia, componentes, acessibilidade e o passo a passo para criar páginas dos sites do Heimdall.">
+<meta property="og:description" content="Studio Design: cores, tipografia, componentes, acessibilidade e o passo a passo para criar páginas dos sites do Heimdall.">
 <meta property="og:url" content="https://heimdall-ai.tech/design.html">
 <meta property="og:image" content="https://heimdall-ai.tech/og.png">
 <meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
@@ -31,8 +31,8 @@
 </div></div></header>
 <main id="conteudo" tabindex="-1"><div class="wrap">
 <div class="doc"><div>
-<h1>Heimdall Design</h1>
-<p>O Heimdall Design é a única fonte de tudo que é aparência e comportamento de interface nos sites do Heimdall (Lab, Notas, News, Saúde, Jogos e Finance): cores, tipografia, medidas, componentes, acessibilidade e tom do texto. Ele foi pensado para leitor de tela e teclado. <strong>Toda página nova e toda mudança numa página existente segue esta página.</strong> O código está em <code>heimdall_design.py</code> (cores, tipografia, CSS e botão) e <code>heimdall_paginacao.py</code> (paginação); o teste <code>tests/design/teste_design.py</code> confere as regras que dá para conferir sozinho; e o arquivo <code>CLAUDE.md</code> do repositório obriga a seguir o padrão em cada atualização.</p>
+<h1>Studio Design</h1>
+<p>O Studio Design é a única fonte de tudo que é aparência e comportamento de interface nos sites do Heimdall (Lab, Notas, News, Saúde, Jogos e Finance): cores, tipografia, medidas, componentes, acessibilidade e tom do texto. Ele foi pensado para leitor de tela e teclado. <strong>Toda página nova e toda mudança numa página existente segue esta página.</strong> O código está em <code>heimdall_design.py</code> (cores, tipografia, CSS e botão) e <code>heimdall_paginacao.py</code> (paginação); o teste <code>tests/design/teste_design.py</code> confere as regras que dá para conferir sozinho; e o arquivo <code>CLAUDE.md</code> do repositório obriga a seguir o padrão em cada atualização.</p>
 <section aria-labelledby="regra"><h2 id="regra">1. Link lê, botão age</h2>
 <ol><li><strong>Link</strong> leva a outro lugar para ler: o menu, "Voltar", o nome de um item em lista ou tabela (um bucket, uma nota, um jogo, uma categoria), "Leia mais" e os links dentro de um texto.</li>
 <li><strong>Botão</strong> faz uma ação ou comando, mesmo quando o resultado é abrir outra página: baixar, atualizar, continuar, confirmar, alterar, classificar, importar, trocar a visão ou o período, paginar, "Ver todos..." e "Ver resultado".</li>
@@ -91,7 +91,7 @@
 <li>Chave liga/desliga: <code>button type="button" role="switch" aria-checked</code> com o nome do item dentro e a situação num texto ligado por <code>aria-describedby</code>; age na hora (via script com nonce) e o resultado vai para uma região <code>role="status"</code>. Sem botão de confirmar.</li>
 <li>Texto só para leitor de tela: classe <code>so-leitor</code>.</li>
 <li>Campo de terminal (<code>textarea class="terminal"</code>, e <code>terminal historico</code> para o histórico) e linha de ações (<code>linha-acoes</code>): área de texto monoespaçada que ocupa 60% da altura da tela, quebra linhas longas e mantém a fonte do corpo. Rótulos curtos ("Terminal", "Histórico"), sem títulos extras antes do campo, foco e cursor no fim ao entrar, e avisos falados por uma região role="alert" que se repete mesmo com texto igual. Nasceram no Controls e funcionaram com leitor de tela.</li>
-<li>Se precisar de algo que o Heimdall Design ainda não tem (uma cor, um componente), acrescente aqui primeiro, no <code>heimdall_design.py</code>, e documente nesta página, em vez de criar um estilo só naquele site.</li></ol></section>
+<li>Se precisar de algo que o Studio Design ainda não tem (uma cor, um componente), acrescente aqui primeiro, no <code>heimdall_design.py</code>, e documente nesta página, em vez de criar um estilo só naquele site.</li></ol></section>
 </div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#regra">1. Link lê, botão age</a></li><li><a href="#cores">2. Cores</a></li><li><a href="#tipo">3. Tipografia e medidas</a></li><li><a href="#comp">4. Componentes</a></li><li><a href="#acess">5. Acessibilidade: lista de conferência</a></li><li><a href="#tom">6. Texto e tom</a></li><li><a href="#novo">7. Ao criar ou mudar uma página</a></li></ul></nav></aside></div>
 </div></main>
 <footer><div class="wrap"><div class="linha">

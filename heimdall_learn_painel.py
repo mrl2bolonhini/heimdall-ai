@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Learn: dados das abas Exercícios e Progresso, só leitura.
+"""Studio Learn: dados das abas Exercícios e Progresso, só leitura.
 
 Exercícios: todos os exercícios das lições, com a resposta do aluno e o resultado. O gabarito só aparece depois que a lição foi concluída.
 Progresso: por pasta, lições, média de acertos, estudos, cards lidos; dias seguidos de estudo e acertos por tipo de exercício.

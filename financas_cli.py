@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Comandos de terminal do Heimdall Finance para arquivos (heimdall finance --inspect, --preview, --import, --inbox, --folder).
+"""Comandos de terminal do Studio Finance para arquivos (heimdall finance --inspect, --preview, --import, --inbox, --folder).
 
     python3 financas_cli.py --inspecionar ARQUIVO [--linhas N]   mostra só a estrutura (letras viram x, números viram 9) e copia para a área de transferência
     python3 financas_cli.py --explicar ARQUIVO [--linhas N]       mostra, linha por linha e de forma anônima, o que o leitor de PDF fez com cada linha
@@ -83,7 +83,7 @@ def _colar() -> str:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Arquivos do Heimdall Finance")
+    ap = argparse.ArgumentParser(description="Arquivos do Studio Finance")
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--inspecionar", metavar="ARQUIVO")
     g.add_argument("--explicar", metavar="ARQUIVO")

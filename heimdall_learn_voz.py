@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Voz do Heimdall Learn: fala (voz do macOS: say e afconvert) e escuta (transcrição local com Whisper).
+"""Voz do Studio Learn: fala (voz do macOS: say e afconvert) e escuta (transcrição local com Whisper).
 
 Falar: texto vira .m4a, na voz do idioma (português, inglês, espanhol...). Só no Mac que hospeda o Heimdall.
 Escutar: o áudio do aluno (gravado no navegador) é convertido e transcrito no próprio Mac; o áudio é apagado logo depois

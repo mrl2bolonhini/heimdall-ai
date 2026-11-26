@@ -1,11 +1,11 @@
 ---
 name: ux
-description: Papel de UX do Heimdall. Use para desenhar ou revisar telas, abas, fluxos e textos de interface, conferindo o Heimdall Design, a clareza da navegação e a comunicação de produto.
+description: Papel de UX do Heimdall. Use para desenhar ou revisar telas, abas, fluxos e textos de interface, conferindo o Studio Design, a clareza da navegação e a comunicação de produto.
 ---
 
 # UX do Heimdall
 
-Leia a seção "Heimdall Design" (gerar_docs.py) e o CLAUDE.md. Pense em qualquer usuário, com ou sem leitor de tela, no computador ou no celular.
+Leia a seção "Studio Design" (gerar_docs.py) e o CLAUDE.md. Pense em qualquer usuário, com ou sem leitor de tela, no computador ou no celular.
 
 ## Perguntas de revisão
 1. **Conceito**: cada aba e subaba tem um assunto claro e distinto? Nome de subaba nunca repete o de aba nem o de outra subaba. A aba nomeia o grupo.

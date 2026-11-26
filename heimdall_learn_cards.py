@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Learn, fase 5: cards (pílulas de conhecimento) e agenda de frequência.
+"""Studio Learn, fase 5: cards (pílulas de conhecimento) e agenda de frequência.
 
 Cada pasta pode ter, por dia, de 0 a 3 cards e de 0 a 1 lição (a lição só em pasta sequencial), a partir de um horário configurável.
 Os cards saem espaçados de 4 em 4 horas depois do horário; a lição, no horário. O Learn confere a cada minuto o que falta fazer

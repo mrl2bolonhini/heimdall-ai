@@ -1064,7 +1064,7 @@ def banco_buscar(termo: str, tabela: str = "", limite: int = 5) -> str:
 # MAC_TOOLS: acessam arquivos, métricas, modelos, memória e documentos pessoais.
 #   Ficam restritas ao administrador.
 # --- Finance no chat (somente leitura) -------------------------------------------------------
-# Lê o banco do Heimdall Finance em modo somente leitura (sqlite mode=ro): nada é gravado, nenhum boleto é pago e nenhum extrato é importado.
+# Lê o banco do Studio Finance em modo somente leitura (sqlite mode=ro): nada é gravado, nenhum boleto é pago e nenhum extrato é importado.
 # Os modelos do chat são todos locais (Ollama), então os valores não saem do Mac. HEIMDALL_FINANCE_CHAT=0 desliga estas ferramentas.
 def _financas_ro():
     import sqlite3
@@ -1242,14 +1242,14 @@ def _learn_ro():
     import heimdall_learn_dados as ld
     arq = ld.caminho_banco()
     if not arq.is_file():
-        raise FileNotFoundError("o Learn ainda não tem dados (abra o Heimdall Learn e crie uma pasta)")
+        raise FileNotFoundError("o Learn ainda não tem dados (abra o Studio Learn e crie uma pasta)")
     con = sqlite3.connect(f"file:{arq}?mode=ro", uri=True, timeout=10)
     con.row_factory = sqlite3.Row
     return con
 
 
 def learn_progresso() -> str:
-    """Progresso no Heimdall Learn: cada pasta de estudo com categoria (aleatório ou sequencial), tipo, idioma, lições criadas e concluídas, média das notas,
+    """Progresso no Studio Learn: cada pasta de estudo com categoria (aleatório ou sequencial), tipo, idioma, lições criadas e concluídas, média das notas,
     estudos por sorteio feitos e a agenda de cards e lições por dia."""
     try:
         con = _learn_ro()
@@ -1276,7 +1276,7 @@ def learn_progresso() -> str:
 
 
 def learn_licoes(pasta: str = "", limite: int = 10) -> str:
-    """Últimas lições do Heimdall Learn: número, título, situação, nota e, nas já concluídas, os exercícios em que o aluno errou (enunciado, resposta dada e correção).
+    """Últimas lições do Studio Learn: número, título, situação, nota e, nas já concluídas, os exercícios em que o aluno errou (enunciado, resposta dada e correção).
     pasta: caminho da pasta, como 'ingles' (vazio = todas). limite: quantas lições (1 a 30)."""
     try:
         con = _learn_ro()
@@ -1301,7 +1301,7 @@ def learn_licoes(pasta: str = "", limite: int = 10) -> str:
 
 
 def learn_cards(limite: int = 10) -> str:
-    """Últimos cards (pílulas de conhecimento) do Heimdall Learn, com pasta, título, texto e se já foram lidos. limite: 1 a 30."""
+    """Últimos cards (pílulas de conhecimento) do Studio Learn, com pasta, título, texto e se já foram lidos. limite: 1 a 30."""
     try:
         con = _learn_ro()
     except FileNotFoundError as e:

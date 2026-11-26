@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa as subabas do Heimdall Design: marcação ARIA, ordem do Tab (aba, subaba, painel interno), troca só do painel interno sem recarregar e Alt+Shift+seta."""
+"""Testa as subabas do Studio Design: marcação ARIA, ordem do Tab (aba, subaba, painel interno), troca só do painel interno sem recarregar e Alt+Shift+seta."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

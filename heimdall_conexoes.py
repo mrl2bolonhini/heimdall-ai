@@ -241,7 +241,7 @@ def iniciar(chave: str, escrita: bool = False, servicos=None) -> str:
             raise ErroMemory("Muitas conexões em andamento. Tente de novo em alguns minutos.")
         PENDENTES[state] = {"pessoa": pessoas.atual(), "provedor": chave, "verifier": verifier, "escrita": bool(escrita), "servicos": servicos or [], "expira": agora + 600}
     if prov.get("fluxo") == "trello":   # o Trello não usa state nem código: o state vai no endereço de retorno e o token volta no fragmento
-        params = {"key": cid, "name": "Heimdall Memory", "scope": escopo_de(chave, escrita, servicos), "expiration": "never", "response_type": "token",
+        params = {"key": cid, "name": "Studio Memory", "scope": escopo_de(chave, escrita, servicos), "expiration": "never", "response_type": "token",
                   "callback_method": "fragment", "return_url": url_retorno() + "?" + urllib.parse.urlencode({"state": state})}
         return prov["auth"] + "?" + urllib.parse.urlencode(params)
     if prov.get("simples"):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa os dados do Heimdall Memory: envio, duplicado, busca sem acento, revisão, etiquetas, lixeira, pasta de entrada e sugestão da IA."""
+"""Testa os dados do Studio Memory: envio, duplicado, busca sem acento, revisão, etiquetas, lixeira, pasta de entrada e sugestão da IA."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

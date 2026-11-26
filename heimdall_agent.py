@@ -28,7 +28,7 @@ agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
 
 # exemplo de uso
 if __name__ == "__main__":
-    print("--- Heimdall Lab inicializado ---")
+    print("--- Studio Lab inicializado ---")
     print("Digite sua pergunta, '/novo' para limpar a conversa ou 'sair' para encerrar.\n")
 
     history = []

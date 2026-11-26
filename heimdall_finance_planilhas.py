@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Páginas do Heimdall Finance para planilhas, investimentos, empréstimos e visões (a lógica está em financas_planilhas.py).
+"""Páginas do Studio Finance para planilhas, investimentos, empréstimos e visões (a lógica está em financas_planilhas.py).
 Link lê, botão age: abrir uma página é link; criar, mover coluna, responder dúvida e apagar são botões em formulário POST com token."""
 import html
 import re

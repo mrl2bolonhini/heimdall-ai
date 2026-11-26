@@ -1626,7 +1626,7 @@ def relatorio_documentos(dias: int = 7, agora: datetime = None) -> str:
                 ref = f"; referência {r['ref_texto']}" if r["ref_texto"] else ""
                 linhas.append(f"- {r['nome']}: {valor}, {r['sinal']} da faixa{ref} (coleta em {r['dia'][8:10]}/{r['dia'][5:7]}).")
             if len(fora) > 15:
-                linhas.append(f"- E mais {len(fora) - 15}, na aba Prontuário do Heimdall Health.")
+                linhas.append(f"- E mais {len(fora) - 15}, na aba Prontuário do Studio Health.")
         elif por_tipo.get("exame"):
             linhas.append("Nenhum resultado de exame fora da faixa de referência do laboratório.")
         laudos = _ler(f"SELECT titulo, dia FROM laudos WHERE documento_id IN ({marcas}) ORDER BY dia DESC", ids)
@@ -1676,11 +1676,11 @@ def relatorio_semanal() -> dict:
             md += [f"## {linhas[0].rstrip(':')}", "", *[f"{l}" + "  " for l in linhas[1:]], ""]
         else:
             md += [*[f"{l}" + "  " for l in linhas], ""]
-    # O Bark leva só texto genérico: o veredito e o ECG ficam no relatório, na aba Avisos do Heimdall Health.
-    corpo = "Abra a aba Avisos do Heimdall Health."
+    # O Bark leva só texto genérico: o veredito e o ECG ficam no relatório, na aba Avisos do Studio Health.
+    corpo = "Abra a aba Avisos do Studio Health."
     if documentos_pendentes_antigos():
         corpo += " Há documentos de saúde aguardando a sua conferência."
-    return {"titulo": titulo, "markdown": "\n".join(md).strip() + "\n", "audio": texto, "bark": {"title": "Heimdall Health: aviso novo", "body": corpo,
+    return {"titulo": titulo, "markdown": "\n".join(md).strip() + "\n", "audio": texto, "bark": {"title": "Studio Health: aviso novo", "body": corpo,
             "group": "saude", "level": "active"}}
 
 
@@ -1746,7 +1746,7 @@ def main() -> int:
     elif a.analise:
         import heimdall_analista_saude
         r = heimdall_analista_saude.rodar(forcar=True)
-        print(r["texto"] + f"\n\n(Gravado na aba Avisos do Heimdall Health; avisou no Mac e no iPhone: {'sim' if r['avisou'] else 'não'}.)")
+        print(r["texto"] + f"\n\n(Gravado na aba Avisos do Studio Health; avisou no Mac e no iPhone: {'sim' if r['avisou'] else 'não'}.)")
     elif a.anomalias is not None:
         import heimdall_anomalias
         print(heimdall_anomalias.relatorio(a.anomalias or None))

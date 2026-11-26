@@ -302,7 +302,7 @@ heimdall() {
       esac ;;
     notes)
       case "$1" in
-        "") _heimdall_web "Heimdall Notes" NOTAS 8011 notes ;;
+        "") _heimdall_web "Studio Notes" NOTAS 8011 notes ;;
         --clean-mirrors) shift; _heimdall_py limpar_espelhos.py "$@" ;;
         --clean-private) shift; _heimdall_py limpar_privadas.py "$@" ;;
         --move-old) shift; _heimdall_tr "--run=--executar" "$@"; _heimdall_py mover_notas_antigas.py "${_HA[@]}" ;;
@@ -310,7 +310,7 @@ heimdall() {
       esac ;;
     news)
       case "$1" in
-        "") _heimdall_web "Heimdall News" NEWS 8012 news ;;
+        "") _heimdall_web "Studio News" NEWS 8012 news ;;
         *) _heimdall_tr "--copy=--copiar
 --sources=--fontes
 --queue=--fila
@@ -320,7 +320,7 @@ heimdall() {
       case "$1" in
         --start) _heimdall_emulador start ;;
         --stop) _heimdall_emulador stop ;;
-        "") _heimdall_web "Heimdall Lab" LAB 8010 lab ;;
+        "") _heimdall_web "Studio Lab" LAB 8010 lab ;;
         *) echo "Use: heimdall lab [--local] [--start] [--stop]"; return 1 ;;
       esac ;;
     health)
@@ -350,23 +350,23 @@ heimdall() {
 --import=--importar" "$@"
           _heimdall_py heimdall_saude.py "${_HA[@]}" ;;
       esac ;;
-    account) _heimdall_web "Heimdall Account" ACCOUNT 8018 account ;;
-    trading) _heimdall_web "Heimdall Trading" TRADING 8020 trading ;;
+    account) _heimdall_web "Studio Account" ACCOUNT 8018 account ;;
+    trading) _heimdall_web "Studio Trading" TRADING 8020 trading ;;
     library|memory)   # library é o nome antigo do memory e continua valendo
       case "$1" in
         -P|--paperless) bash "$HEIMDALL_DIR/scripts/iniciar_paperless.sh" ;;
-        *) _heimdall_web "Heimdall Memory" MEMORY "$(_heimdall_port HEIMDALL_LIBRARY_PORT 8021)" memory ;;
+        *) _heimdall_web "Studio Memory" MEMORY "$(_heimdall_port HEIMDALL_LIBRARY_PORT 8021)" memory ;;
       esac ;;
     learn)
       case "$1" in
-        "") _heimdall_web "Heimdall Learn" LEARN 8019 learn ;;
+        "") _heimdall_web "Studio Learn" LEARN 8019 learn ;;
         -s|--sync) _heimdall_py heimdall_learn_dados.py --sincronizar ;;
         -m|--migrate) shift; _heimdall_tr "--apply=--aplicar" "$@"; _heimdall_py heimdall_learn_migrar.py "${_HA[@]}" ;;
         *) echo "Use: heimdall learn [--sync] [--migrate [--apply]] [--local]"; return 1 ;;
       esac ;;
     games)
       case "$1" in
-        "") _heimdall_web "Heimdall Games" JOGOS 8014 games ;;
+        "") _heimdall_web "Studio Games" JOGOS 8014 games ;;
         --play) _heimdall_web "Jogo $2" JOGOS 8014 games "/jogo/$2" ;;
         --list) printf '%s\n' "2048 (heimdall games --play 2048)" "Arqueiro de áudio (heimdall games --play arqueiro)" "Bacará (heimdall games --play bacara)" "Batalha naval (heimdall games --play naval)" "Blackjack (heimdall games --play blackjack)" "Caça-níqueis (heimdall games --play cacaniqueis)" "Campo minado (heimdall games --play minas)" "A Caverna dos Ecos (heimdall games --play caverna)" "Cinco letras (heimdall games --play cincoletras)" "Estação Orion (heimdall games --play orion)" "O Farol Apagado (heimdall games --play aventura)" "Forca (heimdall games --play forca)" "Gramado (heimdall games --play gramado)" "Jogo da velha (heimdall games --play velha)" "Labirinto (heimdall games --play labirinto)" "A Mansão dos Relógios (heimdall games --play relogios)" "Número secreto (heimdall games --play numero)" "Paciência (heimdall games --play paciencia)" "Poker caribenho (heimdall games --play caribenho)" "Poker Texas hold'em (heimdall games --play poker)" "Roleta (heimdall games --play roleta)" "Senha (heimdall games --play senha)" "Sonar (heimdall games --play sonar)" "Sudoku (heimdall games --play sudoku)" "O Templo Submerso (heimdall games --play templo)" "A Travessia das Três Provas (heimdall games --play escolhas)" "Vilarejo Sitiado (heimdall games --play vilarejo)" "Xadrez (heimdall games --play xadrez)" ;;
         *) echo "Use: heimdall games [--play JOGO] [--list]"; return 1 ;;
@@ -375,12 +375,12 @@ heimdall() {
       case "$1" in
         ""|--open)
           case "$2" in terminal) pg=/terminal ;; services) pg=/servicos ;; maintenance) pg=/manutencao ;; settings) pg=/ajustes ;; "") pg="" ;; *) pg="/$2" ;; esac
-          _heimdall_web "Heimdall Controls" CONTROLS 8017 controls "$pg" ;;
+          _heimdall_web "Studio Controls" CONTROLS 8017 controls "$pg" ;;
         *) echo "Use: heimdall controls [--open [terminal|services|settings|maintenance]] [--local]"; return 1 ;;
       esac ;;
     finance)
       case "$1" in
-        ""|--open) _heimdall_web "Heimdall Finance" FINANCE 8016 finance ;;
+        ""|--open) _heimdall_web "Studio Finance" FINANCE 8016 finance ;;
         --folder) _heimdall_py financas_cli.py --pasta --abrir ;;
         *)
           _heimdall_tr "--inspect=--inspecionar

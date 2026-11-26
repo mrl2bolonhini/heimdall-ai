@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Learn, fase 3: lições sequenciais. A IA cria uma lição por vez, em ordem crescente, a partir do material da pasta
+"""Studio Learn, fase 3: lições sequenciais. A IA cria uma lição por vez, em ordem crescente, a partir do material da pasta
 (os documentos em ordem de nome, trechos em ordem), com explicação em português, o trecho de estudo e de 3 a 5 exercícios
 (alternativas, corrigidas aqui sem IA; texto, corrigidos pela IA com o gabarito). O progresso fica em db/learn.db.
 

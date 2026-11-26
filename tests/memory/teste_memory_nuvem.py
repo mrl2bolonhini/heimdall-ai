@@ -326,7 +326,7 @@ confere("outras rotas continuam exigindo sessão", req("GET", "/nuvem")[0] == 30
 tk = hc.nova_sessao()[0]
 s, h, _ = req("GET", "/nuvem", cookie=tk)
 csrf = re.search(r'data-csrf="([^"]+)"', h).group(1)
-confere("tela Nuvem: seções por provedor, botões POST e foco no Heimdall Design", s == 200 and "<h2>Dropbox</h2>" in h and "<h2>OneDrive</h2>" in h and "Conectar OneDrive" in h
+confere("tela Nuvem: seções por provedor, botões POST e foco no Studio Design", s == 200 and "<h2>Dropbox</h2>" in h and "<h2>OneDrive</h2>" in h and "Conectar OneDrive" in h
         and "Sincronizar agora" in h and "Desconectar Dropbox" in h and 'for="pasta-dropbox"' in h and "Nuvem" in h, h[:300])
 s, _, r = req("POST", "/nuvem/conectar", {"csrf": "errado", "provedor": "onedrive"}, tk)
 confere("conectar sem CSRF: 403", s == 403)

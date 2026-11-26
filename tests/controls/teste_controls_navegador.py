@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa no Chrome (Playwright) o terminal do Heimdall Controls: saída no próprio campo, entrada para programas, atalhos de teclado.
+"""Testa no Chrome (Playwright) o terminal do Studio Controls: saída no próprio campo, entrada para programas, atalhos de teclado.
 Se o Playwright ou o Chrome não existirem, avisa e sai sem falhar (o teste do servidor, tests/controls/teste_controls.py, continua valendo)."""
 import sys as _sys
 from pathlib import Path as _Path

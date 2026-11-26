@@ -180,7 +180,7 @@ CAMPO = '<textarea id="pergunta" name="pergunta" rows="3" maxlength="400" data-p
 
 
 def bloco_html(dono: str, csrf: str, volta: str, titulo: str = "Perguntar", dica: str = "", acao: str = "/perguntar", rotulo: str = "pergunta") -> str:
-    """Campo Perguntar do Heimdall Design, no estilo de chat: as respostas ficam acima do campo (a mais recente perto dele), a resposta aparece sozinha
+    """Campo Perguntar do Studio Design, no estilo de chat: as respostas ficam acima do campo (a mais recente perto dele), a resposta aparece sozinha
     quando o modelo termina (o script do design confere de 3 em 3 segundos, sem recarregar a página e sem tirar o foco do campo) e é anunciada ao leitor de tela."""
     import html as _h
     e = lambda t: _h.escape(str(t), quote=True)  # noqa: E731

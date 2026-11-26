@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Arquivos do Heimdall Finance: leitura de PDF, detecção do banco, inspeção anônima e pasta vigiada.
+"""Arquivos do Studio Finance: leitura de PDF, detecção do banco, inspeção anônima e pasta vigiada.
 
 Tudo roda no seu Mac; nada daqui usa internet. Os extratos e faturas entram como OFX, CSV ou PDF.
 

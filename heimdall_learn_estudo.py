@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Learn, fase 2: modo aleatório. Sorteia um trecho do material da pasta, pergunta, corrige a resposta com base no trecho,
+"""Studio Learn, fase 2: modo aleatório. Sorteia um trecho do material da pasta, pergunta, corrige a resposta com base no trecho,
 mostra a transcrição do trecho, grava o áudio (voz do macOS) e sugere matérias. Tudo fica em db/learn.db (tabela estudos).
 
 A IA é o modelo local (ou a nuvem, se ligada em heimdall_perguntar). Sem modelo, o trecho é sorteado e fica registrado; a pergunta aparece como erro.

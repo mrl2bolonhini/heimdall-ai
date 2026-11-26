@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Base web dos serviços novos do Heimdall (Trading, Memory): login, sessão, CSRF, páginas no Heimdall Design, Ajustes, Perguntar e multipart.
+"""Base web dos serviços novos do Heimdall (Trading, Memory): login, sessão, CSRF, páginas no Studio Design, Ajustes, Perguntar e multipart.
 
 Cada serviço descreve a si mesmo com `Config` (abas e subabas, Ajustes, rotas GET e POST, rotas antigas com 301, texto do Perguntar) e chama `servir(cfg)`.
 Segurança: só 127.0.0.1 (HEIMDALL_<X>_HOST), só nomes de site permitidos, login por senha e código de 6 dígitos ou Cloudflare Access, CSRF em todo POST,
@@ -104,7 +104,7 @@ class Config:
         self.publicas_post = publicas_post or {}   # {rota POST sem sessão: func(campos) -> (titulo, corpo)}; só para o passo final de um retorno de terceiros (o state de uso único vale como credencial)
         self.hosts_legados = {h.strip().lower() for h in hosts_legados.split(",") if h.strip()}   # endereços de antes de uma troca de nome: continuam respondendo e, com <PREFIXO>URL no .env, redirecionam (301) para o novo
         self.pertence = pertence or {}   # {rota que não é aba: rota da aba a destacar}, como /documento dentro de Documentos
-        assert len(abas) <= design.MAX_ABAS, "mais abas do que o Heimdall Design permite"
+        assert len(abas) <= design.MAX_ABAS, "mais abas do que o Studio Design permite"
         self.prefixo = f"HEIMDALL_{chave.upper()}_"
 
     def rotas_abas(self) -> list:
@@ -147,7 +147,7 @@ def _grupo_da_rota(cfg: Config, rota: str):
 
 
 def pagina(cfg: Config, titulo: str, corpo: str, sess: dict = None, rota: str = "", nonce: str = "", script_publico: str = "") -> bytes:
-    """Página no Heimdall Design: abas de cima (grupos), subabas do grupo, botão Ajustes (tela sem abas de cima) e rodapé."""
+    """Página no Studio Design: abas de cima (grupos), subabas do grupo, botão Ajustes (tela sem abas de cima) e rodapé."""
     nav = sair = abas_js = ajustes_html = ""
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:

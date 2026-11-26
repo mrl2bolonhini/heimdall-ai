@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Account (account.heimdall-ai.tech): a porta de entrada do ecossistema. Mostra, a quem entrou pelo Cloudflare Access, um tour dos serviços
+"""Studio Account (account.heimdall-ai.tech): a porta de entrada do ecossistema. Mostra, a quem entrou pelo Cloudflare Access, um tour dos serviços
 a que a pessoa tem acesso, com link, o que cada um faz e como configurar. Também responde /quem.json, que o site heimdall-ai.tech usa para mostrar
 "Entrar" (quando não há login) ou o nome e os serviços (quando há).
 
@@ -96,7 +96,7 @@ def pagina_tour(p: dict, nonce: str) -> bytes:
     saudacao = e(p.get("nome") or p.get("email") or "Dono")
     corpo = (f'<h1>Seus serviços do Heimdall</h1><p>Olá, {saudacao}. Aqui estão os serviços do Heimdall a que você tem acesso, com um link para cada um, o que ele faz '
              f'e como configurar. O menu Conta, no alto de qualquer página, leva a todos eles.</p>' + ("".join(blocos) or "<p>Nenhum serviço liberado ainda. Fale com o dono.</p>"))
-    return _documento("Seus serviços - Heimdall Account", corpo, nonce)
+    return _documento("Seus serviços - Studio Account", corpo, nonce)
 
 
 NAV = '<nav aria-label="Principal"><ul><li><a href="/">Serviços</a></li><li><a href="/integracoes">Integrações</a></li><li><a href="/ajuda">Ajuda e suporte</a></li></ul></nav>'
@@ -105,7 +105,7 @@ NAV = '<nav aria-label="Principal"><ul><li><a href="/">Serviços</a></li><li><a 
 def _documento(titulo: str, corpo: str, nonce: str) -> bytes:
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)}</title>{nuvem.ICONE}<style nonce="{nonce}">{design.CSS}</style></head><body><div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div>'
-            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Account", NAV)}<main id="principal">{corpo}</main>{design.rodape(servico="account")}</body></html>').encode("utf-8")
+            f'<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio Account", NAV)}<main id="principal">{corpo}</main>{design.rodape(servico="account")}</body></html>').encode("utf-8")
 
 
 def _passos_hae(url: str) -> str:
@@ -160,7 +160,7 @@ def pagina_integracoes(p: dict, nonce: str, token: str = "", aviso: str = "", er
     corpo = (f'<h1>Integrações da sua conta</h1>{topo}<p>Aqui você liga o Heimdall aos apps e contas que usa. Cada integração mostra o estado e o que fazer. '
              f'Android: por enquanto só Calendário e Tarefas, pela conta Google, quando essa integração ficar pronta; a Saúde do Android precisa de um app próprio, que ainda não existe.</p>'
              + saude + "".join(prep))
-    return _documento("Integrações - Heimdall Account", corpo, nonce)
+    return _documento("Integrações - Studio Account", corpo, nonce)
 
 
 class Account(nuvem.ManipuladorBase):
@@ -350,7 +350,7 @@ Account._suporte_responder = _suporte_responder_post
 def main() -> None:
     srv = ThreadingHTTPServer((HOST, PORT), Account)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Account em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(hosts_ok()))}; origens do site: {', '.join(sorted(origens_ok()))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Account em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(hosts_ok()))}; origens do site: {', '.join(sorted(origens_ok()))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

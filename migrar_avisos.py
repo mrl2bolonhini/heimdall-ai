@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Traz para a aba Avisos do Heimdall Health e do Heimdall Finance as notas de saúde e finanças que o Heimdall já tinha gravado, e apaga as originais.
+"""Traz para a aba Avisos do Studio Health e do Studio Finance as notas de saúde e finanças que o Heimdall já tinha gravado, e apaga as originais.
 
 Onde elas estão: (1) a cópia em Markdown no cofre (pastas saude e heimdall-financas, com os áudios na subpasta audio); (2) a nota no app Notas:
 pasta Saúde dentro de Heimdall-ai e pasta Heimdall Finanças. Ordem, para nada se perder: importa tudo, CONFERE que cada item está nos avisos,

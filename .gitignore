@@ -37,7 +37,7 @@ pronuncias.local.txt
 export.zip
 apple_health_export/
 
-# Dados financeiros do Heimdall Finance (nunca vão para o git)
+# Dados financeiros do Studio Finance (nunca vão para o git)
 finance/
 dados_financas/  # nome antigo da pasta do Finance (migrada para finance/ na primeira subida)
 .heimdall_desligados.json
@@ -46,7 +46,7 @@ dados_financas/  # nome antigo da pasta do Finance (migrada para finance/ na pri
 amostras_bancos/
 /health/
 
-# Arquivos e pasta de entrada do Heimdall Memory (dados do usuário); library/ é o nome antigo da pasta, ignorado até a migração
+# Arquivos e pasta de entrada do Studio Memory (dados do usuário); library/ é o nome antigo da pasta, ignorado até a migração
 /memory/
 /library/
 

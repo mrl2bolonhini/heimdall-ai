@@ -1,4 +1,4 @@
-Heimdall Games: ideias para os próximos jogos
+Studio Games: ideias para os próximos jogos
 Lista combinada em 2026-11-15, em ordem de prioridade. Ficaram de fora, por decisão sua, a forca em dupla e o treino de digitação por áudio.
 Todos seguem o mesmo padrão dos atuais: arquivo em games/, lógica testada em Node, interface só com botões, campos e lista, e voz pela região aria-live.
 

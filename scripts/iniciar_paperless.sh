@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sobe o Paperless-ngx (motor do Heimdall Memory) em Docker, só em 127.0.0.1:8023, e liga o motor no .env.
+# Sobe o Paperless-ngx (motor do Studio Memory) em Docker, só em 127.0.0.1:8023, e liga o motor no .env.
 # Gera a chave e a senha do Paperless na primeira vez (guardadas no .env, nunca mostradas). Funciona em macOS e Linux; no Windows, use o WSL.
 cd "$(dirname "$0")/.."
 [ -f .env ] || { echo "Não encontrei o .env nesta pasta."; exit 1; }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o Heimdall Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade da página."""
+"""Testa o Studio Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade da página."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

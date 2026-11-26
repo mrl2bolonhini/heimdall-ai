@@ -35,15 +35,15 @@ def h(tok):
     return Cab({cfa.CABECALHO: tok})
 
 
-m = c.menu("Heimdall News", cabecalhos=h("tokdono"))
+m = c.menu("Studio News", cabecalhos=h("tokdono"))
 confere("dono: nome e e-mail no resumo e no texto", "Conta: Murillo Bolonhini" in m and "Murillo Bolonhini (dono@x.com)" in m, m)
-confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Heimdall Lab<", ">Heimdall Notes<", ">Heimdall Games<", ">Heimdall Controls<", ">Heimdall Health<", ">Heimdall Finance<", ">Heimdall Flows<", ">Heimdall Status<", ">Heimdall Chat<", ">Heimdall Account<")) and "Open WebUI" not in m and "Uptime Kuma" not in m and "Notas" not in m and "Saúde" not in m and "Jogos" not in m, m)
+confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Studio Lab<", ">Studio Notes<", ">Studio Games<", ">Studio Controls<", ">Studio Health<", ">Studio Finance<", ">Studio Flows<", ">Studio Status<", ">Studio Chat<", ">Studio Account<")) and "Open WebUI" not in m and "Uptime Kuma" not in m and "Notas" not in m and "Saúde" not in m and "Jogos" not in m, m)
 import heimdall_conta as _c
 confere("lista em ordem alfabética pelo nome real", [_c.NOMES[k] for k in _c.ORDEM] == sorted(_c.NOMES.values(), key=str.lower))
-confere("serviço atual marcado, sem link duplicado", 'aria-current="page">Heimdall News (você está aqui)' in m and m.count(">Heimdall News<") == 0, m)
+confere("serviço atual marcado, sem link duplicado", 'aria-current="page">Studio News (você está aqui)' in m and m.count(">Studio News<") == 0, m)
 confere("Kuma abre no painel (/dashboard)", "https://status.heimdall-ai.tech/dashboard" in m, m)
-g = c.menu("Heimdall Games", cabecalhos=h("tokana"))
-confere("convidado: só o que foi liberado e é convidável (Saúde fica de fora, mesmo na lista)", ">Heimdall News<" in g and "Heimdall Games (você está aqui)" in g and ">Heimdall Account<" in g and "Saúde" not in g and "Controls" not in g and "Finance" not in g and "Uptime" not in g, g)
+g = c.menu("Studio Games", cabecalhos=h("tokana"))
+confere("convidado: só o que foi liberado e é convidável (Saúde fica de fora, mesmo na lista)", ">Studio News<" in g and "Studio Games (você está aqui)" in g and ">Studio Account<" in g and "Saúde" not in g and "Controls" not in g and "Finance" not in g and "Uptime" not in g, g)
 confere("convidado: nome mostrado", "Conta: Ana Souza" in g)
 x = c.menu("", cabecalhos=h("tokxss"))
 confere("nome vindo da Microsoft é escapado", "<script>" not in x and "&lt;script&gt;" in x, x)
@@ -51,13 +51,13 @@ s = c.menu("", cabecalhos=h("toksemnome"))
 confere("sem nome: mostra o e-mail", "Conta: sem@x.com" in s and "Conectado como sem@x.com" in s, s)
 confere("sem Access e sem sessão: nada", c.menu("", cabecalhos=Cab()) == "")
 confere("token inválido: nada", c.menu("", cabecalhos=h("falso")) == "")
-l = c.menu("Heimdall Lab", logado_local=True, cabecalhos=Cab(), sair_html="<form>SAIR</form>")
+l = c.menu("Studio Lab", logado_local=True, cabecalhos=Cab(), sair_html="<form>SAIR</form>")
 import os
 os.environ["HEIMDALL_DONO_NOME"] = "Murillo"
-l_nome = c.menu("Heimdall Lab", logado_local=True, cabecalhos=Cab())
+l_nome = c.menu("Studio Lab", logado_local=True, cabecalhos=Cab())
 confere("porta local com HEIMDALL_DONO_NOME: mostra o nome, não \"Dono\"", "Conta: Murillo" in l_nome and "Conta: Dono" not in l_nome, l_nome)
 del os.environ["HEIMDALL_DONO_NOME"]
-confere("porta local com sessão: Dono, todos os serviços e o botão Sair do serviço", "Conta: Dono" in l and "senha e código" in l and ">Heimdall Notes<" in l and "<form>SAIR</form>" in l and "cdn-cgi/access/logout" not in l, l)
+confere("porta local com sessão: Dono, todos os serviços e o botão Sair do serviço", "Conta: Dono" in l and "senha e código" in l and ">Studio Notes<" in l and "<form>SAIR</form>" in l and "cdn-cgi/access/logout" not in l, l)
 confere("pelo Access há o link para sair do Access", "cdn-cgi/access/logout" in m)
 chamadas = []
 c._nomes.clear()
@@ -85,7 +85,7 @@ import heimdall_lab as nuvem
 
 class Eco(nuvem.ManipuladorBase):
     def do_GET(self):
-        corpo = nuvem.cabecalho("Heimdall News", "").encode()
+        corpo = nuvem.cabecalho("Studio News", "").encode()
         self.send_response(200)
         self.send_header("Content-Length", str(len(corpo)))
         self.end_headers()

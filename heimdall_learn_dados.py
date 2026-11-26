@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Learn, parte de dados: banco próprio (db/learn.db) e pastas de estudo dentro de knowledge/.
+"""Studio Learn, parte de dados: banco próprio (db/learn.db) e pastas de estudo dentro de knowledge/.
 
 Fase 1 do Learn (guides/learn_especificacao.txt): pastas e subpastas criadas pela plataforma, cada uma com CATEGORIA (aleatório ou sequencial)
 e TIPO (aberto: idiomas, programação, filosofia, medicina, exatas, humanas ou qualquer outro que o usuário cadastrar), importação de documentos

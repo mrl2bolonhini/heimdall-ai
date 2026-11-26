@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Learn: traz para o Learn os estudos que antes viviam no Notes.
+"""Studio Learn: traz para o Learn os estudos que antes viviam no Notes.
 
 Fontes (só leitura; nada é apagado nem movido, as cópias originais continuam onde estão):
   1. As notas de estudo do cofre (brain/<tema>/*.md, com o áudio em brain/<tema>/audio/*.m4a) que o fluxo das 6h, 13h e 20h gravava.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Finance (finance.heimdall-ai.tech): suas finanças em páginas de texto e tabelas, para leitor de tela.
+"""Studio Finance (finance.heimdall-ai.tech): suas finanças em páginas de texto e tabelas, para leitor de tela.
 
 Você importa extratos (OFX ou CSV) do banco e do cartão; o painel classifica os gastos por categoria com regras que você
 ajusta, mostra o resumo do mês, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara.
@@ -9,7 +9,7 @@ para a Cloudflare nem para modelo de fora. O Cloudflare só repassa as páginas,
 
 Segurança (mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
-  2. Entrada com a senha e o código de 6 dígitos do Heimdall Lab (ou o Cloudflare Access, se ligado).
+  2. Entrada com a senha e o código de 6 dígitos do Studio Lab (ou o Cloudflare Access, se ligado).
   3. Limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict, token CSRF em todo POST.
   4. Só atende os nomes de site permitidos (HEIMDALL_FINANCE_HOSTS) e manda cabeçalhos de segurança.
   5. Sem senha e sem código configurados, o servidor não sobe.
@@ -182,12 +182,12 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
             perguntar_html = ""
         grupos = estrutura(banco())
         grupo, sub = localizar(grupos, sess.get("atual", "/"))
-        em_ajustes = bool(grupo) and grupo[0] == "ajustes"   # Ajustes é botão no topo, à direita, e não aba (padrão do Heimdall Design)
+        em_ajustes = bool(grupo) and grupo[0] == "ajustes"   # Ajustes é botão no topo, à direita, e não aba (padrão do Studio Design)
         itens_nav = [(g[2][0][0], g[1]) for g in grupos if g[0] != "ajustes"]
         atual = "" if em_ajustes else (grupo[2][0][0] if grupo else "")
         ajustes_html = design.botao("/importar", "Ajustes", atual=em_ajustes)
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        nav = "" if em_ajustes else design.nav_abas(itens_nav, atual, "Seções do Heimdall Finance")
+        nav = "" if em_ajustes else design.nav_abas(itens_nav, atual, "Seções do Studio Finance")
         f = sess.get("flash")
         if f:
             sess["flash"] = None
@@ -204,8 +204,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
         sair = ajustes_html = ""
         conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Finance</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Finance", nav, sair_html=sair, ajustes_html=ajustes_html)}'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio Finance</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio Finance", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="finance")}{scripts}</body></html>').encode("utf-8")
 
 
@@ -779,7 +779,7 @@ def _volta_de_erro(rota: str) -> str:
 def pg_avisos_config(sess: dict) -> tuple:
     """Ajustes > Avisos: como o Finance avisa quando entra um aviso novo. A lista dos avisos fica em Tendências > Avisos."""
     cfg = avisos_mod.config("financas")
-    corpo = ('<p>Escolha como o Heimdall Finance avisa quando entra um aviso novo (análises e relatórios). A lista dos avisos fica em Tendências, na subaba Avisos.</p>'
+    corpo = ('<p>Escolha como o Studio Finance avisa quando entra um aviso novo (análises e relatórios). A lista dos avisos fica em Tendências, na subaba Avisos.</p>'
              f'<form method="post" action="/avisos/config"><input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
              f'<label><input type="checkbox" name="bark" value="1"{" checked" if cfg["bark"] else ""}> Avisar no iPhone (Bark) quando entrar um aviso novo. '
              'O texto da notificação é genérico, sem valores nem nomes.</label>'
@@ -1203,7 +1203,7 @@ def _vigiar_email() -> None:
 
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Heimdall Finance não sobe. Rode: python3 heimdall_acesso.py --tudo")
+        sys.exit("Sem senha e código configurados o Studio Finance não sobe. Rode: python3 heimdall_acesso.py --tudo")
     banco()
     if not heimdall_continuidade.modo_continuidade():   # na nuvem, em continuidade, só leitura: nada de vigiar pasta, e-mail ou Pluggy
         threading.Thread(target=_vigiar_entrada, daemon=True).start()
@@ -1211,7 +1211,7 @@ def main() -> None:
         threading.Thread(target=_vigiar_pluggy, daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), Finance)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Finance em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))}; dados em {DIR_DADOS})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Finance em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))}; dados em {DIR_DADOS})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

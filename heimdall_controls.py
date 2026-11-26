@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Heimdall Controls (controls.heimdall-ai.tech): terminal completo e acessível e painel de serviços, para administrar o Heimdall pelo navegador.
+"""Studio Controls (controls.heimdall-ai.tech): terminal completo e acessível e painel de serviços, para administrar o Heimdall pelo navegador.
 
 O terminal roda no Mac, com as permissões do seu usuário (heimdall_shell.py): a pasta e as variáveis continuam entre os comandos, programas que
 perguntam algo recebem a resposta pelo campo "Resposta ao programa", e há botões para interromper e para copiar a última saída ou as últimas N saídas.
 Isso é o recurso mais poderoso do Heimdall: quem entra aqui manda no Mac. Por isso as camadas são as dos outros painéis e mais duas:
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
-  2. Entrada pelo Cloudflare Access (Microsoft Authenticator) ou pela senha e o código de 6 dígitos do Heimdall Lab.
+  2. Entrada pelo Cloudflare Access (Microsoft Authenticator) ou pela senha e o código de 6 dígitos do Studio Lab.
   3. Só o dono entra: sessão de convidado (escopo de um serviço) é recusada aqui, mesmo que o Access a aceite.
   4. Em endereço público, com o Access ligado, todo pedido precisa trazer o token do Access de um dono (HEIMDALL_CONTROLS_EXIGE_ACCESS=0 desliga).
   5. Token anti-falsificação (CSRF) e conferência de Origin em todo pedido que age; cabeçalhos de segurança; script só com nonce.
@@ -174,8 +174,8 @@ def completar(pasta: str, linha: str) -> dict:
     return {"inicio": inicio, "palavra_nova": d_tipado + novo, "opcoes": [n + ("/" if e_ else "") for n, e_ in itens]}
 
 
-SECOES = [("/", "Resumo"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem")]   # no máximo 5 abas (Heimdall Design)
-# Abas com subabas: a rota de cada subaba aponta para a aba de cima a que pertence (lista de abas enxuta do Heimdall Design).
+SECOES = [("/", "Resumo"), ("/terminal", "Terminal"), ("/servicos", "Serviços"), ("/usuarios", "Usuários"), ("/nuvem", "Nuvem")]   # no máximo 5 abas (Studio Design)
+# Abas com subabas: a rota de cada subaba aponta para a aba de cima a que pertence (lista de abas enxuta do Studio Design).
 SUBABAS = {"/nuvem": [("/nuvem", "Continuidade"), ("/monitor", "Consumo de IA")],
            "/servicos": [("/servicos", "Ligar e desligar"), ("/manutencao", "Manutenção")]}
 ABA_DE = {r: aba for aba, itens in SUBABAS.items() for r, _ in itens}
@@ -980,7 +980,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     nav = sair = ajustes_html = ""
     if sess:
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
-        em_ajustes = atual in dict(AJUSTES)   # Ajustes é botão no topo, à direita, e não aba (padrão do Heimdall Design)
+        em_ajustes = atual in dict(AJUSTES)   # Ajustes é botão no topo, à direita, e não aba (padrão do Studio Design)
         ajustes_html = design.botao("/ajustes", "Ajustes", atual=em_ajustes)
         if em_ajustes:
             nav = " "
@@ -1013,8 +1013,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", nonce: s
     todo = ((design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_SEGREDO + SCRIPT_RECARGA + SCRIPT_SERVICOS + SCRIPT_CONFIG) if sess else "") + script
     js = f'<script nonce="{nonce}">{todo}</script>' if todo and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'
-            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Controls", nav, sair_html=sair, ajustes_html=ajustes_html)}'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio Controls</title>{nuvem.ICONE}<style>{CSS}</style></head><body><!--email_off-->'
+            f'<div id="topo" tabindex="-1" role="group" aria-label="Início da página"></div><a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio Controls", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{corpo}</main>{rodape}{js}<!--/email_off--></body></html>').encode("utf-8")
 
 
@@ -1425,11 +1425,11 @@ class Painel(nuvem.ManipuladorBase):
 
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Heimdall Controls não sobe. Rode: python3 heimdall_acesso.py --tudo")
+        sys.exit("Sem senha e código configurados o Studio Controls não sobe. Rode: python3 heimdall_acesso.py --tudo")
     servicos.iniciar_vigia()
     srv = ThreadingHTTPServer((HOST, PORT), Painel)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Controls em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Controls em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

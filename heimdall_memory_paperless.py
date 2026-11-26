@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Memory com o Paperless-ngx como motor (HEIMDALL_MEMORY_MOTOR=paperless).
+"""Studio Memory com o Paperless-ngx como motor (HEIMDALL_MEMORY_MOTOR=paperless).
 
 O Paperless-ngx roda em Docker neste Mac, escutando só em 127.0.0.1, sem login exposto: o Memory é a única tela e fala com ele pela API REST (token).
 O Paperless faz o OCR, guarda os arquivos, lê e-mails (regras IMAP) e classifica; a classificação aprende com as correções que a pessoa grava em "A revisar".

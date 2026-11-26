@@ -370,7 +370,7 @@ case "$AWS_EMU" in
         docker rm -f moto > /dev/null 2>&1
         # Lambda: o LocalStack executa as funções em contêineres, então precisa do socket do Docker (e da rede heimdall, para os
         # contêineres das funções acharem o LocalStack). Ligado por padrão; HEIMDALL_LOCALSTACK_DOCKER=0 no .env desliga.
-        # Atenção: isso dá ao contêiner do LocalStack controle do Docker do Mac. Quem passa pelo painel Heimdall Lab (senha e
+        # Atenção: isso dá ao contêiner do LocalStack controle do Docker do Mac. Quem passa pelo painel Studio Lab (senha e
         # código de 6 dígitos) consegue executar código em contêineres.
         LS_DOCKER=()
         LS_QUER=0
@@ -402,7 +402,7 @@ case "$AWS_EMU" in
         echo "     Emulador de AWS desligado." ;;
 esac
 # Se o LocalStack parar logo ao subir (o caso comum é o LOCALSTACK_AUTH_TOKEN recusado, código de saída 55), cai para o Moto,
-# para o painel Heimdall Lab e o código de estudo continuarem com um emulador no ar.
+# para o painel Studio Lab e o código de estudo continuarem com um emulador no ar.
 if [ "$AWS_EMU" = "localstack" ]; then
     LS_PAROU=0
     for _ in 1 2 3 4 5 6 7 8; do
@@ -534,7 +534,7 @@ if [ "$WANT_AGENTE" = "1" ]; then
     fi
 fi
 
-# --- Heimdall Lab (painel web do emulador de AWS): sobe sozinho se houver senha e código no .env ---
+# --- Studio Lab (painel web do emulador de AWS): sobe sozinho se houver senha e código no .env ---
 # Para configurar: python3 heimdall_acesso.py --tudo. Escuta só em 127.0.0.1; o acesso público vem do túnel Cloudflare.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] && [ "$AWS_EMU" != "off" ]; then
     if [ -f heimdall_lab.py ]; then
@@ -544,15 +544,15 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] 
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o painel Heimdall Lab não respondeu em 10s. Veja logs/lab_debug.log."
+                echo "Aviso: o painel Studio Lab não respondeu em 10s. Veja logs/lab_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Lab (painel do emulador de AWS) em http://localhost:$LAB_PORT"
+        echo "     Studio Lab (painel do emulador de AWS) em http://localhost:$LAB_PORT"
     fi
 fi
 
-# --- Heimdall Notes (site para ler as notas de estudo e ouvir os áudios): mesmo login do Heimdall Lab ---
+# --- Studio Notes (site para ler as notas de estudo e ouvir os áudios): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (memory.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_notas.py ]; then
@@ -562,16 +562,16 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Notes não respondeu em 10s. Veja logs/notas_debug.log."
+                echo "Aviso: o Studio Notes não respondeu em 10s. Veja logs/notas_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Notes (notas e áudios) em http://localhost:$NOTAS_PORT"
+        echo "     Studio Notes (notas e áudios) em http://localhost:$NOTAS_PORT"
     fi
 fi
 
-# --- Heimdall Learn (plataforma de estudos; fase 1: pastas com categoria e tipo, importação de documentos) ---
-# Desligado por padrão: ligue com HEIMDALL_LEARN=1 no .env (heimdall env --set HEIMDALL_LEARN 1). Mesmo login do Heimdall Lab.
+# --- Studio Learn (plataforma de estudos; fase 1: pastas com categoria e tipo, importação de documentos) ---
+# Desligado por padrão: ligue com HEIMDALL_LEARN=1 no .env (heimdall env --set HEIMDALL_LEARN 1). Mesmo login do Studio Lab.
 if [ "${HEIMDALL_LEARN:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_learn.py ]; then
         HEIMDALL_LEARN_PORT="$LEARN_PORT" "$VENV_PYTHON" heimdall_learn.py > "$(nova_log learn_debug)" 2>&1 &
@@ -580,16 +580,16 @@ if [ "${HEIMDALL_LEARN:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ 
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Learn não respondeu em 10s. Veja logs/learn_debug.log."
+                echo "Aviso: o Studio Learn não respondeu em 10s. Veja logs/learn_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Learn (estudos) em http://localhost:$LEARN_PORT"
+        echo "     Studio Learn (estudos) em http://localhost:$LEARN_PORT"
     fi
 fi
 
-# --- Heimdall Trading (mesa de operações em simulação) ---
-# Desligado por padrão: ligue com HEIMDALL_TRADING=1 no .env (heimdall env --set HEIMDALL_TRADING 1). Mesmo login do Heimdall Lab.
+# --- Studio Trading (mesa de operações em simulação) ---
+# Desligado por padrão: ligue com HEIMDALL_TRADING=1 no .env (heimdall env --set HEIMDALL_TRADING 1). Mesmo login do Studio Lab.
 if [ "${HEIMDALL_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_trading.py ]; then
         HEIMDALL_TRADING_PORT="$TRADING_PORT" "$VENV_PYTHON" heimdall_trading.py > "$(nova_log trading_debug)" 2>&1 &
@@ -598,16 +598,16 @@ if [ "${HEIMDALL_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && 
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Trading não respondeu em 10s. Veja logs/trading_debug.log."
+                echo "Aviso: o Studio Trading não respondeu em 10s. Veja logs/trading_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Trading (mesa de operações em simulação) em http://localhost:$TRADING_PORT"
+        echo "     Studio Trading (mesa de operações em simulação) em http://localhost:$TRADING_PORT"
     fi
 fi
 
-# --- Heimdall Memory (acervo pesquisável; antes se chamava Library) ---
-# Desligado por padrão: ligue com HEIMDALL_MEMORY=1 no .env (heimdall env --set HEIMDALL_MEMORY 1; o nome antigo HEIMDALL_LIBRARY=1 continua valendo). Mesmo login do Heimdall Lab.
+# --- Studio Memory (acervo pesquisável; antes se chamava Library) ---
+# Desligado por padrão: ligue com HEIMDALL_MEMORY=1 no .env (heimdall env --set HEIMDALL_MEMORY 1; o nome antigo HEIMDALL_LIBRARY=1 continua valendo). Mesmo login do Studio Lab.
 if [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ "${HEIMDALL_MEMORY_MOTOR:-${HEIMDALL_LIBRARY_MOTOR:-interno}}" = "paperless" ] && command -v docker > /dev/null 2>&1 && [ -f paperless/docker-compose.yml ]; then
         docker compose -f paperless/docker-compose.yml --env-file .env up -d > "$(nova_log paperless_debug)" 2>&1 || echo "Aviso: não consegui subir o Paperless-ngx (motor do Memory). Veja logs/paperless_debug.log."
@@ -619,15 +619,15 @@ if [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && [ -n "$HEIMDALL_CLO
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Memory não respondeu em 10s. Veja logs/memory_debug.log."
+                echo "Aviso: o Studio Memory não respondeu em 10s. Veja logs/memory_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Memory (acervo pesquisável) em http://localhost:$MEMORY_PORT"
+        echo "     Studio Memory (acervo pesquisável) em http://localhost:$MEMORY_PORT"
     fi
 fi
 
-# --- Heimdall News (notícias das últimas 24 h com resumo de IA e feeds RSS): mesmo login do Heimdall Lab ---
+# --- Studio News (notícias das últimas 24 h com resumo de IA e feeds RSS): mesmo login do Studio Lab ---
 # Atualiza sozinho de 30 em 30 minutos. Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (news.heimdall-ai.tech).
 # Os resumos usam o LiteLLM (porta $LLM_PORT): enquanto ele não estiver no ar, as matérias ficam na fila e o serviço tenta de novo na próxima atualização.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
@@ -638,18 +638,18 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall News não respondeu em 10s. Veja logs/news_debug.log."
+                echo "Aviso: o Studio News não respondeu em 10s. Veja logs/news_debug.log."
                 break
             fi
         done
-        echo "     Heimdall News (notícias e feeds RSS) em http://localhost:$NEWS_PORT"
+        echo "     Studio News (notícias e feeds RSS) em http://localhost:$NEWS_PORT"
         if [ -z "$HEIMDALL_NEWS_RSS_TOKEN" ]; then
             echo "     Feeds RSS desligados: rode  python3 heimdall_news.py --token  para criar a chave."
         fi
     fi
 fi
 
-# --- Heimdall Health (painel com as análises do app Saúde, somente leitura): mesmo login do Heimdall Lab ---
+# --- Studio Health (painel com as análises do app Saúde, somente leitura): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (health.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_painel_saude.py ]; then
@@ -659,20 +659,20 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o painel Heimdall Health não respondeu em 10s. Veja logs/saude_painel_debug.log."
+                echo "Aviso: o painel Studio Health não respondeu em 10s. Veja logs/saude_painel_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Health (painel de saúde) em http://localhost:$SAUDE_PAINEL_PORT"
+        echo "     Studio Health (painel de saúde) em http://localhost:$SAUDE_PAINEL_PORT"
     fi
 fi
 
-# --- Heimdall Controls (terminal completo e painel de serviços): mesmo login do Heimdall Lab ---
+# --- Studio Controls (terminal completo e painel de serviços): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare (controls.heimdall-ai.tech), atrás do Cloudflare Access. Quem entra manda no Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_controls.py ]; then
         if nc -z localhost $CONTROLS_PORT > /dev/null 2>&1; then
-            echo "     Heimdall Controls já estava no ar (foi ele quem pediu esta subida)."
+            echo "     Studio Controls já estava no ar (foi ele quem pediu esta subida)."
         else
             HEIMDALL_CONTROLS_PORT="$CONTROLS_PORT" HEIMDALL_DIR="$(pwd)" "$VENV_PYTHON" heimdall_controls.py > "$(nova_log controls_debug)" 2>&1 &
         fi
@@ -681,15 +681,15 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Heimdall Controls não respondeu em 10s. Veja logs/controls_debug.log."
+                echo "Aviso: o Studio Controls não respondeu em 10s. Veja logs/controls_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Controls em http://localhost:$CONTROLS_PORT"
+        echo "     Studio Controls em http://localhost:$CONTROLS_PORT"
     fi
 fi
 
-# --- Heimdall Games (jogos leves para leitor de tela, no navegador): mesmo login do Heimdall Lab ---
+# --- Studio Games (jogos leves para leitor de tela, no navegador): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (games.heimdall-ai.tech).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_jogos.py ]; then
@@ -699,15 +699,15 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o servidor Heimdall Games não respondeu em 10s. Veja logs/jogos_debug.log."
+                echo "Aviso: o servidor Studio Games não respondeu em 10s. Veja logs/jogos_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Games em http://localhost:$JOGOS_PORT"
+        echo "     Studio Games em http://localhost:$JOGOS_PORT"
     fi
 fi
 
-# --- Heimdall Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa e a identidade que o site heimdall-ai.tech mostra ---
+# --- Studio Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa e a identidade que o site heimdall-ai.tech mostra ---
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare, com o Access na frente. Não precisa de senha: só atende quem o Access aprovou.
 if [ -f heimdall_account.py ]; then
     HEIMDALL_ACCOUNT_PORT="$ACCOUNT_PORT" "$VENV_PYTHON" heimdall_account.py > "$(nova_log account_debug)" 2>&1 &
@@ -716,14 +716,14 @@ if [ -f heimdall_account.py ]; then
         sleep 1
         COUNTER=$((COUNTER+1))
         if [ $COUNTER -gt 10 ]; then
-            echo "Aviso: o servidor Heimdall Account não respondeu em 10s. Veja logs/account_debug.log."
+            echo "Aviso: o servidor Studio Account não respondeu em 10s. Veja logs/account_debug.log."
             break
         fi
     done
-    echo "     Heimdall Account em http://localhost:$ACCOUNT_PORT"
+    echo "     Studio Account em http://localhost:$ACCOUNT_PORT"
 fi
 
-# --- Heimdall Finance (extratos, categorias e tendências): mesmo login do Heimdall Lab ---
+# --- Studio Finance (extratos, categorias e tendências): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (finance.heimdall-ai.tech).
 # Os dados ficam em finance/ (fora do git) e nunca saem do Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
@@ -734,11 +734,11 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o servidor Heimdall Finance não respondeu em 10s. Veja logs/finance_debug.log."
+                echo "Aviso: o servidor Studio Finance não respondeu em 10s. Veja logs/finance_debug.log."
                 break
             fi
         done
-        echo "     Heimdall Finance em http://localhost:$FINANCE_PORT"
+        echo "     Studio Finance em http://localhost:$FINANCE_PORT"
     fi
 fi
 

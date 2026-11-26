@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Finance: planilhas (xlsx e csv) de gastos, investimentos, empréstimos e outros assuntos, e as visões personalizadas delas.
+"""Studio Finance: planilhas (xlsx e csv) de gastos, investimentos, empréstimos e outros assuntos, e as visões personalizadas delas.
 
 Fluxo: o arquivo é lido (xlsx por zipfile, sem biblioteca externa), o Heimdall descobre o tipo e o papel de cada coluna (primeiro por palavras
 do cabeçalho, depois pelo modelo de linguagem quando houver dúvida) e grava as linhas num conjunto. O layout aprendido fica gravado pela assinatura

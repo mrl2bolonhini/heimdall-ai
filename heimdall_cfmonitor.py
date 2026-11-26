@@ -6,7 +6,7 @@
 
 Lê o consumo pela API de análises (GraphQL) da Cloudflare. O token do .env (o mesmo do News) precisa da permissão
 Conta > Análises (Account Analytics) > Leitura. O custo é uma estimativa feita pela Cloudflare a partir dos tokens; a fatura é a
-referência. Usado também pela subaba Consumo de IA (aba Nuvem) do Heimdall Controls.
+referência. Usado também pela subaba Consumo de IA (aba Nuvem) do Studio Controls.
 """
 import json
 import sys

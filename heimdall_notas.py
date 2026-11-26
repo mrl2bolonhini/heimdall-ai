@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Notes: um site simples e agradável para LER as notas de estudo e OUVIR os áudios.
+"""Studio Notes: um site simples e agradável para LER as notas de estudo e OUVIR os áudios.
 
 Lê direto do cofre (brain/: notas em Markdown e áudios .m4a) e da pasta knowledge/ (seus documentos). Não depende de
 nenhum app: abre no Safari do Mac ou do iPhone, funciona com VoiceOver e usa o mesmo login do painel Lab
@@ -46,7 +46,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 
 def carregar_env() -> None:
-    """Do .env lê só as variáveis do Heimdall Notes e as pastas do cofre (as outras chaves do projeto não entram aqui)."""
+    """Do .env lê só as variáveis do Studio Notes e as pastas do cofre (as outras chaves do projeto não entram aqui)."""
     try:
         linhas = (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines()
     except OSError:
@@ -519,7 +519,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
         atual = "/busca" if str(sess.get("atual", "/")).startswith("/busca") else "/"   # temas e notas ficam na aba Início
-        nav = design.nav_abas(NAV, atual, "Seções do Heimdall Notes")
+        nav = design.nav_abas(NAV, atual, "Seções do Studio Notes")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         if atual == "/" and urlparse(str(sess.get("atual", "/"))).path == "/":
             conteudo += bloco_inicio(sess)
@@ -527,8 +527,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
         abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_PERGUNTAR
     js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (script or abas_js) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Notes</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Notes", nav, sair_html=sair)}'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio Notes</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio Notes", nav, sair_html=sair)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="notas")}{js}</body></html>').encode("utf-8")
 
 
@@ -1015,16 +1015,16 @@ def mostrar_titulos_suspeitos() -> None:
 
 def main() -> None:
     import argparse
-    ap = argparse.ArgumentParser(description="Heimdall Notes: site de notas e áudios")
+    ap = argparse.ArgumentParser(description="Studio Notes: site de notas e áudios")
     ap.add_argument("--titulos-suspeitos", action="store_true", help="lista as notas cujo título parece cortado e sai")
     if ap.parse_args().titulos_suspeitos:
         mostrar_titulos_suspeitos()
         return
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Heimdall Notes não sobe. Rode: python3 heimdall_acesso.py --tudo")
+        sys.exit("Sem senha e código configurados o Studio Notes não sobe. Rode: python3 heimdall_acesso.py --tudo")
     srv = ThreadingHTTPServer((HOST, PORT), Notas)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Notes em http://{HOST}:{PORT} (cofre: {VAULT}; documentos: {KNOWLEDGE}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Notes em http://{HOST}:{PORT} (cofre: {VAULT}; documentos: {KNOWLEDGE}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Games (games.heimdall-ai.tech): jogos leves, feitos para leitor de tela, que rodam no navegador.
+"""Studio Games (games.heimdall-ai.tech): jogos leves, feitos para leitor de tela, que rodam no navegador.
 
 Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta games/; o que acontece na partida
 é dito em voz alta por uma região aria-live. Nada é gravado: o servidor só entrega as páginas.
@@ -8,7 +8,7 @@ Jogos: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco le
 
 Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
-  2. Entrada com a senha e o código de 6 dígitos do Heimdall Lab (python3 heimdall_acesso.py --tudo).
+  2. Entrada com a senha e o código de 6 dígitos do Studio Lab (python3 heimdall_acesso.py --tudo).
   3. Limite de tentativas por endereço e global, sessão em cookie HttpOnly e SameSite=Strict.
   4. Só atende os nomes de site permitidos (HEIMDALL_JOGOS_HOSTS) e manda cabeçalhos de segurança.
   5. Só os arquivos .js do catálogo são entregues, e a política de conteúdo só deixa rodar script do próprio site.
@@ -179,7 +179,7 @@ CATALOGO += [
 # Categorias: (id, título, descrição, jogos). A página inicial lista as categorias e cada uma tem a sua página com os jogos.
 CATEGORIAS = [
     # Nomes de uma palavra, em ordem alfabética. Cinco categorias ocupam as 5 posições de abas; com os jogos extras de terceiros passam de 5 itens e o menu Mais
-    # (quinta posição) guarda as duas últimas (Heimdall Design: nunca mais de 5 posições).
+    # (quinta posição) guarda as duas últimas (Studio Design: nunca mais de 5 posições).
     ("acao", "Ação", "Jogos de reflexo e movimento. O som ajuda a jogar: melhor com fones de ouvido.", ["arqueiro", "labirinto", "vilarejo"]),
     ("aventuras", "Aventuras", "Histórias em que você digita comandos e explora.", ["aventura", "relogios", "templo", "orion", "caverna", "escolhas"]),
     ("cassino", "Cassino", "Jogos de azar e de cartas, só com créditos virtuais.", ["poker", "blackjack", "bacara", "caribenho", "cacaniqueis", "roleta"]),
@@ -255,14 +255,14 @@ def pagina(titulo: str, corpo: str, sess: dict = None, extra_head: str = "", scr
         atual = atual or itens[0][0]
         # Numa página de jogo, trocar de aba carrega a página inteira (o jogo tem script e teclas próprias que não podem ficar para trás).
         completas = tuple(r for r, _ in itens) if scripts_ else ()
-        nav = design.nav_abas(itens, atual, "Categorias de jogos do Heimdall Games", completas)
+        nav = design.nav_abas(itens, atual, "Categorias de jogos do Studio Games", completas)
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         conteudo = design.com_abas(itens, atual, conteudo)
         scripts = design.script()
     js = "".join(f'<script src="/js/{e(s)}" defer></script>' for s in (scripts_ or []))
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow">{extra_head}<title>{e(titulo)} - Heimdall Games</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Games", nav, sair_html=sair)}'
+            f'<meta name="robots" content="noindex,nofollow">{extra_head}<title>{e(titulo)} - Studio Games</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio Games", nav, sair_html=sair)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="jogos")}{scripts}{js}</body></html>').encode("utf-8")
 
 
@@ -293,7 +293,7 @@ def pg_outros():
     if not ex:
         return None
     lista = '<ul class="lista-jogos">' + "".join(f'<li><a href="{e(u)}">{e(n)}</a>' + (f": {e(d)}" if d else "") + "</li>" for n, u, d in ex) + "</ul>"
-    return "Extras", f"<p>Jogos de terceiros, hospedados por você, fora do Heimdall Games.</p>{lista}", []
+    return "Extras", f"<p>Jogos de terceiros, hospedados por você, fora do Studio Games.</p>{lista}", []
 
 
 def rota_canonica(rota: str) -> str:
@@ -493,7 +493,7 @@ def main() -> None:
         sys.exit("Sem senha e código configurados o servidor de jogos não sobe. Rode: python3 heimdall_acesso.py --tudo")
     srv = ThreadingHTTPServer((HOST, PORT), Jogos)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Games em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Games em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

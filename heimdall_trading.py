@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Trading: mesa de operações em SIMULAÇÃO, feita para teclado e leitor de tela.
+"""Studio Trading: mesa de operações em SIMULAÇÃO, feita para teclado e leitor de tela.
 
 Nenhuma ordem é enviada a corretora: a execução é código com regras fixas (heimdall_trading_motor.py), com limite por ordem, limite de perda por dia e máximo
 de ordens abertas. A IA só descreve (campo Perguntar e sinais objetivos); quem decide é o usuário, e o serviço nunca recomenda comprar ou vender.

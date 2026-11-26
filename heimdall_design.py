@@ -1,4 +1,4 @@
-"""Heimdall Design: o padrão de interface igual em todos os sites do Heimdall.
+"""Studio Design: o padrão de interface igual em todos os sites do Heimdall.
 
 Regra de ouro (feita para leitor de tela e teclado):
   - LINK leva a outro lugar para LER: menu, "Voltar", o nome de um item em lista ou tabela, "Leia mais", links dentro de texto.
@@ -206,7 +206,7 @@ _BASE_AJUDA = []
 
 
 def base_ajuda() -> str:
-    """Endereço do Heimdall Account, onde ficam a ajuda, o suporte e as políticas que o rodapé de todo serviço liga."""
+    """Endereço do Studio Account, onde ficam a ajuda, o suporte e as políticas que o rodapé de todo serviço liga."""
     if not _BASE_AJUDA:
         try:
             import heimdall_usuarios as _u
@@ -233,7 +233,7 @@ def topo() -> str:
 
 
 def nav_abas(itens: list, atual: str, rotulo: str = "Seções", completas: tuple = ()) -> str:
-    """Navegação principal de um serviço: as abas do Heimdall Design (no lugar de menu lateral ou lista de links)."""
+    """Navegação principal de um serviço: as abas do Studio Design (no lugar de menu lateral ou lista de links)."""
     return '<nav aria-label="Principal">' + abas(itens, atual, rotulo, completas) + "</nav>"
 
 

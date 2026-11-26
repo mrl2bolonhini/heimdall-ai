@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do Heimdall News (heimdall_news.py) com feeds e modelo de mentira, sem internet.
+"""Teste do Studio News (heimdall_news.py) com feeds e modelo de mentira, sem internet.
 
     python3 tests/news/teste_news.py
 
@@ -446,7 +446,7 @@ sys.stderr = antigo_stderr
 confere("RSS geral abre sem login", s == 200 and hd["content-type"].startswith("application/rss+xml"))
 raiz = ET.fromstring(c)
 itens = raiz.findall("./channel/item")
-confere("RSS é XML válido com itens", len(itens) > 10 and raiz.find("./channel/title").text == "Heimdall News")
+confere("RSS é XML válido com itens", len(itens) > 10 and raiz.find("./channel/title").text == "Studio News")
 confere("RSS traz data, link, guid e categoria", all(i.find("pubDate") is not None and i.find("link").text.startswith("http") and i.find("guid") is not None and i.find("category") is not None for i in itens))
 confere("RSS marca o resumo como IA", any("Resumo feito por IA" in (i.find("description").text or "") for i in itens))
 con = banco.conectar()

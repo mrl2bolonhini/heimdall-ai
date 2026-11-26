@@ -14,7 +14,7 @@ Leia o CLAUDE.md antes de planejar. Você coordena a execução e pode implement
 4. Proponha quais papéis chamar depois (UX, QA funcional, QA de acessibilidade).
 
 ## Implementar
-- Siga o Heimdall Design (`heimdall_design.py` é a fonte única), a estrutura de pastas e os nomes em inglês dos comandos.
+- Siga o Studio Design (`heimdall_design.py` é a fonte única), a estrutura de pastas e os nomes em inglês dos comandos.
 - Recurso novo: atualize gerar_docs.py, README (via `python3 gerar_docs.py`), guides/heimdall_ajuda.txt e CHANGELOG.md.
 - Função nova: diga em que sistemas funciona; se depender do Mac, registre a alternativa no ROADMAP.
 - Teste novo vai em `tests/<serviço>/` com o bloco de raiz dos outros.

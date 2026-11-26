@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o motor do Heimdall Trading: ordens a mercado e limitadas, limites, venda sem posição, perda do dia, cotações e sinais."""
+"""Testa o motor do Studio Trading: ordens a mercado e limitadas, limites, venda sem posição, perda do dia, cotações e sinais."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

@@ -24,7 +24,7 @@ MEMORIA = ["memory_save", "memory_search", "memory_forget", "rag_temas", "rag_se
 # com filtros diferentes: é o filtro que limita as funções que cada modelo enxerga (um modelo de 8B escolhe melhor entre 7 funções do que entre 16).
 CONEXOES = [
     {"id": "banco-pessoal", "nome": "Alerts (banco pessoal)", "descricao": "Banco pessoal em modo leitura: diários oficiais, e-mails, privacidade, avisos, Second Brain e métricas de saúde simples. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": GERAL},
-    {"id": "banco-learn", "nome": "Learn (progresso e lições)", "descricao": "Só leitura do Heimdall Learn: progresso por pasta, lições com os erros do aluno e cards. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": ["learn_progresso", "learn_licoes", "learn_cards", "get_system_timestamp"]},
+    {"id": "banco-learn", "nome": "Learn (progresso e lições)", "descricao": "Só leitura do Studio Learn: progresso por pasta, lições com os erros do aluno e cards. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": ["learn_progresso", "learn_licoes", "learn_cards", "get_system_timestamp"]},
     {"id": "banco-saude", "nome": "Health (banco pessoal)", "descricao": "Saúde em modo leitura: histórico por métrica, análises, coração, ECG, treinos e relatório. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": SAUDE},
     {"id": "banco-financas", "nome": "Finance (banco pessoal)", "descricao": "Finance em modo leitura: resumo do mês, lançamentos, orçamentos, recorrentes, boletos e pagamentos futuros. Só para o administrador.", "url": "http://host.docker.internal:8004/mcp", "grupo": "DADOS_TOOLS", "acesso": "só do administrador", "funcoes": FINANCAS},
     {"id": "web-basica", "nome": "Web básica (General)", "descricao": "Só pesquisa na web, leitura de página, cálculo e hora: poucas funções para o General gastar pouco com a lista de ferramentas.", "url": "http://host.docker.internal:8001/mcp", "grupo": "PUBLIC_TOOLS", "acesso": "", "funcoes": WEB_BASICA},
@@ -46,7 +46,7 @@ MODELOS = [
      "uso": "conversa livre e pesquisa na web quando a pergunta pede (também faz o papel do antigo Curiosidades)", "nativa": True,
      "obs": "na nuvem (HEIMDALL_NUVEM=1) usa o Qwen3 30B; sem a nuvem, o gemma local, que pode não chamar a pesquisa."},
     {"id": "learn", "nome": "Learn", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_learn.txt", "temperatura": 0.3, "conexao": "mac-admin,banco-learn",
-     "uso": "ajuda nas lições e nos estudos do Heimdall Learn: progresso, erros, revisão e dúvidas sobre o material (precisa do Learn ligado)", "nativa": True},
+     "uso": "ajuda nas lições e nos estudos do Studio Learn: progresso, erros, revisão e dúvidas sobre o material (precisa do Learn ligado)", "nativa": True},
     {"id": "notes", "nome": "Notes", "base": "qwen3-vl-instruct", "prompt": "prompts/prompt_chat_documentos.txt", "temperatura": 0.2, "conexao": "mac-admin",
      "uso": "notas, triagem, diários, documentos e memória pessoal; os estudos ficam no modelo Learn (opcional; antes, Documentos e Memória)", "nativa": True},
 ]

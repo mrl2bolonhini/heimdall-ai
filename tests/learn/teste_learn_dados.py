@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa a parte de dados do Heimdall Learn: banco próprio, pastas com categoria e tipo, sincronização e importação de documentos."""
+"""Testa a parte de dados do Studio Learn: banco próprio, pastas com categoria e tipo, sincronização e importação de documentos."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

@@ -56,7 +56,7 @@ model_list:
       supports_function_calling: true
       supports_vision: true
 
-  # Modelo pequeno e rápido (3 GB) para os resumos do Heimdall News. No teste com um parágrafo, resumiu certo em português.
+  # Modelo pequeno e rápido (3 GB) para os resumos do Studio News. No teste com um parágrafo, resumiu certo em português.
   # Para baixar: ollama pull gemma3:4b
   - model_name: gemma3-4b
     litellm_params:

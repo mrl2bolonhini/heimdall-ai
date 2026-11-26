@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Learn: site de estudos. Fase 1: pastas com categoria e tipo, e importação de documentos.
+"""Studio Learn: site de estudos. Fase 1: pastas com categoria e tipo, e importação de documentos.
 
 As pastas ficam em knowledge/ (a mesma pasta de documentos do resto do Heimdall) e são cadastradas no banco próprio do Learn
 (db/learn.db). Cada pasta tem uma CATEGORIA (aleatório ou sequencial) e um TIPO aberto (idiomas, programação, filosofia, medicina...).
@@ -149,8 +149,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
         abas_js = design.SCRIPT_ABAS + design.SCRIPT_DETALHES + design.SCRIPT_PERGUNTAR
     js = f'<script nonce="{e(nonce)}">{abas_js}{script}</script>' if (abas_js or script) and nonce else ""
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall Learn</title>{nuvem.ICONE}<style>{CSS}</style></head><body{(' data-csrf="' + e(sess['csrf']) + '"') if sess else ''}>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Learn", nav, sair_html=sair, ajustes_html=ajustes_html)}'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio Learn</title>{nuvem.ICONE}<style>{CSS}</style></head><body{(' data-csrf="' + e(sess['csrf']) + '"') if sess else ''}>'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio Learn", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="learn")}{js}</body></html>').encode("utf-8")
 
 
@@ -158,7 +158,7 @@ ROTAS_PERGUNTAR = re.compile(r"^/((estudos|licoes|exercicios|cards|progresso)\?t
 
 
 def com_perguntar(sess: dict, corpo: str, tema: str = "") -> str:
-    """Campo Perguntar no fim do painel (Heimdall Design): o modelo responde só com os dados de estudo do tema, ou de todos na lista de temas."""
+    """Campo Perguntar no fim do painel (Studio Design): o modelo responde só com os dados de estudo do tema, ou de todos na lista de temas."""
     volta = sess.get("atual", "/") or "/"
     if not ROTAS_PERGUNTAR.match(volta):
         volta = href_aba(tema, "progresso") if tema else "/"
@@ -1040,12 +1040,12 @@ Learn._servir = _servir_audio
 
 def main() -> None:
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Heimdall Learn não sobe. Rode: python3 heimdall_acesso.py --tudo")
+        sys.exit("Sem senha e código configurados o Studio Learn não sobe. Rode: python3 heimdall_acesso.py --tudo")
     dados.sincronizar()
     cards.iniciar_agenda()
     srv = ThreadingHTTPServer((HOST, PORT), Learn)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Learn em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Learn em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Heimdall News: notícias das últimas 24 horas, com resumo feito por IA, e feeds RSS para o iPhone.
+"""Studio News: notícias das últimas 24 horas, com resumo feito por IA, e feeds RSS para o iPhone.
 
 O que faz (tudo em um processo só, que o start_heimdall.sh sobe quando há senha e código no .env):
   - De 30 em 30 minutos lê os feeds listados em noticias_fontes.json (as mesmas fontes do Digest), tira repetidas,
     traduz os títulos em inglês e pede a um modelo local um resumo curto de cada matéria. Tudo vai para o banco pessoal
     (tabela noticias) e fica 30 dias para consulta; o site mostra só as últimas 24 horas.
-  - Site com login (a mesma senha e o mesmo código de 6 dígitos do Heimdall Lab e do Notas): 10 notícias por página,
+  - Site com login (a mesma senha e o mesmo código de 6 dígitos do Studio Lab e do Notas): 10 notícias por página,
     título como cabeçalho, o resumo sempre marcado como "Resumo feito por IA" e o link "Leia mais sobre ..." para a matéria.
   - Feeds RSS para um app de leitura de feeds, em endereços com uma chave secreta (apps de feed não digitam o código de
     6 dígitos): um feed geral, um por categoria e um arquivo OPML que traz todos de uma vez.
@@ -62,7 +62,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 
 def carregar_env() -> None:
-    """Do .env lê só as variáveis do Heimdall News, a chave do LiteLLM e a pasta do banco (as outras chaves não entram aqui)."""
+    """Do .env lê só as variáveis do Studio News, a chave do LiteLLM e a pasta do banco (as outras chaves não entram aqui)."""
     try:
         linhas = (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines()
     except OSError:
@@ -868,7 +868,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:0 0 .3rem;fon
 """
 
 
-# Uma só seção de leitura (Notícias). O estado das fontes é estado técnico: fica em Ajustes, botão no topo (Heimdall Design).
+# Uma só seção de leitura (Notícias). O estado das fontes é estado técnico: fica em Ajustes, botão no topo (Studio Design).
 AJUSTES = "/estado"
 AJUSTES_ITENS = [("/estado", "Estado das fontes"), ("/ajuda", "Ajuda")]
 
@@ -901,8 +901,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None) -> bytes:
                                              "Pergunte em português, por exemplo: o que saiu sobre economia hoje? O modelo procura nos últimos 30 dias de notícias guardadas, passando por categorias e títulos, e lê só as que servem.")
         scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Heimdall News</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall News", nav, sair_html=sair, ajustes_html=ajustes_html)}'
+            f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio News</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio News", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="news")}{scripts}</body></html>').encode("utf-8")
 
 
@@ -1040,11 +1040,11 @@ def rss_xml(titulo: str, caminho: str, itens: list) -> bytes:
 
 def feeds_disponiveis() -> list:
     """[(nome do arquivo sem .xml, título)]: o geral e um por categoria."""
-    return [("geral", "Heimdall News")] + [(slug(c), f"Heimdall News: {c}") for c, _ in categorias_24h()]
+    return [("geral", "Studio News")] + [(slug(c), f"Studio News: {c}") for c, _ in categorias_24h()]
 
 
 def opml_xml() -> bytes:
-    linhas = ['<?xml version="1.0" encoding="UTF-8"?><opml version="2.0"><head><title>Heimdall News</title></head><body>']
+    linhas = ['<?xml version="1.0" encoding="UTF-8"?><opml version="2.0"><head><title>Studio News</title></head><body>']
     for arq, titulo in feeds_disponiveis():
         linhas.append(f'<outline type="rss" text="{_xml(titulo)}" title="{_xml(titulo)}" xmlUrl="{_xml(URL_BASE)}/rss/{_xml(RSS_TOKEN)}/{_xml(arq)}.xml"/>')
     linhas.append("</body></opml>")
@@ -1347,7 +1347,7 @@ def salvar_opml(arquivo: str) -> None:
 
 def main() -> None:
     import argparse
-    ap = argparse.ArgumentParser(description="Heimdall News: notícias com resumo de IA e feeds RSS")
+    ap = argparse.ArgumentParser(description="Studio News: notícias com resumo de IA e feeds RSS")
     ap.add_argument("--token", action="store_true", help="gera (ou troca) a chave dos feeds RSS no .env e mostra os endereços")
     ap.add_argument("--urls", action="store_true", help="mostra os endereços dos feeds")
     ap.add_argument("--copiar", metavar="FEED", help="copia o endereço de um feed (geral, opml ou categoria) para a área de transferência")
@@ -1387,12 +1387,12 @@ def main() -> None:
         print(json.dumps(ciclo(), ensure_ascii=False))
         return
     if not nuvem.SENHA_HASH or not nuvem.TOTP_SEGREDO:
-        sys.exit("Sem senha e código configurados o Heimdall News não sobe. Rode: python3 heimdall_acesso.py --tudo")
+        sys.exit("Sem senha e código configurados o Studio News não sobe. Rode: python3 heimdall_acesso.py --tudo")
     if COLETAR and not heimdall_continuidade.modo_continuidade():
         threading.Thread(target=laco, name="coletor", daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), News)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall News em http://{HOST}:{PORT} (modelo {MODELO}; atualiza a cada {INTERVALO_MIN} min{'' if COLETAR else ', coleta DESLIGADA'}; "
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio News em http://{HOST}:{PORT} (modelo {MODELO}; atualiza a cada {INTERVALO_MIN} min{'' if COLETAR else ', coleta DESLIGADA'}; "
                      f"feeds RSS {'com chave' if RSS_TOKEN else 'SEM chave: rode --token'}; sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()

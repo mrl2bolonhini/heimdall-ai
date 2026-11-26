@@ -48,7 +48,7 @@ for n in range(av.MAX_AVISOS + 5):
     a.gravar(f"t{n}", "")
 confere("guarda no máximo os mais recentes", len(a.listar(10000)) == av.MAX_AVISOS)
 b = av.texto_bark("saude", 1)
-confere("Bark genérico: só o nome do serviço e a aba, sem conteúdo", b["title"] == "Heimdall Health: aviso novo" and "Avisos" in b["body"] and "ECG" not in json.dumps(b))
+confere("Bark genérico: só o nome do serviço e a aba, sem conteúdo", b["title"] == "Studio Health: aviso novo" and "Avisos" in b["body"] and "ECG" not in json.dumps(b))
 confere("do_servico separa saúde e finanças", av.do_servico("saude").caminho != av.do_servico("financas").caminho and "fin" in str(av.do_servico("financas").caminho))
 
 # triagem: o Bark de saúde e finanças não leva título nem resumo

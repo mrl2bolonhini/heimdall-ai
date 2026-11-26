@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Heimdall Memory: acervo de documentos pesquisáveis (envio, leitura de texto com OCR, etiquetas e busca).
+"""Studio Memory: acervo de documentos pesquisáveis (envio, leitura de texto com OCR, etiquetas e busca).
 
-Telas no Heimdall Design, sobre `heimdall_servico_web.py`; os dados ficam em `heimdall_memory_dados.py`.
+Telas no Studio Design, sobre `heimdall_servico_web.py`; os dados ficam em `heimdall_memory_dados.py`.
 Abas: Documentos (Pesquisar, Recentes, A revisar), Adicionar (Enviar arquivo, Pasta de entrada), Organização (Etiquetas, Tipos). Ajustes: Estado, Lixeira, Ajuda.
 
 Variáveis: HEIMDALL_MEMORY (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), HEIMDALL_MEMORY_PORT (8021), HEIMDALL_MEMORY_HOST (127.0.0.1),

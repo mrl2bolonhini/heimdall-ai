@@ -13,7 +13,7 @@ Rotas:
     GET  /notas/nota?id=                texto simples de uma nota
     GET  /notas/privadas                pastas privadas e os ids das notas protegidas (usado pelo limpar_privadas.py)
     POST /avisos/gravar                 {"servico": "saude"|"financas", "titulo": "...", "markdown": "...", "bark": true (opcional)}
-    POST /calendario/desfazer           {"titulo": "...", "data": "AAAA-MM-DD"}  (apaga o evento criado; o Heimdall Notes usa no botão Desfazer)
+    POST /calendario/desfazer           {"titulo": "...", "data": "AAAA-MM-DD"}  (apaga o evento criado; o Studio Notes usa no botão Desfazer)
     POST /lembretes/desfazer            {"titulo": "..."}
     POST /notas/gravar                  {"pasta": "Digest", "titulo": "...", "markdown": "...", "audio": "texto a narrar (opcional)"}
                                         cria ou atualiza uma nota e grava uma cópia .md na pasta do cofre
@@ -26,7 +26,7 @@ Rotas:
     POST /saude/documento               corpo = o arquivo (PDF, JPG, PNG ou HEIC) de um exame, receita ou encaminhamento; cabeçalho X-Heimdall-Nome com o nome.
                                         Aceita o X-Heimdall-Token ou o código de envio do atalho (X-Heimdall-Upload = HEIMDALL_EXAMES_TOKEN). O arquivo vai para a
                                         pasta de entrada, é lido no Mac e fica pendente até você confirmar (heimdall_exames.py)
-    POST /saude/relatorio-semanal       {}  monta o relatório da semana, grava na aba Avisos do Heimdall Health e avisa pelo Bark (texto genérico)
+    POST /saude/relatorio-semanal       {}  monta o relatório da semana, grava na aba Avisos do Studio Health e avisa pelo Bark (texto genérico)
     POST /triagem/criar                 {"id": "origem estável", "titulo": "...", "resumo": "...", "nivel": "critico|alto|medio", "fonte": "justica"}
                                         cria um lembrete na lista "Heimdall: Triagem" (não duplica) e o registra no banco
     POST /triagem/ciclo                 {}  lê os lembretes, registra o que você concluiu, reclassificou ou adiou e avisa pelo Bark
@@ -1185,7 +1185,7 @@ def criar_lembrete(dado: dict) -> dict:
 
 
 def desfazer_evento(dado: dict) -> dict:
-    """Apaga o evento do calendário Heimdall com este título e data (usado pelo botão Desfazer do Heimdall Notes)."""
+    """Apaga o evento do calendário Heimdall com este título e data (usado pelo botão Desfazer do Studio Notes)."""
     titulo = _texto_curto(dado.get("titulo"), 200)
     if not titulo:
         raise ValueError("título vazio")
@@ -1375,7 +1375,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, r)
             if u.path == "/saude/relatorio-semanal":
                 rel = saude.relatorio_semanal()
-                novo = avisos.do_servico("saude").gravar(rel["titulo"], rel["markdown"])   # o relatório fica na aba Avisos do Heimdall Health, não no Notas
+                novo = avisos.do_servico("saude").gravar(rel["titulo"], rel["markdown"])   # o relatório fica na aba Avisos do Studio Health, não no Notas
                 r = {"ok": True, "titulo": rel["titulo"], "aviso": novo, "bark": triagem.enviar_bark(avisos.texto_bark("saude"))}
                 if not r["bark"]:
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} relatório semanal gravado, mas o Bark não confirmou (HEIMDALL_BARK_KEY?)\n")

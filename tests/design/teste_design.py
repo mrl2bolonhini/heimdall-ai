@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do Heimdall Design: nos sites do Heimdall, link lê e botão age.
+"""Teste do Studio Design: nos sites do Heimdall, link lê e botão age.
 
 Procura no código dos painéis links (<a>) cujo texto é uma ação (Baixar, Atualizar, Continuar, Alterar, Classificar, Importar,
 Salvar, Apagar, Ver ..., Próxima, Anterior, Página ...) e falha se achar. Texto em prosa (inline) em minúsculas não conta.
@@ -61,7 +61,7 @@ confere("design.botao_post gera formulário POST com csrf oculto, botão e nome 
 import heimdall_paginacao as pag  # noqa: E402
 
 confere("paginação é toda de botões", "<a " not in pag.html_paginacao("/x", 2, 5, {}, "") and "<button" in pag.html_paginacao("/x", 2, 5, {}, ""))
-confere("o pacote de CSS do Heimdall Design chega aos painéis (via heimdall_lab)", "form.acao" in __import__("heimdall_lab").CSS)
+confere("o pacote de CSS do Studio Design chega aos painéis (via heimdall_lab)", "form.acao" in __import__("heimdall_lab").CSS)
 
 # ---- cores, tipografia e foco: fonte única em heimdall_design.py
 for tema, cores in (("claro", design.CORES_CLARO), ("escuro", design.CORES_ESCURO)):
@@ -78,10 +78,10 @@ for nome in arqs:
 for nome in PAINEIS:
     src = (AQUI / nome).read_text(encoding="utf-8")
     soltas = [m for m in re.findall(r"(?<![\w&])#[0-9a-fA-F]{6}\b", src) if True]
-    confere(f"{nome}: sem cor solta fora do Heimdall Design (use var(--...))", not soltas or nome == "heimdall_lab.py", soltas[:5])  # o Lab guarda o desenho da marca
+    confere(f"{nome}: sem cor solta fora do Studio Design (use var(--...))", not soltas or nome == "heimdall_lab.py", soltas[:5])  # o Lab guarda o desenho da marca
     confere(f"{nome}: páginas em pt-BR e com viewport", "pt-BR" in src and "viewport" in src, "")
 claude_md = (AQUI / "CLAUDE.md")
-confere("CLAUDE.md manda seguir o Heimdall Design em toda atualização", claude_md.is_file() and "Heimdall Design" in claude_md.read_text(encoding="utf-8"))
+confere("CLAUDE.md manda seguir o Studio Design em toda atualização", claude_md.is_file() and "Studio Design" in claude_md.read_text(encoding="utf-8"))
 
 print()
 print("FALHAS: " + str(falhas))

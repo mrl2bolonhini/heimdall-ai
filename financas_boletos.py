@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Leitor de boletos do Heimdall Finance: linha digitável (47 dígitos de boleto bancário ou 48 de conta de consumo/tributo) -> valor, vencimento e banco.
+"""Leitor de boletos do Studio Finance: linha digitável (47 dígitos de boleto bancário ou 48 de conta de consumo/tributo) -> valor, vencimento e banco.
 
 O Heimdall nunca paga nada: ele só lê o código, confere os dígitos verificadores e guarda o boleto como conta a pagar no banco local.
 Nada aqui usa internet; o banco SQLite fica só no Mac.

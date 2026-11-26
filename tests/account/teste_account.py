@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do Heimdall Account: tour por papel, /quem.json com CORS só para os sites do Heimdall, 403/401 sem Access, porta local e cabeçalhos de segurança."""
+"""Teste do Studio Account: tour por papel, /quem.json com CORS só para os sites do Heimdall, 403/401 sem Access, porta local e cabeçalhos de segurança."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
@@ -60,7 +60,7 @@ s, hd, b = pedir("/quem.json", origem="https://heimdall-ai.tech")
 confere("quem.json sem Access: 401 com logado=false e CORS para o site", s == 401 and json.loads(b) == {"logado": False} and hd.get("access-control-allow-origin") == "https://heimdall-ai.tech", f"{s} {hd}")
 
 s, hd, b = pedir("/", jwt="tokdono")
-confere("dono: página do tour com todos os serviços, nomes reais", s == 200 and all(x in b for x in ("Heimdall Lab", "Heimdall Notes", "Heimdall Health", "Heimdall Games", "Heimdall Finance", "Heimdall Controls", "Open WebUI", "n8n", "Uptime Kuma")), b[:300])
+confere("dono: página do tour com todos os serviços, nomes reais", s == 200 and all(x in b for x in ("Studio Lab", "Studio Notes", "Studio Health", "Studio Games", "Studio Finance", "Studio Controls", "Open WebUI", "n8n", "Uptime Kuma")), b[:300])
 confere("dono: Finance e Saúde explicam o multiusuário e o aviso de serviço do dono", "contas bancárias" in b and "serviços de saúde" in b and "Este serviço é do dono" in b)
 confere("página: lang pt-BR, um só h1, pular para o conteúdo, voltar ao topo e sem script", 'lang="pt-BR"' in b and b.count("<h1>") == 1 and 'class="pular"' in b and 'href="#topo"' in b and 'id="topo"' in b and "<script" not in b)
 confere("página: menu Conta com nome e e-mail", "Conta: Murillo" in b and "Murillo (dono@x.com)" in b)
@@ -68,15 +68,15 @@ confere("cabeçalhos: CSP com nonce de estilo, sem cache, nosniff", "style-src '
 nonce = re.search(r"nonce-([\w-]+)'", hd["content-security-policy"]).group(1)
 confere("o nonce do CSP é o da tag de estilo", f'<style nonce="{nonce}">' in b)
 s, hd, b = pedir("/", jwt="tokana")
-confere("convidado: só os serviços dele; nada de Controls, Finance, n8n, Kuma, Chat", all(x in b for x in ("Heimdall Games", "Heimdall News")) and not any(x in b for x in ("Heimdall Controls", "Heimdall Finance", "n8n", "Uptime Kuma", "Open WebUI", "Heimdall Health")), b[:200])
+confere("convidado: só os serviços dele; nada de Controls, Finance, n8n, Kuma, Chat", all(x in b for x in ("Studio Games", "Studio News")) and not any(x in b for x in ("Studio Controls", "Studio Finance", "n8n", "Uptime Kuma", "Open WebUI", "Studio Health")), b[:200])
 s, hd, b = pedir("/", jwt="tokxss")
 confere("nome malicioso vindo da Microsoft é escapado", "<img src=x" not in b and "&lt;img" in b)
 
 s, hd, b = pedir("/quem.json", jwt="tokana", origem="https://heimdall-ai.tech")
 d = json.loads(b)
-confere("quem.json logado: nome, e-mail e serviços, com CORS e cookies", s == 200 and d["logado"] and d["nome"] == "Ana Souza" and d["email"] == "ana@x.com" and [x["nome"] for x in d["servicos"]][:1] == ["Heimdall Account"]
+confere("quem.json logado: nome, e-mail e serviços, com CORS e cookies", s == 200 and d["logado"] and d["nome"] == "Ana Souza" and d["email"] == "ana@x.com" and [x["nome"] for x in d["servicos"]][:1] == ["Studio Account"]
         and hd["access-control-allow-origin"] == "https://heimdall-ai.tech" and hd["access-control-allow-credentials"] == "true" and "origin" in hd["vary"].lower(), f"{s} {hd} {b}")
-confere("quem.json: convidado não recebe serviços de dono", not any(x["nome"] in ("Heimdall Controls", "Heimdall Finance", "Heimdall Flows") for x in d["servicos"]))
+confere("quem.json: convidado não recebe serviços de dono", not any(x["nome"] in ("Studio Controls", "Studio Finance", "Studio Flows") for x in d["servicos"]))
 s, hd, b = pedir("/quem.json", jwt="tokana", origem="https://mal.exemplo")
 confere("quem.json: site de fora não ganha CORS", s == 200 and "access-control-allow-origin" not in hd, str(hd))
 s, hd, b = pedir("/quem.json", jwt="tokana")
@@ -85,7 +85,7 @@ s, hd, b = pedir("/quem.json", metodo="OPTIONS", origem="https://heimdall-ai.tec
 confere("OPTIONS: 204 com CORS só para o site", s == 204 and hd.get("access-control-allow-origin") == "https://heimdall-ai.tech")
 
 s, hd, b = pedir("/", host="localhost")
-confere("porta local: o dono do Mac vê o tour", s == 200 and "Olá, Dono" in b and "Heimdall Controls" in b)
+confere("porta local: o dono do Mac vê o tour", s == 200 and "Olá, Dono" in b and "Studio Controls" in b)
 s, hd, b = pedir("/quem.json", host="127.0.0.1")
 confere("porta local: quem.json mostra o Dono", s == 200 and json.loads(b)["nome"] == "Dono")
 s, hd, b = pedir("/nada", jwt="tokdono")

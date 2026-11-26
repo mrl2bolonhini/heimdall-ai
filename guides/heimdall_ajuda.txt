@@ -101,7 +101,7 @@ Exemplos:
   Em qualquer um, --dry-run só mostra o que faria.
   heimdall chat --check
 
-@ notes | Heimdall Notes, o site das notas de estudo
+@ notes | Studio Notes, o site das notas de estudo
 Sem opção abre o site de notas e áudios (porta 8011). As opções são manutenção do Second Brain e das pastas do app Notas.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
@@ -115,7 +115,7 @@ Exemplos:
   heimdall notes --move-old
   heimdall notes --move-old --run
 
-@ learn | Heimdall Learn, plataforma de estudos (fase 1)
+@ learn | Studio Learn, plataforma de estudos (fase 1)
 Sem opção, abre o site de estudos (porta 8019), com um Resumo em texto (quantos temas, e por tema os documentos de consulta, estudos e lições) e a lista de temas na tela inicial (botões Novo estudo e Ajustes). Novo estudo é um formulário só: nome do tema ou pasta mãe, arquivos, categoria e tipo (lista com a explicação de cada um), Criar. Ao escolher um tema, as abas dele aparecem: tema sequencial tem Lições, Exercícios, Cards e Progresso; tema aleatório tem Estudos, Cards e Progresso (um tema que mudou de categoria mantém a aba do que já tem, para consulta). Trocar de tema volta à lista. Em cada aba há o campo Perguntar (modelo local, só com o seu progresso, os seus estudos e os trechos estudados do tema; na lista de temas, de todos). O botão Ajustes abre uma tela sem abas (a página Tipos de estudo e suas regras fica ali; pausar agenda e avisos, estudos por dia, agenda, importar documentos, mudar categoria, arquivar sem apagar nada). Material: pastas de material com categoria (aleatório ou sequencial) e tipo com regras próprias (idiomas, programação, exatas, arquitetura e dados, filosofia, humanas, direito, medicina, esoterismo e outros), importação de documentos, estudo por sorteio de trecho com pergunta, correção, áudio e matérias sugeridas, lições sequenciais com exercícios e correção, voz do aluno (gravar, transcrever, editar, enviar), cards e lições agendados com aviso no Mac e no Bark, e banco próprio (db/learn.db). Variáveis: HEIMDALL_LEARN_AGENDA=0 desliga a agenda (heimdall env --set HEIMDALL_LEARN_AGENDA 0 e reinicie), HEIMDALL_LEARN_NOTIFICAR=0 tira o aviso, HEIMDALL_LEARN_WHISPER_MODELO e HEIMDALL_LEARN_WHISPER_TAMANHO configuram a transcrição, HEIMDALL_LEARN_GUARDAR_VOZ=1 guarda o áudio do aluno. Cada convidado tem os seus dados separados (db/people/<id>/); HEIMDALL_PESSOAS=0 desliga a separação e todos usam os dados do dono. Desligado por padrão: ligue com heimdall env --set HEIMDALL_LEARN 1 e reinicie.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
@@ -129,7 +129,7 @@ Exemplos:
   heimdall learn --migrate
   heimdall learn --migrate --apply
 
-@ trading | Heimdall Trading, mesa de operações em simulação
+@ trading | Studio Trading, mesa de operações em simulação
 Sem opção, abre a mesa de operações em simulação (porta 8020): cotação, ordens a mercado e limitadas, carteira, histórico e sinais descritivos do movimento recente. Nenhuma ordem é enviada a corretora; os limites por ordem e de perda por dia ficam em Ajustes. Liga com HEIMDALL_TRADING=1 no .env.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
@@ -138,7 +138,7 @@ Exemplos:
   heimdall trading
   heimdall trading --local
 
-@ memory | Heimdall Memory, documentos pesquisáveis
+@ memory | Studio Memory, documentos pesquisáveis
 Sem opção, abre o acervo de documentos pesquisáveis (porta 8021): envio de PDF, foto, Word e texto, leitura de texto (OCR em imagens), etiquetas sugeridas com revisão e busca em todo o conteúdo. Liga com HEIMDALL_MEMORY=1 no .env. Cada pessoa pode conectar o próprio Dropbox ou OneDrive (somente leitura) na subaba Nuvem; o administrador registra o aplicativo no provedor, cadastra o endereço de retorno https://memory.heimdall-ai.tech/nuvem/retorno e grava HEIMDALL_NUVEM_DROPBOX_ID, HEIMDALL_NUVEM_DROPBOX_SEGREDO, HEIMDALL_NUVEM_ONEDRIVE_ID e HEIMDALL_NUVEM_ONEDRIVE_SEGREDO no .env (heimdall env --set). Em Adicionar > Apps, cada pessoa conecta a conta Microsoft (OneNote, To Do, Planner em conta de trabalho ou escola, Calendário e Contatos), o Google (Agenda, Tarefas e Contatos), o iCloud (Calendário e Contatos, com senha de aplicativo, sem configuração do administrador), o Notion, o Todoist e o Trello, e o Memory lê tudo sozinho, para qualquer sistema (administrador: HEIMDALL_NUVEM_GOOGLE_ID e _SEGREDO; HEIMDALL_NUVEM_NOTION_ID e _SEGREDO; HEIMDALL_NUVEM_TODOIST_ID e _SEGREDO; HEIMDALL_NUVEM_TRELLO_ID com a chave de API); em Adicionar > Nuvem, Dropbox e OneDrive, com subpastas e, se a pessoa permitir, mover o importado para a pasta Importados pelo Heimdall.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
@@ -149,7 +149,7 @@ Exemplos:
   heimdall memory --local
   heimdall memory --paperless
 
-@ news | Heimdall News, notícias com resumo de IA
+@ news | Studio News, notícias com resumo de IA
 Sem opção, abre o site de notícias das últimas 24 horas (porta 8012). Com opção, cuida dos feeds RSS, das fontes e da atualização.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
@@ -166,7 +166,7 @@ Exemplos:
   heimdall news --sources Curiosidades
   heimdall news --now
 
-@ lab | Heimdall Lab, o painel da AWS local
+@ lab | Studio Lab, o painel da AWS local
 Abre o painel do emulador de AWS (porta 8010). O emulador (LocalStack ou Moto) fica desligado ao subir o Heimdall, para poupar memória: ligue-o com --start quando for usar e desligue com --stop (HEIMDALL_AWS_EMULATOR_INICIO=auto no .env volta a subi-lo sempre).
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
@@ -237,7 +237,7 @@ Exemplos:
   heimdall health --labs result vitamina d
   heimdall health --labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia
 
-@ account | Heimdall Account, a porta de entrada do ecossistema: tour dos serviços de cada pessoa
+@ account | Studio Account, a porta de entrada do ecossistema: tour dos serviços de cada pessoa
 Abre o tour dos serviços (porta 8018; de fora, account.heimdall-ai.tech, pelo Cloudflare Access). Cada pessoa vê só os serviços a que tem acesso, com link, o que cada um faz e como configurar; o texto fica em heimdall_conta_info.py. O mesmo endereço responde /quem.json, que o site heimdall-ai.tech usa para mostrar "Entrar" ou o nome e os serviços de quem já entrou. O menu Conta, em todos os serviços, lista os mesmos links. A página Integrações (/integracoes) liga a Saúde do iPhone: o botão Ativar gera o token da pessoa e mostra o endereço e o passo a passo para o app Health Auto Export (precisa da caixa de correio ligada; por enquanto só o dono ativa). Notas, Lembretes e Calendário por conta Apple ou Google estão em preparação. Com --local abre o endereço deste Mac.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost) em vez do endereço público
@@ -246,7 +246,7 @@ Exemplos:
   heimdall account
   heimdall account -L
 
-@ controls | Heimdall Controls, central de controle: terminal, serviços ligados e desligados, manutenção
+@ controls | Studio Controls, central de controle: terminal, serviços ligados e desligados, manutenção
 Abre o painel de administração (porta 8017; de fora, controls.heimdall-ai.tech). O Terminal é um shell completo que roda no Mac com as suas permissões: a pasta e as variáveis continuam de um comando para o outro, o campo mostra só o último comando, com a saída logo abaixo (os anteriores ficam em Histórico), Tab completa comandos, arquivos e pastas (use Ctrl+I; o Tab move o foco), e o que você digita enquanto um programa pergunta vai direto para ele. Atalhos de teclado: Ctrl+C interrompe, Ctrl+L limpa, Option+Shift+C copia a última saída, Option+Shift+1 a 9 copia as últimas N, Option+Shift+U leva o cursor ao início da última saída, Option+Shift+R reinicia o shell, Option+Shift+H mostra a lista. Ao terminar um comando, o leitor de tela fala a situação e a saída inteira (Control para a fala). A aba Serviços mostra o que está no ar, com uma chave por serviço, e a subaba Manutenção tem botões para atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra (Cloudflare Access com o Authenticator, ou senha e código de 6 dígitos) e cada comando fica anotado em logs/controls_audit.log, sem a saída. Programas de tela cheia, como vim e top, não funcionam.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
@@ -258,7 +258,7 @@ Exemplos:
   heimdall controls --open settings
   heimdall controls -L
 
-@ games | Heimdall Games, jogos leves para leitor de tela
+@ games | Studio Games, jogos leves para leitor de tela
 Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.heimdall-ai.tech). Os jogos ficam em categorias, que são as abas do site (cinco, com nome de uma palavra; com jogos extras de terceiros há um sexto item, Extras, e o menu Mais, na quinta posição, guarda Lógica e Extras; as rotas antigas redirecionam para as atuais), em ordem alfabética, e dentro delas também em ordem alfabética: Ação (arqueiro de áudio, labirinto e Vilarejo Sitiado, o jogo de tiro e exploração com visual de arcade; no Vilarejo, L diz onde você está, há controle de volume e do ritmo da narração, e os efeitos sonoros são sintetizados no próprio jogo), Aventuras (cinco histórias de texto e a Travessia das Três Provas), Cassino (poker, bacará, blackjack, caça-níqueis, poker caribenho e roleta, só com créditos virtuais), Estratégia (batalha naval, campo minado, gramado, jogo da velha, sonar e xadrez) e Lógica (2048, cinco letras, forca, número secreto, paciência, senha e sudoku). Os jogos de terceiros só entram se tiverem versão em português ou permitirem tradução.
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
@@ -272,7 +272,7 @@ Exemplos:
   heimdall games --play xadrez
   heimdall games -e --status
 
-@ finance | Heimdall Finance, suas finanças em páginas de texto
+@ finance | Studio Finance, suas finanças em páginas de texto
 Abre o painel financeiro no navegador (porta 8016; de fora, finance.heimdall-ai.tech). Você importa extratos do banco e faturas do cartão em OFX, CSV ou PDF; o painel identifica o banco (Nubank, Itaú, Mercado Pago) e se é conta ou cartão, classifica os gastos por categoria com regras que você ajusta (ao corrigir uma categoria, a regra nasce sozinha), mostra o resumo do mês com variação sobre o mês anterior, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara. Abas que os dados criam: com o Pluggy o Heimdall lê também saldos, limites e faturas de cartão, investimentos (e suas movimentações) e empréstimos e financiamentos, guardados com uma foto por dia (a identidade fica de fora). Aparecem sozinhas as abas Contas (extratos), Cartões (faturas), Investimentos e uma aba para cada tipo de crédito que existir nos dados: Financiamento de veículo, Financiamento imobiliário, Consignado, Empréstimo pessoal e Outros (mais Todas as dívidas quando há mais de um tipo). Dívidas de planilha entram nas mesmas abas. Como as abas variam, os atalhos Option+Shift+número mudam de lugar quando uma aba nova aparece. Planilhas: as abas Planilhas e Visões aceitam xlsx e csv. O Heimdall lê o cabeçalho, descobre o tipo (gastos, investimentos, empréstimos ou outro assunto) e o que cada coluna é, e guarda o jeito de ler: a próxima planilha com as mesmas colunas, enviada pelo site ou solta na pasta sheets (heimdall finance --folder mostra o caminho), entra sozinha no mesmo conjunto sem duplicar. Quando não tem certeza, guarda o arquivo e pergunta em Planilhas. Gastos também entram nas transações. Em cada conjunto você cria visões: escolhe as colunas, a ordem delas (botões Mover para cima e para baixo), ordenação, filtro e agrupamento com soma; ficam gravadas e mostram também as linhas que chegarem depois. Para decidir as colunas, o cabeçalho e as 5 primeiras linhas vão ao modelo de linguagem (o grande da nuvem se HEIMDALL_NUVEM=1; HEIMDALL_FINANCE_PLANILHAS_NUVEM=0 mantém no modelo local). Tudo em tabelas para leitor de tela. Os dados ficam só no Mac, na pasta finance (fora do git), e nunca vão para a Cloudflare nem para modelo de fora. Usa o mesmo login do Lab.
 O Finance tem abas com subabas: Extratos (Transações, Contas, Pagamentos futuros e Boletos), Cartões (Fatura aberta e Faturas fechadas), Patrimônio (Investimentos e Dívidas, com uma subaba por tipo de crédito; só aparece com dados), Tendências (Resumo, Evolução, Orçamentos, Contas recorrentes, Análises e Avisos) e Visões (criar e ver visões personalizadas). Ajustes é um botão no topo, à direita, depois do menu Conta, e abre as subabas Importar extrato, Importar planilha, Regras e Avisos (liga ou desliga a notificação no iPhone). Ao importar uma planilha, marque a opção para criar uma visão a partir dela. Tab vai da aba à subaba e ao conteúdo; as setas trocam de subaba.
 PDF: o texto é lido e o total do documento (por exemplo "Total da fatura") é conferido com a soma dos lançamentos. Só o que confere é importado sozinho; o resto vai para review. A pasta de entrada (finance/inbox) é vigiada a cada minuto: solte lá os arquivos; o que importar vai para importados e o que deixar dúvida vai para revisar, com o motivo. Arquivo duplicado não é importado e é apagado; o motivo some quando o arquivo é revisado.
@@ -362,7 +362,7 @@ Exemplos:
   heimdall triage
   heimdall triage --complete-tests
 
-@ notion | Confere a ligação do Heimdall Notes com o Notion
+@ notion | Confere a ligação do Studio Notes com o Notion
 Mostra, para ideias, contatos e endereços, se o token e o banco de dados do Notion estão no .env e se a integração enxerga o banco. O Notion só recebe notas comuns; saúde e finanças nunca vão para lá.
 Como ligar, sem colar segredo em conversa: crie uma integração interna em notion.so/profile/integrations, compartilhe com ela os três bancos de dados (ideias, contatos, endereços), copie o token com Command+C e rode: heimdall env --set HEIMDALL_NOTION_TOKEN. Depois copie o endereço de cada banco e rode: heimdall env --set HEIMDALL_NOTION_DB_IDEIAS (e _CONTATOS, _ENDERECOS), uma vez para cada. Por fim rode heimdall notion e reinicie o agente com heimdall update --restart.
 Opções:
@@ -409,7 +409,7 @@ Exemplos:
   heimdall ask --local "resuma em duas frases o que é o Heimdall"
 
 @ usage | Consumo e custo da Cloudflare
-Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Nuvem do Heimdall Controls, subaba Consumo de IA. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
+Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Nuvem do Studio Controls, subaba Consumo de IA. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
 Opções:
   -d, --days N         período em dias, de 1 a 31 (o padrão é 30)
   -h, --help           mostra esta ajuda
@@ -418,7 +418,7 @@ Exemplos:
   heimdall usage --days 7
 
 @ support | Mensagens enviadas ao suporte pelo formulário de Ajuda e suporte
-Lista as últimas mensagens que os usuários enviaram pelo formulário da página Ajuda e suporte (Heimdall Account), com protocolo, estado do envio e início do texto. O estado enviada indica que o e-mail seguiu para o suporte pelo Cloudflare Email Sending; gravada_sem_envio, que a mensagem ficou só registrada (envio desligado ou falha). O envio por e-mail liga com HEIMDALL_SUPORTE_EMAIL=1, HEIMDALL_SUPORTE_DE e, se quiser outro destino, HEIMDALL_SUPORTE_PARA; as mensagens ficam em db/suporte/mensagens.jsonl.
+Lista as últimas mensagens que os usuários enviaram pelo formulário da página Ajuda e suporte (Studio Account), com protocolo, estado do envio e início do texto. O estado enviada indica que o e-mail seguiu para o suporte pelo Cloudflare Email Sending; gravada_sem_envio, que a mensagem ficou só registrada (envio desligado ou falha). O envio por e-mail liga com HEIMDALL_SUPORTE_EMAIL=1, HEIMDALL_SUPORTE_DE e, se quiser outro destino, HEIMDALL_SUPORTE_PARA; as mensagens ficam em db/suporte/mensagens.jsonl.
 Opções:
   -l, --last           mostra as 10 últimas mensagens (com o motivo, quando o envio falhou)
   -r, --reply          responde de suporte@ a quem escreveu: heimdall support --reply PROTOCOLO "texto" (para e-mail sem protocolo: --reply - --to endereço "texto")
@@ -435,7 +435,7 @@ Exemplos:
   heimdall support --test
 
 @ notices | Traz as notas antigas de saúde e finanças para a aba Avisos
-Sem opção só mostra o que seria feito. Com --migrate importa para a aba Avisos do Heimdall Health e do Heimdall Finance as notas de saúde e finanças que o Heimdall já gravou no cofre e no app Notas, confere que tudo chegou e só então apaga as originais. O app Notas manda cada nota para "Apagadas recentemente", onde ela fica 30 dias. Só mexe nas pastas do Heimdall (Saúde dentro de Heimdall-ai e Heimdall Finanças). Pode rodar de novo sem duplicar. O macOS pode pedir permissão para o Terminal controlar o app Notas.
+Sem opção só mostra o que seria feito. Com --migrate importa para a aba Avisos do Studio Health e do Studio Finance as notas de saúde e finanças que o Heimdall já gravou no cofre e no app Notas, confere que tudo chegou e só então apaga as originais. O app Notas manda cada nota para "Apagadas recentemente", onde ela fica 30 dias. Só mexe nas pastas do Heimdall (Saúde dentro de Heimdall-ai e Heimdall Finanças). Pode rodar de novo sem duplicar. O macOS pode pedir permissão para o Terminal controlar o app Notas.
 Opções:
   -m, --migrate        importa, confere e apaga (sem esta opção, só mostra o que seria feito)
   -h, --help           mostra esta ajuda
@@ -665,5 +665,5 @@ Avisos no Mac
 
 Analista de saúde
   Depois que chegam dados de saúde (no máximo uma vez por dia), o Heimdall roda um analista: o modelo olha todas as métricas, cruza umas com as outras e com treinos, sintomas e exames, levanta hipóteses com grau de probabilidade, aponta perigos e recomendações e cita resumos de estudos do PubMed.
-  O resultado fica na aba Avisos do Heimdall Health. Só avisa no Mac e no iPhone quando há algo que merece atenção, e no domingo. A decisão de procurar um médico é sua.
+  O resultado fica na aba Avisos do Studio Health. Só avisa no Mac e no iPhone quando há algo que merece atenção, e no domingo. A decisão de procurar um médico é sua.
   A busca no PubMed leva só termos genéricos, nunca os seus valores. No .env: HEIMDALL_SAUDE_ANALISTA=0 desliga; HEIMDALL_SAUDE_LITERATURA=0 não consulta o PubMed; com HEIMDALL_NUVEM=1 o analista usa o gpt-oss-120b da nuvem (HEIMDALL_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local); HEIMDALL_SAUDE_ANALISTA_MODELO e HEIMDALL_SAUDE_ANALISTA_URL trocam o modelo local; HEIMDALL_SAUDE_CONDICOES diz as condições a acompanhar.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o site do Heimdall Learn: login exigido, host permitido, CSRF, criação de pasta, tipo, importação multipart, acessibilidade."""
+"""Testa o site do Studio Learn: login exigido, host permitido, CSRF, criação de pasta, tipo, importação multipart, acessibilidade."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

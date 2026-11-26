@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Memory, parte de dados: acervo de documentos pesquisáveis.
+"""Studio Memory, parte de dados: acervo de documentos pesquisáveis.
 
 Cada pessoa tem o seu acervo: banco db/library.db (do dono) ou db/people/<id>/library.db, e os arquivos na pasta memory/ (do dono) ou
 db/people/<id>/memory/. Os documentos chegam por envio no site ou pela pasta de entrada (memory/inbox). Para cada um o Memory:

@@ -479,7 +479,7 @@
   // ================= Tela e som (só no navegador) =================
   var H = raiz.Heimdall, jogo = document.getElementById("jogo"), e = novo("normal"), relogio = null, ctx = null, semAudio = false, rodando = false, flash = 0;
   var W = 480, VH = 240, HT = 300, N = 120;
-  // Paleta de arcade, só para o desenho do jogo (a página em volta segue o Heimdall Design).
+  // Paleta de arcade, só para o desenho do jogo (a página em volta segue o Studio Design).
   var P = { ceu: ["#05051a", "#0a0a33", "#14144d", "#20206b"], chao: ["#0b2a12", "#0f3a18"], parede: [200, 70, 40], arvore: [30, 150, 50], porta: [210, 150, 40], trancada: [220, 40, 80], neon: "#39ff14", ciano: "#00e5ff", rosa: "#ff2d95", amarelo: "#ffe600", branco: "#ffffff" };
 
   // ---- som: amostras sintetizadas (vilarejo_som.js) tocadas em estéreo, com volume e brilho que caem com a distância ----

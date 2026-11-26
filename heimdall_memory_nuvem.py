@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Memory: conexão de cada pessoa com o próprio armazenamento em nuvem (Dropbox e OneDrive), com importação automática.
+"""Studio Memory: conexão de cada pessoa com o próprio armazenamento em nuvem (Dropbox e OneDrive), com importação automática.
 
 Fluxo: a pessoa toca em Conectar, autoriza no site do provedor (OAuth 2.0, código de autorização com PKCE) e informa a pasta a vigiar. A cada
 HEIMDALL_NUVEM_INTERVALO segundos (padrão 900) o Memory lista a pasta, baixa só os arquivos novos ou alterados e os envia ao acervo da pessoa

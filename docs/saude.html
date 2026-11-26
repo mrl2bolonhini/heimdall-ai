@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saúde · Heimdall-ai</title>
-<meta name="description" content="Heimdall Health: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.">
+<meta name="description" content="Studio Health: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.">
 <meta name="theme-color" content="#080d1f">
 <link rel="canonical" href="https://heimdall-ai.tech/saude.html">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -13,7 +13,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Heimdall-ai">
 <meta property="og:title" content="Saúde · Heimdall-ai">
-<meta property="og:description" content="Heimdall Health: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.">
+<meta property="og:description" content="Studio Health: dados do iPhone e do Apple Watch no banco pessoal, análises no terminal, relatório semanal e painel web somente de leitura.">
 <meta property="og:url" content="https://heimdall-ai.tech/saude.html">
 <meta property="og:image" content="https://heimdall-ai.tech/og.png">
 <meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
@@ -31,8 +31,8 @@
 </div></div></header>
 <main id="conteudo" tabindex="-1"><div class="wrap">
 <div class="doc"><div>
-<h1>Heimdall Health</h1>
-<p>O Heimdall Health guarda os dados do app Saúde do iPhone e do Apple Watch no banco pessoal do Mac, analisa e mostra em um painel de texto e tabelas feito para leitor de tela. Não é diagnóstico: são números e comparações com a sua própria média.</p>
+<h1>Studio Health</h1>
+<p>O Studio Health guarda os dados do app Saúde do iPhone e do Apple Watch no banco pessoal do Mac, analisa e mostra em um painel de texto e tabelas feito para leitor de tela. Não é diagnóstico: são números e comparações com a sua própria média.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8013, depois de subir o sistema.</li>
 <li>De fora de casa: health.heimdall-ai.tech, pelo túnel Cloudflare.</li>
@@ -60,7 +60,7 @@
 <li><strong>Coração, Treinos e Diário:</strong> tabelas dos dados, dia a dia.</li>
 <li><strong>Dados:</strong> o estado dos dados, que marca o que está sem chegar há mais de 2 dias. É o primeiro lugar a olhar se algo parecer parado.</li></ul></section>
 <section aria-labelledby="semanal"><h2 id="semanal">Relatório da semana</h2>
-<p>Todo domingo, às 9h, o fluxo "Saúde semanal" do n8n pede o relatório ao agente. O texto vira aviso na aba Avisos do Heimdall Health, e o iPhone recebe um aviso no Bark só em palavras, sem números, porque o aviso passa pelo servidor do Bark. Para ver agora: <code>python3 heimdall_saude.py --semanal</code>, ou rode o fluxo à mão no n8n (Gerar agora).</p></section>
+<p>Todo domingo, às 9h, o fluxo "Saúde semanal" do n8n pede o relatório ao agente. O texto vira aviso na aba Avisos do Studio Health, e o iPhone recebe um aviso no Bark só em palavras, sem números, porque o aviso passa pelo servidor do Bark. Para ver agora: <code>python3 heimdall_saude.py --semanal</code>, ou rode o fluxo à mão no n8n (Gerar agora).</p></section>
 <section aria-labelledby="seguranca"><h2 id="seguranca">Privacidade e segurança</h2>
 <ul><li>Os dados ficam só no Mac, no banco pessoal, e entram na cópia de segurança criptografada.</li>
 <li>O painel escuta só em 127.0.0.1, exige senha e código de 6 dígitos, tem limite de tentativas, cookie HttpOnly e SameSite=Strict, só aceita os nomes de site permitidos e escapa todo texto.</li>

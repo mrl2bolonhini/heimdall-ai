@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o site do Heimdall Memory: login, CSRF, abas e Ajustes no Heimdall Design, envio multipart, busca, revisão, download, lixeira e Perguntar."""
+"""Testa o site do Studio Memory: login, CSRF, abas e Ajustes no Studio Design, envio multipart, busca, revisão, download, lixeira e Perguntar."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

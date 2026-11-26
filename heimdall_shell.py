@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shell persistente do Heimdall Controls, pensado para leitor de tela.
+"""Shell persistente do Studio Controls, pensado para leitor de tela.
 
 Um único shell de verdade (zsh ou bash, num pseudoterminal) fica aberto: a pasta atual, as variáveis e os apelidos continuam de um comando
 para o outro. Cada comando vira um "bloco" com o texto do comando, a saída limpa (sem cores nem códigos de tela), o estado e o código de saída.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Catálogo de tipos de estudo do Heimdall Learn: cada tipo traz a categoria que costuma combinar com ele, o que a IA faz, o que ela evita,
+"""Catálogo de tipos de estudo do Studio Learn: cada tipo traz a categoria que costuma combinar com ele, o que a IA faz, o que ela evita,
 os formatos de exercício e as possibilidades futuras. É a fonte única: a tela de tipos, a criação de pastas e os prompts leem daqui.
 
 Tipo cadastrado pelo usuário que não está aqui usa o perfil genérico: a IA estuda o material da pasta e, se faltar contexto, pergunta.

@@ -5,7 +5,7 @@ Fluxo:
   1. o código monta um dossiê com os números (cada medida contra o seu normal, tendência, correlações calculadas, treinos, sintomas, exames, condições);
   2. busca no PubMed resumos de estudos sobre os achados (a busca leva só termos genéricos, nunca os seus valores), com cache de 30 dias;
   3. o modelo (local por padrão) escreve a análise em JSON; o código confere o JSON, descarta citações que não existem e grava em português simples;
-  4. o resultado vai para a aba Avisos do Heimdall Health; só avisa no Mac e no iPhone quando há algo que merece atenção (ou no resumo de domingo).
+  4. o resultado vai para a aba Avisos do Studio Health; só avisa no Mac e no iPhone quando há algo que merece atenção (ou no resumo de domingo).
 Sem modelo, sai uma análise feita só pelo código (desvios, explicações, correlações), sem hipóteses.
 Não há freio de "não sou médico": o modelo pode levantar hipóteses com grau de probabilidade e dizer quando algo é urgente. A decisão de procurar um médico é sua.
 Uso:  python3 heimdall_analista_saude.py [--dias 30] [--sem-modelo] [--sem-literatura] [--gravar]
@@ -508,7 +508,7 @@ def resumo_curto(r: dict, d: dict) -> str:
         p.append("Hipótese principal: " + r["hipoteses"][0]["texto"] + f" (probabilidade {r['hipoteses'][0]['probabilidade'] or 'não informada'}).")
     if r["recomendacoes"]:
         p.append("O que fazer: " + " ".join(f"{i}. {x['acao'].rstrip('.')}." for i, x in enumerate(r["recomendacoes"][:3], 1)))
-    p.append("Análise completa na aba Avisos do Heimdall Health.")
+    p.append("Análise completa na aba Avisos do Studio Health.")
     return an._cortar(" ".join(p), 1600)
 
 
@@ -560,7 +560,7 @@ def analisar(hoje: str = None, usar_modelo: bool = True, usar_literatura: bool =
 
 
 def rodar(agora: datetime = None, forcar: bool = False, avisar_mac=None, **kw) -> dict:
-    """Roda a análise, grava na aba Avisos do Heimdall Health e avisa só se a gravidade pede (ou no domingo). Devolve {} se ainda não é hora."""
+    """Roda a análise, grava na aba Avisos do Studio Health e avisa só se a gravidade pede (ou no domingo). Devolve {} se ainda não é hora."""
     if _env("HEIMDALL_SAUDE_ANALISTA", "1") == "0" and not forcar:
         return {}
     agora = agora or datetime.now()
@@ -593,7 +593,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Análise de saúde por modelo: todas as métricas, correlações, hipóteses, perigos e recomendações")
     ap.add_argument("--sem-modelo", action="store_true", help="só a análise do código")
     ap.add_argument("--sem-literatura", action="store_true", help="não consulta o PubMed")
-    ap.add_argument("--gravar", action="store_true", help="também grava na aba Avisos do Heimdall Health e avisa se for o caso")
+    ap.add_argument("--gravar", action="store_true", help="também grava na aba Avisos do Studio Health e avisa se for o caso")
     a = ap.parse_args()
     hs._garantir_banco()
     kw = {"usar_modelo": not a.sem_modelo, "usar_literatura": not a.sem_literatura}

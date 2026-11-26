@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Análise de consultor do Heimdall Finance: semanal e mensal, sem dica de investimento.
+"""Análise de consultor do Studio Finance: semanal e mensal, sem dica de investimento.
 
 Todos os números são calculados aqui, em código. O texto fixo já é a análise completa; o modelo local, se responder, só reescreve esse
 texto em tom de conversa, e a resposta só vale se todos os valores e porcentagens dela já estiverem nos fatos (senão fica o texto fixo).

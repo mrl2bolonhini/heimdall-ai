@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Memória clínica do Heimdall Health: perfil de saúde e sugestões de acompanhamento.
+"""Memória clínica do Studio Health: perfil de saúde e sugestões de acompanhamento.
 
 O perfil guarda o que o usuário informa (condições, cirurgias, alergias, convênio, médicos). As sugestões nascem dos documentos já confirmados
 (receitas, encaminhamentos, atestados, laudos, pedidos de exame): retorno ao médico perto do fim do suprimento de um remédio, pergunta sobre

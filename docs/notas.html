@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Notas · Heimdall-ai</title>
-<meta name="description" content="Heimdall Notes: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Lab.">
+<meta name="description" content="Studio Notes: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Lab.">
 <meta name="theme-color" content="#080d1f">
 <link rel="canonical" href="https://heimdall-ai.tech/notas.html">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -13,7 +13,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Heimdall-ai">
 <meta property="og:title" content="Notas · Heimdall-ai">
-<meta property="og:description" content="Heimdall Notes: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Lab.">
+<meta property="og:description" content="Studio Notes: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Lab.">
 <meta property="og:url" content="https://heimdall-ai.tech/notas.html">
 <meta property="og:image" content="https://heimdall-ai.tech/og.png">
 <meta property="og:image:alt" content="Heimdall-ai: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
@@ -31,8 +31,8 @@
 </div></div></header>
 <main id="conteudo" tabindex="-1"><div class="wrap">
 <div class="doc"><div>
-<h1>Heimdall Notes</h1>
-<p>O Heimdall Notes é um site simples e agradável para ler as notas de estudo e ouvir os áudios gerados pelo Heimdall-ai. Ela lê direto do cofre (notas em Markdown e áudios .m4a) e da pasta knowledge/, sem depender de nenhum aplicativo de notas. Foi feita para leitor de tela: títulos, listas e botões com nomes claros, link para pular ao conteúdo e áudio com controles nativos.</p>
+<h1>Studio Notes</h1>
+<p>O Studio Notes é um site simples e agradável para ler as notas de estudo e ouvir os áudios gerados pelo Heimdall-ai. Ela lê direto do cofre (notas em Markdown e áudios .m4a) e da pasta knowledge/, sem depender de nenhum aplicativo de notas. Foi feita para leitor de tela: títulos, listas e botões com nomes claros, link para pular ao conteúdo e áudio com controles nativos.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8011, depois de subir o sistema.</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Lab.</li>
@@ -57,7 +57,7 @@
 <li>Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict.</li>
 <li>Só atende os nomes de site permitidos. Os caminhos são conferidos contra fuga de pasta, todo texto é escapado e arquivos que não são PDF ou áudio só baixam, nunca executam.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>O Heimdall Notes sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Lab).</li>
+<ul><li>O Studio Notes sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Lab).</li>
 <li>Conferir se está no ar: <code>curl -s http://localhost:8011/saude</code></li>
 <li>Reiniciar só ela: <code>pkill -f heimdall_notas.py</code> e subir o sistema como de costume.</li>
 <li>Testar sem rede: <code>python3 tests/notes/teste_notas.py</code></li>

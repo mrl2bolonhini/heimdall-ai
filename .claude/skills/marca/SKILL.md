@@ -10,7 +10,7 @@ Leia o CLAUDE.md, a seção Marca da página de Design e `guides/marca_studiolib
 ## O que avaliar
 1. **Nome**: memorização, grafia, pronúncia em português, conflito com marcas e termos de uso comum (consulte `guides/contexto_projeto.txt`), força do nome-mãe em relação ao complemento de cada aplicativo.
 2. **Símbolo e logotipo**: o desenho conta a história do nome? Funciona em uma cor, em tamanho pequeno (favicon, ícone de app) e sem depender da cor? Não copia nem lembra marca conhecida do mesmo campo.
-3. **Paleta**: diferencia a marca de concorrentes e de marcas do mesmo campo (saúde, finanças); mantém os contrastes do Heimdall Design (texto 4,5 para 1; bordas de campo 3 para 1) nos dois temas.
+3. **Paleta**: diferencia a marca de concorrentes e de marcas do mesmo campo (saúde, finanças); mantém os contrastes do Studio Design (texto 4,5 para 1; bordas de campo 3 para 1) nos dois temas.
 4. **Tom de voz**: profissional, claro, neutro (regra do CLAUDE.md), com a identidade do nome (livre, aberto, cuidadoso) sem slogan vazio.
 5. **Sistema de nomes**: StudioLibre + complemento; quando um aplicativo merece nome próprio (campo regulado, como saúde).
 6. **Migração**: ordem das mudanças para o usuário não ver duas mudanças ao mesmo tempo; o que precisa de redirecionamento.

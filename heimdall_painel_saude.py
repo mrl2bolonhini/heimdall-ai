@@ -9,7 +9,7 @@ de acompanhamento (aceitar, recusar, adiar, responder), o "lido" dos avisos e o 
 
 Segurança (os dados de saúde podem ficar acessíveis de fora, então tem as mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
-  2. Entrada com a senha e o código de 6 dígitos do Heimdall Lab (python3 heimdall_acesso.py --tudo).
+  2. Entrada com a senha e o código de 6 dígitos do Studio Lab (python3 heimdall_acesso.py --tudo).
   3. Limite de tentativas por endereço e global, sessão em cookie HttpOnly e SameSite=Strict.
   4. Só atende os nomes de site permitidos (HEIMDALL_SAUDE_PAINEL_HOSTS) e manda cabeçalhos de segurança.
   5. Sem senha e sem código configurados, o painel não sobe.
@@ -592,10 +592,10 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
     ajustes_html = ""
     if sess:
         grupo, sub = localizar(atual)
-        em_ajustes = bool(grupo) and grupo[0] == "ajustes"   # Ajustes é botão no topo, à direita, e não aba (padrão do Heimdall Design)
+        em_ajustes = bool(grupo) and grupo[0] == "ajustes"   # Ajustes é botão no topo, à direita, e não aba (padrão do Studio Design)
         a = "" if (em_ajustes or not grupo) else grupo[2][0][0]
         ajustes_html = design.botao("/perfil", "Ajustes", atual=em_ajustes)
-        nav = "" if em_ajustes else design.nav_abas(SECOES, a, "Seções do Heimdall Health")
+        nav = "" if em_ajustes else design.nav_abas(SECOES, a, "Seções do Studio Health")
         sair = (f'<form class="linha" method="post" action="/sair"><input type="hidden" name="csrf" value="{e(sess["csrf"])}"><button type="submit">Sair</button></form>')
         interno = conteudo + ("" if atual == "/ajuda" else _bloco_perguntar(sess, atual))   # a Ajuda não tem dados pessoais para perguntar
         if em_ajustes:   # tela sem abas de cima: botão para voltar e as subabas dos ajustes
@@ -606,8 +606,8 @@ def pagina(titulo: str, corpo: str, sess: dict = None, atual: str = "", recarreg
             conteudo = design.com_abas(SECOES, a, interno)
         scripts = design.script()
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Heimdall Health</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
-            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Heimdall Health", nav, sair_html=sair, ajustes_html=ajustes_html)}'
+            f'<meta name="robots" content="noindex,nofollow">{recarregar}<title>{e(titulo)} - Studio Health</title>{nuvem.ICONE}<style>{CSS}</style></head><body>'
+            f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio Health", nav, sair_html=sair, ajustes_html=ajustes_html)}'
             f'<main id="principal">{conteudo}</main>{design.rodape(AVISO_RODAPE if sess else "", servico="saude")}{scripts}</body></html>').encode("utf-8")
 
 
@@ -828,7 +828,7 @@ def main() -> None:
     banco.iniciar()
     srv = ThreadingHTTPServer((HOST, PORT), Painel)
     srv.daemon_threads = True
-    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Heimdall Health em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
+    sys.stderr.write(f"{time.strftime('%H:%M:%S')} Studio Health em http://{HOST}:{PORT} (sites permitidos: {', '.join(sorted(HOSTS_OK))})\n")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
