@@ -6,7 +6,7 @@ Lembrete e evento só nascem depois do aceite. A ordem das abas é fixa; a área
 Abas: Identidade, Cidadania, Patrimônio, Carreira, Rotina. Hoje alimentam as áreas: e-mail oficial (Rotina), Diário Oficial e Justiça (Cidadania) e
 monitor de privacidade (Identidade). Plano e ordem de entrega: guides/miner_plano.txt.
 
-Variáveis: STUDIO_MINER (1 liga; padrão 0, o start_studio.sh só sobe com 1), STUDIO_MINER_PORT (8022), STUDIO_MINER_HOST (127.0.0.1),
+Variáveis: STUDIO_MINER (padrão 1, ligado; 0 desliga: o start_studio.sh só sobe com 1), STUDIO_MINER_PORT (8022), STUDIO_MINER_HOST (127.0.0.1),
 STUDIO_MINER_HOSTS (miner.studiolibre.io,localhost,127.0.0.1).
 
     python3 studio_miner.py

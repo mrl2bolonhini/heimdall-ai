@@ -73,6 +73,8 @@ tk = hc.nova_sessao()[0]
 confere("sessão de outro serviço não entra", req("GET", "/rotina", cookie=hc.nova_sessao("memory")[0])[0] == 303)
 s, h, r = req("GET", "/rotina", tk)
 csrf = re.search(r'data-csrf="([^"]+)"', h).group(1)
+s0, h0, r0 = req("GET", "/", cookie=tk)
+confere("raiz leva a Identidade por padrão", s0 == 303 and r0.getheader("Location") == "/identidade", r0.getheader("Location"))
 confere("Rotina: design (h1 único, pular, abas, Ajustes, Perguntar, aviso no rodapé)", s == 200 and h.count("<h1") == 1 and "Pular para o conteúdo" in h and 'aria-label="Principal"' in h
         and ">Ajustes<" in h and 'id="perguntar-t"' in h and "não substitui um parecer jurídico" in h, h[:300])
 confere("cinco abas fixas na ordem", re.findall(r">(Identidade|Cidadania|Patrimônio|Carreira|Rotina)<", h)[:5] == ["Identidade", "Cidadania", "Patrimônio", "Carreira", "Rotina"], re.findall(r">(Identidade|Cidadania|Patrimônio|Carreira|Rotina)<", h))
@@ -113,8 +115,8 @@ confere("área inicial inválida não quebra", s in (303, 400) and req("GET", "/
 s, _, r = req("POST", "/perguntar", {"csrf": csrf, "pergunta": "O que há pendente?", "rota": "/rotina"}, tk)
 confere("Perguntar aceito com CSRF", s in (200, 202, 303), s)
 import studio_alertas as al
-os.environ["STUDIO_MINER"] = "1"
-confere("alerta aponta para a área do Miner com STUDIO_MINER=1", al._caminho_miner("justica") == "/cidadania" and al._caminho_miner("privacidade") == "/identidade" and al._caminho_miner("email") == "/rotina")
+os.environ.pop("STUDIO_MINER", None)
+confere("alerta aponta para a área do Miner por padrão", al._caminho_miner("justica") == "/cidadania" and al._caminho_miner("privacidade") == "/identidade" and al._caminho_miner("email") == "/rotina")
 os.environ["STUDIO_MINER"] = "0"
 confere("sem STUDIO_MINER: sem caminho", al._caminho_miner("email") is None)
 confere("nomes acessíveis trazem o título", "Ignorar: " in req("GET", "/cidadania", tk)[1] or "Nenhum" in req("GET", "/cidadania", tk)[1])

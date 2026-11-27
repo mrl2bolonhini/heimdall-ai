@@ -599,8 +599,8 @@ if [ "${STUDIO_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ 
 fi
 
 # --- Studio Miner (acompanhamento de fontes públicas por área da vida) ---
-# Desligado por padrão: ligue com STUDIO_MINER=1 no .env (studio env --set STUDIO_MINER 1). Mesmo login do Studio Lab.
-if [ "${STUDIO_MINER:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
+# Ligado por padrão: desligue com STUDIO_MINER=0 no .env (studio env --set STUDIO_MINER 0). Mesmo login do Studio Lab.
+if [ "${STUDIO_MINER:-1}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f studio_miner.py ]; then
         STUDIO_MINER_PORT="$MINER_PORT" "$VENV_PYTHON" studio_miner.py > "$(nova_log miner_debug)" 2>&1 &
         COUNTER=0

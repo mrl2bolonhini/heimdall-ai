@@ -25,7 +25,7 @@ AREAS = {
 FONTE_ROTULO = {"privacidade": "Privacidade", "justica": "Justiça", "diarios": "Diário Oficial", "email": "E-mail oficial"}
 FONTE_AREA = {f: a for a, (_, fontes) in AREAS.items() for f in fontes}
 NIVEL_ROTULO = {"critico": "crítico", "alto": "alto", "medio": "médio"}
-AREA_INICIAL_PADRAO = "rotina"
+AREA_INICIAL_PADRAO = "identidade"
 ENCERRADOS = ("concluida", "descartada")
 # fonte -> título do lembrete ou evento: só a ação, sem dados do conteúdo (regra do studio_agenda.py)
 ACAO_AGENDA = {"email": "Conferir comunicado oficial", "justica": "Conferir publicação oficial", "diarios": "Conferir publicação oficial"}

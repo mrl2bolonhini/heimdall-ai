@@ -6,7 +6,7 @@ Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recur
 - Novo produto, o Studio Miner, reúne em cinco áreas fixas da vida (Identidade, Cidadania, Patrimônio, Carreira e Rotina) o que as fontes públicas e o e-mail oficial registram, com os itens pendentes de cada área.
 - Nada vira lembrete ou evento sem o seu aceite: Aceitar cria o evento (quando há prazo) ou o lembrete; Adiar e Ignorar dispensam o item por ora ou de vez.
 - Avisos sobre boleto apenas identificam o termo; com o Studio Finance ativo, o botão Abrir no Studio Finance leva à conferência lá.
-- Em Ajustes, você escolhe a área que abre primeiro. O serviço vem desligado por padrão.
+- Identidade é a primeira aba e a área que abre por padrão; Rotina é a última. Em Ajustes, você escolhe a área que abre primeiro. O serviço vem ligado por padrão.
 
 ## 2026-11-27 - Serviços antigos removidos do vigia e do código
 - O vigia de disponibilidade deixa de conferir Cloud e Notas (serviços que não existem mais) e passa a conferir Lab. Apelidos e compatibilidades do antigo Cloud saíram do código, e os identificadores internos de agente e jogos levam o nome StudioLibre.

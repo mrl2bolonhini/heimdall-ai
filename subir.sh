@@ -95,7 +95,7 @@ montar_lista() {
         case "${STUDIO_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Studio Lab|http|http://127.0.0.1:${STUDIO_LAB_PORT:-8010}/saude") ;; esac
         [ "${STUDIO_LEARN:-0}" = "1" ] && LISTA+=("Studio Learn|http|http://127.0.0.1:${STUDIO_LEARN_PORT:-8019}/saude")
         [ "${STUDIO_TRADING:-0}" = "1" ] && LISTA+=("Studio Trading|http|http://127.0.0.1:${STUDIO_TRADING_PORT:-8020}/saude")
-        [ "${STUDIO_MINER:-0}" = "1" ] && LISTA+=("Studio Miner|http|http://127.0.0.1:${STUDIO_MINER_PORT:-8022}/saude")
+        [ "${STUDIO_MINER:-1}" = "1" ] && LISTA+=("Studio Miner|http|http://127.0.0.1:${STUDIO_MINER_PORT:-8022}/saude")
         [ "${STUDIO_HUB:-${STUDIO_HUB:-0}}" = "1" ] && LISTA+=("Studio Hub|http|http://127.0.0.1:${STUDIO_HUB_PORT:-${STUDIO_HUB_PORT:-8021}}/saude")
         LISTA+=("Studio News|http|http://127.0.0.1:${STUDIO_NEWS_PORT:-8012}/saude")
         LISTA+=("Studio Health|http|http://127.0.0.1:${STUDIO_SAUDE_PAINEL_PORT:-8013}/saude")

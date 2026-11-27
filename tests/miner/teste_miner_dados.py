@@ -74,7 +74,7 @@ confere("adiado some dos pendentes", d.pendentes("identidade") == [])
 d.ignorar("a5")
 confere("ignorado some dos pendentes", "a5" not in {i["id"] for i in d.pendentes("rotina")})
 confere("histórico mostra decididos", {"a1", "a2", "a5"} <= {i["id"] for i in d.historico(d.AREAS["rotina"][1])})
-confere("área inicial padrão é Rotina", d.area_inicial() == "rotina")
+confere("área inicial padrão é Identidade", d.area_inicial() == "identidade")
 d.definir_area_inicial("cidadania")
 confere("área inicial gravada", d.area_inicial() == "cidadania")
 try:

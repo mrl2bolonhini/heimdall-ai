@@ -20,12 +20,12 @@ import studio_links as links
 
 NIVEIS = {"critico": "timeSensitive", "alto": "active", "medio": "passive"}
 FONTE_PRODUTO = {"saude": "saude"}   # fonte do alerta -> chave do produto em studio_avisos.SERVICOS
-# Fonte do alerta -> tela do Studio Miner que a recebe (usada só com STUDIO_MINER=1)
+# Fonte do alerta -> tela do Studio Miner que a recebe (usada enquanto STUDIO_MINER não for 0)
 MINER_CAMINHO = {"email": "/rotina", "justica": "/cidadania", "diarios": "/cidadania", "privacidade": "/identidade"}
 
 
 def _caminho_miner(fonte):
-    if os.environ.get("STUDIO_MINER", "0") != "1":
+    if os.environ.get("STUDIO_MINER", "1") != "1":
         return None
     return MINER_CAMINHO.get(fonte)
 
