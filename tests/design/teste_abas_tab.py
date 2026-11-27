@@ -54,7 +54,7 @@ else:
         for _ in range(4):
             pg.keyboard.press("Tab")
             ordem.append(pg.evaluate("(document.activeElement === document.body ? 'FORA' : (document.activeElement.id || document.activeElement.textContent))"))
-        confere("sem links no Tab (como no Safari): painel, Voltar para o topo, o fim da página e só depois o menu Conta", ordem == ["painel-aba", "Voltar para o topo", "FORA", "conta"], ordem)
+        confere("sem links no Tab (como no Safari): painel, os links do conteúdo (têm tabindex), Voltar para o topo, o fim da página e só depois o menu Conta", ordem == ["painel-aba", "Item", "Voltar para o topo", "FORA"], ordem)
         nav.close()
 
 print("\nFALHAS:", falhas)

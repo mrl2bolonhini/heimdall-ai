@@ -80,6 +80,7 @@ for nome in PAINEIS:
     soltas = [m for m in re.findall(r"(?<![\w&])#[0-9a-fA-F]{6}\b", src) if True]
     confere(f"{nome}: sem cor solta fora do Studio Design (use var(--...))", not soltas or nome == "heimdall_lab.py", soltas[:5])  # o Lab guarda o desenho da marca
     confere(f"{nome}: páginas em pt-BR e com viewport", "pt-BR" in src and "viewport" in src, "")
+confere("todo link do conteúdo vira parada do Tab (Safari pula links comuns)", "main a[href]" in design.SCRIPT_ABAS and "tabindex', '0'" in design.SCRIPT_ABAS)
 claude_md = (AQUI / "CLAUDE.md")
 confere("CLAUDE.md manda seguir o Studio Design em toda atualização", claude_md.is_file() and "Studio Design" in claude_md.read_text(encoding="utf-8"))
 

@@ -1,23 +1,23 @@
-// Heimdall para o Mac: app de barra de menus. Roda em segundo plano, sem ícone no Dock, e chama o comando `heimdall` por baixo.
-// Menus nativos (VoiceOver lê tudo), resultados em janelas de aviso comuns, e os sites do Heimdall abrem em janelas próprias do app (WebKit, o motor do Safari; sem navegador e sem Electron). Não guarda segredo nenhum: quem tem as chaves é o .env.
+// StudioLibre para o Mac: app de barra de menus. Roda em segundo plano, sem ícone no Dock, e chama o comando `studio` por baixo.
+// Menus nativos (VoiceOver lê tudo), resultados em janelas de aviso comuns, e os sites do StudioLibre abrem em janelas próprias do app (WebKit, o motor do Safari; sem navegador e sem Electron). Não guarda segredo nenhum: quem tem as chaves é o .env.
 // Compilado no seu Mac por scripts/construir_app_mac.sh (studio app).
 import AppKit
 import Foundation
 import UserNotifications
 import WebKit
 
-let pastaHeimdall: String = ProcessInfo.processInfo.environment["HEIMDALL_DIR"] ?? (NSHomeDirectory() + "/heimdall-ai")
+let pastaHeimdall: String = ProcessInfo.processInfo.environment["HEIMDALL_DIR"] ?? (NSHomeDirectory() + "/StudioApps")
 
 func tirarCodigos(_ texto: String) -> String {
     return texto.replacingOccurrences(of: "\u{1B}\\[[0-9;?]*[A-Za-z]", with: "", options: .regularExpression)
 }
 
-/// Roda `heimdall <args>` num zsh, com o PATH dos programas do Homebrew, e devolve o texto e o código de saída.
+/// Roda `studio <args>` num zsh, com o PATH dos programas do Homebrew, e devolve o texto e o código de saída.
 func rodarHeimdall(_ args: [String]) -> (String, Int32) {
     let p = Process()
     p.executableURL = URL(fileURLWithPath: "/bin/zsh")
-    let roteiro = "export HEIMDALL_DIR=\"$1\"; shift; source \"$HEIMDALL_DIR/heimdall.zsh\" 2>/dev/null; heimdall \"$@\""
-    p.arguments = ["-c", roteiro, "heimdall", pastaHeimdall] + args
+    let roteiro = "export HEIMDALL_DIR=\"$1\"; shift; source \"$HEIMDALL_DIR/heimdall.zsh\" 2>/dev/null; studio \"$@\""
+    p.arguments = ["-c", roteiro, "studio", pastaHeimdall] + args
     var ambiente = ProcessInfo.processInfo.environment
     ambiente["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:" + (ambiente["PATH"] ?? "")
     ambiente["TERM"] = "dumb"
@@ -68,12 +68,12 @@ func portaAberta(_ porta: Int) -> Bool {
     return r == 0
 }
 
-/// Torna o Heimdall o app ativo (é o app ativo que manda na barra de menus do alto). Do macOS 14 em diante o método antigo foi substituído.
+/// Torna o StudioLibre o app ativo (é o app ativo que manda na barra de menus do alto). Do macOS 14 em diante o método antigo foi substituído.
 func ativarApp() {
     if #available(macOS 14.0, *) { NSApp.activate() } else { NSApp.activate(ignoringOtherApps: true) }
 }
 
-/// Pede ao próprio sistema (LaunchServices) que ative o Heimdall, como se ele tivesse sido aberto de novo. É o caminho que o macOS sempre aceita.
+/// Pede ao próprio sistema (LaunchServices) que ative o StudioLibre, como se ele tivesse sido aberto de novo. É o caminho que o macOS sempre aceita.
 func reativarPeloSistema() {
     let c = NSWorkspace.OpenConfiguration()
     c.activates = true
@@ -112,10 +112,10 @@ func servicoInicial() -> String {
     return UserDefaults.standard.string(forKey: "servicoInicial") ?? ""
 }
 
-let agenteDeEntrada = NSHomeDirectory() + "/Library/LaunchAgents/tech.heimdall.menu.plist"
+let agenteDeEntrada = NSHomeDirectory() + "/Library/LaunchAgents/io.studiolibre.menu.plist"
 func entradaAtiva() -> Bool { return FileManager.default.fileExists(atPath: agenteDeEntrada) }
 
-/// Uma janela do app com um site do Heimdall dentro (WKWebView). Login, cookies e envio de arquivos funcionam como no navegador.
+/// Uma janela do app com um site do StudioLibre dentro (WKWebView). Login, cookies e envio de arquivos funcionam como no navegador.
 final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, NSWindowDelegate {
     let janela: NSWindow
     let web: WKWebView
@@ -130,7 +130,7 @@ final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownload
                           styleMask: [.titled, .closable, .miniaturizable, .resizable],
                           backing: .buffered, defer: false)
         super.init()
-        janela.title = "Heimdall " + titulo
+        janela.title = "StudioLibre " + titulo
         janela.contentView = web
         janela.isReleasedWhenClosed = false
         janela.collectionBehavior = [.fullScreenPrimary]
@@ -138,7 +138,7 @@ final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownload
         janela.center()
         web.navigationDelegate = self
         web.uiDelegate = self
-        web.setAccessibilityLabel("Heimdall " + titulo)
+        web.setAccessibilityLabel("StudioLibre " + titulo)
         web.load(URLRequest(url: url))
     }
 
@@ -160,7 +160,7 @@ final class JanelaSite: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownload
     func windowWillClose(_ notification: Notification) { aoFechar?() }
 
     func falhou() {
-        let html = "<html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Sem resposta</title></head><body><h1>Sem resposta</h1><p>Não consegui abrir esta página. Confira se os serviços estão ligados: no menu Heimdall, escolha Ligar os serviços, e depois use Command+R para tentar de novo.</p></body></html>"
+        let html = "<html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><title>Sem resposta</title></head><body><h1>Sem resposta</h1><p>Não consegui abrir esta página. Confira se os serviços estão ligados: no menu StudioLibre, escolha Ligar os serviços, e depois use Command+R para tentar de novo.</p></body></html>"
         web.loadHTMLString(html, baseURL: nil)
     }
 
@@ -240,14 +240,14 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
 
     func applicationDidFinishLaunching(_ n: Notification) {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.title = "Heimdall"
-        item.button?.setAccessibilityLabel("Heimdall, menu de estado")
+        item.button?.title = "StudioLibre"
+        item.button?.setAccessibilityLabel("StudioLibre, menu de estado")
         montarMenuPrincipal()
         montarMenu()
         carregarPortas()
         carregarSites()
         if UserDefaults.standard.bool(forKey: "ligarAoAbrir") {
-            // Dá tempo de ler as portas e só liga se nada do Heimdall estiver no ar.
+            // Dá tempo de ler as portas e só liga se nada do StudioLibre estiver no ar.
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
                 guard let self = self else { return }
                 if self.situacao().0.isEmpty { self.ligar() }
@@ -259,12 +259,12 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         iniciarAvisos()
     }
 
-    // --- avisos nativos: o Heimdall grava o aviso completo em db/alerts/ (só no Mac) e o app mostra como notificação do macOS
+    // --- avisos nativos: o StudioLibre grava o aviso completo em db/alerts/ (só no Mac) e o app mostra como notificação do macOS
     var temporizadorAvisos: Timer?
     var avisosPermitidos: Bool { UserDefaults.standard.object(forKey: "avisosNoMac") as? Bool ?? true }
 
     func pastaDeAvisos() -> String {
-        // Pastas novas (db/alerts); se o Mac ainda estiver com as antigas (banco/avisos_mac), usa-as até o Heimdall migrar.
+        // Pastas novas (db/alerts); se o Mac ainda estiver com as antigas (banco/avisos_mac), usa-as até o StudioLibre migrar.
         let fm = FileManager.default
         var base = valorDoEnv("HEIMDALL_DB_DIR") ?? (pastaHeimdall + "/db")
         if valorDoEnv("HEIMDALL_DB_DIR") == nil && !fm.fileExists(atPath: base) && fm.fileExists(atPath: pastaHeimdall + "/banco") {
@@ -295,8 +295,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
             guard avisosPermitidos,
                   let dados = fm.contents(atPath: caminho),
                   let o = try? JSONSerialization.jsonObject(with: dados) as? [String: Any] else { continue }
-            mostrarAviso(titulo: o["titulo"] as? String ?? "Heimdall", corpo: o["corpo"] as? String ?? "",
-                         grupo: o["grupo"] as? String ?? "heimdall", nivel: o["nivel"] as? String ?? "active",
+            mostrarAviso(titulo: o["titulo"] as? String ?? "StudioLibre", corpo: o["corpo"] as? String ?? "",
+                         grupo: o["grupo"] as? String ?? "studiolibre", nivel: o["nivel"] as? String ?? "active",
                          url: o["url"] as? String ?? "")
         }
     }
@@ -388,9 +388,9 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
 
     func resumoServicos() -> String {
         let (abertos, fechados) = situacao()
-        if fechados.isEmpty { return "Serviços do Heimdall: todos ligados (\(abertos.count))" }
-        if abertos.isEmpty { return "Serviços do Heimdall: desligados" }
-        return "Serviços do Heimdall: \(abertos.count) de \(abertos.count + fechados.count) ligados"
+        if fechados.isEmpty { return "Serviços do StudioLibre: todos ligados (\(abertos.count))" }
+        if abertos.isEmpty { return "Serviços do StudioLibre: desligados" }
+        return "Serviços do StudioLibre: \(abertos.count) de \(abertos.count + fechados.count) ligados"
     }
 
     func nuvemLigada() -> Bool { return valorDoEnv("HEIMDALL_NUVEM") == "1" }
@@ -425,7 +425,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     func montarMenu() {
         let menu = NSMenu()
         menu.delegate = self
-        for (tag, texto) in [(101, "Serviços do Heimdall"), (102, "Modelo de IA"), (103, "Celulares")] {
+        for (tag, texto) in [(101, "Serviços do StudioLibre"), (102, "Modelo de IA"), (103, "Celulares")] {
             let linha = NSMenuItem(title: texto, action: nil, keyEquivalent: "")
             linha.tag = tag
             menu.addItem(linha)
@@ -466,8 +466,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         adicionar(celulares, "Ligar a sincronização com os celulares", #selector(alternarSync))
         menu.addItem(NSMenuItem.separator())
 
-        adicionar(menu, "Atualizar o Heimdall e reiniciar", #selector(atualizar), "a")
-        adicionar(menu, "Sair do Heimdall", #selector(sair), "q")
+        adicionar(menu, "Atualizar o StudioLibre e reiniciar", #selector(atualizar), "a")
+        adicionar(menu, "Sair do StudioLibre", #selector(sair), "q")
         item.menu = menu
     }
 
@@ -497,17 +497,17 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     /// Roda um comando em segundo plano e mostra o resultado numa janela de aviso. Um de cada vez.
     func executar(_ titulo: String, _ args: [String], prefixo: String = "") {
         if ocupado {
-            avisar("Heimdall", "Ainda estou terminando outra tarefa. Tente de novo em instantes.")
+            avisar("StudioLibre", "Ainda estou terminando outra tarefa. Tente de novo em instantes.")
             return
         }
         ocupado = true
-        item.button?.title = "Heimdall (trabalhando)"
+        item.button?.title = "StudioLibre (trabalhando)"
         DispatchQueue.global().async {
             let (texto, codigo) = rodarHeimdall(args)
             DispatchQueue.main.async {
                 self.ocupado = false
                 self.situacaoCache = nil
-                self.item.button?.title = "Heimdall"
+                self.item.button?.title = "StudioLibre"
                 avisar(codigo == 0 ? "\(titulo): concluído" : "\(titulo): falhou (código \(codigo))", prefixo.isEmpty ? texto : prefixo + "\n\n" + texto)
             }
         }
@@ -521,7 +521,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
             DispatchQueue.main.async {
                 self.ocupado = false
                 self.ultimaBusca = texto + (codigo == 0 ? "" : "\n(código de saída \(codigo))")
-                self.item.button?.title = codigo == 0 ? "Heimdall" : "Heimdall (atenção)"
+                self.item.button?.title = codigo == 0 ? "StudioLibre" : "StudioLibre (atenção)"
                 if !silencioso { avisar(codigo == 0 ? "Sincronização com os celulares" : "Sincronização com os celulares: atenção", self.ultimaBusca) }
             }
         }
@@ -542,7 +542,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     @objc func mostrarUltimaBusca() { avisar("Última sincronização com os celulares", ultimaBusca) }
     @objc func alternarNuvem() { executar("Modelo de IA", ["env", "--set", "HEIMDALL_NUVEM", nuvemLigada() ? "0" : "1"]) }
     @objc func alternarSync() { executar("Sincronização com os celulares", ["env", "--set", "HEIMDALL_CAIXA", syncLigada() ? "0" : "1"]) }
-    @objc func atualizar() { executar("Atualizar o Heimdall", ["update", "--restart"]) }
+    @objc func atualizar() { executar("Atualizar o StudioLibre", ["update", "--restart"]) }
     @objc func recarregarSites() { carregarSites() }
 
     @objc func abrirSite(_ remetente: NSMenuItem) {
@@ -551,7 +551,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     }
 
     /// Abre (ou traz para a frente) a janela de um site. O app é sempre um app normal (Dock, Command+Tab e barra de menus do alto): trocar de
-    /// "só barra de menus" para "app normal" com a janela já aberta fazia o macOS não tratar o Heimdall como app ativo.
+    /// "só barra de menus" para "app normal" com a janela já aberta fazia o macOS não tratar o StudioLibre como app ativo.
     func abrirJanela(_ nome: String, _ texto: String, recarregar: Bool = false) {
         guard let url = URL(string: texto) else { return }
         if let existente = janelas[nome] {
@@ -624,16 +624,16 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
             escolhaInicial.target = self
             escolhaInicial.action = #selector(mudouServicoInicial)
             escolhaInicial.setAccessibilityLabel("Serviço que abre ao iniciar o app")
-            caixaEntrar = NSButton(checkboxWithTitle: "Iniciar o Heimdall quando eu ligar o Mac", target: self, action: #selector(mudouEntrada))
-            caixaLigar = NSButton(checkboxWithTitle: "Ligar os serviços do Heimdall ao abrir o app", target: self, action: #selector(mudouLigar))
-            caixaAvisos = NSButton(checkboxWithTitle: "Mostrar os avisos do Heimdall como notificações do Mac", target: self, action: #selector(mudouAvisos))
+            caixaEntrar = NSButton(checkboxWithTitle: "Iniciar o StudioLibre quando eu ligar o Mac", target: self, action: #selector(mudouEntrada))
+            caixaLigar = NSButton(checkboxWithTitle: "Ligar os serviços do StudioLibre ao abrir o app", target: self, action: #selector(mudouLigar))
+            caixaAvisos = NSButton(checkboxWithTitle: "Mostrar os avisos do StudioLibre como notificações do Mac", target: self, action: #selector(mudouAvisos))
             let pilha = NSStackView(views: [rotulo, escolhaInicial, caixaEntrar, caixaLigar, caixaAvisos])
             pilha.orientation = .vertical
             pilha.alignment = .leading
             pilha.spacing = 14
             pilha.translatesAutoresizingMaskIntoConstraints = false
             let j = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 230), styleMask: [.titled, .closable], backing: .buffered, defer: false)
-            j.title = "Configurações do Heimdall"
+            j.title = "Configurações do StudioLibre"
             j.isReleasedWhenClosed = false
             if let conteudo = j.contentView {
                 conteudo.addSubview(pilha)
@@ -666,12 +666,12 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     /// Iniciar ao ligar o Mac: cria ou apaga o mesmo LaunchAgent que o studio app --entrar cria. Vale a partir do próximo login.
     @objc func mudouEntrada() {
         if caixaEntrar.state == .on {
-            let executavel = Bundle.main.executablePath ?? (NSHomeDirectory() + "/Applications/Heimdall.app/Contents/MacOS/Heimdall")
+            let executavel = Bundle.main.executablePath ?? (NSHomeDirectory() + "/Applications/StudioLibre.app/Contents/MacOS/StudioLibre")
             let texto = """
             <?xml version="1.0" encoding="UTF-8"?>
             <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
             <plist version="1.0"><dict>
-            <key>Label</key><string>tech.heimdall.menu</string>
+            <key>Label</key><string>io.studiolibre.menu</string>
             <key>ProgramArguments</key><array><string>\(executavel)</string></array>
             <key>RunAtLoad</key><true/>
             </dict></plist>
@@ -696,7 +696,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         let menus = NSApp.mainMenu?.items.map { $0.submenu?.title ?? $0.title }.joined(separator: ", ") ?? "nenhum"
         avisar("Diagnóstico das janelas", """
         Política do app: \(politica)
-        O Heimdall é o app ativo: \(NSApp.isActive ? "sim" : "não")
+        O StudioLibre é o app ativo: \(NSApp.isActive ? "sim" : "não")
         App em primeiro plano agora: \(primeiro)
         Menus montados: \(menus)
         Janelas abertas: \(janelas.count); janela em foco: \(NSApp.keyWindow != nil ? "sim" : "não")
@@ -714,21 +714,21 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     @objc func diminuirZoom() { if let w = janelaAtual()?.web { w.pageZoom = max(0.3, w.pageZoom - 0.1) } }
     @objc func zoomNormal() { janelaAtual()?.web.pageZoom = 1.0 }
 
-    /// Barra de menus do app quando uma janela está em primeiro plano: Heimdall, Arquivo (com os itens do sistema), Edição, Visualizar, Abrir e Janela.
+    /// Barra de menus do app quando uma janela está em primeiro plano: StudioLibre, Arquivo (com os itens do sistema), Edição, Visualizar, Abrir e Janela.
     func montarMenuPrincipal() {
         let principal = NSMenu()
 
-        let menuApp = submenuDe(principal, "Heimdall")
-        _ = itemDe(menuApp, "Sobre o Heimdall", #selector(NSApplication.orderFrontStandardAboutPanel(_:)), "", alvo: false)
+        let menuApp = submenuDe(principal, "StudioLibre")
+        _ = itemDe(menuApp, "Sobre o StudioLibre", #selector(NSApplication.orderFrontStandardAboutPanel(_:)), "", alvo: false)
         menuApp.addItem(NSMenuItem.separator())
         _ = itemDe(menuApp, "Configurações…", #selector(abrirConfiguracoes), ",")
         menuApp.addItem(NSMenuItem.separator())
-        _ = itemDe(menuApp, "Ocultar o Heimdall", #selector(NSApplication.hide(_:)), "h", alvo: false)
+        _ = itemDe(menuApp, "Ocultar o StudioLibre", #selector(NSApplication.hide(_:)), "h", alvo: false)
         let outros = itemDe(menuApp, "Ocultar os outros", #selector(NSApplication.hideOtherApplications(_:)), "h", alvo: false)
         outros.keyEquivalentModifierMask = [.command, .option]
         _ = itemDe(menuApp, "Mostrar tudo", #selector(NSApplication.unhideAllApplications(_:)), "", alvo: false)
         menuApp.addItem(NSMenuItem.separator())
-        _ = itemDe(menuApp, "Sair do Heimdall", #selector(sair), "q")
+        _ = itemDe(menuApp, "Sair do StudioLibre", #selector(sair), "q")
 
         let arquivo = submenuDe(principal, "Arquivo")
         _ = itemDe(arquivo, "Imprimir…", #selector(imprimirJanela), "p")
@@ -748,7 +748,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         _ = itemDe(arquivo, "Resultado da última sincronização", #selector(mostrarUltimaBusca))
         _ = itemDe(arquivo, "Ligar a sincronização com os celulares", #selector(alternarSync))
         arquivo.addItem(NSMenuItem.separator())
-        _ = itemDe(arquivo, "Atualizar o Heimdall e reiniciar", #selector(atualizar))
+        _ = itemDe(arquivo, "Atualizar o StudioLibre e reiniciar", #selector(atualizar))
         arquivo.addItem(NSMenuItem.separator())
         _ = itemDe(arquivo, "Fechar a janela", #selector(NSWindow.performClose(_:)), "w", alvo: false)
 

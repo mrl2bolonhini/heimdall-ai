@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-26 - App do Mac com o nome StudioLibre e Tab em todos os links
+- O app de barra de menus do Mac passa a se chamar StudioLibre (menus, janelas, avisos e Configurações). O comando `studio app` instala o novo app, remove o antigo e religa a abertura ao entrar no Mac, se estava ligada. O macOS pode pedir de novo a permissão de notificações.
+- Studio Learn: a página inicial ganhou as abas Resumo e Temas, e cada tema é um botão. Todos os links do conteúdo dos serviços passaram a ser paradas do Tab, inclusive no Safari.
+
 ## 2026-11-26 - Memory agora é Studio Hub
 - O Studio Memory passou a se chamar Studio Hub nas telas, na ajuda, no site e na documentação. O comando do terminal é `studio hub` (os antigos `studio memory` e `studio library` continuam funcionando). Os dados, as conexões de nuvem e as autorizações já feitas continuam como estavam.
 - O Studio Hub reunirá, nas próximas etapas, as notas e os resumos dos outros serviços, no lugar do Studio Notes.

@@ -79,9 +79,9 @@ confere("Ana cria uma pasta", st == 303)
 post("dono", "/criar", {"nome": "Estudo do dono", "pai": "", "categoria": "aleatorio", "tipo": "Direito", "tipo_novo": "", "idioma": ""})
 post("dono", "/criar", {"nome": "Comum", "pai": "", "categoria": "aleatorio", "tipo": "Direito", "tipo_novo": "", "idioma": ""})
 post("ana", "/criar", {"nome": "Comum", "pai": "", "categoria": "sequencial", "tipo": "Programação", "tipo_novo": "", "idioma": ""})
-_, pagina_dono, _ = req("dono", "GET", "/")
-_, pagina_ana, _ = req("ana", "GET", "/")
-_, pagina_beto, _ = req("beto", "GET", "/")
+_, pagina_dono, _ = req("dono", "GET", "/temas")
+_, pagina_ana, _ = req("ana", "GET", "/temas")
+_, pagina_beto, _ = req("beto", "GET", "/temas")
 confere("o dono não vê a pasta da Ana", "segredos-da-ana" in pagina_ana and "segredos-da-ana" not in pagina_dono and "estudo-do-dono" in pagina_dono)
 confere("a Ana não vê a pasta do dono", "estudo-do-dono" not in pagina_ana)
 confere("o Beto não vê nada de ninguém", "segredos" not in pagina_beto and "estudo-do-dono" not in pagina_beto and "Nenhum tema cadastrado" in pagina_beto)
@@ -135,7 +135,7 @@ confere("sessão de convidado sem pessoa é mandada entrar de novo", st == 303 a
 
 # interruptor
 os.environ["HEIMDALL_PESSOAS"] = "0"
-_, p, _ = req("ana", "GET", "/")
+_, p, _ = req("ana", "GET", "/temas")
 confere("HEIMDALL_PESSOAS=0 devolve o comportamento anterior (todos veem os dados do dono)", "estudo-do-dono" in p and "segredos" not in p)
 os.environ.pop("HEIMDALL_PESSOAS")
 

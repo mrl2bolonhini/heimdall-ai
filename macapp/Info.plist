@@ -4,10 +4,10 @@
 <dict>
   <key>CFBundleDevelopmentRegion</key><string>pt-BR</string>
   <key>CFBundleLocalizations</key><array><string>pt-BR</string><string>pt</string></array>
-  <key>CFBundleName</key><string>Heimdall</string>
-  <key>CFBundleDisplayName</key><string>Heimdall</string>
-  <key>CFBundleIdentifier</key><string>tech.heimdall.menu</string>
-  <key>CFBundleExecutable</key><string>Heimdall</string>
+  <key>CFBundleName</key><string>StudioLibre</string>
+  <key>CFBundleDisplayName</key><string>StudioLibre</string>
+  <key>CFBundleIdentifier</key><string>io.studiolibre.menu</string>
+  <key>CFBundleExecutable</key><string>StudioLibre</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>CFBundleShortVersionString</key><string>1.0</string>

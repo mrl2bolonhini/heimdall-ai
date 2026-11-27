@@ -121,12 +121,15 @@ def abas_do_tema(tema: str) -> list:
     return itens + [(href_aba(tema, "cards"), "Cards"), (href_aba(tema, "progresso"), "Progresso")]
 
 
+ABAS_INICIO = [("/", "Resumo"), ("/temas", "Temas")]
+
+
 def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: str = "") -> bytes:
     nav = sair = abas_js = ajustes_html = ""
     conteudo = f"<h1>{e(titulo)}</h1>{corpo}"
     if sess:
         tema, aba = sess.get("tema", ""), sess.get("aba", "")
-        if aba == "inicio":
+        if aba in ("/", "/temas"):
             botoes = design.botao("/nova", "Novo estudo")
             ajustes_html = design.botao("/ajustes", "Ajustes")
         elif aba == "ajustes":
@@ -143,7 +146,10 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
             itens_aj = [("/ajustes" + sufixo, "Configurações"), ("/ajustes/ajuda" + sufixo, "Ajuda")]
             atual_aj = itens_aj[1][0] if sess.get("sub") == "ajuda" else itens_aj[0][0]
             conteudo = design.com_subabas(itens_aj, atual_aj, conteudo, "Seções dos Ajustes")
-        if tema and aba and aba != "ajustes":
+        if aba in ("/", "/temas"):
+            nav += design.nav_abas(ABAS_INICIO, aba, "Seções do Studio Learn")
+            conteudo = design.com_abas(ABAS_INICIO, aba, conteudo)
+        elif tema and aba and aba != "ajustes":
             itens = abas_do_tema(tema)
             nav += design.nav_abas(itens, aba, f"Seções do tema {dados.nome_bonito(tema)}")
             conteudo = design.com_abas(itens, aba, conteudo)
@@ -156,7 +162,7 @@ def pagina(titulo: str, corpo: str, sess: dict = None, nonce: str = "", script: 
             f'<main id="principal">{conteudo}</main>{design.rodape(servico="learn")}{js}</body></html>').encode("utf-8")
 
 
-ROTAS_PERGUNTAR = re.compile(r"^/((estudos|licoes|exercicios|cards|progresso)\?t=[^&#\s]{1,200})?$")
+ROTAS_PERGUNTAR = re.compile(r"^/(temas|(estudos|licoes|exercicios|cards|progresso)\?t=[^&#\s]{1,200})?$")
 
 
 def com_perguntar(sess: dict, corpo: str, tema: str = "") -> str:
@@ -202,15 +208,23 @@ def _lista_pastas(itens: list, destino: str = "pasta") -> str:
 
 
 def pg_inicio(sess: dict) -> str:
+    """Aba Resumo: os totais de todos os temas."""
     itens = painel.resumo_dos_temas()
     if not itens:
         return aviso(sess) + '<p role="status">Nenhum tema cadastrado ainda. Use o botão Novo estudo, acima.</p>'
     soma = lambda k: sum(x[k] for x in itens)  # noqa: E731
-    lista = "".join(f'<li><a href="/tema?t={quote(x["caminho"])}">{e(x["nome"])}</a>: {e(x["categoria"])}. {plural(x["documentos"], "documento de consulta", "documentos de consulta")}, '
-                    f'{plural(x["estudos"], "estudo", "estudos")} e {plural(x["licoes"], "lição", "lições")}.</li>' for x in itens)
     return (aviso(sess) + f'<h2>Resumo</h2><p role="status">{plural(len(itens), "tema cadastrado", "temas cadastrados")}, com {plural(soma("documentos"), "documento de consulta", "documentos de consulta")}, '
-            f'{plural(soma("estudos"), "estudo", "estudos")} e {plural(soma("licoes"), "lição", "lições")} no total.</p>'
-            f'<h2>Temas</h2><p>Abra um tema para ver as abas dele.</p><ol>{lista}</ol>')
+            f'{plural(soma("estudos"), "estudo", "estudos")} e {plural(soma("licoes"), "lição", "lições")} no total.</p>')
+
+
+def pg_temas(sess: dict) -> str:
+    """Aba Temas: cada tema é um botão (o Tab alcança botões em qualquer navegador; link comum no meio do texto o Safari pula)."""
+    itens = painel.resumo_dos_temas()
+    if not itens:
+        return aviso(sess) + '<p role="status">Nenhum tema cadastrado ainda. Use o botão Novo estudo, acima.</p>'
+    lista = "".join(f'<li>{design.botao("/tema", x["nome"], {"t": x["caminho"]})} {e(x["categoria"])}. {plural(x["documentos"], "documento de consulta", "documentos de consulta")}, '
+                    f'{plural(x["estudos"], "estudo", "estudos")} e {plural(x["licoes"], "lição", "lições")}.</li>' for x in itens)
+    return aviso(sess) + f'<h2>Temas</h2><ol class="temas">{lista}</ol>'
 
 
 def _opcoes_tipo(atual: str = "") -> str:
@@ -736,8 +750,12 @@ class Learn(nuvem.ManipuladorBase):
             raise dados.ErroLearn("Tema não encontrado.")
         if rota == "/":
             dados.sincronizar()
-            sess["aba"] = "inicio"
-            self._pagina(200, "Temas de estudo", com_perguntar(sess, pg_inicio(sess)), sess)
+            sess["aba"] = "/"
+            self._pagina(200, "Studio Learn", com_perguntar(sess, pg_inicio(sess)), sess)
+        elif rota == "/temas":
+            dados.sincronizar()
+            sess["aba"] = "/temas"
+            self._pagina(200, "Temas de estudo", com_perguntar(sess, pg_temas(sess)), sess)
         elif rota == "/tema":
             if not tema:
                 self._ir("/")

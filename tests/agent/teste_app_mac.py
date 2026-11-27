@@ -25,11 +25,11 @@ def confere(nome, ok, extra=""):
         falhas += 1
 
 
-swift = (AQUI / "macapp" / "Heimdall.swift").read_text(encoding="utf-8")
+swift = (AQUI / "macapp" / "StudioLibre.swift").read_text(encoding="utf-8")
 sh = (AQUI / "scripts/construir_app_mac.sh").read_text(encoding="utf-8")
 pl = plistlib.loads((AQUI / "macapp" / "Info.plist").read_bytes())
 
-confere("Info.plist: app normal (Dock e barra de menus do alto) e executável certo", "LSUIElement" not in pl and pl.get("CFBundleExecutable") == "Heimdall" and pl.get("CFBundlePackageType") == "APPL")
+confere("Info.plist: app normal (Dock e barra de menus do alto) e executável certo", "LSUIElement" not in pl and pl.get("CFBundleExecutable") == "StudioLibre" and pl.get("CFBundlePackageType") == "APPL")
 confere("Swift: avisos nativos (UNUserNotificationCenter, pasta avisos_mac, interruptor nas Configurações)",
         "UNUserNotificationCenter" in swift and "avisos_mac" in swift and "avisosNoMac" in swift and "requestAuthorization" in swift)
 sem_texto = re.sub(r"//[^\n]*", "", re.sub(r'"(?:[^"\\]|\\.)*"', '""', swift))
@@ -39,7 +39,7 @@ confere("Swift: app normal desde o início, com o ícone na barra de estado", "s
 confere("Swift: sites em janela própria (WKWebView), sem abrir o navegador", "WKWebView" in swift and "NSWorkspace.shared.open(" not in swift)
 confere("Swift: nomes dos sites são os nomes reais em inglês", all(f'"{n}"' in swift for n in ("Controls", "Notes", "Learn", "News", "Health", "Games", "Finance", "Lab", "Account", "Chat", "Flows", "Status")))
 confere("Swift: janela trata arquivos, downloads e avisos do site", all(t in swift for t in ("runOpenPanelWith", "WKDownloadDelegate", "runJavaScriptAlertPanelWithMessage", "runJavaScriptConfirmPanelWithMessage")))
-confere("Swift: barra de menus com Heimdall, Arquivo, Edição, Visualizar, Abrir e Janela (sem menu Sistema: os itens dele ficam em Arquivo)", all(f'submenuDe(principal, "{m}")' in swift for m in ("Heimdall", "Arquivo", "Edição", "Visualizar", "Abrir", "Janela")) and 'submenuDe(principal, "Sistema")' not in swift and 'itemDe(arquivo, "Ligar os serviços"' in swift and 'itemDe(arquivo, "Atualizar o Heimdall e reiniciar"' in swift)
+confere("Swift: barra de menus com StudioLibre, Arquivo, Edição, Visualizar, Abrir e Janela (sem menu Sistema: os itens dele ficam em Arquivo)", all(f'submenuDe(principal, "{m}")' in swift for m in ("StudioLibre", "Arquivo", "Edição", "Visualizar", "Abrir", "Janela")) and 'submenuDe(principal, "Sistema")' not in swift and 'itemDe(arquivo, "Ligar os serviços"' in swift and 'itemDe(arquivo, "Atualizar o StudioLibre e reiniciar"' in swift)
 confere("Swift: tela cheia, zoom e atalhos de copiar, colar, recarregar e fechar", all(t in swift for t in ("toggleFullScreen", "fullScreenPrimary", "pageZoom", '"c"', '"v"', '"r"', '"w"')))
 confere("Swift: ativa o app de novo logo depois de virar app normal (senão a barra de menus continua a do app anterior)", "func ativarApp()" in swift and "asyncAfter" in swift and swift.count("ativarApp()") >= 3)
 confere("Swift: Imprimir usa printOperation do WebKit (NSView não tem print)", "printOperation(with: NSPrintInfo.shared)" in swift and "NSView.print" not in swift)
@@ -48,9 +48,9 @@ confere("app em português: Info.plist com pt-BR e o script cria pt-BR.lproj (it
 confere("Swift: atalhos dos sites em ordem alfabética: Account Command+0; Chat 1, Controls 2, Finance 3, Games 4, Health 5, Lab 6, Learn 7, News 8, Notes 9; Status e Flows sem atalho; menus ordenados", "func teclaDoSite" in swift and 'if nome == "Account" { return "0" }' in swift and '.filter { $0 != "Account" && $0 != "Flows" }.sorted()' in swift and "teclaDoSite(par.0)" in swift and "localizedStandardCompare" in swift)
 confere("Swift: Learn no menu Abrir e comando para cadastrar as pastas de estudo (studio learn --sync) nos dois menus", '("learn", "Learn")' in swift and 'func sincronizarLearn' in swift and '["learn", "--sync"]' in swift and swift.count("sincronizarLearn") >= 3)
 confere("Swift: o zoom normal saiu de Command+0 (que abre o Account) e foi para Option+Command+0", '"Tamanho normal", #selector(zoomNormal), "0")' in swift and "[.command, .option]" in swift)
-confere("Swift: menu Heimdall com Sobre, Configurações (Command+vírgula), Ocultar e Sair", all(t in swift for t in ('"Sobre o Heimdall"', '"Configurações…", #selector(abrirConfiguracoes), ","', '"Ocultar o Heimdall"', '"Mostrar tudo"', '"Sair do Heimdall"')))
+confere("Swift: menu StudioLibre com Sobre, Configurações (Command+vírgula), Ocultar e Sair", all(t in swift for t in ('"Sobre o StudioLibre"', '"Configurações…", #selector(abrirConfiguracoes), ","', '"Ocultar o StudioLibre"', '"Mostrar tudo"', '"Sair do StudioLibre"')))
 confere("Swift: Configurações com serviço inicial, iniciar com o Mac (LaunchAgent) e ligar serviços ao abrir; também no menu de estado", all(t in swift for t in ("mudouServicoInicial", "mudouEntrada", "mudouLigar", "agenteDeEntrada", '"servicoInicial"', '"ligarAoAbrir"', "setAccessibilityLabel(\"Serviço que abre ao iniciar o app\")")) and swift.count("abrirConfiguracoes") >= 3)
-confere("Swift: o LaunchAgent das Configurações é o mesmo do studio app --entrar (mesmo rótulo e caminho)", "tech.heimdall.menu" in swift and "tech.heimdall.menu" in open("scripts/construir_app_mac.sh", encoding="utf-8").read() and "RunAtLoad" in swift)
+confere("Swift: o LaunchAgent das Configurações é o mesmo do studio app --entrar (mesmo rótulo e caminho)", "io.studiolibre.menu" in swift and "io.studiolibre.menu" in open("scripts/construir_app_mac.sh", encoding="utf-8").read() and "RunAtLoad" in swift)
 confere("Info.plist: só https (sem exceção de rede local nem carregamento aberto)", "NSAppTransportSecurity" not in pl)
 confere("Swift: todos os sites abrem pelos endereços públicos (Cloudflare Access), não por localhost", '["urls", "--public"]' in swift and "localhost" not in swift)
 confere("Swift: abre o Chat sozinho uma vez, fechar a janela não encerra o app e o Dock reabre o Chat", "abrirJanelaInicial" in swift and "applicationShouldTerminateAfterLastWindowClosed" in swift and "return false" in swift and "applicationShouldHandleReopen" in swift)
@@ -66,7 +66,7 @@ confere("script: sintaxe de shell válida", subprocess.run(["bash", "-n", str(AQ
 confere("script: fixa o alvo em macOS 12 (evita o erro -10825)", "-target" in sh and "apple-macos12.0" in sh)
 confere("script: assinatura local (ad hoc), sem conta paga", "codesign --force --deep --sign -" in sh)
 confere("script: só roda no Mac e avisa se falta o compilador", 'uname' in sh and "xcode-select --install" in sh)
-confere("script: mexe só em ~/Applications e no próprio LaunchAgent", "rm -f \"$AGENTE\"" in sh and "rm -rf" not in sh and "sudo" not in sh)
+confere("script: mexe só em ~/Applications e no próprio LaunchAgent", "rm -f \"$AGENTE\"" in sh and sh.count("rm -rf") == 1 and 'rm -rf "$ANTIGO_APP"' in sh and "sudo" not in sh)
 
 print("\nFALHAS: %d" % falhas if falhas else "\nTudo certo.")
 sys.exit(1 if falhas else 0)

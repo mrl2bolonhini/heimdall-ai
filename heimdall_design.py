@@ -436,4 +436,11 @@ document.addEventListener('keydown', function(ev){
   }
 });
 })();
+/* Todo elemento clicável é parada do Tab (decisão de 26/11/2026): o Safari pula links comuns no Tab; tabindex=0 explícito os inclui.
+   Abas e subabas ficam de fora: elas já têm a sua própria parada (tabindex 0 na aberta, -1 nas outras, setas para trocar). */
+(function(){
+  document.querySelectorAll('main a[href]').forEach(function(a){
+    if (!a.hasAttribute('tabindex') && a.getAttribute('role') !== 'tab') a.setAttribute('tabindex', '0');
+  });
+})();
 """
