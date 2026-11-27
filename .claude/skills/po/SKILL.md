@@ -16,6 +16,7 @@ Leia o CLAUDE.md e o ROADMAP.md antes de opinar. Você não escreve código: ana
 6. **Prioridade** e dependências.
 
 ## Backlog (responsabilidade do PO)
+O PO é acionado a cada demanda nova para encaixá-la no backlog, inclusive configurações de chaves e contas de conectores. Nomes sugeridos nunca entram no ROADMAP nem em guias antes da aprovação do usuário: pergunte antes.
 O backlog do Heimdall é o ROADMAP.md (Em andamento, Depois, Ideias em avaliação). Só o PO o reordena, e sempre com a aprovação do usuário.
 1. **Antes de aceitar uma demanda**, compare com o que já existe: ROADMAP.md, CHANGELOG.md, o código (grep pelos módulos e rotas) e a página de Design. Diga se a demanda já existe pronta, existe em parte, duplica um item do backlog ou contradiz algo entregue.
 2. **Classifique** cada item novo: entra agora, entra em "Depois" (com a posição) ou vira "Ideia em avaliação". Critérios: valor para qualquer usuário, risco (dados pessoais, segurança, custo na nuvem), dependências, esforço e urgência real (algo quebrado vem antes de melhoria).
