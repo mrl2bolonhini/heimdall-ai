@@ -49,7 +49,7 @@ for k in ("STUDIO_HUB_PORT", "STUDIO_HUB_MAX_MB", "STUDIO_HUB_HOSTS"):
 sv = next(x for x in servicos.catalogo() if x["id"] == "memory")
 confere("catálogo: serviço Hub", sv["nome"] == "Hub" and "hub" in sv.get("apelidos", []) and "library" not in sv.get("apelidos", []) and sv["script"] == ["heimdall_memory.py"], sv)
 confere("catálogo: não sobra serviço library", not any(x["id"] == "library" for x in servicos.catalogo()))
-confere("padrão do Hub: endereços hub e memory, sem o library", lib.CFG.hosts.startswith("memory.heimdall-ai.tech") and "library" not in lib.CFG.hosts and "hub.studiolibre.io" in lib.CFG.hosts, lib.CFG.hosts)
+confere("padrão do Hub: endereços hub e memory, sem o library", lib.CFG.hosts.startswith("hub.studiolibre.io") and "library" not in lib.CFG.hosts and "hub.studiolibre.io" in lib.CFG.hosts, lib.CFG.hosts)
 
 # 3. .env antigo: os nomes HEIMDALL_MEMORY_* e HEIMDALL_LIBRARY_* viram STUDIO_HUB_*
 hcf.ARQUIVO = TMP / "env_antigo"
@@ -83,7 +83,7 @@ conv = u.situacao()["convidados"]
 confere("convidados do Hub", conv.get("ana@x.com") == ["jogos", "memory"] and conv.get("beto@x.com") == ["memory"], conv)
 d = u.desejado()
 confere("o Hub libera dono e os dois convidados", d["memory"] == ["ana@x.com", "beto@x.com", "dono@x.com"], d["memory"])
-confere("endereço público padrão do Hub", u.host_publico("memory") == "memory.heimdall-ai.tech", u.host_publico("memory"))
+confere("endereço público padrão do Hub", u.host_publico("memory") == "hub.studiolibre.io", u.host_publico("memory"))
 
 print(f"\n{falhas} falha(s)")
 _sys.exit(1 if falhas else 0)

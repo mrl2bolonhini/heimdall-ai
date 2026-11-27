@@ -70,6 +70,7 @@ import heimdall_pessoas as pessoas  # noqa: E402  (tarefas em segundo plano do m
 HOST = os.environ.get("STUDIO_LEARN_HOST", "127.0.0.1")
 PORT = int(os.environ.get("STUDIO_LEARN_PORT", "8019"))
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_LEARN_HOSTS", "learn.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK |= __import__("heimdall_links").hosts_padrao("learn")   # domínio novo e antigo valem juntos durante a transição
 COOKIE = nuvem.COOKIE
 MAX_FORM = 20000
 ESTADOS_LICAO = {"gerando": "sendo criada", "pronta": "aguardando respostas", "corrigindo": "corrigindo", "concluida": "concluída", "erro": "erro ao criar", "erro_correcao": "erro na correção"}

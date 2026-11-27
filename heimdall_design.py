@@ -212,7 +212,7 @@ def base_ajuda() -> str:
             import heimdall_usuarios as _u
             _BASE_AJUDA.append("https://" + _u.host_publico("account"))
         except Exception:  # noqa: BLE001
-            _BASE_AJUDA.append("https://account.heimdall-ai.tech")
+            _BASE_AJUDA.append("https://account.studiolibre.io")
     return _BASE_AJUDA[0]
 
 

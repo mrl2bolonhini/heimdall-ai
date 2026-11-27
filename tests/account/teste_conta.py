@@ -41,7 +41,7 @@ confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n 
 import heimdall_conta as _c
 confere("lista em ordem alfabética pelo nome real", [_c.NOMES[k] for k in _c.ORDEM] == sorted(_c.NOMES.values(), key=str.lower))
 confere("serviço atual marcado, sem link duplicado", 'aria-current="page">Studio News (você está aqui)' in m and m.count(">Studio News<") == 0, m)
-confere("Kuma abre no painel (/dashboard)", "https://status.heimdall-ai.tech/dashboard" in m, m)
+confere("Kuma abre no painel (/dashboard)", "https://status.studiolibre.io/dashboard" in m, m)
 g = c.menu("Studio Games", cabecalhos=h("tokana"))
 confere("convidado: só o que foi liberado e é convidável (Saúde fica de fora, mesmo na lista)", ">Studio News<" in g and "Studio Games (você está aqui)" in g and ">Account<" in g and "Saúde" not in g and "Controls" not in g and "Finance" not in g and "Uptime" not in g, g)
 confere("convidado: nome mostrado", "Conta: Ana Souza" in g)

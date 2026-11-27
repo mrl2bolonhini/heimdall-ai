@@ -77,6 +77,7 @@ try:
 except ValueError:
     PORT = 8016
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_FINANCE_HOSTS", "finance.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK |= __import__("heimdall_links").hosts_padrao("finance")   # domínio novo e antigo valem juntos durante a transição
 DIR_DADOS = Path(os.environ.get("STUDIO_FINANCE_DIR") or heimdall_pastas.finance(PROJECT_DIR))
 try:
     MAX_ENVIO = int(float(os.environ.get("STUDIO_FINANCE_MAX_MB", "8")) * 1024 * 1024)

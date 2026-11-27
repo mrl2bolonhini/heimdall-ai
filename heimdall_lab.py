@@ -86,7 +86,7 @@ PORT = int(os.environ.get("STUDIO_LAB_PORT", "8010"))
 ENDPOINT = os.environ.get("STUDIO_LAB_ENDPOINT", "http://127.0.0.1:4566").rstrip("/")
 REGIAO = os.environ.get("STUDIO_LAB_REGIAO", "us-east-1")
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_LAB_HOSTS", "lab.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
-HOSTS_OK |= {"lab.heimdall-ai.tech", "cloud.heimdall-ai.tech"}   # o endereço novo e o antigo valem juntos, até o Cloudflare passar a usar só o novo
+HOSTS_OK |= __import__("heimdall_links").hosts_padrao("lab", "cloud")   # domínio novo e antigo valem juntos durante a transição
 SENHA_HASH = os.environ.get("HEIMDALL_CLOUD_SENHA_HASH", "")
 TOTP_SEGREDO = os.environ.get("HEIMDALL_CLOUD_TOTP_SEGREDO", "")
 SESSAO_SEG = int(float(os.environ.get("HEIMDALL_CLOUD_SESSAO_HORAS", "8")) * 3600)
@@ -94,7 +94,8 @@ OCIOSA_SEG = 2 * 3600  # sem usar por 2 horas, a sessão cai
 MAX_ENVIO = int(float(os.environ.get("STUDIO_LAB_MAX_MB", "50")) * 1024 * 1024)
 ITERACOES = 600_000
 COOKIE = "heimdall_sessao"  # o mesmo nome nos quatro serviços (Lab, Notas, News e Saúde)
-COOKIE_DOMINIO = os.environ.get("STUDIO_COOKIE_DOMINIO", "heimdall-ai.tech").strip().lstrip(".").lower()
+COOKIE_DOMINIO = os.environ.get("STUDIO_COOKIE_DOMINIO", "studiolibre.io").strip().lstrip(".").lower()
+COOKIE_DOMINIO_ANTIGO = "heimdall-ai.tech"   # sessões em endereços antigos continuam valendo durante a transição
 
 _lock = threading.Lock()
 
@@ -321,11 +322,13 @@ def pagina_continuar(destino: str = "/") -> bytes:
 
 
 def cabecalho_cookie(token: str, host: str, https: bool, apagar: bool = False) -> tuple:
-    """Set-Cookie da sessão. Em *.heimdall-ai.tech vale para todos os subdomínios; em localhost fica só naquele endereço."""
+    """Set-Cookie da sessão. Em *.studiolibre.io (e no domínio antigo) vale para todos os subdomínios; em localhost fica só naquele endereço."""
     v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else SESSAO_SEG}"
     h = (host or "").split(":")[0].strip().lower()
-    if COOKIE_DOMINIO and (h == COOKIE_DOMINIO or h.endswith("." + COOKIE_DOMINIO)):
-        v += f"; Domain={COOKIE_DOMINIO}"
+    for dom in (COOKIE_DOMINIO, COOKIE_DOMINIO_ANTIGO):
+        if dom and (h == dom or h.endswith("." + dom)):
+            v += f"; Domain={dom}"
+            break
     if https:
         v += "; Secure"
     return ("Set-Cookie", v)

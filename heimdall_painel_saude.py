@@ -71,6 +71,7 @@ try:
 except ValueError:
     PORT = 8013
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_SAUDE_PAINEL_HOSTS", "health.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK |= __import__("heimdall_links").hosts_padrao("health")   # domínio novo e antigo valem juntos durante a transição
 COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 PERIODOS = (7, 14, 30, 90, 180, 365)
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731

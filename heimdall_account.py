@@ -67,11 +67,12 @@ def _lista(nome: str, padrao: str) -> set:
 
 
 def hosts_ok() -> set:
-    return _lista("STUDIO_ACCOUNT_HOSTS", "account.heimdall-ai.tech,localhost,127.0.0.1")
+    import heimdall_links
+    return _lista("STUDIO_ACCOUNT_HOSTS", "account.studiolibre.io,account.heimdall-ai.tech,localhost,127.0.0.1") | heimdall_links.hosts_padrao("account")
 
 
 def origens_ok() -> set:
-    return _lista("STUDIO_ACCOUNT_ORIGENS", "https://heimdall-ai.tech,https://www.heimdall-ai.tech")
+    return _lista("STUDIO_ACCOUNT_ORIGENS", "https://studiolibre.io,https://www.studiolibre.io,https://heimdall-ai.tech,https://www.heimdall-ai.tech")
 
 
 def dados_quem(p: dict) -> dict:

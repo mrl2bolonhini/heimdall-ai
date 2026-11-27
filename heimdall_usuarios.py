@@ -23,7 +23,7 @@ SERVICOS = {
     "lab": ("Lab", "STUDIO_LAB_HOSTS", "lab", True),
     "learn": ("Learn", "STUDIO_LEARN_HOSTS", "learn", True),
     "trading": ("Trading", "STUDIO_TRADING_HOSTS", "trading", True),
-    "memory": ("Hub", "STUDIO_HUB_HOSTS", "memory", True),
+    "memory": ("Hub", "STUDIO_HUB_HOSTS", "hub", True),
     "news": ("News", "STUDIO_NEWS_HOSTS", "news", True),
     "jogos": ("Games", "STUDIO_JOGOS_HOSTS", "games", True),
     "chat": ("Chat (Open WebUI)", "STUDIO_WEBUI_HOST", "chat", True),
@@ -165,7 +165,8 @@ def host_publico(chave: str) -> str:
     for h in _lista(env.get(var, "")):
         if h not in ("localhost",) and not h.startswith(("127.", "[")) and not h[:1].isdigit() and not h.endswith(".ts.net"):
             return h
-    return f"{sub}.heimdall-ai.tech"
+    import heimdall_links
+    return f"{sub}.{heimdall_links.dominio()}"
 
 
 def _hosts_do_app(app: dict) -> set:

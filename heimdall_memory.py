@@ -416,7 +416,7 @@ GRUPOS = [
     hub_notas.GRUPO,
 ]
 CFG = web.Config(
-    chave="memory", nome="Hub", porta_env="STUDIO_HUB_PORT", porta=8021, hosts="memory.heimdall-ai.tech,hub.heimdall-ai.tech,hub.studiolibre.io,localhost,127.0.0.1",
+    chave="memory", nome="Hub", porta_env="STUDIO_HUB_PORT", porta=8021, hosts="hub.studiolibre.io,memory.heimdall-ai.tech,hub.heimdall-ai.tech,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
     get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/apps": pg_apps, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira, **hub_notas.GET},

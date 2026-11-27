@@ -66,6 +66,7 @@ try:
 except ValueError:
     PORT = 8014
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_JOGOS_HOSTS", "games.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK |= __import__("heimdall_links").hosts_padrao("games")   # domínio novo e antigo valem juntos durante a transição
 COOKIE = nuvem.COOKIE
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 

@@ -106,7 +106,7 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 u.BASE = f"http://127.0.0.1:{srv.server_port}"
 
 p = u.plano()
-confere("plano numa conta vazia: tudo a criar", all(i["acao"] == "mudar" for i in p) and "criar o aplicativo de chat.heimdall-ai.tech" in " ".join(i["texto"] for i in p), str([i["texto"] for i in p]))
+confere("plano numa conta vazia: tudo a criar", all(i["acao"] == "mudar" for i in p) and "criar o aplicativo de chat.studiolibre.io" in " ".join(i["texto"] for i in p), str([i["texto"] for i in p]))
 confere("plano não muda nada na Cloudflare", ESTADO["apps"] == [] and ESTADO["pols"] == [])
 res = u.aplicar(p)
 confere("aplicar cria política e aplicativo de cada serviço", len(ESTADO["apps"]) == 13 and len(ESTADO["pols"]) == 13 and all(r.endswith("feito.") for r in res[:13]), str(res))
@@ -124,13 +124,13 @@ pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Games")
 confere("remover tira da política e revoga as sessões", [i["email"]["email"] for i in pn["include"]] == ["dono@x.com"] and ESTADO["revogados"] == ["ana@x.com"], str(res))
 
 # aplicativo compartilhado (vários endereços) e aplicativo só de caminho (RSS): o primeiro não é tocado, o segundo não conta
-ESTADO.update(apps=[{"id": "pes", "name": "Pessoal", "domain": "lab.heimdall-ai.tech", "destinations": [{"type": "public", "uri": h} for h in ("lab.heimdall-ai.tech", "notes.heimdall-ai.tech")], "policies": []},
-                    {"id": "rss", "name": "RSS", "domain": "news.heimdall-ai.tech/rss", "policies": []}], pols=[], chamadas=[])
+ESTADO.update(apps=[{"id": "pes", "name": "Pessoal", "domain": "lab.studiolibre.io", "destinations": [{"type": "public", "uri": h} for h in ("lab.studiolibre.io", "notes.studiolibre.io")], "policies": []},
+                    {"id": "rss", "name": "RSS", "domain": "news.studiolibre.io/rss", "policies": []}], pols=[], chamadas=[])
 p2 = {i["servico"]: i for i in u.plano()}
 confere("aplicativo compartilhado não recebe política de serviço; o de caminho (RSS) não vale como cobertura do host",
         p2["lab"]["acao"] == "nada" and p2["news"]["acao"] == "mudar", str(p2["news"]["texto"]))
 # aplicativo que já existe, sem a nossa política: liga sem apagar o que existe nem as outras políticas
-ESTADO.update(apps=[{"id": "ap1", "aud": "z", "name": "Meu Games", "domain": "games.heimdall-ai.tech", "type": "self_hosted", "session_duration": "12h",
+ESTADO.update(apps=[{"id": "ap1", "aud": "z", "name": "Meu Games", "domain": "games.studiolibre.io", "type": "self_hosted", "session_duration": "12h",
                      "allowed_idps": ["idp-ms"], "policies": [{"id": "outra", "precedence": 1}]}], pols=[], chamadas=[])
 res = u.aplicar(u.plano())
 ap = next(a for a in ESTADO["apps"] if a["id"] == "ap1")

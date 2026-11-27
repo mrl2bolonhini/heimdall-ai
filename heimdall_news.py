@@ -102,6 +102,7 @@ def _inteiro(nome: str, padrao: int, minimo: int = 0) -> int:
 HOST = os.environ.get("STUDIO_NEWS_HOST", "127.0.0.1")
 PORT = _inteiro("STUDIO_NEWS_PORT", 8012, 1)
 HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_NEWS_HOSTS", "news.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK |= __import__("heimdall_links").hosts_padrao("news")   # domínio novo e antigo valem juntos durante a transição
 URL_BASE = os.environ.get("STUDIO_NEWS_URL", "https://news.heimdall-ai.tech").rstrip("/")
 FONTES_ARQ = Path(os.environ.get("STUDIO_NEWS_FONTES", str(PROJECT_DIR / "noticias_fontes.json"))).expanduser()
 MODELO = os.environ.get("STUDIO_NEWS_MODELO", "gemma3-4b")

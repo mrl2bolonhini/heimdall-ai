@@ -277,7 +277,7 @@ GRUPOS = [
     ("Análise", [("/analise", "Sinais"), ("/lista", "Lista")]),
 ]
 CFG = web.Config(
-    chave="trading", nome="Trading", porta_env="STUDIO_TRADING_PORT", porta=8020, hosts="trading.heimdall-ai.tech,localhost,127.0.0.1",
+    chave="trading", nome="Trading", porta_env="STUDIO_TRADING_PORT", porta=8020, hosts="trading.studiolibre.io,trading.heimdall-ai.tech,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/limites", "Limites"), ("/ajustes/cotacoes", "Cotações"), ("/ajustes/conta", "Conta")],
     get={"/mesa": pg_mesa, "/carteira": pg_carteira, "/ordens": pg_ordens, "/historico": pg_historico, "/analise": pg_analise, "/lista": pg_lista,
          "/ajustes/limites": aj_limites, "/ajustes/cotacoes": aj_cotacoes, "/ajustes/conta": aj_conta},
