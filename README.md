@@ -56,7 +56,6 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Studio Learn | 8019 | Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Studio Lab. |
 | Studio Trading | 8020 | Mesa de operações em simulação (porta 8020), feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, histórico, sinais descritivos, limites por ordem e de perda por dia. Nenhuma ordem é enviada a corretora. |
 | Studio Hub | 8021 | Documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende. |
-| Studio Notes | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
 | Studio News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
 | Studio Games | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
 | Studio Finance | 8016 | Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
@@ -124,7 +123,7 @@ bash tests/core/teste_silenciar_docker.sh            # script que impede o Docke
 node cloudflare/teste_caixa.mjs           # Worker da caixa de correio (KV e R2 falsos)
 python3 tests/cloudflare/teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
 python3 tests/cloudflare/teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor STUDIO_NUVEM (sem rede)
-python3 tests/notes/teste_notas.py                   # Studio Notes (sem rede)
+python3 tests/notes/teste_leitura.py                  # leitura das notas do Studio Hub (sem rede)
 python3 tests/learn/teste_learn_dados.py             # Studio Learn: banco e pastas
 python3 tests/learn/teste_learn_site.py              # Studio Learn: site
 python3 tests/learn/teste_learn_estudo.py            # Studio Learn: modo aleatório

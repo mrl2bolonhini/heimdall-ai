@@ -160,6 +160,11 @@ def novo_nome(nome: str) -> str:
     return "STUDIO_" + resto
 
 
+# Variáveis de serviços aposentados: saem sozinhas do .env (o Notes virou a aba Notas do Studio Hub em 27/11/2026).
+REMOVIDAS = ("STUDIO_NOTAS_PORT", "STUDIO_NOTAS_HOST", "STUDIO_NOTAS_HOSTS", "HEIMDALL_NOTAS_PORT", "HEIMDALL_NOTAS_HOST", "HEIMDALL_NOTAS_HOSTS",
+             "STUDIO_BIBLIOTECA_PORT", "HEIMDALL_BIBLIOTECA_PORT")
+
+
 def renomear_antigas() -> list:
     """Troca no .env os nomes antigos (HEIMDALL_*) pelos novos (STUDIO_*), sem perder valor: se o novo já existe, o antigo só sai.
     Faz cópia em .env.bak antes de gravar e devolve os nomes trocados. Roda a cada subida dos serviços e não faz nada quando não há o que trocar."""
@@ -172,6 +177,9 @@ def renomear_antigas() -> list:
         if t.startswith("export "):
             t = t[7:].strip()
         nome = t.split("=", 1)[0].strip() if "=" in t and not t.startswith("#") else ""
+        if nome in REMOVIDAS:
+            trocadas.append(nome)
+            continue
         novo = novo_nome(nome) if nome else ""
         if not novo:
             saida.append(ln)

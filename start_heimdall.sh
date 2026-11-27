@@ -47,7 +47,6 @@ DADOS_MCP_PORT=8004
 TERMINAL_PORT=8002
 AGENTE_PORT="${STUDIO_AGENTE_PORT:-8003}"
 LAB_PORT="${STUDIO_LAB_PORT:-8010}"
-NOTAS_PORT="${STUDIO_NOTAS_PORT:-8011}"
 NEWS_PORT="${STUDIO_NEWS_PORT:-8012}"
 LEARN_PORT="${STUDIO_LEARN_PORT:-8019}"
 TRADING_PORT="${STUDIO_TRADING_PORT:-8020}"
@@ -131,7 +130,6 @@ export STUDIO_AGENTE_TOKEN
 echo "[0/7] Liberando portas em uso..."
 lsof -ti:$AGENTE_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LAB_PORT | xargs kill -9 2>/dev/null
-lsof -ti:$NOTAS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NEWS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LEARN_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$TRADING_PORT | xargs kill -9 2>/dev/null
@@ -549,24 +547,6 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] 
             fi
         done
         echo "     Studio Lab (painel do emulador de AWS) em http://localhost:$LAB_PORT"
-    fi
-fi
-
-# --- Studio Notes (site para ler as notas de estudo e ouvir os áudios): mesmo login do Studio Lab ---
-# Escuta só em 127.0.0.1; o acesso público, se você quiser, vem do túnel Cloudflare (memory.heimdall-ai.tech).
-if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_notas.py ]; then
-        STUDIO_NOTAS_PORT="$NOTAS_PORT" "$VENV_PYTHON" heimdall_notas.py > "$(nova_log notas_debug)" 2>&1 &
-        COUNTER=0
-        while ! nc -z localhost $NOTAS_PORT > /dev/null 2>&1; do
-            sleep 1
-            COUNTER=$((COUNTER+1))
-            if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Studio Notes não respondeu em 10s. Veja logs/notas_debug.log."
-                break
-            fi
-        done
-        echo "     Studio Notes (notas e áudios) em http://localhost:$NOTAS_PORT"
     fi
 fi
 

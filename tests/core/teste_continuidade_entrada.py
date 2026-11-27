@@ -63,7 +63,7 @@ spec = importlib.util.spec_from_file_location("entrada", RAIZ / "cloudflare" / "
 entrada = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(entrada)
 entrada.SERVICOS = [("heimdall_finance.py", "STUDIO_FINANCE_PORT", p_fin)]
-confere("a lista de serviços aponta para arquivos que existem", all((RAIZ / m).exists() for m, _, _ in [(x[0], 0, 0) for x in [("heimdall_finance.py",), ("heimdall_painel_saude.py",), ("heimdall_notas.py",), ("heimdall_news.py",), ("heimdall_learn.py",), ("heimdall_jogos.py",), ("heimdall_account.py",)]]))
+confere("a lista de serviços aponta para arquivos que existem", all((RAIZ / m).exists() for m, _, _ in [(x[0], 0, 0) for x in [("heimdall_finance.py",), ("heimdall_painel_saude.py",), ("heimdall_news.py",), ("heimdall_learn.py",), ("heimdall_jogos.py",), ("heimdall_account.py",)]]))
 
 # falha de restauração: sai com erro e não fica pronto
 hc.restaurar = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("não há cópia de continuidade no R2"))

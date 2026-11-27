@@ -18,7 +18,7 @@ from pathlib import Path
 
 AQUI = RAIZ
 sys.path.insert(0, str(AQUI))
-PAINEIS = ["heimdall_lab.py", "heimdall_notas.py", "heimdall_news.py", "heimdall_painel_saude.py", "heimdall_jogos.py", "heimdall_finance.py", "heimdall_controls.py"]
+PAINEIS = ["heimdall_lab.py", "heimdall_news.py", "heimdall_painel_saude.py", "heimdall_jogos.py", "heimdall_finance.py", "heimdall_controls.py"]
 ACAO = re.compile(r"^(Baixar|Atualizar|Continuar|Confirmar|Conferir|Alterar|Classificar|Importar|Salvar|Apagar|Enviar|Ver\b|Pr[óo]xim[ao]|Anterior|P[áa]gina|Nota anterior|Subir)", re.I)
 ANCORA = re.compile(r"<a\b([^>]*)>([^<{]*)</a>")
 

@@ -40,7 +40,7 @@ for k in ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "STUDIO_SUPORTE_PARA", "C
 
 # ---- conteúdo ----
 chaves = [k for k in aj.SERVICOS if k != "geral"]
-confere("há perguntas frequentes gerais e de todos os serviços com página própria", aj.FAQ.get("geral") and all(aj.FAQ.get(k) for k in ("account", "controls", "finance", "saude", "notas", "news", "learn", "jogos", "lab", "chat")))
+confere("há perguntas frequentes gerais e de todos os serviços com página própria", aj.FAQ.get("geral") and all(aj.FAQ.get(k) for k in ("account", "controls", "finance", "saude", "news", "learn", "jogos", "lab", "chat")))
 confere("cada pergunta tem resposta e nada de gíria ou tom pessoal nas respostas", all(q.strip() and r.strip() and not re.search(r"\b(cara|mano|beleza|tá|né|pra)\b", r.lower()) for itens in aj.FAQ.values() for q, r in itens))
 titulo, corpo = aj.pagina_ajuda("tok", "finance")
 confere("ajuda: um só h1, FAQ do serviço antes do geral e formulário no fim", corpo.count("<h1>") == 1 and corpo.index("Perguntas frequentes: Finance") < corpo.index("Perguntas frequentes: Geral") < corpo.index("Falar com o suporte"))
@@ -231,37 +231,20 @@ for k in ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "
 # ---- rodapé de todos os serviços ----
 r = design.rodape(servico="finance")
 confere("rodapé: Ajuda e suporte (com o serviço), Termos de Uso e Privacidade, antes do Voltar para o topo", "/ajuda?servico=finance" in r and "/termos-de-uso" in r and "/politica-de-privacidade" in r and r.index("Privacidade") < r.index("Voltar para o topo") and 'aria-label="Ajuda e informações"' in r)
-fontes = {"controls": "heimdall_controls.py", "finance": "heimdall_finance.py", "saude": "heimdall_painel_saude.py", "notas": "heimdall_notas.py", "news": "heimdall_news.py",
+fontes = {"controls": "heimdall_controls.py", "finance": "heimdall_finance.py", "saude": "heimdall_painel_saude.py", "memory": "heimdall_servico_web.py", "news": "heimdall_news.py",
           "learn": "heimdall_learn.py", "jogos": "heimdall_jogos.py", "lab": "heimdall_lab.py", "account": "heimdall_account.py"}
 confere("todos os serviços com página própria passam a chave do serviço ao rodapé", all(f'design.rodape(' in (RAIZ / f).read_text(encoding="utf-8") and (f'"{k}"' in (RAIZ / f).read_text(encoding="utf-8")) for k, f in fontes.items()))
 confere("as chaves do rodapé existem na ajuda", all(k in aj.SERVICOS for k in fontes))
 
 import re as _re
 _t, _c = aj.pagina_ajuda("tok")
-confere("guia de comandos na Ajuda: sistemas, tabela com caption e scope, iPhone e Android", all(x in _c for x in ("macOS", "Linux", "Windows", "iPhone e Android", 'id="comandos-saude"', "<caption>Comandos do Health", 'scope="row"')))
-_ok = True
-for _a, _m, _p in aj.COMANDOS_HEALTH:
-    for _parte in _p.split(" | "):
-        _scr = _re.search(r"(heimdall_\w+\.py)", _p).group(1)
-        _fonte = (RAIZ / _scr).read_text(encoding="utf-8")
-        for _opt in _re.findall(r"--[a-z-]+", _parte):
-            _ok = _ok and f'"{_opt}"' in _fonte
-confere("guia de comandos: toda opção em Python existe no script", _ok)
-_ok2 = True
-for _a, _m, _p in aj.COMANDOS_ADMIN:
-    _s = _re.search(r"(\w+\.py)", _p)
-    if _s:
-        _fonte = (RAIZ / _s.group(1)).read_text(encoding="utf-8")
-        for _opt in _re.findall(r"--([a-z-]+)", _p):
-            _ok2 = _ok2 and (f'"--{_opt}"' in _fonte or f'"{_opt}"' in _fonte)
-    for _opt in _re.findall(r"heimdall (\w+)", _m):
-        _ok2 = _ok2 and f"    {_opt})" in (RAIZ / "heimdall.zsh").read_text(encoding="utf-8") or f"{_opt}|" in (RAIZ / "heimdall.zsh").read_text(encoding="utf-8")
+confere("Atalhos e dispositivos na Ajuda: iPhone e Android, sem tabela de comandos de terminal", all(x in _c for x in ("iPhone e Android", "Atalhos e dispositivos")) and "Comandos do Health" not in _c)
+_corpo_faq = " ".join(t + " " + r for v in aj.FAQ.values() for t, r in v)
+confere("a Ajuda do produto não traz comandos do dono (terminal, .env, python3, porta, studio)", not _re.search(r"\bstudio [a-z]+ --|python3 |\.env|\bheimdall [a-z]+|localhost|docker |brew |pip ", _c + " " + _corpo_faq), "")
 confere("atalhos de teclado: tabela com caption e scope, com a forma do macOS e a do Windows e Linux em cada linha",
         'id="atalhos"' in _c and "<caption>Atalhos de teclado por sistema" in _c and 'Windows e Linux</th>' in _c and len(aj.ATALHOS) >= 10 and all(a and m and w for a, m, w in aj.ATALHOS))
 confere("atalhos: a forma do Windows e Linux é a do macOS com Option por Alt e Control por Ctrl (nada mais muda)",
         all(m.replace("Option", "Alt").replace("Control", "Ctrl") == w for _a2, m, w in aj.ATALHOS), [w for _a2, m, w in aj.ATALHOS if m.replace("Option", "Alt").replace("Control", "Ctrl") != w])
 confere("atalhos: o menu Mais tem um só atalho (5), sem o 0 antigo", sum("menu Mais" in a for a, _m, _w in aj.ATALHOS) == 1 and "Option+Shift+0" not in _c and "Alt+Shift+0" not in _c)
-confere("guia de comandos: tabela de administração com caption, e toda opção existe no script ou no heimdall.zsh",
-        _ok2 and 'id="comandos-admin"' in _c and "<caption>Comandos de administração" in _c)
 print("\nFALHAS:", falhas)
 raise SystemExit(1 if falhas else 0)

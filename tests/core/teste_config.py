@@ -59,6 +59,10 @@ confere("renomear_antigas: troca porta e endereços pelos nomes do Lab", lido.ge
 confere("renomear_antigas: senha e código continuam com o nome de sempre", lido.get("HEIMDALL_CLOUD_SENHA_HASH") == "x" and lido.get("HEIMDALL_CLOUD_TOTP_SEGREDO") == "y")
 confere("renomear_antigas: se o novo já existe, vale o novo e o antigo sai", lido.get("STUDIO_LAB_MAX_MB") == "9" and "HEIMDALL_CLOUD_MAX_MB" not in lido and len(trocadas) == 3, str(trocadas))
 confere("renomear_antigas: de novo não muda nada e faz cópia na primeira vez", c.renomear_antigas() == [] and (tmp / ".env.bak").exists())
+c.ARQUIVO.write_text("STUDIO_NOTAS_PORT='8011'\nSTUDIO_NOTAS_HOSTS='notes.x'\nSTUDIO_NOTAS_RAIZ='Studio Hub'\nSTUDIO_LAB_PORT='8010'\n", encoding="utf-8")
+rem = c.renomear_antigas()
+lido = {d["nome"]: d["valor"] for d in c.ler()}
+confere("variáveis do serviço Notes aposentado saem do .env; as demais ficam", sorted(rem) == ["STUDIO_NOTAS_HOSTS", "STUDIO_NOTAS_PORT"] and "STUDIO_NOTAS_PORT" not in lido and lido.get("STUDIO_NOTAS_RAIZ") == "Studio Hub" and lido.get("STUDIO_LAB_PORT") == "8010", str(lido))
 
 _op = c.opcoes_do_codigo()
 for _n in ("STUDIO_CONTINUIDADE", "HEIMDALL_CONTINUIDADE_SENHA", "HEIMDALL_CF_ALERTA_EMAIL"):

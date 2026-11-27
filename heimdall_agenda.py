@@ -27,8 +27,8 @@ DESTINOS = {
     "renovacao_receita": (EVENTO, "dia de dar entrada no pedido de renovação, alguns dias antes de a receita vencer", "studio health --labs: receita confirmada com validade"),
     "prazo_oficial": (EVENTO, "data-limite de um comunicado oficial (dia inteiro)", "heimdall_email_oficial.py: e-mail oficial confirmado"),
     "verificar_prazo": (LEMBRETE, "conferir o comunicado oficial, com hora, até você concluir", "heimdall_email_oficial.py"),
-    "evento_nota": (EVENTO, "compromisso com data (e hora) achado numa nota escrita no Studio Notes", "heimdall_catalogo.py: nota catalogada pela IA local"),
-    "lembrete_nota": (LEMBRETE, "algo a fazer, com data, achado numa nota escrita no Studio Notes", "heimdall_catalogo.py: nota catalogada pela IA local"),
+    "evento_nota": (EVENTO, "compromisso com data (e hora) achado numa nota escrita no Catálogo do Studio Hub", "heimdall_catalogo.py: nota catalogada pela IA local"),
+    "lembrete_nota": (LEMBRETE, "algo a fazer, com data, achado numa nota escrita no Catálogo do Studio Hub", "heimdall_catalogo.py: nota catalogada pela IA local"),
     "sugestao_saude": (LEMBRETE, "algo a fazer sugerido pelo Studio Health (marcar retorno, pedir renovação); só depois que você aceita a sugestão", "heimdall_clinico.py: sugestão aceita"),
     "sugestao_saude_evento": (EVENTO, "compromisso com data fixa vindo de uma sugestão do Studio Health (retirada de pontos, consulta já marcada); só depois que você aceita a sugestão", "heimdall_clinico.py: sugestão aceita com data"),
 }

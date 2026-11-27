@@ -307,8 +307,7 @@ def _bloco_versoes() -> str:
     atencao = ('<p role="status">Atenção: ' + e(" ".join(av)) + "</p>") if av else ""
     return ('<h2>Versões instaladas</h2>' + atencao + '<table><caption>Versões do Mac, do Docker e dos serviços</caption><thead><tr><th scope="col">Item</th><th scope="col">Versão</th>'
             f'<th scope="col">Detalhe</th></tr></thead><tbody>{linhas}</tbody></table>'
-            f'<p>A lista é atualizada a cada 10 minutos. Para comparar com as imagens mais novas do registro, veja o <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; '
-            'na aba Terminal, a saída aparece na própria página.</p>')
+            f'<p>A lista é atualizada a cada 10 minutos. A aba Terminal mostra a saída dos comandos na própria página.</p>')
 
 
 def pg_inicio(q: dict, sess: dict) -> tuple:
@@ -369,7 +368,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<div id="area-copia" hidden><label for="texto-copia">Se o navegador não deixar copiar sozinho, selecione tudo neste campo (Command+A no Mac, Ctrl+A no Windows e no Linux) e copie (Command+C no Mac, Ctrl+C no Windows e no Linux)</label>'
         '<textarea id="texto-copia" readonly></textarea></div></section>'
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
-        '<p>Funcionam em qualquer ponto desta página. No Windows e no Linux, use Alt no lugar de Option e Ctrl no lugar de Control ou Command; a lista completa está no Guia de comandos da Ajuda.</p><ol>'
+        '<p>Funcionam em qualquer ponto desta página. No Windows e no Linux, use Alt no lugar de Option e Ctrl no lugar de Control ou Command; a lista completa está em Atalhos e dispositivos, na Ajuda.</p><ol>'
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
         '<li>Ctrl+I: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I completa (é o Tab do terminal de verdade). O Tab fica livre para mover o foco pela página. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
         '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
@@ -383,7 +382,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
     return "Terminal", corpo
 
 
-LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data", "agente": "Mac Agent", "lab": "Lab", "notas": "Notes", "learn": "Learn", "trading": "Trading", "memory": "Memory", "news": "News",
+LOGS_OK = {"mcp": "MCP Mac", "mcp_public": "MCP public", "mcp_dados": "MCP data", "agente": "Mac Agent", "lab": "Lab", "learn": "Learn", "trading": "Trading", "memory": "Memory", "news": "News",
            "saude_painel": "Health", "jogos": "Games", "finance": "Finance", "controls": "Controls", "ingest": "Ingest"}
 # ação -> (rótulo, comando, o que faz). Só estas viram botão; o texto livre vai pelo terminal. Start e Stop têm código próprio.
 ACOES = {
@@ -452,13 +451,13 @@ def _linha_config(i: int, nome: str, valor: str, padrao: str = "", definida: boo
 # Variáveis que o prefixo não agrupa direito: nome sem HEIMDALL_ -> grupo
 DESTINO = {"ANOMALIAS_LEMBRETE_H": "Health", "AGENDA_DETALHES": "Health", "RENOVACAO_DIAS": "Health", "APPS_FECHAR": "Mac Agent", "AWS_EMULATOR": "AWS Emulator",
            "AWS_EMULATOR_INICIO": "AWS Emulator", "LOCALSTACK_DOCKER": "AWS Emulator", "BARK_KEY": "Alertas", "COOKIE_DOMINIO": "Lab", "CODE_MODEL": "Modelos de IA", "FLOW_MODEL": "Modelos de IA",
-           "EMBED_MODEL": "Modelos de IA", "SEGURANCA_MODELO": "Modelos de IA", "ESTUDO_AUDIO": "Voz", "GITHUB_TOKEN": "GitOps", "VAULT_DIR": "Notes",
-           "PASTAS_PROPRIAS": "Notes", "SERVICOS_ESPERA_S": "Controls", "TERMINAL_HOST": "Controls", "BASE_DIR": "Gerais", "DATA_DIR": "Gerais", "DB_DIR": "Gerais",
+           "EMBED_MODEL": "Modelos de IA", "SEGURANCA_MODELO": "Modelos de IA", "ESTUDO_AUDIO": "Voz", "GITHUB_TOKEN": "GitOps", "VAULT_DIR": "Hub",
+           "PASTAS_PROPRIAS": "Hub", "SERVICOS_ESPERA_S": "Controls", "TERMINAL_HOST": "Controls", "BASE_DIR": "Gerais", "DATA_DIR": "Gerais", "DB_DIR": "Gerais",
            "KNOWLEDGE_DIR": "Gerais", "PROJECT_DIR": "Gerais", "TZ": "Gerais", "OAB": "Gerais", "BACKUP_DESTINO": "Backup na nuvem (R2)",
            "SUBIR_VOZ": "Voz", "SUBIR_VOZ_PPM": "Voz"}
 
 
-CATEGORIAS = {"CLOUD": "Lab", "LAB": "Lab", "CONTROLS": "Controls", "NOTAS": "Notes", "NEWS": "News", "SAUDE": "Health", "JOGOS": "Games", "FINANCE": "Finance", "AGENTE": "Mac Agent",
+CATEGORIAS = {"CLOUD": "Lab", "LAB": "Lab", "CONTROLS": "Controls", "NOTAS": "Hub", "NEWS": "News", "SAUDE": "Health", "JOGOS": "Games", "FINANCE": "Finance", "AGENTE": "Mac Agent",
               "KUMA": "Uptime Kuma", "MCP": "MCP", "WEBUI": "Open WebUI", "N8N": "n8n", "R2": "Backup na nuvem (R2)", "BACKUP": "Backup na nuvem (R2)", "CFACCESS": "Cloudflare", "CLOUDFLARE": "Cloudflare", "CF": "Cloudflare",
               "TRIAGEM": "Triagem", "EMAIL": "Vigia de e-mails", "EMAILS": "Vigia de e-mails", "LITELLM": "LiteLLM", "OLLAMA": "Ollama", "GERAL": "Gerais", "ALERT": "Alertas", "EXAMES": "Exames", "GITOPS": "GitOps", "MONITOR": "Monitoramento", "PERGUNTAR": "Perguntar", "VOZ": "Voz", "ACCOUNT": "Account", "SUBIR": "Subida dos serviços"}
 

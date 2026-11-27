@@ -122,7 +122,7 @@ _FRASE_COMANDO = re.compile(r"(?i)heimdall\s+(?:health|finance|news|notes|update
 
 
 def sem_comandos(texto: str) -> str:
-    """Tira das telas as frases que ensinam comandos de terminal (elas ficam na Ajuda, no Guia de comandos, por sistema operacional) e os avisos de 'não é diagnóstico' (um só, no rodapé)."""
+    """Tira das telas as frases que ensinam comandos de terminal (elas ficam no catálogo de comandos do dono) e os avisos de 'não é diagnóstico' (um só, no rodapé)."""
     saida = []
     for linha in (texto or "").split("\n"):
         partes = re.split(r"(?<=[.!?])\s+", linha)
@@ -349,7 +349,7 @@ def pg_exames(q: dict) -> tuple:
         return "Exame: " + nome, corpo
     linhas = exames.ultimos_por_exame()
     if not linhas:
-        return "Exames", f'<p>Ainda não há resultados de exames confirmados. <a href="{design.base_ajuda()}/ajuda?servico=saude#comandos-saude">Como enviar documentos</a>.</p>' + AVISO_EXAMES
+        return "Exames", f'<p>Ainda não há resultados de exames confirmados.</p>' + AVISO_EXAMES
     cab = "".join(f'<th scope="col">{c}</th>' for c in ("Exame", "Data", "Resultado", "Referência do laboratório", "Situação", "Histórico"))
     corpo_t = []
     for r in linhas:
@@ -366,7 +366,7 @@ def pg_documentos(q: dict) -> tuple:
     corpo = ""
     if pend:
         corpo += (f'<p role="status">{len(pend)} documento(s) aguardam a sua conferência. '
-                  f'<a href="{design.base_ajuda()}/ajuda?servico=saude#comandos-saude">Como conferir</a>.</p>')
+                  'Confira cada um antes de ele entrar nos seus registros.</p>')
     docs = exames.listar_documentos()
     if docs:
         cab = "".join(f'<th scope="col">{c}</th>' for c in ("Número", "Tipo", "Data", "Situação", "Origem"))

@@ -553,7 +553,7 @@ def pg_entrar(erro: str = "") -> bytes:
 def pg_inicio() -> str:
     s = saude_emulador()
     if not s["ok"]:
-        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda e está desligado agora. Quem administra o StudioLibre pode ligá-lo no Controls, aba Serviços, ou pelo <a href="{e(design.base_ajuda())}/ajuda#comandos-admin">Guia de comandos</a>; depois, recarregue esta página.</p>'
+        estado = f'<p class="erro" role="alert">O emulador não respondeu em {e(ENDPOINT)}. Detalhe: {e(s["erro"])}. O emulador sobe sob demanda e está desligado agora. Quem administra o StudioLibre pode ligá-lo no Controls, aba Serviços; depois, recarregue esta página.</p>'
         tabela = ""
     else:
         rodando = sorted(k for k, v in s["servicos"].items() if str(v) in ("running", "ready"))
@@ -1345,7 +1345,7 @@ def novo_segredo_totp() -> str:
 def mostrar_segredo(segredo: str) -> None:
     grupos = " ".join(segredo[i:i + 4] for i in range(0, len(segredo), 4))
     print("\nCódigo de verificação de 6 dígitos (TOTP). Cadastre no app Senhas da Apple:")
-    print("1. Abra o item que você usa para o login do StudioLibre (lab, notes e news usam o mesmo código) e apague o código de verificação antigo.")
+    print("1. Abra o item que você usa para o login do StudioLibre (lab e news usam o mesmo código) e apague o código de verificação antigo.")
     print("2. Escolha adicionar código de verificação e depois inserir a chave de configuração (o nome exato do botão varia com a versão do sistema).")
     print("3. Digite a chave abaixo, que gera 6 dígitos, troca a cada 30 segundos e usa SHA-1:")
     print("   " + grupos)
@@ -1407,7 +1407,7 @@ def definir_acesso(modo: str) -> None:
         print("O código de 6 dígitos continua o mesmo.")
     if segredo:
         mostrar_segredo(segredo)
-    print("\nA senha e o código valem para o Studio Lab, o Studio Notes e o Studio News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
+    print("\nA senha e o código valem para o Studio Lab e o Studio News. Para valer, reinicie tudo: ./subir.sh --reiniciar")
     if modo in ("tudo", "senha"):
         aplicar_no_webui(s1)
         aplicar_no_kuma()

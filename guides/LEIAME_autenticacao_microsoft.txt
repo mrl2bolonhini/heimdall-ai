@@ -5,7 +5,7 @@ O que você vai ter no fim: ao abrir lab, notas, news, saúde ou jogos .heimdall
 
 Ordem do login (importante): primeiro o e-mail e a senha da Microsoft, e só depois, se a senha estiver certa, a notificação no celular. Quem não sabe a senha nunca faz o seu celular tocar. A tela do Cloudflare antes disso só mostra o botão da Microsoft e não manda nada ao celular. Um risco que sobra: alguém que descobrisse a senha geraria notificações; o número que você precisa digitar no celular (e que só aparece na tela de quem está logando) impede que um "aprovar" distraído deixe o intruso entrar. Use uma senha longa e única para esse usuário.
 
-Mais de uma pessoa: cada pessoa tem o seu usuário na Microsoft (você cria no diretório) e o seu Authenticator. Você decide em quais endereços cada uma entra. Por exemplo: só você nos painéis pessoais (cloud, notes, news, health, finance) e você mais convidados em games.
+Mais de uma pessoa: cada pessoa tem o seu usuário na Microsoft (você cria no diretório) e o seu Authenticator. Você decide em quais endereços cada uma entra. Por exemplo: só você nos painéis pessoais (lab, news, health, finance) e você mais convidados em games.
 
 Como funciona por baixo: o Cloudflare Access fica na frente dos endereços públicos, usa a Microsoft (Entra ID) para identificar você e entrega aos painéis um documento assinado. O módulo heimdall_cfaccess.py confere a assinatura e abre a sessão. O código está pronto e testado, mas desligado: nada muda até você fazer os passos abaixo e preencher o .env.
 
@@ -38,7 +38,7 @@ B0. Habilitar o Zero Trust (verificado pela API em 16/11: o Access ainda NÃO es
 O túnel já existe e está saudável, mas o Access (parte do Zero Trust) responde "not enabled". Isso se resolve no painel, porque exige aceitar termos e escolher o plano:
 1. Entre em dash.cloudflare.com, abra Zero Trust (no menu lateral) e siga o cadastro: escolha um nome de equipe (por exemplo heimdall) e o plano Free, que cobre até 50 usuários. O Cloudflare pode pedir um método de pagamento mesmo no plano gratuito; se pedir, é você quem informa.
 2. O nome da equipe vira nomedaequipe.cloudflareaccess.com. A parte antes de ".cloudflareaccess.com" é o que vai no .env.
-3. Me avise quando terminar. Com o Access ativo, eu consigo criar o aplicativo e a política pelo MCP da Cloudflare (aplicativo com os nomes lab, notes, news, health, games e finance, política só para o seu e-mail da Microsoft, e o desvio do feed RSS), e você só confere. A parte do provedor Microsoft (ID, segredo e diretório) continua com você, porque o segredo nunca deve passar por mim.
+3. Me avise quando terminar. Com o Access ativo, eu consigo criar o aplicativo e a política pelo MCP da Cloudflare (aplicativo com os nomes lab, news, health, games e finance, política só para o seu e-mail da Microsoft, e o desvio do feed RSS), e você só confere. A parte do provedor Microsoft (ID, segredo e diretório) continua com você, porque o segredo nunca deve passar por mim.
 
 B1. Registrar o aplicativo na Microsoft (para o Cloudflare poder usar o login dela)
 1. No Entra (entra.microsoft.com): Aplicativos, Registros de aplicativo, Novo registro. Nome: Heimdall Access. Tipo de conta: somente este diretório. URI de redirecionamento, plataforma Web: https://NOMEDAEQUIPE.cloudflareaccess.com/cdn-cgi/access/callback (troque NOMEDAEQUIPE).
@@ -52,7 +52,7 @@ B2. Ligar a Microsoft no Cloudflare
 
 B3. Proteger os endereços (dois aplicativos do Access, para poder liberar pessoas diferentes)
 1. Zero Trust, Controles de acesso, Aplicativos, Adicionar aplicativo, Autohospedado.
-2. Aplicativo "Heimdall pessoal": nomes lab, notes, news, health e finance, todos em .heimdall-ai.tech. Política: ação Permitir; regra Incluir, e-mail igual ao seu usuário da Microsoft. Só você entra.
+2. Aplicativo "Heimdall pessoal": nomes lab, news, health e finance, todos em .heimdall-ai.tech. Política: ação Permitir; regra Incluir, e-mail igual ao seu usuário da Microsoft. Só você entra.
 3. Aplicativo "Heimdall games": nome games.heimdall-ai.tech. Política: Permitir, e-mails iguais ao seu e aos dos convidados. Para dar acesso a mais alguém, é só acrescentar o e-mail aqui (e criar o usuário dele na Microsoft).
 4. Nos dois, em "Métodos de login" deixe só a Microsoft (desmarque o PIN por e-mail, senão ele vira uma porta alternativa) e ligue "Aplicar autenticação instantânea": assim o Cloudflare manda direto para a tela de e-mail e senha da Microsoft.
 5. Em cada aplicativo, copie a AUD tag (Editar aplicativo, Configurações adicionais). São duas tags diferentes.

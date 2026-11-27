@@ -13,7 +13,6 @@ const ALVOS = [
   ["Chat", "https://chat.heimdall-ai.tech/health"],
   ["Automações", "https://flows.heimdall-ai.tech/healthz"],
   ["Lab", "https://lab.heimdall-ai.tech/saude"],
-  ["Notas", "https://notes.heimdall-ai.tech/saude"],
   ["News", "https://news.heimdall-ai.tech/saude"],
   ["Saúde", "https://health.heimdall-ai.tech/saude"],
 ];

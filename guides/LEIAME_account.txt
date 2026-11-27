@@ -2,9 +2,9 @@ Account (account.heimdall-ai.tech)
 
 O que é: a porta de entrada do ecossistema. Quem entra pelo Cloudflare Access (conta Microsoft + Authenticator) vê um tour dos serviços do Heimdall a que tem acesso: link para cada um, o que faz e como configurar. O texto de cada serviço fica em heimdall_conta_info.py (um lugar só, para acrescentar serviços e, no futuro, explicar o multiusuário de Health e Finance).
 
-Quem vê o quê: o dono vê todos os serviços; o convidado, só os liberados para ele na aba Usuários do Controls (Lab, Notes, News, Games, Chat). Todo e-mail de dono ou convidado entra no Account, sem escolher.
+Quem vê o quê: o dono vê todos os serviços; o convidado, só os liberados para ele na aba Usuários do Controls (Lab, News, Games, Chat). Todo e-mail de dono ou convidado entra no Account, sem escolher.
 
-Os nomes dos serviços aparecem sempre como eles se chamam (Studio Lab, Studio Notes, Studio News, Studio Health, Studio Games, Studio Finance, Controls, Chat, Flows, Status, Account), sem tradução. A tabela está em heimdall_conta.py (NOMES).
+Os nomes dos serviços aparecem sempre como eles se chamam (Studio Lab, Studio Hub, Studio News, Studio Health, Studio Games, Studio Finance, Controls, Chat, Flows, Status, Account), sem tradução. A tabela está em heimdall_conta.py (NOMES).
 
 Menu Conta: o mesmo no alto de Lab, Notas, News, Saúde, Jogos, Finance e Controls: nome e e-mail, como entrou e links dos serviços.
 

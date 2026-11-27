@@ -60,7 +60,7 @@ s, hd, b = pedir("/quem.json", origem="https://heimdall-ai.tech")
 confere("quem.json sem Access: 401 com logado=false e CORS para o site", s == 401 and json.loads(b) == {"logado": False} and hd.get("access-control-allow-origin") == "https://heimdall-ai.tech", f"{s} {hd}")
 
 s, hd, b = pedir("/", jwt="tokdono")
-confere("dono: página do tour com todos os serviços, nomes reais", s == 200 and all(x in b for x in ("Studio Lab", "Studio Notes", "Studio Health", "Studio Games", "Studio Finance", "Controls", "Open WebUI", "n8n", "Uptime Kuma")), b[:300])
+confere("dono: página do tour com todos os serviços, nomes reais", s == 200 and all(x in b for x in ("Studio Lab", "Studio Hub", "Studio Health", "Studio Games", "Studio Finance", "Controls", "Open WebUI", "n8n", "Uptime Kuma")), b[:300])
 confere("dono: Finance e Saúde explicam o multiusuário e o aviso de serviço do dono", "contas bancárias" in b and "serviços de saúde" in b and "Este serviço é do dono" in b)
 confere("página: lang pt-BR, um só h1, pular para o conteúdo, voltar ao topo e sem script", 'lang="pt-BR"' in b and b.count("<h1>") == 1 and 'class="pular"' in b and 'href="#topo"' in b and 'id="topo"' in b and "<script" not in b)
 confere("página: menu Conta com nome e e-mail", "Conta: Murillo" in b and "Murillo (dono@x.com)" in b)

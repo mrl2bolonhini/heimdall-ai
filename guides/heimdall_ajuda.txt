@@ -59,7 +59,7 @@ Sem opção mostra as últimas 40 linhas do log da subida atual.
 Opções:
   -l, --list           lista os arquivos de log em logs/
   -c, --clean          apaga os logs antigos que ficavam soltos na pasta do projeto
-  -s, --service NOME   últimas linhas do log de um serviço: mcp, mcp-public, mcp-data, agent, cloud, notes, news, health, games, finance, terminal, ingest
+  -s, --service NOME   últimas linhas do log de um serviço: mcp, mcp-public, mcp-data, agent, lab, learn, news, health, games, finance, terminal, ingest
   -h, --help           mostra esta ajuda
 Exemplos:
   studio logs
@@ -106,7 +106,7 @@ Sem opção, abre o site de estudos (porta 8019), com um Resumo em texto (quanto
 Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
   -s, --sync           cadastra no banco as pastas que já existem em knowledge/ (categoria aleatório, tipo Outro)
-  -m, --migrate        mostra o que seria levado dos estudos antigos (Notes) para o Learn, sem gravar nada
+  -m, --migrate        mostra o que seria levado dos estudos antigos (do antigo Notes) para o Learn, sem gravar nada
   -a, --apply          com --migrate, grava a migração (estado "importado"; os originais ficam onde estão)
   -h, --help           mostra esta ajuda
 Exemplos:
@@ -201,7 +201,6 @@ Opções:
   --labs discard ID    joga o documento fora sem gravar nada
   --labs certificates  atestados e afastamentos confirmados (dias, período e CID)
   --labs reports       laudos de imagem e procedimentos confirmados (título e conclusão, ou a análise quando não há conclusão)
-  (Os comandos do Health, por sistema operacional, estão também em Ajuda e suporte, na seção Guia de comandos.)
   --labs suggestions   sugestões de acompanhamento (retorno, exame, perguntas); subcomandos: refresh, all, accept ID [--date AAAA-MM-DD] [--time HH:MM] (com data fixa vira evento no Calendário; sem data, lembrete), dismiss ID, snooze ID DIAS, answer ID TEXTO
   --labs profile       perfil de saúde: condições, cirurgias, alergias, convênio; subcomandos: add TIPO TEXTO, remove ID, done; também em Ajustes, subaba Perfil de saúde, do painel (oferecida no primeiro acesso); fica no banco de cada pessoa
   --labs requests      exames pedidos pelo médico, com o código TUSS (ainda sem resultado)
@@ -336,7 +335,7 @@ Exemplos:
   studio dozzle
 
 @ urls | Todos os endereços locais
-Lista os endereços de chat, notes, news, cloud, health, games, finance, n8n, kuma e dozzle, com as portas do seu .env. Com --public lista os endereços públicos (https), que passam pelo Cloudflare Access e são os que o app do Mac abre; com --public --check confere, sem entrar, se cada um está mesmo atrás do Access.
+Lista os endereços de chat, learn, trading, hub, news, lab, health, games, finance, n8n, kuma e dozzle, com as portas do seu .env. Com --public lista os endereços públicos (https), que passam pelo Cloudflare Access e são os que o app do Mac abre; com --public --check confere, sem entrar, se cada um está mesmo atrás do Access.
 Opções:
   -p, --public         lista os endereços públicos (os do Cloudflare Access)
   -c, --check          com --public, confere se cada endereço está protegido pelo Access
@@ -345,7 +344,7 @@ Exemplos:
   studio urls
   studio urls --public --check
 
-@ notion | Confere a ligação do Studio Notes com o Notion
+@ notion | Confere a ligação do Studio Hub com o Notion
 Mostra, para ideias, contatos e endereços, se o token e o banco de dados do Notion estão no .env e se a integração enxerga o banco. O Notion só recebe notas comuns; saúde e finanças nunca vão para lá.
 Como ligar, sem colar segredo em conversa: crie uma integração interna em notion.so/profile/integrations, compartilhe com ela os três bancos de dados (ideias, contatos, endereços), copie o token com Command+C e rode: studio env --set STUDIO_NOTION_TOKEN. Depois copie o endereço de cada banco e rode: studio env --set STUDIO_NOTION_DB_IDEIAS (e _CONTATOS, _ENDERECOS), uma vez para cada. Por fim rode studio notion e reinicie o agente com studio update --restart.
 Opções:
@@ -354,7 +353,7 @@ Exemplos:
   studio notion
 
 @ cloudai | Modelo grande na nuvem (gpt-oss-120b)
-Mostra se o modelo grande da Cloudflare está ligado e, se estiver, faz uma pergunta de teste. Com o interruptor ligado, as perguntas do StudioLibre (Notes, Finance e os demais que usam o Perguntar) vão primeiro à nuvem, pelo gateway de IA com teto de US$ 10 por mês e sem guardar o conteúdo; se a nuvem falhar, voltam sozinhas ao modelo local. Não precisa reiniciar.
+Mostra se o modelo grande da Cloudflare está ligado e, se estiver, faz uma pergunta de teste. Com o interruptor ligado, as perguntas do StudioLibre (Hub, Finance e os demais que usam o Perguntar) vão primeiro à nuvem, pelo gateway de IA com teto de US$ 10 por mês e sem guardar o conteúdo; se a nuvem falhar, voltam sozinhas ao modelo local. Não precisa reiniciar.
 O campo Perguntar dos sites usa, com a nuvem ligada, o Qwen3 30B sem raciocínio (STUDIO_NUVEM_PERGUNTAR_MODELO troca) e, se a nuvem falhar ou estiver desligada, o modelo local; Option+Shift+P leva ao campo, Enter envia e Shift+Enter pula linha. O Perguntar do News enxerga os 30 dias de notícias do banco: o modelo escolhe categorias, depois títulos, e só as notícias que servem são lidas, o que poupa tokens. O Lab também tem o Perguntar: ele enxerga o que existe no emulador (buckets, funções, bancos, tabelas, consultas) e ajuda a montar recursos e tirar dúvidas de AWS, sem executar nada. O chat do Open WebUI também usa a nuvem (modelos Alerts, Health, Finance, General, Notes e Code), com o modelo local como volta automática; o Conversas usa o Qwen3 30B (STUDIO_NUVEM_CONVERSAS_MODELO troca) e pesquisa na web; STUDIO_NUVEM_CHAT muda a lista de modelos do chat na nuvem. Para o chat valer, reinicie o LiteLLM (studio restart). Para ligar: studio env --set STUDIO_NUVEM 1. Para voltar ao que era: studio env --set STUDIO_NUVEM 0. A chave é a do News (studio cloudflare), com a permissão AI Gateway (Lido, Executar e Editar).
 Opções:
   -h, --help           mostra esta ajuda
@@ -452,7 +451,7 @@ Exemplos:
   studio doctor --versions
 
 @ continuity | Continuidade na nuvem quando o Mac está fora do ar
-Mantém os sites (Finance, Health, Notes, News, Learn, Games e Account) no ar pela nuvem da Cloudflare quando o Mac cai. A nuvem atende em modo somente leitura, com aviso no topo e a data da última cópia. O contêiner só liga na queda e dorme sozinho. Exige STUDIO_CONTINUIDADE=1 no .env para enviar cópias; com ele ligado, o agente do Mac envia sozinho, a cada HEIMDALL_CONTINUIDADE_INTERVALO_MIN minutos (padrão 60), só os bancos que mudaram. Com o Mac fora, o chat, o Lab e os fluxos mostram uma página de fora do ar, e controls.heimdall-ai.tech/continuidade (login pelo Cloudflare Access) mostra o estado da nuvem e permite pausar ou retomar o failover. No Controls do Mac, a aba Nuvem mostra a continuidade, a última cópia, o consumo do mês e os limites de gasto. O consumo e os avisos da Cloudflare usam HEIMDALL_CF_LEITURA_TOKEN (token só de leitura, com as permissões Conta, Faturamento, Leitura e Conta, Notificações, Leitura).
+Mantém os sites (Finance, Health, News, Learn, Games e Account) no ar pela nuvem da Cloudflare quando o Mac cai. A nuvem atende em modo somente leitura, com aviso no topo e a data da última cópia. O contêiner só liga na queda e dorme sozinho. Exige STUDIO_CONTINUIDADE=1 no .env para enviar cópias; com ele ligado, o agente do Mac envia sozinho, a cada HEIMDALL_CONTINUIDADE_INTERVALO_MIN minutos (padrão 60), só os bancos que mudaram. Com o Mac fora, o chat, o Lab e os fluxos mostram uma página de fora do ar, e controls.heimdall-ai.tech/continuidade (login pelo Cloudflare Access) mostra o estado da nuvem e permite pausar ou retomar o failover. No Controls do Mac, a aba Nuvem mostra a continuidade, a última cópia, o consumo do mês e os limites de gasto. O consumo e os avisos da Cloudflare usam HEIMDALL_CF_LEITURA_TOKEN (token só de leitura, com as permissões Conta, Faturamento, Leitura e Conta, Notificações, Leitura).
 Opções:
   -p, --prepare        cria no .env a senha das cópias (guarde-a também fora do Mac)
   -s, --send           envia ao R2 só os bancos que mudaram, cifrados no Mac

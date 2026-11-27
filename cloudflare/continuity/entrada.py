@@ -19,7 +19,6 @@ sys.path.insert(0, str(RAIZ))
 SERVICOS = [
     ("heimdall_finance.py", "STUDIO_FINANCE_PORT", 8016),
     ("heimdall_painel_saude.py", "STUDIO_SAUDE_PAINEL_PORT", 8013),
-    ("heimdall_notas.py", "STUDIO_NOTAS_PORT", 8011),
     ("heimdall_news.py", "STUDIO_NEWS_PORT", 8012),
     ("heimdall_learn.py", "STUDIO_LEARN_PORT", 8019),
     ("heimdall_jogos.py", "STUDIO_JOGOS_PORT", 8014),

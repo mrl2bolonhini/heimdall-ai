@@ -37,13 +37,12 @@ confere("sem serviço é recusado", "serviço" in u.definir("ana@x.com", []))
 confere("serviço que só dono pode (Health) não é dado a convidado", "serviço" in u.definir("ana@x.com", ["saude", "controls"]))
 confere("adiciona convidado", u.definir("Ana@X.com", ["jogos", "chat"]) == "" and u.situacao()["convidados"] == {"ana@x.com": ["chat", "jogos"]})
 confere("troca os serviços", u.definir("ana@x.com", ["jogos"]) == "" and u.situacao()["convidados"]["ana@x.com"] == ["jogos"])
-confere("Notes (triagem, diários, privacidade) não é dado a convidado", "serviço" in u.definir("ana@x.com", ["notas"]))
 confere("dono não se remove", "dono" in u.remover("dono@x.com") and "dono@x.com" in u.situacao()["donos"])
 confere("não remove a si mesmo", "próprio" in u.remover("ana@x.com", "ana@x.com"))
 confere("e-mail que não é convidado", "não é de convidado" in u.remover("zé@x.com"))
 u.definir("beto@y.com", ["chat"])
 d = u.desejado()
-confere("donos entram em tudo; convidados só onde liberados", d["controls"] == ["dono@x.com"] and d["notas"] == ["dono@x.com"] and d["jogos"] == ["ana@x.com", "dono@x.com"] and d["chat"] == ["beto@y.com", "dono@x.com"] and d["saude"] == ["dono@x.com"], str(d))
+confere("donos entram em tudo; convidados só onde liberados", d["controls"] == ["dono@x.com"] and d["jogos"] == ["ana@x.com", "dono@x.com"] and d["chat"] == ["beto@y.com", "dono@x.com"] and d["saude"] == ["dono@x.com"], str(d))
 
 # Cloudflare de mentira
 ESTADO = {"apps": [], "pols": [], "revogados": [], "chamadas": [], "n": 0}
@@ -110,15 +109,15 @@ p = u.plano()
 confere("plano numa conta vazia: tudo a criar", all(i["acao"] == "mudar" for i in p) and "criar o aplicativo de chat.heimdall-ai.tech" in " ".join(i["texto"] for i in p), str([i["texto"] for i in p]))
 confere("plano não muda nada na Cloudflare", ESTADO["apps"] == [] and ESTADO["pols"] == [])
 res = u.aplicar(p)
-confere("aplicar cria política e aplicativo de cada serviço", len(ESTADO["apps"]) == 14 and len(ESTADO["pols"]) == 14 and all(r.endswith("feito.") for r in res[:14]), str(res))
+confere("aplicar cria política e aplicativo de cada serviço", len(ESTADO["apps"]) == 13 and len(ESTADO["pols"]) == 13 and all(r.endswith("feito.") for r in res[:13]), str(res))
 pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Games")
 confere("a política de Games tem dono e Ana", sorted(i["email"]["email"] for i in pn["include"]) == ["ana@x.com", "dono@x.com"])
 confere("toda política exige o Authenticator (MFA) e todo aplicativo novo só aceita o login da Microsoft, direto", all(x["require"] == [{"auth_method": {"auth_method": "mfa"}}] for x in ESTADO["pols"])
         and all(a["allowed_idps"] == ["ms1"] and a["auto_redirect_to_identity"] for a in ESTADO["apps"]))
-confere("os AUDs dos aplicativos vão para HEIMDALL_CFACCESS_AUD", len([x for x in {d["nome"]: d["valor"] for d in hcf.ler()}["HEIMDALL_CFACCESS_AUD"].split(",")]) == 14)
+confere("os AUDs dos aplicativos vão para HEIMDALL_CFACCESS_AUD", len([x for x in {d["nome"]: d["valor"] for d in hcf.ler()}["HEIMDALL_CFACCESS_AUD"].split(",")]) == 13)
 confere("de novo: nada a fazer", all(i["acao"] == "nada" for i in u.plano()))
 
-# remover a Ana: política de Notes perde o e-mail e as sessões dela são revogadas
+# remover a Ana: a política do Lab perde o e-mail e as sessões dela são revogadas
 u.remover("ana@x.com")
 res = u.aplicar(u.plano())
 pn = next(x for x in ESTADO["pols"] if x["name"] == "Heimdall: Games")
@@ -129,7 +128,7 @@ ESTADO.update(apps=[{"id": "pes", "name": "Pessoal", "domain": "lab.heimdall-ai.
                     {"id": "rss", "name": "RSS", "domain": "news.heimdall-ai.tech/rss", "policies": []}], pols=[], chamadas=[])
 p2 = {i["servico"]: i for i in u.plano()}
 confere("aplicativo compartilhado não recebe política de serviço; o de caminho (RSS) não vale como cobertura do host",
-        p2["notas"]["acao"] == "nada" and "compartilhado" in p2["notas"]["texto"] and p2["lab"]["acao"] == "nada" and p2["news"]["acao"] == "mudar", str(p2["news"]["texto"]))
+        p2["lab"]["acao"] == "nada" and p2["news"]["acao"] == "mudar", str(p2["news"]["texto"]))
 # aplicativo que já existe, sem a nossa política: liga sem apagar o que existe nem as outras políticas
 ESTADO.update(apps=[{"id": "ap1", "aud": "z", "name": "Meu Games", "domain": "games.heimdall-ai.tech", "type": "self_hosted", "session_duration": "12h",
                      "allowed_idps": ["idp-ms"], "policies": [{"id": "outra", "precedence": 1}]}], pols=[], chamadas=[])

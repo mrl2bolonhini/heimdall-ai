@@ -39,6 +39,6 @@ confere("triagem e diários continuam", "triagem" in p and "diarios" in p, str(s
 os.environ["STUDIO_LEARN"] = "0"
 p = n.pastas()
 confere("com STUDIO_LEARN=0 os estudos voltam", "python" in p and "ingles" in p, str(sorted(p)))
-confere("Notes não é dado a convidado", u.SERVICOS["notas"][3] is False)
+confere("o serviço Notes não existe mais no catálogo de usuários", "notas" not in u.SERVICOS)
 print("TUDO OK" if not falhas else f"{falhas} FALHA(S)")
 raise SystemExit(1 if falhas else 0)

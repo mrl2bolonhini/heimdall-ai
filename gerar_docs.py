@@ -199,7 +199,6 @@ SERVICOS = [
     ("Studio Learn", "Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Studio Lab.", "8019", "desligado por padrão: STUDIO_LEARN=1 no .env, com senha e código configurados"),
     ("Studio Trading", "Mesa de operações em simulação (porta 8020), feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, histórico, sinais descritivos, limites por ordem e de perda por dia. Nenhuma ordem é enviada a corretora.", "8020", "start_heimdall.sh (liga com STUDIO_TRADING=1)"),
     ("Studio Hub", "Documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende.", "8021", "start_heimdall.sh (liga com STUDIO_HUB=1)"),
-    ("Studio Notes", "Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8011", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Studio News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Studio Games", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Studio Finance", "Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8016", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
@@ -288,7 +287,6 @@ SCRIPTS = [
     ("tests/learn/teste_learn_ajustes.py", "Testa a aba Ajustes: pausar agenda e avisos, agenda por pasta, arquivar pasta sem apagar nada e confirmação."),
     ("tests/learn/teste_learn_migrar.py", "Testa a migração dos estudos antigos para o Learn: simulação sem gravar, importação, repetição sem duplicar e originais intactos."),
     ("tests/learn/teste_learn_estudos_dia.py", "Testa os estudos por dia da agenda do Learn: 6h, 13h e 20h, pasta sorteada, ajuste de 0 a 3 e sem repetir."),
-    ("tests/notes/teste_notas_sem_estudos.py", "Testa que o Notes, com o Learn ligado, deixa os estudos para o Learn e mostra triagem, diários e privacidade."),
     ("tests/learn/teste_learn_perguntar.py", "Testa o Perguntar do Learn: campo em cada aba do tema, contexto só do tema, com os trechos estudados e sem o gabarito de lição em aberto nem o livro inteiro, CSRF e retorno validado."),
     ("tests/learn/teste_learn_painel.py", "Testa as abas Exercícios e Progresso: gabarito escondido, filtro dos erros, sequência de dias e acertos por tipo."),
     ("tests/learn/teste_learn_ferramentas.py", "Testa as ferramentas de leitura do modelo Learn, sempre somente leitura."),
@@ -316,7 +314,8 @@ SCRIPTS = [
     ("tests/memory/teste_memory_dados.py", "Testa os dados do Hub: envio, duplicado, busca, revisão, etiquetas, lixeira, pasta de entrada e validação da sugestão da IA."),
     ("tests/memory/teste_memory_compat.py", "Testa a troca de nome do Library para Hub: variáveis antigas do .env valem como as novas, o endereço antigo redireciona (301) só quando o novo está configurado, a pasta de arquivos antiga é renomeada sem perder nada e convidados com a chave antiga entram no Hub."),
     ("tests/memory/teste_memory_web.py", "Testa o site do Hub: login, CSRF, abas, envio multipart, busca, revisão, download, lixeira, Ajustes e Perguntar."),
-    ("heimdall_notas.py", "Studio Notes (porta 8011): site para ler as notas de estudo do cofre e ouvir os áudios, com velocidade, voltar e avançar 15 segundos, busca e os documentos de knowledge/. Mesmo login do Studio Lab; mostra o cofre inteiro, menos o Digest."),
+    ("heimdall_notas.py", "Leitura das notas e dos documentos de estudo do cofre, usada pela aba Notas do Studio Hub (heimdall_hub_notas.py): pastas e temas, título e data, áudio, Markdown em HTML, busca e o contexto do Perguntar. Somente leitura."),
+    ("tests/notes/teste_leitura.py", "Testa as funções de leitura das notas com um cofre de mentira."),
     ("heimdall_cfaccess.py", "Entrada pelo Cloudflare Access com Microsoft Entra ID: a aprovação chega como notificação no Microsoft Authenticator e os painéis abrem a sessão sem senha nem código de 6 dígitos. Confere a assinatura do Cloudflare só com a biblioteca padrão. Desligado até haver HEIMDALL_CFACCESS_EQUIPE, _AUD e _EMAILS no .env; --status confere a configuração. Passo a passo em guides/LEIAME_autenticacao_microsoft.txt."),
     ("heimdall_acesso.py", "Troca a senha e o código de 6 dígitos que valem para todos os serviços com login (Lab, Notas, News e Saúde): --tudo, --senha ou --codigo. A senha é pedida sem aparecer na tela e fica só como hash no .env."),
     ("heimdall_news_busca.py", "Busca em camadas do Perguntar do News: categorias, depois títulos, e só então lê as poucas notícias que servem, nos 30 dias do banco, para gastar poucos tokens."),
@@ -368,7 +367,7 @@ SCRIPTS = [
     ("heimdall_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e pausa e retoma o monitor de um serviço, com usuário e senha no .env ou, se o login do Kuma estiver desligado, sem senha."),
     ("verificar_access.py", "Confere, sem entrar, se um endereço público está atrás do Cloudflare Access. O start_heimdall.sh o usa antes de ligar o login do Open WebUI pelo Access (STUDIO_WEBUI_ACCESS=1); studio chat --check roda à mão."),
     ("tests/cloudflare/teste_verificar_access.py", "Testa o verificar_access.py com servidores locais que imitam o Access, um site aberto e um endereço sem resposta."),
-    ("heimdall_catalogo.py", "Catalogação de notas do Studio Notes pela IA local: separa ideias, contatos, endereços, lembretes e eventos. Lembrete e evento com data vão direto para o Lembretes e o Calendário (com Desfazer); data duvidosa fica pendente de confirmação; ideias, contatos e endereços vão para o Notion; saúde e finanças nunca vão para o Notion."),
+    ("heimdall_catalogo.py", "Catalogação de notas do Studio Hub pela IA local: separa ideias, contatos, endereços, lembretes e eventos. Lembrete e evento com data vão direto para o Lembretes e o Calendário (com Desfazer); data duvidosa fica pendente de confirmação; ideias, contatos e endereços vão para o Notion; saúde e finanças nunca vão para o Notion."),
     ("heimdall_notion.py", "Cliente mínimo da API do Notion (token e três bancos no .env). Cria páginas de ideia, contato e endereço, arquiva no Desfazer; studio notion confere a ligação."),
     ("tests/notes/teste_catalogo.py", "Testa a catalogação (classificação, datas, privacidade, Desfazer) e o cliente do Notion com uma API simulada. Sem rede e sem modelo."),
     ("migrar_avisos.py", "Traz as notas antigas de saúde e finanças (cofre e app Notas) para a aba Avisos, confere e só então apaga as originais; studio notices --migrate."),
@@ -434,7 +433,7 @@ SCRIPTS = [
     ("cloudflare/teste_vigia.mjs", "Testa o vigia da Cloudflare com KV e rede simulados, contando as gravações por dia (limite gratuito: 1.000): node cloudflare/teste_vigia.mjs."),
     ("cloudflare/teste_saude_caixa.mjs", "Testa a caixa de entrada da saúde com KV e rede simulados: node cloudflare/teste_saude_caixa.mjs."),
     ("cloudflare_chave.py", "Grava no .env o token da Cloudflare (pedido sem aparecer na tela) para a reserva de resumos e a leitura de páginas com navegador do News; descobre o número da conta sozinho."),
-    ("cloudflare/vigia.js", "Worker da Cloudflare (cron de 5 em 5 minutos) que confere de fora de casa se chat, flows, lab, notes, news e health respondem e avisa por e-mail quando algo cai ou volta. O destino do aviso fica na variável ALERTA_PARA, só na Cloudflare."),
+    ("cloudflare/vigia.js", "Worker da Cloudflare (cron de 5 em 5 minutos) que confere de fora de casa se chat, flows, lab, news e health respondem e avisa por e-mail quando algo cai ou volta. O destino do aviso fica na variável ALERTA_PARA, só na Cloudflare."),
     ("noticias_fontes.json", "Fontes do Studio News (categoria, nome, endereço do feed, idioma, limite por atualização). Edite à vontade; é relido a cada atualização."),
     ("heimdall_lab.py", "Painel web do emulador de AWS (porta 8010): S3, Lambda, Glue (bancos, tabelas, crawlers e jobs), Athena (consultas SQL) e um console geral que chama qualquer operação de qualquer serviço. Entrada com senha (hash PBKDF2) e código de 6 dígitos, limite de tentativas, sessão com validade e proteção contra CSRF. Escuta só em 127.0.0.1 e nunca expõe a porta do emulador."),
     ("ingest_docs.py", "Indexa os documentos de knowledge/ no Qdrant, de forma incremental. Cada subpasta vira um tema."),
@@ -502,7 +501,6 @@ COMANDOS = [
         ("Acesso ao app Notas, Calendário e Lembretes", "python3 heimdall_agente.py --teste"),
         ("Voz e velocidade do áudio de estudo", "python3 heimdall_agente.py --voz"),
         ("Painel do emulador de AWS (deve responder ok)", "curl -s http://localhost:8010/saude"),
-        ("Studio Notes (deve responder ok)", "curl -s http://localhost:8011/saude"),
         ("Studio News (deve responder ok)", "curl -s http://localhost:8012/saude"),
         ("Studio Health, o painel (deve responder ok)", "curl -s http://localhost:8013/saude"),
         ("Controls (deve responder ok)", "curl -s http://localhost:8017/saude"),
@@ -514,9 +512,7 @@ COMANDOS = [
         ("Copiar o endereço de um feed sem digitar (geral, opml ou uma categoria)", "python3 heimdall_news.py --copiar geral"),
         ("Gravar um arquivo OPML com todos os feeds (traz a chave secreta: importe e apague)", "python3 heimdall_news.py --opml"),
         ("Atualizar as notícias agora, uma vez", "python3 heimdall_news.py --uma-vez"),
-        ("Reiniciar só o Studio Notes", "pkill -f heimdall_notas.py   # depois suba o sistema como de costume"),
         ("Teste do painel do emulador de AWS (sem rede)", "python3 tests/lab/teste_lab.py"),
-        ("Teste do Studio Notes (sem rede)", "python3 tests/notes/teste_notas.py"),
         ("Teste do Studio News (sem rede)", "python3 tests/news/teste_news.py"),
         ("Teste do Studio Games (servidor, regras e interface)", "python3 tests/games/teste_jogos.py"),
         ("Teste do Studio Finance (extratos, categorias, relatórios e servidor)", "python3 tests/finance/teste_finance.py"),
@@ -701,7 +697,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Passe pela lista de acessibilidade da seção 5.</li>
 <li>Rode <code>studio test --run design</code> e o teste do serviço mexido.</li>
 <li>Abas de navegação entre páginas (<code>design.abas</code> e <code>design.painel_da_aba</code>, com o <code>design.SCRIPT_ABAS</code> e um script com nonce na página): <code>role="tablist"</code> com um link <code>role="tab"</code> por página, <code>aria-selected</code> na aberta, setas, Home e End movem o foco, Option+Shift+número abre a aba. O conteúdo fica num <code>role="tabpanel"</code> dentro de <code>main</code>. É o padrão de todos os serviços (Lab, Notes, News, Health, Games, Finance e Controls): nada de menu lateral nem lista de links. Ajudantes: <code>design.nav_abas</code>, <code>design.com_abas</code>, <code>design.topo</code>, <code>design.script</code> (script com nonce novo) e <code>design.csp</code> (acrescenta o nonce à política de segurança). O Account, de uma página só, não tem abas. Telas enxutas: sem descrição das abas nem aviso falado ao abri-las, um só aviso de profissional de saúde no rodapé e nenhum comando de terminal na tela (eles ficam no Guia de comandos da Ajuda, por sistema operacional). Aba tem nome que agrupa o assunto (Resumo, Medidas, Prontuário) e subaba nunca repete o nome da aba; perfil e estado técnico dos dados ficam em Ajustes. Mantenha a lista enxuta: no máximo 5 posições de abas de cima (decisão de 25/11/2026: leitura mais clara e telas menores dos apps móveis), com nome de uma palavra só, agrupadas por assunto, com subabas para seções parentes (Finance e Health seguem assim); seção nova entra no grupo a que pertence. Com mais de 5 itens (<code>design.MAX_ABAS</code>), as 4 primeiras são abas e as outras vão para o menu Mais, que ocupa a quinta posição (nunca passam de 5) e que nenhum serviço deve usar de propósito, um <code>&lt;details&gt;</code> que abre com o atalho da quinta posição, Option+Shift+5 (Alt+Shift+5 no Windows e no Linux), o único atalho dele (de novo fecha; Esc também) e traz links comuns; se a página aberta está no Mais, o resumo diz qual. Distribuição: as abas ficam numa só linha; o Mais, se existir, é a quinta posição, depois de 4 abas (<code>design.limite_abas</code>), e só o Option+Shift+5 o abre. Em tela estreita as abas ficam em duas colunas. O painel da aba aberta tem <code>tabindex="0"</code> e o link "Voltar para o topo" do rodapé também: o Tab que sai da aba cai no painel e o percurso termina no link do topo, mesmo em navegadores que pulam links no Tab (o Safari, por padrão); sem isso o foco voltava ao menu Conta. Aba, painel e resumo do menu têm contorno de foco. Subabas (<code>design.subabas</code>, <code>design.com_subabas</code>, com <code>design.com_abas(..., foco=False)</code>): um segundo <code>role=\"tablist\"</code> (<code>data-nivel=\"2\"</code>) dentro do painel da aba, para quando uma aba reúne seções parentes (Finance: Extratos tem Transações, Contas, Pagamentos futuros e Boletos). Trocar de subaba troca só o painel interno (<code>#painel-subaba</code>) e o foco fica na subaba; trocar a aba de cima traz a lista de subabas nova. O Tab vai da aba para a subaba aberta e dela para o painel interno; Alt+Shift+seta esquerda ou direita troca de subaba. A aba que tem uma só seção não mostra subabas. Ajustes não é aba: é um botão no topo, à direita, na mesma linha, depois do menu Conta (o Tab passa pelo Conta e depois pelo Ajustes; <code>ajustes_html</code> de <code>heimdall_lab.cabecalho</code>, que usa <code>design.botao</code> e a classe <code>topo-conta</code>); abre uma tela sem as abas de cima, com o botão de voltar e subabas se houver mais de uma seção; a última subaba é Ajuda (<code>heimdall_ajuda.ajuda_do_servico</code>: perguntas frequentes do serviço e o caminho para o suporte). Assim a barra de abas fica só com o conteúdo do serviço. Um serviço com uma só aba não usa abas: cada categoria ou seção que faz sentido por si vira uma aba. A ordem de leitura e os atalhos Option+Shift+1 a 5 (a quinta posição pode ser o Mais) não mudam; no Windows e no Linux, Alt no lugar de Option.</li>
-<li>Perguntar (<code>heimdall_perguntar.bloco_html</code>): campo no fim do painel da aba nas telas em que faz sentido (Finance, Health, News e Learn, em todas as abas do tema; o Notes ganha o seu à parte), só com os dados daquela tela; no News ele busca em camadas nos 30 dias do banco (categorias, títulos, leitura só das notícias que servem). Lab, Games e Controls não têm.</li>
+<li>Perguntar (<code>heimdall_perguntar.bloco_html</code>): campo no fim do painel da aba nas telas em que faz sentido (Finance, Health, News e Learn, em todas as abas do tema; o Hub ganha o seu à parte), só com os dados daquela tela; no News ele busca em camadas nos 30 dias do banco (categorias, títulos, leitura só das notícias que servem). Lab, Games e Controls não têm.</li>
 <li>Fim de toda página: <code>design.rodape</code> com o link "Voltar para o topo" (alvo <code>#topo</code>) e, se houver, botões de ação antes dele. Valores secretos em campo <code>type=password</code> com botão Mostrar/Ocultar (<code>design.SCRIPT_SEGREDO</code>).</li>
 <li>Accordions (<code>&lt;details&gt;&lt;summary&gt;</code>): Esc fecha o aberto em que o foco está e devolve o foco ao resumo (<code>design.SCRIPT_DETALHES</code>).</li>
 <li>Grupo que abre e fecha: <code>details class="grupo"</code> com <code>summary</code> que diz o nome e a contagem. Menu de conta: <code>details class="conta"</code> no topo, com o nome de quem entrou e o Sair.</li>
@@ -721,7 +717,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="saudecam"><h2 id="saudecam">Dados de saúde e painéis</h2>
 <ol><li>O iPhone e o Apple Watch guardam os dados no app Saúde. O app Health Auto Export manda os números ao n8n por um webhook, em automações agendadas (métricas gerais e frequência cardíaca de hora em hora, o resto uma vez por dia).</li>
 <li>O n8n repassa ao agente do Mac, que grava no banco pessoal (SQLite, só nesta máquina).</li>
-<li>Seis serviços web leem o banco e os arquivos do Mac: Lab (8010), Notas (8011), News (8012), Saúde (8013) e Jogos (8014, que não lê nada, só entrega os jogos) e Finance (8016, com banco próprio só das suas finanças). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
+<li>Cinco serviços web leem o banco e os arquivos do Mac: Lab (8010), News (8012), Saúde (8013) e Jogos (8014, que não lê nada, só entrega os jogos) e Finance (8016, com banco próprio só das suas finanças). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
 <li>Aos domingos, às 9h, o n8n pede o relatório da semana: ele vira nota com áudio e um aviso no Bark sem números.</li></ol></section>
 <section aria-labelledby="cfarq"><h2 id="cfarq">Serviços da Cloudflare</h2>
 <ol><li><strong>Túnel</strong> leva os endereços .heimdall-ai.tech até o Mac, sem abrir portas.</li>
@@ -907,45 +903,12 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Testar o painel sem o LocalStack: <code>python3 tests/lab/teste_lab.py</code></li></ul>
 <p>O painel sobe sozinho com o sistema quando há senha e código no <code>.env</code>. Se o LocalStack recusar a licença, o sistema avisa e usa o Moto no lugar, onde Lambda, Glue e Athena são só simulados. Veja os comandos completos em <a href="comandos.html">Comandos</a> e o histórico em <a href="novidades.html">Novidades</a>.</p></section>
 """)
-    out["notas.html"] = pagina("notas.html", "Notas", "Studio Notes: site simples para ler as notas de estudo e ouvir os áudios, com o mesmo login do painel Lab.", """
-<h1>Studio Notes</h1>
-<p>O Studio Notes é um site simples e agradável para ler as notas de estudo e ouvir os áudios gerados pelo StudioLibre. Ela lê direto do cofre (notas em Markdown e áudios .m4a) e da pasta knowledge/, sem depender de nenhum aplicativo de notas. Foi feita para leitor de tela: títulos, listas e botões com nomes claros, link para pular ao conteúdo e áudio com controles nativos.</p>
-<section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
-<ol><li>No próprio computador: http://localhost:8011, depois de subir o sistema.</li>
-<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Lab.</li>
-<li>Para abrir de fora de casa, o site pode ganhar um endereço público próprio pelo túnel Cloudflare, em notes.heimdall-ai.tech. Isso é opcional e só funciona com o computador ligado.</li></ol></section>
-<section aria-labelledby="fazer"><h2 id="fazer">O que dá para fazer</h2>
-<ul><li><strong>Ler</strong>: cada nota vira uma página limpa, com títulos, listas e tabelas, e as tags e os conceitos em linhas simples.</li>
-<li><strong>Ouvir</strong>: o leitor de áudio fica no topo da nota, com velocidade de 0,75 a 1,5 vez, botões de voltar e avançar 15 segundos, e a página lembra onde você parou.</li>
-<li><strong>Navegar</strong>: início com as últimas notas e os temas, lista por tema e botões de nota anterior e próxima nota.</li>
-<li><strong>Buscar</strong>: procura nas notas e nos documentos de texto, sem diferenciar acentos nem maiúsculas.</li>
-<li><strong>Documentos</strong>: os arquivos de knowledge/ (PDF abre na própria página; Markdown e texto são lidos como nota; outros formatos são baixados).</li></ul></section>
-<section aria-labelledby="privacidade"><h2 id="privacidade">O que aparece</h2>
-<ul><li>Por padrão aparece o cofre inteiro: temas de estudo, Second Brain, Monitor de Privacidade, Saúde e as demais pastas.</li>
-<li>Só o Digest fica de fora, porque terá outro uso.</li>
-<li>Para tirar outras pastas, use <code>STUDIO_NOTAS_EXCLUIR="heimdall-digest,saude"</code> no <code>.env</code>. Para mostrar só algumas, <code>STUDIO_NOTAS_PASTAS="pasta-um,pasta-dois"</code>.</li>
-<li>Como inclui notas pessoais, o endereço público exige a senha e o código de 6 dígitos em toda visita.</li></ul></section>
-<section aria-labelledby="leitura"><h2 id="leitura">Leitura e navegação</h2>
-<ul><li>As listas têm 10 notas por página, com paginação em botões (Página anterior, números com a atual marcada, Próxima página e Última página), na página inicial, nos temas e na busca.</li>
-<li>Os títulos aparecem inteiros: textos longos quebram em várias linhas em vez de serem cortados.</li>
-<li>O visual segue a marca do StudioLibre (a mesma paleta do site e dos outros painéis, claro e escuro). Veja <a href="marca.html">Marca</a>.</li></ul></section>
-<section aria-labelledby="seguranca"><h2 id="seguranca">Segurança</h2>
-<ul><li>Escuta só em 127.0.0.1 e é somente de leitura: nada ali grava ou apaga arquivos.</li>
-<li>Senha forte e código de 6 dígitos que não pode ser reaproveitado, limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict.</li>
-<li>Só atende os nomes de site permitidos. Os caminhos são conferidos contra fuga de pasta, todo texto é escapado e arquivos que não são PDF ou áudio só baixam, nunca executam.</li></ul></section>
-<section aria-labelledby="config"><h2 id="config">Configuração</h2>
-<ul><li>O Studio Notes sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Lab).</li>
-<li>Conferir se está no ar: <code>curl -s http://localhost:8011/saude</code></li>
-<li>Reiniciar só ela: <code>pkill -f heimdall_notas.py</code> e subir o sistema como de costume.</li>
-<li>Testar sem rede: <code>python3 tests/notes/teste_notas.py</code></li>
-<li>Se algo falhar: <code>tail -20 logs/notas_debug.log</code></li></ul></section>
-""")
     out["news.html"] = pagina("news.html", "News", "Studio News: notícias das últimas 24 horas com resumo feito por IA e feeds RSS para o iPhone.", """
 <h1>Studio News</h1>
 <p>O Studio News reúne as notícias das fontes que você escolheu, atualiza de 30 em 30 minutos e mostra as das últimas 24 horas, com um resumo feito por um modelo local de IA. Também serve feeds RSS para você ler no iPhone em um app de feeds. Foi feito para leitor de tela: o título de cada notícia é um cabeçalho, o resumo vem sempre identificado como feito por IA e há link para pular ao conteúdo.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8012, depois de subir o sistema.</li>
-<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Lab e do Studio Notes.</li>
+<li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Lab.</li>
 <li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. O endereço já existe no túnel; o site continua privado, pois exige a senha e o código de 6 dígitos.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que mostra</h2>
 <ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com paginação em botões (Página anterior, números com a atual marcada, Próxima página e Última página).</li>

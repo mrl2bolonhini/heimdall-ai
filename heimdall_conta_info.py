@@ -40,7 +40,7 @@ INFO = {
     },
     "trading": {
         "oque": "Mesa de operações em simulação, feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, limite por ordem e limite de perda por dia. Nenhuma ordem é enviada a corretora.",
-        "como": ["Na Mesa, informe o código do ativo, a quantidade e o tipo da ordem, e use Comprar ou Vender. Os atalhos da Mesa estão no Guia de comandos, na Ajuda.",
+        "como": ["Na Mesa, informe o código do ativo, a quantidade e o tipo da ordem, e use Comprar ou Vender. Os atalhos da Mesa estão em Atalhos e dispositivos, na Ajuda.",
                  "Em Ajustes, defina os limites, a fonte das cotações (simulada, manual ou brapi) e o caixa inicial da conta simulada.",
                  "A IA só descreve os números e os movimentos recentes: nunca recomenda comprar ou vender. Quem decide é você."],
         "so_dono": False,

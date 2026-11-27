@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cliente mínimo do Notion para o Studio Notes: ideias, contatos e endereços vão para três bancos de dados do Notion.
+"""Cliente mínimo do Notion para o Studio Hub: ideias, contatos e endereços vão para três bancos de dados do Notion.
 
 Regra de privacidade (ROADMAP): o Notion só recebe notas comuns. Saúde e finanças nunca vão para lá (quem decide é heimdall_catalogo.py).
 Configuração no .env (nunca colada em conversa; o comando `studio notion` grava e confere):

@@ -14,7 +14,7 @@ DOMINIO_PADRAO = "heimdall-ai.tech"
 PRODUTOS = {
     "saude": ("health", "SAUDE_PAINEL", "/avisos"), "health": ("health", "SAUDE_PAINEL", "/avisos"),
     "financas": ("finance", "FINANCE", "/avisos"), "finance": ("finance", "FINANCE", "/avisos"),
-    "learn": ("learn", "LEARN", "/"), "news": ("news", "NEWS", "/"), "notes": ("notes", "NOTAS", "/"), "notas": ("notes", "NOTAS", "/"),
+    "learn": ("learn", "LEARN", "/"), "news": ("news", "NEWS", "/"),
     "games": ("games", "JOGOS", "/"), "jogos": ("games", "JOGOS", "/"), "lab": ("lab", "LAB", "/"),
     "memory": ("memory", "MEMORY", "/"), "trading": ("trading", "TRADING", "/"),
     "controls": ("controls", "CONTROLS", "/"), "account": ("account", "ACCOUNT", "/"),

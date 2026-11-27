@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Catalogação automática de notas do Studio Notes (IA local).
+"""Catalogação automática de notas do Studio Hub (IA local).
 
 Você escreve uma nota livre; o modelo local separa o que é ideia, contato, endereço, lembrete e evento:
   - lembrete  -> app Lembretes (heimdall_agenda, tipo lembrete_nota), só depois do aceite do usuário

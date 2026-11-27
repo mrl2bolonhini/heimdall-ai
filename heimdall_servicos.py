@@ -57,8 +57,6 @@ def catalogo() -> list:
          "porta_env": "STUDIO_AGENTE_PORT", "log": "agente_debug"},
         {"id": "lab", "nome": "Lab", "apelidos": ["cloud"], "porta": _porta("STUDIO_LAB_PORT", 8010), "tipo": "py", "script": ["heimdall_lab.py"],
          "porta_env": "STUDIO_LAB_PORT", "log": "lab_debug"},
-        {"id": "notas", "nome": "Notes", "apelidos": ["notas"], "porta": _porta("STUDIO_NOTAS_PORT", 8011), "tipo": "py", "script": ["heimdall_notas.py"],
-         "porta_env": "STUDIO_NOTAS_PORT", "log": "notas_debug"},
         {"id": "learn", "nome": "Learn", "porta": _porta("STUDIO_LEARN_PORT", 8019), "tipo": "py", "script": ["heimdall_learn.py"],
          "porta_env": "STUDIO_LEARN_PORT", "log": "learn_debug", "opcional": True},
         {"id": "trading", "nome": "Trading", "porta": _porta("STUDIO_TRADING_PORT", 8020), "tipo": "py", "script": ["heimdall_trading.py"],

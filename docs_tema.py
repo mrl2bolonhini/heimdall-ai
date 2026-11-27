@@ -16,7 +16,6 @@ ACESSOS = {
     "n8n": "https://flows.heimdall-ai.tech",
     "status": "https://status.heimdall-ai.tech",
     "lab": "https://lab.heimdall-ai.tech",
-    "notas": "https://notes.heimdall-ai.tech",
     "news": "https://news.heimdall-ai.tech",
     "saude": "https://health.heimdall-ai.tech",
     "jogos": "https://games.heimdall-ai.tech",
@@ -358,7 +357,6 @@ PAGINAS = [
     ("llms.html", "Modelos", "Modelos de linguagem, usos e testes"),
     ("mcp.html", "Ferramentas", "Servidores MCP e cada ferramenta"),
     ("fluxos.html", "Fluxos", "Fluxos do n8n e scripts"),
-    ("notas.html", "Notes", "Studio Notes: ler as notas e ouvir os áudios"),
     ("news.html", "News", "Studio News: notícias com resumo de IA e feeds RSS"),
     ("saude.html", "Health", "Studio Health: dados do iPhone e Apple Watch, análises e painel"),
     ("jogos.html", "Games", "Studio Games: jogos leves para leitor de tela"),
@@ -476,7 +474,6 @@ def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
 <li class="porta" style="--cor:#ffc107"><h3><a href="{ACESSOS['n8n']}">Automações</a></h3><p>Ver e ajustar os fluxos que rodam sozinhos.</p><p class="quem">Login do administrador</p></li>
 <li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['status']}">Status</a></h3><p>Ver se os serviços estão no ar.</p><p class="quem">Acesso restrito</p></li>
 <li class="porta" style="--cor:#1e88e5"><h3><a href="{ACESSOS['lab']}">Lab</a></h3><p>Painel do emulador de AWS: S3, Lambda, Glue e Athena. <a href="lab.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
-<li class="porta" style="--cor:#ffc107"><h3><a href="{ACESSOS['notas']}">Notas</a></h3><p>Ler as notas de estudo e ouvir os áudios. <a href="notas.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['news']}">News</a></h3><p>Notícias das últimas 24 horas com resumo de IA. <a href="news.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#26c6da"><h3><a href="{ACESSOS['jogos']}">Jogos</a></h3><p>Jogos leves para leitor de tela: forca, senha, jogo da velha, 2048 e mais. <a href="jogos.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
 <li class="porta" style="--cor:#66bb6a"><h3><a href="{ACESSOS['finance']}">Finance</a></h3><p>Extratos importados, gastos por categoria e tendências. <a href="finance.html">Como funciona</a>.</p><p class="quem">Senha e código de 6 dígitos</p></li>
@@ -549,7 +546,7 @@ def corpo_marca():
 <p>As seis faixas da ponte dão a paleta. Os contrastes abaixo seguem a medida das diretrizes WCAG; para texto comum, o mínimo é 4,5 para 1.</p>
 {tabela("Paleta", ["Cor", "Hex", "Uso", "Sobre o Papel", "Sobre a Noite"], linhas)}
 <p class="muted">Cores claras servem para formas e destaques, não para texto sobre fundo claro.</p>
-<p>Os painéis com login (Lab, Notas, News e Saúde) usam a mesma paleta: Papel e Tinta no tema claro, Noite e Névoa no escuro, azul da ponte nos links e o Ouro do olhar só como marcação (página atual e botão selecionado), nunca como cor de texto. Cada painel mostra o símbolo ao lado do nome, tem a faixa de seis cores sob o cabeçalho e o mesmo ícone de aba. O teste tests/notes/teste_notas.py confere que os contrastes do texto ficam em pelo menos 4,5 para 1 e os das bordas de campos em pelo menos 3 para 1, nos dois temas.</p></section>
+<p>Os painéis com login (Lab, News e Saúde) usam a mesma paleta: Papel e Tinta no tema claro, Noite e Névoa no escuro, azul da ponte nos links e o Ouro do olhar só como marcação (página atual e botão selecionado), nunca como cor de texto. Cada painel mostra o símbolo ao lado do nome, tem a faixa de seis cores sob o cabeçalho e o mesmo ícone de aba. O teste tests/notes/teste_notas.py confere que os contrastes do texto ficam em pelo menos 4,5 para 1 e os das bordas de campos em pelo menos 3 para 1, nos dois temas.</p></section>
 <section aria-labelledby="tipo"><h2 id="tipo">Tipografia</h2>
 <p>O site usa só fontes do sistema, sem baixar nada. Os títulos usam uma serifa de livro (Iowan Old Style, Palatino ou Georgia, o que o aparelho tiver), pelo tom de saga; o texto e a interface usam a fonte do sistema; comandos usam a monoespaçada.</p></section>
 <section aria-labelledby="terceiros"><h2 id="terceiros">Marcas de terceiros</h2>

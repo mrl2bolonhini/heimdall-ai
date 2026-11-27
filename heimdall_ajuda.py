@@ -32,7 +32,7 @@ ASSUNTOS = {"duvida": "Dúvida de uso", "problema": "Problema ou erro", "sugesta
 
 SERVICOS = {
     "geral": "Geral",
-    "account": "Account", "controls": "Controls", "finance": "Finance", "saude": "Health", "notas": "Notes", "news": "News",
+    "account": "Account", "controls": "Controls", "finance": "Finance", "saude": "Health", "news": "News",
     "learn": "Learn", "trading": "Trading", "memory": "Hub", "jogos": "Games", "lab": "Lab", "chat": "Chat",
 }
 
@@ -82,12 +82,6 @@ FAQ = {
         ("Por que um exame ficou pendente?",
          "Todo documento enviado fica pendente até a sua conferência, para que nenhum dado seja registrado sem a sua confirmação."),
     ],
-    "notas": [
-        ("O que o Notes mostra?",
-         "A triagem de pendências, os diários oficiais, os alertas de privacidade e o Second Brain. Os estudos ficam no Learn. O Notes é exclusivo do dono."),
-        ("O que acontece quando salvo uma nota pelo campo da tela inicial?",
-         "A inteligência artificial separa a nota em ideias, contatos, endereços, lembretes e eventos. Lembretes e eventos vão para os apps Lembretes e Calendário, com a opção Desfazer. Se a data estiver ausente ou ambígua, o item fica pendente até você informá-la."),
-    ],
     "news": [
         ("De onde vêm as notícias?",
          "De fontes que o dono configura. O resumo de cada notícia é gerado por inteligência artificial e deve ser conferido na fonte original."),
@@ -110,11 +104,15 @@ FAQ = {
         ("Para que servem os limites?",
          "O limite por ordem recusa ordens grandes demais, o limite de perda por dia bloqueia novas compras quando o resultado do dia passa dele, e o máximo de ordens abertas evita acúmulo. As ordens recusadas aparecem no Histórico com o motivo. Fechar posição nunca é bloqueado pelos limites."),
         ("De onde vêm as cotações?",
-         "Por padrão, as cotações são reais, da B3, pela brapi (um token em STUDIO_TRADING_BRAPI_TOKEN no .env amplia o acesso). Em Ajustes, na aba Cotações, você pode trocar a fonte por simulada (preços gerados, sem internet) ou manual (você informa o preço de cada ativo)."),
+         "Por padrão, as cotações são reais, da B3, pela brapi (um token da brapi, configurado por quem administra o StudioLibre, amplia o acesso). Em Ajustes, na aba Cotações, você pode trocar a fonte por simulada (preços gerados, sem internet) ou manual (você informa o preço de cada ativo)."),
         ("A inteligência artificial recomenda comprar ou vender?",
          "Nunca. Os sinais descrevem de forma objetiva o movimento recente do preço, e o campo Perguntar explica os números da conta. A decisão é sempre sua, e nada aqui é aconselhamento financeiro."),
     ],
     "memory": [
+        ("O que mostra a aba Notas?",
+         "As notas e os documentos de estudo guardados pelo Hub, com áudio, busca e o Catálogo de notas escritas. A aba Notas é exclusiva do dono da conta."),
+        ("O que acontece quando salvo uma nota no Catálogo?",
+         "A inteligência artificial separa a nota em ideias, contatos, endereços, lembretes e eventos. Lembretes e eventos vão para os apps Lembretes e Calendário, com a opção Desfazer. Se a data estiver ausente ou ambígua, o item fica pendente até você informá-la."),
         ("Como conecto o Dropbox ou o OneDrive?",
          "Em Adicionar, na subaba Nuvem, toque em Conectar no serviço desejado e autorize no site do provedor. Há duas formas de conectar. A padrão é só de leitura: o Hub não altera, move nem apaga nada na sua nuvem. A conexão com organização pede também a permissão de escrita e permite mover cada arquivo importado para a pasta Importados pelo StudioLibre, dentro da pasta vigiada; o Hub nunca apaga arquivos. Depois informe a pasta a vigiar e, se quiser, marque Incluir subpastas (até 5 níveis) e, na conexão com organização, o movimento dos importados. A cada 15 minutos o Hub importa os arquivos novos ou alterados para o seu acervo, e você pode tocar em Sincronizar agora. Arquivos que estão na pasta Importados não são importados de novo. Para retirar a permissão de escrita, desconecte, conecte de novo pela forma padrão e, se quiser, remova o acesso do StudioLibre nas configurações de segurança do Dropbox ou da conta Microsoft. Cada pessoa conecta a própria conta e só enxerga os próprios documentos. Desconectar apaga o acesso; os documentos já importados continuam no acervo. O iCloud Drive não oferece acesso a aplicativos de terceiros, e o Google Drive e o Box ainda não estão disponíveis."),
         ("Como conecto o OneNote, o Microsoft To Do, o Planner, o Calendário, os Contatos, o Google, o iCloud, o Notion, o Todoist e o Trello?",
@@ -144,7 +142,7 @@ FAQ = {
         ("O que é o Lab?",
          "Um ambiente de estudo de AWS que usa um emulador no Mac do dono: S3, Lambda, Glue, Athena e um console geral. Nada é criado na AWS real nem gera custo."),
         ("O emulador não responde. O que faço?",
-         "O emulador sobe sob demanda. No terminal do Mac, execute studio lab --start e aguarde a resposta."),
+         "O emulador sobe sob demanda. Quem administra o StudioLibre o liga no Controls, na aba Serviços; depois, recarregue a página."),
     ],
     "chat": [
         ("Como troco de modelo ou crio um projeto?",
@@ -183,10 +181,10 @@ def data_por_extenso(iso: str = None) -> str:
 def termos_de_uso() -> list:
     return [
         ("1. Aceitação e definições", [
-            f"Estes Termos de Uso regulam o acesso e a utilização dos serviços do StudioLibre (Account, Finance, Health, Notes, News, Learn, Games, Lab e Chat), operados por {responsavel()} (\"Responsável\"). "
+            f"Estes Termos de Uso regulam o acesso e a utilização dos serviços do StudioLibre (Account, Finance, Health, Hub, News, Learn, Games, Lab e Chat), operados por {responsavel()} (\"Responsável\"). "
             "\"Usuário\" é a pessoa que acessa os serviços mediante convite. Ao entrar, o Usuário declara ter lido e concordado com o quanto se segue, bem como com a Política de Privacidade, que integra estes termos."]),
         ("2. Descrição dos serviços", [
-            "O StudioLibre reúne serviços pessoais de organização e acompanhamento: Account (acesso, integrações, ajuda e suporte), Finance (finanças), Health (saúde), Notes (notas), News (notícias), "
+            "O StudioLibre reúne serviços pessoais de organização e acompanhamento: Account (acesso, integrações, ajuda e suporte), Finance (finanças), Health (saúde), Hub (documentos e notas), News (notícias), "
             "Learn (estudos), Games (jogos), Lab (laboratório de serviços de nuvem) e Chat (conversa com modelos de inteligência artificial). Cada Usuário vê apenas os serviços liberados no seu convite."]),
         ("3. Acesso e conta", [
             "O acesso é pessoal e por convite, mediante autenticação pelo Cloudflare Access com conta Microsoft. O Usuário é responsável por manter sua conta e seus dispositivos seguros e por não compartilhar o acesso com terceiros. "
@@ -393,39 +391,6 @@ def ajuda_do_servico(servico: str, base: str = "") -> str:
     return perguntas + contato
 
 
-# Guia de comandos: as telas dos serviços não ensinam comandos; eles ficam aqui, por sistema operacional.
-# Cada linha é (ação, comando heimdall no macOS, comando em Python para Linux e Windows). No Windows use "py" no lugar de "python3".
-COMANDOS_HEALTH = [
-    ("Ver os documentos aguardando conferência", "studio health --labs pending", "python3 heimdall_exames.py --pendentes"),
-    ("Ler o que foi extraído de um documento", "studio health --labs read ID", "python3 heimdall_exames.py --ler ID"),
-    ("Confirmar um documento", "studio health --labs confirm ID", "python3 heimdall_exames.py --confirmar ID"),
-    ("Confirmar deixando itens de fora", "studio health --labs confirm ID --without 3,5", "python3 heimdall_exames.py --confirmar ID --sem 3,5"),
-    ("Descartar um documento", "studio health --labs discard ID", "python3 heimdall_exames.py --descartar ID"),
-    ("Importar um arquivo", "studio health --labs import ARQUIVO", "python3 heimdall_exames.py --importar ARQUIVO"),
-    ("Listar receitas", "studio health --labs prescriptions", "python3 heimdall_exames.py --receitas"),
-    ("Listar encaminhamentos", "studio health --labs referrals", "python3 heimdall_exames.py --encaminhamentos"),
-    ("Listar atestados", "studio health --labs certificates", "python3 heimdall_exames.py --atestados"),
-    ("Listar laudos", "studio health --labs reports", "python3 heimdall_exames.py --laudos"),
-    ("Listar pedidos de exame", "studio health --labs requests", "python3 heimdall_exames.py --pedidos"),
-    ("Listar consultas", "studio health --labs appointments", "python3 heimdall_exames.py --consultas"),
-    ("Cadastrar uma consulta", "studio health --labs appointment --date AAAA-MM-DD --time HH:MM", "python3 heimdall_exames.py --consulta-nova --data AAAA-MM-DD --hora HH:MM"),
-    ("Enviar consultas e renovações ao Calendário", "studio health --labs calendar", "python3 heimdall_exames.py --agenda"),
-    ("Ver as sugestões de acompanhamento", "studio health --labs suggestions", "python3 heimdall_clinico.py --sugestoes"),
-    ("Aceitar uma sugestão (com --date e --time, vira evento no Calendário)", "studio health --labs suggestions accept ID", "python3 heimdall_clinico.py --aceitar ID"),
-    ("Recusar, adiar ou responder uma sugestão", "studio health --labs suggestions dismiss ID | snooze ID DIAS | answer ID TEXTO",
-     "python3 heimdall_clinico.py --recusar ID | --adiar ID --dias N | --responder ID --texto TEXTO"),
-    ("Adicionar um item ao perfil de saúde", "studio health --labs profile add condition|surgery|allergy|insurance|doctor|other TEXTO",
-     "python3 heimdall_clinico.py --perfil-add condicao|cirurgia|alergia|convenio|medico|outro --texto TEXTO"),
-]
-
-# Administração (Controls e Lab): o que as telas não ensinam. A terceira coluna vale para Linux e Windows (com Docker instalado).
-COMANDOS_ADMIN = [
-    ("Ver as versões instaladas e se há imagem mais nova no registro", "studio doctor --versions", "python3 diagnostico.py --versoes"),
-    ("Diagnóstico completo (memória, disco, Docker e modelos)", "studio doctor", "python3 diagnostico.py"),
-    ("Ligar o emulador de AWS usado pelo Lab", "studio lab --start", "docker start localstack (ou docker start moto)"),
-    ("Desligar o emulador de AWS", "studio lab --stop", "docker stop localstack moto"),
-]
-
 # Atalhos de teclado: um só atalho por ação, com a forma do macOS e a do Windows e Linux (Option vira Alt; Control vira Ctrl; o resto é igual).
 ATALHOS = [
     ("Abrir a aba pelo número (de 1 a 5)", "Option+Shift+1 a 5", "Alt+Shift+1 a 5"),
@@ -462,29 +427,12 @@ def _atalhos_html() -> str:
 
 
 def _comandos_html() -> str:
-    cab = "".join(f'<th scope="col">{c}</th>' for c in ("Ação", "macOS (comando heimdall)", "Linux e Windows (Python, na pasta do StudioLibre)"))
-    linhas = "".join(f'<tr><th scope="row">{e(a)}</th><td><code>{e(m)}</code></td><td><code>{e(p)}</code></td></tr>' for a, m, p in COMANDOS_HEALTH)
-    linhas_admin = "".join(f'<tr><th scope="row">{e(a)}</th><td><code>{e(m)}</code></td><td><code>{e(p)}</code></td></tr>' for a, m, p in COMANDOS_ADMIN)
-    return ('<section aria-labelledby="comandos"><h2 id="comandos">Guia de comandos</h2>'
-            '<p>Algumas ações são feitas por comando no computador que hospeda o StudioLibre. As telas dos serviços indicam esta página em vez de mostrar comandos.</p>'
-            '<h3>Abrir o terminal</h3><ol>'
-            '<li>macOS: pressione Command+Espaço, digite Terminal e pressione Return.</li>'
-            '<li>Linux: pressione Ctrl+Alt+T, ou abra o aplicativo Terminal.</li>'
-            '<li>Windows: pressione a tecla Windows, digite PowerShell e pressione Enter.</li></ol>'
-            '<p>Em seguida, entre na pasta do Heimdall: <code>cd ~/StudioApps</code> no macOS e no Linux; <code>cd $HOME\\heimdall-ai</code> no Windows (PowerShell). '
-            'No macOS o comando <code>heimdall</code> funciona de qualquer pasta. No Windows, use <code>py</code> no lugar de <code>python3</code>.</p>'
-            '<h3 id="comandos-saude">Health: documentos, sugestões e perfil</h3>'
-            f'<table><caption>Comandos do Health por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas}</tbody></table>'
-            '<p>Eventos no Calendário e lembretes no app Lembretes dependem do agente do Mac; nos outros sistemas, os itens ficam registrados no StudioLibre.</p>'
-            '<h3 id="comandos-admin">Administração: versões e emulador do Lab</h3>'
-            f'<table><caption>Comandos de administração por sistema</caption><thead><tr>{cab}</tr></thead><tbody>{linhas_admin}</tbody></table>'
-            '<p>No Controls, a aba Terminal executa esses comandos no computador que hospeda o StudioLibre e mostra a saída na própria página; '
-            'a aba Serviços liga e desliga o emulador por uma chave, e a aba Manutenção tem os botões Status e Diagnóstico.</p>'
+    """Guia de atalhos de teclado: só o que serve a qualquer usuário. Comandos de terminal são do dono e ficam no catálogo de comandos."""
+    return ('<section aria-labelledby="atalhos-t"><h2 id="atalhos-t">Atalhos e dispositivos</h2>'
             + _atalhos_html() +
             '<h3>iPhone e Android</h3>'
-            '<p>Abra os painéis pelo navegador (Safari no iPhone, Chrome no Android) para consultar os dados, ver sugestões e editar o perfil. '
-            'A conferência de documentos e os demais comandos acima são feitos no computador que hospeda o StudioLibre. No iPhone, o botão Atualizar dados agora, '
-            'no Health, abre o app Atalhos.</p></section>')
+            '<p>Abra os serviços pelo navegador (Safari no iPhone, Chrome no Android) para consultar os dados, ver sugestões e editar o perfil. '
+            'No iPhone, o botão Atualizar dados agora, no Health, abre o app Atalhos.</p></section>')
 
 
 def formulario_suporte(csrf: str, servico: str = "", valores: dict = None) -> str:

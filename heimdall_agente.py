@@ -13,7 +13,7 @@ Rotas:
     GET  /notas/nota?id=                texto simples de uma nota
     GET  /notas/privadas                pastas privadas e os ids das notas protegidas (usado pelo limpar_privadas.py)
     POST /avisos/gravar                 {"servico": "saude"|"financas", "titulo": "...", "markdown": "...", "bark": true (opcional)}
-    POST /calendario/desfazer           {"titulo": "...", "data": "AAAA-MM-DD"}  (apaga o evento criado; o Studio Notes usa no botão Desfazer)
+    POST /calendario/desfazer           {"titulo": "...", "data": "AAAA-MM-DD"}  (apaga o evento criado; o Studio Hub usa no botão Desfazer)
     POST /lembretes/desfazer            {"titulo": "..."}
     POST /notas/gravar                  {"pasta": "Digest", "titulo": "...", "markdown": "...", "audio": "texto a narrar (opcional)"}
                                         cria ou atualiza uma nota e grava uma cópia .md na pasta do cofre
@@ -1204,7 +1204,7 @@ def criar_lembrete(dado: dict) -> dict:
 
 
 def desfazer_evento(dado: dict) -> dict:
-    """Apaga o evento do calendário Heimdall com este título e data (usado pelo botão Desfazer do Studio Notes)."""
+    """Apaga o evento do calendário Heimdall com este título e data (usado pelo botão Desfazer do Studio Hub)."""
     titulo = _texto_curto(dado.get("titulo"), 200)
     if not titulo:
         raise ValueError("título vazio")

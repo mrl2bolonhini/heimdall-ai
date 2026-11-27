@@ -41,7 +41,7 @@ _heimdall_open() {  # $1 = nome, $2 = endereço
   open "$2" 2>/dev/null || echo "Abra o endereço acima no navegador."
 }
 
-_heimdall_web() {  # $1 nome, $2 chave (LAB, NOTAS, NEWS, SAUDE_PAINEL, JOGOS, FINANCE), $3 porta padrão, $4 subdomínio padrão, $5 caminho opcional
+_heimdall_web() {  # $1 nome, $2 chave (LAB, NEWS, SAUDE_PAINEL, JOGOS, FINANCE), $3 porta padrão, $4 subdomínio padrão, $5 caminho opcional
   # Abre o endereço público (passa pelo Cloudflare Access, com o Authenticator) ou, com --local, o endereço deste Mac (senha e código de 6 dígitos).
   local nome="$1" chave="$2" padrao="$3" sub="$4" caminho="$5" porta host lista h
   porta="$(_heimdall_port "STUDIO_${chave}_PORT" "$padrao")"
@@ -95,7 +95,7 @@ _heimdall_port() {  # porta de cada serviço (a do .env, se houver)
 
 _heimdall_stop_ports() {
   local p
-  for p in 8000 8001 8002 8003 8004 8010 8011 8012 8013 8014 8016 8017 8018 8019 8099 9000; do
+  for p in 8000 8001 8002 8003 8004 8010 8012 8013 8014 8016 8017 8018 8019 8099 9000; do
     lsof -ti:"$p" 2>/dev/null | xargs kill -9 2>/dev/null
   done
 }
@@ -279,7 +279,7 @@ studio() {
         --clean) _heimdall_sh subir.sh --limpar ;;
         --service)
           case "$2" in
-            agent) a=agente ;; notes) a=notas ;; learn) a=learn ;; health) a=saude_painel ;; games) a=jogos ;; terminal) a=open_terminal ;; controls) a=controls_debug ;; account) a=account_debug ;;
+            agent) a=agente ;; learn) a=learn ;; health) a=saude_painel ;; games) a=jogos ;; terminal) a=open_terminal ;; controls) a=controls_debug ;; account) a=account_debug ;;
             finance) a=finance ;; mcp-public) a=mcp_public ;; mcp-data) a=mcp_dados ;; *) a="$2" ;;
           esac
           _heimdall_sh subir.sh --log "$a" ;;
@@ -426,7 +426,6 @@ studio() {
         shift; _heimdall_tr "--check=--verificar" "$@"; _heimdall_py heimdall_conta.py --urls-publicas "${_HA[@]}"; return $?
       fi
       echo "chat: http://localhost:3000"
-      echo "notes: http://localhost:$(_heimdall_port STUDIO_NOTAS_PORT 8011)"
       echo "learn: http://localhost:$(_heimdall_port STUDIO_LEARN_PORT 8019)"
       echo "trading: http://localhost:$(_heimdall_port STUDIO_TRADING_PORT 8020)"
       echo "hub: http://localhost:$(_heimdall_port STUDIO_HUB_PORT "$(_heimdall_port STUDIO_HUB_PORT 8021)")"
@@ -588,7 +587,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     fi
     case ${words[2]} in
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
-      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent lab notes learn trading hub news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
+      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent lab learn trading hub news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
       chat) compadd -- --diagnose --password --email --delete-user --tools --models --import --check ;;
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
       health)

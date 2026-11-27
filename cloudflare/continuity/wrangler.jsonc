@@ -9,13 +9,12 @@
     "DORMIR_APOS_MS": "600000",
     "PAINEL": "controls.heimdall-ai.tech",   // com o Mac fora, este site mostra a página de controle da nuvem (exige Access)
     "FORA": "{\"chat.heimdall-ai.tech\":\"Chat\",\"lab.heimdall-ai.tech\":\"Lab\",\"flows.heimdall-ai.tech\":\"Painel de fluxos\"}",   // dependem do Mac: só mostram a página de fora do ar
-    "ROTAS": "{\"finance.heimdall-ai.tech\":8016,\"health.heimdall-ai.tech\":8013,\"notes.heimdall-ai.tech\":8011,\"news.heimdall-ai.tech\":8012,\"learn.heimdall-ai.tech\":8019,\"games.heimdall-ai.tech\":8014,\"account.heimdall-ai.tech\":8018}"
+    "ROTAS": "{\"finance.heimdall-ai.tech\":8016,\"health.heimdall-ai.tech\":8013,\"news.heimdall-ai.tech\":8012,\"learn.heimdall-ai.tech\":8019,\"games.heimdall-ai.tech\":8014,\"account.heimdall-ai.tech\":8018}"
   },
   // Sites do Heimdall que passam pelo Worker. Confira os nomes reais em heimdall urls antes de implantar.
   "routes": [
     { "pattern": "finance.heimdall-ai.tech/*", "zone_name": "heimdall-ai.tech" },
     { "pattern": "health.heimdall-ai.tech/*", "zone_name": "heimdall-ai.tech" },
-    { "pattern": "notes.heimdall-ai.tech/*", "zone_name": "heimdall-ai.tech" },
     { "pattern": "news.heimdall-ai.tech/*", "zone_name": "heimdall-ai.tech" },
     { "pattern": "learn.heimdall-ai.tech/*", "zone_name": "heimdall-ai.tech" },
     { "pattern": "games.heimdall-ai.tech/*", "zone_name": "heimdall-ai.tech" },

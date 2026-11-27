@@ -362,7 +362,7 @@ e1 = _env()
 h1 = _re.search(r"SENHA_HASH='([^']+)'", e1).group(1)
 t1 = _re.search(r"TOTP_SEGREDO='([^']+)'", e1).group(1)
 confere("--tudo grava senha (hash) e código e preserva o resto", err is None and "OUTRA='coisa'" in e1 and hc.confere_senha("uma frase bem longa 123", h1) and "uma frase bem longa" not in e1)
-confere("--tudo mostra a chave do código e a lista de serviços", t1[:4] in out and "Lab, o Studio Notes e o Studio News" in out)
+confere("--tudo mostra a chave do código e a lista de serviços", t1[:4] in out and "Lab e o Studio News" in out)
 out, err = _rodar("senha", ["outra frase bem comprida 456", "outra frase bem comprida 456"])
 e2 = _env()
 confere("--senha troca só a senha", err is None and _re.search(r"TOTP_SEGREDO='([^']+)'", e2).group(1) == t1 and _re.search(r"SENHA_HASH='([^']+)'", e2).group(1) != h1 and "continua o mesmo" in out and t1[:4] not in out)
@@ -396,9 +396,9 @@ hc.SENHA_HASH = _hash0
 confere("voltando ao valor, a sessão volta a valer (a chave sai do .env)", hc.sessao_valida(tk) is not None)
 hc.encerrar_sessao(tk)
 confere("sair encerra a sessão", hc.sessao_valida(tk) is None)
-k1 = hc.cabecalho_cookie("T", "notes.heimdall-ai.tech", True)[1]
+k1 = hc.cabecalho_cookie("T", "learn.heimdall-ai.tech", True)[1]
 confere("em *.heimdall-ai.tech o cookie vale para o domínio todo, seguro", "Domain=heimdall-ai.tech" in k1 and "Secure" in k1 and "HttpOnly" in k1 and "SameSite=Strict" in k1 and k1.startswith("heimdall_sessao=T;"))
-k2 = hc.cabecalho_cookie("T", "localhost:8011", False)[1]
+k2 = hc.cabecalho_cookie("T", "localhost:8019", False)[1]
 confere("em localhost o cookie não leva Domain", "Domain" not in k2 and "Secure" not in k2)
 k3 = hc.cabecalho_cookie("T", "evil-heimdall-ai.tech", True)[1]
 confere("domínio parecido não ganha Domain", "Domain" not in k3)
