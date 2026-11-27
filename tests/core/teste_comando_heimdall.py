@@ -40,7 +40,7 @@ for linha in (AQUI / "guides/heimdall_ajuda.txt").read_text(encoding="utf-8").sp
 nomes = [s["nome"] for s in secoes]
 codigo = (AQUI / "heimdall.zsh").read_text(encoding="utf-8")
 no_case = {x for g in re.findall(r"^    ([a-z0-9|]+)\)", codigo.split("studio() {")[1].split("# Completar")[0], re.M) for x in g.split("|")}
-confere("há seção de ajuda para os 51 comandos", len(nomes) == 51, len(nomes))
+confere("há seção de ajuda para os 50 comandos", len(nomes) == 50, len(nomes))
 confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help"}, (set(nomes) - no_case, no_case - set(nomes)))
 
 # --- --help e -h em todos os comandos mostram só aquele comando
@@ -98,7 +98,7 @@ with tempfile.TemporaryDirectory() as d:
         ("backup -P", "[heimdall_backup] senha"), ("access -a", "[heimdall_acesso] --tudo"), ("access -v", "[heimdall_acesso] --verificar"),
         ("mail -t", "[heimdall_email_oficial] --testar-login"), ("listen -n 3", "[ouvir_estudo] 3"), ("listen -l", "[ouvir_estudo] --lista"),
         ("env -s X", "[guardar_no_env] X"), ("cloudflare -t", "[cloudflare_chave] --testar"), ("hook -r /r", "[instalar_hook_gitops] --remover /r"),
-        ("notes -o -r", "[mover_notas_antigas] --executar"), ("notes -m", "[limpar_espelhos]"), ("chat -d", "[diagnostico_chat]"), ("up -w -t -n -a", "[subir] --webui --terminal --n8n --agente"),
+        ("hub -o -r", "[mover_notas_antigas] --executar"), ("hub -m", "[limpar_espelhos]"), ("chat -d", "[diagnostico_chat]"), ("up -w -t -n -a", "[subir] --webui --terminal --n8n --agente"),
         ("restart -a", "[subir] --reiniciar --agente"), ("logs -s agent", "[subir] --log agente"), ("logs -l", "[subir] --logs"), ("flows -p", "[instalar_monitor_privacidade]"),
         ("flows -b", "[instalar_fluxos_n8n]"), ("docs -b", "[gerar_marca_png]"), ("db -s SELECT", "[heimdall_banco] --sql SELECT"),
         ("voice -i f.csv", "[heimdall_voz] --importar f.csv"), ("ingest -r", "[ingest_docs] --reset"), ("mcp -v", "[verificar_mcp_dados]"),
