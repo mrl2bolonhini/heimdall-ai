@@ -607,11 +607,11 @@ if [ "${HEIMDALL_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && 
     fi
 fi
 
-# --- Studio Memory (acervo pesquisável; antes se chamava Library) ---
+# --- Studio Hub (acervo pesquisável; antes se chamava Library) ---
 # Desligado por padrão: ligue com HEIMDALL_MEMORY=1 no .env (studio env --set HEIMDALL_MEMORY 1; o nome antigo HEIMDALL_LIBRARY=1 continua valendo). Mesmo login do Studio Lab.
 if [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ "${HEIMDALL_MEMORY_MOTOR:-${HEIMDALL_LIBRARY_MOTOR:-interno}}" = "paperless" ] && command -v docker > /dev/null 2>&1 && [ -f paperless/docker-compose.yml ]; then
-        docker compose -f paperless/docker-compose.yml --env-file .env up -d > "$(nova_log paperless_debug)" 2>&1 || echo "Aviso: não consegui subir o Paperless-ngx (motor do Memory). Veja logs/paperless_debug.log."
+        docker compose -f paperless/docker-compose.yml --env-file .env up -d > "$(nova_log paperless_debug)" 2>&1 || echo "Aviso: não consegui subir o Paperless-ngx (motor do Hub). Veja logs/paperless_debug.log."
     fi
     if [ -f heimdall_memory.py ]; then
         HEIMDALL_MEMORY_PORT="$MEMORY_PORT" "$VENV_PYTHON" heimdall_memory.py > "$(nova_log memory_debug)" 2>&1 &
@@ -620,11 +620,11 @@ if [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && [ -n "$HEIMDALL_CLO
             sleep 1
             COUNTER=$((COUNTER+1))
             if [ $COUNTER -gt 10 ]; then
-                echo "Aviso: o Studio Memory não respondeu em 10s. Veja logs/memory_debug.log."
+                echo "Aviso: o Studio Hub não respondeu em 10s. Veja logs/memory_debug.log."
                 break
             fi
         done
-        echo "     Studio Memory (acervo pesquisável) em http://localhost:$MEMORY_PORT"
+        echo "     Studio Hub (acervo pesquisável) em http://localhost:$MEMORY_PORT"
     fi
 fi
 

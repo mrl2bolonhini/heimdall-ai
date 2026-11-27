@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Studio Memory: conexão de cada pessoa com o próprio armazenamento em nuvem (Dropbox e OneDrive), com importação automática.
+"""Studio Hub: conexão de cada pessoa com o próprio armazenamento em nuvem (Dropbox e OneDrive), com importação automática.
 
 Fluxo: a pessoa toca em Conectar, autoriza no site do provedor (OAuth 2.0, código de autorização com PKCE) e informa a pasta a vigiar. A cada
-HEIMDALL_NUVEM_INTERVALO segundos (padrão 900) o Memory lista a pasta, baixa só os arquivos novos ou alterados e os envia ao acervo da pessoa
+HEIMDALL_NUVEM_INTERVALO segundos (padrão 900) o Hub lista a pasta, baixa só os arquivos novos ou alterados e os envia ao acervo da pessoa
 (heimdall_memory_dados.adicionar: motor interno ou Paperless). Por padrão a conexão é só de leitura. Opções por pasta: incluir subpastas (até
 MAX_PROFUNDIDADE níveis) e, só se a pessoa tiver autorizado a escrita, mover cada arquivo já importado para a pasta "Importados pelo Heimdall" dentro
-da pasta vigiada. O Memory nunca apaga arquivos da nuvem e nunca importa de novo o que está na pasta Importados.
+da pasta vigiada. O Hub nunca apaga arquivos da nuvem e nunca importa de novo o que está na pasta Importados.
 
 Privacidade: cada pessoa tem o seu arquivo de conexão (memory/nuvem.bin, cifrado com AES-GCM, permissão 600) e só a sincronização dela mexe nele.
 O estado (`state`) do OAuth fica na memória do servidor, ligado à pessoa que iniciou, vale por 10 minutos e só uma vez.
@@ -28,7 +28,7 @@ MAX_PROFUNDIDADE = 5      # níveis de subpasta abaixo da pasta vigiada
 MAX_PASTAS = 200          # pastas percorridas por rodada (OneDrive lista pasta a pasta)
 PASTA_IMPORTADOS = "Importados pelo Heimdall"
 PROVEDORES = cx.PROVEDORES   # mesmo registro da base de conexões (os testes ajustam os endereços por aqui)
-# a autorização (OAuth) é da base comum; estes nomes ficam aqui porque o Memory chama o módulo de nuvem
+# a autorização (OAuth) é da base comum; estes nomes ficam aqui porque o Hub chama o módulo de nuvem
 iniciar, concluir, desconectar = cx.iniciar, cx.concluir, cx.desconectar
 
 

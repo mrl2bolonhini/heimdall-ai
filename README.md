@@ -2,7 +2,7 @@
 
 Assistente de Inteligência Artificial que roda no próprio Mac, com ferramentas (MCP), base de conhecimento pessoal e automações (n8n). Desenvolvido por Murillo Bolonhini Cita. O chat é privado e o acesso é por convite; o código é aberto à leitura, mas os dados ficam no Mac do autor.
 
-StudioLibre é o nome da empresa e do conjunto de aplicativos (StudioLibre Memory, Health, Finance, Games), com o domínio studiolibre.io; os endereços e o nome nas telas mudam por etapas (ROADMAP), e hoje os serviços seguem em heimdall-ai.tech com o nome StudioLibre. O significado do nome está na página Marca do site; a análise de marca e de repositório está em guides/marca_studiolibre.txt.
+StudioLibre é o nome da empresa e do conjunto de aplicativos (StudioLibre Hub, Health, Finance, Games), com o domínio studiolibre.io; os endereços e o nome nas telas mudam por etapas (ROADMAP), e hoje os serviços seguem em heimdall-ai.tech com o nome StudioLibre. O significado do nome está na página Marca do site; a análise de marca e de repositório está em guides/marca_studiolibre.txt.
 
 Documentação publicada: https://heimdall-ai.tech (gerada da pasta docs/ pelo GitHub Pages).
 
@@ -55,7 +55,7 @@ Detalhes em https://heimdall-ai.tech/arquitetura.html.
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
 | Studio Learn | 8019 | Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em heimdall_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Studio Lab. |
 | Studio Trading | 8020 | Mesa de operações em simulação (porta 8020), feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, histórico, sinais descritivos, limites por ordem e de perda por dia. Nenhuma ordem é enviada a corretora. |
-| Studio Memory | 8021 | Documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende. |
+| Studio Hub | 8021 | Documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende. |
 | Studio Notes | 8011 | Site para ler as notas de estudo e ouvir os áudios (velocidade, voltar e avançar 15 segundos, busca, documentos de knowledge/). Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
 | Studio News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |
 | Studio Games | 8014 | Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |

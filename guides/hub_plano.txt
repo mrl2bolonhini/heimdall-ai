@@ -26,4 +26,4 @@ Critérios de aceite (resumo)
 3. Teste de cada fase; suíte completa verde (exceto falhas de ambiente conhecidas).
 4. Texto de produto com Studio Hub e StudioLibre; nenhum nome novo guardado sem aprovação.
 
-Aprovações pendentes do usuário: nome da pasta-raiz no app Notas; ordem das fases; quando migrar as pastas.
+Aprovado em 26/11/2026: pasta-raiz no app Notas = "Studio Hub"; começar pela fase A (feita). Pendente: aprovação da fase B (área de Notas no Hub) e do momento de migrar as pastas (fase C).

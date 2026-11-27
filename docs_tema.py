@@ -488,7 +488,7 @@ def corpo_inicio(n_modelos, n_ferr, n_pub, n_mac, n_mcp, n_fluxos):
 <p>Os modelos rodam no próprio Mac, e não em serviços de terceiros. Eles ganham ferramentas reais (busca na web, arquivos, documentos, memória, Notas e Calendário) e rotinas automáticas: resumos, estudo, vigilância de privacidade e avisos no iPhone.</p>
 <p>Foi pensado para quem usa leitor de tela: tudo se opera por texto e comandos, e as automações entregam notas e áudio.</p></div></div></section>
 <section class="faixa" aria-labelledby="empresa"><div class="dois"><h2 id="empresa">StudioLibre</h2><div>
-<p>StudioLibre é o nome da empresa e do conjunto de aplicativos: um estúdio livre de amarras e de ideias prontas, onde cada aplicativo leva o seu complemento (Memory, Health, Finance, Games).</p>
+<p>StudioLibre é o nome da empresa e do conjunto de aplicativos: um estúdio livre de amarras e de ideias prontas, onde cada aplicativo leva o seu complemento (Hub, Health, Finance, Games).</p>
 <p><a href="marca.html#nome">Ler o significado do nome e os princípios</a>.</p></div></div></section>
 <section class="faixa" aria-labelledby="mapa"><h2 id="mapa">Como as peças se ligam</h2>
 {diagrama()}
@@ -526,7 +526,7 @@ def corpo_marca():
 <li><strong>Para qualquer sistema.</strong> Windows, macOS, iPhone e Android entram em toda decisão, com passos para cada um.</li>
 </ol>
 <h3>Como os aplicativos se chamam</h3>
-<p>O nome da empresa vem primeiro e o complemento diz o que o aplicativo faz: StudioLibre Memory (ideias e informações), StudioLibre Health (saúde), StudioLibre Finance (finanças) e StudioLibre Games (jogos). Um aplicativo novo segue o mesmo modelo. No navegador, cada aplicativo tem o seu endereço, no formato <code>aplicativo.studiolibre.io</code>, como <code>memory.studiolibre.io</code>.</p>
+<p>O nome da empresa vem primeiro e o complemento diz o que o aplicativo faz: StudioLibre Hub (ideias e informações), StudioLibre Health (saúde), StudioLibre Finance (finanças) e StudioLibre Games (jogos). Um aplicativo novo segue o mesmo modelo. No navegador, cada aplicativo tem o seu endereço, no formato <code>aplicativo.studiolibre.io</code>, como <code>memory.studiolibre.io</code>.</p>
 <h3>Endereços</h3>
 <p>O domínio principal é <code>studiolibre.io</code>. O <code>studiolibre.app</code> fica reservado para os aplicativos. A troca dos endereços acontece por etapas, e os endereços atuais continuam respondendo e redirecionam para os novos quando cada etapa termina. Até lá, o símbolo e o nome StudioLibre seguem nas telas.</p></section>
 <section aria-labelledby="simbolo"><h2 id="simbolo">Símbolo e logotipo</h2>

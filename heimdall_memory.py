@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Studio Memory: acervo de documentos pesquisáveis (envio, leitura de texto com OCR, etiquetas e busca).
+"""Studio Hub: acervo de documentos pesquisáveis (envio, leitura de texto com OCR, etiquetas e busca).
 
 Telas no Studio Design, sobre `heimdall_servico_web.py`; os dados ficam em `heimdall_memory_dados.py`.
 Abas: Documentos (Pesquisar, Recentes, A revisar), Adicionar (Enviar arquivo, Pasta de entrada), Organização (Etiquetas, Tipos). Ajustes: Estado, Lixeira, Ajuda.
@@ -125,8 +125,8 @@ def pg_nuvem(ctx):
     for x in itens:
         n = e(x["nome"])
         if not x["conectado"]:
-            corpo = (f'<p role="status">{n} não conectado. Na conexão padrão o Memory só lê: não altera nem apaga nada na sua nuvem. A conexão com organização também pede '
-                     'a permissão de escrita, para mover os arquivos já importados para uma pasta de importados. O Memory nunca apaga arquivos.</p>'
+            corpo = (f'<p role="status">{n} não conectado. Na conexão padrão o Hub só lê: não altera nem apaga nada na sua nuvem. A conexão com organização também pede '
+                     'a permissão de escrita, para mover os arquivos já importados para uma pasta de importados. O Hub nunca apaga arquivos.</p>'
                      + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "")
                      + design.botao_post("/nuvem/conectar", f"Conectar {x['nome']}", ctx.csrf, {"provedor": x["chave"]})
                      + design.botao_post("/nuvem/conectar", f"Conectar {x['nome']} com organização", ctx.csrf, {"provedor": x["chave"], "escrita": "1"}))
@@ -161,12 +161,12 @@ def pg_apps(ctx):
             marcas_s = "".join(f'<p><input id="srv-{k}-{e(sv)}" name="srv_{e(sv)}" type="checkbox" value="1"{" checked" if sv in x["servicos"] or not x["servicos"] else ""}>'
                                f'<label for="srv-{k}-{e(sv)}">{e(nm)}</label></p>' for sv, nm in x["disponiveis"])
             guia = ("<p>O iCloud não tem autorização por site: você cria uma senha de aplicativo em account.apple.com, em Entrada e segurança, Senhas de aplicativo (exige a verificação em duas etapas; "
-                    "funciona pelo navegador em qualquer sistema) e informa aqui o Apple ID e essa senha. Nunca use a senha do Apple ID. A senha fica cifrada e é usada só para ler; o Memory não altera nada. "
+                    "funciona pelo navegador em qualquer sistema) e informa aqui o Apple ID e essa senha. Nunca use a senha do Apple ID. A senha fica cifrada e é usada só para ler; o Hub não altera nada. "
                     "Os Lembretes no formato novo do iCloud não têm acesso externo.</p>")
             form = (f'<form method="post" action="/apps/senha"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{k}">'
                     f'<p><label for="icl-usuario">Apple ID (e-mail)</label><br><input id="icl-usuario" name="usuario" type="email" autocomplete="off" required value="{e(x["usuario"])}"></p>'
                     f'<p><label for="icl-senha">Senha de aplicativo</label><br><input id="icl-senha" name="senha" type="password" autocomplete="off" required></p>'
-                    f'<fieldset><legend>Serviços que o Memory pode ler</legend>{marcas_s}</fieldset>'
+                    f'<fieldset><legend>Serviços que o Hub pode ler</legend>{marcas_s}</fieldset>'
                     f'<button type="submit">{"Atualizar conexão" if x["conectado"] else f"Conectar {n}"}</button></form>')
             if x["conectado"]:
                 corpo = (f'<p role="status">{n} conectado como {e(x["usuario"])}: {e(", ".join(x["nomes"]))}. '
@@ -179,10 +179,10 @@ def pg_apps(ctx):
             blocos.append(f"<section><h2>{n}</h2>{corpo}</section>")
             continue
         escolha = (f'<form method="post" action="/apps/conectar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}"><input type="hidden" name="provedor" value="{k}">'
-                   f'<fieldset><legend>Serviços que o Memory pode ler</legend>{marcas}</fieldset>'
+                   f'<fieldset><legend>Serviços que o Hub pode ler</legend>{marcas}</fieldset>'
                    f'<button type="submit">{"Alterar serviços" if x["conectado"] else f"Conectar {n}"}</button></form>')
         if not x["conectado"]:
-            corpo = (f'<p role="status">{n} não conectado. O Memory só lê: não altera nem apaga nada no app. Notas, tarefas, eventos e contatos viram documentos de texto no seu acervo, '
+            corpo = (f'<p role="status">{n} não conectado. O Hub só lê: não altera nem apaga nada no app. Notas, tarefas, eventos e contatos viram documentos de texto no seu acervo, '
                      'atualizados sozinhos a cada 15 minutos.</p>' + (f'<p class="erro" role="alert">{e(x["erro"])}</p>' if x["erro"] else "") + escolha)
         else:
             corpo = (f'<p role="status">{n} conectado: {e(", ".join(x["nomes"]))}. '
@@ -236,20 +236,20 @@ def retorno_nuvem(q):
     estado = (q.get("state") or [""])[0]
     if cx.provedor_do_state(estado) and cx.PROVEDORES[cx.provedor_do_state(estado)].get("fluxo") == "trello":
         # O Trello devolve o token no fragmento do endereço, que o servidor não recebe: esta página o lê e o entrega por POST (o token nunca vai para o endereço do servidor).
-        corpo = (f'<p id="ok" role="status">Concluindo a conexão com o Trello.</p><p id="sem" role="alert" hidden>O Trello não devolveu a autorização. Volte ao Memory e conecte de novo.</p>'
+        corpo = (f'<p id="ok" role="status">Concluindo a conexão com o Trello.</p><p id="sem" role="alert" hidden>O Trello não devolveu a autorização. Volte ao Hub e conecte de novo.</p>'
                  f'<noscript><p role="alert">Esta etapa precisa de JavaScript ativo no navegador. Ative-o e conecte de novo.</p></noscript>'
                  f'<form id="f" method="post" action="/nuvem/trello"><input type="hidden" name="state" value="{e(estado)}"><input id="tk" type="hidden" name="token" value=""></form>'
-                 f'<p>{design.botao("/pesquisar", "Voltar ao Memory")}</p>')
+                 f'<p>{design.botao("/pesquisar", "Voltar ao Hub")}</p>')
         return "Conexão com o Trello", corpo, SCRIPT_TRELLO
     ok, msg = nv.concluir((q.get("state") or [""])[0], (q.get("code") or [""])[0], (q.get("error") or [""])[0])
-    return "Conexão com a nuvem", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/pesquisar", "Voltar ao Memory")}</p>'
+    return "Conexão com a nuvem", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/pesquisar", "Voltar ao Hub")}</p>'
 
 
 def post_trello_publico(campos):
     """Passo final da conexão com o Trello (sem cookie: o state de uso único é a credencial)."""
     import heimdall_conexoes as cx
     ok, msg = cx.concluir_token(campos.get("state", ""), campos.get("token", ""))
-    return "Conexão com o Trello", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/apps", "Voltar ao Memory")}</p>'
+    return "Conexão com o Trello", f'<p role="{"status" if ok else "alert"}">{e(msg)}</p><p>{design.botao("/apps", "Voltar ao Hub")}</p>'
 
 
 def post_nuvem_conectar(ctx, campos, arquivos):
@@ -412,7 +412,7 @@ GRUPOS = [
     ("Organização", [("/etiquetas", "Etiquetas"), ("/tipos", "Tipos")]),
 ]
 CFG = web.Config(
-    chave="memory", nome="Memory", porta_env="HEIMDALL_MEMORY_PORT", porta=8021, hosts="memory.heimdall-ai.tech,localhost,127.0.0.1",
+    chave="memory", nome="Hub", porta_env="HEIMDALL_MEMORY_PORT", porta=8021, hosts="memory.heimdall-ai.tech,hub.heimdall-ai.tech,hub.studiolibre.io,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
     get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/apps": pg_apps, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira},

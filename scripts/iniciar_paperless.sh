@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sobe o Paperless-ngx (motor do Studio Memory) em Docker, só em 127.0.0.1:8023, e liga o motor no .env.
+# Sobe o Paperless-ngx (motor do Studio Hub) em Docker, só em 127.0.0.1:8023, e liga o motor no .env.
 # Gera a chave e a senha do Paperless na primeira vez (guardadas no .env, nunca mostradas). Funciona em macOS e Linux; no Windows, use o WSL.
 cd "$(dirname "$0")/.."
 [ -f .env ] || { echo "Não encontrei o .env nesta pasta."; exit 1; }
@@ -20,4 +20,4 @@ open(".env", "w", encoding="utf-8").write("\n".join(linhas) + "\n")
 PY
 mkdir -p paperless/data paperless/media paperless/export
 docker compose -f paperless/docker-compose.yml --env-file .env up -d || { echo "Não consegui subir o Paperless-ngx; veja a mensagem acima."; exit 1; }
-echo "Paperless-ngx no ar em 127.0.0.1:8023 (a primeira subida leva alguns minutos). Reinicie o Memory: studio restart"
+echo "Paperless-ngx no ar em 127.0.0.1:8023 (a primeira subida leva alguns minutos). Reinicie o Hub: studio restart"

@@ -7,6 +7,7 @@ _studio_espelhar_env() {
     while IFS= read -r _linha; do
         _k="${_linha%%=*}"
         case "$_k" in
+            STUDIO_HUB|STUDIO_HUB_[A-Z0-9_]*) export "HEIMDALL_MEMORY${_k#STUDIO_HUB}=${!_k}" ;;   # Studio Hub é o antigo Memory
             STUDIO_[A-Z0-9_]*) export "HEIMDALL_${_k#STUDIO_}=${!_k}" ;;
         esac
     done < <(env)

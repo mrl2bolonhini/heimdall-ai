@@ -234,7 +234,7 @@ s, _, r = req("POST", "/apps/conectar", {"csrf": csrf, "provedor": "microsoft"},
 confere("conectar sem marcar serviço não vai ao provedor", s != 303 or "auth.exemplo.test" not in (r.getheader("Location") or ""), (s, r.getheader("Location")))
 state = urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)["state"][0]
 s, h, _ = req("GET", f"/nuvem/retorno?state={state}&code=codigo-bom")
-confere("retorno sem cookie conclui a conexão com os serviços escolhidos", s == 200 and "OneNote" in h and "Voltar ao Memory" in h, h[-300:])
+confere("retorno sem cookie conclui a conexão com os serviços escolhidos", s == 200 and "OneNote" in h and "Voltar ao Hub" in h, h[-300:])
 s, h, _ = req("GET", "/apps", cookie=tk)
 confere("depois de conectar: serviços, Sincronizar agora, Desconectar e Alterar serviços", "Microsoft conectado: OneNote, Microsoft To Do" in h and "Sincronizar agora" in h and "Desconectar Microsoft" in h and "Alterar serviços" in h, h[:400])
 s, _, r = req("POST", "/apps/sincronizar", {"csrf": csrf, "provedor": "microsoft"}, tk)

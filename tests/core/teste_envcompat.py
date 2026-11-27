@@ -22,6 +22,9 @@ import heimdall_envcompat as e
 confere("interno troca STUDIO_ por HEIMDALL_", e.interno("STUDIO_LAB_PORT") == "HEIMDALL_LAB_PORT")
 confere("interno deixa outros nomes", e.interno("HEIMDALL_X") == "HEIMDALL_X" and e.interno("LITELLM_MASTER_KEY") == "LITELLM_MASTER_KEY")
 
+confere("Studio Hub: STUDIO_HUB_PORT vira HEIMDALL_MEMORY_PORT", e.interno("STUDIO_HUB_PORT") == "HEIMDALL_MEMORY_PORT" and e.interno("STUDIO_HUB") == "HEIMDALL_MEMORY")
+confere("STUDIO_HUBX não é alias", e.interno("STUDIO_HUBBLE") == "HEIMDALL_HUBBLE")
+
 import heimdall_config as c
 tmp = Path(tempfile.mkdtemp()) / ".env"
 tmp.write_text("STUDIO_LAB_PORT='8011'\nHEIMDALL_NEWS_PORT=8020\n# STUDIO_X=1\n", encoding="utf-8")

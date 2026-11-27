@@ -42,7 +42,7 @@ codigo = (AQUI / "heimdall.zsh").read_text(encoding="utf-8")
 no_case = {x for g in re.findall(r"^    ([a-z0-9|]+)\)", codigo.split("studio() {")[1].split("# Completar")[0], re.M) for x in g.split("|")}
 confere("há seção de ajuda para os 51 comandos", len(nomes) == 51, len(nomes))
 # library e cloud são nomes antigos que continuam valendo (memory e lab)
-confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help", "library", "cloud"}, (set(nomes) - no_case, no_case - set(nomes)))
+confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help", "library", "memory", "cloud"}, (set(nomes) - no_case, no_case - set(nomes)))
 
 # --- --help e -h em todos os comandos mostram só aquele comando
 for n in nomes:

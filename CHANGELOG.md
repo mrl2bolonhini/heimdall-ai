@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-26 - Memory agora é Studio Hub
+- O Studio Memory passou a se chamar Studio Hub nas telas, na ajuda, no site e na documentação. O comando do terminal é `studio hub` (os antigos `studio memory` e `studio library` continuam funcionando). Os dados, as conexões de nuvem e as autorizações já feitas continuam como estavam.
+- O Studio Hub reunirá, nas próximas etapas, as notas e os resumos dos outros serviços, no lugar do Studio Notes.
+
 ## 2026-11-26 - Avisos sem lembretes automáticos
 - A triagem de avisos deixou de existir: o app Lembretes não recebe mais itens sozinho nem insiste por notificação. Alertas de saúde (ECG, frequência cardíaca, anomalias) ficam na aba Avisos do Studio Health, com notificação genérica no iPhone e o aviso completo no Mac, ambos com link para o produto.
 - Notas catalogadas: lembretes e eventos com data ficam pendentes e só vão para o Lembretes e o Calendário depois do seu aceite.

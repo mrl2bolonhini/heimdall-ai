@@ -47,7 +47,7 @@ for k in ("HEIMDALL_MEMORY_PORT", "HEIMDALL_MEMORY_MAX_MB", "HEIMDALL_MEMORY_HOS
 
 # 2. catálogo de serviços: id novo, nome novo, apelido antigo e porta antiga como reserva
 sv = next(x for x in servicos.catalogo() if x["id"] == "memory")
-confere("catálogo: Memory com apelido library", sv["nome"] == "Memory" and "library" in sv.get("apelidos", []) and sv["script"] == ["heimdall_memory.py"], sv)
+confere("catálogo: Hub com apelidos library e memory", sv["nome"] == "Hub" and "library" in sv.get("apelidos", []) and "memory" in sv.get("apelidos", []) and sv["script"] == ["heimdall_memory.py"], sv)
 confere("catálogo: não sobra serviço library", not any(x["id"] == "library" for x in servicos.catalogo()))
 
 # 3. endereço antigo: responde; com HEIMDALL_MEMORY_URL, redireciona (301) para o novo

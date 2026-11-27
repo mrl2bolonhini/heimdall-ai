@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Studio Memory com o Paperless-ngx como motor (HEIMDALL_MEMORY_MOTOR=paperless).
+"""Studio Hub com o Paperless-ngx como motor (HEIMDALL_MEMORY_MOTOR=paperless).
 
-O Paperless-ngx roda em Docker neste Mac, escutando só em 127.0.0.1, sem login exposto: o Memory é a única tela e fala com ele pela API REST (token).
+O Paperless-ngx roda em Docker neste Mac, escutando só em 127.0.0.1, sem login exposto: o Hub é a única tela e fala com ele pela API REST (token).
 O Paperless faz o OCR, guarda os arquivos, lê e-mails (regras IMAP) e classifica; a classificação aprende com as correções que a pessoa grava em "A revisar".
 Estas funções têm os mesmos nomes e formatos de heimdall_memory_dados.py, que as chama no lugar das internas quando o motor é o Paperless (para todos:
-cada pessoa, dono incluído, tem um usuário comum no Paperless e o Memory filtra tudo por dono, por privacidade (LGPD); a conta de administração só cria usuários).
+cada pessoa, dono incluído, tem um usuário comum no Paperless e o Hub filtra tudo por dono, por privacidade (LGPD); a conta de administração só cria usuários).
 
-Convenções: a etiqueta "A revisar" marca o que ainda não foi confirmado; a etiqueta "Lixeira" marca o que foi excluído pelo Memory (nada é apagado do Paperless).
+Convenções: a etiqueta "A revisar" marca o que ainda não foi confirmado; a etiqueta "Lixeira" marca o que foi excluído pelo Hub (nada é apagado do Paperless).
 Variáveis: HEIMDALL_PAPERLESS_URL (http://127.0.0.1:8023), HEIMDALL_PAPERLESS_USER e HEIMDALL_PAPERLESS_SENHA (administração: só cria usuários), HEIMDALL_PAPERLESS_SECRET (deriva a senha de cada pessoa), HEIMDALL_MEMORY_EMAIL_SENHA (senha de e-mail do dono, opcional).
 """
 import json
@@ -51,7 +51,7 @@ def _url() -> str:
 
 
 def pasta_entrada() -> Path:
-    return base.ORIGINAIS["pasta_entrada"]()   # pasta própria de cada pessoa; o Memory envia os arquivos ao Paperless dela (nada fica numa pasta comum)
+    return base.ORIGINAIS["pasta_entrada"]()   # pasta própria de cada pessoa; o Hub envia os arquivos ao Paperless dela (nada fica numa pasta comum)
 
 
 def _login(usuario: str, senha: str) -> str:
@@ -86,14 +86,14 @@ def _token(renovar: bool = False, admin: bool = False) -> str:
 
 
 def _meu_id() -> int:
-    """Id do usuário em atendimento no Paperless. Tudo que o Memory mostra ou grava leva esse dono: o dono (superusuário) vê tudo no Paperless, então o filtro é do Memory."""
+    """Id do usuário em atendimento no Paperless. Tudo que o Hub mostra ou grava leva esse dono: o dono (superusuário) vê tudo no Paperless, então o filtro é do Hub."""
     usuario = _usuario()
     if usuario not in _estado["ids"]:
         _token()   # cria o usuário do convidado na primeira vez
         r = _req("GET", "/api/users/", {"username": usuario}, admin=True)
         achado = [u for u in (r.get("results", []) if isinstance(r, dict) else []) if u.get("username") == usuario]
         if not achado:
-            raise ErroMemory("O Paperless-ngx não encontrou o usuário do Memory.")
+            raise ErroMemory("O Paperless-ngx não encontrou o usuário do Hub.")
         _estado["ids"][usuario] = achado[0]["id"]
     return _estado["ids"][usuario]
 

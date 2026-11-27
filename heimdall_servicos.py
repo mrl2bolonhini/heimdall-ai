@@ -63,7 +63,7 @@ def catalogo() -> list:
          "porta_env": "HEIMDALL_LEARN_PORT", "log": "learn_debug", "opcional": True},
         {"id": "trading", "nome": "Trading", "porta": _porta("HEIMDALL_TRADING_PORT", 8020), "tipo": "py", "script": ["heimdall_trading.py"],
          "porta_env": "HEIMDALL_TRADING_PORT", "log": "trading_debug", "opcional": True},
-        {"id": "memory", "nome": "Memory", "apelidos": ["library"], "porta": _porta("HEIMDALL_MEMORY_PORT", _porta("HEIMDALL_LIBRARY_PORT", 8021)), "tipo": "py", "script": ["heimdall_memory.py"],
+        {"id": "memory", "nome": "Hub", "apelidos": ["library", "memory", "hub"], "porta": _porta("HEIMDALL_MEMORY_PORT", _porta("HEIMDALL_LIBRARY_PORT", 8021)), "tipo": "py", "script": ["heimdall_memory.py"],
          "porta_env": "HEIMDALL_MEMORY_PORT", "log": "memory_debug", "opcional": True},
         {"id": "news", "nome": "News", "porta": _porta("HEIMDALL_NEWS_PORT", 8012), "tipo": "py", "script": ["heimdall_news.py"],
          "porta_env": "HEIMDALL_NEWS_PORT", "log": "news_debug"},

@@ -92,7 +92,7 @@ montar_lista() {
         LISTA+=("Studio Notes|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")
         [ "${HEIMDALL_LEARN:-0}" = "1" ] && LISTA+=("Studio Learn|http|http://127.0.0.1:${HEIMDALL_LEARN_PORT:-8019}/saude")
         [ "${HEIMDALL_TRADING:-0}" = "1" ] && LISTA+=("Studio Trading|http|http://127.0.0.1:${HEIMDALL_TRADING_PORT:-8020}/saude")
-        [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && LISTA+=("Studio Memory|http|http://127.0.0.1:${HEIMDALL_MEMORY_PORT:-${HEIMDALL_LIBRARY_PORT:-8021}}/saude")
+        [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && LISTA+=("Studio Hub|http|http://127.0.0.1:${HEIMDALL_MEMORY_PORT:-${HEIMDALL_LIBRARY_PORT:-8021}}/saude")
         LISTA+=("Studio News|http|http://127.0.0.1:${HEIMDALL_NEWS_PORT:-8012}/saude")
         LISTA+=("Studio Health|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
         LISTA+=("Studio Games|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")

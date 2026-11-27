@@ -339,7 +339,7 @@ loc = r.getheader("Location") or ""
 confere("conectar leva ao provedor (https)", s == 303 and loc.startswith("https://auth.exemplo.test/onedrive?") and "state=" in loc, (s, loc))
 state = urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)["state"][0]
 s, h, _ = req("GET", f"/nuvem/retorno?state={state}&code=codigo-bom")
-confere("retorno sem cookie conclui a conexão", s == 200 and "conectado" in h and "Voltar ao Memory" in h, h[-300:])
+confere("retorno sem cookie conclui a conexão", s == 200 and "conectado" in h and "Voltar ao Hub" in h, h[-300:])
 confere("a conexão foi gravada para o dono", [x for x in nv.situacao() if x["chave"] == "onedrive"][0]["conectado"])
 s, _, r = req("POST", "/nuvem/pasta", {"csrf": csrf, "provedor": "onedrive", "pasta": "Scans"}, tk)
 confere("salvar pasta", s == 303 and r.getheader("Location") == "/nuvem")

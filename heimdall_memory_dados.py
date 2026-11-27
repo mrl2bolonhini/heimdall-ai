@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Studio Memory, parte de dados: acervo de documentos pesquisáveis.
+"""Studio Hub, parte de dados: acervo de documentos pesquisáveis.
 
 Cada pessoa tem o seu acervo: banco db/library.db (do dono) ou db/people/<id>/library.db, e os arquivos na pasta memory/ (do dono) ou
-db/people/<id>/memory/. Os documentos chegam por envio no site ou pela pasta de entrada (memory/inbox). Para cada um o Memory:
+db/people/<id>/memory/. Os documentos chegam por envio no site ou pela pasta de entrada (memory/inbox). Para cada um o Hub:
   1. guarda o arquivo (nome pelo hash, então o mesmo arquivo nunca entra duas vezes);
   2. extrai o texto (PDF com texto, PDF escaneado e foto por OCR, DOCX, TXT, MD, CSV) e indexa para a busca (SQLite FTS5, sem acento);
   3. sugere título, tipo, data, emissor e etiquetas por regras e, se houver modelo, pela IA; a sugestão fica marcada "a revisar"
@@ -51,7 +51,7 @@ class ErroMemory(Exception):
 def pasta_base() -> Path:
     """Pasta de arquivos da pessoa em uso: memory/ na raiz (dono) ou <pasta da pessoa>/memory/."""
     d = banco._PESSOA_DIR.get()
-    return heimdall_pastas.migrar(d or PROJECT_DIR, "library", "memory")   # o Library virou Memory: a pasta antiga é renomeada na primeira vez, sem copiar nem apagar
+    return heimdall_pastas.migrar(d or PROJECT_DIR, "library", "memory")   # o Library virou Hub: a pasta antiga é renomeada na primeira vez, sem copiar nem apagar
 
 
 def pasta_arquivos() -> Path:

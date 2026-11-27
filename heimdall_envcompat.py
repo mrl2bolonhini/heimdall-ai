@@ -12,5 +12,8 @@ ANTIGO = "HEIMDALL_"
 def interno(nome: str) -> str:
     """STUDIO_X vira HEIMDALL_X (o nome que o código lê); qualquer outro nome volta igual."""
     if nome.startswith(NOVO):
-        return ANTIGO + nome[len(NOVO):]
+        resto = nome[len(NOVO):]
+        if resto == "HUB" or resto.startswith("HUB_"):   # Studio Hub é o antigo Memory: STUDIO_HUB_X vale como HEIMDALL_MEMORY_X
+            resto = "MEMORY" + resto[3:]
+        return ANTIGO + resto
     return nome

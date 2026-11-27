@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Studio Memory: apps conectados por conta (notas, tarefas, agenda e contatos), com leitura automática.
+"""Studio Hub: apps conectados por conta (notas, tarefas, agenda e contatos), com leitura automática.
 
 Provedores: Microsoft (OneNote, Microsoft To Do, Microsoft Planner, Calendário e Contatos do Outlook), pela Microsoft Graph, com permissões delegadas de leitura
 (Notes.Read, Tasks.Read, Calendars.Read, Contacts.Read) pedidas só para os serviços que a pessoa marcar (o Planner só existe em conta de trabalho ou escola);

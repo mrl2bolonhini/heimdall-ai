@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Liga o Trading e o Memory no .env, acrescenta os dois identificadores do Cloudflare Access e, se você quiser, grava o token da brapi.
+# Liga o Trading e o Hub no .env, acrescenta os dois identificadores do Cloudflare Access e, se você quiser, grava o token da brapi.
 # Não mostra segredos na tela e faz cópia do .env em .env.bak antes de mudar.
 cd "$(dirname "$0")/.."
 [ -f .env ] || { echo "Não encontrei o .env nesta pasta."; exit 1; }
@@ -23,7 +23,7 @@ for a in AUDS:
         lista.append(a)
 definir("HEIMDALL_CFACCESS_AUD", ",".join(lista))
 open(".env", "w", encoding="utf-8").write("\n".join(linhas) + "\n")
-print("Trading e Memory ligados e identificadores do Access gravados.")
+print("Trading e Hub ligados e identificadores do Access gravados.")
 PY
 read -r -s -p "Token da brapi (opcional; Enter para pular): " T; echo
 if [ -n "$T" ]; then

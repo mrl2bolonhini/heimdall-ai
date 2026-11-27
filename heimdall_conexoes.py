@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Heimdall Conexões: base comum das conexões de cada pessoa com serviços externos por conta (OAuth 2.0 com PKCE).
 
-Usada pelo Memory (arquivos em nuvem: heimdall_memory_nuvem.py; notas, tarefas, agenda e contatos: heimdall_memory_apps.py). Como tudo roda no
+Usada pelo Hub (arquivos em nuvem: heimdall_memory_nuvem.py; notas, tarefas, agenda e contatos: heimdall_memory_apps.py). Como tudo roda no
 servidor e a pessoa só autoriza no navegador, funciona para quem usa Windows, Linux, macOS, Android ou iPhone.
 
 O que esta base cuida (os módulos de cada grupo só dizem o que ler):
@@ -241,7 +241,7 @@ def iniciar(chave: str, escrita: bool = False, servicos=None) -> str:
             raise ErroMemory("Muitas conexões em andamento. Tente de novo em alguns minutos.")
         PENDENTES[state] = {"pessoa": pessoas.atual(), "provedor": chave, "verifier": verifier, "escrita": bool(escrita), "servicos": servicos or [], "expira": agora + 600}
     if prov.get("fluxo") == "trello":   # o Trello não usa state nem código: o state vai no endereço de retorno e o token volta no fragmento
-        params = {"key": cid, "name": "Studio Memory", "scope": escopo_de(chave, escrita, servicos), "expiration": "never", "response_type": "token",
+        params = {"key": cid, "name": "Studio Hub", "scope": escopo_de(chave, escrita, servicos), "expiration": "never", "response_type": "token",
                   "callback_method": "fragment", "return_url": url_retorno() + "?" + urllib.parse.urlencode({"state": state})}
         return prov["auth"] + "?" + urllib.parse.urlencode(params)
     if prov.get("simples"):
@@ -260,9 +260,9 @@ def concluir(state: str, code: str, erro: str = "") -> tuple:
     with _lock_pend:
         pend = PENDENTES.pop(state or "", None)
     if not pend or pend["expira"] < time.time():
-        return False, "Esta autorização expirou ou já foi usada. Volte ao Memory e conecte de novo."
+        return False, "Esta autorização expirou ou já foi usada. Volte ao Hub e conecte de novo."
     if erro or not code or len(code) > 2000:
-        return False, "A autorização não foi concluída. Volte ao Memory e tente de novo."
+        return False, "A autorização não foi concluída. Volte ao Hub e tente de novo."
     chave = pend["provedor"]
     prov = PROVEDORES[chave]
     cid, seg = credenciais(chave)
@@ -312,16 +312,16 @@ def concluir_token(state: str, token: str) -> tuple:
     with _lock_pend:
         pend = PENDENTES.pop(state or "", None)
     if not pend or pend["expira"] < time.time() or PROVEDORES.get(pend["provedor"], {}).get("fluxo") != "trello":
-        return False, "Esta autorização expirou ou já foi usada. Volte ao Memory e conecte de novo."
+        return False, "Esta autorização expirou ou já foi usada. Volte ao Hub e conecte de novo."
     token = (token or "").strip()
     if not re.fullmatch(r"[A-Za-z0-9_\-]{16,200}", token):
-        return False, "A autorização não foi concluída. Volte ao Memory e tente de novo."
+        return False, "A autorização não foi concluída. Volte ao Hub e tente de novo."
     chave = pend["provedor"]
     prov = PROVEDORES[chave]
     try:
         st, _, _b = http("GET", prov["api"] + "/members/me?fields=id", {"Authorization": cab_trello(token), "Accept": "application/json"})
         if st != 200:
-            return False, "O Trello não confirmou a autorização. Volte ao Memory e tente de novo."
+            return False, "O Trello não confirmou a autorização. Volte ao Hub e tente de novo."
         with como(pend["pessoa"]), LOCK:
             todos = carregar()
             todos[chave] = {**todos.get(chave, {}), "acesso": token, "renovacao": "sem-renovacao", "expira": time.time() + 10 * 365 * 86400, "escrita": False,
@@ -408,7 +408,7 @@ def sincronizar_todos() -> dict:
 
 
 def iniciar_sincronizador() -> None:
-    """Thread de fundo do Memory. HEIMDALL_NUVEM=0 desliga; sem provedor configurado, não faz nada."""
+    """Thread de fundo do Hub. HEIMDALL_NUVEM=0 desliga; sem provedor configurado, não faz nada."""
     if os.environ.get("HEIMDALL_NUVEM", "1") == "0" or not configurados():
         return
     intervalo = max(60, int(os.environ.get("HEIMDALL_NUVEM_INTERVALO", "900") or 900))

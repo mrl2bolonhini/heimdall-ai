@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Base web dos serviços novos do StudioLibre (Trading, Memory): login, sessão, CSRF, páginas no Studio Design, Ajustes, Perguntar e multipart.
+"""Base web dos serviços novos do StudioLibre (Trading, Hub): login, sessão, CSRF, páginas no Studio Design, Ajustes, Perguntar e multipart.
 
 Cada serviço descreve a si mesmo com `Config` (abas e subabas, Ajustes, rotas GET e POST, rotas antigas com 301, texto do Perguntar) e chama `servir(cfg)`.
 Segurança: só 127.0.0.1 (HEIMDALL_<X>_HOST), só nomes de site permitidos, login por senha e código de 6 dígitos ou Cloudflare Access, CSRF em todo POST,
@@ -36,7 +36,7 @@ e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 def carregar_env(prefixo: str, legado: str = "") -> None:
     """Lê do .env só as variáveis do serviço (HEIMDALL_<X>_*) e as de pasta de dados.
 
-    legado: prefixo antigo do serviço renomeado (HEIMDALL_LIBRARY_ para o Memory). As variáveis com o prefixo antigo valem como as novas;
+    legado: prefixo antigo do serviço renomeado (HEIMDALL_LIBRARY_ para o Hub). As variáveis com o prefixo antigo valem como as novas;
     se as duas existirem, a nova manda. Assim o .env de quem atualiza continua funcionando sem edição."""
     try:
         linhas = (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines()

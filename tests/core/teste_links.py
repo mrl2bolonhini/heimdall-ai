@@ -51,8 +51,10 @@ with tempfile.TemporaryDirectory() as d:
     os.environ["HEIMDALL_ALERTAS_DIR"] = d
     mac.pasta = lambda: Path(d)
     confere("aviso do Mac com url https é gravado", mac.publicar({"title": "t", "body": "c", "url": "https://health.heimdall-ai.tech/avisos"}))
+    import time as _t
+    _t.sleep(0.01)
     confere("aviso do Mac com url não https ignora o link", mac.publicar({"title": "t2", "body": "c", "url": "javascript:alert(1)"}))
-    itens = [json.loads(p.read_text()) for p in sorted(Path(d).glob("*.json"))]
+    itens = sorted((json.loads(p.read_text()) for p in Path(d).glob("*.json")), key=lambda x: x["criado"])
     confere("url https vai ao arquivo; outra não", itens[0].get("url", "").startswith("https://") and "url" not in itens[1])
 
 print("\nFALHAS:", falhas)
