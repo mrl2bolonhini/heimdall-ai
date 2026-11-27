@@ -576,7 +576,7 @@ def _consultar_notas_agora(quieto: int):
     if not _aviso_sem_acesso[0]:
         _aviso_sem_acesso[0] = True
         sys.stderr.write(f"{time.strftime('%H:%M:%S')} Second Brain: não consigo ver o banco do Notas (dê Acesso Total ao Disco ao Terminal); "
-                         "só consulto o Notas depois de uma gravação do Heimdall" + (f" e a cada {VARREDURA_MIN} min\n" if VARREDURA_MIN else "\n"))
+                         "só consulto o Notas depois de uma gravação do StudioLibre" + (f" e a cada {VARREDURA_MIN} min\n" if VARREDURA_MIN else "\n"))
     if VARREDURA_MIN and time.time() - _ultima_varredura >= VARREDURA_MIN * 60:
         return True, None
     return False, None
@@ -731,7 +731,7 @@ def gravar(pasta: str, titulo: str, markdown: str, audio: str = "") -> dict:
     titulo, markdown, audio = _limpar(titulo), _limpar(markdown), _limpar(audio)
     pasta = LEGADAS.get(pasta, pasta)
     if pasta not in PASTAS_PROPRIAS and not pasta.startswith(PREFIXO_ESCRITA) and pasta not in temas_conhecimento():
-        raise PermissionError("só escrevo nas pastas do Heimdall e nas pastas de temas de knowledge/: " + ", ".join(PASTAS_PROPRIAS))
+        raise PermissionError("só escrevo nas pastas do StudioLibre e nas pastas de temas de knowledge/: " + ", ".join(PASTAS_PROPRIAS))
     if not titulo.strip() or len(titulo) > 200:
         raise ValueError("título vazio ou longo demais")
     if not re.fullmatch(r"[\w][\w .-]{0,60}", pasta):
@@ -1242,7 +1242,7 @@ def buscar_site(url: str) -> str:
     u = urlparse(url)
     if u.scheme != "https" or (u.hostname or "").lower() not in SITES_PERMITIDOS or u.username or u.port not in (None, 443):
         raise PermissionError("site não permitido")
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh) Heimdall", "Accept": "application/json, text/html;q=0.9, */*;q=0.8"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh) StudioLibre", "Accept": "application/json, text/html;q=0.9, */*;q=0.8"})
     with urllib.request.build_opener(_SemRedirecionar).open(req, timeout=40) as r:
         return r.read(2_000_000).decode("utf-8", "replace")
 
@@ -1267,7 +1267,7 @@ def _analise_de_saude_em_segundo_plano() -> None:
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "HeimdallAgente/1.0"
+    server_version = "StudioAgente/1.0"
 
     def log_message(self, fmt, *args):  # sem IP nem parâmetros no log
         sys.stderr.write("%s %s\n" % (time.strftime("%H:%M:%S"), fmt % args if args else fmt))
@@ -1348,7 +1348,7 @@ class Handler(BaseHTTPRequestHandler):
             nome = urllib.parse.unquote(self.headers.get("X-Heimdall-Nome", "documento"))[:120]
             r = exames.receber(dados, nome)
             threading.Thread(target=_ler_documentos, daemon=True).start()   # lê já, sem esperar o minuto da vigia
-            return self._json(200, {"ok": True, "arquivo": r["arquivo"], "mensagem": "Recebido. O Heimdall vai ler o documento; você será avisado quando houver o que conferir."})
+            return self._json(200, {"ok": True, "arquivo": r["arquivo"], "mensagem": "Recebido. O StudioLibre vai ler o documento; você será avisado quando houver o que conferir."})
         except exames.ErroExames as e:
             return self._json(400, {"erro": str(e)[:200]})
         except Exception as e:  # noqa: BLE001
@@ -1542,7 +1542,7 @@ def _vigiar_documentos() -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Agente local do Heimdall para o app Notas")
+    ap = argparse.ArgumentParser(description="Agente local do StudioLibre para o app Notas")
     ap.add_argument("--teste", action="store_true", help="só confere o acesso ao app Notas e sai")
     ap.add_argument("--voz", action="store_true", help="lista as vozes em português, diz qual será usada e fala uma amostra")
     args = ap.parse_args()
@@ -1551,7 +1551,7 @@ def main() -> int:
         print(f"Voz pelo atalho '{ATALHO}' (STUDIO_VOZ_ATALHO). Gerando uma amostra...")
         with _t.TemporaryDirectory() as d:
             t = Path(d) / "amostra.txt"
-            t.write_text(dicionario_voz.aplicar("Esta é uma amostra da voz do Heimdall, para os áudios de estudo."), encoding="utf-8")
+            t.write_text(dicionario_voz.aplicar("Esta é uma amostra da voz do StudioLibre, para os áudios de estudo."), encoding="utf-8")
             motivo = audio_por_atalho(str(t), Path(d) / "amostra")
             if motivo:
                 print("Não deu certo: " + motivo)
@@ -1581,7 +1581,7 @@ def main() -> int:
     threading.Thread(target=_vigiar_documentos, daemon=True).start()
     threading.Thread(target=continuidade.vigiar, daemon=True).start()   # cópia cifrada dos bancos para o R2, só com STUDIO_CONTINUIDADE=1
     srv = ThreadingHTTPServer((HOST, PORT), Handler)
-    print(f"Agente do Heimdall em http://{HOST}:{PORT} (cofre: {VAULT})", flush=True)
+    print(f"Agente StudioLibre em http://{HOST}:{PORT} (cofre: {VAULT})", flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

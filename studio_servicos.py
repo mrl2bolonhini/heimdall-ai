@@ -55,7 +55,7 @@ def catalogo() -> list:
         {"id": "terminal", "nome": "Open Terminal", "porta": 8002, "tipo": "py", "script": None, "log": "open_terminal"},
         {"id": "agente", "nome": "Mac Agent", "apelidos": ["agente"], "porta": _porta("STUDIO_AGENTE_PORT", 8003), "tipo": "py", "script": ["studio_agente.py"],
          "porta_env": "STUDIO_AGENTE_PORT", "log": "agente_debug"},
-        {"id": "lab", "nome": "Lab", "apelidos": ["cloud"], "porta": _porta("STUDIO_LAB_PORT", 8010), "tipo": "py", "script": ["studio_lab.py"],
+        {"id": "lab", "nome": "Lab", "apelidos": [], "porta": _porta("STUDIO_LAB_PORT", 8010), "tipo": "py", "script": ["studio_lab.py"],
          "porta_env": "STUDIO_LAB_PORT", "log": "lab_debug"},
         {"id": "learn", "nome": "Learn", "porta": _porta("STUDIO_LEARN_PORT", 8019), "tipo": "py", "script": ["studio_learn.py"],
          "porta_env": "STUDIO_LEARN_PORT", "log": "learn_debug", "opcional": True},
@@ -143,7 +143,7 @@ _trava = threading.Lock()
 def desligados() -> set:
     try:
         d = json.loads(ARQUIVO.read_text(encoding="utf-8"))
-        return {("lab" if str(x) == "cloud" else str(x)) for x in d.get("desligados", [])}   # o Cloud virou Lab
+        return {str(x) for x in d.get("desligados", [])}
     except (OSError, ValueError, AttributeError):
         return set()
 

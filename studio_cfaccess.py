@@ -59,7 +59,7 @@ def config() -> dict:
             continue
         email, servicos = item.split("=", 1)
         email = email.strip().lower()
-        sv = {("lab" if s.strip().lower() == "cloud" else s.strip().lower()) for s in servicos.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", s.strip().lower())}   # o Cloud virou Lab
+        sv = {s.strip().lower() for s in servicos.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", s.strip().lower())}
         if email and sv:
             convidados[email] = sv
     return {"equipe": equipe, "auds": auds, "donos": donos, "convidados": convidados}
@@ -77,7 +77,7 @@ def _b64(s: str) -> bytes:
 
 def _buscar_chaves(equipe: str) -> dict:
     url = f"https://{equipe}.cloudflareaccess.com/cdn-cgi/access/certs"
-    req = urllib.request.Request(url, headers={"User-Agent": "heimdall-cfaccess/1"})
+    req = urllib.request.Request(url, headers={"User-Agent": "studio-cfaccess/1"})
     with urllib.request.urlopen(req, timeout=6) as r:
         dados = json.loads(r.read(200_000).decode("utf-8", "replace"))
     chaves = {}

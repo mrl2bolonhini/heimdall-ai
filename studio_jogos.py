@@ -336,7 +336,7 @@ CSP_PAGINA = "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; 
 
 
 class Jogos(nuvem.ManipuladorBase):
-    server_version = "HeimdallJogos"
+    server_version = "StudioJogos"
     sys_version = ""
     protocol_version = "HTTP/1.0"
 

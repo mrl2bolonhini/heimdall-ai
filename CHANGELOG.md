@@ -2,6 +2,9 @@
 
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-27 - Serviços antigos removidos do vigia e do código
+- O vigia de disponibilidade deixa de conferir Cloud e Notas (serviços que não existem mais) e passa a conferir Lab. Apelidos e compatibilidades do antigo Cloud saíram do código, e os identificadores internos de agente e jogos levam o nome StudioLibre.
+
 ## 2026-11-27 - Scripts da raiz renomeados
 - O comando e o carregador passam a ser studio.zsh e o iniciador start_studio.sh; os registros de execução levam o prefixo studio. A pasta padrão do projeto é ~/StudioApps. O ~/.zshrc antigo é ajustado sozinho, com cópia de segurança.
 
