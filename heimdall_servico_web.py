@@ -7,6 +7,7 @@ cookie HttpOnly, HTML sempre escapado, limite de tamanho do pedido, dados separa
 """
 import html
 import os
+import re
 import secrets
 import sys
 import time
@@ -93,7 +94,7 @@ class Config:
 
     def __init__(self, chave: str, nome: str, porta_env: str, porta: int, hosts: str, abas: list, ajustes: list, get: dict, post: dict,
                  aliases: dict = None, sistema_perguntar: str = "", contexto_perguntar=None, dica_perguntar: str = "", max_post: int = 20000, ao_iniciar=None,
-                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None, publicas_post: dict = None):
+                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None, publicas_post: dict = None, arquivos: dict = None):
         self.chave, self.nome, self.porta_env, self.porta, self.hosts = chave, nome, porta_env, porta, hosts
         self.abas, self.ajustes, self.get, self.post = abas, ajustes, get, post
         self.aliases = aliases or {}
@@ -101,6 +102,7 @@ class Config:
         self.max_post, self.ao_iniciar, self.css, self.script_pagina, self.erro = max_post, ao_iniciar, css, script_pagina, erro
         self.publicas = publicas or {}   # {rota GET sem sessão: func(q) -> (titulo, corpo) ou (titulo, corpo, script)}; só para retornos de terceiros (OAuth), que chegam sem o cookie
         self.publicas_post = publicas_post or {}   # {rota POST sem sessão: func(campos) -> (titulo, corpo)}; só para o passo final de um retorno de terceiros (o state de uso único vale como credencial)
+        self.arquivos = arquivos or {}   # {rota GET: func(ctx) -> Path ou None}: entrega o arquivo com suporte a Range (o Safari do iPhone exige para tocar áudio); None é 404
         self.pertence = pertence or {}   # {rota que não é aba: rota da aba a destacar}, como /documento dentro de Documentos
         assert len(abas) <= design.MAX_ABAS, "mais abas do que o Studio Design permite"
         self.prefixo = f"STUDIO_{PREFIXO_DO_SERVICO.get(chave, chave.upper())}_"
@@ -344,6 +346,13 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
             if rota == "/ajustes/ajuda":
                 self._pagina(200, "Ajuda", ajuda.ajuda_do_servico(cfg.chave, design.base_ajuda()), sess, rota)
                 return
+            if rota in cfg.arquivos:
+                arq = cfg.arquivos[rota](ctx)
+                if not arq:
+                    self._pagina(404, "Não encontrei", '<p>Este arquivo não existe ou não está liberado.</p>', sess, rota)
+                    return
+                self._servir_arquivo(arq, inline=not ctx.p("baixar"))
+                return
             func = cfg.get.get(rota)
             if not func:
                 self._pagina(404, "Página não encontrada", f'<p>Esta página não existe.</p><p>{design.botao(cfg.abas[0][1][0][0], "Voltar ao início")}</p>', sess, rota)
@@ -359,6 +368,62 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
             else:
                 corpo = ctx.aviso() + corpo
             self._pagina(200, titulo, corpo, sess, rota)
+
+        def _cabecalhos_seguros(self) -> None:
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Referrer-Policy", "no-referrer")
+
+        def _servir_arquivo(self, arq, inline: bool = True) -> None:
+            """Entrega o arquivo com suporte a Range. Só PDF e áudio abrem na página; o resto baixa e nunca executa."""
+            tipos = {".m4a": "audio/mp4", ".mp3": "audio/mpeg", ".pdf": "application/pdf"}
+            tipo = tipos.get(arq.suffix.lower())
+            mostrar = inline and tipo is not None
+            tipo = tipo or "application/octet-stream"
+            total = arq.stat().st_size
+            ini, fim, status = 0, total - 1, 200
+            m = re.match(r"^bytes=(\d*)-(\d*)$", self.headers.get("Range", "").strip())
+            if m and (m.group(1) or m.group(2)) and total > 0:
+                if m.group(1):
+                    ini = int(m.group(1))
+                    fim = min(int(m.group(2)), total - 1) if m.group(2) else total - 1
+                else:
+                    ini = max(0, total - int(m.group(2)))
+                if ini > fim or ini >= total:
+                    self.send_response(416)
+                    self.send_header("Content-Range", f"bytes */{total}")
+                    self.send_header("Content-Length", "0")
+                    self._cabecalhos_seguros()
+                    self.end_headers()
+                    return
+                status = 206
+            tamanho = max(0, fim - ini + 1)
+            self.send_response(status)
+            self.send_header("Content-Type", tipo)
+            self.send_header("Content-Length", str(tamanho))
+            self.send_header("Accept-Ranges", "bytes")
+            if status == 206:
+                self.send_header("Content-Range", f"bytes {ini}-{fim}/{total}")
+            self.send_header("Content-Disposition", f'{"inline" if mostrar else "attachment"}; filename="{re.sub(r"[^\w. -]", "_", arq.name)}"')
+            self.send_header("Cache-Control", "private, max-age=600")
+            self._cabecalhos_seguros()
+            if not mostrar:
+                self.send_header("Content-Security-Policy", "default-src 'none'; sandbox")
+            self.end_headers()
+            if self.command == "HEAD":
+                return
+            try:
+                with arq.open("rb") as f:
+                    f.seek(ini)
+                    restante = tamanho
+                    while restante > 0:
+                        bloco = f.read(min(65536, restante))
+                        if not bloco:
+                            break
+                        self.wfile.write(bloco)
+                        restante -= len(bloco)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
         def _post(self, rota: str, token: str, sess: dict) -> None:
             if rota not in cfg.post and rota not in ("/sair", "/perguntar"):

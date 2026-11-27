@@ -27,3 +27,5 @@ Critérios de aceite (resumo)
 4. Texto de produto com Studio Hub e StudioLibre; nenhum nome novo guardado sem aprovação.
 
 Aprovado em 26/11/2026: pasta-raiz no app Notas = "Studio Hub"; começar pela fase A (feita). Pendente: aprovação da fase B (área de Notas no Hub) e do momento de migrar as pastas (fase C).
+
+Fase B feita em 27/11/2026: aba Notas no Hub (heimdall_hub_notas.py) com Recentes, Temas, Busca e Catálogo; áudio e arquivos com Range pela base (Config.arquivos); só o dono; o Notes segue no ar. Próximo: fase C (pastas do app Notas), que mexe em dados do usuário e só começa com o aval dele.

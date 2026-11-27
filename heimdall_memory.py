@@ -18,6 +18,7 @@ import heimdall_servico_web as web
 web.carregar_env("STUDIO_HUB_")
 
 import heimdall_design as design  # noqa: E402
+import heimdall_hub_notas as hub_notas  # noqa: E402
 import heimdall_memory_dados as dados  # noqa: E402
 import heimdall_paginacao as pag  # noqa: E402
 
@@ -395,6 +396,8 @@ def post_restaurar(ctx, campos, arquivos):
 
 def contexto_perguntar(ctx) -> str:
     """Só o que a tela mostra: totais, os 30 documentos mais recentes (título, tipo, data) e trechos dos que mais combinam com a pergunta."""
+    if ctx.rota.startswith(hub_notas.PREFIXO):
+        return hub_notas.contexto(ctx)
     s = dados.estado()
     linhas = [f"Acervo: {s['documentos']} documentos."]
     recentes, _ = dados.listar(por_pagina=30)
@@ -410,17 +413,18 @@ GRUPOS = [
     ("Documentos", [("/pesquisar", "Pesquisar"), ("/recentes", "Recentes"), ("/revisar", "A revisar")]),
     ("Adicionar", [("/enviar", "Enviar arquivo"), ("/entrada", "Pasta de entrada"), ("/email", "E-mail"), ("/nuvem", "Nuvem"), ("/apps", "Apps")]),
     ("Organização", [("/etiquetas", "Etiquetas"), ("/tipos", "Tipos")]),
+    hub_notas.GRUPO,
 ]
 CFG = web.Config(
     chave="memory", nome="Hub", porta_env="STUDIO_HUB_PORT", porta=8021, hosts="memory.heimdall-ai.tech,hub.heimdall-ai.tech,hub.studiolibre.io,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
     get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/apps": pg_apps, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
-         "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira},
+         "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira, **hub_notas.GET},
     post={"/enviar": post_enviar, "/email/salvar": post_email, "/apps/conectar": post_apps_conectar, "/apps/senha": post_apps_senha, "/apps/sincronizar": post_apps_sincronizar, "/apps/desconectar": post_apps_desconectar, "/nuvem/conectar": post_nuvem_conectar, "/nuvem/pasta": post_nuvem_pasta, "/nuvem/sincronizar": post_nuvem_sincronizar, "/nuvem/desconectar": post_nuvem_desconectar, "/entrada/processar": post_entrada, "/documento/salvar": post_salvar, "/documento/confirmar": post_confirmar,
-          "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar},
+          "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar, **hub_notas.POST},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: qual é o vencimento do boleto de energia? o que diz a cláusula de rescisão do contrato? O modelo responde só com os documentos do seu acervo.",
-    css=CSS, erro=dados.ErroMemory, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem}, publicas_post={"/nuvem/trello": post_trello_publico},
+    css=CSS + hub_notas.CSS, erro=dados.ErroMemory, pertence={"/documento": "/pesquisar", **hub_notas.PERTENCE}, arquivos=hub_notas.ARQUIVOS, script_pagina=hub_notas.script, publicas={"/nuvem/retorno": retorno_nuvem}, publicas_post={"/nuvem/trello": post_trello_publico},
     ao_iniciar=lambda: (__import__("heimdall_memory_nuvem"), __import__("heimdall_memory_apps"), __import__("heimdall_conexoes").iniciar_sincronizador()))
 
 

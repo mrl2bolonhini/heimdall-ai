@@ -2,6 +2,10 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-27 - Studio Hub com a aba Notas
+- O Studio Hub ganhou a aba Notas, com as subabas Recentes, Temas, Busca e Catálogo: notas e documentos de estudo, áudio com avanço e retomada, busca e o catálogo de notas escritas (lembretes e eventos só depois do seu aceite). O Perguntar da aba responde só com trechos das notas. A área é só do dono.
+- O Studio Notes continua no ar por enquanto.
+
 ## 2026-11-26 - Nomes antigos removidos
 - O comando `heimdall` e os apelidos `library`, `memory` e `cloud` deixaram de existir: o comando é `studio` e o Hub é `studio hub`.
 - As configurações do .env passam a usar o prefixo STUDIO_ e são atualizadas sozinhas na próxima subida dos serviços, com cópia de segurança em .env.bak. Os endereços antigos do Library deixaram de responder.

@@ -229,7 +229,7 @@ def aviso_ia(dono: str, rotulo: str = "catalogo") -> str:
     return h
 
 
-def bloco_html(dono: str, csrf: str, volta: str = "/") -> str:
+def bloco_html(dono: str, csrf: str, volta: str = "/", prefixo: str = "") -> str:
     """Resultado da catalogação: andamento, itens criados com Desfazer e itens pendentes com o campo de data."""
     h = aviso_ia(dono)
     lista = registros(dono)
@@ -243,12 +243,12 @@ def bloco_html(dono: str, csrf: str, volta: str = "/") -> str:
               "desfeito": "Desfeito.", "descartado": "Descartado."}.get(r["estado"], "") + "</p>"
         base = f'<input type="hidden" name="csrf" value="{e(csrf)}"><input type="hidden" name="id" value="{e(r["id"])}">'
         if r["estado"] == "feito" and r.get("desfazer"):
-            h += f'<form method="post" action="/desfazer">{base}<button type="submit">Desfazer: {e(it["titulo"][:60])}</button></form>'
+            h += f'<form method="post" action="{prefixo}/desfazer">{base}<button type="submit">Desfazer: {e(it["titulo"][:60])}</button></form>'
         elif r["estado"] == "pendente":
-            h += (f'<form method="post" action="/confirmar">{base}<p><label for="d-{e(r["id"])}">Data de {e(it["titulo"][:60])}</label><br>'
+            h += (f'<form method="post" action="{prefixo}/confirmar">{base}<p><label for="d-{e(r["id"])}">Data de {e(it["titulo"][:60])}</label><br>'
                   f'<input type="date" id="d-{e(r["id"])}" name="data" value="{e(it["data"] if _data_ok(it["data"]) else "")}" required></p>'
                   f'<p><label for="h-{e(r["id"])}">Hora, se tiver (HH:MM)</label><br><input type="text" id="h-{e(r["id"])}" name="hora" value="{e(it["hora"])}" maxlength="5" autocomplete="off"></p>'
                   f'<button type="submit">Aceitar e criar {e(it["titulo"][:60])}</button></form>'
-                  f'<form method="post" action="/descartar">{base}<button type="submit">Descartar {e(it["titulo"][:60])}</button></form>')
+                  f'<form method="post" action="{prefixo}/descartar">{base}<button type="submit">Descartar {e(it["titulo"][:60])}</button></form>')
         h += "</li>"
     return h + "</ol></section>"
