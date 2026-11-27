@@ -75,6 +75,7 @@ import heimdall_avisos as avisos
 import heimdall_avisos_mac as avisos_mac
 import heimdall_seguranca as seguranca
 import heimdall_triagem as triagem
+import heimdall_links as links
 import heimdall_eventkit as eventkit
 import heimdall_voz as dicionario_voz
 
@@ -1515,11 +1516,11 @@ def _ler_documentos() -> None:
         novos = [r for r in rs if r.get("ok") and not r.get("duplicado")]
         falhos = [r for r in rs if not r.get("ok")]
         if novos:
-            triagem.enviar_bark({"title": "Saúde: documento para conferir", "group": "saude", "level": "active",
-                                 "body": f"{len(novos)} documento(s) lido(s). Para ouvir o que foi lido: studio health --labs pending."})
+            triagem.enviar_bark(links.com_link({"title": "Studio Health: documento para conferir", "group": "saude", "level": "active",
+                                 "body": f"{len(novos)} documento(s) lido(s) e prontos para conferir."}, "saude"))
         if falhos:
-            triagem.enviar_bark({"title": "Saúde: documento não lido", "group": "saude", "level": "active",
-                                 "body": f"{len(falhos)} documento(s) não puderam ser lidos e estão na pasta health/review, com o motivo."})
+            triagem.enviar_bark(links.com_link({"title": "Studio Health: documento não lido", "group": "saude", "level": "active",
+                                 "body": f"{len(falhos)} documento(s) não puderam ser lidos e aguardam conferência."}, "saude"))
     except Exception as e:  # noqa: BLE001 - a vigia nunca derruba o agente
         sys.stderr.write(f"{time.strftime('%H:%M:%S')} documentos de saúde: {type(e).__name__}: {str(e)[:160]}\n")
     finally:

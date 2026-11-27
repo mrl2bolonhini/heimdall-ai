@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-26 - Notificações abrem o produto de origem
+- Toda notificação de aviso passa a levar o link da tela do produto que a gerou: o aviso de saúde e de finanças abre a aba Avisos do Studio Health e do Studio Finance, e o aviso de estudo abre o Studio Learn. No iPhone o toque na notificação do Bark abre o link; no Mac o toque abre o produto no navegador. O texto no iPhone continua genérico, sem dados pessoais.
+- As mensagens de documentos de saúde dizem apenas o que aconteceu e levam ao Studio Health, sem comandos de terminal.
+- O endereço dos produtos vem de um só ponto de configuração, o que facilita a troca de domínio. Quando houver app para celular, a notificação passa a ser a do app.
+
 ## 2026-11-26 - Notas não abre sozinho e novos endereços do repositório
 - O agente do Mac deixou de abrir o app Notas só para consultar notas alteradas: com o app fechado, a consulta espera o usuário abri-lo. Gravações feitas pelo próprio Studio Notes continuam funcionando. a opção STUDIO_NOTAS_ABRIR_APP=1 devolve o comportamento anterior.
 - O repositório passou a se chamar StudioApps (studiolibre/StudioApps): README, site e guias usam o novo endereço e a pasta ~/StudioApps.

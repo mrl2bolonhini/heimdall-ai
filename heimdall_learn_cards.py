@@ -138,12 +138,14 @@ def notificar_padrao(titulo: str, corpo: str, generico: str = "Há novidade no L
         return
     try:
         import heimdall_avisos_mac as mac
-        mac.publicar({"title": titulo, "body": corpo, "group": "learn", "level": "active"})
+        import heimdall_links as links
+        mac.publicar(links.com_link({"title": titulo, "body": corpo, "group": "learn", "level": "active"}, "learn"))
     except Exception:  # noqa: BLE001
         pass
     try:
         import heimdall_triagem as tri
-        tri.enviar_bark({"title": "Learn", "body": generico, "group": "learn"})
+        import heimdall_links as links
+        tri.enviar_bark(links.com_link({"title": "Studio Learn", "body": generico, "group": "learn"}, "learn"))
     except Exception:  # noqa: BLE001
         pass
 

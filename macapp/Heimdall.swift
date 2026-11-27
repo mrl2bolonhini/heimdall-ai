@@ -296,16 +296,18 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
                   let dados = fm.contents(atPath: caminho),
                   let o = try? JSONSerialization.jsonObject(with: dados) as? [String: Any] else { continue }
             mostrarAviso(titulo: o["titulo"] as? String ?? "Heimdall", corpo: o["corpo"] as? String ?? "",
-                         grupo: o["grupo"] as? String ?? "heimdall", nivel: o["nivel"] as? String ?? "active")
+                         grupo: o["grupo"] as? String ?? "heimdall", nivel: o["nivel"] as? String ?? "active",
+                         url: o["url"] as? String ?? "")
         }
     }
 
-    func mostrarAviso(titulo: String, corpo: String, grupo: String, nivel: String) {
+    func mostrarAviso(titulo: String, corpo: String, grupo: String, nivel: String, url: String = "") {
         let c = UNMutableNotificationContent()
         c.title = titulo
         c.body = corpo
         c.threadIdentifier = grupo
         c.sound = .default
+        if url.hasPrefix("https://") { c.userInfo = ["url": url] }
         if #available(macOS 12.0, *) {
             switch nivel {
             case "critical", "timeSensitive": c.interruptionLevel = .timeSensitive
@@ -324,7 +326,11 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
-        ativarApp()
+        if let u = response.notification.request.content.userInfo["url"] as? String, u.hasPrefix("https://"), let destino = URL(string: u) {
+            NSWorkspace.shared.open(destino)   // abre a tela do produto no navegador padrão
+        } else {
+            ativarApp()
+        }
         completionHandler()
     }
 

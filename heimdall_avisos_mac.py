@@ -37,6 +37,9 @@ def publicar(aviso: dict) -> bool:
     nivel = str(aviso.get("level") or "active")
     item = {"titulo": titulo or "StudioLibre", "corpo": corpo, "grupo": str(aviso.get("group") or "heimdall")[:40],
             "nivel": nivel if nivel in NIVEIS else "active", "criado": time.time()}
+    url = str(aviso.get("url") or "").strip()
+    if url.startswith("https://") and len(url) <= 300:   # o app abre o endereço do produto ao clicar na notificação
+        item["url"] = url
     try:
         p = pasta()
         p.mkdir(parents=True, exist_ok=True)

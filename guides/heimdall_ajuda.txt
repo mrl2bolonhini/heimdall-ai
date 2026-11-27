@@ -660,7 +660,7 @@ Exemplos:
   studio help --doc
 
 Avisos no Mac
-  Os avisos que vão ao iPhone pelo Bark também aparecem no Mac como notificações do macOS, com o texto completo (o Bark do iPhone continua genérico).
+  Os avisos que vão ao iPhone pelo Bark também aparecem no Mac como notificações do macOS, com o texto completo (o Bark do iPhone continua genérico). Cada notificação leva o link da tela do produto que a gerou; no Mac, clicar nela abre o produto no navegador (STUDIO_DOMINIO define o domínio base e STUDIO_NOTIFICACAO_LINK=0 desliga o link).
   O app do Mac mostra as notificações; na primeira vez o macOS pede permissão. Liga e desliga em StudioLibre, Configurações. No .env: HEIMDALL_AVISOS_MAC=0 desliga de vez.
 
 Analista de saúde
