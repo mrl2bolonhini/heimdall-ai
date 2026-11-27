@@ -1,0 +1,29 @@
+Plano: Studio Notes dentro do Studio Hub (item 3 da frente prioritária; análise do PO, da UX e do tech lead, 26/11/2026)
+
+Decisões do usuário que valem aqui: o Memory passa a se chamar Studio Hub (hub.studiolibre.io); o Notes deixa de ser serviço próprio e vira a área de resumos e informações coletadas dos outros serviços, dentro do Hub; pastas e prefixos do app Notas sem "Heimdall", com migração com cópia e aviso, sem apagar nota; variável nova só STUDIO_; texto de produto sem detalhe técnico; nomes só depois da aprovação do usuário.
+
+O que existe hoje
+1. Memory: serviço web sobre a base comum (heimdall_servico_web.py), 3 grupos de abas (Documentos, Adicionar, Organização), Ajustes (Estado, Lixeira), Perguntar. Endereço memory.heimdall-ai.tech, antigo library.
+2. Notes: serviço próprio (heimdall_notas.py, ~1000 linhas, página própria): leitor das notas do cofre (brain/) e de knowledge/, áudios, catálogo de notas escritas (lembrete e evento só com aceite desde 26/11/2026), Perguntar, abas próprias. Só do dono.
+3. App Notas da Apple: o agente grava só em pastas com nome começando por "Heimdall" (PREFIXO_ESCRITA) dentro da raiz "Heimdall-ai"; essa regra também impede que o Heimdall releia o que ele mesmo gravou. Esta é a parte de risco: a segurança de escrita e a ausência de laço dependem do prefixo.
+
+Fases (cada uma com interruptor, plano de volta e teste; nada que roda no Mac pode quebrar)
+Fase A. Memory vira Hub (baixo risco): nome nas telas, na ajuda e na documentação; subdomínio hub; variáveis STUDIO_HUB_*, com HEIMDALL_MEMORY_* aceitas como nome antigo; porta e dados inalterados; endereço memory (e library) redirecionando 301 para hub. Conta (Account), Controls, comando `studio` e o Perguntar acompanham.
+Fase B. Área de Notas dentro do Hub: um grupo novo de abas (nome de uma palavra, subabas por assunto) com o leitor de notas, os áudios, o catálogo de notas escritas e o Perguntar sobre as notas. Limite de 5 abas respeitado (hoje 3 grupos + Notas = 4). O Notes continua no ar, redirecionando por rota, até a fase D. Dado por pessoa: o conteúdo continua só do dono.
+Fase C. Pastas do app Notas sem "Heimdall": nova raiz e novos nomes de pasta; o prefixo de escrita passa a ser a nova raiz (o agente escreve só dentro dela e continua sem reler o que gravou); migração com cópia: as notas antigas são copiadas para a pasta nova, o usuário confere, e só ele apaga as antigas. Fica um aviso na tela e no Mac dizendo o que foi copiado. Os dois nomes (antigo e novo) valem como "pasta própria" durante a transição, para não gerar laço. Volta: interruptor que devolve a raiz antiga.
+Fase D. Aposentar o Notes: o serviço para; notes.* redireciona para o hub (rotas equivalentes); FAQ, Ajuda, Account, Controls, listas de serviços, testes e documentação deixam de citar o Notes.
+
+Riscos e cuidados
+1. Laço de leitura: a nova raiz precisa entrar na lista de pastas próprias antes da primeira gravação.
+2. Notas do usuário nunca são alteradas; só as pastas que o Heimdall criou são movidas por cópia.
+3. Fluxos do n8n e o GitOps gravam em Heimdall-ai/<pasta>: ajustar os fluxos ou manter a tradução no agente (o fluxo manda só o nome da pasta; o agente monta o caminho).
+4. Cloudflare: novo host hub e aplicativo no Access (um por serviço, AUD novo) fazem parte da fase 4 da renomeação; até lá o Hub responde nos endereços atuais.
+5. Dados por pessoa e Perguntar: o Hub já tem o Perguntar; a área de Notas segue a mesma regra (só dados da tela).
+
+Critérios de aceite (resumo)
+1. Nenhuma nota do usuário apagada ou alterada; cópia conferida antes de qualquer remoção.
+2. Endereços antigos (memory, library, notes) respondem e redirecionam.
+3. Teste de cada fase; suíte completa verde (exceto falhas de ambiente conhecidas).
+4. Texto de produto com Studio Hub e StudioLibre; nenhum nome novo guardado sem aprovação.
+
+Aprovações pendentes do usuário: nome da pasta-raiz no app Notas; ordem das fases; quando migrar as pastas.
