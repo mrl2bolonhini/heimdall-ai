@@ -52,9 +52,9 @@ def osa(script, *args):
     raise RuntimeError("script inesperado")
 
 
-seco = mg.migrar(cofre, osa, "Heimdall-ai", simular=True, log=lambda *_: None)
+seco = mg.migrar(cofre, osa, "StudioLibre", simular=True, log=lambda *_: None)
 confere("simular não grava nem apaga nada", av.do_servico("saude").listar() == [] and (cofre / "saude" / "saude-semana.md").exists() and not apagadas, seco)
-r = mg.migrar(cofre, osa, "Heimdall-ai", log=lambda *_: None)
+r = mg.migrar(cofre, osa, "StudioLibre", log=lambda *_: None)
 sa, fi = av.do_servico("saude").listar(), av.do_servico("financas").listar()
 confere("saúde: importa a cópia do cofre e a nota sem cofre; sem duplicar a que está nos dois", len(sa) == 2 and {a["titulo"] for a in sa} == {"Saúde: semana de 10/11", "Resumo antigo sem cofre"}, sa)
 confere("finanças: importa a análise", len(fi) == 1 and fi[0]["titulo"] == "Análise de março" and "gastei 500" in fi[0]["texto"], fi)
@@ -62,9 +62,9 @@ confere("o frontmatter do cofre não vai para o aviso", all("tags:" not in a["te
 confere("as 3 notas do app Notas foram apagadas depois da conferência", sorted(apagadas) == sorted(NOTAS) and r["apagados_notas"] == 3, (apagadas, r))
 confere("cofre: md e áudio de saúde e finanças apagados; outras pastas intactas", not (cofre / "saude" / "saude-semana.md").exists() and not (cofre / "saude" / "audio" / "saude-semana.m4a").exists()
         and not (cofre / "heimdall-financas" / "analise-de-marco.md").exists() and (cofre / "heimdall-digest" / "digest.md").exists(), r)
-confere("sem erros e sem a lista de saúde dentro da raiz tocada fora de Heimdall-ai", r["erros"] == [] and all(a[1] == ("Saúde", "Heimdall-ai") for a in chamadas if "listar-pasta" in a[0] and a[1][0] == "Saúde"), chamadas)
+confere("sem erros e sem a lista de saúde dentro da raiz tocada fora de StudioLibre", r["erros"] == [] and all(a[1] == ("Saúde", "StudioLibre") for a in chamadas if "listar-pasta" in a[0] and a[1][0] == "Saúde"), chamadas)
 apagadas.clear()
-r2 = mg.migrar(cofre, osa, "Heimdall-ai", log=lambda *_: None)
+r2 = mg.migrar(cofre, osa, "StudioLibre", log=lambda *_: None)
 confere("rodar de novo não duplica", len(av.do_servico("saude").listar()) == 2 and len(av.do_servico("financas").listar()) == 1 and r2["importados"] == 0, r2)
 
 # falha ao apagar no app Notas: o cofre fica para tentar de novo
@@ -77,7 +77,7 @@ def osa_falha(script, *args):
     return osa(script, *args)
 
 
-r3 = mg.migrar(cofre, osa_falha, "Heimdall-ai", log=lambda *_: None)
+r3 = mg.migrar(cofre, osa_falha, "StudioLibre", log=lambda *_: None)
 confere("erro ao apagar nota: mantém o arquivo do cofre e avisa", (cofre / "saude" / "novo.md").exists() and any("mantive" in e for e in r3["erros"]), r3)
 
 # importação com falha: nada é apagado

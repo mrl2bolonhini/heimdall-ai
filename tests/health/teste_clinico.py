@@ -138,7 +138,7 @@ n0 = len(pedidos)
 a = cl.aceitar(pontos["id"], post=post, hoje=HOJE)
 confere("aceitar retirada de pontos cria EVENTO de dia inteiro na data do documento, só com a ação no título",
         a["evento"] and not a["lembrete"] and pedidos[n0][0].endswith("/calendario/evento") and pedidos[n0][1]["data"] == "2026-12-02"
-        and "hora" not in pedidos[n0][1] and pedidos[n0][1]["titulo"] == "Heimdall Saúde: retirada de pontos", pedidos[n0:])
+        and "hora" not in pedidos[n0][1] and pedidos[n0][1]["titulo"] == "Studio Health: retirada de pontos", pedidos[n0:])
 for exige in (("2026-11-01", ""), ("25/12/2026", ""), ("2026-12-20", "25:00")):
     try:
         cl.aceitar(ped, post=post, hoje=HOJE, data=exige[0], hora=exige[1])

@@ -12,7 +12,7 @@ import sys
 import heimdall_nuvem as nuvem
 import heimdall_perguntar as perguntar
 
-SISTEMA = "Você é o assistente do Heimdall. Responda em português, de forma direta e curta, sem inventar fatos nem números."
+SISTEMA = "Você é o assistente do StudioLibre. Responda em português, de forma direta e curta, sem inventar fatos nem números."
 
 
 def perguntar_ao_modelo(pergunta: str, modo: str = "", nuvem_chat=None, local_chat=None) -> tuple:

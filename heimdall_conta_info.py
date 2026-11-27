@@ -6,7 +6,7 @@ Para acrescentar um serviço ou mudar um texto, edite só aqui. "como" é uma li
 """
 INFO = {
     "lab": {
-        "oque": "Painel web do emulador de AWS do Heimdall, com S3, Lambda, Glue, Athena e um console geral, para estudar e testar sem custo.",
+        "oque": "Painel web do emulador de AWS do StudioLibre, com S3, Lambda, Glue, Athena e um console geral, para estudar e testar sem custo.",
         "como": ["Entre pelo Cloudflare Access, com a sua conta Microsoft e a aprovação no Authenticator.",
                  "Escolha na barra do alto o serviço da AWS que quer usar: S3, Lambda, Glue, Athena ou Console.",
                  "Nada precisa ser configurado: os recursos ficam em um emulador local, sem custo na AWS."],
@@ -15,17 +15,17 @@ INFO = {
         "oque": "Site simples para ler as notas de estudo e ouvir os áudios, feito para leitor de tela.",
         "como": ["Abra o serviço e escolha a nota na lista.",
                  "Para ouvir, use o botão de reproduzir da própria nota.",
-                 "O conteúdo vem do app Notas e da triagem do Heimdall."],
+                 "O conteúdo vem do app Notas e da triagem do StudioLibre."],
     },
     "news": {
         "oque": "Notícias das últimas 24 horas com resumo feito por inteligência artificial, e feeds RSS para ler no iPhone.",
         "como": ["Abra o serviço e leia os resumos por fonte.",
                  "Para ler no iPhone, copie o endereço do feed RSS da fonte e assine no seu leitor de RSS.",
-                 "As fontes são configuradas pelo dono do Heimdall."],
+                 "As fontes são configuradas pelo dono do StudioLibre."],
     },
     "saude": {
         "oque": "Dados do iPhone e do Apple Watch num banco pessoal, análises, relatório semanal e um painel somente de leitura.",
-        "como": ["No iPhone, o app Health Auto Export envia os dados ao Heimdall com o token gerado em Integrações, no Account.",
+        "como": ["No iPhone, o app Health Auto Export envia os dados ao StudioLibre com o token gerado em Integrações, no Account.",
                  "Abra o painel para ver o dia, as anomalias e as tendências.",
                  "Para conferir se os dados estão chegando, veja o estado da integração em Integrações, no Account."],
         "so_dono": True,
@@ -62,7 +62,7 @@ INFO = {
         "oque": "Contas conectadas pelo Open Finance, extratos, planilhas, boletos e investimentos reunidos em páginas de texto para leitor de tela, com gastos por categoria, tendências, alertas e o campo Perguntar.",
         "como": ["Conecte suas contas pelo Open Finance ou importe extratos e planilhas nos Ajustes do Finance.",
                  "Abra o serviço para ver gastos por categoria, tendências, boletos e investimentos.",
-                 "Os dados ficam no ambiente do Heimdall; cópias cifradas podem ser mantidas na nuvem da Cloudflare, conforme a Política de Privacidade."],
+                 "Os dados ficam no ambiente do StudioLibre; cópias cifradas podem ser mantidas na nuvem da Cloudflare, conforme a Política de Privacidade."],
         "so_dono": True,
         "multiusuario": "Hoje o serviço é usado apenas pelo dono. Uma versão para outras pessoas está prevista no roadmap: cada uma conectará as próprias contas bancárias, com os dados guardados separadamente.",
     },
@@ -80,14 +80,14 @@ INFO = {
                  "Uma conta é criada na primeira entrada; o dono pode ajustar o que ela vê."],
     },
     "flows": {
-        "oque": "Flows: automações e agendamentos do Heimdall, como o resumo de e-mails e a chegada dos dados de saúde. Tecnologia: n8n.",
+        "oque": "Flows: automações e agendamentos do StudioLibre, como o resumo de e-mails e a chegada dos dados de saúde. Tecnologia: n8n.",
         "como": ["Entre pelo Cloudflare Access e depois pelo login próprio do n8n, que o programa não deixa desligar.",
                  "Abra o fluxo desejado para ver ou editar os passos.",
                  "Mudanças nos fluxos do repositório são aplicadas pelo dono com studio flows."],
         "so_dono": True,
     },
     "status": {
-        "oque": "Status: monitora se os serviços do Heimdall estão no ar e avisa quando algum cai. Tecnologia: Uptime Kuma.",
+        "oque": "Status: monitora se os serviços do StudioLibre estão no ar e avisa quando algum cai. Tecnologia: Uptime Kuma.",
         "como": ["Abra o serviço: ele entra direto no painel.",
                  "Cada monitor mostra a disponibilidade; em Configurações ficam as notificações e a aparência.",
                  "Pausar e retomar serviços também se faz na aba Serviços do Controls."],

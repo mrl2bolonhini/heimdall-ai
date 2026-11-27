@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Leitor de boletos do Studio Finance: linha digitável (47 dígitos de boleto bancário ou 48 de conta de consumo/tributo) -> valor, vencimento e banco.
 
-O Heimdall nunca paga nada: ele só lê o código, confere os dígitos verificadores e guarda o boleto como conta a pagar no banco local.
+O StudioLibre nunca paga nada: ele só lê o código, confere os dígitos verificadores e guarda o boleto como conta a pagar no banco local.
 Nada aqui usa internet; o banco SQLite fica só no Mac.
 """
 import json
@@ -138,7 +138,7 @@ def _baixar(host: str, ip: str, caminho: str, timeout: int = 8, maximo: int = 30
     ctx = ssl.create_default_context()
     with socket.create_connection((ip, 443), timeout=timeout) as s, ctx.wrap_socket(s, server_hostname=host) as t:
         t.settimeout(timeout)
-        t.sendall(f"GET {caminho} HTTP/1.1\r\nHost: {host}\r\nAccept: application/json, application/jose, text/plain\r\nUser-Agent: Heimdall-Finance\r\nConnection: close\r\n\r\n".encode("ascii", "ignore"))
+        t.sendall(f"GET {caminho} HTTP/1.1\r\nHost: {host}\r\nAccept: application/json, application/jose, text/plain\r\nUser-Agent: StudioLibre-Finance\r\nConnection: close\r\n\r\n".encode("ascii", "ignore"))
         dados = b""
         while len(dados) < maximo + 4000:
             parte = t.recv(8192)
@@ -350,7 +350,7 @@ def adicionar_pessoa(con, nome: str) -> str:
     if len(nome) < 2:
         raise ERRO("Digite o nome da pessoa (por exemplo, Maria Silva).")
     if re.search(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}", nome):
-        raise ERRO("Digite só o nome. O Heimdall não guarda CPF.")
+        raise ERRO("Digite só o nome. O StudioLibre não guarda CPF.")
     con.execute("INSERT OR IGNORE INTO pessoas(nome) VALUES(?)", (nome,))
     con.commit()
     return nome
@@ -487,7 +487,7 @@ def listar(con, hoje: date = None, incluir_pagos: bool = False) -> list:
 
 
 def definir_situacao(con, id_boleto: int, pago: bool) -> bool:
-    """Marcar como pago ou reabrir é decisão sua: o boleto fica travado e o Heimdall não muda mais a situação dele sozinho."""
+    """Marcar como pago ou reabrir é decisão sua: o boleto fica travado e o StudioLibre não muda mais a situação dele sozinho."""
     cur = con.execute("UPDATE boletos SET situacao=?, motivo=NULL, manual=1 WHERE id=?", ("pago" if pago else "aberto", int(id_boleto)))
     con.commit()
     return cur.rowcount > 0

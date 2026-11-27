@@ -1,4 +1,4 @@
-"""Servidor MCP do Heimdall (HTTP, endpoint /mcp), em grupos de ferramentas.
+"""Servidor MCP do StudioLibre (HTTP, endpoint /mcp), em grupos de ferramentas.
 
 Uso:
     python heimdall_mcp.py --group mac      # ferramentas do Mac (admin), porta 8000
@@ -31,7 +31,7 @@ GROUPS = {
     "dados": ("Heimdall Dados", 8004, lambda m: m.DADOS_TOOLS),
 }
 
-parser = argparse.ArgumentParser(description="Servidor MCP do Heimdall")
+parser = argparse.ArgumentParser(description="Servidor MCP do StudioLibre")
 parser.add_argument("--group", choices=sorted(GROUPS), default="all")
 args = parser.parse_args()
 

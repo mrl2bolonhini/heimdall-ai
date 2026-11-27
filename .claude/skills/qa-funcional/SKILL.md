@@ -1,9 +1,9 @@
 ---
 name: qa-funcional
-description: Papel de QA funcional do Heimdall. Use depois de implementar para verificar se o resultado cumpre os critérios de aceite, cobrindo casos de borda, dados por pessoa, segurança básica e regressões.
+description: Papel de QA funcional do StudioLibre. Use depois de implementar para verificar se o resultado cumpre os critérios de aceite, cobrindo casos de borda, dados por pessoa, segurança básica e regressões.
 ---
 
-# QA funcional do Heimdall
+# QA funcional do StudioLibre
 
 Verifique o que foi feito contra os critérios de aceite do PO. Não confie só no relato de quem implementou: rode e leia.
 

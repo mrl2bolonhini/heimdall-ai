@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cópia de segurança criptografada do banco pessoal do Heimdall.
+"""Cópia de segurança criptografada do banco pessoal do StudioLibre.
 
 O que faz: tira uma cópia consistente do banco (SQLite .backup), confere a integridade, comprime,
 criptografa com AES-256-GCM (chave derivada da senha com scrypt) e grava em um ou mais destinos:
@@ -68,7 +68,7 @@ def decifrar(blob: bytes, senha: str) -> bytes:
     from cryptography.exceptions import InvalidTag
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     if not blob.startswith(MAGIA) or len(blob) < len(MAGIA) + 28:
-        raise ValueError("não é uma cópia do Heimdall (cabeçalho inválido)")
+        raise ValueError("não é uma cópia do StudioLibre (cabeçalho inválido)")
     sal = blob[len(MAGIA):len(MAGIA) + 16]
     nonce = blob[len(MAGIA) + 16:len(MAGIA) + 28]
     try:

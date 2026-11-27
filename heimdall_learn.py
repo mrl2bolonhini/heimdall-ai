@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Studio Learn: site de estudos. Fase 1: pastas com categoria e tipo, e importação de documentos.
 
-As pastas ficam em knowledge/ (a mesma pasta de documentos do resto do Heimdall) e são cadastradas no banco próprio do Learn
+As pastas ficam em knowledge/ (a mesma pasta de documentos do resto do StudioLibre) e são cadastradas no banco próprio do Learn
 (db/learn.db). Cada pasta tem uma CATEGORIA (aleatório ou sequencial) e um TIPO aberto (idiomas, programação, filosofia, medicina...).
 A IA combina categoria, tipo e material para decidir como estudar (fases seguintes: perguntas aleatórias, lições, voz, cards).
 

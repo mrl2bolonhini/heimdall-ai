@@ -8,13 +8,13 @@
 #       ./start_heimdall.sh --n8n      sobe também o n8n (automações e agendamentos) em http://localhost:5678 (ou STUDIO_N8N=1)
 #       ./start_heimdall.sh --agente   sobe também o agente do Mac (ponte do n8n com o app Notas) na porta 8003; sobe sozinho
 #                                      quando STUDIO_AGENTE_TOKEN existe no .env (o scripts/instalar_automacoes_avancadas.sh cria)
-#       Aparência do Open WebUI (no .env): STUDIO_WEBUI_NAME="Heimdall-ai" (nome); arquivos em branding/
+#       Aparência do Open WebUI (no .env): STUDIO_WEBUI_NAME="StudioLibre" (nome); arquivos em branding/
 #       (favicon.png, logo.png, splash.png...) são copiados para dentro do contêiner a cada subida.
 #       Extras (opcionais, no .env): STUDIO_MONITORING=0 desliga Uptime Kuma e Dozzle;
 #       STUDIO_AWS_EMULATOR=auto|moto|localstack|off escolhe o emulador de AWS.
 #       STUDIO_WEBUI_ENXUTO=1 (padrão) | 0: Open WebUI sem Notas, Automações, imagem, código e recursos automáticos (STUDIO_WEBUI_TITULOS=1 mantém os títulos; STUDIO_WEBUI_EMBEDDING=ollama poupa mais memória)
 #       STUDIO_AWS_EMULATOR_INICIO=demanda (padrão) | auto: com "demanda", o emulador de AWS (LocalStack ou Moto) já criado não sobe
-#       junto com o Heimdall, para poupar memória; ligue quando for usar: studio lab --start (e desligue com studio lab --stop).
+#       junto com o StudioLibre, para poupar memória; ligue quando for usar: studio lab --start (e desligue com studio lab --stop).
 #       ./start_heimdall.sh --update   antes de subir, atualiza as imagens Docker (SearXNG,
 #                                      Qdrant e Open WebUI), com backup; também vale STUDIO_UPDATE=1 no .env
 
@@ -76,7 +76,7 @@ for arg in "$@"; do
     [ "$arg" = "--docling" ] && WANT_DOCLING=1
 done
 
-echo "=== [Heimdall System Boot] ==="
+echo "=== [StudioLibre System Boot] ==="
 echo "Projeto: $PROJECT_DIR"
 
 # --- Chave mestra do LiteLLM (guardada em .env, nunca no YAML) ---
@@ -486,7 +486,7 @@ if ! command -v uvx > /dev/null 2>&1; then
 fi
 
 # --- Servidores MCP: grupo do Mac (admin, 8000) e grupo público (convidados, 8001) ---
-echo "[5/7] Subindo os servidores MCP do Heimdall..."
+echo "[5/7] Subindo os servidores MCP do StudioLibre..."
 "$VENV_PYTHON" heimdall_mcp.py --group mac > "$(nova_log mcp_debug)" 2>&1 &
 MCP_PID=$!
 "$VENV_PYTHON" heimdall_mcp.py --group public > "$(nova_log mcp_public_debug)" 2>&1 &

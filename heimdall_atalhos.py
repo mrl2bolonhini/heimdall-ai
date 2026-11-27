@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Conversor do que o Atalho do iPhone envia (saúde) para o formato do Health Auto Export, que o resto do Heimdall já entende.
+"""Conversor do que o Atalho do iPhone envia (saúde) para o formato do Health Auto Export, que o resto do StudioLibre já entende.
 
 Formato do Atalho, versão 1 (corpo "dados" do item de saúde na caixa):
     {"origem": "atalhos", "versao": 1, "amostras": [{"tipo": "passos", "inicio": "2026-11-21T08:00:00-03:00", "fim": "...", "valor": 120, "unidade": "count"}, ...]}

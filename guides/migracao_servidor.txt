@@ -1,9 +1,9 @@
-Plano de migração do Heimdall para um servidor próprio (VPS)
+Plano de migração do StudioLibre para um servidor próprio (VPS)
 
 Status: fase 0 em andamento (decisões do usuário em 24/11/2026). Em 25/11/2026 a conta na Locaweb foi criada e o chamado com as perguntas abaixo foi aberto; falta registrar as respostas e decidir contrato e orçamento. Nenhuma fase com código começou; cada uma só começa depois do sim do usuário.
 
 1. Objetivo
-Manter o Heimdall no ar sem depender do Mac. Um servidor alugado (VPS) passa a hospedar os serviços, os fluxos e os dados. O Mac deixa de ser a fonte e vira cliente, mantendo uma única função que só ele tem: a ponte com os apps da Apple.
+Manter o StudioLibre no ar sem depender do Mac. Um servidor alugado (VPS) passa a hospedar os serviços, os fluxos e os dados. O Mac deixa de ser a fonte e vira cliente, mantendo uma única função que só ele tem: a ponte com os apps da Apple.
 
 2. Decisões já tomadas (24/11/2026)
 1) O Mac continua como ponte Apple (Notas, Calendário, Lembretes). O servidor chama o agente do Mac por um canal privado; se o Mac estiver fora do ar, o pedido fica em fila e roda quando ele volta, com aviso.
@@ -13,7 +13,7 @@ Manter o Heimdall no ar sem depender do Mac. Um servidor alugado (VPS) passa a h
 
 3. Servidor candidato
 Locaweb VPS Linux de 8 GB (4 vCPU, 200 GB), datacenter no Brasil, imagem Docker de um clique, 1 snapshot grátis. Preços do contrato de 24 meses, conferidos em 24/11/2026: R$ 63,90 por mês na promoção, R$ 155,90 de lista e R$ 124,72 na renovação. Não há plano mensal avulso. O SLA da VPS não é informado (os 99,9% divulgados são do Locaweb Cloud, mais caro).
-Dimensionamento medido: contêineres cerca de 1,9 GB e processos do Heimdall cerca de 1,1 GB, ou seja, cerca de 3,1 GB. A medida pode estar subestimada (o LiteLLM, por exemplo). Com 8 GB há folga; 4 GB só serve com o chat próprio e fica apertado.
+Dimensionamento medido: contêineres cerca de 1,9 GB e processos do StudioLibre cerca de 1,1 GB, ou seja, cerca de 3,1 GB. A medida pode estar subestimada (o LiteLLM, por exemplo). Com 8 GB há folga; 4 GB só serve com o chat próprio e fica apertado.
 Perguntas à Locaweb antes de contratar (tarefa do usuário):
 1) Docker e Docker Compose funcionam sem restrição na VPS?
 2) Existe SLA de disponibilidade escrito para a VPS?

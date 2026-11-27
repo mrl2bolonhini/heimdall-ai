@@ -57,7 +57,7 @@ saida = ag.osascript(SCRIPT)
 confere("roda o script e devolve a saída", saida == "ok")
 confere("abre o Notas escondido e em segundo plano", ["open", "-g", "-j", "-a", "Notes"] in chamadas, chamadas)
 time.sleep(0.8)
-confere("fecha o Notas que o próprio Heimdall abriu", "Notes" not in rodando and ag._apps_nossos == set(), (rodando, ag._apps_nossos))
+confere("fecha o Notas que o próprio StudioLibre abriu", "Notes" not in rodando and ag._apps_nossos == set(), (rodando, ag._apps_nossos))
 
 esconderam = [c for c in chamadas if c[:3] == ["osascript", "-l", "JavaScript"] and "com.apple.Notes" in c[-1]]
 confere("esconde o Notas logo depois de abri-lo e de novo no fim da chamada", len(esconderam) == 2, chamadas)

@@ -76,7 +76,7 @@ O que faz, a cada hora, só lendo (nada é marcado como lido, movido ou apagado)
 
 Antes de instalar, uma vez, crie a senha de aplicativo do Gmail:
 1. A verificação em duas etapas precisa estar ligada na conta Google.
-2. Abra o endereço myaccount.google.com/apppasswords, dê o nome Heimdall e crie. O Google mostra 16 letras; copie.
+2. Abra o endereço myaccount.google.com/apppasswords, dê o nome StudioLibre e crie. O Google mostra 16 letras; copie.
 3. No Gmail, em Configurações, aba Encaminhamento e POP/IMAP, confirme que o IMAP está ativado.
 Depois, na pasta do projeto:
   bash scripts/instalar_email_oficial.sh
@@ -85,7 +85,7 @@ Testar sem enviar nada: bash scripts/instalar_email_oficial.sh --testar
 Desligar e apagar a senha: bash scripts/instalar_email_oficial.sh --remover
 
 Cuidados:
-1. A senha de aplicativo dá acesso ao Gmail inteiro (o Google não oferece senha só de leitura). Ela fica apenas no .env, com permissão 600. Para revogar, apague a senha Heimdall na página do Google.
+1. A senha de aplicativo dá acesso ao Gmail inteiro (o Google não oferece senha só de leitura). Ela fica apenas no .env, com permissão 600. Para revogar, apague a senha StudioLibre na página do Google.
 2. Se o Mac estiver dormindo, a verificação espera; recupera quando acordar.
 3. Esta parte foi testada com e-mails simulados, não com o Gmail real. Se algo falhar, o log fica em ~/Library/Logs/heimdall-email-oficial.log (veja com: tail -30 ~/Library/Logs/heimdall-email-oficial.log).
 
@@ -118,7 +118,7 @@ Se o Querido Diário ainda falhar, o aviso do Bark trará a causa. Para ver a re
 =====================================================================
 PASTAS DO NOTAS COM NOMES PRÓPRIOS E PROTEÇÃO DA PASTA PRIVADA
 =====================================================================
-1. Novos nomes das pastas no app Notas: "Monitor de Privacidade" (antes Heimdall Privacidade), "Digest" (antes Heimdall Digest) e "Cérebro" (antes Heimdall Cérebro). O agente só escreve nessas três (e nas antigas que começam com Heimdall). Para mudar os nomes, use no .env: STUDIO_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro". As notas antigas ficam nas pastas antigas; apague-as à mão quando quiser. Essas pastas nunca são lidas como fonte, para não criar laço.
+1. Novos nomes das pastas no app Notas: "Monitor de Privacidade" (antes StudioLibre Privacidade), "Digest" (antes StudioLibre Digest) e "Cérebro" (antes StudioLibre Cérebro). O agente só escreve nessas três (e nas antigas que começam com StudioLibre). Para mudar os nomes, use no .env: STUDIO_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro". As notas antigas ficam nas pastas antigas; apague-as à mão quando quiser. Essas pastas nunca são lidas como fonte, para não criar laço.
 2. Pasta privada: antes só valia o nome exato "Privado". Uma pasta chamada ".privado" (com ponto) passava batida e suas notas iam para o Cérebro. Agora a comparação ignora maiúsculas, acentos, espaços e pontos no começo: ".privado", "Privado" e " PRIVADO " são a mesma pasta, com as subpastas. Outras pastas privadas: STUDIO_NOTAS_PRIVADAS="Privado,Diário" no .env.
 
 Como aplicar (um comando por vez, na pasta do projeto):

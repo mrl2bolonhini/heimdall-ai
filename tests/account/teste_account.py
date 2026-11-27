@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do Account: tour por papel, /quem.json com CORS só para os sites do Heimdall, 403/401 sem Access, porta local e cabeçalhos de segurança."""
+"""Teste do Account: tour por papel, /quem.json com CORS só para os sites do StudioLibre, 403/401 sem Access, porta local e cabeçalhos de segurança."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())

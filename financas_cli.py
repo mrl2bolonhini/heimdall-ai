@@ -170,7 +170,7 @@ def main() -> None:
                     fb.adicionar_pessoa(con, a.pessoa)
                 idb, novo = fb.registrar(con, b, beneficiario, arquivo, None, dono)
                 print(("Registrado" if novo else "Já estava registrado") + f" (número {idb}): " + fb.frase({**b, "beneficiario": beneficiario or b.get("beneficiario", ""), "dono": dono}))
-            print("\nO Heimdall não paga nada: só guarda a conta a pagar. Veja em studio finance, página Boletos, ou com studio finance --bills.")
+            print("\nO StudioLibre não paga nada: só guarda a conta a pagar. Veja em studio finance, página Boletos, ou com studio finance --bills.")
         elif a.guardar_pluggy:
             import financas_pluggy as fpl
             print(fpl.guardar_chave(a.guardar_pluggy, _colar()))

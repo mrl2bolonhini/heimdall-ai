@@ -1,9 +1,9 @@
 ---
 name: ux
-description: Papel de UX do Heimdall. Use para desenhar ou revisar telas, abas, fluxos e textos de interface, conferindo o Studio Design, a clareza da navegação e a comunicação de produto.
+description: Papel de UX do StudioLibre. Use para desenhar ou revisar telas, abas, fluxos e textos de interface, conferindo o Studio Design, a clareza da navegação e a comunicação de produto.
 ---
 
-# UX do Heimdall
+# UX do StudioLibre
 
 Leia a seção "Studio Design" (gerar_docs.py) e o CLAUDE.md. Pense em qualquer usuário, com ou sem leitor de tela, no computador ou no celular.
 

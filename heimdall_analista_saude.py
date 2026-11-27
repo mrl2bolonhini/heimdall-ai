@@ -494,7 +494,7 @@ def renderizar(r: dict, d: dict, lit: list) -> str:
         por = {x["pmid"]: x for x in lit}
         L += ["", "Estudos consultados (PubMed):"] + [f"{i}. {por[x['pmid']]['titulo']} ({por[x['pmid']]['revista']}, {por[x['pmid']]['ano']}), PMID {x['pmid']}. Leitura do modelo: {x['o_que_diz']} "
                                                        f"Começo do resumo do estudo, para você conferir: {por[x['pmid']]['resumo'][:260].rstrip()}..." for i, x in enumerate(r["literatura"], 1)]
-    L += ["", "A decisão de procurar um médico é sua; esta análise é feita pelo Heimdall a partir dos seus dados e de resumos de estudos, e pode errar."
+    L += ["", "A decisão de procurar um médico é sua; esta análise é feita pelo StudioLibre a partir dos seus dados e de resumos de estudos, e pode errar."
           + (f" Modelo: {modelo_usado}." if modelo_usado and r.get("_modelo") else "")]
     return para_leitor_de_tela("\n".join(L))
 

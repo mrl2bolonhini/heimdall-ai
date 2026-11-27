@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste dos serviços do Heimdall (heimdall_servicos.py) e do Kuma (heimdall_kuma.py): catálogo, memória do que foi desligado,
+"""Teste dos serviços do StudioLibre (heimdall_servicos.py) e do Kuma (heimdall_kuma.py): catálogo, memória do que foi desligado,
 ligar e desligar de verdade um processo de teste, vigia e leitura da página de status do Kuma."""
 import sys as _sys
 from pathlib import Path as _Path

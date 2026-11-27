@@ -4,7 +4,7 @@
 Quem usa: o Controls (aba Serviços). Para um serviço novo aparecer lá, acrescente uma linha em CATALOGO e só.
 
 Como liga e desliga:
-  - "py": script Python do Heimdall. Desliga encerrando quem escuta na porta; liga com o python do venv, a porta no ambiente e o log em logs/.
+  - "py": script Python do StudioLibre. Desliga encerrando quem escuta na porta; liga com o python do venv, a porta no ambiente e o log em logs/.
   - "docker": contêiner. Desliga com docker stop e liga com docker start (o contêiner precisa existir: a primeira vez é do start_heimdall.sh).
   - "cmd": comando próprio (LiteLLM, Ollama).
   - sem "liga": só desliga aqui; para ligar de novo use studio restart.
@@ -95,7 +95,7 @@ def parar_tudo() -> list:
 
 
 def iniciar_tudo() -> tuple:
-    """Sobe o Heimdall inteiro como o studio up (subir.sh), sem esperar. A saída vai para logs/controls_manutencao.log."""
+    """Sobe o StudioLibre inteiro como o studio up (subir.sh), sem esperar. A saída vai para logs/controls_manutencao.log."""
     script = PROJECT_DIR / "subir.sh"
     if not script.exists():
         return False, "subir.sh não encontrado"

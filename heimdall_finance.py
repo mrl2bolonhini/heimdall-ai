@@ -391,7 +391,7 @@ def pg_importar(sess: dict) -> tuple:
              '<label><input type="checkbox" name="forcar" value="1"> Importar o PDF mesmo que o total do documento não confira com os lançamentos (só depois de revisar)</label>'
              '<button type="submit">Importar</button></form>'
              '<p class="sub">Dica: extrato de conta e fatura de cartão devem ser importados com nomes de conta diferentes. O pagamento da fatura na conta vira "Pagamento de fatura" e não conta como despesa, porque os gastos já aparecem na fatura. '
-             'Você também pode soltar os arquivos na pasta de entrada (studio finance --folder): o Heimdall importa sozinho o que conferir e separa o que deixar dúvida.</p>' + hist)
+             'Você também pode soltar os arquivos na pasta de entrada (studio finance --folder): o StudioLibre importa sozinho o que conferir e separa o que deixar dúvida.</p>' + hist)
     return "Importar extrato", corpo + _bloco_pluggy(sess)
 
 
@@ -399,7 +399,7 @@ def _bloco_pluggy(sess: dict) -> str:
     """Conexão com os bancos pelo Meu Pluggy: situação da última sincronização e botão para sincronizar agora."""
     cfg = fpl.credenciais()
     if not cfg:
-        return ('<h2>Conexão automática com os bancos</h2><p>Ainda não está ligada. Com o plano pessoal gratuito do Meu Pluggy, o Heimdall baixa sozinho as contas e transações dos bancos que você autorizar '
+        return ('<h2>Conexão automática com os bancos</h2><p>Ainda não está ligada. Com o plano pessoal gratuito do Meu Pluggy, o StudioLibre baixa sozinho as contas e transações dos bancos que você autorizar '
                 '(somente leitura; os dados passam pelos servidores do Pluggy). No terminal: studio finance --guardar-pluggy id, depois segredo, depois itens, copiando cada valor antes.</p>')
     est = fpl.ler_estado(DIR_DADOS / "pluggy_estado.json")
     corpo = ['<h2>Conexão automática com os bancos</h2>']
@@ -556,7 +556,7 @@ def pg_analise(sess: dict) -> tuple:
     """A semana e o mês já vêm prontos: a última análise salva ou, se não houver, a calculada agora pelas regras. Os botões geram uma nova com os dados de agora."""
     csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
     corpo = ['<p>Análise no estilo de consultor, só com redução de gastos, datas de pagamento, o que subiu e baixou e pontos de atenção, sem dica de investimento. '
-             'Os números são calculados pelo Heimdall; o modelo local só redige o texto, e se ele citar um valor que não está nos dados, vale o texto calculado. Nada sai do Mac. '
+             'Os números são calculados pelo StudioLibre; o modelo local só redige o texto, e se ele citar um valor que não está nos dados, vale o texto calculado. Nada sai do Mac. '
              'O botão de cada análise gera uma nova com os dados que o Finance tem até agora.</p>']
     pendentes = {t["info"] for t in perguntar.em_andamento(sess["csrf"], "analise") if t["estado"] == "pensando"}
     for t in perguntar.em_andamento(sess["csrf"], "analise"):
@@ -674,7 +674,7 @@ def pg_futuros(sess: dict) -> tuple:
 def _bloco_pessoas(csrf: str) -> str:
     nomes = fb.pessoas(banco())
     html_ = ('<h2>Pessoas</h2><p>Cadastre as pessoas cujos boletos você paga, por exemplo sua noiva e sua filha, para agrupar os boletos e somar o que está em aberto de cada uma. '
-             'Só o nome: o Heimdall não guarda CPF. Ao ler um PDF, ele procura o nome no campo Pagador.</p>'
+             'Só o nome: o StudioLibre não guarda CPF. Ao ler um PDF, ele procura o nome no campo Pagador.</p>'
              f'<form method="post" action="/boletos/pessoa">{csrf}<p><label for="npessoa">Nome da pessoa</label><br><input type="text" id="npessoa" name="nome" autocomplete="off" required></p>'
              '<button type="submit">Adicionar pessoa</button></form>')
     if nomes:
@@ -690,7 +690,7 @@ def _opcoes_pessoas(atual: str) -> str:
 
 def pg_boletos(sess: dict) -> tuple:
     csrf = f'<input type="hidden" name="csrf" value="{e(sess["csrf"])}">'
-    corpo = ['<p>Aqui ficam os boletos como contas a pagar. O Heimdall lê a linha digitável, confere os dígitos verificadores e mostra valor e vencimento. '
+    corpo = ['<p>Aqui ficam os boletos como contas a pagar. O StudioLibre lê a linha digitável, confere os dígitos verificadores e mostra valor e vencimento. '
              'Ele nunca paga nada: o pagamento é sempre com você, no app do banco. PDF de boleto solto na pasta de entrada também é registrado.</p>',
              '<h2>Registrar um boleto</h2>'
              f'<form method="post" action="/boletos">{csrf}<p><label for="linha">Linha digitável (47 ou 48 números), código de barras (44 números) ou Pix copia e cola; pontos e espaços podem ficar</label><br>'

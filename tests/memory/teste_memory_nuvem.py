@@ -76,7 +76,7 @@ class H(BaseHTTPRequestHandler):
             if d["path"] not in ("", "/Docs"):
                 return self._j({"error": "path"}, 409)
             extras = [{".tag": "file", "id": i, "name": n, "size": len(c), "content_hash": m, "path_lower": pl} for (i, (n, c, m)), pl in zip(EXTRA.items(), (
-                "/docs/sub/nota_sub.txt", "/docs/importados pelo heimdall/velho.txt", "/docs/a/b/c/d/e/f/fundo.txt"))] if d.get("recursive") else []
+                "/docs/sub/nota_sub.txt", "/docs/importados pelo studiolibre/velho.txt", "/docs/a/b/c/d/e/f/fundo.txt"))] if d.get("recursive") else []
             return self._j({"entries": [{".tag": "file", "id": i, "name": n, "size": len(c), "content_hash": m} for i, (n, c, m) in list(ARQUIVOS.items())[:2]] + extras, "has_more": True, "cursor": "c1"})
         if u == "/2/files/create_folder_v2":
             ESTADO["pastas_criadas"].append(json.loads(corpo)["path"])
@@ -122,11 +122,11 @@ class H(BaseHTTPRequestHandler):
             itens = [{"id": i, "name": n, "size": len(c), "eTag": m, "file": {}} for i, (n, c, m) in ARQUIVOS.items()]
             if pg == "1":
                 return self._j({"value": itens[:2], "@odata.nextLink": f"http://127.0.0.1:{PORTA_F}{p.path}?pagina=2"})
-            return self._j({"value": itens[2:] + [{"id": "pasta", "name": "sub", "folder": {}}, {"id": "imp", "name": "Importados pelo Heimdall", "folder": {}}]})
+            return self._j({"value": itens[2:] + [{"id": "pasta", "name": "sub", "folder": {}}, {"id": "imp", "name": "Importados pelo StudioLibre", "folder": {}}]})
         m = re.fullmatch(r"/me/drive/items/([^/]+)/children", p.path)
         if m:
             ESTADO["pastas_lidas"].append(m.group(1))
-            return self._j({"value": [{"id": "id:5", "name": EXTRA["id:5"][0], "size": len(EXTRA["id:5"][1]), "eTag": "h5", "file": {}}, {"id": "imp", "name": "Importados pelo Heimdall", "folder": {}}]})
+            return self._j({"value": [{"id": "id:5", "name": EXTRA["id:5"][0], "size": len(EXTRA["id:5"][1]), "eTag": "h5", "file": {}}, {"id": "imp", "name": "Importados pelo StudioLibre", "folder": {}}]})
         m = re.fullmatch(r"/me/drive/items/(.+)/content", p.path)
         if m:
             return self._j({}, 302, {"Location": f"http://127.0.0.1:{PORTA_F}/dl/{m.group(1)}"})
@@ -287,7 +287,7 @@ with cx.como(CONV2):
     confere("Dropbox: importa a subpasta, ignora Importados e o que passa do limite de níveis", r["novos"] == 3 and r["erros"] == 0 and "id:5" in ESTADO["baixados"]
             and "id:6" not in ESTADO["baixados"] and "id:7" not in ESTADO["baixados"], (r, ESTADO["baixados"]))
     confere("Dropbox: cada arquivo importado vai para a pasta de importados", r["movidos"] == 3 and [m["from_path"] for m in ESTADO["movidos"]] == ["id:1", "id:2", "id:5"]
-            and all(m["to_path"].startswith("/Docs/Importados pelo Heimdall/") and m["autorename"] for m in ESTADO["movidos"]) and ESTADO["pastas_criadas"] == ["/Docs/Importados pelo Heimdall"], (r, ESTADO))
+            and all(m["to_path"].startswith("/Docs/Importados pelo StudioLibre/") and m["autorename"] for m in ESTADO["movidos"]) and ESTADO["pastas_criadas"] == ["/Docs/Importados pelo StudioLibre"], (r, ESTADO))
     r = nv.sincronizar("dropbox", usar_ia=False)
     confere("segunda rodada não repete nem move de novo", r["novos"] == 0 and r["movidos"] == 0 and len(ESTADO["movidos"]) == 3, (r, ESTADO["movidos"]))
     confere("o resumo informa os movidos", "movidos" in nv.situacao()[0]["resumo"])
@@ -297,7 +297,7 @@ with cx.como(CONV2):
     r = nv.sincronizar("onedrive", usar_ia=False)
     confere("OneDrive: percorre a subpasta, pula Importados e move com o id da pasta criada", r["novos"] + r["repetidos"] == 3 and r["movidos"] == 3 and r["erros"] == 0
             and ESTADO["pastas_lidas"] == ["pasta"] and len(ESTADO["patch"]) == 3 and all(b["parentReference"] == {"id": "destino-od"} for _, b in ESTADO["patch"])
-            and ESTADO["pastas_criadas"][-1] == "Importados pelo Heimdall", (r, ESTADO["pastas_lidas"], ESTADO["patch"]))
+            and ESTADO["pastas_criadas"][-1] == "Importados pelo StudioLibre", (r, ESTADO["pastas_lidas"], ESTADO["patch"]))
     confere("o acervo do convidado tem os três documentos", dados.listar()[1] == 3)
 confere("o dono não foi afetado: continua só leitura e sem mover", nv.situacao()[0]["escrita"] is False and nv.situacao()[0]["mover"] is False and dados.listar()[1] == 2)
 
@@ -354,7 +354,7 @@ tg2 = hc.nova_sessao("memory", CONV2)[0]
 s, h, _ = req("GET", "/nuvem", cookie=tg2)
 csrf2 = re.search(r'data-csrf="([^"]+)"', h).group(1)
 confere("tela do convidado com organização: subpastas e mover marcados, sem botão de permitir", "com organização" in h and re.search(r'name="subpastas"[^>]*checked', h) and re.search(r'name="mover"[^>]*checked', h)
-        and "Importados pelo Heimdall" in h and 'for="sub-dropbox"' in h and "Permitir organização" not in h, h[:300])
+        and "Importados pelo StudioLibre" in h and 'for="sub-dropbox"' in h and "Permitir organização" not in h, h[:300])
 s, _, r = req("POST", "/nuvem/pasta", {"csrf": csrf2, "provedor": "dropbox", "pasta": "/Docs"}, tg2)
 with cx.como(CONV2):
     sit = nv.situacao()[0]

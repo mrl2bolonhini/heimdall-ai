@@ -1,4 +1,4 @@
-# Imagem de continuidade do Heimdall (linux/amd64). Contexto de construção: a raiz do repositório (ver wrangler.jsonc).
+# Imagem de continuidade do StudioLibre (linux/amd64). Contexto de construção: a raiz do repositório (ver wrangler.jsonc).
 FROM --platform=linux/amd64 python:3.12-slim
 ENV PYTHONUNBUFFERED=1 HEIMDALL_CONTINUIDADE_MODO=1
 WORKDIR /app

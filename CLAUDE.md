@@ -1,10 +1,10 @@
-# Regras do repositório Heimdall-ai
+# Regras do repositório StudioLibre
 
 ## Contexto
 - Antes de planejar qualquer demanda, leia `guides/contexto_projeto.txt`: resumo do que foi implementado, debatido e decidido (Open WebUI enxuto e chat próprio, servidor e Locaweb, Open Finance e tarefas agendadas, estilo e conceito, time de skills, nome do produto). Ao fechar um bloco de decisões novas, atualize esse arquivo.
 
 ## Studio Design (obrigatório em toda atualização de interface)
-Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News, Saúde, Jogos, Finance), leia a página de Design
+Antes de criar ou mudar qualquer página dos sites do StudioLibre (Lab, Notas, News, Saúde, Jogos, Finance), leia a página de Design
 (gerada em gerar_docs.py, seção "Studio Design") e siga-a. A fonte única de cores, tipografia, medidas, foco e botão é `heimdall_design.py`.
 - Link lê, botão age (`design.botao`; paginação em `heimdall_paginacao.py`).
 - Nada de cor, tamanho de fonte ou foco definido só numa página: use as variáveis (`var(--texto)` etc.). Precisa de algo novo? Acrescente primeiro ao `heimdall_design.py` e à página de Design.
@@ -19,9 +19,9 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News
 - Rode `python3 tests/design/teste_design.py` e o teste do serviço alterado antes de enviar.
 
 ## Evento ou lembrete (obrigatório em toda aplicação que escreve na agenda)
-- Evento (Calendário, calendário Heimdall) é o que acontece numa data e hora ou tem data fixa: consulta, prazo. Lembrete (app Lembretes) é o que o usuário precisa fazer e marcar como feito.
+- Evento (Calendário, calendário StudioLibre) é o que acontece numa data e hora ou tem data fixa: consulta, prazo. Lembrete (app Lembretes) é o que o usuário precisa fazer e marcar como feito.
 - A regra e a tabela de tipos ficam em `heimdall_agenda.py` (DESTINOS). Tipo novo de item na agenda: cadastre-o lá escolhendo evento ou lembrete, e use `agenda.enviar`. Rode `python3 tests/agent/teste_agenda.py`.
-- O usuário aceitou que o Calendário sincronize com a nuvem da Apple (ela já fornece dados de saúde ao Heimdall): o evento leva especialidade, médico e local. STUDIO_AGENDA_DETALHES=0 volta ao título genérico.
+- O usuário aceitou que o Calendário sincronize com a nuvem da Apple (ela já fornece dados de saúde ao StudioLibre): o evento leva especialidade, médico e local. STUDIO_AGENDA_DETALHES=0 volta ao título genérico.
 
 ## Perguntar (obrigatório em todo serviço com dados pessoais)
 - Todo serviço que mostra dados pessoais do usuário (Finance, Health, News, Hub, Learn) tem o campo Perguntar no fim do painel de cada aba (`heimdall_perguntar.bloco_html`): o código do serviço monta o contexto só com os dados daquela tela, o modelo responde só com base nele (com os trechos que o usuário estudou, para poder perguntar sobre o texto, nunca o livro inteiro nem o gabarito ainda secreto) e a rota POST /perguntar exige CSRF e valida o endereço de volta. Serviço novo com dados pessoais já nasce com o Perguntar e um teste dele. O Lab também tem o Perguntar (contexto: o estado do emulador, com conhecimento geral de AWS permitido, sem executar nada). Trading (contexto: conta simulada, posições, ordens e avisos; nunca recomenda operar) e Hub, antigo Memory (contexto: lista de documentos e trechos dos mais parecidos com a pergunta) também têm o Perguntar, pela base `heimdall_servico_web.py`. Games e Controls ficam de fora por ora. O Perguntar usa o modelo leve da nuvem (Qwen3 30B com /no_think; STUDIO_NUVEM_PERGUNTAR_MODELO troca) e o campo é de várias linhas: Enter envia, Shift+Enter pula linha, Option+Shift+P (Alt+Shift+P no Windows e no Linux) leva ao campo.
@@ -63,7 +63,7 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News
 
 ## Outras regras fixas
 - Trading é só simulação (decisão do usuário em 25/11/2026): nenhuma ordem vai a corretora; a execução é código com regras fixas e limites; a IA descreve números e movimentos e nunca recomenda comprar ou vender. Serviço novo com telas simples nasce sobre `heimdall_servico_web.py` (Trading e Hub são os exemplos).
-- O Heimdall passa a ser pensado como possível produto comercial (decisão do usuário em 23/11/2026). Todo texto dentro do Heimdall (interface, mensagens de erro e aviso, ajuda, documentação, notificações) segue comunicação profissional voltada a produto: clara, objetiva, neutra e consistente, sem gíria nem tom pessoal ou de bastidor, nomeando o que o usuário pode fazer. Texto que já existe é ajustado ao ser mexido.
+- O StudioLibre passa a ser pensado como possível produto comercial (decisão do usuário em 23/11/2026). Todo texto dentro do StudioLibre (interface, mensagens de erro e aviso, ajuda, documentação, notificações) segue comunicação profissional voltada a produto: clara, objetiva, neutra e consistente, sem gíria nem tom pessoal ou de bastidor, nomeando o que o usuário pode fazer. Texto que já existe é ajustado ao ser mexido.
 - Continuidade (decisão do usuário em 23/11/2026): quando o Mac fica fora do ar (queda de energia, por exemplo), serviços e fluxos precisam continuar na nuvem. Ver o item de continuidade no ROADMAP; toda fase segue as regras de interruptor no .env e de limite de gasto.
 - O usuário é cego e usa VoiceOver: respostas em português, texto corrido e listas numeradas simples, sem elementos visuais.
 - Padrão combinado em conversa que valha para o projeto todo vai para este CLAUDE.md, para as próximas conversas seguirem.
@@ -71,7 +71,7 @@ Antes de criar ou mudar qualquer página dos sites do Heimdall (Lab, Notas, News
 - Segredos vêm do .env, nunca colados.
 - Sistemas (decisão do usuário em 25/11/2026): Windows, macOS, iPhone e Android entram em toda decisão do projeto, inclusive nos apps futuros. O dono usa Mac, mas os demais usuários podem não usar: ajuda, documentação e mensagens trazem comandos e passos para macOS, Linux e Windows (PowerShell, `py`) e dizem o que se faz no iPhone e no Android (navegador, app ou Atalhos), nunca presumindo Mac ou iPhone. O comando `heimdall` é do zsh (macOS e Linux); o equivalente em Python (`python3 heimdall_*.py`) serve nos três sistemas. Ao criar função nova, diga em que sistemas ela funciona e, se depender do Mac (agente da Apple, Calendário, Lembretes), registre a alternativa no ROADMAP.
 - Texto de produto não usa informações pessoais do usuário (decisão de 25/11/2026): descrições de funções, exemplos, mensagens, ajuda, README, CHANGELOG e documentação falam de forma profissional e abrangente, para qualquer usuário (exemplos genéricos como asma, alergia, convênio; nunca a condição, a profissão ou os documentos do dono). Dados do dono ficam só no banco e no .env dele.
-- Migração para a Cloudflare (decisão do usuário em 21/11/2026): a regra "saúde e finanças nunca saem do Mac" foi abandonada; saúde, finanças e o resto podem ir para a nuvem da Cloudflare, com dados protegidos (R2 com chave do cliente, acesso restrito). O Mac continua hospedando o Heimdall (sem VPS por enquanto) e o agente da Apple. O desenvolvimento segue na assinatura Pro do Claude, não na API.
+- Migração para a Cloudflare (decisão do usuário em 21/11/2026): a regra "saúde e finanças nunca saem do Mac" foi abandonada; saúde, finanças e o resto podem ir para a nuvem da Cloudflare, com dados protegidos (R2 com chave do cliente, acesso restrito). O Mac continua hospedando o StudioLibre (sem VPS por enquanto) e o agente da Apple. O desenvolvimento segue na assinatura Pro do Claude, não na API.
 - Limite de gasto da nuvem: no máximo US$ 15 por mês, somando Workers, Workers AI, AI Gateway e créditos de modelos. Ative alertas e limites ANTES de ligar cada fase; nenhuma fase começa sem eles.
 - Plano de volta: toda fase da migração precisa poder ser desligada por um interruptor no .env (ex.: STUDIO_NUVEM=0) que devolve o comportamento anterior (modelos locais, dados no Mac), e os dados enviados à nuvem têm cópia de volta no Mac antes de qualquer remoção. Nunca apagar a cópia local antes de o usuário confirmar que a fase vale a pena.
 - Deploy da continuidade (Worker e contêiner na Cloudflare): feito pelo workflow `.github/workflows/deploy-continuidade.yml` quando a `main` avança (só com o sim do usuário). Segredos do deploy ficam nos segredos do repositório, nunca no código. Manual: `studio continuity --deploy`.

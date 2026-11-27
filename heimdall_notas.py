@@ -560,7 +560,7 @@ def busca(q: str) -> list:
 # ----------------------------------------------------------------------------------------
 CONECTIVOS = {"de", "da", "do", "das", "dos", "e", "em", "com", "para", "por", "a", "o", "as", "os", "na", "no", "nas", "nos", "que", "ou", "um", "uma",
               "ao", "à", "sobre", "entre", "como", "se", "pela", "pelo", "sem", "the", "of", "and", "to", "in", "for", "with", "on", "a", "an"}
-LIMITES_ANTIGOS = (80, 120, 150, 200, 220)   # tamanhos em que o Heimdall cortou títulos gravados (45, 60 e 90 só cortavam o que aparece na tela, não o arquivo)
+LIMITES_ANTIGOS = (80, 120, 150, 200, 220)   # tamanhos em que o StudioLibre cortou títulos gravados (45, 60 e 90 só cortavam o que aparece na tela, não o arquivo)
 
 
 def motivos_de_corte(titulo: str) -> list:
@@ -577,7 +577,7 @@ def motivos_de_corte(titulo: str) -> list:
     if ultima[0] in CONECTIVOS and len(t.split()) > 2:
         m.append(f'termina na palavra "{ultima[0]}", que pede continuação')
     if len(t) in LIMITES_ANTIGOS and t[-1].isalnum():
-        m.append(f"tem exatamente {len(t)} caracteres, um tamanho em que o Heimdall já cortou títulos")
+        m.append(f"tem exatamente {len(t)} caracteres, um tamanho em que o StudioLibre já cortou títulos")
     if t.count("(") > t.count(")") or t.count("[") > t.count("]") or t.count('"') % 2 or t.count("“") > t.count("”"):
         m.append("tem parêntese ou aspas sem fechar")
     return m

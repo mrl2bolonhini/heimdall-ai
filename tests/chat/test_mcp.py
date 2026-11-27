@@ -1,4 +1,4 @@
-"""Testa o MCP do Heimdall em dois pontos:
+"""Testa o MCP do StudioLibre em dois pontos:
 
 1. direto em cada grupo (8000 = ferramentas do Mac, 8001 = ferramentas públicas), sem autenticação;
 2. pelo LiteLLM (porta 9000), com a chave mestra do .env, que junta os dois grupos e a AWS.

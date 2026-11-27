@@ -1,5 +1,5 @@
 {
-  // Heimdall Continuidade (fase 4 do guides/continuidade_nuvem.txt). NÃO implantar antes de: plano Workers Paid, política de gasto com bloqueio
+  // StudioLibre Continuidade (fase 4 do guides/continuidade_nuvem.txt). NÃO implantar antes de: plano Workers Paid, política de gasto com bloqueio
   // em Workers e em Durable Objects, e cópias dos bancos no R2 (python3 heimdall_continuidade.py enviar). Implantação: scripts/continuidade_nuvem.sh.
   "name": "heimdall-continuidade",
   "main": "worker.js",
@@ -11,7 +11,7 @@
     "FORA": "{\"chat.studiolibre.io\":\"Chat\",\"lab.studiolibre.io\":\"Lab\",\"flows.studiolibre.io\":\"Painel de fluxos\"}",   // dependem do Mac: só mostram a página de fora do ar
     "ROTAS": "{\"finance.studiolibre.io\":8016,\"health.studiolibre.io\":8013,\"news.studiolibre.io\":8012,\"learn.studiolibre.io\":8019,\"games.studiolibre.io\":8014,\"account.studiolibre.io\":8018}"
   },
-  // Sites do Heimdall que passam pelo Worker. Confira os nomes reais em heimdall urls antes de implantar.
+  // Sites do StudioLibre que passam pelo Worker. Confira os nomes reais em heimdall urls antes de implantar.
   "routes": [
     { "pattern": "finance.studiolibre.io/*", "zone_name": "studiolibre.io" },
     { "pattern": "health.studiolibre.io/*", "zone_name": "studiolibre.io" },
@@ -31,7 +31,7 @@
       "class_name": "Continuidade",
       "scheduling_policy": "default",   // política estável: aceita instance_type e max_instances (a política durable_object ainda é beta e não aceita)
       "image": "./Dockerfile",
-      "image_build_context": "../..",   // a raiz do repositório (o Dockerfile copia o código do Heimdall)
+      "image_build_context": "../..",   // a raiz do repositório (o Dockerfile copia o código do StudioLibre)
       "instance_type": "standard-1",
       "max_instances": 1               // uma instância só: teto de custo
     }

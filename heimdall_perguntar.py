@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Perguntar ao modelo local, reutilizável pelos sites do Heimdall (Finance primeiro; Saúde, Notas e News podem usar o mesmo).
+"""Perguntar ao modelo local, reutilizável pelos sites do StudioLibre (Finance primeiro; Saúde, Notas e News podem usar o mesmo).
 
 Por padrão usa o modelo local, pelo LiteLLM (http://127.0.0.1:9000, chave LITELLM_MASTER_KEY do .env). Com STUDIO_NUVEM=1 no .env tenta
 primeiro o modelo grande da Cloudflare (heimdall_nuvem.py, pelo gateway com teto de gasto) e, se a nuvem falhar, volta ao modelo local.

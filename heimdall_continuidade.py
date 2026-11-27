@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Continuidade do Heimdall na nuvem: cópia cifrada dos bancos para o R2 (no Mac) e restauração deles no contêiner (na nuvem).
+"""Continuidade do StudioLibre na nuvem: cópia cifrada dos bancos para o R2 (no Mac) e restauração deles no contêiner (na nuvem).
 
 No Mac (STUDIO_CONTINUIDADE=1 no .env liga; =0 desliga e não envia nada):
     python3 heimdall_continuidade.py preparar    gera a senha das cópias de continuidade no .env (se ainda não existir)

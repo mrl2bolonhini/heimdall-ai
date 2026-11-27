@@ -1,5 +1,5 @@
 #!/bin/bash
-# Faz o Docker Desktop parar de abrir o painel (Dashboard) quando inicia. Com o Heimdall abrindo o Docker em segundo plano, nada mais aparece na frente.
+# Faz o Docker Desktop parar de abrir o painel (Dashboard) quando inicia. Com o StudioLibre abrindo o Docker em segundo plano, nada mais aparece na frente.
 # Só mexe numa chave da configuração do Docker, com cópia de segurança ao lado do arquivo. Feche o Docker Desktop antes (ele regrava o arquivo ao sair).
 # Uso: bash scripts/silenciar_docker.sh [--desfazer]
 PASTA="${DOCKER_CONFIG_PASTA:-$HOME/Library/Group Containers/group.com.docker}"

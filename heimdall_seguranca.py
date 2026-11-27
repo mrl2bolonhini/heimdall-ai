@@ -131,7 +131,7 @@ COMUM = (
 )
 ORIENTACAO = {
     "exposicao": "Tarefa: revisar a exposição do Mac à rede. Foque no que mudou desde a leitura anterior, em escutas fora do próprio Mac, "
-                 "no Tailscale Funnel (expõe à internet pública) e no firewall. Os serviços do Heimdall escutam em todas as interfaces de "
+                 "no Tailscale Funnel (expõe à internet pública) e no firewall. Os serviços do StudioLibre escutam em todas as interfaces de "
                  "propósito, para o acesso pelo Tailscale: só aponte um deles se a mudança for inesperada.",
     "logs": "Tarefa: revisar os logs das últimas 24 horas. Cada linha dos dados traz quantas vezes ocorreu (Nx) e um exemplo. Procure "
             "tentativas de login recusadas, padrões de varredura ou força bruta, e erros que se repetem sem motivo. Ignore ruído comum.",

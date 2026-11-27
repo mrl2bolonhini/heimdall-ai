@@ -1,4 +1,4 @@
-"""Agente local de teste do Heimdall (LangGraph + Ollama), usando as mesmas
+"""Agente local de teste do StudioLibre (LangGraph + Ollama), usando as mesmas
 ferramentas do servidor MCP."""
 from langchain_core.tools import StructuredTool
 from langchain_ollama import ChatOllama
@@ -16,7 +16,7 @@ llm = ChatOllama(
 )
 
 system_prompt = (
-    "Você é o Heimdall-ai, assistente de um laboratório pessoal no macOS. "
+    "Você é o StudioLibre, assistente de um laboratório pessoal no macOS. "
     "Você pode gerenciar arquivos locais, monitorar o sistema, consultar o Hacker News, "
     "buscar no Reddit, ler feeds RSS, pesquisar na web e ver a astronomia do dia. "
     "Quando precisar de dados do sistema ou de qualquer fonte externa, chame a ferramenta "

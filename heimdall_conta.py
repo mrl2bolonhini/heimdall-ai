@@ -104,7 +104,7 @@ def menu(atual: str = "", logado_local: bool = False, sair_html: str = "", cabec
     itens = ""
     for k, n, url in servicos_da(p):
         itens += (f'<li><a href="{e(url)}" aria-current="page">{e(n)} (você está aqui)</a></li>' if k == chave else f'<li><a href="{e(url)}">{e(n)}</a></li>')
-    lista = f'<p>Serviços do Heimdall</p><ul aria-label="Serviços do Heimdall">{itens}</ul>' if itens else ""
+    lista = f'<p>Serviços do StudioLibre</p><ul aria-label="Serviços do StudioLibre">{itens}</ul>' if itens else ""
     saida = '<p><a href="/cdn-cgi/access/logout">Sair também do Cloudflare Access</a></p>' if p.get("access") else ""
     return (f'<nav aria-label="Conta"><details class="conta"><summary>Conta: {e(nome)}</summary><p>Conectado como {quem}, entrando por {e(p["via"])}.</p>'
             f'{lista}{sair_html}{saida}</details></nav>')

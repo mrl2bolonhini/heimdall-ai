@@ -109,7 +109,7 @@ def pg_email(ctx):
     form = (f'<form method="post" action="/email/salvar"><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
             '<label for="servidor">Servidor IMAP (por exemplo imap.exemplo.com)</label><input id="servidor" name="servidor" type="text" maxlength="100" required>'
             '<label for="usuario">Endereço de e-mail</label><input id="usuario" name="usuario" type="email" maxlength="120" required autocomplete="off">'
-            '<label for="pasta">Pasta ou marcador a ler</label><input id="pasta" name="pasta" type="text" value="Heimdall" maxlength="60" required>'
+            '<label for="pasta">Pasta ou marcador a ler</label><input id="pasta" name="pasta" type="text" value="StudioLibre" maxlength="60" required>'
             + ('<label for="senha">Senha de aplicativo (opcional: se ficar em branco, vale a senha configurada pelo administrador)</label>' if pl.senha_do_env() else '<label for="senha">Senha de aplicativo do e-mail (gerada no provedor; não use a senha principal)</label>')
             + '<input id="senha" name="senha" type="password" maxlength="200" autocomplete="off"' + ("" if pl.senha_do_env() else " required") + '>'
             '<label for="remetente">Só de quem (opcional)</label><input id="remetente" name="remetente" type="text" maxlength="100">'

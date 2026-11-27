@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Documentos clínicos do Heimdall: exames de laboratório, receitas e encaminhamentos.
 
-Você solta o PDF (ou a foto) na pasta de entrada do Mac ou o compartilha pelo iPhone; o Heimdall lê o texto no próprio Mac,
+Você solta o PDF (ou a foto) na pasta de entrada do Mac ou o compartilha pelo iPhone; o StudioLibre lê o texto no próprio Mac,
 separa os dados e os guarda no banco pessoal (heimdall.db) para cruzar com o que vem do relógio. Nada sai do Mac.
 
 Como a leitura é confiável:
@@ -2281,7 +2281,7 @@ def _eventos_pendentes(hoje: date) -> list:
         itens.append({"chave": f"consulta|{c['id']}|{c['dia']}", "tipo": "consulta", "dia": c["dia"],
                       "dado": {"titulo": "Consulta médica" + (f": {det}" if det else ""), "data": c["dia"], "hora": c["hora"], "duracao_min": 60,
                                "local": c["local"] if DETALHES_NA_AGENDA else "", "alertas_min_antes": [60, 1440],
-                               "notas": "Criado pelo Heimdall. Detalhes: studio health --labs appointments."}})
+                               "notas": "Criado pelo StudioLibre. Detalhes: studio health --labs appointments."}})
     por_doc = {}
     for r in _ler("SELECT * FROM receitas WHERE validade >= ? AND validade != '' ORDER BY validade, id", (hoje.isoformat(),)):
         por_doc.setdefault((r["documento_id"], r["validade"]), []).append(r)
@@ -2290,7 +2290,7 @@ def _eventos_pendentes(hoje: date) -> list:
         nomes = ", ".join(r["medicamento"] for r in rs[:3]) + (f" e mais {len(rs) - 3}" if len(rs) > 3 else "") if DETALHES_NA_AGENDA else ""
         itens.append({"chave": f"renovacao_receita|{doc}|{val}", "tipo": "renovacao_receita", "dia": quando.isoformat(),
                       "dado": {"titulo": "Pedir renovação de receita" + (f": {nomes}" if nomes else ""), "data": quando.isoformat(),
-                               "notas": f"Criado pelo Heimdall. A receita vence em {_br(val)}. Detalhes: studio health --labs prescriptions.", "alerta_dias_antes": 1}})
+                               "notas": f"Criado pelo StudioLibre. A receita vence em {_br(val)}. Detalhes: studio health --labs prescriptions.", "alerta_dias_antes": 1}})
     return itens
 
 
@@ -2450,7 +2450,7 @@ def gerar_token(env=None) -> str:
 # Linha de comando
 # --------------------------------------------------------------------------------------------
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Documentos clínicos do Heimdall (exames, receitas, encaminhamentos, atestados, laudos)")
+    ap = argparse.ArgumentParser(description="Documentos clínicos do StudioLibre (exames, receitas, encaminhamentos, atestados, laudos)")
     ap.add_argument("--pasta", action="store_true", help="lê o que estiver na pasta de entrada")
     ap.add_argument("--importar", nargs="+", metavar="ARQUIVO")
     ap.add_argument("--pendentes", action="store_true")

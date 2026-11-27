@@ -335,19 +335,20 @@ def senha_do_env() -> bool:
 
 def email_configurar(servidor: str, usuario: str, pasta: str, remetente: str = "", senha: str = "") -> str:
     """Cria (ou atualiza) a conta IMAP e a regra da pessoa, que lê só os anexos da pasta indicada. A senha de aplicativo fica só no Paperless (nunca é mostrada de volta)."""
-    servidor, usuario, pasta, remetente = servidor.strip().lower(), usuario.strip(), (pasta or "Heimdall").strip(), remetente.strip()
+    servidor, usuario, pasta, remetente = servidor.strip().lower(), usuario.strip(), (pasta or "StudioLibre").strip(), remetente.strip()
     if not re.fullmatch(r"[a-z0-9.-]{3,100}", servidor) or "@" not in usuario or len(usuario) > 120 or not re.fullmatch(r"[\w .\-/À-ÿ]{1,60}", pasta):
         raise ErroMemory("Confira o servidor IMAP (por exemplo imap.exemplo.com), o endereço de e-mail e o nome da pasta.")
     senha = (senha or "").strip() or (os.environ.get("STUDIO_HUB_EMAIL_SENHA", "") if not _pessoa() else "")
     if not senha or len(senha) > 200:
         raise ErroMemory("Informe a senha de aplicativo do e-mail (gerada no provedor de e-mail; não use a senha principal).")
-    nome_conta = f"Heimdall {usuario}"
+    nome_conta = f"StudioLibre {usuario}"
+    nome_antigo = f"Heimdall {usuario}"   # nome da versão anterior: a conta existente é renomeada, nunca duplicada
     meu = _meu_id()
     conta = {"name": nome_conta, "imap_server": servidor, "imap_port": 993, "imap_security": 2, "username": usuario, "password": senha, "character_set": "UTF-8", "account_type": 1, "owner": meu}
-    existente = next((x for x in _todos("/api/mail_accounts/") if x["name"] == nome_conta and x.get("owner") == meu), None)
+    existente = next((x for x in _todos("/api/mail_accounts/") if x["name"] in (nome_conta, nome_antigo) and x.get("owner") == meu), None)
     cid = (_req("PATCH", f"/api/mail_accounts/{existente['id']}/", corpo=conta) if existente else _req("POST", "/api/mail_accounts/", corpo=conta))["id"]
-    regra = {"name": "Heimdall: documentos por e-mail", "account": cid, "enabled": True, "folder": pasta, "filter_from": remetente or None, "maximum_age": 30, "action": 3,
+    regra = {"name": "StudioLibre: documentos por e-mail", "account": cid, "enabled": True, "folder": pasta, "filter_from": remetente or None, "maximum_age": 30, "action": 3,
              "attachment_type": 1, "consumption_scope": 1, "order": 1, "owner": meu, "assign_title_from": 2, "assign_tags": [_id_por_nome("tags", TAG_REVISAR)]}
-    r = next((x for x in _todos("/api/mail_rules/") if x["name"] == regra["name"] and x.get("owner") == meu), None)
+    r = next((x for x in _todos("/api/mail_rules/") if x["name"] in (regra["name"], "Heimdall: documentos por e-mail") and x.get("owner") == meu), None)
     _req("PATCH", f"/api/mail_rules/{r['id']}/", corpo=regra) if r else _req("POST", "/api/mail_rules/", corpo=regra)
     return f"E-mail configurado: os anexos da pasta {pasta} de {usuario} serão importados e ficarão em A revisar."

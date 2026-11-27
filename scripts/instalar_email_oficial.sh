@@ -4,7 +4,7 @@
 # o próprio Gmail registra), resume os verdadeiros com o modelo local, alerta sobre imitações (golpes) e nunca segue links.
 #
 # Antes: crie uma senha de aplicativo do Gmail (exige verificação em duas etapas ligada):
-#   myaccount.google.com/apppasswords  (com o VoiceOver: campo "Nome do app", digite Heimdall, ative o botão Criar;
+#   myaccount.google.com/apppasswords  (com o VoiceOver: campo "Nome do app", digite StudioLibre, ative o botão Criar;
 #   o Google mostra 16 letras; copie). Confirme também que o IMAP está ligado em Gmail > Configurações > Encaminhamento e POP/IMAP.
 #
 # Uso, na pasta do projeto:

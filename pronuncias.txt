@@ -1,4 +1,4 @@
-# Dicionário de pronúncia do Heimdall. Formato:  palavra = como falar
+# Dicionário de pronúncia do StudioLibre. Formato:  palavra = como falar
 # Vale para o anúncio do subir.sh e para o áudio das notas. As suas entradas ficam em pronuncias.local.txt (não sobem para o GitHub).
 LiteLLM = Lait é-le-le-ême
 n8n = ene oito ene
@@ -39,5 +39,4 @@ Store = Stór
 id = aidí
 Be My Eyes = Bí My Ahes
 Digest = Daidjest
-Heimdall = Raimdall
-heimdall-ai = raimdall-ei-ai
+StudioLibre = Estúdio Líbre

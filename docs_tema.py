@@ -387,7 +387,7 @@ def pagina(arquivo, titulo, descricao, corpo, home=False):
     # Em todas as páginas do site (menos a 404): "Entrar" (sem login) ou, com login, o nome e os serviços da pessoa; o heimdall.js pergunta a CONTA_URL + quem.json.
     conta = f'<div class="conta-site" id="conta-site" data-url="{CONTA_URL}"><a href="{CONTA_URL}">Entrar no StudioLibre</a></div>' if arquivo != "404.html" else ""
     menu = "".join('<li><a href="%s"%s>%s</a></li>' % (a, ' aria-current="page"' if a == arquivo else "", H(t)) for a, t, _ in PAGINAS)
-    nome = "StudioLibre: IA que roda em casa" if arquivo == "index.html" else titulo + " · Heimdall-ai"
+    nome = "StudioLibre: IA que roda em casa" if arquivo == "index.html" else titulo + " · StudioLibre"
     url = SITE if arquivo == "index.html" else SITE + arquivo
     if home:
         principal = corpo

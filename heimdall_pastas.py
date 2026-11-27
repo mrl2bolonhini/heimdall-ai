@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nomes das pastas de dados do Heimdall e a migração dos nomes antigos para os novos (padrão: nome em inglês, igual ao do serviço).
+"""Nomes das pastas de dados do StudioLibre e a migração dos nomes antigos para os novos (padrão: nome em inglês, igual ao do serviço).
 
 Padrão: pasta com nome em inglês e de uma palavra só. Nomes antigos que migram sozinhos: dados_financas para finance, banco para db, cerebro para brain
 e, dentro do finance, entrada para inbox e entrada_planilhas para sheets (qdrant_storage para qdrant é feito pelo start_heimdall.sh, por causa do Docker).

@@ -5,7 +5,7 @@ STATUS (23/11/2026): decisões aprovadas pelo usuário (dono nos caminhos de hoj
 Decisão do usuário: todos os serviços devem guardar os dados de cada pessoa separados dos dados do dono. Nada abaixo está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, tem teste de isolamento e interruptor no .env (STUDIO_PESSOAS=0 devolve o comportamento atual, de um dono só).
 
 COMO É HOJE (conferido no código)
-  1. A entrada de um convidado pelo Cloudflare Access já identifica o e-mail, mas a sessão do Heimdall (heimdall_lab.py) só guarda o escopo do serviço, sem dizer quem é a pessoa. Por isso nenhum serviço sabe de quem são os dados.
+  1. A entrada de um convidado pelo Cloudflare Access já identifica o e-mail, mas a sessão do StudioLibre (heimdall_lab.py) só guarda o escopo do serviço, sem dizer quem é a pessoa. Por isso nenhum serviço sabe de quem são os dados.
   2. Convidados podem entrar em Lab, Learn, News, Games e Chat. Health, Finance, Controls, n8n, Status e Account são só do dono (heimdall_usuarios.py).
   3. Cada serviço já tem o seu banco ou a sua pasta (db/learn.db, db/heimdall.db, knowledge/, health/, finance/). Falta separar por pessoa, não por serviço.
 

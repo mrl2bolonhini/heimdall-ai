@@ -27,7 +27,7 @@ if [ "$REMOVER" = "1" ]; then
         [ -f "$HOOK.antes" ] && mv "$HOOK.antes" "$HOOK"
         echo "Gancho removido de $REPO_DIR."
     else
-        echo "Nenhum gancho do Heimdall encontrado em $REPO_DIR."
+        echo "Nenhum gancho do StudioLibre encontrado em $REPO_DIR."
     fi
     exit 0
 fi

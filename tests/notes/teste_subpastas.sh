@@ -18,4 +18,4 @@ except Exception as e:
     print("ERRO:", getattr(e, "read", lambda: b"")().decode() or e)
 P
 done
-echo "Agora abra o Notas: devem existir Heimdall-ai > Saúde, Heimdall-ai > Digest e Heimdall-ai > Estudos > geral."
+echo "Agora abra o Notas: devem existir StudioLibre > Saúde, StudioLibre > Digest e StudioLibre > Estudos > geral."

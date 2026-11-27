@@ -1,4 +1,4 @@
-# Comando unificado do ecossistema Heimdall-ai (zsh). Carregado pelo ~/.zshrc com:
+# Comando unificado do ecossistema StudioLibre (zsh). Carregado pelo ~/.zshrc com:
 #     source ~/heimdall-ai/heimdall.zsh
 # Pasta do projeto: STUDIO_DIR (padrão ~/studioapps; se não existir, ~/heimdall-ai, a pasta antiga, até a mudança de pasta). Digite "studio" sem nada para ver todos os comandos.
 
@@ -537,7 +537,7 @@ studio() {
         _heimdall_sh subir.sh --reiniciar
         # O app de barra de menus só é compilado de novo quando a atualização mudou o app (macapp/ ou o script que o constrói), ou com --app.
         if [ "$forcar_app" = 1 ] || git -C "$STUDIO_DIR" diff --name-only "$antes" HEAD -- macapp scripts/construir_app_mac.sh | grep -q .; then
-          echo "Compilando o app Heimdall..."
+          echo "Compilando o app StudioLibre..."
           _heimdall_sh scripts/construir_app_mac.sh || echo "Não consegui compilar o app. Rode depois: studio app"
         fi
       else

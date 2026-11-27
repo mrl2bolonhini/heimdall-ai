@@ -1,5 +1,5 @@
 #!/bin/bash
-# Sobe o Heimdall-ai UMA vez só, guarda o log de cada subida e avisa quando tudo estiver no ar.
+# Sobe o StudioLibre UMA vez só, guarda o log de cada subida e avisa quando tudo estiver no ar.
 #
 #   ./subir.sh                    sobe com --webui --terminal (o que você usa hoje)
 #   ./subir.sh --update           sobe com os argumentos que você passar (os mesmos do start_heimdall.sh)
@@ -131,7 +131,7 @@ escolher_voz() {  # acha a voz pedida em SUBIR_VOZ na lista do sistema (qualquer
 
 avisar() {  # $1 = texto curto para a notificação e a voz
     [ "$SUBIR_SOM" = "0" ] && return
-    command -v osascript > /dev/null 2>&1 && osascript -e "display notification \"$1\" with title \"Heimdall-ai\"" > /dev/null 2>&1
+    command -v osascript > /dev/null 2>&1 && osascript -e "display notification \"$1\" with title \"StudioLibre\"" > /dev/null 2>&1
     if command -v say > /dev/null 2>&1; then
         [ -z "${VOZ_ESCOLHIDA:-}" ] && { escolher_voz; VOZ_ESCOLHIDA=1; }
         local fala="Heimdall. $1"
@@ -198,7 +198,7 @@ ls -1t "$LOGS"/heimdall-*.log 2> /dev/null | tail -n +16 | while read -r velho; 
 nohup bash "$SCRIPT" "${ARGS[@]}" >> "$LOG" 2>&1 &
 PID=$!
 echo "$PID" > "$LOGS/subida.pid"
-echo "Subindo o Heimdall-ai (argumentos: ${ARGS[*]}). Log: $LOG"
+echo "Subindo o StudioLibre (argumentos: ${ARGS[*]}). Log: $LOG"
 echo "Esperando até $((ESPERA / 60)) minutos. Vou avisar cada serviço que ficar no ar."
 
 declare -a JA

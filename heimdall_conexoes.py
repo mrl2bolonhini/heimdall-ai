@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Heimdall Conexões: base comum das conexões de cada pessoa com serviços externos por conta (OAuth 2.0 com PKCE).
+"""StudioLibre Conexões: base comum das conexões de cada pessoa com serviços externos por conta (OAuth 2.0 com PKCE).
 
 Usada pelo Hub (arquivos em nuvem: heimdall_memory_nuvem.py; notas, tarefas, agenda e contatos: heimdall_memory_apps.py). Como tudo roda no
 servidor e a pessoa só autoriza no navegador, funciona para quem usa Windows, Linux, macOS, Android ou iPhone.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diagnóstico de desempenho do Mac (studio doctor): memória, processador, disco, Docker, Ollama e serviços do Heimdall.
+"""Diagnóstico de desempenho do Mac (studio doctor): memória, processador, disco, Docker, Ollama e serviços do StudioLibre.
 
 Só lê informações do sistema (vm_stat, ps, df, docker stats, ollama ps...). Não mostra linhas de comando nem argumentos de processo,
 só o nome do programa ou do script, para nada sensível aparecer. Cada parte falha em silêncio quando o comando não existe.
@@ -268,7 +268,7 @@ def ollama(achados: list) -> list:
 
 
 def servicos(procs_por_porta: dict = None) -> list:
-    out = ["Serviços do Heimdall (porta, nome e memória)"]
+    out = ["Serviços do StudioLibre (porta, nome e memória)"]
     achou = False
     for porta in sorted(SERVICOS):
         pid = run(["lsof", "-nP", f"-iTCP:{porta}", "-sTCP:LISTEN", "-t"], 5)
@@ -280,7 +280,7 @@ def servicos(procs_por_porta: dict = None) -> list:
         out.append(f"  {SERVICOS[porta]} (porta {porta}): {mem}")
         achou = True
     if not achou:
-        out.append("  Nenhum serviço do Heimdall escutando agora (ou o lsof não está disponível).")
+        out.append("  Nenhum serviço do StudioLibre escutando agora (ou o lsof não está disponível).")
     return out
 
 

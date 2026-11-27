@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa que o Second Brain só abre o Notas quando há nota nova (gravação do Heimdall ou mudança no banco do Notas)."""
+"""Testa que o Second Brain só abre o Notas quando há nota nova (gravação do StudioLibre ou mudança no banco do Notas)."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
@@ -54,7 +54,7 @@ mtime[0] = time.time() - 10
 confere("mudança recente: consulta", rodar() > 0)
 confere("ainda recente: consulta de novo (a nota pode ter ficado quieta)", rodar() > 0)
 
-# 4. gravação do Heimdall força a consulta mesmo sem mudança no arquivo
+# 4. gravação do StudioLibre força a consulta mesmo sem mudança no arquivo
 mtime[0] = time.time() - 7200
 rodar(); rodar()
 ag._gravacao_nova.set()
@@ -87,7 +87,7 @@ except RuntimeError:
 ag.osascript = lambda script, *a, **k: (chamadas.append(script[:30]) or "")
 confere("consulta que falhou é tentada de novo", rodar() > 0)
 
-# 8. app Notas fechado: não abre só para consultar (a menos que o Heimdall tenha acabado de gravar)
+# 8. app Notas fechado: não abre só para consultar (a menos que o StudioLibre tenha acabado de gravar)
 aberto[0] = False
 ag.SO_COM_NOTAS_ABERTO = True
 mtime[0] = time.time() - 500
@@ -100,7 +100,7 @@ aberto[0] = False
 mtime[0] = time.time() - 400
 confere("Notas fechado de novo: não consulta", rodar() == 0)
 ag._gravacao_nova.set()
-confere("gravação do Heimdall com Notas fechado: consulta", rodar() > 0)
+confere("gravação do StudioLibre com Notas fechado: consulta", rodar() > 0)
 aberto[0] = False
 ag.SO_COM_NOTAS_ABERTO = False
 mtime[0] = time.time() - 300

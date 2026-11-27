@@ -5,7 +5,7 @@ O AppleScript obriga o macOS a abrir o app (que aparece na tela e no Command+Tab
 O agente (heimdall_agente.osascript) tenta primeiro este módulo para os scripts registrados em registrar(); se o EventKit não estiver
 disponível (pacote não instalado, permissão negada, erro), cai no AppleScript de antes, então nada deixa de funcionar.
 
-Dependência: pip install pyobjc-framework-EventKit (no venv do Heimdall). Permissão: na primeira vez o macOS pergunta se o programa pode
+Dependência: pip install pyobjc-framework-EventKit (no venv do StudioLibre). Permissão: na primeira vez o macOS pergunta se o programa pode
 acessar Lembretes e Calendário. Desligar: STUDIO_EVENTKIT=0 no .env. Conferir: venv/bin/python heimdall_eventkit.py --status
 """
 from __future__ import annotations

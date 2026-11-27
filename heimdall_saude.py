@@ -1084,7 +1084,7 @@ def relatorio_ecg(dias: int = 365) -> str:
     af = [l for l in linhas if l["classificacao"] == "Fibrilação atrial"]
     if af:
         out.append("Atenção: houve gravação classificada pela Apple como fibrilação atrial em " + ", ".join(l["dia"] for l in af[-5:]) +
-                   ". Mostre ao seu médico; o Heimdall não faz diagnóstico.")
+                   ". Mostre ao seu médico; o StudioLibre não faz diagnóstico.")
     inc = [l for l in linhas if l["classificacao"].startswith("Inconclusivo")]
     if inc:
         ruins = [l for l in inc if "gravação ruim" in l["classificacao"]]
@@ -1096,7 +1096,7 @@ def relatorio_ecg(dias: int = 365) -> str:
     if u["fc_media"]:
         frase += f", frequência média de {_num(u['fc_media'])} bpm"
     if u["rr_medio_ms"]:
-        frase += (f". Pela forma de onda (análise do Heimdall, qualidade {u['qualidade']}): {u['picos']} batimentos, intervalo médio de {_num(u['rr_medio_ms'])} ms, "
+        frase += (f". Pela forma de onda (análise do StudioLibre, qualidade {u['qualidade']}): {u['picos']} batimentos, intervalo médio de {_num(u['rr_medio_ms'])} ms, "
                   f"variação entre batimentos (RMSSD) de {_num(u['rmssd_ms'])} ms, irregularidade de {_num(u['cv_rr'], 1)} por cento")
     out.append(frase + ".")
     boas = [l for l in linhas if l["qualidade"] == "boa" and l["cv_rr"] is not None and l["classificacao"] == "Ritmo sinusal"]
@@ -1689,7 +1689,7 @@ def relatorio_semanal() -> dict:
 # ----------------------------------------------------------------------------------------
 def main() -> int:
     import argparse
-    ap = argparse.ArgumentParser(description="Saúde do ecossistema Apple no Heimdall (treinos, ECG, frequência cardíaca)")
+    ap = argparse.ArgumentParser(description="Saúde do ecossistema Apple no StudioLibre (treinos, ECG, frequência cardíaca)")
     ap.add_argument("--importar", metavar="EXPORT", help="importa o export.zip (ou pasta, ou o xml) do app Saúde")
     ap.add_argument("--relatorio", nargs="?", const=30, type=int, metavar="DIAS", help="análise geral (padrão 30 dias)")
     ap.add_argument("--treinos", nargs="?", const=30, type=int, metavar="DIAS")

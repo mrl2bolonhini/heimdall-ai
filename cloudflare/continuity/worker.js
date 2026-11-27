@@ -1,4 +1,4 @@
-// Heimdall Continuidade: Worker de entrada que mantém os sites no ar quando o Mac está fora (queda de energia, rede).
+// StudioLibre Continuidade: Worker de entrada que mantém os sites no ar quando o Mac está fora (queda de energia, rede).
 // Em condições normais só repassa a requisição ao Mac pelo túnel. Se o Mac não responde, liga o contêiner (Cloudflare Containers),
 // que restaura a última cópia cifrada dos bancos e atende em modo SOMENTE LEITURA, com um aviso no topo de cada página.
 // O contêiner dorme sozinho depois de um tempo sem uso, então só custa enquanto o Mac está fora.
@@ -33,14 +33,14 @@ const html = (corpo, status = 200) => new Response(corpo, { status, headers: { "
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 export function paginaIndisponivel(motivo) {
-  return html(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Heimdall indisponível</title></head>`
-    + `<body><main><h1>Heimdall indisponível no momento</h1><p role="status">O servidor principal está fora do ar e o modo de continuidade ainda não ficou pronto. ${esc(motivo)}</p>`
+  return html(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>StudioLibre indisponível</title></head>`
+    + `<body><main><h1>StudioLibre indisponível no momento</h1><p role="status">O servidor principal está fora do ar e o modo de continuidade ainda não ficou pronto. ${esc(motivo)}</p>`
     + `<p>Tente novamente em alguns minutos.</p></main></body></html>`, 503);
 }
 
 export function paginaSomenteLeitura() {
-  return html(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Somente leitura - Heimdall</title></head>`
-    + `<body><main><h1>Alteração indisponível</h1><p role="alert">O Heimdall está em modo de continuidade, somente para leitura. Esta ação ficará disponível quando o servidor principal voltar.</p>`
+  return html(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Somente leitura - StudioLibre</title></head>`
+    + `<body><main><h1>Alteração indisponível</h1><p role="alert">O StudioLibre está em modo de continuidade, somente para leitura. Esta ação ficará disponível quando o servidor principal voltar.</p>`
     + `<p><a href="/">Voltar ao início</a></p></main></body></html>`, 503);
 }
 
@@ -48,7 +48,7 @@ export function aviso(copia) {
   let quando = "data indisponível";
   const d = new Date(copia);
   if (copia && !isNaN(d)) quando = d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" });
-  return `<div class="aviso" role="status">Modo de continuidade: o Heimdall está atendendo pela nuvem enquanto o servidor principal está indisponível. `
+  return `<div class="aviso" role="status">Modo de continuidade: o StudioLibre está atendendo pela nuvem enquanto o servidor principal está indisponível. `
     + `As páginas são somente para leitura e mostram os dados de ${esc(quando)}.</div>`;
 }
 
@@ -169,7 +169,7 @@ export function blocoConsumo(c) {
 
 export function paginaPainel(estado, macNoAr, consumo, avisos) {
   const pausada = !!estado.pausa;
-  return pagina("Nuvem do Heimdall",
+  return pagina("Nuvem do StudioLibre",
     `<p role="status">Servidor principal (Mac): <strong>${macNoAr ? "no ar" : "fora do ar"}</strong>. `
     + (estado.contato ? `Último contato: ${esc(quandoTexto(estado.contato))}. ` : "Nenhum contato registrado ainda. ")
     + (estado.copia ? `Última cópia de dados lida pela nuvem: ${esc(quandoTexto(estado.copia))}.` : "A nuvem ainda não leu nenhuma cópia nesta sessão.") + `</p>`

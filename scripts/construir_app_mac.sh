@@ -7,7 +7,7 @@
 cd "$(dirname "$0")/.." || exit 1
 DESTINO="$HOME/Applications/StudioLibre.app"
 AGENTE="$HOME/Library/LaunchAgents/io.studiolibre.menu.plist"
-# App antigo (nome Heimdall): é removido; o nome antigo deixa de existir (decisão do usuário em 26/11/2026).
+# App antigo (nome StudioLibre): é removido; o nome antigo deixa de existir (decisão do usuário em 26/11/2026).
 ANTIGO_APP="$HOME/Applications/Heimdall.app"
 ANTIGO_AGENTE="$HOME/Library/LaunchAgents/tech.heimdall.menu.plist"
 ENTRAR=""
@@ -30,14 +30,14 @@ if ! command -v swiftc >/dev/null 2>&1; then
   exit 1
 fi
 pkill -x StudioLibre 2>/dev/null || true
-pkill -x Heimdall 2>/dev/null || true
+pkill -x StudioLibre 2>/dev/null || true
 launchctl bootout "gui/$(id -u)/tech.heimdall.menu" 2>/dev/null || true
 if [ -e "$ANTIGO_AGENTE" ] || [ -d "$ANTIGO_APP" ]; then
   # o app antigo ligava ao entrar no Mac: o novo religa se ele estava ligado
   [ -e "$ANTIGO_AGENTE" ] && [ -z "$ENTRAR" ] && ENTRAR=sim
   rm -f "$ANTIGO_AGENTE"
   rm -rf "$ANTIGO_APP"
-  echo "App antigo (Heimdall) removido."
+  echo "App antigo (StudioLibre) removido."
 fi
 set -e
 mkdir -p "$DESTINO/Contents/MacOS" "$DESTINO/Contents/Resources"

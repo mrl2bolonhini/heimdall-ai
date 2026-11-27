@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Banco de dados pessoal do Heimdall (SQLite, só biblioteca padrão).
+"""Banco de dados pessoal do StudioLibre (SQLite, só biblioteca padrão).
 
 Guarda no Mac, fora do n8n e fora do Git, o histórico que hoje se perde ou fica preso nos fluxos:
 saúde por dia, menções dos diários oficiais e análises do Second Brain. O agente (heimdall_agente.py)
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS triagem (
     id TEXT PRIMARY KEY,            -- resumo legível + hash do identificador de origem
     criado TEXT NOT NULL,           -- AAAA-MM-DDTHH:MM:SSZ (UTC)
     fonte TEXT NOT NULL DEFAULT '', -- justica, saude, email, privacidade, diarios
-    nivel TEXT NOT NULL DEFAULT 'alto',     -- critico, alto, medio (como o Heimdall classificou)
+    nivel TEXT NOT NULL DEFAULT 'alto',     -- critico, alto, medio (como o StudioLibre classificou)
     titulo TEXT NOT NULL DEFAULT '',
     resumo TEXT NOT NULL DEFAULT '',
     estado TEXT NOT NULL DEFAULT 'pendente',        -- pendente, concluida, descartada
@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS ecg (
     duracao_s REAL,
     completo INTEGER NOT NULL DEFAULT 1,        -- 0 = a exportação trouxe só parte das leituras
     sintomas TEXT NOT NULL DEFAULT '',
-    picos INTEGER, fc_forma_onda REAL,          -- análise do Heimdall sobre a forma de onda (não é diagnóstico)
+    picos INTEGER, fc_forma_onda REAL,          -- análise do StudioLibre sobre a forma de onda (não é diagnóstico)
     rr_medio_ms REAL, sdnn_ms REAL, rmssd_ms REAL, pnn50 REAL, cv_rr REAL,
     qualidade TEXT NOT NULL DEFAULT '',         -- boa, regular ou ruim (confiança da detecção dos batimentos)
     fonte TEXT NOT NULL DEFAULT '',
@@ -262,7 +262,7 @@ CREATE TABLE IF NOT EXISTS exames_resultados (
     documento_id INTEGER NOT NULL,
     dia TEXT NOT NULL,              -- data da coleta
     chave TEXT NOT NULL,            -- nome canônico (vitamina_d, hemoglobina...); fora do catálogo vira o nome sem acento
-    nome TEXT NOT NULL,             -- como o Heimdall chama o exame
+    nome TEXT NOT NULL,             -- como o StudioLibre chama o exame
     nome_original TEXT NOT NULL DEFAULT '',     -- como aparece no documento
     grupo TEXT NOT NULL DEFAULT '', -- Hemograma, Vitaminas, Lipídios...
     valor REAL,
@@ -272,7 +272,7 @@ CREATE TABLE IF NOT EXISTS exames_resultados (
     ref_texto TEXT NOT NULL DEFAULT '',         -- referência do laboratório, como está no documento
     ref_min REAL, ref_max REAL,                 -- só quando a referência tem uma única faixa clara
     sinal TEXT NOT NULL DEFAULT '', -- abaixo, dentro, acima ou vazio (sem faixa clara para comparar)
-    catalogado INTEGER NOT NULL DEFAULT 0,      -- 1 = o nome está no catálogo do Heimdall
+    catalogado INTEGER NOT NULL DEFAULT 0,      -- 1 = o nome está no catálogo do StudioLibre
     fonte TEXT NOT NULL DEFAULT '', -- regra, modelo ou ambos (quem leu a linha)
     ordem INTEGER NOT NULL DEFAULT 0,
     UNIQUE (documento_id, chave, ordem)
@@ -716,7 +716,7 @@ def tabelas_para_modelo() -> str:
         "treinos(id, dia, inicio, fim, tipo, duracao_min, local, distancia_km, energia_kcal, energia_total_kcal, met, fc_min, fc_media, fc_max, fc_recuperacao, "
         "subida_m, passos, velocidade_kmh, esforco, temperatura_c, fonte): cada treino do Apple Saúde (fc_serie e rota são JSON longos; evite pedir).\n"
         "ecg(id, dia, inicio, classificacao, fc_media, freq_hz, amostras, duracao_s, sintomas, picos, rr_medio_ms, sdnn_ms, rmssd_ms, pnn50, cv_rr, qualidade): "
-        "cada ECG do Apple Watch; classificacao é a da Apple (ritmo sinusal, fibrilação atrial, inconclusivo...); as medidas de batimento são do Heimdall, não diagnóstico.\n"
+        "cada ECG do Apple Watch; classificacao é a da Apple (ritmo sinusal, fibrilação atrial, inconclusivo...); as medidas de batimento são do StudioLibre, não diagnóstico.\n"
         "fc_hora(dia, hora, fc_min, fc_media, fc_max, leituras): frequência cardíaca por hora do dia.\n"
         "saude_eventos(id, tipo, dia, inicio, titulo, valor, texto): sintomas, humor (valor de -1 a 1), medicamentos, avisos de frequência cardíaca e ciclo.\n"
         "documentos_saude(id, tipo, arquivo, dia, emissor, solicitante, origem, estado, avisos): exames, receitas, encaminhamentos, atestados e laudos enviados pelo usuário; "
@@ -739,7 +739,7 @@ def tabelas_para_modelo() -> str:
 if __name__ == "__main__":
     import argparse
     import sys
-    ap = argparse.ArgumentParser(description="Banco pessoal do Heimdall")
+    ap = argparse.ArgumentParser(description="Banco pessoal do StudioLibre")
     ap.add_argument("--sql", help="roda um SELECT e mostra o resultado em texto")
     a = ap.parse_args()
     iniciar()

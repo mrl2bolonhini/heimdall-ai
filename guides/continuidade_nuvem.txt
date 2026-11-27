@@ -1,13 +1,13 @@
-Continuidade do Heimdall na nuvem quando o Mac fica fora do ar
+Continuidade do StudioLibre na nuvem quando o Mac fica fora do ar
 
 Status: implantada em 23/11/2026, falta o teste de queda real e o diário de alterações (decisões do usuário em 23/11/2026: só entra em ação quando o Mac cai; gravar dados na nuvem é aceito, inclusive saúde e finanças).
 
 1. Objetivo
-Quando o Mac ficar sem energia ou sem rede, os sites do Heimdall (Finance, Health, News, Learn, Games, Lab, Controls) e os fluxos essenciais continuam funcionando na nuvem, sem custo enquanto o Mac está no ar. Quando o Mac volta, ele reassume e os dados feitos na nuvem voltam para ele.
+Quando o Mac ficar sem energia ou sem rede, os sites do StudioLibre (Finance, Health, News, Learn, Games, Lab, Controls) e os fluxos essenciais continuam funcionando na nuvem, sem custo enquanto o Mac está no ar. Quando o Mac volta, ele reassume e os dados feitos na nuvem voltam para ele.
 
 2. Peças na Cloudflare (preços e limites conferidos na documentação da Cloudflare em 23/11/2026)
 1) Worker de entrada: recebe o tráfego dos endereços *.studiolibre.io, tenta o Mac pelo túnel e, se o Mac não responde dentro de poucos segundos, encaminha para o container. Publica uma faixa de aviso "Modo de continuidade" nas páginas atendidas pela nuvem.
-2) Cloudflare Containers: roda a mesma imagem do Heimdall (um container por grupo de serviços). Faz parte do plano Workers Paid (US$ 5 por mês). Cobra a cada 10 ms só enquanto o container está ativo e escala a zero depois de um tempo sem uso. Memória e disco cobram pelo tipo de instância; CPU, pelo uso. Franquia mensal incluída (total do mês, não por hora): 25 GiB-hora de memória, 375 vCPU-minuto e 200 GB-hora de disco. Tipos: de lite (1/16 vCPU, 256 MiB) a standard-4 (4 vCPU, 12 GiB). Imagens: 50 GB por conta.
+2) Cloudflare Containers: roda a mesma imagem do StudioLibre (um container por grupo de serviços). Faz parte do plano Workers Paid (US$ 5 por mês). Cobra a cada 10 ms só enquanto o container está ativo e escala a zero depois de um tempo sem uso. Memória e disco cobram pelo tipo de instância; CPU, pelo uso. Franquia mensal incluída (total do mês, não por hora): 25 GiB-hora de memória, 375 vCPU-minuto e 200 GB-hora de disco. Tipos: de lite (1/16 vCPU, 256 MiB) a standard-4 (4 vCPU, 12 GiB). Imagens: 50 GB por conta.
 3) D1 (bancos SQLite da Cloudflare): cópia durável dos bancos de cada serviço e diário de alterações. Plano Paid: 25 bilhões de linhas lidas, 50 milhões gravadas e 5 GB por mês incluídos; sem custo de computação quando ociosos; banco de até 10 GB; Time Travel de 30 dias; cada banco atende cerca de 10 consultas por segundo (consulta de 100 ms). Os serviços usam arquivos SQLite via Python; o acesso ao D1 é por Worker ou API, então é preciso uma camada de dados (a avaliar na fase 3).
    R2 com chave do cliente: guarda arquivos (PDFs, exames, anexos) e o .env cifrado. É de onde o container restaura os dados ao iniciar. Os documentos da Cloudflare lidos não dizem se o disco do container é persistente; por isso nada fica só nele.
 4) Workflows: executa os fluxos essenciais com passos, esperas e novas tentativas, sem container. Incluído nos planos Workers; 10 milhões de requisições e 500 mil passos por mês no Paid (a cobrança de passos e armazenamento começa em 10/08/2026).
@@ -16,7 +16,7 @@ Quando o Mac ficar sem energia ou sem rede, os sites do Heimdall (Finance, Healt
 3. Estimativa de custo (a confirmar no painel antes de ligar)
 - Mac no ar: só a assinatura Workers Paid (US$ 5), mais uso do Worker de entrada.
 - Uma queda de 3 horas com um container standard-1 (4 GiB): 4 GiB x 3 h = 12 GiB-hora de memória, dentro da franquia mensal de 25 GiB-hora (cerca de 6 horas de container de 4 GiB por mês). O custo extra fica perto de zero.
-- Um container ligado o mês inteiro: 4 GiB = cerca de 2.900 GiB-hora, uns US$ 26 de memória acima da franquia; 1 GiB (tipo basic) = cerca de 730 GiB-hora, uns US$ 6, mas só cabe se o Heimdall couber em 1 GiB (medir). Por isso: por isso o container só liga quando o Mac cai e dorme sozinho depois.
+- Um container ligado o mês inteiro: 4 GiB = cerca de 2.900 GiB-hora, uns US$ 26 de memória acima da franquia; 1 GiB (tipo basic) = cerca de 730 GiB-hora, uns US$ 6, mas só cabe se o StudioLibre couber em 1 GiB (medir). Por isso: por isso o container só liga quando o Mac cai e dorme sozinho depois.
 
 4. Dados
 1) O Mac continua sendo a fonte. A cada alteração (ou em intervalos curtos) ele replica os bancos para o D1 (com Time Travel de 30 dias) e os arquivos para o R2, com versão e data.
@@ -31,7 +31,7 @@ Quando o Mac ficar sem energia ou sem rede, os sites do Heimdall (Finance, Healt
 
 6. Fases (cada uma com interruptor no .env, ex.: STUDIO_CONTINUIDADE=0)
 1) Alertas e limite de gasto na Cloudflare; Workers Paid ativo.
-2) Imagem do Heimdall para contêiner (Dockerfile), testada localmente.
+2) Imagem do StudioLibre para contêiner (Dockerfile), testada localmente.
 3) Cópias cifradas dos bancos para o R2, com restauração testada.
 4) Worker de entrada com failover e faixa de aviso; teste desligando o Mac de propósito.
 5) Diário de alterações e reconciliação na volta do Mac.

@@ -49,12 +49,12 @@ def _brl(v) -> str:
 # Planilhas
 # --------------------------------------------------------------------------------------------
 def pg_planilhas(con, sess: dict, pasta: Path) -> tuple:
-    corpo = ['<p>Importe planilhas (xlsx ou csv) de gastos, investimentos, empréstimos ou qualquer outro assunto. O Heimdall lê o cabeçalho, descobre o que cada coluna é e guarda as linhas num conjunto. '
+    corpo = ['<p>Importe planilhas (xlsx ou csv) de gastos, investimentos, empréstimos ou qualquer outro assunto. O StudioLibre lê o cabeçalho, descobre o que cada coluna é e guarda as linhas num conjunto. '
              'O jeito de ler fica gravado: quando você mandar outra planilha com as mesmas colunas, ou soltar o arquivo na pasta de entrada, as linhas novas entram sozinhas no mesmo conjunto, sem duplicar o que já estava. '
              'Quando a identificação não é segura, o arquivo fica guardado e a pergunta aparece logo abaixo, sem adivinhar. Planilhas de gastos também alimentam as transações, os orçamentos e o resumo.</p>',
              f'<form method="post" action="/planilhas" enctype="multipart/form-data">{_oculto(sess)}'
              '<label for="arquivo">Planilha (xlsx, xlsm, csv)</label><input id="arquivo" name="arquivo" type="file" accept=".xlsx,.xlsm,.csv,.tsv,.txt" required>'
-             f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes(list(fp.TIPOS_USUARIO.items()), "", "Deixar o Heimdall decidir")}</select>'
+             f'<label for="tipo">Tipo</label><select id="tipo" name="tipo">{_opcoes(list(fp.TIPOS_USUARIO.items()), "", "Deixar o StudioLibre decidir")}</select>'
              '<label for="nome">Nome do conjunto (em branco: usa o nome do arquivo ou o que foi identificado)</label><input id="nome" name="nome" type="text" maxlength="60">'
              '<label><input type="checkbox" name="inverter" value="1"> Nesta planilha de gastos, os gastos vêm com valor positivo</label>'
              '<label><input type="checkbox" name="visao" value="1"> Criar uma visão a partir desta planilha (você escolhe as colunas e a ordem na aba Visões)</label>'
@@ -78,7 +78,7 @@ def pg_planilhas(con, sess: dict, pasta: Path) -> tuple:
         corpo.append("<h2>Conjuntos</h2>" + tabela("Conjuntos de planilhas", ["Nome", "Tipo", "Linhas", "Última importação"], linhas, {2}))
     else:
         corpo.append("<p>Ainda não há conjuntos. Importe a primeira planilha acima.</p>")
-    corpo.append(f'<p class="sub">Você também pode soltar planilhas na pasta sheets, dentro da pasta de dados do Finance: a cada minuto o Heimdall importa o que entender e deixa as dúvidas aqui. No terminal: studio finance --folder.</p>')
+    corpo.append(f'<p class="sub">Você também pode soltar planilhas na pasta sheets, dentro da pasta de dados do Finance: a cada minuto o StudioLibre importa o que entender e deixa as dúvidas aqui. No terminal: studio finance --folder.</p>')
     return "Planilhas", "".join(corpo)
 
 
@@ -152,7 +152,7 @@ def pg_visoes(con, sess: dict = None) -> tuple:
     """Criar e ver as visões: o formulário de nova visão (conjunto e nome) e a tabela das visões gravadas."""
     vs = fp.visoes(con)
     cs = fp.conjuntos(con)
-    corpo = ['<p>Visões são formas gravadas de mostrar uma planilha: você escolhe as colunas, a ordem delas, como ordenar, filtrar e agrupar, e o Heimdall mantém isso para as linhas novas que chegarem.</p>']
+    corpo = ['<p>Visões são formas gravadas de mostrar uma planilha: você escolhe as colunas, a ordem delas, como ordenar, filtrar e agrupar, e o StudioLibre mantém isso para as linhas novas que chegarem.</p>']
     if cs and sess:
         corpo.append("<h2>Criar uma visão</h2>"
                      f'<form method="post" action="/visoes/nova">{_oculto(sess)}'
@@ -242,7 +242,7 @@ def pg_emprestimos(con, categoria: str = "") -> tuple:
     titulo = fp.CATEGORIAS_CREDITO.get(categoria, "Dívidas e financiamentos")
     r = fp.resumo_emprestimos(con, categoria)
     if not r["itens"]:
-        return titulo, ('<p>Ainda não há dados aqui. O Heimdall cria esta aba sozinho quando encontra o tipo de crédito nos dados do Pluggy (studio finance --sync) ou numa planilha de dívidas '
+        return titulo, ('<p>Ainda não há dados aqui. O StudioLibre cria esta aba sozinho quando encontra o tipo de crédito nos dados do Pluggy (studio finance --sync) ou numa planilha de dívidas '
                         '(com colunas como contrato, saldo devedor, parcela e taxa) importada em Planilhas.</p><p><a href="/planilhas">Ir para Planilhas</a></p>')
     corpo = [f'<p>{len(r["itens"])} contrato(s): saldo devedor total de {e(fn.brl(r["saldo"]))}'
              + (f' e parcelas que somam {e(fn.brl(r["parcelas"]))} por mês' if r["parcelas"] else "") + ".</p>"]

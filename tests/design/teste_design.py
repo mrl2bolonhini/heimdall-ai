@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do Studio Design: nos sites do Heimdall, link lê e botão age.
+"""Teste do Studio Design: nos sites do StudioLibre, link lê e botão age.
 
 Procura no código dos painéis links (<a>) cujo texto é uma ação (Baixar, Atualizar, Continuar, Alterar, Classificar, Importar,
 Salvar, Apagar, Ver ..., Próxima, Anterior, Página ...) e falha se achar. Texto em prosa (inline) em minúsculas não conta.

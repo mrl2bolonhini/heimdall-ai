@@ -1,4 +1,4 @@
-# Implanta a continuidade do Heimdall (Worker + contêiner) na Cloudflare quando a main avança.
+# Implanta a continuidade do StudioLibre (Worker + contêiner) na Cloudflare quando a main avança.
 # A main só avança com o sim do dono (CLAUDE.md), então o deploy só acontece depois dessa aprovação.
 # Segredos do repositório (Settings > Secrets and variables > Actions):
 #   CLOUDFLARE_DEPLOY_TOKEN   token da Cloudflare para implantar (Workers Scripts e Rotas de Workers: edição; Contêineres: edição)

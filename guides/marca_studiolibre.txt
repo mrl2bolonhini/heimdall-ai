@@ -6,12 +6,12 @@ Documento de decisão. Os papéis ux e marca propõem; a decisão é do usuário
 
 1) Nome: StudioLibre (empresa e conjunto de aplicativos), com complemento por aplicativo (StudioLibre Memory, Health, Finance, Games).
 2) Domínios registrados, na mesma conta da Cloudflare do studiolibre.io: studiolibre.io (principal) e studiolibre.app (reservado).
-3) Símbolo atual: a ponte Bifröst vista de frente, com seis faixas (#bfe3fb, #93d2fa, #42a5f5, #26c6da, #1e88e5, #ffc107) e um olho dourado no centro. Conta a história do nome Heimdall (o guardião da ponte). A paleta tem Noite, Papel, Tinta, Névoa, Gelo, Azul da ponte, Azul profundo, Turquesa e Ouro do olhar, com contrastes medidos.
+3) Símbolo atual: a ponte Bifröst vista de frente, com seis faixas (#bfe3fb, #93d2fa, #42a5f5, #26c6da, #1e88e5, #ffc107) e um olho dourado no centro. Conta a história do nome StudioLibre (o guardião da ponte). A paleta tem Noite, Papel, Tinta, Névoa, Gelo, Azul da ponte, Azul profundo, Turquesa e Ouro do olhar, com contrastes medidos.
 4) Onde a identidade visual vive: heimdall_design.py (cores, fonte única de todos os serviços), docs_tema.py (PALETA, BANDAS e o símbolo do site), heimdall_lab.SIMBOLO (cabeçalho dos serviços), arquivos do site (logo.svg, logo-escuro.svg, simbolo.svg, simbolo-uma-cor.svg, favicon.svg, apple-touch-icon.png, og.png), ícone do app do Mac (macapp) e Pages/index.html.
 
 2. VISÃO DO UX
 
-1) O símbolo atual deixa de contar a história do nome. Ponte e olho dizem Heimdall; StudioLibre pede outra ideia (liberdade, estúdio, abertura). Se o nome mudar nas telas e o símbolo ficar, a marca nova nasce com um desenho que não a explica.
+1) O símbolo atual deixa de contar a história do nome. Ponte e olho dizem StudioLibre; StudioLibre pede outra ideia (liberdade, estúdio, abertura). Se o nome mudar nas telas e o símbolo ficar, a marca nova nasce com um desenho que não a explica.
 2) Trocar cores é barato (uma fonte única, heimdall_design.py) e trocar o símbolo é médio (cerca de dez arquivos). O custo real é a confusão do usuário: nome, endereço e visual mudando ao mesmo tempo. Ordem recomendada: primeiro o domínio e os endereços, depois o nome nas telas, por último o logotipo e as cores, cada um numa entrega própria.
 3) Acessibilidade: o símbolo já é decorativo (escondido do leitor de tela) e o nome vem em texto, então trocar o desenho não afeta o VoiceOver. O que pode piorar é o contraste: toda cor nova passa pelo mesmo teste (texto a 4,5 para 1, bordas de campo a 3 para 1, nos dois temas). Dourado e tons claros só como marcação, nunca como cor de texto sobre fundo claro (regra atual da página Marca).
 4) Consistência entre serviços: todas as telas leem as mesmas variáveis. A mudança de cor entra só no heimdall_design.py, na página de Design e na página Marca, nunca numa página isolada.
@@ -59,7 +59,7 @@ Perguntas em aberto:
 
 6.1. A ideia do anel aberto
 1) O anel é o estúdio: um espaço delimitado onde as coisas são feitas e ganham foco. A abertura é o "libre": o anel não se fecha, então nada fica preso dentro dele. É a entrada e a saída: os dados entram, podem ser levados embora, e o programa pode ser entendido e trocado.
-2) O ponto dourado fica no vão, metade dentro e metade fora. Representa a pessoa, a ideia ou o dado em movimento, passando pela abertura. Também guarda um fio com a marca atual: o dourado é o antigo olho do Heimdall, reduzido a um ponto.
+2) O ponto dourado fica no vão, metade dentro e metade fora. Representa a pessoa, a ideia ou o dado em movimento, passando pela abertura. Também guarda um fio com a marca atual: o dourado é o antigo olho do StudioLibre, reduzido a um ponto.
 3) Em uma cor a forma continua legível (anel mais ponto), serve em 16 por 16 pixels e como ícone de aplicativo. Cada aplicativo pode trocar só a cor do anel ou do ponto, mantendo o desenho.
 4) Cuidados: o anel aberto é uma forma comum (lembra um C, um ícone de energia ou de recarregar). Precisa de busca de semelhança antes de ir a um designer; a posição da abertura, a espessura do traço e a posição do ponto são o que o tornam próprio.
 
@@ -72,12 +72,12 @@ Método: distância de cor (CIE76, aproximada; abaixo de 10 é quase igual, abai
 5) Ouro (#ffc107): sem coincidência próxima nas marcas consultadas.
 6) Roxo (Nubank) e verde-limão (Evernote) ficam longe de toda a paleta.
 Leitura: a base azul, em especial no aplicativo de saúde, é a mais disputada (Abbott e Fitbit), e o azul sozinho não diferencia a StudioLibre. O ouro é o elemento próprio da marca.
-Proposta, para o designer testar: manter o ouro como assinatura; trocar o azul principal da marca por um tom mais escuro e menos comum no campo, como um índigo (por exemplo #3949ab: distância de 43 da Abbott, 78 do Fitbit, 24 do Notion; contraste 7,1 para 1 sobre o Papel); usar o turquesa só como acento secundário e nunca como cor principal do aplicativo de saúde; dar a cada aplicativo uma cor de acento própria, dentro da mesma família. O índigo tem pouco contraste sobre a Noite (2,5 para 1), então no tema escuro ele serve para formas, não para texto: o texto continua em Névoa. Toda cor escolhida passa pelos testes de contraste do Heimdall Design antes de entrar.
+Proposta, para o designer testar: manter o ouro como assinatura; trocar o azul principal da marca por um tom mais escuro e menos comum no campo, como um índigo (por exemplo #3949ab: distância de 43 da Abbott, 78 do Fitbit, 24 do Notion; contraste 7,1 para 1 sobre o Papel); usar o turquesa só como acento secundário e nunca como cor principal do aplicativo de saúde; dar a cada aplicativo uma cor de acento própria, dentro da mesma família. O índigo tem pouco contraste sobre a Noite (2,5 para 1), então no tema escuro ele serve para formas, não para texto: o texto continua em Névoa. Toda cor escolhida passa pelos testes de contraste do StudioLibre Design antes de entrar.
 
 6.3. Nome do aplicativo de saúde
 1) StudioLibre Health: segue o padrão dos outros (Memory, Finance, Games), com complemento em inglês, igual aos endereços e às pastas do projeto. É descritivo e fraco como marca isolada, mas a força vem do StudioLibre.
 2) StudioLibre your Health: não recomendado. Mistura as línguas dentro do nome, quebra o padrão "StudioLibre mais um substantivo", é difícil de falar e de escrever em endereço, e "your health" é uma expressão descritiva que não protege nada.
-3) Outro idioma: Saúde (em português, é também o nome do app da Apple no Brasil, de onde o Heimdall lê dados, o que confunde); Salud (espanhol; combina com a palavra Libre, que não é portuguesa, mas é um terceiro idioma no nome); Vita (latim, curto e internacional, mas comum em outros produtos). Mudar o idioma só do app de saúde quebra o padrão sem resolver o risco, que vem da palavra Libre.
+3) Outro idioma: Saúde (em português, é também o nome do app da Apple no Brasil, de onde o StudioLibre lê dados, o que confunde); Salud (espanhol; combina com a palavra Libre, que não é portuguesa, mas é um terceiro idioma no nome); Vita (latim, curto e internacional, mas comum em outros produtos). Mudar o idioma só do app de saúde quebra o padrão sem resolver o risco, que vem da palavra Libre.
 4) Recomendação do papel marca: manter StudioLibre Health. O risco com a Abbott é tratado por análise de especialista e pelo desenho e pelas cores próprios, não pelo idioma. Se o especialista desaconselhar, a saída é um nome próprio para o app, com a menção "da StudioLibre".
 5) A busca de anterioridade no INPI para "StudioLibre Health" e para as finalistas pode ser feita a pedido.
 

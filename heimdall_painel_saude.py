@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Painel de saúde do Heimdall (health.studiolibre.io): lê o banco pessoal e mostra, em texto e tabelas bons para
+"""Painel de saúde do StudioLibre (health.studiolibre.io): lê o banco pessoal e mostra, em texto e tabelas bons para
 leitor de tela, as análises do heimdall_saude.py: como você está agora, tendências, sono, atividade, recuperação, coração,
 ECG, treinos, sintomas/humor/medicamentos, o relatório da semana, o diário dos últimos dias e o estado dos dados
 (para você ver se a exportação contínua do iPhone está chegando).
@@ -89,7 +89,7 @@ main h1{line-height:1.25;margin-top:1rem}h2{line-height:1.3;margin:1.6rem 0 .3re
 #   Resumo          como estou, por período (hoje, dia a dia, semana, tendências); a página Hoje abre com o que pede atenção
 #   Medidas         meus números (sono, recuperação, atividade, treinos, coração e o que registrei: sintomas, humor, medicamentos)
 #   Prontuário      meus documentos de saúde (exames, documentos recebidos, receitas, atestados, laudos, consultas)
-#   Acompanhamento  o que o Heimdall sugere e avisa (sugestões, anomalias, avisos)
+#   Acompanhamento  o que o StudioLibre sugere e avisa (sugestões, anomalias, avisos)
 #   Ajustes (botão) perfil de saúde, estado dos dados e ajuda, na tela sem abas de cima, como nos demais serviços
 # Cada grupo é (chave, nome da aba, [(rota, nome da subaba)]); a aba aponta para a primeira subaba. Rota nova entra no grupo a que pertence.
 GRUPOS = [("resumo", "Resumo", [("/", "Hoje"), ("/diario", "Dia a dia"), ("/semana", "Semana"), ("/tendencias", "Tendências")]),

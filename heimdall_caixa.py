@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cliente da caixa de correio na Cloudflare (Worker heimdall-caixa): o Mac busca o que os celulares deixaram e deixa o que eles devem aplicar.
 
-Interruptor: STUDIO_CAIXA=1 no .env liga; qualquer outro valor desliga e o Heimdall volta a depender só do agente do Mac.
+Interruptor: STUDIO_CAIXA=1 no .env liga; qualquer outro valor desliga e o StudioLibre volta a depender só do agente do Mac.
 Chaves no .env: STUDIO_CAIXA_URL (padrão abaixo), STUDIO_CAIXA_TOKEN (token de dono, criado por `start`), CLOUDFLARE_API_TOKEN (só para `start`).
 Antes de apagar qualquer item da caixa, o Mac grava uma cópia em db/mailbox/<pessoa>/ (permissão só do dono): nada se perde.
 

@@ -31,7 +31,7 @@ EXT_OK = {".ofx", ".csv", ".txt", ".pdf"}
 # --------------------------------------------------------------------------------------------
 # PDF -> texto
 # --------------------------------------------------------------------------------------------
-INSTALAR_PDF = "Não achei como ler PDF. Instale um destes: 'pip install pypdf' (no venv do Heimdall) ou 'brew install poppler'."
+INSTALAR_PDF = "Não achei como ler PDF. Instale um destes: 'pip install pypdf' (no venv do StudioLibre) ou 'brew install poppler'."
 
 
 def texto_do_pdf(dados: bytes) -> str:

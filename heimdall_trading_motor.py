@@ -139,7 +139,7 @@ def _preco_brapi(ticker: str, agora: float) -> float:
     token = os.environ.get("STUDIO_TRADING_BRAPI_TOKEN", "")
     url = f"https://brapi.dev/api/quote/{ticker}" + (f"?token={token}" if token else "")
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Heimdall-Trading"}), timeout=8) as r:
+        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "StudioLibre-Trading"}), timeout=8) as r:
             preco = float(json.loads(r.read(200_000))["results"][0]["regularMarketPrice"])
     except (urllib.error.URLError, OSError, ValueError, KeyError, IndexError, TypeError):
         raise ErroTrading(f"Não consegui a cotação de {ticker} na brapi. Tente de novo ou mude a fonte em Ajustes.") from None

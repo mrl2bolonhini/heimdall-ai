@@ -1,4 +1,4 @@
-"""Paginação em botões, igual em todos os sites do Heimdall (News, Notas).
+"""Paginação em botões, igual em todos os sites do StudioLibre (News, Notas).
 
 Um único formulário GET com um botão por página, bom para leitor de tela e para teclado:
 

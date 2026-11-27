@@ -8,7 +8,7 @@ CONFIG_FILE="$PROJECT_DIR/litellm_config.yaml"
 MCP_PORT=8000
 LLM_PORT=9000
 
-echo "=== [Heimdall System Boot] ==="
+echo "=== [StudioLibre System Boot] ==="
 
 # --- Chave mestra do LiteLLM (guardada em .env, nunca no YAML) ---
 if [ -f .env ]; then
@@ -79,7 +79,7 @@ else
 fi
 
 # --- Servidor MCP unificado ---
-echo "[4/5] Subindo o servidor MCP do Heimdall..."
+echo "[4/5] Subindo o servidor MCP do StudioLibre..."
 mkdir -p logs
 "$VENV_PYTHON" heimdall_mcp.py > logs/mcp_debug.log 2>&1 &
 MCP_PID=$!

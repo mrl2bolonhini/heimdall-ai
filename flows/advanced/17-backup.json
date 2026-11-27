@@ -1,6 +1,6 @@
 {
  "id": "hdBackup00000001",
- "name": "Heimdall: cópia de segurança do banco (diária) e verificação (semanal)",
+ "name": "StudioLibre: cópia de segurança do banco (diária) e verificação (semanal)",
  "active": false,
  "nodes": [
   {

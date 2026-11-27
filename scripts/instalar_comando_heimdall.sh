@@ -19,7 +19,7 @@ while i < len(linhas):
         while j < len(linhas) and linhas[j].rstrip() != "}":
             j += 1
         # descarta o comentário logo acima, se for o da função antiga
-        while saida and saida[-1].startswith("# Ecossistema Heimdall"):
+        while saida and saida[-1].startswith("# Ecossistema StudioLibre"):
             saida.pop()
         i, removido = j + 1, True
         continue
@@ -31,7 +31,7 @@ PY
 grep -q "heimdall-comando" "$RC" || {
     {
         echo ""
-        echo "# heimdall-comando: comando unificado do ecossistema Heimdall-ai"
+        echo "# heimdall-comando: comando unificado do ecossistema StudioLibre"
         echo "export STUDIO_DIR=\"$PROJ\""
         echo "source \"\$STUDIO_DIR/heimdall.zsh\""
     } >> "$RC"

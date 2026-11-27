@@ -35,7 +35,7 @@ def pasta_dados() -> Path:
 
 
 def pasta_knowledge() -> Path:
-    """Material de estudo da pessoa. O dono usa knowledge/ (a mesma pasta dos documentos do resto do Heimdall); as outras pessoas, a sua própria,
+    """Material de estudo da pessoa. O dono usa knowledge/ (a mesma pasta dos documentos do resto do StudioLibre); as outras pessoas, a sua própria,
     fora dela, para a busca nos documentos do dono nunca ver os arquivos delas."""
     if pessoas.e_dono():
         return Path(os.environ.get("STUDIO_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()

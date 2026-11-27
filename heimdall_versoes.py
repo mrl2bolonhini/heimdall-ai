@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Versões do que roda no Mac: macOS, Python, Docker, Ollama, LiteLLM, o próprio Heimdall e cada serviço em contêiner.
+"""Versões do que roda no Mac: macOS, Python, Docker, Ollama, LiteLLM, o próprio StudioLibre e cada serviço em contêiner.
 
 Usado por `studio doctor --versions` (com comparação com a imagem mais nova no registro) e pelo Resumo do Controls (só as versões, sem rede).
 Só lê: docker inspect/exec de comandos de versão, sw_vers, git. Cada item falha em silêncio quando o comando não existe.
@@ -94,7 +94,7 @@ def _do_mac(run=run) -> list:
     v = run(["sw_vers", "-productVersion"])
     if v:
         itens.append({"nome": "macOS", "versao": v, "detalhe": "", "estado": ""})
-    itens.append({"nome": "Python do Heimdall", "versao": sys.version.split()[0], "detalhe": "", "estado": ""})
+    itens.append({"nome": "Python do StudioLibre", "versao": sys.version.split()[0], "detalhe": "", "estado": ""})
     d = run(["docker", "version", "--format", "{{.Server.Version}}"])
     if d:
         itens.append({"nome": "Docker (motor)", "versao": d, "detalhe": "", "estado": ""})
@@ -112,7 +112,7 @@ def _do_mac(run=run) -> list:
     commit = run(["git", "-C", str(PROJECT_DIR), "log", "-1", "--format=%h %cs"])
     ramo = run(["git", "-C", str(PROJECT_DIR), "rev-parse", "--abbrev-ref", "HEAD"])
     if commit:
-        itens.append({"nome": "Heimdall-ai (código)", "versao": commit, "detalhe": f"ramo {ramo}" if ramo else "", "estado": ""})
+        itens.append({"nome": "StudioLibre (código)", "versao": commit, "detalhe": f"ramo {ramo}" if ramo else "", "estado": ""})
     return itens
 
 

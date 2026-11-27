@@ -265,7 +265,7 @@ def _regras(f: dict, hoje: date) -> list:
                 sem.append(p["exame"])
         if sem:
             lista = ", ".join(sem[:8]) + (f" e mais {len(sem) - 8}" if len(sem) > 8 else "")
-            cands.append(_cand(f"pedido_sem_resultado|{doc}", "pergunta", "Exames pedidos que ainda não têm resultado no Heimdall",
+            cands.append(_cand(f"pedido_sem_resultado|{doc}", "pergunta", "Exames pedidos que ainda não têm resultado no StudioLibre",
                                f"O pedido de {br(dia)} tem {len(ps)} exame(s); sem resultado enviado depois dessa data: {lista}. Se você já fez, solte os laudos em health/inbox; "
                                "se ainda não fez, este é o aviso para fazê-los.", hoje.isoformat(), [doc]))
     # 4. encaminhamento com data futura e local sugerido (UBS): o local pode ser outro
@@ -289,7 +289,7 @@ def _regras(f: dict, hoje: date) -> list:
     # 5. perfil vazio
     if not f["perfil"] and (f["receitas"] or f["atestados"] or f["encaminhamentos"] or f["laudos"]):
         cands.append(_cand("perfil|vazio", "pergunta", "Registrar o perfil de saúde",
-                           "O perfil ainda está vazio. Condições e doenças que você já tem, cirurgias, alergias e o convênio ajudam o Heimdall a dar sugestões mais certas. "
+                           "O perfil ainda está vazio. Condições e doenças que você já tem, cirurgias, alergias e o convênio ajudam o StudioLibre a dar sugestões mais certas. "
                            "Nada é obrigatório: studio health --labs profile add TIPO TEXTO.", hoje.isoformat(), []))
     return cands
 
@@ -439,10 +439,10 @@ def relatorio_sugestoes(todas: bool = False) -> str:
 
 
 def _titulo_agenda(s: dict) -> str:
-    """O título que vai à agenda (e à nuvem da Apple) diz só a ação; remédio, CID e motivo ficam no Heimdall."""
+    """O título que vai à agenda (e à nuvem da Apple) diz só a ação; remédio, CID e motivo ficam no StudioLibre."""
     if s.get("acao"):
-        return "Heimdall Saúde: " + s["acao"]
-    return "Heimdall Saúde: marcar consulta" if s["tipo"] == "consulta" else "Heimdall Saúde: fazer exame"
+        return "Studio Health: " + s["acao"]
+    return "Studio Health: marcar consulta" if s["tipo"] == "consulta" else "Studio Health: fazer exame"
 
 
 def destino_da_sugestao(s: dict, data: str = "", hoje: date = None) -> str:
@@ -473,7 +473,7 @@ def aceitar(sid: int, post=None, hoje: date = None, data: str = "", hora: str = 
         raise ErroClinico("A hora é HH:MM, por exemplo 14:30.")
     dest = destino_da_sugestao(s, data, hoje)
     titulo = _titulo_agenda(s)
-    notas = "Criado pelo Heimdall a partir de uma sugestão que você aceitou. Detalhes: studio health --labs suggestions."
+    notas = "Criado pelo StudioLibre a partir de uma sugestão que você aceitou. Detalhes: studio health --labs suggestions."
     if dest == "evento":
         dia = data or s["compromisso"]
         dado = {"titulo": titulo, "data": dia, "duracao_min": 60, "alertas_min_antes": [60, 1440], "notas": notas}

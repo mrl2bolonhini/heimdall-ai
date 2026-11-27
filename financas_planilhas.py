@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Studio Finance: planilhas (xlsx e csv) de gastos, investimentos, empréstimos e outros assuntos, e as visões personalizadas delas.
 
-Fluxo: o arquivo é lido (xlsx por zipfile, sem biblioteca externa), o Heimdall descobre o tipo e o papel de cada coluna (primeiro por palavras
+Fluxo: o arquivo é lido (xlsx por zipfile, sem biblioteca externa), o StudioLibre descobre o tipo e o papel de cada coluna (primeiro por palavras
 do cabeçalho, depois pelo modelo de linguagem quando houver dúvida) e grava as linhas num conjunto. O layout aprendido fica gravado pela assinatura
-dos cabeçalhos: o próximo arquivo com o mesmo layout (ou quase) entra sozinho no mesmo conjunto. Quando não dá para ter certeza, o Heimdall
+dos cabeçalhos: o próximo arquivo com o mesmo layout (ou quase) entra sozinho no mesmo conjunto. Quando não dá para ter certeza, o StudioLibre
 guarda o arquivo e faz uma pergunta (dúvida) em vez de chutar. Gastos também alimentam as transações do Finance.
 Visões são formas gravadas de mostrar um conjunto (colunas escolhidas e na ordem pedida, ordenação, filtro, agrupamento): como leem os
 registros na hora de abrir, lançamentos novos aparecem nelas sem refazer nada.

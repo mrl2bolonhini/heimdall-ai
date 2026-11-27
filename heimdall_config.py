@@ -3,7 +3,7 @@
 
 Quem usa: a aba Ajustes do Controls. O formato é o mesmo do scripts/guardar_no_env.sh: NOME='valor' (o start_heimdall.sh lê o arquivo com source),
 permissão 600 e uma cópia de segurança em .env.bak antes de cada mudança. Comentários e linhas que não são variável ficam como estão.
-Mudar um valor aqui só vale para os serviços que lerem o .env depois: reinicie o serviço (aba Serviços) ou o Heimdall (aba Manutenção).
+Mudar um valor aqui só vale para os serviços que lerem o .env depois: reinicie o serviço (aba Serviços) ou o StudioLibre (aba Manutenção).
 """
 import os
 import re
@@ -224,7 +224,7 @@ def _padrao_legivel(bruto) -> str:
 
 
 def opcoes_do_codigo() -> dict:
-    """{NOME: valor padrão} das variáveis HEIMDALL_* que os scripts do Heimdall leem. Guardado por 60 s."""
+    """{NOME: valor padrão} das variáveis HEIMDALL_* que os scripts do StudioLibre leem. Guardado por 60 s."""
     if time.time() - _cache["quando"] < 60 and _cache["dados"]:
         return _cache["dados"]
     achadas: dict = {}

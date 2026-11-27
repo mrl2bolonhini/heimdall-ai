@@ -1,4 +1,4 @@
-// Heimdall Saúde Caixa: Worker da Cloudflare que fica na frente do webhook de saúde do n8n
+// StudioLibre Saúde Caixa: Worker da Cloudflare que fica na frente do webhook de saúde do n8n
 // (flows.studiolibre.io/webhook/heimdall-saude), o endereço que o Health Auto Export já usa. Nada muda no app.
 //
 //   Mac no ar        -> repassa o envio ao n8n do jeito que veio e devolve a resposta dele.

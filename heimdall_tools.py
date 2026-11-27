@@ -1,4 +1,4 @@
-"""Ferramentas do Heimdall.
+"""Ferramentas do StudioLibre.
 
 Funções simples, sem decoradores, usadas tanto pelo servidor MCP
 (heimdall_mcp.py) quanto pelo agente local (heimdall_agent.py).
@@ -224,9 +224,9 @@ def write_file(file_path: str, content: str) -> str:
         if len(content) > MAX_WRITE_CHARS:
             return f"Erro: conteúdo grande demais (máximo {MAX_WRITE_CHARS} caracteres)."
         # Sem isso, um texto malicioso lido da web poderia induzir o modelo a reescrever
-        # o próprio código do Heimdall ou a criar itens de inicialização do macOS.
+        # o próprio código do StudioLibre ou a criar itens de inicialização do macOS.
         if target.is_relative_to(PROJECT_DIR) or (rel_parts and rel_parts[0] == "Library"):
-            return "Erro: gravação não permitida nesta pasta (código do Heimdall ou Library do macOS)."
+            return "Erro: gravação não permitida nesta pasta (código do StudioLibre ou Library do macOS)."
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         return f"Sucesso: arquivo gravado em '{target}'."
@@ -235,7 +235,7 @@ def write_file(file_path: str, content: str) -> str:
 
 
 def get_system_metrics() -> str:
-    """Retorna o uso atual de RAM, swap e CPU do Mac (host do Heimdall)."""
+    """Retorna o uso atual de RAM, swap e CPU do Mac (host do StudioLibre)."""
     try:
         ram = psutil.virtual_memory()
         swap = psutil.swap_memory()
@@ -384,7 +384,7 @@ def fetch_rss_feed(feed_url: str) -> str:
     try:
         import feedparser
     except ImportError:
-        return "Dependência ausente: rode 'pip install feedparser' no venv do Heimdall e reinicie."
+        return "Dependência ausente: rode 'pip install feedparser' no venv do StudioLibre e reinicie."
     try:
         res = _safe_get(feed_url.strip(), headers=FEED_HEADERS, timeout=10)
     except Exception as e:
@@ -446,7 +446,7 @@ def get_youtube_transcript(video: str, language: str = "pt", offset: int = 0) ->
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
     except ImportError:
-        return "Dependência ausente: rode 'pip install youtube-transcript-api' no venv do Heimdall e reinicie."
+        return "Dependência ausente: rode 'pip install youtube-transcript-api' no venv do StudioLibre e reinicie."
 
     langs = [language] + [l for l in ("pt", "pt-BR", "en") if l != language]
     try:
@@ -932,7 +932,7 @@ def treinos_resumo(dias: int = 30, tipo: str = "") -> str:
 
 def ecg_resumo(dias: int = 365) -> str:
     """Resumo dos ECG feitos no Apple Watch: quantos, classificação da Apple (ritmo sinusal, fibrilação atrial, inconclusivo), último ECG e as medidas dos batimentos
-    calculadas pelo Heimdall. Informativo, não é diagnóstico. dias: de 1 a 3650."""
+    calculadas pelo StudioLibre. Informativo, não é diagnóstico. dias: de 1 a 3650."""
     try:
         return _BANCO_AVISO + "\n" + _saude_mod().relatorio_ecg(_limitar(dias, padrao=365))
     except Exception as e:  # noqa: BLE001
@@ -1005,7 +1005,7 @@ def analise_exames(exame: str = "", dias: int = 730) -> str:
 
 
 def exames_pendentes() -> str:
-    """Documentos de saúde (exames, receitas, encaminhamentos) que o Heimdall já leu e que aguardam a conferência do usuário, item por item. Esta ferramenta só lê: quem confirma
+    """Documentos de saúde (exames, receitas, encaminhamentos) que o StudioLibre já leu e que aguardam a conferência do usuário, item por item. Esta ferramenta só lê: quem confirma
     ou descarta é o usuário, no terminal (studio health --labs confirm ID), depois de ouvir o que foi lido. Nunca confirme nada por conta própria."""
     try:
         return _BANCO_AVISO + "\n" + _exames_mod().texto_pendentes()

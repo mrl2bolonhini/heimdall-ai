@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste da Ajuda e suporte do Heimdall (heimdall_ajuda.py e as rotas do Account): perguntas frequentes de todos os serviços, formulário com protocolo, limite por hora,
+"""Teste da Ajuda e suporte do StudioLibre (heimdall_ajuda.py e as rotas do Account): perguntas frequentes de todos os serviços, formulário com protocolo, limite por hora,
 validação, envio pelo Cloudflare Email Sending (simulado, sem rede), CSRF e origem, páginas de política com aviso de minuta, e os links do rodapé de todos os serviços."""
 import sys as _sys
 from pathlib import Path as _Path

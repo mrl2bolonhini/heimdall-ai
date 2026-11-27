@@ -280,7 +280,7 @@ with sync_playwright() as pw:
     pg.click("details.grupo >> nth=0 >> summary")
     pg.keyboard.press("Escape")
     confere("Esc fecha o grupo aberto e devolve o foco ao resumo", espera(lambda: pg.locator("details.grupo[open]").count() == 0 and pg.evaluate("document.activeElement.tagName") == "SUMMARY"))
-    confere("Recarregar Heimdall começa desabilitado", pg.is_disabled("#recarregar"))
+    confere("Recarregar StudioLibre começa desabilitado", pg.is_disabled("#recarregar"))
     sec = pg.locator("input[type=password]").first
     sid = sec.get_attribute("id")
     pg.evaluate("document.querySelector('details.grupo input[type=password]').closest('details').open = true")
@@ -301,7 +301,7 @@ with sync_playwright() as pw:
     pg.keyboard.press("Enter")
     confere("Enter no formulário envia sem recarregar, avisa e limpa os campos", espera(lambda: "salva" in pg.inner_text("#resultado-config") and pg.input_value("#nova-nome") == ""
             and pg.evaluate("window.marca") == "mesma" and "STUDIO_TESTE_NAV" in pg.evaluate("window.enviado")))
-    confere("depois de salvar, Recarregar Heimdall habilita", espera(lambda: not pg.is_disabled("#recarregar")))
+    confere("depois de salvar, Recarregar StudioLibre habilita", espera(lambda: not pg.is_disabled("#recarregar")))
     pg.click("text=Voltar para o topo")
     confere("Voltar para o topo leva ao início", espera(lambda: pg.evaluate("window.scrollY") <= 16), str(pg.evaluate("[window.scrollY, location.hash, document.body.scrollHeight, innerHeight]")))
     confere("sem erros de JavaScript no console", not erros, erros)

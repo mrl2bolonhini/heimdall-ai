@@ -40,7 +40,7 @@ def aplicar(texto: str, raiz: Path = RAIZ) -> str:
     d = carregar(raiz)
     if not d:
         return texto
-    chaves = sorted((v[0] for v in d.values()), key=len, reverse=True)   # "Heimdall-ai" antes de "Heimdall"
+    chaves = sorted((v[0] for v in d.values()), key=len, reverse=True)   # "StudioLibre" antes de "Heimdall"
     padrao = re.compile(r"(?<![\w-])(" + "|".join(re.escape(c) for c in chaves) + r")(?![\w-]|\.\w)", re.I)
     return padrao.sub(lambda m: d[m.group(1).lower()][1], texto)
 

@@ -68,7 +68,7 @@ def api(metodo, caminho, params=None, corpo=None, chave=""):
 cfg = {"id": "cid", "segredo": "segredo-correto-123456", "itens": [U]}
 d = Path(tempfile.mkdtemp())
 con = fn.conectar(d / "p.db")
-# conta já importada por extrato: o Heimdall deve reaproveitar o nome e começar depois da última data dela
+# conta já importada por extrato: o StudioLibre deve reaproveitar o nome e começar depois da última data dela
 fn.importar_itens(con, [{"data": "2026-11-09", "valor": -1000, "descricao": "ANTIGO"}], "ofx", "x.ofx", "Itaú conta")
 cli = fp.Cliente(cfg, api)
 hoje = date(2026, 11, 17)

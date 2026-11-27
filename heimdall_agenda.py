@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Evento do Calendário ou lembrete do app Lembretes: a regra única do Heimdall.
+"""Evento do Calendário ou lembrete do app Lembretes: a regra única do StudioLibre.
 
-Regra (vale para toda aplicação do Heimdall):
+Regra (vale para toda aplicação do StudioLibre):
   - EVENTO (Calendário, calendário "Heimdall") é algo que acontece numa data e hora, ou que tem data fixa para olhar: consulta, retorno, prazo.
     Não tem "concluído": passa quando o dia passa.
   - LEMBRETE (app Lembretes, lista "Heimdall") é algo que você precisa fazer e marcar como feito: conferir, pagar, ligar.
-    Fica pendente até você concluir, e o Heimdall volta a avisar enquanto estiver pendente.
+    Fica pendente até você concluir, e o StudioLibre volta a avisar enquanto estiver pendente.
 Cada tipo de item que vai para a agenda é cadastrado em DESTINOS, com o destino escolhido. Quem criar um tipo novo acrescenta aqui (o teste
 tests/agent/teste_agenda.py barra tipo fora desta tabela) e a tabela entra na página de documentação.
 """

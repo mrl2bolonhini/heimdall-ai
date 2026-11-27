@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory() as t:
     (r / "pronuncias.local.txt").write_text("Heimdall = Raimdal\n", encoding="utf-8")
     confere("o arquivo local ganha", v.aplicar("Heimdall", r) == "Raimdal")
     confere("linha ruim ignorada", "ruim" not in v.carregar(r))
-confere("o dicionário do projeto fala Raimdall", v.aplicar("Heimdall-ai e Heimdall") == "raimdall-ei-ai e Raimdall")
+confere("o dicionário do projeto fala StudioLibre", v.aplicar("StudioLibre") == "Estúdio Líbre")
 confere("pronuncias.txt tem as entradas do VoiceOver", v.aplicar("abra o GitHub e o Whatsapp") == "abra o Guitirrâb e o Uatzap")
 with tempfile.TemporaryDirectory() as t2:
     c = Path(t2) / "p.csv"
@@ -56,9 +56,9 @@ with tempfile.TemporaryDirectory() as t3:
     import heimdall_agente as ag
     ag.sys.platform = "darwin"
     pasta = Path(t3) / "cofre"
-    caminho, motivo = ag.fazer_audio("Nota de teste", "O Heimdall subiu. Veja https://exemplo.com agora.", pasta)
+    caminho, motivo = ag.fazer_audio("Nota de teste", "O StudioLibre subiu. Veja https://exemplo.com agora.", pasta)
     confere("atalho gera o m4a", caminho is not None and caminho.name == "nota-de-teste.m4a" and caminho.stat().st_size > 2000 and motivo == "")
-    confere("o texto vai com a pronúncia e sem links", b"Raimdall subiu" in caminho.read_bytes() and b"exemplo.com" not in caminho.read_bytes())
+    confere("o texto vai com a pronúncia e sem links", "Estúdio Líbre subiu".encode() in caminho.read_bytes() and b"exemplo.com" not in caminho.read_bytes())
     confere("sem sobras do atalho", not list((pasta / "audio").glob("*.atalho")) and not list((pasta / "audio").glob("*.aiff")))
     ag.ATALHO = "Quebrado"
     confere("atalho quebrado dá motivo", "falhou" in ag.audio_por_atalho(str(Path(t3) / "x.txt"), pasta / "audio" / "y"))

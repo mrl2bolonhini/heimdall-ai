@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Limpa o que o Second Brain criou por engano a partir de notas do próprio Heimdall.
+"""Limpa o que o Second Brain criou por engano a partir de notas do próprio StudioLibre.
 
 Quando o app Notas não informa a pasta de uma nota, o Second Brain antigo analisava os seus próprios
 espelhos ("Cérebro: ...") e os digests ("Digest AAAA-MM-DD HHh") como se fossem notas suas. Este script

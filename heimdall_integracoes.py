@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Integrações da conta: o que cada pessoa liga ao Heimdall a partir do menu Conta (account.studiolibre.io/integracoes).
+"""Integrações da conta: o que cada pessoa liga ao StudioLibre a partir do menu Conta (account.studiolibre.io/integracoes).
 
 Hoje só a Saúde está pronta, e só para o dono: o app Health Auto Export do iPhone envia os dados à caixa de correio da Cloudflare
 (endereço /v1/hae) com o token da pessoa; o Mac busca (studio mailbox pull) e importa para o banco de saúde. Notas, Lembretes e Calendário

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Senha e código de 6 dígitos de todos os serviços Heimdall com login (Lab, Notas e News).
+"""Senha e código de 6 dígitos de todos os serviços StudioLibre com login (Lab, Notas e News).
 
 Os três usam o mesmo acesso, guardado no .env (a senha só como hash, nunca em texto). Aqui você troca o que precisar:
 
@@ -67,7 +67,7 @@ def verificar() -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Senha e código de 6 dígitos dos serviços Heimdall (Lab, Notas e News)")
+    ap = argparse.ArgumentParser(description="Senha e código de 6 dígitos dos serviços StudioLibre (Lab, Notas e News)")
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--tudo", action="store_true", help="nova senha e novo código de 6 dígitos")
     g.add_argument("--senha", action="store_true", help="só troca a senha")

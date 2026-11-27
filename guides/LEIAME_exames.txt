@@ -1,4 +1,4 @@
-Exames, receitas e encaminhamentos no Heimdall
+Exames, receitas e encaminhamentos no StudioLibre
 
 O que faz: lê o PDF ou a foto, separa cada item, e só grava nas métricas de saúde depois que você confere. Os originais ficam só no Mac, em health/archive, com permissão só sua, e não entram no backup do banco.
 
@@ -6,7 +6,7 @@ O que faz: lê o PDF ou a foto, separa cada item, e só grava nas métricas de s
 2. Reinicie o agente para ele passar a vigiar a pasta e aceitar o envio do iPhone: ./subir.sh --reiniciar
 
 Pelo Mac
-1. Coloque o PDF ou a foto na pasta health/inbox (dentro da pasta do Heimdall; o que não der para ler vai para health/review, com o motivo). O agente lê sozinho e avisa no Bark, sem nome nem número.
+1. Coloque o PDF ou a foto na pasta health/inbox (dentro da pasta do StudioLibre; o que não der para ler vai para health/review, com o motivo). O agente lê sozinho e avisa no Bark, sem nome nem número.
 2. Para ler na hora: studio health --labs folder
 3. Ouvir o que foi lido: studio health --labs pending, depois studio health --labs read NÚMERO.
 4. Se estiver certo: studio health --labs confirm NÚMERO. Se algum item estiver errado, deixe-o de fora: studio health --labs confirm NÚMERO --without 2,5. Se o documento não tiver data, acrescente --date AAAA-MM-DD. Para jogar fora: studio health --labs discard NÚMERO.
@@ -15,14 +15,14 @@ Pelo iPhone (atalho na folha de compartilhamento)
 1. No Mac, gere o código só desse envio: studio health --labs token
 2. Exponha o agente na sua rede Tailscale (só dentro dela, nunca pela internet): tailscale serve --bg --https=8443 http://127.0.0.1:8003
 3. Copie o código sem colar à mão: grep '^STUDIO_EXAMES_TOKEN=' .env | cut -d= -f2- | tr -d '\n' | pbcopy. Ele chega ao iPhone pela Área de Transferência Universal.
-4. No app Atalhos, crie um atalho novo chamado Enviar para o Heimdall e ative a opção de aparecer na Folha de Compartilhamento, aceitando PDF e Imagens.
+4. No app Atalhos, crie um atalho novo chamado Enviar para o StudioLibre e ative a opção de aparecer na Folha de Compartilhamento, aceitando PDF e Imagens.
 5. Primeira ação: Obter conteúdo da URL, com o endereço https://NOME-DO-MAC.SEU-TAILNET.ts.net:8443/saude/documento, método POST, corpo de requisição Arquivo, e o arquivo é a Entrada do Atalho.
 6. Em cabeçalhos, acrescente X-Heimdall-Upload com o código copiado, e X-Heimdall-Nome com o nome do arquivo (variável Nome da Entrada do Atalho).
 7. Última ação: Mostrar resultado. A resposta diz se o documento foi recebido e quantos itens foram lidos.
 8. Depois, no Mac, confira com studio health --labs pending. Nada é gravado antes disso.
 
 Consultas e renovação de receita no Calendário
-1. Documento de confirmação de consulta: o Heimdall lê data, hora, médico, especialidade e local. Depois de studio health --labs read NÚMERO e studio health --labs confirm NÚMERO, a consulta vira evento no calendário Heimdall, com alerta 1 dia e 1 hora antes.
+1. Documento de confirmação de consulta: o StudioLibre lê data, hora, médico, especialidade e local. Depois de studio health --labs read NÚMERO e studio health --labs confirm NÚMERO, a consulta vira evento no calendário StudioLibre, com alerta 1 dia e 1 hora antes.
 2. À mão: studio health --labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia --doctor Nome --place Local
 3. Receita com validade: ao confirmar, cria o evento Pedir renovação de receita, 7 dias antes de vencer.
 4. Se o agente estava fora do ar, rode studio health --labs calendar. Rodar de novo não duplica.
@@ -33,7 +33,7 @@ Depois de confirmado
 - studio health --labs: o último resultado de cada exame.
 - studio health --labs result vitamina d: histórico, com o que o relógio mostrou antes de cada coleta.
 - studio health --labs analysis: leitura cruzada com sono, HRV, pulso e atividade.
-- No chat, o Heimdall consulta com as ferramentas exames_resumo, exame_historico, analise_exames, exames_pendentes e receitas_encaminhamentos. Confirmar e descartar só existem no terminal.
+- No chat, o StudioLibre consulta com as ferramentas exames_resumo, exame_historico, analise_exames, exames_pendentes e receitas_encaminhamentos. Confirmar e descartar só existem no terminal.
 - No painel de saúde: páginas Exames e Documentos, somente leitura.
 
 Cuidados: a leitura não é diagnóstico nem interpretação médica. Confira sempre com o documento original e com o seu médico. A relação com o relógio é coincidência no tempo, não causa.

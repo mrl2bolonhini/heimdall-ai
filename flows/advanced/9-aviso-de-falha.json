@@ -1,6 +1,6 @@
 {
   "id": "hdFalhaAviso0001",
-  "name": "Heimdall: aviso de falha",
+  "name": "StudioLibre: aviso de falha",
   "active": false,
   "nodes": [
     {
@@ -24,7 +24,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "const e = $input.first().json || {};\nconst ex = e.execution || {};\nconst wf = e.workflow || {};\nconst err = ex.error || {};\nconst onde = ex.lastNodeExecuted || (err.node && err.node.name) || 'etapa desconhecida';\nconst msg = String(err.message || 'sem detalhes').slice(0, 300);\nreturn [{ json: { titulo: 'Falha: ' + String(wf.name || 'fluxo').replace(/^Heimdall:\\s*/, ''),\n  corpo: 'Etapa: ' + onde + '. ' + msg + (ex.id ? ' (execução ' + ex.id + ')' : '') } }];"
+        "jsCode": "const e = $input.first().json || {};\nconst ex = e.execution || {};\nconst wf = e.workflow || {};\nconst err = ex.error || {};\nconst onde = ex.lastNodeExecuted || (err.node && err.node.name) || 'etapa desconhecida';\nconst msg = String(err.message || 'sem detalhes').slice(0, 300);\nreturn [{ json: { titulo: 'Falha: ' + String(wf.name || 'fluxo').replace(/^StudioLibre:\\s*/, ''),\n  corpo: 'Etapa: ' + onde + '. ' + msg + (ex.id ? ' (execução ' + ex.id + ')' : '') } }];"
       }
     },
     {

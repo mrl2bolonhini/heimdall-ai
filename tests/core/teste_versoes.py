@@ -45,7 +45,7 @@ def falso(remoto_n8n="sha256:aaa", sem_docker=False, ollama_diferente=False):
 
 it = {i["nome"]: i for i in v.coletar(atualizacoes=True, run=falso())}
 confere("macOS, Docker e Ollama lidos", it["macOS"]["versao"] == "15.1" and it["Docker (motor)"]["versao"] == "27.3.1" and it["Ollama"]["versao"] == "0.5.1", str(it))
-confere("código do Heimdall com commit e ramo", it["Heimdall-ai (código)"]["versao"].startswith("abc1234") and "develop" in it["Heimdall-ai (código)"]["detalhe"])
+confere("código do StudioLibre com commit e ramo", it["StudioLibre (código)"]["versao"].startswith("abc1234") and "develop" in it["StudioLibre (código)"]["detalhe"])
 confere("Open WebUI: versão do package.json", it["Open WebUI (chat)"]["versao"] == "0.6.9")
 confere("n8n: versão do comando", it["n8n (automações)"]["versao"] == "1.70.2")
 confere("SearXNG: cai no rótulo da imagem", it["SearXNG (busca)"]["versao"] == "2025.1.1")
@@ -54,7 +54,7 @@ confere("compara com o registro: igual = atualizada, diferente = desatualizada, 
         it["n8n (automações)"]["estado"] == "atualizada" and it["Open WebUI (chat)"]["estado"] == "desatualizada" and it["SearXNG (busca)"]["estado"] == "")
 sem = {i["nome"]: i for i in v.coletar(atualizacoes=False, run=falso())}
 confere("sem rede não compara", all(i["estado"] == "" for i in sem.values()))
-confere("sem Docker não quebra e ainda mostra o resto", {i["nome"] for i in v.coletar(run=falso(sem_docker=True))} >= {"macOS", "Ollama", "Heimdall-ai (código)"})
+confere("sem Docker não quebra e ainda mostra o resto", {i["nome"] for i in v.coletar(run=falso(sem_docker=True))} >= {"macOS", "Ollama", "StudioLibre (código)"})
 linhas = "\n".join(v.texto(list(it.values())))
 confere("texto: avisa o que tem imagem mais nova", "studio restart --update" in linhas and "Open WebUI (chat): 0.6.9" in linhas, linhas)
 av = v.avisos(list(it.values()))

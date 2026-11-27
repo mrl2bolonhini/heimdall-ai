@@ -3,7 +3,7 @@ SAÚDE DO ECOSSISTEMA APPLE NO HEIMDALL: TREINOS, ECG, FREQUÊNCIA CARDÍACA E M
 
 O que entra no banco (db/heimdall.db, só no seu Mac):
 - treinos: tipo, duração, distância, energia, frequência cardíaca (mínima, média, máxima e a série), recuperação em 1 minuto, subida, passos, velocidade, esforço, temperatura e rota.
-- ecg: classificação da Apple, frequência média, a forma de onda inteira (comprimida) e, calculado pelo Heimdall a partir dela, o intervalo entre batimentos (RR), RMSSD, pNN50 e a irregularidade. Tudo informativo, nada é diagnóstico.
+- ecg: classificação da Apple, frequência média, a forma de onda inteira (comprimida) e, calculado pelo StudioLibre a partir dela, o intervalo entre batimentos (RR), RMSSD, pNN50 e a irregularidade. Tudo informativo, nada é diagnóstico.
 - fc_hora: mínimo, média e máximo da frequência cardíaca por hora; e fc_min, fc_media e fc_max por dia em saude_diaria.
 - saude_eventos: sintomas, humor (estado de espírito), medicamentos, avisos de frequência cardíaca do relógio e ciclo.
 - saude_diaria: tudo o que o n8n já guardava, mais pulso em repouso, variabilidade, VO2 máx, frequência ao caminhar, recuperação cardíaca e os anéis de atividade (quando vêm do arquivo de exportação).
@@ -15,7 +15,7 @@ Duas formas de alimentar, que se completam.
    b. No Mac, na pasta do projeto:
         python3 heimdall_saude.py --importar ~/Downloads/export.zip
       Pode rodar de novo: não duplica. Valores que o n8n já gravou não são sobrescritos.
-   c. Apague o export.zip depois (ele tem seu nome e data de nascimento; o Heimdall não lê nem grava essas duas coisas).
+   c. Apague o export.zip depois (ele tem seu nome e data de nascimento; o StudioLibre não lê nem grava essas duas coisas).
 
 2. CONTÍNUO (Health Auto Export, no iPhone, no mesmo endereço e com o mesmo cabeçalho X-Heimdall-Saude que você já usa para o resumo diário)
    Crie uma automação nova do tipo REST API (ou ajuste a que já existe) com:
@@ -27,7 +27,7 @@ Duas formas de alimentar, que se completam.
    - No app Saúde do iPhone, dê ao Health Auto Export permissão para ler tudo (ECG, treinos, rotas, sintomas, estado de espírito, medicamentos).
    Os nomes das opções podem variar um pouco conforme a versão do app.
    Depois de importar o fluxo atualizado no n8n (./scripts/instalar_automacoes_avancadas.sh), cada envio que tiver treinos, ECG, frequência cardíaca, sintomas, humor, medicamentos ou avisos vai para o agente do Mac (POST /saude/hae) e é gravado.
-   Se o relógio disser que um ECG foi classificado como fibrilação atrial, o Heimdall abre um item na triagem (nível alto), com a observação de que não é diagnóstico.
+   Se o relógio disser que um ECG foi classificado como fibrilação atrial, o StudioLibre abre um item na triagem (nível alto), com a observação de que não é diagnóstico.
 
 Como analisar:
    python3 heimdall_saude.py --relatorio         tudo junto (30 dias): treinos, carga, cruzamento do treino com pulso em repouso e variabilidade, coração, ECG, sintomas, humor, medicamentos
@@ -65,11 +65,11 @@ O resumo sai às 5h50 com o que o iPhone já enviou. Se o sono da noite ainda n�
 Para os dados chegarem cedo, crie no iPhone uma automação no app Atalhos: Automação, Nova automação, Alarme, "É parado", e como ação "Executar Atalho" com o "Exportar dados de saúde". Desligue "Perguntar antes de executar" para ela rodar sozinha quando você parar o despertador.
 
 SINAIS VITAIS, APNEIA E TEMPERATURA DO PULSO
-1. O aviso do app Sinais Vitais e o aviso de possível apneia do sono são notificações da Apple. Elas não saem pelo Health Auto Export, então o Heimdall não as vê. O que ele vê são os números por trás: pulso em repouso, respiração no sono, oxigênio, sono e distúrbios respiratórios (x:breathing_disturbances).
+1. O aviso do app Sinais Vitais e o aviso de possível apneia do sono são notificações da Apple. Elas não saem pelo Health Auto Export, então o StudioLibre não as vê. O que ele vê são os números por trás: pulso em repouso, respiração no sono, oxigênio, sono e distúrbios respiratórios (x:breathing_disturbances).
 2. Quando duas ou mais dessas medidas saem do seu intervalo típico ao mesmo tempo, o resumo traz uma linha "Vários sinais vitais fora do seu intervalo típico..." e abre um item de triagem. Isso não é diagnóstico. Um aviso de apneia da Apple vale uma conversa com um médico.
-3. A temperatura do pulso no sono só chega se o relógio a medir (Apple Watch Series 8 ou mais novo, ou Ultra) e se a automação do Health Auto Export incluir "Apple Sleeping Wrist Temperature". Para conferir se o relógio mede, abra o app Saúde, Navegar, Medidas do corpo, e procure Temperatura do pulso. Se existir lá, ligue a métrica no Health Auto Export; o Heimdall a guarda sozinho como x:apple_sleeping_wrist_temperature.
-4. Frequência cardíaca da madrugada: o Heimdall compara a média entre 0h e 7h com o seu normal dos últimos 14 dias. Se ficar pelo menos 10 bpm acima (e bem fora da variação habitual), abre um item na triagem. A página Hoje do painel mostra a comparação. Para isso a automação precisa enviar a frequência cardíaca (heart rate) agrupada por hora.
-5. Oxigênio mínimo: além da média do dia, o Heimdall guarda a menor leitura de oxigênio (spo2_min). Até 92 por cento aparece como relevante no resumo; até 90 por cento abre um item na triagem; até 88 por cento abre um item crítico. A leitura no pulso pode errar por movimento ou ajuste do relógio, mas uma queda abaixo de 91 por cento, sobretudo com outros sinais, vale conversar com um médico.
+3. A temperatura do pulso no sono só chega se o relógio a medir (Apple Watch Series 8 ou mais novo, ou Ultra) e se a automação do Health Auto Export incluir "Apple Sleeping Wrist Temperature". Para conferir se o relógio mede, abra o app Saúde, Navegar, Medidas do corpo, e procure Temperatura do pulso. Se existir lá, ligue a métrica no Health Auto Export; o StudioLibre a guarda sozinho como x:apple_sleeping_wrist_temperature.
+4. Frequência cardíaca da madrugada: o StudioLibre compara a média entre 0h e 7h com o seu normal dos últimos 14 dias. Se ficar pelo menos 10 bpm acima (e bem fora da variação habitual), abre um item na triagem. A página Hoje do painel mostra a comparação. Para isso a automação precisa enviar a frequência cardíaca (heart rate) agrupada por hora.
+5. Oxigênio mínimo: além da média do dia, o StudioLibre guarda a menor leitura de oxigênio (spo2_min). Até 92 por cento aparece como relevante no resumo; até 90 por cento abre um item na triagem; até 88 por cento abre um item crítico. A leitura no pulso pode errar por movimento ou ajuste do relógio, mas uma queda abaixo de 91 por cento, sobretudo com outros sinais, vale conversar com um médico.
 
 Anomalias em todas as medidas
 1. python3 heimdall_anomalias.py mostra o que saiu do seu normal (mediana dos últimos 30 dias). Também está na página Anomalias do painel e no chat (analise_saude, tema anomalias).
