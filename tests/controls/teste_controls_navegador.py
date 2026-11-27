@@ -14,7 +14,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="controls_nav_"))
-os.environ.update({"HEIMDALL_CONTROLS_SHELL": "/bin/bash", "HEIMDALL_CONTROLS_RC": "0", "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
+os.environ.update({"STUDIO_CONTROLS_SHELL": "/bin/bash", "STUDIO_CONTROLS_RC": "0", "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
 try:
     from playwright.sync_api import sync_playwright
@@ -295,12 +295,12 @@ with sync_playwright() as pw:
     pg.fill("#filtro-cfg", "")
     pg.evaluate("window.fetch0 = window.fetch; window.fetch = function(u, o){ if (String(u).indexOf('/ajustes/salvar') >= 0) { window.enviado = String(o.body); return Promise.resolve(new Response(JSON.stringify({ok: true, mensagem: 'X salva. Vale quando o serviço que usa for reiniciado.'}), {status: 200})); } return window.fetch0(u, o); }; 0")
     pg.click("summary:has-text('Nova variável')")
-    pg.fill("#nova-nome", "HEIMDALL_TESTE_NAV")
+    pg.fill("#nova-nome", "STUDIO_TESTE_NAV")
     pg.fill("#nova-valor", "abc")
     pg.focus("#nova-valor")
     pg.keyboard.press("Enter")
     confere("Enter no formulário envia sem recarregar, avisa e limpa os campos", espera(lambda: "salva" in pg.inner_text("#resultado-config") and pg.input_value("#nova-nome") == ""
-            and pg.evaluate("window.marca") == "mesma" and "HEIMDALL_TESTE_NAV" in pg.evaluate("window.enviado")))
+            and pg.evaluate("window.marca") == "mesma" and "STUDIO_TESTE_NAV" in pg.evaluate("window.enviado")))
     confere("depois de salvar, Recarregar Heimdall habilita", espera(lambda: not pg.is_disabled("#recarregar")))
     pg.click("text=Voltar para o topo")
     confere("Voltar para o topo leva ao início", espera(lambda: pg.evaluate("window.scrollY") <= 16), str(pg.evaluate("[window.scrollY, location.hash, document.body.scrollHeight, innerHeight]")))

@@ -13,9 +13,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="analista_"))
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "banco")
-os.environ["HEIMDALL_AVISOS_MAC"] = "1"
-os.environ.pop("HEIMDALL_SAUDE_LITERATURA", None)
+os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
+os.environ["STUDIO_AVISOS_MAC"] = "1"
+os.environ.pop("STUDIO_SAUDE_LITERATURA", None)
 sys.path.insert(0, str(RAIZ))
 import heimdall_saude as hs  # noqa: E402
 import heimdall_analista_saude as an  # noqa: E402
@@ -81,18 +81,18 @@ confere("a busca leva só termos genéricos, nunca valores seus", chamadas and n
 n = len(chamadas)
 an.literatura(d, abrir=abrir)
 confere("segunda análise usa o cache (sem nova chamada)", len(chamadas) == n, (n, len(chamadas)))
-os.environ["HEIMDALL_SAUDE_LITERATURA"] = "0"
-confere("HEIMDALL_SAUDE_LITERATURA=0 não consulta", an.literatura(d, abrir=abrir) == [])
-os.environ.pop("HEIMDALL_SAUDE_LITERATURA")
+os.environ["STUDIO_SAUDE_LITERATURA"] = "0"
+confere("STUDIO_SAUDE_LITERATURA=0 não consulta", an.literatura(d, abrir=abrir) == [])
+os.environ.pop("STUDIO_SAUDE_LITERATURA")
 
 
 def semrede(u):
     raise OSError("sem internet")
 
 
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "outro")   # cache vazio não afeta; só confere que falha de rede não derruba
+os.environ["STUDIO_DB_DIR"] = str(TMP / "outro")   # cache vazio não afeta; só confere que falha de rede não derruba
 confere("PubMed fora do ar: segue sem literatura nova", isinstance(an.literatura(dict(d, medidas=[dict(m, estado="forte") for m in d["medidas"]]), abrir=semrede), list))
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "banco")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 
 # conferência do JSON do modelo
 bom = json.dumps({"panorama": "HRV caiu 53 por cento.", "gravidade": "importante", "sinais": [{"medida": "HRV", "o_que_e": "variação entre batimentos", "o_que_mostra": "14 ms contra 33", "impacto": "recuperação pior", "gravidade": "atencao"}],
@@ -128,9 +128,9 @@ nv.chat = nuvem_falha
 an._abridor = type("A", (), {"open": staticmethod(lambda req, timeout=0: _R())})()
 confere("nuvem falha (limite, rede): cai para o modelo local", an._chamar_modelo("p") == "local respondeu" and an.modelo_usado.endswith("(local)"), an.modelo_usado)
 nv.chat = lambda *a, **k: "nuvem respondeu"
-os.environ["HEIMDALL_SAUDE_ANALISTA_NUVEM"] = "0"
-confere("HEIMDALL_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local", an._chamar_modelo("p") == "local respondeu", an.modelo_usado)
-os.environ.pop("HEIMDALL_SAUDE_ANALISTA_NUVEM")
+os.environ["STUDIO_SAUDE_ANALISTA_NUVEM"] = "0"
+confere("STUDIO_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local", an._chamar_modelo("p") == "local respondeu", an.modelo_usado)
+os.environ.pop("STUDIO_SAUDE_ANALISTA_NUVEM")
 nv.ativo = lambda env=None: False
 confere("nuvem desligada: modelo local", an._chamar_modelo("p") == "local respondeu")
 
@@ -169,9 +169,9 @@ confere("rodar grava a análise na aba Avisos do Health", r1 and r1["aviso"] and
 confere("gravidade urgente avisa, com o resumo e o nível time sensitive", len(avisos_mac) == 1 and avisos_mac[0]["level"] == "timeSensitive" and "urgente" in avisos_mac[0]["title"] and "Hipótese principal" in avisos_mac[0]["body"], avisos_mac)
 confere("segunda chamada no mesmo dia não roda de novo", an.rodar(agora + timedelta(hours=2), modelo=lambda p: bom, abrir=abrir, avisar_mac=avisos_mac.append) == {})
 confere("forçar roda mesmo assim", bool(an.rodar(agora + timedelta(hours=2), forcar=True, modelo=lambda p: bom, abrir=abrir, avisar_mac=avisos_mac.append)))
-os.environ["HEIMDALL_SAUDE_ANALISTA"] = "0"
-confere("HEIMDALL_SAUDE_ANALISTA=0 desliga a automática", an.rodar(agora + timedelta(days=3), modelo=lambda p: bom, abrir=abrir) == {})
-os.environ.pop("HEIMDALL_SAUDE_ANALISTA")
+os.environ["STUDIO_SAUDE_ANALISTA"] = "0"
+confere("STUDIO_SAUDE_ANALISTA=0 desliga a automática", an.rodar(agora + timedelta(days=3), modelo=lambda p: bom, abrir=abrir) == {})
+os.environ.pop("STUDIO_SAUDE_ANALISTA")
 
 # dia calmo não avisa
 for m, v in (("hrv", 33), ("fc_repouso", 58), ("spo2_min", 93), ("sono_total", 420)):

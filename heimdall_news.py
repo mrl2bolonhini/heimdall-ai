@@ -23,12 +23,12 @@ Segurança: escuta só em 127.0.0.1; o site exige senha forte + código de 6 dí
 HTML sempre escapado; matérias e feeds são baixados só de endereços públicos (nunca da sua rede ou do próprio Mac) e o
 texto deles nunca é obedecido como instrução pelo modelo. O RSS só aceita a chave certa; tentativas erradas têm limite próprio por endereço (não travam o login).
 
-Variáveis opcionais no .env: HEIMDALL_NEWS_PORT (8012), HEIMDALL_NEWS_HOSTS (news.heimdall-ai.tech,localhost,127.0.0.1),
-HEIMDALL_NEWS_URL (https://news.heimdall-ai.tech), HEIMDALL_NEWS_RSS_TOKEN, HEIMDALL_NEWS_MODELO (gemma3-4b),
-HEIMDALL_NEWS_LLM_URL (http://127.0.0.1:9000/v1/chat/completions; usa LITELLM_MASTER_KEY), HEIMDALL_NEWS_INTERVALO_MIN (30),
-HEIMDALL_NEWS_RESUMOS_POR_CICLO (10), HEIMDALL_NEWS_ORCAMENTO_MIN (20), HEIMDALL_NEWS_PAUSA (horas sem resumos, ex.: 1-6),
-HEIMDALL_NEWS_COLETAR (0 desliga a coleta e deixa só o site), HEIMDALL_NEWS_FONTES (outro arquivo de fontes),
-HEIMDALL_NEWS_RSS_HORAS (72), HEIMDALL_NEWS_FUSO (America/Sao_Paulo).
+Variáveis opcionais no .env: STUDIO_NEWS_PORT (8012), STUDIO_NEWS_HOSTS (news.heimdall-ai.tech,localhost,127.0.0.1),
+STUDIO_NEWS_URL (https://news.heimdall-ai.tech), STUDIO_NEWS_RSS_TOKEN, STUDIO_NEWS_MODELO (gemma3-4b),
+STUDIO_NEWS_LLM_URL (http://127.0.0.1:9000/v1/chat/completions; usa LITELLM_MASTER_KEY), STUDIO_NEWS_INTERVALO_MIN (30),
+STUDIO_NEWS_RESUMOS_POR_CICLO (10), STUDIO_NEWS_ORCAMENTO_MIN (20), STUDIO_NEWS_PAUSA (horas sem resumos, ex.: 1-6),
+STUDIO_NEWS_COLETAR (0 desliga a coleta e deixa só o site), STUDIO_NEWS_FONTES (outro arquivo de fontes),
+STUDIO_NEWS_RSS_HORAS (72), STUDIO_NEWS_FUSO (America/Sao_Paulo).
 
 Usa só a biblioteca padrão do Python.
 """
@@ -38,7 +38,6 @@ import html
 import ipaddress
 import json
 import os
-import heimdall_envcompat as _envcompat
 import re
 import secrets
 import socket
@@ -76,8 +75,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        chave = _envcompat.interno(chave)
-        if not (chave.startswith("HEIMDALL_NEWS_") or chave in ("LITELLM_MASTER_KEY", "HEIMDALL_DB_DIR")):
+        if not (chave.startswith("STUDIO_NEWS_") or chave in ("LITELLM_MASTER_KEY", "STUDIO_DB_DIR")):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -101,43 +99,43 @@ def _inteiro(nome: str, padrao: int, minimo: int = 0) -> int:
         return padrao
 
 
-HOST = os.environ.get("HEIMDALL_NEWS_HOST", "127.0.0.1")
-PORT = _inteiro("HEIMDALL_NEWS_PORT", 8012, 1)
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_NEWS_HOSTS", "news.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
-URL_BASE = os.environ.get("HEIMDALL_NEWS_URL", "https://news.heimdall-ai.tech").rstrip("/")
-FONTES_ARQ = Path(os.environ.get("HEIMDALL_NEWS_FONTES", str(PROJECT_DIR / "noticias_fontes.json"))).expanduser()
-MODELO = os.environ.get("HEIMDALL_NEWS_MODELO", "gemma3-4b")
-LLM_URL = os.environ.get("HEIMDALL_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions")
+HOST = os.environ.get("STUDIO_NEWS_HOST", "127.0.0.1")
+PORT = _inteiro("STUDIO_NEWS_PORT", 8012, 1)
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_NEWS_HOSTS", "news.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+URL_BASE = os.environ.get("STUDIO_NEWS_URL", "https://news.heimdall-ai.tech").rstrip("/")
+FONTES_ARQ = Path(os.environ.get("STUDIO_NEWS_FONTES", str(PROJECT_DIR / "noticias_fontes.json"))).expanduser()
+MODELO = os.environ.get("STUDIO_NEWS_MODELO", "gemma3-4b")
+LLM_URL = os.environ.get("STUDIO_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions")
 LLM_CHAVE = os.environ.get("LITELLM_MASTER_KEY", "")
-INTERVALO_MIN = _inteiro("HEIMDALL_NEWS_INTERVALO_MIN", 30, 1)
-RESUMOS_POR_CICLO = _inteiro("HEIMDALL_NEWS_RESUMOS_POR_CICLO", 10)
-ORCAMENTO_MIN = _inteiro("HEIMDALL_NEWS_ORCAMENTO_MIN", 20, 1)
-RSS_HORAS = _inteiro("HEIMDALL_NEWS_RSS_HORAS", 72, 1)
+INTERVALO_MIN = _inteiro("STUDIO_NEWS_INTERVALO_MIN", 30, 1)
+RESUMOS_POR_CICLO = _inteiro("STUDIO_NEWS_RESUMOS_POR_CICLO", 10)
+ORCAMENTO_MIN = _inteiro("STUDIO_NEWS_ORCAMENTO_MIN", 20, 1)
+RSS_HORAS = _inteiro("STUDIO_NEWS_RSS_HORAS", 72, 1)
 GUARDAR_DIAS = 30
 JANELA_HORAS = 24
 POR_PAGINA = 10
 MAX_TENTATIVAS = 3
 ESPERA_RSS_MIN = 120   # no RSS, matéria sem resumo só entra depois de esperar isto (o leitor de feeds não atualiza item já baixado)
 COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
-RSS_TOKEN = os.environ.get("HEIMDALL_NEWS_RSS_TOKEN", "")
-PAUSA = os.environ.get("HEIMDALL_NEWS_PAUSA", "").strip()
+RSS_TOKEN = os.environ.get("STUDIO_NEWS_RSS_TOKEN", "")
+PAUSA = os.environ.get("STUDIO_NEWS_PAUSA", "").strip()
 # Serviços da Cloudflare, só para o News (matérias públicas; dados pessoais e de saúde nunca passam por aqui):
 #   reserva de resumos no Workers AI, quando o modelo local não responde; leitura de páginas pelo Browser Rendering.
 CF_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
 CF_CONTA = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
 CF_BASE = "https://api.cloudflare.com/client/v4"
-CF_MODELO = os.environ.get("HEIMDALL_NEWS_RESERVA_MODELO", "@cf/mistralai/mistral-small-3.1-24b-instruct")
-RESERVA_LIGADA = os.environ.get("HEIMDALL_NEWS_RESERVA", "1") != "0" and bool(CF_TOKEN and CF_CONTA)
-RESERVA_POR_DIA = _inteiro("HEIMDALL_NEWS_RESERVA_POR_DIA", 60)
-RENDER_POR_DIA = _inteiro("HEIMDALL_NEWS_RENDER_POR_DIA", 20)
-COLETAR = os.environ.get("HEIMDALL_NEWS_COLETAR", "1") != "0"
+CF_MODELO = os.environ.get("STUDIO_NEWS_RESERVA_MODELO", "@cf/mistralai/mistral-small-3.1-24b-instruct")
+RESERVA_LIGADA = os.environ.get("STUDIO_NEWS_RESERVA", "1") != "0" and bool(CF_TOKEN and CF_CONTA)
+RESERVA_POR_DIA = _inteiro("STUDIO_NEWS_RESERVA_POR_DIA", 60)
+RENDER_POR_DIA = _inteiro("STUDIO_NEWS_RENDER_POR_DIA", 20)
+COLETAR = os.environ.get("STUDIO_NEWS_COLETAR", "1") != "0"
 AGENTE_USUARIO = "Heimdall-News/1.0 (leitor de feeds pessoal)"
 PERMITIR_LOCAL = False   # só os testes ligam isto: em uso normal endereços da própria rede são recusados
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 
 try:
     from zoneinfo import ZoneInfo
-    FUSO = ZoneInfo(os.environ.get("HEIMDALL_NEWS_FUSO", "America/Sao_Paulo"))
+    FUSO = ZoneInfo(os.environ.get("STUDIO_NEWS_FUSO", "America/Sao_Paulo"))
 except Exception:  # noqa: BLE001  (sem base de fusos: Brasília fixo)
     FUSO = timezone(timedelta(hours=-3))
 
@@ -1360,11 +1358,11 @@ def main() -> None:
     a = ap.parse_args()
     banco.iniciar()   # garante a tabela noticias mesmo antes da primeira subida
     if a.token:
-        nuvem.env_gravar({"HEIMDALL_NEWS_RSS_TOKEN": secrets.token_urlsafe(24)})
+        nuvem.env_gravar({"STUDIO_NEWS_RSS_TOKEN": secrets.token_urlsafe(24)})
         print("Chave nova gravada no .env (permissão 600). Os endereços antigos pararam de valer quando o serviço reiniciar.")
         carregar_chave = ""
         for l in (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines():
-            if l.startswith("HEIMDALL_NEWS_RSS_TOKEN="):
+            if l.startswith("STUDIO_NEWS_RSS_TOKEN="):
                 carregar_chave = l.split("=", 1)[1].strip("'\"")
         globals()["RSS_TOKEN"] = carregar_chave
         mostrar_urls()

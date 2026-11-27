@@ -2,7 +2,7 @@ DADOS SEPARADOS POR PESSOA (PLANO, 23/11/2026)
 
 STATUS (23/11/2026): decisões aprovadas pelo usuário (dono nos caminhos de hoje; convidado sem aviso por enquanto; cota por pessoa no teto de US$ 15; login local é sempre o dono). Fase 0 (fundação) e fase 1 (Learn) prontas. O Notes deixou de guardar estudos (foram para o Learn) e ficou só do dono (triagem, diários, privacidade): não precisa de dados por pessoa. Faltam, na fase 2, Lab, News e Games, e depois as fases 3 a 5 e a cota por pessoa.
 
-Decisão do usuário: todos os serviços devem guardar os dados de cada pessoa separados dos dados do dono. Nada abaixo está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, tem teste de isolamento e interruptor no .env (HEIMDALL_PESSOAS=0 devolve o comportamento atual, de um dono só).
+Decisão do usuário: todos os serviços devem guardar os dados de cada pessoa separados dos dados do dono. Nada abaixo está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, tem teste de isolamento e interruptor no .env (STUDIO_PESSOAS=0 devolve o comportamento atual, de um dono só).
 
 COMO É HOJE (conferido no código)
   1. A entrada de um convidado pelo Cloudflare Access já identifica o e-mail, mas a sessão do Heimdall (heimdall_lab.py) só guarda o escopo do serviço, sem dizer quem é a pessoa. Por isso nenhum serviço sabe de quem são os dados.
@@ -27,7 +27,7 @@ PONTO ÚNICO DE ESCOLHA DO CAMINHO
   Novo módulo heimdall_pessoas.py: identifica a pessoa da sessão, devolve o id e a pasta de dados de cada serviço para ela. Nenhum serviço monta caminho de dados sozinho depois disto; todos pedem a este módulo. Há um teste que falha se algum módulo de serviço abrir um banco fora dele.
 
 FASES
-  0. Fundação: a sessão passa a carregar a pessoa (e-mail validado do Access; entrada por senha e código no Mac é sempre o dono). heimdall_pessoas.py, teste de isolamento (duas pessoas, dados de uma nunca aparecem para a outra, caminho com .. ou id forjado é recusado), HEIMDALL_PESSOAS.
+  0. Fundação: a sessão passa a carregar a pessoa (e-mail validado do Access; entrada por senha e código no Mac é sempre o dono). heimdall_pessoas.py, teste de isolamento (duas pessoas, dados de uma nunca aparecem para a outra, caminho com .. ou id forjado é recusado), STUDIO_PESSOAS.
   1. Learn: banco, pastas de material, áudios e agenda por pessoa. A agenda percorre as pessoas. Importar documento, cards, lições, progresso e ajustes passam a ser da pessoa. As ferramentas de leitura do modelo Learn só leem os dados da pessoa que está conversando.
   2. Lab, Notes, News e Games: mesmo tratamento, um serviço por vez.
   3. Chat: o Open WebUI já tem usuários próprios. A memória e a busca nos documentos (Qdrant) passam a uma coleção por pessoa, e as ferramentas MCP recebem a pessoa. Fase maior, depende de como o Open WebUI repassa o usuário às ferramentas.

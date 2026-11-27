@@ -47,14 +47,14 @@ env_append() {
     chmod 600 .env
 }
 
-# Remove do .env as linhas HEIMDALL_MONITOR_* (usado ao reconfigurar e ao remover).
+# Remove do .env as linhas STUDIO_MONITOR_* (usado ao reconfigurar e ao remover).
 limpar_env_monitor() {
     [ -f .env ] || return 0
     "$PY" - .env <<'PYEOF'
 import re, sys
 p = sys.argv[1]
 linhas = open(p, encoding="utf-8").read().splitlines()
-novas = [l for l in linhas if not re.match(r"^HEIMDALL_MONITOR_[A-Z_]+=", l)]
+novas = [l for l in linhas if not re.match(r"^STUDIO_MONITOR_[A-Z_]+=", l)]
 open(p, "w", encoding="utf-8").write("\n".join(novas) + ("\n" if novas else ""))
 PYEOF
     chmod 600 .env
@@ -76,10 +76,10 @@ fi
 docker ps --format '{{.Names}}' | grep -qx searxng || fail "o contêiner do SearXNG não está rodando. Rode: bash start_heimdall.sh --n8n"
 [ -d flows/monitor ] || fail "a pasta flows/monitor/ não está ao lado deste script."
 [ -n "${LITELLM_MASTER_KEY:-}" ] || fail "LITELLM_MASTER_KEY não está no .env (rode o start_heimdall.sh uma vez para gerá-la)."
-[ -n "${HEIMDALL_AGENTE_TOKEN:-}" ] || fail "o token do agente do Mac não existe. Rode antes: bash scripts/instalar_automacoes_avancadas.sh"
+[ -n "${STUDIO_AGENTE_TOKEN:-}" ] || fail "o token do agente do Mac não existe. Rode antes: bash scripts/instalar_automacoes_avancadas.sh"
 
 # --- Bark ---
-BARK_KEY="${HEIMDALL_BARK_KEY:-}"
+BARK_KEY="${STUDIO_BARK_KEY:-}"
 if [ -z "$BARK_KEY" ]; then
     echo "Cole a chave do Bark (ou a URL completa do Bark). Nada aparece na tela enquanto você cola."
     read -r -s -p "Chave do Bark: " BARK_KEY
@@ -92,11 +92,11 @@ esac
 [[ "$BARK_KEY" =~ ^[A-Za-z0-9_-]{6,}$ ]] || fail "a chave do Bark deve ter só letras, números, hífen ou sublinhado."
 if [ "${ASK_SAVE_BARK:-0}" = "1" ]; then
     read -r -p "Guardar a chave do Bark no .env? [s/N] " ANS
-    case "$ANS" in s|S|sim|SIM) env_append "HEIMDALL_BARK_KEY='$BARK_KEY'"; echo "Chave do Bark gravada no .env." ;; esac
+    case "$ANS" in s|S|sim|SIM) env_append "STUDIO_BARK_KEY='$BARK_KEY'"; echo "Chave do Bark gravada no .env." ;; esac
 fi
 
-MODELO="${HEIMDALL_FLOW_MODEL:-qwen3-vl-instruct}"
-[[ "$MODELO" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "HEIMDALL_FLOW_MODEL tem caracteres inválidos."
+MODELO="${STUDIO_FLOW_MODEL:-qwen3-vl-instruct}"
+[[ "$MODELO" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "STUDIO_FLOW_MODEL tem caracteres inválidos."
 
 # --- Identificadores a monitorar ---
 pergunta() {  # pergunta "texto" VARIAVEL_ATUAL -> imprime o valor escolhido
@@ -110,19 +110,19 @@ pergunta() {  # pergunta "texto" VARIAVEL_ATUAL -> imprime o valor escolhido
     printf '%s' "$resp"
 }
 
-if [ "$RECONF" = "1" ] || [ -z "${HEIMDALL_MONITOR_NOME:-}${HEIMDALL_MONITOR_EMAILS:-}${HEIMDALL_MONITOR_USUARIOS:-}" ]; then
+if [ "$RECONF" = "1" ] || [ -z "${STUDIO_MONITOR_NOME:-}${STUDIO_MONITOR_EMAILS:-}${STUDIO_MONITOR_USUARIOS:-}" ]; then
     echo
     echo "Monitor de privacidade: o que devo procurar sobre você? Use só o que já é público ou que você quer vigiar."
     echo "NÃO informe CPF, senhas, documentos nem cartões. Várias respostas, separe por vírgula. Enter deixa em branco."
     echo
-    N_NOME="$(pergunta "1. Seu nome completo (um só; as outras formas vão na pergunta 2):" "${HEIMDALL_MONITOR_NOME:-}")"
-    N_VAR="$(pergunta "2. Outras grafias do nome (apelidos, sem acento, só sobrenome composto):" "${HEIMDALL_MONITOR_VARIACOES:-}")"
-    N_EMAILS="$(pergunta "3. Seus e-mails:" "${HEIMDALL_MONITOR_EMAILS:-}")"
-    N_USERS="$(pergunta "4. Seus usuários e apelidos em redes e sites (mínimo 5 letras para confirmar sozinho):" "${HEIMDALL_MONITOR_USUARIOS:-}")"
-    N_CIDADE="$(pergunta "5. Sua cidade:" "${HEIMDALL_MONITOR_CIDADE:-}")"
+    N_NOME="$(pergunta "1. Seu nome completo (um só; as outras formas vão na pergunta 2):" "${STUDIO_MONITOR_NOME:-}")"
+    N_VAR="$(pergunta "2. Outras grafias do nome (apelidos, sem acento, só sobrenome composto):" "${STUDIO_MONITOR_VARIACOES:-}")"
+    N_EMAILS="$(pergunta "3. Seus e-mails:" "${STUDIO_MONITOR_EMAILS:-}")"
+    N_USERS="$(pergunta "4. Seus usuários e apelidos em redes e sites (mínimo 5 letras para confirmar sozinho):" "${STUDIO_MONITOR_USUARIOS:-}")"
+    N_CIDADE="$(pergunta "5. Sua cidade:" "${STUDIO_MONITOR_CIDADE:-}")"
     echo "6. Fatos que só combinam com você (empresa, profissão, faculdade, área). Eles separam você de homônimos:"
-    N_SINAIS="$(pergunta "   Fatos:" "${HEIMDALL_MONITOR_SINAIS:-}")"
-    N_IGN="$(pergunta "7. Sites seus a ignorar, só o domínio (por exemplo meusite.com.br):" "${HEIMDALL_MONITOR_IGNORAR:-}")"
+    N_SINAIS="$(pergunta "   Fatos:" "${STUDIO_MONITOR_SINAIS:-}")"
+    N_IGN="$(pergunta "7. Sites seus a ignorar, só o domínio (por exemplo meusite.com.br):" "${STUDIO_MONITOR_IGNORAR:-}")"
 
     "$PY" - "$N_NOME" "$N_VAR" "$N_EMAILS" "$N_USERS" "$N_CIDADE" "$N_SINAIS" "$N_IGN" > "$(pwd)/.monitor_env.tmp" <<'PYEOF' || { rm -f .monitor_env.tmp; fail "dados inválidos (veja a mensagem acima)."; }
 import re, shlex, sys
@@ -153,7 +153,7 @@ for d in lista(ign):
 if re.search(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}", " ".join(sys.argv[1:8])):
     sys.exit("parece haver um CPF nas respostas. Tire-o: pesquisar o CPF o expõe aos buscadores.")
 for k, v in (("NOME", nome), ("VARIACOES", var), ("EMAILS", emails), ("USUARIOS", users), ("CIDADE", cidade), ("SINAIS", sinais), ("IGNORAR", ign)):
-    print("HEIMDALL_MONITOR_%s=%s" % (k, shlex.quote(",".join(lista(v)) if k not in ("NOME", "CIDADE") else v)))
+    print("STUDIO_MONITOR_%s=%s" % (k, shlex.quote(",".join(lista(v)) if k not in ("NOME", "CIDADE") else v)))
 PYEOF
     limpar_env_monitor
     cat .monitor_env.tmp >> .env
@@ -181,10 +181,10 @@ for ID in hdMonitor00000001 hdDiario00000001 hdLembrete0000001; do
     docker cp n8n:/tmp/hd_mon_export_$ID.json "$TMP/export_antigo_$ID.json" > /dev/null 2>&1
 done
 
-SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_MODELO="$MODELO" SUBS_AGENTE="$HEIMDALL_AGENTE_TOKEN" \
-M_NOME="${HEIMDALL_MONITOR_NOME:-}" M_VAR="${HEIMDALL_MONITOR_VARIACOES:-}" M_EMAILS="${HEIMDALL_MONITOR_EMAILS:-}" \
-M_USERS="${HEIMDALL_MONITOR_USUARIOS:-}" M_CIDADE="${HEIMDALL_MONITOR_CIDADE:-}" M_SINAIS="${HEIMDALL_MONITOR_SINAIS:-}" \
-M_IGN="${HEIMDALL_MONITOR_IGNORAR:-}" M_OAB="${HEIMDALL_OAB:-}" \
+SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_MODELO="$MODELO" SUBS_AGENTE="$STUDIO_AGENTE_TOKEN" \
+M_NOME="${STUDIO_MONITOR_NOME:-}" M_VAR="${STUDIO_MONITOR_VARIACOES:-}" M_EMAILS="${STUDIO_MONITOR_EMAILS:-}" \
+M_USERS="${STUDIO_MONITOR_USUARIOS:-}" M_CIDADE="${STUDIO_MONITOR_CIDADE:-}" M_SINAIS="${STUDIO_MONITOR_SINAIS:-}" \
+M_IGN="${STUDIO_MONITOR_IGNORAR:-}" M_OAB="${STUDIO_OAB:-}" \
 "$PY" - "$PROJECT_DIR/flows/monitor" "$TMP" <<'PYEOF' || fail "não consegui preparar os fluxos."
 import json, os, pathlib, re, sys
 
@@ -195,13 +195,13 @@ def lista(s):
     return [x.strip() for x in s.split(",") if x.strip()]
 
 def oab_cfg(v):
-    """HEIMDALL_OAB=NUMERO/UF (por exemplo 123456/SP). Vazio desliga a consulta ao Diário da Justiça."""
+    """STUDIO_OAB=NUMERO/UF (por exemplo 123456/SP). Vazio desliga a consulta ao Diário da Justiça."""
     v = v.strip()
     if not v:
         return None
     m = re.match(r"^(\d{1,7})\s*[/-]?\s*([A-Za-z]{2})$", v)
     if not m:
-        sys.exit("HEIMDALL_OAB inválida: use número e UF, por exemplo 123456/SP ou 123456SP")
+        sys.exit("STUDIO_OAB inválida: use número e UF, por exemplo 123456/SP ou 123456SP")
     return {"numero": m.group(1), "uf": m.group(2).upper()}
 
 config = {
@@ -306,7 +306,7 @@ if docker exec n8n wget -q -T 15 -O - "http://searxng:8080/search?q=teste&format
 else
     echo " - AVISO: o n8n não recebeu JSON do SearXNG. Confira 'formats: - json' em searxng/settings.yml e rode o start_heimdall.sh de novo."
 fi
-if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${HEIMDALL_AGENTE_URL:-http://localhost:8003}/saude)" = "200" ]; then
+if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${STUDIO_AGENTE_URL:-http://localhost:8003}/saude)" = "200" ]; then
     echo " - Agente do Mac no ar (o relatório vai para o app Notas, pasta Monitor de Privacidade)."
 else
     echo " - AVISO: o agente do Mac está fora do ar. Sem ele o relatório não chega ao app Notas (o Bark ainda avisa). Rode o start_heimdall.sh."

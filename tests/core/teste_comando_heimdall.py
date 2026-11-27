@@ -24,7 +24,7 @@ def confere(nome, ok, detalhe=""):
 
 def bash(cmd, projeto=None):
     env_dir = projeto or str(AQUI)
-    r = subprocess.run(["bash", "-c", f'export HEIMDALL_DIR="{env_dir}"; source "{AQUI}/heimdall.zsh"; {cmd}'], capture_output=True, text=True, timeout=60)
+    r = subprocess.run(["bash", "-c", f'export STUDIO_DIR="{env_dir}"; source "{AQUI}/heimdall.zsh"; {cmd}'], capture_output=True, text=True, timeout=60)
     return r.returncode, r.stdout + r.stderr
 
 
@@ -41,8 +41,7 @@ nomes = [s["nome"] for s in secoes]
 codigo = (AQUI / "heimdall.zsh").read_text(encoding="utf-8")
 no_case = {x for g in re.findall(r"^    ([a-z0-9|]+)\)", codigo.split("studio() {")[1].split("# Completar")[0], re.M) for x in g.split("|")}
 confere("há seção de ajuda para os 51 comandos", len(nomes) == 51, len(nomes))
-# library e cloud são nomes antigos que continuam valendo (memory e lab)
-confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help", "library", "memory", "cloud"}, (set(nomes) - no_case, no_case - set(nomes)))
+confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help"}, (set(nomes) - no_case, no_case - set(nomes)))
 
 # --- --help e -h em todos os comandos mostram só aquele comando
 for n in nomes:
@@ -53,20 +52,22 @@ for n in nomes:
 # pasta padrão: STUDIO_DIR, senão ~/studioapps, senão ~/heimdall-ai
 _h = Path(tempfile.mkdtemp())
 def _dir(prep):
-    r = subprocess.run(["bash", "-c", f'export HOME="{_h}"; unset HEIMDALL_DIR STUDIO_DIR; {prep}; source "{AQUI}/heimdall.zsh"; echo "$HEIMDALL_DIR"'], capture_output=True, text=True, timeout=60)
+    r = subprocess.run(["bash", "-c", f'export HOME="{_h}"; unset STUDIO_DIR STUDIO_DIR; {prep}; source "{AQUI}/heimdall.zsh"; echo "$STUDIO_DIR"'], capture_output=True, text=True, timeout=60)
     return r.stdout.strip()
 confere("pasta padrão sem nenhuma pasta nova: ~/heimdall-ai", _dir("true") == f"{_h}/heimdall-ai")
 (_h / "studioapps").mkdir()
 confere("pasta padrão com ~/studioapps: usa a nova", _dir("true") == f"{_h}/studioapps")
 confere("STUDIO_DIR manda sobre as duas", _dir("export STUDIO_DIR=/tmp/outra") == "/tmp/outra")
-rc, out = bash("heimdall help health")
-confere("o apelido heimdall continua funcionando e chama o studio", rc == 0 and out.startswith("studio health - "), out[:100])
+rc, out = bash("studio help health")
+confere("studio help mostra a ajuda do comando", rc == 0 and out.startswith("studio health - "), out[:100])
+rc, out = bash("type heimdall")
+confere("o comando antigo heimdall não existe mais", rc != 0, out[:100])
 rc, out = bash("studio help health")
 confere("help COMANDO mostra a ajuda do comando", out.startswith("studio health - "), out[:100])
 rc, out = bash("studio help")
 confere("help lista todos os comandos", all(f"  {n} " in out for n in nomes), out[:200])
 rc, out = bash("studio -h")
-confere("studio -h lista os comandos", "heimdall COMANDO" in out)
+confere("studio -h lista os comandos", "studio COMANDO" in out)
 rc, out = bash("studio help nada")
 confere("help de comando desconhecido falha com aviso", rc != 0 and "Sem ajuda" in out, out)
 
@@ -104,8 +105,8 @@ with tempfile.TemporaryDirectory() as d:
         ("health --today", "[heimdall_saude] --hoje"), ("test -r nada", "Teste desconhecido"),
     ]
     for cmd, esperado in casos:
-        rc, out = bash(f"heimdall {cmd}", d)
-        confere(f"heimdall {cmd}", esperado in out, out[:200])
+        rc, out = bash(f"studio {cmd}", d)
+        confere(f"studio {cmd}", esperado in out, out[:200])
     rc, out = bash("studio help --doc", d)
     confere("help --doc sem o arquivo avisa", rc != 0 and "comando-heimdall.html" in out, out)
     (Path(d) / "docs").mkdir()

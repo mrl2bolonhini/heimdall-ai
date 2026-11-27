@@ -13,7 +13,7 @@ import threading
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-avisos-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_FINANCE_DIR": str(TMP / "fin"), "HEIMDALL_VAULT_DIR": str(TMP / "cofre"),
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_FINANCE_DIR": str(TMP / "fin"), "STUDIO_VAULT_DIR": str(TMP / "cofre"),
                    "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
 import heimdall_agente as ag  # noqa: E402

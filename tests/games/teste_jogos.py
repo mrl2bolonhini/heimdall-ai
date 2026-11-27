@@ -129,7 +129,7 @@ st, _, _ = pedir("/", ck)
 confere("depois de sair a sessão não vale", st == 303, st)
 
 # jogos extras do .env
-os.environ["HEIMDALL_JOGOS_EXTRAS"] = "Terceiro|http://localhost:8015|Quebra-cabeças;Mal|javascript:alert(1)|x;Outro|https://exemplo.test/jogo|"
+os.environ["STUDIO_JOGOS_EXTRAS"] = "Terceiro|http://localhost:8015|Quebra-cabeças;Mal|javascript:alert(1)|x;Outro|https://exemplo.test/jogo|"
 ex = hj.extras()
 confere("extras aceitam só http e https", [x[0] for x in ex] == ["Terceiro", "Outro"], ex)
 token2, _ = hc.nova_sessao()
@@ -138,7 +138,7 @@ corpo_cab = corpo.split("<main")[0]
 confere("com extras são 6 itens: 4 abas e o menu Mais na quinta posição (Lógica e Outros), nunca mais de 5 posições; sem o endereço perigoso",
         st == 200 and 'href="http://localhost:8015"' in corpo and "javascript:" not in corpo and corpo_cab.count('role="tab"') == 4 and 'id="mais"' in corpo_cab
         and 'href="/categoria/logica"' in corpo_cab.split('id="mais"')[1] and 'href="/extras"' in corpo_cab.split('id="mais"')[1] and "Mais, aba aberta: Extras" in corpo_cab, (st, corpo_cab[-700:]))
-os.environ.pop("HEIMDALL_JOGOS_EXTRAS")
+os.environ.pop("STUDIO_JOGOS_EXTRAS")
 for _antigo, _novo, _jogo in (("cartas", "cassino", "poker"), ("acao", "acao", "vilarejo"), ("audio", "acao", "vilarejo"), ("tabuleiro", "estrategia", "xadrez"),
                               ("palavras", "logica", "forca"), ("numeros", "logica", "sudoku")):
     st_c, _, cab_c = pedir(f"/categoria/{_antigo}", f"{hc.COOKIE}={token2}")
@@ -156,7 +156,7 @@ confere("sem extras, as 5 categorias ocupam as 5 posições", len(hj.nav_jogos()
 st_o, _, cab_o = pedir("/outros", f"{hc.COOKIE}={token2}")
 confere("a rota antiga /outros redireciona (301) para /extras", st_o == 301 and cab_o.get("Location") == "/extras", (st_o, cab_o.get("Location")))
 confere("sem extras não há item Extras nem a rota", pedir("/extras", f"{hc.COOKIE}={token2}")[0] == 404 and 'href="/extras"' not in pedir("/", f"{hc.COOKIE}={token2}")[1])
-os.environ.pop("HEIMDALL_JOGOS_EXTRAS", None)
+os.environ.pop("STUDIO_JOGOS_EXTRAS", None)
 
 for arq in ("tests/games/teste_jogos_logica.js", "tests/games/teste_jogos_ui.js"):
     r = subprocess.run(["node", str(AQUI / arq)], capture_output=True, text=True, timeout=120)

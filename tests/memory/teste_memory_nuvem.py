@@ -18,9 +18,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="nuvem_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_DROPBOX_ID": "dbx-id", "HEIMDALL_NUVEM_DROPBOX_SEGREDO": "dbx-seg",
-                   "HEIMDALL_NUVEM_ONEDRIVE_ID": "od-id", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "STUDIO_HUB_IA": "0",
+                   "STUDIO_NUVEM_CHAVE": "chave-de-teste", "STUDIO_NUVEM_DROPBOX_ID": "dbx-id", "STUDIO_NUVEM_DROPBOX_SEGREDO": "dbx-seg",
+                   "STUDIO_NUVEM_ONEDRIVE_ID": "od-id", "STUDIO_HUB_URL": "https://memory.exemplo.test"})
 
 ESTADO = {"tokens": 0, "revogado": False, "auth_no_download": [], "baixados": [], "refresh_usado": [], "escopo": "", "movidos": [], "pastas_criadas": [], "patch": [], "pastas_lidas": []}
 EXTRA = {   # itens que só aparecem na listagem com subpastas

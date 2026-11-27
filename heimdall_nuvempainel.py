@@ -102,7 +102,7 @@ def estado(env: dict = None, abrir=None, cliente=None, com_nuvem: bool = True) -
     e = _env() if env is None else env
     saida = {"ligado": continuidade.ligado(e), "senha": bool(e.get("HEIMDALL_CONTINUIDADE_SENHA")), "painel": PAINEL_NUVEM, "teto": TETO_MENSAL}
     try:
-        saida["copia"] = continuidade.status({**e, "HEIMDALL_CONTINUIDADE": "1"}, cliente) if saida["senha"] else {"ok": False, "erro": "A senha da continuidade ainda não foi criada (studio continuity --prepare)."}
+        saida["copia"] = continuidade.status({**e, "STUDIO_CONTINUIDADE": "1"}, cliente) if saida["senha"] else {"ok": False, "erro": "A senha da continuidade ainda não foi criada (studio continuity --prepare)."}
     except Exception as ex:  # a nuvem pode estar fora; a página continua
         saida["copia"] = {"ok": False, "erro": f"Não consegui ler a cópia: {type(ex).__name__}."}
     saida["gastos"] = politicas(e, abrir) if com_nuvem else {"ok": False, "erro": "Consulta desligada."}
@@ -113,7 +113,7 @@ def estado(env: dict = None, abrir=None, cliente=None, com_nuvem: bool = True) -
 
 def ligar(valor: bool) -> str:
     """Grava o interruptor da continuidade no .env. Devolve a mensagem de erro, ou '' se deu certo."""
-    return config.salvar("HEIMDALL_CONTINUIDADE", "1" if valor else "0")
+    return config.salvar("STUDIO_CONTINUIDADE", "1" if valor else "0")
 
 
 def enviar_agora() -> dict:

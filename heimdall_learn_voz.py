@@ -3,10 +3,10 @@
 
 Falar: texto vira .m4a, na voz do idioma (português, inglês, espanhol...). Só no Mac que hospeda o Heimdall.
 Escutar: o áudio do aluno (gravado no navegador) é convertido e transcrito no próprio Mac; o áudio é apagado logo depois
-(HEIMDALL_LEARN_GUARDAR_VOZ=1 guarda em db/voz, permissão só do dono). Nada sai do Mac.
+(STUDIO_LEARN_GUARDAR_VOZ=1 guarda em db/voz, permissão só do dono). Nada sai do Mac.
 
 Programas para a transcrição (um destes, mais um conversor de áudio):
-  whisper-cli (brew install whisper-cpp) com o modelo em HEIMDALL_LEARN_WHISPER_MODELO (arquivo ggml-*.bin), ou mlx_whisper, ou whisper (pip).
+  whisper-cli (brew install whisper-cpp) com o modelo em STUDIO_LEARN_WHISPER_MODELO (arquivo ggml-*.bin), ou mlx_whisper, ou whisper (pip).
   ffmpeg (brew install ffmpeg) ou o afconvert do macOS (não lê webm do Chrome; o Safari grava mp4 e funciona).
 Usa só a biblioteca padrão do Python.
 """
@@ -78,7 +78,7 @@ def falar(texto: str, idioma: str, base: Path) -> str:
 # --- escutar ------------------------------------------------------------------------------------------
 def motor() -> tuple:
     """(nome, comando-base) do transcritor instalado, ou ('', [])."""
-    modelo = os.environ.get("HEIMDALL_LEARN_WHISPER_MODELO", "").strip()
+    modelo = os.environ.get("STUDIO_LEARN_WHISPER_MODELO", "").strip()
     if shutil.which("whisper-cli") and modelo and Path(modelo).expanduser().is_file():
         return "whisper-cli", ["whisper-cli", "-m", str(Path(modelo).expanduser()), "-nt", "-np"]
     if shutil.which("mlx_whisper"):
@@ -92,7 +92,7 @@ def disponivel() -> tuple:
     """(True, '') ou (False, motivo em português)."""
     nome, _ = motor()
     if not nome:
-        return False, "Nenhum transcritor instalado no Mac. Instale com: brew install whisper-cpp ffmpeg (e aponte HEIMDALL_LEARN_WHISPER_MODELO para um modelo ggml)."
+        return False, "Nenhum transcritor instalado no Mac. Instale com: brew install whisper-cpp ffmpeg (e aponte STUDIO_LEARN_WHISPER_MODELO para um modelo ggml)."
     if not (shutil.which("ffmpeg") or shutil.which("afconvert")):
         return False, "Falta um conversor de áudio (brew install ffmpeg)."
     return True, ""
@@ -138,7 +138,7 @@ def transcrever(audio: bytes, idioma: str = "", executor=None, conversor=None) -
             elif nome == "mlx_whisper":
                 cmd = base + [str(wav)] + (["--language", lang] if lang else []) + ["--output-format", "txt", "--output-dir", tmp]
             else:
-                cmd = base + [str(wav)] + (["--language", lang] if lang else []) + ["--model", os.environ.get("HEIMDALL_LEARN_WHISPER_TAMANHO", "small"), "--output_format", "txt", "--output_dir", tmp]
+                cmd = base + [str(wav)] + (["--language", lang] if lang else []) + ["--model", os.environ.get("STUDIO_LEARN_WHISPER_TAMANHO", "small"), "--output_format", "txt", "--output_dir", tmp]
             saida = (executor or _executar)(cmd)
             if nome != "whisper-cli":
                 txt = Path(tmp) / "entrada.txt"
@@ -146,7 +146,7 @@ def transcrever(audio: bytes, idioma: str = "", executor=None, conversor=None) -
                     saida = txt.read_text(encoding="utf-8", errors="replace")
         except (RuntimeError, OSError, subprocess.SubprocessError) as ex:
             raise dados.ErroLearn(str(ex)[:160])
-        if os.environ.get("HEIMDALL_LEARN_GUARDAR_VOZ", "0") == "1":
+        if os.environ.get("STUDIO_LEARN_GUARDAR_VOZ", "0") == "1":
             pasta = dados.pasta_dados() / "voz"
             pasta.mkdir(parents=True, exist_ok=True, mode=0o700)
             destino = pasta / f"voz-{int(__import__('time').time())}.audio"

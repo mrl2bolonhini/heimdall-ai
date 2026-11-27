@@ -53,10 +53,10 @@ confere("sem Access e sem sessão: nada", c.menu("", cabecalhos=Cab()) == "")
 confere("token inválido: nada", c.menu("", cabecalhos=h("falso")) == "")
 l = c.menu("Studio Lab", logado_local=True, cabecalhos=Cab(), sair_html="<form>SAIR</form>")
 import os
-os.environ["HEIMDALL_DONO_NOME"] = "Murillo"
+os.environ["STUDIO_DONO_NOME"] = "Murillo"
 l_nome = c.menu("Studio Lab", logado_local=True, cabecalhos=Cab())
-confere("porta local com HEIMDALL_DONO_NOME: mostra o nome, não \"Dono\"", "Conta: Murillo" in l_nome and "Conta: Dono" not in l_nome, l_nome)
-del os.environ["HEIMDALL_DONO_NOME"]
+confere("porta local com STUDIO_DONO_NOME: mostra o nome, não \"Dono\"", "Conta: Murillo" in l_nome and "Conta: Dono" not in l_nome, l_nome)
+del os.environ["STUDIO_DONO_NOME"]
 confere("porta local com sessão: Dono, todos os serviços e o botão Sair do serviço", "Conta: Dono" in l and "senha e código" in l and ">Studio Notes<" in l and "<form>SAIR</form>" in l and "cdn-cgi/access/logout" not in l, l)
 confere("pelo Access há o link para sair do Access", "cdn-cgi/access/logout" in m)
 chamadas = []

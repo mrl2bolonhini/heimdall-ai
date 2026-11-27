@@ -35,7 +35,7 @@ def confere(nome, ok, extra=""):
 tmp = _Path(tempfile.mkdtemp())
 aj.PASTA = tmp / "suporte"
 aj._env_arquivo = lambda chave: ""
-for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "HEIMDALL_SUPORTE_PARA", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID", "HEIMDALL_POLITICA_APROVADA"):
+for k in ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "STUDIO_SUPORTE_PARA", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID", "STUDIO_POLITICA_APROVADA"):
     aj.os.environ.pop(k, None)
 
 # ---- conteúdo ----
@@ -47,16 +47,16 @@ confere("ajuda: um só h1, FAQ do serviço antes do geral e formulário no fim",
 confere("ajuda: campos com label e botão de envio", all(f'for="{i}"' in corpo for i in ("s-servico", "s-assunto", "s-msg")) and 'type="submit"' in corpo and 'name="csrf" value="tok"' in corpo)
 confere("ajuda: serviço desconhecido volta ao geral, sem erro", "Perguntas frequentes: Geral" in aj.pagina_ajuda("tok", "<script>")[1] and "<script>" not in aj.pagina_ajuda("tok", "<script>")[1])
 confere("termos de uso e de privacidade: um só h1, índice, aviso de minuta e, sem dados no .env, o marcador do responsável", all(x[1].count("<h1>") == 1 and "Minuta em revisão" in x[1] and 'aria-label="Conteúdo desta página"' in x[1] and "Em vigor desde 24 de novembro de 2026" in x[1] for x in (aj.pagina_termos_de_uso(), aj.pagina_privacidade())) and "[NOME E DOCUMENTO DO RESPONSÁVEL" in aj.pagina_termos_de_uso()[1])
-aj.os.environ.update({"HEIMDALL_RESPONSAVEL": "Fulano de Tal, CPF/MF nº 000.000.000-00", "HEIMDALL_FORO": "Campinas"})
+aj.os.environ.update({"STUDIO_RESPONSAVEL": "Fulano de Tal, CPF/MF nº 000.000.000-00", "STUDIO_FORO": "Campinas"})
 confere("com os dados no .env: o responsável e o foro aparecem nos dois documentos, e o encarregado padrão é o suporte", "Fulano de Tal, CPF/MF nº 000.000.000-00" in aj.pagina_termos_de_uso()[1] and "foro de Campinas" in aj.pagina_termos_de_uso()[1] and "Fulano de Tal" in aj.pagina_privacidade()[1] and "suporte@heimdall-ai.tech" in aj.pagina_privacidade()[1])
 confere("nenhum documento deixa marcador entre colchetes quando os dados estão definidos", "[" not in aj.texto_documento("termos") and "[" not in aj.texto_documento("privacidade"))
 confere("texto puro: título, vigência, índice e seções numeradas", aj.texto_documento("termos").startswith("TERMOS DE USO DO HEIMDALL") and "Conteúdo" in aj.texto_documento("termos") and "13. Lei aplicável e foro" in aj.texto_documento("termos") and "POLÍTICA DE PRIVACIDADE" in aj.texto_documento("privacidade"))
-for k in ("HEIMDALL_RESPONSAVEL", "HEIMDALL_FORO"):
+for k in ("STUDIO_RESPONSAVEL", "STUDIO_FORO"):
     aj.os.environ.pop(k, None)
 confere("privacidade: cita os operadores reais (Cloudflare, Microsoft, Pluggy, Apple, Bark, Notion) e os direitos da LGPD", all(x in aj.pagina_privacidade()[1] for x in ("Cloudflare", "Microsoft", "Pluggy", "Apple", "Bark", "Notion", "art. 18")))
-aj.os.environ["HEIMDALL_POLITICA_APROVADA"] = "1"
-confere("HEIMDALL_POLITICA_APROVADA=1 tira o aviso de minuta", "Minuta em revisão" not in aj.pagina_privacidade()[1])
-aj.os.environ.pop("HEIMDALL_POLITICA_APROVADA")
+aj.os.environ["STUDIO_POLITICA_APROVADA"] = "1"
+confere("STUDIO_POLITICA_APROVADA=1 tira o aviso de minuta", "Minuta em revisão" not in aj.pagina_privacidade()[1])
+aj.os.environ.pop("STUDIO_POLITICA_APROVADA")
 
 # ---- validação e registro ----
 P = {"email": "ana@x.com", "nome": "Ana"}
@@ -84,7 +84,7 @@ confere("o limite é por pessoa, e passada 1 hora a pessoa volta a enviar", outr
 
 # ---- envio por e-mail (simulado) ----
 confere("sem configuração, o envio por e-mail fica desligado e a mensagem continua gravada", not aj.envio_configurado() and aj.enviar_email(r) is False)
-aj.os.environ.update({"HEIMDALL_SUPORTE_EMAIL": "1", "HEIMDALL_SUPORTE_DE": "no-reply@heimdall-ai.tech", "CLOUDFLARE_API_TOKEN": "tk", "CLOUDFLARE_ACCOUNT_ID": "acc"})
+aj.os.environ.update({"STUDIO_SUPORTE_EMAIL": "1", "STUDIO_SUPORTE_DE": "no-reply@heimdall-ai.tech", "CLOUDFLARE_API_TOKEN": "tk", "CLOUDFLARE_ACCOUNT_ID": "acc"})
 chamadas = []
 
 
@@ -116,7 +116,7 @@ aj._post = quebra
 r3 = aj.registrar({"email": "dora@x.com"}, "duvida", "geral", "Teste com falha de envio.", agora)
 confere("falha na Cloudflare: não levanta erro e o estado vira gravada_sem_envio", aj.enviar_email(r3) is False and [x for x in aj._ler_registros() if x["protocolo"] == r3["protocolo"]][0]["estado"] == "gravada_sem_envio")
 confere("confirmação: com e sem envio, sempre traz o protocolo; sem envio indica o e-mail de suporte", r3["protocolo"] in aj.mensagem_de_confirmacao(r3, False) and "suporte@heimdall-ai.tech" in aj.mensagem_de_confirmacao(r3, False) and "enviada ao suporte" in aj.mensagem_de_confirmacao(r3, True))
-for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"):
+for k in ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"):
     aj.os.environ.pop(k, None)
 
 # ---- rotas do Account ----
@@ -175,7 +175,7 @@ s, b = pedir("/suporte", jwt="tokana", origem=origem, metodo="POST", corpo=urlli
 confere("mensagem com HTML é gravada como texto (sem executar) e a confirmação não a repete", s == 200 and "<script>alert" not in b)
 
 # ---- resposta de suporte@ (CLI e Account) ----
-for k, v in (("HEIMDALL_SUPORTE_EMAIL", "1"), ("HEIMDALL_SUPORTE_DE", "suporte@heimdall-ai.tech"), ("CLOUDFLARE_API_TOKEN", "tk"), ("CLOUDFLARE_ACCOUNT_ID", "acc")):
+for k, v in (("STUDIO_SUPORTE_EMAIL", "1"), ("STUDIO_SUPORTE_DE", "suporte@heimdall-ai.tech"), ("CLOUDFLARE_API_TOKEN", "tk"), ("CLOUDFLARE_ACCOUNT_ID", "acc")):
     aj.os.environ[k] = v
 chamadas.clear()
 aj._post = falso
@@ -225,7 +225,7 @@ s, b = pedir("/suporte/responder", jwt="tokdono", origem=origem_d, metodo="POST"
 confere("POST /suporte/responder com csrf errado: 403", s == 403)
 s, b = pedir("/suporte/responder", jwt="tokdono", origem="https://outro.exemplo", metodo="POST", corpo=corpo_r)
 confere("POST /suporte/responder com origem de outro site: 403", s == 403)
-for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"):
+for k in ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"):
     aj.os.environ.pop(k, None)
 
 # ---- rodapé de todos os serviços ----

@@ -34,7 +34,7 @@ limpar_env() {
 import re, sys
 p = sys.argv[1]
 linhas = open(p, encoding="utf-8").read().splitlines()
-novas = [l for l in linhas if not re.match(r"^HEIMDALL_EMAIL_(USUARIO|SENHA_APP)=", l)]
+novas = [l for l in linhas if not re.match(r"^STUDIO_EMAIL_(USUARIO|SENHA_APP)=", l)]
 open(p, "w", encoding="utf-8").write("\n".join(novas) + ("\n" if novas else ""))
 PYEOF
     chmod 600 .env
@@ -63,7 +63,7 @@ fi
 [ -f .env ] || fail "não achei o .env nesta pasta. Rode antes o start_heimdall.sh."
 
 # .env guarda o resto (Bark, token, chave do LiteLLM); o vigia lê tudo de lá.
-USUARIO_ATUAL="$(grep -E '^HEIMDALL_EMAIL_USUARIO=' .env | tail -1 | cut -d= -f2- | tr -d "'\"")"
+USUARIO_ATUAL="$(grep -E '^STUDIO_EMAIL_USUARIO=' .env | tail -1 | cut -d= -f2- | tr -d "'\"")"
 if [ -n "$USUARIO_ATUAL" ]; then PROMPT_USU="Seu endereço do Gmail [Enter mantém: $USUARIO_ATUAL] "; else PROMPT_USU="Seu endereço do Gmail: "; fi
 read -r -p "$PROMPT_USU" USUARIO
 USUARIO="${USUARIO:-$USUARIO_ATUAL}"
@@ -77,7 +77,7 @@ SENHA="$(printf '%s' "$SENHA" | tr -d ' \t\r\n')"
 
 limpar_env
 { [ -s .env ] && [ "$(tail -c1 .env | wc -l | tr -d ' ')" = "0" ] && echo; \
-  echo "HEIMDALL_EMAIL_USUARIO='$USUARIO'"; echo "HEIMDALL_EMAIL_SENHA_APP='$SENHA'"; } >> .env
+  echo "STUDIO_EMAIL_USUARIO='$USUARIO'"; echo "STUDIO_EMAIL_SENHA_APP='$SENHA'"; } >> .env
 chmod 600 .env
 unset SENHA
 

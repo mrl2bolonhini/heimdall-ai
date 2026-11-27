@@ -54,7 +54,7 @@ def publicar(dado: dict) -> dict:
     fonte = re.sub(r"[^a-z0-9_-]", "", str(dado.get("fonte", "")).lower())[:20]
     resumo = _texto(dado.get("resumo"), 2000)
     r = {"ok": True, "id": origem, "novo": False, "mac": False, "bark": False, "aba": False}
-    if os.environ.get("STUDIO_ALERTAS", os.environ.get("HEIMDALL_ALERTAS", "1")) == "0":
+    if os.environ.get("STUDIO_ALERTAS", os.environ.get("STUDIO_ALERTAS", "1")) == "0":
         return {**r, "desativado": True}
     if not _registrar(origem, {"fonte": fonte, "nivel": nivel, "titulo": titulo, "resumo": resumo}):
         return r

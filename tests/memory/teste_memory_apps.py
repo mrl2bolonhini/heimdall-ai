@@ -18,8 +18,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="apps_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_ONEDRIVE_ID": "app-ms-id", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "STUDIO_HUB_IA": "0",
+                   "STUDIO_NUVEM_CHAVE": "chave-de-teste", "STUDIO_NUVEM_ONEDRIVE_ID": "app-ms-id", "STUDIO_HUB_URL": "https://memory.exemplo.test"})
 
 ESTADO = {"revogado": False, "recusar": set(), "tokens": 0, "chamadas": []}
 NOTAS = {   # id -> (título, html, marca)

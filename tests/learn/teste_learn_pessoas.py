@@ -16,10 +16,10 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 TMP = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
-os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
-os.environ["HEIMDALL_AVISOS_MAC"] = "0"
-os.environ.pop("HEIMDALL_PESSOAS", None)
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
+os.environ["STUDIO_AVISOS_MAC"] = "0"
+os.environ.pop("STUDIO_PESSOAS", None)
 (TMP / "knowledge").mkdir()
 
 import heimdall_lab as nuvem  # noqa: E402
@@ -134,10 +134,10 @@ st, _, r = req(None, "GET", "/", token=tk_antigo)
 confere("sessão de convidado sem pessoa é mandada entrar de novo", st == 303 and r.getheader("Location") == "/entrar")
 
 # interruptor
-os.environ["HEIMDALL_PESSOAS"] = "0"
+os.environ["STUDIO_PESSOAS"] = "0"
 _, p, _ = req("ana", "GET", "/temas")
-confere("HEIMDALL_PESSOAS=0 devolve o comportamento anterior (todos veem os dados do dono)", "estudo-do-dono" in p and "segredos" not in p)
-os.environ.pop("HEIMDALL_PESSOAS")
+confere("STUDIO_PESSOAS=0 devolve o comportamento anterior (todos veem os dados do dono)", "estudo-do-dono" in p and "segredos" not in p)
+os.environ.pop("STUDIO_PESSOAS")
 
 # nenhum módulo do Learn escolhe caminho de dados sozinho
 for arq in sorted(RAIZ.glob("heimdall_learn*.py")):
@@ -145,7 +145,7 @@ for arq in sorted(RAIZ.glob("heimdall_learn*.py")):
     txt = re.sub(r"#[^\n]*", "", txt)
     if arq.name == "heimdall_learn_dados.py":
         continue
-    confere(f"{arq.name} não monta caminho de dados por conta própria", "learn.db" not in txt and "PROJECT_DIR / \"knowledge\"" not in txt and "HEIMDALL_KNOWLEDGE_DIR\", str" not in txt and "heimdall_pastas.db" not in txt)
+    confere(f"{arq.name} não monta caminho de dados por conta própria", "learn.db" not in txt and "PROJECT_DIR / \"knowledge\"" not in txt and "STUDIO_KNOWLEDGE_DIR\", str" not in txt and "heimdall_pastas.db" not in txt)
 
 print("\n" + ("Tudo certo." if not falhas else f"{falhas} falha(s)."))
 sys.exit(1 if falhas else 0)

@@ -59,7 +59,7 @@ Comandos, na pasta do projeto
 9. Só um novo código de 6 dígitos (perdeu a chave, por exemplo): python3 heimdall_acesso.py --codigo (só a senha: --senha)
 10. Teste do painel sem LocalStack: python3 tests/lab/teste_lab.py
 11. Gravar uma chave nova do LocalStack sem colar no arquivo (copie a chave do site app.localstack.cloud antes): T=$(pbpaste | tr -d '[:space:]'); grep -v '^LOCALSTACK_AUTH_TOKEN=' .env > .env.novo && printf "LOCALSTACK_AUTH_TOKEN='%s'\n" "$T" >> .env.novo && mv .env.novo .env && chmod 600 .env
-12. Desligar a execução de Lambda: HEIMDALL_LOCALSTACK_DOCKER=0 no .env e subir o sistema de novo.
+12. Desligar a execução de Lambda: STUDIO_LOCALSTACK_DOCKER=0 no .env e subir o sistema de novo.
 
 Segurança
 1. O painel público exige senha e código de 6 dígitos, bloqueia depois de 5 tentativas erradas e nunca expõe a porta 4566.

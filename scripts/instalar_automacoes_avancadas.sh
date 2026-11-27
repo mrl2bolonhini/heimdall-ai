@@ -4,7 +4,7 @@
 #   7. Digest hiperpersonalizado (8h e 18h -> feeds -> triagem -> "por que importa para mim" -> Notas; sem aviso no Bark, quem avisa é o Studio News)
 #   8. Second Brain         (app Notas -> conceitos, tags, conexões e lacunas -> nota espelho + base vetorial)
 #
-# Uso, na pasta do projeto, com o n8n no ar (start_heimdall.sh com --n8n ou HEIMDALL_N8N=1):
+# Uso, na pasta do projeto, com o n8n no ar (start_heimdall.sh com --n8n ou STUDIO_N8N=1):
 #     bash scripts/instalar_automacoes_avancadas.sh
 #
 # O que ele faz:
@@ -16,12 +16,12 @@
 # Rodar de novo atualiza os fluxos (mesmos identificadores), por exemplo depois de autorizar outro repositório.
 #
 # Opções no .env (todas opcionais):
-#   HEIMDALL_BARK_KEY          chave do Bark (se faltar, o script pergunta)
-#   HEIMDALL_GITHUB_TOKEN      token do GitHub com permissão de Contents e Pull requests (Read and write)
-#   HEIMDALL_GITOPS_REPOS      repositórios autorizados, "dono/repo,dono/outro"
-#   HEIMDALL_FLOW_MODEL        modelo do LiteLLM para digest e second brain (padrão: qwen3-vl-instruct)
-#   HEIMDALL_CODE_MODEL        modelo do LiteLLM para o GitOps (padrão: deepseek-coder-v2:16b)
-#   HEIMDALL_EMBED_MODEL       modelo de embeddings do Ollama (padrão: nomic-embed-text)
+#   STUDIO_BARK_KEY          chave do Bark (se faltar, o script pergunta)
+#   STUDIO_GITHUB_TOKEN      token do GitHub com permissão de Contents e Pull requests (Read and write)
+#   STUDIO_GITOPS_REPOS      repositórios autorizados, "dono/repo,dono/outro"
+#   STUDIO_FLOW_MODEL        modelo do LiteLLM para digest e second brain (padrão: qwen3-vl-instruct)
+#   STUDIO_CODE_MODEL        modelo do LiteLLM para o GitOps (padrão: deepseek-coder-v2:16b)
+#   STUDIO_EMBED_MODEL       modelo de embeddings do Ollama (padrão: nomic-embed-text)
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR" || exit 1
@@ -53,7 +53,7 @@ PY="$PROJECT_DIR/venv/bin/python"
 [ -n "$PY" ] || fail "não encontrei o Python."
 
 # --- Bark ---
-BARK_KEY="${HEIMDALL_BARK_KEY:-}"
+BARK_KEY="${STUDIO_BARK_KEY:-}"
 if [ -z "$BARK_KEY" ]; then
     echo "Cole a chave do Bark (ou a URL completa do Bark). Nada aparece na tela enquanto você cola."
     read -r -s -p "Chave do Bark: " BARK_KEY
@@ -66,12 +66,12 @@ esac
 [[ "$BARK_KEY" =~ ^[A-Za-z0-9_-]{6,}$ ]] || fail "a chave do Bark deve ter só letras, números, hífen ou sublinhado."
 if [ "${ASK_SAVE_BARK:-0}" = "1" ]; then
     read -r -p "Guardar a chave do Bark no .env? [s/N] " ANS
-    case "$ANS" in s|S|sim|SIM) env_append "HEIMDALL_BARK_KEY='$BARK_KEY'"; echo "Chave do Bark gravada no .env." ;; esac
+    case "$ANS" in s|S|sim|SIM) env_append "STUDIO_BARK_KEY='$BARK_KEY'"; echo "Chave do Bark gravada no .env." ;; esac
 fi
 
 # --- GitHub (só para o GitOps; deixe em branco para instalar apenas o digest e o second brain) ---
 SKIP_GIT=0
-GH_TOKEN="${HEIMDALL_GITHUB_TOKEN:-}"
+GH_TOKEN="${STUDIO_GITHUB_TOKEN:-}"
 if [ -z "$GH_TOKEN" ]; then
     echo
     echo "GitOps: cole o token do GitHub (fine-grained, com Contents e Pull requests em 'Read and write'"
@@ -87,46 +87,46 @@ else
     [[ "$GH_TOKEN" =~ ^[A-Za-z0-9_]{20,}$ ]] || fail "o token do GitHub tem caracteres inesperados (esperado: letras, números e sublinhado)."
     if [ "${ASK_SAVE_GH:-0}" = "1" ]; then
         read -r -p "Guardar o token do GitHub no .env? [s/N] " ANS
-        case "$ANS" in s|S|sim|SIM) env_append "HEIMDALL_GITHUB_TOKEN='$GH_TOKEN'"; echo "Token do GitHub gravado no .env." ;; esac
+        case "$ANS" in s|S|sim|SIM) env_append "STUDIO_GITHUB_TOKEN='$GH_TOKEN'"; echo "Token do GitHub gravado no .env." ;; esac
     fi
-    REPOS="${HEIMDALL_GITOPS_REPOS:-}"
+    REPOS="${STUDIO_GITOPS_REPOS:-}"
     if [ -z "$REPOS" ]; then
         read -r -p "Repositórios autorizados (dono/repo, separados por vírgula): " REPOS
-        [ -n "$REPOS" ] && env_append "HEIMDALL_GITOPS_REPOS='$REPOS'"
+        [ -n "$REPOS" ] && env_append "STUDIO_GITOPS_REPOS='$REPOS'"
     fi
     REPOS="$(printf '%s' "$REPOS" | tr -d ' ')"
     [[ "$REPOS" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(,[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)*$ ]] \
         || fail "a lista de repositórios deve ser no formato dono/repo,dono/outro (sem espaços ou aspas)."
-    if [ -z "${HEIMDALL_GITOPS_TOKEN:-}" ]; then
-        HEIMDALL_GITOPS_TOKEN="$(openssl rand -hex 24)"
-        env_append "HEIMDALL_GITOPS_TOKEN='$HEIMDALL_GITOPS_TOKEN'"
+    if [ -z "${STUDIO_GITOPS_TOKEN:-}" ]; then
+        STUDIO_GITOPS_TOKEN="$(openssl rand -hex 24)"
+        env_append "STUDIO_GITOPS_TOKEN='$STUDIO_GITOPS_TOKEN'"
         echo "Token do webhook do GitOps gerado e gravado no .env."
     fi
 fi
 
 # --- Monitor de saúde: token do endereço que recebe os dados do iPhone ---
-if [ -z "${HEIMDALL_SAUDE_TOKEN:-}" ]; then
-    HEIMDALL_SAUDE_TOKEN="$(openssl rand -hex 24)"
-    env_append "HEIMDALL_SAUDE_TOKEN='$HEIMDALL_SAUDE_TOKEN'"
+if [ -z "${STUDIO_SAUDE_TOKEN:-}" ]; then
+    STUDIO_SAUDE_TOKEN="$(openssl rand -hex 24)"
+    env_append "STUDIO_SAUDE_TOKEN='$STUDIO_SAUDE_TOKEN'"
     echo "Token do monitor de saúde gerado e gravado no .env."
 fi
-SAUDE_COND="${HEIMDALL_SAUDE_CONDICOES:-}"
+SAUDE_COND="${STUDIO_SAUDE_CONDICOES:-}"
 
 # --- Token do agente do Mac ---
-if [ -z "${HEIMDALL_AGENTE_TOKEN:-}" ]; then
-    HEIMDALL_AGENTE_TOKEN="$(openssl rand -hex 24)"
-    env_append "HEIMDALL_AGENTE_TOKEN='$HEIMDALL_AGENTE_TOKEN'"
+if [ -z "${STUDIO_AGENTE_TOKEN:-}" ]; then
+    STUDIO_AGENTE_TOKEN="$(openssl rand -hex 24)"
+    env_append "STUDIO_AGENTE_TOKEN='$STUDIO_AGENTE_TOKEN'"
     echo "Token do agente do Mac gerado e gravado no .env."
     NOVO_AGENTE=1
 fi
 
 # --- Modelos e dimensão dos embeddings ---
-MODELO="${HEIMDALL_FLOW_MODEL:-qwen3-vl-instruct}"
-MODELO_COD="${HEIMDALL_CODE_MODEL:-deepseek-coder-v2:16b}"
-EMBED="${HEIMDALL_EMBED_MODEL:-nomic-embed-text}"
-[[ "$MODELO" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "HEIMDALL_FLOW_MODEL tem caracteres inválidos."
-[[ "$MODELO_COD" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "HEIMDALL_CODE_MODEL tem caracteres inválidos."
-[[ "$EMBED" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "HEIMDALL_EMBED_MODEL tem caracteres inválidos."
+MODELO="${STUDIO_FLOW_MODEL:-qwen3-vl-instruct}"
+MODELO_COD="${STUDIO_CODE_MODEL:-deepseek-coder-v2:16b}"
+EMBED="${STUDIO_EMBED_MODEL:-nomic-embed-text}"
+[[ "$MODELO" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "STUDIO_FLOW_MODEL tem caracteres inválidos."
+[[ "$MODELO_COD" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "STUDIO_CODE_MODEL tem caracteres inválidos."
+[[ "$EMBED" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "STUDIO_EMBED_MODEL tem caracteres inválidos."
 DIM="$(curl -s -m 90 "http://localhost:11434/api/embed" -d "{\"model\":\"$EMBED\",\"input\":\"teste\"}" 2>/dev/null \
     | "$PY" -c 'import json,sys; print(len(json.load(sys.stdin)["embeddings"][0]))' 2>/dev/null)"
 if ! [[ "$DIM" =~ ^[0-9]+$ ]]; then
@@ -150,8 +150,8 @@ for ID in hdSaude000000001 hdSecondBrain001 hdDigest00000001 hdResumo00000001 hd
 done
 
 SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_MODELO="$MODELO" SUBS_MODELO_COD="$MODELO_COD" \
-SUBS_GH="${GH_TOKEN:-}" SUBS_GITOPS="${HEIMDALL_GITOPS_TOKEN:-}" SUBS_REPOS="${REPOS:-}" SUBS_AGENTE="$HEIMDALL_AGENTE_TOKEN" \
-SUBS_EMBED="$EMBED" SUBS_DIM="$DIM" SUBS_SKIP_GIT="$SKIP_GIT" SUBS_SAUDE="$HEIMDALL_SAUDE_TOKEN" SUBS_SAUDE_COND="$SAUDE_COND" \
+SUBS_GH="${GH_TOKEN:-}" SUBS_GITOPS="${STUDIO_GITOPS_TOKEN:-}" SUBS_REPOS="${REPOS:-}" SUBS_AGENTE="$STUDIO_AGENTE_TOKEN" \
+SUBS_EMBED="$EMBED" SUBS_DIM="$DIM" SUBS_SKIP_GIT="$SKIP_GIT" SUBS_SAUDE="$STUDIO_SAUDE_TOKEN" SUBS_SAUDE_COND="$SAUDE_COND" \
 "$PY" - "$PROJECT_DIR/flows/advanced" "$TMP" <<'PYEOF' || fail "não consegui preparar os fluxos."
 import json, os, pathlib, re, sys
 
@@ -230,8 +230,8 @@ ATIVADOS=0
 DESLIGADO_PELO_LEARN=0
 for id in $IDS; do
     # Com o Learn ligado, os estudos por sorteio (6h, 13h e 20h) são feitos por ele; o fluxo "estudo dos livros" fica importado, mas desligado.
-    # HEIMDALL_LEARN=0 no .env devolve o fluxo ao n8n na próxima instalação.
-    if [ "$id" = "hdEstudoDiario01" ] && [ "${HEIMDALL_LEARN:-0}" = "1" ]; then
+    # STUDIO_LEARN=0 no .env devolve o fluxo ao n8n na próxima instalação.
+    if [ "$id" = "hdEstudoDiario01" ] && [ "${STUDIO_LEARN:-0}" = "1" ]; then
         docker exec n8n n8n update:workflow --id="$id" --active=false > /dev/null 2>&1
         DESLIGADO_PELO_LEARN=1
         continue
@@ -252,12 +252,12 @@ fi
 # --- Conferências ---
 echo
 echo "Conferindo o que os fluxos precisam:"
-if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${HEIMDALL_AGENTE_URL:-http://localhost:8003}/saude)" = "200" ]; then
+if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${STUDIO_AGENTE_URL:-http://localhost:8003}/saude)" = "200" ]; then
     echo " - Agente do Mac: no ar na porta 8003."
     if docker exec n8n wget -q -T 5 -O - http://host.docker.internal:8003/saude > /dev/null 2>&1; then
         echo " - O n8n alcança o agente do Mac."
     else
-        echo " - AVISO: o n8n não alcança o agente. Ponha HEIMDALL_AGENTE_HOST=0.0.0.0 no .env e rode o start_heimdall.sh de novo."
+        echo " - AVISO: o n8n não alcança o agente. Ponha STUDIO_AGENTE_HOST=0.0.0.0 no .env e rode o start_heimdall.sh de novo."
     fi
 else
     echo " - Agente do Mac: FORA DO AR. Rode o start_heimdall.sh de novo (ele sobe o agente sozinho agora que o token existe)."
@@ -290,7 +290,7 @@ fi
 {
     echo
     echo "Monitor de saúde: o endereço que recebe os dados do iPhone é http://<IP-do-Tailscale-do-Mac>:5678/webhook/heimdall-saude"
-    echo "O cabeçalho de autenticação é X-Heimdall-Saude, com o token HEIMDALL_SAUDE_TOKEN do .env (o roteiro do app está no LEIAME)."
+    echo "O cabeçalho de autenticação é X-Heimdall-Saude, com o token STUDIO_SAUDE_TOKEN do .env (o roteiro do app está no LEIAME)."
 }
 echo
 echo "Pronto."

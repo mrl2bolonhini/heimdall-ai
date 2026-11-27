@@ -1,22 +1,21 @@
 # Comando unificado do ecossistema Heimdall-ai (zsh). Carregado pelo ~/.zshrc com:
 #     source ~/heimdall-ai/heimdall.zsh
-# Pasta do projeto: STUDIO_DIR ou HEIMDALL_DIR (padrão ~/studioapps; se não existir, ~/heimdall-ai). Digite "studio" sem nada para ver todos os comandos. O nome antigo, heimdall, continua funcionando como apelido.
+# Pasta do projeto: STUDIO_DIR (padrão ~/studioapps; se não existir, ~/heimdall-ai, a pasta antiga, até a mudança de pasta). Digite "studio" sem nada para ver todos os comandos.
 
-if [ -z "${HEIMDALL_DIR:-}" ]; then   # pasta do projeto: STUDIO_DIR, senão ~/studioapps (nome novo), senão ~/heimdall-ai (nome antigo)
-  if [ -n "${STUDIO_DIR:-}" ]; then HEIMDALL_DIR="$STUDIO_DIR"
-  elif [ -d "$HOME/studioapps" ]; then HEIMDALL_DIR="$HOME/studioapps"
-  else HEIMDALL_DIR="$HOME/heimdall-ai"; fi
+if [ -z "${STUDIO_DIR:-}" ]; then   # pasta do projeto: STUDIO_DIR, senão ~/studioapps, senão ~/heimdall-ai (pasta antiga)
+  if [ -d "$HOME/studioapps" ]; then STUDIO_DIR="$HOME/studioapps"
+  else STUDIO_DIR="$HOME/heimdall-ai"; fi
 fi
 
 _heimdall_py() {  # script Python do projeto, com o Python do venv, na pasta do projeto, sem mudar a pasta do seu terminal
-  local py="$HEIMDALL_DIR/venv/bin/python"
+  local py="$STUDIO_DIR/venv/bin/python"
   [ -x "$py" ] || py="$(command -v python3)"
-  ( cd "$HEIMDALL_DIR" && "$py" "$@" )
+  ( cd "$STUDIO_DIR" && "$py" "$@" )
 }
 
 _heimdall_sh() {  # script de shell do projeto
   local s="$1"; shift
-  ( cd "$HEIMDALL_DIR" && bash "./$s" "$@" )
+  ( cd "$STUDIO_DIR" && bash "./$s" "$@" )
 }
 
 _heimdall_tr() {  # traduz as opções em inglês para as do programa. $1 = linhas "de=para" ("-" descarta); o resto são os argumentos. Resultado em _HA
@@ -45,11 +44,11 @@ _heimdall_open() {  # $1 = nome, $2 = endereço
 _heimdall_web() {  # $1 nome, $2 chave (LAB, NOTAS, NEWS, SAUDE_PAINEL, JOGOS, FINANCE), $3 porta padrão, $4 subdomínio padrão, $5 caminho opcional
   # Abre o endereço público (passa pelo Cloudflare Access, com o Authenticator) ou, com --local, o endereço deste Mac (senha e código de 6 dígitos).
   local nome="$1" chave="$2" padrao="$3" sub="$4" caminho="$5" porta host lista h
-  porta="$(_heimdall_port "HEIMDALL_${chave}_PORT" "$padrao")"
+  porta="$(_heimdall_port "STUDIO_${chave}_PORT" "$padrao")"
   if [ "${_HLOCAL:-0}" = 1 ]; then
     _heimdall_open "$nome (local)" "http://localhost:$porta$caminho"; return
   fi
-  [ -f "$HEIMDALL_DIR/.env" ] && lista="$(grep -E "^HEIMDALL_${chave}_HOSTS=" "$HEIMDALL_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
+  [ -f "$STUDIO_DIR/.env" ] && lista="$(grep -E "^STUDIO_${chave}_HOSTS=" "$STUDIO_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
   for h in ${(s:,:)lista}; do
     h="${h// /}"
     case "$h" in ""|localhost|127.*|*.ts.net|[0-9]*) ;; *) host="$h"; break ;; esac
@@ -84,13 +83,13 @@ _heimdall_emulador() {  # studio lab --start|--stop: liga ou desliga o emulador 
 
 _heimdall_envval() {  # valor do .env ($1), ou o padrão ($2)
   local v
-  [ -f "$HEIMDALL_DIR/.env" ] && v="$(grep -E "^$1=" "$HEIMDALL_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
+  [ -f "$STUDIO_DIR/.env" ] && v="$(grep -E "^$1=" "$STUDIO_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
   echo "${v:-$2}"
 }
 
 _heimdall_port() {  # porta de cada serviço (a do .env, se houver)
   local v
-  [ -f "$HEIMDALL_DIR/.env" ] && v="$(grep -E "^$1=" "$HEIMDALL_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
+  [ -f "$STUDIO_DIR/.env" ] && v="$(grep -E "^$1=" "$STUDIO_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
   echo "${v:-$2}"
 }
 
@@ -106,7 +105,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     up|restart) printf '%s\n' "-w=--webui" "-t=--terminal" "-n=--n8n" "-a=--agent" "-i=--ingest" "-d=--docling" "-u=--update" ;;
     logs) printf '%s\n' "-l=--list" "-c=--clean" "-s=--service" ;;
     containers) printf '%s\n' "-a=--all" ;;
-    lab|cloud) printf '%s\n' "-L=--local" "-s=--start" "-p=--stop" ;;
+    lab) printf '%s\n' "-L=--local" "-s=--start" "-p=--stop" ;;
     chat) printf '%s\n' "-d=--diagnose" "-p=--password" "-e=--email" "-D=--delete-user" "-c=--check" "-m=--models" "-t=--tools" ;;
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  "-L=--local" ;;
     notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
@@ -115,7 +114,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     account) printf '%s\n' "-L=--local" ;;
     learn) printf '%s\n' "-L=--local" "-s=--sync" "-m=--migrate" "-a=--apply" ;;
     trading) printf '%s\n' "-L=--local" ;;
-    hub|library|memory) printf '%s\n' "-L=--local" "-P=--paperless" ;;
+    hub) printf '%s\n' "-L=--local" "-P=--paperless" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
     db) printf '%s\n' "-s=--sql" ;;
@@ -146,10 +145,10 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
   printf '%s\n' "-h=--help"
 }
 
-_heimdall_ajuda_arquivo() { echo "$HEIMDALL_DIR/guides/heimdall_ajuda.txt"; }
+_heimdall_ajuda_arquivo() { echo "$STUDIO_DIR/guides/heimdall_ajuda.txt"; }
 
 _heimdall_overview() {  # lista os comandos, um por linha
-  echo "Uso: heimdall COMANDO [--opção ...]. Para as variações de um comando: heimdall COMANDO --help (ou -h)."
+  echo "Uso: studio COMANDO [--opção ...]. Para as variações de um comando: studio COMANDO --help (ou -h)."
   echo "Todas as opções têm a forma curta de uma letra. Documento completo no navegador: studio help --doc"
   echo
   awk -F' [|] ' '/^@ /{sub(/^@ /,"",$1); printf "  %-12s %s\n",$1,$2}' "$(_heimdall_ajuda_arquivo)"
@@ -163,7 +162,7 @@ _heimdall_usage() {  # ajuda de um comando só
 }
 
 _heimdall_doc() {  # o Safari recusa file:// fora da área permitida; por isso o documento é servido por um servidor local mínimo (porta 8099, só 127.0.0.1)
-  local dir="$HEIMDALL_DIR/docs" porta=8099
+  local dir="$STUDIO_DIR/docs" porta=8099
   if [ ! -f "$dir/comando-heimdall.html" ]; then echo "Não achei $dir/comando-heimdall.html. Rode: studio update   (ou: studio docs)"; return 1; fi
   if ! nc -z 127.0.0.1 "$porta" > /dev/null 2>&1; then
     local py; py="$(command -v python3)"
@@ -237,8 +236,8 @@ _heimdall_labs() {  # studio health --labs: exames, receitas, encaminhamentos, a
 studio() {
   local cmd="$1"
   [ $# -gt 0 ] && shift
-  if [ ! -d "$HEIMDALL_DIR" ] && [ "$cmd" != "dir" ]; then
-    echo "Não achei a pasta $HEIMDALL_DIR. Defina HEIMDALL_DIR no ~/.zshrc antes do source."; return 1
+  if [ ! -d "$STUDIO_DIR" ] && [ "$cmd" != "dir" ]; then
+    echo "Não achei a pasta $STUDIO_DIR. Defina STUDIO_DIR no ~/.zshrc antes do source."; return 1
   fi
   local a pg
   case "$cmd" in
@@ -252,7 +251,7 @@ studio() {
   done
   _HLOCAL=0
   case "$cmd" in
-    lab|cloud|notes|learn|trading|library|memory|hub|news|health|games|finance|controls|account)
+    lab|notes|learn|trading|hub|news|health|games|finance|controls|account)
       local _x _n=()
       for _x in "$@"; do
         if [ "$_x" = "--local" ]; then _HLOCAL=1; else _n+=("$_x"); fi
@@ -294,7 +293,7 @@ studio() {
       case "$1" in
         "") _heimdall_open "Open WebUI (chat)" "http://localhost:3000" ;;
         --diagnose) _heimdall_sh scripts/diagnostico_chat.sh ;;
-        --check) _heimdall_py verificar_access.py "https://$(_heimdall_envval HEIMDALL_WEBUI_HOST chat.heimdall-ai.tech)" ;;
+        --check) _heimdall_py verificar_access.py "https://$(_heimdall_envval STUDIO_WEBUI_HOST chat.heimdall-ai.tech)" ;;
         --password) shift; _heimdall_sh scripts/trocar_senha_webui.sh "$@" ;;
         --email) shift; _heimdall_sh scripts/trocar_email_webui.sh "$@" ;;
         --delete-user) shift; _heimdall_sh scripts/excluir_usuario_webui.sh "$@" ;;
@@ -319,7 +318,7 @@ studio() {
 --queue=--fila
 --now=--uma-vez" "$@"; _heimdall_py heimdall_news.py "${_HA[@]}" ;;
       esac ;;
-    lab|cloud)
+    lab)
       case "$1" in
         --start) _heimdall_emulador start ;;
         --stop) _heimdall_emulador stop ;;
@@ -355,10 +354,10 @@ studio() {
       esac ;;
     account) _heimdall_web "Account" ACCOUNT 8018 account ;;
     trading) _heimdall_web "Studio Trading" TRADING 8020 trading ;;
-    hub|library|memory)   # library e memory são nomes antigos do hub e continuam valendo
+    hub)
       case "$1" in
-        -P|--paperless) bash "$HEIMDALL_DIR/scripts/iniciar_paperless.sh" ;;
-        *) _heimdall_web "Studio Hub" MEMORY "$(_heimdall_port HEIMDALL_LIBRARY_PORT 8021)" memory ;;
+        -P|--paperless) bash "$STUDIO_DIR/scripts/iniciar_paperless.sh" ;;
+        *) _heimdall_web "Studio Hub" HUB "$(_heimdall_port STUDIO_HUB_PORT 8021)" memory ;;
       esac ;;
     learn)
       case "$1" in
@@ -432,17 +431,17 @@ studio() {
         shift; _heimdall_tr "--check=--verificar" "$@"; _heimdall_py heimdall_conta.py --urls-publicas "${_HA[@]}"; return $?
       fi
       echo "chat: http://localhost:3000"
-      echo "notes: http://localhost:$(_heimdall_port HEIMDALL_NOTAS_PORT 8011)"
-      echo "learn: http://localhost:$(_heimdall_port HEIMDALL_LEARN_PORT 8019)"
-      echo "trading: http://localhost:$(_heimdall_port HEIMDALL_TRADING_PORT 8020)"
-      echo "hub: http://localhost:$(_heimdall_port HEIMDALL_MEMORY_PORT "$(_heimdall_port HEIMDALL_LIBRARY_PORT 8021)")"
-      echo "news: http://localhost:$(_heimdall_port HEIMDALL_NEWS_PORT 8012)"
-      echo "lab: http://localhost:$(_heimdall_port HEIMDALL_LAB_PORT "$(_heimdall_port HEIMDALL_CLOUD_PORT 8010)")"
-      echo "health: http://localhost:$(_heimdall_port HEIMDALL_SAUDE_PAINEL_PORT 8013)"
-      echo "games: http://localhost:$(_heimdall_port HEIMDALL_JOGOS_PORT 8014)"
-      echo "finance: http://localhost:$(_heimdall_port HEIMDALL_FINANCE_PORT 8016)"
-      echo "controls: http://localhost:$(_heimdall_port HEIMDALL_CONTROLS_PORT 8017)"
-      echo "account: http://localhost:$(_heimdall_port HEIMDALL_ACCOUNT_PORT 8018)"
+      echo "notes: http://localhost:$(_heimdall_port STUDIO_NOTAS_PORT 8011)"
+      echo "learn: http://localhost:$(_heimdall_port STUDIO_LEARN_PORT 8019)"
+      echo "trading: http://localhost:$(_heimdall_port STUDIO_TRADING_PORT 8020)"
+      echo "hub: http://localhost:$(_heimdall_port STUDIO_HUB_PORT "$(_heimdall_port STUDIO_HUB_PORT 8021)")"
+      echo "news: http://localhost:$(_heimdall_port STUDIO_NEWS_PORT 8012)"
+      echo "lab: http://localhost:$(_heimdall_port STUDIO_LAB_PORT 8010)"
+      echo "health: http://localhost:$(_heimdall_port STUDIO_SAUDE_PAINEL_PORT 8013)"
+      echo "games: http://localhost:$(_heimdall_port STUDIO_JOGOS_PORT 8014)"
+      echo "finance: http://localhost:$(_heimdall_port STUDIO_FINANCE_PORT 8016)"
+      echo "controls: http://localhost:$(_heimdall_port STUDIO_CONTROLS_PORT 8017)"
+      echo "account: http://localhost:$(_heimdall_port STUDIO_ACCOUNT_PORT 8018)"
       echo "n8n: http://localhost:5678"
       echo "kuma: http://localhost:3001"
       echo "dozzle: http://localhost:8081" ;;
@@ -479,10 +478,10 @@ studio() {
       _heimdall_py heimdall_backup.py "${_HA[@]}" ;;
     continuity)
       case "$1" in
-        --deploy) "$HEIMDALL_DIR/scripts/continuidade_nuvem.sh" implantar ;;
-        --off) "$HEIMDALL_DIR/scripts/continuidade_nuvem.sh" desligar ;;
-        --on) "$HEIMDALL_DIR/scripts/continuidade_nuvem.sh" ligar ;;
-        --secrets) "$HEIMDALL_DIR/scripts/continuidade_nuvem.sh" segredos ;;
+        --deploy) "$STUDIO_DIR/scripts/continuidade_nuvem.sh" implantar ;;
+        --off) "$STUDIO_DIR/scripts/continuidade_nuvem.sh" desligar ;;
+        --on) "$STUDIO_DIR/scripts/continuidade_nuvem.sh" ligar ;;
+        --secrets) "$STUDIO_DIR/scripts/continuidade_nuvem.sh" segredos ;;
         *) _heimdall_tr "--prepare=preparar
 --send=enviar
 --status=status" "$@"
@@ -535,15 +534,15 @@ studio() {
         --app|-a) restart=1; forcar_app=1 ;;
         *) echo "Opção desconhecida: $1. Use: studio update [--restart | --app]"; return 1 ;;
       esac
-      branch="$(git -C "$HEIMDALL_DIR" rev-parse --abbrev-ref HEAD)"
-      antes="$(git -C "$HEIMDALL_DIR" rev-parse HEAD)"
+      branch="$(git -C "$STUDIO_DIR" rev-parse --abbrev-ref HEAD)"
+      antes="$(git -C "$STUDIO_DIR" rev-parse HEAD)"
       echo "Atualizando a branch $branch..."
-      git -C "$HEIMDALL_DIR" pull --ff-only origin "$branch" || { echo "O pull falhou; veja a mensagem acima."; return 1; }
-      source "$HEIMDALL_DIR/heimdall.zsh" && echo "Comandos do heimdall recarregados neste terminal."
+      git -C "$STUDIO_DIR" pull --ff-only origin "$branch" || { echo "O pull falhou; veja a mensagem acima."; return 1; }
+      source "$STUDIO_DIR/heimdall.zsh" && echo "Comandos do studio recarregados neste terminal."
       if [ "$restart" = 1 ]; then
         _heimdall_sh subir.sh --reiniciar
         # O app de barra de menus só é compilado de novo quando a atualização mudou o app (macapp/ ou o script que o constrói), ou com --app.
-        if [ "$forcar_app" = 1 ] || git -C "$HEIMDALL_DIR" diff --name-only "$antes" HEAD -- macapp scripts/construir_app_mac.sh | grep -q .; then
+        if [ "$forcar_app" = 1 ] || git -C "$STUDIO_DIR" diff --name-only "$antes" HEAD -- macapp scripts/construir_app_mac.sh | grep -q .; then
           echo "Compilando o app Heimdall..."
           _heimdall_sh scripts/construir_app_mac.sh || echo "Não consegui compilar o app. Rode depois: studio app"
         fi
@@ -558,10 +557,10 @@ studio() {
       esac ;;
     test)
       case "$1" in
-        ""|--list) ( cd "$HEIMDALL_DIR" && ls teste_*.py teste_*.sh test_*.py 2>/dev/null | sed 's/^teste_//; s/\.py$//; s/\.sh$//' ) ;;
+        ""|--list) ( cd "$STUDIO_DIR" && ls teste_*.py teste_*.sh test_*.py 2>/dev/null | sed 's/^teste_//; s/\.py$//; s/\.sh$//' ) ;;
         --all)
           local f falhas=0
-          for f in "$HEIMDALL_DIR"/teste_*.py; do
+          for f in "$STUDIO_DIR"/teste_*.py; do
             echo "== $(basename "$f")"
             _heimdall_py "$(basename "$f")" > /dev/null 2>&1 && echo "ok" || { echo "FALHOU"; falhas=$((falhas+1)); }
           done
@@ -569,14 +568,14 @@ studio() {
           [ "$falhas" = 0 ] ;;
         --run)
           a="$2"; shift 2 2>/dev/null
-          if [ -f "$HEIMDALL_DIR/teste_$a.py" ]; then _heimdall_py "teste_$a.py" "$@"
-          elif [ -f "$HEIMDALL_DIR/teste_$a.sh" ]; then _heimdall_sh "teste_$a.sh" "$@"
-          elif [ -f "$HEIMDALL_DIR/test_$a.py" ]; then _heimdall_py "test_$a.py" "$@"
+          if [ -f "$STUDIO_DIR/teste_$a.py" ]; then _heimdall_py "teste_$a.py" "$@"
+          elif [ -f "$STUDIO_DIR/teste_$a.sh" ]; then _heimdall_sh "teste_$a.sh" "$@"
+          elif [ -f "$STUDIO_DIR/test_$a.py" ]; then _heimdall_py "test_$a.py" "$@"
           else echo "Teste desconhecido. Veja a lista com: studio test --list"; return 1; fi ;;
         *) echo "Use: studio test [--list] [--all] [--run NOME]"; return 1 ;;
       esac ;;
-    dir) echo "$HEIMDALL_DIR" ;;
-    cd) cd "$HEIMDALL_DIR" ;;
+    dir) echo "$STUDIO_DIR" ;;
+    cd) cd "$STUDIO_DIR" ;;
 
     *) echo "Comando desconhecido: $cmd. Veja os comandos com: studio help"; return 1 ;;
   esac
@@ -633,13 +632,11 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       docs) compadd -- --brand ;;
       help) compadd -- --doc $cmds ;;
       test)
-        if [[ ${words[CURRENT-1]} == --run ]]; then compadd -- $(cd "$HEIMDALL_DIR" 2>/dev/null && ls teste_*.py teste_*.sh test_*.py 2>/dev/null | sed 's/^teste_//; s/\.py$//; s/\.sh$//')
+        if [[ ${words[CURRENT-1]} == --run ]]; then compadd -- $(cd "$STUDIO_DIR" 2>/dev/null && ls teste_*.py teste_*.sh test_*.py 2>/dev/null | sed 's/^teste_//; s/\.py$//; s/\.sh$//')
         else compadd -- --list --all --run; fi ;;
     esac
     compadd -- --help
   }
-  compdef _heimdall_complete studio heimdall
+  compdef _heimdall_complete studio
 fi
 
-# Apelido da transição: o comando antigo continua funcionando e chama o novo.
-heimdall() { studio "$@"; }

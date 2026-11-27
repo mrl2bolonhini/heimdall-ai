@@ -6,7 +6,7 @@ O agente (heimdall_agente.osascript) tenta primeiro este módulo para os scripts
 disponível (pacote não instalado, permissão negada, erro), cai no AppleScript de antes, então nada deixa de funcionar.
 
 Dependência: pip install pyobjc-framework-EventKit (no venv do Heimdall). Permissão: na primeira vez o macOS pergunta se o programa pode
-acessar Lembretes e Calendário. Desligar: HEIMDALL_EVENTKIT=0 no .env. Conferir: venv/bin/python heimdall_eventkit.py --status
+acessar Lembretes e Calendário. Desligar: STUDIO_EVENTKIT=0 no .env. Conferir: venv/bin/python heimdall_eventkit.py --status
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import threading
 import time
 from datetime import datetime
 
-ATIVO = os.environ.get("HEIMDALL_EVENTKIT", "1").strip() != "0"
+ATIVO = os.environ.get("STUDIO_EVENTKIT", "1").strip() != "0"
 try:  # pyobjc só existe no macOS
     import EventKit as EK  # type: ignore
     import Foundation as NS  # type: ignore
@@ -276,7 +276,7 @@ def tentar(script: str, args) -> tuple[bool, str | None]:
 def verificar_na_partida() -> None:
     """Pede as permissões já na partida do agente (o aviso do macOS aparece uma vez) e registra o resultado no log."""
     if not ATIVO:
-        _log("desligado (HEIMDALL_EVENTKIT=0)")
+        _log("desligado (STUDIO_EVENTKIT=0)")
         return
     if not PACOTE:
         _log("pacote pyobjc-framework-EventKit não instalado; Lembretes e Calendário seguem pelo AppleScript (abrem os apps). "

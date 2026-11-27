@@ -5,11 +5,11 @@ Como funciona: você autoriza cada banco no site do Meu Pluggy; este módulo lê
 local do Finance, do mesmo jeito que um extrato importado. Os dados passam pelos servidores do Pluggy antes de chegar ao Mac: é uma exceção consciente à regra de
 que dados de finanças não saem do Mac, aceita pelo usuário. Nada é movido: não há pagamento, transferência nem qualquer chamada que escreva no banco.
 
-Chaves no .env (nunca coladas na conversa): HEIMDALL_PLUGGY_CLIENT_ID, HEIMDALL_PLUGGY_CLIENT_SECRET e HEIMDALL_PLUGGY_ITEMS (os ids dos bancos conectados,
+Chaves no .env (nunca coladas na conversa): STUDIO_PLUGGY_CLIENT_ID, STUDIO_PLUGGY_CLIENT_SECRET e STUDIO_PLUGGY_ITEMS (os ids dos bancos conectados,
 separados por vírgula). `financas_cli.py --guardar-pluggy id|segredo|itens` grava cada uma lendo a área de transferência, sem imprimir o valor.
 
 Uso: python3 financas_cli.py --sincronizar [--desde AAAA-MM-DD] [--listar] [--nomear N=NOME]
-O painel do Finance repete a sincronização a cada 6 horas quando as três chaves existem (HEIMDALL_FINANCE_PLUGGY=0 desliga). O Meu Pluggy só atualiza a cada 24 h.
+O painel do Finance repete a sincronização a cada 6 horas quando as três chaves existem (STUDIO_FINANCE_PLUGGY=0 desliga). O Meu Pluggy só atualiza a cada 24 h.
 """
 import json
 import re
@@ -58,13 +58,13 @@ def _ler_env(caminho: Path) -> dict:
 def credenciais(env_path: Path = None) -> dict:
     """{'id', 'segredo', 'itens': [...]} ou {} se faltar alguma das três chaves."""
     e = _ler_env(env_path or AQUI / ".env")
-    itens = [x.strip() for x in e.get("HEIMDALL_PLUGGY_ITEMS", "").split(",") if x.strip()]
-    if not e.get("HEIMDALL_PLUGGY_CLIENT_ID") or not e.get("HEIMDALL_PLUGGY_CLIENT_SECRET") or not itens:
+    itens = [x.strip() for x in e.get("STUDIO_PLUGGY_ITEMS", "").split(",") if x.strip()]
+    if not e.get("STUDIO_PLUGGY_CLIENT_ID") or not e.get("STUDIO_PLUGGY_CLIENT_SECRET") or not itens:
         return {}
-    return {"id": e["HEIMDALL_PLUGGY_CLIENT_ID"], "segredo": e["HEIMDALL_PLUGGY_CLIENT_SECRET"], "itens": itens}
+    return {"id": e["STUDIO_PLUGGY_CLIENT_ID"], "segredo": e["STUDIO_PLUGGY_CLIENT_SECRET"], "itens": itens}
 
 
-CHAVES = {"id": "HEIMDALL_PLUGGY_CLIENT_ID", "segredo": "HEIMDALL_PLUGGY_CLIENT_SECRET", "itens": "HEIMDALL_PLUGGY_ITEMS"}
+CHAVES = {"id": "STUDIO_PLUGGY_CLIENT_ID", "segredo": "STUDIO_PLUGGY_CLIENT_SECRET", "itens": "STUDIO_PLUGGY_ITEMS"}
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
 
@@ -85,7 +85,7 @@ def guardar_chave(qual: str, valor: str, env_path: Path = None) -> str:
         partes = [p.strip() for p in valor.split(",") if p.strip()]
         if not partes or not all(_UUID.match(p) for p in partes):
             raise ErroPluggy("Os ids dos bancos conectados são códigos no formato 8-4-4-4-12 (separados por vírgula, se forem vários). Copie de novo na página Demo, em Itens Conectados.")
-        antigos = [x.strip() for x in _ler_env(Path(env_path or AQUI / ".env")).get("HEIMDALL_PLUGGY_ITEMS", "").split(",") if x.strip()]
+        antigos = [x.strip() for x in _ler_env(Path(env_path or AQUI / ".env")).get("STUDIO_PLUGGY_ITEMS", "").split(",") if x.strip()]
         valor = ",".join(dict.fromkeys(antigos + partes))  # cada comando acrescenta os bancos novos; repetir o mesmo não duplica
     elif qual == "id" and not _UUID.match(valor):
         raise ErroPluggy("O Client ID é um código no formato 8-4-4-4-12. Copie de novo no Dashboard do Pluggy, em Aplicações.")

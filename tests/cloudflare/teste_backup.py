@@ -13,8 +13,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="hd_backup_"))
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "banco")
-os.environ["HEIMDALL_FINANCE_DIR"] = str(TMP / "finance")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
+os.environ["STUDIO_FINANCE_DIR"] = str(TMP / "finance")
 
 import heimdall_backup as B  # noqa: E402
 import heimdall_banco as D  # noqa: E402
@@ -88,7 +88,7 @@ con.execute("INSERT INTO triagem (id, criado, fonte, nivel, titulo, resumo, atua
 con.commit()
 con.close()
 pasta = TMP / "icloud"
-env = {"HEIMDALL_BACKUP_SENHA": "s3nha", "HEIMDALL_BACKUP_DESTINO": str(pasta)}
+env = {"STUDIO_BACKUP_SENHA": "s3nha", "STUDIO_BACKUP_DESTINO": str(pasta)}
 r = B.fazer(env, agora=base)
 ok(r["ok"] and (pasta / r["nome"]).exists(), "cópia gravada na pasta")
 ok(not list(pasta.glob("*.parcial")), "sem arquivo parcial sobrando")
@@ -177,7 +177,7 @@ class PessoaQuebrada(FakeS3):
 
 
 antes = B.estado()["ultimo_ok"]
-r = B.fazer(dict(env2, HEIMDALL_BACKUP_DESTINO=""), cliente_r2=PessoaQuebrada(), agora=base + timedelta(days=300))
+r = B.fazer(dict(env2, STUDIO_BACKUP_DESTINO=""), cliente_r2=PessoaQuebrada(), agora=base + timedelta(days=300))
 ok(not r["ok"] and all(x["ok"] for x in r["destinos"]) and not all(p["ok"] for p in r["pessoas"]), "falha só na cópia de uma pessoa: resultado acusa a falha")
 ok(B.estado()["ultimo_ok"] != antes and B.estado()["pessoas_ok"] is False, "a data do último sucesso segue a cópia do dono; a das pessoas fica registrada à parte")
 
@@ -212,7 +212,7 @@ ok(all(x["ok"] for x in v.values()) and any(k.endswith(" / learn") for k in v) a
 ok(all(not n.startswith(("learn/", "people/")) for n in B.listar(env2, cliente_r2=s3o)[next(iter(B.listar(env2, cliente_r2=s3o)))]), "a lista principal não mistura os outros bancos")
 
 # 7. configuração faltando
-for cfg, trecho in (({}, "SENHA"), ({"HEIMDALL_BACKUP_SENHA": "x"}, "destino")):
+for cfg, trecho in (({}, "SENHA"), ({"STUDIO_BACKUP_SENHA": "x"}, "destino")):
     try:
         B.fazer(cfg)
         ok(False, "deveria recusar sem configuração")

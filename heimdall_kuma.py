@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Uptime Kuma (status.heimdall-ai.tech) visto pelo Controls: ler a situação de cada monitor e pausar/retomar o monitor de um serviço.
 
-Ler: a página de status pública do Kuma, pelo endereço local (HEIMDALL_KUMA_URL, padrão http://127.0.0.1:3001) e o nome da página
-(HEIMDALL_KUMA_SLUG, padrão heimdall). Não precisa de senha.
-Pausar e retomar: o Kuma só oferece isso pela API autenticada (socket.io). Precisa de HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env
+Ler: a página de status pública do Kuma, pelo endereço local (STUDIO_KUMA_URL, padrão http://127.0.0.1:3001) e o nome da página
+(STUDIO_KUMA_SLUG, padrão heimdall). Não precisa de senha.
+Pausar e retomar: o Kuma só oferece isso pela API autenticada (socket.io). Precisa de STUDIO_KUMA_USUARIO e STUDIO_KUMA_SENHA no .env
 e do pacote python-socketio. Sem eles o Controls continua ligando e desligando o serviço de verdade e avisa que o Kuma não foi mexido.
 O monitor de um serviço é achado pelo nome: o primeiro monitor cujo nome contém o nome do serviço (sem acento, sem maiúsculas).
 """
@@ -13,8 +13,8 @@ import time
 import unicodedata
 import urllib.request
 
-URL = os.environ.get("HEIMDALL_KUMA_URL", "http://127.0.0.1:3001").rstrip("/")
-SLUG = os.environ.get("HEIMDALL_KUMA_SLUG", "heimdall")
+URL = os.environ.get("STUDIO_KUMA_URL", "http://127.0.0.1:3001").rstrip("/")
+SLUG = os.environ.get("STUDIO_KUMA_SLUG", "heimdall")
 
 
 def _norm(t: str) -> str:
@@ -58,9 +58,9 @@ def achar(mons: list, *nomes: str):
 
 
 def pausar_ou_retomar(monitor_id: int, pausar: bool) -> str:
-    """Devolve "" se deu certo ou o motivo de não ter dado. Com HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA entra com elas; sem elas, só
+    """Devolve "" se deu certo ou o motivo de não ter dado. Com STUDIO_KUMA_USUARIO e STUDIO_KUMA_SENHA entra com elas; sem elas, só
     funciona se o login do Kuma estiver desligado (Settings, Security, Disable Auth): nesse caso o Kuma avisa "autoLogin" ao conectar."""
-    usuario, senha = os.environ.get("HEIMDALL_KUMA_USUARIO", ""), os.environ.get("HEIMDALL_KUMA_SENHA", "")
+    usuario, senha = os.environ.get("STUDIO_KUMA_USUARIO", ""), os.environ.get("STUDIO_KUMA_SENHA", "")
     try:
         import socketio  # python-socketio
     except ImportError:
@@ -80,7 +80,7 @@ def pausar_ou_retomar(monitor_id: int, pausar: bool) -> str:
                     break
                 time.sleep(0.1)
             if not entrou:
-                return "sem HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env e o Kuma ainda exige login (desligue em Settings, Security, Disable Auth)"
+                return "sem STUDIO_KUMA_USUARIO e STUDIO_KUMA_SENHA no .env e o Kuma ainda exige login (desligue em Settings, Security, Disable Auth)"
         r = cli.call("pauseMonitor" if pausar else "resumeMonitor", monitor_id, timeout=8)
         return "" if isinstance(r, dict) and r.get("ok") else "o Kuma não aceitou o pedido"
     except Exception as ex:  # noqa: BLE001 - qualquer falha de rede vira aviso

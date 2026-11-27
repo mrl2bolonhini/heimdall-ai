@@ -26,7 +26,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 def pasta_dados_base() -> Path:
     """Pasta de dados do dono (db/). A das outras pessoas fica dentro dela, em people/<id>/."""
-    return Path(os.environ.get("HEIMDALL_DB_DIR", str(heimdall_pastas.db(PROJECT_DIR)))).expanduser()
+    return Path(os.environ.get("STUDIO_DB_DIR", str(heimdall_pastas.db(PROJECT_DIR)))).expanduser()
 
 
 def pasta_dados() -> Path:
@@ -38,7 +38,7 @@ def pasta_knowledge() -> Path:
     """Material de estudo da pessoa. O dono usa knowledge/ (a mesma pasta dos documentos do resto do Heimdall); as outras pessoas, a sua própria,
     fora dela, para a busca nos documentos do dono nunca ver os arquivos delas."""
     if pessoas.e_dono():
-        return Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
+        return Path(os.environ.get("STUDIO_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
     p = pasta_dados() / "knowledge"
     p.mkdir(parents=True, exist_ok=True)
     return p
@@ -70,7 +70,7 @@ def _agora() -> str:
 
 def max_bytes() -> int:
     try:
-        return max(1, int(os.environ.get("HEIMDALL_LEARN_MAX_MB", "50"))) * 1024 * 1024
+        return max(1, int(os.environ.get("STUDIO_LEARN_MAX_MB", "50"))) * 1024 * 1024
     except ValueError:
         return 50 * 1024 * 1024
 

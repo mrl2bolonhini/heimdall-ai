@@ -391,7 +391,7 @@ if (entrada / "fatura-itau-ruim.pdf").exists():
 confere("arquivo recém-copiado espera a próxima rodada", fa.processar_entrada(con, base) == [] and (entrada / "recente.ofx").exists())
 
 # ---- linha de comando
-env = dict(os.environ, HEIMDALL_FINANCE_DIR=str(tmp / "cli"))
+env = dict(os.environ, STUDIO_FINANCE_DIR=str(tmp / "cli"))
 (tmp / "f.pdf").write_bytes(pdf) if pdf_ok else None
 if pdf_ok:
     p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--inspecionar", str(tmp / "f.pdf")], capture_output=True, text=True, env=env, timeout=60)
@@ -469,7 +469,7 @@ if pdf_ok:
         _ob = _fb.interpretar(_outra)
     except fn.ErroFinance:
         _ob = None
-    _env = dict(os.environ, HEIMDALL_FINANCE_DIR=str(tmp / "clib"))
+    _env = dict(os.environ, STUDIO_FINANCE_DIR=str(tmp / "clib"))
     p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boleto", "34191234546789012345767890123457616560000045090"], capture_output=True, text=True, env=_env, timeout=60)
     confere("--boleto com a linha registra e avisa que não paga", p.returncode == 0 and "Registrado" in p.stdout and "R$ 450,90" in p.stdout and "não paga nada" in p.stdout, p.stdout[:300] + p.stderr[:200])
     p = subprocess.run([sys.executable, str(AQUI / "financas_cli.py"), "--boleto", "34191234546789012345767890123457616560000045090"], capture_output=True, text=True, env=_env, timeout=60)

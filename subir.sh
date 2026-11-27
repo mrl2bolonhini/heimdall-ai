@@ -51,12 +51,16 @@ case "$1" in
     --reiniciar) MODO="reiniciar"; shift ;;
 esac
 
+# Nomes antigos de variável (HEIMDALL_*) viram STUDIO_* no .env, com cópia em .env.bak (só quando há o que trocar)
+if [ -f .env ]; then
+    if [ -x venv/bin/python ]; then venv/bin/python -c "import heimdall_config as c; t = c.renomear_antigas(); print('Variáveis do .env com o nome novo:', ', '.join(t)) if t else None" 2>/dev/null || true; fi
+fi
+
 if [ -f .env ]; then
     set -a
     # shellcheck disable=SC1091
     . ./.env > /dev/null 2>&1
     set +a
-    . ./scripts/studio_env.sh
 fi
 
 ARGS=("$@")
@@ -75,31 +79,31 @@ montar_lista() {
     LISTA+=("MCP do Mac|tcp|8000")
     LISTA+=("MCP público|tcp|8001")
     LISTA+=("MCP de dados|tcp|8004")
-    [ -n "$HEIMDALL_AGENTE_TOKEN" ] || [ "$HEIMDALL_AGENTE" = "1" ] || tem_arg --agente && LISTA+=("Agente do Mac|tcp|${HEIMDALL_AGENTE_PORT:-8003}")
-    if [ "$HEIMDALL_MONITORING" != "0" ]; then
+    [ -n "$STUDIO_AGENTE_TOKEN" ] || [ "$STUDIO_AGENTE" = "1" ] || tem_arg --agente && LISTA+=("Agente do Mac|tcp|${STUDIO_AGENTE_PORT:-8003}")
+    if [ "$STUDIO_MONITORING" != "0" ]; then
         LISTA+=("Uptime Kuma (status)|tcp|3001")
         LISTA+=("Dozzle (logs)|tcp|8081")
     fi
-    if [ "$HEIMDALL_N8N" = "1" ] || tem_arg --n8n; then LISTA+=("n8n (automações)|tcp|5678"); fi
-    if [ "$HEIMDALL_WEBUI" = "1" ] || tem_arg --webui; then LISTA+=("Open WebUI (chat)|tcp|3000"); fi
+    if [ "$STUDIO_N8N" = "1" ] || tem_arg --n8n; then LISTA+=("n8n (automações)|tcp|5678"); fi
+    if [ "$STUDIO_WEBUI" = "1" ] || tem_arg --webui; then LISTA+=("Open WebUI (chat)|tcp|3000"); fi
     if [ -n "$OPEN_TERMINAL_API_KEY" ] || tem_arg --terminal; then LISTA+=("Open Terminal|tcp|8002"); fi
     # Sob demanda (padrão): se o contêiner do emulador já existe, ele não sobe junto e não entra na espera.
     EMU_SOB_DEMANDA=0
-    if [ "${HEIMDALL_AWS_EMULATOR_INICIO:-demanda}" = "demanda" ] && docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE '^(localstack|moto)$'; then EMU_SOB_DEMANDA=1; fi
-    case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) [ "$EMU_SOB_DEMANDA" = "1" ] || LISTA+=("Emulador de AWS|tcp|4566") ;; esac
+    if [ "${STUDIO_AWS_EMULATOR_INICIO:-demanda}" = "demanda" ] && docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE '^(localstack|moto)$'; then EMU_SOB_DEMANDA=1; fi
+    case "${STUDIO_AWS_EMULATOR:-auto}" in off) ;; *) [ "$EMU_SOB_DEMANDA" = "1" ] || LISTA+=("Emulador de AWS|tcp|4566") ;; esac
     if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-        case "${HEIMDALL_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Studio Lab|http|http://127.0.0.1:${HEIMDALL_LAB_PORT:-8010}/saude") ;; esac
-        LISTA+=("Studio Notes|http|http://127.0.0.1:${HEIMDALL_NOTAS_PORT:-${HEIMDALL_BIBLIOTECA_PORT:-8011}}/saude")
-        [ "${HEIMDALL_LEARN:-0}" = "1" ] && LISTA+=("Studio Learn|http|http://127.0.0.1:${HEIMDALL_LEARN_PORT:-8019}/saude")
-        [ "${HEIMDALL_TRADING:-0}" = "1" ] && LISTA+=("Studio Trading|http|http://127.0.0.1:${HEIMDALL_TRADING_PORT:-8020}/saude")
-        [ "${HEIMDALL_MEMORY:-${HEIMDALL_LIBRARY:-0}}" = "1" ] && LISTA+=("Studio Hub|http|http://127.0.0.1:${HEIMDALL_MEMORY_PORT:-${HEIMDALL_LIBRARY_PORT:-8021}}/saude")
-        LISTA+=("Studio News|http|http://127.0.0.1:${HEIMDALL_NEWS_PORT:-8012}/saude")
-        LISTA+=("Studio Health|http|http://127.0.0.1:${HEIMDALL_SAUDE_PAINEL_PORT:-8013}/saude")
-        LISTA+=("Studio Games|http|http://127.0.0.1:${HEIMDALL_JOGOS_PORT:-8014}/saude")
-        LISTA+=("Studio Finance|http|http://127.0.0.1:${HEIMDALL_FINANCE_PORT:-8016}/saude")
-        LISTA+=("Controls|http|http://127.0.0.1:${HEIMDALL_CONTROLS_PORT:-8017}/saude")
+        case "${STUDIO_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Studio Lab|http|http://127.0.0.1:${STUDIO_LAB_PORT:-8010}/saude") ;; esac
+        LISTA+=("Studio Notes|http|http://127.0.0.1:${STUDIO_NOTAS_PORT:-${STUDIO_BIBLIOTECA_PORT:-8011}}/saude")
+        [ "${STUDIO_LEARN:-0}" = "1" ] && LISTA+=("Studio Learn|http|http://127.0.0.1:${STUDIO_LEARN_PORT:-8019}/saude")
+        [ "${STUDIO_TRADING:-0}" = "1" ] && LISTA+=("Studio Trading|http|http://127.0.0.1:${STUDIO_TRADING_PORT:-8020}/saude")
+        [ "${STUDIO_HUB:-${STUDIO_HUB:-0}}" = "1" ] && LISTA+=("Studio Hub|http|http://127.0.0.1:${STUDIO_HUB_PORT:-${STUDIO_HUB_PORT:-8021}}/saude")
+        LISTA+=("Studio News|http|http://127.0.0.1:${STUDIO_NEWS_PORT:-8012}/saude")
+        LISTA+=("Studio Health|http|http://127.0.0.1:${STUDIO_SAUDE_PAINEL_PORT:-8013}/saude")
+        LISTA+=("Studio Games|http|http://127.0.0.1:${STUDIO_JOGOS_PORT:-8014}/saude")
+        LISTA+=("Studio Finance|http|http://127.0.0.1:${STUDIO_FINANCE_PORT:-8016}/saude")
+        LISTA+=("Controls|http|http://127.0.0.1:${STUDIO_CONTROLS_PORT:-8017}/saude")
     fi
-    [ -f heimdall_account.py ] && LISTA+=("Account|http|http://127.0.0.1:${HEIMDALL_ACCOUNT_PORT:-8018}/saude")
+    [ -f heimdall_account.py ] && LISTA+=("Account|http|http://127.0.0.1:${STUDIO_ACCOUNT_PORT:-8018}/saude")
 }
 
 esta_no_ar() {  # $1 = tipo, $2 = alvo

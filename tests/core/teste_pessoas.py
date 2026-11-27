@@ -10,7 +10,7 @@ import tempfile
 import threading
 from pathlib import Path
 
-os.environ.pop("HEIMDALL_PESSOAS", None)
+os.environ.pop("STUDIO_PESSOAS", None)
 import heimdall_lab as nuvem  # noqa: E402
 import heimdall_pessoas as pe  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
@@ -76,11 +76,11 @@ confere("existentes: dono e as pastas válidas", pe.existentes(base) == ["dono",
 confere("pasta com nome fora do padrão é ignorada", "lixo" not in pe.existentes(base))
 
 # desligado
-os.environ["HEIMDALL_PESSOAS"] = "0"
+os.environ["STUDIO_PESSOAS"] = "0"
 with pe.definir(ana):
-    confere("HEIMDALL_PESSOAS=0 usa sempre os dados do dono", pe.raiz(base) == base and pe.e_dono())
+    confere("STUDIO_PESSOAS=0 usa sempre os dados do dono", pe.raiz(base) == base and pe.e_dono())
     confere("existentes com o recurso desligado: só o dono", pe.existentes(base) == ["dono"])
-os.environ.pop("HEIMDALL_PESSOAS")
+os.environ.pop("STUDIO_PESSOAS")
 
 # tokens
 tk, s = nuvem.nova_sessao("*")

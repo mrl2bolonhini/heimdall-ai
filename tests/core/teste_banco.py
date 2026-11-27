@@ -15,7 +15,7 @@ import time
 import urllib.request
 
 tmp = tempfile.mkdtemp(prefix="heimdall-banco-")
-os.environ["HEIMDALL_DB_DIR"] = tmp
+os.environ["STUDIO_DB_DIR"] = tmp
 import heimdall_banco as b  # noqa: E402
 
 falhas = 0
@@ -90,7 +90,7 @@ ok(not ({"banco_resumo", "banco_consultar", "banco_buscar", "saude_historico"} &
 
 # rotas do agente
 porta = "18003"
-env = dict(os.environ, HEIMDALL_AGENTE_TOKEN="t" * 20, HEIMDALL_AGENTE_PORT=porta, HEIMDALL_VAULT_DIR=tmp + "/cofre")
+env = dict(os.environ, STUDIO_AGENTE_TOKEN="t" * 20, STUDIO_AGENTE_PORT=porta, STUDIO_VAULT_DIR=tmp + "/cofre")
 p = subprocess.Popen([sys.executable, "heimdall_agente.py"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 try:
     for _ in range(30):

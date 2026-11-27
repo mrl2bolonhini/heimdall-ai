@@ -48,7 +48,7 @@ def banco(p, linhas):
     con.close()
 
 
-ENV = {"HEIMDALL_CONTINUIDADE": "1", "HEIMDALL_CONTINUIDADE_SENHA": "senha-de-teste", "HEIMDALL_R2_ENDPOINT": "https://x", "HEIMDALL_R2_BUCKET": "b",
+ENV = {"STUDIO_CONTINUIDADE": "1", "HEIMDALL_CONTINUIDADE_SENHA": "senha-de-teste", "HEIMDALL_R2_ENDPOINT": "https://x", "HEIMDALL_R2_BUCKET": "b",
        "HEIMDALL_R2_KEY_ID": "k", "HEIMDALL_R2_SECRET": "s"}
 raiz = Path(tempfile.mkdtemp())
 banco(raiz / "db" / "heimdall.db", ["segredo-de-saude-123"])
@@ -62,7 +62,7 @@ banco(raiz_p / "db" / "people" / "convidada-1" / "copies" / "heimdall-2026-11-25
 confere("o banco de cada pessoa entra na cópia; as cópias locais dela, não",
         hc.arquivos(raiz_p) == ["db/heimdall.db", "db/people/convidada-1/heimdall.db"], hc.arquivos(raiz_p))
 
-r = hc.enviar(raiz, dict(ENV, HEIMDALL_CONTINUIDADE="0"), S3Falso())
+r = hc.enviar(raiz, dict(ENV, STUDIO_CONTINUIDADE="0"), S3Falso())
 confere("interruptor desligado não envia nada", r.get("desligado") is True)
 s3 = S3Falso()
 r = hc.enviar(raiz, ENV, s3)
@@ -77,7 +77,7 @@ confere("só o banco que mudou é reenviado", r["enviados"] == ["finance/financa
 
 # envio automático (agente do Mac)
 s3a = S3Falso()
-confere("envio automático desligado não faz nada", hc.uma_rodada(raiz, dict(ENV, HEIMDALL_CONTINUIDADE="0"), s3a) is None and s3a.puts == 0)
+confere("envio automático desligado não faz nada", hc.uma_rodada(raiz, dict(ENV, STUDIO_CONTINUIDADE="0"), s3a) is None and s3a.puts == 0)
 confere("dentro do contêiner de continuidade não envia", hc.uma_rodada(raiz, dict(ENV, HEIMDALL_CONTINUIDADE_MODO="1"), s3a) is None and s3a.puts == 0)
 ra = hc.uma_rodada(raiz, ENV, s3a)
 confere("envio automático manda o que mudou", ra["ok"] and sorted(ra["enviados"]) == ["db/heimdall.db", "finance/financas.db"], ra)

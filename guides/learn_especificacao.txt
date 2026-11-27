@@ -1,6 +1,6 @@
 LEARN: PLATAFORMA DE ESTUDOS DO HEIMDALL (ESPECIFICAÇÃO, 22/11/2026)
 
-Este é o desenho combinado em conversa. Nada aqui está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, e tem interruptor no .env (HEIMDALL_LEARN=0 devolve o comportamento anterior).
+Este é o desenho combinado em conversa. Nada aqui está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, e tem interruptor no .env (STUDIO_LEARN=0 devolve o comportamento anterior).
 
 O QUE É
   Um site novo, no padrão dos outros (Studio Design, leitor de tela, teclado), com acesso próprio, como learn.heimdall-ai.tech. Reúne tudo que hoje é estudo e nota: os temas de knowledge/, os estudos das 6h, 13h e 20h, as notas e a leitura em áudio. O modelo Notes do chat vira o modelo Learn quando o serviço existir; ele consulta as pastas, as lições e o progresso.
@@ -26,7 +26,7 @@ STATUS (23/11/2026)
   Fases 1 a 5 prontas e o modelo Learn do chat com as ferramentas de leitura. Pendente: migrar os estudos de 6h, 13h e 20h para a agenda do Learn e medir o gasto de nuvem se lições e correções forem para ela.
 
 FASES (cada uma já entrega algo usável)
-  1. Pastas e subpastas com categoria, importar documentos pela plataforma, e mover estudos e notas para o Learn. Site novo, acesso próprio, interruptor HEIMDALL_LEARN.
+  1. Pastas e subpastas com categoria, importar documentos pela plataforma, e mover estudos e notas para o Learn. Site novo, acesso próprio, interruptor STUDIO_LEARN.
   2. Categoria aleatório funcionando no Learn, com o que já existe hoje. O modelo Notes vira Learn.
   3. Lições sequenciais, com explicação e exercícios de alternativas e de texto.
   4. Voz do aluno (gravar, transcrever, corrigir) e trechos falados no idioma de estudo.

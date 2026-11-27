@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Perguntar ao modelo local, reutilizável pelos sites do Heimdall (Finance primeiro; Saúde, Notas e News podem usar o mesmo).
 
-Por padrão usa o modelo local, pelo LiteLLM (http://127.0.0.1:9000, chave LITELLM_MASTER_KEY do .env). Com HEIMDALL_NUVEM=1 no .env tenta
+Por padrão usa o modelo local, pelo LiteLLM (http://127.0.0.1:9000, chave LITELLM_MASTER_KEY do .env). Com STUDIO_NUVEM=1 no .env tenta
 primeiro o modelo grande da Cloudflare (heimdall_nuvem.py, pelo gateway com teto de gasto) e, se a nuvem falhar, volta ao modelo local.
 Desde 21/11/2026 saúde e finanças podem ir à nuvem (regra no CLAUDE.md). O contexto é montado pelo código de cada site, o modelo só responde
 com base nele, e os números da resposta são conferidos contra o contexto: o que não estiver lá vira aviso, para o modelo não inventar valor.
@@ -21,8 +21,8 @@ import heimdall_nuvem as nuvem
 import heimdall_pessoas as pessoas
 
 AQUI = Path(__file__).resolve().parent
-LLM_URL = os.environ.get("HEIMDALL_PERGUNTAR_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions")
-MODELO_PADRAO = os.environ.get("HEIMDALL_PERGUNTAR_MODELO", "llama-3.1-8b")
+LLM_URL = os.environ.get("STUDIO_PERGUNTAR_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions")
+MODELO_PADRAO = os.environ.get("STUDIO_PERGUNTAR_MODELO", "llama-3.1-8b")
 
 
 def _chave() -> str:

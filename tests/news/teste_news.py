@@ -189,10 +189,10 @@ FONTES = {"fontes": [
 (RAIZ / "fontes.json").write_text(json.dumps(FONTES), encoding="utf-8")
 
 os.environ.update({
-    "HEIMDALL_DB_DIR": str(RAIZ / "banco"), "HEIMDALL_NEWS_FONTES": str(RAIZ / "fontes.json"), "HEIMDALL_NEWS_RSS_TOKEN": TOKEN,
-    "HEIMDALL_NEWS_LLM_URL": f"http://127.0.0.1:{P_LLM}/v1/chat/completions", "LITELLM_MASTER_KEY": CHAVE_LLM,
-    "HEIMDALL_NEWS_RESUMOS_POR_CICLO": "6", "HEIMDALL_CLOUD_TOTP_SEGREDO": SEGREDO, "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost",
-    "HEIMDALL_NEWS_MODELO": "modelo-de-teste", "HEIMDALL_NEWS_URL": "https://news.exemplo.test", "HEIMDALL_NEWS_FUSO": "America/Sao_Paulo",
+    "STUDIO_DB_DIR": str(RAIZ / "banco"), "STUDIO_NEWS_FONTES": str(RAIZ / "fontes.json"), "STUDIO_NEWS_RSS_TOKEN": TOKEN,
+    "STUDIO_NEWS_LLM_URL": f"http://127.0.0.1:{P_LLM}/v1/chat/completions", "LITELLM_MASTER_KEY": CHAVE_LLM,
+    "STUDIO_NEWS_RESUMOS_POR_CICLO": "6", "HEIMDALL_CLOUD_TOTP_SEGREDO": SEGREDO, "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost",
+    "STUDIO_NEWS_MODELO": "modelo-de-teste", "STUDIO_NEWS_URL": "https://news.exemplo.test", "STUDIO_NEWS_FUSO": "America/Sao_Paulo",
 })
 sys.path.insert(0, str(RAIZ))
 import heimdall_lab as hc  # noqa: E402
@@ -579,15 +579,15 @@ hn.main()
 sys.stdout = antigo
 confere("--urls funciona antes da primeira subida (tabela criada na hora)", "/geral.xml" in saida.getvalue() and sql("SELECT COUNT(*) FROM noticias") == [(0,)])
 hc.PROJECT_DIR = hn.PROJECT_DIR = RAIZ
-(RAIZ / ".env").write_text("OUTRA='coisa'\nHEIMDALL_NEWS_RSS_TOKEN='antiga'\n", encoding="utf-8")
+(RAIZ / ".env").write_text("OUTRA='coisa'\nSTUDIO_NEWS_RSS_TOKEN='antiga'\n", encoding="utf-8")
 sys.argv = ["heimdall_news.py", "--token"]
 saida = io.StringIO()
 antigo, sys.stdout = sys.stdout, saida
 hn.main()
 sys.stdout = antigo
 env = (RAIZ / ".env").read_text(encoding="utf-8")
-novo = re.search(r"HEIMDALL_NEWS_RSS_TOKEN='([^']+)'", env).group(1)
-confere("--token troca a chave no .env e preserva o resto", novo not in ("antiga", TOKEN) and len(novo) >= 30 and "OUTRA='coisa'" in env and env.count("HEIMDALL_NEWS_RSS_TOKEN") == 1)
+novo = re.search(r"STUDIO_NEWS_RSS_TOKEN='([^']+)'", env).group(1)
+confere("--token troca a chave no .env e preserva o resto", novo not in ("antiga", TOKEN) and len(novo) >= 30 and "OUTRA='coisa'" in env and env.count("STUDIO_NEWS_RSS_TOKEN") == 1)
 confere("--token mostra os endereços novos e como reiniciar", f"/rss/{novo}/geral.xml" in saida.getvalue() and "./subir.sh --reiniciar" in saida.getvalue())
 confere("--token cria o .env com permissão 600", oct((RAIZ / ".env").stat().st_mode & 0o777) == "0o600")
 s, _, _ = req("GET", f"/rss/{TOKEN}/geral.xml")

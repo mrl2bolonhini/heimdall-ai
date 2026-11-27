@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Inicia o LiteLLM com a configuração certa para o interruptor da nuvem (HEIMDALL_NUVEM).
+"""Inicia o LiteLLM com a configuração certa para o interruptor da nuvem (STUDIO_NUVEM).
 
-Com HEIMDALL_NUVEM=1 (e a chave da Cloudflare no .env), os modelos do chat (HEIMDALL_NUVEM_CHAT, padrão qwen3-vl-instruct e
+Com STUDIO_NUVEM=1 (e a chave da Cloudflare no .env), os modelos do chat (STUDIO_NUVEM_CHAT, padrão qwen3-vl-instruct e
 deepseek-coder-v2:16b e conversas) passam a responder pelo gpt-oss-120b do gateway "heimdall" da Cloudflare (teto de gasto no gateway). O modelo
 local continua na lista com o nome "<modelo>-local" e é o plano de volta: se a nuvem falhar ou o limite cortar, o LiteLLM tenta o local sozinho.
-Com HEIMDALL_NUVEM diferente de 1, vale o litellm_config.yaml sem mudança nenhuma (como antes da migração).
+Com STUDIO_NUVEM diferente de 1, vale o litellm_config.yaml sem mudança nenhuma (como antes da migração).
 
 O arquivo gerado (db/litellm_config_efetivo.yaml, fora do git, permissão 600) leva a chave lida do .env, por isso nunca é copiado.
-O Conversas usa outro modelo da nuvem (Qwen3 30B, HEIMDALL_NUVEM_CONVERSAS_MODELO muda), porque o gpt-oss recusa o que o gemma local não recusa.
+O Conversas usa outro modelo da nuvem (Qwen3 30B, STUDIO_NUVEM_CONVERSAS_MODELO muda), porque o gpt-oss recusa o que o gemma local não recusa.
 O gemma-4-uncensored continua disponível, só local, para quem quiser escolher à mão.
 
     python3 heimdall_litellm.py [opções do litellm]    gera a configuração e inicia o LiteLLM com ela
@@ -25,13 +25,13 @@ ORIGINAL = AQUI / "litellm_config.yaml"
 EFETIVO = heimdall_pastas.db(AQUI) / "litellm_config_efetivo.yaml"
 PADRAO_CHAT = "qwen3-vl-instruct,deepseek-coder-v2:16b,conversas"
 # O Conversas tem modelo próprio na nuvem: o Qwen3 30B custa bem menos por token que o gpt-oss e o Mistral (confira os preços no Workers AI),
-# aceita ferramentas e não recusa tanto. Outro modelo: studio env --set HEIMDALL_NUVEM_CONVERSAS_MODELO "workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct"
+# aceita ferramentas e não recusa tanto. Outro modelo: studio env --set STUDIO_NUVEM_CONVERSAS_MODELO "workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct"
 MODELO_CONVERSAS = "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8"
-CHAVES_EXTRA = ("HEIMDALL_NUVEM_CHAT", "HEIMDALL_NUVEM_CONVERSAS_MODELO")
+CHAVES_EXTRA = ("STUDIO_NUVEM_CHAT", "STUDIO_NUVEM_CONVERSAS_MODELO")
 
 
 def _ler_extra() -> dict:
-    """HEIMDALL_NUVEM_CHAT do .env (o heimdall_nuvem só lê as chaves que ele conhece)."""
+    """STUDIO_NUVEM_CHAT do .env (o heimdall_nuvem só lê as chaves que ele conhece)."""
     out = {}
     try:
         for ln in (AQUI / ".env").read_text(encoding="utf-8").splitlines():
@@ -50,7 +50,7 @@ def _ler_extra() -> dict:
 
 
 def nomes_na_nuvem(env: dict) -> list:
-    bruto = env.get("HEIMDALL_NUVEM_CHAT") or PADRAO_CHAT
+    bruto = env.get("STUDIO_NUVEM_CHAT") or PADRAO_CHAT
     return [n.strip() for n in bruto.split(",") if n.strip()]
 
 
@@ -60,8 +60,8 @@ def config_para_nuvem(cfg: dict, env: dict) -> dict:
     novo = copy.deepcopy(cfg)
     token = env["CLOUDFLARE_API_TOKEN"]
     base = f"https://gateway.ai.cloudflare.com/v1/{env['CLOUDFLARE_ACCOUNT_ID']}/{nuvem.GATEWAY}/compat"
-    modelo_padrao = env.get("HEIMDALL_NUVEM_MODELO") or nuvem.MODELO_PADRAO
-    modelo_por_nome = {"conversas": env.get("HEIMDALL_NUVEM_CONVERSAS_MODELO") or MODELO_CONVERSAS}
+    modelo_padrao = env.get("STUDIO_NUVEM_MODELO") or nuvem.MODELO_PADRAO
+    modelo_por_nome = {"conversas": env.get("STUDIO_NUVEM_CONVERSAS_MODELO") or MODELO_CONVERSAS}
     escolhidos = set(nomes_na_nuvem(env))
     lista, voltas = [], {}
     for item in novo.get("model_list", []):

@@ -118,7 +118,7 @@ def main() -> None:
         sys.exit("O número da conta deve ter 32 caracteres (0 a 9 e a a f). Nada foi gravado.")
     nuvem.env_gravar({"CLOUDFLARE_API_TOKEN": token, "CLOUDFLARE_ACCOUNT_ID": conta})
     print("Gravado no .env (permissão 600). Reinicie para valer: ./subir.sh --reiniciar")
-    print("Para desligar só a reserva de resumos: HEIMDALL_NEWS_RESERVA=0 no .env. Para ler uma fonte com navegador: \"renderizar\": true em noticias_fontes.json.")
+    print("Para desligar só a reserva de resumos: STUDIO_NEWS_RESERVA=0 no .env. Para ler uma fonte com navegador: \"renderizar\": true em noticias_fontes.json.")
 
 
 if __name__ == "__main__":

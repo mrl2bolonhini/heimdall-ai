@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Agente local do Heimdall: ponte entre o n8n (no Docker) e o app Notas do Mac.
 
-Só usa a biblioteca padrão do Python. Escuta em 127.0.0.1:8003 (HEIMDALL_AGENTE_HOST /
-HEIMDALL_AGENTE_PORT mudam isso) e exige o cabeçalho X-Heimdall-Token igual a
-HEIMDALL_AGENTE_TOKEN (o start_heimdall.sh gera e guarda no .env).
+Só usa a biblioteca padrão do Python. Escuta em 127.0.0.1:8003 (STUDIO_AGENTE_HOST /
+STUDIO_AGENTE_PORT mudam isso) e exige o cabeçalho X-Heimdall-Token igual a
+STUDIO_AGENTE_TOKEN (o start_heimdall.sh gera e guarda no .env).
 
 Rotas:
     GET  /saude                         sem token; diz se o agente está de pé
@@ -24,7 +24,7 @@ Rotas:
                                         insere ou atualiza pela chave primária (tabelas: saude_diaria, saude_resumos, diarios, analises)
     POST /banco/consultar               {"sql": "SELECT ...", "limite": 200}  só um SELECT, em conexão somente leitura
     POST /saude/documento               corpo = o arquivo (PDF, JPG, PNG ou HEIC) de um exame, receita ou encaminhamento; cabeçalho X-Heimdall-Nome com o nome.
-                                        Aceita o X-Heimdall-Token ou o código de envio do atalho (X-Heimdall-Upload = HEIMDALL_EXAMES_TOKEN). O arquivo vai para a
+                                        Aceita o X-Heimdall-Token ou o código de envio do atalho (X-Heimdall-Upload = STUDIO_EXAMES_TOKEN). O arquivo vai para a
                                         pasta de entrada, é lido no Mac e fica pendente até você confirmar (heimdall_exames.py)
     POST /saude/relatorio-semanal       {}  monta o relatório da semana, grava na aba Avisos do Studio Health e avisa pelo Bark (texto genérico)
     POST /triagem/criar                 {"id": "origem estável", "titulo": "...", "resumo": "...", "nivel": "critico|alto|medio", "fonte": "justica"}
@@ -37,9 +37,9 @@ Rotas:
                                         Segurança e devolve {gravidade, linha, gravar...} para o n8n decidir o aviso (regras em heimdall_seguranca.py)
     GET  /backup/estado                 última cópia bem-sucedida e última tentativa
 
-Pastas privadas: notas da pasta "Privado" (e de outras listadas em HEIMDALL_NOTAS_PRIVADAS) nunca são listadas nem lidas.
+Pastas privadas: notas da pasta "Privado" (e de outras listadas em STUDIO_NOTAS_PRIVADAS) nunca são listadas nem lidas.
 Segurança: LÊ qualquer nota (menos as privadas), mas só ESCREVE em pastas cujo nome começa com "Heimdall" (as notas
-pessoais nunca são alteradas) e só grava arquivos dentro do cofre (HEIMDALL_VAULT_DIR, padrão
+pessoais nunca são alteradas) e só grava arquivos dentro do cofre (STUDIO_VAULT_DIR, padrão
 ./brain). Notas das pastas "Heimdall*" e da lixeira não entram na lista de alteradas.
 
 Teste (precisa autorizar o controle do app Notas na primeira vez):
@@ -88,51 +88,51 @@ def _carregar_env_da_voz() -> None:
         for linha in (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines():
             chave, sep, valor = linha.partition("=")
             chave = chave.strip()
-            if sep and (chave.startswith("HEIMDALL_VOZ") or chave == "HEIMDALL_ESTUDO_AUDIO") and chave not in os.environ:
+            if sep and (chave.startswith("STUDIO_VOZ") or chave == "STUDIO_ESTUDO_AUDIO") and chave not in os.environ:
                 os.environ[chave] = valor.strip().strip("'\"")
     except OSError:
         pass
 
 
 _carregar_env_da_voz()
-HOST = os.environ.get("HEIMDALL_AGENTE_HOST", "127.0.0.1")
-PORT = int(os.environ.get("HEIMDALL_AGENTE_PORT", "8003"))
-TOKEN = os.environ.get("HEIMDALL_AGENTE_TOKEN", "")
-VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(heimdall_pastas.brain(PROJECT_DIR)))).expanduser()
+HOST = os.environ.get("STUDIO_AGENTE_HOST", "127.0.0.1")
+PORT = int(os.environ.get("STUDIO_AGENTE_PORT", "8003"))
+TOKEN = os.environ.get("STUDIO_AGENTE_TOKEN", "")
+VAULT = Path(os.environ.get("STUDIO_VAULT_DIR", str(heimdall_pastas.brain(PROJECT_DIR)))).expanduser()
 PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continuam aceitos e ignorados
 # Pastas do app Notas que o Heimdall cria e onde só ele escreve. Nunca são lidas como fonte (evita laço) e as
-# suas notas pessoais nunca são alteradas. Para mudar, use no .env: HEIMDALL_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro"
-PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("HEIMDALL_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Second Brain,Cérebro").split(",") if p.strip()]
+# suas notas pessoais nunca são alteradas. Para mudar, use no .env: STUDIO_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro"
+PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("STUDIO_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Second Brain,Cérebro").split(",") if p.strip()]
 for _p in ("Saúde", "Segurança", "GitOps", "Second Brain", "Cérebro"):  # sempre permitidas, mesmo com o .env personalizado ("Cérebro" é o nome antigo)
     if _p not in PASTAS_PROPRIAS:
         PASTAS_PROPRIAS.append(_p)
 # No app Notas, tudo que o Heimdall grava fica dentro de uma pasta-raiz: Heimdall-ai/Digest, Heimdall-ai/Saúde,
 # Heimdall-ai/Estudos/<tema> etc. Os fluxos continuam mandando só o nome da pasta; o agente monta o caminho.
-# Para voltar às pastas soltas: HEIMDALL_NOTAS_RAIZ="" no .env.
-RAIZ_NOTAS = os.environ.get("HEIMDALL_NOTAS_RAIZ", "Heimdall-ai").strip()
+# Para voltar às pastas soltas: STUDIO_NOTAS_RAIZ="" no .env.
+RAIZ_NOTAS = os.environ.get("STUDIO_NOTAS_RAIZ", "Heimdall-ai").strip()
 # Subpasta do cofre de cada pasta (mantém os nomes antigos para não separar o que já foi gravado).
 PASTA_DO_COFRE = {"Monitor de Privacidade": "heimdall-privacidade", "Digest": "heimdall-digest", "Cérebro": "heimdall-cerebro", "Second Brain": "heimdall-cerebro"}
 
 
 # Temas de estudo: cada subpasta de knowledge/ vira uma pasta no app Notas com o nome da tag do tema (o mesmo nome que
 # o ingest_docs.py usa: minúsculas, sem acentos, hífens). Pastas novas de conhecimento ganham a pasta de notas sozinhas.
-KNOWLEDGE = Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
+KNOWLEDGE = Path(os.environ.get("STUDIO_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
 # Voz do áudio dos estudos. Vazio (padrão) = a melhor voz em português instalada (Premium, depois Aprimorada, depois a padrão).
-# Para fixar uma: HEIMDALL_VOZ="Luciana (Enhanced)" ((Aprimorada) vale igual). Os nomes saem de: say -v '?' | grep pt_
-VOZ = os.environ.get("HEIMDALL_VOZ", "").strip()
-# Velocidade na escala de porcentagem da fala do macOS (0 a 100). 65 ≈ 350 palavras por minuto. Para fixar palavras por minuto: HEIMDALL_VOZ_PPM=300
+# Para fixar uma: STUDIO_VOZ="Luciana (Enhanced)" ((Aprimorada) vale igual). Os nomes saem de: say -v '?' | grep pt_
+VOZ = os.environ.get("STUDIO_VOZ", "").strip()
+# Velocidade na escala de porcentagem da fala do macOS (0 a 100). 65 ≈ 350 palavras por minuto. Para fixar palavras por minuto: STUDIO_VOZ_PPM=300
 try:
-    VELOCIDADE = max(0.0, min(100.0, float(os.environ.get("HEIMDALL_VOZ_VELOCIDADE", "65"))))
+    VELOCIDADE = max(0.0, min(100.0, float(os.environ.get("STUDIO_VOZ_VELOCIDADE", "65"))))
 except ValueError:
     VELOCIDADE = 65.0
 try:
-    PPM = int(os.environ.get("HEIMDALL_VOZ_PPM", "0"))
+    PPM = int(os.environ.get("STUDIO_VOZ_PPM", "0"))
 except ValueError:
     PPM = 0
-AUDIO_ATIVO = os.environ.get("HEIMDALL_ESTUDO_AUDIO", "1") != "0"
+AUDIO_ATIVO = os.environ.get("STUDIO_ESTUDO_AUDIO", "1") != "0"
 # Atalho do app Atalhos que gera o áudio (permite vozes que o say não enxerga, como a Siri). O atalho recebe o texto como entrada
 # e devolve o áudio ("Criar áudio falado a partir de texto"); a velocidade e a voz ficam no próprio atalho. Vazio = usa o say.
-ATALHO = os.environ.get("HEIMDALL_VOZ_ATALHO", "").strip()
+ATALHO = os.environ.get("STUDIO_VOZ_ATALHO", "").strip()
 
 
 def tema_slug(texto: str) -> str:
@@ -159,18 +159,18 @@ IGNORAR_PASTAS = {
     "recently deleted", "apagadas recentemente", "excluídas recentemente", "notas excluídas",
     "excluidas recentemente", "notas apagadas",
 }
-IGNORAR_PASTAS |= {p.strip().lower() for p in os.environ.get("HEIMDALL_NOTAS_IGNORAR", "").split(",") if p.strip()}
+IGNORAR_PASTAS |= {p.strip().lower() for p in os.environ.get("STUDIO_NOTAS_IGNORAR", "").split(",") if p.strip()}
 # Pastas do app Notas que NUNCA são lidas nem analisadas (notas muito pessoais). "Privado" sempre vale; acrescente
-# outras no .env com HEIMDALL_NOTAS_PRIVADAS="Privado,Diário". As subpastas também ficam protegidas.
+# outras no .env com STUDIO_NOTAS_PRIVADAS="Privado,Diário". As subpastas também ficam protegidas.
 PRIVADAS: list[str] = []
-for _nome in ["Privado"] + os.environ.get("HEIMDALL_NOTAS_PRIVADAS", "").split(","):
+for _nome in ["Privado"] + os.environ.get("STUDIO_NOTAS_PRIVADAS", "").split(","):
     _nome = _nome.strip()
     if _nome and _nome.lower() not in [x.lower() for x in PRIVADAS] and re.fullmatch(r'[^"\\\n\r\t]{1,80}', _nome):
         PRIVADAS.append(_nome)
 MAX_CORPO = 1_000_000
 MAX_CORPO_SAUDE = 64 * 1024 * 1024   # exportações com ECG (milhares de leituras por gravação) são grandes
 MAX_CORPO_DOC = exames.MAX_BYTES + 4096   # um exame, receita ou encaminhamento enviado do iPhone
-TOKEN_UPLOAD = os.environ.get("HEIMDALL_EXAMES_TOKEN", "")   # só serve para /saude/documento
+TOKEN_UPLOAD = os.environ.get("STUDIO_EXAMES_TOKEN", "")   # só serve para /saude/documento
 MAX_TEXTO_NOTA = 20_000
 OSASCRIPT_TIMEOUT = 120
 _lock = threading.Lock()  # o app Notas atende um pedido de cada vez
@@ -361,9 +361,9 @@ tell application "Notes" to return (count of notes) as string
 # Por isso o Heimdall abre cada um escondido e em segundo plano (open -g -j), e fecha de novo depois de alguns segundos
 # sem uso, mas SÓ se foi ele que abriu e se você não estiver com o app na frente. Se você já deixou o app aberto, nada muda.
 APPS_ALVO = ("Notes", "Reminders", "Calendar")
-SOSSEGO_APP = 20          # segundos sem uso até fechar um app que o Heimdall abriu (só se HEIMDALL_APPS_FECHAR=1)
+SOSSEGO_APP = 20          # segundos sem uso até fechar um app que o Heimdall abriu (só se STUDIO_APPS_FECHAR=1)
 # Por padrão o Heimdall NÃO fecha o app depois de usar: fechar e abrir de novo a cada ciclo é justamente o que faz o app aparecer toda hora.
-FECHAR_APPS = os.environ.get("HEIMDALL_APPS_FECHAR", "0").strip() == "1"
+FECHAR_APPS = os.environ.get("STUDIO_APPS_FECHAR", "0").strip() == "1"
 _apps_lock = threading.RLock()
 _apps_nossos: set[str] = set()                   # apps abertos pelo Heimdall
 _apps_timers: dict[str, threading.Timer] = {}    # fechamento agendado de cada um
@@ -544,12 +544,12 @@ def ids_privados() -> set:
 # O fluxo do Second Brain pergunta a cada 5 min quais notas mudaram, e cada pergunta abria o app Notas. Agora o agente primeiro olha, sem abrir
 # o Notas, se o banco de dados das notas mudou desde a última verificação (data do arquivo). Só se mudou, ou se o Heimdall acabou de gravar
 # uma nota, ele consulta o app. Se o macOS não deixar ver o arquivo (falta Acesso Total ao Disco), o agente só consulta o Notas depois de uma
-# gravação do Heimdall e, se HEIMDALL_NOTAS_VARREDURA_MIN estiver ligado, a cada tantos minutos (padrão 0: desligado).
+# gravação do Heimdall e, se STUDIO_NOTAS_VARREDURA_MIN estiver ligado, a cada tantos minutos (padrão 0: desligado).
 _gravacao_nova = threading.Event()
 _verificado_mtime = 0.0
 _ultima_varredura = 0.0
 _aviso_sem_acesso = [False]
-VARREDURA_MIN = int(os.environ.get("HEIMDALL_NOTAS_VARREDURA_MIN", "0") or 0)
+VARREDURA_MIN = int(os.environ.get("STUDIO_NOTAS_VARREDURA_MIN", "0") or 0)
 _ARQUIVOS_NOTAS = [Path.home() / "Library/Group Containers/group.com.apple.notes" / n for n in ("NoteStore.sqlite", "NoteStore.sqlite-wal")]
 
 
@@ -1246,7 +1246,7 @@ _analise_saude_rodando = threading.Lock()
 
 
 def _analise_de_saude_em_segundo_plano() -> None:
-    """Depois que chegam dados de saúde, roda o analista (modelo + PubMed) numa thread. Ele mesmo respeita o intervalo mínimo e o interruptor HEIMDALL_SAUDE_ANALISTA=0."""
+    """Depois que chegam dados de saúde, roda o analista (modelo + PubMed) numa thread. Ele mesmo respeita o intervalo mínimo e o interruptor STUDIO_SAUDE_ANALISTA=0."""
     def tarefa():
         if not _analise_saude_rodando.acquire(blocking=False):
             return
@@ -1391,7 +1391,7 @@ class Handler(BaseHTTPRequestHandler):
                 novo = avisos.do_servico("saude").gravar(rel["titulo"], rel["markdown"])   # o relatório fica na aba Avisos do Studio Health, não no Notas
                 r = {"ok": True, "titulo": rel["titulo"], "aviso": novo, "bark": bark.enviar_bark(avisos.texto_bark("saude"))}
                 if not r["bark"]:
-                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} relatório semanal gravado, mas o Bark não confirmou (HEIMDALL_BARK_KEY?)\n")
+                    sys.stderr.write(f"{time.strftime('%H:%M:%S')} relatório semanal gravado, mas o Bark não confirmou (STUDIO_BARK_KEY?)\n")
                 return self._json(200, r)
             if u.path == "/saude/hae":
                 r = saude.processar_hae(dado)
@@ -1542,7 +1542,7 @@ def main() -> int:
     args = ap.parse_args()
     if args.voz and ATALHO:
         import tempfile as _t
-        print(f"Voz pelo atalho '{ATALHO}' (HEIMDALL_VOZ_ATALHO). Gerando uma amostra...")
+        print(f"Voz pelo atalho '{ATALHO}' (STUDIO_VOZ_ATALHO). Gerando uma amostra...")
         with _t.TemporaryDirectory() as d:
             t = Path(d) / "amostra.txt"
             t.write_text(dicionario_voz.aplicar("Esta é uma amostra da voz do Heimdall, para os áudios de estudo."), encoding="utf-8")
@@ -1560,20 +1560,20 @@ def main() -> int:
             print("Nenhuma voz utilizável. Baixe uma em Ajustes do Sistema > Acessibilidade > Conteúdo falado > Vozes do sistema > Gerenciar vozes (procure Luciana ou Felipe, versão Aprimorada ou Premium).")
             return 1
         ppm = palavras_por_minuto()
-        print(f"Voz escolhida: {voz}. Velocidade: {ppm} palavras por minuto (HEIMDALL_VOZ_VELOCIDADE={VELOCIDADE:g}).")
+        print(f"Voz escolhida: {voz}. Velocidade: {ppm} palavras por minuto (STUDIO_VOZ_VELOCIDADE={VELOCIDADE:g}).")
         subprocess.run(["say", "-v", voz, "-r", str(ppm), "Esta é uma amostra da voz e da velocidade usadas nos áudios de estudo."])
         return 0
     if args.teste:
         return teste()
     if not TOKEN or len(TOKEN) < 16:
-        print("Erro: defina HEIMDALL_AGENTE_TOKEN (16+ caracteres) no .env.", file=sys.stderr)
+        print("Erro: defina STUDIO_AGENTE_TOKEN (16+ caracteres) no .env.", file=sys.stderr)
         return 1
     VAULT.mkdir(parents=True, exist_ok=True)
     banco.iniciar()
     exames.preparar_pasta()
     threading.Thread(target=eventkit.verificar_na_partida, daemon=True).start()   # pede as permissões de Lembretes e Calendário e registra no log
     threading.Thread(target=_vigiar_documentos, daemon=True).start()
-    threading.Thread(target=continuidade.vigiar, daemon=True).start()   # cópia cifrada dos bancos para o R2, só com HEIMDALL_CONTINUIDADE=1
+    threading.Thread(target=continuidade.vigiar, daemon=True).start()   # cópia cifrada dos bancos para o R2, só com STUDIO_CONTINUIDADE=1
     srv = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Agente do Heimdall em http://{HOST}:{PORT} (cofre: {VAULT})", flush=True)
     try:

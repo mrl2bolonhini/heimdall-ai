@@ -12,18 +12,18 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-RAIZ = Path(os.environ.get("HEIMDALL_RAIZ") or "/app")   # na imagem o código fica em /app
+RAIZ = Path(os.environ.get("STUDIO_RAIZ") or "/app")   # na imagem o código fica em /app
 sys.path.insert(0, str(RAIZ))
 
 # (módulo, variável da porta, porta): as mesmas portas do start_heimdall.sh
 SERVICOS = [
-    ("heimdall_finance.py", "HEIMDALL_FINANCE_PORT", 8016),
-    ("heimdall_painel_saude.py", "HEIMDALL_SAUDE_PAINEL_PORT", 8013),
-    ("heimdall_notas.py", "HEIMDALL_NOTAS_PORT", 8011),
-    ("heimdall_news.py", "HEIMDALL_NEWS_PORT", 8012),
-    ("heimdall_learn.py", "HEIMDALL_LEARN_PORT", 8019),
-    ("heimdall_jogos.py", "HEIMDALL_JOGOS_PORT", 8014),
-    ("heimdall_account.py", "HEIMDALL_ACCOUNT_PORT", 8018),
+    ("heimdall_finance.py", "STUDIO_FINANCE_PORT", 8016),
+    ("heimdall_painel_saude.py", "STUDIO_SAUDE_PAINEL_PORT", 8013),
+    ("heimdall_notas.py", "STUDIO_NOTAS_PORT", 8011),
+    ("heimdall_news.py", "STUDIO_NEWS_PORT", 8012),
+    ("heimdall_learn.py", "STUDIO_LEARN_PORT", 8019),
+    ("heimdall_jogos.py", "STUDIO_JOGOS_PORT", 8014),
+    ("heimdall_account.py", "STUDIO_ACCOUNT_PORT", 8018),
 ]
 estado = {"pronto": False, "quando": "", "erro": ""}
 FILHOS = {}   # processos dos sites, para quem precisar encerrá-los (testes)
@@ -44,7 +44,7 @@ class Saude(BaseHTTPRequestHandler):
 
 def _servir_saude() -> None:
     try:
-        ThreadingHTTPServer(("0.0.0.0", int(os.environ.get("HEIMDALL_SAUDE_PORTA", "8080"))), Saude).serve_forever()
+        ThreadingHTTPServer(("0.0.0.0", int(os.environ.get("STUDIO_SAUDE_PORTA", "8080"))), Saude).serve_forever()
     except OSError:   # porta já ocupada (outra instância do /health): segue sem ele
         pass
 

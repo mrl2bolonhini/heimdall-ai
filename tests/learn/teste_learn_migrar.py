@@ -18,10 +18,10 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 TMP = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
-os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
-os.environ["HEIMDALL_VAULT_DIR"] = str(TMP / "brain")
-os.environ["HEIMDALL_AVISOS_MAC"] = "0"
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
+os.environ["STUDIO_VAULT_DIR"] = str(TMP / "brain")
+os.environ["STUDIO_AVISOS_MAC"] = "0"
 (TMP / "knowledge").mkdir()
 
 import heimdall_lab as nuvem  # noqa: E402
@@ -154,10 +154,10 @@ v = sqlite3.connect(arq)
 v.execute("CREATE TABLE estudos (id INTEGER PRIMARY KEY AUTOINCREMENT, pasta TEXT NOT NULL, documento TEXT NOT NULL, trecho_idx INTEGER NOT NULL, trecho TEXT NOT NULL, pergunta TEXT NOT NULL DEFAULT '', resposta TEXT NOT NULL DEFAULT '', correcao TEXT NOT NULL DEFAULT '', sugestoes TEXT NOT NULL DEFAULT '', audio TEXT NOT NULL DEFAULT '', estado TEXT NOT NULL DEFAULT 'sorteado', erro TEXT NOT NULL DEFAULT '', criado TEXT NOT NULL)")
 v.commit()
 v.close()
-os.environ["HEIMDALL_DB_DIR"] = str(arq.parent)
+os.environ["STUDIO_DB_DIR"] = str(arq.parent)
 cols = {x[1] for x in d.conectar().execute("PRAGMA table_info(estudos)")}
 confere("banco do Learn já existente ganha as colunas novas sem perder nada", {"titulo", "origem", "chave"} <= cols)
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
 
 # tela
 srv = ThreadingHTTPServer(("127.0.0.1", 0), site.Learn)

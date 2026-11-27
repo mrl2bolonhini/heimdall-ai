@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJECT_DIR="${HEIMDALL_PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+PROJECT_DIR="${STUDIO_PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 cd "$PROJECT_DIR" || exit 1
 
 VENV_PYTHON="$PROJECT_DIR/venv/bin/python"
@@ -12,8 +12,8 @@ echo "=== [Heimdall System Boot] ==="
 
 # --- Chave mestra do LiteLLM (guardada em .env, nunca no YAML) ---
 if [ -f .env ]; then
+    [ -x venv/bin/python ] && venv/bin/python -c "import heimdall_config as c; c.renomear_antigas()" 2>/dev/null
     set -a; source .env; set +a
-    source "$PROJECT_DIR/scripts/studio_env.sh"
 fi
 if [ -z "$LITELLM_MASTER_KEY" ]; then
     LITELLM_MASTER_KEY="sk-$(openssl rand -hex 24)"

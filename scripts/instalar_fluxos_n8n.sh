@@ -2,7 +2,7 @@
 # Instala no n8n os fluxos da pasta flows/basic/ (resumo da AWS, pergunta de estudo, vigia de
 # versões, alerta de saúde do Mac e relatório de disponibilidade).
 #
-# Uso, na pasta do projeto, com o n8n no ar (start_heimdall.sh com --n8n ou HEIMDALL_N8N=1):
+# Uso, na pasta do projeto, com o n8n no ar (start_heimdall.sh com --n8n ou STUDIO_N8N=1):
 #     bash scripts/instalar_fluxos_n8n.sh
 #
 # O que ele faz:
@@ -13,10 +13,10 @@
 # As chaves não são mostradas na tela. Rodar de novo atualiza os fluxos (mesmos identificadores).
 #
 # Opções no .env (todas opcionais):
-#   HEIMDALL_BARK_KEY      chave do Bark (se faltar, o script pergunta)
-#   HEIMDALL_FLOW_MODEL    modelo do LiteLLM usado nos resumos (padrão: qwen3-vl-instruct)
-#   HEIMDALL_KUMA_SLUG     nome (slug) da página de status do Uptime Kuma (padrão: heimdall)
-#   HEIMDALL_ALERT_RAM / HEIMDALL_ALERT_MEM_FREE / HEIMDALL_ALERT_DISK / HEIMDALL_ALERT_DISK_FREE
+#   STUDIO_BARK_KEY      chave do Bark (se faltar, o script pergunta)
+#   STUDIO_FLOW_MODEL    modelo do LiteLLM usado nos resumos (padrão: qwen3-vl-instruct)
+#   STUDIO_KUMA_SLUG     nome (slug) da página de status do Uptime Kuma (padrão: heimdall)
+#   STUDIO_ALERT_RAM / STUDIO_ALERT_MEM_FREE / STUDIO_ALERT_DISK / STUDIO_ALERT_DISK_FREE
 #                          limites do alerta do Mac: RAM %, memória livre mínima % (avisa abaixo dela), disco %, livre em GB (95/30/90/20)
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -37,7 +37,7 @@ docker ps --format '{{.Names}}' | grep -qx n8n || fail "o contêiner do n8n não
 [ -n "${LITELLM_MASTER_KEY:-}" ] || fail "LITELLM_MASTER_KEY não está no .env (rode o start_heimdall.sh uma vez para gerá-la)."
 
 # --- Chave do Bark (aceita a chave pura ou a URL completa) ---
-BARK_KEY="${HEIMDALL_BARK_KEY:-}"
+BARK_KEY="${STUDIO_BARK_KEY:-}"
 if [ -z "$BARK_KEY" ]; then
     echo "Cole a chave do Bark (ou a URL completa do Bark). Nada aparece na tela enquanto você cola."
     read -r -s -p "Chave do Bark: " BARK_KEY
@@ -52,21 +52,21 @@ if [ "${ASK_SAVE:-0}" = "1" ]; then
     read -r -p "Guardar a chave no .env para as próximas vezes? [s/N] " ANS
     case "$ANS" in
         s|S|sim|SIM)
-            printf "\nHEIMDALL_BARK_KEY='%s'\n" "$BARK_KEY" >> .env
+            printf "\nSTUDIO_BARK_KEY='%s'\n" "$BARK_KEY" >> .env
             chmod 600 .env
             echo "Chave gravada no .env." ;;
     esac
 fi
 
 # --- Parâmetros com valores padrão e validação ---
-MODELO="${HEIMDALL_FLOW_MODEL:-qwen3-vl-instruct}"
-SLUG="${HEIMDALL_KUMA_SLUG:-heimdall}"
-A_RAM="${HEIMDALL_ALERT_RAM:-95}"
-A_MEMLIVRE="${HEIMDALL_ALERT_MEM_FREE:-30}"
-A_DISCO="${HEIMDALL_ALERT_DISK:-90}"
-A_LIVRE="${HEIMDALL_ALERT_DISK_FREE:-20}"
-[[ "$MODELO" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "HEIMDALL_FLOW_MODEL tem caracteres inválidos."
-[[ "$SLUG" =~ ^[A-Za-z0-9_-]+$ ]] || fail "HEIMDALL_KUMA_SLUG tem caracteres inválidos."
+MODELO="${STUDIO_FLOW_MODEL:-qwen3-vl-instruct}"
+SLUG="${STUDIO_KUMA_SLUG:-heimdall}"
+A_RAM="${STUDIO_ALERT_RAM:-95}"
+A_MEMLIVRE="${STUDIO_ALERT_MEM_FREE:-30}"
+A_DISCO="${STUDIO_ALERT_DISK:-90}"
+A_LIVRE="${STUDIO_ALERT_DISK_FREE:-20}"
+[[ "$MODELO" =~ ^[A-Za-z0-9._:/-]+$ ]] || fail "STUDIO_FLOW_MODEL tem caracteres inválidos."
+[[ "$SLUG" =~ ^[A-Za-z0-9_-]+$ ]] || fail "STUDIO_KUMA_SLUG tem caracteres inválidos."
 for v in "$A_RAM" "$A_MEMLIVRE" "$A_DISCO" "$A_LIVRE"; do
     [[ "$v" =~ ^[0-9]+$ ]] || fail "os limites do alerta devem ser números inteiros."
 done
@@ -84,7 +84,7 @@ cleanup() {
 trap cleanup EXIT
 
 # --- Aplica as chaves e parâmetros (por variáveis de ambiente, fora da lista de processos) ---
-SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_AGENTE="${HEIMDALL_AGENTE_TOKEN:-}" SUBS_MODELO="$MODELO" SUBS_SLUG="$SLUG" \
+SUBS_LITELLM_KEY="$LITELLM_MASTER_KEY" SUBS_BARK_KEY="$BARK_KEY" SUBS_AGENTE="${STUDIO_AGENTE_TOKEN:-}" SUBS_MODELO="$MODELO" SUBS_SLUG="$SLUG" \
 SUBS_RAM="$A_RAM" SUBS_MEMLIVRE="$A_MEMLIVRE" SUBS_DISCO="$A_DISCO" SUBS_LIVRE="$A_LIVRE" \
 "$PY" - "$PROJECT_DIR/flows/basic" "$TMP" <<'PYEOF' || fail "não consegui preparar os fluxos."
 import json, os, pathlib, re, sys

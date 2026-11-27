@@ -105,7 +105,7 @@ confere("Kuma: acha o monitor pelo nome do serviço, sem acento nem parênteses"
 srv.shutdown()
 mons, erro = hku.monitores()
 confere("Kuma fora do ar: devolve lista vazia e o motivo", mons == [] and "Kuma" in erro, erro)
-os.environ.pop("HEIMDALL_KUMA_USUARIO", None)
+os.environ.pop("STUDIO_KUMA_USUARIO", None)
 # Cliente socketio de mentira: registra o que foi chamado e dispara (ou não) o autoLogin ao conectar.
 import types
 _chamadas, _cfg = [], {"auto": False, "login_ok": True}
@@ -131,23 +131,23 @@ class _Cli:
 
 
 sys.modules["socketio"] = types.SimpleNamespace(Client=_Cli)
-os.environ.pop("HEIMDALL_KUMA_USUARIO", None)
-os.environ.pop("HEIMDALL_KUMA_SENHA", None)
+os.environ.pop("STUDIO_KUMA_USUARIO", None)
+os.environ.pop("STUDIO_KUMA_SENHA", None)
 _cfg["auto"] = False
 r = hku.pausar_ou_retomar(7, True)
-confere("pausar sem usuário e senha e com login ligado no Kuma explica o que fazer", "HEIMDALL_KUMA_USUARIO" in r and "Disable Auth" in r and not _chamadas, r)
+confere("pausar sem usuário e senha e com login ligado no Kuma explica o que fazer", "STUDIO_KUMA_USUARIO" in r and "Disable Auth" in r and not _chamadas, r)
 _cfg["auto"] = True
 _chamadas.clear()
 confere("pausar com o login do Kuma desligado funciona sem senha (autoLogin) e não tenta logar", hku.pausar_ou_retomar(7, True) == "" and _chamadas == [("pauseMonitor", 7)], str(_chamadas))
 _chamadas.clear()
 confere("retomar também", hku.pausar_ou_retomar(7, False) == "" and _chamadas == [("resumeMonitor", 7)])
-os.environ["HEIMDALL_KUMA_USUARIO"], os.environ["HEIMDALL_KUMA_SENHA"] = "u", "s"
+os.environ["STUDIO_KUMA_USUARIO"], os.environ["STUDIO_KUMA_SENHA"] = "u", "s"
 _chamadas.clear()
 confere("com usuário e senha entra com eles e depois pausa", hku.pausar_ou_retomar(7, True) == "" and [c[0] for c in _chamadas] == ["login", "pauseMonitor"])
 _cfg["login_ok"] = False
 confere("senha recusada pelo Kuma é dita", "recusou" in hku.pausar_ou_retomar(7, True))
-os.environ.pop("HEIMDALL_KUMA_USUARIO", None)
-os.environ.pop("HEIMDALL_KUMA_SENHA", None)
+os.environ.pop("STUDIO_KUMA_USUARIO", None)
+os.environ.pop("STUDIO_KUMA_SENHA", None)
 
 print("\nTUDO OK" if not falhas else f"\n{falhas} FALHA(S)")
 sys.exit(1 if falhas else 0)

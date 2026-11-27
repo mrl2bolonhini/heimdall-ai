@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Modelos grandes na nuvem (gpt-oss-120b no Workers AI) pelo gateway de IA "heimdall" da Cloudflare.
 
-Interruptor: HEIMDALL_NUVEM=1 no .env liga; qualquer outro valor (ou ausente) desliga e tudo volta aos modelos locais, sem reiniciar
+Interruptor: STUDIO_NUVEM=1 no .env liga; qualquer outro valor (ou ausente) desliga e tudo volta aos modelos locais, sem reiniciar
 (o .env é lido a cada chamada). Se a nuvem falhar, quem chama cai para o modelo local (ver heimdall_perguntar.chamar_local).
 
 O gateway exige autenticação, não guarda o conteúdo das conversas e corta em US$ 10 por mês. Usa a mesma chave do News
@@ -19,10 +19,10 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 GATEWAY = "heimdall"
 MODELO_PADRAO = "workers-ai/@cf/openai/gpt-oss-120b"
-# Perguntar dos sites: modelo mais leve e barato, sem raciocínio (o /no_think vai no prompt). HEIMDALL_NUVEM_PERGUNTAR_MODELO troca.
+# Perguntar dos sites: modelo mais leve e barato, sem raciocínio (o /no_think vai no prompt). STUDIO_NUVEM_PERGUNTAR_MODELO troca.
 MODELO_PERGUNTAR = "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8"
 USER_AGENT = "heimdall-ai/1.0"  # sem isto o endereço do gateway recusa o Python padrão (erro 1010)
-CHAVES = ("HEIMDALL_NUVEM", "HEIMDALL_NUVEM_MODELO", "HEIMDALL_NUVEM_PERGUNTAR_MODELO", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+CHAVES = ("STUDIO_NUVEM", "STUDIO_NUVEM_MODELO", "STUDIO_NUVEM_PERGUNTAR_MODELO", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
 ultimo_erro = ""
 
 
@@ -47,7 +47,7 @@ def _env() -> dict:
 
 def ativo(env: dict = None) -> bool:
     e = env if env is not None else _env()
-    return e.get("HEIMDALL_NUVEM") == "1" and bool(e.get("CLOUDFLARE_API_TOKEN")) and bool(e.get("CLOUDFLARE_ACCOUNT_ID"))
+    return e.get("STUDIO_NUVEM") == "1" and bool(e.get("CLOUDFLARE_API_TOKEN")) and bool(e.get("CLOUDFLARE_ACCOUNT_ID"))
 
 
 def _abrir(req, timeout):
@@ -56,7 +56,7 @@ def _abrir(req, timeout):
 
 def modelo_perguntar(env: dict = None) -> str:
     e = env if env is not None else _env()
-    return e.get("HEIMDALL_NUVEM_PERGUNTAR_MODELO") or MODELO_PERGUNTAR
+    return e.get("STUDIO_NUVEM_PERGUNTAR_MODELO") or MODELO_PERGUNTAR
 
 
 def chat(sistema: str, usuario: str, max_tokens: int = 700, timeout: int = 120, env: dict = None, abrir=None, forcar: bool = False, modelo: str = "", folga: int = 1000) -> str:
@@ -69,7 +69,7 @@ def chat(sistema: str, usuario: str, max_tokens: int = 700, timeout: int = 120, 
     url = f"https://gateway.ai.cloudflare.com/v1/{e['CLOUDFLARE_ACCOUNT_ID']}/{GATEWAY}/compat/chat/completions"
     token = e["CLOUDFLARE_API_TOKEN"]
     # o gpt-oss gasta parte dos tokens raciocinando antes de responder: dá folga além do que o chamador pediu (modelo sem raciocínio usa folga menor)
-    corpo = {"model": modelo or e.get("HEIMDALL_NUVEM_MODELO") or MODELO_PADRAO, "temperature": 0.2, "max_tokens": int(max_tokens) + int(folga),
+    corpo = {"model": modelo or e.get("STUDIO_NUVEM_MODELO") or MODELO_PADRAO, "temperature": 0.2, "max_tokens": int(max_tokens) + int(folga),
              "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": usuario}]}
     req = urllib.request.Request(url, data=json.dumps(corpo).encode("utf-8"), method="POST", headers={
         "Authorization": "Bearer " + token, "cf-aig-authorization": "Bearer " + token,
@@ -93,14 +93,14 @@ def chat(sistema: str, usuario: str, max_tokens: int = 700, timeout: int = 120, 
 def main() -> None:
     e = _env()
     if not ativo(e):
-        print("Nuvem DESLIGADA (HEIMDALL_NUVEM não é 1, ou falta a chave da Cloudflare). Os modelos locais seguem em uso.")
-        print("Para ligar: studio env --set HEIMDALL_NUVEM 1")
+        print("Nuvem DESLIGADA (STUDIO_NUVEM não é 1, ou falta a chave da Cloudflare). Os modelos locais seguem em uso.")
+        print("Para ligar: studio env --set STUDIO_NUVEM 1")
         return
-    print("Nuvem LIGADA. Modelo:", e.get("HEIMDALL_NUVEM_MODELO") or MODELO_PADRAO)
+    print("Nuvem LIGADA. Modelo:", e.get("STUDIO_NUVEM_MODELO") or MODELO_PADRAO)
     try:
         print("Teste:", chat("Responda em português, em uma frase curta.", "Diga que está funcionando.", max_tokens=60))
     except RuntimeError as ex:
-        sys.exit(f"Teste falhou ({ex}). Se estava ligada, os apps usam o modelo local. Para desligar: studio env --set HEIMDALL_NUVEM 0")
+        sys.exit(f"Teste falhou ({ex}). Se estava ligada, os apps usam o modelo local. Para desligar: studio env --set STUDIO_NUVEM 0")
 
 
 if __name__ == "__main__":

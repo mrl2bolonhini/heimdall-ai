@@ -10,8 +10,8 @@ import tempfile
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
-os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 (TMP / "knowledge" / "aws").mkdir(parents=True)
 (TMP / "knowledge" / "aws" / "guia.pdf").write_bytes(b"%PDF-1.4 x")
 (TMP / "knowledge" / "esoterismo" / "tarot").mkdir(parents=True)
@@ -101,7 +101,7 @@ for nome in ("virus.exe", "../fuga.pdf", "sem_extensao", ".oculto.pdf", "a" * 20
     else:
         confere(f"arquivo recusado: {nome[:20]}", r_ is not None)
 confere("arquivo vazio recusado", erro(d.importar_documento, "ingles-basico", "vazio.pdf", b"") is not None)
-os.environ["HEIMDALL_LEARN_MAX_MB"] = "1"
+os.environ["STUDIO_LEARN_MAX_MB"] = "1"
 confere("arquivo acima do limite recusado", erro(d.importar_documento, "ingles-basico", "grande.pdf", b"x" * (1024 * 1024 + 1)) is not None)
 confere("pasta não cadastrada recusa importação", erro(d.importar_documento, "aws/sub", "a.pdf", b"x") is not None and erro(d.importar_documento, "", "a.pdf", b"x") is not None)
 

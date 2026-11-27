@@ -11,9 +11,9 @@ import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
-os.environ["HEIMDALL_DB_DIR"] = tempfile.mkdtemp()
-os.environ["HEIMDALL_EXAMES_DIR"] = tempfile.mkdtemp()
-os.environ["HEIMDALL_EXAMES_LLM"] = "0"
+os.environ["STUDIO_DB_DIR"] = tempfile.mkdtemp()
+os.environ["STUDIO_EXAMES_DIR"] = tempfile.mkdtemp()
+os.environ["STUDIO_EXAMES_LLM"] = "0"
 sys.path.insert(0, str(RAIZ))
 import heimdall_agenda as ag  # noqa: E402
 import heimdall_banco as banco  # noqa: E402
@@ -133,7 +133,7 @@ ag.enviar = orig
 # --- modo genérico, para quem não quer detalhes na nuvem
 ex.DETALHES_NA_AGENDA = False
 gen = ex._eventos_pendentes(hoje)
-confere("com HEIMDALL_AGENDA_DETALHES=0 o título é genérico e sem local",
+confere("com STUDIO_AGENDA_DETALHES=0 o título é genérico e sem local",
         all("cardio" not in i["dado"]["titulo"].lower() and "Medicamento" not in i["dado"]["titulo"] and not i["dado"].get("local") for i in gen) and gen)
 ex.DETALHES_NA_AGENDA = True
 

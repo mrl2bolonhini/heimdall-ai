@@ -123,7 +123,7 @@ python3 tests/agent/teste_app_mac.py                  # confere o app de barra d
 bash tests/core/teste_silenciar_docker.sh            # script que impede o Docker de abrir o painel ao iniciar (pasta falsa)
 node cloudflare/teste_caixa.mjs           # Worker da caixa de correio (KV e R2 falsos)
 python3 tests/cloudflare/teste_nuvem.py                   # modelo grande na nuvem (gateway da Cloudflare), interruptor e volta ao modelo local (sem rede)
-python3 tests/cloudflare/teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor HEIMDALL_NUVEM (sem rede)
+python3 tests/cloudflare/teste_litellm_nuvem.py           # LiteLLM: chat na nuvem com o local como volta, interruptor STUDIO_NUVEM (sem rede)
 python3 tests/notes/teste_notas.py                   # Studio Notes (sem rede)
 python3 tests/learn/teste_learn_dados.py             # Studio Learn: banco e pastas
 python3 tests/learn/teste_learn_site.py              # Studio Learn: site
@@ -139,9 +139,9 @@ python3 gerar_docs.py --check                     # documentação em dia
 
 ### Lembretes, Calendário e Notas sem abrir os apps
 
-- Lembretes e Calendário rodam pelo EventKit (heimdall_eventkit.py), sem abrir os apps. Precisa de `venv/bin/pip install pyobjc-framework-EventKit` e da permissão do macOS (pedida uma vez). Conferir: `venv/bin/python heimdall_eventkit.py --status`. Se faltar o pacote ou a permissão, o agente usa o AppleScript de antes. Desligar: `HEIMDALL_EVENTKIT=0` no .env.
-- O Notas só pode ser usado com o app aberto. O agente o abre escondido, não o fecha (`HEIMDALL_APPS_FECHAR=1` fecha depois de 20 s) e registra cada abertura no log do agente.
-- O Second Brain só consulta o Notas quando há nota nova: o agente olha a data do banco do Notas sem abrir o app e consulta se mudou, ou depois de uma gravação do StudioLibre. Se o macOS não deixar ver o banco (falta Acesso Total ao Disco ao Terminal), só consulta depois de uma gravação do StudioLibre; `HEIMDALL_NOTAS_VARREDURA_MIN=240` (minutos) liga uma consulta periódica de segurança.
+- Lembretes e Calendário rodam pelo EventKit (heimdall_eventkit.py), sem abrir os apps. Precisa de `venv/bin/pip install pyobjc-framework-EventKit` e da permissão do macOS (pedida uma vez). Conferir: `venv/bin/python heimdall_eventkit.py --status`. Se faltar o pacote ou a permissão, o agente usa o AppleScript de antes. Desligar: `STUDIO_EVENTKIT=0` no .env.
+- O Notas só pode ser usado com o app aberto. O agente o abre escondido, não o fecha (`STUDIO_APPS_FECHAR=1` fecha depois de 20 s) e registra cada abertura no log do agente.
+- O Second Brain só consulta o Notas quando há nota nova: o agente olha a data do banco do Notas sem abrir o app e consulta se mudou, ou depois de uma gravação do StudioLibre. Se o macOS não deixar ver o banco (falta Acesso Total ao Disco ao Terminal), só consulta depois de uma gravação do StudioLibre; `STUDIO_NOTAS_VARREDURA_MIN=240` (minutos) liga uma consulta periódica de segurança.
 
 
 Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pasta do projeto.
@@ -152,7 +152,7 @@ Os testes dos fluxos (`test_*.js` com Node e `test_*.py` com Python) ficam na pa
 | Nome no LiteLLM | Modelo no Ollama | Uso | Observações |
 |---|---|---|---|
 | `gemma-4-uncensored` | `ollama_chat/eriktonon/gemma4-uncensored` | Uso geral | Confira a chamada de ferramentas com tests/chat/test_models_tools.py. |
-| `conversas` | `ollama_chat/eriktonon/gemma4-uncensored` | Base do modelo General do Open WebUI | Local é o mesmo gemma de gemma-4-uncensored; com HEIMDALL_NUVEM=1 o heimdall_litellm.py o troca pelo Qwen3 30B da nuvem e deixa este como volta (conversas-local). |
+| `conversas` | `ollama_chat/eriktonon/gemma4-uncensored` | Base do modelo General do Open WebUI | Local é o mesmo gemma de gemma-4-uncensored; com STUDIO_NUVEM=1 o heimdall_litellm.py o troca pelo Qwen3 30B da nuvem e deixa este como volta (conversas-local). |
 | `dolphin3-cyber-8b` | `ollama_chat/mparvin/dolphin3-cyber-8b-gguf:q8_0` | Segurança e conversa livre, só texto | Não chama ferramentas no Ollama; use para análises de texto, não nos fluxos com MCP. |
 | `deepseek-coder-v2:16b` | `ollama_chat/deepseek-coder-v2:16b` | Código (usado pelo GitOps) | O GitOps usa este modelo na etapa de análise de código. |
 | `qwen3-vl-instruct` | `ollama_chat/qwen3-vl:8b-instruct` | Modelo padrão dos fluxos; entende imagens | Declara suporte a imagens no LiteLLM. |
@@ -176,7 +176,7 @@ Modelos personalizados do Open WebUI, um por contexto, cada um com seu prompt e 
 | Notes | `qwen3-vl-instruct` | `mac-admin` | `memory_save`, `memory_search`, `memory_forget`, `rag_temas`, `rag_search` | 0,2 |
 <!-- /AUTO:MODELOS_CHAT -->
 
-Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta chamada de ferramentas) e contexto de 8192 tokens. Modelo padrão dos fluxos: `qwen3-vl-instruct` (`HEIMDALL_FLOW_MODEL`). Embeddings: `nomic-embed-text`.
+Todos usam o prefixo `ollama_chat/` no LiteLLM (o prefixo `ollama/` não suporta chamada de ferramentas) e contexto de 8192 tokens. Modelo padrão dos fluxos: `qwen3-vl-instruct` (`STUDIO_FLOW_MODEL`). Embeddings: `nomic-embed-text`.
 
 ## Ferramentas MCP
 
@@ -265,7 +265,7 @@ Instalação: `bash scripts/instalar_fluxos_n8n.sh` (básicos), `bash scripts/in
 1. Dados pessoais, chaves e identificadores ficam só no Mac. `.env`, `knowledge/`, `qdrant/` e backups nunca são versionados.
 2. Notas de pastas privadas nunca são lidas, indexadas nem analisadas.
 3. O agente do Mac exige token e só grava nas pastas do próprio StudioLibre.
-4. O vigia de e-mail é somente leitura, só confia no remetente confirmado pelo Gmail e nunca segue links. Avisos de serviços sem interesse (Serasa, SPC, Boa Vista, Quod por padrão; HEIMDALL_EMAIL_BAIXA_PRIORIDADE no .env muda a lista) não viram triagem nem lembrete, mas golpe imitando eles continua alertando.
+4. O vigia de e-mail é somente leitura, só confia no remetente confirmado pelo Gmail e nunca segue links. Avisos de serviços sem interesse (Serasa, SPC, Boa Vista, Quod por padrão; STUDIO_EMAIL_BAIXA_PRIORIDADE no .env muda a lista) não viram triagem nem lembrete, mas golpe imitando eles continua alertando.
 5. Falhas nunca são silenciosas; fonte indisponível nunca vira "nada novo".
 6. Textos de fontes externas são tratados como dados, não como ordens.
 7. Este repositório pode ser público: o código não traz dados pessoais (caminhos, IPs e e-mail vêm de variáveis ou do `.env`, que nunca é versionado). Antes de publicar, confira o histórico com `git log --all --oneline -- .env` e `git log --all -p | grep -ciE "api_key|token|senha"`.

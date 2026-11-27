@@ -7,19 +7,18 @@ Isso é o recurso mais poderoso do Heimdall: quem entra aqui manda no Mac. Por i
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
   2. Entrada pelo Cloudflare Access (Microsoft Authenticator) ou pela senha e o código de 6 dígitos do Studio Lab.
   3. Só o dono entra: sessão de convidado (escopo de um serviço) é recusada aqui, mesmo que o Access a aceite.
-  4. Em endereço público, com o Access ligado, todo pedido precisa trazer o token do Access de um dono (HEIMDALL_CONTROLS_EXIGE_ACCESS=0 desliga).
+  4. Em endereço público, com o Access ligado, todo pedido precisa trazer o token do Access de um dono (STUDIO_CONTROLS_EXIGE_ACCESS=0 desliga).
   5. Token anti-falsificação (CSRF) e conferência de Origin em todo pedido que age; cabeçalhos de segurança; script só com nonce.
   6. Cada comando é anotado em logs/controls_audit.log (data, endereço, comando; nunca a saída), arquivo só seu.
   7. Sem senha e sem código configurados, o painel não sobe.
 
-Variáveis opcionais no .env: HEIMDALL_CONTROLS_PORT (8017), HEIMDALL_CONTROLS_HOST (127.0.0.1), HEIMDALL_CONTROLS_HOSTS
-(controls.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_CONTROLS_SHELL (padrão: o seu shell), HEIMDALL_CONTROLS_EXIGE_ACCESS (1).
+Variáveis opcionais no .env: STUDIO_CONTROLS_PORT (8017), STUDIO_CONTROLS_HOST (127.0.0.1), STUDIO_CONTROLS_HOSTS
+(controls.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_CONTROLS_SHELL (padrão: o seu shell), STUDIO_CONTROLS_EXIGE_ACCESS (1).
 """
 import concurrent.futures
 import html
 import json
 import os
-import heimdall_envcompat as _envcompat
 import re
 import secrets
 import socket
@@ -48,8 +47,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        chave = _envcompat.interno(chave)
-        if not chave.startswith("HEIMDALL_CONTROLS_"):
+        if not chave.startswith("STUDIO_CONTROLS_"):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -70,14 +68,14 @@ import heimdall_shell as hshell  # noqa: E402
 import heimdall_usuarios as usuarios
 import heimdall_versoes as versoes  # noqa: E402
 
-HOST = os.environ.get("HEIMDALL_CONTROLS_HOST", "127.0.0.1")
+HOST = os.environ.get("STUDIO_CONTROLS_HOST", "127.0.0.1")
 try:
-    PORT = max(1, int(os.environ.get("HEIMDALL_CONTROLS_PORT", "8017")))
+    PORT = max(1, int(os.environ.get("STUDIO_CONTROLS_PORT", "8017")))
 except ValueError:
     PORT = 8017
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_CONTROLS_HOSTS", "controls.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_CONTROLS_HOSTS", "controls.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 LOCAIS = {"localhost", "127.0.0.1"}
-EXIGE_ACCESS = os.environ.get("HEIMDALL_CONTROLS_EXIGE_ACCESS", "1") != "0"
+EXIGE_ACCESS = os.environ.get("STUDIO_CONTROLS_EXIGE_ACCESS", "1") != "0"
 COOKIE = nuvem.COOKIE
 SERVICO = "controls"
 AUDITORIA = PROJECT_DIR / "logs" / "controls_audit.log"
@@ -86,7 +84,7 @@ MAX_EXIBIDO = 40_000      # caracteres da saída de UM comando mostrados na tela
 try:
     # ao voltar ao campo com o cursor no começo (o Safari faz isso), espera este tempo, em ms, antes de levá-lo ao fim, para o VoiceOver
     # terminar de ler o nome do campo sem ser cortado. 0 desliga o salto. Aumente se o nome ainda for cortado; diminua se demorar.
-    ATRASO_CURSOR_MS = max(0, int(os.environ.get("HEIMDALL_CONTROLS_ATRASO_CURSOR", "1800")))
+    ATRASO_CURSOR_MS = max(0, int(os.environ.get("STUDIO_CONTROLS_ATRASO_CURSOR", "1800")))
 except ValueError:
     ATRASO_CURSOR_MS = 1800
 MAX_TRANSCRICAO = 400_000  # caracteres do campo do terminal no total (os comandos mais antigos saem da tela)
@@ -191,10 +189,10 @@ def obter_shell() -> hshell.Shell:
     """O shell único do painel; abre na primeira vez que alguém usa o terminal."""
     global _shell
     if _shell is None:
-        qual = os.environ.get("HEIMDALL_CONTROLS_SHELL") or ("/bin/zsh" if os.path.exists("/bin/zsh") else os.environ.get("SHELL") or "/bin/bash")
-        inicio = '[ -n "$ZSH_VERSION" ] && [ -f "$HEIMDALL_DIR/heimdall.zsh" ] && source "$HEIMDALL_DIR/heimdall.zsh"; true'
-        _shell = hshell.Shell(pasta=str(PROJECT_DIR), comando_shell=qual, ambiente={"HEIMDALL_DIR": str(PROJECT_DIR)}, inicio=inicio,
-                              carregar_rc=os.environ.get("HEIMDALL_CONTROLS_RC", "1") != "0")
+        qual = os.environ.get("STUDIO_CONTROLS_SHELL") or ("/bin/zsh" if os.path.exists("/bin/zsh") else os.environ.get("SHELL") or "/bin/bash")
+        inicio = '[ -n "$ZSH_VERSION" ] && [ -f "$STUDIO_DIR/heimdall.zsh" ] && source "$STUDIO_DIR/heimdall.zsh"; true'
+        _shell = hshell.Shell(pasta=str(PROJECT_DIR), comando_shell=qual, ambiente={"STUDIO_DIR": str(PROJECT_DIR)}, inicio=inicio,
+                              carregar_rc=os.environ.get("STUDIO_CONTROLS_RC", "1") != "0")
     if not _shell.vivo():
         _shell.iniciar()
     return _shell
@@ -419,10 +417,10 @@ def pg_servicos(q: dict, sess: dict) -> tuple:
                      f'<span id="est-{sid}">{"Ligado" if ar else "Desligado"}: {e(_situacao_servico(sv, ar, sid in off, mon))}</span></li>')
     if erro_kuma:
         aviso_kuma = f'<p class="nota">Kuma: {e(erro_kuma)}. A situação vem da porta de cada serviço.</p>'
-    elif os.environ.get("HEIMDALL_KUMA_USUARIO"):
+    elif os.environ.get("STUDIO_KUMA_USUARIO"):
         aviso_kuma = '<p class="nota">Kuma consultado. Ao desligar ou ligar, o monitor do serviço no Kuma é pausado ou retomado.</p>'
     else:
-        aviso_kuma = '<p class="nota">Kuma consultado só para leitura. Para pausar e retomar monitores por aqui, ponha HEIMDALL_KUMA_USUARIO e HEIMDALL_KUMA_SENHA no .env ou desligue o login do Kuma (Settings, Security, Disable Auth); com o login desligado não precisa de senha.</p>'
+        aviso_kuma = '<p class="nota">Kuma consultado só para leitura. Para pausar e retomar monitores por aqui, ponha STUDIO_KUMA_USUARIO e STUDIO_KUMA_SENHA no .env ou desligue o login do Kuma (Settings, Security, Disable Auth); com o login desligado não precisa de senha.</p>'
     corpo = ("<p>Cada serviço é uma chave: Espaço ou Enter liga ou desliga na hora. O que você desliga continua desligado depois de atualizar e reiniciar.</p>"
              + aviso_kuma + '<p id="resultado-servicos" role="status"></p>'
              + f'<ul class="chaves" id="servicos" data-csrf="{e(sess["csrf"])}">' + "".join(itens) + "</ul>")
@@ -473,14 +471,14 @@ def pg_configuracoes(q: dict, sess: dict) -> tuple:
     faltam = sorted(n for n in codigo if n not in nomes)
     def rotulo(n: str) -> str:  # chaves diferentes com o mesmo rótulo (R2 e BACKUP) viram um grupo só
         g = config.grupo(n)
-        return DESTINO.get(n.removeprefix("HEIMDALL_")) or CATEGORIAS.get(g, g.title())
+        return DESTINO.get(n.removeprefix("STUDIO_").removeprefix("HEIMDALL_")) or CATEGORIAS.get(g, g.title())
     contagem: dict = {}
     for n in [d["nome"] for d in definidas] + faltam:
         contagem[rotulo(n)] = contagem.get(rotulo(n), 0) + 1
 
     def cat(n: str) -> str:  # grupo de um item só vai para "Outras"
         g, r = config.grupo(n), rotulo(n)
-        return r if contagem.get(r, 0) > 1 or g in CATEGORIAS or n.removeprefix("HEIMDALL_") in DESTINO else "Outras"
+        return r if contagem.get(r, 0) > 1 or g in CATEGORIAS or n.removeprefix("STUDIO_").removeprefix("HEIMDALL_") in DESTINO else "Outras"
     grupos: dict = {}
     for i, d in enumerate(definidas):
         grupos.setdefault(cat(d["nome"]), {"def": [], "falta": []})["def"].append(_linha_config(i, d["nome"], d["valor"]))
@@ -566,7 +564,7 @@ def pg_nuvem(q: dict, sess: dict) -> tuple:
                 f'<button type="submit" aria-describedby="d-{acao}">{e(rotulo)}</button></form> <span id="d-{acao}">{e(desc)}</span></li>')
     acoes = ('<h2>Ações</h2><ul class="acoes">'
              + botao("desligar" if ligado else "ligar", "Desligar a continuidade" if ligado else "Ligar a continuidade",
-                     "Grava HEIMDALL_CONTINUIDADE no .env. Vale já para o envio das cópias; o failover da nuvem tem a sua própria pausa, na página de controle da nuvem abaixo.")
+                     "Grava STUDIO_CONTINUIDADE no .env. Vale já para o envio das cópias; o failover da nuvem tem a sua própria pausa, na página de controle da nuvem abaixo.")
              + botao("enviar", "Enviar cópia agora", "Envia ao R2 os bancos que mudaram desde a última cópia (exige a continuidade ligada).") + "</ul>")
     g = est["gastos"]
     if g.get("ok") and g["itens"]:
@@ -632,7 +630,7 @@ def pg_monitor(q: dict, sess: dict) -> tuple:
     dias = dias if dias in (1, 7, 30) else 30
     r = cfmonitor.consultar(dias, usar_cache=True)
     ligada = cfmonitor.nuvem.ativo()
-    estado = f"<p>Modelo grande na nuvem: <strong>{'ligado' if ligada else 'desligado'}</strong>. Para mudar, use Ajustes, variável HEIMDALL_NUVEM (1 liga e 0 desliga).</p>"
+    estado = f"<p>Modelo grande na nuvem: <strong>{'ligado' if ligada else 'desligado'}</strong>. Para mudar, use Ajustes, variável STUDIO_NUVEM (1 liga e 0 desliga).</p>"
     filtro = "<p>Período: " + " ".join(
         (f'<strong aria-current="page">{n} dia{"s" if n > 1 else ""}</strong>' if n == dias else f'<a href="/monitor?dias={n}">{n} dia{"s" if n > 1 else ""}</a>') for n in (1, 7, 30)) + "</p>"
     if not r.get("ok"):

@@ -32,8 +32,8 @@ grep -q "heimdall-comando" "$RC" || {
     {
         echo ""
         echo "# heimdall-comando: comando unificado do ecossistema Heimdall-ai"
-        echo "export HEIMDALL_DIR=\"$PROJ\""
-        echo "source \"\$HEIMDALL_DIR/heimdall.zsh\""
+        echo "export STUDIO_DIR=\"$PROJ\""
+        echo "source \"\$STUDIO_DIR/heimdall.zsh\""
     } >> "$RC"
     echo "Linhas adicionadas ao .zshrc."
 }

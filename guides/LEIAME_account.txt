@@ -8,7 +8,7 @@ Os nomes dos serviços aparecem sempre como eles se chamam (Studio Lab, Studio N
 
 Menu Conta: o mesmo no alto de Lab, Notas, News, Saúde, Jogos, Finance e Controls: nome e e-mail, como entrou e links dos serviços.
 
-Site (heimdall-ai.tech): todas as páginas mostram "Entrar no Heimdall" quando não há login. Com login, mostra "Conta: nome" com os serviços. Ela pergunta a account.heimdall-ai.tech/quem.json com os cookies do Access. Como o cookie é do endereço account, o login conta depois de abrir o Account uma vez (clicando em Entrar); vale pelo tempo da sessão do Access (8 horas). Só os sites de HEIMDALL_ACCOUNT_ORIGENS podem perguntar.
+Site (heimdall-ai.tech): todas as páginas mostram "Entrar no Heimdall" quando não há login. Com login, mostra "Conta: nome" com os serviços. Ela pergunta a account.heimdall-ai.tech/quem.json com os cookies do Access. Como o cookie é do endereço account, o login conta depois de abrir o Account uma vez (clicando em Entrar); vale pelo tempo da sessão do Access (8 horas). Só os sites de STUDIO_ACCOUNT_ORIGENS podem perguntar.
 
 Como foi montado na Cloudflare (já feito): aplicativo "Account" no Access para account.heimdall-ai.tech, política "Heimdall: Account" (e-mails dos donos e convidados, com Authenticator), registro DNS account apontando para o túnel heimdall, e a rota do túnel para http://localhost:8018.
 
@@ -18,4 +18,4 @@ No Mac, uma vez:
 3. Abra https://account.heimdall-ai.tech
 Pela porta local: studio account --local (http://localhost:8018), que mostra o tour do dono sem login.
 
-Variáveis (Ajustes, grupo Account): HEIMDALL_ACCOUNT_PORT (8018), HEIMDALL_ACCOUNT_HOST (127.0.0.1), HEIMDALL_ACCOUNT_HOSTS (account.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_ACCOUNT_ORIGENS (https://heimdall-ai.tech,https://www.heimdall-ai.tech).
+Variáveis (Ajustes, grupo Account): STUDIO_ACCOUNT_PORT (8018), STUDIO_ACCOUNT_HOST (127.0.0.1), STUDIO_ACCOUNT_HOSTS (account.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_ACCOUNT_ORIGENS (https://heimdall-ai.tech,https://www.heimdall-ai.tech).

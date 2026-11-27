@@ -17,9 +17,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="apps2_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_ONEDRIVE_ID": "app-ms-id", "HEIMDALL_NUVEM_TODOIST_ID": "todo-id",
-                   "HEIMDALL_NUVEM_TODOIST_SEGREDO": "todo-seg", "HEIMDALL_NUVEM_TRELLO_ID": "chave-trello-publica", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "STUDIO_HUB_IA": "0",
+                   "STUDIO_NUVEM_CHAVE": "chave-de-teste", "STUDIO_NUVEM_ONEDRIVE_ID": "app-ms-id", "STUDIO_NUVEM_TODOIST_ID": "todo-id",
+                   "STUDIO_NUVEM_TODOIST_SEGREDO": "todo-seg", "STUDIO_NUVEM_TRELLO_ID": "chave-trello-publica", "STUDIO_HUB_URL": "https://memory.exemplo.test"})
 
 TOKEN_TRELLO = "ATTA" + "a1b2c3d4" * 8
 ESTADO = {"pessoal": False, "todoist_revogado": False, "token_todoist": "tdst-token-1", "detalhes": 0, "form_todoist": None, "marca_plano": '"etag-1"'}

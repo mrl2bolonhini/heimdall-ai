@@ -15,7 +15,7 @@ import zipfile
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-tipos-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "health"), "HEIMDALL_EXAMES_LLM": "0"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_EXAMES_DIR": str(TMP / "health"), "STUDIO_EXAMES_LLM": "0"})
 import heimdall_banco as banco  # noqa: E402
 import heimdall_exames as ex  # noqa: E402
 
@@ -180,14 +180,14 @@ def cai(*a, **k):
 
 ex.nuvem.chat = cai
 confere("nuvem falha: cai para o modelo local", json.loads(ex._modelo("x")) == {"origem": "local"})
-os.environ["HEIMDALL_EXAMES_NUVEM"] = "0"
+os.environ["STUDIO_EXAMES_NUVEM"] = "0"
 ex.nuvem.chat = lambda *a, **k: '{"origem": "nuvem"}'
-confere("HEIMDALL_EXAMES_NUVEM=0: nunca usa a nuvem", json.loads(ex._modelo("x")) == {"origem": "local"})
-del os.environ["HEIMDALL_EXAMES_NUVEM"]
+confere("STUDIO_EXAMES_NUVEM=0: nunca usa a nuvem", json.loads(ex._modelo("x")) == {"origem": "local"})
+del os.environ["STUDIO_EXAMES_NUVEM"]
 ex.nuvem.ativo = lambda *a, **k: False
 confere("nuvem desligada: usa o modelo local", json.loads(ex._modelo("x")) == {"origem": "local"})
 ex.USAR_MODELO = False
-confere("IA desligada (HEIMDALL_EXAMES_LLM=0): sem modelo nenhum", ex._modelo("x") == "")
+confere("IA desligada (STUDIO_EXAMES_LLM=0): sem modelo nenhum", ex._modelo("x") == "")
 
 # ----- formatos TXT e DOCX
 LAB = "Laboratório Modelo\nRESULTADO | INTERVALO DE REFERÊNCIA\nHemoglobina   14,4 g/dL   13,0 a 17,0 g/dL\nHematócrito   45,0 %   40,0 a 50,0 %\nVCM   91,0 fL   83,0 a 101,0 fL\nData da coleta: 10/11/2026\n"

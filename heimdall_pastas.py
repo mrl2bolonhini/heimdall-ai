@@ -5,7 +5,7 @@ Padrão: pasta com nome em inglês e de uma palavra só. Nomes antigos que migra
 e, dentro do finance, entrada para inbox e entrada_planilhas para sheets (qdrant_storage para qdrant é feito pelo start_heimdall.sh, por causa do Docker).
 Pasta de dados do Finance: era dados_financas/, agora é finance/. Na primeira vez que qualquer serviço pede a pasta, se só a antiga existir,
 ela é renomeada (os dados não são copiados nem apagados: o mesmo diretório muda de nome). Se não der para renomear, continua valendo a antiga.
-HEIMDALL_FINANCE_DIR no .env, quando existe, manda mais que tudo isto.
+STUDIO_FINANCE_DIR no .env, quando existe, manda mais que tudo isto.
 Subpastas: db/copias para db/copies, db/caixa_recebidos para db/mailbox, db/avisos_mac para db/alerts, db/pessoas para db/people;
 finance/inbox/importados para imported e revisar para review; os documentos de saúde saíram de db/documentos para a pasta própria health/
 (entrada para inbox, arquivados para archive, revisar para review).

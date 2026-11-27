@@ -57,12 +57,12 @@ import heimdall_continuidade as hc  # noqa: E402
 
 dados = tempfile.mkdtemp()
 p_saude, p_fin = porta_livre(), porta_livre()
-os.environ.update({"HEIMDALL_RAIZ": str(RAIZ), "HEIMDALL_SAUDE_PORTA": str(p_saude), "HEIMDALL_FINANCE_DIR": dados,
+os.environ.update({"STUDIO_RAIZ": str(RAIZ), "STUDIO_SAUDE_PORTA": str(p_saude), "STUDIO_FINANCE_DIR": dados,
                    "HEIMDALL_CLOUD_SENHA_HASH": "pbkdf2$teste", "HEIMDALL_CLOUD_TOTP_SEGREDO": "JBSWY3DPEHPK3PXP"})
 spec = importlib.util.spec_from_file_location("entrada", RAIZ / "cloudflare" / "continuity" / "entrada.py")
 entrada = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(entrada)
-entrada.SERVICOS = [("heimdall_finance.py", "HEIMDALL_FINANCE_PORT", p_fin)]
+entrada.SERVICOS = [("heimdall_finance.py", "STUDIO_FINANCE_PORT", p_fin)]
 confere("a lista de serviços aponta para arquivos que existem", all((RAIZ / m).exists() for m, _, _ in [(x[0], 0, 0) for x in [("heimdall_finance.py",), ("heimdall_painel_saude.py",), ("heimdall_notas.py",), ("heimdall_news.py",), ("heimdall_learn.py",), ("heimdall_jogos.py",), ("heimdall_account.py",)]]))
 
 # falha de restauração: sai com erro e não fica pronto

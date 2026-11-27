@@ -16,7 +16,7 @@ Análises (texto corrido, para leitor de tela; informativas, nada aqui é diagn�
 As mesmas análises estão no chat como ferramentas (treinos_resumo, ecg_resumo, frequencia_cardiaca_resumo, relatorio_saude).
 
 Privacidade: o arquivo de exportação traz nome e data de nascimento; nada disso é lido nem gravado. A rota (GPS) dos treinos fica só no banco
-local; HEIMDALL_SAUDE_ROTA=0 no .env desliga o armazenamento dela. Só biblioteca padrão do Python.
+local; STUDIO_SAUDE_ROTA=0 no .env desliga o armazenamento dela. Só biblioteca padrão do Python.
 """
 import csv
 import hashlib
@@ -24,7 +24,6 @@ import io
 import json
 import math
 import os
-import heimdall_envcompat as _envcompat
 import re
 import statistics
 import struct
@@ -40,7 +39,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 
 
 def carregar_env() -> None:
-    """Do .env lê só a pasta do banco e as opções HEIMDALL_SAUDE_* (rodado à mão, o terminal não leu o .env)."""
+    """Do .env lê só a pasta do banco e as opções STUDIO_SAUDE_* (rodado à mão, o terminal não leu o .env)."""
     try:
         linhas = (PROJECT_DIR / ".env").read_text(encoding="utf-8").splitlines()
     except OSError:
@@ -52,8 +51,7 @@ def carregar_env() -> None:
         if not linha or linha.startswith("#") or "=" not in linha:
             continue
         chave, valor = (x.strip() for x in linha.split("=", 1))
-        chave = _envcompat.interno(chave)
-        if chave == "HEIMDALL_DB_DIR" or chave.startswith("HEIMDALL_SAUDE_"):
+        if chave == "STUDIO_DB_DIR" or chave.startswith("STUDIO_SAUDE_"):
             if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
                 valor = valor[1:-1]
             os.environ.setdefault(chave, valor)
@@ -62,7 +60,7 @@ def carregar_env() -> None:
 carregar_env()
 import heimdall_banco as banco  # noqa: E402
 
-GUARDAR_ROTA = os.environ.get("HEIMDALL_SAUDE_ROTA", "1") != "0"
+GUARDAR_ROTA = os.environ.get("STUDIO_SAUDE_ROTA", "1") != "0"
 MAX_SERIE_FC = 600
 MAX_ROTA = 400
 
@@ -1592,9 +1590,9 @@ def _contagem(n: int, tipo: str) -> str:
 
 
 def _dias_pendente() -> int:
-    """HEIMDALL_SAUDE_PENDENTE_DIAS: depois de quantos dias um documento sem conferência entra no relatório da semana (padrão 3)."""
+    """STUDIO_SAUDE_PENDENTE_DIAS: depois de quantos dias um documento sem conferência entra no relatório da semana (padrão 3)."""
     try:
-        return max(1, int(os.environ.get("HEIMDALL_SAUDE_PENDENTE_DIAS", "3")))
+        return max(1, int(os.environ.get("STUDIO_SAUDE_PENDENTE_DIAS", "3")))
     except ValueError:
         return 3
 
@@ -1652,7 +1650,7 @@ def relatorio_documentos(dias: int = 7, agora: datetime = None) -> str:
 
 
 def documentos_pendentes_antigos() -> int:
-    """Quantos documentos aguardam conferência há mais de HEIMDALL_SAUDE_PENDENTE_DIAS dias."""
+    """Quantos documentos aguardam conferência há mais de STUDIO_SAUDE_PENDENTE_DIAS dias."""
     limite = (datetime.now() - timedelta(days=_dias_pendente())).isoformat(timespec="seconds")
     try:
         return len(_ler("SELECT 1 FROM documentos_saude WHERE estado = 'pendente' AND criado <= ?", (limite,)))

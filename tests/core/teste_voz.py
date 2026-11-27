@@ -51,8 +51,8 @@ with tempfile.TemporaryDirectory() as t3:
     for x in b.iterdir():
         x.chmod(x.stat().st_mode | stat.S_IEXEC)
     os.environ["PATH"] = str(b) + os.pathsep + os.environ["PATH"]
-    os.environ["HEIMDALL_VOZ_ATALHO"] = "Narrator"
-    os.environ["HEIMDALL_DB_DIR"] = t3
+    os.environ["STUDIO_VOZ_ATALHO"] = "Narrator"
+    os.environ["STUDIO_DB_DIR"] = t3
     import heimdall_agente as ag
     ag.sys.platform = "darwin"
     pasta = Path(t3) / "cofre"

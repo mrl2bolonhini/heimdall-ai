@@ -6,7 +6,7 @@ Os cards saem espaçados de 4 em 4 horas depois do horário; a lição, no horá
 (uma ação por pasta por vez), cria o card ou a lição e avisa: notificação nativa do Mac com o texto completo, e Bark no iPhone só com texto
 genérico (o texto passa por servidor de terceiros). Falha do modelo: espera 30 minutos antes de tentar de novo.
 
-Desligar: HEIMDALL_LEARN_AGENDA=0 (não gera nada sozinho) e HEIMDALL_LEARN_NOTIFICAR=0 (gera, mas não avisa).
+Desligar: STUDIO_LEARN_AGENDA=0 (não gera nada sozinho) e STUDIO_LEARN_NOTIFICAR=0 (gera, mas não avisa).
 Usa só a biblioteca padrão do Python.
 """
 import os
@@ -134,7 +134,7 @@ def marcar_lido(id_: int, lido: bool = True) -> None:
 
 def notificar_padrao(titulo: str, corpo: str, generico: str = "Há novidade no Learn.") -> None:
     """Mac: aviso nativo com o texto completo. iPhone: Bark só com texto genérico. Nunca levanta erro."""
-    if os.environ.get("HEIMDALL_LEARN_NOTIFICAR", "1") == "0" or dados.ajuste("avisos", "1") == "0":
+    if os.environ.get("STUDIO_LEARN_NOTIFICAR", "1") == "0" or dados.ajuste("avisos", "1") == "0":
         return
     try:
         import heimdall_avisos_mac as mac
@@ -250,8 +250,8 @@ def executar_agenda(agora: datetime = None, modelo_card=None, modelo_licao=None,
 
 
 def iniciar_agenda(intervalo: int = 60):
-    """Thread que confere a agenda a cada minuto. Desligada com HEIMDALL_LEARN_AGENDA=0. Devolve a thread ou None."""
-    if os.environ.get("HEIMDALL_LEARN_AGENDA", "1") == "0":
+    """Thread que confere a agenda a cada minuto. Desligada com STUDIO_LEARN_AGENDA=0. Devolve a thread ou None."""
+    if os.environ.get("STUDIO_LEARN_AGENDA", "1") == "0":
         return None
 
     def laco():

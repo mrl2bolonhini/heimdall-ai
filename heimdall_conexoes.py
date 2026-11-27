@@ -5,12 +5,12 @@ Usada pelo Hub (arquivos em nuvem: heimdall_memory_nuvem.py; notas, tarefas, age
 servidor e a pessoa só autoriza no navegador, funciona para quem usa Windows, Linux, macOS, Android ou iPhone.
 
 O que esta base cuida (os módulos de cada grupo só dizem o que ler):
-  - registro de provedores (PROVEDORES) e das credenciais do administrador no .env (HEIMDALL_NUVEM_<CHAVE>_ID e _SEGREDO);
+  - registro de provedores (PROVEDORES) e das credenciais do administrador no .env (STUDIO_NUVEM_<CHAVE>_ID e _SEGREDO);
   - armazenamento cifrado por pessoa (memory/nuvem.bin, AES-GCM, permissão 600; sem o pacote cryptography a conexão é recusada);
   - OAuth: autorização com state de uso único (10 minutos, ligado à pessoa) e PKCE S256, troca do código, renovação do token com rotação,
     revogação detectada (pede nova conexão);
   - HTTP seguro (só https; redirecionamentos seguidos à mão e sem o token);
-  - a rodada de fundo (HEIMDALL_NUVEM_INTERVALO, padrão 900 s; HEIMDALL_NUVEM=0 desliga) que chama o sincronizador registrado de cada grupo para cada
+  - a rodada de fundo (STUDIO_NUVEM_INTERVALO, padrão 900 s; STUDIO_NUVEM=0 desliga) que chama o sincronizador registrado de cada grupo para cada
     pessoa conectada, sem que o erro de uma interrompa as outras.
 Um provedor novo entra em PROVEDORES com "grupo" (que escolhe o sincronizador), endereços, escopos e, se for o caso, "escopos_servico" (um escopo por serviço).
 Usa a biblioteca padrão e `cryptography`.
@@ -81,10 +81,10 @@ PROVEDORES = {
 
 # ---------------------------------------------------------------- configuração e armazenamento cifrado
 def credenciais(chave: str) -> tuple:
-    p = f"HEIMDALL_NUVEM_{PROVEDORES[chave].get('credencial', chave).upper()}_"
+    p = f"STUDIO_NUVEM_{PROVEDORES[chave].get('credencial', chave).upper()}_"
     id_, seg = os.environ.get(p + "ID", "").strip(), os.environ.get(p + "SEGREDO", "").strip()
     if not id_:   # administrador pode registrar um aplicativo só para este provedor
-        p = f"HEIMDALL_NUVEM_{chave.upper()}_"
+        p = f"STUDIO_NUVEM_{chave.upper()}_"
         id_, seg = os.environ.get(p + "ID", "").strip() or id_, os.environ.get(p + "SEGREDO", "").strip() or seg
     return id_, seg
 
@@ -94,7 +94,7 @@ def configurados(grupo: str = "") -> list:
 
 
 def url_retorno() -> str:
-    return (os.environ.get("HEIMDALL_MEMORY_URL") or os.environ.get("HEIMDALL_LIBRARY_URL") or "https://memory.heimdall-ai.tech").rstrip("/") + "/nuvem/retorno"
+    return (os.environ.get("STUDIO_HUB_URL") or os.environ.get("STUDIO_HUB_URL") or "https://memory.heimdall-ai.tech").rstrip("/") + "/nuvem/retorno"
 
 
 def _aead():
@@ -102,9 +102,9 @@ def _aead():
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     except ImportError:
         raise ErroMemory("A conexão com a nuvem precisa do pacote cryptography instalado neste servidor.") from None
-    segredo = os.environ.get("HEIMDALL_NUVEM_CHAVE") or os.environ.get("HEIMDALL_PAPERLESS_SECRET", "")
+    segredo = os.environ.get("STUDIO_NUVEM_CHAVE") or os.environ.get("STUDIO_PAPERLESS_SECRET", "")
     if not segredo:
-        raise ErroMemory("Falta a chave de cifragem da conexão com a nuvem no .env (HEIMDALL_NUVEM_CHAVE).")
+        raise ErroMemory("Falta a chave de cifragem da conexão com a nuvem no .env (STUDIO_NUVEM_CHAVE).")
     return AESGCM(hashlib.sha256(b"heimdall-nuvem-v1\0" + segredo.encode()).digest())
 
 
@@ -408,10 +408,10 @@ def sincronizar_todos() -> dict:
 
 
 def iniciar_sincronizador() -> None:
-    """Thread de fundo do Hub. HEIMDALL_NUVEM=0 desliga; sem provedor configurado, não faz nada."""
-    if os.environ.get("HEIMDALL_NUVEM", "1") == "0" or not configurados():
+    """Thread de fundo do Hub. STUDIO_NUVEM=0 desliga; sem provedor configurado, não faz nada."""
+    if os.environ.get("STUDIO_NUVEM", "1") == "0" or not configurados():
         return
-    intervalo = max(60, int(os.environ.get("HEIMDALL_NUVEM_INTERVALO", "900") or 900))
+    intervalo = max(60, int(os.environ.get("STUDIO_NUVEM_INTERVALO", "900") or 900))
 
     def laco():
         time.sleep(30)

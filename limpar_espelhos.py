@@ -22,7 +22,7 @@ from pathlib import Path
 
 QDRANT = os.environ.get("QDRANT_URL", "http://localhost:6333").rstrip("/")
 COLECAO = "heimdall_notas"
-COFRE = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(heimdall_pastas.brain(Path(__file__).resolve().parent)))).expanduser()
+COFRE = Path(os.environ.get("STUDIO_VAULT_DIR", str(heimdall_pastas.brain(Path(__file__).resolve().parent)))).expanduser()
 RUIM = re.compile(r"^(C[ée]rebro: |Digest \d{4}-\d{2}-\d{2} \d{2}h$)")
 SO_LISTAR = "--so-listar" in sys.argv
 

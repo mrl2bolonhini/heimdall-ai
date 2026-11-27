@@ -30,7 +30,7 @@ from urllib.parse import urljoin, urlparse
 import psutil
 import requests
 
-USER_BASE_DIR = Path(os.getenv("HEIMDALL_BASE_DIR", str(Path.home()))).resolve()
+USER_BASE_DIR = Path(os.getenv("STUDIO_BASE_DIR", str(Path.home()))).resolve()
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 SEARXNG_URL = os.getenv("SEARXNG_URL", "http://localhost:8080")
 NASA_API_KEY = os.getenv("NASA_API_KEY", "DEMO_KEY")
@@ -45,7 +45,7 @@ MAX_READ_CHARS = 6000
 MAX_WRITE_CHARS = 200_000
 
 PROJECT_DIR = Path(__file__).resolve().parent
-DATA_DIR = Path(os.getenv("HEIMDALL_DATA_DIR", str(PROJECT_DIR / "data")))
+DATA_DIR = Path(os.getenv("STUDIO_DATA_DIR", str(PROJECT_DIR / "data")))
 MEMORY_FILE = DATA_DIR / "memory.jsonl"
 MAX_MEMORIES = 300
 MAX_MEMORY_CHARS = 500
@@ -1065,19 +1065,19 @@ def banco_buscar(termo: str, tabela: str = "", limite: int = 5) -> str:
 #   Ficam restritas ao administrador.
 # --- Finance no chat (somente leitura) -------------------------------------------------------
 # Lê o banco do Studio Finance em modo somente leitura (sqlite mode=ro): nada é gravado, nenhum boleto é pago e nenhum extrato é importado.
-# Os modelos do chat são todos locais (Ollama), então os valores não saem do Mac. HEIMDALL_FINANCE_CHAT=0 desliga estas ferramentas.
+# Os modelos do chat são todos locais (Ollama), então os valores não saem do Mac. STUDIO_FINANCE_CHAT=0 desliga estas ferramentas.
 def _financas_ro():
     import sqlite3
 
     import financas_nucleo as fn
 
-    if os.environ.get("HEIMDALL_FINANCE_CHAT", "1") == "0":
-        raise PermissionError("as ferramentas do Finance no chat estão desligadas (HEIMDALL_FINANCE_CHAT=0 no .env)")
-    pasta = os.environ.get("HEIMDALL_FINANCE_DIR", "")
+    if os.environ.get("STUDIO_FINANCE_CHAT", "1") == "0":
+        raise PermissionError("as ferramentas do Finance no chat estão desligadas (STUDIO_FINANCE_CHAT=0 no .env)")
+    pasta = os.environ.get("STUDIO_FINANCE_DIR", "")
     if not pasta:
         try:
             for ln in (Path(__file__).resolve().parent / ".env").read_text(encoding="utf-8").splitlines():
-                if ln.startswith("HEIMDALL_FINANCE_DIR="):
+                if ln.startswith("STUDIO_FINANCE_DIR="):
                     pasta = ln.split("=", 1)[1].strip().strip('"').strip("'")
         except OSError:
             pass

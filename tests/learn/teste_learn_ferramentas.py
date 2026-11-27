@@ -11,8 +11,8 @@ import tempfile
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
-os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 (TMP / "knowledge").mkdir()
 
 import heimdall_tools as t  # noqa: E402

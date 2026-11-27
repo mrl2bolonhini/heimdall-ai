@@ -74,7 +74,7 @@ escrever(COFRE / "python" / "resumo-aula.md", "# Resumo\n\nEsta aula apresenta o
 os.utime(COFRE / "python" / "aula-1.md", (time.time() - 100, time.time() - 100))
 escrever(RAIZ / "fora.md", "# Fora do cofre\n")
 
-os.environ.update({"HEIMDALL_VAULT_DIR": str(COFRE), "HEIMDALL_KNOWLEDGE_DIR": str(CONHEC), "HEIMDALL_CLOUD_TOTP_SEGREDO": SEGREDO})
+os.environ.update({"STUDIO_VAULT_DIR": str(COFRE), "STUDIO_KNOWLEDGE_DIR": str(CONHEC), "HEIMDALL_CLOUD_TOTP_SEGREDO": SEGREDO})
 sys.path.insert(0, str(RAIZ))
 import heimdall_lab as hc  # noqa: E402
 
@@ -183,14 +183,14 @@ s, _, c = req("GET", "/busca?q=segredo", cookie=ck)
 confere("busca acha privacidade e saúde, não o Digest", b"senha do banco" in c or b"Segredo" in c)
 s, _, c = req("GET", "/busca?q=resumo.", cookie=ck)
 confere("busca não acha o Digest", b"Digest do dia" not in c)
-os.environ["HEIMDALL_NOTAS_EXCLUIR"] = "heimdall-digest,saude"
+os.environ["STUDIO_NOTAS_EXCLUIR"] = "heimdall-digest,saude"
 s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
 confere("EXCLUIR tira outras pastas", s == 404)
-del os.environ["HEIMDALL_NOTAS_EXCLUIR"]
-os.environ["HEIMDALL_NOTAS_PASTAS"] = "heimdall-cerebro"
+del os.environ["STUDIO_NOTAS_EXCLUIR"]
+os.environ["STUDIO_NOTAS_PASTAS"] = "heimdall-cerebro"
 s, _, c = req("GET", "/nota?p=saude&n=exame.md", cookie=ck)
 confere("PASTAS com lista mostra só as listadas e os temas", s == 404 and req("GET", "/nota?p=heimdall-cerebro&n=ideia.md", cookie=ck)[0] == 200 and req("GET", "/nota?p=python&n=aula-1.md", cookie=ck)[0] == 200)
-del os.environ["HEIMDALL_NOTAS_PASTAS"]
+del os.environ["STUDIO_NOTAS_PASTAS"]
 
 # --- marca e paleta compartilhadas (a mesma do site) ---
 import docs_tema as _dt

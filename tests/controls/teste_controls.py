@@ -17,7 +17,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="controls_"))
-os.environ.update({"HEIMDALL_CONTROLS_SHELL": "/bin/bash", "HEIMDALL_CONTROLS_RC": "0", "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
+os.environ.update({"STUDIO_CONTROLS_SHELL": "/bin/bash", "STUDIO_CONTROLS_RC": "0", "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
 import heimdall_lab as hc  # noqa: E402
 import heimdall_controls as hcx  # noqa: E402
@@ -282,9 +282,9 @@ confere("alternar sem o token de segurança é recusado, com o motivo", s == 403
 import heimdall_config as hcf  # noqa: E402
 import tempfile as _tf  # noqa: E402
 hcf.ARQUIVO = Path(_tf.mkdtemp()) / ".env"
-hcf.ARQUIVO.write_text("HEIMDALL_TESTE='um'\n", encoding="utf-8")
+hcf.ARQUIVO.write_text("STUDIO_TESTE='um'\n", encoding="utf-8")
 s, corpo, _ = req("GET", "/ajustes", cookie=token)
-confere("configurações: lista o que está no .env, com o valor inteiro, e as opções do código", s == 200 and "HEIMDALL_TESTE" in corpo and 'value="um"' in corpo
+confere("configurações: lista o que está no .env, com o valor inteiro, e as opções do código", s == 200 and "STUDIO_TESTE" in corpo and 'value="um"' in corpo
         and "<details" in corpo and "No .env" in corpo and "Opções ainda sem valor" in corpo and "Controls: " in corpo and corpo.count("<h1") == 1 and 'type="search"' in corpo, corpo[:200])
 import re as _re
 _tit = _re.findall(r"<summary>([^<]*)</summary>", corpo)
@@ -294,14 +294,14 @@ confere("configurações: cada campo tem label", corpo.count("<label") >= corpo.
 confere("configurações: segredos vêm ocultos com botão Mostrar; há rodapé com Voltar para o topo e Recarregar desabilitado",
         'type="password"' in corpo and 'data-mostrar="cfg-' in corpo and 'href="#topo" tabindex="0">Voltar para o topo' in corpo and 'id="topo"' in corpo and "Recarregar StudioLibre</button>" in corpo and 'id="recarregar"' in corpo and " disabled>" in corpo)
 confere("configurações: opções com valor padrão vêm preenchidas e não há mais o botão de gravar padrões", 'value="8010"' in corpo and "Gravar valores padrão" not in corpo)
-s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "dois", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
-confere("salvar grava no .env e diz que vale depois de reiniciar", s == 200 and json.loads(corpo)["ok"] and "HEIMDALL_TESTE='dois'" in hcf.ARQUIVO.read_text() and "reiniciado" in corpo, corpo)
-s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "valor": "a'b", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "STUDIO_TESTE", "valor": "dois", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+confere("salvar grava no .env e diz que vale depois de reiniciar", s == 200 and json.loads(corpo)["ok"] and "STUDIO_TESTE='dois'" in hcf.ARQUIVO.read_text() and "reiniciado" in corpo, corpo)
+s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "STUDIO_TESTE", "valor": "a'b", "acao": "salvar"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("valor com aspa simples é recusado com o motivo", not json.loads(corpo)["ok"] and "aspa" in corpo and "a'b" not in hcf.ARQUIVO.read_text())
-s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": "errado", "nome": "HEIMDALL_TESTE", "valor": "x"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": "errado", "nome": "STUDIO_TESTE", "valor": "x"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("salvar sem o token de segurança é recusado", s == 403 and "dois" in hcf.ARQUIVO.read_text())
-s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "HEIMDALL_TESTE", "acao": "remover"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
-confere("remover tira do .env", json.loads(corpo)["ok"] and "HEIMDALL_TESTE" not in hcf.ARQUIVO.read_text())
+s, corpo, _ = req("POST", "/ajustes/salvar", {"csrf": CSRF, "nome": "STUDIO_TESTE", "acao": "remover"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
+confere("remover tira do .env", json.loads(corpo)["ok"] and "STUDIO_TESTE" not in hcf.ARQUIVO.read_text())
 # --- usuários
 hcf.ARQUIVO.write_text("HEIMDALL_CFACCESS_EMAILS='dono@x.com'\n", encoding="utf-8")
 s, corpo, _ = req("GET", "/usuarios", cookie=token)

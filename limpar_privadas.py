@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Apaga tudo o que o Second Brain guardou a partir de notas que depois foram para uma pasta privada.
 
-Use depois de mover uma nota para a pasta "Privado" (ou outra listada em HEIMDALL_NOTAS_PRIVADAS) se ela já tinha
+Use depois de mover uma nota para a pasta "Privado" (ou outra listada em STUDIO_NOTAS_PRIVADAS) se ela já tinha
 sido analisada antes. O agente do Mac precisa estar no ar. O script remove, só dessas notas:
   1. os pontos na base vetorial (Qdrant, coleção heimdall_notas);
   2. a cópia em Markdown em brain/heimdall-cerebro/;
@@ -23,23 +23,23 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 SO_LISTAR = "--so-listar" in sys.argv
 QDRANT = os.environ.get("QDRANT_URL", "http://localhost:6333").rstrip("/")
-AGENTE = f"http://localhost:{os.environ.get('HEIMDALL_AGENTE_PORT', '8003')}"
-COFRE = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(heimdall_pastas.brain(AQUI)))).expanduser()
+AGENTE = f"http://localhost:{os.environ.get('STUDIO_AGENTE_PORT', '8003')}"
+COFRE = Path(os.environ.get("STUDIO_VAULT_DIR", str(heimdall_pastas.brain(AQUI)))).expanduser()
 COLECAO = "heimdall_notas"
 
 
 def token() -> str:
-    t = os.environ.get("HEIMDALL_AGENTE_TOKEN", "")
+    t = os.environ.get("STUDIO_AGENTE_TOKEN", "")
     if t:
         return t
     try:
         for linha in (AQUI / ".env").read_text(encoding="utf-8").splitlines():
-            m = re.match(r"^HEIMDALL_AGENTE_TOKEN=(['\"]?)(.*?)\1\s*$", linha)
+            m = re.match(r"^STUDIO_AGENTE_TOKEN=(['\"]?)(.*?)\1\s*$", linha)
             if m:
                 return m.group(2)
     except OSError:
         pass
-    sys.exit("Não achei HEIMDALL_AGENTE_TOKEN (nem no ambiente nem no .env).")
+    sys.exit("Não achei STUDIO_AGENTE_TOKEN (nem no ambiente nem no .env).")
 
 
 def http(url: str, dado=None, cabecalhos=None):

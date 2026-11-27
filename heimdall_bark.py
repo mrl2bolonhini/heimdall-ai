@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 def chave_bark() -> str:
-    v = (os.environ.get("STUDIO_BARK_KEY") or os.environ.get("HEIMDALL_BARK_KEY", "")).strip()
+    v = (os.environ.get("STUDIO_BARK_KEY") or os.environ.get("STUDIO_BARK_KEY", "")).strip()
     if not v:
         try:
             for linha in (Path(__file__).resolve().parent / ".env").read_text(encoding="utf-8").splitlines():

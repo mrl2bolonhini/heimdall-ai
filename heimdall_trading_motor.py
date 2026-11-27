@@ -7,8 +7,8 @@ Regras fixas, em código (a IA avisa, quem decide é o usuário, e nenhuma ordem
   3. Sem venda a descoberto: só se vende o que está na carteira (descontadas as vendas já abertas).
   4. Limites por ordem (valor), de perda por dia (bloqueia novas compras) e de ordens abertas. Fechar posição e cancelar nunca são bloqueados.
   5. Tudo fica gravado em db/trading.db (por pessoa: banco.pasta_em_uso()); zerar a conta apaga só esse arquivo.
-Cotações (HEIMDALL_TRADING_FONTE): "simulada" (padrão, preços artificiais que variam sozinhos, bons para treinar), "manual" (você informa o preço)
-ou "brapi" (preços da B3 pela brapi.dev, com HEIMDALL_TRADING_BRAPI_TOKEN no .env).
+Cotações (STUDIO_TRADING_FONTE): "simulada" (padrão, preços artificiais que variam sozinhos, bons para treinar), "manual" (você informa o preço)
+ou "brapi" (preços da B3 pela brapi.dev, com STUDIO_TRADING_BRAPI_TOKEN no .env).
 """
 import contextlib
 import json
@@ -29,7 +29,7 @@ import heimdall_banco as banco
 TICKER = re.compile(r"^[A-Z0-9]{1,10}$")
 CAIXA_INICIAL = 100000.0
 PADROES = {"caixa_inicial": CAIXA_INICIAL, "caixa": CAIXA_INICIAL, "limite_ordem": 10000.0, "limite_perda_dia": 2000.0, "max_ordens": 20,
-           "taxa_pct": 0.0, "fonte": os.environ.get("HEIMDALL_TRADING_FONTE", "brapi")}   # padrão: cotações reais da B3 (brapi); HEIMDALL_TRADING_FONTE=simulada volta aos preços gerados
+           "taxa_pct": 0.0, "fonte": os.environ.get("STUDIO_TRADING_FONTE", "brapi")}   # padrão: cotações reais da B3 (brapi); STUDIO_TRADING_FONTE=simulada volta aos preços gerados
 FONTES = ("simulada", "manual", "brapi")
 _lock = threading.RLock()
 
@@ -136,7 +136,7 @@ def _preco_brapi(ticker: str, agora: float) -> float:
     ant = _cache_brapi.get(ticker)
     if ant and agora - ant[0] < 15:
         return ant[1]
-    token = os.environ.get("HEIMDALL_TRADING_BRAPI_TOKEN", "")
+    token = os.environ.get("STUDIO_TRADING_BRAPI_TOKEN", "")
     url = f"https://brapi.dev/api/quote/{ticker}" + (f"?token={token}" if token else "")
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Heimdall-Trading"}), timeout=8) as r:

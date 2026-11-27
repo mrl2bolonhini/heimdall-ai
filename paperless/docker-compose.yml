@@ -19,14 +19,14 @@ services:
       - ./export:/usr/src/paperless/export
     environment:
       PAPERLESS_REDIS: redis://broker:6379
-      PAPERLESS_SECRET_KEY: ${HEIMDALL_PAPERLESS_SECRET}
-      PAPERLESS_ADMIN_USER: ${HEIMDALL_PAPERLESS_USER:-heimdall}
-      PAPERLESS_ADMIN_PASSWORD: ${HEIMDALL_PAPERLESS_SENHA}
-      PAPERLESS_TIME_ZONE: ${HEIMDALL_PAPERLESS_FUSO:-America/Sao_Paulo}
+      PAPERLESS_SECRET_KEY: ${STUDIO_PAPERLESS_SECRET}
+      PAPERLESS_ADMIN_USER: ${STUDIO_PAPERLESS_USER:-heimdall}
+      PAPERLESS_ADMIN_PASSWORD: ${STUDIO_PAPERLESS_SENHA}
+      PAPERLESS_TIME_ZONE: ${STUDIO_PAPERLESS_FUSO:-America/Sao_Paulo}
       PAPERLESS_OCR_LANGUAGE: por
-      # Códigos de barras: folha separadora (PATCHT) divide um lote escaneado em documentos; etiqueta ASN numera o papel. HEIMDALL_PAPERLESS_BARCODES=false desliga.
-      PAPERLESS_CONSUMER_ENABLE_BARCODES: ${HEIMDALL_PAPERLESS_BARCODES:-true}
-      PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: ${HEIMDALL_PAPERLESS_BARCODES:-true}
+      # Códigos de barras: folha separadora (PATCHT) divide um lote escaneado em documentos; etiqueta ASN numera o papel. STUDIO_PAPERLESS_BARCODES=false desliga.
+      PAPERLESS_CONSUMER_ENABLE_BARCODES: ${STUDIO_PAPERLESS_BARCODES:-true}
+      PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: ${STUDIO_PAPERLESS_BARCODES:-true}
       PAPERLESS_OCR_LANGUAGES: por
 volumes:
   redisdata:

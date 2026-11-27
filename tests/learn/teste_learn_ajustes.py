@@ -16,9 +16,9 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 TMP = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
-os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
-os.environ["HEIMDALL_AVISOS_MAC"] = "0"
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
+os.environ["STUDIO_AVISOS_MAC"] = "0"
 (TMP / "knowledge").mkdir()
 
 import heimdall_lab as nuvem  # noqa: E402

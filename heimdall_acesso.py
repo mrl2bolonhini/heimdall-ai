@@ -17,7 +17,6 @@ import getpass
 import re
 import time
 
-import heimdall_envcompat as _envcompat
 import heimdall_lab as nuvem
 
 
@@ -32,9 +31,9 @@ def _ler_env() -> dict:
         l = l.strip()
         if l.startswith("export "):
             l = l[7:]
-        if "=" in l and _envcompat.interno(l.split("=", 1)[0].strip()).startswith("HEIMDALL_LAB_"):
+        if "=" in l and l.split("=", 1)[0].strip().startswith("STUDIO_LAB_"):
             k, v = l.split("=", 1)
-            k = _envcompat.interno(k.strip())
+            k = k.strip()
             v = v.strip()
             if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"":
                 v = v[1:-1]

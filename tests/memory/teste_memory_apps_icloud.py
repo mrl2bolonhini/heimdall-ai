@@ -17,8 +17,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="icloud_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "STUDIO_HUB_IA": "0",
+                   "STUDIO_NUVEM_CHAVE": "chave-de-teste", "STUDIO_HUB_URL": "https://memory.exemplo.test"})
 SENHA = "abcd-efgh-ijkl-mnop"
 ESTADO = {"revogado": False, "etag_evento": "ev-e1", "titulo": "Consulta de rotina", "fora": False}
 CRED_OK = "Basic " + base64.b64encode(f"maria@icloud.com:{SENHA}".encode()).decode()

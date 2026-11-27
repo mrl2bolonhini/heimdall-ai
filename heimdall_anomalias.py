@@ -368,10 +368,10 @@ def relatorio(hoje: str = None) -> str:
 # Aviso na triagem: só quando algo MUDA, com a interpretação do modelo local
 # ----------------------------------------------------------------------------------------
 ESTADO = hs.banco.DB_DIR / "anomalias_estado.json"
-LEMBRETE_HORAS = int(os.environ.get("HEIMDALL_ANOMALIAS_LEMBRETE_H", "120"))   # sinal que persiste igual: um lembrete a cada tantas horas, nunca a cada ciclo
+LEMBRETE_HORAS = int(os.environ.get("STUDIO_ANOMALIAS_LEMBRETE_H", "120"))   # sinal que persiste igual: um lembrete a cada tantas horas, nunca a cada ciclo
 PIORA_Z = 1.0                                                                    # quanto o desvio precisa crescer para contar como piora
-LLM_URL = os.environ.get("HEIMDALL_SAUDE_LLM_URL", os.environ.get("HEIMDALL_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions"))
-LLM_MODELO = os.environ.get("HEIMDALL_SAUDE_MODELO", os.environ.get("HEIMDALL_NEWS_MODELO", "gemma3-4b"))
+LLM_URL = os.environ.get("STUDIO_SAUDE_LLM_URL", os.environ.get("STUDIO_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions"))
+LLM_MODELO = os.environ.get("STUDIO_SAUDE_MODELO", os.environ.get("STUDIO_NEWS_MODELO", "gemma3-4b"))
 _abridor_local = urllib.request.build_opener(urllib.request.ProxyHandler({}))   # só o LiteLLM desta máquina: dado de saúde nunca sai do Mac
 
 
@@ -411,7 +411,7 @@ def _interpretar(r: dict, fortes: list, antes: dict, mudou: dict) -> dict:
         "(3) as causas mais comuns; (4) qual o impacto prático (o que isso afeta no corpo e no dia a dia) e se é motivo de preocupação ou só de atenção. Nunca devolva apenas o número e a média.\n"
         "Não diagnostique, não invente números, não trate variação pequena como perigo. Sugira de duas a três ações concretas e proporcionais (por exemplo conferir se o relógio estava no pulso, "
         "medir a temperatura, descansar, hidratar, repetir a medida amanhã). Só sugira procurar atendimento se houver combinação clara de sinais ou sintomas relatados.\n"
-        + (f"Condições da pessoa que você deve respeitar: {os.environ['HEIMDALL_SAUDE_CONDICOES']}.\n" if os.environ.get("HEIMDALL_SAUDE_CONDICOES") else "")
+        + (f"Condições da pessoa que você deve respeitar: {os.environ['STUDIO_SAUDE_CONDICOES']}.\n" if os.environ.get("STUDIO_SAUDE_CONDICOES") else "")
         + "Regras de interpretação: esforço físico forte recente explica pulso, respiração e variabilidade alterados; ruído só importa acima de 70 dB de média no dia; "
           "passos, energia e exercício diferentes do normal são contexto, não problema; nunca ligue dois sinais sem relação fisiológica.\n"
         + "\nACHADOS DE HOJE:\n" + "\n".join(achados)
@@ -428,9 +428,9 @@ def _interpretar(r: dict, fortes: list, antes: dict, mudou: dict) -> dict:
     if os.environ.get("LITELLM_MASTER_KEY"):
         cab["Authorization"] = "Bearer " + os.environ["LITELLM_MASTER_KEY"]
     txt = ""
-    try:   # modelo grande da nuvem (gpt-oss-120b) quando HEIMDALL_NUVEM=1; HEIMDALL_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local
+    try:   # modelo grande da nuvem (gpt-oss-120b) quando STUDIO_NUVEM=1; STUDIO_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local
         import heimdall_nuvem
-        if heimdall_nuvem.ativo() and os.environ.get("HEIMDALL_SAUDE_ANALISTA_NUVEM", "1") != "0":
+        if heimdall_nuvem.ativo() and os.environ.get("STUDIO_SAUDE_ANALISTA_NUVEM", "1") != "0":
             txt = heimdall_nuvem.chat("Responda SOMENTE com o JSON pedido.", prompt, max_tokens=900, timeout=180)
     except Exception:  # noqa: BLE001 - nuvem fora do ar: cai para o modelo local
         txt = ""

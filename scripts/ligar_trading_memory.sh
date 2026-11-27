@@ -14,8 +14,8 @@ def definir(nome, valor):
             linhas[i] = f"{nome}={valor}"
             return
     linhas.append(f"{nome}={valor}")
-definir("HEIMDALL_TRADING", "1")
-definir("HEIMDALL_MEMORY", "1")
+definir("STUDIO_TRADING", "1")
+definir("STUDIO_HUB", "1")
 atual = next((l.split("=", 1)[1].strip().strip("\"'") for l in linhas if l.startswith("HEIMDALL_CFACCESS_AUD=")), "")
 lista = [x for x in atual.split(",") if x]
 for a in AUDS:
@@ -27,8 +27,8 @@ print("Trading e Hub ligados e identificadores do Access gravados.")
 PY
 read -r -s -p "Token da brapi (opcional; Enter para pular): " T; echo
 if [ -n "$T" ]; then
-    grep -v '^HEIMDALL_TRADING_BRAPI_TOKEN=' .env > .env.tmp && mv .env.tmp .env
-    echo "HEIMDALL_TRADING_BRAPI_TOKEN=$T" >> .env
+    grep -v '^STUDIO_TRADING_BRAPI_TOKEN=' .env > .env.tmp && mv .env.tmp .env
+    echo "STUDIO_TRADING_BRAPI_TOKEN=$T" >> .env
     echo "Token da brapi gravado."
 fi
 unset T

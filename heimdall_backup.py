@@ -12,8 +12,8 @@ Os demais bancos da mesma pasta (learn.db, avisos_saude.db...) e os da pasta do 
 cada um na subpasta com o nome dele (learn/, financas/; para uma pessoa, people/<id>/learn/). As cópias locais (copies/) não entram.
 
 Configuração (no .env, nunca no Git):
-    HEIMDALL_BACKUP_SENHA   senha das cópias (gerada por:  python3 heimdall_backup.py preparar)
-    HEIMDALL_BACKUP_DESTINO pasta de destino (opcional), ex.: ~/Library/Mobile Documents/com~apple~CloudDocs/Heimdall-backup
+    STUDIO_BACKUP_SENHA   senha das cópias (gerada por:  python3 heimdall_backup.py preparar)
+    STUDIO_BACKUP_DESTINO pasta de destino (opcional), ex.: ~/Library/Mobile Documents/com~apple~CloudDocs/Heimdall-backup
     HEIMDALL_R2_ENDPOINT    https://<id da conta>.r2.cloudflarestorage.com   (opcional, junto com as três abaixo)
     HEIMDALL_R2_BUCKET, HEIMDALL_R2_KEY_ID, HEIMDALL_R2_SECRET
 
@@ -170,8 +170,8 @@ def _env(env=None):
 def destinos(env=None, cliente_r2=None):
     e = _env(env)
     lista = []
-    if e.get("HEIMDALL_BACKUP_DESTINO", "").strip():
-        lista.append(DestinoPasta(e["HEIMDALL_BACKUP_DESTINO"].strip()))
+    if e.get("STUDIO_BACKUP_DESTINO", "").strip():
+        lista.append(DestinoPasta(e["STUDIO_BACKUP_DESTINO"].strip()))
     r2 = {"endpoint": e.get("HEIMDALL_R2_ENDPOINT", "").strip(), "bucket": e.get("HEIMDALL_R2_BUCKET", "").strip(),
           "key_id": e.get("HEIMDALL_R2_KEY_ID", "").strip(), "secret": e.get("HEIMDALL_R2_SECRET", "").strip()}
     if all(r2.values()):
@@ -231,7 +231,7 @@ def _copia_de_arquivo(arquivo: Path) -> bytes:
 
 def _pasta_finance() -> Path:
     import heimdall_pastas
-    return Path(os.environ.get("HEIMDALL_FINANCE_DIR") or heimdall_pastas.finance(PROJECT_DIR)).expanduser()
+    return Path(os.environ.get("STUDIO_FINANCE_DIR") or heimdall_pastas.finance(PROJECT_DIR)).expanduser()
 
 
 def bancos_extras_do_dono() -> list:
@@ -320,12 +320,12 @@ def fazer(env=None, cliente_r2=None, agora=None):
     """Faz a cópia do banco do dono e do banco de cada pessoa e envia a todos os destinos.
     Devolve {ok, nome, destinos:[{destino, ok, erro?}], pessoas:[{pessoa, ok, ...}]}; ok só se TUDO deu certo."""
     e = _env(env)
-    senha = e.get("HEIMDALL_BACKUP_SENHA", "")
+    senha = e.get("STUDIO_BACKUP_SENHA", "")
     if not senha:
-        raise RuntimeError("falta HEIMDALL_BACKUP_SENHA no .env (rode: python3 heimdall_backup.py preparar)")
+        raise RuntimeError("falta STUDIO_BACKUP_SENHA no .env (rode: python3 heimdall_backup.py preparar)")
     dests = destinos(e, cliente_r2)
     if not dests:
-        raise RuntimeError("nenhum destino configurado (HEIMDALL_BACKUP_DESTINO ou as variáveis HEIMDALL_R2_*)")
+        raise RuntimeError("nenhum destino configurado (STUDIO_BACKUP_DESTINO ou as variáveis HEIMDALL_R2_*)")
     with _trava:
         agora = agora or datetime.now()
         nome = f"heimdall-{agora:%Y-%m-%dT%H%M}{EXT}"
@@ -385,9 +385,9 @@ def _verificar_destino(d, senha, nova_ok=False):
 def verificar(env=None, cliente_r2=None):
     """Baixa a cópia mais recente de cada destino (a do dono e a de cada pessoa), decifra e confere a integridade e as tabelas."""
     e = _env(env)
-    senha = e.get("HEIMDALL_BACKUP_SENHA", "")
+    senha = e.get("STUDIO_BACKUP_SENHA", "")
     if not senha:
-        raise RuntimeError("falta HEIMDALL_BACKUP_SENHA no .env")
+        raise RuntimeError("falta STUDIO_BACKUP_SENHA no .env")
     saida = {}
     for d in destinos(e, cliente_r2):
         saida[d.nome] = _verificar_destino(d, senha)
@@ -401,9 +401,9 @@ def verificar(env=None, cliente_r2=None):
 
 
 def restaurar(arquivo, saida, env=None):
-    senha = _env(env).get("HEIMDALL_BACKUP_SENHA", "")
+    senha = _env(env).get("STUDIO_BACKUP_SENHA", "")
     if not senha:
-        raise RuntimeError("falta HEIMDALL_BACKUP_SENHA no .env")
+        raise RuntimeError("falta STUDIO_BACKUP_SENHA no .env")
     saida = Path(saida).expanduser()
     if saida.exists():
         raise RuntimeError(f"{saida} já existe; escolha outro nome (por segurança, nada é sobrescrito)")
@@ -416,12 +416,12 @@ def restaurar(arquivo, saida, env=None):
 def _preparar():
     env = PROJECT_DIR / ".env"
     texto = env.read_text(encoding="utf-8") if env.exists() else ""
-    if "HEIMDALL_BACKUP_SENHA=" in texto:
+    if "STUDIO_BACKUP_SENHA=" in texto:
         print("A senha das cópias já existe no .env. Para ouvi-la: python3 heimdall_backup.py senha")
         return
     senha = secrets.token_urlsafe(24)
     with env.open("a", encoding="utf-8") as f:
-        f.write(("" if texto.endswith("\n") or not texto else "\n") + f"HEIMDALL_BACKUP_SENHA='{senha}'\n")
+        f.write(("" if texto.endswith("\n") or not texto else "\n") + f"STUDIO_BACKUP_SENHA='{senha}'\n")
     print("Senha das cópias gerada e gravada no .env.")
     print("Guarde-a também fora do Mac (gerenciador de senhas): sem ela as cópias não abrem. Para ouvi-la: python3 heimdall_backup.py senha")
 
@@ -446,7 +446,7 @@ def main(argv):
         if cmd == "preparar":
             return _preparar() or 0
         if cmd == "senha":
-            print(os.environ.get("HEIMDALL_BACKUP_SENHA", "(ainda não existe; rode: python3 heimdall_backup.py preparar)"))
+            print(os.environ.get("STUDIO_BACKUP_SENHA", "(ainda não existe; rode: python3 heimdall_backup.py preparar)"))
             return 0
         if cmd == "fazer":
             r = fazer()

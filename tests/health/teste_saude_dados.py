@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-saude-"))
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "banco")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 sys.path.insert(0, str(RAIZ))
 import heimdall_banco as banco  # noqa: E402
 import heimdall_saude as hs  # noqa: E402
@@ -132,7 +132,7 @@ confere("repetir o mesmo envio não duplica", sql("SELECT COUNT(*) n FROM treino
 confere("payload estranho não quebra", hs.processar_hae({"data": {"workouts": "x", "ecg": [1], "metrics": [{"name": "heart_rate", "data": [{"date": "lixo"}]}]}})["treinos"] == 0 and hs.processar_hae([])["treinos"] == 0)
 hs.GUARDAR_ROTA = False
 hs.processar_hae({"data": {"workouts": [dict(treino, id="BBB-222")]}})
-confere("HEIMDALL_SAUDE_ROTA=0 não guarda a rota", json.loads(sql("SELECT rota FROM treinos WHERE id='BBB-222'")[0]["rota"]) == [])
+confere("STUDIO_SAUDE_ROTA=0 não guarda a rota", json.loads(sql("SELECT rota FROM treinos WHERE id='BBB-222'")[0]["rota"]) == [])
 hs.GUARDAR_ROTA = True
 
 # ---------------------------------------------------------------- arquivo de exportação do app Saúde
@@ -291,11 +291,11 @@ confere("documentos: pendente antigo entra pelo tipo e pela data, sem o nome do 
 rsem2 = hs.relatorio_semanal()
 confere("relatório semanal traz a seção de documentos antes do aviso final", "## Documentos de saúde" in rsem2["markdown"] and rsem2["audio"].index("Documentos de saúde") < rsem2["audio"].index(hs.AVISO), rsem2["markdown"][-600:])
 confere("Bark avisa que há documento aguardando, sem nomes nem números", "aguardando a sua conferência" in rsem2["bark"]["body"] and not any(c.isdigit() for c in rsem2["bark"]["body"]) and "receita" not in rsem2["bark"]["body"], rsem2["bark"]["body"])
-os.environ["HEIMDALL_SAUDE_PENDENTE_DIAS"] = "10"
-confere("HEIMDALL_SAUDE_PENDENTE_DIAS muda o prazo do pendente", "aguarda" not in hs.relatorio_documentos(7) and hs.documentos_pendentes_antigos() == 0)
-os.environ.pop("HEIMDALL_SAUDE_PENDENTE_DIAS")
+os.environ["STUDIO_SAUDE_PENDENTE_DIAS"] = "10"
+confere("STUDIO_SAUDE_PENDENTE_DIAS muda o prazo do pendente", "aguarda" not in hs.relatorio_documentos(7) and hs.documentos_pendentes_antigos() == 0)
+os.environ.pop("STUDIO_SAUDE_PENDENTE_DIAS")
 # banco novo e vazio: relatórios não quebram
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "vazio")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "vazio")
 banco.DB_DIR = TMP / "vazio"
 banco.DB_PATH = banco.DB_DIR / "heimdall.db"
 confere("banco vazio: mensagens úteis", "Nenhum treino" in hs.relatorio_treinos() and "Nenhum ECG" in hs.relatorio_ecg() and "Sem dados" in hs.relatorio_fc())

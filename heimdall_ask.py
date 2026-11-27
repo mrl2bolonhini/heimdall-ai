@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pergunta ao modelo pelo terminal: nuvem (gpt-oss-120b pelo gateway) se estiver ligada, senão o modelo local.
 
-    python3 heimdall_ask.py "sua pergunta"            nuvem se HEIMDALL_NUVEM=1; se a nuvem falhar, cai para o modelo local
+    python3 heimdall_ask.py "sua pergunta"            nuvem se STUDIO_NUVEM=1; se a nuvem falhar, cai para o modelo local
     python3 heimdall_ask.py --local "sua pergunta"    só o modelo local
     python3 heimdall_ask.py --cloud "sua pergunta"    só a nuvem (não cai para o local; avisa o erro)
 

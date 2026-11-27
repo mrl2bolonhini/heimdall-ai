@@ -14,8 +14,8 @@ from pathlib import Path
 AQUI = RAIZ
 sys.path.insert(0, str(AQUI))
 tmp = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_FINANCE_DIR"] = str(tmp / "dados")
-os.environ.pop("HEIMDALL_FINANCE_CHAT", None)
+os.environ["STUDIO_FINANCE_DIR"] = str(tmp / "dados")
+os.environ.pop("STUDIO_FINANCE_CHAT", None)
 import financas_boletos as fb  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
 import heimdall_tools as ht  # noqa: E402
@@ -76,9 +76,9 @@ except sqlite3.OperationalError:
 con2.close()
 confere("nada mudou no banco depois das consultas", fn.conectar(tmp / "dados" / "financas.db").execute("SELECT COUNT(*) FROM transacoes").fetchone()[0] == 12)
 
-os.environ["HEIMDALL_FINANCE_CHAT"] = "0"
-confere("HEIMDALL_FINANCE_CHAT=0 desliga todas as ferramentas", all("desligadas" in f() for f in (ht.financas_resumo, ht.financas_recorrentes, ht.financas_boletos, ht.financas_orcamentos, ht.financas_transacoes)))
-os.environ.pop("HEIMDALL_FINANCE_CHAT")
+os.environ["STUDIO_FINANCE_CHAT"] = "0"
+confere("STUDIO_FINANCE_CHAT=0 desliga todas as ferramentas", all("desligadas" in f() for f in (ht.financas_resumo, ht.financas_recorrentes, ht.financas_boletos, ht.financas_orcamentos, ht.financas_transacoes)))
+os.environ.pop("STUDIO_FINANCE_CHAT")
 confere("as ferramentas estão no grupo de dados do chat", {"financas_resumo", "financas_transacoes", "financas_orcamentos", "financas_recorrentes", "financas_boletos"} <= {f.__name__ for f in ht.DADOS_TOOLS})
 confere("e não estão no grupo público dos convidados", not ({f.__name__ for f in ht.PUBLIC_TOOLS} & {"financas_resumo", "financas_transacoes", "financas_orcamentos", "financas_recorrentes", "financas_boletos"}))
 

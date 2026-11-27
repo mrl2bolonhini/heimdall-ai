@@ -56,7 +56,7 @@
 <li>Sessão em cookie HttpOnly e SameSite=Strict, com validade, e token contra CSRF nos formulários.</li>
 <li>A sessão é única para Lab, Notas, News e Saúde: entrando em um, os outros três já reconhecem você (o cookie vale para *.heimdall-ai.tech e é assinado com uma chave que sai da senha e da chave do código). Sair em um sai em todos; trocar a senha ou o código derruba todas as sessões. Em localhost a sessão fica só no endereço aberto.</li>
 <li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
-<li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>HEIMDALL_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
+<li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>STUDIO_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
 <ul><li>Definir a senha e gerar o código de 6 dígitos (os mesmos valem para Lab, Notas, News e Saúde): <code>python3 heimdall_acesso.py --tudo</code></li>
 <li>Trocar só a senha: <code>python3 heimdall_acesso.py --senha</code></li>

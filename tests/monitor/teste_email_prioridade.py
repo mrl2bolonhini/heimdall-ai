@@ -32,8 +32,8 @@ titulos = [c["titulo"] for c in criados]
 confere("Serasa oficial urgente não vira triagem", not any("Serasa" in t and t.startswith("E-mail oficial") for t in titulos), titulos)
 confere("Receita Federal urgente continua crítica", [c for c in criados if c["titulo"].startswith("E-mail oficial") and "Receita" in c["titulo"] and c["nivel"] == "critico"], criados)
 confere("golpe imitando Serasa continua alertando", any(t.startswith("Possível golpe por e-mail") for t in titulos), titulos)
-confere("a lista é configurável no .env", not eo.baixa_prioridade({"HEIMDALL_EMAIL_BAIXA_PRIORIDADE": "outra"}, item()) and eo.baixa_prioridade({"HEIMDALL_EMAIL_BAIXA_PRIORIDADE": "receita"}, item(servico="Receita Federal", dominio="gov.br")))
-confere("lista vazia no .env não rebaixa ninguém", not eo.baixa_prioridade({"HEIMDALL_EMAIL_BAIXA_PRIORIDADE": " "}, item()))
+confere("a lista é configurável no .env", not eo.baixa_prioridade({"STUDIO_EMAIL_BAIXA_PRIORIDADE": "outra"}, item()) and eo.baixa_prioridade({"STUDIO_EMAIL_BAIXA_PRIORIDADE": "receita"}, item(servico="Receita Federal", dominio="gov.br")))
+confere("lista vazia no .env não rebaixa ninguém", not eo.baixa_prioridade({"STUDIO_EMAIL_BAIXA_PRIORIDADE": " "}, item()))
 confere("não rebaixa o que não é oficial", not eo.baixa_prioridade({}, item(classe="suspeito")))
 confere("agendar não cria evento nem lembrete para Serasa", eo.agendar({}, item(), {"urgencia": "alta", "prazo_iso": "2026-12-01"}, __import__("datetime").datetime(2026, 11, 18, 10, 0)) == "")
 

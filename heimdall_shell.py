@@ -101,7 +101,7 @@ class Shell:
             fcntl.ioctl(escravo, termios.TIOCSWINSZ, struct.pack("HHHH", 50, LARGURA, 0, 0))
             env = dict(os.environ)
             env.update({"TERM": "dumb", "NO_COLOR": "1", "PAGER": "cat", "GIT_PAGER": "cat", "MANPAGER": "cat", "COLUMNS": str(LARGURA), "LINES": "50",
-                        "HEIMDALL_CONTROLS": "1", "LANG": env.get("LANG") or "pt_BR.UTF-8"})
+                        "STUDIO_CONTROLS": "1", "LANG": env.get("LANG") or "pt_BR.UTF-8"})
             env.update(self.ambiente_extra)
             nome = os.path.basename(self.comando_shell)
             if self.carregar_rc:

@@ -324,8 +324,8 @@ _PROMPT = ("Você interpreta planilhas financeiras pessoais brasileiras. Respond
 
 def _modelo_padrao(sistema: str, usuario: str) -> str:
     import heimdall_perguntar as perguntar
-    # só o cabeçalho e as 5 primeiras linhas vão ao modelo; HEIMDALL_FINANCE_PLANILHAS_NUVEM=0 mantém tudo no modelo local do Mac
-    return perguntar.chamar_local(sistema, usuario, max_tokens=500, timeout=120, usar_nuvem=os.environ.get("HEIMDALL_FINANCE_PLANILHAS_NUVEM", "1") != "0")
+    # só o cabeçalho e as 5 primeiras linhas vão ao modelo; STUDIO_FINANCE_PLANILHAS_NUVEM=0 mantém tudo no modelo local do Mac
+    return perguntar.chamar_local(sistema, usuario, max_tokens=500, timeout=120, usar_nuvem=os.environ.get("STUDIO_FINANCE_PLANILHAS_NUVEM", "1") != "0")
 
 
 def _pedir_ao_modelo(modelo, arquivo, cab, linhas) -> dict:

@@ -6,8 +6,8 @@ de ordens abertas. A IA só descreve (campo Perguntar e sinais objetivos); quem 
 Abas: Mesa, Carteira, Ordens (Abertas, Histórico), Análise (Sinais, Lista). Ajustes: Limites, Cotações, Conta, Ajuda.
 Atalhos da Mesa (Option+Shift no macOS, Alt+Shift no Windows e no Linux): B comprar, S vender, F fechar posição, X cancelar ordens abertas, Q ir ao campo do ativo.
 
-Variáveis: HEIMDALL_TRADING (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), HEIMDALL_TRADING_PORT (8020), HEIMDALL_TRADING_HOST (127.0.0.1),
-HEIMDALL_TRADING_HOSTS (trading.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_TRADING_FONTE (brapi, padrão, com cotações reais da B3; simulada ou manual), HEIMDALL_TRADING_BRAPI_TOKEN (opcional).
+Variáveis: STUDIO_TRADING (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_TRADING_PORT (8020), STUDIO_TRADING_HOST (127.0.0.1),
+STUDIO_TRADING_HOSTS (trading.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_TRADING_FONTE (brapi, padrão, com cotações reais da B3; simulada ou manual), STUDIO_TRADING_BRAPI_TOKEN (opcional).
 
     python3 heimdall_trading.py
 
@@ -15,7 +15,7 @@ Funciona em macOS, Linux e Windows (só biblioteca padrão do Python).
 """
 import heimdall_servico_web as web
 
-web.carregar_env("HEIMDALL_TRADING_")
+web.carregar_env("STUDIO_TRADING_")
 
 import heimdall_design as design  # noqa: E402
 import heimdall_trading_motor as m  # noqa: E402
@@ -277,7 +277,7 @@ GRUPOS = [
     ("Análise", [("/analise", "Sinais"), ("/lista", "Lista")]),
 ]
 CFG = web.Config(
-    chave="trading", nome="Trading", porta_env="HEIMDALL_TRADING_PORT", porta=8020, hosts="trading.heimdall-ai.tech,localhost,127.0.0.1",
+    chave="trading", nome="Trading", porta_env="STUDIO_TRADING_PORT", porta=8020, hosts="trading.heimdall-ai.tech,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/limites", "Limites"), ("/ajustes/cotacoes", "Cotações"), ("/ajustes/conta", "Conta")],
     get={"/mesa": pg_mesa, "/carteira": pg_carteira, "/ordens": pg_ordens, "/historico": pg_historico, "/analise": pg_analise, "/lista": pg_lista,
          "/ajustes/limites": aj_limites, "/ajustes/cotacoes": aj_cotacoes, "/ajustes/conta": aj_conta},

@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-laudo-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "health"), "HEIMDALL_EXAMES_LLM": "0"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_EXAMES_DIR": str(TMP / "health"), "STUDIO_EXAMES_LLM": "0"})
 import heimdall_banco as banco  # noqa: E402
 import heimdall_exames as ex  # noqa: E402
 

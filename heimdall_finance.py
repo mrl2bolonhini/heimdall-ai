@@ -11,16 +11,15 @@ Segurança (mesmas camadas dos outros painéis):
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
   2. Entrada com a senha e o código de 6 dígitos do Studio Lab (ou o Cloudflare Access, se ligado).
   3. Limite de tentativas, sessão em cookie HttpOnly e SameSite=Strict, token CSRF em todo POST.
-  4. Só atende os nomes de site permitidos (HEIMDALL_FINANCE_HOSTS) e manda cabeçalhos de segurança.
+  4. Só atende os nomes de site permitidos (STUDIO_FINANCE_HOSTS) e manda cabeçalhos de segurança.
   5. Sem senha e sem código configurados, o servidor não sobe.
 
-Variáveis opcionais no .env: HEIMDALL_FINANCE_PORT (8016), HEIMDALL_FINANCE_HOST (127.0.0.1),
-HEIMDALL_FINANCE_HOSTS (finance.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_FINANCE_DIR (pasta do banco) e HEIMDALL_FINANCE_MAX_MB (8).
+Variáveis opcionais no .env: STUDIO_FINANCE_PORT (8016), STUDIO_FINANCE_HOST (127.0.0.1),
+STUDIO_FINANCE_HOSTS (finance.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_FINANCE_DIR (pasta do banco) e STUDIO_FINANCE_MAX_MB (8).
 """
 import html
 import heimdall_pastas
 import os
-import heimdall_envcompat as _envcompat
 import re
 import secrets
 import sys
@@ -48,8 +47,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        chave = _envcompat.interno(chave)
-        if not chave.startswith("HEIMDALL_FINANCE_"):
+        if not chave.startswith("STUDIO_FINANCE_"):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -73,15 +71,15 @@ import heimdall_paginacao as paginacao  # noqa: E402  (paginação em botões, i
 import heimdall_continuidade  # noqa: E402
 import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 
-HOST = os.environ.get("HEIMDALL_FINANCE_HOST", "127.0.0.1")
+HOST = os.environ.get("STUDIO_FINANCE_HOST", "127.0.0.1")
 try:
-    PORT = max(1, int(os.environ.get("HEIMDALL_FINANCE_PORT", "8016")))
+    PORT = max(1, int(os.environ.get("STUDIO_FINANCE_PORT", "8016")))
 except ValueError:
     PORT = 8016
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_FINANCE_HOSTS", "finance.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
-DIR_DADOS = Path(os.environ.get("HEIMDALL_FINANCE_DIR") or heimdall_pastas.finance(PROJECT_DIR))
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_FINANCE_HOSTS", "finance.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+DIR_DADOS = Path(os.environ.get("STUDIO_FINANCE_DIR") or heimdall_pastas.finance(PROJECT_DIR))
 try:
-    MAX_ENVIO = int(float(os.environ.get("HEIMDALL_FINANCE_MAX_MB", "8")) * 1024 * 1024)
+    MAX_ENVIO = int(float(os.environ.get("STUDIO_FINANCE_MAX_MB", "8")) * 1024 * 1024)
 except ValueError:
     MAX_ENVIO = 8 * 1024 * 1024
 COOKIE = nuvem.COOKIE
@@ -462,8 +460,8 @@ def _sincronizar_pluggy() -> None:
 
 
 def _vigiar_pluggy() -> None:
-    """A cada 6 horas baixa as transações dos bancos conectados no Meu Pluggy. Só roda com as três chaves no .env; HEIMDALL_FINANCE_PLUGGY=0 desliga."""
-    if os.environ.get("HEIMDALL_FINANCE_PLUGGY", "1") == "0" or not fpl.credenciais():
+    """A cada 6 horas baixa as transações dos bancos conectados no Meu Pluggy. Só roda com as três chaves no .env; STUDIO_FINANCE_PLUGGY=0 desliga."""
+    if os.environ.get("STUDIO_FINANCE_PLUGGY", "1") == "0" or not fpl.credenciais():
         return
     time.sleep(30)
     while True:
@@ -1174,8 +1172,8 @@ def _vigiar_entrada() -> None:
 
 
 def _vigiar_email() -> None:
-    """A cada 15 minutos lê o Gmail (somente leitura) atrás de boletos e Pix. Só roda com a senha de e-mail no .env; HEIMDALL_FINANCE_EMAIL=0 desliga."""
-    if os.environ.get("HEIMDALL_FINANCE_EMAIL", "1") == "0":
+    """A cada 15 minutos lê o Gmail (somente leitura) atrás de boletos e Pix. Só roda com a senha de e-mail no .env; STUDIO_FINANCE_EMAIL=0 desliga."""
+    if os.environ.get("STUDIO_FINANCE_EMAIL", "1") == "0":
         return
     cfg = femail.credenciais()
     if not cfg:

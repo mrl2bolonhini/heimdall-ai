@@ -3,10 +3,10 @@
 
 Regra de privacidade (ROADMAP): o Notion só recebe notas comuns. Saúde e finanças nunca vão para lá (quem decide é heimdall_catalogo.py).
 Configuração no .env (nunca colada em conversa; o comando `studio notion` grava e confere):
-  HEIMDALL_NOTION_TOKEN           token da integração interna do Notion
-  HEIMDALL_NOTION_DB_IDEIAS       id do banco de dados de ideias
-  HEIMDALL_NOTION_DB_CONTATOS     id do banco de dados de contatos
-  HEIMDALL_NOTION_DB_ENDERECOS    id do banco de dados de endereços
+  STUDIO_NOTION_TOKEN           token da integração interna do Notion
+  STUDIO_NOTION_DB_IDEIAS       id do banco de dados de ideias
+  STUDIO_NOTION_DB_CONTATOS     id do banco de dados de contatos
+  STUDIO_NOTION_DB_ENDERECOS    id do banco de dados de endereços
 O título vai na propriedade de título do banco (qualquer nome) e os detalhes viram texto dentro da página; assim o banco pode ter as colunas que você quiser.
 """
 import json
@@ -19,7 +19,7 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 API = "https://api.notion.com/v1"
 VERSAO = "2022-06-28"
-BANCOS = {"ideia": "HEIMDALL_NOTION_DB_IDEIAS", "contato": "HEIMDALL_NOTION_DB_CONTATOS", "endereco": "HEIMDALL_NOTION_DB_ENDERECOS"}
+BANCOS = {"ideia": "STUDIO_NOTION_DB_IDEIAS", "contato": "STUDIO_NOTION_DB_CONTATOS", "endereco": "STUDIO_NOTION_DB_ENDERECOS"}
 ID_RE = re.compile(r"[0-9a-fA-F]{32}")
 
 
@@ -45,12 +45,12 @@ def id_do_banco(tipo: str) -> str:
 
 
 def configurado(tipo: str) -> bool:
-    return bool(_env("HEIMDALL_NOTION_TOKEN") and id_do_banco(tipo))
+    return bool(_env("STUDIO_NOTION_TOKEN") and id_do_banco(tipo))
 
 
 def _chamar(metodo: str, caminho: str, corpo: dict = None, http=None) -> dict:
     """http(metodo, url, corpo, cabecalho) -> dict é para teste."""
-    cab = {"Authorization": "Bearer " + _env("HEIMDALL_NOTION_TOKEN"), "Notion-Version": VERSAO, "Content-Type": "application/json"}
+    cab = {"Authorization": "Bearer " + _env("STUDIO_NOTION_TOKEN"), "Notion-Version": VERSAO, "Content-Type": "application/json"}
     if http:
         return http(metodo, API + caminho, corpo, cab)
     req = urllib.request.Request(API + caminho, data=json.dumps(corpo).encode("utf-8") if corpo is not None else None, headers=cab, method=metodo)
@@ -105,8 +105,8 @@ def verificar(http=None) -> list:
     """Para `studio notion`: uma linha por banco, dizendo se o token enxerga o banco."""
     out = []
     for tipo in BANCOS:
-        if not _env("HEIMDALL_NOTION_TOKEN"):
-            out.append(f"{tipo}: falta HEIMDALL_NOTION_TOKEN")
+        if not _env("STUDIO_NOTION_TOKEN"):
+            out.append(f"{tipo}: falta STUDIO_NOTION_TOKEN")
         elif not id_do_banco(tipo):
             out.append(f"{tipo}: falta {BANCOS[tipo]}")
         else:

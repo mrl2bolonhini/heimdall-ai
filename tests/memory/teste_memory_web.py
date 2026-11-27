@@ -15,7 +15,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="memory_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "STUDIO_HUB_IA": "0"})
 import heimdall_lab as hc  # noqa: E402
 import heimdall_memory as lib  # noqa: E402
 import heimdall_memory_dados as dados  # noqa: E402

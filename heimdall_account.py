@@ -7,16 +7,15 @@ Segurança:
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare, com o Access na frente (só e-mails de donos e convidados, com o Authenticator).
   2. No endereço público só atende quem trouxe o documento assinado do Access, conferido aqui (heimdall_cfaccess); sem ele, 403. Pela porta local (localhost)
      atende o dono do Mac: a página só tem nomes e links de serviços, nada guardado.
-  3. /quem.json só devolve CORS (com cookies) para os sites listados em HEIMDALL_ACCOUNT_ORIGENS; para os outros, nada.
-  4. Só atende os nomes de site permitidos (HEIMDALL_ACCOUNT_HOSTS) e manda cabeçalhos de segurança; a página não usa script.
+  3. /quem.json só devolve CORS (com cookies) para os sites listados em STUDIO_ACCOUNT_ORIGENS; para os outros, nada.
+  4. Só atende os nomes de site permitidos (STUDIO_ACCOUNT_HOSTS) e manda cabeçalhos de segurança; a página não usa script.
 
-Variáveis opcionais no .env: HEIMDALL_ACCOUNT_PORT (8018), HEIMDALL_ACCOUNT_HOST (127.0.0.1),
-HEIMDALL_ACCOUNT_HOSTS (account.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_ACCOUNT_ORIGENS (https://heimdall-ai.tech,https://www.heimdall-ai.tech).
+Variáveis opcionais no .env: STUDIO_ACCOUNT_PORT (8018), STUDIO_ACCOUNT_HOST (127.0.0.1),
+STUDIO_ACCOUNT_HOSTS (account.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_ACCOUNT_ORIGENS (https://heimdall-ai.tech,https://www.heimdall-ai.tech).
 """
 import html
 import json
 import os
-import heimdall_envcompat as _envcompat
 import secrets
 import sys
 import time
@@ -41,8 +40,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        chave = _envcompat.interno(chave)
-        if not chave.startswith(("HEIMDALL_ACCOUNT_", "HEIMDALL_CFACCESS_")):
+        if not chave.startswith(("STUDIO_ACCOUNT_", "HEIMDALL_CFACCESS_")):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -59,8 +57,8 @@ import heimdall_integracoes as integ  # noqa: E402
 import heimdall_ajuda as ajuda  # noqa: E402  (perguntas frequentes, suporte e políticas)
 
 e = html.escape
-PORT = int(os.environ.get("HEIMDALL_ACCOUNT_PORT", "8018"))
-HOST = os.environ.get("HEIMDALL_ACCOUNT_HOST", "127.0.0.1")
+PORT = int(os.environ.get("STUDIO_ACCOUNT_PORT", "8018"))
+HOST = os.environ.get("STUDIO_ACCOUNT_HOST", "127.0.0.1")
 LOCAIS = {"localhost", "127.0.0.1", "[::1]"}
 
 
@@ -69,11 +67,11 @@ def _lista(nome: str, padrao: str) -> set:
 
 
 def hosts_ok() -> set:
-    return _lista("HEIMDALL_ACCOUNT_HOSTS", "account.heimdall-ai.tech,localhost,127.0.0.1")
+    return _lista("STUDIO_ACCOUNT_HOSTS", "account.heimdall-ai.tech,localhost,127.0.0.1")
 
 
 def origens_ok() -> set:
-    return _lista("HEIMDALL_ACCOUNT_ORIGENS", "https://heimdall-ai.tech,https://www.heimdall-ai.tech")
+    return _lista("STUDIO_ACCOUNT_ORIGENS", "https://heimdall-ai.tech,https://www.heimdall-ai.tech")
 
 
 def dados_quem(p: dict) -> dict:
@@ -141,7 +139,7 @@ def pagina_integracoes(p: dict, nonce: str, token: str = "", aviso: str = "", er
         elif not st["pode"]:
             estado_txt = "Ainda não disponível para a sua conta: falta o armazenamento por pessoa. Por enquanto só o dono do StudioLibre pode ligar a Saúde."
         elif not st["caixa"]:
-            estado_txt = "A caixa de correio está desligada. No terminal do Mac: studio mailbox start, depois studio env --set HEIMDALL_CAIXA 1."
+            estado_txt = "A caixa de correio está desligada. No terminal do Mac: studio mailbox start, depois studio env --set STUDIO_CAIXA 1."
         else:
             estado_txt = "Ainda não ativada."
         acoes = ""

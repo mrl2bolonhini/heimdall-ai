@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
 
 import heimdall_memory_dados as L  # noqa: E402
 import heimdall_banco as banco  # noqa: E402

@@ -3,7 +3,7 @@
 
 O Bark entrega ao iPhone com texto genérico (o texto passa por um servidor de terceiros). No Mac não há esse limite: o aviso fica só em
 `db/alerts/` (permissão 700) e é lido pelo app, que o apaga depois de mostrar. Campos no estilo do Bark: title, body, group, level.
-Desligar: HEIMDALL_AVISOS_MAC=0.
+Desligar: STUDIO_AVISOS_MAC=0.
 """
 import json
 import os
@@ -19,7 +19,7 @@ MAX_TITULO, MAX_CORPO, MAX_FILA = 200, 4000, 200
 
 
 def ligado() -> bool:
-    return os.environ.get("HEIMDALL_AVISOS_MAC", "1").strip() != "0"
+    return os.environ.get("STUDIO_AVISOS_MAC", "1").strip() != "0"
 
 
 def pasta() -> Path:

@@ -27,7 +27,7 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent
 ARQUIVO = PROJECT_DIR / ".heimdall_desligados.json"
 LOGS_DIR = PROJECT_DIR / "logs"
-ESPERA_VIGIA_S = int(os.environ.get("HEIMDALL_SERVICOS_ESPERA_S", "180"))
+ESPERA_VIGIA_S = int(os.environ.get("STUDIO_SERVICOS_ESPERA_S", "180"))
 INTERVALO_VIGIA_S = 30
 
 
@@ -41,7 +41,7 @@ def _porta(var: str, padrao: int) -> int:
 def catalogo() -> list:
     """Lista de serviços, na ordem em que aparecem. As portas respeitam o .env."""
     py = sys.executable or "python3"
-    lit_cmd = [py, "heimdall_litellm.py"]  # escolhe a configuração conforme HEIMDALL_NUVEM e inicia o LiteLLM
+    lit_cmd = [py, "heimdall_litellm.py"]  # escolhe a configuração conforme STUDIO_NUVEM e inicia o LiteLLM
     return [
         {"id": "litellm", "nome": "LiteLLM", "porta": 9000, "tipo": "cmd", "log": "litellm",
          "liga": lit_cmd + ["--host", "0.0.0.0", "--port", "9000"]},
@@ -53,28 +53,28 @@ def catalogo() -> list:
         {"id": "mcp_public", "nome": "MCP public", "apelidos": ["mcp publico"], "porta": 8001, "tipo": "py", "script": ["heimdall_mcp.py", "--group", "public"], "log": "mcp_public_debug"},
         {"id": "mcp_dados", "nome": "MCP data", "apelidos": ["mcp dados"], "porta": 8004, "tipo": "py", "script": ["heimdall_mcp.py", "--group", "dados"], "log": "mcp_dados_debug"},
         {"id": "terminal", "nome": "Open Terminal", "porta": 8002, "tipo": "py", "script": None, "log": "open_terminal"},
-        {"id": "agente", "nome": "Mac Agent", "apelidos": ["agente"], "porta": _porta("HEIMDALL_AGENTE_PORT", 8003), "tipo": "py", "script": ["heimdall_agente.py"],
-         "porta_env": "HEIMDALL_AGENTE_PORT", "log": "agente_debug"},
-        {"id": "lab", "nome": "Lab", "apelidos": ["cloud"], "porta": _porta("HEIMDALL_LAB_PORT", 8010), "tipo": "py", "script": ["heimdall_lab.py"],
-         "porta_env": "HEIMDALL_LAB_PORT", "log": "lab_debug"},
-        {"id": "notas", "nome": "Notes", "apelidos": ["notas"], "porta": _porta("HEIMDALL_NOTAS_PORT", 8011), "tipo": "py", "script": ["heimdall_notas.py"],
-         "porta_env": "HEIMDALL_NOTAS_PORT", "log": "notas_debug"},
-        {"id": "learn", "nome": "Learn", "porta": _porta("HEIMDALL_LEARN_PORT", 8019), "tipo": "py", "script": ["heimdall_learn.py"],
-         "porta_env": "HEIMDALL_LEARN_PORT", "log": "learn_debug", "opcional": True},
-        {"id": "trading", "nome": "Trading", "porta": _porta("HEIMDALL_TRADING_PORT", 8020), "tipo": "py", "script": ["heimdall_trading.py"],
-         "porta_env": "HEIMDALL_TRADING_PORT", "log": "trading_debug", "opcional": True},
-        {"id": "memory", "nome": "Hub", "apelidos": ["library", "memory", "hub"], "porta": _porta("HEIMDALL_MEMORY_PORT", _porta("HEIMDALL_LIBRARY_PORT", 8021)), "tipo": "py", "script": ["heimdall_memory.py"],
-         "porta_env": "HEIMDALL_MEMORY_PORT", "log": "memory_debug", "opcional": True},
-        {"id": "news", "nome": "News", "porta": _porta("HEIMDALL_NEWS_PORT", 8012), "tipo": "py", "script": ["heimdall_news.py"],
-         "porta_env": "HEIMDALL_NEWS_PORT", "log": "news_debug"},
-        {"id": "saude", "nome": "Health", "apelidos": ["saude"], "porta": _porta("HEIMDALL_SAUDE_PAINEL_PORT", 8013), "tipo": "py", "script": ["heimdall_painel_saude.py"],
-         "porta_env": "HEIMDALL_SAUDE_PAINEL_PORT", "log": "saude_painel_debug"},
-        {"id": "jogos", "nome": "Games", "apelidos": ["jogos"], "porta": _porta("HEIMDALL_JOGOS_PORT", 8014), "tipo": "py", "script": ["heimdall_jogos.py"],
-         "porta_env": "HEIMDALL_JOGOS_PORT", "log": "jogos_debug"},
-        {"id": "finance", "nome": "Finance", "porta": _porta("HEIMDALL_FINANCE_PORT", 8016), "tipo": "py", "script": ["heimdall_finance.py"],
-         "porta_env": "HEIMDALL_FINANCE_PORT", "log": "finance_debug"},
-        {"id": "account", "nome": "Account", "apelidos": ["conta", "account"], "porta": _porta("HEIMDALL_ACCOUNT_PORT", 8018), "tipo": "py", "script": ["heimdall_account.py"],
-         "porta_env": "HEIMDALL_ACCOUNT_PORT", "log": "account_debug"},
+        {"id": "agente", "nome": "Mac Agent", "apelidos": ["agente"], "porta": _porta("STUDIO_AGENTE_PORT", 8003), "tipo": "py", "script": ["heimdall_agente.py"],
+         "porta_env": "STUDIO_AGENTE_PORT", "log": "agente_debug"},
+        {"id": "lab", "nome": "Lab", "apelidos": ["cloud"], "porta": _porta("STUDIO_LAB_PORT", 8010), "tipo": "py", "script": ["heimdall_lab.py"],
+         "porta_env": "STUDIO_LAB_PORT", "log": "lab_debug"},
+        {"id": "notas", "nome": "Notes", "apelidos": ["notas"], "porta": _porta("STUDIO_NOTAS_PORT", 8011), "tipo": "py", "script": ["heimdall_notas.py"],
+         "porta_env": "STUDIO_NOTAS_PORT", "log": "notas_debug"},
+        {"id": "learn", "nome": "Learn", "porta": _porta("STUDIO_LEARN_PORT", 8019), "tipo": "py", "script": ["heimdall_learn.py"],
+         "porta_env": "STUDIO_LEARN_PORT", "log": "learn_debug", "opcional": True},
+        {"id": "trading", "nome": "Trading", "porta": _porta("STUDIO_TRADING_PORT", 8020), "tipo": "py", "script": ["heimdall_trading.py"],
+         "porta_env": "STUDIO_TRADING_PORT", "log": "trading_debug", "opcional": True},
+        {"id": "memory", "nome": "Hub", "apelidos": ["memory", "hub"], "porta": _porta("STUDIO_HUB_PORT", _porta("STUDIO_HUB_PORT", 8021)), "tipo": "py", "script": ["heimdall_memory.py"],
+         "porta_env": "STUDIO_HUB_PORT", "log": "memory_debug", "opcional": True},
+        {"id": "news", "nome": "News", "porta": _porta("STUDIO_NEWS_PORT", 8012), "tipo": "py", "script": ["heimdall_news.py"],
+         "porta_env": "STUDIO_NEWS_PORT", "log": "news_debug"},
+        {"id": "saude", "nome": "Health", "apelidos": ["saude"], "porta": _porta("STUDIO_SAUDE_PAINEL_PORT", 8013), "tipo": "py", "script": ["heimdall_painel_saude.py"],
+         "porta_env": "STUDIO_SAUDE_PAINEL_PORT", "log": "saude_painel_debug"},
+        {"id": "jogos", "nome": "Games", "apelidos": ["jogos"], "porta": _porta("STUDIO_JOGOS_PORT", 8014), "tipo": "py", "script": ["heimdall_jogos.py"],
+         "porta_env": "STUDIO_JOGOS_PORT", "log": "jogos_debug"},
+        {"id": "finance", "nome": "Finance", "porta": _porta("STUDIO_FINANCE_PORT", 8016), "tipo": "py", "script": ["heimdall_finance.py"],
+         "porta_env": "STUDIO_FINANCE_PORT", "log": "finance_debug"},
+        {"id": "account", "nome": "Account", "apelidos": ["conta", "account"], "porta": _porta("STUDIO_ACCOUNT_PORT", 8018), "tipo": "py", "script": ["heimdall_account.py"],
+         "porta_env": "STUDIO_ACCOUNT_PORT", "log": "account_debug"},
         {"id": "kuma", "nome": "Uptime Kuma", "porta": 3001, "tipo": "docker", "alvo": ["uptime-kuma"], "kuma": False},
         {"id": "dozzle", "nome": "Dozzle", "porta": 8081, "tipo": "docker", "alvo": ["dozzle"]},
         {"id": "n8n", "nome": "n8n", "porta": 5678, "tipo": "docker", "alvo": ["n8n"]},
@@ -231,7 +231,7 @@ def ligar(s: dict) -> tuple:
     if not cmd:
         return False, "este serviço só liga com: studio restart"
     env = _ambiente()
-    env["HEIMDALL_DIR"] = str(PROJECT_DIR)
+    env["STUDIO_DIR"] = str(PROJECT_DIR)
     if s.get("porta_env"):
         env[s["porta_env"]] = str(s["porta"])
     try:

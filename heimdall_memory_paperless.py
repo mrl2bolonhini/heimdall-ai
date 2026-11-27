@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Studio Hub com o Paperless-ngx como motor (HEIMDALL_MEMORY_MOTOR=paperless).
+"""Studio Hub com o Paperless-ngx como motor (STUDIO_HUB_MOTOR=paperless).
 
 O Paperless-ngx roda em Docker neste Mac, escutando só em 127.0.0.1, sem login exposto: o Hub é a única tela e fala com ele pela API REST (token).
 O Paperless faz o OCR, guarda os arquivos, lê e-mails (regras IMAP) e classifica; a classificação aprende com as correções que a pessoa grava em "A revisar".
@@ -7,7 +7,7 @@ Estas funções têm os mesmos nomes e formatos de heimdall_memory_dados.py, que
 cada pessoa, dono incluído, tem um usuário comum no Paperless e o Hub filtra tudo por dono, por privacidade (LGPD); a conta de administração só cria usuários).
 
 Convenções: a etiqueta "A revisar" marca o que ainda não foi confirmado; a etiqueta "Lixeira" marca o que foi excluído pelo Hub (nada é apagado do Paperless).
-Variáveis: HEIMDALL_PAPERLESS_URL (http://127.0.0.1:8023), HEIMDALL_PAPERLESS_USER e HEIMDALL_PAPERLESS_SENHA (administração: só cria usuários), HEIMDALL_PAPERLESS_SECRET (deriva a senha de cada pessoa), HEIMDALL_MEMORY_EMAIL_SENHA (senha de e-mail do dono, opcional).
+Variáveis: STUDIO_PAPERLESS_URL (http://127.0.0.1:8023), STUDIO_PAPERLESS_USER e STUDIO_PAPERLESS_SENHA (administração: só cria usuários), STUDIO_PAPERLESS_SECRET (deriva a senha de cada pessoa), STUDIO_HUB_EMAIL_SENHA (senha de e-mail do dono, opcional).
 """
 import json
 import os
@@ -43,11 +43,11 @@ def _senha_pessoa(pessoa: str) -> str:
     """Senha derivada da chave do Paperless: não precisa ser guardada em lugar nenhum."""
     import hashlib
     import hmac
-    return hmac.new(os.environ.get("HEIMDALL_PAPERLESS_SECRET", "").encode(), f"pessoa:{pessoa}".encode(), hashlib.sha256).hexdigest()[:40]
+    return hmac.new(os.environ.get("STUDIO_PAPERLESS_SECRET", "").encode(), f"pessoa:{pessoa}".encode(), hashlib.sha256).hexdigest()[:40]
 
 
 def _url() -> str:
-    return os.environ.get("HEIMDALL_PAPERLESS_URL", "http://127.0.0.1:8023").rstrip("/")
+    return os.environ.get("STUDIO_PAPERLESS_URL", "http://127.0.0.1:8023").rstrip("/")
 
 
 def pasta_entrada() -> Path:
@@ -63,12 +63,12 @@ def _login(usuario: str, senha: str) -> str:
 def _token(renovar: bool = False, admin: bool = False) -> str:
     """Token do usuário em atendimento. Cada pessoa (dono e convidados) tem o seu usuário comum, criado na primeira vez pela conta de administração do .env (que só serve para isso)."""
     pessoa = _pessoa() or "dono"
-    usuario = os.environ.get("HEIMDALL_PAPERLESS_USER", "heimdall") if admin else f"heimdall-{pessoa}"
+    usuario = os.environ.get("STUDIO_PAPERLESS_USER", "heimdall") if admin else f"heimdall-{pessoa}"
     if _estado["tokens"].get(usuario) and not renovar:
         return _estado["tokens"][usuario]
-    senha = os.environ.get("HEIMDALL_PAPERLESS_SENHA", "") if admin else _senha_pessoa(pessoa)
-    if not senha or not os.environ.get("HEIMDALL_PAPERLESS_SECRET"):
-        raise ErroMemory("Faltam a senha ou a chave do Paperless-ngx no .env (HEIMDALL_PAPERLESS_SENHA, HEIMDALL_PAPERLESS_SECRET).")
+    senha = os.environ.get("STUDIO_PAPERLESS_SENHA", "") if admin else _senha_pessoa(pessoa)
+    if not senha or not os.environ.get("STUDIO_PAPERLESS_SECRET"):
+        raise ErroMemory("Faltam a senha ou a chave do Paperless-ngx no .env (STUDIO_PAPERLESS_SENHA, STUDIO_PAPERLESS_SECRET).")
     try:
         try:
             _estado["tokens"][usuario] = _login(usuario, senha)
@@ -330,7 +330,7 @@ def email_estado() -> dict:
 
 def senha_do_env() -> bool:
     """O dono pode usar a senha de aplicativo do .env em vez de digitá-la; convidados digitam a própria."""
-    return not _pessoa() and bool(os.environ.get("HEIMDALL_MEMORY_EMAIL_SENHA"))
+    return not _pessoa() and bool(os.environ.get("STUDIO_HUB_EMAIL_SENHA"))
 
 
 def email_configurar(servidor: str, usuario: str, pasta: str, remetente: str = "", senha: str = "") -> str:
@@ -338,7 +338,7 @@ def email_configurar(servidor: str, usuario: str, pasta: str, remetente: str = "
     servidor, usuario, pasta, remetente = servidor.strip().lower(), usuario.strip(), (pasta or "Heimdall").strip(), remetente.strip()
     if not re.fullmatch(r"[a-z0-9.-]{3,100}", servidor) or "@" not in usuario or len(usuario) > 120 or not re.fullmatch(r"[\w .\-/À-ÿ]{1,60}", pasta):
         raise ErroMemory("Confira o servidor IMAP (por exemplo imap.exemplo.com), o endereço de e-mail e o nome da pasta.")
-    senha = (senha or "").strip() or (os.environ.get("HEIMDALL_MEMORY_EMAIL_SENHA", "") if not _pessoa() else "")
+    senha = (senha or "").strip() or (os.environ.get("STUDIO_HUB_EMAIL_SENHA", "") if not _pessoa() else "")
     if not senha or len(senha) > 200:
         raise ErroMemory("Informe a senha de aplicativo do e-mail (gerada no provedor de e-mail; não use a senha principal).")
     nome_conta = f"Heimdall {usuario}"

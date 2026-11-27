@@ -28,7 +28,7 @@ def confere(nome, ok, extra=""):
         falhas += 1
 
 
-ENV = {"HEIMDALL_CAIXA": "1", "HEIMDALL_CAIXA_TOKEN": "hc_dono", "CLOUDFLARE_API_TOKEN": "cf-teste"}
+ENV = {"STUDIO_CAIXA": "1", "STUDIO_CAIXA_TOKEN": "hc_dono", "CLOUDFLARE_API_TOKEN": "cf-teste"}
 
 
 class Resp:
@@ -56,15 +56,15 @@ def caixa_falsa(entradas, log, falha_apagar=False):
     return abrir
 
 
-confere("ligada só com HEIMDALL_CAIXA=1 e o token", cx.ativa(ENV))
-confere("desligada com HEIMDALL_CAIXA=0", not cx.ativa({**ENV, "HEIMDALL_CAIXA": "0"}))
-confere("desligada sem o token", not cx.ativa({"HEIMDALL_CAIXA": "1"}))
-confere("desligada sem o interruptor", not cx.ativa({"HEIMDALL_CAIXA_TOKEN": "x"}))
+confere("ligada só com STUDIO_CAIXA=1 e o token", cx.ativa(ENV))
+confere("desligada com STUDIO_CAIXA=0", not cx.ativa({**ENV, "STUDIO_CAIXA": "0"}))
+confere("desligada sem o token", not cx.ativa({"STUDIO_CAIXA": "1"}))
+confere("desligada sem o interruptor", not cx.ativa({"STUDIO_CAIXA_TOKEN": "x"}))
 
 log = []
 gravado = {}
 t = cx.iniciar(ENV, abrir=caixa_falsa([], log), gravar=gravado.update)
-confere("start grava o token novo no .env (função de gravar)", t == "hc_novo" and gravado == {"HEIMDALL_CAIXA_TOKEN": "hc_novo"})
+confere("start grava o token novo no .env (função de gravar)", t == "hc_novo" and gravado == {"STUDIO_CAIXA_TOKEN": "hc_novo"})
 confere("start prova acesso com a chave da Cloudflare no cabeçalho", any(h.get("X-cf-token") == "cf-teste" for _, _, h in log))
 try:
     cx.iniciar({}, abrir=caixa_falsa([], []), gravar=lambda p: None)
@@ -113,8 +113,8 @@ cx.tratar_padrao({"tipo": "saude", "usuario": "ana", "dados": {}}, {}, importar=
 confere("saúde de outra pessoa também é importada, para o banco dela", chamadas[-1] == ("ana", "eu"))
 cx.tratar_padrao({"tipo": "nota", "usuario": "eu", "dados": {}}, {}, importar=reg)
 confere("outros tipos só ficam na cópia local", len(chamadas) == 2)
-cx.tratar_padrao({"tipo": "saude", "usuario": "murillo", "dados": {}}, {"HEIMDALL_CAIXA_MEU_NOME": "murillo"}, importar=reg)
-confere("o nome do dono vem de HEIMDALL_CAIXA_MEU_NOME", chamadas[-1] == ("murillo", "murillo"))
+cx.tratar_padrao({"tipo": "saude", "usuario": "murillo", "dados": {}}, {"STUDIO_CAIXA_MEU_NOME": "murillo"}, importar=reg)
+confere("o nome do dono vem de STUDIO_CAIXA_MEU_NOME", chamadas[-1] == ("murillo", "murillo"))
 
 try:
     cx.pedido("GET", "/v1/entrada", token="x", env=ENV, abrir=lambda *a, **k: (_ for _ in ()).throw(urllib.error.URLError("sem rede")))

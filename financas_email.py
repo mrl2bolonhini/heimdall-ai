@@ -2,12 +2,12 @@
 """Lê o Gmail em busca de boletos e Pix copia e cola e os registra no Finance como contas a pagar.
 
 Só lê (IMAP em modo somente leitura: nada é marcado como lido, movido ou apagado) e usa a mesma senha de aplicativo do monitor de e-mails oficiais
-(HEIMDALL_EMAIL_USUARIO e HEIMDALL_EMAIL_SENHA_APP, no .env). O e-mail é dado não confiável: links nunca são abertos, só o texto e os PDFs anexados
+(STUDIO_EMAIL_USUARIO e STUDIO_EMAIL_SENHA_APP, no .env). O e-mail é dado não confiável: links nunca são abertos, só o texto e os PDFs anexados
 são lidos, e só vale linha digitável com dígitos verificadores corretos. Boleto falso por e-mail é golpe comum, então o remetente é conferido pela
 autenticação que o próprio Gmail registrou (DMARC/DKIM) e, se não passar, o boleto entra com um aviso. Nada é pago.
 
 Uso: python3 financas_cli.py --ler-email        (uma verificação)
-O painel do Finance repete a verificação a cada 15 minutos quando há senha de e-mail no .env (HEIMDALL_FINANCE_EMAIL=0 desliga).
+O painel do Finance repete a verificação a cada 15 minutos quando há senha de e-mail no .env (STUDIO_FINANCE_EMAIL=0 desliga).
 """
 import email
 import email.policy
@@ -42,9 +42,9 @@ AVISO_ORIGEM = "Remetente não autenticado: pode ser boleto falso. Confira o nom
 
 def credenciais(env_path: Path = None) -> dict:
     cfg = eo.ler_env(str(env_path or AQUI / ".env"))
-    if not cfg.get("HEIMDALL_EMAIL_USUARIO") or not cfg.get("HEIMDALL_EMAIL_SENHA_APP"):
+    if not cfg.get("STUDIO_EMAIL_USUARIO") or not cfg.get("STUDIO_EMAIL_SENHA_APP"):
         return {}
-    return {"HEIMDALL_EMAIL_USUARIO": cfg["HEIMDALL_EMAIL_USUARIO"], "HEIMDALL_EMAIL_SENHA_APP": cfg["HEIMDALL_EMAIL_SENHA_APP"]}
+    return {"STUDIO_EMAIL_USUARIO": cfg["STUDIO_EMAIL_USUARIO"], "STUDIO_EMAIL_SENHA_APP": cfg["STUDIO_EMAIL_SENHA_APP"]}
 
 
 def buscar(cfg: dict, dias: int = DIAS) -> list:
@@ -52,7 +52,7 @@ def buscar(cfg: dict, dias: int = DIAS) -> list:
     imap = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=60)
     achadas = []
     try:
-        imap.login(cfg["HEIMDALL_EMAIL_USUARIO"], cfg["HEIMDALL_EMAIL_SENHA_APP"].replace(" ", ""))
+        imap.login(cfg["STUDIO_EMAIL_USUARIO"], cfg["STUDIO_EMAIL_SENHA_APP"].replace(" ", ""))
         if imap.select("INBOX", readonly=True)[0] != "OK":
             return []
         tipo, dados = imap.uid("SEARCH", None, "X-GM-RAW", '"%s"' % consulta(dias).replace('"', '\\"'))

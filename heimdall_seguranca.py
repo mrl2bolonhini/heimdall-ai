@@ -17,7 +17,7 @@ Uso à mão (na pasta do projeto, com o LiteLLM no ar):
     python3 heimdall_seguranca.py logs|commits|exposicao            roda a tarefa e mostra a nota
     python3 heimdall_seguranca.py logs|commits|exposicao --sem-modelo   só mostra os dados coletados, sem chamar o modelo
 
-No .env (opcionais): HEIMDALL_SEGURANCA_MODELO (padrão dolphin3-cyber-8b), HEIMDALL_LITELLM_URL (padrão http://localhost:9000/v1/chat/completions).
+No .env (opcionais): STUDIO_SEGURANCA_MODELO (padrão dolphin3-cyber-8b), STUDIO_LITELLM_URL (padrão http://localhost:9000/v1/chat/completions).
 """
 import json
 import os
@@ -32,8 +32,8 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent
 DATA_DIR = PROJECT_DIR / "data"
 ESTADO = DATA_DIR / "seguranca_estado.json"
-MODELO = os.environ.get("HEIMDALL_SEGURANCA_MODELO", "dolphin3-cyber-8b")
-LITELLM_URL = os.environ.get("HEIMDALL_LITELLM_URL", "http://localhost:9000/v1/chat/completions")
+MODELO = os.environ.get("STUDIO_SEGURANCA_MODELO", "dolphin3-cyber-8b")
+LITELLM_URL = os.environ.get("STUDIO_LITELLM_URL", "http://localhost:9000/v1/chat/completions")
 LIMITE_DADOS = 9000          # caracteres enviados ao modelo (contexto de 8192 tokens, com a resposta incluída)
 TEMPO_MODELO = 900           # segundos: o dolphin de 8 GB demora para carregar quando o Mac está ocupado
 NIVEIS = ["nenhuma", "baixa", "media", "alta"]

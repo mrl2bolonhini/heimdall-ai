@@ -5,7 +5,7 @@
 #   bash scripts/ouvir_estudo.sh --lista  só mostra os 10 mais recentes
 # Para parar: Control+C.
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
-COFRE="${HEIMDALL_VAULT_DIR:-./brain}"
+COFRE="${STUDIO_VAULT_DIR:-./brain}"
 LISTA="$(ls -t "$COFRE"/*/audio/*.m4a 2>/dev/null)"
 [ -n "$LISTA" ] || { echo "Nenhum áudio de estudo encontrado em $COFRE/<tema>/audio/." >&2; exit 1; }
 if [ "${1:-}" = "--lista" ]; then echo "$LISTA" | head -10; exit 0; fi

@@ -382,8 +382,8 @@ ORIGINAIS = {}   # funções do acervo interno, para o motor Paperless reaprovei
 
 
 def motor() -> str:
-    """"paperless" (HEIMDALL_MEMORY_MOTOR=paperless) ou "interno". No Paperless, cada pessoa tem o seu usuário e só vê o que é dela."""
-    return "paperless" if os.environ.get("HEIMDALL_MEMORY_MOTOR", "interno") == "paperless" else "interno"
+    """"paperless" (STUDIO_HUB_MOTOR=paperless) ou "interno". No Paperless, cada pessoa tem o seu usuário e só vê o que é dela."""
+    return "paperless" if os.environ.get("STUDIO_HUB_MOTOR", "interno") == "paperless" else "interno"
 
 
 def _despachar(nome: str):

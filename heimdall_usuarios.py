@@ -4,7 +4,7 @@
 Heimdall: donos em HEIMDALL_CFACCESS_EMAILS (entram em tudo) e convidados em HEIMDALL_CFACCESS_CONVIDADOS ("ana@x.com=jogos+chat;beto@y.com=chat").
 Cloudflare: uma política reutilizável "Heimdall: <serviço>" por serviço, com os e-mails que podem entrar, ligada ao aplicativo do endereço público
 do serviço (criado se não existir). Só se mexe em política com esse nome; as de outra origem ficam como estão.
-Token: HEIMDALL_CLOUDFLARE_ACCESS_TOKEN (permissão "Access: Apps and Policies" de edição) e CLOUDFLARE_ACCOUNT_ID, no .env.
+Token: STUDIO_CLOUDFLARE_ACCESS_TOKEN (permissão "Access: Apps and Policies" de edição) e CLOUDFLARE_ACCOUNT_ID, no .env.
 Sempre há o plano antes (o que vai mudar) e o aplicar. Dono nunca é removido por aqui.
 """
 import json
@@ -20,23 +20,22 @@ BASE = "https://api.cloudflare.com/client/v4"
 EMAIL = re.compile(r"^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$")
 # chave -> (nome, variável com o(s) endereço(s) públicos, subdomínio padrão, pode ser dado a convidado)
 SERVICOS = {
-    "lab": ("Lab", "HEIMDALL_LAB_HOSTS", "lab", True),
-    "notas": ("Notes", "HEIMDALL_NOTAS_HOSTS", "notes", False),   # triagem, diários e privacidade: só do dono (os estudos foram para o Learn)
-    "learn": ("Learn", "HEIMDALL_LEARN_HOSTS", "learn", True),
-    "trading": ("Trading", "HEIMDALL_TRADING_HOSTS", "trading", True),
-    "memory": ("Hub", "HEIMDALL_MEMORY_HOSTS", "memory", True),
-    "news": ("News", "HEIMDALL_NEWS_HOSTS", "news", True),
-    "jogos": ("Games", "HEIMDALL_JOGOS_HOSTS", "games", True),
-    "chat": ("Chat (Open WebUI)", "HEIMDALL_WEBUI_HOST", "chat", True),
-    "saude": ("Health", "HEIMDALL_SAUDE_PAINEL_HOSTS", "health", False),
-    "finance": ("Finance", "HEIMDALL_FINANCE_HOSTS", "finance", False),
-    "controls": ("Controls", "HEIMDALL_CONTROLS_HOSTS", "controls", False),
-    "flows": ("n8n", "HEIMDALL_N8N_HOSTS", "flows", False),
-    "status": ("Uptime Kuma", "HEIMDALL_KUMA_HOSTS", "status", False),
-    "account": ("Account", "HEIMDALL_ACCOUNT_HOSTS", "account", False),  # tour dos serviços: entram todos os e-mails (donos e convidados), sem escolher
+    "lab": ("Lab", "STUDIO_LAB_HOSTS", "lab", True),
+    "notas": ("Notes", "STUDIO_NOTAS_HOSTS", "notes", False),   # triagem, diários e privacidade: só do dono (os estudos foram para o Learn)
+    "learn": ("Learn", "STUDIO_LEARN_HOSTS", "learn", True),
+    "trading": ("Trading", "STUDIO_TRADING_HOSTS", "trading", True),
+    "memory": ("Hub", "STUDIO_HUB_HOSTS", "memory", True),
+    "news": ("News", "STUDIO_NEWS_HOSTS", "news", True),
+    "jogos": ("Games", "STUDIO_JOGOS_HOSTS", "games", True),
+    "chat": ("Chat (Open WebUI)", "STUDIO_WEBUI_HOST", "chat", True),
+    "saude": ("Health", "STUDIO_SAUDE_PAINEL_HOSTS", "health", False),
+    "finance": ("Finance", "STUDIO_FINANCE_HOSTS", "finance", False),
+    "controls": ("Controls", "STUDIO_CONTROLS_HOSTS", "controls", False),
+    "flows": ("n8n", "STUDIO_N8N_HOSTS", "flows", False),
+    "status": ("Uptime Kuma", "STUDIO_KUMA_HOSTS", "status", False),
+    "account": ("Account", "STUDIO_ACCOUNT_HOSTS", "account", False),  # tour dos serviços: entram todos os e-mails (donos e convidados), sem escolher
 }
 PREFIXO = "Heimdall: "
-CHAVES_ANTIGAS = {"library": "memory"}   # nomes antigos de serviço no .env (o Library virou Memory e o Memory virou Hub em 26/11/2026; a chave interna continua memory)
 
 
 def _env() -> dict:
@@ -54,7 +53,7 @@ def situacao() -> dict:
     for item in env.get("HEIMDALL_CFACCESS_CONVIDADOS", "").split(";"):
         if "=" in item:
             e, s = item.split("=", 1)
-            sv = sorted({CHAVES_ANTIGAS.get(x.strip().lower(), x.strip().lower()) for x in s.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", x.strip().lower()) and SERVICOS.get(CHAVES_ANTIGAS.get(x.strip().lower(), x.strip().lower()), (0, 0, 0, True))[3]})
+            sv = sorted({x.strip().lower() for x in s.split("+") if re.fullmatch(r"[a-z0-9]{1,20}", x.strip().lower()) and SERVICOS.get(x.strip().lower(), (0, 0, 0, True))[3]})
             if e.strip() and sv:
                 conv[e.strip().lower()] = sv
     return {"donos": _lista(env.get("HEIMDALL_CFACCESS_EMAILS", "")), "convidados": conv}
@@ -101,17 +100,17 @@ class ErroCloudflare(Exception):
 
 def configurado() -> str:
     """"" se há token e conta; senão o que falta."""
-    env = {**_env(), **{k: v for k, v in os.environ.items() if k.startswith(("HEIMDALL_CLOUDFLARE", "CLOUDFLARE"))}}
-    if not env.get("HEIMDALL_CLOUDFLARE_ACCESS_TOKEN"):
-        return "falta HEIMDALL_CLOUDFLARE_ACCESS_TOKEN no .env (studio env --set HEIMDALL_CLOUDFLARE_ACCESS_TOKEN)"
+    env = {**_env(), **{k: v for k, v in os.environ.items() if k.startswith(("STUDIO_CLOUDFLARE", "CLOUDFLARE"))}}
+    if not env.get("STUDIO_CLOUDFLARE_ACCESS_TOKEN"):
+        return "falta STUDIO_CLOUDFLARE_ACCESS_TOKEN no .env (studio env --set STUDIO_CLOUDFLARE_ACCESS_TOKEN)"
     if not re.fullmatch(r"[0-9a-f]{32}", env.get("CLOUDFLARE_ACCOUNT_ID", "")):
         return "falta CLOUDFLARE_ACCOUNT_ID (32 letras e números) em Ajustes"
     return ""
 
 
 def _api(metodo: str, caminho: str, corpo=None):
-    env = {**_env(), **{k: v for k, v in os.environ.items() if k.startswith(("HEIMDALL_CLOUDFLARE", "CLOUDFLARE"))}}
-    conta, tok = env.get("CLOUDFLARE_ACCOUNT_ID", ""), env.get("HEIMDALL_CLOUDFLARE_ACCESS_TOKEN", "")
+    env = {**_env(), **{k: v for k, v in os.environ.items() if k.startswith(("STUDIO_CLOUDFLARE", "CLOUDFLARE"))}}
+    conta, tok = env.get("CLOUDFLARE_ACCOUNT_ID", ""), env.get("STUDIO_CLOUDFLARE_ACCESS_TOKEN", "")
     req = urllib.request.Request(f"{BASE}/accounts/{conta}{caminho}", method=metodo, data=None if corpo is None else json.dumps(corpo).encode("utf-8"),
                                  headers={"Authorization": "Bearer " + tok, "Content-Type": "application/json"})
     try:
@@ -142,14 +141,14 @@ def _tudo(caminho: str) -> list:
 
 
 def _mfa() -> bool:
-    return (_env().get("HEIMDALL_CLOUDFLARE_ACCESS_MFA") or os.environ.get("HEIMDALL_CLOUDFLARE_ACCESS_MFA", "1")).strip() != "0"
+    return (_env().get("STUDIO_CLOUDFLARE_ACCESS_MFA") or os.environ.get("STUDIO_CLOUDFLARE_ACCESS_MFA", "1")).strip() != "0"
 
 
 def _idp() -> str:
-    """Login permitido nos aplicativos novos: o de HEIMDALL_CLOUDFLARE_ACCESS_IDP ou, se a conta tem um só login da Microsoft (azureAD), esse."""
+    """Login permitido nos aplicativos novos: o de STUDIO_CLOUDFLARE_ACCESS_IDP ou, se a conta tem um só login da Microsoft (azureAD), esse."""
     env = {**_env(), **os.environ}
-    if env.get("HEIMDALL_CLOUDFLARE_ACCESS_IDP", "").strip():
-        return env["HEIMDALL_CLOUDFLARE_ACCESS_IDP"].strip()
+    if env.get("STUDIO_CLOUDFLARE_ACCESS_IDP", "").strip():
+        return env["STUDIO_CLOUDFLARE_ACCESS_IDP"].strip()
     try:
         ms = [i["id"] for i in (_api("GET", "/access/identity_providers") or []) if i.get("type") == "azureAD"]
     except (ErroCloudflare, KeyError, TypeError):

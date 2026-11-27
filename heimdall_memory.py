@@ -4,8 +4,8 @@
 Telas no Studio Design, sobre `heimdall_servico_web.py`; os dados ficam em `heimdall_memory_dados.py`.
 Abas: Documentos (Pesquisar, Recentes, A revisar), Adicionar (Enviar arquivo, Pasta de entrada), Organização (Etiquetas, Tipos). Ajustes: Estado, Lixeira, Ajuda.
 
-Variáveis: HEIMDALL_MEMORY (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), HEIMDALL_MEMORY_PORT (8021), HEIMDALL_MEMORY_HOST (127.0.0.1),
-HEIMDALL_MEMORY_HOSTS (memory.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_MEMORY_MAX_MB (30; limite por arquivo), HEIMDALL_MEMORY_IA (0 desliga as sugestões do modelo).
+Variáveis: STUDIO_HUB (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_HUB_PORT (8021), STUDIO_HUB_HOST (127.0.0.1),
+STUDIO_HUB_HOSTS (memory.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_HUB_MAX_MB (30; limite por arquivo), STUDIO_HUB_IA (0 desliga as sugestões do modelo).
 
     python3 heimdall_memory.py
 
@@ -15,7 +15,7 @@ import os
 
 import heimdall_servico_web as web
 
-web.carregar_env("HEIMDALL_MEMORY_", legado="HEIMDALL_LIBRARY_")
+web.carregar_env("STUDIO_HUB_")
 
 import heimdall_design as design  # noqa: E402
 import heimdall_memory_dados as dados  # noqa: E402
@@ -83,7 +83,7 @@ def pg_revisar(ctx):
 
 
 def pg_enviar(ctx):
-    mb = int(os.environ.get("HEIMDALL_MEMORY_MAX_MB", "30"))
+    mb = int(os.environ.get("STUDIO_HUB_MAX_MB", "30"))
     form = (f'<form method="post" action="/enviar" enctype="multipart/form-data"><label for="arquivos">Arquivos (PDF, foto, DOCX, TXT, MD ou CSV, até {mb} MB cada)</label>'
             f'<input id="arquivos" name="arquivos" type="file" multiple required><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
             '<button type="submit">Enviar</button></form>')
@@ -101,7 +101,7 @@ def pg_entrada(ctx):
 
 def pg_email(ctx):
     if dados.motor() != "paperless":
-        return "E-mail", '<p role="status">O envio por e-mail usa o motor Paperless-ngx (HEIMDALL_MEMORY_MOTOR=paperless).</p>'
+        return "E-mail", '<p role="status">O envio por e-mail usa o motor Paperless-ngx (STUDIO_HUB_MOTOR=paperless).</p>'
     import heimdall_memory_paperless as pl
     est = pl.email_estado()
     situacao = ("Conta: " + ", ".join(est["contas"]) + ". " + "; ".join(f'regra {r["nome"]} na pasta {r["pasta"]}' + ("" if r["ativa"] else " (desligada)") for r in est["regras"]) + ".") if est["contas"] else "Nenhuma conta de e-mail configurada."
@@ -266,7 +266,7 @@ def post_nuvem_pasta(ctx, campos, arquivos):
 
 def post_nuvem_sincronizar(ctx, campos, arquivos):
     import heimdall_memory_nuvem as nv
-    r = nv.sincronizar(campos.get("provedor", ""), os.environ.get("HEIMDALL_MEMORY_IA", "1") != "0")
+    r = nv.sincronizar(campos.get("provedor", ""), os.environ.get("STUDIO_HUB_IA", "1") != "0")
     ctx.flash("ok", f"{_plural(r['novos'], 'documento novo', 'documentos novos')}, {r['repetidos']} repetidos, {r['erros']} com erro" + (f", {r['movidos']} movidos." if r["movidos"] else "."))
     return "/revisar" if r["novos"] else "/nuvem"
 
@@ -346,7 +346,7 @@ def post_enviar(ctx, campos, arquivos):
     if not arquivos:
         raise dados.ErroMemory("Escolha ao menos um arquivo.")
     novos = repetidos = 0
-    usar_ia = os.environ.get("HEIMDALL_MEMORY_IA", "1") != "0"
+    usar_ia = os.environ.get("STUDIO_HUB_IA", "1") != "0"
     for nome, conteudo in arquivos[:20]:
         r = dados.adicionar(nome, conteudo, "envio", usar_ia)
         novos += r["novo"]
@@ -356,7 +356,7 @@ def post_enviar(ctx, campos, arquivos):
 
 
 def post_entrada(ctx, campos, arquivos):
-    r = dados.processar_entrada(os.environ.get("HEIMDALL_MEMORY_IA", "1") != "0")
+    r = dados.processar_entrada(os.environ.get("STUDIO_HUB_IA", "1") != "0")
     ctx.flash("ok", f"{_plural(r['novos'], 'documento novo', 'documentos novos')}, {r['repetidos']} repetidos, {r['recusados']} recusados.")
     return "/revisar" if r["novos"] else "/entrada"
 
@@ -412,7 +412,7 @@ GRUPOS = [
     ("Organização", [("/etiquetas", "Etiquetas"), ("/tipos", "Tipos")]),
 ]
 CFG = web.Config(
-    chave="memory", nome="Hub", porta_env="HEIMDALL_MEMORY_PORT", porta=8021, hosts="memory.heimdall-ai.tech,hub.heimdall-ai.tech,hub.studiolibre.io,localhost,127.0.0.1",
+    chave="memory", nome="Hub", porta_env="STUDIO_HUB_PORT", porta=8021, hosts="memory.heimdall-ai.tech,hub.heimdall-ai.tech,hub.studiolibre.io,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
     get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/apps": pg_apps, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira},
@@ -420,7 +420,7 @@ CFG = web.Config(
           "/documento/excluir": post_excluir, "/documento/restaurar": post_restaurar},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: qual é o vencimento do boleto de energia? o que diz a cláusula de rescisão do contrato? O modelo responde só com os documentos do seu acervo.",
-    css=CSS, hosts_legados="library.heimdall-ai.tech", erro=dados.ErroMemory, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem}, publicas_post={"/nuvem/trello": post_trello_publico},
+    css=CSS, erro=dados.ErroMemory, pertence={"/documento": "/pesquisar"}, publicas={"/nuvem/retorno": retorno_nuvem}, publicas_post={"/nuvem/trello": post_trello_publico},
     ao_iniciar=lambda: (__import__("heimdall_memory_nuvem"), __import__("heimdall_memory_apps"), __import__("heimdall_conexoes").iniciar_sincronizador()))
 
 

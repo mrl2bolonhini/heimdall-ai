@@ -25,13 +25,13 @@ sys.path.insert(0, str(AQUI))
 
 
 def _env_dir() -> str:
-    """HEIMDALL_FINANCE_DIR do ambiente ou do .env (sem carregar o resto do .env)."""
-    if os.environ.get("HEIMDALL_FINANCE_DIR"):
-        return os.environ["HEIMDALL_FINANCE_DIR"]
+    """STUDIO_FINANCE_DIR do ambiente ou do .env (sem carregar o resto do .env)."""
+    if os.environ.get("STUDIO_FINANCE_DIR"):
+        return os.environ["STUDIO_FINANCE_DIR"]
     env = AQUI / ".env"
     try:
         for ln in env.read_text(encoding="utf-8").splitlines():
-            if ln.startswith("HEIMDALL_FINANCE_DIR="):
+            if ln.startswith("STUDIO_FINANCE_DIR="):
                 return ln.split("=", 1)[1].strip().strip('"').strip("'")
     except OSError:
         pass
@@ -341,7 +341,7 @@ def main() -> None:
             import financas_email as femail
             cfg = femail.credenciais()
             if not cfg:
-                sys.exit("Não achei a senha de aplicativo do Gmail no .env (HEIMDALL_EMAIL_USUARIO e HEIMDALL_EMAIL_SENHA_APP). Instale o monitor de e-mails oficiais primeiro: heimdall privacy --email.")
+                sys.exit("Não achei a senha de aplicativo do Gmail no .env (STUDIO_EMAIL_USUARIO e STUDIO_EMAIL_SENHA_APP). Instale o monitor de e-mails oficiais primeiro: heimdall privacy --email.")
             dias = max(1, min(a.dias or femail.DIAS, femail.MAX_DIAS))
             diag = {}
             res = femail.executar(_banco(), cfg, DIR_DADOS / "email_estado.json", dias=dias, diag=diag, ignorar_vistos=True)

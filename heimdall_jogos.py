@@ -10,18 +10,17 @@ Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outr
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
   2. Entrada com a senha e o código de 6 dígitos do Studio Lab (python3 heimdall_acesso.py --tudo).
   3. Limite de tentativas por endereço e global, sessão em cookie HttpOnly e SameSite=Strict.
-  4. Só atende os nomes de site permitidos (HEIMDALL_JOGOS_HOSTS) e manda cabeçalhos de segurança.
+  4. Só atende os nomes de site permitidos (STUDIO_JOGOS_HOSTS) e manda cabeçalhos de segurança.
   5. Só os arquivos .js do catálogo são entregues, e a política de conteúdo só deixa rodar script do próprio site.
   6. Sem senha e sem código configurados, o servidor não sobe.
 
-Variáveis opcionais no .env: HEIMDALL_JOGOS_PORT (8014), HEIMDALL_JOGOS_HOST (127.0.0.1),
-HEIMDALL_JOGOS_HOSTS (games.heimdall-ai.tech,localhost,127.0.0.1) e HEIMDALL_JOGOS_EXTRAS: outros jogos que você hospeda
+Variáveis opcionais no .env: STUDIO_JOGOS_PORT (8014), STUDIO_JOGOS_HOST (127.0.0.1),
+STUDIO_JOGOS_HOSTS (games.heimdall-ai.tech,localhost,127.0.0.1) e STUDIO_JOGOS_EXTRAS: outros jogos que você hospeda
 (só os que tenham versão em português ou permitam tradução), no formato "Nome|http://localhost:8015|descrição;Outro|https://exemplo.test|descrição".
 """
 import unicodedata
 import html
 import os
-import heimdall_envcompat as _envcompat
 import re
 import secrets
 import sys
@@ -49,8 +48,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        chave = _envcompat.interno(chave)
-        if not chave.startswith("HEIMDALL_JOGOS_"):
+        if not chave.startswith("STUDIO_JOGOS_"):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -62,12 +60,12 @@ carregar_env()
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
 import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 
-HOST = os.environ.get("HEIMDALL_JOGOS_HOST", "127.0.0.1")
+HOST = os.environ.get("STUDIO_JOGOS_HOST", "127.0.0.1")
 try:
-    PORT = max(1, int(os.environ.get("HEIMDALL_JOGOS_PORT", "8014")))
+    PORT = max(1, int(os.environ.get("STUDIO_JOGOS_PORT", "8014")))
 except ValueError:
     PORT = 8014
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_JOGOS_HOSTS", "games.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_JOGOS_HOSTS", "games.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 COOKIE = nuvem.COOKIE
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
 
@@ -218,9 +216,9 @@ def scripts_do_jogo(jid: str) -> list:
 
 
 def extras() -> list:
-    """Jogos extras, de terceiros, hospedados por você (HEIMDALL_JOGOS_EXTRAS): só endereços http e https."""
+    """Jogos extras, de terceiros, hospedados por você (STUDIO_JOGOS_EXTRAS): só endereços http e https."""
     saida = []
-    for item in os.environ.get("HEIMDALL_JOGOS_EXTRAS", "").split(";"):
+    for item in os.environ.get("STUDIO_JOGOS_EXTRAS", "").split(";"):
         p = [x.strip() for x in item.split("|")]
         if len(p) >= 2 and p[0] and re.match(r"^https?://[A-Za-z0-9.:/_~%?#=&-]+$", p[1]):
             saida.append((p[0], p[1], p[2] if len(p) > 2 else ""))

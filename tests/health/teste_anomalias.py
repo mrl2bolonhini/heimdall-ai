@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="anomalias_"))
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "banco")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 sys.path.insert(0, str(RAIZ))
 import heimdall_saude as hs  # noqa: E402
 import heimdall_anomalias as an  # noqa: E402

@@ -2,8 +2,8 @@
 # Testa a gravação em subpastas do app Notas: cria a nota "Teste de subpastas" em Heimdall-ai/Saúde.
 # Rode na pasta do projeto, com o agente do Mac no ar. Depois apague a nota à mão, se quiser.
 cd "$(dirname "$0")/../.." || exit 1
-TOKEN=$(grep '^HEIMDALL_AGENTE_TOKEN=' .env | head -1 | cut -d= -f2- | tr -d "\"'")
-[ -z "$TOKEN" ] && { echo "Não achei HEIMDALL_AGENTE_TOKEN no .env."; exit 1; }
+TOKEN=$(grep '^STUDIO_AGENTE_TOKEN=' .env | head -1 | cut -d= -f2- | tr -d "\"'")
+[ -z "$TOKEN" ] && { echo "Não achei STUDIO_AGENTE_TOKEN no .env."; exit 1; }
 for PASTA in "Saúde" "Digest" "geral"; do
   echo "== pasta: $PASTA"
   python3 - "$PASTA" "$TOKEN" <<'P'

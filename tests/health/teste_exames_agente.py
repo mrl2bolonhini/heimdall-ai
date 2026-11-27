@@ -16,8 +16,8 @@ import urllib.parse
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-exames-agente-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "health"), "HEIMDALL_EXAMES_LLM": "0",
-                   "HEIMDALL_VAULT_DIR": str(TMP / "cofre"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_EXAMES_DIR": str(TMP / "health"), "STUDIO_EXAMES_LLM": "0",
+                   "STUDIO_VAULT_DIR": str(TMP / "cofre"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
 import heimdall_agente as ag  # noqa: E402
 import heimdall_banco as banco  # noqa: E402

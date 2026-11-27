@@ -12,7 +12,6 @@ import threading
 import time
 from pathlib import Path
 
-import heimdall_envcompat as _envcompat
 
 PROJECT_DIR = Path(__file__).resolve().parent
 ARQUIVO = PROJECT_DIR / ".env"
@@ -41,7 +40,7 @@ def ler() -> list:
         if not t or t.startswith("#") or "=" not in t:
             continue
         nome, valor = t.split("=", 1)
-        nome = _envcompat.interno(nome.strip())
+        nome = nome.strip()
         if NOME_OK.match(nome):
             achadas.pop(nome, None)  # a última define; mantém a posição da última
             achadas[nome] = _valor_limpo(valor)
@@ -92,7 +91,7 @@ def _e_do_nome(linha: str, nome: str) -> bool:
     t = linha.strip()
     if t.startswith("export "):
         t = t[7:].strip()
-    return _envcompat.interno(t.split("=", 1)[0].strip()) == _envcompat.interno(nome) and "=" in t and not t.startswith("#")
+    return t.split("=", 1)[0].strip() == nome and "=" in t and not t.startswith("#")
 
 
 def salvar(nome: str, valor: str) -> str:
@@ -138,23 +137,48 @@ def remover(nome: str) -> str:
 
 # Nomes que mudaram: o Cloud virou Lab (23/11/2026). A senha, o código e a duração da sessão (HEIMDALL_CLOUD_SENHA_HASH, _TOTP_SEGREDO e _SESSAO_HORAS)
 # servem a todos os sites e mantêm o nome.
-RENOMEADAS = {f"HEIMDALL_CLOUD_{x}": f"HEIMDALL_LAB_{x}" for x in ("HOST", "PORT", "ENDPOINT", "REGIAO", "HOSTS", "MAX_MB")}
+RENOMEADAS = {f"HEIMDALL_CLOUD_{x}": f"STUDIO_LAB_{x}" for x in ("HOST", "PORT", "ENDPOINT", "REGIAO", "HOSTS", "MAX_MB")}
+
+
+MANTER_HEIMDALL = ("CFACCESS_", "CF_", "R2_", "CLOUD_", "CONTINUIDADE_")   # nomes que o Worker e o GitHub também conhecem: só trocam na fase 4 da renomeação
+
+
+def novo_nome(nome: str) -> str:
+    """O nome novo de uma variável do .env, ou "" se ela não muda. HEIMDALL_X vira STUDIO_X; MEMORY e LIBRARY viram HUB (Studio Hub);
+    os nomes de MANTER_HEIMDALL ficam como estão, salvo os do Lab em RENOMEADAS."""
+    if nome in RENOMEADAS:
+        return RENOMEADAS[nome]
+    if not nome.startswith("HEIMDALL_"):
+        return ""
+    resto = nome[len("HEIMDALL_"):]
+    if not resto or resto.startswith(MANTER_HEIMDALL):
+        return ""
+    for velho in ("MEMORY", "LIBRARY"):
+        if resto == velho or resto.startswith(velho + "_"):
+            resto = "HUB" + resto[len(velho):]
+            break
+    return "STUDIO_" + resto
 
 
 def renomear_antigas() -> list:
-    """Troca no .env os nomes antigos pelos novos (sem perder valor: se o novo já existe, o antigo só sai). Faz cópia em .env.bak. Devolve os nomes trocados."""
+    """Troca no .env os nomes antigos (HEIMDALL_*) pelos novos (STUDIO_*), sem perder valor: se o novo já existe, o antigo só sai.
+    Faz cópia em .env.bak antes de gravar e devolve os nomes trocados. Roda a cada subida dos serviços e não faz nada quando não há o que trocar."""
     linhas = _linhas_atuais()
     if not linhas:
         return []
     trocadas, saida = [], []
     for ln in linhas:
-        nome = next((a for a in RENOMEADAS if _e_do_nome(ln, a)), "")
-        if not nome:
+        t = ln.strip()
+        if t.startswith("export "):
+            t = t[7:].strip()
+        nome = t.split("=", 1)[0].strip() if "=" in t and not t.startswith("#") else ""
+        novo = novo_nome(nome) if nome else ""
+        if not novo:
             saida.append(ln)
             continue
         trocadas.append(nome)
-        if not any(_e_do_nome(x, RENOMEADAS[nome]) for x in linhas):
-            saida.append(ln.replace(nome, RENOMEADAS[nome], 1))
+        if not any(_e_do_nome(x, novo) for x in linhas) and not any(_e_do_nome(x, novo) for x in saida):
+            saida.append(ln.replace(nome, novo, 1))
     if trocadas:
         _copia()
         _gravar(saida)
@@ -170,14 +194,15 @@ _PALAVRAS_SEGREDO = {"SENHA", "SECRET", "SEGREDO", "TOKEN", "KEY", "HASH", "PASS
 
 
 def e_segredo(nome: str) -> bool:
-    """Segredo de verdade: alguma palavra do nome é senha, token, chave etc. HEIMDALL_WEBUI_SEM_SENHA é um liga/desliga, não um segredo."""
+    """Segredo de verdade: alguma palavra do nome é senha, token, chave etc. STUDIO_WEBUI_SEM_SENHA é um liga/desliga, não um segredo."""
     partes = nome.upper().split("_")
     return any(p in _PALAVRAS_SEGREDO and (i == 0 or partes[i - 1] != "SEM") for i, p in enumerate(partes))
 
 
 # Opções que não valem mais: não aparecem na lista de Ajustes (quem ainda as tem no .env pode apagá-las à mão ou deixar).
-OBSOLETAS = {"HEIMDALL_WEBUI_SEM_SENHA"}
-_SH_SIMPLES = re.compile(r"\$\{?(HEIMDALL_[A-Z0-9_]+)")
+OBSOLETAS = {"STUDIO_WEBUI_SEM_SENHA"}
+PREFIXOS = ("STUDIO_", "HEIMDALL_")   # HEIMDALL_ só nos nomes que o Worker e o GitHub também conhecem (CFACCESS, CF, R2, CLOUD, CONTINUIDADE), até a fase 4
+_SH_SIMPLES = re.compile(r"\$\{?((?:STUDIO|HEIMDALL)_[A-Z0-9_]+)")
 _cache = {"quando": 0.0, "dados": {}}
 
 
@@ -203,10 +228,10 @@ def opcoes_do_codigo() -> dict:
         except OSError:
             continue
         for nome, padrao in _PY.findall(texto):
-            if nome.startswith("HEIMDALL_") and (nome not in achadas or not achadas[nome]):
+            if nome.startswith(PREFIXOS) and (nome not in achadas or not achadas[nome]):
                 achadas[nome] = _padrao_legivel(padrao)
         for nome, padrao in _SH.findall(texto):
-            if nome.startswith("HEIMDALL_") and (nome not in achadas or not achadas[nome]):
+            if nome.startswith(PREFIXOS) and (nome not in achadas or not achadas[nome]):
                 achadas[nome] = _padrao_legivel(padrao)
         if f.suffix in (".sh", ".zsh"):
             for nome in _SH_SIMPLES.findall(texto):  # lidas como $NOME ou ${NOME:+...}, sem padrão
@@ -214,7 +239,7 @@ def opcoes_do_codigo() -> dict:
     try:  # variáveis documentadas na ajuda também aparecem, mesmo se o código as lê de outro jeito
         import heimdall_config_ajuda as _aj
         for nome in _aj.DESCRICOES:
-            if nome.startswith(("HEIMDALL_", "SUBIR_")):
+            if nome.startswith(PREFIXOS + ("SUBIR_",)):
                 achadas.setdefault(nome, "")
     except ImportError:
         pass
@@ -225,9 +250,9 @@ def opcoes_do_codigo() -> dict:
 
 
 def grupo(nome: str) -> str:
-    """Agrupa pelo serviço: HEIMDALL_LAB_PORT -> LAB; LITELLM_MASTER_KEY -> LITELLM. Sem prefixo, vai para GERAL."""
+    """Agrupa pelo serviço: STUDIO_LAB_PORT -> LAB; LITELLM_MASTER_KEY -> LITELLM. Sem prefixo, vai para GERAL."""
     partes = nome.split("_")
-    if nome.startswith("HEIMDALL_"):
+    if nome.startswith(PREFIXOS):
         return partes[1] if len(partes) > 2 else "GERAL"
     return partes[0] or "GERAL"
 

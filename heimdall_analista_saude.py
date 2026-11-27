@@ -9,8 +9,8 @@ Fluxo:
 Sem modelo, sai uma análise feita só pelo código (desvios, explicações, correlações), sem hipóteses.
 Não há freio de "não sou médico": o modelo pode levantar hipóteses com grau de probabilidade e dizer quando algo é urgente. A decisão de procurar um médico é sua.
 Uso:  python3 heimdall_analista_saude.py [--dias 30] [--sem-modelo] [--sem-literatura] [--gravar]
-Interruptores no .env: HEIMDALL_SAUDE_ANALISTA=0 (desliga a análise automática), HEIMDALL_SAUDE_LITERATURA=0 (não consulta o PubMed),
-HEIMDALL_SAUDE_ANALISTA_MODELO e HEIMDALL_SAUDE_ANALISTA_URL (usar outro modelo, por exemplo um maior), HEIMDALL_SAUDE_CONDICOES (condições a acompanhar).
+Interruptores no .env: STUDIO_SAUDE_ANALISTA=0 (desliga a análise automática), STUDIO_SAUDE_LITERATURA=0 (não consulta o PubMed),
+STUDIO_SAUDE_ANALISTA_MODELO e STUDIO_SAUDE_ANALISTA_URL (usar outro modelo, por exemplo um maior), STUDIO_SAUDE_CONDICOES (condições a acompanhar).
 """
 import hashlib
 import json
@@ -30,8 +30,8 @@ import heimdall_anomalias as an  # noqa: E402
 import heimdall_nuvem as nuvem  # noqa: E402
 import heimdall_saude as hs  # noqa: E402
 
-LLM_URL = os.environ.get("HEIMDALL_SAUDE_ANALISTA_URL", an.LLM_URL)
-LLM_MODELO = os.environ.get("HEIMDALL_SAUDE_ANALISTA_MODELO", an.LLM_MODELO)
+LLM_URL = os.environ.get("STUDIO_SAUDE_ANALISTA_URL", an.LLM_URL)
+LLM_MODELO = os.environ.get("STUDIO_SAUDE_ANALISTA_MODELO", an.LLM_MODELO)
 PUBMED = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 CACHE_DIAS = 30
 INTERVALO_HORAS = 20            # a análise automática roda no máximo uma vez por esse tempo
@@ -101,7 +101,7 @@ def _env(c: str, padrao: str = "") -> str:
 
 
 def _do_dotenv(chave: str) -> str:
-    """Lê um valor direto do .env (rodado à mão, o terminal não leu o .env, e o hs.carregar_env só traz HEIMDALL_SAUDE_*). Só a chave local do LiteLLM é usada daqui."""
+    """Lê um valor direto do .env (rodado à mão, o terminal não leu o .env, e o hs.carregar_env só traz STUDIO_SAUDE_*). Só a chave local do LiteLLM é usada daqui."""
     if os.environ.get(chave):
         return os.environ[chave].strip()
     try:
@@ -168,7 +168,7 @@ def _contexto_clinico(hoje: str) -> dict:
         ctx["exames_fora_da_faixa_12m"] = [f"{e['dia']} {e['nome']}: {e['valor_texto']} {e['unidade']} ({e['sinal']}; referência {e['ref_texto']})".strip()[:140] for e in ex]
     except Exception:  # noqa: BLE001
         pass
-    cond = _env("HEIMDALL_SAUDE_CONDICOES")
+    cond = _env("STUDIO_SAUDE_CONDICOES")
     if cond:
         ctx["condicoes_da_pessoa"] = cond
     return ctx
@@ -266,7 +266,7 @@ def _buscar_pubmed(consulta: str, maximo: int = 3, abrir=None) -> list:
 
 def literatura(d: dict, abrir=None, agora: float = None) -> list:
     """Resumos de estudos sobre o que saiu do normal. Só termos genéricos saem da máquina. Sem internet, devolve o que há em cache (ou nada)."""
-    if _env("HEIMDALL_SAUDE_LITERATURA", "1") == "0":
+    if _env("STUDIO_SAUDE_LITERATURA", "1") == "0":
         return []
     consultas = []
     for m in d["medidas"]:
@@ -346,11 +346,11 @@ modelo_usado = ""   # quem respondeu a última análise (mostrado no fim do text
 
 
 def _chamar_modelo(prompt: str) -> str:
-    """Modelo grande da nuvem (gpt-oss-120b pelo gateway da Cloudflare) quando HEIMDALL_NUVEM=1; se falhar, ou com HEIMDALL_SAUDE_ANALISTA_NUVEM=0, o modelo local.
+    """Modelo grande da nuvem (gpt-oss-120b pelo gateway da Cloudflare) quando STUDIO_NUVEM=1; se falhar, ou com STUDIO_SAUDE_ANALISTA_NUVEM=0, o modelo local.
     Cada falha entra em `falhas_modelo`, para a análise dizer por que o modelo não respondeu."""
     global modelo_usado
-    if _env("HEIMDALL_SAUDE_ANALISTA_NUVEM", "1") == "0":
-        falhas_modelo.append("nuvem não usada na saúde (HEIMDALL_SAUDE_ANALISTA_NUVEM=0)")
+    if _env("STUDIO_SAUDE_ANALISTA_NUVEM", "1") == "0":
+        falhas_modelo.append("nuvem não usada na saúde (STUDIO_SAUDE_ANALISTA_NUVEM=0)")
     elif nuvem.ativo():
         try:
             txt = nuvem.chat(SISTEMA_NUVEM, prompt, max_tokens=3000, timeout=300)
@@ -360,7 +360,7 @@ def _chamar_modelo(prompt: str) -> str:
             falhas_modelo.append(f"nuvem: {e}")
     else:
         e = nuvem._env()
-        falhas_modelo.append("nuvem desligada (falta HEIMDALL_NUVEM=1 no .env)" if e.get("CLOUDFLARE_API_TOKEN") else "nuvem sem chave da Cloudflare no .env")
+        falhas_modelo.append("nuvem desligada (falta STUDIO_NUVEM=1 no .env)" if e.get("CLOUDFLARE_API_TOKEN") else "nuvem sem chave da Cloudflare no .env")
     corpo = json.dumps({"model": LLM_MODELO, "temperature": 0.2, "max_tokens": 3000, "messages": [{"role": "user", "content": prompt}]}).encode()
     cab = {"Content-Type": "application/json"}
     chave = _do_dotenv("LITELLM_MASTER_KEY")
@@ -561,7 +561,7 @@ def analisar(hoje: str = None, usar_modelo: bool = True, usar_literatura: bool =
 
 def rodar(agora: datetime = None, forcar: bool = False, avisar_mac=None, **kw) -> dict:
     """Roda a análise, grava na aba Avisos do Studio Health e avisa só se a gravidade pede (ou no domingo). Devolve {} se ainda não é hora."""
-    if _env("HEIMDALL_SAUDE_ANALISTA", "1") == "0" and not forcar:
+    if _env("STUDIO_SAUDE_ANALISTA", "1") == "0" and not forcar:
         return {}
     agora = agora or datetime.now()
     est = _ler_estado()

@@ -14,9 +14,9 @@ from datetime import datetime
 from pathlib import Path
 
 tmp = Path(tempfile.mkdtemp(prefix="learn_estudos_dia_"))
-os.environ["HEIMDALL_DB_DIR"] = str(tmp / "db")
-os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(tmp / "knowledge")
-os.environ["HEIMDALL_LEARN"] = "1"
+os.environ["STUDIO_DB_DIR"] = str(tmp / "db")
+os.environ["STUDIO_KNOWLEDGE_DIR"] = str(tmp / "knowledge")
+os.environ["STUDIO_LEARN"] = "1"
 import heimdall_learn_dados as dados  # noqa: E402
 import heimdall_learn_cards as cards  # noqa: E402
 

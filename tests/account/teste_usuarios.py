@@ -27,8 +27,8 @@ def confere(nome, ok, extra=""):
 hcf.ARQUIVO = Path(tempfile.mkdtemp()) / ".env"
 CONTA = "a" * 32
 hcf.ARQUIVO.write_text(f"HEIMDALL_CFACCESS_EMAILS='dono@x.com'\nCLOUDFLARE_ACCOUNT_ID='{CONTA}'\n", encoding="utf-8")
-confere("sem token, diz o que falta", "HEIMDALL_CLOUDFLARE_ACCESS_TOKEN" in u.configurado())
-hcf.salvar("HEIMDALL_CLOUDFLARE_ACCESS_TOKEN", "tok")
+confere("sem token, diz o que falta", "STUDIO_CLOUDFLARE_ACCESS_TOKEN" in u.configurado())
+hcf.salvar("STUDIO_CLOUDFLARE_ACCESS_TOKEN", "tok")
 confere("com token e conta, está configurado", u.configurado() == "")
 
 confere("e-mail inválido é recusado", "inválido" in u.definir("ana", ["jogos"]))

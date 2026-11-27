@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-migrar-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_FINANCE_DIR": str(TMP / "fin"), "HEIMDALL_VAULT_DIR": str(TMP / "cofre")})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_FINANCE_DIR": str(TMP / "fin"), "STUDIO_VAULT_DIR": str(TMP / "cofre")})
 sys.path.insert(0, str(RAIZ))
 import heimdall_avisos as av  # noqa: E402
 import migrar_avisos as mg  # noqa: E402

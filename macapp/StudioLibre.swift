@@ -6,7 +6,7 @@ import Foundation
 import UserNotifications
 import WebKit
 
-let pastaHeimdall: String = ProcessInfo.processInfo.environment["HEIMDALL_DIR"] ?? (NSHomeDirectory() + "/StudioApps")
+let pastaHeimdall: String = ProcessInfo.processInfo.environment["STUDIO_DIR"] ?? (NSHomeDirectory() + "/StudioApps")
 
 func tirarCodigos(_ texto: String) -> String {
     return texto.replacingOccurrences(of: "\u{1B}\\[[0-9;?]*[A-Za-z]", with: "", options: .regularExpression)
@@ -16,7 +16,7 @@ func tirarCodigos(_ texto: String) -> String {
 func rodarHeimdall(_ args: [String]) -> (String, Int32) {
     let p = Process()
     p.executableURL = URL(fileURLWithPath: "/bin/zsh")
-    let roteiro = "export HEIMDALL_DIR=\"$1\"; shift; source \"$HEIMDALL_DIR/heimdall.zsh\" 2>/dev/null; studio \"$@\""
+    let roteiro = "export STUDIO_DIR=\"$1\"; shift; source \"$STUDIO_DIR/heimdall.zsh\" 2>/dev/null; studio \"$@\""
     p.arguments = ["-c", roteiro, "studio", pastaHeimdall] + args
     var ambiente = ProcessInfo.processInfo.environment
     ambiente["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:" + (ambiente["PATH"] ?? "")
@@ -266,8 +266,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     func pastaDeAvisos() -> String {
         // Pastas novas (db/alerts); se o Mac ainda estiver com as antigas (banco/avisos_mac), usa-as até o StudioLibre migrar.
         let fm = FileManager.default
-        var base = valorDoEnv("HEIMDALL_DB_DIR") ?? (pastaHeimdall + "/db")
-        if valorDoEnv("HEIMDALL_DB_DIR") == nil && !fm.fileExists(atPath: base) && fm.fileExists(atPath: pastaHeimdall + "/banco") {
+        var base = valorDoEnv("STUDIO_DB_DIR") ?? (pastaHeimdall + "/db")
+        if valorDoEnv("STUDIO_DB_DIR") == nil && !fm.fileExists(atPath: base) && fm.fileExists(atPath: pastaHeimdall + "/banco") {
             base = pastaHeimdall + "/banco"
         }
         base = (base as NSString).expandingTildeInPath
@@ -278,7 +278,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     }
 
     func iniciarAvisos() {
-        guard valorDoEnv("HEIMDALL_AVISOS_MAC") != "0" else { return }
+        guard valorDoEnv("STUDIO_AVISOS_MAC") != "0" else { return }
         let centro = UNUserNotificationCenter.current()
         centro.delegate = self
         centro.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
@@ -374,7 +374,7 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     func situacao() -> ([String], [String]) {
         if let c = situacaoCache, Date().timeIntervalSince(c.0) < 2 { return (c.1, c.2) }
         var lista = portas
-        if lista.isEmpty { lista = [("controls", Int(valorDoEnv("HEIMDALL_CONTROLS_PORT") ?? "8017") ?? 8017)] }
+        if lista.isEmpty { lista = [("controls", Int(valorDoEnv("STUDIO_CONTROLS_PORT") ?? "8017") ?? 8017)] }
         var abertos: [String] = []
         var fechados: [String] = []
         for (nome, porta) in lista {
@@ -393,8 +393,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
         return "Serviços do StudioLibre: \(abertos.count) de \(abertos.count + fechados.count) ligados"
     }
 
-    func nuvemLigada() -> Bool { return valorDoEnv("HEIMDALL_NUVEM") == "1" }
-    func syncLigada() -> Bool { return valorDoEnv("HEIMDALL_CAIXA") == "1" }
+    func nuvemLigada() -> Bool { return valorDoEnv("STUDIO_NUVEM") == "1" }
+    func syncLigada() -> Bool { return valorDoEnv("STUDIO_CAIXA") == "1" }
 
     /// Liga ou desliga cada item conforme o estado: Ligar só vale com os serviços desligados; Reiniciar e Parar, só com eles ligados.
     @objc func validateMenuItem(_ m: NSMenuItem) -> Bool {
@@ -540,8 +540,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
     @objc func sincronizarLearn() { executar("Pastas do Learn", ["learn", "--sync"]) }
     @objc func sincronizarAgora() { buscarCaixa(silencioso: false) }
     @objc func mostrarUltimaBusca() { avisar("Última sincronização com os celulares", ultimaBusca) }
-    @objc func alternarNuvem() { executar("Modelo de IA", ["env", "--set", "HEIMDALL_NUVEM", nuvemLigada() ? "0" : "1"]) }
-    @objc func alternarSync() { executar("Sincronização com os celulares", ["env", "--set", "HEIMDALL_CAIXA", syncLigada() ? "0" : "1"]) }
+    @objc func alternarNuvem() { executar("Modelo de IA", ["env", "--set", "STUDIO_NUVEM", nuvemLigada() ? "0" : "1"]) }
+    @objc func alternarSync() { executar("Sincronização com os celulares", ["env", "--set", "STUDIO_CAIXA", syncLigada() ? "0" : "1"]) }
     @objc func atualizar() { executar("Atualizar o StudioLibre", ["update", "--restart"]) }
     @objc func recarregarSites() { carregarSites() }
 

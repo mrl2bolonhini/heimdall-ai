@@ -11,16 +11,15 @@ Segurança (os dados de saúde podem ficar acessíveis de fora, então tem as me
   1. Escuta só em 127.0.0.1. O acesso de fora vem do túnel Cloudflare.
   2. Entrada com a senha e o código de 6 dígitos do Studio Lab (python3 heimdall_acesso.py --tudo).
   3. Limite de tentativas por endereço e global, sessão em cookie HttpOnly e SameSite=Strict.
-  4. Só atende os nomes de site permitidos (HEIMDALL_SAUDE_PAINEL_HOSTS) e manda cabeçalhos de segurança.
+  4. Só atende os nomes de site permitidos (STUDIO_SAUDE_PAINEL_HOSTS) e manda cabeçalhos de segurança.
   5. Sem senha e sem código configurados, o painel não sobe.
   6. Nada de rota de treino, forma de onda do ECG nem dados brutos: só números agregados e as análises.
 
-Variáveis opcionais no .env: HEIMDALL_SAUDE_PAINEL_PORT (8013), HEIMDALL_SAUDE_PAINEL_HOST (127.0.0.1),
-HEIMDALL_SAUDE_PAINEL_HOSTS (health.heimdall-ai.tech,localhost,127.0.0.1).
+Variáveis opcionais no .env: STUDIO_SAUDE_PAINEL_PORT (8013), STUDIO_SAUDE_PAINEL_HOST (127.0.0.1),
+STUDIO_SAUDE_PAINEL_HOSTS (health.heimdall-ai.tech,localhost,127.0.0.1).
 """
 import html
 import os
-import heimdall_envcompat as _envcompat
 import re
 import secrets
 import sys
@@ -48,8 +47,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        chave = _envcompat.interno(chave)
-        if not (chave.startswith("HEIMDALL_SAUDE_PAINEL_") or chave == "HEIMDALL_DB_DIR"):
+        if not (chave.startswith("STUDIO_SAUDE_PAINEL_") or chave == "STUDIO_DB_DIR"):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -67,12 +65,12 @@ import heimdall_avisos as avisos_mod  # noqa: E402  (aba Avisos: relatórios que
 import heimdall_exames as exames  # noqa: E402  (exames, receitas e encaminhamentos já confirmados)
 import heimdall_clinico as clinico  # noqa: E402  (perfil de saúde e sugestões de acompanhamento)
 
-HOST = os.environ.get("HEIMDALL_SAUDE_PAINEL_HOST", "127.0.0.1")
+HOST = os.environ.get("STUDIO_SAUDE_PAINEL_HOST", "127.0.0.1")
 try:
-    PORT = max(1, int(os.environ.get("HEIMDALL_SAUDE_PAINEL_PORT", "8013")))
+    PORT = max(1, int(os.environ.get("STUDIO_SAUDE_PAINEL_PORT", "8013")))
 except ValueError:
     PORT = 8013
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_SAUDE_PAINEL_HOSTS", "health.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_SAUDE_PAINEL_HOSTS", "health.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 PERIODOS = (7, 14, 30, 90, 180, 365)
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731
@@ -184,7 +182,7 @@ def dias_de(q: dict, padrao: int) -> int:
 # ----------------------------------------------------------------------------------------
 # Botão "Atualizar dados agora" (só no iPhone): abre o atalho que dispara as automações do Health Auto Export
 # ----------------------------------------------------------------------------------------
-ATALHO = os.environ.get("HEIMDALL_SAUDE_ATALHO", "Exportar dados de saúde")
+ATALHO = os.environ.get("STUDIO_SAUDE_ATALHO", "Exportar dados de saúde")
 ESPERA_DADOS = 120      # segundos esperando o dado chegar depois que o atalho voltou
 RECONFERE_EM = 20       # uma única conferência automática; depois, só pelo link
 

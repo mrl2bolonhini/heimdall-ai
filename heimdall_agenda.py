@@ -16,7 +16,7 @@ import urllib.request
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
-AGENTE = os.environ.get("HEIMDALL_AGENTE_URL", "http://127.0.0.1:8003")
+AGENTE = os.environ.get("STUDIO_AGENTE_URL", "http://127.0.0.1:8003")
 EVENTO, LEMBRETE = "evento", "lembrete"
 ROTA = {EVENTO: "/calendario/evento", LEMBRETE: "/lembretes/criar"}
 ROTA_DESFAZER = {EVENTO: "/calendario/desfazer", LEMBRETE: "/lembretes/desfazer"}
@@ -44,12 +44,12 @@ def destino(tipo: str) -> str:
 
 
 def _token() -> str:
-    t = os.environ.get("HEIMDALL_AGENTE_TOKEN", "")
+    t = os.environ.get("STUDIO_AGENTE_TOKEN", "")
     if t:
         return t
     try:
         for ln in (AQUI / ".env").read_text(encoding="utf-8").splitlines():
-            if ln.strip().startswith("HEIMDALL_AGENTE_TOKEN="):
+            if ln.strip().startswith("STUDIO_AGENTE_TOKEN="):
                 v = ln.split("=", 1)[1].strip()
                 return v[1:-1] if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"" else v
     except OSError:

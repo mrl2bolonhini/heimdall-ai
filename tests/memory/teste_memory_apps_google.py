@@ -16,8 +16,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="google_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "HEIMDALL_MEMORY_IA": "0",
-                   "HEIMDALL_NUVEM_CHAVE": "chave-de-teste", "HEIMDALL_NUVEM_GOOGLE_ID": "g-id", "HEIMDALL_NUVEM_GOOGLE_SEGREDO": "g-seg", "HEIMDALL_MEMORY_URL": "https://memory.exemplo.test"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "STUDIO_HUB_IA": "0",
+                   "STUDIO_NUVEM_CHAVE": "chave-de-teste", "STUDIO_NUVEM_GOOGLE_ID": "g-id", "STUDIO_NUVEM_GOOGLE_SEGREDO": "g-seg", "STUDIO_HUB_URL": "https://memory.exemplo.test"})
 ESTADO = {"tokens": 0, "revogado": False, "chamadas": [], "etag": "e1", "form": None}
 
 

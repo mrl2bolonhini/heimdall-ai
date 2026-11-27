@@ -57,7 +57,7 @@ confere("Swift: abre o Chat sozinho uma vez, fechar a janela não encerra o app 
 confere("Swift: itens habilitados pelo estado (Ligar só com tudo desligado; Reiniciar e Parar só com tudo ligado)", "validateMenuItem" in swift and "return !ocupado && !todosLigados()" in swift and "return !ocupado && algumLigado()" in swift)
 confere("Swift: o estado olha a porta de cada serviço (lista de studio urls) e mostra quem está fora do ar", 'rodarHeimdall(["urls"])' in swift and "func situacao()" in swift and "Fora do ar" in swift and "de \\(abertos.count + fechados.count) ligados" in swift)
 confere("Swift: linhas de estado e grupos Abrir serviço, Nuvem e Celulares no menu de estado", all(t in swift for t in ("menuNeedsUpdate", 'grupo(menu, "Abrir serviço")', 'grupo(menu, "Nuvem (Cloudflare)")', 'grupo(menu, "Celulares")')))
-confere("Swift: o app só lê interruptores e a porta do .env, nunca chaves", all(c in swift for c in ("HEIMDALL_NUVEM", "HEIMDALL_CAIXA", "HEIMDALL_CONTROLS_PORT")) and "TOKEN" not in swift)
+confere("Swift: o app só lê interruptores e a porta do .env, nunca chaves", all(c in swift for c in ("STUDIO_NUVEM", "STUDIO_CAIXA", "STUDIO_CONTROLS_PORT")) and "TOKEN" not in swift)
 confere("Swift: rótulo de acessibilidade na barra de menus", "setAccessibilityLabel" in swift)
 confere("Swift: não tem segredo, token nem chave", not re.search(r"(hc_|sk-|Bearer|API_TOKEN|password|senha)", swift, re.I))
 confere("Swift: chama só o comando heimdall (nada de rm, sudo ou curl)", not re.search(r'"(rm|sudo|curl|sh)"', swift) and "sudo" not in swift)

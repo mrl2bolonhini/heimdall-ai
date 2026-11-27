@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Avisos nativos no Mac: fila local, texto completo (saúde e finanças incluídos) só no Mac, Bark continua genérico, interruptor HEIMDALL_AVISOS_MAC=0.
+"""Avisos nativos no Mac: fila local, texto completo (saúde e finanças incluídos) só no Mac, Bark continua genérico, interruptor STUDIO_AVISOS_MAC=0.
 
     python3 tests/agent/teste_avisos_mac.py
 """
@@ -14,8 +14,8 @@ import tempfile
 from pathlib import Path
 
 tmp = tempfile.mkdtemp()
-os.environ["HEIMDALL_DB_DIR"] = tmp
-os.environ.pop("HEIMDALL_AVISOS_MAC", None)
+os.environ["STUDIO_DB_DIR"] = tmp
+os.environ.pop("STUDIO_AVISOS_MAC", None)
 import heimdall_avisos_mac as mac  # noqa: E402
 import heimdall_alertas as alertas  # noqa: E402
 import heimdall_bark as bk  # noqa: E402
@@ -41,13 +41,13 @@ confere("pasta 700 e arquivo 600", oct(pasta.stat().st_mode & 0o777) == "0o700" 
 mac.publicar({"title": "x", "level": "inventado"})
 confere("nível desconhecido vira active", any(json.loads(a.read_text())["nivel"] == "active" for a in pasta.glob("*.json")))
 confere("aviso vazio é recusado", mac.publicar({}) is False and mac.publicar("texto") is False)
-os.environ["HEIMDALL_AVISOS_MAC"] = "0"
+os.environ["STUDIO_AVISOS_MAC"] = "0"
 antes = len(list(pasta.glob("*.json")))
-confere("HEIMDALL_AVISOS_MAC=0 desliga", mac.publicar({"title": "não"}) is False and len(list(pasta.glob("*.json"))) == antes)
-os.environ.pop("HEIMDALL_AVISOS_MAC")
+confere("STUDIO_AVISOS_MAC=0 desliga", mac.publicar({"title": "não"}) is False and len(list(pasta.glob("*.json"))) == antes)
+os.environ.pop("STUDIO_AVISOS_MAC")
 
 # alertas: o Bark segue genérico (com o link do produto); o Mac recebe título e resumo completos, mesmo de saúde
-os.environ["HEIMDALL_AVISOS_DIR"] = tmp
+os.environ["STUDIO_AVISOS_DIR"] = tmp
 enviados = []
 bk.enviar_bark = lambda p: enviados.append(p) or True
 for a in pasta.glob("*.json"):

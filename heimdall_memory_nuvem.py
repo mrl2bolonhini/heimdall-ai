@@ -2,15 +2,15 @@
 """Studio Hub: conexão de cada pessoa com o próprio armazenamento em nuvem (Dropbox e OneDrive), com importação automática.
 
 Fluxo: a pessoa toca em Conectar, autoriza no site do provedor (OAuth 2.0, código de autorização com PKCE) e informa a pasta a vigiar. A cada
-HEIMDALL_NUVEM_INTERVALO segundos (padrão 900) o Hub lista a pasta, baixa só os arquivos novos ou alterados e os envia ao acervo da pessoa
+STUDIO_NUVEM_INTERVALO segundos (padrão 900) o Hub lista a pasta, baixa só os arquivos novos ou alterados e os envia ao acervo da pessoa
 (heimdall_memory_dados.adicionar: motor interno ou Paperless). Por padrão a conexão é só de leitura. Opções por pasta: incluir subpastas (até
 MAX_PROFUNDIDADE níveis) e, só se a pessoa tiver autorizado a escrita, mover cada arquivo já importado para a pasta "Importados pelo Heimdall" dentro
 da pasta vigiada. O Hub nunca apaga arquivos da nuvem e nunca importa de novo o que está na pasta Importados.
 
 Privacidade: cada pessoa tem o seu arquivo de conexão (memory/nuvem.bin, cifrado com AES-GCM, permissão 600) e só a sincronização dela mexe nele.
 O estado (`state`) do OAuth fica na memória do servidor, ligado à pessoa que iniciou, vale por 10 minutos e só uma vez.
-Configuração do administrador (.env): HEIMDALL_NUVEM_<DROPBOX|ONEDRIVE>_ID e _SEGREDO; HEIMDALL_MEMORY_URL (padrão https://memory.heimdall-ai.tech)
-para o endereço de retorno <URL>/nuvem/retorno, que precisa estar cadastrado no aplicativo do provedor. HEIMDALL_NUVEM=0 desliga a sincronização.
+Configuração do administrador (.env): STUDIO_NUVEM_<DROPBOX|ONEDRIVE>_ID e _SEGREDO; STUDIO_HUB_URL (padrão https://memory.heimdall-ai.tech)
+para o endereço de retorno <URL>/nuvem/retorno, que precisa estar cadastrado no aplicativo do provedor. STUDIO_NUVEM=0 desliga a sincronização.
 Usa a biblioteca padrão e `cryptography` (AESGCM, já usada nas cópias de segurança); sem ela, a conexão é recusada em vez de gravar token em texto aberto.
 """
 import json

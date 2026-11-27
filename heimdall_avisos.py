@@ -108,13 +108,13 @@ class Avisos:
 
 
 def do_servico(servico: str) -> "Avisos":
-    """Os avisos de um serviço, no lugar certo: saúde fica ao lado do banco pessoal; finanças, na pasta de dados do Studio Finance (HEIMDALL_FINANCE_DIR)."""
+    """Os avisos de um serviço, no lugar certo: saúde fica ao lado do banco pessoal; finanças, na pasta de dados do Studio Finance (STUDIO_FINANCE_DIR)."""
     import os
     if servico == "saude":
         import heimdall_banco
         return Avisos(heimdall_banco.DB_DIR / "avisos_saude.db")
     if servico == "financas":
-        return Avisos(Path(os.environ.get("HEIMDALL_FINANCE_DIR") or heimdall_pastas.finance(Path(__file__).resolve().parent)) / "avisos_financas.db")
+        return Avisos(Path(os.environ.get("STUDIO_FINANCE_DIR") or heimdall_pastas.finance(Path(__file__).resolve().parent)) / "avisos_financas.db")
     raise ValueError("serviço sem avisos: " + str(servico))
 
 

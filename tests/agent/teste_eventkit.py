@@ -52,7 +52,7 @@ def quebrado():
 ek.registrar("SCRIPT_BUG", quebrado)
 confere("erro inesperado: recua só desta vez", ek.tentar("SCRIPT_BUG", ()) == (False, None) and ek._falha_ate < time.time())
 ek.ATIVO = False
-confere("HEIMDALL_EVENTKIT=0 desliga", ek.tentar("SCRIPT_OK", ("a", "b")) == (False, None))
+confere("STUDIO_EVENTKIT=0 desliga", ek.tentar("SCRIPT_OK", ("a", "b")) == (False, None))
 ek.ATIVO = True
 
 # 3. integração com o agente: com o EventKit resolvendo, o AppleScript não roda e nenhum app é aberto

@@ -15,10 +15,10 @@ from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-os.environ["HEIMDALL_NOTION_TOKEN"] = "segredo-de-teste"
-os.environ["HEIMDALL_NOTION_DB_IDEIAS"] = "https://www.notion.so/ws/Ideias-0123456789abcdef0123456789abcdef?v=1"
-os.environ["HEIMDALL_NOTION_DB_CONTATOS"] = "abcdef01-2345-6789-abcd-ef0123456789"
-os.environ.pop("HEIMDALL_NOTION_DB_ENDERECOS", None)
+os.environ["STUDIO_NOTION_TOKEN"] = "segredo-de-teste"
+os.environ["STUDIO_NOTION_DB_IDEIAS"] = "https://www.notion.so/ws/Ideias-0123456789abcdef0123456789abcdef?v=1"
+os.environ["STUDIO_NOTION_DB_CONTATOS"] = "abcdef01-2345-6789-abcd-ef0123456789"
+os.environ.pop("STUDIO_NOTION_DB_ENDERECOS", None)
 import heimdall_agenda as ag  # noqa: E402
 import heimdall_catalogo as cat  # noqa: E402
 import heimdall_notion as nt  # noqa: E402

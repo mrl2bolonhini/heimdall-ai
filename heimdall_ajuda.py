@@ -4,9 +4,9 @@ e as páginas de Termos de Uso e de Privacidade, que o rodapé de todos os servi
 
 Suporte: a mensagem recebe um protocolo, é gravada em db/suporte/mensagens.jsonl (permissão 600) e, se o envio de e-mail estiver configurado, segue para
 o endereço de suporte pelo Cloudflare Email Sending (POST /email/sending/send). Sem a configuração, a mensagem fica só gravada e a página diz isso.
-Variáveis no .env: HEIMDALL_SUPORTE_EMAIL=1 liga o envio; HEIMDALL_SUPORTE_DE (remetente no domínio já ativado no Email Sending) e
-HEIMDALL_SUPORTE_PARA (destino; padrão suporte@heimdall-ai.tech); CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID, como nos demais usos da Cloudflare.
-HEIMDALL_POLITICA_APROVADA=1 tira o aviso de minuta das páginas de política, depois que o texto for revisado e aprovado pelo dono.
+Variáveis no .env: STUDIO_SUPORTE_EMAIL=1 liga o envio; STUDIO_SUPORTE_DE (remetente no domínio já ativado no Email Sending) e
+STUDIO_SUPORTE_PARA (destino; padrão suporte@heimdall-ai.tech); CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID, como nos demais usos da Cloudflare.
+STUDIO_POLITICA_APROVADA=1 tira o aviso de minuta das páginas de política, depois que o texto for revisado e aprovado pelo dono.
 """
 import html
 import json
@@ -110,7 +110,7 @@ FAQ = {
         ("Para que servem os limites?",
          "O limite por ordem recusa ordens grandes demais, o limite de perda por dia bloqueia novas compras quando o resultado do dia passa dele, e o máximo de ordens abertas evita acúmulo. As ordens recusadas aparecem no Histórico com o motivo. Fechar posição nunca é bloqueado pelos limites."),
         ("De onde vêm as cotações?",
-         "Por padrão, as cotações são reais, da B3, pela brapi (um token em HEIMDALL_TRADING_BRAPI_TOKEN no .env amplia o acesso). Em Ajustes, na aba Cotações, você pode trocar a fonte por simulada (preços gerados, sem internet) ou manual (você informa o preço de cada ativo)."),
+         "Por padrão, as cotações são reais, da B3, pela brapi (um token em STUDIO_TRADING_BRAPI_TOKEN no .env amplia o acesso). Em Ajustes, na aba Cotações, você pode trocar a fonte por simulada (preços gerados, sem internet) ou manual (você informa o preço de cada ativo)."),
         ("A inteligência artificial recomenda comprar ou vender?",
          "Nunca. Os sinais descrevem de forma objetiva o movimento recente do preço, e o campo Perguntar explica os números da conta. A decisão é sempre sua, e nada aqui é aconselhamento financeiro."),
     ],
@@ -120,7 +120,7 @@ FAQ = {
         ("Como conecto o OneNote, o Microsoft To Do, o Planner, o Calendário, os Contatos, o Google, o iCloud, o Notion, o Todoist e o Trello?",
          "Em Adicionar, na subaba Apps, marque os serviços da Microsoft que o Hub pode ler e toque em Conectar Microsoft. Você autoriza uma vez no site da Microsoft, com conta pessoal ou de trabalho ou escola, e a leitura passa a ser automática, a cada 15 minutos. Cada nota, tarefa, evento (de 30 dias atrás a 180 dias à frente) e contato vira um documento de texto no seu acervo, pesquisável junto com os demais e disponível no Perguntar. Se o item mudar no app, o mesmo documento é atualizado. O Hub só lê: não altera nada no app. O Microsoft Planner só existe em conta Microsoft de trabalho ou escola; em conta pessoal ele é recusado e os outros serviços continuam. O iCloud não tem autorização por site: crie uma senha de aplicativo em account.apple.com, em Entrada e segurança (exige a verificação em duas etapas e funciona pelo navegador em qualquer sistema), e informe o Apple ID e essa senha na subaba Apps; nunca use a senha do Apple ID. O Hub lê o Calendário e os Contatos do iCloud, não os Lembretes. O Google (Agenda principal, Tarefas e Contatos), o Notion, o Todoist e o Trello têm a própria seção. No Notion, você escolhe na autorização quais páginas compartilhar e o Hub lê só elas; para incluir outras, conecte de novo e marque-as. Em todas: toque em Conectar e autorize no site do serviço; o Hub lê as tarefas ativas do Todoist e os cartões dos quadros abertos do Trello. Se você revogar o acesso no app, o Hub pede para conectar de novo. Para mudar os serviços, marque de novo e toque em Alterar serviços. Funciona em qualquer sistema, porque a leitura é feita pelo servidor. Apple Notas, Bear e Google Keep não têm acesso por conta e ainda não estão disponíveis."),
         ("Como o leitor de códigos de barras funciona?",
-         "Com o motor Paperless-ngx, o Hub lê códigos de barras nos arquivos enviados. Uma folha separadora com o código PATCHT divide um lote escaneado em vários documentos, e uma etiqueta ASN numera o papel para localizá-lo depois. Sem códigos de barras, nada é dividido. Desligue com HEIMDALL_PAPERLESS_BARCODES=false."),
+         "Com o motor Paperless-ngx, o Hub lê códigos de barras nos arquivos enviados. Uma folha separadora com o código PATCHT divide um lote escaneado em vários documentos, e uma etiqueta ASN numera o papel para localizá-lo depois. Sem códigos de barras, nada é dividido. Desligue com STUDIO_PAPERLESS_BARCODES=false."),
         ("Que arquivos posso enviar?",
          "PDF (com texto ou escaneado), fotos (JPG, PNG, HEIC, TIFF, WEBP), Word (DOCX), texto, Markdown e CSV, até 30 MB por arquivo. O mesmo arquivo nunca entra duas vezes."),
         ("Como funciona a pesquisa?",
@@ -156,22 +156,22 @@ FAQ = {
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Termos de Uso e Política de Privacidade (MINUTA): o texto descreve o que o StudioLibre faz hoje. Os dados de identificação do responsável
-# ficam no .env (HEIMDALL_RESPONSAVEL, HEIMDALL_ENCARREGADO, HEIMDALL_FORO), nunca no código, porque o repositório é público.
+# ficam no .env (STUDIO_RESPONSAVEL, STUDIO_ENCARREGADO, STUDIO_FORO), nunca no código, porque o repositório é público.
 # ---------------------------------------------------------------------------------------------------------------------
 def _cfg(chave: str, padrao: str = "") -> str:
     return (os.environ.get(chave) or _env_arquivo(chave) or padrao).strip()
 
 
 def responsavel() -> str:
-    return _cfg("HEIMDALL_RESPONSAVEL", "[NOME E DOCUMENTO DO RESPONSÁVEL: defina HEIMDALL_RESPONSAVEL]")
+    return _cfg("STUDIO_RESPONSAVEL", "[NOME E DOCUMENTO DO RESPONSÁVEL: defina STUDIO_RESPONSAVEL]")
 
 
 def encarregado() -> str:
-    return _cfg("HEIMDALL_ENCARREGADO", f"o próprio responsável, pelo e-mail {EMAIL_SUPORTE}")
+    return _cfg("STUDIO_ENCARREGADO", f"o próprio responsável, pelo e-mail {EMAIL_SUPORTE}")
 
 
 def foro() -> str:
-    return _cfg("HEIMDALL_FORO", "São Paulo")
+    return _cfg("STUDIO_FORO", "São Paulo")
 
 
 def data_por_extenso(iso: str = None) -> str:
@@ -278,7 +278,7 @@ def politica_privacidade() -> list:
 
 
 def aviso_minuta() -> str:
-    if os.environ.get("HEIMDALL_POLITICA_APROVADA") == "1" or _env_arquivo("HEIMDALL_POLITICA_APROVADA") == "1":
+    if os.environ.get("STUDIO_POLITICA_APROVADA") == "1" or _env_arquivo("STUDIO_POLITICA_APROVADA") == "1":
         return ""
     return ('<p role="note"><strong>Minuta em revisão.</strong> Este texto ainda não foi aprovado pelo responsável e pode mudar antes da publicação.</p>')
 
@@ -585,15 +585,15 @@ def _atualizar_estado(protocolo: str, estado: str, motivo: str = "") -> None:
 
 
 def _conf() -> dict:
-    ch = ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "HEIMDALL_SUPORTE_PARA", "HEIMDALL_SUPORTE_TOKEN", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+    ch = ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "STUDIO_SUPORTE_PARA", "STUDIO_SUPORTE_TOKEN", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
     c = {k: (os.environ.get(k) or _env_arquivo(k)) for k in ch}
-    c["TOKEN_ENVIO"] = c.get("HEIMDALL_SUPORTE_TOKEN") or c.get("CLOUDFLARE_API_TOKEN") or ""
+    c["TOKEN_ENVIO"] = c.get("STUDIO_SUPORTE_TOKEN") or c.get("CLOUDFLARE_API_TOKEN") or ""
     return c
 
 
 def envio_configurado(c: dict = None) -> bool:
     c = c if c is not None else _conf()
-    return c.get("HEIMDALL_SUPORTE_EMAIL") == "1" and bool(c.get("HEIMDALL_SUPORTE_DE")) and bool(c.get("TOKEN_ENVIO")) and bool(c.get("CLOUDFLARE_ACCOUNT_ID"))
+    return c.get("STUDIO_SUPORTE_EMAIL") == "1" and bool(c.get("STUDIO_SUPORTE_DE")) and bool(c.get("TOKEN_ENVIO")) and bool(c.get("CLOUDFLARE_ACCOUNT_ID"))
 
 
 def _post(req, timeout):
@@ -604,7 +604,7 @@ def _enviar_cf(c: dict, para: str, assunto: str, texto: str, responder_para: str
     """Envia um e-mail de texto pelo Cloudflare Email Sending. Devolve (ok, motivo). Se a Cloudflare recusar o reply_to, tenta de novo sem ele."""
     url = f"https://api.cloudflare.com/client/v4/accounts/{c['CLOUDFLARE_ACCOUNT_ID']}/email/sending/send"
     cab = {"Authorization": f"Bearer {c['TOKEN_ENVIO']}", "Content-Type": "application/json"}
-    corpo = {"to": para, "from": c["HEIMDALL_SUPORTE_DE"], "subject": assunto, "text": texto}
+    corpo = {"to": para, "from": c["STUDIO_SUPORTE_DE"], "subject": assunto, "text": texto}
     tentativas = [dict(corpo, reply_to=responder_para)] if responder_para else []
     tentativas.append(corpo)
     motivo = ""
@@ -633,21 +633,21 @@ def enviar_email(reg: dict) -> bool:
     """Envia ao suporte pelo Cloudflare Email Sending, com o e-mail de quem escreveu como endereço de resposta. Devolve True se a Cloudflare aceitou; qualquer falha deixa a mensagem gravada e devolve False."""
     c = _conf()
     if not envio_configurado(c):
-        faltam = [k for k in ("HEIMDALL_SUPORTE_EMAIL", "HEIMDALL_SUPORTE_DE", "TOKEN_ENVIO", "CLOUDFLARE_ACCOUNT_ID") if not c.get(k) or (k == "HEIMDALL_SUPORTE_EMAIL" and c.get(k) != "1")]
+        faltam = [k for k in ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "TOKEN_ENVIO", "CLOUDFLARE_ACCOUNT_ID") if not c.get(k) or (k == "STUDIO_SUPORTE_EMAIL" and c.get(k) != "1")]
         reg["motivo"] = "Envio desligado ou incompleto: " + ", ".join(faltam)
         _atualizar_estado(reg["protocolo"], "gravada_sem_envio", reg["motivo"])
         return False
     assunto = f"[{reg['protocolo']}] {ASSUNTOS.get(reg['assunto'], reg['assunto'])} - {SERVICOS.get(reg['servico'], reg['servico'])}"
     texto = (f"Protocolo: {reg['protocolo']}\nData: {reg['data']}\nDe: {reg.get('nome') or '-'} <{reg['email']}>\nServiço: {SERVICOS.get(reg['servico'], reg['servico'])}\n"
              f"Assunto: {ASSUNTOS.get(reg['assunto'], reg['assunto'])}\n\n{reg['mensagem']}\n")
-    ok, motivo = _enviar_cf(c, c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE, assunto, texto, reg["email"] if _email_valido(reg["email"]) else "")
+    ok, motivo = _enviar_cf(c, c.get("STUDIO_SUPORTE_PARA") or EMAIL_SUPORTE, assunto, texto, reg["email"] if _email_valido(reg["email"]) else "")
     reg["motivo"] = motivo
     _atualizar_estado(reg["protocolo"], "enviada" if ok else "gravada_sem_envio", motivo)
     return ok
 
 
 def responder(protocolo: str, texto: str, para: str = "") -> tuple:
-    """Responde de suporte@ (remetente HEIMDALL_SUPORTE_DE) a quem escreveu. Devolve (ok, mensagem). Com protocolo, usa o e-mail gravado; sem protocolo, exige 'para'."""
+    """Responde de suporte@ (remetente STUDIO_SUPORTE_DE) a quem escreveu. Devolve (ok, mensagem). Com protocolo, usa o e-mail gravado; sem protocolo, exige 'para'."""
     texto = (texto or "").strip()
     if len(texto) < 2 or len(texto) > MAX_MENSAGEM:
         return False, f"A resposta precisa ter de 2 a {MAX_MENSAGEM} caracteres."
@@ -657,7 +657,7 @@ def responder(protocolo: str, texto: str, para: str = "") -> tuple:
         return False, "Não há um e-mail válido para responder." + (" Informe o endereço." if not reg else " Quem escreveu entrou pela porta local, sem e-mail gravado; informe o endereço.")
     c = _conf()
     if not envio_configurado(c):
-        return False, "O envio de e-mail não está configurado (HEIMDALL_SUPORTE_EMAIL, HEIMDALL_SUPORTE_DE e token da Cloudflare)."
+        return False, "O envio de e-mail não está configurado (STUDIO_SUPORTE_EMAIL, STUDIO_SUPORTE_DE e token da Cloudflare)."
     assunto = f"Re: [{protocolo}] {ASSUNTOS.get((reg or {}).get('assunto'), 'Suporte')}" if protocolo else "Resposta do suporte StudioLibre"
     rodape = f"\n\n--\nSuporte StudioLibre\n{EMAIL_SUPORTE}" + (f"\nProtocolo: {protocolo}" if protocolo else "")
     ok, motivo = _enviar_cf(c, destino, assunto, texto + rodape, EMAIL_SUPORTE)
@@ -735,7 +735,7 @@ def _gravar_no_env(chave: str, valor: str) -> None:
 
 
 def criar_token_envio() -> int:
-    """Cria, com o token atual da Cloudflare, um token só com a permissão Email Sending e o grava no .env (HEIMDALL_SUPORTE_TOKEN), sem exibi-lo."""
+    """Cria, com o token atual da Cloudflare, um token só com a permissão Email Sending e o grava no .env (STUDIO_SUPORTE_TOKEN), sem exibi-lo."""
     c = _conf()
     base, conta = c.get("CLOUDFLARE_API_TOKEN"), c.get("CLOUDFLARE_ACCOUNT_ID")
     if not base or not conta:
@@ -744,7 +744,7 @@ def criar_token_envio() -> int:
     g = _api("GET", "/user/tokens/permission_groups", base)
     if not g.get("success"):
         print("O token atual da Cloudflare não pode criar tokens (falta a permissão API Tokens: Edit). Motivo: " + "; ".join(e.get("message", "") for e in g.get("errors", [])))
-        print("Alternativa: no painel, Perfil, Tokens de API, Criar token personalizado, permissão Conta, Email Sending, Edit; depois copie o valor e rode: bash scripts/guardar_no_env.sh HEIMDALL_SUPORTE_TOKEN")
+        print("Alternativa: no painel, Perfil, Tokens de API, Criar token personalizado, permissão Conta, Email Sending, Edit; depois copie o valor e rode: bash scripts/guardar_no_env.sh STUDIO_SUPORTE_TOKEN")
         return 1
     grupos = [x for x in g["result"] if "email sending" in x.get("name", "").lower() and "account" in " ".join(x.get("scopes", [])).lower()]
     escolhido = next((x for x in grupos if re.search(r"write|edit", x["name"], re.I)), None)
@@ -756,8 +756,8 @@ def criar_token_envio() -> int:
     if not r.get("success") or not r.get("result", {}).get("value"):
         print("Não foi possível criar o token: " + "; ".join(e.get("message", "") for e in r.get("errors", [])))
         return 1
-    _gravar_no_env("HEIMDALL_SUPORTE_TOKEN", r["result"]["value"])
-    print(f"Token criado com a permissão '{escolhido['name']}' e gravado no .env como HEIMDALL_SUPORTE_TOKEN (não é exibido). Rode: studio support --test")
+    _gravar_no_env("STUDIO_SUPORTE_TOKEN", r["result"]["value"])
+    print(f"Token criado com a permissão '{escolhido['name']}' e gravado no .env como STUDIO_SUPORTE_TOKEN (não é exibido). Rode: studio support --test")
     return 0
 
 
@@ -792,7 +792,7 @@ def main() -> int:
         return criar_token_envio()
     if "--testar" in sys.argv:
         c = _conf()
-        destino = c.get("HEIMDALL_SUPORTE_PARA") or EMAIL_SUPORTE
+        destino = c.get("STUDIO_SUPORTE_PARA") or EMAIL_SUPORTE
         reg, ok = enviar({"email": destino, "nome": "Teste do envio"}, "outro", "geral", "Teste do envio de e-mail do suporte, feito por studio support --test.")
         print(f"Protocolo {reg['protocolo']}: " + ("enviado para " + destino + ". Confira a caixa de entrada e o spam." if ok else "não enviado."))
         if not ok:

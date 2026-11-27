@@ -5,7 +5,7 @@ Guarda no Mac, fora do n8n e fora do Git, o histórico que hoje se perde ou fica
 saúde por dia, menções dos diários oficiais e análises do Second Brain. O agente (heimdall_agente.py)
 expõe isto em /banco/*; o n8n grava, e o chat e os painéis futuros consultam.
 
-Arquivo: HEIMDALL_DB_DIR/heimdall.db (padrão: ./banco/heimdall.db). Cópia diária em db/copies (7 últimas).
+Arquivo: STUDIO_DB_DIR/heimdall.db (padrão: ./banco/heimdall.db). Cópia diária em db/copies (7 últimas).
 Leitura livre só por SELECT (consulta_sql): conexão somente leitura + autorizador que recusa qualquer outra coisa.
 """
 import contextlib
@@ -22,7 +22,7 @@ from datetime import datetime
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent
-DB_DIR = Path(os.environ.get("HEIMDALL_DB_DIR", str(heimdall_pastas.db(PROJECT_DIR)))).expanduser()
+DB_DIR = Path(os.environ.get("STUDIO_DB_DIR", str(heimdall_pastas.db(PROJECT_DIR)))).expanduser()
 DB_PATH = DB_DIR / "heimdall.db"
 _RAIZ = DB_DIR   # a pasta de base não muda, mesmo quando banco.pessoa() troca DB_DIR
 _trava = threading.Lock()
@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS treinos (
     esforco REAL,                   -- pontuação de esforço da Apple (iOS 18)
     temperatura_c REAL,
     fc_serie TEXT NOT NULL DEFAULT '[]',   -- JSON [[segundos desde o início, bpm], ...] (até 600 pontos)
-    rota TEXT NOT NULL DEFAULT '[]',       -- JSON [[lat, lon, altitude], ...] (até 400 pontos; HEIMDALL_SAUDE_ROTA=0 não guarda)
+    rota TEXT NOT NULL DEFAULT '[]',       -- JSON [[lat, lon, altitude], ...] (até 400 pontos; STUDIO_SAUDE_ROTA=0 não guarda)
     fonte TEXT NOT NULL DEFAULT '',
     extra TEXT NOT NULL DEFAULT '{}',
     atualizado TEXT NOT NULL

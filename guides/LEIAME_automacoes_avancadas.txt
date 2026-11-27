@@ -3,7 +3,7 @@ AUTOMAÇÕES AVANÇADAS DO HEIMDALL-AI
 
 Conteúdo do pacote (tudo vai para a pasta ~/StudioApps, por cima dos arquivos atuais):
 1. heimdall_agente.py: agente do Mac. Ponte entre o n8n (no Docker) e o app Notas. Só usa a biblioteca padrão do Python.
-2. start_heimdall.sh: versão atualizada. Sobe o agente sozinho quando HEIMDALL_AGENTE_TOKEN existe no .env (ou com --agente).
+2. start_heimdall.sh: versão atualizada. Sobe o agente sozinho quando STUDIO_AGENTE_TOKEN existe no .env (ou com --agente).
 3. scripts/instalar_automacoes_avancadas.sh: instala os três fluxos no n8n e confere as dependências.
 4. scripts/instalar_hook_gitops.sh: liga um repositório git ao GitOps (instala o gancho pre-push).
 5. flows/advanced/: os fluxos (6 GitOps, 7 Digest, 8 Second Brain, 9 aviso de falha do GitOps).
@@ -90,7 +90,7 @@ Digest:        docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=
 Second Brain:  docker exec -e N8N_RUNNERS_BROKER_PORT=5680 n8n n8n execute --id=hdSecondBrain001 2>&1 | tail -n 40
 GitOps:        o hash do teste precisa existir no GitHub (commit já enviado) e a branch precisa ser a mesma do push. Faça um git push num repositório ligado e acompanhe em Execuções, na interface do n8n (http://localhost:5678).
                Ou teste só o webhook, sem push (precisa de um commit já publicado no GitHub; troque o hash):
-               curl -X POST http://localhost:5678/webhook/heimdall-gitops -H "X-Heimdall-Token: $HEIMDALL_GITOPS_TOKEN" \
+               curl -X POST http://localhost:5678/webhook/heimdall-gitops -H "X-Heimdall-Token: $STUDIO_GITOPS_TOKEN" \
                  -H "Content-Type: application/json" -d '{"repo":"dono/repo","branch":"main","sha":"HASH_COMPLETO_DE_40_CARACTERES"}'
 Observação: o n8n só guarda memória de "já visto" (digest) e "última nota analisada" (second brain) nas execuções
 agendadas; testes manuais por "execute" não gravam esse estado e podem repetir itens.
@@ -98,7 +98,7 @@ agendadas; testes manuais por "execute" não gravam esse estado e podem repetir 
 PROBLEMAS COMUNS
 ----------------
 1. Agente fora do ar: veja logs/agente_debug.log. Confira com: curl -s http://localhost:8003/saude
-2. O n8n não alcança o agente: ponha HEIMDALL_AGENTE_HOST=0.0.0.0 no .env e rode o start_heimdall.sh de novo.
+2. O n8n não alcança o agente: ponha STUDIO_AGENTE_HOST=0.0.0.0 no .env e rode o start_heimdall.sh de novo.
    (O agente exige o token em todas as rotas, menos /saude, mesmo escutando em todas as interfaces.)
 3. "Not authorized" ao ler notas: autorize o Terminal em Ajustes do Sistema > Privacidade e Segurança > Automação > Notas.
 4. O app Notas abre sozinho: o agente o consulta por AppleScript; ele abre em segundo plano. É esperado.
@@ -122,7 +122,7 @@ PASTA PRIVADA (notas que nunca são lidas)
 -----------------------------------------
 1. Crie no app Notas uma pasta chamada exatamente "Privado" e guarde nela as notas muito pessoais. Subpastas também ficam protegidas.
 2. O agente do Mac nunca lista nem lê notas dessa pasta. Se ele não conseguir consultar a pasta, entrega nenhuma nota (falha fechado).
-3. Para proteger outras pastas, ponha no .env: HEIMDALL_NOTAS_PRIVADAS="Diário,Segredos" e reinicie o agente.
+3. Para proteger outras pastas, ponha no .env: STUDIO_NOTAS_PRIVADAS="Diário,Segredos" e reinicie o agente.
 4. Se uma nota JÁ tinha sido analisada antes de ir para a pasta privada, rode: python3 limpar_privadas.py --so-listar
    e depois sem o --so-listar. Ele apaga só os derivados dessa nota (pontos no Qdrant, cópia .md e nota espelho).
 5. Para a base de conhecimento (knowledge/), pastas cujo nome começa com ponto (por exemplo knowledge/.privado) nunca são indexadas.
@@ -146,7 +146,7 @@ A cada execução:
 2. O modelo local cria uma pergunta de revisão, a resposta esperada e o nome do conceito.
 3. Busca de 1 a 3 artigos reais na web pelo SearXNG (sem vídeos, redes sociais e lojas, um por site, só https). Os links vêm da busca; o modelo nunca inventa endereços. Se a busca falhar, a nota diz isso.
 4. Grava uma nota no app Notas, em uma pasta com o nome da tag do tema, ou seja, o nome da subpasta de knowledge/ sem acentos, em minúsculas e com hífens (knowledge/AWS Dados vira a pasta "aws-dados"; arquivos soltos vão para "geral"). Subpastas novas de knowledge/ ganham a pasta no Notas sozinhas, na primeira vez em que forem sorteadas. A nota tem: Pergunta, Resposta (para conferir depois), Leitura e Para aprofundar (links). O título é "Estudo AAAA-MM-DD HHh: conceito".
-5. Áudio: o agente do Mac narra a leitura com a voz Luciana (pt-BR), salva em brain/<tema>/audio/ no formato .m4a e tenta anexar à nota; se anexar, o áudio toca no iPhone pela nota. Para trocar a voz: HEIMDALL_VOZ="Felipe" no .env. Para desligar: HEIMDALL_ESTUDO_AUDIO=0. Vozes instaladas: say -v '?' | grep pt_BR
+5. Áudio: o agente do Mac narra a leitura com a voz Luciana (pt-BR), salva em brain/<tema>/audio/ no formato .m4a e tenta anexar à nota; se anexar, o áudio toca no iPhone pela nota. Para trocar a voz: STUDIO_VOZ="Felipe" no .env. Para desligar: STUDIO_ESTUDO_AUDIO=0. Vozes instaladas: say -v '?' | grep pt_BR
 6. O Bark avisa com a pergunta (sem a resposta) e o endereço da leitura.
 O Second Brain analisa todas as suas notas: as que você escreve, os estudos, o digest, os diários oficiais, o monitor de privacidade e o resumo de saúde, para ligar uma notícia a um estudo, um hábito a um padrão de saúde, uma lei nova a um processo seu. Ficam de fora só os próprios espelhos dele (pasta Second Brain) e as pastas que você marcou como privadas. Tudo roda nos modelos locais do seu Mac. O espelho de cada nota é gravado em Heimdall-ai > Second Brain; a pasta antiga Cérebro guarda os espelhos de antes.
 
@@ -171,7 +171,7 @@ ATUALIZAÇÃO DO ESTUDO: UMA NOTA POR TEMA, TÍTULO SEM REPETIÇÃO E COMO OUVIR
 AJUSTES DE VOZ E DE TÍTULO
 1. Título repetido: o app Notas coloca o nome da nota como primeira linha quando recebe nome e corpo juntos, e o corpo já começava pelo título. Agora a nota é criada só com o corpo (o título vira a primeira linha). Vale para todas as notas do Heimdall. Notas já criadas continuam como estão.
 2. Voz: por padrão o agente usa a melhor voz em português instalada (Premium, depois Aprimorada, depois a padrão). Para ter voz melhor, baixe em Ajustes do Sistema > Acessibilidade > Conteúdo falado > Voz do sistema > Gerenciar vozes: Luciana ou Felipe, versão Aprimorada ou Premium.
-3. Velocidade: padrão 65 na escala de porcentagem da fala do macOS, que equivale a cerca de 350 palavras por minuto. Para mudar, no .env: HEIMDALL_VOZ_VELOCIDADE=60 (porcentagem) ou HEIMDALL_VOZ_PPM=300 (palavras por minuto exatas). Para fixar uma voz: HEIMDALL_VOZ="Felipe (Enhanced)" (os nomes aparecem em inglês no seu sistema; (Aprimorada) também é aceito).
+3. Velocidade: padrão 65 na escala de porcentagem da fala do macOS, que equivale a cerca de 350 palavras por minuto. Para mudar, no .env: STUDIO_VOZ_VELOCIDADE=60 (porcentagem) ou STUDIO_VOZ_PPM=300 (palavras por minuto exatas). Para fixar uma voz: STUDIO_VOZ="Felipe (Enhanced)" (os nomes aparecem em inglês no seu sistema; (Aprimorada) também é aceito).
 4. Para ouvir uma amostra e ver qual voz será usada, sem esperar o fluxo: python3 heimdall_agente.py --voz
    Depois de mudar o .env, reinicie o agente (pkill -f heimdall_agente.py e suba o sistema como de costume).
 
@@ -185,18 +185,18 @@ Importante: o "Resumo agrupado" precisa estar ativo, porque os outros fluxos fal
 
 MONITOR DE SAÚDE
 Recebe os dados do app Saúde pelo Health Auto Export e escreve, às 5h50, um resumo (Notas, pasta Saúde) que entra no aviso das 6h. As regras do código decidem o que é relevante (sono, pulso em repouso, variabilidade, respiração, oxigênio, passos e energia, sempre contra a sua média de 30 dias); o modelo só redige; e uma verificação descarta o texto se ele trocar o sentido de uma variação. Os critérios para procurar um médico são fixos e não vêm do modelo. O resumo não acompanha glicemia (sem sensor, o app Saúde não tem esse dado) e não é diagnóstico.
-Condições de saúde para o modelo respeitar nas sugestões (opcional, ficam só no seu .env): acrescente HEIMDALL_SAUDE_CONDICOES='texto curto' e rode de novo o scripts/instalar_automacoes_avancadas.sh.
+Condições de saúde para o modelo respeitar nas sugestões (opcional, ficam só no seu .env): acrescente STUDIO_SAUDE_CONDICOES='texto curto' e rode de novo o scripts/instalar_automacoes_avancadas.sh.
 Configuração no app Health Auto Export (Premium), no iPhone:
 1. Ligue o Tailscale no iPhone. No Mac, descubra o endereço do Tailscale com: tailscale ip -4
 2. No app, abra a aba de automações e crie uma automação do tipo REST API.
 3. Endereço: http://<IP-do-Tailscale-do-Mac>:5678/webhook/heimdall-saude  Método: POST  Formato: JSON.
-4. Cabeçalho: nome X-Heimdall-Saude, valor igual ao HEIMDALL_SAUDE_TOKEN do .env. Para ler o valor no Mac, sem mostrá-lo a ninguém: grep HEIMDALL_SAUDE_TOKEN .env
+4. Cabeçalho: nome X-Heimdall-Saude, valor igual ao STUDIO_SAUDE_TOKEN do .env. Para ler o valor no Mac, sem mostrá-lo a ninguém: grep STUDIO_SAUDE_TOKEN .env
 5. Métricas: pode marcar quantas quiser. O resumo analisa as que tiverem dado e ignora as que vierem vazias. As principais (sono, pulso em repouso, variabilidade, respiração, oxigênio, passos e energia ativa) têm critérios próprios; as demais são comparadas com a sua própria média de 30 dias e só aparecem se fugirem muito dela. Temperatura corporal de 37,8 ou mais sempre é destacada. Agregação por dia, sincronização diária (antes das 5h50) e período padrão.
 6. Rode a automação uma vez à mão e confira no n8n, em Execuções, o fluxo "monitor de saúde": o ramo "Receber do iPhone" deve aparecer como concluído.
 O app precisa da permissão de leitura do app Saúde e da atualização em segundo plano. Se o Mac estiver dormindo na hora do envio, o app tenta de novo na próxima rodada.
 
 NOTAS EM SUBPASTAS
-No app Notas, o Heimdall agora grava dentro de uma pasta Heimdall-ai: Digest, Saúde, Monitor de Privacidade, Cérebro e Estudos (com uma subpasta por tema, como arquitetura-e-engenharia-de-dados e esoterismo-e-mistissismo). Os fluxos do n8n não mudam; só o agente do Mac precisa ser reiniciado. As notas antigas ficam nas pastas soltas de antes; mova-as para as novas quando quiser, ou apague as pastas velhas. Para testar, na pasta do projeto: bash tests/notes/teste_subpastas.sh. Para mudar o nome da raiz, ponha HEIMDALL_NOTAS_RAIZ="Outro nome" no .env; com o valor vazio, tudo volta às pastas soltas.
+No app Notas, o Heimdall agora grava dentro de uma pasta Heimdall-ai: Digest, Saúde, Monitor de Privacidade, Cérebro e Estudos (com uma subpasta por tema, como arquitetura-e-engenharia-de-dados e esoterismo-e-mistissismo). Os fluxos do n8n não mudam; só o agente do Mac precisa ser reiniciado. As notas antigas ficam nas pastas soltas de antes; mova-as para as novas quando quiser, ou apague as pastas velhas. Para testar, na pasta do projeto: bash tests/notes/teste_subpastas.sh. Para mudar o nome da raiz, ponha STUDIO_NOTAS_RAIZ="Outro nome" no .env; com o valor vazio, tudo volta às pastas soltas.
 
 Banco de dados pessoal
 O Mac guarda um banco SQLite (db/heimdall.db, fora do Git) com oito tabelas: saude_diaria (qualquer métrica que chegue), saude_resumos, diarios (menções nos diários oficiais), analises (Second Brain, uma por nota), emails (e-mails de serviços públicos: só remetente, assunto e classificação, nunca o corpo), estudos (cada estudo dos livros), privacidade (achados do monitor) e avisos (cada aviso de rotina do resumo agrupado). Os fluxos de saúde, diários e Second Brain gravam nele sozinhos, sem mudar o que já faziam. Há uma cópia por dia em db/copias (as 7 últimas).

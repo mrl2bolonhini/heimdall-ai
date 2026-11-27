@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Continuidade do Heimdall na nuvem: cópia cifrada dos bancos para o R2 (no Mac) e restauração deles no contêiner (na nuvem).
 
-No Mac (HEIMDALL_CONTINUIDADE=1 no .env liga; =0 desliga e não envia nada):
+No Mac (STUDIO_CONTINUIDADE=1 no .env liga; =0 desliga e não envia nada):
     python3 heimdall_continuidade.py preparar    gera a senha das cópias de continuidade no .env (se ainda não existir)
     python3 heimdall_continuidade.py enviar      envia ao R2 só os bancos que mudaram, cifrados com AES-256-GCM
     python3 heimdall_continuidade.py status      mostra a data da última cópia no R2
@@ -35,7 +35,7 @@ MANIFESTO = PREFIXO + "manifesto.hdcn"
 
 def ligado(env=None) -> bool:
     e = os.environ if env is None else env
-    return str(e.get("HEIMDALL_CONTINUIDADE", "0")).strip() in ("1", "true", "sim")
+    return str(e.get("STUDIO_CONTINUIDADE", "0")).strip() in ("1", "true", "sim")
 
 
 def modo_continuidade(env=None) -> bool:
@@ -109,7 +109,7 @@ def enviar(raiz: Path = PROJECT_DIR, env=None, cliente=None, agora=None) -> dict
     """Envia ao R2 os bancos que mudaram desde a última cópia. Devolve {ok, enviados, iguais, quando} ou {ok, desligado}."""
     e = os.environ if env is None else env
     if not ligado(e):
-        return {"ok": True, "desligado": True, "aviso": "HEIMDALL_CONTINUIDADE está desligado; nada foi enviado."}
+        return {"ok": True, "desligado": True, "aviso": "STUDIO_CONTINUIDADE está desligado; nada foi enviado."}
     senha = e.get("HEIMDALL_CONTINUIDADE_SENHA", "")
     if not senha:
         raise RuntimeError("falta HEIMDALL_CONTINUIDADE_SENHA no .env (rode: python3 heimdall_continuidade.py preparar)")
@@ -211,7 +211,7 @@ def uma_rodada(raiz: Path = PROJECT_DIR, env=None, cliente=None):
 
 
 def vigiar(dormir=time.sleep, rodadas=None) -> None:
-    """Laço do agente do Mac: envia à nuvem só os bancos que mudaram, a cada HEIMDALL_CONTINUIDADE_INTERVALO_MIN minutos, enquanto HEIMDALL_CONTINUIDADE=1."""
+    """Laço do agente do Mac: envia à nuvem só os bancos que mudaram, a cada HEIMDALL_CONTINUIDADE_INTERVALO_MIN minutos, enquanto STUDIO_CONTINUIDADE=1."""
     feitas = 0
     while rodadas is None or feitas < rodadas:
         r = uma_rodada()

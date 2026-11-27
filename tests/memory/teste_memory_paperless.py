@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 TMP = _Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
 
 BD = {"tags": {}, "document_types": {}, "correspondents": {}, "docs": {}, "mail_accounts": {}, "mail_rules": {}, "prox": 1, "pedidos": [],
       "users": {"heimdall": {"id": 1, "username": "heimdall", "password": "segredo", "is_superuser": True}}}
@@ -162,11 +162,11 @@ class H(BaseHTTPRequestHandler):
 
 srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
 threading.Thread(target=srv.serve_forever, daemon=True).start()
-os.environ["HEIMDALL_PAPERLESS_URL"] = f"http://127.0.0.1:{srv.server_address[1]}"
-os.environ["HEIMDALL_PAPERLESS_USER"] = "heimdall"
-os.environ["HEIMDALL_PAPERLESS_SENHA"] = "segredo"
-os.environ["HEIMDALL_PAPERLESS_SECRET"] = "chave-de-teste"
-os.environ["HEIMDALL_MEMORY_MOTOR"] = "paperless"
+os.environ["STUDIO_PAPERLESS_URL"] = f"http://127.0.0.1:{srv.server_address[1]}"
+os.environ["STUDIO_PAPERLESS_USER"] = "heimdall"
+os.environ["STUDIO_PAPERLESS_SENHA"] = "segredo"
+os.environ["STUDIO_PAPERLESS_SECRET"] = "chave-de-teste"
+os.environ["STUDIO_HUB_MOTOR"] = "paperless"
 
 import heimdall_banco as banco  # noqa: E402
 import heimdall_memory_dados as L  # noqa: E402
@@ -194,15 +194,15 @@ def erro(fn, *a, **k):
 # --- escolha do motor
 confere("dono usa o Paperless", L.motor() == "paperless")
 confere("convidado também usa o Paperless, com usuário próprio", L.motor() == "paperless")
-os.environ["HEIMDALL_MEMORY_MOTOR"] = "interno"
+os.environ["STUDIO_HUB_MOTOR"] = "interno"
 confere("interruptor devolve o motor interno", L.motor() == "interno")
-os.environ["HEIMDALL_MEMORY_MOTOR"] = "paperless"
+os.environ["STUDIO_HUB_MOTOR"] = "paperless"
 
 # --- senha errada
-os.environ["HEIMDALL_PAPERLESS_SENHA"] = "errada"
+os.environ["STUDIO_PAPERLESS_SENHA"] = "errada"
 P._estado["tokens"].clear()
 confere("senha recusada vira mensagem clara", "recusou" in erro(L.estado))
-os.environ["HEIMDALL_PAPERLESS_SENHA"] = "segredo"
+os.environ["STUDIO_PAPERLESS_SENHA"] = "segredo"
 
 # --- envio
 r = L.adicionar("contrato_alfa.pdf", b"%PDF-1.4 conteudo", usar_ia=False)
@@ -263,9 +263,9 @@ confere("dono tem usuário comum, sem exclusão, e o administrador não é dono 
         and "delete_document" not in BD["users"]["heimdall-dono"]["user_permissions"] and BD["docs"][did]["owner"] == BD["users"]["heimdall-dono"]["id"] != 1)
 
 # --- e-mail: a senha vem só do .env
-os.environ.pop("HEIMDALL_MEMORY_EMAIL_SENHA", None)
+os.environ.pop("STUDIO_HUB_EMAIL_SENHA", None)
 confere("sem senha, e-mail é recusado", "senha de aplicativo" in erro(P.email_configurar, "imap.exemplo.com", "pessoa@exemplo.com", "Heimdall"))
-os.environ["HEIMDALL_MEMORY_EMAIL_SENHA"] = "senha-app"
+os.environ["STUDIO_HUB_EMAIL_SENHA"] = "senha-app"
 confere("servidor inválido é recusado", "Confira" in erro(P.email_configurar, "x y", "pessoa@exemplo.com", "Heimdall"))
 msg = P.email_configurar("IMAP.exemplo.com", "pessoa@exemplo.com", "Heimdall", "")
 conta = next(iter(BD["mail_accounts"].values()))
@@ -290,7 +290,7 @@ confere("convidado não altera documento do dono", "não encontrado" in erro(L.a
 confere("convidado não confirma nem exclui documento do dono", "não encontrado" in erro(L.confirmar, did) and "não encontrado" in erro(L.lixeira, did))
 confere("documento do dono continua intacto", BD["docs"][did]["title"] == "Contrato Alfa" and not any(t["name"] == "Lixeira" and t["id"] in BD["docs"][did]["tags"] for t in BD["tags"].values()))
 confere("etiquetas do convidado são só dele", all(x["nome"] != "trabalho" for x in L.etiquetas_com_contagem()))
-os.environ["HEIMDALL_MEMORY_EMAIL_SENHA"] = "senha-do-dono"
+os.environ["STUDIO_HUB_EMAIL_SENHA"] = "senha-do-dono"
 confere("convidado não herda a senha de e-mail do dono", "senha de aplicativo" in erro(P.email_configurar, "imap.exemplo.com", "ana@exemplo.com", "Heimdall") and not P.senha_do_env())
 P.email_configurar("imap.exemplo.com", "ana@exemplo.com", "Ana", "", "senha-da-ana")
 ana = BD["users"]["heimdall-ana"]["id"]

@@ -12,16 +12,16 @@ O que tem:
   - Anterior e próxima nota dentro do tema; busca por texto; documentos de knowledge/ (PDF abre na página).
 
 Pastas: por padrão aparece o cofre inteiro (temas de estudo, Second Brain, Monitor de Privacidade, Saúde etc.), menos o
-Digest. Para tirar mais pastas: HEIMDALL_NOTAS_EXCLUIR="heimdall-digest,saude". Para mostrar só algumas pastas além
-dos temas de estudo: HEIMDALL_NOTAS_PASTAS="heimdall-cerebro,outra-pasta".
+Digest. Para tirar mais pastas: STUDIO_NOTAS_EXCLUIR="heimdall-digest,saude". Para mostrar só algumas pastas além
+dos temas de estudo: STUDIO_NOTAS_PASTAS="heimdall-cerebro,outra-pasta".
 
 Segurança (pode ficar público em notes.heimdall-ai.tech): escuta só em 127.0.0.1; senha forte + código de 6 dígitos
 (HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO, os mesmos do painel Lab); limite de tentativas; sessão em cookie
 HttpOnly e SameSite=Strict; só nomes de site permitidos; somente leitura (nada aqui grava ou apaga arquivos); caminhos
 conferidos contra fuga de pasta; HTML sempre escapado; documentos que não são PDF ou áudio só baixam, nunca executam.
 
-Variáveis opcionais: HEIMDALL_NOTAS_PORT (8011), HEIMDALL_NOTAS_HOST (127.0.0.1), HEIMDALL_NOTAS_HOSTS
-(notes.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_NOTAS_PASTAS, HEIMDALL_NOTAS_EXCLUIR, HEIMDALL_VAULT_DIR, HEIMDALL_KNOWLEDGE_DIR.
+Variáveis opcionais: STUDIO_NOTAS_PORT (8011), STUDIO_NOTAS_HOST (127.0.0.1), STUDIO_NOTAS_HOSTS
+(notes.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_NOTAS_PASTAS, STUDIO_NOTAS_EXCLUIR, STUDIO_VAULT_DIR, STUDIO_KNOWLEDGE_DIR.
 
     python3 heimdall_notas.py     (o start_heimdall.sh sobe sozinho se houver senha e código no .env)
 
@@ -31,7 +31,6 @@ import html
 import heimdall_pastas
 import mimetypes
 import os
-import heimdall_envcompat as _envcompat
 import re
 import secrets
 import sys
@@ -60,10 +59,9 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        chave = _envcompat.interno(chave)
-        if chave.startswith("HEIMDALL_BIBLIOTECA_"):  # nome antigo das variáveis: continua valendo
-            chave = "HEIMDALL_NOTAS_" + chave[len("HEIMDALL_BIBLIOTECA_"):]
-        elif not (chave.startswith("HEIMDALL_NOTAS_") or chave in ("HEIMDALL_VAULT_DIR", "HEIMDALL_KNOWLEDGE_DIR", "HEIMDALL_LEARN")):
+        if chave.startswith("STUDIO_BIBLIOTECA_"):  # nome antigo das variáveis: continua valendo
+            chave = "STUDIO_NOTAS_" + chave[len("STUDIO_BIBLIOTECA_"):]
+        elif not (chave.startswith("STUDIO_NOTAS_") or chave in ("STUDIO_VAULT_DIR", "STUDIO_KNOWLEDGE_DIR", "STUDIO_LEARN")):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -71,8 +69,8 @@ def carregar_env() -> None:
 
 
 carregar_env()
-for _k in [k for k in os.environ if k.startswith("HEIMDALL_BIBLIOTECA_")]:  # idem para variáveis já no ambiente
-    os.environ.setdefault("HEIMDALL_NOTAS_" + _k[len("HEIMDALL_BIBLIOTECA_"):], os.environ[_k])
+for _k in [k for k in os.environ if k.startswith("STUDIO_BIBLIOTECA_")]:  # idem para variáveis já no ambiente
+    os.environ.setdefault("STUDIO_NOTAS_" + _k[len("STUDIO_BIBLIOTECA_"):], os.environ[_k])
 
 import heimdall_lab as nuvem  # noqa: E402  (login, senha, código de 6 dígitos e sessões: o mesmo do painel Lab)
 import heimdall_design as design  # noqa: E402  (padrão de interface: link lê, botão age)
@@ -81,11 +79,11 @@ import heimdall_catalogo as catalogo  # noqa: E402  (catalogação da nota pela 
 import heimdall_perguntar as perguntar  # noqa: E402  (campo Perguntar, só com o modelo local)
 import heimdall_pessoas as pessoas  # noqa: E402
 
-HOST = os.environ.get("HEIMDALL_NOTAS_HOST", "127.0.0.1")
-PORT = int(os.environ.get("HEIMDALL_NOTAS_PORT", "8011"))
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_NOTAS_HOSTS", "notes.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
-VAULT = Path(os.environ.get("HEIMDALL_VAULT_DIR", str(heimdall_pastas.brain(PROJECT_DIR)))).expanduser()
-KNOWLEDGE = Path(os.environ.get("HEIMDALL_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
+HOST = os.environ.get("STUDIO_NOTAS_HOST", "127.0.0.1")
+PORT = int(os.environ.get("STUDIO_NOTAS_PORT", "8011"))
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_NOTAS_HOSTS", "notes.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+VAULT = Path(os.environ.get("STUDIO_VAULT_DIR", str(heimdall_pastas.brain(PROJECT_DIR)))).expanduser()
+KNOWLEDGE = Path(os.environ.get("STUDIO_KNOWLEDGE_DIR", str(PROJECT_DIR / "knowledge"))).expanduser()
 COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 NOMES = {"heimdall-privacidade": "Monitor de Privacidade", "heimdall-cerebro": "Second Brain", "saude": "Saúde", "heimdall-digest": "Digest"}
 EXT_NOTA = {".md", ".markdown", ".txt"}
@@ -124,16 +122,16 @@ def _subdirs(raiz: Path) -> list:
 
 def learn_ativo() -> bool:
     """Com o Learn ligado, os estudos (os temas dos livros e os documentos de knowledge/) ficam só nele; o Notes mostra o resto do cofre
-    (triagem, diários, privacidade, Second Brain, saúde). HEIMDALL_LEARN=0 devolve os estudos ao Notes."""
-    return os.environ.get("HEIMDALL_LEARN", "0") == "1"
+    (triagem, diários, privacidade, Second Brain, saúde). STUDIO_LEARN=0 devolve os estudos ao Notes."""
+    return os.environ.get("STUDIO_LEARN", "0") == "1"
 
 
 def pastas() -> dict:
     """Pastas liberadas: chave (slug) -> {'nome', 'cofre' (notas e áudios), 'docs' (documentos de knowledge)}."""
-    cfg = os.environ.get("HEIMDALL_NOTAS_PASTAS", "*").strip() or "*"
+    cfg = os.environ.get("STUDIO_NOTAS_PASTAS", "*").strip() or "*"
     tudo = cfg == "*"
     liberadas = {slug(x) for x in cfg.split(",") if x.strip()}
-    fora = {slug(x) for x in os.environ.get("HEIMDALL_NOTAS_EXCLUIR", "heimdall-digest").split(",") if x.strip()}
+    fora = {slug(x) for x in os.environ.get("STUDIO_NOTAS_EXCLUIR", "heimdall-digest").split(",") if x.strip()}
     res = {}
     estudo_no_learn = learn_ativo()
     temas_de_estudo = {slug(d.name) for d in _subdirs(KNOWLEDGE)}

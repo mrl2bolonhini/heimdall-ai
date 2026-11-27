@@ -1,5 +1,5 @@
 """Confere a consulta ao Diário da Justiça (DJEN) e ao Querido Diário. Mostra só estrutura, nunca o conteúdo das publicações.
-Uso: python3 tests/monitor/teste_diario_justica.py [dias]   (lê HEIMDALL_OAB=NUMERO/UF do .env; dias padrão: 30)"""
+Uso: python3 tests/monitor/teste_diario_justica.py [dias]   (lê STUDIO_OAB=NUMERO/UF do .env; dias padrão: 30)"""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
@@ -12,7 +12,7 @@ def oab_do_env():
     arq = RAIZ / ".env"
     if arq.exists():
         for linha in arq.read_text(encoding="utf-8").splitlines():
-            m = re.match(r"^\s*(?:export\s+)?HEIMDALL_OAB=['\"]?(\d{1,7})\s*[/-]?\s*([A-Za-z]{2})", linha)
+            m = re.match(r"^\s*(?:export\s+)?STUDIO_OAB=['\"]?(\d{1,7})\s*[/-]?\s*([A-Za-z]{2})", linha)
             if m:
                 return m.group(1), m.group(2).upper()
     return None
@@ -35,7 +35,7 @@ ok = ok and st == 200
 
 oab = oab_do_env()
 if not oab:
-    print("Diário da Justiça: HEIMDALL_OAB não está no .env. Acrescente a linha HEIMDALL_OAB=NUMERO/UF e rode de novo.")
+    print("Diário da Justiça: STUDIO_OAB não está no .env. Acrescente a linha STUDIO_OAB=NUMERO/UF e rode de novo.")
     sys.exit(1)
 f = lambda d: d.strftime("%d/%m/%Y")
 q = urllib.parse.urlencode({"numeroOab": oab[0], "ufOab": oab[1], "meio": "D", "itensPorPagina": 5,
@@ -56,12 +56,12 @@ else:
     ok = False
     print("  429 = espere 1 minuto; 403 = a API só atende o Brasil; 500 = data inválida ou instabilidade.")
 
-# Comparação: a mesma janela pelo nome do advogado (HEIMDALL_MONITOR_NOME no .env), para saber se o problema é o formato da OAB.
+# Comparação: a mesma janela pelo nome do advogado (STUDIO_MONITOR_NOME no .env), para saber se o problema é o formato da OAB.
 def nome_do_env():
     arq = RAIZ / ".env"
     if arq.exists():
         for linha in arq.read_text(encoding="utf-8").splitlines():
-            m = re.match(r"^\s*(?:export\s+)?HEIMDALL_MONITOR_NOME=(.+)$", linha)
+            m = re.match(r"^\s*(?:export\s+)?STUDIO_MONITOR_NOME=(.+)$", linha)
             if m:
                 return m.group(1).strip().strip("'\"")
     return ""

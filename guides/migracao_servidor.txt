@@ -47,12 +47,12 @@ Fase 0: pré-requisitos (sem código)
 
 Fase 1: servidor em paralelo, só leitura
 - Contratar a VPS, endurecer o acesso (chave SSH, sem senha, firewall fechado, atualizações automáticas), instalar Docker e subir os mesmos contêineres e o mesmo código do repositório, com cópia dos bancos a partir do Mac. O Mac segue como fonte; o servidor serve só para testar.
-- Interruptor: HEIMDALL_SERVIDOR=0 (padrão). Volta: desligar o contêiner; o Mac não foi alterado.
+- Interruptor: STUDIO_SERVIDOR=0 (padrão). Volta: desligar o contêiner; o Mac não foi alterado.
 - Critério de saída: todos os sites abrem no servidor com os dados copiados e os testes do repositório passam nele.
 
 Fase 2: embeddings na nuvem
 - Trocar o ingest_docs.py e as buscas do Qdrant para o bge-m3 pelo Workers AI (via gateway se o /compat aceitar embeddings; senão direto), recriar o índice com `ingest_docs.py --reset` (a dimensão muda) e manter o índice antigo (nomic-embed-text no Ollama) como cópia de volta.
-- Interruptor: HEIMDALL_EMBEDDING=nuvem (padrão local). Volta: HEIMDALL_EMBEDDING=local reaponta ao índice antigo, que não é apagado até o usuário confirmar.
+- Interruptor: STUDIO_EMBEDDING=nuvem (padrão local). Volta: STUDIO_EMBEDDING=local reaponta ao índice antigo, que não é apagado até o usuário confirmar.
 - Medir a qualidade em português (conjunto fixo de perguntas) antes de trocar de vez.
 
 Fase 3: fonte dos dados passa para o servidor
@@ -60,19 +60,19 @@ Fase 3: fonte dos dados passa para o servidor
 - Os 14 dos 18 fluxos do n8n que chamam o agente do Mac passam a usar o endereço do agente pelo canal privado.
 - As rotas do agente que só mexem em banco, backup e avisos (/banco/*, /backup/*, /avisos/gravar e parecidas) migram para o servidor; ficam no Mac as que dependem da Apple (/notas/*, /calendario/*, /lembretes/*, saúde HealthKit via Health Auto Export, say, afplay, shortcuts).
 - A análise de segurança (fluxo 19) precisa de decisão: rodar no servidor ou continuar no Mac.
-- Interruptor: HEIMDALL_FONTE=mac|servidor (padrão mac). Volta: voltar a fonte para o Mac com o último estado sincronizado; nada é apagado no Mac.
+- Interruptor: STUDIO_FONTE=mac|servidor (padrão mac). Volta: voltar a fonte para o Mac com o último estado sincronizado; nada é apagado no Mac.
 
 Fase 4: Mac como ponte Apple
 - O agente no Mac é alcançado pelo servidor por um canal privado (túnel da Cloudflare ou Tailscale; decidir na fase). Com o Mac fora do ar, o pedido fica em fila no servidor e roda quando ele volta, com aviso na interface.
-- Interruptor: HEIMDALL_PONTE_APPLE=1. Volta: o servidor passa a gravar direto no banco sem escrever na Apple, com aviso.
+- Interruptor: STUDIO_PONTE_APPLE=1. Volta: o servidor passa a gravar direto no banco sem escrever na Apple, com aviso.
 
 Fase 5: continuidade
 - Os Workers e o contêiner de continuidade já existentes (heimdall_continuidade.py) passam a apontar para o servidor como fonte, e o Mac deixa de ser fonte da cópia. A queda que passa a importar é a do servidor; a nuvem da Cloudflare cobre essa queda em modo reduzido.
-- Interruptor: o atual, HEIMDALL_CONTINUIDADE. Volta: reapontar a fonte para o Mac.
+- Interruptor: o atual, STUDIO_CONTINUIDADE. Volta: reapontar a fonte para o Mac.
 
 Fase 6: chat próprio
 - Projeto = instrução, modelo, artefatos e histórico separados por projeto (definido em 24/11/2026). Isso exige banco próprio (SQLite) e pasta de arquivos por projeto, com cópia no R2, e dá mais trabalho que um chat só com instrução e modelo. Substitui o Open WebUI por um chat leve sobre o LiteLLM (criar projeto com instrução fixa e trocar de modelo). Economiza cerca de 650 MB de memória do Open WebUI.
-- Interruptor: HEIMDALL_CHAT=webui|proprio (padrão webui). Volta: religar o Open WebUI, cujo volume de dados não é apagado.
+- Interruptor: STUDIO_CHAT=webui|proprio (padrão webui). Volta: religar o Open WebUI, cujo volume de dados não é apagado.
 
 Fase 7: app do iPhone
 - Depois da conta de desenvolvedor da Apple (US$ 99 por ano), o app assume Calendário, Lembretes e Saúde (HealthKit) falando com o servidor, e o Mac deixa de ser necessário para essas funções. Notas não tem API para apps no iOS: continua pelo Mac, pelo Atalhos ou por compartilhar a nota.

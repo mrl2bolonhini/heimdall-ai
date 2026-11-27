@@ -7,10 +7,10 @@ A IA combina categoria, tipo e material para decidir como estudar (fases seguint
 
 Segurança: escuta só em 127.0.0.1; mesmo login do painel Lab (senha, código de 6 dígitos ou Cloudflare Access); CSRF em todo POST;
 sessão em cookie HttpOnly; só nomes de site permitidos; caminhos conferidos contra fuga de pasta; arquivos só com extensão
-conhecida, nome simples e limite de tamanho (HEIMDALL_LEARN_MAX_MB, 50); HTML sempre escapado.
+conhecida, nome simples e limite de tamanho (STUDIO_LEARN_MAX_MB, 50); HTML sempre escapado.
 
-Variáveis: HEIMDALL_LEARN (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), HEIMDALL_LEARN_PORT (8019), HEIMDALL_LEARN_HOST (127.0.0.1),
-HEIMDALL_LEARN_HOSTS (learn.heimdall-ai.tech,localhost,127.0.0.1).
+Variáveis: STUDIO_LEARN (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_LEARN_PORT (8019), STUDIO_LEARN_HOST (127.0.0.1),
+STUDIO_LEARN_HOSTS (learn.heimdall-ai.tech,localhost,127.0.0.1).
 
     python3 heimdall_learn.py
 
@@ -18,7 +18,6 @@ Usa só a biblioteca padrão do Python.
 """
 import html
 import os
-import heimdall_envcompat as _envcompat
 import re
 import secrets
 import sys
@@ -46,8 +45,7 @@ def carregar_env() -> None:
             continue
         chave, valor = linha.split("=", 1)
         chave, valor = chave.strip(), valor.strip()
-        chave = _envcompat.interno(chave)
-        if not (chave.startswith("HEIMDALL_LEARN_") or chave in ("HEIMDALL_KNOWLEDGE_DIR", "HEIMDALL_DB_DIR")):
+        if not (chave.startswith("STUDIO_LEARN_") or chave in ("STUDIO_KNOWLEDGE_DIR", "STUDIO_DB_DIR")):
             continue
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
             valor = valor[1:-1]
@@ -69,9 +67,9 @@ import heimdall_learn_tipos as tipos  # noqa: E402
 import heimdall_perguntar as perguntar  # noqa: E402
 import heimdall_pessoas as pessoas  # noqa: E402  (tarefas em segundo plano do modelo)
 
-HOST = os.environ.get("HEIMDALL_LEARN_HOST", "127.0.0.1")
-PORT = int(os.environ.get("HEIMDALL_LEARN_PORT", "8019"))
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("HEIMDALL_LEARN_HOSTS", "learn.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOST = os.environ.get("STUDIO_LEARN_HOST", "127.0.0.1")
+PORT = int(os.environ.get("STUDIO_LEARN_PORT", "8019"))
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_LEARN_HOSTS", "learn.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
 COOKIE = nuvem.COOKIE
 MAX_FORM = 20000
 ESTADOS_LICAO = {"gerando": "sendo criada", "pronta": "aguardando respostas", "corrigindo": "corrigindo", "concluida": "concluída", "erro": "erro ao criar", "erro_correcao": "erro na correção"}
@@ -458,14 +456,14 @@ def pg_progresso(sess: dict, tema: str) -> str:
 
 def pg_ajustes(sess: dict, tema: str = "") -> str:
     csrf = sess["csrf"]
-    env_agenda = os.environ.get("HEIMDALL_LEARN_AGENDA", "1") == "0"
-    env_avisos = os.environ.get("HEIMDALL_LEARN_NOTIFICAR", "1") == "0"
+    env_agenda = os.environ.get("STUDIO_LEARN_AGENDA", "1") == "0"
+    env_avisos = os.environ.get("STUDIO_LEARN_NOTIFICAR", "1") == "0"
     ag_ajuste = dados.ajuste("agenda", "1") == "1"
     av_ajuste = dados.ajuste("avisos", "1") == "1"
     geral = ('<h2>Geral</h2><p role="status">Agenda de cards e lições: ' + ("ligada" if ag_ajuste and not env_agenda else "pausada")
              + ". Avisos no Mac e no iPhone: " + ("ligados" if av_ajuste and not env_avisos else "desligados") + ".</p>"
-             + ('<p class="meta">A agenda está desligada no .env do Mac (HEIMDALL_LEARN_AGENDA=0); ela só volta depois que você tirar essa linha e reiniciar.</p>' if env_agenda else "")
-             + ('<p class="meta">Os avisos estão desligados no .env do Mac (HEIMDALL_LEARN_NOTIFICAR=0).</p>' if env_avisos else "")
+             + ('<p class="meta">A agenda está desligada no .env do Mac (STUDIO_LEARN_AGENDA=0); ela só volta depois que você tirar essa linha e reiniciar.</p>' if env_agenda else "")
+             + ('<p class="meta">Os avisos estão desligados no .env do Mac (STUDIO_LEARN_NOTIFICAR=0).</p>' if env_avisos else "")
              + design.botao_post("/ajustes/definir", "Pausar a agenda" if ag_ajuste else "Ligar a agenda", csrf, {"chave": "agenda", "valor": "0" if ag_ajuste else "1", "t": tema})
              + design.botao_post("/ajustes/definir", "Desligar os avisos" if av_ajuste else "Ligar os avisos", csrf, {"chave": "avisos", "valor": "0" if av_ajuste else "1", "t": tema})
              + design.botao("/tipos", "Tipos de estudo e suas regras")

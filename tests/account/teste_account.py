@@ -99,7 +99,7 @@ import heimdall_integracoes as integ  # noqa: E402
 
 integ.ARQUIVO = Path(tempfile.mkdtemp()) / "banco" / "integracoes.json"
 chamadas = []
-amb = {"HEIMDALL_CAIXA": "1", "HEIMDALL_CAIXA_TOKEN": "hc_dono", "HEIMDALL_CAIXA_MEU_NOME": "murillo"}
+amb = {"STUDIO_CAIXA": "1", "STUDIO_CAIXA_TOKEN": "hc_dono", "STUDIO_CAIXA_MEU_NOME": "murillo"}
 integ.caixa._env = lambda: dict(amb)
 integ.caixa.revogar_pessoa = lambda nome, env=None, abrir=None: chamadas.append(("revogar", nome)) or 1
 integ.caixa.criar_pessoa = lambda nome, env=None, abrir=None: chamadas.append(("criar", nome)) or "hc_tokendeteste1234567890"
@@ -131,7 +131,7 @@ s, hd, b = pedir("/integracoes", jwt="tokdono")
 confere("depois de ativar, a página mostra 'Ativa desde' e o token não aparece de novo", "Ativa desde" in b and "hc_tokendeteste" not in b and "Desativar a Saúde" in b)
 s, hd, b = pedir("/integracoes/saude/desativar", jwt="tokdono", metodo="POST", origem="https://account.heimdall-ai.tech", corpo="csrf=" + tok_csrf)
 confere("desativar revoga o token e limpa o estado", s == 200 and "Saúde desativada" in b and chamadas[-1] == ("revogar", "murillo") and "saude" not in integ._ler().get("murillo", {}))
-amb["HEIMDALL_CAIXA"] = "0"
+amb["STUDIO_CAIXA"] = "0"
 s, hd, b = pedir("/integracoes/saude/ativar", jwt="tokdono", metodo="POST", origem="https://account.heimdall-ai.tech", corpo="csrf=" + tok_csrf)
 confere("com a caixa desligada, ativar é recusado com mensagem clara", s == 400 and "desligada" in b)
 confere("nome da pessoa na caixa: dono usa o nome combinado; convidado, o e-mail reduzido", integ.usuario_de({"papel": "dono"}, amb) == "murillo" and integ.usuario_de({"papel": "convidado", "email": "Ana.Souza@x.com"}, amb) == "ana-souza-x-com")

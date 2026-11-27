@@ -27,7 +27,7 @@ def confere(nome, ok, extra=""):
         falhas += 1
 
 
-LIGADO = {"HEIMDALL_NUVEM": "1", "CLOUDFLARE_API_TOKEN": "segredo-de-teste", "CLOUDFLARE_ACCOUNT_ID": "a" * 32}
+LIGADO = {"STUDIO_NUVEM": "1", "CLOUDFLARE_API_TOKEN": "segredo-de-teste", "CLOUDFLARE_ACCOUNT_ID": "a" * 32}
 
 
 class Resp:
@@ -38,12 +38,12 @@ class Resp:
 
 
 # --- interruptor -----------------------------------------------------------------------------------------
-confere("ligada só com HEIMDALL_NUVEM=1 e a chave", nv.ativo(LIGADO))
-confere("desligada com HEIMDALL_NUVEM=0", not nv.ativo({**LIGADO, "HEIMDALL_NUVEM": "0"}))
-confere("desligada sem o interruptor", not nv.ativo({k: v for k, v in LIGADO.items() if k != "HEIMDALL_NUVEM"}))
-confere("desligada sem a chave", not nv.ativo({"HEIMDALL_NUVEM": "1"}))
+confere("ligada só com STUDIO_NUVEM=1 e a chave", nv.ativo(LIGADO))
+confere("desligada com STUDIO_NUVEM=0", not nv.ativo({**LIGADO, "STUDIO_NUVEM": "0"}))
+confere("desligada sem o interruptor", not nv.ativo({k: v for k, v in LIGADO.items() if k != "STUDIO_NUVEM"}))
+confere("desligada sem a chave", not nv.ativo({"STUDIO_NUVEM": "1"}))
 try:
-    nv.chat("s", "u", env={"HEIMDALL_NUVEM": "0"})
+    nv.chat("s", "u", env={"STUDIO_NUVEM": "0"})
     confere("chat desligado levanta erro", False)
 except RuntimeError:
     confere("chat desligado levanta erro", True)
@@ -64,9 +64,9 @@ confere("envia as duas autorizações", visto["h"].get("authorization") == "Bear
 confere("tem User-Agent próprio (evita o erro 1010)", visto["h"].get("user-agent") == "heimdall-ai/1.0")
 confere("modelo padrão é o gpt-oss-120b", visto["corpo"]["model"] == "workers-ai/@cf/openai/gpt-oss-120b", visto["corpo"]["model"])
 confere("dá folga de tokens para o raciocínio", visto["corpo"]["max_tokens"] == 1500, visto["corpo"]["max_tokens"])
-confere("modelo trocável pelo .env", True if nv.chat("s", "u", env={**LIGADO, "HEIMDALL_NUVEM_MODELO": "workers-ai/@cf/meta/llama-3.3-70b-instruct-fp8-fast"}, abrir=abrir_ok) and visto["corpo"]["model"].endswith("llama-3.3-70b-instruct-fp8-fast") else False)
+confere("modelo trocável pelo .env", True if nv.chat("s", "u", env={**LIGADO, "STUDIO_NUVEM_MODELO": "workers-ai/@cf/meta/llama-3.3-70b-instruct-fp8-fast"}, abrir=abrir_ok) and visto["corpo"]["model"].endswith("llama-3.3-70b-instruct-fp8-fast") else False)
 
-confere("modelo do Perguntar: Qwen3 30B por padrão, trocável pelo .env", nv.modelo_perguntar(LIGADO) == "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8" and nv.modelo_perguntar({**LIGADO, "HEIMDALL_NUVEM_PERGUNTAR_MODELO": "x/y"}) == "x/y")
+confere("modelo do Perguntar: Qwen3 30B por padrão, trocável pelo .env", nv.modelo_perguntar(LIGADO) == "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8" and nv.modelo_perguntar({**LIGADO, "STUDIO_NUVEM_PERGUNTAR_MODELO": "x/y"}) == "x/y")
 nv.chat("s", "u", max_tokens=500, env=LIGADO, abrir=abrir_ok, modelo=nv.modelo_perguntar(LIGADO), folga=300)
 confere("modelo e folga escolhidos por quem chama (sem raciocínio, folga menor)", visto["corpo"]["model"].endswith("qwen3-30b-a3b-fp8") and visto["corpo"]["max_tokens"] == 800, visto["corpo"])
 import heimdall_perguntar as _pg
@@ -77,9 +77,9 @@ _pg.nuvem.chat = lambda sistema, usuario, **kw: (_vistos.append((sistema, kw)) o
 _t = _pg.responder("ctx", "pergunta?", "SIS")
 confere("responder usa o modelo leve com /no_think e tira o raciocínio do texto", _t["texto"] == "Resposta limpa." and _vistos[0][0].endswith("/no_think") and _vistos[0][1]["modelo"].endswith("qwen3-30b-a3b-fp8") and _vistos[0][1]["folga"] == 300, _vistos)
 _pg.nuvem.ativo, _pg.nuvem.chat = _orig
-confere("forcar liga a nuvem só nesta chamada, mesmo com o interruptor em 0", nv.chat("s", "u", env={**LIGADO, "HEIMDALL_NUVEM": "0"}, abrir=abrir_ok, forcar=True) == "resposta")
+confere("forcar liga a nuvem só nesta chamada, mesmo com o interruptor em 0", nv.chat("s", "u", env={**LIGADO, "STUDIO_NUVEM": "0"}, abrir=abrir_ok, forcar=True) == "resposta")
 try:
-    nv.chat("s", "u", env={"HEIMDALL_NUVEM": "0"}, abrir=abrir_ok, forcar=True)
+    nv.chat("s", "u", env={"STUDIO_NUVEM": "0"}, abrir=abrir_ok, forcar=True)
     confere("forcar sem chave continua recusando", False)
 except RuntimeError as ex:
     confere("forcar sem chave continua recusando", "chave" in str(ex), str(ex))

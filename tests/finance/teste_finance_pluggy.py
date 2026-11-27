@@ -373,9 +373,9 @@ r5 = fp.executar(con, cfg, d / "e4.json", None, hoje, fp.Cliente(cfg, api_sem_it
 confere("item indisponível não derruba a sincronização", len(r5["contas"]) == 2 and r5["avisos"] == [])
 # .env
 env = d / ".env"
-env.write_text("OUTRA=1\nHEIMDALL_PLUGGY_CLIENT_ID=velho\n", encoding="utf-8")
+env.write_text("OUTRA=1\nSTUDIO_PLUGGY_CLIENT_ID=velho\n", encoding="utf-8")
 msg = fp.guardar_chave("id", U, env)
-confere("guardar chave troca a linha antiga e não imprime o valor", f"HEIMDALL_PLUGGY_CLIENT_ID={U}" in env.read_text() and "velho" not in env.read_text() and U not in msg and "OUTRA=1" in env.read_text(), msg)
+confere("guardar chave troca a linha antiga e não imprime o valor", f"STUDIO_PLUGGY_CLIENT_ID={U}" in env.read_text() and "velho" not in env.read_text() and U not in msg and "OUTRA=1" in env.read_text(), msg)
 fp.guardar_chave("segredo", "segredo-correto-123456", env)
 fp.guardar_chave("itens", f"{U}, 99999999-2222-3333-4444-555555555555", env)
 fp.guardar_chave("itens", "88888888-2222-3333-4444-555555555555", env)

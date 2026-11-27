@@ -18,7 +18,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="painel_saude_"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
 import heimdall_banco as banco  # noqa: E402
 import heimdall_lab as hc  # noqa: E402

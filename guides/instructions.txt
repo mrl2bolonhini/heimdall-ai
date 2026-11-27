@@ -20,10 +20,10 @@ Emulador da AWS (LocalStack)
 http://localhost:4566
 
 Para desativar Dozzle e Uptime no .env
-HEIMDALL_MONITORING=0
+STUDIO_MONITORING=0
 
 Para desativar emulador da AWS (LocalStack) no .env
-HEIMDALL_AWS_EMULATOR=off
+STUDIO_AWS_EMULATOR=off
 Ou moto ou localstack
 
 Logs do dozzle

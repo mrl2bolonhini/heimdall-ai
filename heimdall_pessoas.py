@@ -7,7 +7,7 @@ os caminhos de sempre (sem migração). O <id> sai do e-mail (hash), então o e-
 
 Este módulo é o ponto único de escolha: os serviços não montam caminho de dados por conta própria; pedem a `raiz()`.
 A pessoa da requisição fica numa variável de contexto (`definir`); tarefas em segundo plano a levam junto com `vincular`.
-Desligar: HEIMDALL_PESSOAS=0 (todo mundo usa os dados do dono, como antes). Usa só a biblioteca padrão do Python.
+Desligar: STUDIO_PESSOAS=0 (todo mundo usa os dados do dono, como antes). Usa só a biblioteca padrão do Python.
 """
 import contextvars
 import hashlib
@@ -27,7 +27,7 @@ class ErroPessoa(Exception):
 
 
 def ativo() -> bool:
-    return os.environ.get("HEIMDALL_PESSOAS", "1") != "0"
+    return os.environ.get("STUDIO_PESSOAS", "1") != "0"
 
 
 def id_da(email: str) -> str:

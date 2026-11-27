@@ -51,7 +51,7 @@ def _do_env(chave: str) -> str:
 
 
 def pasta_cofre() -> Path:
-    v = _do_env("HEIMDALL_VAULT_DIR")
+    v = _do_env("STUDIO_VAULT_DIR")
     return Path(v).expanduser() if v else heimdall_pastas.brain(PROJECT_DIR)
 
 

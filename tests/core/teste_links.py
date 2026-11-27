@@ -18,7 +18,7 @@ def confere(nome, cond):
         falhas += 1
 
 
-for k in [k for k in os.environ if k.startswith(("STUDIO_", "HEIMDALL_"))]:
+for k in [k for k in os.environ if k.startswith("STUDIO_")]:
     del os.environ[k]
 import heimdall_links as L
 
@@ -28,12 +28,10 @@ confere("Learn vai para a página inicial", L.url_produto("learn") == "https://l
 confere("produto desconhecido não tem link", L.url_produto("xyz") == "" and L.com_link({"title": "t"}, "xyz") == {"title": "t"})
 os.environ["STUDIO_DOMINIO"] = "studiolibre.io"
 confere("STUDIO_DOMINIO muda todos os endereços", L.url_produto("saude") == "https://health.studiolibre.io/avisos" and L.url_produto("games") == "https://games.studiolibre.io/")
-os.environ["HEIMDALL_DOMINIO"] = "antigo.tech"
-confere("STUDIO_ vence HEIMDALL_", L.dominio() == "studiolibre.io")
 os.environ["STUDIO_DOMINIO"] = "inválido/x"
-confere("domínio inválido volta ao padrão", L.dominio() == "heimdall-ai.tech" or L.dominio() == "antigo.tech")
-del os.environ["STUDIO_DOMINIO"], os.environ["HEIMDALL_DOMINIO"]
-os.environ["HEIMDALL_FINANCE_HOSTS"] = "localhost,127.0.0.1,fin.exemplo.com"
+confere("domínio inválido volta ao padrão", L.dominio() == "heimdall-ai.tech")
+del os.environ["STUDIO_DOMINIO"]
+os.environ["STUDIO_FINANCE_HOSTS"] = "localhost,127.0.0.1,fin.exemplo.com"
 confere("hosts do .env valem (primeiro público)", L.url_produto("finance") == "https://fin.exemplo.com/avisos")
 os.environ["STUDIO_NOTIFICACAO_LINK"] = "0"
 confere("interruptor desliga o link", L.url_produto("finance") == "" and "url" not in L.com_link({"title": "t"}, "finance"))
@@ -48,7 +46,7 @@ confere("texto_bark continua genérico", "Abra a aba Avisos" in b["body"])
 
 import heimdall_avisos_mac as mac
 with tempfile.TemporaryDirectory() as d:
-    os.environ["HEIMDALL_ALERTAS_DIR"] = d
+    os.environ["STUDIO_ALERTAS_DIR"] = d
     mac.pasta = lambda: Path(d)
     confere("aviso do Mac com url https é gravado", mac.publicar({"title": "t", "body": "c", "url": "https://health.heimdall-ai.tech/avisos"}))
     import time as _t

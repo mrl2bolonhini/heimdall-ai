@@ -31,7 +31,7 @@ confere("o fluxo não usa mais o limite de swap em GB", "__ALERTA_SWAP__" not in
 confere("o fluxo avisa pela memória livre", "mem_livre_percent" in codigo and "__ALERTA_MEM_LIVRE__" in codigo)
 
 instalador = (RAIZ / "scripts/instalar_fluxos_n8n.sh").read_text(encoding="utf-8")
-confere("o instalador troca __ALERTA_MEM_LIVRE__ pelo limite (padrão 30)", '"__ALERTA_MEM_LIVRE__"' in instalador and "HEIMDALL_ALERT_MEM_FREE:-30" in instalador)
+confere("o instalador troca __ALERTA_MEM_LIVRE__ pelo limite (padrão 30)", '"__ALERTA_MEM_LIVRE__"' in instalador and "STUDIO_ALERT_MEM_FREE:-30" in instalador)
 confere("o instalador não deixa nenhum marcador de swap", "__ALERTA_SWAP__" not in instalador and "ALERT_SWAP" not in instalador)
 
 node = shutil.which("node")
@@ -70,14 +70,14 @@ confere("as métricas do MCP incluem mem_livre_percent (kern.memorystatus_level,
 
 # --- ajuda das variáveis
 ajuda = (RAIZ / "heimdall_config_ajuda.py").read_text(encoding="utf-8")
-confere("a ajuda do .env descreve HEIMDALL_ALERT_MEM_FREE e HEIMDALL_AWS_EMULATOR_INICIO", "HEIMDALL_ALERT_MEM_FREE" in ajuda and "HEIMDALL_AWS_EMULATOR_INICIO" in ajuda)
-confere("a ajuda do .env não cita mais HEIMDALL_ALERT_SWAP", "HEIMDALL_ALERT_SWAP" not in ajuda)
+confere("a ajuda do .env descreve STUDIO_ALERT_MEM_FREE e STUDIO_AWS_EMULATOR_INICIO", "STUDIO_ALERT_MEM_FREE" in ajuda and "STUDIO_AWS_EMULATOR_INICIO" in ajuda)
+confere("a ajuda do .env não cita mais STUDIO_ALERT_SWAP", "STUDIO_ALERT_SWAP" not in ajuda)
 
 # --- emulador sob demanda: scripts de subida
 start = (RAIZ / "start_heimdall.sh").read_text(encoding="utf-8")
 subir = (RAIZ / "subir.sh").read_text(encoding="utf-8")
 confere("start_heimdall.sh tem o modo sob demanda e só o aplica se o contêiner já existe",
-        'HEIMDALL_AWS_EMULATOR_INICIO:-demanda' in start and "AWS_EMU=demanda" in start and "grep -qE '^(localstack|moto)$'" in start)
+        'STUDIO_AWS_EMULATOR_INICIO:-demanda' in start and "AWS_EMU=demanda" in start and "grep -qE '^(localstack|moto)$'" in start)
 confere("no modo sob demanda o emulador é parado, não criado", re.search(r"demanda\)\s*\n\s*docker stop moto localstack", start) is not None)
 confere("subir.sh não espera o emulador quando ele está sob demanda", "EMU_SOB_DEMANDA" in subir and '[ "$EMU_SOB_DEMANDA" = "1" ] || LISTA+=("Emulador de AWS|tcp|4566")' in subir)
 
@@ -98,7 +98,7 @@ with tempfile.TemporaryDirectory() as tmp:
         f.chmod(0o755)
 
     def lab(args, contêineres):
-        env = {**os.environ, "PATH": f"{bin_}:{os.environ['PATH']}", "FAKE_LOG": str(log), "FAKE_CONTAINERS": contêineres, "HEIMDALL_DIR": str(RAIZ)}
+        env = {**os.environ, "PATH": f"{bin_}:{os.environ['PATH']}", "FAKE_LOG": str(log), "FAKE_CONTAINERS": contêineres, "STUDIO_DIR": str(RAIZ)}
         log.write_text("")
         r = subprocess.run(["bash", "-c", f'source "{RAIZ}/heimdall.zsh"; studio lab {args}'], capture_output=True, text=True, timeout=60, env=env)
         return r.returncode, r.stdout + r.stderr, log.read_text()

@@ -2,7 +2,7 @@
 """Endereço da tela de cada produto, para as notificações apontarem para ele (decisão do usuário em 26/11/2026).
 
 Um só ponto define o domínio: STUDIO_DOMINIO (padrão heimdall-ai.tech até a troca para studiolibre.io; depois é só mudar o valor).
-Cada produto tem um subdomínio (finance., health. e assim por diante). Se o .env definir os hosts do serviço (HEIMDALL_<X>_HOSTS ou
+Cada produto tem um subdomínio (finance., health. e assim por diante). Se o .env definir os hosts do serviço (STUDIO_<X>_HOSTS ou
 STUDIO_<X>_HOSTS), vale o primeiro host público dessa lista. Sem domínio válido, não há link: a notificação segue sem ele.
 Desligar os links: STUDIO_NOTIFICACAO_LINK=0.
 """
@@ -23,7 +23,7 @@ _HOST_OK = re.compile(r"^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-
 
 
 def _env(nome: str, padrao: str = "") -> str:
-    return os.environ.get("STUDIO_" + nome) or os.environ.get("HEIMDALL_" + nome) or padrao
+    return os.environ.get("STUDIO_" + nome) or padrao
 
 
 def dominio() -> str:

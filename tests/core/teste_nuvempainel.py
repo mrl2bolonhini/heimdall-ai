@@ -55,7 +55,7 @@ def abrir_rede(req, timeout):
 
 
 confere("sem rede, mensagem em português", not n.politicas(ENV, abrir_rede)["ok"] and "Cloudflare" in n.politicas(ENV, abrir_rede)["erro"])
-e = n.estado({**ENV, "HEIMDALL_CONTINUIDADE": "1"}, abrir_ok)
+e = n.estado({**ENV, "STUDIO_CONTINUIDADE": "1"}, abrir_ok)
 def abrir_paygo(req, timeout):
     visto["url2"], visto["auth2"] = req.full_url, req.get_header("Authorization")
     return Resp(json.dumps({"result": [{"ServiceName": "Workers Standard", "BilledCost": 5}, {"ServiceName": "Containers", "BilledCost": 1.5},

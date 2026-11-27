@@ -9,12 +9,12 @@ python3 - <<'PY'
 import secrets
 linhas = open(".env", encoding="utf-8").read().splitlines()
 tem = {l.split("=", 1)[0] for l in linhas if "=" in l}
-novos = {"HEIMDALL_PAPERLESS_SECRET": secrets.token_urlsafe(48), "HEIMDALL_PAPERLESS_SENHA": secrets.token_urlsafe(24), "HEIMDALL_PAPERLESS_USER": "heimdall",
-         "HEIMDALL_PAPERLESS_URL": "http://127.0.0.1:8023", "HEIMDALL_MEMORY_MOTOR": "paperless"}
+novos = {"STUDIO_PAPERLESS_SECRET": secrets.token_urlsafe(48), "STUDIO_PAPERLESS_SENHA": secrets.token_urlsafe(24), "STUDIO_PAPERLESS_USER": "heimdall",
+         "STUDIO_PAPERLESS_URL": "http://127.0.0.1:8023", "STUDIO_HUB_MOTOR": "paperless"}
 for k, v in novos.items():
     if k not in tem:
         linhas.append(f"{k}={v}")
-    elif k == "HEIMDALL_MEMORY_MOTOR":
+    elif k == "STUDIO_HUB_MOTOR":
         linhas = [f"{k}={v}" if l.startswith(k + "=") else l for l in linhas]
 open(".env", "w", encoding="utf-8").write("\n".join(linhas) + "\n")
 PY

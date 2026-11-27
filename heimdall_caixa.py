@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Cliente da caixa de correio na Cloudflare (Worker heimdall-caixa): o Mac busca o que os celulares deixaram e deixa o que eles devem aplicar.
 
-Interruptor: HEIMDALL_CAIXA=1 no .env liga; qualquer outro valor desliga e o Heimdall volta a depender só do agente do Mac.
-Chaves no .env: HEIMDALL_CAIXA_URL (padrão abaixo), HEIMDALL_CAIXA_TOKEN (token de dono, criado por `start`), CLOUDFLARE_API_TOKEN (só para `start`).
+Interruptor: STUDIO_CAIXA=1 no .env liga; qualquer outro valor desliga e o Heimdall volta a depender só do agente do Mac.
+Chaves no .env: STUDIO_CAIXA_URL (padrão abaixo), STUDIO_CAIXA_TOKEN (token de dono, criado por `start`), CLOUDFLARE_API_TOKEN (só para `start`).
 Antes de apagar qualquer item da caixa, o Mac grava uma cópia em db/mailbox/<pessoa>/ (permissão só do dono): nada se perde.
 
     python3 heimdall_caixa.py status          estado (ligada ou não) e se o Worker responde
     python3 heimdall_caixa.py start           cria o token de dono (prova acesso com a chave da Cloudflare) e o grava no .env
     python3 heimdall_caixa.py add NOME        cria o token de uma pessoa (a-z, 0-9, hífen); o token vai para a área de transferência
-                                              (o seu celular é a pessoa 'eu', ou o nome em HEIMDALL_CAIXA_MEU_NOME: a saúde dele entra no banco de saúde)
+                                              (o seu celular é a pessoa 'eu', ou o nome em STUDIO_CAIXA_MEU_NOME: a saúde dele entra no banco de saúde)
     python3 heimdall_caixa.py remove NOME     revoga o token de uma pessoa
     python3 heimdall_caixa.py pull            busca as entradas, grava a cópia local e apaga da caixa
 """
@@ -24,7 +24,7 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 URL_PADRAO = "https://heimdall-caixa.mbolonhinic.workers.dev"
 USER_AGENT = "heimdall-ai/1.0"
-CHAVES = ("HEIMDALL_CAIXA", "HEIMDALL_CAIXA_URL", "HEIMDALL_CAIXA_TOKEN", "HEIMDALL_CAIXA_MEU_NOME", "CLOUDFLARE_API_TOKEN")
+CHAVES = ("STUDIO_CAIXA", "STUDIO_CAIXA_URL", "STUDIO_CAIXA_TOKEN", "STUDIO_CAIXA_MEU_NOME", "CLOUDFLARE_API_TOKEN")
 PASTA = heimdall_pastas.db_mailbox(AQUI)
 
 
@@ -49,14 +49,14 @@ def _env() -> dict:
 
 def ativa(env=None) -> bool:
     env = _env() if env is None else env
-    return env.get("HEIMDALL_CAIXA") == "1" and bool(env.get("HEIMDALL_CAIXA_TOKEN"))
+    return env.get("STUDIO_CAIXA") == "1" and bool(env.get("STUDIO_CAIXA_TOKEN"))
 
 
 def pedido(metodo, rota, corpo=None, token=None, extra=None, env=None, abrir=None, timeout=30):
     """Chama o Worker. Devolve o JSON; levanta RuntimeError com mensagem clara em qualquer falha."""
     env = _env() if env is None else env
     abrir = abrir or urllib.request.urlopen
-    url = env.get("HEIMDALL_CAIXA_URL", URL_PADRAO).rstrip("/") + rota
+    url = env.get("STUDIO_CAIXA_URL", URL_PADRAO).rstrip("/") + rota
     cab = {"User-Agent": USER_AGENT, "Content-Type": "application/json"}
     if token:
         cab["Authorization"] = "Bearer " + token
@@ -76,7 +76,7 @@ def pedido(metodo, rota, corpo=None, token=None, extra=None, env=None, abrir=Non
 
 
 def _dono(env):
-    t = env.get("HEIMDALL_CAIXA_TOKEN", "")
+    t = env.get("STUDIO_CAIXA_TOKEN", "")
     if not t:
         raise RuntimeError("falta o token de dono: rode studio mailbox start")
     return t
@@ -94,7 +94,7 @@ def iniciar(env=None, abrir=None, gravar=None) -> str:
     if gravar is None:
         import heimdall_lab
         gravar = heimdall_lab.env_gravar
-    gravar({"HEIMDALL_CAIXA_TOKEN": token})
+    gravar({"STUDIO_CAIXA_TOKEN": token})
     return token
 
 
@@ -158,7 +158,7 @@ def tratar_padrao(item: dict, env=None, importar=None) -> None:
     Outros tipos (notas...) ficam só na cópia local até existir o destino deles."""
     env = _env() if env is None else env
     if item.get("tipo") == "saude":
-        (importar or importar_saude)(item.get("usuario", ""), item.get("dados"), env.get("HEIMDALL_CAIXA_MEU_NOME", "eu"))
+        (importar or importar_saude)(item.get("usuario", ""), item.get("dados"), env.get("STUDIO_CAIXA_MEU_NOME", "eu"))
 
 
 def _copiar(texto: str) -> bool:
@@ -175,10 +175,10 @@ def main(argv=None) -> int:
     env = _env()
     try:
         if cmd == "status":
-            print("Caixa de correio: " + ("LIGADA." if ativa(env) else "DESLIGADA (HEIMDALL_CAIXA=1 liga, depois de rodar studio mailbox start)."))
-            if env.get("HEIMDALL_CAIXA_TOKEN"):
+            print("Caixa de correio: " + ("LIGADA." if ativa(env) else "DESLIGADA (STUDIO_CAIXA=1 liga, depois de rodar studio mailbox start)."))
+            if env.get("STUDIO_CAIXA_TOKEN"):
                 try:
-                    n = len(pedido("GET", "/v1/entrada", token=env["HEIMDALL_CAIXA_TOKEN"], env=env).get("itens", []))
+                    n = len(pedido("GET", "/v1/entrada", token=env["STUDIO_CAIXA_TOKEN"], env=env).get("itens", []))
                     print(f"A caixa responde. Itens esperando o Mac: {n}.")
                 except RuntimeError as e:
                     print(f"Problema: {e}.")
@@ -187,7 +187,7 @@ def main(argv=None) -> int:
                 print("Ainda sem token de dono. Rode: studio mailbox start")
         elif cmd == "start":
             iniciar(env)
-            print("Token de dono criado e gravado no .env. Para ligar: studio env --set HEIMDALL_CAIXA 1")
+            print("Token de dono criado e gravado no .env. Para ligar: studio env --set STUDIO_CAIXA 1")
         elif cmd == "add" and len(a) == 2:
             t = criar_pessoa(a[1], env)
             if _copiar(t):
@@ -199,7 +199,7 @@ def main(argv=None) -> int:
             print(f"Pessoa {a[1]}: {n} token(s) revogado(s).")
         elif cmd == "pull":
             if not ativa(env):
-                print("Caixa desligada: nada a fazer. Para ligar: studio env --set HEIMDALL_CAIXA 1")
+                print("Caixa desligada: nada a fazer. Para ligar: studio env --set STUDIO_CAIXA 1")
                 return 0
             r = puxar(env, tratar=lambda it: tratar_padrao(it, env))
             print(f"Recebidos {r['recebidos']}, apagados da caixa {r['apagados']}, falhas {r['falhas']}. Cópias em db/mailbox/.")

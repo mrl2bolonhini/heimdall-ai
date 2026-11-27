@@ -33,10 +33,10 @@ INTEGRACOES = {
 
 
 def usuario_de(p: dict, env=None) -> str:
-    """Nome da pessoa na caixa. O dono usa o nome combinado (HEIMDALL_CAIXA_MEU_NOME, padrão "eu"); os demais, o e-mail reduzido a a-z, 0-9 e hífen."""
+    """Nome da pessoa na caixa. O dono usa o nome combinado (STUDIO_CAIXA_MEU_NOME, padrão "eu"); os demais, o e-mail reduzido a a-z, 0-9 e hífen."""
     env = caixa._env() if env is None else env
     if p.get("papel") == "dono":
-        return re.sub(r"[^a-z0-9-]", "", (env.get("HEIMDALL_CAIXA_MEU_NOME") or "eu").lower())[:32] or "eu"
+        return re.sub(r"[^a-z0-9-]", "", (env.get("STUDIO_CAIXA_MEU_NOME") or "eu").lower())[:32] or "eu"
     base = re.sub(r"[^a-z0-9]+", "-", (p.get("email") or "").lower()).strip("-")
     if not base:
         return ""
@@ -84,7 +84,7 @@ def estado(p: dict, env=None) -> dict:
 
 def url_hae(env=None) -> str:
     env = caixa._env() if env is None else env
-    return env.get("HEIMDALL_CAIXA_URL", caixa.URL_PADRAO).rstrip("/") + "/v1/hae"
+    return env.get("STUDIO_CAIXA_URL", caixa.URL_PADRAO).rstrip("/") + "/v1/hae"
 
 
 def ativar_saude(p: dict, env=None, abrir=None) -> str:
@@ -94,7 +94,7 @@ def ativar_saude(p: dict, env=None, abrir=None) -> str:
     if not st["pode"]:
         raise RuntimeError("por enquanto só o dono pode ativar a Saúde; falta o armazenamento por pessoa")
     if not st["caixa"]:
-        raise RuntimeError("a caixa de correio está desligada: rode studio mailbox start e depois studio env --set HEIMDALL_CAIXA 1")
+        raise RuntimeError("a caixa de correio está desligada: rode studio mailbox start e depois studio env --set STUDIO_CAIXA 1")
     u = st["usuario"]
     try:
         caixa.revogar_pessoa(u, env, abrir)  # trocar o token: o antigo deixa de valer

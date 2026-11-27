@@ -6,7 +6,7 @@ separa os dados e os guarda no banco pessoal (heimdall.db) para cruzar com o que
 
 Como a leitura é confiável:
 1. O texto sai do PDF (pdftotext ou pypdf). Se o PDF é imagem, ou se o arquivo é foto, o tesseract faz o reconhecimento (OCR).
-2. Um leitor de regras acha as linhas "exame, valor, unidade, referência". O modelo local (HEIMDALL_EXAMES_MODELO) pode ajudar onde as regras não
+2. Um leitor de regras acha as linhas "exame, valor, unidade, referência". O modelo local (STUDIO_EXAMES_MODELO) pode ajudar onde as regras não
    alcançam, mas cada valor que ele devolve precisa aparecer LITERALMENTE no texto do documento, perto do nome do exame. O que não bater é
    descartado e listado como "não consegui confirmar". O modelo nunca calcula nem inventa número.
 3. A situação (abaixo, dentro, acima) só é calculada quando a referência do laboratório tem uma única faixa clara. Faixas por sexo, idade ou
@@ -35,7 +35,6 @@ import html
 import io
 import json
 import os
-import heimdall_envcompat as _envcompat
 import re
 import secrets
 import shutil
@@ -66,8 +65,7 @@ def carregar_env() -> None:
         if not linha or linha.startswith("#") or "=" not in linha:
             continue
         chave, valor = (x.strip() for x in linha.split("=", 1))
-        chave = _envcompat.interno(chave)
-        if chave in ("HEIMDALL_DB_DIR", "LITELLM_MASTER_KEY") or chave.startswith(("HEIMDALL_SAUDE_", "HEIMDALL_EXAMES_")):
+        if chave in ("STUDIO_DB_DIR", "LITELLM_MASTER_KEY") or chave.startswith(("STUDIO_SAUDE_", "STUDIO_EXAMES_")):
             if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "'\"":
                 valor = valor[1:-1]
             os.environ.setdefault(chave, valor)
@@ -77,14 +75,14 @@ carregar_env()
 import heimdall_banco as banco  # noqa: E402
 import heimdall_pastas  # noqa: E402
 import heimdall_agenda as agenda  # noqa: E402  (evento do Calendário ou lembrete: a regra única)
-import heimdall_nuvem as nuvem  # noqa: E402  (modelo da Cloudflare, com interruptor HEIMDALL_NUVEM)
+import heimdall_nuvem as nuvem  # noqa: E402  (modelo da Cloudflare, com interruptor STUDIO_NUVEM)
 
-DIR = Path(os.environ.get("HEIMDALL_EXAMES_DIR", str(heimdall_pastas.health(PROJECT_DIR, banco.DB_DIR)))).expanduser()
+DIR = Path(os.environ.get("STUDIO_EXAMES_DIR", str(heimdall_pastas.health(PROJECT_DIR, banco.DB_DIR)))).expanduser()
 MAX_BYTES = 25 * 1024 * 1024
 EXT_OK = {".pdf", ".png", ".jpg", ".jpeg", ".heic", ".tif", ".tiff", ".bmp", ".webp", ".txt", ".docx"}
-USAR_MODELO = os.environ.get("HEIMDALL_EXAMES_LLM", "1") != "0"
-LLM_URL = os.environ.get("HEIMDALL_SAUDE_LLM_URL", os.environ.get("HEIMDALL_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions"))
-LLM_MODELO = os.environ.get("HEIMDALL_EXAMES_MODELO", os.environ.get("HEIMDALL_SAUDE_MODELO", os.environ.get("HEIMDALL_NEWS_MODELO", "gemma3-4b")))
+USAR_MODELO = os.environ.get("STUDIO_EXAMES_LLM", "1") != "0"
+LLM_URL = os.environ.get("STUDIO_SAUDE_LLM_URL", os.environ.get("STUDIO_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions"))
+LLM_MODELO = os.environ.get("STUDIO_EXAMES_MODELO", os.environ.get("STUDIO_SAUDE_MODELO", os.environ.get("STUDIO_NEWS_MODELO", "gemma3-4b")))
 AVISO = "Isto é a leitura de um documento, não um diagnóstico nem uma interpretação médica. Confira com o documento original e com o seu médico."
 _abridor_local = urllib.request.build_opener(urllib.request.ProxyHandler({}))   # o modelo local (LiteLLM desta máquina); a nuvem passa por heimdall_nuvem
 _TRAVA = threading.Lock()
@@ -1086,11 +1084,11 @@ _THINK = re.compile(r"(?is)<think>.*?</think>")
 
 
 def _modelo(prompt: str, max_tokens: int = 1400) -> str:
-    """Resposta de um modelo para ler documentos. Primeiro a nuvem (heimdall_nuvem, só com HEIMDALL_NUVEM=1 e sem HEIMDALL_EXAMES_NUVEM=0,
+    """Resposta de um modelo para ler documentos. Primeiro a nuvem (heimdall_nuvem, só com STUDIO_NUVEM=1 e sem STUDIO_EXAMES_NUVEM=0,
     e com o texto reduzido por _minimizar); se ela estiver desligada ou falhar, o modelo local. Vazio quando nenhum dos dois responde."""
     if not USAR_MODELO:
         return ""
-    if os.environ.get("HEIMDALL_EXAMES_NUVEM", "1") != "0" and nuvem.ativo():
+    if os.environ.get("STUDIO_EXAMES_NUVEM", "1") != "0" and nuvem.ativo():
         try:
             r = nuvem.chat("Você lê documentos médicos em português do Brasil e devolve só o JSON pedido.\n/no_think", _minimizar(prompt), max_tokens=max_tokens,
                            timeout=150, modelo=nuvem.modelo_perguntar(), folga=300)
@@ -2239,7 +2237,7 @@ def _numeros(t: str) -> set:
 
 def _interpretar(fatos: str) -> str:
     """Pede ao modelo local um comentário curto sobre os fatos. Rejeita o texto se citar número que não está nos fatos."""
-    condicoes = os.environ.get("HEIMDALL_SAUDE_CONDICOES", "")
+    condicoes = os.environ.get("STUDIO_SAUDE_CONDICOES", "")
     prompt = (_ANTI_INJECAO.replace("Responda só com JSON, sem comentários.\n", "") +
               "Você comenta, em português do Brasil, exames de laboratório de um adulto junto com dados do Apple Watch. O texto vai para um leitor de tela: frases curtas, sem listas, sem símbolos.\n"
               "Use SOMENTE os números dos FATOS abaixo; não calcule, não estime e não cite nenhum outro número. Não diagnostique e não sugira medicamentos ou doses. "
@@ -2271,8 +2269,8 @@ def analise(nome: str = "", dias: int = 730, com_modelo: bool = True) -> str:
 # --------------------------------------------------------------------------------------------
 # Agenda: consulta e renovação de receita viram EVENTO no Calendário (regra em heimdall_agenda.py)
 # --------------------------------------------------------------------------------------------
-RENOVACAO_DIAS = int(os.environ.get("HEIMDALL_RENOVACAO_DIAS", "7"))      # o evento cai tantos dias antes de a receita vencer
-DETALHES_NA_AGENDA = os.environ.get("HEIMDALL_AGENDA_DETALHES", "1") != "0"  # 1 (padrão): título com especialidade e médico, local no evento; 0: título genérico
+RENOVACAO_DIAS = int(os.environ.get("STUDIO_RENOVACAO_DIAS", "7"))      # o evento cai tantos dias antes de a receita vencer
+DETALHES_NA_AGENDA = os.environ.get("STUDIO_AGENDA_DETALHES", "1") != "0"  # 1 (padrão): título com especialidade e médico, local no evento; 0: título genérico
 
 
 def _eventos_pendentes(hoje: date) -> list:
@@ -2430,7 +2428,7 @@ def gerar_token(env=None) -> str:
     atual = ""
     try:
         for l in env.read_text(encoding="utf-8").splitlines():
-            if l.startswith("HEIMDALL_EXAMES_TOKEN="):
+            if l.startswith("STUDIO_EXAMES_TOKEN="):
                 atual = l.split("=", 1)[1].strip().strip("'\"")
     except OSError:
         pass
@@ -2440,7 +2438,7 @@ def gerar_token(env=None) -> str:
     cod = "".join(secrets.choice(alfabeto) for _ in range(20))
     cod = "-".join(cod[i:i + 5] for i in range(0, 20, 5))
     with open(env, "a", encoding="utf-8") as f:
-        f.write(f"\nHEIMDALL_EXAMES_TOKEN={cod}\n")
+        f.write(f"\nSTUDIO_EXAMES_TOKEN={cod}\n")
     try:
         env.chmod(0o600)
     except OSError:
@@ -2483,7 +2481,7 @@ def main() -> int:
     banco.iniciar()
     try:
         if a.gerar_token:
-            print("Código de envio do atalho do iPhone (guardado em HEIMDALL_EXAMES_TOKEN no .env):", gerar_token())
+            print("Código de envio do atalho do iPhone (guardado em STUDIO_EXAMES_TOKEN no .env):", gerar_token())
         elif a.pasta:
             r = processar_entrada()
             print(f"Pasta de entrada: {preparar_pasta()}")

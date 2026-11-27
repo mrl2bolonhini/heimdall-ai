@@ -19,9 +19,9 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 TMP = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
-os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
-os.environ["HEIMDALL_AVISOS_MAC"] = "0"
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
+os.environ["STUDIO_AVISOS_MAC"] = "0"
 (TMP / "knowledge").mkdir()
 
 import heimdall_lab as nuvem  # noqa: E402
@@ -147,7 +147,7 @@ confere("trecho do card sequencial limitado às lições criadas", all(t in [x[1
 
 confere("notificar_padrao nunca levanta erro", ca.notificar_padrao("t", "c") is None)
 d._agora = _agora_real
-os.environ["HEIMDALL_LEARN_AGENDA"] = "0"
+os.environ["STUDIO_LEARN_AGENDA"] = "0"
 confere("agenda desligável por variável", ca.iniciar_agenda() is None)
 
 # site

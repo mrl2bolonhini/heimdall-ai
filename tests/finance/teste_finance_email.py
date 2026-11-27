@@ -107,9 +107,9 @@ confere("o leitor de e-mail não abre links nem usa requisições web", "urllib"
 confere("o IMAP é aberto em modo somente leitura", 'imap.select("INBOX", readonly=True)' in fonte and "BODY.PEEK" in fonte)
 confere("sem senha no .env, não há credenciais", fe.credenciais(Path(tempfile.mkdtemp()) / "nao-existe.env") == {})
 d = Path(tempfile.mkdtemp())
-(d / ".env").write_text("HEIMDALL_EMAIL_USUARIO=a@b.com\nHEIMDALL_EMAIL_SENHA_APP='abcd efgh'\nOUTRA=segredo\n", encoding="utf-8")
+(d / ".env").write_text("STUDIO_EMAIL_USUARIO=a@b.com\nSTUDIO_EMAIL_SENHA_APP='abcd efgh'\nOUTRA=segredo\n", encoding="utf-8")
 c = fe.credenciais(d / ".env")
-confere("credenciais: só as duas chaves do e-mail, lidas do .env", set(c) == {"HEIMDALL_EMAIL_USUARIO", "HEIMDALL_EMAIL_SENHA_APP"} and c["HEIMDALL_EMAIL_SENHA_APP"] == "abcd efgh")
+confere("credenciais: só as duas chaves do e-mail, lidas do .env", set(c) == {"STUDIO_EMAIL_USUARIO", "STUDIO_EMAIL_SENHA_APP"} and c["STUDIO_EMAIL_SENHA_APP"] == "abcd efgh")
 est = d / "estado.json"
 r3 = fe.executar(fn.conectar(d / "x.db"), c, est, lambda cfg: [msgs[0]])
 confere("executar guarda o estado em arquivo e devolve o resumo", r3 and est.exists() and "<a1@x>" in est.read_text(encoding="utf-8"))

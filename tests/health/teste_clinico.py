@@ -12,7 +12,7 @@ from datetime import date
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-clinico-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "health"), "HEIMDALL_EXAMES_LLM": "0"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_EXAMES_DIR": str(TMP / "health"), "STUDIO_EXAMES_LLM": "0"})
 import heimdall_agenda as ag  # noqa: E402
 import heimdall_clinico as cl  # noqa: E402
 import heimdall_exames as ex  # noqa: E402
@@ -191,7 +191,7 @@ ex.USAR_MODELO = False
 
 
 # ----- perfil: convite no primeiro acesso
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "banco")
+os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 sql("DELETE FROM perfil_clinico")
 sql("DELETE FROM perfil_ajustes")
 confere("primeiro acesso: perfil vazio e nunca concluído é pendente", cl.perfil_pendente(HOJE) is True)

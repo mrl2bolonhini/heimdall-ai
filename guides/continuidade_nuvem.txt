@@ -29,7 +29,7 @@ Quando o Mac ficar sem energia ou sem rede, os sites do Heimdall (Finance, Healt
 - Modelos locais (Ollama): na nuvem usam os modelos da Workers AI, no modelo leve já definido.
 - Tailscale e o app de iPhone dependem do Mac: ficam fora no modo de continuidade.
 
-6. Fases (cada uma com interruptor no .env, ex.: HEIMDALL_CONTINUIDADE=0)
+6. Fases (cada uma com interruptor no .env, ex.: STUDIO_CONTINUIDADE=0)
 1) Alertas e limite de gasto na Cloudflare; Workers Paid ativo.
 2) Imagem do Heimdall para contêiner (Dockerfile), testada localmente.
 3) Cópias cifradas dos bancos para o R2, com restauração testada.

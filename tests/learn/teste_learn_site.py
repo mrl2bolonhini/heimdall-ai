@@ -15,9 +15,9 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp())
-os.environ["HEIMDALL_DB_DIR"] = str(TMP / "db")
-os.environ["HEIMDALL_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
-os.environ["HEIMDALL_LEARN_MAX_MB"] = "1"
+os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
+os.environ["STUDIO_LEARN_MAX_MB"] = "1"
 (TMP / "knowledge" / "aws").mkdir(parents=True)
 
 import heimdall_lab as nuvem  # noqa: E402

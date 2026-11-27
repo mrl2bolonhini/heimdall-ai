@@ -11,9 +11,9 @@
 # Depois de criar os modelos, os modelos de base (gemma, qwen, deepseek, os -local...) são escondidos do seletor de modelos do chat,
 # para sobrar só os 7 criados. Eles continuam funcionando por baixo. --keep-base não esconde nada.
 #
-# A chave da API vem de HEIMDALL_WEBUI_API_KEY no .env; se não houver, o script pergunta sem mostrar na tela e não grava.
+# A chave da API vem de STUDIO_WEBUI_API_KEY no .env; se não houver, o script pergunta sem mostrar na tela e não grava.
 # Crie a chave no Open WebUI: Configurações, Conta, Chaves de API, Criar (conta administradora). Copie-a com Command+C e grave com
-# studio env --set HEIMDALL_WEBUI_API_KEY (lê a área de transferência, sem mostrar). A chave nunca é impressa.
+# studio env --set STUDIO_WEBUI_API_KEY (lê a área de transferência, sem mostrar). A chave nunca é impressa.
 # Conexão com o mesmo ID é atualizada no lugar (as outras conexões ficam como estão); modelo com o mesmo id é atualizado. Nada é apagado.
 cd "$(dirname "$0")/.." || exit 1
 python3 - "$@" <<'PY'
@@ -30,8 +30,8 @@ if arq.exists():
         if "=" in linha and not linha.lstrip().startswith("#"):
             k, v = linha.split("=", 1)
             env[k.strip()] = v.strip().strip("'\"")
-base = os.environ.get("HEIMDALL_WEBUI_URL", env.get("HEIMDALL_WEBUI_URL", "http://localhost:3000")).rstrip("/")
-chave = os.environ.get("HEIMDALL_WEBUI_API_KEY") or env.get("HEIMDALL_WEBUI_API_KEY", "")
+base = os.environ.get("STUDIO_WEBUI_URL", env.get("STUDIO_WEBUI_URL", "http://localhost:3000")).rstrip("/")
+chave = os.environ.get("STUDIO_WEBUI_API_KEY") or env.get("STUDIO_WEBUI_API_KEY", "")
 modelos = json.loads(Path("openwebui/modelos_importar.json").read_text(encoding="utf-8")) if FAZER_MOD else []
 conexoes = []
 if FAZER_FERR:

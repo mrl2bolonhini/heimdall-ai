@@ -38,7 +38,7 @@ if [ -f "$PROJECT_DIR/.env" ]; then
     . "$PROJECT_DIR/.env"
     set +a
 fi
-[ -n "${HEIMDALL_GITOPS_TOKEN:-}" ] || fail "HEIMDALL_GITOPS_TOKEN não está no .env. Rode antes: bash scripts/instalar_automacoes_avancadas.sh"
+[ -n "${STUDIO_GITOPS_TOKEN:-}" ] || fail "STUDIO_GITOPS_TOKEN não está no .env. Rode antes: bash scripts/instalar_automacoes_avancadas.sh"
 
 REMOTE_URL="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null)"
 [ -n "$REMOTE_URL" ] || fail "o repositório não tem remoto 'origin'."
@@ -49,8 +49,8 @@ SLUG="$(printf '%s' "$REMOTE_URL" | sed -E 's#^(git@github\.com:|ssh://git@githu
 CONF="$HOME/.heimdall_gitops"
 umask 077
 {
-    echo "HEIMDALL_GITOPS_URL='http://localhost:5678/webhook/heimdall-gitops'"
-    echo "HEIMDALL_GITOPS_TOKEN='$HEIMDALL_GITOPS_TOKEN'"
+    echo "STUDIO_GITOPS_URL='http://localhost:5678/webhook/heimdall-gitops'"
+    echo "STUDIO_GITOPS_TOKEN='$STUDIO_GITOPS_TOKEN'"
 } > "$CONF"
 chmod 600 "$CONF"
 
@@ -82,8 +82,8 @@ printf '%s\n' "$ENTRADA" | while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_S
     RAMO="${REMOTE_REF#refs/heads/}"
     case "$RAMO" in fix/refactor-auto-*) continue ;; esac
     # Espera o push terminar (o n8n lê o commit no GitHub) e avisa, sem prender o terminal.
-    ( sleep 20; curl -s -m 15 -X POST "$HEIMDALL_GITOPS_URL" \
-        -H "X-Heimdall-Token: $HEIMDALL_GITOPS_TOKEN" -H 'Content-Type: application/json' \
+    ( sleep 20; curl -s -m 15 -X POST "$STUDIO_GITOPS_URL" \
+        -H "X-Heimdall-Token: $STUDIO_GITOPS_TOKEN" -H 'Content-Type: application/json' \
         -d "{\"repo\":\"$SLUG\",\"branch\":\"$RAMO\",\"sha\":\"$LOCAL_SHA\"}" > /dev/null 2>&1 ) > /dev/null 2>&1 < /dev/null &
 done
 exit 0
@@ -101,16 +101,16 @@ except FileNotFoundError:
 achou = False
 mudou = False
 for i, l in enumerate(linhas):
-    m = re.match(r"^HEIMDALL_GITOPS_REPOS=(['\"]?)(.*?)\1\s*$", l)
+    m = re.match(r"^STUDIO_GITOPS_REPOS=(['\"]?)(.*?)\1\s*$", l)
     if m:
         achou = True
         itens = [x for x in m.group(2).split(",") if x]
         if slug.lower() not in [x.lower() for x in itens]:
             itens.append(slug)
-            linhas[i] = "HEIMDALL_GITOPS_REPOS='%s'" % ",".join(itens)
+            linhas[i] = "STUDIO_GITOPS_REPOS='%s'" % ",".join(itens)
             mudou = True
 if not achou:
-    linhas.append("HEIMDALL_GITOPS_REPOS='%s'" % slug)
+    linhas.append("STUDIO_GITOPS_REPOS='%s'" % slug)
     mudou = True
 if mudou:
     open(caminho, "w", encoding="utf-8").write("\n".join(linhas) + "\n")

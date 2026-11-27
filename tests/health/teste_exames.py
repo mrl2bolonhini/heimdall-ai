@@ -15,7 +15,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-exames-"))
-os.environ.update({"HEIMDALL_DB_DIR": str(TMP / "banco"), "HEIMDALL_EXAMES_DIR": str(TMP / "health"), "HEIMDALL_EXAMES_LLM": "0"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_EXAMES_DIR": str(TMP / "health"), "STUDIO_EXAMES_LLM": "0"})
 sys.path.insert(0, str(RAIZ))
 import heimdall_banco as banco  # noqa: E402
 import heimdall_exames as ex  # noqa: E402
@@ -397,7 +397,7 @@ ex.USAR_MODELO = False
 env = TMP / "env_teste"
 env.write_text("OUTRA=1\n")
 t1 = ex.gerar_token(env)
-confere("token: formato legível e gravado no .env", len(t1) == 23 and t1.count("-") == 3 and f"HEIMDALL_EXAMES_TOKEN={t1}" in env.read_text())
+confere("token: formato legível e gravado no .env", len(t1) == 23 and t1.count("-") == 3 and f"STUDIO_EXAMES_TOKEN={t1}" in env.read_text())
 confere("token: repetir devolve o mesmo", ex.gerar_token(env) == t1)
 confere("banco: resumo conhece as novas tabelas", banco.resumo()["exames_resultados"]["linhas"] >= 12 and banco.resumo()["receitas"]["linhas"] == 2)
 confere("banco: consulta livre só de leitura enxerga os exames", banco.consulta_sql("SELECT COUNT(*) FROM exames_resultados")["linhas"][0][0] >= 12)
