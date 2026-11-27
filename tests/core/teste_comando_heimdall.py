@@ -40,7 +40,7 @@ for linha in (AQUI / "guides/heimdall_ajuda.txt").read_text(encoding="utf-8").sp
 nomes = [s["nome"] for s in secoes]
 codigo = (AQUI / "heimdall.zsh").read_text(encoding="utf-8")
 no_case = {x for g in re.findall(r"^    ([a-z0-9|]+)\)", codigo.split("studio() {")[1].split("# Completar")[0], re.M) for x in g.split("|")}
-confere("há seção de ajuda para os 52 comandos", len(nomes) == 52, len(nomes))
+confere("há seção de ajuda para os 51 comandos", len(nomes) == 51, len(nomes))
 # library e cloud são nomes antigos que continuam valendo (memory e lab)
 confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help", "library", "cloud"}, (set(nomes) - no_case, no_case - set(nomes)))
 
@@ -82,7 +82,7 @@ for s in secoes:
 
 # --- tradução e execução com programas de mentira
 with tempfile.TemporaryDirectory() as d:
-    for f in ("subir", "consultar_triagem", "concluir_testes_triagem", "diagnostico_chat", "trocar_senha_webui", "ouvir_estudo", "guardar_no_env", "verificar_mcp_dados",
+    for f in ("subir", "diagnostico_chat", "trocar_senha_webui", "ouvir_estudo", "guardar_no_env", "verificar_mcp_dados",
               "instalar_automacoes_avancadas", "instalar_fluxos_n8n", "instalar_monitor_privacidade", "instalar_email_oficial", "instalar_hook_gitops"):
         alvo = Path(d, f + ".sh") if f == "subir" else Path(d, "scripts", f + ".sh")  # só o subir.sh fica na raiz do projeto
         alvo.parent.mkdir(exist_ok=True)
@@ -99,7 +99,7 @@ with tempfile.TemporaryDirectory() as d:
         ("env -s X", "[guardar_no_env] X"), ("cloudflare -t", "[cloudflare_chave] --testar"), ("hook -r /r", "[instalar_hook_gitops] --remover /r"),
         ("notes -o -r", "[mover_notas_antigas] --executar"), ("notes -m", "[limpar_espelhos]"), ("chat -d", "[diagnostico_chat]"), ("up -w -t -n -a", "[subir] --webui --terminal --n8n --agente"),
         ("restart -a", "[subir] --reiniciar --agente"), ("logs -s agent", "[subir] --log agente"), ("logs -l", "[subir] --logs"), ("flows -p", "[instalar_monitor_privacidade]"),
-        ("flows -b", "[instalar_fluxos_n8n]"), ("docs -b", "[gerar_marca_png]"), ("triage -c", "[concluir_testes_triagem]"), ("db -s SELECT", "[heimdall_banco] --sql SELECT"),
+        ("flows -b", "[instalar_fluxos_n8n]"), ("docs -b", "[gerar_marca_png]"), ("db -s SELECT", "[heimdall_banco] --sql SELECT"),
         ("voice -i f.csv", "[heimdall_voz] --importar f.csv"), ("ingest -r", "[ingest_docs] --reset"), ("mcp -v", "[verificar_mcp_dados]"),
         ("health --today", "[heimdall_saude] --hoje"), ("test -r nada", "Teste desconhecido"),
     ]

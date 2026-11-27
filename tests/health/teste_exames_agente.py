@@ -60,7 +60,7 @@ def pdf_com_texto(linhas):
 TOKEN, ENVIO = "token-do-agente-123456", "ABCDE-FGHJK-LMNPQ-RSTUV"
 ag.TOKEN, ag.TOKEN_UPLOAD = TOKEN, ENVIO
 avisos = []
-ag.triagem.enviar_bark = lambda payload: avisos.append(payload) or True
+ag.bark.enviar_bark = lambda payload: avisos.append(payload) or True
 banco.iniciar()
 srv = ag.ThreadingHTTPServer(("127.0.0.1", 0), ag.Handler)
 porta = srv.server_address[1]

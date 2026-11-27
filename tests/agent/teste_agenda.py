@@ -51,7 +51,7 @@ def confere(nome, cond, extra=""):
 
 # --- a regra
 confere("consulta e renovação são eventos; triagem e verificar são lembretes",
-        ag.destino("consulta") == "evento" and ag.destino("renovacao_receita") == "evento" and ag.destino("triagem") == "lembrete" and ag.destino("verificar_prazo") == "lembrete")
+        ag.destino("consulta") == "evento" and ag.destino("renovacao_receita") == "evento" and ag.destino("verificar_prazo") == "lembrete")
 try:
     ag.destino("inventado")
     confere("tipo fora da tabela é barrado", False)

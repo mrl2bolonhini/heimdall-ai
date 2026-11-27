@@ -326,8 +326,8 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
-        if let u = response.notification.request.content.userInfo["url"] as? String, u.hasPrefix("https://"), let destino = URL(string: u) {
-            NSWorkspace.shared.open(destino)   // abre a tela do produto no navegador padrão
+        if let u = response.notification.request.content.userInfo["url"] as? String, u.hasPrefix("https://"), let destino = URL(string: u), let host = destino.host {
+            abrirJanela(host, u, recarregar: true)   // abre a tela do produto na janela própria do app, sem navegador
         } else {
             ativarApp()
         }
@@ -552,9 +552,10 @@ final class Delegado: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUserNot
 
     /// Abre (ou traz para a frente) a janela de um site. O app é sempre um app normal (Dock, Command+Tab e barra de menus do alto): trocar de
     /// "só barra de menus" para "app normal" com a janela já aberta fazia o macOS não tratar o Heimdall como app ativo.
-    func abrirJanela(_ nome: String, _ texto: String) {
+    func abrirJanela(_ nome: String, _ texto: String, recarregar: Bool = false) {
         guard let url = URL(string: texto) else { return }
         if let existente = janelas[nome] {
+            if recarregar { existente.web.load(URLRequest(url: url)) }
             existente.mostrar()
             return
         }

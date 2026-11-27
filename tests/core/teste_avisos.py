@@ -19,7 +19,6 @@ sys.path.insert(0, str(RAIZ))
 import heimdall_agente as ag  # noqa: E402
 import heimdall_avisos as av  # noqa: E402
 import heimdall_banco as banco  # noqa: E402
-import heimdall_triagem as tri  # noqa: E402
 
 falhas = 0
 
@@ -51,20 +50,11 @@ b = av.texto_bark("saude", 1)
 confere("Bark genérico: só o nome do serviço e a aba, sem conteúdo", b["title"] == "Studio Health: aviso novo" and "Avisos" in b["body"] and "ECG" not in json.dumps(b))
 confere("do_servico separa saúde e finanças", av.do_servico("saude").caminho != av.do_servico("financas").caminho and "fin" in str(av.do_servico("financas").caminho))
 
-# triagem: o Bark de saúde e finanças não leva título nem resumo
-row = {"titulo": "ECG classificado pela Apple como fibrilação atrial", "resumo": "FC 150 bpm, saldo -2000", "fonte": "saude"}
-p = tri.montar_aviso(row, True, 1)
-confere("triagem de saúde: Bark sem título nem resumo", "ECG" not in json.dumps(p, ensure_ascii=False) and "150" not in p["body"] and "Saúde" in p["title"], p)
-p = tri.montar_aviso({"titulo": "Fatura vence", "resumo": "R$ 3.000", "fonte": "financas"}, False, 1)
-confere("triagem de finanças: Bark sem título nem valor", "Fatura" not in p["title"] and "3.000" not in p["body"], p)
-g = tri.montar_aviso_agrupado([(row, False), ({"titulo": "Prazo no tribunal", "resumo": "Processo 123", "fonte": "justica"}, False)], False, 2)
-confere("agrupado: saúde genérica, justiça com título", "fibrilação" not in g["body"] and "150" not in g["body"] and "Prazo no tribunal" in g["body"], g["body"])
-
 # agente
 TOKEN = "token-do-agente-123456"
 ag.TOKEN = TOKEN
 barks = []
-ag.triagem.enviar_bark = lambda payload: barks.append(payload) or True
+ag.bark.enviar_bark = lambda payload: barks.append(payload) or True
 banco.iniciar()
 srv = ag.ThreadingHTTPServer(("127.0.0.1", 0), ag.Handler)
 porta = srv.server_address[1]

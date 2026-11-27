@@ -242,53 +242,6 @@ def preparar_lista(nome_lista) -> str:
     return "lista criada" if criado else "lista já existe"
 
 
-def triagem_criar(tid, tit, corpo, prio, nome_lista) -> str:
-    """Igual ao AS_CRIAR da triagem: um lembrete por origem (a marca [hd:ID] vai no fim do texto), vence em 1 minuto."""
-    marca = f"[hd:{tid}]"
-    cal, _ = _achar_calendario(nome_lista, "lembrete", True)
-    for r in _lembretes_da_lista(cal):
-        if marca in str(r.notes() or ""):
-            return "ja_existe"
-    _criar_lembrete_ek(cal, tit, corpo + "\n\n" + marca, time.time() + 60, int(prio))
-    return "criado"
-
-
-_MARCA = re.compile(r"\[hd:([^\]]*)\]")
-
-
-def formatar_triagem(itens: list[dict], agora: float) -> str:
-    """Mesmo texto do AS_LER: uma linha por lembrete com marca, 'id<TAB>feito<TAB>prioridade<TAB>vence<TAB>feitoEm<TAB>nome',
-    com os pendentes antes dos concluídos. vence e feitoEm são segundos em relação a agora (vazio se não houver data)."""
-    def linha(i: dict, feito: str) -> str:
-        m = _MARCA.search(i.get("notas") or "")
-        if not m or not m.group(1):
-            return ""
-        vence = "" if i.get("vence_ts") is None else str(int(round(i["vence_ts"] - agora)))
-        feito_em = "" if not (feito == "1" and i.get("feito_ts") is not None) else str(int(round(i["feito_ts"] - agora)))
-        nome = re.sub(r"[\t\r\n]+", " ", i.get("nome") or "")
-        return f"{m.group(1)}\t{feito}\t{int(i.get('prioridade') or 0)}\t{vence}\t{feito_em}\t{nome}\n"
-    pend = "".join(linha(i, "0") for i in itens if not i.get("feito"))
-    conc = "".join(linha(i, "1") for i in itens if i.get("feito"))
-    return "lista:ok\n" + pend + conc
-
-
-def triagem_ler(nome_lista) -> str:
-    cal, _ = _achar_calendario(nome_lista, "lembrete", False)
-    if cal is None:
-        return "lista:ausente"
-    agenda = NS.NSCalendar.currentCalendar()
-    itens = []
-    for r in _lembretes_da_lista(cal):
-        comp = r.dueDateComponents()
-        data = agenda.dateFromComponents_(comp) if comp is not None else None
-        concluido = bool(r.isCompleted())
-        feita = r.completionDate() if concluido else None
-        itens.append({"notas": str(r.notes() or ""), "prioridade": int(r.priority()), "nome": str(r.title() or ""), "feito": concluido,
-                      "vence_ts": float(data.timeIntervalSince1970()) if data is not None else None,
-                      "feito_ts": float(feita.timeIntervalSince1970()) if feita is not None else None})
-    return formatar_triagem(itens, time.time()).rstrip("\n")
-
-
 # ----------------------------------------------------------------------------------------
 # Registro: qual AppleScript é resolvido por qual função
 # ----------------------------------------------------------------------------------------

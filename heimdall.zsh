@@ -118,7 +118,6 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     library|memory) printf '%s\n' "-L=--local" "-P=--paperless" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
-    triage) printf '%s\n' "-c=--complete-tests" ;;
     db) printf '%s\n' "-s=--sql" ;;
     notices) printf '%s\n' "-m=--migrate" ;;
     doctor) printf '%s\n' "-m=--memory" "-c=--cpu" "-d=--disk" "-k=--docker" "-o=--ollama" "-s=--services" "-v=--versions" "-t=--top" ;;
@@ -448,8 +447,6 @@ studio() {
       echo "kuma: http://localhost:3001"
       echo "dozzle: http://localhost:8081" ;;
 
-    triage)
-      if [ "$1" = "--complete-tests" ]; then _heimdall_sh scripts/concluir_testes_triagem.sh; else _heimdall_sh scripts/consultar_triagem.sh "$@"; fi ;;
     db) _heimdall_py heimdall_banco.py "$@" ;;
     notion) _heimdall_py heimdall_notion.py ;;
     cloudai) _heimdall_py heimdall_nuvem.py ;;
@@ -589,7 +586,7 @@ studio() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _heimdall_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat notes learn trading memory news lab health games finance controls account n8n kuma dozzle urls triage notices notion cloudai mailbox app ask usage support db doctor backup continuity mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat notes learn trading memory news lab health games finance controls account n8n kuma dozzle urls notices notion cloudai mailbox app ask usage support db doctor backup continuity mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -610,7 +607,6 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       games) if [[ ${words[CURRENT-1]} == --play ]]; then compadd -- 2048 arqueiro bacara naval blackjack cacaniqueis minas caverna cincoletras orion aventura forca gramado velha labirinto relogios numero paciencia caribenho poker roleta senha sonar sudoku templo escolhas vilarejo xadrez
         else compadd -- --local --play --list; fi ;;
       lab) compadd -- --local --start --stop ;;
-      triage) compadd -- --complete-tests ;;
       notices) compadd -- --migrate ;;
       db) compadd -- --sql ;;
       doctor) compadd -- --memory --cpu --disk --docker --ollama --services --versions --top ;;

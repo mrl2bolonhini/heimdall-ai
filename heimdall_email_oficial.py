@@ -335,9 +335,9 @@ def baixa_prioridade(cfg, it) -> bool:
     return any(n in alvo for n in nomes)
 
 
-def criar_triagem(cfg, itens, simular=False):
-    """Cada e-mail suspeito de golpe ou oficial e urgente vira um lembrete na lista "Heimdall: Triagem" (o agente do Mac
-    insiste por Bark até você concluir, reclassificar ou adiar). Não cria nada para e-mails de rotina."""
+def criar_alertas(cfg, itens, simular=False):
+    """Cada e-mail suspeito de golpe ou oficial e urgente vira um alerta (aviso no Mac e Bark genérico; nunca lembrete: decisão do usuário em
+    26/11/2026). Não cria nada para e-mails de rotina."""
     if simular or not itens:
         return
     for it in itens:
@@ -355,12 +355,16 @@ def criar_triagem(cfg, itens, simular=False):
             post_json(url_agente(cfg) + "/triagem/criar", {"id": "email|" + it["mid"].lower(), "titulo": titulo[:150], "resumo": resumo[:800], "nivel": nivel, "fonte": "email"},
                       {"X-Heimdall-Token": cfg.get("HEIMDALL_AGENTE_TOKEN", "")}, timeout=60)
         except Exception as e:
-            print("Triagem falhou:", e, file=sys.stderr)
+            print("Alerta falhou:", e, file=sys.stderr)
 
 
 def agendar(cfg, it, r, agora, simular=False):
     """Cria evento no Calendário e lembrete no app Lembretes (calendário e lista "Heimdall") para e-mails OFICIAIS confirmados.
-    Devolve uma frase para o relatório, ou "" se nada foi criado."""
+    Devolve uma frase para o relatório, ou "" se nada foi criado.
+    Desligado por padrão (decisão do usuário em 26/11/2026: lembrete e evento só depois do aceite). Sem tela de aceite até existir o produto de
+    comunicados oficiais, só STUDIO_EMAIL_OFICIAL_AGENDA=1 volta a criar sozinho."""
+    if os.environ.get("STUDIO_EMAIL_OFICIAL_AGENDA", "0") != "1" and not simular:
+        return ""
     if it["classe"] != "oficial" or not r or r["urgencia"] not in ("alta", "media") or baixa_prioridade(cfg, it):
         return ""
     hoje = agora.date()
@@ -500,7 +504,7 @@ def executar(cfg, simular=False, agora=None, buscar=buscar_mensagens, estado_arq
     corpo = ", ".join(partes) + ". " + (primeiro["servico"] + ": " + primeiro["assunto"][:80] + ". " if primeiro else "") + "Detalhes na pasta Monitor de Privacidade do Notas. Não use links do e-mail."
     gravar_notas(cfg, "E-mails oficiais " + agora.strftime("%Y-%m-%d %H%M"), md, simular)
     registrar_banco(cfg, itens, simular)
-    criar_triagem(cfg, itens, simular)
+    criar_alertas(cfg, itens, simular)
     avisar(cfg, titulo, corpo, urgente=bool(n["suspeito"]) or any(i.get("urg") == "alta" for i in itens), simular=simular)
     if not simular:
         for it in itens:

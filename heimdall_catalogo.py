@@ -2,10 +2,10 @@
 """Catalogação automática de notas do Studio Notes (IA local).
 
 Você escreve uma nota livre; o modelo local separa o que é ideia, contato, endereço, lembrete e evento:
-  - lembrete  -> app Lembretes (heimdall_agenda, tipo lembrete_nota)
+  - lembrete  -> app Lembretes (heimdall_agenda, tipo lembrete_nota), só depois do aceite do usuário
   - evento    -> Calendário (heimdall_agenda, tipo evento_nota)
   - ideia, contato, endereço -> Notion (heimdall_notion); sem Notion configurado, vão para uma nota local "Heimdall Notas"
-Regras: lembrete e evento são criados na hora, com botão Desfazer; data ausente, ambígua ou no passado fica pendente de confirmação.
+Regras: lembrete e evento ficam pendentes até o usuário aceitar (botão Criar, com a data conferida); depois de criados, têm botão Desfazer.
 Saúde e finanças nunca vão para o Notion: o item fica só em nota local. O modelo nunca recebe ordem de fora: o texto da nota é dado.
 """
 import html
@@ -117,8 +117,9 @@ def _padrao(deps: dict) -> dict:
     return d
 
 
-def executar(item: dict, deps: dict = None) -> dict:
-    """Manda o item ao destino certo. Devolve campos de estado: estado (feito, pendente, falhou), destino, detalhe, desfazer, e ids."""
+def executar(item: dict, deps: dict = None, aceito: bool = False) -> dict:
+    """Manda o item ao destino certo. Devolve campos de estado: estado (feito, pendente, falhou), destino, detalhe, desfazer, e ids.
+    Lembrete e evento só vão à agenda com `aceito=True` (decisão do usuário em 26/11/2026: nada cria lembrete sozinho)."""
     d = _padrao(deps)
     t = item["tipo"]
     if t in ("lembrete", "evento"):
@@ -127,6 +128,8 @@ def executar(item: dict, deps: dict = None) -> dict:
             return {"estado": "pendente", "destino": "agenda", "detalhe": "a data não ficou clara; confirme abaixo", "desfazer": False}
         if dia < d["hoje"]():
             return {"estado": "pendente", "destino": "agenda", "detalhe": "a data já passou; confirme ou corrija abaixo", "desfazer": False}
+        if not aceito:
+            return {"estado": "pendente", "destino": "agenda", "detalhe": "aguarda o seu aceite: confira a data e use o botão abaixo", "desfazer": False}
         if t == "lembrete":
             tipo, dado = "lembrete_nota", {"titulo": item["titulo"], "vencimento": dia.isoformat(), "hora": int((item["hora"] or "09:00").split(":")[0]), "notas": item["texto"]}
         else:
@@ -184,7 +187,7 @@ def confirmar(dono: str, rid: str, data: str, hora: str = "", deps: dict = None)
     if not _data_ok(data):
         return "Data inválida. Use o campo de data."
     it.update(data=data, hora=_hora_ok(hora) or it["hora"], incerto=False)
-    res = executar(it, deps)
+    res = executar(it, deps, aceito=True)   # o clique do usuário é o aceite
     with _trava:
         r.update(res)
         r["item"] = it
@@ -245,7 +248,7 @@ def bloco_html(dono: str, csrf: str, volta: str = "/") -> str:
             h += (f'<form method="post" action="/confirmar">{base}<p><label for="d-{e(r["id"])}">Data de {e(it["titulo"][:60])}</label><br>'
                   f'<input type="date" id="d-{e(r["id"])}" name="data" value="{e(it["data"] if _data_ok(it["data"]) else "")}" required></p>'
                   f'<p><label for="h-{e(r["id"])}">Hora, se tiver (HH:MM)</label><br><input type="text" id="h-{e(r["id"])}" name="hora" value="{e(it["hora"])}" maxlength="5" autocomplete="off"></p>'
-                  f'<button type="submit">Criar {e(it["titulo"][:60])}</button></form>'
+                  f'<button type="submit">Aceitar e criar {e(it["titulo"][:60])}</button></form>'
                   f'<form method="post" action="/descartar">{base}<button type="submit">Descartar {e(it["titulo"][:60])}</button></form>')
         h += "</li>"
     return h + "</ol></section>"

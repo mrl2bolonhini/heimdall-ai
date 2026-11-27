@@ -27,7 +27,7 @@ def item(classe="oficial", servico="Serasa/SPC", dominio="serasa.com.br", urg="a
 
 criados = []
 eo.post_json = lambda url, dado, cab=None, timeout=0: criados.append(dado)
-eo.criar_triagem({}, [item(), item(mid="m2", servico="Receita Federal", dominio="gov.br"), item(classe="suspeito", mid="m3")])
+eo.criar_alertas({}, [item(), item(mid="m2", servico="Receita Federal", dominio="gov.br"), item(classe="suspeito", mid="m3")])
 titulos = [c["titulo"] for c in criados]
 confere("Serasa oficial urgente não vira triagem", not any("Serasa" in t and t.startswith("E-mail oficial") for t in titulos), titulos)
 confere("Receita Federal urgente continua crítica", [c for c in criados if c["titulo"].startswith("E-mail oficial") and "Receita" in c["titulo"] and c["nivel"] == "critico"], criados)

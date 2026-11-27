@@ -4,7 +4,7 @@
 Regra (vale para toda aplicação do Heimdall):
   - EVENTO (Calendário, calendário "Heimdall") é algo que acontece numa data e hora, ou que tem data fixa para olhar: consulta, retorno, prazo.
     Não tem "concluído": passa quando o dia passa.
-  - LEMBRETE (app Lembretes, lista "Heimdall" ou "Heimdall: Triagem") é algo que você precisa fazer e marcar como feito: conferir, pagar, ligar.
+  - LEMBRETE (app Lembretes, lista "Heimdall") é algo que você precisa fazer e marcar como feito: conferir, pagar, ligar.
     Fica pendente até você concluir, e o Heimdall volta a avisar enquanto estiver pendente.
 Cada tipo de item que vai para a agenda é cadastrado em DESTINOS, com o destino escolhido. Quem criar um tipo novo acrescenta aqui (o teste
 tests/agent/teste_agenda.py barra tipo fora desta tabela) e a tabela entra na página de documentação.
@@ -31,7 +31,6 @@ DESTINOS = {
     "lembrete_nota": (LEMBRETE, "algo a fazer, com data, achado numa nota escrita no Studio Notes", "heimdall_catalogo.py: nota catalogada pela IA local"),
     "sugestao_saude": (LEMBRETE, "algo a fazer sugerido pelo Studio Health (marcar retorno, pedir renovação); só depois que você aceita a sugestão", "heimdall_clinico.py: sugestão aceita"),
     "sugestao_saude_evento": (EVENTO, "compromisso com data fixa vindo de uma sugestão do Studio Health (retirada de pontos, consulta já marcada); só depois que você aceita a sugestão", "heimdall_clinico.py: sugestão aceita com data"),
-    "triagem": (LEMBRETE, "item importante que pede decisão; você conclui, reclassifica ou adia", "heimdall_triagem.py (lista Heimdall: Triagem)"),
 }
 
 REGRA = ("Evento é o que acontece numa data e hora ou tem data fixa (consulta, prazo): vai para o Calendário. "

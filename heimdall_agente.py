@@ -28,10 +28,9 @@ Rotas:
                                         pasta de entrada, é lido no Mac e fica pendente até você confirmar (heimdall_exames.py)
     POST /saude/relatorio-semanal       {}  monta o relatório da semana, grava na aba Avisos do Studio Health e avisa pelo Bark (texto genérico)
     POST /triagem/criar                 {"id": "origem estável", "titulo": "...", "resumo": "...", "nivel": "critico|alto|medio", "fonte": "justica"}
-                                        cria um lembrete na lista "Heimdall: Triagem" (não duplica) e o registra no banco
-    POST /triagem/ciclo                 {}  lê os lembretes, registra o que você concluiu, reclassificou ou adiou e avisa pelo Bark
-                                        quem está pendente (chamado pelo n8n a cada 15 minutos; regras em heimdall_triagem.py)
-    GET  /triagem/estado                itens pendentes da triagem
+                                        (nome antigo: registra um alerta e avisa; não cria lembrete; regras em heimdall_alertas.py)
+    POST /triagem/ciclo                 {}  sem efeito (a triagem deixou de existir em 26/11/2026; a rota só evita erro no fluxo antigo)
+    GET  /triagem/estado                últimos alertas registrados
     POST /backup/executar               {}  cópia criptografada do banco para os destinos do .env (pasta e/ou R2); regras em heimdall_backup.py
     POST /backup/verificar              {}  baixa a cópia mais recente de cada destino, decifra e confere a integridade
     POST /seguranca/executar            {"tarefa": "logs|commits|exposicao"}  o dolphin3-cyber-8b analisa os dados que o script coleta, grava a nota em
@@ -74,7 +73,8 @@ import heimdall_saude as saude
 import heimdall_avisos as avisos
 import heimdall_avisos_mac as avisos_mac
 import heimdall_seguranca as seguranca
-import heimdall_triagem as triagem
+import heimdall_alertas as alertas
+import heimdall_bark as bark
 import heimdall_links as links
 import heimdall_eventkit as eventkit
 import heimdall_voz as dicionario_voz
@@ -1144,8 +1144,7 @@ end run
 # Estes scripts rodam pelo EventKit quando possível (heimdall_eventkit.py); o AppleScript acima fica como recuo.
 for _script, _funcao in ((AS_EVENTO, eventkit.evento_dia_inteiro), (AS_EVENTO_HORARIO, eventkit.evento_com_hora),
                          (AS_LEMBRETE, eventkit.lembrete_simples), (AS_PREPARAR_CAL, eventkit.preparar_calendario),
-                         (AS_PREPARAR_LEM, eventkit.preparar_lista), (triagem.AS_CRIAR, eventkit.triagem_criar),
-                         (triagem.AS_LER, eventkit.triagem_ler)):
+                         (AS_PREPARAR_LEM, eventkit.preparar_lista)):
     eventkit.registrar(_script, _funcao)
 
 
@@ -1311,7 +1310,7 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/banco/esquema":
                 return self._json(200, {"esquema": banco.tabelas_para_modelo()})
             if u.path == "/triagem/estado":
-                return self._json(200, triagem.estado())
+                return self._json(200, alertas.estado())
             if u.path == "/backup/estado":
                 return self._json(200, backup.estado())
             if u.path == "/notas/privadas":
@@ -1371,7 +1370,7 @@ class Handler(BaseHTTPRequestHandler):
                     novo = avisos.do_servico(serv).gravar(str(dado.get("titulo", "")), str(dado.get("markdown", "")))
                 except ValueError as ex:
                     return self._json(400, {"erro": str(ex)})
-                return self._json(200, {"ok": True, "id": novo, "bark": triagem.enviar_bark(avisos.texto_bark(serv)) if dado.get("bark") and avisos.bark_ligado(serv) else None})
+                return self._json(200, {"ok": True, "id": novo, "bark": bark.enviar_bark(avisos.texto_bark(serv)) if dado.get("bark") and avisos.bark_ligado(serv) else None})
             if u.path == "/saude/analise":   # roda agora a análise completa e devolve o texto (o aviso também vai para a aba Avisos do Health)
                 import heimdall_analista_saude as analista
                 a = analista.rodar(forcar=True)
@@ -1390,37 +1389,37 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/saude/relatorio-semanal":
                 rel = saude.relatorio_semanal()
                 novo = avisos.do_servico("saude").gravar(rel["titulo"], rel["markdown"])   # o relatório fica na aba Avisos do Studio Health, não no Notas
-                r = {"ok": True, "titulo": rel["titulo"], "aviso": novo, "bark": triagem.enviar_bark(avisos.texto_bark("saude"))}
+                r = {"ok": True, "titulo": rel["titulo"], "aviso": novo, "bark": bark.enviar_bark(avisos.texto_bark("saude"))}
                 if not r["bark"]:
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} relatório semanal gravado, mas o Bark não confirmou (HEIMDALL_BARK_KEY?)\n")
                 return self._json(200, r)
             if u.path == "/saude/hae":
                 r = saude.processar_hae(dado)
-                for f in r.pop("ecg_fibrilacao", []):   # a Apple classificou como fibrilação atrial: entra na triagem (não é diagnóstico)
+                for f in r.pop("ecg_fibrilacao", []):   # a Apple classificou como fibrilação atrial: vira aviso no Studio Health (não é diagnóstico)
                     try:
-                        triagem.criar({"id": f["id"], "titulo": "ECG classificado pela Apple como fibrilação atrial",
-                                       "resumo": f"Gravação de {f['inicio']}. Não é diagnóstico: mostre ao seu médico. Detalhes: python3 heimdall_saude.py --ecg.",
-                                       "nivel": "alto", "fonte": "saude"}, osascript_travado)
+                        alertas.publicar({"id": f["id"], "titulo": "ECG classificado pela Apple como fibrilação atrial",
+                                          "resumo": f"Gravação de {f['inicio']}. Não é diagnóstico: mostre ao seu médico.",
+                                          "nivel": "alto", "fonte": "saude"})
                         r["triagem"] = r.get("triagem", 0) + 1
-                    except Exception as e:  # noqa: BLE001 - a gravação já foi feita; a triagem é um aviso a mais
-                        sys.stderr.write(f"{time.strftime('%H:%M:%S')} triagem do ECG falhou: {str(e)[:120]}\n")
-                try:   # frequência cardíaca da madrugada bem acima do normal: entra na triagem (a mesma id no dia não duplica)
+                    except Exception as e:  # noqa: BLE001 - a gravação já foi feita; o aviso é um extra
+                        sys.stderr.write(f"{time.strftime('%H:%M:%S')} aviso do ECG falhou: {str(e)[:120]}\n")
+                try:   # frequência cardíaca da madrugada bem acima do normal: vira aviso (a mesma id no dia não duplica)
                     alerta = saude.alerta_fc() if r.get("fc_horas") else None
                     if alerta:
-                        triagem.criar(alerta, osascript_travado)
+                        alertas.publicar(alerta)
                         r["triagem"] = r.get("triagem", 0) + 1
-                except Exception as e:  # noqa: BLE001 - os dados já foram gravados; a triagem é um aviso a mais
+                except Exception as e:  # noqa: BLE001 - os dados já foram gravados; o aviso é um extra
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} alerta de frequência cardíaca falhou: {str(e)[:120]}\n")
-                try:   # anomalias em todas as medidas e cruzamentos de sinais: um item de triagem consolidado por dia
+                try:   # anomalias em todas as medidas e cruzamentos de sinais: um aviso consolidado por dia
                     import heimdall_anomalias as anomalias
                     alerta = anomalias.alerta()
                     if alerta:
                         estado_novo = alerta.pop("_estado", None)
-                        triagem.criar(alerta, osascript_travado)
+                        alertas.publicar(alerta)
                         if estado_novo:
-                            anomalias.salvar_estado(estado_novo)   # só depois de entrar na triagem: aviso perdido não conta como entregue
+                            anomalias.salvar_estado(estado_novo)   # só depois de publicado: aviso perdido não conta como entregue
                         r["triagem"] = r.get("triagem", 0) + 1
-                except Exception as e:  # noqa: BLE001 - os dados já foram gravados; a triagem é um aviso a mais
+                except Exception as e:  # noqa: BLE001 - os dados já foram gravados; o aviso é um extra
                     sys.stderr.write(f"{time.strftime('%H:%M:%S')} alerta de anomalias falhou: {str(e)[:120]}\n")
                 _analise_de_saude_em_segundo_plano()   # análise completa por modelo, no máximo uma vez por dia; não segura a resposta da importação
                 return self._json(200, r)
@@ -1437,9 +1436,12 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/lembretes/desfazer":
                 return self._json(200, desfazer_lembrete(dado))
             if u.path == "/triagem/criar":
-                return self._json(200, triagem.criar(dado, osascript_travado))
-            if u.path == "/triagem/ciclo":
-                return self._json(200, triagem.ciclo(osascript_travado))
+                try:   # rota mantida para os fluxos do n8n: agora vira alerta (aviso), nunca lembrete
+                    return self._json(200, alertas.publicar(dado))
+                except ValueError as ex:
+                    return self._json(400, {"erro": str(ex)})
+            if u.path == "/triagem/ciclo":   # a triagem deixou de existir (26/11/2026); a rota fica só para o fluxo antigo não falhar
+                return self._json(200, {"ok": True, "desativado": True})
             if u.path == "/seguranca/executar":
                 r = seguranca.executar(str(dado.get("tarefa", "")))
                 if r["gravar"]:
@@ -1495,7 +1497,6 @@ def teste() -> int:
     try:
         print("   Calendário:", osascript(AS_PREPARAR_CAL, NOME_AGENDA))
         print("   Lembretes:", osascript(AS_PREPARAR_LEM, NOME_AGENDA))
-        print("   Triagem:", osascript(AS_PREPARAR_LEM, triagem.NOME_LISTA))
     except Exception as e:  # noqa: BLE001
         print(f"   Falhou: {e}")
         print("   Autorize o Terminal em Ajustes do Sistema > Privacidade e Segurança > Automação > Calendário e Lembretes, e rode de novo.")
@@ -1516,10 +1517,10 @@ def _ler_documentos() -> None:
         novos = [r for r in rs if r.get("ok") and not r.get("duplicado")]
         falhos = [r for r in rs if not r.get("ok")]
         if novos:
-            triagem.enviar_bark(links.com_link({"title": "Studio Health: documento para conferir", "group": "saude", "level": "active",
+            bark.enviar_bark(links.com_link({"title": "Studio Health: documento para conferir", "group": "saude", "level": "active",
                                  "body": f"{len(novos)} documento(s) lido(s) e prontos para conferir."}, "saude"))
         if falhos:
-            triagem.enviar_bark(links.com_link({"title": "Studio Health: documento não lido", "group": "saude", "level": "active",
+            bark.enviar_bark(links.com_link({"title": "Studio Health: documento não lido", "group": "saude", "level": "active",
                                  "body": f"{len(falhos)} documento(s) não puderam ser lidos e aguardam conferência."}, "saude"))
     except Exception as e:  # noqa: BLE001 - a vigia nunca derruba o agente
         sys.stderr.write(f"{time.strftime('%H:%M:%S')} documentos de saúde: {type(e).__name__}: {str(e)[:160]}\n")

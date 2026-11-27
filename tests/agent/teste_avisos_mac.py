@@ -17,7 +17,9 @@ tmp = tempfile.mkdtemp()
 os.environ["HEIMDALL_DB_DIR"] = tmp
 os.environ.pop("HEIMDALL_AVISOS_MAC", None)
 import heimdall_avisos_mac as mac  # noqa: E402
-import heimdall_triagem as tri  # noqa: E402
+import heimdall_alertas as alertas  # noqa: E402
+import heimdall_bark as bk  # noqa: E402
+import heimdall_banco as _banco  # noqa: E402
 
 falhas = 0
 
@@ -44,17 +46,22 @@ antes = len(list(pasta.glob("*.json")))
 confere("HEIMDALL_AVISOS_MAC=0 desliga", mac.publicar({"title": "não"}) is False and len(list(pasta.glob("*.json"))) == antes)
 os.environ.pop("HEIMDALL_AVISOS_MAC")
 
-# triagem: o Bark segue genérico; o Mac recebe título e resumo mesmo de saúde
-row = {"titulo": "Resultado do hemograma", "resumo": "Glicose 62 mg/dL, abaixo da faixa", "prioridade_usuario": "", "fonte": "saude"}
-sens = tri._sensivel(row)
-bark = tri.montar_aviso(row, False, 1)
-completo = tri.montar_aviso(row, False, 1, completo=True)
-if sens:
-    confere("Bark: saúde sem título nem resumo", "hemograma" not in bark["title"] and "Glicose" not in bark["body"], bark)
-    confere("Mac: título e resumo completos", "hemograma" in completo["title"] and "Glicose 62" in completo["body"], completo)
-else:
-    print("aviso: linha de exemplo não é sensível pelo critério atual; conferência de saúde pulada")
-ag = tri.montar_aviso_agrupado([(row, False), ({**row, "titulo": "Outro exame"}, False)], False, 2, completo=True)
-confere("agrupado completo traz os títulos", "hemograma" in ag["body"] and "Outro exame" in ag["body"], ag)
+# alertas: o Bark segue genérico (com o link do produto); o Mac recebe título e resumo completos, mesmo de saúde
+os.environ["HEIMDALL_AVISOS_DIR"] = tmp
+enviados = []
+bk.enviar_bark = lambda p: enviados.append(p) or True
+for a in pasta.glob("*.json"):
+    a.unlink()
+r = alertas.publicar({"id": "teste|1", "titulo": "Resultado do hemograma", "resumo": "Glicose 62 mg/dL, abaixo da faixa", "nivel": "alto", "fonte": "saude"})
+confere("alerta de saúde é novo e vai ao Mac", r["novo"] and r["mac"], r)
+arq = [json.loads(a.read_text()) for a in pasta.glob("*.json")]
+confere("Mac: título e resumo completos", any("hemograma" in a["titulo"] and "Glicose 62" in a["corpo"] for a in arq), arq)
+confere("Mac: leva o link do produto", any(a.get("url", "").startswith("https://health.") for a in arq), arq)
+confere("Bark: genérico, sem título nem resumo do exame, com link", len(enviados) == 1 and "hemograma" not in json.dumps(enviados[0]) and "Glicose" not in json.dumps(enviados[0]) and enviados[0].get("url"), enviados)
+r2 = alertas.publicar({"id": "teste|1", "titulo": "Resultado do hemograma", "resumo": "x", "fonte": "saude"})
+confere("mesma origem não repete o aviso", not r2["novo"] and len(enviados) == 1)
+r3 = alertas.publicar({"id": "teste|2", "titulo": "Menção no diário", "resumo": "Processo 123", "nivel": "critico", "fonte": "justica"})
+confere("alerta sem produto: Mac completo e Bark genérico sem link", r3["novo"] and r3["mac"] and "url" not in enviados[-1] and "Processo" not in json.dumps(enviados[-1]), enviados[-1])
+confere("sem lembrete: o alerta não toca a agenda", "lembrete" not in r3 and "lembrete" not in r)
 
 sys.exit(1 if falhas else 0)

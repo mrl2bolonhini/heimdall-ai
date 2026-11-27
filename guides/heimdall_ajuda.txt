@@ -353,15 +353,6 @@ Exemplos:
   studio urls
   studio urls --public --check
 
-@ triage | Triagem obrigatória de avisos
-Sem opção mostra o estado da triagem no agente do Mac (lê o token do .env). Os itens são lembretes na lista "Heimdall: Triagem".
-Opções:
-  -c, --complete-tests conclui os lembretes de teste "Teste de triagem"
-  -h, --help           mostra esta ajuda
-Exemplos:
-  studio triage
-  studio triage --complete-tests
-
 @ notion | Confere a ligação do Studio Notes com o Notion
 Mostra, para ideias, contatos e endereços, se o token e o banco de dados do Notion estão no .env e se a integração enxerga o banco. O Notion só recebe notas comuns; saúde e finanças nunca vão para lá.
 Como ligar, sem colar segredo em conversa: crie uma integração interna em notion.so/profile/integrations, compartilhe com ela os três bancos de dados (ideias, contatos, endereços), copie o token com Command+C e rode: studio env --set HEIMDALL_NOTION_TOKEN. Depois copie o endereço de cada banco e rode: studio env --set HEIMDALL_NOTION_DB_IDEIAS (e _CONTATOS, _ENDERECOS), uma vez para cada. Por fim rode studio notion e reinicie o agente com studio update --restart.
@@ -585,7 +576,7 @@ Exemplos:
 @ flows | Instala fluxos no n8n
 Importa fluxos para o n8n, que precisa estar no ar. Sem opção instala as automações avançadas.
 Opções:
-  -a, --advanced       automações avançadas (saúde, GitOps, triagem, resumos): scripts/instalar_automacoes_avancadas.sh
+  -a, --advanced       automações avançadas (saúde, GitOps, resumos): scripts/instalar_automacoes_avancadas.sh
   -b, --basic          fluxos básicos da pasta flows/basic/ (resumo da AWS, estudo, vigia de versões)
   -p, --privacy        monitor de privacidade diário
   -e, --email          vigia de e-mails oficiais
@@ -660,7 +651,7 @@ Exemplos:
   studio help --doc
 
 Avisos no Mac
-  Os avisos que vão ao iPhone pelo Bark também aparecem no Mac como notificações do macOS, com o texto completo (o Bark do iPhone continua genérico). Cada notificação leva o link da tela do produto que a gerou; no Mac, clicar nela abre o produto no navegador (STUDIO_DOMINIO define o domínio base e STUDIO_NOTIFICACAO_LINK=0 desliga o link).
+  Os avisos que vão ao iPhone pelo Bark também aparecem no Mac como notificações do macOS, com o texto completo (o Bark do iPhone continua genérico). Cada notificação leva o link da tela do produto que a gerou; no Mac, clicar nela abre o produto na janela do app (STUDIO_DOMINIO define o domínio base e STUDIO_NOTIFICACAO_LINK=0 desliga o link).
   O app do Mac mostra as notificações; na primeira vez o macOS pede permissão. Liga e desliga em StudioLibre, Configurações. No .env: HEIMDALL_AVISOS_MAC=0 desliga de vez.
 
 Analista de saúde

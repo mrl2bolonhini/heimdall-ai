@@ -143,7 +143,7 @@ def notificar_padrao(titulo: str, corpo: str, generico: str = "Há novidade no L
     except Exception:  # noqa: BLE001
         pass
     try:
-        import heimdall_triagem as tri
+        import heimdall_bark as tri
         import heimdall_links as links
         tri.enviar_bark(links.com_link({"title": "Studio Learn", "body": generico, "group": "learn"}, "learn"))
     except Exception:  # noqa: BLE001

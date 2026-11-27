@@ -2,8 +2,14 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-26 - Avisos sem lembretes automáticos
+- A triagem de avisos deixou de existir: o app Lembretes não recebe mais itens sozinho nem insiste por notificação. Alertas de saúde (ECG, frequência cardíaca, anomalias) ficam na aba Avisos do Studio Health, com notificação genérica no iPhone e o aviso completo no Mac, ambos com link para o produto.
+- Notas catalogadas: lembretes e eventos com data ficam pendentes e só vão para o Lembretes e o Calendário depois do seu aceite.
+- O vigia de e-mail oficial avisa, mas não cria evento nem lembrete sozinho.
+- Os avisos de documento de saúde não trazem mais comandos de terminal.
+
 ## 2026-11-26 - Notificações abrem o produto de origem
-- Toda notificação de aviso passa a levar o link da tela do produto que a gerou: o aviso de saúde e de finanças abre a aba Avisos do Studio Health e do Studio Finance, e o aviso de estudo abre o Studio Learn. No iPhone o toque na notificação do Bark abre o link; no Mac o toque abre o produto no navegador. O texto no iPhone continua genérico, sem dados pessoais.
+- Toda notificação de aviso passa a levar o link da tela do produto que a gerou: o aviso de saúde e de finanças abre a aba Avisos do Studio Health e do Studio Finance, e o aviso de estudo abre o Studio Learn. No iPhone o toque na notificação do Bark abre o link; no Mac o toque abre o produto na janela do app. O texto no iPhone continua genérico, sem dados pessoais.
 - As mensagens de documentos de saúde dizem apenas o que aconteceu e levam ao Studio Health, sem comandos de terminal.
 - O endereço dos produtos vem de um só ponto de configuração, o que facilita a troca de domínio. Quando houver app para celular, a notificação passa a ser a do app.
 
