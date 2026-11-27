@@ -1,0 +1,34 @@
+Studio Miner: plano do produto (decisões do usuário em 27/11/2026)
+
+Endereço: miner.studiolibre.io. Produto único que minera fontes públicas e entrega avisos práticos, reunindo o e-mail oficial, o Diário Oficial e Justiça e o monitor de privacidade.
+
+Regras decididas
+1. Consulta de terceiros é livre onde a fonte é pública; as limitações sobre terceiros valem só para a IA (resumo, classificação e Perguntar).
+2. Fica de fora o acompanhamento de termos de uso e políticas de privacidade.
+3. Sem burlar captcha. Cofre de login e senha opcional, no modelo dos conectores do Hub, para portais que permitam; nunca para o gov.br.
+4. Abas principais por áreas da vida, sem aba de acompanhamento. Cada área abre na subaba Pendentes (itens que pedem ação, por prazo, com fonte e data, e os botões Aceitar, Adiar e Ignorar). Lembrete e evento só com aceite. A área inicial é configurável em Ajustes.
+5. Limite de cinco abas, de uma palavra, sem posição livre; área nova só se juntar duas.
+
+Áreas e serviços
+1. Identidade: menções ao nome, CPF, telefone ou e-mail na internet aberta; vazamentos e credenciais expostas; cadastros indevidos e tentativas de fraude detectados no e-mail.
+2. Cidadania: diários oficiais (União, estados e municípios); processos e intimações por nome ou documento; projetos de lei, normas e consultas públicas; vagas desistentes em agendamentos públicos escassos (passaporte, consulado, INSS).
+3. Patrimônio: leilões judiciais e extrajudiciais; protestos e restrições de crédito; multas e pendências fiscais; preços de imóveis, veículos (Fipe) e passagens; marcas, patentes e domínios.
+4. Carreira: vagas de emprego; concursos, seleções e bolsas; palavras-chave e oportunidades do setor do usuário (editais e licitações entram aqui).
+5. Rotina: triagem do e-mail (boletos, confirmações de compra, avisos críticos); páginas web específicas; conectores programáveis do usuário.
+
+Cuidados de projeto
+1. CPF e telefone: conferência apenas local, nas páginas já baixadas, ou em bases de vazamento por prefixo de hash; nunca digitados em motor de busca, que os exporia a terceiros.
+2. Boletos e compras: o Studio Finance já importa boletos; o Miner não duplica o dado, aponta para o Finance (a confirmar com o usuário).
+3. Custo e carga: cota por pessoa, intervalo mínimo por fonte e respeito ao robots.txt; fontes baratas podem rodar na nuvem (continuidade) dentro do teto de US$ 15 por mês, com interruptor no .env.
+4. Aviso único no rodapé: o Miner informa e não dá parecer jurídico.
+5. Funciona no navegador em todos os sistemas; evento e lembrete dependem do agente do Mac (alternativa: exportar o evento em formato de calendário).
+
+Fontes a verificar (nada foi consultado ainda): DataJud e Comunica PJe (CNJ), DOU, Querido Diário (diários municipais), PNCP, LexML e APIs da Câmara e do Senado, RDAP do Registro.br, revista do INPI, Fipe, base de vazamentos por prefixo de hash. Fontes de risco: protestos, multas, passagens, imóveis, vagas de emprego, leilões e agendamentos (captcha, login ou termos de uso).
+
+Ordem de entrega proposta
+1. Casca do produto com as cinco áreas, Pendentes e aceite, migrando e-mail oficial (Rotina), Diário Oficial e Justiça (Cidadania) e privacidade (Identidade).
+2. Cidadania completa, Carreira (concursos, editais, bolsas) e o monitor genérico de páginas (Rotina).
+3. Vagas, marcas e domínios, preços com Fipe, vazamentos e palavras-chave.
+4. Protestos, multas, agendamentos, leilões, cofre de credenciais e conectores.
+
+Pendente de decisão: a área inicial é a primeira aba (regra atual do CLAUDE.md) ou a ordem das abas é fixa e a área inicial só define para onde o endereço leva (recomendação do PO, pela previsibilidade para leitor de tela).
