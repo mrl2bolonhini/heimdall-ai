@@ -60,7 +60,7 @@ fi
 [ -z "${1:-}" ] || fail "opção desconhecida: $1 (use --testar ou --remover)."
 
 [ "$(uname)" = "Darwin" ] || fail "o agendamento usa o launchd do macOS. Em outro sistema, rode 'python3 studio_email_oficial.py' por cron a cada hora."
-[ -f .env ] || fail "não achei o .env nesta pasta. Rode antes o start_heimdall.sh."
+[ -f .env ] || fail "não achei o .env nesta pasta. Rode antes o start_studio.sh."
 
 # .env guarda o resto (Bark, token, chave do LiteLLM); o vigia lê tudo de lá.
 USUARIO_ATUAL="$(grep -E '^STUDIO_EMAIL_USUARIO=' .env | tail -1 | cut -d= -f2- | tr -d "'\"")"

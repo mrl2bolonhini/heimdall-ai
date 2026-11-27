@@ -6,7 +6,7 @@ Uso, na pasta do projeto:
     python3 gerar_docs.py --check    só confere se docs/ e README estão em dia (sai com 1 se não estiverem)
 
 O que sai do código (sempre em dia): ferramentas (studio_tools.py), modelos e servidores MCP (litellm_config.yaml),
-fluxos do n8n (flows/*/), opções do start_heimdall.sh e as novidades (CHANGELOG.md).
+fluxos do n8n (flows/*/), opções do start_studio.sh e as novidades (CHANGELOG.md).
 O que é texto escrito à mão: os textos explicativos deste arquivo. Ao criar um recurso novo, siga a lista de
 "Como manter" do README: CHANGELOG.md, texto aqui se preciso, e rode este script.
 Só usa a biblioteca padrão (PyYAML é usado se existir; senão, uma leitura simples do YAML).
@@ -132,7 +132,7 @@ def ler_fluxos():
 
 def ler_opcoes_start():
     linhas = []
-    for l in (AQUI / "start_heimdall.sh").read_text(encoding="utf-8").splitlines()[1:30]:
+    for l in (AQUI / "start_studio.sh").read_text(encoding="utf-8").splitlines()[1:30]:
         if not l.startswith("#"):
             break
         linhas.append(l.lstrip("# ").rstrip())
@@ -181,24 +181,24 @@ def ler_roadmap():
 # ---------------------------------------------------------------------------------------------------------
 SERVICOS = [
     # nome, função, porta, como sobe
-    ("Ollama", "Executa os modelos de linguagem no Mac.", "11434", "start_heimdall.sh (inicia se não estiver rodando)"),
-    ("LiteLLM Proxy", "Ponto único de acesso (API compatível com a da OpenAI) aos modelos; também expõe os servidores MCP.", "9000", "start_heimdall.sh"),
-    ("Servidor MCP do Mac (admin)", "Ferramentas que mexem no Mac: arquivos, métricas, memória e documentos.", "8000", "start_heimdall.sh"),
-    ("Servidor MCP público", "Ferramentas seguras para convidados: web, cálculo, feeds, transcrições.", "8001", "start_heimdall.sh"),
-    ("Servidor MCP de dados", "Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain) e as de consulta do Finance, para o Open WebUI. Escuta só em 127.0.0.1.", "8004", "start_heimdall.sh"),
-    ("SearXNG", "Mecanismo de busca na web que não rastreia quem pesquisa.", "8080", "start_heimdall.sh (Docker)"),
-    ("Qdrant", "Base vetorial: busca por significado nos documentos e nas notas.", "6333", "start_heimdall.sh (Docker)"),
+    ("Ollama", "Executa os modelos de linguagem no Mac.", "11434", "start_studio.sh (inicia se não estiver rodando)"),
+    ("LiteLLM Proxy", "Ponto único de acesso (API compatível com a da OpenAI) aos modelos; também expõe os servidores MCP.", "9000", "start_studio.sh"),
+    ("Servidor MCP do Mac (admin)", "Ferramentas que mexem no Mac: arquivos, métricas, memória e documentos.", "8000", "start_studio.sh"),
+    ("Servidor MCP público", "Ferramentas seguras para convidados: web, cálculo, feeds, transcrições.", "8001", "start_studio.sh"),
+    ("Servidor MCP de dados", "Só as ferramentas do banco pessoal (saúde, diários, e-mails, estudos, Second Brain) e as de consulta do Finance, para o Open WebUI. Escuta só em 127.0.0.1.", "8004", "start_studio.sh"),
+    ("SearXNG", "Mecanismo de busca na web que não rastreia quem pesquisa.", "8080", "start_studio.sh (Docker)"),
+    ("Qdrant", "Base vetorial: busca por significado nos documentos e nas notas.", "6333", "start_studio.sh (Docker)"),
     ("Open WebUI", "Interface de chat usada pelos convidados e pelo dono. Sobe em modo enxuto (sem Notas, Automações, imagem, código e recursos automáticos) para poupar memória.", "3000", "--webui ou STUDIO_WEBUI=1 (STUDIO_WEBUI_ENXUTO=0 devolve tudo)"),
     ("Open Terminal", "Terminal acessível pelo Open WebUI.", "8002", "--terminal"),
     ("n8n", "Automações e tarefas agendadas.", "5678", "--n8n ou STUDIO_N8N=1"),
     ("Agente do Mac", "Ponte entre o n8n (no Docker) e o app Notas, o Calendário, os Lembretes e a voz do macOS.", "8003", "--agente (sobe sozinho com STUDIO_AGENTE_TOKEN)"),
     ("Docling", "Extração de texto de PDFs, com OCR.", "5001", "--docling ou STUDIO_DOCLING=1"),
-    ("Uptime Kuma", "Painel de disponibilidade dos serviços.", "3001", "start_heimdall.sh (STUDIO_MONITORING=0 desliga)"),
-    ("Dozzle", "Leitor de logs dos contêineres.", "8081", "start_heimdall.sh (STUDIO_MONITORING=0 desliga)"),
-    ("Emulador de AWS (Moto ou LocalStack)", "Para testar código de AWS sem custo.", "4566", "start_heimdall.sh (STUDIO_AWS_EMULATOR; sob demanda por padrão: studio lab --start liga e --stop desliga; STUDIO_AWS_EMULATOR_INICIO=auto sobe sempre)"),
+    ("Uptime Kuma", "Painel de disponibilidade dos serviços.", "3001", "start_studio.sh (STUDIO_MONITORING=0 desliga)"),
+    ("Dozzle", "Leitor de logs dos contêineres.", "8081", "start_studio.sh (STUDIO_MONITORING=0 desliga)"),
+    ("Emulador de AWS (Moto ou LocalStack)", "Para testar código de AWS sem custo.", "4566", "start_studio.sh (STUDIO_AWS_EMULATOR; sob demanda por padrão: studio lab --start liga e --stop desliga; STUDIO_AWS_EMULATOR_INICIO=auto sobe sempre)"),
     ("Studio Learn", "Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em studio_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Studio Lab.", "8019", "desligado por padrão: STUDIO_LEARN=1 no .env, com senha e código configurados"),
-    ("Studio Trading", "Mesa de operações em simulação (porta 8020), feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, histórico, sinais descritivos, limites por ordem e de perda por dia. Nenhuma ordem é enviada a corretora.", "8020", "start_heimdall.sh (liga com STUDIO_TRADING=1)"),
-    ("Studio Hub", "Documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende.", "8021", "start_heimdall.sh (liga com STUDIO_HUB=1)"),
+    ("Studio Trading", "Mesa de operações em simulação (porta 8020), feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, histórico, sinais descritivos, limites por ordem e de perda por dia. Nenhuma ordem é enviada a corretora.", "8020", "start_studio.sh (liga com STUDIO_TRADING=1)"),
+    ("Studio Hub", "Documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende.", "8021", "start_studio.sh (liga com STUDIO_HUB=1)"),
     ("Studio News", "Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8012", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Studio Games", "Jogos leves para leitor de tela no navegador: forca, senha (Mastermind), jogo da velha, número secreto, 2048, cinco letras, sudoku, xadrez, batalha naval, campo minado, caça-níqueis e quatro aventuras de texto com níveis de dificuldade. Cada jogada é lida em voz alta por uma região aria-live. Não guarda nada. Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8014", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
     ("Studio Finance", "Finanças pessoais em páginas de texto e tabelas: importa extratos OFX e CSV, classifica gastos por categoria com regras que você ajusta, mostra o resumo do mês, os maiores gastos, as tendências e alertas. Banco SQLite só no Mac (finance, fora do git); só sai do Mac o que você ligar de propósito: a conexão com os bancos pelo Meu Pluggy (dados passam pelos servidores dele) e a leitura de e-mail (somente leitura). Mesmo login do Studio Lab. Escuta só em 127.0.0.1.", "8016", "sobe sozinho com HEIMDALL_CLOUD_SENHA_HASH e HEIMDALL_CLOUD_TOTP_SEGREDO no .env"),
@@ -365,7 +365,7 @@ SCRIPTS = [
     ("studio_usuarios.py", "Usuários do Heimdall: donos e convidados no .env (quem entra em quais serviços) e a sincronização com o Cloudflare Access, com plano antes e aplicar depois; usado pela aba Usuários do Controls."),
     ("tests/account/teste_usuarios.py", "Testa a lista de usuários e a sincronização, com uma Cloudflare simulada (servidor local)."),
     ("studio_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e pausa e retoma o monitor de um serviço, com usuário e senha no .env ou, se o login do Kuma estiver desligado, sem senha."),
-    ("verificar_access.py", "Confere, sem entrar, se um endereço público está atrás do Cloudflare Access. O start_heimdall.sh o usa antes de ligar o login do Open WebUI pelo Access (STUDIO_WEBUI_ACCESS=1); studio chat --check roda à mão."),
+    ("verificar_access.py", "Confere, sem entrar, se um endereço público está atrás do Cloudflare Access. O start_studio.sh o usa antes de ligar o login do Open WebUI pelo Access (STUDIO_WEBUI_ACCESS=1); studio chat --check roda à mão."),
     ("tests/cloudflare/teste_verificar_access.py", "Testa o verificar_access.py com servidores locais que imitam o Access, um site aberto e um endereço sem resposta."),
     ("studio_catalogo.py", "Catalogação de notas do Studio Hub pela IA local: separa ideias, contatos, endereços, lembretes e eventos. Lembrete e evento com data vão direto para o Lembretes e o Calendário (com Desfazer); data duvidosa fica pendente de confirmação; ideias, contatos e endereços vão para o Notion; saúde e finanças nunca vão para o Notion."),
     ("studio_notion.py", "Cliente mínimo da API do Notion (token e três bancos no .env). Cria páginas de ideia, contato e endereço, arquiva no Desfazer; studio notion confere a ligação."),
@@ -449,24 +449,24 @@ SCRIPTS = [
 
 COMANDOS = [
     ("Subir e parar", [
-        ("Subir uma vez só, guardando o log e avisando quando tudo estiver no ar (aceita os argumentos do start_heimdall.sh)", "./subir.sh"),
+        ("Subir uma vez só, guardando o log e avisando quando tudo estiver no ar (aceita os argumentos do start_studio.sh)", "./subir.sh"),
         ("Ver agora o que está no ar, sem subir nada", "./subir.sh --status"),
         ("Ver as últimas linhas do log da subida atual", "./subir.sh --log"),
         ("Ver o log de um serviço (mcp, mcp_public, mcp_dados, agente, lab, notas, news, open_terminal, ingest)", "./subir.sh --log notas"),
         ("Listar os logs, todos na pasta logs/", "./subir.sh --logs"),
         ("Apagar os logs antigos que ficavam soltos na pasta do projeto", "./subir.sh --limpar"),
         ("Encerrar a subida em andamento e subir de novo", "./subir.sh --reiniciar"),
-        ("Subir tudo em segundo plano, com Open WebUI e Open Terminal", "nohup bash start_heimdall.sh --webui --terminal > heimdall.log 2>&1 &"),
-        ("Subir com n8n e agente do Mac", "nohup bash start_heimdall.sh --webui --terminal --n8n --agente > heimdall.log 2>&1 &"),
-        ("Subir e indexar os documentos novos antes", "nohup bash start_heimdall.sh --ingest > heimdall.log 2>&1 &"),
-        ("Atualizar as imagens Docker (com backup) ao subir", "nohup bash start_heimdall.sh --update > heimdall.log 2>&1 &"),
+        ("Subir tudo em segundo plano, com Open WebUI e Open Terminal", "nohup bash start_studio.sh --webui --terminal > studio.log 2>&1 &"),
+        ("Subir com n8n e agente do Mac", "nohup bash start_studio.sh --webui --terminal --n8n --agente > studio.log 2>&1 &"),
+        ("Subir e indexar os documentos novos antes", "nohup bash start_studio.sh --ingest > studio.log 2>&1 &"),
+        ("Atualizar as imagens Docker (com backup) ao subir", "nohup bash start_studio.sh --update > studio.log 2>&1 &"),
         ("Reiniciar só o agente do Mac", "pkill -f studio_agente.py   # depois suba o sistema como de costume"),
         ("Nova senha e novo código de 6 dígitos (valem para Lab, Notas, News e Saúde)", "python3 studio_acesso.py --tudo"),
         ("Trocar só a senha, mantendo o código de 6 dígitos", "python3 studio_acesso.py --senha"),
         ("Gerar só um novo código de 6 dígitos", "python3 studio_acesso.py --codigo"),
         ("Ver se a entrada pelo Cloudflare Access (aprovação no Microsoft Authenticator) está ligada", "python3 studio_cfaccess.py --status"),
         ("Reiniciar só o painel do emulador de AWS", "pkill -f studio_lab.py   # depois suba o sistema como de costume"),
-        ("Ver o final do log", "tail -30 heimdall.log"),
+        ("Ver o final do log", "tail -30 studio.log"),
     ]),
     ("Saúde: análises no terminal", [
         ("Importar o export.zip do app Saúde", "python3 studio_saude.py --importar ~/Downloads/export.zip"),
@@ -564,7 +564,7 @@ PROBLEMAS = [
     ("O comando de subir falha ou o terminal mostra 'command not found' depois dele",
      "Confira se digitou dois hifens nas opções (--terminal, não ---terminal) e se não colou texto extra no fim da linha. Digite o comando em vez de colar."),
     ("O Bark avisa 'não consegui gravar a nota'",
-     "O aviso traz o motivo entre parênteses. Veja também: grep -E \"recusado|erro em|inválido\" heimdall.log | tail -5. Depois de atualizar o studio_agente.py, reinicie o agente."),
+     "O aviso traz o motivo entre parênteses. Veja também: grep -E \"recusado|erro em|inválido\" studio.log | tail -5. Depois de atualizar o studio_agente.py, reinicie o agente."),
     ("Erro 'ascii codec can't encode' na busca do Gmail",
      "Corrigido: a consulta ao Gmail sai sem acentos. Atualize studio_email_oficial.py."),
     ("Falha de conexão TLS (SSL handshake failure) ao consultar o Querido Diário",
@@ -624,7 +624,7 @@ def pagina_comando_heimdall():
 <h1>Comando heimdall</h1>
 <p>O comando <code>heimdall</code> reúne o ecossistema no terminal do Mac, no formato <code>heimdall SERVIÇO --opção</code>: o comando é o serviço e o que ele faz vem em opções. Toda opção tem a forma longa, com dois hífens, e a curta, de uma letra com um hífen (<code>--help</code> e <code>-h</code>). Cada comando mostra só as suas variações com <code>heimdall COMANDO --help</code>. Esta página também abre com <code>studio help --doc</code>.</p>
 <section aria-labelledby="instalar"><h2 id="instalar">Instalar</h2>
-<ol><li>Na pasta do projeto: <code>bash scripts/instalar_comando_heimdall.sh</code>. Ele faz cópia do ~/.zshrc, remove uma função heimdall antiga e liga o heimdall.zsh do projeto.</li>
+<ol><li>Na pasta do projeto: <code>bash scripts/instalar_comando_studio.sh</code>. Ele faz cópia do ~/.zshrc, remove uma função heimdall antiga e liga o studio.zsh do projeto.</li>
 <li>Depois: <code>source ~/.zshrc</code>. A partir daí o comando se atualiza com <code>studio update</code>.</li>
 <li>Se o projeto não estiver em ~/StudioApps, defina STUDIO_DIR no ~/.zshrc antes da linha do source.</li></ol></section>
 <section aria-labelledby="indice"><h2 id="indice">Todos os comandos</h2><ul>{indice}</ul></section>
@@ -849,12 +849,12 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
         cm += "".join(comando(c, r) for r, c in itens) + "</section>"
     op = "".join("<li>%s</li>" % H(l) for l in ler_opcoes_start())
     pr = "".join("<h3>%s</h3><p>%s</p>" % (H(a), H(b)) for a, b in PROBLEMAS)
-    out["comando-heimdall.html"] = pagina("comando-heimdall.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções, com a forma longa e a curta de cada uma.", pagina_comando_heimdall())
+    out["comando-studio.html"] = pagina("comando-studio.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções, com a forma longa e a curta de cada uma.", pagina_comando_heimdall())
     out["comandos.html"] = pagina("comandos.html", "Comandos", "Comandos para subir, testar, instalar e manter o StudioLibre.", f"""
 <h1>Comandos</h1>
 <p>Todos os comandos são executados no Terminal, na pasta do projeto (<code>~/StudioApps</code>). Em cada um há um botão para copiar. Se for colar, confira que nada além do comando entrou na linha.</p>
 {cm}
-<section aria-labelledby="opcoes"><h2 id="opcoes">Opções do start_heimdall.sh</h2><details><summary>Texto de ajuda do script</summary><ul>{op}</ul></details></section>
+<section aria-labelledby="opcoes"><h2 id="opcoes">Opções do start_studio.sh</h2><details><summary>Texto de ajuda do script</summary><ul>{op}</ul></details></section>
 <section aria-labelledby="prob"><h2 id="prob">Problemas conhecidos</h2>{pr}</section>
 """)
 
@@ -920,7 +920,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <p>Tudo fica 30 dias na tabela noticias do banco pessoal (entra na cópia de segurança criptografada). O site mostra só as últimas 24 horas; o resto serve para consulta, pelo chat ou por SQL. Matérias com mais de 30 dias são apagadas sozinhas.</p></section>
 <section aria-labelledby="rss"><h2 id="rss">Feeds RSS para o iPhone</h2>
 <ol><li>Crie a chave: <code>python3 studio_news.py --token</code> e reinicie com <code>./subir.sh --reiniciar</code>. Isso mostra o endereço de um feed geral, de um feed por categoria e de um arquivo OPML que traz todos de uma vez.</li>
-<li>Se o app pedir um arquivo em vez de um endereço: <code>python3 studio_news.py --opml</code> grava <code>heimdall-news.opml</code> na pasta atual (com permissão 600). Ele leva a chave secreta dentro; importe no app e apague o arquivo.</li>
+<li>Se o app pedir um arquivo em vez de um endereço: <code>python3 studio_news.py --opml</code> grava <code>studio-news.opml</code> na pasta atual (com permissão 600). Ele leva a chave secreta dentro; importe no app e apague o arquivo.</li>
 <li>Para copiar um endereço sem digitar: <code>python3 studio_news.py --copiar geral</code> (ou <code>opml</code>, ou o nome de uma categoria). Depois cole no app de feeds; a área de transferência universal leva do Mac para o iPhone.</li>
 <li>Apps de feeds não digitam o código de 6 dígitos, por isso o endereço leva uma chave secreta. Quem tem o endereço lê os feeds; para trocar, rode o comando da chave de novo (os endereços antigos param de valer).</li>
 <li>O feed guarda 72 horas de notícias, cada item com o resumo de IA identificado. Matérias que ainda esperam o resumo só entram no feed depois de 2 horas, porque os apps de feeds não atualizam um item já baixado.</li></ol></section>
@@ -1130,7 +1130,7 @@ def main():
     paginas = gerar_paginas(ferr, modelos, mcp, fluxos)
     arquivos = dict(paginas)
     arquivos["style.css"] = CSS
-    arquivos["heimdall.js"] = JS
+    arquivos["studio.js"] = JS
     arquivos["favicon.svg"] = favicon_svg()
     arquivos["logo.svg"] = logo_arquivo(False)
     arquivos["logo-escuro.svg"] = logo_arquivo(True)

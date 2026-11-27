@@ -74,8 +74,8 @@ Detalhes em https://studiolibre.io/arquitetura.html.
 ## Instalação
 
 1. Clone o repositório e entre na pasta: `git clone https://github.com/studiolibre/StudioApps.git ~/StudioApps && cd ~/StudioApps`.
-2. Crie o ambiente Python em `venv` (o `start_heimdall.sh` o usa): `python3.12 -m venv venv`, e instale nele os pacotes que os scripts importam: fastmcp, litellm com proxy, feedparser, psutil, pypdf, requests, starlette, pyyaml e youtube-transcript-api.
-3. Crie o arquivo `.env` com as chaves (nunca vai para o repositório) e proteja-o: `chmod 600 .env`. As variáveis estão descritas no cabeçalho de `start_heimdall.sh`.
+2. Crie o ambiente Python em `venv` (o `start_studio.sh` o usa): `python3.12 -m venv venv`, e instale nele os pacotes que os scripts importam: fastmcp, litellm com proxy, feedparser, psutil, pypdf, requests, starlette, pyyaml e youtube-transcript-api.
+3. Crie o arquivo `.env` com as chaves (nunca vai para o repositório) e proteja-o: `chmod 600 .env`. As variáveis estão descritas no cabeçalho de `start_studio.sh`.
 4. Coloque os documentos pessoais em `knowledge/`, uma subpasta por tema.
 5. Suba o sistema (próxima seção).
 
@@ -83,7 +83,7 @@ Detalhes em https://studiolibre.io/arquitetura.html.
 
 ```
 ./subir.sh                 # sobe uma vez só, guarda o log em logs/ e avisa quando tudo estiver no ar
-./subir.sh --update        # os argumentos são os do start_heimdall.sh
+./subir.sh --update        # os argumentos são os do start_studio.sh
 ./subir.sh --status        # confere agora o que está no ar
 ./subir.sh --log           # últimas linhas do log da subida atual
 ./subir.sh --log notas     # idem, de um serviço (mcp, agente, lab, notas, open_terminal...)
@@ -93,12 +93,12 @@ Detalhes em https://studiolibre.io/arquitetura.html.
 docker ps --format '{{.Names}}: {{.Status}}'
 ```
 
-O `subir.sh` recusa iniciar uma segunda subida enquanto outra estiver em andamento, grava cada log em `logs/heimdall-AAAAMMDD-HHMMSS.log` (os 15 mais recentes) e aponta `heimdall.log` para o atual. Os logs de cada serviço também ficam em `logs/` (por exemplo `logs/notas_debug.log`), com os 5 anteriores de cada um em `logs/historico/`. Ao final avisa "Tudo no ar" com notificação e voz do macOS (`SUBIR_SOM=0` desliga). O comando antigo continua valendo: `nohup bash start_heimdall.sh --webui --terminal --n8n --agente > heimdall.log 2>&1 &`.
+O `subir.sh` recusa iniciar uma segunda subida enquanto outra estiver em andamento, grava cada log em `logs/studio-AAAAMMDD-HHMMSS.log` (os 15 mais recentes) e aponta `studio.log` para o atual. Os logs de cada serviço também ficam em `logs/` (por exemplo `logs/notas_debug.log`), com os 5 anteriores de cada um em `logs/historico/`. Ao final avisa "Tudo no ar" com notificação e voz do macOS (`SUBIR_SOM=0` desliga). O comando antigo continua valendo: `nohup bash start_studio.sh --webui --terminal --n8n --agente > studio.log 2>&1 &`.
 
-Opções: `--webui`, `--terminal`, `--n8n`, `--agente`, `--docling`, `--ingest`, `--update`. A lista completa está no cabeçalho de `start_heimdall.sh` e em https://studiolibre.io/comandos.html.
+Opções: `--webui`, `--terminal`, `--n8n`, `--agente`, `--docling`, `--ingest`, `--update`. A lista completa está no cabeçalho de `start_studio.sh` e em https://studiolibre.io/comandos.html.
 
 ## Organização das pastas
-Módulos Python, `subir.sh`, `start_heimdall.sh` e `heimdall.zsh` ficam na raiz. `tests/<serviço>/` guarda os testes (finance, health, news, notes, games, lab, cloudflare, account, controls, agent, chat, design, monitor, core); `guides/` os guias e ajudas; `prompts/` os prompts do chat; `scripts/` os scripts de shell; `flows/` os fluxos do n8n (basic, advanced, monitor); `games/` os jogos; `finance/` os dados do Finance no Mac (antes `dados_financas/`, renomeada sozinha na primeira subida). `./rodar_testes.sh` roda todos os testes; `./rodar_testes.sh finance` só os de uma pasta.
+Módulos Python, `subir.sh`, `start_studio.sh` e `studio.zsh` ficam na raiz. `tests/<serviço>/` guarda os testes (finance, health, news, notes, games, lab, cloudflare, account, controls, agent, chat, design, monitor, core); `guides/` os guias e ajudas; `prompts/` os prompts do chat; `scripts/` os scripts de shell; `flows/` os fluxos do n8n (basic, advanced, monitor); `games/` os jogos; `finance/` os dados do Finance no Mac (antes `dados_financas/`, renomeada sozinha na primeira subida). `./rodar_testes.sh` roda todos os testes; `./rodar_testes.sh finance` só os de uma pasta.
 
 ## Testar
 

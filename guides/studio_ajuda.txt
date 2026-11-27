@@ -5,7 +5,7 @@
 #     -x, --longa  <duas ou mais espaços>  o que faz
 #   Exemplos:
 #     heimdall comando --opção
-# É lida pelo heimdall.zsh (heimdall COMANDO --help e studio help) e por gerar_docs.py (página Comando heimdall do site e studio help --doc).
+# É lida pelo studio.zsh (heimdall COMANDO --help e studio help) e por gerar_docs.py (página Comando heimdall do site e studio help --doc).
 # Toda opção aceita também a forma curta de uma letra; -h e --help existem em todos os comandos.
 
 @ up | Sobe todo o ecossistema

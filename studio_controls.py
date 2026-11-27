@@ -191,7 +191,7 @@ def obter_shell() -> hshell.Shell:
     global _shell
     if _shell is None:
         qual = os.environ.get("STUDIO_CONTROLS_SHELL") or ("/bin/zsh" if os.path.exists("/bin/zsh") else os.environ.get("SHELL") or "/bin/bash")
-        inicio = '[ -n "$ZSH_VERSION" ] && [ -f "$STUDIO_DIR/heimdall.zsh" ] && source "$STUDIO_DIR/heimdall.zsh"; true'
+        inicio = '[ -n "$ZSH_VERSION" ] && [ -f "$STUDIO_DIR/studio.zsh" ] && source "$STUDIO_DIR/studio.zsh"; true'
         _shell = hshell.Shell(pasta=str(PROJECT_DIR), comando_shell=qual, ambiente={"STUDIO_DIR": str(PROJECT_DIR)}, inicio=inicio,
                               carregar_rc=os.environ.get("STUDIO_CONTROLS_RC", "1") != "0")
     if not _shell.vivo():
@@ -371,7 +371,7 @@ def pg_terminal(q: dict, sess: dict) -> tuple:
         '<section aria-labelledby="h-atalhos"><h2 id="h-atalhos" tabindex="-1">Atalhos de teclado</h2>'
         '<p>Funcionam em qualquer ponto desta página. No Windows e no Linux, use Alt no lugar de Option e Ctrl no lugar de Control ou Command; a lista completa está em Atalhos e dispositivos, na Ajuda.</p><ol>'
         '<li>Enter: executa o comando digitado na última linha, ou envia a resposta ao programa que está perguntando. Shift+Enter: nova linha dentro do comando.</li>'
-        '<li>Ctrl+I: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I completa (é o Tab do terminal de verdade). O Tab fica livre para mover o foco pela página. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/heimdall-ai/).</li>'
+        '<li>Ctrl+I: completa o nome de um comando (na primeira palavra) ou de um arquivo ou pasta. Se houver vários, completa o que for igual em todos e o leitor de tela diz as opções. Ctrl+I completa (é o Tab do terminal de verdade). O Tab fica livre para mover o foco pela página. Depois de cd ou pushd, completa só pastas e, se não houver na pasta atual, procura na pasta pessoal (cd heim vira cd ~/StudioApps/).</li>'
         '<li>Ctrl+C ou Option+Shift+I: interrompe o programa em execução. Sem programa rodando, Ctrl+C apaga a linha digitada.</li>'
         '<li>Option+Shift+C: copia a última saída. Control+Shift+1 até 9: copia as últimas 1 a 9 saídas. Control+Shift+0: copia todas. A caixa Incluir o comando vale para todas.</li>'
         '<li>Option+Shift+U: leva o cursor ao início da última saída; depois leia com a leitura contínua do leitor de tela (VO+A no VoiceOver) ou desça com a seta. Option+Shift+O: o leitor de tela lê o começo da última saída.</li>'

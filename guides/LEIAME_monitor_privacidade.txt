@@ -14,7 +14,7 @@ Limite: a memória só vale nas execuções agendadas das 9h. Um teste manual n�
 
 Instalar
 1. Copie para a raiz do projeto: scripts/instalar_monitor_privacidade.sh, guides/LEIAME_monitor_privacidade.txt e a pasta flows/monitor.
-2. Com o n8n, o SearXNG e o agente de Notas no ar (bash start_heimdall.sh), rode: bash scripts/instalar_monitor_privacidade.sh
+2. Com o n8n, o SearXNG e o agente de Notas no ar (bash start_studio.sh), rode: bash scripts/instalar_monitor_privacidade.sh
 3. Responda às perguntas: nome, outras grafias, e-mails, usuários, cidade, fatos que só combinam com você (empresa, área) e sites seus a ignorar. Não informe CPF, senhas nem documentos. O instalador recusa respostas que pareçam CPF.
 4. Suas respostas ficam só no .env (ignorado pelo git) e dentro do n8n. Para mudar depois: bash scripts/instalar_monitor_privacidade.sh --reconfigurar. Para tirar: bash scripts/instalar_monitor_privacidade.sh --remover.
 
@@ -44,7 +44,7 @@ Limites honestos
 4. O modelo pode errar a classificação. Por isso a nota separa confirmado, provável e homônimo, e o risco tem piso calculado por código.
 
 Problemas comuns
-1. O n8n não recebe JSON do SearXNG: confira "formats: - json" em searxng/settings.yml e reinicie com o start_heimdall.sh.
+1. O n8n não recebe JSON do SearXNG: confira "formats: - json" em searxng/settings.yml e reinicie com o start_studio.sh.
 2. Bark chega, mas a nota não aparece: o agente do Mac está fora do ar ou sem permissão no app Notas. Rode python3 studio_agente.py --teste.
 3. Muitos resultados antigos no primeiro dia: esperado. Eles não se repetem depois.
 
@@ -105,7 +105,7 @@ O que mudou:
 
 Como aplicar, no Terminal, na pasta do projeto, um comando por vez:
 1. Copie os arquivos para ~/StudioApps (por cima).
-2. Reinicie o agente do Mac, que carrega as rotas novas: pkill -f studio_agente.py  e depois suba o sistema como de costume (o start_heimdall.sh sobe o agente).
+2. Reinicie o agente do Mac, que carrega as rotas novas: pkill -f studio_agente.py  e depois suba o sistema como de costume (o start_studio.sh sobe o agente).
 3. Dê as permissões do Calendário e dos Lembretes, uma vez: python3 studio_agente.py --teste
    O macOS pede para autorizar o Terminal a controlar o Calendário e os Lembretes. Com o VoiceOver, o aviso aparece como janela; ative o botão OK ou Permitir. Se perder o aviso: Ajustes do Sistema > Privacidade e Segurança > Automação.
 4. Reinstale os fluxos do n8n: bash scripts/instalar_monitor_privacidade.sh --reconfigurar (Enter mantém as respostas anteriores).

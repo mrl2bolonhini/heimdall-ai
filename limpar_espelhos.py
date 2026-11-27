@@ -5,7 +5,7 @@ Quando o app Notas não informa a pasta de uma nota, o Second Brain antigo anali
 espelhos ("Cérebro: ...") e os digests ("Digest AAAA-MM-DD HHh") como se fossem notas suas. Este script
 remove só isso, em três lugares, e não toca nas suas notas:
   1. a base vetorial (Qdrant, coleção studio_notas): pontos cujo título começa com "Cérebro:" ou "Digest ";
-  2. os arquivos cerebro-cerebro-*.md e cerebro-digest-*.md do cofre (~/heimdall-ai/brain/heimdall-cerebro);
+  2. os arquivos cerebro-cerebro-*.md e cerebro-digest-*.md do cofre (~/StudioApps/brain/heimdall-cerebro);
   3. as notas "Cérebro: Cérebro: ..." e "Cérebro: Digest ..." no app Notas (vão para "Apagadas Recentemente").
 
 Uso (na pasta do projeto):   python3 limpar_espelhos.py

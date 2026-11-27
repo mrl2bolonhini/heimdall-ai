@@ -2,7 +2,7 @@
 # Sobe o StudioLibre UMA vez só, guarda o log de cada subida e avisa quando tudo estiver no ar.
 #
 #   ./subir.sh                    sobe com --webui --terminal (o que você usa hoje)
-#   ./subir.sh --update           sobe com os argumentos que você passar (os mesmos do start_heimdall.sh)
+#   ./subir.sh --update           sobe com os argumentos que você passar (os mesmos do start_studio.sh)
 #   ./subir.sh --status           só confere agora o que está no ar, sem subir nada
 #   ./subir.sh --log              mostra as últimas 40 linhas do log da subida atual
 #   ./subir.sh --log lab          idem, do serviço indicado (mcp, mcp_public, mcp_dados, agente, lab, learn, trading, memory, news, saude_painel, jogos, account, finance, controls, open_terminal, ingest)
@@ -12,8 +12,8 @@
 #
 # O que ele faz:
 #   1. Recusa subir se já houver uma subida em andamento (era isso que derrubava uma tentativa com a outra).
-#   2. Grava o log em logs/heimdall-AAAAMMDD-HHMMSS.log e aponta heimdall.log para o da subida atual. Os logs anteriores
-#      ficam guardados (os 15 mais recentes). Os logs de cada serviço também ficam em logs/ (o start_heimdall.sh guarda os 5
+#   2. Grava o log em logs/studio-AAAAMMDD-HHMMSS.log e aponta studio.log para o da subida atual. Os logs anteriores
+#      ficam guardados (os 15 mais recentes). Os logs de cada serviço também ficam em logs/ (o start_studio.sh guarda os 5
 #      anteriores de cada um em logs/historico/).
 #   3. Confere, de poucos em poucos segundos, cada serviço que deve estar no ar nesta subida e conta o que já subiu.
 #   4. No fim avisa: "Tudo no ar" (com aviso do macOS e voz) ou lista o que ficou faltando e onde olhar no log.
@@ -23,7 +23,7 @@
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR" || exit 1
-SCRIPT="${SUBIR_SCRIPT:-$PROJECT_DIR/start_heimdall.sh}"
+SCRIPT="${SUBIR_SCRIPT:-$PROJECT_DIR/start_studio.sh}"
 LOGS="$PROJECT_DIR/logs"
 ESPERA="${SUBIR_ESPERA:-900}"
 
@@ -38,7 +38,7 @@ case "$1" in
             [ -n "$alvo" ] && { echo "== $alvo"; tail -n 40 "$alvo"; exit 0; }
             echo "Não achei log para '$2'. Veja os nomes com: ./subir.sh --logs"; exit 1
         fi
-        tail -n 40 "$PROJECT_DIR/heimdall.log" 2> /dev/null || echo "Ainda não há log. Rode ./subir.sh"; exit 0 ;;
+        tail -n 40 "$PROJECT_DIR/studio.log" 2> /dev/null || echo "Ainda não há log. Rode ./subir.sh"; exit 0 ;;
     --logs) ls -lt "$LOGS" 2> /dev/null | tail -n +2 || echo "Ainda não há logs."; exit 0 ;;
     --limpar)
         n=0
@@ -68,7 +68,7 @@ ARGS=("$@")
 tem_arg() { local a; for a in "${ARGS[@]}"; do [ "$a" = "$1" ] && return 0; done; return 1; }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# O que deve estar no ar nesta subida (as mesmas condições do start_heimdall.sh)
+# O que deve estar no ar nesta subida (as mesmas condições do start_studio.sh)
 # Cada linha: nome|tipo|alvo   (tipo: tcp = porta aberta; http = responde com sucesso)
 # ---------------------------------------------------------------------------------------------------------------------
 montar_lista() {
@@ -143,7 +143,7 @@ avisar() {  # $1 = texto curto para a notificação e a voz
 }
 
 subida_em_andamento() {
-    pgrep -f "start_heimdall.sh" > /dev/null 2>&1 && return 0
+    pgrep -f "start_studio.sh" > /dev/null 2>&1 && return 0
     local p
     p="$(cat "$LOGS/subida.pid" 2> /dev/null)"
     [ -n "$p" ] && kill -0 "$p" 2> /dev/null
@@ -160,7 +160,7 @@ if [ "$MODO" = "status" ]; then
         IFS='|' read -r nome tipo alvo <<< "$item"
         if esta_no_ar "$tipo" "$alvo"; then echo "No ar:   $nome"; else echo "Parado:  $nome"; faltam=$((faltam+1)); fi
     done
-    if subida_em_andamento; then echo "Há uma subida em andamento (start_heimdall.sh rodando)."; else echo "Nenhuma subida em andamento."; fi
+    if subida_em_andamento; then echo "Há uma subida em andamento (start_studio.sh rodando)."; else echo "Nenhuma subida em andamento."; fi
     if [ "$faltam" -eq 0 ]; then echo "Tudo no ar: ${#LISTA[@]} serviços."; exit 0; fi
     echo "Faltam $faltam de ${#LISTA[@]} serviços."
     exit 1
@@ -172,7 +172,7 @@ fi
 if subida_em_andamento; then
     if [ "$MODO" = "reiniciar" ]; then
         echo "Encerrando a subida em andamento..."
-        pkill -f "start_heimdall.sh"
+        pkill -f "start_studio.sh"
         p="$(cat "$LOGS/subida.pid" 2> /dev/null)"
         [ -n "$p" ] && kill "$p" 2> /dev/null
         sleep 3
@@ -186,14 +186,14 @@ if subida_em_andamento; then
 fi
 
 mkdir -p "$LOGS"
-# Um heimdall.log solto de antes vira parte do histórico, em vez de ser sobrescrito.
-if [ -f heimdall.log ] && [ ! -L heimdall.log ]; then
-    mv heimdall.log "$LOGS/heimdall-anterior-$(date -r heimdall.log +%Y%m%d-%H%M%S 2>/dev/null || date +%Y%m%d-%H%M%S).log"
+# Um studio.log solto de antes vira parte do histórico, em vez de ser sobrescrito.
+if [ -f studio.log ] && [ ! -L studio.log ]; then
+    mv studio.log "$LOGS/studio-anterior-$(date -r studio.log +%Y%m%d-%H%M%S 2>/dev/null || date +%Y%m%d-%H%M%S).log"
 fi
-LOG="$LOGS/heimdall-$(date +%Y%m%d-%H%M%S).log"
-ln -sfn "$LOG" heimdall.log
+LOG="$LOGS/studio-$(date +%Y%m%d-%H%M%S).log"
+ln -sfn "$LOG" studio.log
 # Guarda só os 15 logs mais recentes.
-ls -1t "$LOGS"/heimdall-*.log 2> /dev/null | tail -n +16 | while read -r velho; do rm -f "$velho"; done
+ls -1t "$LOGS"/studio-*.log 2> /dev/null | tail -n +16 | while read -r velho; do rm -f "$velho"; done
 
 nohup bash "$SCRIPT" "${ARGS[@]}" >> "$LOG" 2>&1 &
 PID=$!
@@ -204,7 +204,7 @@ echo "Esperando até $((ESPERA / 60)) minutos. Vou avisar cada serviço que fica
 declare -a JA
 ok_n=0
 inicio=$SECONDS
-# Antes de contar serviços, espera o start_heimdall.sh terminar de liberar as portas (etapa 1). Assim, restos de uma
+# Antes de contar serviços, espera o start_studio.sh terminar de liberar as portas (etapa 1). Assim, restos de uma
 # subida anterior que ainda estejam de pé não contam como "no ar".
 MARCA="${SUBIR_MARCA:-\[1/7\]}"
 while ! grep -q "$MARCA" "$LOG" 2> /dev/null; do

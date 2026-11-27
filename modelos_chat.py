@@ -154,7 +154,7 @@ def texto_guia():
     sem_filtro = [c["id"] for c in CONEXOES if not excluidas(c)]
     L = ["MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos): GUIA DA PRIMEIRA CONFIGURAÇÃO", "",
          "Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.", "",
-         "Serve para quem ainda não importou nada. Todos os arquivos estão em ~/heimdall-ai/openwebui/. Tudo leva uns 15 minutos. Os passos são de teclado e de terminal, pensados para o VoiceOver.", "",
+         "Serve para quem ainda não importou nada. Todos os arquivos estão em ~/StudioApps/openwebui/. Tudo leva uns 15 minutos. Os passos são de teclado e de terminal, pensados para o VoiceOver.", "",
          "ANTES DE COMEÇAR",
          "  1. Atualize o StudioLibre e reinicie: studio update --restart. Isso sobe o LiteLLM, que é de onde o Open WebUI tira a lista de modelos.",
          "  2. Para o chat responder pela nuvem (rápido), ligue o interruptor e reinicie: studio env --set STUDIO_NUVEM 1, depois studio restart. Confira com studio cloudai. Sem a nuvem, o chat usa os modelos locais do Ollama e fica lento. Para voltar ao local: studio env --set STUDIO_NUVEM 0 e studio restart.",
@@ -162,7 +162,7 @@ def texto_guia():
          "PASSO 1: AS CONEXÕES DE FERRAMENTAS (%d arquivos)" % len(CONEXOES),
          "  1. Abra Configurações do administrador, Integrações, Servidores de ferramentas externos.",
          "  2. Use Importar, uma vez para cada arquivo da pasta openwebui/ferramentas/: " + ", ".join(c["id"] + ".json" for c in CONEXOES) + ". Um arquivo por conexão, porque o Open WebUI importa só a primeira conexão de cada arquivo. Se o Open WebUI já tiver uma conexão com o mesmo ID (por exemplo internet), apague a antiga antes de importar, para não duplicar; se o convidado usava essa conexão, reaplique o acesso dele depois.",
-         "  3. O filtro de funções NÃO vem na importação (o Open WebUI não o exporta nem o importa). Ele é o que impede cada modelo de enxergar funções que não são do seu assunto. Nas conexões " + ", ".join(com_filtro) + ", abra a edição e cole a lista no campo Lista de filtros de nomes de funções. Para copiar sem digitar, no Terminal: pbcopy < ~/heimdall-ai/openwebui/filtro_ID.txt (troque ID pelo nome da conexão) e depois Command+V no campo. Sem filtro (usa todas as funções do servidor): " + ", ".join(sem_filtro) + ".",
+         "  3. O filtro de funções NÃO vem na importação (o Open WebUI não o exporta nem o importa). Ele é o que impede cada modelo de enxergar funções que não são do seu assunto. Nas conexões " + ", ".join(com_filtro) + ", abra a edição e cole a lista no campo Lista de filtros de nomes de funções. Para copiar sem digitar, no Terminal: pbcopy < ~/StudioApps/openwebui/filtro_ID.txt (troque ID pelo nome da conexão) e depois Command+V no campo. Sem filtro (usa todas as funções do servidor): " + ", ".join(sem_filtro) + ".",
          "  4. Salve cada conexão e use o botão de verificar conexão. As que usam o servidor de dados (porta 8004) e o do Mac (porta 8000) só respondem com o StudioLibre ligado.", "",
          "PASSO 2: OS MODELOS (%d)" % len(MODELOS),
          "  0. Atalho: crie uma chave em Configurações, Conta, Chaves de API (conta administradora) e rode studio chat --import; ele cria ou atualiza as conexões de ferramentas (já com o filtro de funções) e os 7 modelos com os prompts padrão, sem importar arquivo nem colar filtro. Só as conexões: studio chat --tools; só os modelos: studio chat --models. A chave pode ficar em STUDIO_WEBUI_API_KEY no .env ou ser digitada na hora.",
@@ -203,7 +203,7 @@ def texto_guia():
         if m.get("obs"):
             L.append("   Observação: " + m["obs"])
         L.append("")
-    L += ["Para copiar um prompt sem digitar: pbcopy < ~/heimdall-ai/NOME_DO_ARQUIVO.txt e colar com Command+V no campo de instrução de sistema.", "",
+    L += ["Para copiar um prompt sem digitar: pbcopy < ~/StudioApps/NOME_DO_ARQUIVO.txt e colar com Command+V no campo de instrução de sistema.", "",
           "AJUSTES EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)"]
     for m in MODELOS:
         L.append("  %s: temperatura %s." % (m["nome"], str(m["temperatura"]).replace(".", ",")))

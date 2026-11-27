@@ -16,7 +16,7 @@ func tirarCodigos(_ texto: String) -> String {
 func rodarHeimdall(_ args: [String]) -> (String, Int32) {
     let p = Process()
     p.executableURL = URL(fileURLWithPath: "/bin/zsh")
-    let roteiro = "export STUDIO_DIR=\"$1\"; shift; source \"$STUDIO_DIR/heimdall.zsh\" 2>/dev/null; studio \"$@\""
+    let roteiro = "export STUDIO_DIR=\"$1\"; shift; source \"$STUDIO_DIR/studio.zsh\" 2>/dev/null; studio \"$@\""
     p.arguments = ["-c", roteiro, "studio", pastaHeimdall] + args
     var ambiente = ProcessInfo.processInfo.environment
     ambiente["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:" + (ambiente["PATH"] ?? "")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Studio News: notícias das últimas 24 horas, com resumo feito por IA, e feeds RSS para o iPhone.
 
-O que faz (tudo em um processo só, que o start_heimdall.sh sobe quando há senha e código no .env):
+O que faz (tudo em um processo só, que o start_studio.sh sobe quando há senha e código no .env):
   - De 30 em 30 minutos lê os feeds listados em noticias_fontes.json (as mesmas fontes do Digest), tira repetidas,
     traduz os títulos em inglês e pede a um modelo local um resumo curto de cada matéria. Tudo vai para o banco pessoal
     (tabela noticias) e fica 30 dias para consulta; o site mostra só as últimas 24 horas.
@@ -16,7 +16,7 @@ Chave dos feeds (troque quando quiser; os endereços antigos deixam de funcionar
     python3 studio_news.py --copiar geral   (ou opml, ou o nome da categoria) copia o endereço para a área de transferência
 
 Outros comandos:
-    python3 studio_news.py --opml [ARQUIVO]   grava um arquivo OPML com todos os feeds (padrão: heimdall-news.opml na pasta atual)
+    python3 studio_news.py --opml [ARQUIVO]   grava um arquivo OPML com todos os feeds (padrão: studio-news.opml na pasta atual)
     python3 studio_news.py --uma-vez     faz só uma atualização agora, mostra o resultado e sai
 
 Segurança: escuta só em 127.0.0.1; o site exige senha forte + código de 6 dígitos; só nomes de site permitidos; somente leitura;
@@ -1352,7 +1352,7 @@ def main() -> None:
     ap.add_argument("--token", action="store_true", help="gera (ou troca) a chave dos feeds RSS no .env e mostra os endereços")
     ap.add_argument("--urls", action="store_true", help="mostra os endereços dos feeds")
     ap.add_argument("--copiar", metavar="FEED", help="copia o endereço de um feed (geral, opml ou categoria) para a área de transferência")
-    ap.add_argument("--opml", nargs="?", const="heimdall-news.opml", metavar="ARQUIVO", help="grava um arquivo OPML com todos os feeds (padrão: heimdall-news.opml)")
+    ap.add_argument("--opml", nargs="?", const="studio-news.opml", metavar="ARQUIVO", help="grava um arquivo OPML com todos os feeds (padrão: studio-news.opml)")
     ap.add_argument("--fontes", nargs="?", const="", metavar="FILTRO", help="baixa cada feed agora e mostra quantos itens ele traz e a idade deles (não grava nada); com um nome ou categoria, só essas fontes e os 3 itens mais novos")
     ap.add_argument("--fila", action="store_true", help="mostra quantas notícias esperam resumo de IA e quanto falta")
     ap.add_argument("--uma-vez", action="store_true", help="faz só uma atualização agora e sai")

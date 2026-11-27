@@ -1,14 +1,14 @@
 Subida padrão
-nohup bash start_heimdall.sh --webui --terminal > heimdall.log 2>&1 &tail -20 heimdall.log
+nohup bash start_studio.sh --webui --terminal > studio.log 2>&1 &tail -20 studio.log
 
 Sobe tudo e verifica update do Docker
-nohup bash start_heimdall.sh --webui --terminal --update > heimdall.log 2>&1 &
+nohup bash start_studio.sh --webui --terminal --update > studio.log 2>&1 &
 
 Confere update
-grep -n "atualizada\|Backup" heimdall.log
+grep -n "atualizada\|Backup" studio.log
 
 Últimas linhas dos logos de subida
-tail -n 10 heimdall.log
+tail -n 10 studio.log
 
 URL do Uptime com subdomínio
 https://status.studiolibre.io

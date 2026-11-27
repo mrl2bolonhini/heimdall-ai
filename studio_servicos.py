@@ -5,12 +5,12 @@ Quem usa: o Controls (aba Serviços). Para um serviço novo aparecer lá, acresc
 
 Como liga e desliga:
   - "py": script Python do StudioLibre. Desliga encerrando quem escuta na porta; liga com o python do venv, a porta no ambiente e o log em logs/.
-  - "docker": contêiner. Desliga com docker stop e liga com docker start (o contêiner precisa existir: a primeira vez é do start_heimdall.sh).
+  - "docker": contêiner. Desliga com docker stop e liga com docker start (o contêiner precisa existir: a primeira vez é do start_studio.sh).
   - "cmd": comando próprio (LiteLLM, Ollama).
   - sem "liga": só desliga aqui; para ligar de novo use studio restart.
 O que você desligou fica em .heimdall_desligados.json. Um vigia (reconciliar) confere de 30 em 30 segundos e derruba de novo o que
 deveria estar desligado, por exemplo depois de um "studio update --restart", mas só depois de a subida terminar (3 minutos), para
-não atrapalhar a espera do start_heimdall.sh. Ligar um serviço tira ele da lista de desligados.
+não atrapalhar a espera do start_studio.sh. Ligar um serviço tira ele da lista de desligados.
 O Controls não aparece como desligável: desligá-lo cortaria o acesso ao painel.
 """
 import json
@@ -82,9 +82,9 @@ def catalogo() -> list:
 
 
 def parar_tudo() -> list:
-    """Encerra a subida (start_heimdall.sh) e desliga todos os serviços do catálogo. O Controls fica de pé, para você poder religar (Start).
+    """Encerra a subida (start_studio.sh) e desliga todos os serviços do catálogo. O Controls fica de pé, para você poder religar (Start).
     Não marca nada como desligado de propósito: o Start sobe tudo de novo."""
-    _rodar(["pkill", "-f", "start_heimdall.sh"], 8)
+    _rodar(["pkill", "-f", "start_studio.sh"], 8)
     cat = catalogo()
     resultados = []
     import concurrent.futures

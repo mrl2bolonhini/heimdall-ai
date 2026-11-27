@@ -3,7 +3,7 @@ AUTOMAÇÕES AVANÇADAS DO HEIMDALL-AI
 
 Conteúdo do pacote (tudo vai para a pasta ~/StudioApps, por cima dos arquivos atuais):
 1. studio_agente.py: agente do Mac. Ponte entre o n8n (no Docker) e o app Notas. Só usa a biblioteca padrão do Python.
-2. start_heimdall.sh: versão atualizada. Sobe o agente sozinho quando STUDIO_AGENTE_TOKEN existe no .env (ou com --agente).
+2. start_studio.sh: versão atualizada. Sobe o agente sozinho quando STUDIO_AGENTE_TOKEN existe no .env (ou com --agente).
 3. scripts/instalar_automacoes_avancadas.sh: instala os três fluxos no n8n e confere as dependências.
 4. scripts/instalar_hook_gitops.sh: liga um repositório git ao GitOps (instala o gancho pre-push).
 5. flows/advanced/: os fluxos (6 GitOps, 7 Digest, 8 Second Brain, 9 aviso de falha do GitOps).
@@ -13,7 +13,7 @@ PASSO A PASSO
 1. Copie os arquivos e dê permissão de execução:
    unzip -o ~/Downloads/automacoes_avancadas.zip -d ~/StudioApps
    cd ~/StudioApps
-   chmod +x start_heimdall.sh scripts/instalar_automacoes_avancadas.sh scripts/instalar_hook_gitops.sh
+   chmod +x start_studio.sh scripts/instalar_automacoes_avancadas.sh scripts/instalar_hook_gitops.sh
 
 2. Garanta o modelo de embeddings (uma vez): ollama pull nomic-embed-text
 
@@ -28,7 +28,7 @@ PASSO A PASSO
    repositórios escolhidos, com Contents e Pull requests em "Read and write". Aperte Enter sem colar nada para pular o GitOps.
 
 5. Reinicie o ecossistema para o agente subir com o token novo:
-   nohup bash start_heimdall.sh > heimdall.log 2>&1 &
+   nohup bash start_studio.sh > studio.log 2>&1 &
 
 6. Ligue um repositório ao GitOps (repita para cada repositório; depois rode de novo o passo 4):
    bash scripts/instalar_hook_gitops.sh ~/caminho/do/repositorio
@@ -98,7 +98,7 @@ agendadas; testes manuais por "execute" não gravam esse estado e podem repetir 
 PROBLEMAS COMUNS
 ----------------
 1. Agente fora do ar: veja logs/agente_debug.log. Confira com: curl -s http://localhost:8003/saude
-2. O n8n não alcança o agente: ponha STUDIO_AGENTE_HOST=0.0.0.0 no .env e rode o start_heimdall.sh de novo.
+2. O n8n não alcança o agente: ponha STUDIO_AGENTE_HOST=0.0.0.0 no .env e rode o start_studio.sh de novo.
    (O agente exige o token em todas as rotas, menos /saude, mesmo escutando em todas as interfaces.)
 3. "Not authorized" ao ler notas: autorize o Terminal em Ajustes do Sistema > Privacidade e Segurança > Automação > Notas.
 4. O app Notas abre sozinho: o agente o consulta por AppleScript; ele abre em segundo plano. É esperado.
@@ -204,4 +204,4 @@ Para trazer o histórico de saúde que já está no n8n (uma vez): python import
 Para conferir o que há no banco: python studio_banco.py
 Para consultar: python studio_banco.py --sql "SELECT dia, valor FROM saude_diaria WHERE metrica='hrv' ORDER BY dia DESC LIMIT 14"
 Só SELECT é aceito. Os fluxos mudaram: reinicie o agente e rode de novo bash scripts/instalar_automacoes_avancadas.sh e bash scripts/instalar_monitor_privacidade.sh (eles levam a memória dos fluxos para a versão nova). Antes, rode o importar_saude_n8n.py, por garantia.
-Perguntar ao banco pelo chat. O Open WebUI não recebe as ferramentas sozinho: ligue o servidor MCP de dados (start_heimdall.sh o sobe na porta 8004, só em 127.0.0.1) em Configurações > Administração > Integrações > Servidores de ferramentas externos > Adicionar conexão: tipo "MCP (HTTP em fluxo)", endereço http://host.docker.internal:8004/mcp, autenticação nenhuma, acesso restrito ao administrador. Depois, em cada conversa, ligue a ferramenta no menu "+". Se o modelo ainda ignorar a ferramenta, em Administração > Modelos > o modelo > Parâmetros avançados > Chamada de funções, escolha "Nativa". Exemplos de perguntas: "como foi meu sono nas últimas duas semanas", "o que apareceu nos diários oficiais sobre mim este mês", "quais e-mails suspeitos chegaram", "o que o Second Brain ligou aos meus estudos de dados". As ferramentas são banco_resumo, banco_consultar, banco_buscar e saude_historico.
+Perguntar ao banco pelo chat. O Open WebUI não recebe as ferramentas sozinho: ligue o servidor MCP de dados (start_studio.sh o sobe na porta 8004, só em 127.0.0.1) em Configurações > Administração > Integrações > Servidores de ferramentas externos > Adicionar conexão: tipo "MCP (HTTP em fluxo)", endereço http://host.docker.internal:8004/mcp, autenticação nenhuma, acesso restrito ao administrador. Depois, em cada conversa, ligue a ferramenta no menu "+". Se o modelo ainda ignorar a ferramenta, em Administração > Modelos > o modelo > Parâmetros avançados > Chamada de funções, escolha "Nativa". Exemplos de perguntas: "como foi meu sono nas últimas duas semanas", "o que apareceu nos diários oficiais sobre mim este mês", "quais e-mails suspeitos chegaram", "o que o Second Brain ligou aos meus estudos de dados". As ferramentas são banco_resumo, banco_consultar, banco_buscar e saude_historico.

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Instala o comando "heimdall" no zsh: tira do ~/.zshrc a função antiga (com cópia de segurança) e liga o heimdall.zsh deste projeto.
-# Uso: bash scripts/instalar_comando_heimdall.sh      depois:  source ~/.zshrc
+# Instala o comando "studio" no zsh: tira do ~/.zshrc a função antiga (com cópia de segurança) e liga o studio.zsh deste projeto.
+# Uso: bash scripts/instalar_comando_studio.sh      depois:  source ~/.zshrc
 cd "$(dirname "$0")/.." || exit 1
 PROJ="$(pwd)"
 RC="$HOME/.zshrc"
 [ -f "$RC" ] || touch "$RC"
-cp "$RC" "$RC.antes-do-heimdall.$(date +%Y%m%d-%H%M%S)" && echo "Cópia de segurança do .zshrc criada."
+cp "$RC" "$RC.antes-do-studio.$(date +%Y%m%d-%H%M%S)" && echo "Cópia de segurança do .zshrc criada."
 python3 - "$RC" <<'PY'
 import re, sys
 rc = sys.argv[1]
@@ -33,8 +33,8 @@ grep -q "heimdall-comando" "$RC" || {
         echo ""
         echo "# heimdall-comando: comando unificado do ecossistema StudioLibre"
         echo "export STUDIO_DIR=\"$PROJ\""
-        echo "source \"\$STUDIO_DIR/heimdall.zsh\""
+        echo "source \"\$STUDIO_DIR/studio.zsh\""
     } >> "$RC"
     echo "Linhas adicionadas ao .zshrc."
 }
-echo "Pronto. Rode: source ~/.zshrc   e depois: heimdall ajuda"
+echo "Pronto. Rode: source ~/.zshrc   e depois: studio help"

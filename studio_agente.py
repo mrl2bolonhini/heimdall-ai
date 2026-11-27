@@ -3,7 +3,7 @@
 
 Só usa a biblioteca padrão do Python. Escuta em 127.0.0.1:8003 (STUDIO_AGENTE_HOST /
 STUDIO_AGENTE_PORT mudam isso) e exige o cabeçalho X-Heimdall-Token igual a
-STUDIO_AGENTE_TOKEN (o start_heimdall.sh gera e guarda no .env).
+STUDIO_AGENTE_TOKEN (o start_studio.sh gera e guarda no .env).
 
 Rotas:
     GET  /saude                         sem token; diz se o agente está de pé

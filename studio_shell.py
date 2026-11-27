@@ -72,7 +72,7 @@ class Shell:
         self.comando_shell = comando_shell or os.environ.get("SHELL") or "/bin/bash"
         self.ambiente_extra = ambiente or {}
         self.carregar_rc = carregar_rc            # True: lê o .zshrc ou .bashrc do usuário (apelidos, PATH); False: shell limpo (testes)
-        self.inicio = inicio                      # comandos de preparo, rodados antes do primeiro bloco (por exemplo, carregar o heimdall.zsh)
+        self.inicio = inicio                      # comandos de preparo, rodados antes do primeiro bloco (por exemplo, carregar o studio.zsh)
         self.marca = "HD" + secrets.token_hex(6)
         self._re_marca = re.compile(r"@@" + self.marca + r"\|(\d+)\|([^|\n]*)\|@@\n?")
         self._lock = threading.RLock()

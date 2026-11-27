@@ -6,7 +6,7 @@ Uso:
     python studio_mcp.py --group dados    # só o banco pessoal, para o Open WebUI, 127.0.0.1:8004
     python studio_mcp.py                  # todas juntas, porta 8000 (comportamento antigo)
 
-O start_heimdall.sh sobe os grupos "mac" e "public" em dois processos. O LiteLLM
+O start_studio.sh sobe os grupos "mac" e "public" em dois processos. O LiteLLM
 se conecta aos dois e os repassa ao open-client pela porta 9000. O Open WebUI
 dos convidados deve se conectar só ao grupo "public" (porta 8001).
 """

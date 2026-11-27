@@ -47,5 +47,5 @@ Ordem sugerida para os jogos de cassino: blackjack, roleta, bacará, poker carib
 
 Observações
 - Jogos de terceiros do boletim Audiogames.net não foram testados e não têm licença aberta confirmada. Por isso a ideia é fazer versões nossas, nunca copiar.
-- Ao concluir cada jogo, atualizar: studio_jogos.py (catálogo e grupo), heimdall.zsh e guides/studio_ajuda.txt (lista e Tab), gerar_docs.py (página Jogos), README, CHANGELOG e os testes.
+- Ao concluir cada jogo, atualizar: studio_jogos.py (catálogo e grupo), studio.zsh e guides/studio_ajuda.txt (lista e Tab), gerar_docs.py (página Jogos), README, CHANGELOG e os testes.
 - Depois de cada um: testar na develop, e só avançar a main com o seu aval.

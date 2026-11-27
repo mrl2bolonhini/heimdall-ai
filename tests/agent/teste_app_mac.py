@@ -61,7 +61,7 @@ confere("Swift: o app só lê interruptores e a porta do .env, nunca chaves", al
 confere("Swift: rótulo de acessibilidade na barra de menus", "setAccessibilityLabel" in swift)
 confere("Swift: não tem segredo, token nem chave", not re.search(r"(hc_|sk-|Bearer|API_TOKEN|password|senha)", swift, re.I))
 confere("Swift: chama só o comando heimdall (nada de rm, sudo ou curl)", not re.search(r'"(rm|sudo|curl|sh)"', swift) and "sudo" not in swift)
-confere("Swift: cada comando usa subcomandos que existem", all(c in (AQUI / "heimdall.zsh").read_text(encoding="utf-8") for c in ("status)", "restart)", "mailbox)", "usage)", "update)", "urls)", "env)")))
+confere("Swift: cada comando usa subcomandos que existem", all(c in (AQUI / "studio.zsh").read_text(encoding="utf-8") for c in ("status)", "restart)", "mailbox)", "usage)", "update)", "urls)", "env)")))
 confere("script: sintaxe de shell válida", subprocess.run(["bash", "-n", str(AQUI / "scripts/construir_app_mac.sh")]).returncode == 0)
 confere("script: fixa o alvo em macOS 12 (evita o erro -10825)", "-target" in sh and "apple-macos12.0" in sh)
 confere("script: assinatura local (ad hoc), sem conta paga", "codesign --force --deep --sign -" in sh)

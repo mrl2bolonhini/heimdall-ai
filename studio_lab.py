@@ -19,7 +19,7 @@ Configuração (tudo no .env):
     python3 studio_acesso.py --senha    só troca a senha
     python3 studio_acesso.py --codigo   só gera um novo código TOTP (perdeu o app, por exemplo)
     (python3 studio_lab.py --definir-senha e --novo-codigo continuam funcionando)
-    python3 studio_lab.py                   sobe o painel (o start_heimdall.sh faz isso sozinho se houver senha e código)
+    python3 studio_lab.py                   sobe o painel (o start_studio.sh faz isso sozinho se houver senha e código)
 
 Variáveis opcionais: STUDIO_LAB_PORT (8010), STUDIO_LAB_HOST (127.0.0.1), STUDIO_LAB_ENDPOINT
 (http://127.0.0.1:4566), STUDIO_LAB_HOSTS (lab.studiolibre.io,localhost,127.0.0.1), HEIMDALL_CLOUD_SESSAO_HORAS (8),

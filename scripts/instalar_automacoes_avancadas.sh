@@ -4,7 +4,7 @@
 #   7. Digest hiperpersonalizado (8h e 18h -> feeds -> triagem -> "por que importa para mim" -> Notas; sem aviso no Bark, quem avisa é o Studio News)
 #   8. Second Brain         (app Notas -> conceitos, tags, conexões e lacunas -> nota espelho + base vetorial)
 #
-# Uso, na pasta do projeto, com o n8n no ar (start_heimdall.sh com --n8n ou STUDIO_N8N=1):
+# Uso, na pasta do projeto, com o n8n no ar (start_studio.sh com --n8n ou STUDIO_N8N=1):
 #     bash scripts/instalar_automacoes_avancadas.sh
 #
 # O que ele faz:
@@ -44,9 +44,9 @@ env_append() {
 }
 
 command -v docker > /dev/null 2>&1 || fail "o Docker não foi encontrado."
-docker ps --format '{{.Names}}' | grep -qx n8n || fail "o contêiner do n8n não está rodando. Suba com: bash start_heimdall.sh --n8n"
+docker ps --format '{{.Names}}' | grep -qx n8n || fail "o contêiner do n8n não está rodando. Suba com: bash start_studio.sh --n8n"
 [ -d flows/advanced ] || fail "a pasta flows/advanced/ não está ao lado deste script."
-[ -n "${LITELLM_MASTER_KEY:-}" ] || fail "LITELLM_MASTER_KEY não está no .env (rode o start_heimdall.sh uma vez para gerá-la)."
+[ -n "${LITELLM_MASTER_KEY:-}" ] || fail "LITELLM_MASTER_KEY não está no .env (rode o start_studio.sh uma vez para gerá-la)."
 
 PY="$PROJECT_DIR/venv/bin/python"
 [ -x "$PY" ] || PY="$(command -v python3)"
@@ -257,10 +257,10 @@ if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${STUDIO_AGENTE_URL:-http://
     if docker exec n8n wget -q -T 5 -O - http://host.docker.internal:8003/saude > /dev/null 2>&1; then
         echo " - O n8n alcança o agente do Mac."
     else
-        echo " - AVISO: o n8n não alcança o agente. Ponha STUDIO_AGENTE_HOST=0.0.0.0 no .env e rode o start_heimdall.sh de novo."
+        echo " - AVISO: o n8n não alcança o agente. Ponha STUDIO_AGENTE_HOST=0.0.0.0 no .env e rode o start_studio.sh de novo."
     fi
 else
-    echo " - Agente do Mac: FORA DO AR. Rode o start_heimdall.sh de novo (ele sobe o agente sozinho agora que o token existe)."
+    echo " - Agente do Mac: FORA DO AR. Rode o start_studio.sh de novo (ele sobe o agente sozinho agora que o token existe)."
 fi
 if docker exec n8n wget -q -T 5 -O - http://host.docker.internal:11434/api/version > /dev/null 2>&1; then
     echo " - O n8n alcança o Ollama."
@@ -285,7 +285,7 @@ if [ "$SKIP_GIT" = "0" ]; then
 fi
 if [ "${NOVO_AGENTE:-0}" = "1" ]; then
     echo
-    echo "O token do agente é novo: rode o start_heimdall.sh de novo para o agente subir com ele."
+    echo "O token do agente é novo: rode o start_studio.sh de novo para o agente subir com ele."
 fi
 {
     echo

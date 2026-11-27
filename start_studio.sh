@@ -1,12 +1,12 @@
 #!/bin/bash
-# Uso:  ./start_heimdall.sh            sobe tudo (Open WebUI só se STUDIO_WEBUI=1 no .env)
-#       ./start_heimdall.sh --webui    sobe tudo, incluindo o Open WebUI (porta 3000)
-#       ./start_heimdall.sh --terminal sobe também o Open Terminal (porta 8002); a chave vem de
+# Uso:  ./start_studio.sh            sobe tudo (Open WebUI só se STUDIO_WEBUI=1 no .env)
+#       ./start_studio.sh --webui    sobe tudo, incluindo o Open WebUI (porta 3000)
+#       ./start_studio.sh --terminal sobe também o Open Terminal (porta 8002); a chave vem de
 #                                      OPEN_TERMINAL_API_KEY no .env (se faltar, o script gera uma)
-#       ./start_heimdall.sh --ingest   antes de subir o LiteLLM, indexa só o que mudou em knowledge/ (ou STUDIO_INGEST=1)
-#       ./start_heimdall.sh --docling  sobe também o Docling (extração de PDFs com OCR) na porta 5001 (ou STUDIO_DOCLING=1)
-#       ./start_heimdall.sh --n8n      sobe também o n8n (automações e agendamentos) em http://localhost:5678 (ou STUDIO_N8N=1)
-#       ./start_heimdall.sh --agente   sobe também o agente do Mac (ponte do n8n com o app Notas) na porta 8003; sobe sozinho
+#       ./start_studio.sh --ingest   antes de subir o LiteLLM, indexa só o que mudou em knowledge/ (ou STUDIO_INGEST=1)
+#       ./start_studio.sh --docling  sobe também o Docling (extração de PDFs com OCR) na porta 5001 (ou STUDIO_DOCLING=1)
+#       ./start_studio.sh --n8n      sobe também o n8n (automações e agendamentos) em http://localhost:5678 (ou STUDIO_N8N=1)
+#       ./start_studio.sh --agente   sobe também o agente do Mac (ponte do n8n com o app Notas) na porta 8003; sobe sozinho
 #                                      quando STUDIO_AGENTE_TOKEN existe no .env (o scripts/instalar_automacoes_avancadas.sh cria)
 #       Aparência do Open WebUI (no .env): STUDIO_WEBUI_NAME="StudioLibre" (nome); arquivos em branding/
 #       (favicon.png, logo.png, splash.png...) são copiados para dentro do contêiner a cada subida.
@@ -15,7 +15,7 @@
 #       STUDIO_WEBUI_ENXUTO=1 (padrão) | 0: Open WebUI sem Notas, Automações, imagem, código e recursos automáticos (STUDIO_WEBUI_TITULOS=1 mantém os títulos; STUDIO_WEBUI_EMBEDDING=ollama poupa mais memória)
 #       STUDIO_AWS_EMULATOR_INICIO=demanda (padrão) | auto: com "demanda", o emulador de AWS (LocalStack ou Moto) já criado não sobe
 #       junto com o StudioLibre, para poupar memória; ligue quando for usar: studio lab --start (e desligue com studio lab --stop).
-#       ./start_heimdall.sh --update   antes de subir, atualiza as imagens Docker (SearXNG,
+#       ./start_studio.sh --update   antes de subir, atualiza as imagens Docker (SearXNG,
 #                                      Qdrant e Open WebUI), com backup; também vale STUDIO_UPDATE=1 no .env
 
 # A pasta do projeto é a pasta deste script, então funciona em qualquer lugar.

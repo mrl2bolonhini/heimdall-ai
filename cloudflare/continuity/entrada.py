@@ -15,7 +15,7 @@ from pathlib import Path
 RAIZ = Path(os.environ.get("STUDIO_RAIZ") or "/app")   # na imagem o código fica em /app
 sys.path.insert(0, str(RAIZ))
 
-# (módulo, variável da porta, porta): as mesmas portas do start_heimdall.sh
+# (módulo, variável da porta, porta): as mesmas portas do start_studio.sh
 SERVICOS = [
     ("studio_finance.py", "STUDIO_FINANCE_PORT", 8016),
     ("studio_painel_saude.py", "STUDIO_SAUDE_PAINEL_PORT", 8013),

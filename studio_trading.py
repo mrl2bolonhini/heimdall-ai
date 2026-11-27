@@ -6,7 +6,7 @@ de ordens abertas. A IA só descreve (campo Perguntar e sinais objetivos); quem 
 Abas: Mesa, Carteira, Ordens (Abertas, Histórico), Análise (Sinais, Lista). Ajustes: Limites, Cotações, Conta, Ajuda.
 Atalhos da Mesa (Option+Shift no macOS, Alt+Shift no Windows e no Linux): B comprar, S vender, F fechar posição, X cancelar ordens abertas, Q ir ao campo do ativo.
 
-Variáveis: STUDIO_TRADING (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_TRADING_PORT (8020), STUDIO_TRADING_HOST (127.0.0.1),
+Variáveis: STUDIO_TRADING (1 liga; padrão 0, o start_studio.sh só sobe com 1), STUDIO_TRADING_PORT (8020), STUDIO_TRADING_HOST (127.0.0.1),
 STUDIO_TRADING_HOSTS (trading.studiolibre.io,localhost,127.0.0.1), STUDIO_TRADING_FONTE (brapi, padrão, com cotações reais da B3; simulada ou manual), STUDIO_TRADING_BRAPI_TOKEN (opcional).
 
     python3 studio_trading.py

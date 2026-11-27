@@ -74,9 +74,9 @@ confere("a ajuda do .env descreve STUDIO_ALERT_MEM_FREE e STUDIO_AWS_EMULATOR_IN
 confere("a ajuda do .env não cita mais STUDIO_ALERT_SWAP", "STUDIO_ALERT_SWAP" not in ajuda)
 
 # --- emulador sob demanda: scripts de subida
-start = (RAIZ / "start_heimdall.sh").read_text(encoding="utf-8")
+start = (RAIZ / "start_studio.sh").read_text(encoding="utf-8")
 subir = (RAIZ / "subir.sh").read_text(encoding="utf-8")
-confere("start_heimdall.sh tem o modo sob demanda e só o aplica se o contêiner já existe",
+confere("start_studio.sh tem o modo sob demanda e só o aplica se o contêiner já existe",
         'STUDIO_AWS_EMULATOR_INICIO:-demanda' in start and "AWS_EMU=demanda" in start and "grep -qE '^(localstack|moto)$'" in start)
 confere("no modo sob demanda o emulador é parado, não criado", re.search(r"demanda\)\s*\n\s*docker stop moto localstack", start) is not None)
 confere("subir.sh não espera o emulador quando ele está sob demanda", "EMU_SOB_DEMANDA" in subir and '[ "$EMU_SOB_DEMANDA" = "1" ] || LISTA+=("Emulador de AWS|tcp|4566")' in subir)
@@ -100,7 +100,7 @@ with tempfile.TemporaryDirectory() as tmp:
     def lab(args, contêineres):
         env = {**os.environ, "PATH": f"{bin_}:{os.environ['PATH']}", "FAKE_LOG": str(log), "FAKE_CONTAINERS": contêineres, "STUDIO_DIR": str(RAIZ)}
         log.write_text("")
-        r = subprocess.run(["bash", "-c", f'source "{RAIZ}/heimdall.zsh"; studio lab {args}'], capture_output=True, text=True, timeout=60, env=env)
+        r = subprocess.run(["bash", "-c", f'source "{RAIZ}/studio.zsh"; studio lab {args}'], capture_output=True, text=True, timeout=60, env=env)
         return r.returncode, r.stdout + r.stderr, log.read_text()
 
     rc, out, dlog = lab("--start", "localstack")

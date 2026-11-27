@@ -98,7 +98,7 @@ mcp_servers:
       AWS_DOCUMENTATION_PARTITION: "aws"
 
 # Pesquisa na web nativa do LiteLLM (é a seção "pesquisa" do app, separada do MCP).
-# O SearXNG precisa ter o formato JSON habilitado; o start_heimdall.sh já cuida disso.
+# O SearXNG precisa ter o formato JSON habilitado; o start_studio.sh já cuida disso.
 search_tools:
   - search_tool_name: searxng-search
     litellm_params:
@@ -109,5 +109,5 @@ litellm_settings:
   drop_params: true
 
 general_settings:
-  # Definida pelo start_heimdall.sh (arquivo .env). Não escreva a chave aqui.
+  # Definida pelo start_studio.sh (arquivo .env). Não escreva a chave aqui.
   master_key: os.environ/LITELLM_MASTER_KEY

@@ -3,7 +3,7 @@
 if nc -z 127.0.0.1 8004 > /dev/null 2>&1; then
   echo "1. O servidor MCP de dados esta ouvindo na porta 8004 do Mac."
 else
-  echo "1. PROBLEMA: nada ouvindo na porta 8004. Reinicie o sistema (start_heimdall.sh) e veja mcp_dados_debug.log."
+  echo "1. PROBLEMA: nada ouvindo na porta 8004. Reinicie o sistema (start_studio.sh) e veja mcp_dados_debug.log."
   exit 1
 fi
 if ! docker ps --format '{{.Names}}' | grep -qx open-webui; then

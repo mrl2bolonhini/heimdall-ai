@@ -5,7 +5,7 @@ Depois de passar pelo Access (Microsoft ou código por e-mail), o Open WebUI e o
 Open WebUI
 1. Confira que o Cloudflare Access protege o endereço público do chat (chat.studiolibre.io): studio chat --check. A resposta tem de dizer que manda entrar pelo Cloudflare Access.
 2. Ponha no .env: STUDIO_WEBUI_ACCESS='1'. Se o endereço do chat for outro, também STUDIO_WEBUI_HOST='endereço'.
-3. Rode studio restart. O start_heimdall.sh refaz a checagem e só liga o modo se o Access estiver na frente. Se não estiver, avisa e deixa o login por senha como estava.
+3. Rode studio restart. O start_studio.sh refaz a checagem e só liga o modo se o Access estiver na frente. Se não estiver, avisa e deixa o login por senha como estava.
 4. Entre pelo endereço público. O Open WebUI cria ou reconhece o usuário pelo e-mail que o Access informa. Para manter o seu histórico, o e-mail do Access tem de ser o mesmo da sua conta atual no Open WebUI. Quem entrar primeiro, se não houver conta nenhuma, vira administrador; as demais contas novas ficam pendentes até você aprovar.
 5. Opcional, depois de testar: STUDIO_WEBUI_SEM_SENHA='1' tira o formulário de senha. Antes disso o formulário continua como reserva, útil para entrar em http://localhost:3000, que não passa pelo Access.
 O que muda: com o modo ligado, a porta 3000 fica só em 127.0.0.1. O iPhone pela Tailscale deixa de alcançar o Open WebUI nessa porta e passa a usar o endereço público. Isso é de propósito: quem alcançasse a porta direto poderia inventar o cabeçalho e se passar por outra pessoa.
@@ -29,4 +29,4 @@ Trocar o e-mail da conta do Open WebUI sem apagar o volume: studio chat --email 
 
 Login próprio do n8n: STUDIO_N8N_SESSAO_HORAS (padrão 8760) estende a sessão; STUDIO_N8N_SEM_LOGIN=1 tenta desligar o login, mas a opção N8N_BASIC_AUTH_ACTIVE foi removida das versões atuais do n8n. Depois de mudar, rode studio update --restart.
 
-Atenção: não use STUDIO_WEBUI_SEM_SENHA. Com a senha desligada (ENABLE_PASSWORD_AUTH=false) o Open WebUI recusa com 403 até o login pelo Access e a página fica em "Fazendo login". A opção é ignorada pelo start_heimdall.sh.
+Atenção: não use STUDIO_WEBUI_SEM_SENHA. Com a senha desligada (ENABLE_PASSWORD_AUTH=false) o Open WebUI recusa com 403 até o login pelo Access e a página fica em "Fazendo login". A opção é ignorada pelo start_studio.sh.

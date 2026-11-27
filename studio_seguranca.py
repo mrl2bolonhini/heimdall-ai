@@ -294,7 +294,7 @@ def coletar_exposicao(anterior: dict) -> dict:
 _AUTH = re.compile(r"(?i)\b(?:401|403)\b|unauthori[sz]ed|forbidden|invalid (?:token|password|credentials|api key)|token inv[aá]lido|"
                    r"senha (?:incorreta|inv[aá]lida)|login (?:failed|falhou)|authentication failed|access denied|permission denied|"
                    r"recusad|too many (?:requests|attempts)|brute")
-_RUIDO = re.compile(r"Killed: 9")   # o start_heimdall.sh encerra os processos antigos a cada reinício
+_RUIDO = re.compile(r"Killed: 9")   # o start_studio.sh encerra os processos antigos a cada reinício
 _ERRO = re.compile(r"(?i)traceback|exception|\berror\b|\berro\b|fatal|panic|out of memory|killed")
 
 

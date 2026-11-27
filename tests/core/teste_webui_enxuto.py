@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do modo enxuto do Open WebUI (start_heimdall.sh): variáveis, interruptores e documentação."""
+"""Teste do modo enxuto do Open WebUI (start_studio.sh): variáveis, interruptores e documentação."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
@@ -20,7 +20,7 @@ def confere(nome, ok, detalhe=""):
             print("     " + str(detalhe)[:400])
 
 
-start = (RAIZ / "start_heimdall.sh").read_text(encoding="utf-8")
+start = (RAIZ / "start_studio.sh").read_text(encoding="utf-8")
 bloco = start[start.index("WEBUI_ENXUTO=()"):start.index("ghcr.io/open-webui/open-webui:main > /dev/null")]
 for var in ("ENABLE_NOTES=False", "ENABLE_AUTOMATIONS=False", "ENABLE_IMAGE_GENERATION=False", "ENABLE_CODE_EXECUTION=False",
             "ENABLE_CODE_INTERPRETER=False", "ENABLE_AUTOCOMPLETE_GENERATION=False", "ENABLE_TAGS_GENERATION=False",

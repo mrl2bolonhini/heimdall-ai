@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o comando heimdall (heimdall.zsh): ajuda por comando, formas curtas de todas as opções documentadas, help --doc e a tradução das opções."""
+"""Testa o comando heimdall (studio.zsh): ajuda por comando, formas curtas de todas as opções documentadas, help --doc e a tradução das opções."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
@@ -24,7 +24,7 @@ def confere(nome, ok, detalhe=""):
 
 def bash(cmd, projeto=None):
     env_dir = projeto or str(AQUI)
-    r = subprocess.run(["bash", "-c", f'export STUDIO_DIR="{env_dir}"; source "{AQUI}/heimdall.zsh"; {cmd}'], capture_output=True, text=True, timeout=60)
+    r = subprocess.run(["bash", "-c", f'export STUDIO_DIR="{env_dir}"; source "{AQUI}/studio.zsh"; {cmd}'], capture_output=True, text=True, timeout=60)
     return r.returncode, r.stdout + r.stderr
 
 
@@ -38,7 +38,7 @@ for linha in (AQUI / "guides/studio_ajuda.txt").read_text(encoding="utf-8").spli
         m = re.match(r"^  (-[A-Za-z]), (--[a-z0-9-]+)", linha)
         atual["opcoes"].append((m.group(1), m.group(2)))
 nomes = [s["nome"] for s in secoes]
-codigo = (AQUI / "heimdall.zsh").read_text(encoding="utf-8")
+codigo = (AQUI / "studio.zsh").read_text(encoding="utf-8")
 no_case = {x for g in re.findall(r"^    ([a-z0-9|]+)\)", codigo.split("studio() {")[1].split("# Completar")[0], re.M) for x in g.split("|")}
 confere("há seção de ajuda para os 50 comandos", len(nomes) == 50, len(nomes))
 confere("todo comando do case tem seção na ajuda e vice-versa", set(nomes) - no_case == set() and (no_case - set(nomes)) <= {"help"}, (set(nomes) - no_case, no_case - set(nomes)))
@@ -49,15 +49,13 @@ for n in nomes:
         rc, out = bash(f"studio {n} {flag}")
         ok = rc == 0 and out.startswith(f"studio {n} - ") and "-h, --help" in out and out.count("\nstudio ") <= 3
         confere(f"studio {n} {flag}", ok, out[:200])
-# pasta padrão: STUDIO_DIR, senão ~/studioapps, senão ~/heimdall-ai
+# pasta padrão: STUDIO_DIR, senão ~/StudioApps
 _h = Path(tempfile.mkdtemp())
 def _dir(prep):
-    r = subprocess.run(["bash", "-c", f'export HOME="{_h}"; unset STUDIO_DIR STUDIO_DIR; {prep}; source "{AQUI}/heimdall.zsh"; echo "$STUDIO_DIR"'], capture_output=True, text=True, timeout=60)
+    r = subprocess.run(["bash", "-c", f'export HOME="{_h}"; unset STUDIO_DIR STUDIO_DIR; {prep}; source "{AQUI}/studio.zsh"; echo "$STUDIO_DIR"'], capture_output=True, text=True, timeout=60)
     return r.stdout.strip()
-confere("pasta padrão sem nenhuma pasta nova: ~/heimdall-ai", _dir("true") == f"{_h}/heimdall-ai")
-(_h / "studioapps").mkdir()
-confere("pasta padrão com ~/studioapps: usa a nova", _dir("true") == f"{_h}/studioapps")
-confere("STUDIO_DIR manda sobre as duas", _dir("export STUDIO_DIR=/tmp/outra") == "/tmp/outra")
+confere("pasta padrão: ~/StudioApps", _dir("true") == f"{_h}/StudioApps")
+confere("STUDIO_DIR manda sobre a padrão", _dir("export STUDIO_DIR=/tmp/outra") == "/tmp/outra")
 rc, out = bash("studio help health")
 confere("studio help mostra a ajuda do comando", rc == 0 and out.startswith("studio health - "), out[:100])
 rc, out = bash("type heimdall")
@@ -73,7 +71,7 @@ confere("help de comando desconhecido falha com aviso", rc != 0 and "Sem ajuda" 
 
 # --- toda opção curta documentada vira a longa
 for s in secoes:
-    rc, out = bash(f"_heimdall_short {s['nome']}")
+    rc, out = bash(f"_studio_short {s['nome']}")
     mapa = set(out.split())
     for curta, longa in s["opcoes"]:
         if longa == "--help":
@@ -108,16 +106,16 @@ with tempfile.TemporaryDirectory() as d:
         rc, out = bash(f"studio {cmd}", d)
         confere(f"studio {cmd}", esperado in out, out[:200])
     rc, out = bash("studio help --doc", d)
-    confere("help --doc sem o arquivo avisa", rc != 0 and "comando-heimdall.html" in out, out)
+    confere("help --doc sem o arquivo avisa", rc != 0 and "comando-studio.html" in out, out)
     (Path(d) / "docs").mkdir()
-    (Path(d) / "docs" / "comando-heimdall.html").write_text("<html></html>")
+    (Path(d) / "docs" / "comando-studio.html").write_text("<html></html>")
     rc, out = bash("studio help --doc", d)
-    confere("help --doc abre o documento por http, não por file://", "http://localhost:8099/comando-heimdall.html" in out and "file://" not in out, out)
+    confere("help --doc abre o documento por http, não por file://", "http://localhost:8099/comando-studio.html" in out and "file://" not in out, out)
     rc, out = bash("studio help -d", d)
-    confere("help -d abre o documento", "comando-heimdall.html" in out, out)
+    confere("help -d abre o documento", "comando-studio.html" in out, out)
     rc, out = bash("studio --doc", d)
-    confere("studio --doc abre o documento", "comando-heimdall.html" in out, out)
+    confere("studio --doc abre o documento", "comando-studio.html" in out, out)
 
-confere("a página do documento existe no site", (AQUI / "docs" / "comando-heimdall.html").exists())
+confere("a página do documento existe no site", (AQUI / "docs" / "comando-studio.html").exists())
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)

@@ -2,7 +2,7 @@
 """Nomes das pastas de dados do StudioLibre e a migração dos nomes antigos para os novos (padrão: nome em inglês, igual ao do serviço).
 
 Padrão: pasta com nome em inglês e de uma palavra só. Nomes antigos que migram sozinhos: dados_financas para finance, banco para db, cerebro para brain
-e, dentro do finance, entrada para inbox e entrada_planilhas para sheets (qdrant_storage para qdrant é feito pelo start_heimdall.sh, por causa do Docker).
+e, dentro do finance, entrada para inbox e entrada_planilhas para sheets (qdrant_storage para qdrant é feito pelo start_studio.sh, por causa do Docker).
 Pasta de dados do Finance: era dados_financas/, agora é finance/. Na primeira vez que qualquer serviço pede a pasta, se só a antiga existir,
 ela é renomeada (os dados não são copiados nem apagados: o mesmo diretório muda de nome). Se não der para renomear, continua valendo a antiga.
 STUDIO_FINANCE_DIR no .env, quando existe, manda mais que tudo isto.

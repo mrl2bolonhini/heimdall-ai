@@ -2,7 +2,7 @@
 # Instala no n8n os fluxos da pasta flows/basic/ (resumo da AWS, pergunta de estudo, vigia de
 # versões, alerta de saúde do Mac e relatório de disponibilidade).
 #
-# Uso, na pasta do projeto, com o n8n no ar (start_heimdall.sh com --n8n ou STUDIO_N8N=1):
+# Uso, na pasta do projeto, com o n8n no ar (start_studio.sh com --n8n ou STUDIO_N8N=1):
 #     bash scripts/instalar_fluxos_n8n.sh
 #
 # O que ele faz:
@@ -32,9 +32,9 @@ fi
 fail() { echo "Erro: $*" >&2; exit 1; }
 
 command -v docker > /dev/null 2>&1 || fail "o Docker não foi encontrado."
-docker ps --format '{{.Names}}' | grep -qx n8n || fail "o contêiner do n8n não está rodando. Suba com: bash start_heimdall.sh --n8n"
+docker ps --format '{{.Names}}' | grep -qx n8n || fail "o contêiner do n8n não está rodando. Suba com: bash start_studio.sh --n8n"
 [ -d flows/basic ] || fail "a pasta flows/basic/ não está ao lado deste script."
-[ -n "${LITELLM_MASTER_KEY:-}" ] || fail "LITELLM_MASTER_KEY não está no .env (rode o start_heimdall.sh uma vez para gerá-la)."
+[ -n "${LITELLM_MASTER_KEY:-}" ] || fail "LITELLM_MASTER_KEY não está no .env (rode o start_studio.sh uma vez para gerá-la)."
 
 # --- Chave do Bark (aceita a chave pura ou a URL completa) ---
 BARK_KEY="${STUDIO_BARK_KEY:-}"
@@ -165,7 +165,7 @@ fi
 # --- Avisos úteis ---
 if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' http://localhost:8000/metricas)" != "200" ]; then
     echo "Aviso: o MCP do Mac ainda não responde em /metricas (o alerta de saúde precisa dele)."
-    echo "       Copie o studio_mcp.py novo e rode o start_heimdall.sh de novo."
+    echo "       Copie o studio_mcp.py novo e rode o start_studio.sh de novo."
 fi
 echo "Aviso: o relatório de disponibilidade precisa de uma página de status no Uptime Kuma com o nome (slug) '$SLUG'."
 echo "Pronto."

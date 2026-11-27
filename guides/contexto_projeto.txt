@@ -65,7 +65,7 @@ Plataforma e operação
 2) Lista de abas enxuta (no máximo 5 posições, com o menu Mais como a quinta quando passar disso, e um só atalho para ele, Option+Shift+5; nome de aba com uma palavra só; decisão de 25/11/2026). Atalhos sempre nas duas formas (macOS e Windows/Linux) e rotas sempre atualizadas (a antiga redireciona 301 para a nova), agrupada por assunto, com subabas; o nome da aba agrupa o assunto e a subaba nunca repete o nome da aba nem de outra subaba. Perfil, estado técnico dos dados e configurações ficam em Ajustes.
 3) Telas enxutas: sem descrições, sem avisos repetidos, sem comandos de terminal; Guia de comandos na Ajuda traz o equivalente por sistema (macOS, Linux, Windows) e o que fazer no iPhone e no Android.
 4) Texto de produto: profissional, claro, objetivo, neutro e sem dados do dono. Textos antigos são ajustados ao serem mexidos (ainda há restos, por exemplo no fluxo de digest hiperpersonalizado).
-5) Comandos do terminal: nomes em inglês; opções com dois hífens e forma curta; heimdall.zsh traduz para scripts com opções em português.
+5) Comandos do terminal: nomes em inglês; opções com dois hífens e forma curta; studio.zsh traduz para scripts com opções em português.
 6) Evento versus lembrete: evento é data e hora ou data fixa (Calendário); lembrete é algo a fazer (app Lembretes). Tabela em studio_agenda.py.
 7) Vários sistemas: Windows, macOS, iPhone e Android entram em toda decisão. O comando heimdall é do zsh; o equivalente em Python serve nos três sistemas. Dependência do Mac (agente da Apple) registra alternativa no ROADMAP.
 

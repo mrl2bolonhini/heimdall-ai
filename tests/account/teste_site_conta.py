@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do bloco de conta das páginas do site (docs/index.html + heimdall.js) no navegador, com o account.studiolibre.io de mentira.
+"""Teste do bloco de conta das páginas do site (docs/index.html + studio.js) no navegador, com o account.studiolibre.io de mentira.
 Sem login (redirecionamento do Access ou 401): fica o link "Entrar no StudioLibre". Com login: nome, e-mail e links dos serviços, sem executar HTML vindo do servidor."""
 import sys as _sys
 from pathlib import Path as _Path

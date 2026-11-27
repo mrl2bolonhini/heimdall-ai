@@ -4,7 +4,7 @@
 Telas no Studio Design, sobre `studio_servico_web.py`; os dados ficam em `studio_memory_dados.py`.
 Abas: Documentos (Pesquisar, Recentes, A revisar), Adicionar (Enviar arquivo, Pasta de entrada), Organização (Etiquetas, Tipos). Ajustes: Estado, Lixeira, Ajuda.
 
-Variáveis: STUDIO_HUB (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_HUB_PORT (8021), STUDIO_HUB_HOST (127.0.0.1),
+Variáveis: STUDIO_HUB (1 liga; padrão 0, o start_studio.sh só sobe com 1), STUDIO_HUB_PORT (8021), STUDIO_HUB_HOST (127.0.0.1),
 STUDIO_HUB_HOSTS (hub.studiolibre.io,localhost,127.0.0.1), STUDIO_HUB_MAX_MB (30; limite por arquivo), STUDIO_HUB_IA (0 desliga as sugestões do modelo).
 
     python3 studio_memory.py

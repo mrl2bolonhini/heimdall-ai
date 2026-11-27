@@ -98,7 +98,7 @@ DESCRICOES = {
     "SUBIR_SOM": "0 desliga a voz e a notificação ao fim da subida.",
     "SUBIR_ESPERA": "Segundos de espera máxima até os serviços subirem (padrão 900).",
     "SUBIR_MARCA": "Texto do passo em que a subida entra na lista de serviços (uso interno).",
-    "SUBIR_SCRIPT": "Script que o subir.sh executa (padrão start_heimdall.sh).",
+    "SUBIR_SCRIPT": "Script que o subir.sh executa (padrão start_studio.sh).",
     "STUDIO_ACCOUNT_PORT": "Porta do Account, o tour dos serviços (padrão 8018).",
     "STUDIO_ACCOUNT_HOST": "Endereço em que o Account escuta (padrão 127.0.0.1: só este Mac).",
     "STUDIO_ACCOUNT_HOSTS": "Nomes de site que o Account aceita (padrão account.studiolibre.io,localhost,127.0.0.1); também decide o endereço dos links e do Access.",

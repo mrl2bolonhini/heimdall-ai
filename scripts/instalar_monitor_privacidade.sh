@@ -5,7 +5,7 @@
 #   (pasta "Monitor de Privacidade") e um resumo no iPhone pelo Bark. O fluxo tem memória: não repete o que já
 #   viu, avisa se uma página conhecida mudar e acompanha a tendência dos últimos dias.
 #
-# Uso, na pasta do projeto, com o n8n e o SearXNG no ar (start_heimdall.sh --n8n):
+# Uso, na pasta do projeto, com o n8n e o SearXNG no ar (start_studio.sh --n8n):
 #     bash scripts/instalar_monitor_privacidade.sh                 (primeira vez: faz as perguntas)
 #     bash scripts/instalar_monitor_privacidade.sh --reconfigurar  (muda nome, e-mails, usuários etc.)
 #     bash scripts/instalar_monitor_privacidade.sh --remover       (apaga do .env o que você informou e desativa o fluxo)
@@ -61,7 +61,7 @@ PYEOF
 }
 
 command -v docker > /dev/null 2>&1 || fail "o Docker não foi encontrado."
-docker ps --format '{{.Names}}' | grep -qx n8n || fail "o contêiner do n8n não está rodando. Suba com: bash start_heimdall.sh --n8n"
+docker ps --format '{{.Names}}' | grep -qx n8n || fail "o contêiner do n8n não está rodando. Suba com: bash start_studio.sh --n8n"
 
 if [ "$REMOVER" = "1" ]; then
     for ID in hdMonitor00000001 hdDiario00000001 hdLembrete0000001; do
@@ -73,9 +73,9 @@ if [ "$REMOVER" = "1" ]; then
     exit 0
 fi
 
-docker ps --format '{{.Names}}' | grep -qx searxng || fail "o contêiner do SearXNG não está rodando. Rode: bash start_heimdall.sh --n8n"
+docker ps --format '{{.Names}}' | grep -qx searxng || fail "o contêiner do SearXNG não está rodando. Rode: bash start_studio.sh --n8n"
 [ -d flows/monitor ] || fail "a pasta flows/monitor/ não está ao lado deste script."
-[ -n "${LITELLM_MASTER_KEY:-}" ] || fail "LITELLM_MASTER_KEY não está no .env (rode o start_heimdall.sh uma vez para gerá-la)."
+[ -n "${LITELLM_MASTER_KEY:-}" ] || fail "LITELLM_MASTER_KEY não está no .env (rode o start_studio.sh uma vez para gerá-la)."
 [ -n "${STUDIO_AGENTE_TOKEN:-}" ] || fail "o token do agente do Mac não existe. Rode antes: bash scripts/instalar_automacoes_avancadas.sh"
 
 # --- Bark ---
@@ -304,12 +304,12 @@ echo "Conferindo o que o monitor precisa:"
 if docker exec n8n wget -q -T 15 -O - "http://searxng:8080/search?q=teste&format=json" 2>/dev/null | grep -q '"results"'; then
     echo " - O n8n alcança o SearXNG com resposta em JSON."
 else
-    echo " - AVISO: o n8n não recebeu JSON do SearXNG. Confira 'formats: - json' em searxng/settings.yml e rode o start_heimdall.sh de novo."
+    echo " - AVISO: o n8n não recebeu JSON do SearXNG. Confira 'formats: - json' em searxng/settings.yml e rode o start_studio.sh de novo."
 fi
 if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${STUDIO_AGENTE_URL:-http://localhost:8003}/saude)" = "200" ]; then
     echo " - Agente do Mac no ar (o relatório vai para o app Notas, pasta Monitor de Privacidade)."
 else
-    echo " - AVISO: o agente do Mac está fora do ar. Sem ele o relatório não chega ao app Notas (o Bark ainda avisa). Rode o start_heimdall.sh."
+    echo " - AVISO: o agente do Mac está fora do ar. Sem ele o relatório não chega ao app Notas (o Bark ainda avisa). Rode o start_studio.sh."
 fi
 echo
 echo "Para testar agora, sem esperar as 9h (o teste manual não guarda memória):"

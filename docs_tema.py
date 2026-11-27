@@ -363,7 +363,7 @@ PAGINAS = [
     ("finance.html", "Finance", "Studio Finance: extratos, categorias e tendências das suas finanças"),
     ("lab.html", "Lab", "Painel do emulador de AWS: acesso, segurança e roteiro"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
-    ("comando-heimdall.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções"),
+    ("comando-studio.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções"),
     ("novidades.html", "Novidades", "Histórico de recursos"),
     ("roadmap.html", "Roadmap", "Próximos recursos"),
     ("marca.html", "Marca", "O nome StudioLibre, logotipo, cores e tipografia"),
@@ -384,7 +384,7 @@ CONTA_URL = "https://account.studiolibre.io/"
 
 
 def pagina(arquivo, titulo, descricao, corpo, home=False):
-    # Em todas as páginas do site (menos a 404): "Entrar" (sem login) ou, com login, o nome e os serviços da pessoa; o heimdall.js pergunta a CONTA_URL + quem.json.
+    # Em todas as páginas do site (menos a 404): "Entrar" (sem login) ou, com login, o nome e os serviços da pessoa; o studio.js pergunta a CONTA_URL + quem.json.
     conta = f'<div class="conta-site" id="conta-site" data-url="{CONTA_URL}"><a href="{CONTA_URL}">Entrar no StudioLibre</a></div>' if arquivo != "404.html" else ""
     menu = "".join('<li><a href="%s"%s>%s</a></li>' % (a, ' aria-current="page"' if a == arquivo else "", H(t)) for a, t, _ in PAGINAS)
     nome = "StudioLibre: IA que roda em casa" if arquivo == "index.html" else titulo + " · StudioLibre"
@@ -434,7 +434,7 @@ def pagina(arquivo, titulo, descricao, corpo, home=False):
 <ul aria-label="Links do rodapé"><li><a href="{REPO}">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
 </div></div></footer>
 <p id="aviso" class="sr" role="status" aria-live="polite"></p>
-<script src="heimdall.js" defer></script>
+<script src="studio.js" defer></script>
 </body>
 </html>
 """

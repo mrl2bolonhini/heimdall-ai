@@ -9,7 +9,7 @@ Segurança: escuta só em 127.0.0.1; mesmo login do painel Lab (senha, código d
 sessão em cookie HttpOnly; só nomes de site permitidos; caminhos conferidos contra fuga de pasta; arquivos só com extensão
 conhecida, nome simples e limite de tamanho (STUDIO_LEARN_MAX_MB, 50); HTML sempre escapado.
 
-Variáveis: STUDIO_LEARN (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_LEARN_PORT (8019), STUDIO_LEARN_HOST (127.0.0.1),
+Variáveis: STUDIO_LEARN (1 liga; padrão 0, o start_studio.sh só sobe com 1), STUDIO_LEARN_PORT (8019), STUDIO_LEARN_HOST (127.0.0.1),
 STUDIO_LEARN_HOSTS (learn.studiolibre.io,localhost,127.0.0.1).
 
     python3 studio_learn.py

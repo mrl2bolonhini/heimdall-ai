@@ -2,7 +2,7 @@ MODELOS PERSONALIZADOS DO OPEN WEBUI (Workspace, Modelos): GUIA DA PRIMEIRA CONF
 
 Este arquivo é gerado por python3 gerar_docs.py a partir de modelos_chat.py. Não edite aqui; edite lá.
 
-Serve para quem ainda não importou nada. Todos os arquivos estão em ~/heimdall-ai/openwebui/. Tudo leva uns 15 minutos. Os passos são de teclado e de terminal, pensados para o VoiceOver.
+Serve para quem ainda não importou nada. Todos os arquivos estão em ~/StudioApps/openwebui/. Tudo leva uns 15 minutos. Os passos são de teclado e de terminal, pensados para o VoiceOver.
 
 ANTES DE COMEÇAR
   1. Atualize o StudioLibre e reinicie: studio update --restart. Isso sobe o LiteLLM, que é de onde o Open WebUI tira a lista de modelos.
@@ -12,7 +12,7 @@ ANTES DE COMEÇAR
 PASSO 1: AS CONEXÕES DE FERRAMENTAS (6 arquivos)
   1. Abra Configurações do administrador, Integrações, Servidores de ferramentas externos.
   2. Use Importar, uma vez para cada arquivo da pasta openwebui/ferramentas/: banco-pessoal.json, banco-learn.json, banco-saude.json, banco-financas.json, web-basica.json, mac-admin.json. Um arquivo por conexão, porque o Open WebUI importa só a primeira conexão de cada arquivo. Se o Open WebUI já tiver uma conexão com o mesmo ID (por exemplo internet), apague a antiga antes de importar, para não duplicar; se o convidado usava essa conexão, reaplique o acesso dele depois.
-  3. O filtro de funções NÃO vem na importação (o Open WebUI não o exporta nem o importa). Ele é o que impede cada modelo de enxergar funções que não são do seu assunto. Nas conexões banco-pessoal, banco-learn, banco-saude, banco-financas, web-basica, mac-admin, abra a edição e cole a lista no campo Lista de filtros de nomes de funções. Para copiar sem digitar, no Terminal: pbcopy < ~/heimdall-ai/openwebui/filtro_ID.txt (troque ID pelo nome da conexão) e depois Command+V no campo. Sem filtro (usa todas as funções do servidor): .
+  3. O filtro de funções NÃO vem na importação (o Open WebUI não o exporta nem o importa). Ele é o que impede cada modelo de enxergar funções que não são do seu assunto. Nas conexões banco-pessoal, banco-learn, banco-saude, banco-financas, web-basica, mac-admin, abra a edição e cole a lista no campo Lista de filtros de nomes de funções. Para copiar sem digitar, no Terminal: pbcopy < ~/StudioApps/openwebui/filtro_ID.txt (troque ID pelo nome da conexão) e depois Command+V no campo. Sem filtro (usa todas as funções do servidor): .
   4. Salve cada conexão e use o botão de verificar conexão. As que usam o servidor de dados (porta 8004) e o do Mac (porta 8000) só respondem com o StudioLibre ligado.
 
 PASSO 2: OS MODELOS (7)
@@ -113,7 +113,7 @@ Conexão 6: ID mac-admin, nome "Notes (Mac e memória, administrador)", http://h
    Chamada de função: Nativa
    Temperatura: 0,2
 
-Para copiar um prompt sem digitar: pbcopy < ~/heimdall-ai/NOME_DO_ARQUIVO.txt e colar com Command+V no campo de instrução de sistema.
+Para copiar um prompt sem digitar: pbcopy < ~/StudioApps/NOME_DO_ARQUIVO.txt e colar com Command+V no campo de instrução de sistema.
 
 AJUSTES EM CADA MODELO (campo Parâmetros avançados, ao editar o modelo)
   Alerts: temperatura 0,2.
