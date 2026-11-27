@@ -6,11 +6,11 @@ import threading
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
-RAIZ = next(p for p in Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 os.environ.update({"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
-import heimdall_lab as hc  # noqa: E402
-import heimdall_jogos as hj  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_jogos as hj  # noqa: E402
 
 falhas = 0
 

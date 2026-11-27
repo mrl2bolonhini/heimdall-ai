@@ -12,7 +12,7 @@ echo "=== [StudioLibre System Boot] ==="
 
 # --- Chave mestra do LiteLLM (guardada em .env, nunca no YAML) ---
 if [ -f .env ]; then
-    [ -x venv/bin/python ] && venv/bin/python -c "import heimdall_config as c; c.renomear_antigas()" 2>/dev/null
+    [ -x venv/bin/python ] && venv/bin/python -c "import studio_config as c; c.renomear_antigas()" 2>/dev/null
     set -a; source .env; set +a
 fi
 if [ -z "$LITELLM_MASTER_KEY" ]; then
@@ -81,7 +81,7 @@ fi
 # --- Servidor MCP unificado ---
 echo "[4/5] Subindo o servidor MCP do StudioLibre..."
 mkdir -p logs
-"$VENV_PYTHON" heimdall_mcp.py > logs/mcp_debug.log 2>&1 &
+"$VENV_PYTHON" studio_mcp.py > logs/mcp_debug.log 2>&1 &
 MCP_PID=$!
 trap 'kill $MCP_PID 2>/dev/null' EXIT INT TERM
 

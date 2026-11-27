@@ -3,7 +3,7 @@
 Usa banco e pastas temporários; nada toca a internet. Os textos de fatura e extrato são inventados."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import io
 import os

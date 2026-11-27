@@ -5,7 +5,7 @@
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -16,10 +16,10 @@ from pathlib import Path
 tmp = tempfile.mkdtemp()
 os.environ["STUDIO_DB_DIR"] = tmp
 os.environ.pop("STUDIO_AVISOS_MAC", None)
-import heimdall_avisos_mac as mac  # noqa: E402
-import heimdall_alertas as alertas  # noqa: E402
-import heimdall_bark as bk  # noqa: E402
-import heimdall_banco as _banco  # noqa: E402
+import studio_avisos_mac as mac  # noqa: E402
+import studio_alertas as alertas  # noqa: E402
+import studio_bark as bk  # noqa: E402
+import studio_banco as _banco  # noqa: E402
 
 falhas = 0
 

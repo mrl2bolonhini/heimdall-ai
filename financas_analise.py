@@ -9,7 +9,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 
 import financas_nucleo as fn
-import heimdall_perguntar as hp
+import studio_perguntar as hp
 
 FLEXIVEIS = ["Restaurantes", "Lazer e viagens", "Compras", "Assinaturas", "Transporte", "Outros gastos"]
 

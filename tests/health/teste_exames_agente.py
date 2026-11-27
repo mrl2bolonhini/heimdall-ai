@@ -2,7 +2,7 @@
 """Testa a rota POST /saude/documento do agente (envio do iPhone) e a leitura automática, com documentos FICTÍCIOS."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import json
@@ -19,9 +19,9 @@ TMP = Path(tempfile.mkdtemp(prefix="heimdall-exames-agente-"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_EXAMES_DIR": str(TMP / "health"), "STUDIO_EXAMES_LLM": "0",
                    "STUDIO_VAULT_DIR": str(TMP / "cofre"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
-import heimdall_agente as ag  # noqa: E402
-import heimdall_banco as banco  # noqa: E402
-import heimdall_exames as ex  # noqa: E402
+import studio_agente as ag  # noqa: E402
+import studio_banco as banco  # noqa: E402
+import studio_exames as ex  # noqa: E402
 
 falhas = 0
 

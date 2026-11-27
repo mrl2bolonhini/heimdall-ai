@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Teste da catalogação de notas (heimdall_catalogo.py) e do cliente do Notion (heimdall_notion.py), sem rede e sem modelo.
+"""Teste da catalogação de notas (studio_catalogo.py) e do cliente do Notion (studio_notion.py), sem rede e sem modelo.
 
     python3 tests/notes/teste_catalogo.py
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -19,9 +19,9 @@ os.environ["STUDIO_NOTION_TOKEN"] = "segredo-de-teste"
 os.environ["STUDIO_NOTION_DB_IDEIAS"] = "https://www.notion.so/ws/Ideias-0123456789abcdef0123456789abcdef?v=1"
 os.environ["STUDIO_NOTION_DB_CONTATOS"] = "abcdef01-2345-6789-abcd-ef0123456789"
 os.environ.pop("STUDIO_NOTION_DB_ENDERECOS", None)
-import heimdall_agenda as ag  # noqa: E402
-import heimdall_catalogo as cat  # noqa: E402
-import heimdall_notion as nt  # noqa: E402
+import studio_agenda as ag  # noqa: E402
+import studio_catalogo as cat  # noqa: E402
+import studio_notion as nt  # noqa: E402
 
 ok = falha = 0
 

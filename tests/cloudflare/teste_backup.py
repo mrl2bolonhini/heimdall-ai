@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Testes da cópia de segurança (heimdall_backup.py), sem rede: R2 simulado e banco temporário.
+"""Testes da cópia de segurança (studio_backup.py), sem rede: R2 simulado e banco temporário.
 Uso: python3 tests/cloudflare/teste_backup.py"""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sqlite3
@@ -16,8 +16,8 @@ TMP = Path(tempfile.mkdtemp(prefix="hd_backup_"))
 os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 os.environ["STUDIO_FINANCE_DIR"] = str(TMP / "finance")
 
-import heimdall_backup as B  # noqa: E402
-import heimdall_banco as D  # noqa: E402
+import studio_backup as B  # noqa: E402
+import studio_banco as D  # noqa: E402
 
 falhas = []
 

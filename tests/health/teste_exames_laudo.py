@@ -4,7 +4,7 @@ leucograma com % e valor absoluto, blocos de histórico, tabelas de referência 
 Nenhum dado real: nomes, datas e valores abaixo são inventados."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sqlite3
@@ -14,8 +14,8 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-laudo-"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_EXAMES_DIR": str(TMP / "health"), "STUDIO_EXAMES_LLM": "0"})
-import heimdall_banco as banco  # noqa: E402
-import heimdall_exames as ex  # noqa: E402
+import studio_banco as banco  # noqa: E402
+import studio_exames as ex  # noqa: E402
 
 falhas = 0
 

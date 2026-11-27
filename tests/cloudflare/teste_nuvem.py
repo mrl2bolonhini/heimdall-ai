@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Teste do modelo grande na nuvem (heimdall_nuvem.py) e da volta ao modelo local, sem rede e sem token real.
+"""Teste do modelo grande na nuvem (studio_nuvem.py) e da volta ao modelo local, sem rede e sem token real.
 
     python3 tests/cloudflare/teste_nuvem.py
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import io
 import json
@@ -14,8 +14,8 @@ import urllib.error
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_nuvem as nv  # noqa: E402
-import heimdall_perguntar as pg  # noqa: E402
+import studio_nuvem as nv  # noqa: E402
+import studio_perguntar as pg  # noqa: E402
 
 falhas = 0
 
@@ -69,7 +69,7 @@ confere("modelo trocável pelo .env", True if nv.chat("s", "u", env={**LIGADO, "
 confere("modelo do Perguntar: Qwen3 30B por padrão, trocável pelo .env", nv.modelo_perguntar(LIGADO) == "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8" and nv.modelo_perguntar({**LIGADO, "STUDIO_NUVEM_PERGUNTAR_MODELO": "x/y"}) == "x/y")
 nv.chat("s", "u", max_tokens=500, env=LIGADO, abrir=abrir_ok, modelo=nv.modelo_perguntar(LIGADO), folga=300)
 confere("modelo e folga escolhidos por quem chama (sem raciocínio, folga menor)", visto["corpo"]["model"].endswith("qwen3-30b-a3b-fp8") and visto["corpo"]["max_tokens"] == 800, visto["corpo"])
-import heimdall_perguntar as _pg
+import studio_perguntar as _pg
 _vistos = []
 _orig = (_pg.nuvem.ativo, _pg.nuvem.chat)
 _pg.nuvem.ativo = lambda *a, **k: True
@@ -134,7 +134,7 @@ finally:
     pg.nuvem.ativo, pg.nuvem.chat, pg.urllib.request.urlopen = orig_ativo, orig_chat, orig_urlopen
 
 # --- studio ask: nuvem ou local, com aviso ---------------------------------------------------------------
-import heimdall_ask as ask  # noqa: E402
+import studio_ask as ask  # noqa: E402
 _ativo0 = ask.nuvem.ativo
 try:
     ask.nuvem.ativo = lambda env=None: True

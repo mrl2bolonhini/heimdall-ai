@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>News · Heimdall-ai</title>
+<title>News · StudioLibre</title>
 <meta name="description" content="Studio News: notícias das últimas 24 horas com resumo feito por IA e feeds RSS para o iPhone.">
 <meta name="theme-color" content="#080d1f">
 <link rel="canonical" href="https://studiolibre.io/news.html">
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="StudioLibre">
-<meta property="og:title" content="News · Heimdall-ai">
+<meta property="og:title" content="News · StudioLibre">
 <meta property="og:description" content="Studio News: notícias das últimas 24 horas com resumo feito por IA e feeds RSS para o iPhone.">
 <meta property="og:url" content="https://studiolibre.io/news.html">
 <meta property="og:image" content="https://studiolibre.io/og.png">
@@ -46,9 +46,9 @@
 <section aria-labelledby="banco"><h2 id="banco">Banco pessoal</h2>
 <p>Tudo fica 30 dias na tabela noticias do banco pessoal (entra na cópia de segurança criptografada). O site mostra só as últimas 24 horas; o resto serve para consulta, pelo chat ou por SQL. Matérias com mais de 30 dias são apagadas sozinhas.</p></section>
 <section aria-labelledby="rss"><h2 id="rss">Feeds RSS para o iPhone</h2>
-<ol><li>Crie a chave: <code>python3 heimdall_news.py --token</code> e reinicie com <code>./subir.sh --reiniciar</code>. Isso mostra o endereço de um feed geral, de um feed por categoria e de um arquivo OPML que traz todos de uma vez.</li>
-<li>Se o app pedir um arquivo em vez de um endereço: <code>python3 heimdall_news.py --opml</code> grava <code>heimdall-news.opml</code> na pasta atual (com permissão 600). Ele leva a chave secreta dentro; importe no app e apague o arquivo.</li>
-<li>Para copiar um endereço sem digitar: <code>python3 heimdall_news.py --copiar geral</code> (ou <code>opml</code>, ou o nome de uma categoria). Depois cole no app de feeds; a área de transferência universal leva do Mac para o iPhone.</li>
+<ol><li>Crie a chave: <code>python3 studio_news.py --token</code> e reinicie com <code>./subir.sh --reiniciar</code>. Isso mostra o endereço de um feed geral, de um feed por categoria e de um arquivo OPML que traz todos de uma vez.</li>
+<li>Se o app pedir um arquivo em vez de um endereço: <code>python3 studio_news.py --opml</code> grava <code>heimdall-news.opml</code> na pasta atual (com permissão 600). Ele leva a chave secreta dentro; importe no app e apague o arquivo.</li>
+<li>Para copiar um endereço sem digitar: <code>python3 studio_news.py --copiar geral</code> (ou <code>opml</code>, ou o nome de uma categoria). Depois cole no app de feeds; a área de transferência universal leva do Mac para o iPhone.</li>
 <li>Apps de feeds não digitam o código de 6 dígitos, por isso o endereço leva uma chave secreta. Quem tem o endereço lê os feeds; para trocar, rode o comando da chave de novo (os endereços antigos param de valer).</li>
 <li>O feed guarda 72 horas de notícias, cada item com o resumo de IA identificado. Matérias que ainda esperam o resumo só entram no feed depois de 2 horas, porque os apps de feeds não atualizam um item já baixado.</li></ol></section>
 <section aria-labelledby="fontes"><h2 id="fontes">Fontes e modelo</h2>
@@ -69,7 +69,7 @@
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
 <ul><li>Sobe sozinho com o sistema quando há senha e código no <code>.env</code> (os mesmos do Lab).</li>
 <li>Conferir se está no ar: <code>curl -s http://localhost:8012/saude</code></li>
-<li>Atualizar agora, uma vez: <code>python3 heimdall_news.py --uma-vez</code></li>
+<li>Atualizar agora, uma vez: <code>python3 studio_news.py --uma-vez</code></li>
 <li>Testar sem rede: <code>python3 tests/news/teste_news.py</code></li>
 <li>Se algo falhar: <code>tail -20 logs/news_debug.log</code> ou <code>./subir.sh --log news</code></li></ul></section>
 </div><aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul><li><a href="#abrir">Como abrir</a></li><li><a href="#fazer">O que mostra</a></li><li><a href="#banco">Banco pessoal</a></li><li><a href="#rss">Feeds RSS para o iPhone</a></li><li><a href="#fontes">Fontes e modelo</a></li><li><a href="#cf">Cloudflare (opcional)</a></li><li><a href="#seguranca">Segurança</a></li><li><a href="#config">Configuração</a></li></ul></nav></aside></div>

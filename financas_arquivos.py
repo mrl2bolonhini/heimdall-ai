@@ -13,7 +13,7 @@ por x e todos os números por 9, menos um vocabulário de rótulos de extrato (d
 me mostrar o layout do seu banco sem que nenhum nome, valor ou número de conta saia do seu Mac.
 """
 import hashlib
-import heimdall_pastas
+import studio_pastas
 import io
 import re
 import shutil
@@ -591,8 +591,8 @@ def _gravar(con, a: dict, nome: str, conta: str, agora: str = None, hash_arquivo
 # Pasta vigiada
 # --------------------------------------------------------------------------------------------
 def preparar_pasta(base: Path) -> Path:
-    entrada = heimdall_pastas.finance_inbox(base)
-    for pasta in (entrada, heimdall_pastas.finance_imported(entrada), heimdall_pastas.finance_review(entrada)):
+    entrada = studio_pastas.finance_inbox(base)
+    for pasta in (entrada, studio_pastas.finance_imported(entrada), studio_pastas.finance_review(entrada)):
         pasta.mkdir(parents=True, exist_ok=True)
     return entrada
 
@@ -645,15 +645,15 @@ def concluir_revisao(base: Path, arquivo: Path, agora: str = None) -> None:
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     entrada = preparar_pasta(Path(base))
     arquivo = Path(arquivo)
-    if arquivo.is_file() and arquivo.parent.resolve() == heimdall_pastas.finance_review(entrada).resolve():
-        _mover(arquivo, heimdall_pastas.finance_imported(entrada), agora)
-    _limpar_motivos(heimdall_pastas.finance_review(entrada))
+    if arquivo.is_file() and arquivo.parent.resolve() == studio_pastas.finance_review(entrada).resolve():
+        _mover(arquivo, studio_pastas.finance_imported(entrada), agora)
+    _limpar_motivos(studio_pastas.finance_review(entrada))
 
 
 def devolver_para_entrada(base: Path) -> list:
     """Move os arquivos de review/ de volta para entrada/ (sem os .motivo.txt) para serem lidos de novo. Devolve [(nome, movido, aviso)]."""
     entrada = preparar_pasta(Path(base))
-    revisar = heimdall_pastas.finance_review(entrada)
+    revisar = studio_pastas.finance_review(entrada)
     saida = []
     for arq in sorted(revisar.iterdir()):
         if not arq.is_file() or arq.name.startswith(".") or arq.name.endswith(".motivo.txt"):
@@ -691,7 +691,7 @@ def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 
     Os .motivo.txt de arquivos que já saíram de review/ são apagados."""
     agora = agora or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     entrada = preparar_pasta(Path(base))
-    revisar = heimdall_pastas.finance_review(entrada)
+    revisar = studio_pastas.finance_review(entrada)
     resultados = []
     limpos = _limpar_motivos(revisar)
     if limpos:
@@ -725,13 +725,13 @@ def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 
                 resultados.append({"arquivo": arq.name, "ok": True, "duplicado": True, "conta": r["conta"], "novas": 0, "repetidas": r["repetidas"], "lidas": r["lidas"],
                                    "motivo": "Todos os lançamentos já estavam importados: não importei de novo e apaguei esta cópia."})
                 continue
-            _mover(arq, heimdall_pastas.finance_imported(entrada), agora)
+            _mover(arq, studio_pastas.finance_imported(entrada), agora)
             _limpar_motivos(revisar)
             resultados.append({"arquivo": arq.name, "ok": True, "conta": r["conta"], "novas": r["novas"], "repetidas": r["repetidas"], "lidas": r["lidas"]})
         except ERRO as ex:
             boleto = _tentar_boleto(con, arq, dados, agora) if arq.suffix.lower() == ".pdf" else None
             if boleto:
-                _mover(arq, heimdall_pastas.finance_imported(entrada), agora)
+                _mover(arq, studio_pastas.finance_imported(entrada), agora)
                 _limpar_motivos(revisar)
                 resultados.append(boleto)
                 continue
@@ -745,7 +745,7 @@ def processar_entrada(con, base: Path, agora: str = None, max_bytes: int = 16 * 
 
 def pendentes(base: Path) -> list:
     """(arquivo, motivo) dos arquivos em review/."""
-    pasta = heimdall_pastas.finance_review(heimdall_pastas.finance_inbox(base))
+    pasta = studio_pastas.finance_review(studio_pastas.finance_inbox(base))
     if not pasta.is_dir():
         return []
     saida = []

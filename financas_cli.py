@@ -12,7 +12,7 @@ A pasta de entrada é finance/inbox. Arquivos que importam vão para imported/; 
 cada um com um .motivo.txt. Os dados ficam só neste Mac.
 """
 import argparse
-import heimdall_pastas
+import studio_pastas
 import os
 import shutil
 import subprocess
@@ -42,7 +42,7 @@ import financas_arquivos as fa
 import financas_boletos as fb  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
 
-DIR_DADOS = Path(_env_dir() or heimdall_pastas.finance(AQUI))
+DIR_DADOS = Path(_env_dir() or studio_pastas.finance(AQUI))
 
 
 def _banco():
@@ -401,7 +401,7 @@ def main() -> None:
                     print(f"Para revisar: {r['arquivo']}: {r['motivo']}")
         else:
             pasta = fa.preparar_pasta(DIR_DADOS)
-            fa._limpar_motivos(heimdall_pastas.finance_review(pasta))
+            fa._limpar_motivos(studio_pastas.finance_review(pasta))
             print(f"Pasta de entrada: {pasta}")
             import financas_planilhas as fplan
             print(f"Pasta de planilhas (xlsx e csv de gastos, investimentos, empréstimos e outros): {fplan.pasta_de_entrada(DIR_DADOS)}")

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Testes das tarefas de segurança (heimdall_seguranca.py), sem rede e sem o modelo: o modelo e os comandos do sistema são simulados.
+"""Testes das tarefas de segurança (studio_seguranca.py), sem rede e sem o modelo: o modelo e os comandos do sistema são simulados.
 Uso: python3 tests/monitor/teste_seguranca.py"""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 import tempfile
 from pathlib import Path
 
-import heimdall_seguranca as S
+import studio_seguranca as S
 
 falhas = []
 

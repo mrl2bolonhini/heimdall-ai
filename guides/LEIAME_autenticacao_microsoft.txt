@@ -7,9 +7,9 @@ Ordem do login (importante): primeiro o e-mail e a senha da Microsoft, e só dep
 
 Mais de uma pessoa: cada pessoa tem o seu usuário na Microsoft (você cria no diretório) e o seu Authenticator. Você decide em quais endereços cada uma entra. Por exemplo: só você nos painéis pessoais (lab, news, health, finance) e você mais convidados em games.
 
-Como funciona por baixo: o Cloudflare Access fica na frente dos endereços públicos, usa a Microsoft (Entra ID) para identificar você e entrega aos painéis um documento assinado. O módulo heimdall_cfaccess.py confere a assinatura e abre a sessão. O código está pronto e testado, mas desligado: nada muda até você fazer os passos abaixo e preencher o .env.
+Como funciona por baixo: o Cloudflare Access fica na frente dos endereços públicos, usa a Microsoft (Entra ID) para identificar você e entrega aos painéis um documento assinado. O módulo studio_cfaccess.py confere a assinatura e abre a sessão. O código está pronto e testado, mas desligado: nada muda até você fazer os passos abaixo e preencher o .env.
 
-O que continua igual: pelo localhost e pelo Tailscale o pedido não passa pelo Cloudflare, então ali continuam valendo senha e código de 6 dígitos. Você pode cadastrar a chave do código de 6 dígitos também no Microsoft Authenticator ("outra conta"), para aposentar o app da Apple. A chave está no .env; para mostrá-la no terminal sem copiar de arquivo, rode: grep '^HEIMDALL_CLOUD_TOTP_SEGREDO=' "$STUDIO_DIR/.env" | cut -d= -f2 | tr -d "'\"" . No Authenticator, use Adicionar conta, Outra conta, e a opção de digitar a chave manualmente. Antes de apagar do app da Apple, confira com python3 heimdall_acesso.py --verificar que os códigos batem.
+O que continua igual: pelo localhost e pelo Tailscale o pedido não passa pelo Cloudflare, então ali continuam valendo senha e código de 6 dígitos. Você pode cadastrar a chave do código de 6 dígitos também no Microsoft Authenticator ("outra conta"), para aposentar o app da Apple. A chave está no .env; para mostrá-la no terminal sem copiar de arquivo, rode: grep '^HEIMDALL_CLOUD_TOTP_SEGREDO=' "$STUDIO_DIR/.env" | cut -d= -f2 | tr -d "'\"" . No Authenticator, use Adicionar conta, Outra conta, e a opção de digitar a chave manualmente. Antes de apagar do app da Apple, confira com python3 studio_acesso.py --verificar que os códigos batem.
 
 Aviso de honestidade: eu não consegui testar nada disto com a Microsoft nem com o Cloudflare, nem o VoiceOver com o Authenticator. Os pontos que dependem disso estão marcados com "CONFIRMAR".
 
@@ -57,7 +57,7 @@ B3. Proteger os endereços (dois aplicativos do Access, para poder liberar pesso
 4. Nos dois, em "Métodos de login" deixe só a Microsoft (desmarque o PIN por e-mail, senão ele vira uma porta alternativa) e ligue "Aplicar autenticação instantânea": assim o Cloudflare manda direto para a tela de e-mail e senha da Microsoft.
 5. Em cada aplicativo, copie a AUD tag (Editar aplicativo, Configurações adicionais). São duas tags diferentes.
 6. Opcional, exigir MFA no Cloudflare: na política, acrescente a regra Exigir, Método de autenticação, mfa. O Cloudflare confere o que a Microsoft informou (a Microsoft é um dos provedores que suportam isso). Cuidado: se a Microsoft não pedir a notificação para algum usuário, ele fica barrado em vez de entrar sem MFA. CONFIRMAR com o primeiro convidado. Nos padrões de segurança gratuitos, usuários sem função de administrador só recebem a notificação "quando a Microsoft julga necessário"; se isso incomodar, as saídas são dar ao convidado uma função que sempre exige MFA, ou usar o MFA por usuário do Entra (desligando os padrões de segurança).
-7. No .env do StudioLibre ficam: HEIMDALL_CFACCESS_AUD com as duas tags separadas por vírgula, HEIMDALL_CFACCESS_EMAILS com o seu e-mail, e HEIMDALL_CFACCESS_CONVIDADOS com os convidados no formato ana@exemplo.com=jogos;beto@exemplo.com=jogos+finance (nomes de serviço: cloud, notas, news, saude, jogos, finance). Mesmo que o Cloudflare deixasse um convidado passar em outro endereço, o painel confere de novo e recusa. Tirar um convidado: tire do Access e do .env; a sessão dele que já estiver aberta dura até 8 horas, ou até você trocar a senha ou o código (python3 heimdall_acesso.py --codigo).
+7. No .env do StudioLibre ficam: HEIMDALL_CFACCESS_AUD com as duas tags separadas por vírgula, HEIMDALL_CFACCESS_EMAILS com o seu e-mail, e HEIMDALL_CFACCESS_CONVIDADOS com os convidados no formato ana@exemplo.com=jogos;beto@exemplo.com=jogos+finance (nomes de serviço: cloud, notas, news, saude, jogos, finance). Mesmo que o Cloudflare deixasse um convidado passar em outro endereço, o painel confere de novo e recusa. Tirar um convidado: tire do Access e do .env; a sessão dele que já estiver aberta dura até 8 horas, ou até você trocar a senha ou o código (python3 studio_acesso.py --codigo).
 
 ATENÇÃO, O QUE NÃO PODE FICAR ATRÁS DO ACCESS
 - Os feeds RSS do News (endereço /rss/CHAVE/...): os apps de feed não fazem login. Crie, no mesmo aplicativo ou em outro, uma regra de desvio (Bypass) só para o caminho news.studiolibre.io/rss/*. A proteção ali continua sendo a chave secreta no endereço.
@@ -72,7 +72,7 @@ PARTE C. LIGAR NO HEIMDALL
      studio env --set HEIMDALL_CFACCESS_EMAILS
      studio env --set HEIMDALL_CFACCESS_CONVIDADOS   (só se for liberar mais alguém)
    (a equipe é só o nome; o AUD são as duas tags copiadas, separadas por vírgula; os e-mails são o do seu usuário da Microsoft).
-2. Conferir: python3 heimdall_cfaccess.py --status
+2. Conferir: python3 studio_cfaccess.py --status
    Deve dizer "LIGADA" e "ok, 1 chave(s)" nos certificados do Cloudflare.
 3. Reiniciar: studio update --restart (ou ./subir.sh --reiniciar). Isto não exige instalador.
 4. Teste: abra games.studiolibre.io. Deve ir ao login da Microsoft, mandar a notificação e entrar direto nos jogos. Se o --status disser que está desligada ou se o login cair na tela de senha e código, a reserva continua funcionando.

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Teste do menu Conta (heimdall_conta.py): nome e e-mail, serviços por papel, texto escapado, fallback sem nome e sem Access."""
+"""Teste do menu Conta (studio_conta.py): nome e e-mail, serviços por papel, texto escapado, fallback sem nome e sem Access."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 
-import heimdall_cfaccess as cfa
-import heimdall_conta as c
-import heimdall_usuarios as u
+import studio_cfaccess as cfa
+import studio_conta as c
+import studio_usuarios as u
 
 falhas = 0
 
@@ -38,7 +38,7 @@ def h(tok):
 m = c.menu("Studio News", cabecalhos=h("tokdono"))
 confere("dono: nome e e-mail no resumo e no texto", "Conta: Murillo Bolonhini" in m and "Murillo Bolonhini (dono@x.com)" in m, m)
 confere("dono: vê todos os serviços, inclusive Controls, Health, Finance, n8n e Kuma", all(n in m for n in (">Studio Lab<", ">Studio Hub<", ">Studio Games<", ">Controls<", ">Studio Health<", ">Studio Finance<", ">Flows<", ">Status<", ">Chat<", ">Account<")) and "Open WebUI" not in m and "Uptime Kuma" not in m and "Notas" not in m and "Saúde" not in m and "Jogos" not in m, m)
-import heimdall_conta as _c
+import studio_conta as _c
 confere("lista em ordem alfabética pelo nome real", [_c.NOMES[k] for k in _c.ORDEM] == sorted(_c.NOMES.values(), key=str.lower))
 confere("serviço atual marcado, sem link duplicado", 'aria-current="page">Studio News (você está aqui)' in m and m.count(">Studio News<") == 0, m)
 confere("Kuma abre no painel (/dashboard)", "https://status.studiolibre.io/dashboard" in m, m)
@@ -80,7 +80,7 @@ import threading
 import urllib.request
 from http.server import ThreadingHTTPServer
 
-import heimdall_lab as nuvem
+import studio_lab as nuvem
 
 
 class Eco(nuvem.ManipuladorBase):

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Teste de heimdall_usuarios.py: lista de donos e convidados no .env e a sincronização com uma Cloudflare de mentira (servidor local)."""
+"""Teste de studio_usuarios.py: lista de donos e convidados no .env e a sincronização com uma Cloudflare de mentira (servidor local)."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import re
@@ -12,8 +12,8 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-import heimdall_config as hcf
-import heimdall_usuarios as u
+import studio_config as hcf
+import studio_usuarios as u
 
 falhas = 0
 

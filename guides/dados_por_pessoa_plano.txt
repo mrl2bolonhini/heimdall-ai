@@ -2,11 +2,11 @@ DADOS SEPARADOS POR PESSOA (PLANO, 23/11/2026)
 
 STATUS (23/11/2026): decisões aprovadas pelo usuário (dono nos caminhos de hoje; convidado sem aviso por enquanto; cota por pessoa no teto de US$ 15; login local é sempre o dono). Fase 0 (fundação) e fase 1 (Learn) prontas. O Notes deixou de guardar estudos (foram para o Learn) e ficou só do dono (triagem, diários, privacidade): não precisa de dados por pessoa. Faltam, na fase 2, Lab, News e Games, e depois as fases 3 a 5 e a cota por pessoa.
 
-Decisão do usuário: todos os serviços devem guardar os dados de cada pessoa separados dos dados do dono. Nada abaixo está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, tem teste de isolamento e interruptor no .env (STUDIO_PESSOAS=0 devolve o comportamento atual, de um dono só).
+Decisão do usuário: todos os serviços devem guardar os dados de cada pessoa separados dos dados do dono. Nada abaixo está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/studio_ajuda.txt e CHANGELOG.md, tem teste de isolamento e interruptor no .env (STUDIO_PESSOAS=0 devolve o comportamento atual, de um dono só).
 
 COMO É HOJE (conferido no código)
-  1. A entrada de um convidado pelo Cloudflare Access já identifica o e-mail, mas a sessão do StudioLibre (heimdall_lab.py) só guarda o escopo do serviço, sem dizer quem é a pessoa. Por isso nenhum serviço sabe de quem são os dados.
-  2. Convidados podem entrar em Lab, Learn, News, Games e Chat. Health, Finance, Controls, n8n, Status e Account são só do dono (heimdall_usuarios.py).
+  1. A entrada de um convidado pelo Cloudflare Access já identifica o e-mail, mas a sessão do StudioLibre (studio_lab.py) só guarda o escopo do serviço, sem dizer quem é a pessoa. Por isso nenhum serviço sabe de quem são os dados.
+  2. Convidados podem entrar em Lab, Learn, News, Games e Chat. Health, Finance, Controls, n8n, Status e Account são só do dono (studio_usuarios.py).
   3. Cada serviço já tem o seu banco ou a sua pasta (db/learn.db, db/heimdall.db, knowledge/, health/, finance/). Falta separar por pessoa, não por serviço.
 
 DESENHO ESCOLHIDO (recomendado)
@@ -24,15 +24,15 @@ DESENHO ESCOLHIDO (recomendado)
   O dono mantém os caminhos de hoje (db/learn.db, knowledge/). Assim não há migração nem risco para os seus dados. As pessoas novas entram em db/people/. (Decisão a confirmar: ver o fim.)
 
 PONTO ÚNICO DE ESCOLHA DO CAMINHO
-  Novo módulo heimdall_pessoas.py: identifica a pessoa da sessão, devolve o id e a pasta de dados de cada serviço para ela. Nenhum serviço monta caminho de dados sozinho depois disto; todos pedem a este módulo. Há um teste que falha se algum módulo de serviço abrir um banco fora dele.
+  Novo módulo studio_pessoas.py: identifica a pessoa da sessão, devolve o id e a pasta de dados de cada serviço para ela. Nenhum serviço monta caminho de dados sozinho depois disto; todos pedem a este módulo. Há um teste que falha se algum módulo de serviço abrir um banco fora dele.
 
 FASES
-  0. Fundação: a sessão passa a carregar a pessoa (e-mail validado do Access; entrada por senha e código no Mac é sempre o dono). heimdall_pessoas.py, teste de isolamento (duas pessoas, dados de uma nunca aparecem para a outra, caminho com .. ou id forjado é recusado), STUDIO_PESSOAS.
+  0. Fundação: a sessão passa a carregar a pessoa (e-mail validado do Access; entrada por senha e código no Mac é sempre o dono). studio_pessoas.py, teste de isolamento (duas pessoas, dados de uma nunca aparecem para a outra, caminho com .. ou id forjado é recusado), STUDIO_PESSOAS.
   1. Learn: banco, pastas de material, áudios e agenda por pessoa. A agenda percorre as pessoas. Importar documento, cards, lições, progresso e ajustes passam a ser da pessoa. As ferramentas de leitura do modelo Learn só leem os dados da pessoa que está conversando.
   2. Lab, News e Games: mesmo tratamento, um serviço por vez.
   3. Chat: o Open WebUI já tem usuários próprios. A memória e a busca nos documentos (Qdrant) passam a uma coleção por pessoa, e as ferramentas MCP recebem a pessoa. Fase maior, depende de como o Open WebUI repassa o usuário às ferramentas.
   4. Health, Finance e os demais, só do dono hoje: seguem do dono. Se um dia forem abertos a outras pessoas, entram no mesmo modelo, com cuidado extra (dados sensíveis, chave por pessoa).
-  5. Ciclo de vida: exportar os dados de uma pessoa, apagar os dados de uma pessoa a pedido, cópia de segurança por pessoa (heimdall_backup.py; feita em 25/11/2026 para o heimdall.db de cada pessoa) e aba Usuários do Controls mostrando o espaço usado.
+  5. Ciclo de vida: exportar os dados de uma pessoa, apagar os dados de uma pessoa a pedido, cópia de segurança por pessoa (studio_backup.py; feita em 25/11/2026 para o heimdall.db de cada pessoa) e aba Usuários do Controls mostrando o espaço usado.
 
 QUESTÕES QUE PRECISAM DE DECISÃO
   1. Dono nos caminhos de hoje (recomendado) ou mover tudo para db/people/<dono>/ também? Mover deixa tudo igual, mas exige migração dos seus dados.

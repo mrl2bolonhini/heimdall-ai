@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Teste das configurações (heimdall_config.py): ler, salvar, remover e o catálogo do código, sempre num .env de mentira."""
+"""Teste das configurações (studio_config.py): ler, salvar, remover e o catálogo do código, sempre num .env de mentira."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import stat
@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_config as c  # noqa: E402
+import studio_config as c  # noqa: E402
 
 falhas = 0
 

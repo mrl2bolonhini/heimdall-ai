@@ -19,4 +19,4 @@ Leia a seção "Studio Design" (gerar_docs.py) e o CLAUDE.md. Pense em qualquer 
 9. **Telas e sistemas**: funciona no celular (iPhone e Android) e no computador, sem depender de terminal.
 
 ## Entrega
-Proposta em texto corrido e listas numeradas, com o problema, a mudança sugerida e o motivo. Se algo novo for necessário no design, proponha acrescentá-lo primeiro ao `heimdall_design.py` e à página de Design. Não use mockups visuais: descreva a estrutura em ordem de leitura.
+Proposta em texto corrido e listas numeradas, com o problema, a mudança sugerida e o motivo. Se algo novo for necessário no design, proponha acrescentá-lo primeiro ao `studio_design.py` e à página de Design. Não use mockups visuais: descreva a estrutura em ordem de leitura.

@@ -2,7 +2,7 @@
 """Testa a regra evento x lembrete e o envio de consulta e renovação de receita ao Calendário, sem agente real."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import re
@@ -15,9 +15,9 @@ os.environ["STUDIO_DB_DIR"] = tempfile.mkdtemp()
 os.environ["STUDIO_EXAMES_DIR"] = tempfile.mkdtemp()
 os.environ["STUDIO_EXAMES_LLM"] = "0"
 sys.path.insert(0, str(RAIZ))
-import heimdall_agenda as ag  # noqa: E402
-import heimdall_banco as banco  # noqa: E402
-import heimdall_exames as ex  # noqa: E402
+import studio_agenda as ag  # noqa: E402
+import studio_banco as banco  # noqa: E402
+import studio_exames as ex  # noqa: E402
 
 banco.iniciar()
 falhas = 0
@@ -58,7 +58,7 @@ try:
 except KeyError:
     confere("tipo fora da tabela é barrado", True)
 confere("todo destino é evento ou lembrete", all(d in ("evento", "lembrete") for d, _, _ in ag.DESTINOS.values()))
-fonte = Path("heimdall_email_oficial.py").read_text(encoding="utf-8")
+fonte = Path("studio_email_oficial.py").read_text(encoding="utf-8")
 confere("e-mail oficial: prazo no Calendário e verificação no Lembretes, como na tabela",
         '"/calendario/evento", {"titulo": "Prazo: "' in fonte and '"/lembretes/criar", {"titulo": "Verificar: "' in fonte)
 
@@ -138,7 +138,7 @@ confere("com STUDIO_AGENDA_DETALHES=0 o título é genérico e sem local",
 ex.DETALHES_NA_AGENDA = True
 
 # --- validação do agente (sem rodar AppleScript)
-import heimdall_agente as agente  # noqa: E402
+import studio_agente as agente  # noqa: E402
 agente.osascript = lambda script, *a, **k: "criado:" + "|".join(a)
 agente._lock = __import__("threading").Lock()
 v = agente.criar_evento({"titulo": "Consulta médica", "data": d1.isoformat(), "hora": "14:30", "duracao_min": 45, "alertas_min_antes": [60, 1440]})

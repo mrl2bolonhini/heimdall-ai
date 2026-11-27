@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Testa heimdall_pessoas.py e a pessoa dentro da sessão: id estável, caminhos, contexto, tarefas em segundo plano e tokens de convidado."""
+"""Testa studio_pessoas.py e a pessoa dentro da sessão: id estável, caminhos, contexto, tarefas em segundo plano e tokens de convidado."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sys
@@ -11,8 +11,8 @@ import threading
 from pathlib import Path
 
 os.environ.pop("STUDIO_PESSOAS", None)
-import heimdall_lab as nuvem  # noqa: E402
-import heimdall_pessoas as pe  # noqa: E402
+import studio_lab as nuvem  # noqa: E402
+import studio_pessoas as pe  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"
 

@@ -59,13 +59,13 @@ NOVOS = """OUTROS MODELOS DO LITELLM (não são base de nenhum modelo do chat)
 
 
 # Coleção de conhecimento do Open WebUI usada pelo modelo Notes (a que já existe no seu Open WebUI).
-CONHECIMENTO = {"id": "42999e43-33d7-4a5e-bef7-0f2bd58184d7", "name": "heimdall_docs", "type": "collection", "description": "Meus documentos"}
+CONHECIMENTO = {"id": "42999e43-33d7-4a5e-bef7-0f2bd58184d7", "name": "studio_docs", "type": "collection", "description": "Meus documentos"}
 PASTA_IMPORTAR = AQUI / "openwebui"
 
 
 def _listas_de_ferramentas():
-    """Lê heimdall_tools.py sem importá-lo: devolve {grupo: [funções]} e o conjunto de todas as funções definidas."""
-    arvore = ast.parse((AQUI / "heimdall_tools.py").read_text(encoding="utf-8"))
+    """Lê studio_tools.py sem importá-lo: devolve {grupo: [funções]} e o conjunto de todas as funções definidas."""
+    arvore = ast.parse((AQUI / "studio_tools.py").read_text(encoding="utf-8"))
     funcs = {n.name for n in arvore.body if isinstance(n, ast.FunctionDef)}
     grupos = {}
     for n in arvore.body:
@@ -120,7 +120,7 @@ def problemas():
         for f in c["funcoes"]:
             todas.add(f)
             if f not in funcs:
-                erros.append("conexão %s: a função %s não existe em heimdall_tools.py" % (c["id"], f))
+                erros.append("conexão %s: a função %s não existe em studio_tools.py" % (c["id"], f))
             elif f not in no_grupo:
                 erros.append("conexão %s: a função %s não faz parte do servidor %s" % (c["id"], f, c["grupo"]))
     for g in ("DADOS_TOOLS",):

@@ -226,7 +226,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "http://qdrant:6333/collections/heimdall_notas/points/query",
+        "url": "http://qdrant:6333/collections/studio_notas/points/query",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -269,7 +269,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "http://qdrant:6333/collections/heimdall_docs/points/query",
+        "url": "http://qdrant:6333/collections/studio_docs/points/query",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

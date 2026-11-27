@@ -13,7 +13,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-import heimdall_banco as banco
+import studio_banco as banco
 
 CONTAINER = "n8n"
 ID_FLUXO = "hdSaude000000001"

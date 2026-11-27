@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do Studio News (heimdall_news.py) com feeds e modelo de mentira, sem internet.
+"""Teste do Studio News (studio_news.py) com feeds e modelo de mentira, sem internet.
 
     python3 tests/news/teste_news.py
 
@@ -11,7 +11,7 @@ HTML escapado, RSS com chave secreta (geral, categoria e OPML), chave fora do lo
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import io
@@ -195,12 +195,12 @@ os.environ.update({
     "STUDIO_NEWS_MODELO": "modelo-de-teste", "STUDIO_NEWS_URL": "https://news.exemplo.test", "STUDIO_NEWS_FUSO": "America/Sao_Paulo",
 })
 sys.path.insert(0, str(RAIZ))
-import heimdall_lab as hc  # noqa: E402
+import studio_lab as hc  # noqa: E402
 
 hc.SENHA_HASH = hc.hash_senha(SENHA, iteracoes=100_000)
 hc.TOTP_SEGREDO = SEGREDO
-import heimdall_banco as banco  # noqa: E402
-import heimdall_news as hn  # noqa: E402
+import studio_banco as banco  # noqa: E402
+import studio_news as hn  # noqa: E402
 
 
 banco.iniciar()
@@ -526,7 +526,7 @@ confere("a fonte volta ao normal quando responde de novo", hn.ESTADO["fontes"]["
 
 # --- sair ---
 csrf = re.search(r'name="csrf" value="([^"]+)"', txt(req("GET", "/", cookie=ck)[2])).group(1)
-import heimdall_perguntar as _hp
+import studio_perguntar as _hp
 import time as _tm
 _s, _h, _b = req("GET", "/", cookie=ck)
 _t = txt(_b)
@@ -574,13 +574,13 @@ con.commit()
 con.close()
 saida = io.StringIO()
 antigo, sys.stdout = sys.stdout, saida
-sys.argv = ["heimdall_news.py", "--urls"]
+sys.argv = ["studio_news.py", "--urls"]
 hn.main()
 sys.stdout = antigo
 confere("--urls funciona antes da primeira subida (tabela criada na hora)", "/geral.xml" in saida.getvalue() and sql("SELECT COUNT(*) FROM noticias") == [(0,)])
 hc.PROJECT_DIR = hn.PROJECT_DIR = RAIZ
 (RAIZ / ".env").write_text("OUTRA='coisa'\nSTUDIO_NEWS_RSS_TOKEN='antiga'\n", encoding="utf-8")
-sys.argv = ["heimdall_news.py", "--token"]
+sys.argv = ["studio_news.py", "--token"]
 saida = io.StringIO()
 antigo, sys.stdout = sys.stdout, saida
 hn.main()
@@ -595,14 +595,14 @@ s2, _, _ = req("GET", f"/rss/{novo}/geral.xml")
 confere("chave nova vale e a antiga deixa de valer", s == 404 and s2 == 200)
 saida = io.StringIO()
 antigo, sys.stdout = sys.stdout, saida
-sys.argv = ["heimdall_news.py", "--opml", str(RAIZ / "feeds.opml")]
+sys.argv = ["studio_news.py", "--opml", str(RAIZ / "feeds.opml")]
 hn.main()
 sys.stdout = antigo
 op2 = ET.fromstring((RAIZ / "feeds.opml").read_bytes())
 confere("--opml grava o arquivo com todos os feeds e a chave nova", len(list(op2.iter("outline"))) == 4 and f"/rss/{novo}/geral.xml" in (RAIZ / "feeds.opml").read_text(encoding="utf-8") and oct((RAIZ / "feeds.opml").stat().st_mode & 0o777) == "0o600" and "Atenção" in saida.getvalue())
 saida = io.StringIO()
 antigo, sys.stdout = sys.stdout, saida
-sys.argv = ["heimdall_news.py", "--copiar", "ciencia"]
+sys.argv = ["studio_news.py", "--copiar", "ciencia"]
 try:
     hn.main()
 except SystemExit:
@@ -611,12 +611,12 @@ sys.stdout = antigo
 confere("--copiar acha o feed da categoria", "ciencia" in saida.getvalue() and ("copiado" in saida.getvalue() or f"/rss/{novo}/ciencia.xml" in saida.getvalue()))
 saida = io.StringIO()
 antigo, sys.stdout = sys.stdout, saida
-sys.argv = ["heimdall_news.py", "--fila"]
+sys.argv = ["studio_news.py", "--fila"]
 hn.main()
 sys.stdout = antigo
 _fila_real = sql("SELECT COUNT(*) FROM noticias WHERE resumo_base='' AND tentativas < ? AND publicado >= ?", hn.MAX_TENTATIVAS, hn.iso(hn.agora() - timedelta(hours=hn.JANELA_HORAS)))[0][0]
 confere("--fila mostra a fila e o ritmo", f"Na fila esperando resumo: {_fila_real}" in saida.getvalue() and "Notícias das últimas 24 horas" in saida.getvalue())
-sys.argv = ["heimdall_news.py", "--copiar", "inexistente"]
+sys.argv = ["studio_news.py", "--copiar", "inexistente"]
 try:
     hn.main()
     confere("--copiar com nome errado avisa", False)

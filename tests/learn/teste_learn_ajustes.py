@@ -2,7 +2,7 @@
 """Testa a aba Ajustes do Learn: pausar agenda e avisos, agenda por pasta, arquivar pasta sem apagar nada e as telas."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import os
@@ -21,10 +21,10 @@ os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 os.environ["STUDIO_AVISOS_MAC"] = "0"
 (TMP / "knowledge").mkdir()
 
-import heimdall_lab as nuvem  # noqa: E402
-import heimdall_learn as site  # noqa: E402
-import heimdall_learn_cards as ca  # noqa: E402
-import heimdall_learn_dados as d  # noqa: E402
+import studio_lab as nuvem  # noqa: E402
+import studio_learn as site  # noqa: E402
+import studio_learn_cards as ca  # noqa: E402
+import studio_learn_dados as d  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"
 
@@ -66,7 +66,7 @@ confere("agenda pausada nos Ajustes não gera nada", ca.executar_agenda(datetime
 d.definir_ajuste("agenda", "1")
 confere("agenda ligada de novo gera", ca.executar_agenda(datetime(2026, 11, 23, 10, 0), lambda *a, **k: "Título\n\nCorpo do card de teste aqui.", None, lambda *a: None) != [])
 chamadas = []
-import heimdall_avisos_mac as mac  # noqa: E402
+import studio_avisos_mac as mac  # noqa: E402
 mac.publicar = lambda x: chamadas.append(x)
 d.definir_ajuste("avisos", "0")
 ca.notificar_padrao("t", "c")

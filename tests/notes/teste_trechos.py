@@ -8,7 +8,7 @@ tanto com trechos novos quanto com trechos antigos (indexados antes da correçã
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import re
@@ -21,7 +21,7 @@ from pathlib import Path
 AQUI = RAIZ
 sys.path.insert(0, str(AQUI))
 sys.modules.setdefault("requests", types.ModuleType("requests"))
-sys.modules.setdefault("heimdall_tools", types.SimpleNamespace(QDRANT_COLLECTION="x", EMBED_MODEL="x", _embed=lambda t: [[0.0]]))
+sys.modules.setdefault("studio_tools", types.SimpleNamespace(QDRANT_COLLECTION="x", EMBED_MODEL="x", _embed=lambda t: [[0.0]]))
 import ingest_docs as ig  # noqa: E402
 
 ok_n, falhas = 0, []

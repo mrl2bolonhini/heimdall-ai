@@ -2,7 +2,7 @@
 """Testa cards e agenda do Learn: limites (3 cards e 1 lição por dia), horários, espera após falha, notificação e as telas."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import json
@@ -24,12 +24,12 @@ os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 os.environ["STUDIO_AVISOS_MAC"] = "0"
 (TMP / "knowledge").mkdir()
 
-import heimdall_lab as nuvem  # noqa: E402
-import heimdall_learn as site  # noqa: E402
-import heimdall_learn_cards as ca  # noqa: E402
-import heimdall_learn_dados as d  # noqa: E402
+import studio_lab as nuvem  # noqa: E402
+import studio_learn as site  # noqa: E402
+import studio_learn_cards as ca  # noqa: E402
+import studio_learn_dados as d  # noqa: E402
 d.definir_ajuste("estudos_dia", "0")   # estudos por sorteio têm teste próprio (teste_learn_estudos_dia.py)
-import heimdall_learn_licoes as li  # noqa: E402
+import studio_learn_licoes as li  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"
 

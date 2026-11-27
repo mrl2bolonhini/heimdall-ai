@@ -2,7 +2,7 @@
 """Testa que o agente abre Notas, Lembretes e Calendário escondidos (open -g -j) e só fecha o que ele mesmo abriu."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import subprocess
 import sys
@@ -11,7 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_agente as ag  # noqa: E402
+import studio_agente as ag  # noqa: E402
 
 falhas = 0
 

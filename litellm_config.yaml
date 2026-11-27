@@ -15,7 +15,7 @@ model_list:
     model_info:
       supports_function_calling: true
 
-  # Base do modelo Conversas do Open WebUI. Local, é o mesmo gemma de cima; com STUDIO_NUVEM=1 o heimdall_litellm.py troca este nome
+  # Base do modelo Conversas do Open WebUI. Local, é o mesmo gemma de cima; com STUDIO_NUVEM=1 o studio_litellm.py troca este nome
   # pelo modelo da nuvem (Qwen3 30B), com ferramentas (SearXNG), e deixa este local como volta ("conversas-local").
   - model_name: conversas
     litellm_params:
@@ -75,7 +75,7 @@ model_list:
     model_info:
       supports_function_calling: true
 
-# Servidor MCP unificado (heimdall_mcp.py). O LiteLLM o expõe em
+# Servidor MCP unificado (studio_mcp.py). O LiteLLM o expõe em
 # http://<host>:9000/mcp para clientes como o open-client.
 mcp_servers:
   # Ferramentas do Mac (arquivos, métricas, memória, documentos): só administrador.

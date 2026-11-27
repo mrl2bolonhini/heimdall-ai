@@ -2,12 +2,12 @@
 """Testa o percurso do Tab pelas abas: da aba o foco vai para o painel de conteúdo e termina no link Voltar para o topo, sem cair de volta no menu Conta."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_design as d  # noqa: E402
+import studio_design as d  # noqa: E402
 
 falhas = 0
 

@@ -2,7 +2,7 @@
 """Testa o ponto de entrada do contêiner de continuidade sem Docker: /health só fica pronto depois de restaurar a cópia, o site sobe em modo de leitura e uma falha de restauração não sobe nada."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import importlib.util
 import os
@@ -53,7 +53,7 @@ def espera(cond, seg=20):
 
 
 import urllib.error  # noqa: E402
-import heimdall_continuidade as hc  # noqa: E402
+import studio_continuidade as hc  # noqa: E402
 
 dados = tempfile.mkdtemp()
 p_saude, p_fin = porta_livre(), porta_livre()
@@ -62,8 +62,8 @@ os.environ.update({"STUDIO_RAIZ": str(RAIZ), "STUDIO_SAUDE_PORTA": str(p_saude),
 spec = importlib.util.spec_from_file_location("entrada", RAIZ / "cloudflare" / "continuity" / "entrada.py")
 entrada = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(entrada)
-entrada.SERVICOS = [("heimdall_finance.py", "STUDIO_FINANCE_PORT", p_fin)]
-confere("a lista de serviços aponta para arquivos que existem", all((RAIZ / m).exists() for m, _, _ in [(x[0], 0, 0) for x in [("heimdall_finance.py",), ("heimdall_painel_saude.py",), ("heimdall_news.py",), ("heimdall_learn.py",), ("heimdall_jogos.py",), ("heimdall_account.py",)]]))
+entrada.SERVICOS = [("studio_finance.py", "STUDIO_FINANCE_PORT", p_fin)]
+confere("a lista de serviços aponta para arquivos que existem", all((RAIZ / m).exists() for m, _, _ in [(x[0], 0, 0) for x in [("studio_finance.py",), ("studio_painel_saude.py",), ("studio_news.py",), ("studio_learn.py",), ("studio_jogos.py",), ("studio_account.py",)]]))
 
 # falha de restauração: sai com erro e não fica pronto
 hc.restaurar = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("não há cópia de continuidade no R2"))

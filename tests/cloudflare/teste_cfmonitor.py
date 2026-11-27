@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Teste do monitor da Cloudflare (heimdall_cfmonitor.py), sem rede e sem token real.
+"""Teste do monitor da Cloudflare (studio_cfmonitor.py), sem rede e sem token real.
 
     python3 tests/cloudflare/teste_cfmonitor.py
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import io
 import json
@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_cfmonitor as cm  # noqa: E402
+import studio_cfmonitor as cm  # noqa: E402
 
 falhas = 0
 

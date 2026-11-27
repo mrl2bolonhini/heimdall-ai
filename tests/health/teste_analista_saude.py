@@ -2,7 +2,7 @@
 """Testa o analista de saúde: dossiê, correlações, literatura (PubMed simulado, cache), conferência do JSON do modelo, análise sem modelo, gravação e aviso."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -17,8 +17,8 @@ os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 os.environ["STUDIO_AVISOS_MAC"] = "1"
 os.environ.pop("STUDIO_SAUDE_LITERATURA", None)
 sys.path.insert(0, str(RAIZ))
-import heimdall_saude as hs  # noqa: E402
-import heimdall_analista_saude as an  # noqa: E402
+import studio_saude as hs  # noqa: E402
+import studio_analista_saude as an  # noqa: E402
 
 falhas = 0
 
@@ -107,7 +107,7 @@ confere("lixo do modelo vira vazio", an.conferir("não sei", lit) == {} and an.c
 confere("gravidade inventada vira informativo", an.conferir('{"panorama":"x","gravidade":"catastrofe"}', lit)["gravidade"] == "informativo")
 
 # modelo: nuvem (120b) quando ligada, local se a nuvem falhar ou se o interruptor da análise pedir
-import heimdall_nuvem as nv  # noqa: E402
+import studio_nuvem as nv  # noqa: E402
 vistos = []
 nv.ativo = lambda env=None: True
 nv.chat = lambda sistema, usuario, max_tokens=0, timeout=0, **k: (vistos.append((sistema, max_tokens, timeout)) or "nuvem respondeu")
@@ -162,7 +162,7 @@ e = an.analisar(HOJE, modelo=lambda p: "lixo", abrir=abrir)
 confere("modelo fora do formato: o texto diz o motivo", not e["com_modelo"] and "fora do formato" in e["texto"], e["texto"][:600])
 
 # rodar: grava na aba Avisos, avisa pela gravidade, respeita o intervalo
-import heimdall_avisos as av  # noqa: E402
+import studio_avisos as av  # noqa: E402
 agora = datetime.now()
 r1 = an.rodar(agora, modelo=lambda p: bom, abrir=abrir, avisar_mac=avisos_mac.append)
 confere("rodar grava a análise na aba Avisos do Health", r1 and r1["aviso"] and any("Análise de saúde" in x["titulo"] for x in av.do_servico("saude").listar()), r1 and r1.get("aviso"))

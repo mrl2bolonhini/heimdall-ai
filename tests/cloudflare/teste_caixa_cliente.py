@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Teste do cliente da caixa de correio (heimdall_caixa.py), sem rede e sem token real.
+"""Teste do cliente da caixa de correio (studio_caixa.py), sem rede e sem token real.
 
     python3 tests/cloudflare/teste_caixa_cliente.py
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import io
 import json
@@ -16,7 +16,7 @@ import urllib.error
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_caixa as cx  # noqa: E402
+import studio_caixa as cx  # noqa: E402
 
 falhas = 0
 

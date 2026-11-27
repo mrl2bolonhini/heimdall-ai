@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Testa heimdall_anomalias: normal, desvio, tendência lenta, sequência, cruzamentos, medidas do dia inteiro e métricas desconhecidas."""
+"""Testa studio_anomalias: normal, desvio, tendência lenta, sequência, cruzamentos, medidas do dia inteiro e métricas desconhecidas."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import re
@@ -14,8 +14,8 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp(prefix="anomalias_"))
 os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 sys.path.insert(0, str(RAIZ))
-import heimdall_saude as hs  # noqa: E402
-import heimdall_anomalias as an  # noqa: E402
+import studio_saude as hs  # noqa: E402
+import studio_anomalias as an  # noqa: E402
 
 falhas = 0
 

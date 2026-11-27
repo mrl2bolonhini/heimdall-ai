@@ -4,7 +4,7 @@
 Quando o app Notas não informa a pasta de uma nota, o Second Brain antigo analisava os seus próprios
 espelhos ("Cérebro: ...") e os digests ("Digest AAAA-MM-DD HHh") como se fossem notas suas. Este script
 remove só isso, em três lugares, e não toca nas suas notas:
-  1. a base vetorial (Qdrant, coleção heimdall_notas): pontos cujo título começa com "Cérebro:" ou "Digest ";
+  1. a base vetorial (Qdrant, coleção studio_notas): pontos cujo título começa com "Cérebro:" ou "Digest ";
   2. os arquivos cerebro-cerebro-*.md e cerebro-digest-*.md do cofre (~/heimdall-ai/brain/heimdall-cerebro);
   3. as notas "Cérebro: Cérebro: ..." e "Cérebro: Digest ..." no app Notas (vão para "Apagadas Recentemente").
 
@@ -12,7 +12,7 @@ Uso (na pasta do projeto):   python3 limpar_espelhos.py
 Opção --so-listar mostra o que seria apagado, sem apagar nada.
 """
 import json
-import heimdall_pastas
+import studio_pastas
 import os
 import re
 import subprocess
@@ -21,8 +21,8 @@ import urllib.request
 from pathlib import Path
 
 QDRANT = os.environ.get("QDRANT_URL", "http://localhost:6333").rstrip("/")
-COLECAO = "heimdall_notas"
-COFRE = Path(os.environ.get("STUDIO_VAULT_DIR", str(heimdall_pastas.brain(Path(__file__).resolve().parent)))).expanduser()
+COLECAO = "studio_notas"
+COFRE = Path(os.environ.get("STUDIO_VAULT_DIR", str(studio_pastas.brain(Path(__file__).resolve().parent)))).expanduser()
 RUIM = re.compile(r"^(C[ée]rebro: |Digest \d{4}-\d{2}-\d{2} \d{2}h$)")
 SO_LISTAR = "--so-listar" in sys.argv
 

@@ -2,7 +2,7 @@
 """Testa o site do Studio Learn: login exigido, host permitido, CSRF, criação de pasta, tipo, importação multipart, acessibilidade."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import sys
@@ -20,8 +20,8 @@ os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 os.environ["STUDIO_LEARN_MAX_MB"] = "1"
 (TMP / "knowledge" / "aws").mkdir(parents=True)
 
-import heimdall_lab as nuvem  # noqa: E402
-import heimdall_learn as site  # noqa: E402
+import studio_lab as nuvem  # noqa: E402
+import studio_learn as site  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"
 

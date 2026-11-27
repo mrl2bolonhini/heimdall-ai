@@ -2,7 +2,7 @@
 """Testa os dados das abas Exercícios e Progresso do Learn: gabarito só depois de concluir, filtro dos erros, dias seguidos e acertos por tipo."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -16,9 +16,9 @@ os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
 os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 (TMP / "knowledge").mkdir()
 
-import heimdall_learn_dados as d  # noqa: E402
-import heimdall_learn_licoes as li  # noqa: E402
-import heimdall_learn_painel as pa  # noqa: E402
+import studio_learn_dados as d  # noqa: E402
+import studio_learn_licoes as li  # noqa: E402
+import studio_learn_painel as pa  # noqa: E402
 
 falhas = 0
 

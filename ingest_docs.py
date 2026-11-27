@@ -30,7 +30,7 @@ import requests
 BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
 
-import heimdall_tools as ht  # noqa: E402
+import studio_tools as ht  # noqa: E402
 
 TEXT_EXT = {".txt", ".md", ".rst", ".csv", ".json", ".yaml", ".yml", ".py", ".sql"}
 DEFAULT_MAX_MB = 50

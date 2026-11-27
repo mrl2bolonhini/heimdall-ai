@@ -3,7 +3,7 @@
 isolamento entre pessoas e as telas /nuvem, contra provedores falsos."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import sys
@@ -138,12 +138,12 @@ PORTA_F = fake.server_address[1]
 threading.Thread(target=fake.serve_forever, daemon=True).start()
 F = f"http://127.0.0.1:{PORTA_F}"
 
-import heimdall_lab as hc  # noqa: E402
-import heimdall_memory as lib  # noqa: E402
-import heimdall_memory_dados as dados  # noqa: E402
-import heimdall_conexoes as cx  # noqa: E402
-import heimdall_memory_nuvem as nv  # noqa: E402
-import heimdall_servico_web as web  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_memory as lib  # noqa: E402
+import studio_memory_dados as dados  # noqa: E402
+import studio_conexoes as cx  # noqa: E402
+import studio_memory_nuvem as nv  # noqa: E402
+import studio_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
 cx.PERMITE_HTTP = True

@@ -3,7 +3,7 @@
 Perguntar com o contexto das notas, e a regra de que só o dono vê o conteúdo."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import os
@@ -16,12 +16,12 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="hub_notas_"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "STUDIO_HUB_IA": "0"})
-import heimdall_hub_notas as hn  # noqa: E402
-import heimdall_lab as hc  # noqa: E402
-import heimdall_memory as lib  # noqa: E402
-import heimdall_memory_dados as dados  # noqa: E402
-import heimdall_notas as n  # noqa: E402
-import heimdall_servico_web as web  # noqa: E402
+import studio_hub_notas as hn  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_memory as lib  # noqa: E402
+import studio_memory_dados as dados  # noqa: E402
+import studio_notas as n  # noqa: E402
+import studio_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
 hc.SENHA_HASH = hc.hash_senha("senha-de-teste-forte", iteracoes=100_000)
@@ -117,7 +117,7 @@ confere("contexto do Perguntar traz só trechos das notas", "Fotossíntese" in c
 s, _, r = req("POST", "/perguntar", {"csrf": csrf, "texto": "o que é fotossíntese?", "volta": "/notas"}, tk)
 confere("Perguntar na aba Notas é aceito", s == 303 and r.getheader("Location", "").startswith("/notas"), (s, r.getheader("Location")))
 # convidado: não vê nada
-import heimdall_pessoas as pessoas  # noqa: E402
+import studio_pessoas as pessoas  # noqa: E402
 confere("convidado recebe aviso, não o conteúdo", pessoas.e_dono() is True)
 with pessoas.definir(pessoas.id_da("ana@exemplo.com")):
     ativo_antes = pessoas.ativo

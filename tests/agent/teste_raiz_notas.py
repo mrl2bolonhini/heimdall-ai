@@ -2,11 +2,11 @@
 """Testa a raiz Studio Hub do app Notas: caminhos, nomes antigos aceitos, laço evitado e a cópia sem apagar nada (sem Mac)."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 os.environ.pop("STUDIO_NOTAS_RAIZ", None)
-import heimdall_agente as ag  # noqa: E402
+import studio_agente as ag  # noqa: E402
 
 falhas = 0
 

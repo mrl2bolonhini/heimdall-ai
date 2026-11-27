@@ -6,7 +6,7 @@ Uso, na pasta do projeto, com o sistema no ar:
     python3 tests/health/teste_saude.py qwen3-vl-instruct --bruto      # prompt antigo, sem as regras (para comparar)"""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json, re, sys, time, urllib.request
 from pathlib import Path

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Testa financas_analise.py e heimdall_perguntar.py: fatos calculados, texto fixo, conferência dos números do modelo e contexto das perguntas.
+"""Testa financas_analise.py e studio_perguntar.py: fatos calculados, texto fixo, conferência dos números do modelo e contexto das perguntas.
 O modelo é simulado; nada toca a rede. Dados inventados."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sys
@@ -16,7 +16,7 @@ sys.path.insert(0, str(AQUI))
 import financas_analise as fa  # noqa: E402
 import financas_boletos as fb  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
-import heimdall_perguntar as hp  # noqa: E402
+import studio_perguntar as hp  # noqa: E402
 
 falhas = 0
 
@@ -95,7 +95,7 @@ confere("pergunta: resposta com valor dos dados passa sem aviso", r["texto"].sta
 hp.chamar_local = lambda *a, **k: "Foram R$ 777,77."
 r = hp.responder(ctx, "x")
 confere("pergunta: valor que não está nos dados gera aviso", r["avisos"] and "R$ 777,77" in r["avisos"][0], r)
-confere("o módulo tenta a nuvem só quando ligada e volta ao modelo local se ela falhar", "nuvem.ativo()" in (AQUI / "heimdall_perguntar.py").read_text(encoding="utf-8") and "usando o modelo local" in (AQUI / "heimdall_perguntar.py").read_text(encoding="utf-8"))
+confere("o módulo tenta a nuvem só quando ligada e volta ao modelo local se ela falhar", "nuvem.ativo()" in (AQUI / "studio_perguntar.py").read_text(encoding="utf-8") and "usando o modelo local" in (AQUI / "studio_perguntar.py").read_text(encoding="utf-8"))
 
 # tarefas em segundo plano
 import time  # noqa: E402

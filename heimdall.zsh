@@ -144,7 +144,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
   printf '%s\n' "-h=--help"
 }
 
-_heimdall_ajuda_arquivo() { echo "$STUDIO_DIR/guides/heimdall_ajuda.txt"; }
+_heimdall_ajuda_arquivo() { echo "$STUDIO_DIR/guides/studio_ajuda.txt"; }
 
 _heimdall_overview() {  # lista os comandos, um por linha
   echo "Uso: studio COMANDO [--opção ...]. Para as variações de um comando: studio COMANDO --help (ou -h)."
@@ -181,34 +181,34 @@ _heimdall_labs() {  # studio health --labs: exames, receitas, encaminhamentos, a
 --place=--local
 --days=--dias" "$@"
   case "$_sub" in
-    ""|summary) _heimdall_py heimdall_exames.py --resumo "${_HA[@]}" ;;
-    pending) _heimdall_py heimdall_exames.py --pendentes ;;
-    read) _heimdall_py heimdall_exames.py --ler "${_HA[@]}" ;;
-    confirm) _heimdall_py heimdall_exames.py --confirmar "${_HA[@]}" ;;
-    discard) _heimdall_py heimdall_exames.py --descartar "${_HA[@]}" ;;
-    folder) _heimdall_py heimdall_exames.py --pasta ;;
-    import) _heimdall_py heimdall_exames.py --importar "${_HA[@]}" ;;
-    result) _heimdall_py heimdall_exames.py --exame "${_HA[@]}" ;;
-    analysis) _heimdall_py heimdall_exames.py --analise "${_HA[@]}" ;;
-    prescriptions) _heimdall_py heimdall_exames.py --receitas ;;
-    referrals) _heimdall_py heimdall_exames.py --encaminhamentos ;;
-    certificates) _heimdall_py heimdall_exames.py --atestados ;;
-    reports) _heimdall_py heimdall_exames.py --laudos ;;
-    requests) _heimdall_py heimdall_exames.py --pedidos ;;
+    ""|summary) _heimdall_py studio_exames.py --resumo "${_HA[@]}" ;;
+    pending) _heimdall_py studio_exames.py --pendentes ;;
+    read) _heimdall_py studio_exames.py --ler "${_HA[@]}" ;;
+    confirm) _heimdall_py studio_exames.py --confirmar "${_HA[@]}" ;;
+    discard) _heimdall_py studio_exames.py --descartar "${_HA[@]}" ;;
+    folder) _heimdall_py studio_exames.py --pasta ;;
+    import) _heimdall_py studio_exames.py --importar "${_HA[@]}" ;;
+    result) _heimdall_py studio_exames.py --exame "${_HA[@]}" ;;
+    analysis) _heimdall_py studio_exames.py --analise "${_HA[@]}" ;;
+    prescriptions) _heimdall_py studio_exames.py --receitas ;;
+    referrals) _heimdall_py studio_exames.py --encaminhamentos ;;
+    certificates) _heimdall_py studio_exames.py --atestados ;;
+    reports) _heimdall_py studio_exames.py --laudos ;;
+    requests) _heimdall_py studio_exames.py --pedidos ;;
     suggestions)   # sugestões de acompanhamento: nada vira lembrete ou evento sem accept
       case "${_HA[1]:-}" in
-        refresh) _heimdall_py heimdall_clinico.py --atualizar ;;
-        all) _heimdall_py heimdall_clinico.py --sugestoes --todas ;;
+        refresh) _heimdall_py studio_clinico.py --atualizar ;;
+        all) _heimdall_py studio_clinico.py --sugestoes --todas ;;
         accept)   # com --date (e --time) o compromisso já marcado vira evento no Calendário; sem data, conforme o caso: evento ou lembrete
           local _a=("${(@)_HA[3,-1]}") _o=() _i
           for ((_i=1; _i<=${#_a}; _i++)); do
             case "${_a[_i]}" in --date) _o+=(--data "${_a[_i+1]:-}"); ((_i++)) ;; --time) _o+=(--hora "${_a[_i+1]:-}"); ((_i++)) ;; esac
           done
-          _heimdall_py heimdall_clinico.py --aceitar "${_HA[2]:-0}" "${_o[@]}" ;;
-        dismiss) _heimdall_py heimdall_clinico.py --recusar "${_HA[2]:-0}" ;;
-        snooze) _heimdall_py heimdall_clinico.py --adiar "${_HA[2]:-0}" --dias "${_HA[3]:-14}" ;;
-        answer) _heimdall_py heimdall_clinico.py --responder "${_HA[2]:-0}" --texto "${(j: :)_HA[3,-1]}" ;;
-        "") _heimdall_py heimdall_clinico.py --sugestoes ;;
+          _heimdall_py studio_clinico.py --aceitar "${_HA[2]:-0}" "${_o[@]}" ;;
+        dismiss) _heimdall_py studio_clinico.py --recusar "${_HA[2]:-0}" ;;
+        snooze) _heimdall_py studio_clinico.py --adiar "${_HA[2]:-0}" --dias "${_HA[3]:-14}" ;;
+        answer) _heimdall_py studio_clinico.py --responder "${_HA[2]:-0}" --texto "${(j: :)_HA[3,-1]}" ;;
+        "") _heimdall_py studio_clinico.py --sugestoes ;;
         *) echo "Use: studio health --labs suggestions [refresh|all|accept ID [--date AAAA-MM-DD] [--time HH:MM]|dismiss ID|snooze ID DAYS|answer ID TEXT]" ;;
       esac ;;
     profile)   # perfil de saúde: condições, cirurgias, alergias, convênio
@@ -216,17 +216,17 @@ _heimdall_labs() {  # studio health --labs: exames, receitas, encaminhamentos, a
         add)
           local _t="${_HA[2]:-}"
           case "$_t" in condition) _t=condicao ;; surgery) _t=cirurgia ;; allergy) _t=alergia ;; insurance) _t=convenio ;; doctor) _t=medico ;; other) _t=outro ;; esac
-          _heimdall_py heimdall_clinico.py --perfil-add "$_t" --texto "${(j: :)_HA[3,-1]}" ;;
-        remove) _heimdall_py heimdall_clinico.py --perfil-rm "${_HA[2]:-0}" ;;
-        done) _heimdall_py heimdall_clinico.py --perfil-concluir ;;
-        "") _heimdall_py heimdall_clinico.py --perfil ;;
+          _heimdall_py studio_clinico.py --perfil-add "$_t" --texto "${(j: :)_HA[3,-1]}" ;;
+        remove) _heimdall_py studio_clinico.py --perfil-rm "${_HA[2]:-0}" ;;
+        done) _heimdall_py studio_clinico.py --perfil-concluir ;;
+        "") _heimdall_py studio_clinico.py --perfil ;;
         *) echo "Use: studio health --labs profile [add condition|surgery|allergy|insurance|doctor|other TEXT|remove ID|done]" ;;
       esac ;;
-    appointments) _heimdall_py heimdall_exames.py --consultas ;;
-    appointment) _heimdall_py heimdall_exames.py --consulta-nova "${_HA[@]}" ;;
-    calendar) _heimdall_py heimdall_exames.py --agenda ;;
-    documents) _heimdall_py heimdall_exames.py --documentos ;;
-    token) _heimdall_py heimdall_exames.py --gerar-token ;;
+    appointments) _heimdall_py studio_exames.py --consultas ;;
+    appointment) _heimdall_py studio_exames.py --consulta-nova "${_HA[@]}" ;;
+    calendar) _heimdall_py studio_exames.py --agenda ;;
+    documents) _heimdall_py studio_exames.py --documentos ;;
+    token) _heimdall_py studio_exames.py --gerar-token ;;
     --open) _heimdall_web "Painel de saúde" SAUDE_PAINEL 8013 health /exames ;;
     *) echo "Use: studio health --labs [summary|pending|read ID|confirm ID [--without 2,5] [--date AAAA-MM-DD]|discard ID|folder|import FILE...|result NAME|analysis [NAME]|prescriptions|referrals|certificates|reports|requests|suggestions|profile|appointments|appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NAME] [--specialty NAME] [--place PLACE]|calendar|documents|token|--open]"; return 1 ;;
   esac
@@ -307,7 +307,7 @@ studio() {
         *) _heimdall_tr "--copy=--copiar
 --sources=--fontes
 --queue=--fila
---now=--uma-vez" "$@"; _heimdall_py heimdall_news.py "${_HA[@]}" ;;
+--now=--uma-vez" "$@"; _heimdall_py studio_news.py "${_HA[@]}" ;;
       esac ;;
     lab)
       case "$1" in
@@ -341,7 +341,7 @@ studio() {
 --trends=--tendencias
 --workouts=--treinos
 --import=--importar" "$@"
-          _heimdall_py heimdall_saude.py "${_HA[@]}" ;;
+          _heimdall_py studio_saude.py "${_HA[@]}" ;;
       esac ;;
     account) _heimdall_web "Account" ACCOUNT 8018 account ;;
     trading) _heimdall_web "Studio Trading" TRADING 8020 trading ;;
@@ -357,8 +357,8 @@ studio() {
     learn)
       case "$1" in
         "") _heimdall_web "Studio Learn" LEARN 8019 learn ;;
-        -s|--sync) _heimdall_py heimdall_learn_dados.py --sincronizar ;;
-        -m|--migrate) shift; _heimdall_tr "--apply=--aplicar" "$@"; _heimdall_py heimdall_learn_migrar.py "${_HA[@]}" ;;
+        -s|--sync) _heimdall_py studio_learn_dados.py --sincronizar ;;
+        -m|--migrate) shift; _heimdall_tr "--apply=--aplicar" "$@"; _heimdall_py studio_learn_migrar.py "${_HA[@]}" ;;
         *) echo "Use: studio learn [--sync] [--migrate [--apply]] [--local]"; return 1 ;;
       esac ;;
     games)
@@ -423,7 +423,7 @@ studio() {
     dozzle) _heimdall_open "Dozzle (logs)" "http://localhost:8081" ;;
     urls)
       if [ "$1" = "--public" ]; then
-        shift; _heimdall_tr "--check=--verificar" "$@"; _heimdall_py heimdall_conta.py --urls-publicas "${_HA[@]}"; return $?
+        shift; _heimdall_tr "--check=--verificar" "$@"; _heimdall_py studio_conta.py --urls-publicas "${_HA[@]}"; return $?
       fi
       echo "chat: http://localhost:3000"
       echo "learn: http://localhost:$(_heimdall_port STUDIO_LEARN_PORT 8019)"
@@ -440,20 +440,20 @@ studio() {
       echo "kuma: http://localhost:3001"
       echo "dozzle: http://localhost:8081" ;;
 
-    db) _heimdall_py heimdall_banco.py "$@" ;;
-    notion) _heimdall_py heimdall_notion.py ;;
-    cloudai) _heimdall_py heimdall_nuvem.py ;;
-    mailbox) _heimdall_py heimdall_caixa.py "$@" ;;
+    db) _heimdall_py studio_banco.py "$@" ;;
+    notion) _heimdall_py studio_notion.py ;;
+    cloudai) _heimdall_py studio_nuvem.py ;;
+    mailbox) _heimdall_py studio_caixa.py "$@" ;;
     app) _heimdall_tr "--login=--entrar
 --remove-login=--nao-entrar" "$@"; _heimdall_sh scripts/construir_app_mac.sh "${_HA[@]}" ;;
     ask) _heimdall_tr "--local=-
---cloud=-" "$@"; _heimdall_py heimdall_ask.py "${_HA[@]}" ;;
-    usage) _heimdall_tr "--days=--dias" "$@"; _heimdall_py heimdall_cfmonitor.py "${_HA[@]}" ;;
+--cloud=-" "$@"; _heimdall_py studio_ask.py "${_HA[@]}" ;;
+    usage) _heimdall_tr "--days=--dias" "$@"; _heimdall_py studio_cfmonitor.py "${_HA[@]}" ;;
     support) _heimdall_tr "--last=--ultimas
 --test=--testar
 --reply=--responder
 --to=--para
---documents=--documentos" "$@"; _heimdall_py heimdall_ajuda.py "${_HA[@]}" ;;
+--documents=--documentos" "$@"; _heimdall_py studio_ajuda.py "${_HA[@]}" ;;
     notices) _heimdall_tr "--migrate=--executar" "$@"; _heimdall_py migrar_avisos.py "${_HA[@]}" ;;
     doctor)
       _heimdall_tr "--memory=--memoria
@@ -469,7 +469,7 @@ studio() {
 --list=listar
 --verify=verificar
 --restore=restaurar" "$@"
-      _heimdall_py heimdall_backup.py "${_HA[@]}" ;;
+      _heimdall_py studio_backup.py "${_HA[@]}" ;;
     continuity)
       case "$1" in
         --deploy) "$STUDIO_DIR/scripts/continuidade_nuvem.sh" implantar ;;
@@ -479,7 +479,7 @@ studio() {
         *) _heimdall_tr "--prepare=preparar
 --send=enviar
 --status=status" "$@"
-           _heimdall_py heimdall_continuidade.py "${_HA[@]}" ;;
+           _heimdall_py studio_continuidade.py "${_HA[@]}" ;;
       esac ;;
     mail) _heimdall_tr "--test-login=--testar-login
 --diagnose=--diagnostico
@@ -490,20 +490,20 @@ studio() {
 --month=--mes
 --search=--buscar
 --category=--categoria
---limit=--limite" "$@"; _heimdall_py heimdall_email_oficial.py "${_HA[@]}" ;;
+--limit=--limite" "$@"; _heimdall_py studio_email_oficial.py "${_HA[@]}" ;;
     access)
       _heimdall_tr "--password=--senha
 --code=--codigo
 --all=--tudo
 --verify=--verificar" "$@"
-      _heimdall_py heimdall_acesso.py "${_HA[@]}" ;;
-    voice) _heimdall_tr "--import=--importar" "$@"; _heimdall_py heimdall_voz.py "${_HA[@]}" ;;
+      _heimdall_py studio_acesso.py "${_HA[@]}" ;;
+    voice) _heimdall_tr "--import=--importar" "$@"; _heimdall_py studio_voz.py "${_HA[@]}" ;;
     listen) _heimdall_tr "--list=--lista
 --latest=-" "$@"; _heimdall_sh scripts/ouvir_estudo.sh "${_HA[@]}" ;;
     ingest) _heimdall_py ingest_docs.py "$@" ;;
     env)
       case "$1" in
-        --defaults) _heimdall_py heimdall_config.py --gravar-padroes ;;
+        --defaults) _heimdall_py studio_config.py --gravar-padroes ;;
         *) _heimdall_tr "--set=-" "$@"; _heimdall_sh scripts/guardar_no_env.sh "${_HA[@]}" ;;
       esac ;;
     cloudflare) _heimdall_tr "--set=-

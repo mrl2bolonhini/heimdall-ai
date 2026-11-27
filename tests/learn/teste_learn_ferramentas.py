@@ -2,7 +2,7 @@
 """Testa as ferramentas de leitura do Learn para o modelo Learn do chat: sem banco, progresso, lições com erros e cards; sempre só leitura."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -15,7 +15,7 @@ os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
 os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 (TMP / "knowledge").mkdir()
 
-import heimdall_tools as t  # noqa: E402
+import studio_tools as t  # noqa: E402
 
 falhas = 0
 
@@ -30,9 +30,9 @@ def confere(nome, ok, extra=""):
 confere("sem banco o Learn explica em vez de quebrar", "ainda não tem dados" in t.learn_progresso() and "ainda não tem dados" in t.learn_licoes() and "ainda não tem dados" in t.learn_cards())
 confere("ferramentas fazem parte do servidor de dados e não do público", all(f in t.DADOS_TOOLS for f in (t.learn_progresso, t.learn_licoes, t.learn_cards)) and not any(f in t.PUBLIC_TOOLS for f in (t.learn_progresso, t.learn_licoes, t.learn_cards)))
 
-import heimdall_learn_dados as d  # noqa: E402
-import heimdall_learn_licoes as li  # noqa: E402
-import heimdall_learn_cards as ca  # noqa: E402
+import studio_learn_dados as d  # noqa: E402
+import studio_learn_licoes as li  # noqa: E402
+import studio_learn_cards as ca  # noqa: E402
 d.criar_pasta("Inglês", "", "Idiomas", "inglês")
 d.criar_pasta("Direito civil", "", "Direito")
 (TMP / "knowledge" / "ingles" / "a.md").write_text("\n\n".join(("Frase %d do material sobre o verbo sentar e correr no parque. " % i) * 6 for i in range(8)), encoding="utf-8")

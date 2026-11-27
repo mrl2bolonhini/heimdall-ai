@@ -2,7 +2,7 @@
 """Testes de financas_planilhas.py: leitura de xlsx e csv, interpretação, aprendizado do layout, dúvidas, visões e resumos. Sem rede e sem modelo real."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 import tempfile

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Testa os nomes do Studio Hub (ex-Memory, 26/11/2026): variáveis STUDIO_HUB_*, serviço no catálogo, endereços, pasta de arquivos antiga renomeada sem perder nada
-e convidados liberados para o Hub. Os nomes antigos do .env (HEIMDALL_MEMORY_*, HEIMDALL_LIBRARY_*) são trocados por heimdall_config.renomear_antigas."""
+e convidados liberados para o Hub. Os nomes antigos do .env (HEIMDALL_MEMORY_*, HEIMDALL_LIBRARY_*) são trocados por studio_config.renomear_antigas."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import os
@@ -16,13 +16,13 @@ TMP = Path(tempfile.mkdtemp(prefix="memory_compat_"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 for k in [k for k in os.environ if k.startswith("STUDIO_HUB_")]:
     del os.environ[k]
-import heimdall_config as hcf  # noqa: E402
-import heimdall_memory as lib  # noqa: E402
-import heimdall_memory_dados as dados  # noqa: E402
-import heimdall_pastas  # noqa: E402
-import heimdall_servico_web as web  # noqa: E402
-import heimdall_servicos as servicos  # noqa: E402
-import heimdall_usuarios as u  # noqa: E402
+import studio_config as hcf  # noqa: E402
+import studio_memory as lib  # noqa: E402
+import studio_memory_dados as dados  # noqa: E402
+import studio_pastas  # noqa: E402
+import studio_servico_web as web  # noqa: E402
+import studio_servicos as servicos  # noqa: E402
+import studio_usuarios as u  # noqa: E402
 
 falhas = 0
 
@@ -47,7 +47,7 @@ for k in ("STUDIO_HUB_PORT", "STUDIO_HUB_MAX_MB", "STUDIO_HUB_HOSTS"):
 
 # 2. catálogo de serviços
 sv = next(x for x in servicos.catalogo() if x["id"] == "memory")
-confere("catálogo: serviço Hub", sv["nome"] == "Hub" and "hub" in sv.get("apelidos", []) and "library" not in sv.get("apelidos", []) and sv["script"] == ["heimdall_memory.py"], sv)
+confere("catálogo: serviço Hub", sv["nome"] == "Hub" and "hub" in sv.get("apelidos", []) and "library" not in sv.get("apelidos", []) and sv["script"] == ["studio_memory.py"], sv)
 confere("catálogo: não sobra serviço library", not any(x["id"] == "library" for x in servicos.catalogo()))
 confere("padrão do Hub: endereços hub e memory, sem o library", lib.CFG.hosts.startswith("hub.studiolibre.io") and "library" not in lib.CFG.hosts and "hub.studiolibre.io" in lib.CFG.hosts, lib.CFG.hosts)
 
@@ -69,11 +69,11 @@ confere("depois de migrar, a chamada seguinte devolve a mesma pasta", dados.past
 pessoa = TMP / "pessoa"
 (pessoa / "library").mkdir(parents=True)
 (pessoa / "library" / "b.txt").write_text("x", encoding="utf-8")
-confere("pessoa: pasta antiga renomeada", heimdall_pastas.migrar(pessoa, "library", "memory") == pessoa / "memory" and (pessoa / "memory" / "b.txt").exists())
+confere("pessoa: pasta antiga renomeada", studio_pastas.migrar(pessoa, "library", "memory") == pessoa / "memory" and (pessoa / "memory" / "b.txt").exists())
 (TMP / "outra" / "library").mkdir(parents=True)
 (TMP / "outra" / "memory").mkdir(parents=True)
 (TMP / "outra" / "library" / "c.txt").write_text("c", encoding="utf-8")
-confere("se as duas existem, nada é mexido", heimdall_pastas.migrar(TMP / "outra", "library", "memory") == TMP / "outra" / "memory" and (TMP / "outra" / "library" / "c.txt").exists())
+confere("se as duas existem, nada é mexido", studio_pastas.migrar(TMP / "outra", "library", "memory") == TMP / "outra" / "memory" and (TMP / "outra" / "library" / "c.txt").exists())
 confere("o banco mantém o nome histórico library.db", dados.caminho().name == "library.db")
 
 # 5. convidados liberados para o Hub

@@ -18,7 +18,7 @@ Ao terminar cada um, o script o descarrega da memória (use --keep-loaded para e
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import argparse
 import json
@@ -35,7 +35,7 @@ BASE_DIR = RAIZ
 sys.path.insert(0, str(BASE_DIR))
 
 try:
-    import heimdall_tools as tools_module
+    import studio_tools as tools_module
 except ImportError:
     import tools as tools_module
 

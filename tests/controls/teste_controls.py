@@ -2,7 +2,7 @@
 """Testa o Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade da página."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import json
@@ -19,8 +19,8 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp(prefix="controls_"))
 os.environ.update({"STUDIO_CONTROLS_SHELL": "/bin/bash", "STUDIO_CONTROLS_RC": "0", "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
-import heimdall_lab as hc  # noqa: E402
-import heimdall_controls as hcx  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_controls as hcx  # noqa: E402
 
 hcx.AUDITORIA = TMP / "logs" / "controls_audit.log"
 falhas = 0
@@ -156,7 +156,7 @@ confere("Tab: cd só oferece pastas", hcx.completar(str(dc), "cd sub")["palavra_
 if _ant is None: os.environ.pop("HOME")
 else: os.environ["HOME"] = _ant
 confere("duração: número colado no s, sem fração quando zero", [hcx.duracao(x) for x in (0, 0.004, 0.3, 12.3, 37.21, 65.4)] == ["0s", "0s", "0,3s", "12,3s", "37,21s", "1min e 5,4s"], [hcx.duracao(x) for x in (0, 0.004, 0.3, 12.3, 37.21, 65.4)])
-import heimdall_shell as _hs  # noqa: E402
+import studio_shell as _hs  # noqa: E402
 confere("eco da linha digitada sai da saída; saída parecida fica", _hs._sem_eco("cd ../", "cd ../\nok") == "ok" and _hs._sem_eco("ls", "a\nls") == "a\nls" and _hs._sem_eco("echo oi", "oi") == "oi")
 confere("histórico sem linha em branco no fim", not st["historico"].endswith("\n"), repr(st["historico"][-20:]))
 confere("Tab: nada que combine devolve lista vazia", hcx.completar(str(dc), "cat zzz")["opcoes"] == [])
@@ -198,8 +198,8 @@ hcx.obter_shell().esperar(10)
 confere("interromper (Ctrl+C)", json.loads(corpo)["ok"] and hcx.obter_shell().bloco(n6).estado == "interrompido")
 
 # --- serviços (rádios) e manutenção (ações)
-import heimdall_servicos as hsv  # noqa: E402
-import heimdall_kuma as hku  # noqa: E402
+import studio_servicos as hsv  # noqa: E402
+import studio_kuma as hku  # noqa: E402
 hku.monitores = lambda: ([{"id": 7, "nome": "Lab (8010)", "status": "no ar"}], "")
 chamadas = []
 hsv.aplicar = lambda sid, lig: (chamadas.append((sid, lig)) or (True, f"{sid} ok"))
@@ -223,7 +223,7 @@ confere("subaba Ajuda do Controls: perguntas do Controls e caminho para o suport
 confere("abas: o Terminal carrega a página inteira (data-completa)", corpo.count(" data-completa>") == 1)
 confere("abas e chaves: os scripts vão com nonce", "ArrowRight" in corpo and "/servicos/alternar" in corpo and "nonce=" in corpo)
 # --- aba Monitor: consumo da Cloudflare (sem rede: a consulta é trocada por uma resposta pronta) ---------------------
-import heimdall_cfmonitor as hcm  # noqa: E402
+import studio_cfmonitor as hcm  # noqa: E402
 _orig_consultar = hcm.consultar
 hcm.consultar = lambda dias=30, **k: hcm._resumir([{"count": 3, "sum": {"cost": 0.0042, "tokensIn": 1200, "tokensOut": 800, "erroredRequests": 1, "cachedRequests": 0},
                                                    "dimensions": {"model": "@cf/openai/gpt-oss-120b", "date": "2026-11-21"}}], dias)
@@ -240,7 +240,7 @@ confere("monitor: sem permissão, mostra o aviso com role=alert e nenhum valor i
 hcm.consultar = _orig_consultar
 
 # --- aba Nuvem: continuidade, cópia, limites de gasto (sem rede: tudo trocado por respostas prontas) ---------------------
-import heimdall_nuvempainel as hnp  # noqa: E402
+import studio_nuvempainel as hnp  # noqa: E402
 _orig_estado, _orig_ligar, _orig_enviar = hnp.estado, hnp.ligar, hnp.enviar_agora
 hnp.estado = lambda **k: {"ligado": True, "senha": True, "painel": hnp.PAINEL_NUVEM, "teto": 15.0,
                           "copia": {"ok": True, "quando": "2026-11-23T23:28:34+00:00", "arquivos": ["db/a.db", "db/b.db"]},
@@ -279,7 +279,7 @@ s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": CSRF, "id": "inventado"
 confere("alternar: serviço desconhecido é recusado", s == 409, corpo)
 s, corpo, _ = req("POST", "/servicos/alternar", {"csrf": "errado", "id": "lab", "estado": "off"}, cookie=token, extra={"X-Heimdall-Ajax": "1"})
 confere("alternar sem o token de segurança é recusado, com o motivo", s == 403 and "token" in corpo, corpo)
-import heimdall_config as hcf  # noqa: E402
+import studio_config as hcf  # noqa: E402
 import tempfile as _tf  # noqa: E402
 hcf.ARQUIVO = Path(_tf.mkdtemp()) / ".env"
 hcf.ARQUIVO.write_text("STUDIO_TESTE='um'\n", encoding="utf-8")
@@ -367,7 +367,7 @@ confere("reiniciar o shell abre um novo e limpo", "vazio" in b7["saida"], b7["sa
 
 # --- Access exigido em endereço público
 hcx.HOSTS_OK.add("controls.studiolibre.io")
-import heimdall_cfaccess as cfa  # noqa: E402
+import studio_cfaccess as cfa  # noqa: E402
 orig_ativo = cfa.ativo
 cfa.ativo = lambda: True
 s, corpo, _ = req("GET", "/terminal", cookie=token, host="controls.studiolibre.io")

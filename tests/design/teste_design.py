@@ -10,7 +10,7 @@ dentro de <audio>, que o navegador só mostra quando não toca áudio.
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import re
 import sys
@@ -18,7 +18,7 @@ from pathlib import Path
 
 AQUI = RAIZ
 sys.path.insert(0, str(AQUI))
-PAINEIS = ["heimdall_lab.py", "heimdall_news.py", "heimdall_painel_saude.py", "heimdall_jogos.py", "heimdall_finance.py", "heimdall_controls.py"]
+PAINEIS = ["studio_lab.py", "studio_news.py", "studio_painel_saude.py", "studio_jogos.py", "studio_finance.py", "studio_controls.py"]
 ACAO = re.compile(r"^(Baixar|Atualizar|Continuar|Confirmar|Conferir|Alterar|Classificar|Importar|Salvar|Apagar|Enviar|Ver\b|Pr[óo]xim[ao]|Anterior|P[áa]gina|Nota anterior|Subir)", re.I)
 ANCORA = re.compile(r"<a\b([^>]*)>([^<{]*)</a>")
 
@@ -49,7 +49,7 @@ for nome in PAINEIS:
                 achados.append(f"linha {n}: <a>{texto}</a>")
     confere(f"{nome}: nenhuma ação é link", not achados, "; ".join(achados))
 
-import heimdall_design as design  # noqa: E402
+import studio_design as design  # noqa: E402
 
 b = design.botao("/x", "Ver tudo", {"a": "1", "vazio": ""}, 'Ver "tudo"')
 confere("design.botao gera formulário GET com botão e nome acessível escapado", 'method="get"' in b and "<button" in b and 'aria-label="Ver &quot;tudo&quot;"' in b and 'name="a"' in b and 'name="vazio"' not in b, b)
@@ -58,27 +58,27 @@ confere("design.botao marca a opção atual", 'aria-current="true"' in design.bo
 bp = design.botao_post("/y", "Ativar", "tok", {"a": "1", "vazio": ""}, 'Ativar "x"')
 confere("design.botao_post gera formulário POST com csrf oculto, botão e nome acessível escapado", 'method="post"' in bp and 'name="csrf" value="tok"' in bp and "<button" in bp and 'aria-label="Ativar &quot;x&quot;"' in bp and 'name="vazio"' not in bp, bp)
 
-import heimdall_paginacao as pag  # noqa: E402
+import studio_paginacao as pag  # noqa: E402
 
 confere("paginação é toda de botões", "<a " not in pag.html_paginacao("/x", 2, 5, {}, "") and "<button" in pag.html_paginacao("/x", 2, 5, {}, ""))
-confere("o pacote de CSS do Studio Design chega aos painéis (via heimdall_lab)", "form.acao" in __import__("heimdall_lab").CSS)
+confere("o pacote de CSS do Studio Design chega aos painéis (via studio_lab)", "form.acao" in __import__("studio_lab").CSS)
 
-# ---- cores, tipografia e foco: fonte única em heimdall_design.py
+# ---- cores, tipografia e foco: fonte única em studio_design.py
 for tema, cores in (("claro", design.CORES_CLARO), ("escuro", design.CORES_ESCURO)):
     ruins = [f"{a} sobre {b}: {design.contraste(cores[a], cores[b]):.2f} < {m}" for a, b, m in design.PARES_DE_CONTRASTE if design.contraste(cores[a], cores[b]) < m]
     confere(f"tema {tema}: todo contraste atinge o mínimo", not ruins, "; ".join(ruins))
 confere("claro e escuro definem as mesmas variáveis", set(design.CORES_CLARO) == set(design.CORES_ESCURO) == set(design.PAPEL_DAS_CORES))
 confere("o CSS traz os dois temas, o foco visível e o salto para o conteúdo", "prefers-color-scheme:dark" in design.CSS and "outline:3px" in design.CSS and ".pular" in design.CSS)
 confere("o corpo do texto tem 18 px ou mais", design.TAMANHO_BASE_PX >= 18 and "font:18px/1.5" in design.CSS)
-confere("a paginação usa o alvo mínimo de toque", design.ALTURA_MINIMA_ALVO in open(AQUI / "heimdall_paginacao.py", encoding="utf-8").read())
-arqs = PAINEIS + ["heimdall_paginacao.py", "heimdall_design.py"]
+confere("a paginação usa o alvo mínimo de toque", design.ALTURA_MINIMA_ALVO in open(AQUI / "studio_paginacao.py", encoding="utf-8").read())
+arqs = PAINEIS + ["studio_paginacao.py", "studio_design.py"]
 for nome in arqs:
     src = (AQUI / nome).read_text(encoding="utf-8")
     confere(f"{nome}: não remove o contorno do foco", not re.search(r"outline\s*:\s*(none|0)\b", src))
 for nome in PAINEIS:
     src = (AQUI / nome).read_text(encoding="utf-8")
     soltas = [m for m in re.findall(r"(?<![\w&])#[0-9a-fA-F]{6}\b", src) if True]
-    confere(f"{nome}: sem cor solta fora do Studio Design (use var(--...))", not soltas or nome == "heimdall_lab.py", soltas[:5])  # o Lab guarda o desenho da marca
+    confere(f"{nome}: sem cor solta fora do Studio Design (use var(--...))", not soltas or nome == "studio_lab.py", soltas[:5])  # o Lab guarda o desenho da marca
     confere(f"{nome}: páginas em pt-BR e com viewport", "pt-BR" in src and "viewport" in src, "")
 confere("todo link do conteúdo vira parada do Tab (Safari pula links comuns)", "main a[href]" in design.SCRIPT_ABAS and "tabindex', '0'" in design.SCRIPT_ABAS)
 claude_md = (AQUI / "CLAUDE.md")

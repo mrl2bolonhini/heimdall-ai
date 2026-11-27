@@ -2,7 +2,7 @@
 """Testa migrar_avisos.py: traz as notas antigas de saúde e finanças para os avisos, confere e só então apaga (cofre e app Notas de mentira)."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sys
@@ -12,7 +12,7 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-migrar-"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_FINANCE_DIR": str(TMP / "fin"), "STUDIO_VAULT_DIR": str(TMP / "cofre")})
 sys.path.insert(0, str(RAIZ))
-import heimdall_avisos as av  # noqa: E402
+import studio_avisos as av  # noqa: E402
 import migrar_avisos as mg  # noqa: E402
 
 falhas = 0

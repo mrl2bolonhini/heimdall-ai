@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Teste dos dados da aba Nuvem (heimdall_nuvempainel.py): limites de gasto lidos da Cloudflare, erros e interruptor, sem rede."""
+"""Teste dos dados da aba Nuvem (studio_nuvempainel.py): limites de gasto lidos da Cloudflare, erros e interruptor, sem rede."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_nuvempainel.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_nuvempainel.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import io
 import json
 import sys
 import urllib.error
 
-import heimdall_nuvempainel as n  # noqa: E402
+import studio_nuvempainel as n  # noqa: E402
 
 falhas = 0
 

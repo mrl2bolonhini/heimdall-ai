@@ -53,7 +53,7 @@ esac
 
 # Nomes antigos de variável (HEIMDALL_*) viram STUDIO_* no .env, com cópia em .env.bak (só quando há o que trocar)
 if [ -f .env ]; then
-    if [ -x venv/bin/python ]; then venv/bin/python -c "import heimdall_config as c; t = c.renomear_antigas(); print('Variáveis do .env com o nome novo:', ', '.join(t)) if t else None" 2>/dev/null || true; fi
+    if [ -x venv/bin/python ]; then venv/bin/python -c "import studio_config as c; t = c.renomear_antigas(); print('Variáveis do .env com o nome novo:', ', '.join(t)) if t else None" 2>/dev/null || true; fi
 fi
 
 if [ -f .env ]; then
@@ -102,7 +102,7 @@ montar_lista() {
         LISTA+=("Studio Finance|http|http://127.0.0.1:${STUDIO_FINANCE_PORT:-8016}/saude")
         LISTA+=("Controls|http|http://127.0.0.1:${STUDIO_CONTROLS_PORT:-8017}/saude")
     fi
-    [ -f heimdall_account.py ] && LISTA+=("Account|http|http://127.0.0.1:${STUDIO_ACCOUNT_PORT:-8018}/saude")
+    [ -f studio_account.py ] && LISTA+=("Account|http|http://127.0.0.1:${STUDIO_ACCOUNT_PORT:-8018}/saude")
 }
 
 esta_no_ar() {  # $1 = tipo, $2 = alvo
@@ -135,7 +135,7 @@ avisar() {  # $1 = texto curto para a notificação e a voz
     if command -v say > /dev/null 2>&1; then
         [ -z "${VOZ_ESCOLHIDA:-}" ] && { escolher_voz; VOZ_ESCOLHIDA=1; }
         local fala="Heimdall. $1"
-        command -v python3 > /dev/null 2>&1 && fala=$(python3 "$PROJECT_DIR/heimdall_voz.py" "$fala" 2> /dev/null || printf '%s' "$fala")   # dicionário de pronúncia (pronuncias.txt)
+        command -v python3 > /dev/null 2>&1 && fala=$(python3 "$PROJECT_DIR/studio_voz.py" "$fala" 2> /dev/null || printf '%s' "$fala")   # dicionário de pronúncia (pronuncias.txt)
         if [ -n "$VOZ_SUBIR" ]; then say -v "$VOZ_SUBIR" -r "${SUBIR_VOZ_PPM:-290}" "$fala" > /dev/null 2>&1 &
         else say -r "${SUBIR_VOZ_PPM:-290}" "$fala" > /dev/null 2>&1 &
         fi

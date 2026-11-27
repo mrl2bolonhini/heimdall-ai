@@ -8,7 +8,7 @@ só o nome do programa ou do script, para nada sensível aparecer. Cada parte fa
 Sem opção, faz tudo e termina com uma conclusão em linguagem simples.
 """
 import argparse
-import heimdall_versoes
+import studio_versoes
 import os
 import re
 import shutil
@@ -307,9 +307,9 @@ def main(argv=None) -> int:
         blocos.append(servicos())
     avisos_versoes = []
     if a.versoes:  # só quando pedida: compara com o registro e usa a rede
-        itens = heimdall_versoes.coletar(atualizacoes=True)
-        blocos.append(heimdall_versoes.texto(itens))
-        avisos_versoes = heimdall_versoes.avisos(itens)
+        itens = studio_versoes.coletar(atualizacoes=True)
+        blocos.append(studio_versoes.texto(itens))
+        avisos_versoes = studio_versoes.avisos(itens)
     so_versoes = a.versoes and not any((a.memoria, a.cpu, a.disco, a.docker, a.ollama, a.servicos))
     for b in blocos:
         print("\n".join(b))

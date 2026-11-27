@@ -2,7 +2,7 @@
 """Testa os dados do Studio Memory: envio, duplicado, busca sem acento, revisão, etiquetas, lixeira, pasta de entrada e sugestão da IA."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sys
@@ -12,8 +12,8 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp())
 os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
 
-import heimdall_memory_dados as L  # noqa: E402
-import heimdall_banco as banco  # noqa: E402
+import studio_memory_dados as L  # noqa: E402
+import studio_banco as banco  # noqa: E402
 
 L.PROJECT_DIR = TMP
 falhas = 0

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Testes do dicionário de pronúncia (heimdall_voz.py)."""
+"""Testes do dicionário de pronúncia (studio_voz.py)."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_voz as v
+import studio_voz as v
 
 falhas = 0
 
@@ -53,7 +53,7 @@ with tempfile.TemporaryDirectory() as t3:
     os.environ["PATH"] = str(b) + os.pathsep + os.environ["PATH"]
     os.environ["STUDIO_VOZ_ATALHO"] = "Narrator"
     os.environ["STUDIO_DB_DIR"] = t3
-    import heimdall_agente as ag
+    import studio_agente as ag
     ag.sys.platform = "darwin"
     pasta = Path(t3) / "cofre"
     caminho, motivo = ag.fazer_audio("Nota de teste", "O StudioLibre subiu. Veja https://exemplo.com agora.", pasta)

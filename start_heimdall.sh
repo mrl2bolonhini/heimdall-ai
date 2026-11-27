@@ -82,7 +82,7 @@ echo "Projeto: $PROJECT_DIR"
 # --- Chave mestra do LiteLLM (guardada em .env, nunca no YAML) ---
 if [ -f .env ]; then
     # Troca no .env os nomes antigos de variável (HEIMDALL_*) pelos novos (STUDIO_*), com cópia em .env.bak
-    "$VENV_PYTHON" -c "import heimdall_config as c; t = c.renomear_antigas(); print('Variáveis do .env com o nome novo:', ', '.join(t)) if t else None" 2>/dev/null
+    "$VENV_PYTHON" -c "import studio_config as c; t = c.renomear_antigas(); print('Variáveis do .env com o nome novo:', ', '.join(t)) if t else None" 2>/dev/null
     set -a; source .env; set +a
     LAB_PORT="${STUDIO_LAB_PORT:-8010}"
 fi
@@ -273,6 +273,16 @@ while ! curl -s http://localhost:6333/collections > /dev/null 2>&1; do
     if [ $COUNTER -gt 30 ]; then
         echo "Aviso: o Qdrant não respondeu em 30s; rag_search não vai funcionar (docker logs qdrant)."
         break
+    fi
+done
+# Coleções do Qdrant passaram de heimdall_* para studio_*: um apelido (alias) aponta o nome novo para os dados que já existem, sem copiar nem apagar nada.
+for par in "heimdall_notas studio_notas" "heimdall_docs studio_docs"; do
+    antigo="${par% *}"; novo="${par#* }"
+    if [ "$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:6333/collections/$antigo")" = "200" ] \
+       && [ "$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:6333/collections/$novo")" != "200" ]; then
+        curl -s -X POST http://localhost:6333/collections/aliases -H 'Content-Type: application/json' \
+            -d "{\"actions\":[{\"create_alias\":{\"collection_name\":\"$antigo\",\"alias_name\":\"$novo\"}}]}" > /dev/null \
+            && echo "     Coleção $antigo agora também responde como $novo."
     fi
 done
 echo "[3/7] Qdrant pronto (porta 6333, só local). Coloque documentos em knowledge/ e rode: python ingest_docs.py"
@@ -487,11 +497,11 @@ fi
 
 # --- Servidores MCP: grupo do Mac (admin, 8000) e grupo público (convidados, 8001) ---
 echo "[5/7] Subindo os servidores MCP do StudioLibre..."
-"$VENV_PYTHON" heimdall_mcp.py --group mac > "$(nova_log mcp_debug)" 2>&1 &
+"$VENV_PYTHON" studio_mcp.py --group mac > "$(nova_log mcp_debug)" 2>&1 &
 MCP_PID=$!
-"$VENV_PYTHON" heimdall_mcp.py --group public > "$(nova_log mcp_public_debug)" 2>&1 &
+"$VENV_PYTHON" studio_mcp.py --group public > "$(nova_log mcp_public_debug)" 2>&1 &
 MCP_PUBLIC_PID=$!
-"$VENV_PYTHON" heimdall_mcp.py --group dados > "$(nova_log mcp_dados_debug)" 2>&1 &
+"$VENV_PYTHON" studio_mcp.py --group dados > "$(nova_log mcp_dados_debug)" 2>&1 &
 MCP_DADOS_PID=$!
 TERMINAL_PID=""
 AGENTE_PID=""
@@ -514,8 +524,8 @@ echo "[5/7] MCP do Mac (admin) em http://localhost:$MCP_PORT/mcp e MCP público 
 # --- Agente do Mac (opcional): lê o app Notas e grava notas/Markdown só em pastas "Heimdall*" ---
 # Usa a biblioteca padrão do Python. Escuta em 127.0.0.1 (STUDIO_AGENTE_HOST=0.0.0.0 abre à rede) e exige o token.
 if [ "$WANT_AGENTE" = "1" ]; then
-    if [ -f heimdall_agente.py ]; then
-        STUDIO_AGENTE_PORT="$AGENTE_PORT" "$VENV_PYTHON" heimdall_agente.py > "$(nova_log agente_debug)" 2>&1 &
+    if [ -f studio_agente.py ]; then
+        STUDIO_AGENTE_PORT="$AGENTE_PORT" "$VENV_PYTHON" studio_agente.py > "$(nova_log agente_debug)" 2>&1 &
         AGENTE_PID=$!
         COUNTER=0
         while ! nc -z localhost $AGENTE_PORT > /dev/null 2>&1; do
@@ -528,15 +538,15 @@ if [ "$WANT_AGENTE" = "1" ]; then
         done
         echo "     Agente do Mac na porta $AGENTE_PORT (Second Brain e Digest). Na primeira vez, autorize o acesso ao app Notas."
     else
-        echo "Aviso: heimdall_agente.py não está na pasta do projeto; o agente do Mac não foi iniciado."
+        echo "Aviso: studio_agente.py não está na pasta do projeto; o agente do Mac não foi iniciado."
     fi
 fi
 
 # --- Studio Lab (painel web do emulador de AWS): sobe sozinho se houver senha e código no .env ---
-# Para configurar: python3 heimdall_acesso.py --tudo. Escuta só em 127.0.0.1; o acesso público vem do túnel Cloudflare.
+# Para configurar: python3 studio_acesso.py --tudo. Escuta só em 127.0.0.1; o acesso público vem do túnel Cloudflare.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ] && [ "$AWS_EMU" != "off" ]; then
-    if [ -f heimdall_lab.py ]; then
-        STUDIO_LAB_PORT="$LAB_PORT" "$VENV_PYTHON" heimdall_lab.py > "$(nova_log lab_debug)" 2>&1 &
+    if [ -f studio_lab.py ]; then
+        STUDIO_LAB_PORT="$LAB_PORT" "$VENV_PYTHON" studio_lab.py > "$(nova_log lab_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $LAB_PORT > /dev/null 2>&1; do
             sleep 1
@@ -553,8 +563,8 @@ fi
 # --- Studio Learn (plataforma de estudos; fase 1: pastas com categoria e tipo, importação de documentos) ---
 # Desligado por padrão: ligue com STUDIO_LEARN=1 no .env (studio env --set STUDIO_LEARN 1). Mesmo login do Studio Lab.
 if [ "${STUDIO_LEARN:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_learn.py ]; then
-        STUDIO_LEARN_PORT="$LEARN_PORT" "$VENV_PYTHON" heimdall_learn.py > "$(nova_log learn_debug)" 2>&1 &
+    if [ -f studio_learn.py ]; then
+        STUDIO_LEARN_PORT="$LEARN_PORT" "$VENV_PYTHON" studio_learn.py > "$(nova_log learn_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $LEARN_PORT > /dev/null 2>&1; do
             sleep 1
@@ -571,8 +581,8 @@ fi
 # --- Studio Trading (mesa de operações em simulação) ---
 # Desligado por padrão: ligue com STUDIO_TRADING=1 no .env (studio env --set STUDIO_TRADING 1). Mesmo login do Studio Lab.
 if [ "${STUDIO_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_trading.py ]; then
-        STUDIO_TRADING_PORT="$TRADING_PORT" "$VENV_PYTHON" heimdall_trading.py > "$(nova_log trading_debug)" 2>&1 &
+    if [ -f studio_trading.py ]; then
+        STUDIO_TRADING_PORT="$TRADING_PORT" "$VENV_PYTHON" studio_trading.py > "$(nova_log trading_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $TRADING_PORT > /dev/null 2>&1; do
             sleep 1
@@ -592,8 +602,8 @@ if [ "${STUDIO_HUB:-${STUDIO_HUB:-0}}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HA
     if [ "${STUDIO_HUB_MOTOR:-${STUDIO_HUB_MOTOR:-interno}}" = "paperless" ] && command -v docker > /dev/null 2>&1 && [ -f paperless/docker-compose.yml ]; then
         docker compose -f paperless/docker-compose.yml --env-file .env up -d > "$(nova_log paperless_debug)" 2>&1 || echo "Aviso: não consegui subir o Paperless-ngx (motor do Hub). Veja logs/paperless_debug.log."
     fi
-    if [ -f heimdall_memory.py ]; then
-        STUDIO_HUB_PORT="$MEMORY_PORT" "$VENV_PYTHON" heimdall_memory.py > "$(nova_log memory_debug)" 2>&1 &
+    if [ -f studio_memory.py ]; then
+        STUDIO_HUB_PORT="$MEMORY_PORT" "$VENV_PYTHON" studio_memory.py > "$(nova_log memory_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $MEMORY_PORT > /dev/null 2>&1; do
             sleep 1
@@ -611,8 +621,8 @@ fi
 # Atualiza sozinho de 30 em 30 minutos. Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (news.studiolibre.io).
 # Os resumos usam o LiteLLM (porta $LLM_PORT): enquanto ele não estiver no ar, as matérias ficam na fila e o serviço tenta de novo na próxima atualização.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_news.py ]; then
-        STUDIO_NEWS_PORT="$NEWS_PORT" "$VENV_PYTHON" heimdall_news.py > "$(nova_log news_debug)" 2>&1 &
+    if [ -f studio_news.py ]; then
+        STUDIO_NEWS_PORT="$NEWS_PORT" "$VENV_PYTHON" studio_news.py > "$(nova_log news_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $NEWS_PORT > /dev/null 2>&1; do
             sleep 1
@@ -624,7 +634,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
         done
         echo "     Studio News (notícias e feeds RSS) em http://localhost:$NEWS_PORT"
         if [ -z "$STUDIO_NEWS_RSS_TOKEN" ]; then
-            echo "     Feeds RSS desligados: rode  python3 heimdall_news.py --token  para criar a chave."
+            echo "     Feeds RSS desligados: rode  python3 studio_news.py --token  para criar a chave."
         fi
     fi
 fi
@@ -632,8 +642,8 @@ fi
 # --- Studio Health (painel com as análises do app Saúde, somente leitura): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (health.studiolibre.io).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_painel_saude.py ]; then
-        STUDIO_SAUDE_PAINEL_PORT="$SAUDE_PAINEL_PORT" "$VENV_PYTHON" heimdall_painel_saude.py > "$(nova_log saude_painel_debug)" 2>&1 &
+    if [ -f studio_painel_saude.py ]; then
+        STUDIO_SAUDE_PAINEL_PORT="$SAUDE_PAINEL_PORT" "$VENV_PYTHON" studio_painel_saude.py > "$(nova_log saude_painel_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $SAUDE_PAINEL_PORT > /dev/null 2>&1; do
             sleep 1
@@ -650,11 +660,11 @@ fi
 # --- Controls (terminal completo e painel de serviços): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare (controls.studiolibre.io), atrás do Cloudflare Access. Quem entra manda no Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_controls.py ]; then
+    if [ -f studio_controls.py ]; then
         if nc -z localhost $CONTROLS_PORT > /dev/null 2>&1; then
             echo "     Controls já estava no ar (foi ele quem pediu esta subida)."
         else
-            STUDIO_CONTROLS_PORT="$CONTROLS_PORT" STUDIO_DIR="$(pwd)" "$VENV_PYTHON" heimdall_controls.py > "$(nova_log controls_debug)" 2>&1 &
+            STUDIO_CONTROLS_PORT="$CONTROLS_PORT" STUDIO_DIR="$(pwd)" "$VENV_PYTHON" studio_controls.py > "$(nova_log controls_debug)" 2>&1 &
         fi
         COUNTER=0
         while ! nc -z localhost $CONTROLS_PORT > /dev/null 2>&1; do
@@ -672,8 +682,8 @@ fi
 # --- Studio Games (jogos leves para leitor de tela, no navegador): mesmo login do Studio Lab ---
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (games.studiolibre.io).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_jogos.py ]; then
-        STUDIO_JOGOS_PORT="$JOGOS_PORT" "$VENV_PYTHON" heimdall_jogos.py > "$(nova_log jogos_debug)" 2>&1 &
+    if [ -f studio_jogos.py ]; then
+        STUDIO_JOGOS_PORT="$JOGOS_PORT" "$VENV_PYTHON" studio_jogos.py > "$(nova_log jogos_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $JOGOS_PORT > /dev/null 2>&1; do
             sleep 1
@@ -689,8 +699,8 @@ fi
 
 # --- Account (account.studiolibre.io): tour dos serviços de cada pessoa e a identidade que o site studiolibre.io mostra ---
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare, com o Access na frente. Não precisa de senha: só atende quem o Access aprovou.
-if [ -f heimdall_account.py ]; then
-    STUDIO_ACCOUNT_PORT="$ACCOUNT_PORT" "$VENV_PYTHON" heimdall_account.py > "$(nova_log account_debug)" 2>&1 &
+if [ -f studio_account.py ]; then
+    STUDIO_ACCOUNT_PORT="$ACCOUNT_PORT" "$VENV_PYTHON" studio_account.py > "$(nova_log account_debug)" 2>&1 &
     COUNTER=0
     while ! nc -z localhost $ACCOUNT_PORT > /dev/null 2>&1; do
         sleep 1
@@ -707,8 +717,8 @@ fi
 # Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (finance.studiolibre.io).
 # Os dados ficam em finance/ (fora do git) e nunca saem do Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
-    if [ -f heimdall_finance.py ]; then
-        STUDIO_FINANCE_PORT="$FINANCE_PORT" "$VENV_PYTHON" heimdall_finance.py > "$(nova_log finance_debug)" 2>&1 &
+    if [ -f studio_finance.py ]; then
+        STUDIO_FINANCE_PORT="$FINANCE_PORT" "$VENV_PYTHON" studio_finance.py > "$(nova_log finance_debug)" 2>&1 &
         COUNTER=0
         while ! nc -z localhost $FINANCE_PORT > /dev/null 2>&1; do
             sleep 1
@@ -852,9 +862,9 @@ fi
 # Usa o executável oficial "litellm" do venv; rodar "python -m litellm.proxy.proxy_cli"
 # importa o módulo duas vezes e quebrou a leitura do --config.
 echo "[7/7] Subindo o LiteLLM Proxy..."
-# O heimdall_litellm.py escolhe a configuração: com STUDIO_NUVEM=1 o chat responde pelo modelo da nuvem (e o local é a volta);
+# O studio_litellm.py escolhe a configuração: com STUDIO_NUVEM=1 o chat responde pelo modelo da nuvem (e o local é a volta);
 # com qualquer outro valor vale o litellm_config.yaml como sempre foi.
-"$VENV_PYTHON" "$PROJECT_DIR/heimdall_litellm.py" --host 0.0.0.0 --port $LLM_PORT &
+"$VENV_PYTHON" "$PROJECT_DIR/studio_litellm.py" --host 0.0.0.0 --port $LLM_PORT &
 LITELLM_PID=$!
 trap 'kill $MCP_PID $MCP_PUBLIC_PID $MCP_DADOS_PID $TERMINAL_PID $AGENTE_PID $LITELLM_PID 2>/dev/null' EXIT INT TERM
 wait $LITELLM_PID

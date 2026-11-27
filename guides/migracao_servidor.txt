@@ -67,7 +67,7 @@ Fase 4: Mac como ponte Apple
 - Interruptor: STUDIO_PONTE_APPLE=1. Volta: o servidor passa a gravar direto no banco sem escrever na Apple, com aviso.
 
 Fase 5: continuidade
-- Os Workers e o contêiner de continuidade já existentes (heimdall_continuidade.py) passam a apontar para o servidor como fonte, e o Mac deixa de ser fonte da cópia. A queda que passa a importar é a do servidor; a nuvem da Cloudflare cobre essa queda em modo reduzido.
+- Os Workers e o contêiner de continuidade já existentes (studio_continuidade.py) passam a apontar para o servidor como fonte, e o Mac deixa de ser fonte da cópia. A queda que passa a importar é a do servidor; a nuvem da Cloudflare cobre essa queda em modo reduzido.
 - Interruptor: o atual, STUDIO_CONTINUIDADE. Volta: reapontar a fonte para o Mac.
 
 Fase 6: chat próprio

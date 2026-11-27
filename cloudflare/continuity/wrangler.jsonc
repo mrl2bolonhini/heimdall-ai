@@ -1,6 +1,6 @@
 {
   // StudioLibre Continuidade (fase 4 do guides/continuidade_nuvem.txt). NÃO implantar antes de: plano Workers Paid, política de gasto com bloqueio
-  // em Workers e em Durable Objects, e cópias dos bancos no R2 (python3 heimdall_continuidade.py enviar). Implantação: scripts/continuidade_nuvem.sh.
+  // em Workers e em Durable Objects, e cópias dos bancos no R2 (python3 studio_continuidade.py enviar). Implantação: scripts/continuidade_nuvem.sh.
   "name": "heimdall-continuidade",
   "main": "worker.js",
   "compatibility_date": "2026-11-01",

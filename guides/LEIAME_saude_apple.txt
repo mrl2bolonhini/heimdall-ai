@@ -13,7 +13,7 @@ Duas formas de alimentar, que se completam.
 1. HISTÓRICO, UMA VEZ (arquivo do app Saúde, traz tudo desde o começo, inclusive ECG e rotas)
    a. No iPhone: app Saúde, botão do perfil (canto superior direito), "Exportar Todos os Dados de Saúde". Pode demorar. Envie o export.zip para o Mac por AirDrop.
    b. No Mac, na pasta do projeto:
-        python3 heimdall_saude.py --importar ~/Downloads/export.zip
+        python3 studio_saude.py --importar ~/Downloads/export.zip
       Pode rodar de novo: não duplica. Valores que o n8n já gravou não são sobrescritos.
    c. Apague o export.zip depois (ele tem seu nome e data de nascimento; o StudioLibre não lê nem grava essas duas coisas).
 
@@ -30,10 +30,10 @@ Duas formas de alimentar, que se completam.
    Se o relógio disser que um ECG foi classificado como fibrilação atrial, o StudioLibre abre um item na triagem (nível alto), com a observação de que não é diagnóstico.
 
 Como analisar:
-   python3 heimdall_saude.py --relatorio         tudo junto (30 dias): treinos, carga, cruzamento do treino com pulso em repouso e variabilidade, coração, ECG, sintomas, humor, medicamentos
-   python3 heimdall_saude.py --treinos 60        treinos dos últimos 60 dias
-   python3 heimdall_saude.py --ecg               ECG do último ano
-   python3 heimdall_saude.py --fc 14             frequência cardíaca dos últimos 14 dias
+   python3 studio_saude.py --relatorio         tudo junto (30 dias): treinos, carga, cruzamento do treino com pulso em repouso e variabilidade, coração, ECG, sintomas, humor, medicamentos
+   python3 studio_saude.py --treinos 60        treinos dos últimos 60 dias
+   python3 studio_saude.py --ecg               ECG do último ano
+   python3 studio_saude.py --fc 14             frequência cardíaca dos últimos 14 dias
    No chat (Open WebUI): peça "resumo dos meus treinos", "como estão meus ECG", "frequência cardíaca da semana" ou "relatório de saúde".
    Perguntas livres também funcionam pelas ferramentas banco_consultar e banco_buscar (tabelas treinos, ecg, fc_hora, saude_eventos).
 
@@ -46,13 +46,13 @@ Fora desta primeira versão (existem no ecossistema Apple e podem entrar depois)
 
 ANÁLISES SEM TREINO
 O relógio só grava um treino quando você inicia um no app Treino ou aceita o aviso de início. Mesmo sem treinos, estes comandos usam os dados do dia todo:
-1. python3 heimdall_saude.py --agora
-2. python3 heimdall_saude.py --sono
-3. python3 heimdall_saude.py --atividade
-4. python3 heimdall_saude.py --recuperacao
-5. python3 heimdall_saude.py --tendencias
-6. python3 heimdall_saude.py --relatorio   (junta tudo)
-7. python3 heimdall_saude.py --hoje        (o que já chegou de hoje; avisa se nada chegou)
+1. python3 studio_saude.py --agora
+2. python3 studio_saude.py --sono
+3. python3 studio_saude.py --atividade
+4. python3 studio_saude.py --recuperacao
+5. python3 studio_saude.py --tendencias
+6. python3 studio_saude.py --relatorio   (junta tudo)
+7. python3 studio_saude.py --hoje        (o que já chegou de hoje; avisa se nada chegou)
 
 ATUALIZAR PELO PAINEL (health.studiolibre.io)
 No iPhone, o botão "Atualizar dados agora" (Panorama, na aba Resumo, e Estado dos dados, em Ajustes) abre o app Atalhos e roda o atalho "Exportar dados de saúde", que dispara as automações do Health Auto Export. Ao terminar, volta para Estado dos dados, que confere se uma gravação nova chegou (uma vez sozinho depois de 20 segundos; depois pelo link "Conferir de novo"). Se em 2 minutos nada for gravado, aparece um alerta.
@@ -72,7 +72,7 @@ SINAIS VITAIS, APNEIA E TEMPERATURA DO PULSO
 5. Oxigênio mínimo: além da média do dia, o StudioLibre guarda a menor leitura de oxigênio (spo2_min). Até 92 por cento aparece como relevante no resumo; até 90 por cento abre um item na triagem; até 88 por cento abre um item crítico. A leitura no pulso pode errar por movimento ou ajuste do relógio, mas uma queda abaixo de 91 por cento, sobretudo com outros sinais, vale conversar com um médico.
 
 Anomalias em todas as medidas
-1. python3 heimdall_anomalias.py mostra o que saiu do seu normal (mediana dos últimos 30 dias). Também está na página Anomalias do painel e no chat (analise_saude, tema anomalias).
+1. python3 studio_anomalias.py mostra o que saiu do seu normal (mediana dos últimos 30 dias). Também está na página Anomalias do painel e no chat (analise_saude, tema anomalias).
 2. O monitor compara pulso, variabilidade, respiração, oxigênio, sono, distúrbios respiratórios, temperatura, caminhada, atividade e qualquer medida nova que o Health Auto Export mande. Mudança pequena não conta, e melhora aparece como positiva.
 3. Ele avisa dias seguidos fora do normal e mudança lenta na média de 7 dias, e cruza os sinais (estresse ou infecção; sono e respiração). Um cruzamento de sinais, ou duas medidas fisiológicas muito fora do normal em sistemas diferentes do corpo (coração, variabilidade, respiração e oxigênio, sono, temperatura), abrem um item de triagem, mas só quando algo muda: sinal novo ou que piorou. Pulso em repouso e pulso mínimo contam como um só sistema. Passos, energia, exercício, caminhada, peso e frequência média do dia são contexto: aparecem no relatório, mas nunca viram aviso. Treino forte hoje ou ontem (40 minutos ou 300 kcal) explica pulso, variabilidade e respiração alterados, a menos que durem 3 dias ou mais. O ruído do ambiente só conta acima de 70 dB de média no dia (limite de referência de 24 horas da OMS e da EPA) e só alerta sozinho a partir de 75 dB. O alerta de pulso alto na madrugada, depois de treino forte, só sai se a noite anterior também estava alta. O mesmo quadro não repete; só volta como lembrete depois de 5 dias (STUDIO_ANOMALIAS_LEMBRETE_H muda isso). O texto do aviso é interpretado pelo modelo local (STUDIO_SAUDE_MODELO), que diz se o conjunto faz sentido ou se o dado parece errado e sugere ações; os dados de saúde nunca saem do Mac. Valores impossíveis (energia em repouso de 384 kcal num dia inteiro, por exemplo) entram no rodapé como dado incorreto, não como alerta.
 4. Medidas com menos de 10 dias de histórico ou sem dado recente aparecem no rodapé como não comparadas. Quanto mais medidas a automação enviar, mais o monitor enxerga.

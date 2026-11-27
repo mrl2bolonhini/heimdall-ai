@@ -3,7 +3,7 @@
 Usa um banco temporário; nada toca a internet."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 from datetime import date
@@ -23,8 +23,8 @@ TMP = tempfile.mkdtemp(prefix="finance_teste_")
 os.environ["STUDIO_FINANCE_DIR"] = TMP
 sys.path.insert(0, str(AQUI))
 import financas_nucleo as fn  # noqa: E402
-import heimdall_lab as hc  # noqa: E402
-import heimdall_finance as hf  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_finance as hf  # noqa: E402
 
 falhas = 0
 
@@ -418,7 +418,7 @@ confere("remover pagamento futuro", con2.execute("SELECT COUNT(*) FROM previstos
 post("/futuros/ignorar", {"chave": "recorrente:netflix.com", "ignorar": "1"}, ck, csrf)
 confere("ignorar pela página grava e chave estranha é recusada", con2.execute("SELECT COUNT(*) FROM ignorados").fetchone()[0] == 1 and (post("/futuros/ignorar", {"chave": "qualquer", "ignorar": "1"}, ck, csrf)[0] == 303) and con2.execute("SELECT COUNT(*) FROM ignorados").fetchone()[0] == 1)
 # análise e perguntar (modelo simulado)
-import heimdall_perguntar as _hp
+import studio_perguntar as _hp
 import time as _tm
 _hp.chamar_local = lambda sistema, usuario, modelo="", max_tokens=700, timeout=240: "Resposta de teste sem números."
 st, corpo, _ = pedir("/analise", ck)
@@ -440,7 +440,7 @@ post("/avisos/lido", {"id": "todos"}, ck, csrf)
 st, corpo, _ = pedir("/avisos", ck)
 confere("marcar todos como lidos", "0 não lido(s)" in corpo and "Marcar como lido" not in corpo)
 confere("avisos com CSRF errado são recusados", post("/avisos/lido", {"id": "todos"}, ck, "errado")[0] == 403)
-confere("a rota que salvava no Notas não existe mais", "/analise/notas" not in open("heimdall_finance.py").read())
+confere("a rota que salvava no Notas não existe mais", "/analise/notas" not in open("studio_finance.py").read())
 # campo Perguntar no fim de toda página
 for _rota in ("/resumo", "/transacoes", "/tendencias", "/orcamentos", "/analise", "/futuros", "/boletos", "/recorrentes", "/regras", "/importar", "/avisos"):
     st, corpo, _ = pedir(_rota, ck)

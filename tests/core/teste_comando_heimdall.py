@@ -2,7 +2,7 @@
 """Testa o comando heimdall (heimdall.zsh): ajuda por comando, formas curtas de todas as opções documentadas, help --doc e a tradução das opções."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import re
 import subprocess
@@ -30,7 +30,7 @@ def bash(cmd, projeto=None):
 
 # --- seções da ajuda: comandos e opções
 secoes, atual = [], None
-for linha in (AQUI / "guides/heimdall_ajuda.txt").read_text(encoding="utf-8").splitlines():
+for linha in (AQUI / "guides/studio_ajuda.txt").read_text(encoding="utf-8").splitlines():
     if linha.startswith("@ "):
         atual = {"nome": linha[2:].split(" | ")[0].strip(), "opcoes": []}
         secoes.append(atual)
@@ -88,21 +88,21 @@ with tempfile.TemporaryDirectory() as d:
         alvo = Path(d, f + ".sh") if f == "subir" else Path(d, "scripts", f + ".sh")  # só o subir.sh fica na raiz do projeto
         alvo.parent.mkdir(exist_ok=True)
         alvo.write_text(f'#!/bin/bash\necho "[{f}] $@"\n')
-    for f in ("heimdall_saude", "heimdall_banco", "heimdall_backup", "heimdall_email_oficial", "heimdall_acesso", "heimdall_voz", "ingest_docs", "cloudflare_chave",
+    for f in ("studio_saude", "studio_banco", "studio_backup", "studio_email_oficial", "studio_acesso", "studio_voz", "ingest_docs", "cloudflare_chave",
               "importar_saude_n8n", "limpar_espelhos", "limpar_privadas", "mover_notas_antigas", "gerar_docs", "gerar_marca_png"):
         Path(d, f + ".py").write_text(f'import sys\nprint("[{f}]", *sys.argv[1:])\n')
     casos = [
-        ("health -t", "[heimdall_saude] --hoje"), ("health -r 30", "[heimdall_saude] --relatorio 30"), ("health -a 2026-11-10", "[heimdall_saude] --anomalias 2026-11-10"),
-        ("health -A", "[heimdall_saude] --atividade"), ("health -R 90", "[heimdall_saude] --recuperacao 90"), ("health -i x.zip", "[heimdall_saude] --importar x.zip"),
-        ("health -N", "[importar_saude_n8n]"), ("backup -v", "[heimdall_backup] verificar"), ("backup -R a b", "[heimdall_backup] restaurar a b"),
-        ("backup -P", "[heimdall_backup] senha"), ("access -a", "[heimdall_acesso] --tudo"), ("access -v", "[heimdall_acesso] --verificar"),
-        ("mail -t", "[heimdall_email_oficial] --testar-login"), ("listen -n 3", "[ouvir_estudo] 3"), ("listen -l", "[ouvir_estudo] --lista"),
+        ("health -t", "[studio_saude] --hoje"), ("health -r 30", "[studio_saude] --relatorio 30"), ("health -a 2026-11-10", "[studio_saude] --anomalias 2026-11-10"),
+        ("health -A", "[studio_saude] --atividade"), ("health -R 90", "[studio_saude] --recuperacao 90"), ("health -i x.zip", "[studio_saude] --importar x.zip"),
+        ("health -N", "[importar_saude_n8n]"), ("backup -v", "[studio_backup] verificar"), ("backup -R a b", "[studio_backup] restaurar a b"),
+        ("backup -P", "[studio_backup] senha"), ("access -a", "[studio_acesso] --tudo"), ("access -v", "[studio_acesso] --verificar"),
+        ("mail -t", "[studio_email_oficial] --testar-login"), ("listen -n 3", "[ouvir_estudo] 3"), ("listen -l", "[ouvir_estudo] --lista"),
         ("env -s X", "[guardar_no_env] X"), ("cloudflare -t", "[cloudflare_chave] --testar"), ("hook -r /r", "[instalar_hook_gitops] --remover /r"),
         ("hub -o -r", "[mover_notas_antigas] --executar"), ("hub -m", "[limpar_espelhos]"), ("chat -d", "[diagnostico_chat]"), ("up -w -t -n -a", "[subir] --webui --terminal --n8n --agente"),
         ("restart -a", "[subir] --reiniciar --agente"), ("logs -s agent", "[subir] --log agente"), ("logs -l", "[subir] --logs"), ("flows -p", "[instalar_monitor_privacidade]"),
-        ("flows -b", "[instalar_fluxos_n8n]"), ("docs -b", "[gerar_marca_png]"), ("db -s SELECT", "[heimdall_banco] --sql SELECT"),
-        ("voice -i f.csv", "[heimdall_voz] --importar f.csv"), ("ingest -r", "[ingest_docs] --reset"), ("mcp -v", "[verificar_mcp_dados]"),
-        ("health --today", "[heimdall_saude] --hoje"), ("test -r nada", "Teste desconhecido"),
+        ("flows -b", "[instalar_fluxos_n8n]"), ("docs -b", "[gerar_marca_png]"), ("db -s SELECT", "[studio_banco] --sql SELECT"),
+        ("voice -i f.csv", "[studio_voz] --importar f.csv"), ("ingest -r", "[ingest_docs] --reset"), ("mcp -v", "[verificar_mcp_dados]"),
+        ("health --today", "[studio_saude] --hoje"), ("test -r nada", "Teste desconhecido"),
     ]
     for cmd, esperado in casos:
         rc, out = bash(f"studio {cmd}", d)

@@ -2,7 +2,7 @@
 """Testa os avisos de saúde e finanças: ficam na aba Avisos de cada serviço, nunca no app Notas, e o Bark leva só texto genérico."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import json
@@ -16,9 +16,9 @@ TMP = Path(tempfile.mkdtemp(prefix="heimdall-avisos-"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_FINANCE_DIR": str(TMP / "fin"), "STUDIO_VAULT_DIR": str(TMP / "cofre"),
                    "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
-import heimdall_agente as ag  # noqa: E402
-import heimdall_avisos as av  # noqa: E402
-import heimdall_banco as banco  # noqa: E402
+import studio_agente as ag  # noqa: E402
+import studio_avisos as av  # noqa: E402
+import studio_banco as banco  # noqa: E402
 
 falhas = 0
 

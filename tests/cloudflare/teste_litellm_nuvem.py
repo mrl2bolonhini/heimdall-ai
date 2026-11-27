@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Confere a configuração do LiteLLM com o interruptor da nuvem (heimdall_litellm.py). Sem rede e sem LiteLLM instalado."""
+"""Confere a configuração do LiteLLM com o interruptor da nuvem (studio_litellm.py). Sem rede e sem LiteLLM instalado."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import stat
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-import heimdall_litellm as hl
+import studio_litellm as hl
 
 falhas = 0
 

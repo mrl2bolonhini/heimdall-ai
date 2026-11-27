@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Teste dos serviços do StudioLibre (heimdall_servicos.py) e do Kuma (heimdall_kuma.py): catálogo, memória do que foi desligado,
+"""Teste dos serviços do StudioLibre (studio_servicos.py) e do Kuma (studio_kuma.py): catálogo, memória do que foi desligado,
 ligar e desligar de verdade um processo de teste, vigia e leitura da página de status do Kuma."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -15,8 +15,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_kuma as hku  # noqa: E402
-import heimdall_servicos as hsv  # noqa: E402
+import studio_kuma as hku  # noqa: E402
+import studio_servicos as hsv  # noqa: E402
 
 falhas = 0
 

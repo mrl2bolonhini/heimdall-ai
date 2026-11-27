@@ -38,7 +38,7 @@ trava() {
   for p in workers durable_objects; do
     echo "$lista" | grep -q "$p usage_block" || { echo "Recusado: falta o bloqueio de gasto (usage_block) em $p. Rode ./scripts/limites_gasto_cloudflare.sh antes."; return 1; }
   done
-  "$PY" heimdall_continuidade.py status >/dev/null 2>&1 || { echo "Recusado: não achei a cópia dos bancos no R2. Rode: studio continuity --send"; return 1; }
+  "$PY" studio_continuidade.py status >/dev/null 2>&1 || { echo "Recusado: não achei a cópia dos bancos no R2. Rode: studio continuity --send"; return 1; }
 }
 
 case "$1" in

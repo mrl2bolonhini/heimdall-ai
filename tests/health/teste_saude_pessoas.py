@@ -2,7 +2,7 @@
 """Teste da saúde por pessoa: banco separado, métricas diárias do Health Auto Export, conversor do Atalho e importação pela caixa. Sem rede."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -13,10 +13,10 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp())
 os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 
-import heimdall_atalhos as at  # noqa: E402
-import heimdall_banco as banco  # noqa: E402
-import heimdall_caixa as cx  # noqa: E402
-import heimdall_saude_diaria as sd  # noqa: E402
+import studio_atalhos as at  # noqa: E402
+import studio_banco as banco  # noqa: E402
+import studio_caixa as cx  # noqa: E402
+import studio_saude_diaria as sd  # noqa: E402
 
 falhas = 0
 

@@ -2,7 +2,7 @@
 """Teste do alerta de memória do Mac (fluxo 4 do n8n) e do emulador de AWS sob demanda (studio lab --start/--stop)."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -64,12 +64,12 @@ else:
     confere("disco cheio continua avisando", isinstance(r, list) and len(r) == 1 and "disco em 95%" in r[0]["json"]["mensagem"], r)
 
 # --- métricas do MCP trazem mem_livre_percent
-mcp = (RAIZ / "heimdall_mcp.py").read_text(encoding="utf-8")
+mcp = (RAIZ / "studio_mcp.py").read_text(encoding="utf-8")
 confere("as métricas do MCP incluem mem_livre_percent (kern.memorystatus_level, com reserva no psutil)",
         '"mem_livre_percent"' in mcp and "kern.memorystatus_level" in mcp and "ram.available / ram.total" in mcp)
 
 # --- ajuda das variáveis
-ajuda = (RAIZ / "heimdall_config_ajuda.py").read_text(encoding="utf-8")
+ajuda = (RAIZ / "studio_config_ajuda.py").read_text(encoding="utf-8")
 confere("a ajuda do .env descreve STUDIO_ALERT_MEM_FREE e STUDIO_AWS_EMULATOR_INICIO", "STUDIO_ALERT_MEM_FREE" in ajuda and "STUDIO_AWS_EMULATOR_INICIO" in ajuda)
 confere("a ajuda do .env não cita mais STUDIO_ALERT_SWAP", "STUDIO_ALERT_SWAP" not in ajuda)
 
@@ -119,7 +119,7 @@ with tempfile.TemporaryDirectory() as tmp:
     confere("opção desconhecida mostra o uso", rc != 0 and "studio lab [--local] [--start] [--stop]" in out, (rc, out))
 
 # --- Lab: mensagem quando o emulador está desligado
-lab_py = (RAIZ / "heimdall_lab.py").read_text(encoding="utf-8")
+lab_py = (RAIZ / "studio_lab.py").read_text(encoding="utf-8")
 confere("o Lab explica que o emulador é sob demanda e onde ligar, sem comando de terminal na tela", "sob demanda" in lab_py and "aba Serviços" in lab_py and "ligue-o com studio lab --start" not in lab_py)
 
 print("\nFalhas: %d" % falhas)

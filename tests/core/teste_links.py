@@ -20,7 +20,7 @@ def confere(nome, cond):
 
 for k in [k for k in os.environ if k.startswith("STUDIO_")]:
     del os.environ[k]
-import heimdall_links as L
+import studio_links as L
 
 confere("padrão aponta para a aba Avisos do Health", L.url_produto("saude") == "https://health.studiolibre.io/avisos")
 confere("Finance usa financas ou finance", L.url_produto("financas") == L.url_produto("finance") == "https://finance.studiolibre.io/avisos")
@@ -39,12 +39,12 @@ del os.environ["STUDIO_NOTIFICACAO_LINK"]
 confere("caminho inseguro vira /", L.url_produto("learn", "avisos x") == "https://learn.studiolibre.io/")
 confere("com_link não altera o original", (lambda p: (L.com_link(p, "learn"), "url" not in p)[1])({"title": "t"}))
 
-import heimdall_avisos as av
+import studio_avisos as av
 b = av.texto_bark("saude", 2)
 confere("texto_bark leva o link do produto", b["url"] == "https://health.studiolibre.io/avisos" and "2 avisos" in b["title"])
 confere("texto_bark continua genérico", "Abra a aba Avisos" in b["body"])
 
-import heimdall_avisos_mac as mac
+import studio_avisos_mac as mac
 with tempfile.TemporaryDirectory() as d:
     os.environ["STUDIO_ALERTAS_DIR"] = d
     mac.pasta = lambda: Path(d)

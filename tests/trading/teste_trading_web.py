@@ -2,7 +2,7 @@
 """Testa o site do Studio Trading: login, CSRF, abas, ordens e rejeições, fechar posição, cancelar, lista, Ajustes (limites, fonte, preço manual, zerar), atalhos e Perguntar."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import os
@@ -16,10 +16,10 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="trading_"))
 os.environ.update({"STUDIO_TRADING_FONTE": "simulada", "STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
-import heimdall_lab as hc  # noqa: E402
-import heimdall_servico_web as web  # noqa: E402
-import heimdall_trading as tr  # noqa: E402
-import heimdall_trading_motor as m  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_servico_web as web  # noqa: E402
+import studio_trading as tr  # noqa: E402
+import studio_trading_motor as m  # noqa: E402
 
 hc.SENHA_HASH = hc.hash_senha("senha-de-teste-forte", iteracoes=100_000)
 hc.TOTP_SEGREDO = "JBSWY3DPEHPK3PXP"

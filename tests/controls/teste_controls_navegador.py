@@ -3,7 +3,7 @@
 Se o Playwright ou o Chrome não existirem, avisa e sai sem falhar (o teste do servidor, tests/controls/teste_controls.py, continua valendo)."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sys
@@ -21,8 +21,8 @@ try:
 except ImportError:
     print("Playwright não instalado: teste do navegador pulado.")
     sys.exit(0)
-import heimdall_lab as hc  # noqa: E402
-import heimdall_controls as hcx  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_controls as hcx  # noqa: E402
 
 hcx.ATRASO_CURSOR_MS = 400
 hcx.AUDITORIA = TMP / "logs" / "controls_audit.log"

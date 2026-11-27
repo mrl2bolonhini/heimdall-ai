@@ -2,7 +2,7 @@
 """Testa o site do Studio Memory: login, CSRF, abas e Ajustes no Studio Design, envio multipart, busca, revisão, download, lixeira e Perguntar."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import os
@@ -16,10 +16,10 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="memory_"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost", "STUDIO_HUB_IA": "0"})
-import heimdall_lab as hc  # noqa: E402
-import heimdall_memory as lib  # noqa: E402
-import heimdall_memory_dados as dados  # noqa: E402
-import heimdall_servico_web as web  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_memory as lib  # noqa: E402
+import studio_memory_dados as dados  # noqa: E402
+import studio_servico_web as web  # noqa: E402
 
 dados.PROJECT_DIR = TMP
 hc.SENHA_HASH = hc.hash_senha("senha-de-teste-forte", iteracoes=100_000)

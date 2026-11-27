@@ -2,7 +2,7 @@
 """Testa o alerta de frequência cardíaca alta na madrugada (alerta_fc) e a linha correspondente na página Hoje."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sys
@@ -13,7 +13,7 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp(prefix="fc_madrugada_"))
 os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 sys.path.insert(0, str(RAIZ))
-import heimdall_saude as hs  # noqa: E402
+import studio_saude as hs  # noqa: E402
 
 falhas = 0
 
@@ -69,7 +69,7 @@ confere("menos de 4 horas de madrugada com dado: não alerta", hs.alerta_fc(HOJE
 
 # histórico curto: menos de 7 dias de base
 import sqlite3  # noqa: E402
-import heimdall_banco as banco  # noqa: E402
+import studio_banco as banco  # noqa: E402
 con = sqlite3.connect(banco.DB_PATH)
 con.execute("DELETE FROM fc_hora WHERE dia < ?", (dia(5),))
 con.commit()

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Testes de heimdall_saude.py com dados FICTÍCIOS: treinos, ECG, frequência cardíaca, eventos, exportação do app Saúde e relatórios."""
+"""Testes de studio_saude.py com dados FICTÍCIOS: treinos, ECG, frequência cardíaca, eventos, exportação do app Saúde e relatórios."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import math
@@ -18,8 +18,8 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-saude-"))
 os.environ["STUDIO_DB_DIR"] = str(TMP / "banco")
 sys.path.insert(0, str(RAIZ))
-import heimdall_banco as banco  # noqa: E402
-import heimdall_saude as hs  # noqa: E402
+import studio_banco as banco  # noqa: E402
+import studio_saude as hs  # noqa: E402
 
 falhas = 0
 

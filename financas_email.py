@@ -20,7 +20,7 @@ from pathlib import Path
 import financas_arquivos as fa
 import financas_boletos as fb
 import financas_nucleo as fn
-import heimdall_email_oficial as eo
+import studio_email_oficial as eo
 
 AQUI = Path(__file__).resolve().parent
 MAX_PDF = 8 * 1024 * 1024

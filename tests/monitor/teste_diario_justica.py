@@ -2,7 +2,7 @@
 Uso: python3 tests/monitor/teste_diario_justica.py [dias]   (lê STUDIO_OAB=NUMERO/UF do .env; dias padrão: 30)"""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json, re, sys, urllib.error, urllib.parse, urllib.request
 from datetime import date, timedelta

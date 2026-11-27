@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Teste da Ajuda e suporte do StudioLibre (heimdall_ajuda.py e as rotas do Account): perguntas frequentes de todos os serviços, formulário com protocolo, limite por hora,
+"""Teste da Ajuda e suporte do StudioLibre (studio_ajuda.py e as rotas do Account): perguntas frequentes de todos os serviços, formulário com protocolo, limite por hora,
 validação, envio pelo Cloudflare Email Sending (simulado, sem rede), CSRF e origem, páginas de política com aviso de minuta, e os links do rodapé de todos os serviços."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import json
@@ -14,13 +14,13 @@ import urllib.parse
 from datetime import datetime, timedelta
 from http.server import ThreadingHTTPServer
 
-import heimdall_account as a
-import heimdall_ajuda as aj
-import heimdall_cfaccess as cfa
-import heimdall_conta as c
-import heimdall_design as design
-import heimdall_integracoes as integ
-import heimdall_usuarios as u
+import studio_account as a
+import studio_ajuda as aj
+import studio_cfaccess as cfa
+import studio_conta as c
+import studio_design as design
+import studio_integracoes as integ
+import studio_usuarios as u
 
 falhas = 0
 
@@ -231,8 +231,8 @@ for k in ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "
 # ---- rodapé de todos os serviços ----
 r = design.rodape(servico="finance")
 confere("rodapé: Ajuda e suporte (com o serviço), Termos de Uso e Privacidade, antes do Voltar para o topo", "/ajuda?servico=finance" in r and "/termos-de-uso" in r and "/politica-de-privacidade" in r and r.index("Privacidade") < r.index("Voltar para o topo") and 'aria-label="Ajuda e informações"' in r)
-fontes = {"controls": "heimdall_controls.py", "finance": "heimdall_finance.py", "saude": "heimdall_painel_saude.py", "memory": "heimdall_servico_web.py", "news": "heimdall_news.py",
-          "learn": "heimdall_learn.py", "jogos": "heimdall_jogos.py", "lab": "heimdall_lab.py", "account": "heimdall_account.py"}
+fontes = {"controls": "studio_controls.py", "finance": "studio_finance.py", "saude": "studio_painel_saude.py", "memory": "studio_servico_web.py", "news": "studio_news.py",
+          "learn": "studio_learn.py", "jogos": "studio_jogos.py", "lab": "studio_lab.py", "account": "studio_account.py"}
 confere("todos os serviços com página própria passam a chave do serviço ao rodapé", all(f'design.rodape(' in (RAIZ / f).read_text(encoding="utf-8") and (f'"{k}"' in (RAIZ / f).read_text(encoding="utf-8")) for k, f in fontes.items()))
 confere("as chaves do rodapé existem na ajuda", all(k in aj.SERVICOS for k in fontes))
 

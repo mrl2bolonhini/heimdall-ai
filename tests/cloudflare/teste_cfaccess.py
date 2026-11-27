@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Testa a entrada pelo Cloudflare Access (heimdall_cfaccess.py): assinatura RS256, claims, e-mail, cache e o fluxo HTTP do painel de jogos.
+"""Testa a entrada pelo Cloudflare Access (studio_cfaccess.py): assinatura RS256, claims, e-mail, cache e o fluxo HTTP do painel de jogos.
 Sem internet: gera um par de chaves RSA só para o teste e responde os certificados no lugar do Cloudflare."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import base64
 import hashlib
@@ -20,9 +20,9 @@ from pathlib import Path
 AQUI = RAIZ
 os.environ.update({"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(AQUI))
-import heimdall_cfaccess as cfa  # noqa: E402
-import heimdall_lab as hc  # noqa: E402
-import heimdall_jogos as hj  # noqa: E402
+import studio_cfaccess as cfa  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_jogos as hj  # noqa: E402
 
 falhas = 0
 
@@ -279,10 +279,10 @@ shutil.rmtree(_t, ignore_errors=True)
 
 # o comando de conferência no Terminal lê o .env sozinho (só as variáveis do Access) e não sobrescreve o ambiente
 _d = tempfile.mkdtemp()
-shutil.copy(os.path.join(str(RAIZ), "heimdall_cfaccess.py"), _d)
+shutil.copy(os.path.join(str(RAIZ), "studio_cfaccess.py"), _d)
 open(os.path.join(_d, ".env"), "w").write("SEGREDO='nao-deve-sair'\nHEIMDALL_CFACCESS_EQUIPE='minha-equipe'\nHEIMDALL_CFACCESS_AUD='aud1,aud2'\nHEIMDALL_CFACCESS_EMAILS='dono@exemplo.test'\n")
 _env_limpo = {k: v for k, v in os.environ.items() if not k.startswith("HEIMDALL_CFACCESS_")}
-r = subprocess.run([sys.executable, "-I", os.path.join(_d, "heimdall_cfaccess.py"), "--status"], cwd=_d, env=_env_limpo, capture_output=True, text=True)
+r = subprocess.run([sys.executable, "-I", os.path.join(_d, "studio_cfaccess.py"), "--status"], cwd=_d, env=_env_limpo, capture_output=True, text=True)
 confere("--status no Terminal lê o .env", "Equipe: minha-equipe" in r.stdout and "E-mails de dono (entram em todos os painéis): 1" in r.stdout, r.stdout + r.stderr)
 confere("--status não imprime segredos nem valores", "nao-deve-sair" not in r.stdout and "dono@exemplo.test" not in r.stdout and "aud1" not in r.stdout)
 shutil.rmtree(_d, ignore_errors=True)

@@ -2,7 +2,7 @@
 """Testa o painel de saúde: login, páginas, somente leitura, host permitido, escape de HTML e estado dos dados."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import random
@@ -20,10 +20,10 @@ from pathlib import Path
 TMP = Path(tempfile.mkdtemp(prefix="painel_saude_"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(RAIZ))
-import heimdall_banco as banco  # noqa: E402
-import heimdall_lab as hc  # noqa: E402
-import heimdall_painel_saude as ps  # noqa: E402
-import heimdall_saude as hs  # noqa: E402
+import studio_banco as banco  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_painel_saude as ps  # noqa: E402
+import studio_saude as hs  # noqa: E402
 
 falhas = 0
 
@@ -95,7 +95,7 @@ confere("login errado é recusado", st == 401 and "incorretos" in corpo, (st, co
 
 token, sess = hc.nova_sessao()
 ck = f"{ps.COOKIE}={token}"
-import heimdall_clinico as _cl
+import studio_clinico as _cl
 import urllib.parse as _up
 
 
@@ -158,7 +158,7 @@ ex_._escrever(lambda con: con.execute("INSERT INTO sugestoes_saude (chave, tipo,
 st, corpo, _ = pedir("/sugestoes", ck)
 confere("sugestão com data fixa diz que vira evento; campos de data e hora têm rótulo; pergunta tem resposta",
         "Aceitar e criar evento em 02/12/2099" in corpo and 'for="hora-1"' in corpo and "Guardar resposta" in corpo and 'aria-label="Recusar: Retirada de pontos' in corpo, corpo[:600])
-import heimdall_agenda as _ag
+import studio_agenda as _ag
 _enviados = []
 _ag.AGENTE = "http://127.0.0.1:1"
 _orig = _ag.enviar
@@ -206,8 +206,8 @@ st, corpo, _ = pedir("/nao-existe", ck)
 confere("página inexistente dá 404", st == 404, st)
 st, corpo, _ = pedir("/semana", ck, dados=b"x=1")
 confere("POST fora das rotas de gravação é recusado", st == 405, st)
-import heimdall_avisos as _av
-import heimdall_perguntar as _hp
+import studio_avisos as _av
+import studio_perguntar as _hp
 import time as _tm
 st, corpo, cab = pedir("/sono", ck)
 import re as _re

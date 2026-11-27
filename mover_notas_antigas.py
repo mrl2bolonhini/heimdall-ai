@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import heimdall_agente as ag  # noqa: E402
+import studio_agente as ag  # noqa: E402
 
 # Reaproveita o trecho do AppleScript que acha ou cria a pasta pelo caminho.
 _src = ag.AS_GRAVAR

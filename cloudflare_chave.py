@@ -16,7 +16,7 @@ import sys
 import urllib.error
 import urllib.request
 
-import heimdall_lab as nuvem
+import studio_lab as nuvem
 
 
 def _get(caminho: str, token: str) -> dict:

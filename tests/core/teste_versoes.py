@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Teste do heimdall_versoes.py com um 'docker' de mentira: versões, comparação com o registro e falhas em silêncio."""
+"""Teste do studio_versoes.py com um 'docker' de mentira: versões, comparação com o registro e falhas em silêncio."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 
-import heimdall_versoes as v
+import studio_versoes as v
 
 falhas = 0
 

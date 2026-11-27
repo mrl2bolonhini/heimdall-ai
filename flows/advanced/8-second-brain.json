@@ -47,7 +47,7 @@
       ],
       "parameters": {
         "method": "PUT",
-        "url": "http://qdrant:6333/collections/heimdall_notas",
+        "url": "http://qdrant:6333/collections/studio_notas",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -207,7 +207,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "http://qdrant:6333/collections/heimdall_notas/points/query",
+        "url": "http://qdrant:6333/collections/studio_notas/points/query",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -344,7 +344,7 @@
       ],
       "parameters": {
         "method": "PUT",
-        "url": "http://qdrant:6333/collections/heimdall_notas/points?wait=true",
+        "url": "http://qdrant:6333/collections/studio_notas/points?wait=true",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -373,7 +373,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nsd.hashes = sd.hashes || {};\nconst esp = $('Montar espelho').all().map(i => i.json);\nconst gr = $('Gravar espelho').all();\nlet falhas = 0;\nconst contr = [];\nesp.forEach((e, i) => {\n  sd.hashes[e.id] = e.hash;\n  if (!gr[i] || !gr[i].json || gr[i].json.ok !== true) falhas++;\n  (e.contradicoes || []).forEach(c => contr.push(e.titulo + ' x ' + c.titulo + ': ' + c.motivo));\n});\nconst maxMod = Math.max.apply(null, $('Lista').all().map(i => i.json.mod));\nif (isFinite(maxMod)) sd.cursor = Math.max(sd.cursor || 0, maxMod);\nconst msgs = [];\nif (contr.length) msgs.push('Possível contradição entre notas:\\n' + contr.join('\\n'));\nif (falhas) msgs.push('Não consegui gravar ' + falhas + ' nota(s) espelho no app Notas. Confira o agente do Mac (heimdall_agente.py).');\nif (!msgs.length) return [];\nreturn [{ json: { titulo: contr.length ? 'Second Brain: possível contradição' : 'Second Brain: atenção', corpo: msgs.join('\\n\\n') } }];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nsd.hashes = sd.hashes || {};\nconst esp = $('Montar espelho').all().map(i => i.json);\nconst gr = $('Gravar espelho').all();\nlet falhas = 0;\nconst contr = [];\nesp.forEach((e, i) => {\n  sd.hashes[e.id] = e.hash;\n  if (!gr[i] || !gr[i].json || gr[i].json.ok !== true) falhas++;\n  (e.contradicoes || []).forEach(c => contr.push(e.titulo + ' x ' + c.titulo + ': ' + c.motivo));\n});\nconst maxMod = Math.max.apply(null, $('Lista').all().map(i => i.json.mod));\nif (isFinite(maxMod)) sd.cursor = Math.max(sd.cursor || 0, maxMod);\nconst msgs = [];\nif (contr.length) msgs.push('Possível contradição entre notas:\\n' + contr.join('\\n'));\nif (falhas) msgs.push('Não consegui gravar ' + falhas + ' nota(s) espelho no app Notas. Confira o agente do Mac (studio_agente.py).');\nif (!msgs.length) return [];\nreturn [{ json: { titulo: contr.length ? 'Second Brain: possível contradição' : 'Second Brain: atenção', corpo: msgs.join('\\n\\n') } }];"
       }
     },
     {

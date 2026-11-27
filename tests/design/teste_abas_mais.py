@@ -2,13 +2,13 @@
 """Testa o menu Mais das abas (mais de 5 itens, o máximo por padrão): marcação, Option+Shift+0 e Esc no navegador."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_design as d  # noqa: E402
+import studio_design as d  # noqa: E402
 
 falhas = 0
 

@@ -2,7 +2,7 @@
 """Testa a coleta de tudo o que o Pluggy entrega (contas, faturas, investimentos, movimentações, empréstimos) com uma API simulada, as categorias de crédito e as abas dinâmicas."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 import tempfile
@@ -14,8 +14,8 @@ import financas_nucleo as fn  # noqa: E402
 import financas_planilhas as fp  # noqa: E402
 import financas_pluggy_dados as pd  # noqa: E402
 import financas_pluggy as fpl  # noqa: E402
-import heimdall_finance as hf  # noqa: E402
-import heimdall_finance_planilhas as hfp  # noqa: E402
+import studio_finance as hf  # noqa: E402
+import studio_finance_planilhas as hfp  # noqa: E402
 
 falhas = 0
 

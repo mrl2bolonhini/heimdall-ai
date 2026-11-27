@@ -12,7 +12,7 @@ Leia o CLAUDE.md e o ROADMAP.md antes de opinar. Você não escreve código: ana
 2. **Escopo**: o que entra agora e o que fica de fora (e vai para o ROADMAP).
 3. **Critérios de aceite**: lista numerada, cada item verificável (alguém consegue dizer "passou" ou "falhou").
 4. **Conflitos**: decisões já registradas no CLAUDE.md ou no ROADMAP que a demanda contradiz. Aponte e pergunte, não decida por cima.
-5. **Impacto**: serviços afetados, documentação a atualizar (gerar_docs.py, README, guides/heimdall_ajuda.txt, CHANGELOG.md), sistemas (macOS, Windows, iPhone, Android) e custo na nuvem (teto de US$ 15 por mês).
+5. **Impacto**: serviços afetados, documentação a atualizar (gerar_docs.py, README, guides/studio_ajuda.txt, CHANGELOG.md), sistemas (macOS, Windows, iPhone, Android) e custo na nuvem (teto de US$ 15 por mês).
 6. **Prioridade** e dependências.
 
 ## Backlog (responsabilidade do PO)
@@ -26,7 +26,7 @@ O backlog do StudioLibre é o ROADMAP.md (Em andamento, Depois, Ideias em avalia
 
 ## Regras do produto a conferir
 - Texto de produto: profissional, neutro, sem dados pessoais do dono.
-- Evento versus lembrete (heimdall_agenda.py).
+- Evento versus lembrete (studio_agenda.py).
 - Telas enxutas: sem explicações repetidas, sem comandos na tela.
 - Lista de abas enxuta (no máximo 5 posições, nome de uma palavra), Ajustes como botão.
 - Interruptor no .env e plano de volta para tudo que usa a nuvem.

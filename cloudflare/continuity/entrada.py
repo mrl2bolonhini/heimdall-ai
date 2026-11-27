@@ -17,12 +17,12 @@ sys.path.insert(0, str(RAIZ))
 
 # (módulo, variável da porta, porta): as mesmas portas do start_heimdall.sh
 SERVICOS = [
-    ("heimdall_finance.py", "STUDIO_FINANCE_PORT", 8016),
-    ("heimdall_painel_saude.py", "STUDIO_SAUDE_PAINEL_PORT", 8013),
-    ("heimdall_news.py", "STUDIO_NEWS_PORT", 8012),
-    ("heimdall_learn.py", "STUDIO_LEARN_PORT", 8019),
-    ("heimdall_jogos.py", "STUDIO_JOGOS_PORT", 8014),
-    ("heimdall_account.py", "STUDIO_ACCOUNT_PORT", 8018),
+    ("studio_finance.py", "STUDIO_FINANCE_PORT", 8016),
+    ("studio_painel_saude.py", "STUDIO_SAUDE_PAINEL_PORT", 8013),
+    ("studio_news.py", "STUDIO_NEWS_PORT", 8012),
+    ("studio_learn.py", "STUDIO_LEARN_PORT", 8019),
+    ("studio_jogos.py", "STUDIO_JOGOS_PORT", 8014),
+    ("studio_account.py", "STUDIO_ACCOUNT_PORT", 8018),
 ]
 estado = {"pronto": False, "quando": "", "erro": ""}
 FILHOS = {}   # processos dos sites, para quem precisar encerrá-los (testes)
@@ -56,7 +56,7 @@ def subir(modulo: str, var: str, porta: int) -> subprocess.Popen:
 def main() -> int:
     os.environ["HEIMDALL_CONTINUIDADE_MODO"] = "1"
     threading.Thread(target=_servir_saude, daemon=True).start()
-    import heimdall_continuidade as hc
+    import studio_continuidade as hc
     try:
         r = hc.restaurar(RAIZ)
     except Exception as ex:  # noqa: BLE001

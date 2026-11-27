@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import heimdall_avisos as av  # noqa: E402
+import studio_avisos as av  # noqa: E402
 
 # serviço -> (pasta do cofre, nome da pasta no app Notas, True se fica dentro da pasta-raiz Heimdall-ai)
 ORIGENS = {"saude": ("saude", "Saúde", True), "financas": ("heimdall-financas", "Heimdall Finanças", False)}
@@ -111,7 +111,7 @@ def migrar(cofre: Path, osa=None, raiz: str = "Heimdall-ai", simular: bool = Fal
                 if _norm(titulo) in ja:
                     continue   # é a mesma nota que o cofre já tem
                 try:
-                    corpo = osa(__import__("heimdall_agente").AS_LER, nid)
+                    corpo = osa(__import__("studio_agente").AS_LER, nid)
                 except Exception as ex:  # noqa: BLE001
                     res["erros"].append(f"não li a nota {titulo[:40]}: {str(ex)[:120]}")
                     notas_apple.pop()
@@ -156,7 +156,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Traz as notas de saúde e finanças para a aba Avisos e apaga as originais")
     ap.add_argument("--executar", action="store_true", help="importa, confere e apaga (sem isto, só mostra o que seria feito)")
     a = ap.parse_args()
-    import heimdall_agente as ag
+    import studio_agente as ag
     cofre = ag.VAULT
 
     def osa(script, *args):

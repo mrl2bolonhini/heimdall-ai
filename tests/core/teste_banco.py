@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Testa o banco pessoal (heimdall_banco.py) e as rotas /banco/* do agente. Usa uma pasta temporária; não toca no seu banco.
+"""Testa o banco pessoal (studio_banco.py) e as rotas /banco/* do agente. Usa uma pasta temporária; não toca no seu banco.
     python tests/core/teste_banco.py
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -16,7 +16,7 @@ import urllib.request
 
 tmp = tempfile.mkdtemp(prefix="heimdall-banco-")
 os.environ["STUDIO_DB_DIR"] = tmp
-import heimdall_banco as b  # noqa: E402
+import studio_banco as b  # noqa: E402
 
 falhas = 0
 
@@ -65,9 +65,9 @@ ok(b.resumo()["saude_diaria"]["dias"] == 2, "resumo conta os dias")
 ok(any(p.name.startswith("heimdall-") for p in (b.DB_DIR / "copies").glob("*.db")), "cópia diária criada")
 
 
-# ferramentas do chat (heimdall_tools)
+# ferramentas do chat (studio_tools)
 from datetime import date, timedelta  # noqa: E402
-import heimdall_tools as T  # noqa: E402
+import studio_tools as T  # noqa: E402
 
 hoje = date.today()
 b.gravar("saude_diaria", [{"dia": (hoje - timedelta(days=i)).isoformat(), "metrica": "sono_total", "valor": 400 + i * 10, "unidade": "min"} for i in range(5)]
@@ -91,7 +91,7 @@ ok(not ({"banco_resumo", "banco_consultar", "banco_buscar", "saude_historico"} &
 # rotas do agente
 porta = "18003"
 env = dict(os.environ, STUDIO_AGENTE_TOKEN="t" * 20, STUDIO_AGENTE_PORT=porta, STUDIO_VAULT_DIR=tmp + "/cofre")
-p = subprocess.Popen([sys.executable, "heimdall_agente.py"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+p = subprocess.Popen([sys.executable, "studio_agente.py"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 try:
     for _ in range(30):
         try:

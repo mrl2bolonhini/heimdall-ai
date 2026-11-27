@@ -1,0 +1,651 @@
+# Referência do comando heimdall. Uma seção por comando, no formato:
+#   @ comando | resumo de uma linha
+#   texto livre
+#   Opções:
+#     -x, --longa  <duas ou mais espaços>  o que faz
+#   Exemplos:
+#     heimdall comando --opção
+# É lida pelo heimdall.zsh (heimdall COMANDO --help e studio help) e por gerar_docs.py (página Comando heimdall do site e studio help --doc).
+# Toda opção aceita também a forma curta de uma letra; -h e --help existem em todos os comandos.
+
+@ up | Sobe todo o ecossistema
+Roda o subir.sh: sobe os serviços, guarda o log da subida e avisa quando tudo estiver no ar. Sem opções sobe com --webui --terminal.
+Opções:
+  -w, --webui      sobe também o Open WebUI (chat, porta 3000), em modo enxuto: sem Notas, Automações, imagem, código e recursos automáticos (STUDIO_WEBUI_ENXUTO=0 no .env devolve tudo; STUDIO_WEBUI_TITULOS=1 mantém os títulos das conversas; STUDIO_WEBUI_EMBEDDING=ollama poupa mais memória)
+  -t, --terminal   sobe o Open Terminal (porta 8002)
+  -n, --n8n        sobe o n8n (automações, porta 5678)
+  -a, --agent      sobe o agente do Mac (ponte do n8n com Notas e Lembretes, porta 8003)
+                   Lembretes e Calendário usam o EventKit (sem abrir os apps); veja studio_eventkit.py --status. O Second Brain só consulta o Notas quando há nota nova.
+  -i, --ingest     indexa em knowledge/ só o que mudou antes de subir o LiteLLM
+  -d, --docling    sobe o Docling (leitura de PDFs com OCR, porta 5001)
+  -u, --update     atualiza as imagens Docker (SearXNG, Qdrant e Open WebUI), com backup
+  -h, --help       mostra esta ajuda
+Exemplos:
+  studio up
+  studio up --webui --terminal --n8n
+  studio up -w -t -n -a
+
+@ restart | Encerra a subida atual e sobe de novo
+Faz o mesmo que up, depois de encerrar o que estava em andamento. Aceita as mesmas opções do up.
+Opções:
+  -w, --webui      sobe também o Open WebUI
+  -t, --terminal   sobe o Open Terminal
+  -n, --n8n        sobe o n8n
+  -a, --agent      sobe o agente do Mac
+  -i, --ingest     indexa knowledge/ antes de subir
+  -d, --docling    sobe o Docling
+  -u, --update     atualiza as imagens Docker
+  -h, --help       mostra esta ajuda
+Exemplos:
+  studio restart
+  studio restart --webui --terminal --n8n
+
+@ stop | Encerra os serviços do Mac
+Encerra o que escuta nas portas 8000 a 8004, 8010 a 8014, 8099 (documento da ajuda) e 9000 (MCP, agente, Lab, Notas, News, painel de saúde e LiteLLM). Os contêineres do Docker continuam rodando.
+Opções:
+  -h, --help       mostra esta ajuda
+Exemplos:
+  studio stop
+
+@ status | Confere o que está no ar
+Roda o subir.sh --status: confere cada serviço que deveria estar no ar e diz o que falta.
+Opções:
+  -h, --help       mostra esta ajuda
+Exemplos:
+  studio status
+
+@ logs | Logs da subida e de cada serviço
+Sem opção mostra as últimas 40 linhas do log da subida atual.
+Opções:
+  -l, --list           lista os arquivos de log em logs/
+  -c, --clean          apaga os logs antigos que ficavam soltos na pasta do projeto
+  -s, --service NOME   últimas linhas do log de um serviço: mcp, mcp-public, mcp-data, agent, lab, learn, news, health, games, finance, terminal, ingest
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio logs
+  studio logs --service agent
+  studio logs -s news
+
+@ containers | Contêineres do Docker
+Roda docker ps. Qualquer opção do docker ps vale aqui.
+Opções:
+  -a, --all            inclui os contêineres parados (opção do docker ps)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio containers
+  studio containers -a
+
+@ models | Modelos do Ollama
+Roda ollama list: os modelos baixados no Mac.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio models
+
+@ chat | Open WebUI, o chat
+Sem opção abre o chat no navegador (porta 3000).
+Opções:
+  -d, --diagnose       mostra o que o servidor de dados e o Open WebUI registraram nas últimas chamadas de ferramenta
+  -p, --password       troca a senha de um usuário do Open WebUI sem perder conversas (aceita --stdin)
+  -c, --check          confere se o endereço público do chat (STUDIO_WEBUI_HOST) está atrás do Cloudflare Access; é o que o login sem senha exige
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio chat
+  studio chat --diagnose
+  studio chat --password
+  studio chat --email
+  studio chat --delete-user
+  studio chat --import    cria ou atualiza no Open WebUI as conexões de ferramentas (com o filtro de funções) e os 8 modelos com os prompts padrão, pela API (chave em STUDIO_WEBUI_API_KEY ou perguntada na hora)
+  studio chat --tools     só as conexões de ferramentas
+  studio chat --models    só os modelos; no fim esconde do seletor os modelos de base, para sobrarem só os criados (--keep-base não esconde; --show-all mostra de novo)
+  Em qualquer um, --dry-run só mostra o que faria.
+  studio chat --check
+
+@ learn | Studio Learn, plataforma de estudos (fase 1)
+Sem opção, abre o site de estudos (porta 8019), com um Resumo em texto (quantos temas, e por tema os documentos de consulta, estudos e lições) e a lista de temas na tela inicial (botões Novo estudo e Ajustes). Novo estudo é um formulário só: nome do tema ou pasta mãe, arquivos, categoria e tipo (lista com a explicação de cada um), Criar. Ao escolher um tema, as abas dele aparecem: tema sequencial tem Lições, Exercícios, Cards e Progresso; tema aleatório tem Estudos, Cards e Progresso (um tema que mudou de categoria mantém a aba do que já tem, para consulta). Trocar de tema volta à lista. Em cada aba há o campo Perguntar (modelo local, só com o seu progresso, os seus estudos e os trechos estudados do tema; na lista de temas, de todos). O botão Ajustes abre uma tela sem abas (a página Tipos de estudo e suas regras fica ali; pausar agenda e avisos, estudos por dia, agenda, importar documentos, mudar categoria, arquivar sem apagar nada). Material: pastas de material com categoria (aleatório ou sequencial) e tipo com regras próprias (idiomas, programação, exatas, arquitetura e dados, filosofia, humanas, direito, medicina, esoterismo e outros), importação de documentos, estudo por sorteio de trecho com pergunta, correção, áudio e matérias sugeridas, lições sequenciais com exercícios e correção, voz do aluno (gravar, transcrever, editar, enviar), cards e lições agendados com aviso no Mac e no Bark, e banco próprio (db/learn.db). Variáveis: STUDIO_LEARN_AGENDA=0 desliga a agenda (studio env --set STUDIO_LEARN_AGENDA 0 e reinicie), STUDIO_LEARN_NOTIFICAR=0 tira o aviso, STUDIO_LEARN_WHISPER_MODELO e STUDIO_LEARN_WHISPER_TAMANHO configuram a transcrição, STUDIO_LEARN_GUARDAR_VOZ=1 guarda o áudio do aluno. Cada convidado tem os seus dados separados (db/people/<id>/); STUDIO_PESSOAS=0 desliga a separação e todos usam os dados do dono. Desligado por padrão: ligue com studio env --set STUDIO_LEARN 1 e reinicie.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
+  -s, --sync           cadastra no banco as pastas que já existem em knowledge/ (categoria aleatório, tipo Outro)
+  -m, --migrate        mostra o que seria levado dos estudos antigos (do antigo Notes) para o Learn, sem gravar nada
+  -a, --apply          com --migrate, grava a migração (estado "importado"; os originais ficam onde estão)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio learn
+  studio learn --sync
+  studio learn --migrate
+  studio learn --migrate --apply
+
+@ trading | Studio Trading, mesa de operações em simulação
+Sem opção, abre a mesa de operações em simulação (porta 8020): cotação, ordens a mercado e limitadas, carteira, histórico e sinais descritivos do movimento recente. Nenhuma ordem é enviada a corretora; os limites por ordem e de perda por dia ficam em Ajustes. Liga com STUDIO_TRADING=1 no .env.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio trading
+  studio trading --local
+
+@ hub | Studio Hub, documentos pesquisáveis
+Sem opção, abre o acervo de documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto (OCR em imagens), etiquetas sugeridas com revisão e busca em todo o conteúdo. Liga com STUDIO_HUB=1 no .env. Cada pessoa pode conectar o próprio Dropbox ou OneDrive (somente leitura) na subaba Nuvem; o administrador registra o aplicativo no provedor, cadastra o endereço de retorno https://hub.studiolibre.io/nuvem/retorno e grava STUDIO_NUVEM_DROPBOX_ID, STUDIO_NUVEM_DROPBOX_SEGREDO, STUDIO_NUVEM_ONEDRIVE_ID e STUDIO_NUVEM_ONEDRIVE_SEGREDO no .env (studio env --set). Em Adicionar > Apps, cada pessoa conecta a conta Microsoft (OneNote, To Do, Planner em conta de trabalho ou escola, Calendário e Contatos), o Google (Agenda, Tarefas e Contatos), o iCloud (Calendário e Contatos, com senha de aplicativo, sem configuração do administrador), o Notion, o Todoist e o Trello, e o Hub lê tudo sozinho, para qualquer sistema (administrador: STUDIO_NUVEM_GOOGLE_ID e _SEGREDO; STUDIO_NUVEM_NOTION_ID e _SEGREDO; STUDIO_NUVEM_TODOIST_ID e _SEGREDO; STUDIO_NUVEM_TRELLO_ID com a chave de API); em Adicionar > Nuvem, Dropbox e OneDrive, com subpastas e, se a pessoa permitir, mover o importado para a pasta Importados pelo StudioLibre.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
+  -m, --clean-mirrors  limpa o que o Second Brain criou por engano a partir de notas do próprio StudioLibre
+  -p, --clean-private  apaga o que o Second Brain guardou de notas que depois foram para uma pasta privada
+  -o, --copy-old       conta as notas das pastas antigas do app Notas; com --run, copia-as para a pasta Studio Hub (nada é apagado)
+  -r, --run            com --copy-old, executa de verdade (sem isto só conta)
+  -P, --paperless      sobe o Paperless-ngx em Docker (só neste Mac, sem endereço público) e passa a usá-lo como motor do Hub: leitura de e-mail e classificação que aprende com as correções; precisa do Docker e de reiniciar depois (studio restart)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio hub
+  studio hub --local
+  studio hub --paperless
+  studio hub --copy-old
+  studio hub --copy-old --run
+
+@ news | Studio News, notícias com resumo de IA
+Sem opção, abre o site de notícias das últimas 24 horas (porta 8012). Com opção, cuida dos feeds RSS, das fontes e da atualização.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
+  -s, --sources        baixa cada feed agora e mostra quantos itens ele traz e a idade deles; aceita um nome de fonte ou categoria para ver só esse
+  -q, --queue          mostra quantas notícias esperam resumo de IA
+  -n, --now            faz uma atualização agora e sai, sem esperar os 30 minutos
+  -t, --token          gera ou troca a chave dos feeds RSS e mostra os endereços
+  -u, --urls           mostra os endereços dos feeds
+  -c, --copy           copia o endereço de um feed (geral, opml ou categoria) para a área de transferência
+  -o, --opml           grava um arquivo OPML com todos os feeds, para importar no app de feeds
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio news
+  studio news --sources Curiosidades
+  studio news --now
+
+@ lab | Studio Lab, o painel da AWS local
+Abre o painel do emulador de AWS (porta 8010). O emulador (LocalStack ou Moto) fica desligado ao subir o StudioLibre, para poupar memória: ligue-o com --start quando for usar e desligue com --stop (STUDIO_AWS_EMULATOR_INICIO=auto no .env volta a subi-lo sempre).
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
+  -s, --start          liga o emulador de AWS e espera ele responder
+  -p, --stop           desliga o emulador de AWS e libera a memória
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio lab
+  studio lab --start
+  studio lab --stop
+
+@ health | Painel de saúde e relatórios no terminal
+Sem opção abre o painel de saúde no navegador (porta 8013). Com --open abre uma página dele. Com qualquer outra opção, roda o relatório no terminal. Nada aqui é diagnóstico.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
+  -o, --open PÁGINA    abre uma página do painel: anomalies, today, week, sleep, activity, recovery, heart, workouts, events, diary, labs, documents, data, notices (a aba Avisos: relatórios da semana)
+  -t, --today          o que já chegou de hoje
+  -n, --now            os últimos 7 dias contra a média dos 90 anteriores
+  -w, --weekly         o relatório da semana (inclui os documentos de saúde confirmados e os que aguardam conferência)
+  -a, --anomalies [AAAA-MM-DD]   o que saiu do seu normal (cada medida contra os 30 dias anteriores)
+  -y, --analysis                 análise completa por modelo: todas as métricas, correlações, hipóteses, perigos, recomendações e estudos do PubMed; grava na aba Avisos
+  -r, --report [DIAS]  análise geral (padrão 30 dias)
+  -s, --sleep [DIAS]   sono (padrão 90 dias)
+  -A, --activity [DIAS]  atividade: passos, exercício e esforço (padrão 90)
+  -R, --recovery [DIAS]  recuperação: HRV e pulso em repouso (padrão 180)
+  -T, --trends [DIAS]  tendências (padrão 90)
+  -W, --workouts [DIAS]  treinos (padrão 30)
+  -e, --ecg [DIAS]     ECG (padrão 365)
+  -f, --fc [DIAS]      frequência cardíaca (padrão 14)
+  -i, --import ARQUIVO   importa o export.zip do app Saúde (pode repetir sem duplicar)
+  -N, --import-n8n     copia para o banco o histórico de saúde que estava no n8n
+  -l, --labs [SUB]     exames de laboratório, receitas, encaminhamentos e consultas: lê PDF e foto, guarda cada item depois que você confere (pasta health/inbox; o iPhone envia pelo atalho). Subcomandos abaixo. Nada é diagnóstico
+  -l, --labs [SUB]     exames, receitas, encaminhamentos e consultas (subcomandos abaixo)
+  -h, --help           mostra esta ajuda
+  --labs summary       (ou só --labs) o último resultado de cada exame confirmado
+  --labs pending       documentos lidos que aguardam a sua conferência
+  --labs read ID       conta o que foi lido no documento, item por item, com numeração
+                       laudos com tabela de referência (jejum, risco, idade, sexo) usam a faixa do seu sexo e idade, lidos do cabeçalho do laudo; metas por risco não recebem sinal; valores do bloco Histórico entram com a data deles
+  --labs confirm ID [--without 2,5] [--date AAAA-MM-DD]   grava os itens (deixa de fora os números de --without) e leva consultas e renovações ao Calendário
+  --labs discard ID    joga o documento fora sem gravar nada
+  --labs certificates  atestados e afastamentos confirmados (dias, período e CID)
+  --labs reports       laudos de imagem e procedimentos confirmados (título e conclusão, ou a análise quando não há conclusão)
+  --labs suggestions   sugestões de acompanhamento (retorno, exame, perguntas); subcomandos: refresh, all, accept ID [--date AAAA-MM-DD] [--time HH:MM] (com data fixa vira evento no Calendário; sem data, lembrete), dismiss ID, snooze ID DIAS, answer ID TEXTO
+  --labs profile       perfil de saúde: condições, cirurgias, alergias, convênio; subcomandos: add TIPO TEXTO, remove ID, done; também em Ajustes, subaba Perfil de saúde, do painel (oferecida no primeiro acesso); fica no banco de cada pessoa
+  --labs requests      exames pedidos pelo médico, com o código TUSS (ainda sem resultado)
+  --labs folder        lê agora o que estiver na pasta de entrada
+  --labs import FILE...   lê arquivos de qualquer pasta
+  --labs result NAME   histórico de um exame, com o que o relógio mostrou antes de cada coleta
+  --labs analysis [NAME]   leitura cruzada com sono, HRV, pulso e atividade
+  --labs prescriptions    receitas confirmadas
+  --labs referrals     encaminhamentos confirmados
+  --labs appointments  consultas cadastradas
+  --labs appointment --date AAAA-MM-DD [--time HH:MM] [--doctor NOME] [--specialty NOME] [--place LOCAL]   cadastra uma consulta à mão e a leva ao Calendário
+  --labs calendar      leva ao Calendário o que ainda estiver pendente (se o agente estava fora do ar)
+  --labs documents     lista de tudo que foi recebido
+  --labs token         gera o código do atalho do iPhone (fica no .env)
+  --labs --open        abre a página Exames do painel de saúde
+Exemplos:
+  studio health
+  studio health --open anomalies
+  studio health --today
+  studio health --anomalies 2026-11-10
+  studio health --analysis
+  studio health -r 60
+  studio health --labs pending
+  studio health --labs confirm 3 --without 7
+  studio health --labs result vitamina d
+  studio health --labs appointment --date 2026-12-03 --time 14:30 --specialty cardiologia
+
+@ account | Account, a porta de entrada do ecossistema: tour dos serviços de cada pessoa
+Abre o tour dos serviços (porta 8018; de fora, account.studiolibre.io, pelo Cloudflare Access). Cada pessoa vê só os serviços a que tem acesso, com link, o que cada um faz e como configurar; o texto fica em studio_conta_info.py. O mesmo endereço responde /quem.json, que o site studiolibre.io usa para mostrar "Entrar" ou o nome e os serviços de quem já entrou. O menu Conta, em todos os serviços, lista os mesmos links. A página Integrações (/integracoes) liga a Saúde do iPhone: o botão Ativar gera o token da pessoa e mostra o endereço e o passo a passo para o app Health Auto Export (precisa da caixa de correio ligada; por enquanto só o dono ativa). Notas, Lembretes e Calendário por conta Apple ou Google estão em preparação. Com --local abre o endereço deste Mac.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost) em vez do endereço público
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio account
+  studio account -L
+
+@ controls | Controls, central de controle: terminal, serviços ligados e desligados, manutenção
+Abre o painel de administração (porta 8017; de fora, controls.studiolibre.io). O Terminal é um shell completo que roda no Mac com as suas permissões: a pasta e as variáveis continuam de um comando para o outro, o campo mostra só o último comando, com a saída logo abaixo (os anteriores ficam em Histórico), Tab completa comandos, arquivos e pastas (use Ctrl+I; o Tab move o foco), e o que você digita enquanto um programa pergunta vai direto para ele. Atalhos de teclado: Ctrl+C interrompe, Ctrl+L limpa, Option+Shift+C copia a última saída, Option+Shift+1 a 9 copia as últimas N, Option+Shift+U leva o cursor ao início da última saída, Option+Shift+R reinicia o shell, Option+Shift+H mostra a lista. Ao terminar um comando, o leitor de tela fala a situação e a saída inteira (Control para a fala). A aba Serviços mostra o que está no ar, com uma chave por serviço, e a subaba Manutenção tem botões para atualizar, reiniciar, diagnosticar e ver logs. Só o dono entra (Cloudflare Access com o Authenticator, ou senha e código de 6 dígitos) e cada comando fica anotado em logs/controls_audit.log, sem a saída. Programas de tela cheia, como vim e top, não funcionam.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
+  -h, --help           mostra esta ajuda
+  -o, --open [PÁGINA]  abre uma página: terminal, services ou maintenance
+Exemplos:
+  studio controls
+  studio controls --open terminal
+  studio controls --open settings
+  studio controls -L
+
+@ games | Studio Games, jogos leves para leitor de tela
+Sem opção abre o servidor de jogos no navegador (porta 8014; de fora, games.studiolibre.io). Os jogos ficam em categorias, que são as abas do site (cinco, com nome de uma palavra; com jogos extras de terceiros há um sexto item, Extras, e o menu Mais, na quinta posição, guarda Lógica e Extras; as rotas antigas redirecionam para as atuais), em ordem alfabética, e dentro delas também em ordem alfabética: Ação (arqueiro de áudio, labirinto e Vilarejo Sitiado, o jogo de tiro e exploração com visual de arcade; no Vilarejo, L diz onde você está, há controle de volume e do ritmo da narração, e os efeitos sonoros são sintetizados no próprio jogo), Aventuras (cinco histórias de texto e a Travessia das Três Provas), Cassino (poker, bacará, blackjack, caça-níqueis, poker caribenho e roleta, só com créditos virtuais), Estratégia (batalha naval, campo minado, gramado, jogo da velha, sonar e xadrez) e Lógica (2048, cinco letras, forca, número secreto, paciência, senha e sudoku). Os jogos de terceiros só entram se tiverem versão em português ou permitirem tradução.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
+  -p, --play JOGO      abre direto um jogo: 2048, vilarejo, arqueiro, bacara, naval, blackjack, cacaniqueis, minas, caverna, cincoletras, orion, aventura, forca, gramado, velha, labirinto, relogios, numero, paciencia, caribenho, poker, roleta, senha, sonar, sudoku, templo, escolhas, xadrez
+  -l, --list           lista os jogos
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio games
+  studio games --play forca
+  studio games -l
+  studio games --play xadrez
+  studio games -e --status
+
+@ finance | Studio Finance, suas finanças em páginas de texto
+Abre o painel financeiro no navegador (porta 8016; de fora, finance.studiolibre.io). Você importa extratos do banco e faturas do cartão em OFX, CSV ou PDF; o painel identifica o banco (Nubank, Itaú, Mercado Pago) e se é conta ou cartão, classifica os gastos por categoria com regras que você ajusta (ao corrigir uma categoria, a regra nasce sozinha), mostra o resumo do mês com variação sobre o mês anterior, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara. Abas que os dados criam: com o Pluggy o StudioLibre lê também saldos, limites e faturas de cartão, investimentos (e suas movimentações) e empréstimos e financiamentos, guardados com uma foto por dia (a identidade fica de fora). Aparecem sozinhas as abas Contas (extratos), Cartões (faturas), Investimentos e uma aba para cada tipo de crédito que existir nos dados: Financiamento de veículo, Financiamento imobiliário, Consignado, Empréstimo pessoal e Outros (mais Todas as dívidas quando há mais de um tipo). Dívidas de planilha entram nas mesmas abas. Como as abas variam, os atalhos Option+Shift+número mudam de lugar quando uma aba nova aparece. Planilhas: as abas Planilhas e Visões aceitam xlsx e csv. O StudioLibre lê o cabeçalho, descobre o tipo (gastos, investimentos, empréstimos ou outro assunto) e o que cada coluna é, e guarda o jeito de ler: a próxima planilha com as mesmas colunas, enviada pelo site ou solta na pasta sheets (studio finance --folder mostra o caminho), entra sozinha no mesmo conjunto sem duplicar. Quando não tem certeza, guarda o arquivo e pergunta em Planilhas. Gastos também entram nas transações. Em cada conjunto você cria visões: escolhe as colunas, a ordem delas (botões Mover para cima e para baixo), ordenação, filtro e agrupamento com soma; ficam gravadas e mostram também as linhas que chegarem depois. Para decidir as colunas, o cabeçalho e as 5 primeiras linhas vão ao modelo de linguagem (o grande da nuvem se STUDIO_NUVEM=1; STUDIO_FINANCE_PLANILHAS_NUVEM=0 mantém no modelo local). Tudo em tabelas para leitor de tela. Os dados ficam só no Mac, na pasta finance (fora do git), e nunca vão para a Cloudflare nem para modelo de fora. Usa o mesmo login do Lab.
+O Finance tem abas com subabas: Extratos (Transações, Contas, Pagamentos futuros e Boletos), Cartões (Fatura aberta e Faturas fechadas), Patrimônio (Investimentos e Dívidas, com uma subaba por tipo de crédito; só aparece com dados), Tendências (Resumo, Evolução, Orçamentos, Contas recorrentes, Análises e Avisos) e Visões (criar e ver visões personalizadas). Ajustes é um botão no topo, à direita, depois do menu Conta, e abre as subabas Importar extrato, Importar planilha, Regras e Avisos (liga ou desliga a notificação no iPhone). Ao importar uma planilha, marque a opção para criar uma visão a partir dela. Tab vai da aba à subaba e ao conteúdo; as setas trocam de subaba.
+PDF: o texto é lido e o total do documento (por exemplo "Total da fatura") é conferido com a soma dos lançamentos. Só o que confere é importado sozinho; o resto vai para review. A pasta de entrada (finance/inbox) é vigiada a cada minuto: solte lá os arquivos; o que importar vai para importados e o que deixar dúvida vai para revisar, com o motivo. Arquivo duplicado não é importado e é apagado; o motivo some quando o arquivo é revisado.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
+  -h, --help           mostra esta ajuda
+  -o, --open           abre o painel no navegador (é o padrão sem opções)
+  -f, --folder         abre a pasta de entrada no Finder e lista os arquivos para revisar
+  -i, --inspect ARQ    mostra só a estrutura do arquivo (letras viram x, números viram 9) e copia para a área de transferência; serve para me mostrar o layout do seu banco sem enviar dados
+  -x, --explain ARQ    diagnóstico anônimo de PDF: mostra, linha por linha, o que o leitor fez (lançamento, saldo, ignorada, sem data) e quantos saldos fecham em cada jeito de conferir; copia para a área de transferência
+  -l, --lines N        com --inspect, quantas linhas mostrar (padrão 150)
+  -p, --preview ARQ    mostra o que seria importado, com a conferência do total, sem gravar
+  -m, --import ARQ     importa um arquivo (OFX, CSV ou PDF)
+  -a, --account NOME   com --import, o nome da conta ou do cartão (sem isso, usa o que for identificado)
+  -F, --force          com --import, importa o PDF mesmo que o total não confira (só depois de revisar)
+  -b, --inbox          importa agora o que estiver na pasta de entrada, sem esperar o minuto
+  -v, --values         com --explain, mostra também os valores em reais das linhas lidas como lançamento (a descrição continua mascarada); use quando o total não confere e for preciso achar qual lançamento tem o sinal errado
+  -B, --bill ARQ|CÓDIGO lê um boleto (PDF, linha digitável de 47 ou 48 dígitos, código de barras de 44 dígitos ou Pix copia e cola, entre aspas), confere os dígitos e guarda como conta a pagar; nunca paga nada. PDF de boleto solto na pasta de entrada também é registrado
+  -D, --bills          lista os boletos em aberto, com valor, vencimento e o total por pessoa
+  -E, --read-email     lê agora o Gmail (somente leitura, só Caixa de entrada) atrás de boletos e Pix dos últimos 7 dias (ou de N dias com --days N, até 365), mostra quantas mensagens a busca trouxe e por que cada uma foi descartada, por exemplo só link, PDF escaneado ou dígitos que não conferem e registra como contas a pagar; o painel já repete isso a cada 15 minutos. Boleto de remetente não autenticado entra com aviso de possível golpe. Precisa da senha de aplicativo do Gmail no .env (a mesma do monitor de e-mails oficiais); STUDIO_FINANCE_EMAIL=0 desliga a leitura automática. Boleto que o e-mail diz estar em débito automático ou cartão, ou que o histórico mostra pago, vira Já programado e sai das contas a pagar (botão É para pagar mesmo desfaz)
+  -S, --sync           baixa sozinho as contas e transações dos bancos conectados no Meu Pluggy (plano pessoal gratuito, somente leitura; os dados passam pelos servidores do Pluggy) e importa no Finance, sem duplicar. O painel repete isso a cada 6 horas; STUDIO_FINANCE_PLUGGY=0 desliga. Precisa das chaves no .env
+  --save-pluggy ID|segredo|itens  grava no .env a chave que você acabou de copiar (Client ID, Client Secret ou o id de um banco conectado; repetir com outro id acrescenta o banco, sem apagar os anteriores; também aceita o endereço da página Demo com ?item=, de onde tira só o id do item), lendo a área de transferência sem mostrar o valor; depois do segredo, esvazia a área de transferência
+  --since AAAA-MM-DD   com --sync, busca desde essa data (o Meu Pluggy guarda até 12 meses). Sem isso, começa no dia seguinte ao último extrato importado da conta, ou 90 dias atrás
+  --list               com --sync, mostra as contas dos bancos e o nome de cada uma no Finance
+  --name N=NOME        com --sync, dá o nome N da lista a uma conta
+  --diagnose-card NOME mostra como o Pluggy devolve as transações e faturas de um cartão (parcelas, datas de compra, fatura de cada uma), para conferir parcelados
+  --fixed-installment NOME=VALOR:PARCELA/TOTAL cadastra uma parcela que o banco cobra mas não lista (ex.: mercado=176,42:14/21, a parcela que cai na fatura em aberto agora); o programa avança a parcela a cada fatura e para sozinho na última; mercado=remover tira
+  --closing NOME=REGRA guarda quando fecha a fatura de um cartão: um dia do mês (itau=27) ou vencimento:dias antes (itau=1:7); com ele, --balance calcula a fatura em aberto pelas compras do ciclo
+  --balance            mostra o saldo de cada conta e a fatura de cada cartão na última leitura do banco, com os totais
+  --latest             mostra os últimos lançamentos (use --limit N, --account PEDAÇO_DO_NOME, --month AAAA-MM, --search TEXTO, --category NOME)
+  --summary            resumo do mês (entradas, gastos, onde mais gastou, maiores gastos); use --month AAAA-MM para outro mês
+  --now                com --sync, pede ao Pluggy para reler os bancos agora (PATCH /items; não move dinheiro) e espera terminar antes de importar. Experimental (em teste real com Meu Pluggy o Pluggy respondeu erro 400, ou seja, essas conexões não aceitam atualização pela API): o Pluggy limita a um pedido por hora e pode não aceitar em conexões do Meu Pluggy; se recusar, a leitura segue normal e o motivo é mostrado
+  --simulate           com --sync e --since, só mostra até onde o Pluggy devolve histórico de cada conta, sem gravar nada
+  --redo-from-pluggy   mostra e, com --force, apaga os lançamentos das contas do Pluggy (inclusive de extrato) depois de copiar o banco, e relê tudo pelo Pluggy desde --since (padrão 2024-01-01)
+  --dedupe             mostra (e, com --force, apaga) lançamentos do Pluggy que repetem extrato ou fatura já importados (mesma conta, dia e valor)
+  --standardize-names  renomeia sozinho, com o histórico, as contas do Pluggy para o padrão (Banco conta corrente, Banco cartão de crédito), sem digitar nomes
+  --rename-account "ATUAL=NOVO"  troca o nome de uma conta já importada por extrato, com todo o histórico (faça antes da primeira sincronização)
+  -P, --person NOME    com --bill, de quem é o boleto (por exemplo, a noiva ou a filha); a pessoa é cadastrada na hora. Só o nome, nunca CPF. Sem isso, o StudioLibre tenta achar o pagador no PDF
+  -r, --retry          devolve tudo de review para a entrada e importa de novo (use depois de uma atualização do leitor); o motivo antigo some
+Exemplos:
+  studio finance
+  studio finance --folder
+  studio finance --inspect ~/Downloads/fatura.pdf
+  studio finance --preview ~/Downloads/fatura.pdf
+  studio finance --bill ~/Downloads/boleto.pdf
+  studio finance --bills
+  studio finance --import ~/Downloads/extrato.ofx --account "Itaú conta"
+  studio logs --service finance
+
+@ n8n | Automações do n8n
+Abre o n8n no navegador (porta 5678).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio n8n
+
+@ kuma | Uptime Kuma, o status dos serviços
+Abre o Uptime Kuma no navegador (porta 3001).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio kuma
+
+@ dozzle | Dozzle, os logs dos contêineres
+Abre o Dozzle no navegador (porta 8081).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio dozzle
+
+@ urls | Todos os endereços locais
+Lista os endereços de chat, learn, trading, hub, news, lab, health, games, finance, n8n, kuma e dozzle, com as portas do seu .env. Com --public lista os endereços públicos (https), que passam pelo Cloudflare Access e são os que o app do Mac abre; com --public --check confere, sem entrar, se cada um está mesmo atrás do Access.
+Opções:
+  -p, --public         lista os endereços públicos (os do Cloudflare Access)
+  -c, --check          com --public, confere se cada endereço está protegido pelo Access
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio urls
+  studio urls --public --check
+
+@ notion | Confere a ligação do Studio Hub com o Notion
+Mostra, para ideias, contatos e endereços, se o token e o banco de dados do Notion estão no .env e se a integração enxerga o banco. O Notion só recebe notas comuns; saúde e finanças nunca vão para lá.
+Como ligar, sem colar segredo em conversa: crie uma integração interna em notion.so/profile/integrations, compartilhe com ela os três bancos de dados (ideias, contatos, endereços), copie o token com Command+C e rode: studio env --set STUDIO_NOTION_TOKEN. Depois copie o endereço de cada banco e rode: studio env --set STUDIO_NOTION_DB_IDEIAS (e _CONTATOS, _ENDERECOS), uma vez para cada. Por fim rode studio notion e reinicie o agente com studio update --restart.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio notion
+
+@ cloudai | Modelo grande na nuvem (gpt-oss-120b)
+Mostra se o modelo grande da Cloudflare está ligado e, se estiver, faz uma pergunta de teste. Com o interruptor ligado, as perguntas do StudioLibre (Hub, Finance e os demais que usam o Perguntar) vão primeiro à nuvem, pelo gateway de IA com teto de US$ 10 por mês e sem guardar o conteúdo; se a nuvem falhar, voltam sozinhas ao modelo local. Não precisa reiniciar.
+O campo Perguntar dos sites usa, com a nuvem ligada, o Qwen3 30B sem raciocínio (STUDIO_NUVEM_PERGUNTAR_MODELO troca) e, se a nuvem falhar ou estiver desligada, o modelo local; Option+Shift+P leva ao campo, Enter envia e Shift+Enter pula linha. O Perguntar do News enxerga os 30 dias de notícias do banco: o modelo escolhe categorias, depois títulos, e só as notícias que servem são lidas, o que poupa tokens. O Lab também tem o Perguntar: ele enxerga o que existe no emulador (buckets, funções, bancos, tabelas, consultas) e ajuda a montar recursos e tirar dúvidas de AWS, sem executar nada. O chat do Open WebUI também usa a nuvem (modelos Alerts, Health, Finance, General, Notes e Code), com o modelo local como volta automática; o Conversas usa o Qwen3 30B (STUDIO_NUVEM_CONVERSAS_MODELO troca) e pesquisa na web; STUDIO_NUVEM_CHAT muda a lista de modelos do chat na nuvem. Para o chat valer, reinicie o LiteLLM (studio restart). Para ligar: studio env --set STUDIO_NUVEM 1. Para voltar ao que era: studio env --set STUDIO_NUVEM 0. A chave é a do News (studio cloudflare), com a permissão AI Gateway (Lido, Executar e Editar).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio cloudai
+  studio env --set STUDIO_NUVEM 1
+
+@ mailbox | Caixa de correio dos celulares (Cloudflare)
+A caixa de correio é o ponto de encontro entre o Mac e os celulares: o celular deixa lá saúde e notas, o Mac busca, grava uma cópia em db/mailbox/ (só o dono lê) e só então apaga da caixa; o que o Mac quer que o celular aplique (lembretes e eventos) fica na saída da pessoa. Se o item for saúde (formato Health Auto Export ou do Atalho do iPhone), o pull também o importa: a do seu celular (a pessoa "eu", criada com studio mailbox add eu) vai para o banco de saúde de sempre e a de cada outra pessoa para o banco dela, em db/people/NOME/. Outros tipos (notas...) ficam só na cópia local por enquanto. O endereço /v1/hae da caixa recebe direto o formato do Health Auto Export (token da pessoa no cabeçalho Authorization); a página Integrações da Conta mostra o passo a passo. O que sobrar na nuvem some sozinho em 7 dias. Não é criptografia de ponta a ponta. Subcomandos: status (mostra se está ligada e se responde), start (cria o token de dono, provando acesso com a chave da Cloudflare), add NOME (cria o token de uma pessoa e o copia para a área de transferência), remove NOME (revoga a pessoa), pull (busca as entradas). Para ligar: studio env --set STUDIO_CAIXA 1. Para desligar: studio env --set STUDIO_CAIXA 0.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio mailbox start
+  studio mailbox add ana
+  studio mailbox pull
+
+@ app | App do StudioLibre na barra de menus do Mac
+Compila neste Mac o app de barra de menus do StudioLibre e o instala em ~/Applications/StudioLibre.app, com assinatura local gratuita (sem conta de desenvolvedor). O app é um app normal (ícone no Dock, Command+Tab e barra de menus do alto com Arquivo, Edição, Visualizar, Abrir e Janela; os comandos do sistema, como ligar, reiniciar, parar, estado, nuvem, sincronização e atualizar, ficam em Arquivo) e abre o Chat ao iniciar; fechar a janela não o encerra, e ele continua com o ícone StudioLibre na barra de estado, com: três linhas de estado (serviços, modelo de IA, celulares) e itens que se habilitam conforme o estado (Ligar só com os serviços desligados; Reiniciar e Parar só com eles ligados); abrir Controls, Notes, Learn, News, Health, Games, Finance, Lab, Account e Chat, cada um numa janela própria do app (sem navegador), em ordem alfabética, com atalhos Command+0 (Account) e Command+1 a 9 (Chat, Lab, Controls, Finance, Games, Health, Learn, News, Notes; Status e Flows sem atalho); comando para cadastrar as pastas de estudo novas do Learn; Configurações (Command+vírgula) para escolher o serviço que abre ao iniciar, iniciar com o Mac e ligar os serviços ao abrir; consumo da nuvem; sincronização com os celulares (também sozinha, de 10 em 10 minutos); ligar ou desligar a nuvem e a sincronização; atualizar o StudioLibre. Menus nativos, que o VoiceOver lê. Precisa das ferramentas de linha de comando da Apple; se faltarem, o comando diz para rodar xcode-select --install. Rode de novo depois de um studio update que mude o app.
+Opções:
+  -l, --login          abre o app sozinho quando você entra no Mac
+  -r, --remove-login   deixa de abrir sozinho
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio app
+  studio app --login
+
+@ ask | Pergunta ao modelo pelo terminal
+Faz uma pergunta curta ao modelo e mostra a resposta, com uma linha no fim dizendo quem respondeu. Com a nuvem ligada (STUDIO_NUVEM=1) a pergunta vai ao gpt-oss-120b pelo gateway da Cloudflare; se a nuvem falhar, cai sozinha para o modelo local e avisa. A pergunta não fica guardada em histórico. Escreva a pergunta entre aspas.
+Opções:
+  -l, --local          usa só o modelo local
+  -c, --cloud          usa só a nuvem, sem cair para o local
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio ask "o que é um índice no banco de dados?"
+  studio ask --local "resuma em duas frases o que é o StudioLibre"
+
+@ usage | Consumo e custo da Cloudflare
+Mostra o consumo do modelo grande na nuvem pelo gateway de IA: requisições, tokens de entrada e de saída e custo estimado, por modelo e por dia, comparados com o teto de US$ 10 do gateway e o teto combinado de US$ 15 por mês. A mesma informação está na aba Nuvem do Controls, subaba Consumo de IA. O token do News precisa da permissão Conta > Análises (Account Analytics) > Leitura; sem ela o comando diz o que acrescentar. O custo é uma estimativa da Cloudflare; a fatura é a referência.
+Opções:
+  -d, --days N         período em dias, de 1 a 31 (o padrão é 30)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio usage
+  studio usage --days 7
+
+@ support | Mensagens enviadas ao suporte pelo formulário de Ajuda e suporte
+Lista as últimas mensagens que os usuários enviaram pelo formulário da página Ajuda e suporte (Account), com protocolo, estado do envio e início do texto. O estado enviada indica que o e-mail seguiu para o suporte pelo Cloudflare Email Sending; gravada_sem_envio, que a mensagem ficou só registrada (envio desligado ou falha). O envio por e-mail liga com STUDIO_SUPORTE_EMAIL=1, STUDIO_SUPORTE_DE e, se quiser outro destino, STUDIO_SUPORTE_PARA; as mensagens ficam em db/suporte/mensagens.jsonl.
+Opções:
+  -l, --last           mostra as 10 últimas mensagens (com o motivo, quando o envio falhou)
+  -r, --reply          responde de suporte@ a quem escreveu: studio support --reply PROTOCOLO "texto" (para e-mail sem protocolo: --reply - --to endereço "texto")
+      --to             endereço de destino quando a resposta não tem protocolo
+  -d, --documents      grava em db/juridico dois arquivos de texto, termos_de_uso.txt e politica_de_privacidade.txt, para ler e revisar (os dados do responsável vêm do .env: STUDIO_RESPONSAVEL, STUDIO_ENCARREGADO e STUDIO_FORO)
+  -k, --token          cria, com o token atual da Cloudflare, um token só de envio de e-mail e o grava no .env (STUDIO_SUPORTE_TOKEN), sem exibi-lo
+  -t, --test           envia uma mensagem de teste ao destino do suporte e mostra o motivo se falhar
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio support --last
+  studio support --reply HMD-20261124-799A97 "Olá, já corrigimos. Obrigado pelo aviso."
+  studio support --documents
+  studio support --token
+  studio support --test
+
+@ notices | Traz as notas antigas de saúde e finanças para a aba Avisos
+Sem opção só mostra o que seria feito. Com --migrate importa para a aba Avisos do Studio Health e do Studio Finance as notas de saúde e finanças que o StudioLibre já gravou no cofre e no app Notas, confere que tudo chegou e só então apaga as originais. O app Notas manda cada nota para "Apagadas recentemente", onde ela fica 30 dias. Só mexe nas pastas do StudioLibre (Saúde dentro de StudioLibre e StudioLibre Finanças). Pode rodar de novo sem duplicar. O macOS pode pedir permissão para o Terminal controlar o app Notas.
+Opções:
+  -m, --migrate        importa, confere e apaga (sem esta opção, só mostra o que seria feito)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio notices
+  studio notices --migrate
+
+@ db | Banco pessoal
+Sem opção só confere que o banco existe. Com --sql roda um SELECT em conexão somente leitura.
+Opções:
+  -s, --sql "SELECT ..."  roda um SELECT e mostra o resultado em texto
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio db --sql "SELECT dia, valor FROM saude_diaria WHERE metrica='hrv' ORDER BY dia DESC LIMIT 7"
+
+@ doctor | Diagnóstico de desempenho do Mac (por que está lento)
+Sem opção confere tudo e termina com uma conclusão em linguagem simples. Só lê informações do sistema e mostra o nome do programa, nunca linhas de comando.
+Opções:
+  -m, --memory         memória, troca em disco (swap) e quem mais usa memória
+  -c, --cpu            carga do processador, calor, Time Machine e quem mais usa processador
+  -d, --disk           espaço livre, modelos do Ollama e Docker
+  -k, --docker         memória e processador de cada contêiner
+  -o, --ollama         modelos carregados na memória pelo Ollama
+  -s, --services       memória de cada serviço do StudioLibre que está no ar
+  -t, --top N          quantos programas listar nos mais usados (padrão 8)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio doctor
+  studio doctor --memory --top 15
+  studio doctor --ollama
+  studio doctor --versions
+
+@ continuity | Continuidade na nuvem quando o Mac está fora do ar
+Mantém os sites (Finance, Health, News, Learn, Games e Account) no ar pela nuvem da Cloudflare quando o Mac cai. A nuvem atende em modo somente leitura, com aviso no topo e a data da última cópia. O contêiner só liga na queda e dorme sozinho. Exige STUDIO_CONTINUIDADE=1 no .env para enviar cópias; com ele ligado, o agente do Mac envia sozinho, a cada HEIMDALL_CONTINUIDADE_INTERVALO_MIN minutos (padrão 60), só os bancos que mudaram. Com o Mac fora, o chat, o Lab e os fluxos mostram uma página de fora do ar, e controls.studiolibre.io/continuidade (login pelo Cloudflare Access) mostra o estado da nuvem e permite pausar ou retomar o failover. No Controls do Mac, a aba Nuvem mostra a continuidade, a última cópia, o consumo do mês e os limites de gasto. O consumo e os avisos da Cloudflare usam HEIMDALL_CF_LEITURA_TOKEN (token só de leitura, com as permissões Conta, Faturamento, Leitura e Conta, Notificações, Leitura).
+Opções:
+  -p, --prepare        cria no .env a senha das cópias (guarde-a também fora do Mac)
+  -s, --send           envia ao R2 só os bancos que mudaram, cifrados no Mac
+  -t, --status         mostra a data da última cópia no R2
+  -k, --secrets        envia ao Worker os segredos que o contêiner usa, lidos do .env
+  -d, --deploy         implanta o Worker e o contêiner; só roda com bloqueio de gasto em Workers e Durable Objects e com a cópia no R2
+  -o, --off            interruptor: desliga o failover (o Worker só repassa ao Mac)
+  -n, --on             liga o failover de novo
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio continuity --prepare
+  studio continuity --send
+  studio continuity --status
+
+@ backup | Cópia de segurança criptografada do banco
+Tira uma cópia consistente do banco, criptografa (AES-256-GCM) e grava na pasta ou no bucket R2 configurados no .env. Mantém as 14 cópias mais recentes e a mais nova de cada um dos 6 últimos meses. O banco de cada pessoa cadastrada tem cópias próprias, na subpasta people/<id>/ do mesmo destino, com a mesma senha e a mesma retenção. Os demais bancos da pasta db/ (o do Learn, por exemplo) e os da pasta do Finance também entram, cada um na subpasta com o nome dele (learn/, financas/, e people/<id>/learn/ para uma pessoa).
+Opções:
+  -p, --prepare        cria a senha da cópia e confere os destinos
+  -P, --password       mostra a senha da cópia guardada no .env
+  -r, --run            faz a cópia agora
+  -l, --list           lista as cópias existentes
+  -v, --verify         confere a integridade de cada destino
+  -R, --restore ORIGEM DESTINO   restaura uma cópia
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio backup --run
+  studio backup --verify
+  studio backup --restore arquivo.enc banco-restaurado.db
+
+@ mail | Vigia do e-mail oficial
+Lê o Gmail em modo somente leitura e separa e-mails verdadeiros de serviços públicos de imitações. Sem opção faz uma verificação.
+Opções:
+  -t, --test-login     só testa o login IMAP
+  -s, --simulate       simula, sem avisar nem gravar (pula e-mails já vistos; por isso pode não mostrar nada)
+  -d, --diagnose       mostra como cada e-mail recente de serviço público foi classificado, inclusive os já vistos: remetente, domínio, resultado de autenticação do Gmail e motivo. Não envia nem grava nada e não mostra o corpo
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio mail
+  studio mail --test-login
+  studio mail --diagnose
+
+@ access | Senha e código de 6 dígitos
+A mesma senha e o mesmo código servem a Lab, Notas, News e ao painel de saúde. Depois de trocar, rode studio restart.
+Opções:
+  -p, --password       troca só a senha
+  -c, --code           gera só um novo código de 6 dígitos
+  -a, --all            troca a senha e o código
+  -v, --verify         confere, sem navegador, se a senha e o código batem com o .env
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio access --password
+  studio access --verify
+
+@ voice | Dicionário de pronúncia
+Sem opção e com um texto, mostra como o texto fica depois das trocas de pronúncia (como "StudioLibre" por "Háimdal").
+Opções:
+  -i, --import ARQUIVO.csv   traz as pronúncias do VoiceOver para pronuncias.local.txt
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio voice StudioLibre
+  studio voice --import pronuncias.csv
+
+@ listen | Áudios de estudo
+Toca no Mac o áudio de estudo mais recente. Para parar: Control+C.
+Opções:
+  -l, --list           só mostra os 10 mais recentes
+  -n, --latest N       toca os N mais recentes, em sequência
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio listen
+  studio listen --latest 3
+  studio listen --list
+
+@ ingest | Base de conhecimento
+Indexa documentos no Qdrant para a ferramenta rag_search. Sem pastas indexa knowledge/. Precisa do Qdrant e do Ollama no ar.
+Opções:
+  -r, --reset          apaga a coleção e recria (troca de modelo de embedding)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio ingest
+  studio ingest ~/Notas ~/Docs
+  studio ingest --reset
+
+@ env | Grava um segredo no .env
+Grava no .env o texto que está na área de transferência (copiado com Command+C), sem mostrá-lo na tela. Para as variáveis do Cloudflare Access (HEIMDALL_CFACCESS_EQUIPE, _AUD, _EMAILS e _CONVIDADOS), que não são segredos, dá para passar o valor direto no comando; segredos nunca aceitam valor na linha de comando. Com --defaults, grava de uma vez os valores padrão que o código usa e o .env ainda não tem.
+Opções:
+  -s, --set NOME [VALOR]   nome da variável (por exemplo HEIMDALL_R2_KEY_ID) e, só para as do Access, o valor
+  -d, --defaults           grava no .env os valores padrão do código que ainda não estão lá (nunca segredos; não muda o que já existe; cópia em .env.bak)
+  -h, --help               mostra esta ajuda
+Exemplos:
+  studio env --set HEIMDALL_R2_SECRET
+  studio env --set HEIMDALL_CF_LEITURA_TOKEN
+  studio env --set HEIMDALL_CFACCESS_EQUIPE mrl2-bolonhini
+
+@ cloudflare | Chave da Cloudflare
+Grava no .env a chave que liga a reserva de resumos no Workers AI e a leitura de páginas com navegador do News.
+Opções:
+  -s, --set            grava a chave (é o padrão)
+  -t, --test           testa a chave gravada (Workers AI, Browser Run e o gateway de IA), mostrando a resposta da Cloudflare
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio cloudflare
+  studio cloudflare --test
+
+@ mcp | Servidor MCP de dados
+Confere se o servidor MCP de dados (porta 8004) está no ar e se o Open WebUI, no Docker, consegue alcançá-lo.
+Opções:
+  -v, --verify         faz a conferência (é o padrão)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio mcp
+
+@ flows | Instala fluxos no n8n
+Importa fluxos para o n8n, que precisa estar no ar. Sem opção instala as automações avançadas.
+Opções:
+  -a, --advanced       automações avançadas (saúde, GitOps, resumos): scripts/instalar_automacoes_avancadas.sh
+  -b, --basic          fluxos básicos da pasta flows/basic/ (resumo da AWS, estudo, vigia de versões)
+  -p, --privacy        monitor de privacidade diário
+  -e, --email          vigia de e-mails oficiais
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio flows
+  studio flows --privacy
+
+@ hook | GitOps num repositório
+Instala ou remove o gancho pre-push que avisa o n8n a cada git push de um repositório local.
+Opções:
+  -i, --install REPOSITÓRIO   instala o gancho (é o padrão quando só há o caminho)
+  -r, --remove REPOSITÓRIO    remove o gancho
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio hook ~/projetos/meu-repo
+  studio hook --remove ~/projetos/meu-repo
+
+@ update | Traz as novidades do GitHub
+Faz git pull --ff-only da branch atual do projeto e diz se precisa reiniciar ou reinstalar fluxos. Depois recarrega os comandos do heimdall no próprio terminal, então não precisa dar source de novo.
+Opções:
+  -r, --restart        reinicia os serviços em seguida; se a atualização mudou o app de barra de menus (macapp/), compila o app de novo
+  -a, --app            reinicia os serviços e compila o app sempre
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio update
+  studio update --restart
+  studio update --app
+
+@ docs | Regenera o site e o README
+Roda gerar_docs.py: gera docs/ e as tabelas do README a partir do código.
+Opções:
+  -b, --brand          regenera as imagens da marca (precisa de Playwright)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio docs
+
+@ test | Testes do projeto
+Sem opção lista os testes.
+Opções:
+  -l, --list           lista os testes
+  -a, --all            roda todos os testes teste_*.py e diz quantos falharam
+  -r, --run NOME       roda um teste (studio test --run anomalias roda tests/health/teste_anomalias.py)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio test --list
+  studio test --run anomalias
+  studio test --all
+
+@ dir | Pasta do projeto
+Mostra o caminho da pasta do projeto (STUDIO_DIR).
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio dir
+
+@ cd | Entra na pasta do projeto
+Muda a pasta do seu terminal para a do projeto.
+Opções:
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio cd
+
+@ help | Ajuda do comando studio
+Sem argumentos lista os comandos. Com o nome de um comando mostra só as variações dele, o mesmo que heimdall COMANDO --help.
+Opções:
+  -d, --doc            abre no navegador o documento com todos os comandos e opções explicados (servido em http://localhost:8099 enquanto o terminal estiver aberto; o servidor sai com studio stop)
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio help
+  studio help health
+  studio help --doc
+
+Avisos no Mac
+  Os avisos que vão ao iPhone pelo Bark também aparecem no Mac como notificações do macOS, com o texto completo (o Bark do iPhone continua genérico). Cada notificação leva o link da tela do produto que a gerou; no Mac, clicar nela abre o produto na janela do app (STUDIO_DOMINIO define o domínio base e STUDIO_NOTIFICACAO_LINK=0 desliga o link).
+  O app do Mac mostra as notificações; na primeira vez o macOS pede permissão. Liga e desliga em StudioLibre, Configurações. No .env: STUDIO_AVISOS_MAC=0 desliga de vez.
+
+Analista de saúde
+  Depois que chegam dados de saúde (no máximo uma vez por dia), o StudioLibre roda um analista: o modelo olha todas as métricas, cruza umas com as outras e com treinos, sintomas e exames, levanta hipóteses com grau de probabilidade, aponta perigos e recomendações e cita resumos de estudos do PubMed.
+  O resultado fica na aba Avisos do Studio Health. Só avisa no Mac e no iPhone quando há algo que merece atenção, e no domingo. A decisão de procurar um médico é sua.
+  A busca no PubMed leva só termos genéricos, nunca os seus valores. No .env: STUDIO_SAUDE_ANALISTA=0 desliga; STUDIO_SAUDE_LITERATURA=0 não consulta o PubMed; com STUDIO_NUVEM=1 o analista usa o gpt-oss-120b da nuvem (STUDIO_SAUDE_ANALISTA_NUVEM=0 mantém a saúde no modelo local); STUDIO_SAUDE_ANALISTA_MODELO e STUDIO_SAUDE_ANALISTA_URL trocam o modelo local; STUDIO_SAUDE_CONDICOES diz as condições a acompanhar.

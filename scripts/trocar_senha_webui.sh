@@ -9,7 +9,7 @@
 #   2. mostra os usuários cadastrados e pergunta de quem é a senha (se só houver um, usa esse);
 #   3. pede a nova senha duas vezes, sem mostrar na tela e sem gravá-la em arquivo nem no histórico do terminal;
 #   4. dentro do contêiner, troca só o hash da senha desse usuário no banco do Open WebUI e confere o resultado.
-# Com --stdin (usado pelo heimdall_acesso.py) a nova senha vem pela entrada padrão e não é perguntada de novo.
+# Com --stdin (usado pelo studio_acesso.py) a nova senha vem pela entrada padrão e não é perguntada de novo.
 # Nada é reiniciado. As sessões já abertas em outros aparelhos continuam valendo até expirarem.
 #
 # Se algo der errado, o próprio script avisa e não altera mais nada. Para voltar à senha antiga, rode o script de novo e informe a antiga.

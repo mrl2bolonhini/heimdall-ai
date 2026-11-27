@@ -2,14 +2,14 @@
 """Testa as subabas do Studio Design: marcação ARIA, ordem do Tab (aba, subaba, painel interno), troca só do painel interno sem recarregar e Alt+Shift+seta."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_design as d  # noqa: E402
+import studio_design as d  # noqa: E402
 
 falhas = 0
 

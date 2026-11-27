@@ -9,7 +9,7 @@ Visões são formas gravadas de mostrar um conjunto (colunas escolhidas e na ord
 registros na hora de abrir, lançamentos novos aparecem nelas sem refazer nada.
 """
 import csv
-import heimdall_pastas
+import studio_pastas
 import hashlib
 import io
 import json
@@ -323,7 +323,7 @@ _PROMPT = ("Você interpreta planilhas financeiras pessoais brasileiras. Respond
 
 
 def _modelo_padrao(sistema: str, usuario: str) -> str:
-    import heimdall_perguntar as perguntar
+    import studio_perguntar as perguntar
     # só o cabeçalho e as 5 primeiras linhas vão ao modelo; STUDIO_FINANCE_PLANILHAS_NUVEM=0 mantém tudo no modelo local do Mac
     return perguntar.chamar_local(sistema, usuario, max_tokens=500, timeout=120, usar_nuvem=os.environ.get("STUDIO_FINANCE_PLANILHAS_NUVEM", "1") != "0")
 
@@ -627,8 +627,8 @@ def importar_arquivo(con, dados: bytes, arquivo: str, pasta: Path, **kw) -> list
 
 
 def pasta_de_entrada(base: Path) -> Path:
-    p = heimdall_pastas.finance_sheets(base)
-    for pasta in (p, heimdall_pastas.finance_imported(p)):
+    p = studio_pastas.finance_sheets(base)
+    for pasta in (p, studio_pastas.finance_imported(p)):
         pasta.mkdir(parents=True, exist_ok=True)
         try:
             pasta.chmod(0o700)
@@ -652,9 +652,9 @@ def processar_pasta(con, base: Path, agora: str = None, modelo=None) -> list:
             if any(r.get("duplicado") for r in res):
                 arq.unlink()
             else:
-                destino = heimdall_pastas.finance_imported(entrada) / arq.name
+                destino = studio_pastas.finance_imported(entrada) / arq.name
                 if destino.exists():
-                    destino = heimdall_pastas.finance_imported(entrada) / f"{datetime.now():%Y%m%d-%H%M%S}-{arq.name}"
+                    destino = studio_pastas.finance_imported(entrada) / f"{datetime.now():%Y%m%d-%H%M%S}-{arq.name}"
                 arq.replace(destino)
             saida.append({"arquivo": arq.name, "resultados": res})
         except fn.ErroFinance as ex:

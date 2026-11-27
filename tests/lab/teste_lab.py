@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Teste do painel heimdall_lab.py sem precisar do LocalStack nem do boto3 (usa um emulador de mentira).
+"""Teste do painel studio_lab.py sem precisar do LocalStack nem do boto3 (usa um emulador de mentira).
 
     python3 tests/lab/teste_lab.py
 
@@ -8,7 +8,7 @@ páginas do S3, Lambda e console geral, envio e download de arquivo, e escape de
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import io
@@ -133,7 +133,7 @@ botocore.config = types.ModuleType("botocore.config")
 botocore.config.Config = lambda **kw: None
 sys.modules.update({"boto3": boto3, "botocore": botocore, "botocore.config": botocore.config})
 
-import heimdall_lab as hc  # noqa: E402
+import studio_lab as hc  # noqa: E402
 
 falhas = 0
 
@@ -328,7 +328,7 @@ confere("sair apaga o cookie", st == 303 and "Max-Age=0" in hd["set-cookie"])
 st, _, _ = req("GET", "/s3", cookie=cookie)
 confere("depois de sair a sessão não vale mais", st == 303)
 
-# --- heimdall_acesso.py: senha e código dos serviços, em separado ---
+# --- studio_acesso.py: senha e código dos serviços, em separado ---
 import getpass as _gp
 import io as _io
 import re as _re
@@ -407,7 +407,7 @@ confere("apagar o cookie usa o mesmo Domain e Max-Age=0", "Domain=studiolibre.io
 
 # ---- Perguntar do Lab ----
 print("\nPerguntar")
-import heimdall_perguntar as _pg  # noqa: E402
+import studio_perguntar as _pg  # noqa: E402
 _pg._respostas.clear()
 _tk2, _ss2 = hc.nova_sessao()
 cookie = f"{hc.COOKIE}={_tk2}"

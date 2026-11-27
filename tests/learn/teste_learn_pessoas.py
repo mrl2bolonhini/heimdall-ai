@@ -2,7 +2,7 @@
 """Testa que o Learn separa os dados por pessoa: dono, Ana e Beto não enxergam as pastas, arquivos, agenda, cards nem ajustes uns dos outros."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import os
@@ -22,11 +22,11 @@ os.environ["STUDIO_AVISOS_MAC"] = "0"
 os.environ.pop("STUDIO_PESSOAS", None)
 (TMP / "knowledge").mkdir()
 
-import heimdall_lab as nuvem  # noqa: E402
-import heimdall_learn as site  # noqa: E402
-import heimdall_learn_cards as ca  # noqa: E402
-import heimdall_learn_dados as d  # noqa: E402
-import heimdall_pessoas as pe  # noqa: E402
+import studio_lab as nuvem  # noqa: E402
+import studio_learn as site  # noqa: E402
+import studio_learn_cards as ca  # noqa: E402
+import studio_learn_dados as d  # noqa: E402
+import studio_pessoas as pe  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"
 
@@ -140,12 +140,12 @@ confere("STUDIO_PESSOAS=0 devolve o comportamento anterior (todos veem os dados 
 os.environ.pop("STUDIO_PESSOAS")
 
 # nenhum módulo do Learn escolhe caminho de dados sozinho
-for arq in sorted(RAIZ.glob("heimdall_learn*.py")):
+for arq in sorted(RAIZ.glob("studio_learn*.py")):
     txt = re.sub(r'""".*?"""', "", arq.read_text(encoding="utf-8"), flags=re.S)
     txt = re.sub(r"#[^\n]*", "", txt)
-    if arq.name == "heimdall_learn_dados.py":
+    if arq.name == "studio_learn_dados.py":
         continue
-    confere(f"{arq.name} não monta caminho de dados por conta própria", "learn.db" not in txt and "PROJECT_DIR / \"knowledge\"" not in txt and "STUDIO_KNOWLEDGE_DIR\", str" not in txt and "heimdall_pastas.db" not in txt)
+    confere(f"{arq.name} não monta caminho de dados por conta própria", "learn.db" not in txt and "PROJECT_DIR / \"knowledge\"" not in txt and "STUDIO_KNOWLEDGE_DIR\", str" not in txt and "studio_pastas.db" not in txt)
 
 print("\n" + ("Tudo certo." if not falhas else f"{falhas} falha(s)."))
 sys.exit(1 if falhas else 0)

@@ -2,7 +2,7 @@
 """Teste do diagnóstico de desempenho (heimdall perf): análise dos textos do macOS, sem depender do Mac."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 from pathlib import Path
@@ -27,7 +27,7 @@ confere("vm_stat: tamanho de página e categorias", vm.get("pages active") == 50
 sw = d.parse_swap("total = 3072.00M  used = 2012.50M  free = 1059.50M  (encrypted)")
 confere("swap: lê usado e total", abs(sw["used"] - 2012.5 * 1024 ** 2) < 1 and abs(sw["total"] - 3072 * 1024 ** 2) < 1, sw)
 confere("nome do processo: aplicativo", d.nome_do_processo("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome Helper") == "Google Chrome")
-confere("nome do processo: script Python sem argumentos", d.nome_do_processo("/opt/homebrew/bin/python3", "python3 /x/heimdall_finance.py --senha SEGREDO") == "heimdall_finance.py")
+confere("nome do processo: script Python sem argumentos", d.nome_do_processo("/opt/homebrew/bin/python3", "python3 /x/studio_finance.py --senha SEGREDO") == "studio_finance.py")
 ps = "1 1000 5,0 /Applications/Foo.app/Contents/MacOS/Foo\n2 2000 10,0 /Applications/Foo.app/Contents/MacOS/Foo Helper\n3 500 1,0 /usr/bin/ssh\n"
 ag = {a["nome"]: a for a in d.parse_ps(ps)}
 confere("ps agrega por aplicativo", ag["Foo"]["n"] == 2 and ag["Foo"]["mem"] == 3000 * 1024 and ag["ssh"]["n"] == 1, ag)

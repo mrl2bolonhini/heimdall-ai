@@ -2,7 +2,7 @@
 """Testa a cópia de continuidade: envio só do que mudou, cifra no Mac, restauração conferida, interruptor e caminhos seguros (R2 simulado)."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import io
 import sqlite3
@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_continuidade as hc  # noqa: E402
+import studio_continuidade as hc  # noqa: E402
 
 falhas = 0
 

@@ -26,7 +26,7 @@ LOG="$HOME/Library/Logs/heimdall-email-oficial.log"
 PY="$PROJECT_DIR/venv/bin/python"
 [ -x "$PY" ] || PY="$(command -v python3)"
 [ -n "$PY" ] || fail "não encontrei o Python."
-[ -f heimdall_email_oficial.py ] || fail "heimdall_email_oficial.py não está nesta pasta."
+[ -f studio_email_oficial.py ] || fail "studio_email_oficial.py não está nesta pasta."
 
 limpar_env() {
     [ -f .env ] || return 0
@@ -53,13 +53,13 @@ if [ "${1:-}" = "--remover" ]; then
 fi
 
 if [ "${1:-}" = "--testar" ]; then
-    "$PY" heimdall_email_oficial.py --testar-login || exit 1
-    "$PY" heimdall_email_oficial.py --simular
+    "$PY" studio_email_oficial.py --testar-login || exit 1
+    "$PY" studio_email_oficial.py --simular
     exit 0
 fi
 [ -z "${1:-}" ] || fail "opção desconhecida: $1 (use --testar ou --remover)."
 
-[ "$(uname)" = "Darwin" ] || fail "o agendamento usa o launchd do macOS. Em outro sistema, rode 'python3 heimdall_email_oficial.py' por cron a cada hora."
+[ "$(uname)" = "Darwin" ] || fail "o agendamento usa o launchd do macOS. Em outro sistema, rode 'python3 studio_email_oficial.py' por cron a cada hora."
 [ -f .env ] || fail "não achei o .env nesta pasta. Rode antes o start_heimdall.sh."
 
 # .env guarda o resto (Bark, token, chave do LiteLLM); o vigia lê tudo de lá.
@@ -82,7 +82,7 @@ chmod 600 .env
 unset SENHA
 
 echo "Testando o login no Gmail..."
-if ! "$PY" heimdall_email_oficial.py --testar-login; then
+if ! "$PY" studio_email_oficial.py --testar-login; then
     limpar_env
     fail "o Gmail recusou o login. A senha foi apagada do .env. Confira a senha de aplicativo e se o IMAP está ligado, e rode de novo."
 fi
@@ -98,7 +98,7 @@ cat > "$PLIST" <<PLISTEOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>Label</key><string>$LABEL</string>
-<key>ProgramArguments</key><array><string>$PY</string><string>$PROJECT_DIR/heimdall_email_oficial.py</string></array>
+<key>ProgramArguments</key><array><string>$PY</string><string>$PROJECT_DIR/studio_email_oficial.py</string></array>
 <key>WorkingDirectory</key><string>$PROJECT_DIR</string>
 <key>StartInterval</key><integer>3600</integer>
 <key>RunAtLoad</key><true/>

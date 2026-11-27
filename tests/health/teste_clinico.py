@@ -3,7 +3,7 @@
 revisão pelo modelo conferida, aceitar/recusar/adiar/responder. Dados FICTÍCIOS."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -13,9 +13,9 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="heimdall-clinico-"))
 os.environ.update({"STUDIO_DB_DIR": str(TMP / "banco"), "STUDIO_EXAMES_DIR": str(TMP / "health"), "STUDIO_EXAMES_LLM": "0"})
-import heimdall_agenda as ag  # noqa: E402
-import heimdall_clinico as cl  # noqa: E402
-import heimdall_exames as ex  # noqa: E402
+import studio_agenda as ag  # noqa: E402
+import studio_clinico as cl  # noqa: E402
+import studio_exames as ex  # noqa: E402
 
 falhas = 0
 

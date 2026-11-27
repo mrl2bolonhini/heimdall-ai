@@ -6,7 +6,7 @@ o Notes mostra triagem, diários e privacidade. STUDIO_LEARN=0 devolve tudo. Con
 """
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import tempfile
@@ -21,8 +21,8 @@ for p in (cofre / "triagem", cofre / "diarios", cofre / "python", conh / "python
 os.environ["STUDIO_VAULT_DIR"], os.environ["STUDIO_KNOWLEDGE_DIR"] = str(cofre), str(conh)
 os.environ["STUDIO_LEARN"] = "1"
 
-import heimdall_notas as n  # noqa: E402
-import heimdall_usuarios as u  # noqa: E402
+import studio_notas as n  # noqa: E402
+import studio_usuarios as u  # noqa: E402
 
 falhas = 0
 

@@ -2,7 +2,7 @@
 """Testa o motor Paperless-ngx do Memory contra um servidor falso que imita a API REST: token, etiquetas, tipos, emissores, documentos, envio, tarefas, e-mail e a escolha do motor."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import json
 import os
@@ -168,9 +168,9 @@ os.environ["STUDIO_PAPERLESS_SENHA"] = "segredo"
 os.environ["STUDIO_PAPERLESS_SECRET"] = "chave-de-teste"
 os.environ["STUDIO_HUB_MOTOR"] = "paperless"
 
-import heimdall_banco as banco  # noqa: E402
-import heimdall_memory_dados as L  # noqa: E402
-import heimdall_memory_paperless as P  # noqa: E402
+import studio_banco as banco  # noqa: E402
+import studio_memory_dados as L  # noqa: E402
+import studio_memory_paperless as P  # noqa: E402
 
 L.PROJECT_DIR = TMP
 falhas = 0
@@ -276,7 +276,7 @@ P.email_configurar("imap.exemplo.com", "pessoa@exemplo.com", "Outra", "")
 confere("repetir atualiza em vez de duplicar", len(BD["mail_accounts"]) == 1 and len(BD["mail_rules"]) == 1 and next(iter(BD["mail_rules"].values()))["folder"] == "Outra")
 est = P.email_estado()
 confere("regra e conta pertencem ao dono", conta["owner"] == regra["owner"] == BD["users"]["heimdall-dono"]["id"])
-confere("estado do e-mail lista conta e regra e não mostra a senha", est["contas"] == ["Heimdall pessoa@exemplo.com"] and est["regras"][0]["pasta"] == "Outra" and "senha-app" not in json.dumps(est))
+confere("estado do e-mail lista conta e regra e não mostra a senha", est["contas"] == ["StudioLibre pessoa@exemplo.com"] and est["regras"][0]["pasta"] == "Outra" and "senha-app" not in json.dumps(est))
 
 # --- convidado: usuário próprio, só vê o que é dele, e o dono não mistura
 marca = banco._PESSOA_DIR.set(TMP / "people" / "ana")
@@ -297,14 +297,14 @@ ana = BD["users"]["heimdall-ana"]["id"]
 conta_ana = next(c for c in BD["mail_accounts"].values() if c["owner"] == ana)
 confere("convidado conecta o próprio e-mail, com a própria senha, em conta dele", conta_ana["password"] == "senha-da-ana" and conta_ana["username"] == "ana@exemplo.com"
         and next(r for r in BD["mail_rules"].values() if r["owner"] == ana)["folder"] == "Ana")
-confere("convidado vê só a própria conta de e-mail e sem a senha", P.email_estado()["contas"] == ["Heimdall ana@exemplo.com"] and "senha" not in json.dumps(P.email_estado()))
+confere("convidado vê só a própria conta de e-mail e sem a senha", P.email_estado()["contas"] == ["StudioLibre ana@exemplo.com"] and "senha" not in json.dumps(P.email_estado()))
 ent = L.pasta_entrada()
 confere("pasta de entrada do convidado é a própria", "people" in str(ent) or "memory" in str(ent), ent)
 ent.mkdir(parents=True, exist_ok=True)
 (ent / "nota.txt").write_bytes(b"texto da ana")
 confere("importar da pasta envia ao Paperless do convidado", L.processar_entrada(usar_ia=False)["novos"] == 1 and L.listar()[1] == 2)
 banco._PESSOA_DIR.reset(marca)
-confere("dono vê só a própria conta de e-mail", P.email_estado()["contas"] == ["Heimdall pessoa@exemplo.com"])
+confere("dono vê só a própria conta de e-mail", P.email_estado()["contas"] == ["StudioLibre pessoa@exemplo.com"])
 docs, n = L.listar()
 confere("dono não vê documentos do convidado", n == 2 and all(d["titulo"] != "segredo_ana" for d in docs) and L.obter(rc["id"]) == {}, (docs, n))
 confere("dono não vê as etiquetas do convidado", L.estado()["documentos"] == 2)

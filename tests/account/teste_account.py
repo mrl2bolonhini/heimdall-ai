@@ -2,7 +2,7 @@
 """Teste do Account: tour por papel, /quem.json com CORS só para os sites do StudioLibre, 403/401 sem Access, porta local e cabeçalhos de segurança."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import json
@@ -11,10 +11,10 @@ import sys
 import threading
 from http.server import ThreadingHTTPServer
 
-import heimdall_account as a
-import heimdall_cfaccess as cfa
-import heimdall_conta as c
-import heimdall_usuarios as u
+import studio_account as a
+import studio_cfaccess as cfa
+import studio_conta as c
+import studio_usuarios as u
 
 falhas = 0
 
@@ -95,7 +95,7 @@ confere("caminho desconhecido: 404", s == 404)
 import tempfile  # noqa: E402
 from pathlib import Path  # noqa: E402
 
-import heimdall_integracoes as integ  # noqa: E402
+import studio_integracoes as integ  # noqa: E402
 
 integ.ARQUIVO = Path(tempfile.mkdtemp()) / "banco" / "integracoes.json"
 chamadas = []

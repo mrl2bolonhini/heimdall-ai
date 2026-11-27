@@ -2,7 +2,7 @@
 """Testa o modo aleatório do Learn: extração de texto, trechos, sorteio sem repetir, pergunta e correção (modelo simulado), áudio e o fluxo no site."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import http.client
 import os
@@ -22,10 +22,10 @@ os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
 os.environ["STUDIO_KNOWLEDGE_DIR"] = str(TMP / "knowledge")
 (TMP / "knowledge").mkdir()
 
-import heimdall_lab as nuvem  # noqa: E402
-import heimdall_learn as site  # noqa: E402
-import heimdall_learn_dados as d  # noqa: E402
-import heimdall_learn_estudo as es  # noqa: E402
+import studio_lab as nuvem  # noqa: E402
+import studio_learn as site  # noqa: E402
+import studio_learn_dados as d  # noqa: E402
+import studio_learn_estudo as es  # noqa: E402
 nuvem.SENHA_HASH = nuvem.SENHA_HASH or "teste"
 nuvem.TOTP_SEGREDO = nuvem.TOTP_SEGREDO or "JBSWY3DPEHPK3PXP"
 

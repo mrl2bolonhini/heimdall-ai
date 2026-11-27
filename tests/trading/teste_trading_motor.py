@@ -2,7 +2,7 @@
 """Testa o motor do Studio Trading: ordens a mercado e limitadas, limites, venda sem posição, perda do dia, cotações e sinais."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sys
@@ -13,7 +13,7 @@ TMP = Path(tempfile.mkdtemp())
 os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
 os.environ["STUDIO_TRADING_FONTE"] = "simulada"
 
-import heimdall_trading_motor as m  # noqa: E402
+import studio_trading_motor as m  # noqa: E402
 
 falhas = 0
 

@@ -2,7 +2,7 @@
 """Testa as páginas do Finance para planilhas, investimentos, empréstimos e visões, com servidor temporário e sem rede."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import re
@@ -21,8 +21,8 @@ os.environ.update({"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,loc
 TMP = tempfile.mkdtemp(prefix="finance_plan_teste_")
 os.environ["STUDIO_FINANCE_DIR"] = TMP
 sys.path.insert(0, str(AQUI))
-import heimdall_lab as hc  # noqa: E402
-import heimdall_finance as hf  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_finance as hf  # noqa: E402
 import financas_planilhas as fp  # noqa: E402
 from teste_planilhas_util import xlsx  # noqa: E402
 

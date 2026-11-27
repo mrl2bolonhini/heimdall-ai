@@ -2,7 +2,7 @@
 """Teste do modo enxuto do Open WebUI (start_heimdall.sh): variáveis, interruptores e documentação."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import re
 import shutil
@@ -58,11 +58,11 @@ if bash:
 else:
     print("pulado: bash não encontrado")
 
-import heimdall_config_ajuda as aj
-ajuda = str(getattr(aj, "AJUDA", "")) or (RAIZ / "heimdall_config_ajuda.py").read_text(encoding="utf-8")
+import studio_config_ajuda as aj
+ajuda = str(getattr(aj, "AJUDA", "")) or (RAIZ / "studio_config_ajuda.py").read_text(encoding="utf-8")
 for v in ("STUDIO_WEBUI_ENXUTO", "STUDIO_WEBUI_TITULOS", "STUDIO_WEBUI_EMBEDDING", "STUDIO_WEBUI_EMBEDDING_MODELO"):
     confere("a ajuda do .env descreve " + v, v in ajuda)
-for arq in ("CHANGELOG.md", "guides/heimdall_ajuda.txt", "gerar_docs.py"):
+for arq in ("CHANGELOG.md", "guides/studio_ajuda.txt", "gerar_docs.py"):
     confere(arq + " cita o modo enxuto", "WEBUI_ENXUTO" in (RAIZ / arq).read_text(encoding="utf-8"))
 # O README é gerado por gerar_docs.py e mostra a descrição, sem a coluna com o nome da variável.
 confere("README.md descreve o modo enxuto", "modo enxuto" in (RAIZ / "README.md").read_text(encoding="utf-8"))

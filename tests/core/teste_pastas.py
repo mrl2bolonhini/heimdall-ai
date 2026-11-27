@@ -2,13 +2,13 @@
 """Testa a migração do nome antigo das pastas de dados (dados_financas para finance) e a organização do repositório."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 import tempfile
 from pathlib import Path
 
-import heimdall_pastas as hp
+import studio_pastas as hp
 
 falhas = 0
 

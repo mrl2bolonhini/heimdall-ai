@@ -2,14 +2,14 @@
 """Testa a parte do EventKit que não depende do macOS: o texto devolvido, a escolha entre EventKit e AppleScript e o recuo."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(RAIZ))
-import heimdall_eventkit as ek  # noqa: E402
+import studio_eventkit as ek  # noqa: E402
 
 falhas = 0
 
@@ -56,7 +56,7 @@ confere("STUDIO_EVENTKIT=0 desliga", ek.tentar("SCRIPT_OK", ("a", "b")) == (Fals
 ek.ATIVO = True
 
 # 3. integração com o agente: com o EventKit resolvendo, o AppleScript não roda e nenhum app é aberto
-import heimdall_agente as ag  # noqa: E402
+import studio_agente as ag  # noqa: E402
 registrados = [ag.AS_EVENTO, ag.AS_EVENTO_HORARIO, ag.AS_LEMBRETE, ag.AS_PREPARAR_CAL, ag.AS_PREPARAR_LEM]
 confere("os 5 scripts de Lembretes e Calendário estão registrados", all(s in ek._registro for s in registrados))
 ek._falha_ate = 0.0

@@ -2,7 +2,7 @@
 """Testa o servidor de jogos (login, host, páginas, arquivos servidos, cabeçalhos) e roda os testes de lógica e de interface em Node."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import subprocess
@@ -17,8 +17,8 @@ from pathlib import Path
 AQUI = RAIZ
 os.environ.update({"NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 sys.path.insert(0, str(AQUI))
-import heimdall_lab as hc  # noqa: E402
-import heimdall_jogos as hj  # noqa: E402
+import studio_lab as hc  # noqa: E402
+import studio_jogos as hj  # noqa: E402
 
 falhas = 0
 
@@ -116,7 +116,7 @@ st, _, _ = pedir("/js/base.js", ck)
 confere("base.js é servido", st == 200)
 st, js, cab = pedir("/js/motor.js", ck)
 confere("motor.js é servido", st == 200 and "javascript" in cab.get("Content-Type", "") and "HeimdallMotor" in js)
-for ruim in ("/js/../.env", "/js/..%2F.env", "/js/heimdall_jogos.py", "/js/teste.js", "/js/", "/jogo/../x", "/jogo/nao-existe", "/jogo/FORCA"):
+for ruim in ("/js/../.env", "/js/..%2F.env", "/js/studio_jogos.py", "/js/teste.js", "/js/", "/jogo/../x", "/jogo/nao-existe", "/jogo/FORCA"):
     st, corpo, _ = pedir(ruim, ck)
     confere(f"recusa {ruim}", st in (404, 400) and "HEIMDALL" not in corpo and "SENHA_HASH" not in corpo, (st, corpo[:100]))
 st, corpo, _ = pedir("/jogo/forca", ck, dados=b"x=1")

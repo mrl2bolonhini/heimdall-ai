@@ -3,7 +3,7 @@
 Sem login (redirecionamento do Access ou 401): fica o link "Entrar no StudioLibre". Com login: nome, e-mail e links dos serviços, sem executar HTML vindo do servidor."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import functools
 import http.server

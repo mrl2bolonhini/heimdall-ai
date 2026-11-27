@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Testa as funções de leitura das notas (heimdall_notas.py), usadas pela aba Notas do Studio Hub, com um cofre de mentira."""
+"""Testa as funções de leitura das notas (studio_notas.py), usadas pela aba Notas do Studio Hub, com um cofre de mentira."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import tempfile
@@ -15,7 +15,7 @@ cofre, conh = TMP / "cofre", TMP / "conh"
 conh.mkdir()
 (cofre / "python" / "a.md").write_text("# Aula 1: listas\n\nIntrodução a listas em Python, com exemplos.\n\n- item um\n- item dois\n", encoding="utf-8")
 os.environ.update({"STUDIO_VAULT_DIR": str(cofre), "STUDIO_KNOWLEDGE_DIR": str(conh), "STUDIO_LEARN": "0"})
-import heimdall_notas as n  # noqa: E402
+import studio_notas as n  # noqa: E402
 
 falhas = 0
 

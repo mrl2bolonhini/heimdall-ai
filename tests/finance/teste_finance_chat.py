@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Testa as ferramentas do Finance no chat (heimdall_tools.financas_*): leitura, filtros, somente leitura, desligar e banco ausente. Dados inventados."""
+"""Testa as ferramentas do Finance no chat (studio_tools.financas_*): leitura, filtros, somente leitura, desligar e banco ausente. Dados inventados."""
 import sys as _sys
 from pathlib import Path as _Path
-RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "heimdall_config.py").exists())
+RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
 _sys.path.insert(0, str(RAIZ))
 import os
 import sqlite3
@@ -18,7 +18,7 @@ os.environ["STUDIO_FINANCE_DIR"] = str(tmp / "dados")
 os.environ.pop("STUDIO_FINANCE_CHAT", None)
 import financas_boletos as fb  # noqa: E402
 import financas_nucleo as fn  # noqa: E402
-import heimdall_tools as ht  # noqa: E402
+import studio_tools as ht  # noqa: E402
 
 falhas = 0
 

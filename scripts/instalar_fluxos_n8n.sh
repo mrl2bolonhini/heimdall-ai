@@ -165,7 +165,7 @@ fi
 # --- Avisos úteis ---
 if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' http://localhost:8000/metricas)" != "200" ]; then
     echo "Aviso: o MCP do Mac ainda não responde em /metricas (o alerta de saúde precisa dele)."
-    echo "       Copie o heimdall_mcp.py novo e rode o start_heimdall.sh de novo."
+    echo "       Copie o studio_mcp.py novo e rode o start_heimdall.sh de novo."
 fi
 echo "Aviso: o relatório de disponibilidade precisa de uma página de status no Uptime Kuma com o nome (slug) '$SLUG'."
 echo "Pronto."
