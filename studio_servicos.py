@@ -8,7 +8,7 @@ Como liga e desliga:
   - "docker": contêiner. Desliga com docker stop e liga com docker start (o contêiner precisa existir: a primeira vez é do start_studio.sh).
   - "cmd": comando próprio (LiteLLM, Ollama).
   - sem "liga": só desliga aqui; para ligar de novo use studio restart.
-O que você desligou fica em .heimdall_desligados.json. Um vigia (reconciliar) confere de 30 em 30 segundos e derruba de novo o que
+O que você desligou fica em .studio_desligados.json. Um vigia (reconciliar) confere de 30 em 30 segundos e derruba de novo o que
 deveria estar desligado, por exemplo depois de um "studio update --restart", mas só depois de a subida terminar (3 minutos), para
 não atrapalhar a espera do start_studio.sh. Ligar um serviço tira ele da lista de desligados.
 O Controls não aparece como desligável: desligá-lo cortaria o acesso ao painel.
@@ -25,7 +25,7 @@ import time
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent
-ARQUIVO = PROJECT_DIR / ".heimdall_desligados.json"
+ARQUIVO = PROJECT_DIR / ".studio_desligados.json"
 LOGS_DIR = PROJECT_DIR / "logs"
 ESPERA_VIGIA_S = int(os.environ.get("STUDIO_SERVICOS_ESPERA_S", "180"))
 INTERVALO_VIGIA_S = 30

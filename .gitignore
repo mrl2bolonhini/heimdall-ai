@@ -40,7 +40,7 @@ apple_health_export/
 # Dados financeiros do Studio Finance (nunca vão para o git)
 finance/
 dados_financas/  # nome antigo da pasta do Finance (migrada para finance/ na primeira subida)
-.heimdall_desligados.json
+.studio_desligados.json
 
 # Extratos e faturas de amostra (nunca vão para o git)
 amostras_bancos/

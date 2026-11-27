@@ -359,7 +359,7 @@ SCRIPTS = [
     ("financas_cli.py", "Comandos de terminal do Finance para arquivos: --inspect, --explain, --preview, --import, --inbox e --folder (studio finance ...)."),
     ("studio_controls.py", "Controls (porta 8017): terminal completo e acessível no navegador e painel de serviços. Só o dono entra; cada comando é anotado em logs/controls_audit.log, sem a saída. Endereço de fora: controls.studiolibre.io."),
     ("studio_shell.py", "Shell persistente do Controls num pseudoterminal: a pasta e as variáveis continuam entre comandos, a saída vem limpa de cores e códigos de tela, e cada comando é um bloco com estado e código de saída."),
-    ("studio_servicos.py", "Catálogo dos serviços do StudioLibre e o liga e desliga de cada um (usado pela aba Serviços do Controls); lembra o que foi desligado em .heimdall_desligados.json e um vigia mantém desligado."),
+    ("studio_servicos.py", "Catálogo dos serviços do StudioLibre e o liga e desliga de cada um (usado pela aba Serviços do Controls); lembra o que foi desligado em .studio_desligados.json e um vigia mantém desligado."),
     ("studio_config.py", "Lê, grava e remove valores do .env (NOME='valor', permissão 600, cópia em .env.bak) e lista as opções HEIMDALL_* que o código aceita; usado pela aba Ajustes do Controls."),
     ("tests/core/teste_config.py", "Testa ler, salvar, remover e o catálogo de opções, num .env simulado."),
     ("studio_usuarios.py", "Usuários do Heimdall: donos e convidados no .env (quem entra em quais serviços) e a sincronização com o Cloudflare Access, com plano antes e aplicar depois; usado pela aba Usuários do Controls."),
