@@ -61,7 +61,11 @@ confere("Bark: genérico, sem título nem resumo do exame, com link", len(enviad
 r2 = alertas.publicar({"id": "teste|1", "titulo": "Resultado do hemograma", "resumo": "x", "fonte": "saude"})
 confere("mesma origem não repete o aviso", not r2["novo"] and len(enviados) == 1)
 r3 = alertas.publicar({"id": "teste|2", "titulo": "Menção no diário", "resumo": "Processo 123", "nivel": "critico", "fonte": "justica"})
-confere("alerta sem produto: Mac completo e Bark genérico sem link", r3["novo"] and r3["mac"] and "url" not in enviados[-1] and "Processo" not in json.dumps(enviados[-1]), enviados[-1])
+confere("alerta sem produto próprio: Mac completo e Bark genérico com link do Miner", r3["novo"] and r3["mac"] and enviados[-1].get("url", "").endswith("/cidadania") and "Processo" not in json.dumps(enviados[-1]), enviados[-1])
+os.environ["STUDIO_MINER"] = "0"
+r4 = alertas.publicar({"id": "teste|3", "titulo": "Outra menção", "resumo": "Processo 456", "nivel": "alto", "fonte": "justica"})
+confere("Miner desligado: Bark genérico sem link", r4["novo"] and "url" not in enviados[-1] and "Processo" not in json.dumps(enviados[-1]), enviados[-1])
+os.environ.pop("STUDIO_MINER", None)
 confere("sem lembrete: o alerta não toca a agenda", "lembrete" not in r3 and "lembrete" not in r)
 
 sys.exit(1 if falhas else 0)
