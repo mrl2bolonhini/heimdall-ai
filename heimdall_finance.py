@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Studio Finance (finance.heimdall-ai.tech): suas finanças em páginas de texto e tabelas, para leitor de tela.
+"""Studio Finance (finance.studiolibre.io): suas finanças em páginas de texto e tabelas, para leitor de tela.
 
 Você importa extratos (OFX ou CSV) do banco e do cartão; o painel classifica os gastos por categoria com regras que você
 ajusta, mostra o resumo do mês, os maiores gastos, a evolução mês a mês e avisa quando uma categoria dispara.
@@ -15,7 +15,7 @@ Segurança (mesmas camadas dos outros painéis):
   5. Sem senha e sem código configurados, o servidor não sobe.
 
 Variáveis opcionais no .env: STUDIO_FINANCE_PORT (8016), STUDIO_FINANCE_HOST (127.0.0.1),
-STUDIO_FINANCE_HOSTS (finance.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_FINANCE_DIR (pasta do banco) e STUDIO_FINANCE_MAX_MB (8).
+STUDIO_FINANCE_HOSTS (finance.studiolibre.io,localhost,127.0.0.1), STUDIO_FINANCE_DIR (pasta do banco) e STUDIO_FINANCE_MAX_MB (8).
 """
 import html
 import heimdall_pastas
@@ -76,7 +76,7 @@ try:
     PORT = max(1, int(os.environ.get("STUDIO_FINANCE_PORT", "8016")))
 except ValueError:
     PORT = 8016
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_FINANCE_HOSTS", "finance.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_FINANCE_HOSTS", "finance.studiolibre.io,localhost,127.0.0.1").split(",") if h.strip()}
 HOSTS_OK |= __import__("heimdall_links").hosts_padrao("finance")   # domínio novo e antigo valem juntos durante a transição
 DIR_DADOS = Path(os.environ.get("STUDIO_FINANCE_DIR") or heimdall_pastas.finance(PROJECT_DIR))
 try:

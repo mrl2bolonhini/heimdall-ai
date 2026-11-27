@@ -5,7 +5,7 @@ Telas no Studio Design, sobre `heimdall_servico_web.py`; os dados ficam em `heim
 Abas: Documentos (Pesquisar, Recentes, A revisar), Adicionar (Enviar arquivo, Pasta de entrada), Organização (Etiquetas, Tipos). Ajustes: Estado, Lixeira, Ajuda.
 
 Variáveis: STUDIO_HUB (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_HUB_PORT (8021), STUDIO_HUB_HOST (127.0.0.1),
-STUDIO_HUB_HOSTS (memory.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_HUB_MAX_MB (30; limite por arquivo), STUDIO_HUB_IA (0 desliga as sugestões do modelo).
+STUDIO_HUB_HOSTS (hub.studiolibre.io,localhost,127.0.0.1), STUDIO_HUB_MAX_MB (30; limite por arquivo), STUDIO_HUB_IA (0 desliga as sugestões do modelo).
 
     python3 heimdall_memory.py
 
@@ -416,7 +416,7 @@ GRUPOS = [
     hub_notas.GRUPO,
 ]
 CFG = web.Config(
-    chave="memory", nome="Hub", porta_env="STUDIO_HUB_PORT", porta=8021, hosts="hub.studiolibre.io,memory.heimdall-ai.tech,hub.heimdall-ai.tech,localhost,127.0.0.1",
+    chave="memory", nome="Hub", porta_env="STUDIO_HUB_PORT", porta=8021, hosts="hub.studiolibre.io,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/estado", "Estado"), ("/ajustes/lixeira", "Lixeira")],
     get={"/pesquisar": pg_pesquisar, "/recentes": pg_recentes, "/revisar": pg_revisar, "/enviar": pg_enviar, "/entrada": pg_entrada, "/email": pg_email, "/nuvem": pg_nuvem, "/apps": pg_apps, "/etiquetas": pg_etiquetas, "/tipos": pg_tipos,
          "/documento": pg_documento, "/baixar": baixar, "/ajustes/estado": aj_estado, "/ajustes/lixeira": aj_lixeira, **hub_notas.GET},

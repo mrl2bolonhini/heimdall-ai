@@ -253,7 +253,7 @@ confere("nuvem: estado, cópia, tabela de limites com caption e scope e um só h
         and "US$ 5,00" in corpo and "abaixo do limite" in corpo and "US$ 15 por mês" in corpo and corpo.count("<h1") == 1 and 'role="status"' in corpo, corpo[:300])
 confere("nuvem: consumo do mês com total, teto e tabela", "Total no mês: <strong>US$ 6,75</strong> de um teto de US$ 15,00" in corpo and "<caption>Consumo faturável do mês por serviço" in corpo and 'scope="row">Containers' in corpo and "perto do teto" not in corpo)
 confere("nuvem: avisos da Cloudflare em tabela com caption e scope", "<caption>Últimos avisos enviados pela Cloudflare" in corpo and "Origem fora" in corpo and "O túnel caiu" in corpo)
-confere("nuvem: aparece como aba e com o link da página de controle na nuvem", 'role="tab"' in corpo and ">Nuvem<" in corpo and "controls.heimdall-ai.tech/continuidade" in corpo)
+confere("nuvem: aparece como aba e com o link da página de controle na nuvem", 'role="tab"' in corpo and ">Nuvem<" in corpo and "controls.studiolibre.io/continuidade" in corpo)
 gravado = []
 hnp.ligar = lambda v: (gravado.append(v), "")[1]
 hnp.enviar_agora = lambda: {"ok": True, "enviados": ["db/a.db"], "iguais": ["db/b.db"]}
@@ -366,11 +366,11 @@ b7 = next(b for b in st["blocos"] if b["n"] == n7)
 confere("reiniciar o shell abre um novo e limpo", "vazio" in b7["saida"], b7["saida"])
 
 # --- Access exigido em endereço público
-hcx.HOSTS_OK.add("controls.heimdall-ai.tech")
+hcx.HOSTS_OK.add("controls.studiolibre.io")
 import heimdall_cfaccess as cfa  # noqa: E402
 orig_ativo = cfa.ativo
 cfa.ativo = lambda: True
-s, corpo, _ = req("GET", "/terminal", cookie=token, host="controls.heimdall-ai.tech")
+s, corpo, _ = req("GET", "/terminal", cookie=token, host="controls.studiolibre.io")
 confere("endereço público com Access ligado e sem token do Access: 403", s == 403)
 cfa.ativo = orig_ativo
 

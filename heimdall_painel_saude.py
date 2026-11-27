@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Painel de saúde do Heimdall (health.heimdall-ai.tech): lê o banco pessoal e mostra, em texto e tabelas bons para
+"""Painel de saúde do Heimdall (health.studiolibre.io): lê o banco pessoal e mostra, em texto e tabelas bons para
 leitor de tela, as análises do heimdall_saude.py: como você está agora, tendências, sono, atividade, recuperação, coração,
 ECG, treinos, sintomas/humor/medicamentos, o relatório da semana, o diário dos últimos dias e o estado dos dados
 (para você ver se a exportação contínua do iPhone está chegando).
@@ -16,7 +16,7 @@ Segurança (os dados de saúde podem ficar acessíveis de fora, então tem as me
   6. Nada de rota de treino, forma de onda do ECG nem dados brutos: só números agregados e as análises.
 
 Variáveis opcionais no .env: STUDIO_SAUDE_PAINEL_PORT (8013), STUDIO_SAUDE_PAINEL_HOST (127.0.0.1),
-STUDIO_SAUDE_PAINEL_HOSTS (health.heimdall-ai.tech,localhost,127.0.0.1).
+STUDIO_SAUDE_PAINEL_HOSTS (health.studiolibre.io,localhost,127.0.0.1).
 """
 import html
 import os
@@ -70,7 +70,7 @@ try:
     PORT = max(1, int(os.environ.get("STUDIO_SAUDE_PAINEL_PORT", "8013")))
 except ValueError:
     PORT = 8013
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_SAUDE_PAINEL_HOSTS", "health.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_SAUDE_PAINEL_HOSTS", "health.studiolibre.io,localhost,127.0.0.1").split(",") if h.strip()}
 HOSTS_OK |= __import__("heimdall_links").hosts_padrao("health")   # domínio novo e antigo valem juntos durante a transição
 COOKIE = nuvem.COOKIE  # cookie único dos quatro serviços (sessão compartilhada)
 PERIODOS = (7, 14, 30, 90, 180, 365)

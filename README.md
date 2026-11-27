@@ -2,23 +2,23 @@
 
 Assistente de Inteligência Artificial que roda no próprio Mac, com ferramentas (MCP), base de conhecimento pessoal e automações (n8n). Desenvolvido por Murillo Bolonhini Cita. O chat é privado e o acesso é por convite; o código é aberto à leitura, mas os dados ficam no Mac do autor.
 
-StudioLibre é o nome da empresa e do conjunto de aplicativos (StudioLibre Hub, Health, Finance, Games), com o domínio studiolibre.io; os endereços e o nome nas telas mudam por etapas (ROADMAP), e hoje os serviços seguem em heimdall-ai.tech com o nome StudioLibre. O significado do nome está na página Marca do site; a análise de marca e de repositório está em guides/marca_studiolibre.txt.
+StudioLibre é o nome da empresa e do conjunto de aplicativos (StudioLibre Hub, Health, Finance, Games), com o domínio studiolibre.io; os endereços e o nome nas telas mudam por etapas (ROADMAP), e hoje os serviços seguem em studiolibre.io com o nome StudioLibre. O significado do nome está na página Marca do site; a análise de marca e de repositório está em guides/marca_studiolibre.txt.
 
-Documentação publicada: https://heimdall-ai.tech (gerada da pasta docs/ pelo GitHub Pages).
+Documentação publicada: https://studiolibre.io (gerada da pasta docs/ pelo GitHub Pages).
 
 Este README é mantido junto com o código. As tabelas entre marcadores `AUTO` são geradas por `python3 gerar_docs.py`; não as edite à mão.
 
 ## Acessos
 
-1. Chat: https://chat.heimdall-ai.tech (por convite).
-2. Automações: https://flows.heimdall-ai.tech (login do administrador).
-3. Status: https://status.heimdall-ai.tech (acesso restrito).
-4. Lab: https://lab.heimdall-ai.tech (painel do emulador de AWS; senha e código de 6 dígitos).
-4b. Saúde: https://health.heimdall-ai.tech (painel de saúde, somente leitura; senha e código de 6 dígitos).
-4c. Jogos: https://games.heimdall-ai.tech (jogos leves para leitor de tela; senha e código de 6 dígitos).
-5. Documentação: https://heimdall-ai.tech (página do Lab: https://heimdall-ai.tech/lab.html)
+1. Chat: https://chat.studiolibre.io (por convite).
+2. Automações: https://flows.studiolibre.io (login do administrador).
+3. Status: https://status.studiolibre.io (acesso restrito).
+4. Lab: https://lab.studiolibre.io (painel do emulador de AWS; senha e código de 6 dígitos).
+4b. Saúde: https://health.studiolibre.io (painel de saúde, somente leitura; senha e código de 6 dígitos).
+4c. Jogos: https://games.studiolibre.io (jogos leves para leitor de tela; senha e código de 6 dígitos).
+5. Documentação: https://studiolibre.io (página do Lab: https://studiolibre.io/lab.html)
 
-Contato: suporte@heimdall-ai.tech e https://www.linkedin.com/in/murillobolonhinicita
+Contato: suporte@studiolibre.io e https://www.linkedin.com/in/murillobolonhinicita
 
 ## Propósito
 
@@ -31,7 +31,7 @@ StudioLibre, na mitologia nórdica, guarda a ponte Bifröst. O projeto vigia e c
 3. Três servidores MCP em Python (8000, só do Mac; 8001, público; 8004, só o banco pessoal e só em 127.0.0.1, para o Open WebUI) e o servidor de documentação da AWS fornecem as ferramentas.
 4. O n8n agenda fluxos; o agente do Mac (8003) liga o n8n ao app Notas, ao Calendário, aos Lembretes e à voz do macOS; o Bark entrega avisos no iPhone, e o app do Mac mostra os mesmos avisos, completos, como notificações do macOS.
 
-Detalhes em https://heimdall-ai.tech/arquitetura.html.
+Detalhes em https://studiolibre.io/arquitetura.html.
 
 ### Serviços e portas
 
@@ -95,7 +95,7 @@ docker ps --format '{{.Names}}: {{.Status}}'
 
 O `subir.sh` recusa iniciar uma segunda subida enquanto outra estiver em andamento, grava cada log em `logs/heimdall-AAAAMMDD-HHMMSS.log` (os 15 mais recentes) e aponta `heimdall.log` para o atual. Os logs de cada serviço também ficam em `logs/` (por exemplo `logs/notas_debug.log`), com os 5 anteriores de cada um em `logs/historico/`. Ao final avisa "Tudo no ar" com notificação e voz do macOS (`SUBIR_SOM=0` desliga). O comando antigo continua valendo: `nohup bash start_heimdall.sh --webui --terminal --n8n --agente > heimdall.log 2>&1 &`.
 
-Opções: `--webui`, `--terminal`, `--n8n`, `--agente`, `--docling`, `--ingest`, `--update`. A lista completa está no cabeçalho de `start_heimdall.sh` e em https://heimdall-ai.tech/comandos.html.
+Opções: `--webui`, `--terminal`, `--n8n`, `--agente`, `--docling`, `--ingest`, `--update`. A lista completa está no cabeçalho de `start_heimdall.sh` e em https://studiolibre.io/comandos.html.
 
 ## Organização das pastas
 Módulos Python, `subir.sh`, `start_heimdall.sh` e `heimdall.zsh` ficam na raiz. `tests/<serviço>/` guarda os testes (finance, health, news, notes, games, lab, cloudflare, account, controls, agent, chat, design, monitor, core); `guides/` os guias e ajudas; `prompts/` os prompts do chat; `scripts/` os scripts de shell; `flows/` os fluxos do n8n (basic, advanced, monitor); `games/` os jogos; `finance/` os dados do Finance no Mac (antes `dados_financas/`, renomeada sozinha na primeira subida). `./rodar_testes.sh` roda todos os testes; `./rodar_testes.sh finance` só os de uma pasta.
@@ -271,7 +271,7 @@ Instalação: `bash scripts/instalar_fluxos_n8n.sh` (básicos), `bash scripts/in
 
 ## Publicação da documentação
 
-A pasta docs/ é publicada pelo GitHub Pages com o domínio heimdall-ai.tech (arquivo `docs/CNAME`). O fluxo `.github/workflows/pages.yml` confere se a documentação está em dia e publica a cada push em `main`. O passo a passo de DNS no Cloudflare está em `guides/PUBLICAR_PAGINAS.md`. Observação: GitHub Pages em repositório privado exige plano pago; em repositório público é gratuito.
+A pasta docs/ é publicada pelo GitHub Pages com o domínio studiolibre.io (arquivo `docs/CNAME`). O fluxo `.github/workflows/pages.yml` confere se a documentação está em dia e publica a cada push em `main`. O passo a passo de DNS no Cloudflare está em `guides/PUBLICAR_PAGINAS.md`. Observação: GitHub Pages em repositório privado exige plano pago; em repositório público é gratuito.
 
 ## Como manter (a cada recurso novo)
 

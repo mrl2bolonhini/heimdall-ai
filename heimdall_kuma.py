@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Uptime Kuma (status.heimdall-ai.tech) visto pelo Controls: ler a situação de cada monitor e pausar/retomar o monitor de um serviço.
+"""Uptime Kuma (status.studiolibre.io) visto pelo Controls: ler a situação de cada monitor e pausar/retomar o monitor de um serviço.
 
 Ler: a página de status pública do Kuma, pelo endereço local (STUDIO_KUMA_URL, padrão http://127.0.0.1:3001) e o nome da página
 (STUDIO_KUMA_SLUG, padrão heimdall). Não precisa de senha.

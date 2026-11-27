@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Controls (controls.heimdall-ai.tech): terminal completo e acessível e painel de serviços, para administrar o StudioLibre pelo navegador.
+"""Controls (controls.studiolibre.io): terminal completo e acessível e painel de serviços, para administrar o StudioLibre pelo navegador.
 
 O terminal roda no Mac, com as permissões do seu usuário (heimdall_shell.py): a pasta e as variáveis continuam entre os comandos, programas que
 perguntam algo recebem a resposta pelo campo "Resposta ao programa", e há botões para interromper e para copiar a última saída ou as últimas N saídas.
@@ -13,7 +13,7 @@ Isso é o recurso mais poderoso do Heimdall: quem entra aqui manda no Mac. Por i
   7. Sem senha e sem código configurados, o painel não sobe.
 
 Variáveis opcionais no .env: STUDIO_CONTROLS_PORT (8017), STUDIO_CONTROLS_HOST (127.0.0.1), STUDIO_CONTROLS_HOSTS
-(controls.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_CONTROLS_SHELL (padrão: o seu shell), STUDIO_CONTROLS_EXIGE_ACCESS (1).
+(controls.studiolibre.io,localhost,127.0.0.1), STUDIO_CONTROLS_SHELL (padrão: o seu shell), STUDIO_CONTROLS_EXIGE_ACCESS (1).
 """
 import concurrent.futures
 import html
@@ -73,7 +73,7 @@ try:
     PORT = max(1, int(os.environ.get("STUDIO_CONTROLS_PORT", "8017")))
 except ValueError:
     PORT = 8017
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_CONTROLS_HOSTS", "controls.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_CONTROLS_HOSTS", "controls.studiolibre.io,localhost,127.0.0.1").split(",") if h.strip()}
 HOSTS_OK |= __import__("heimdall_links").hosts_padrao("controls")   # domínio novo e antigo valem juntos durante a transição
 LOCAIS = {"localhost", "127.0.0.1"}
 EXIGE_ACCESS = os.environ.get("STUDIO_CONTROLS_EXIGE_ACCESS", "1") != "0"

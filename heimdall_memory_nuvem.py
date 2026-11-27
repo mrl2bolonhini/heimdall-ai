@@ -9,7 +9,7 @@ da pasta vigiada. O Hub nunca apaga arquivos da nuvem e nunca importa de novo o 
 
 Privacidade: cada pessoa tem o seu arquivo de conexão (memory/nuvem.bin, cifrado com AES-GCM, permissão 600) e só a sincronização dela mexe nele.
 O estado (`state`) do OAuth fica na memória do servidor, ligado à pessoa que iniciou, vale por 10 minutos e só uma vez.
-Configuração do administrador (.env): STUDIO_NUVEM_<DROPBOX|ONEDRIVE>_ID e _SEGREDO; STUDIO_HUB_URL (padrão https://memory.heimdall-ai.tech)
+Configuração do administrador (.env): STUDIO_NUVEM_<DROPBOX|ONEDRIVE>_ID e _SEGREDO; STUDIO_HUB_URL (padrão https://hub.studiolibre.io)
 para o endereço de retorno <URL>/nuvem/retorno, que precisa estar cadastrado no aplicativo do provedor. STUDIO_NUVEM=0 desliga a sincronização.
 Usa a biblioteca padrão e `cryptography` (AESGCM, já usada nas cópias de segurança); sem ela, a conexão é recusada em vez de gravar token em texto aberto.
 """

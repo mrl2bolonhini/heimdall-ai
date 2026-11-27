@@ -9,7 +9,7 @@ import heimdall_config as config
 import heimdall_continuidade as continuidade
 
 TETO_MENSAL = 15.0   # US$ por mês (CLAUDE.md)
-PAINEL_NUVEM = "https://controls.heimdall-ai.tech/continuidade"
+PAINEL_NUVEM = "https://controls.studiolibre.io/continuidade"
 URL = "https://api.cloudflare.com/client/v4/accounts/{conta}/billing/spend-policies"
 PRODUTOS = {"workers": "Workers", "durable_objects": "Durable Objects (contêiner)"}
 ACOES = {"usage_block": "Bloqueio", "notification": "Aviso"}

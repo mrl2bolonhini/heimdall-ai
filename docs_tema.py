@@ -6,23 +6,23 @@ Para mudar cores, tipografia ou layout: edite este arquivo e rode `python3 gerar
 import html
 import re
 
-DOMINIO = "heimdall-ai.tech"
+DOMINIO = "studiolibre.io"
 AUTOR = "Murillo Bolonhini Cita"
 REPO = "https://github.com/studiolibre/StudioApps"
-EMAIL = "suporte@heimdall-ai.tech"
+EMAIL = "suporte@studiolibre.io"
 LINKEDIN = "https://www.linkedin.com/in/murillobolonhinicita"
 ACESSOS = {
-    "chat": "https://chat.heimdall-ai.tech",
-    "n8n": "https://flows.heimdall-ai.tech",
-    "status": "https://status.heimdall-ai.tech",
-    "lab": "https://lab.heimdall-ai.tech",
-    "news": "https://news.heimdall-ai.tech",
-    "saude": "https://health.heimdall-ai.tech",
-    "jogos": "https://games.heimdall-ai.tech",
-    "learn": "https://learn.heimdall-ai.tech",
-    "trading": "https://trading.heimdall-ai.tech",
-    "memory": "https://memory.heimdall-ai.tech",
-    "finance": "https://finance.heimdall-ai.tech",
+    "chat": "https://chat.studiolibre.io",
+    "n8n": "https://flows.studiolibre.io",
+    "status": "https://status.studiolibre.io",
+    "lab": "https://lab.studiolibre.io",
+    "news": "https://news.studiolibre.io",
+    "saude": "https://health.studiolibre.io",
+    "jogos": "https://games.studiolibre.io",
+    "learn": "https://learn.studiolibre.io",
+    "trading": "https://trading.studiolibre.io",
+    "memory": "https://hub.studiolibre.io",
+    "finance": "https://finance.studiolibre.io",
 }
 H = lambda s: html.escape(str(s), quote=True)
 
@@ -380,7 +380,7 @@ def _toc(corpo):
     return f'<aside class="toc"><nav aria-label="Nesta página"><p>Nesta página</p><ul>{lis}</ul></nav></aside>'
 
 
-CONTA_URL = "https://account.heimdall-ai.tech/"
+CONTA_URL = "https://account.studiolibre.io/"
 
 
 def pagina(arquivo, titulo, descricao, corpo, home=False):

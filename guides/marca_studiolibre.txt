@@ -5,7 +5,7 @@ Documento de decisão. Os papéis ux e marca propõem; a decisão é do usuário
 1. SITUAÇÃO
 
 1) Nome: StudioLibre (empresa e conjunto de aplicativos), com complemento por aplicativo (StudioLibre Memory, Health, Finance, Games).
-2) Domínios registrados, na mesma conta da Cloudflare do heimdall-ai.tech: studiolibre.io (principal) e studiolibre.app (reservado).
+2) Domínios registrados, na mesma conta da Cloudflare do studiolibre.io: studiolibre.io (principal) e studiolibre.app (reservado).
 3) Símbolo atual: a ponte Bifröst vista de frente, com seis faixas (#bfe3fb, #93d2fa, #42a5f5, #26c6da, #1e88e5, #ffc107) e um olho dourado no centro. Conta a história do nome Heimdall (o guardião da ponte). A paleta tem Noite, Papel, Tinta, Névoa, Gelo, Azul da ponte, Azul profundo, Turquesa e Ouro do olhar, com contrastes medidos.
 4) Onde a identidade visual vive: heimdall_design.py (cores, fonte única de todos os serviços), docs_tema.py (PALETA, BANDAS e o símbolo do site), heimdall_lab.SIMBOLO (cabeçalho dos serviços), arquivos do site (logo.svg, logo-escuro.svg, simbolo.svg, simbolo-uma-cor.svg, favicon.svg, apple-touch-icon.png, og.png), ícone do app do Mac (macapp) e Pages/index.html.
 
@@ -37,9 +37,9 @@ Documento de decisão. Os papéis ux e marca propõem; a decisão é do usuário
 
 Opções:
 1) Repositório novo, vazio. Perde o histórico de commits, os links antigos e as configurações. Não recomendado.
-2) Renomear o repositório atual (mrl2bolonhini/heimdall-ai). Mantém histórico, issues e Actions; o GitHub redireciona o endereço antigo. Os clones locais (o Mac) precisam de `git remote set-url origin <endereço novo>`.
-3) Criar uma organização StudioLibre no GitHub e transferir o repositório para ela (studiolibre/heimdall-ai). Dá à empresa uma presença própria, separa o projeto da conta pessoal, aceita vários repositórios no futuro e mantém histórico, redirecionamento e Actions. Organização para código público é gratuita.
-Recomendação: opção 3, em dois tempos: transferir agora para a organização, mantendo o nome do repositório; renomear o repositório só quando o nome StudioLibre chegar às telas. Antes: conferir se o nome studiolibre está livre no GitHub (github.com/studiolibre), porque a consulta não é possível a partir daqui. Depois de transferir: atualizar o remote do Mac (`git remote set-url origin https://github.com/studiolibre/heimdall-ai.git`), o endereço do repositório no REPO do docs_tema.py, nos guias e nos segredos do workflow de deploy; a publicação do site e o deploy da continuidade continuam, mas precisam ser conferidos uma vez.
+2) Renomear o repositório atual (studiolibre/StudioApps). Mantém histórico, issues e Actions; o GitHub redireciona o endereço antigo. Os clones locais (o Mac) precisam de `git remote set-url origin <endereço novo>`.
+3) Criar uma organização StudioLibre no GitHub e transferir o repositório para ela (studiolibre/StudioApps). Dá à empresa uma presença própria, separa o projeto da conta pessoal, aceita vários repositórios no futuro e mantém histórico, redirecionamento e Actions. Organização para código público é gratuita.
+Recomendação: opção 3, em dois tempos: transferir agora para a organização, mantendo o nome do repositório; renomear o repositório só quando o nome StudioLibre chegar às telas. Antes: conferir se o nome studiolibre está livre no GitHub (github.com/studiolibre), porque a consulta não é possível a partir daqui. Depois de transferir: atualizar o remote do Mac (`git remote set-url origin https://github.com/studiolibre/StudioApps.git`), o endereço do repositório no REPO do docs_tema.py, nos guias e nos segredos do workflow de deploy; a publicação do site e o deploy da continuidade continuam, mas precisam ser conferidos uma vez.
 Um repositório por aplicativo não se justifica agora: o código compartilha módulos e testes na raiz.
 
 5. PROPOSTA DE ORDEM (para aprovação do usuário)
@@ -83,6 +83,6 @@ Proposta, para o designer testar: manter o ouro como assinatura; trocar o azul p
 
 6.4. Organização no GitHub
 1) A criação de organização no GitHub não pode ser feita por esta sessão: não há API para isso em conta pessoal e a sessão só alcança o repositório atual. Passos para o usuário, em texto e com teclado: abrir github.com/organizations/plan; escolher o plano gratuito; no nome da organização digitar studiolibre (o formulário diz se está livre); informar o e-mail de contato; marcar "My personal account" como dona; aceitar os termos e criar.
-2) Depois: no repositório mrl2bolonhini/heimdall-ai, Settings, Danger Zone, Transfer ownership, destino studiolibre. Avisar a sessão, que atualiza o REPO do docs_tema.py, os guias e confere o deploy, e o Mac roda `git remote set-url origin https://github.com/studiolibre/heimdall-ai.git`.
+2) Depois: no repositório studiolibre/StudioApps, Settings, Danger Zone, Transfer ownership, destino studiolibre. Avisar a sessão, que atualiza o REPO do docs_tema.py, os guias e confere o deploy, e o Mac roda `git remote set-url origin https://github.com/studiolibre/StudioApps.git`.
 
 Decisão final do usuário (26/11/2026, posterior a este documento): StudioLibre é só o nome da empresa; os aplicativos e as telas se chamam Studio Health, Studio Finance, Studio Games e Studio Memory (radical Studio no começo, sem "Libre"), e o comando do terminal é `studio`. Isso substitui os trechos acima que falam em "StudioLibre Health" e em complemento sobre o nome StudioLibre. Ponto de atenção registrado: "Studio" sozinho é termo comum e de pouca força como marca; a proteção vem do nome da empresa. A consulta ao INPI continua com o usuário.

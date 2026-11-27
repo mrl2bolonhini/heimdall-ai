@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Studio Games (games.heimdall-ai.tech): jogos leves, feitos para leitor de tela, que rodam no navegador.
+"""Studio Games (games.studiolibre.io): jogos leves, feitos para leitor de tela, que rodam no navegador.
 
 Cada jogo é HTML comum (botões, campos e listas) mais um arquivo JavaScript da pasta games/; o que acontece na partida
 é dito em voz alta por uma região aria-live. Nada é gravado: o servidor só entrega as páginas.
@@ -15,7 +15,7 @@ Segurança (pode ficar acessível de fora, então tem as mesmas camadas dos outr
   6. Sem senha e sem código configurados, o servidor não sobe.
 
 Variáveis opcionais no .env: STUDIO_JOGOS_PORT (8014), STUDIO_JOGOS_HOST (127.0.0.1),
-STUDIO_JOGOS_HOSTS (games.heimdall-ai.tech,localhost,127.0.0.1) e STUDIO_JOGOS_EXTRAS: outros jogos que você hospeda
+STUDIO_JOGOS_HOSTS (games.studiolibre.io,localhost,127.0.0.1) e STUDIO_JOGOS_EXTRAS: outros jogos que você hospeda
 (só os que tenham versão em português ou permitam tradução), no formato "Nome|http://localhost:8015|descrição;Outro|https://exemplo.test|descrição".
 """
 import unicodedata
@@ -65,7 +65,7 @@ try:
     PORT = max(1, int(os.environ.get("STUDIO_JOGOS_PORT", "8014")))
 except ValueError:
     PORT = 8014
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_JOGOS_HOSTS", "games.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_JOGOS_HOSTS", "games.studiolibre.io,localhost,127.0.0.1").split(",") if h.strip()}
 HOSTS_OK |= __import__("heimdall_links").hosts_padrao("games")   # domínio novo e antigo valem juntos durante a transição
 COOKIE = nuvem.COOKIE
 e = lambda t: html.escape(str(t), quote=True)  # noqa: E731

@@ -10,7 +10,7 @@ sessão em cookie HttpOnly; só nomes de site permitidos; caminhos conferidos co
 conhecida, nome simples e limite de tamanho (STUDIO_LEARN_MAX_MB, 50); HTML sempre escapado.
 
 Variáveis: STUDIO_LEARN (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_LEARN_PORT (8019), STUDIO_LEARN_HOST (127.0.0.1),
-STUDIO_LEARN_HOSTS (learn.heimdall-ai.tech,localhost,127.0.0.1).
+STUDIO_LEARN_HOSTS (learn.studiolibre.io,localhost,127.0.0.1).
 
     python3 heimdall_learn.py
 
@@ -69,7 +69,7 @@ import heimdall_pessoas as pessoas  # noqa: E402  (tarefas em segundo plano do m
 
 HOST = os.environ.get("STUDIO_LEARN_HOST", "127.0.0.1")
 PORT = int(os.environ.get("STUDIO_LEARN_PORT", "8019"))
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_LEARN_HOSTS", "learn.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_LEARN_HOSTS", "learn.studiolibre.io,localhost,127.0.0.1").split(",") if h.strip()}
 HOSTS_OK |= __import__("heimdall_links").hosts_padrao("learn")   # domínio novo e antigo valem juntos durante a transição
 COOKIE = nuvem.COOKIE
 MAX_FORM = 20000

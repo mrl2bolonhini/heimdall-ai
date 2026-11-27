@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Confere se um endereço público está protegido pelo Cloudflare Access (sem entrar nele).
 
-Uso: python3 verificar_access.py https://chat.heimdall-ai.tech
+Uso: python3 verificar_access.py https://chat.studiolibre.io
 Saída 0 = protegido (o Access manda a pessoa entrar antes), 1 = aberto (responde sem passar pelo Access: NÃO ligue o login pelo cabeçalho),
 2 = sem resposta (o endereço está fora do ar ou sem internet; o login por cabeçalho fica seguro, porque ninguém de fora chega ao serviço).
 """

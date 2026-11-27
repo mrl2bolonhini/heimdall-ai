@@ -1,5 +1,5 @@
 // Heimdall Saúde Caixa: Worker da Cloudflare que fica na frente do webhook de saúde do n8n
-// (flows.heimdall-ai.tech/webhook/heimdall-saude), o endereço que o Health Auto Export já usa. Nada muda no app.
+// (flows.studiolibre.io/webhook/heimdall-saude), o endereço que o Health Auto Export já usa. Nada muda no app.
 //
 //   Mac no ar        -> repassa o envio ao n8n do jeito que veio e devolve a resposta dele.
 //   Mac fora do ar   -> guarda o envio no KV (7 dias, até 200 envios) e responde 202 ao app, que o considera entregue.
@@ -7,7 +7,7 @@
 //
 // Ligações: FILA (KV). Opcional: TOKEN_SAUDE (segredo): se existir, só guarda envios cujo cabeçalho
 // X-Heimdall-Saude (ou Authorization) for igual a ele, para ninguém encher a fila com lixo.
-const ORIGEM = "https://flows.heimdall-ai.tech/webhook/heimdall-saude";
+const ORIGEM = "https://flows.studiolibre.io/webhook/heimdall-saude";
 const MAX_ITENS = 200, MAX_BYTES = 8 * 1024 * 1024, TTL = 7 * 24 * 3600, POR_RODADA = 20;
 const CABECALHOS = ["content-type", "x-heimdall-saude", "authorization"];
 

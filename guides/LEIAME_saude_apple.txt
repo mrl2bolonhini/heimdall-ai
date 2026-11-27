@@ -54,7 +54,7 @@ O relógio só grava um treino quando você inicia um no app Treino ou aceita o 
 6. python3 heimdall_saude.py --relatorio   (junta tudo)
 7. python3 heimdall_saude.py --hoje        (o que já chegou de hoje; avisa se nada chegou)
 
-ATUALIZAR PELO PAINEL (health.heimdall-ai.tech)
+ATUALIZAR PELO PAINEL (health.studiolibre.io)
 No iPhone, o botão "Atualizar dados agora" (Panorama, na aba Resumo, e Estado dos dados, em Ajustes) abre o app Atalhos e roda o atalho "Exportar dados de saúde", que dispara as automações do Health Auto Export. Ao terminar, volta para Estado dos dados, que confere se uma gravação nova chegou (uma vez sozinho depois de 20 segundos; depois pelo link "Conferir de novo"). Se em 2 minutos nada for gravado, aparece um alerta.
 1. O nome do atalho é lido de STUDIO_SAUDE_ATALHO no .env (padrão: Exportar dados de saúde). Se você renomear o atalho, ajuste essa variável e reinicie com ./subir.sh --reiniciar.
 2. O botão só aparece com o painel aberto no iPhone. Deixe o iPhone desbloqueado.

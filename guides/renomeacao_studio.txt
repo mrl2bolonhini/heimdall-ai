@@ -1,6 +1,6 @@
 Renomeação de Heimdall para Studio: plano em fases
 
-Decisões (26/11/2026): empresa StudioLibre; apps e telas Studio Health, Studio Finance, Studio Games, Studio Memory etc.; comando `studio`; variáveis STUDIO_; domínio studiolibre.io. Repositório: studiolibre/heimdall-ai (o nome do repositório ainda será renomeado na fase 2).
+Decisões (26/11/2026): empresa StudioLibre; apps e telas Studio Health, Studio Finance, Studio Games, Studio Memory etc.; comando `studio`; variáveis STUDIO_; domínio studiolibre.io. Repositório: studiolibre/StudioApps (o nome do repositório ainda será renomeado na fase 2).
 
 Princípio: nada que roda hoje no Mac pode quebrar. Cada fase se desliga ou volta atrás, e o nome antigo continua funcionando como alternativa durante a transição.
 
@@ -11,7 +11,7 @@ Fase 3 (código), em blocos pequenos com testes a cada bloco:
  Bloco 3, comando (feito em 26/11/2026): `studio` é a função principal do heimdall.zsh e o comando antigo `heimdall` foi removido em 26/11/2026; ajuda, documentação e testes usam `studio`. STUDIO_DIR vale como alternativa a STUDIO_DIR.
  Bloco 2, variáveis STUDIO_* (feito em 26/11/2026, por compatibilidade): o .env aceita STUDIO_X com o mesmo efeito de STUDIO_X (se as duas existem, vale STUDIO_X). No shell, scripts/studio_env.sh (chamado pelo subir.sh, start_heimdall.sh e start_ecosystem.sh depois do source do .env); no Python, heimdall_envcompat.py nos carregadores de .env e no Ajustes (heimdall_config). O .env do usuário não é reescrito e STUDIO_X continua valendo. Fica para a fase 4: o Docker (Paperless) que lê o .env direto, os nomes combinados com o Worker e o GitHub Actions (CLOUD_SENHA_HASH, TOTP_SEGREDO, CFACCESS_*, R2_*, portas, CONTINUIDADE_*), com o novo deploy do Worker.
  Blocos 4 e 5, módulos, arquivos e pastas de dados (adiados de propósito para depois da fase 4): heimdall_*.py, start_heimdall.sh, macapp/Heimdall.swift e as pastas do Mac. Renomear mexe nos LaunchAgents e nos dados do Mac e não é visível ao usuário; será feito com migração automática, reinstalação dos LaunchAgents e nomes antigos como redirecionadores, junto com a mudança da pasta ~/studioapps.
-Fase 4 (Cloudflare, com limite de gasto e plano de volta): subdomínios em studiolibre.io (health, finance, games, memory etc.); os endereços de heimdall-ai.tech redirecionam; túnel, aplicativos do Access, roteamento de e-mail (suporte@), bucket do R2 e Workers; deploy da continuidade.
+Fase 4 (Cloudflare, com limite de gasto e plano de volta): subdomínios em studiolibre.io (health, finance, games, memory etc.); os endereços de studiolibre.io redirecionam; túnel, aplicativos do Access, roteamento de e-mail (suporte@), bucket do R2 e Workers; deploy da continuidade.
 Fase 5: página Marca, CHANGELOG, CLAUDE.md e guias; mensagem de despedida do nome antigo.
 
 Fora do escopo desta renomeação: logomarca e cores (decisão de design à parte); consulta ao INPI (com o usuário).

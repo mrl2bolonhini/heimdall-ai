@@ -371,7 +371,7 @@ PADROES_COMMIT = [
     ("caminho pessoal", "media", re.compile(r"/Users/" + _HOME)),
     ("rede privada", "media", re.compile(r"\b(?:192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|"
                                           r"100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}|[\w-]+\.ts\.net)\b")),
-    ("e-mail", "media", re.compile(r"[\w.+-]{2,}@(?!heimdall-ai\.tech)[\w-]+\.[\w.]+")),
+    ("e-mail", "media", re.compile(r"[\w.+-]{2,}@(?!studiolibre\.io)[\w-]+\.[\w.]+")),
 ]
 _ARQ_SENSIVEL = re.compile(r"(^|/)(\.env(\.[a-z]+)?|[^/]*\.(pem|p12|pfx|key|db|sqlite3?)|id_rsa[^/]*|[^/]*credentials[^/]*|(backups|banco)/[^/]+)$")
 

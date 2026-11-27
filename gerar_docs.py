@@ -21,7 +21,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 DOCS = AQUI / "docs"
-DOMINIO = "heimdall-ai.tech"
+DOMINIO = "studiolibre.io"
 AUTOR = "Murillo Bolonhini Cita"
 GH_USUARIO = "studiolibre"
 H = lambda s: html.escape(str(s), quote=True)
@@ -345,7 +345,7 @@ SCRIPTS = [
     ("tests/core/teste_diagnostico.py", "Teste do diagnóstico: análise dos textos do macOS sem depender do Mac."),
     ("tests/design/teste_design.py", "Teste do Studio Design: falha se um link de painel tiver texto de ação, se algum contraste de cor ficar abaixo do mínimo, se o foco for removido ou houver cor solta fora do Studio Design."),
     ("heimdall_paginacao.py", "Paginação em botões usada pelo Studio News, Notas e Finance: Página anterior, números de página com a atual marcada, Próxima página e Última página, em um formulário GET que mantém o tema, a categoria ou a busca."),
-    ("heimdall_jogos.py", "Studio Games (porta 8014): entrega os jogos da pasta games/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Lab, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.heimdall-ai.tech."),
+    ("heimdall_jogos.py", "Studio Games (porta 8014): entrega os jogos da pasta games/ (JavaScript sem dependências; as aventuras usam o motor.js e histórias em dados hist_*.js) atrás do mesmo login do Lab, com política de conteúdo que só deixa rodar script do próprio site. Endereço de fora: games.studiolibre.io."),
     ("financas_planilhas.py", "Planilhas do Finance: lê xlsx (sem biblioteca externa) e csv, descobre o tipo (gastos, investimentos, empréstimos, outros) e o papel de cada coluna por palavras do cabeçalho e, na dúvida, pelo modelo de linguagem (só o cabeçalho e 5 linhas; STUDIO_FINANCE_PLANILHAS_NUVEM=0 mantém no modelo local), grava as linhas em conjuntos sem duplicar, aprende o layout pela assinatura dos cabeçalhos para os próximos arquivos, guarda dúvidas com o arquivo e pergunta ao usuário, e mantém as visões gravadas (colunas, ordem, ordenação, filtro, agrupamento com soma). Gastos também alimentam as transações."),
     ("heimdall_finance_planilhas.py", "Páginas do Finance para Planilhas (importação, dúvidas, conjuntos), Investimentos, Empréstimos e Visões (personalizar colunas com botões de mover, tirar e incluir). Ações em formulários POST com token."),
     ("tests/finance/teste_planilhas.py", "Teste das planilhas do Finance: xlsx montado à mão, datas e porcentagens do Excel, classificação, aprendizado do layout, dúvidas, modelo simulado, visões e pasta de entrada. Sem rede."),
@@ -353,11 +353,11 @@ SCRIPTS = [
     ("financas_pluggy_dados.py", "Tudo o que o Pluggy entrega além das transações: contas e cartões (saldo, limite, fechamento), faturas, investimentos, movimentações de investimentos e empréstimos e financiamentos, em conjuntos com foto diária (histórico de saldos e posições). Nenhuma coluna é descartada; a identidade (CPF, endereço) fica de fora de propósito. Falha de produto não atrapalha as transações."),
     ("tests/finance/teste_finance_pluggy_dados.py", "Teste da coleta extra do Pluggy com API simulada, das categorias de crédito (veículo, imóvel, consignado, pessoal) e das abas que os dados criam."),
     ("tests/finance/teste_finance_planilhas.py", "Teste das páginas de planilhas, investimentos, empréstimos e visões com o servidor do Finance temporário."),
-    ("heimdall_finance.py", "Studio Finance (porta 8016): painel web das finanças (resumo do mês, transações, tendências, importação, regras) atrás do mesmo login do Lab, com CSRF em todo envio e política de conteúdo sem script. Endereço de fora: finance.heimdall-ai.tech."),
+    ("heimdall_finance.py", "Studio Finance (porta 8016): painel web das finanças (resumo do mês, transações, tendências, importação, regras) atrás do mesmo login do Lab, com CSRF em todo envio e política de conteúdo sem script. Endereço de fora: finance.studiolibre.io."),
     ("financas_nucleo.py", "Núcleo do Studio Finance: banco SQLite local, leitura de extratos OFX e CSV (formatos e valores brasileiros), deduplicação, categorias por regras (as suas vencem as padrão) e relatórios de resumo e tendências. Sem internet."),
     ("financas_arquivos.py", "Arquivos do Studio Finance: leitura de PDF de extrato e fatura (texto extraído por pypdf ou pdftotext e lido por linhas de data, descrição e valor, com conferência do total do documento), identificação do banco e do tipo, inspeção anônima do layout (letras viram x, números viram 9) e a pasta de entrada vigiada. Sem internet."),
     ("financas_cli.py", "Comandos de terminal do Finance para arquivos: --inspect, --explain, --preview, --import, --inbox e --folder (studio finance ...)."),
-    ("heimdall_controls.py", "Controls (porta 8017): terminal completo e acessível no navegador e painel de serviços. Só o dono entra; cada comando é anotado em logs/controls_audit.log, sem a saída. Endereço de fora: controls.heimdall-ai.tech."),
+    ("heimdall_controls.py", "Controls (porta 8017): terminal completo e acessível no navegador e painel de serviços. Só o dono entra; cada comando é anotado em logs/controls_audit.log, sem a saída. Endereço de fora: controls.studiolibre.io."),
     ("heimdall_shell.py", "Shell persistente do Controls num pseudoterminal: a pasta e as variáveis continuam entre comandos, a saída vem limpa de cores e códigos de tela, e cada comando é um bloco com estado e código de saída."),
     ("heimdall_servicos.py", "Catálogo dos serviços do StudioLibre e o liga e desliga de cada um (usado pela aba Serviços do Controls); lembra o que foi desligado em .heimdall_desligados.json e um vigia mantém desligado."),
     ("heimdall_config.py", "Lê, grava e remove valores do .env (NOME='valor', permissão 600, cópia em .env.bak) e lista as opções HEIMDALL_* que o código aceita; usado pela aba Ajustes do Controls."),
@@ -382,7 +382,7 @@ SCRIPTS = [
     ("tests/agent/teste_avisos_mac.py", "Testa os avisos nativos do Mac: fila local com permissões, texto completo só no Mac, Bark genérico, interruptor."),
     ("tests/core/teste_links.py", "Testa o endereço dos produtos nas notificações: domínio base, hosts do .env, interruptor, Bark e aviso do Mac."),
     ("tests/core/teste_avisos.py", "Testa os avisos: gravar, lido, HTML do texto nunca interpretado, rota /avisos/gravar do agente, pastas de saúde e finanças desviadas do Notas e Bark sem dados sensíveis."),
-    ("heimdall_account.py", "Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa, com link, o que faz e como configurar, página de Integrações (/integracoes, com ações POST) e /quem.json, que o site usa para mostrar Entrar ou o nome e os serviços de quem entrou. Só atende quem o Cloudflare Access aprovou."),
+    ("heimdall_account.py", "Account (account.studiolibre.io): tour dos serviços de cada pessoa, com link, o que faz e como configurar, página de Integrações (/integracoes, com ações POST) e /quem.json, que o site usa para mostrar Entrar ou o nome e os serviços de quem entrou. Só atende quem o Cloudflare Access aprovou."),
     ("heimdall_saude_diaria.py", "Métricas diárias de saúde (passos, energia, sono, frequência em repouso, HRV, oxigênio...) a partir do corpo do Health Auto Export, para o caminho da caixa de correio; soma as horas já recebidas para o total do dia nunca diminuir."),
     ("heimdall_atalhos.py", "Conversor do que o Atalho do iPhone envia (amostras de saúde, formato versão 1) para o formato do Health Auto Export."),
     ("tests/health/teste_saude_pessoas.py", "Testa a saúde por pessoa: banco separado, métricas diárias, conversor do Atalho e importação pela caixa."),
@@ -398,7 +398,7 @@ SCRIPTS = [
     ("tests/controls/teste_servicos.py", "Testa o catálogo, o liga e desliga de verdade de um processo de teste, o vigia e a leitura do Kuma."),
     ("tests/controls/teste_controls.py", "Testa o Controls: login só do dono, CSRF, terminal persistente, cópia das últimas saídas, auditoria e acessibilidade."),
     ("tests/controls/teste_controls_navegador.py", "Testa o terminal do Controls num Chrome de verdade (Playwright): saída no próprio campo, resposta a programas, atalhos de teclado. Pula se não houver Playwright ou Chrome."),
-    ("heimdall_painel_saude.py", "Studio Health (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Lab (senha e código de 6 dígitos). Endereço de fora: health.heimdall-ai.tech."),
+    ("heimdall_painel_saude.py", "Studio Health (porta 8013): painel web somente de leitura com as análises do heimdall_saude.py, em páginas de texto e tabelas para leitor de tela, e o estado dos dados. Mesmo login do Lab (senha e código de 6 dígitos). Endereço de fora: health.studiolibre.io."),
     ("heimdall_voz.py", "Dicionário de pronúncia: troca palavras por uma grafia que a voz do macOS lê certo (por exemplo, StudioLibre vira Háimdal), no anúncio falado do subir.sh e no áudio das notas. Aceita --importar arquivo.csv para trazer as pronúncias do VoiceOver."),
     ("pronuncias.txt", "Pronúncias que vêm com o projeto, uma por linha no formato palavra = como falar. As suas ficam em pronuncias.local.txt, que não vai para o GitHub."),
     ("heimdall_alertas.py", "Alertas do monitor (saúde, e-mail oficial, diários, privacidade, segurança): registram-se uma vez por origem e viram aviso (aba Avisos do Studio Health, notificação do Mac e Bark genérico), nunca lembrete."),
@@ -413,7 +413,7 @@ SCRIPTS = [
     ("tests/health/teste_exames_agente.py", "Testa o envio de documentos pelo agente (código, tipo, tamanho, duplicado, aviso)."),
     ("importar_saude_n8n.py", "Copia para o banco pessoal o histórico de saúde que já estava guardado dentro do n8n. Pode rodar de novo sem duplicar."),
     ("heimdall_continuidade.py", "Continuidade na nuvem: cópia cifrada (AES-256-GCM, feita no Mac) dos bancos para o R2, só do que mudou, e restauração conferida por soma dentro do contêiner; interruptor STUDIO_CONTINUIDADE; o agente do Mac repete o envio sozinho (HEIMDALL_CONTINUIDADE_INTERVALO_MIN). Em modo continuidade os sites não rodam coletores nem vigias."),
-    ("cloudflare/continuity/worker.js", "Worker de entrada da continuidade: repassa ao Mac e, se o túnel está fora, liga o contêiner (Cloudflare Containers) em modo somente leitura, com aviso e data da cópia; interruptor CONTINUIDADE. Também mostra a página de fora do ar do chat, do Lab e dos fluxos, e a página de controle da nuvem em controls.heimdall-ai.tech/continuidade (exige o Access e confere a assinatura do token), com pausa, retomada do failover, consumo do mês e avisos da Cloudflare (token só de leitura, fora do contêiner)."),
+    ("cloudflare/continuity/worker.js", "Worker de entrada da continuidade: repassa ao Mac e, se o túnel está fora, liga o contêiner (Cloudflare Containers) em modo somente leitura, com aviso e data da cópia; interruptor CONTINUIDADE. Também mostra a página de fora do ar do chat, do Lab e dos fluxos, e a página de controle da nuvem em controls.studiolibre.io/continuidade (exige o Access e confere a assinatura do token), com pausa, retomada do failover, consumo do mês e avisos da Cloudflare (token só de leitura, fora do contêiner)."),
     ("cloudflare/continuity/entrada.py", "Ponto de entrada do contêiner: restaura a última cópia, sobe os sites que não dependem do Mac e responde /health."),
     ("cloudflare/continuity/Dockerfile", "Imagem do contêiner de continuidade (Python 3.12, linux/amd64) com o código do StudioLibre; o .dockerignore da raiz deixa de fora tudo, menos o código e os arquivos estáticos (nunca dados, bancos nem segredos)."),
     ("cloudflare/continuity/wrangler.jsonc", "Configuração do Worker de continuidade: rotas dos sites, Durable Object, contêiner de uma instância (teto de custo). Não implantar sem os limites de gasto."),
@@ -720,7 +720,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Cinco serviços web leem o banco e os arquivos do Mac: Lab (8010), News (8012), Saúde (8013) e Jogos (8014, que não lê nada, só entrega os jogos) e Finance (8016, com banco próprio só das suas finanças). Todos escutam só em 127.0.0.1, têm o mesmo login (senha e código de 6 dígitos) e chegam de fora pelo túnel Cloudflare.</li>
 <li>Aos domingos, às 9h, o n8n pede o relatório da semana: ele vira nota com áudio e um aviso no Bark sem números.</li></ol></section>
 <section aria-labelledby="cfarq"><h2 id="cfarq">Serviços da Cloudflare</h2>
-<ol><li><strong>Túnel</strong> leva os endereços .heimdall-ai.tech até o Mac, sem abrir portas.</li>
+<ol><li><strong>Túnel</strong> leva os endereços .studiolibre.io até o Mac, sem abrir portas.</li>
 <li><strong>Vigia</strong> (Worker com cron de 5 em 5 minutos) confere de fora de casa se os serviços respondem e avisa por e-mail quando algo cai ou volta. A Cloudflare também avisa quando o túnel cai.</li>
 <li><strong>Caixa de entrada da saúde</strong> (Worker com KV) guarda os envios do Health Auto Export quando o Mac está fora e os reenvia depois.</li>
 <li><strong>Email Routing</strong> encaminha o e-mail de suporte do domínio.</li>
@@ -872,7 +872,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <h1>Lab</h1>
 <p>O Studio Lab é um painel web para usar o emulador de AWS (LocalStack, com o Moto como alternativa) pelo navegador. Serve para estudar engenharia de dados na AWS sem custo e sem depender de um console visual: as páginas são texto, títulos, tabelas e formulários simples, boas para leitor de tela.</p>
 <section aria-labelledby="entrar"><h2 id="entrar">Como entrar</h2>
-<ol><li>Endereço: <a href="https://lab.heimdall-ai.tech">lab.heimdall-ai.tech</a>. É de uso pessoal, não é aberto ao público.</li>
+<ol><li>Endereço: <a href="https://lab.studiolibre.io">lab.studiolibre.io</a>. É de uso pessoal, não é aberto ao público.</li>
 <li>A entrada pede uma senha forte e um código de 6 dígitos, que o aplicativo Senhas da Apple gera e troca a cada 30 segundos.</li>
 <li>O painel só responde com o computador ligado e o sistema rodando. No próprio computador, o endereço é http://localhost:8010.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que dá para fazer</h2>
@@ -892,7 +892,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <li>Entrada com senha (guardada só como hash PBKDF2) e código de 6 dígitos (TOTP), que não pode ser reaproveitado.</li>
 <li>Limite de tentativas por endereço e global, com bloqueio de 15 minutos.</li>
 <li>Sessão em cookie HttpOnly e SameSite=Strict, com validade, e token contra CSRF nos formulários.</li>
-<li>A sessão é única para Lab, Notas, News e Saúde: entrando em um, os outros três já reconhecem você (o cookie vale para *.heimdall-ai.tech e é assinado com uma chave que sai da senha e da chave do código). Sair em um sai em todos; trocar a senha ou o código derruba todas as sessões. Em localhost a sessão fica só no endereço aberto.</li>
+<li>A sessão é única para Lab, Notas, News e Saúde: entrando em um, os outros três já reconhecem você (o cookie vale para *.studiolibre.io e é assinado com uma chave que sai da senha e da chave do código). Sair em um sai em todos; trocar a senha ou o código derruba todas as sessões. Em localhost a sessão fica só no endereço aberto.</li>
 <li>Só atende os nomes de site permitidos, manda cabeçalhos de segurança e entrega os arquivos baixados sempre como anexo.</li>
 <li>Executar funções Lambda dá ao emulador controle do Docker do computador. Por isso a entrada tem duas camadas, e a execução pode ser desligada com <code>STUDIO_LOCALSTACK_DOCKER=0</code>.</li></ul></section>
 <section aria-labelledby="config"><h2 id="config">Configuração</h2>
@@ -909,7 +909,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8012, depois de subir o sistema.</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do painel Lab.</li>
-<li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.heimdall-ai.tech. O endereço já existe no túnel; o site continua privado, pois exige a senha e o código de 6 dígitos.</li></ol></section>
+<li>Para abrir de fora de casa, o site pode ganhar um endereço próprio pelo túnel Cloudflare, em news.studiolibre.io. O endereço já existe no túnel; o site continua privado, pois exige a senha e o código de 6 dígitos.</li></ol></section>
 <section aria-labelledby="fazer"><h2 id="fazer">O que mostra</h2>
 <ul><li><strong>Últimas 24 horas</strong>, da mais nova para a mais antiga, 10 por página, com paginação em botões (Página anterior, números com a atual marcada, Próxima página e Última página).</li>
 <li><strong>Cada notícia</strong>: título como cabeçalho, o resumo sempre marcado como "Resumo feito por IA", o link "Leia mais sobre ..." para a matéria original, que abre em uma nova aba (o leitor de tela avisa), e a fonte, a categoria e a hora.</li>
@@ -951,7 +951,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <p>Jogos leves para jogar no navegador, pensados para leitor de tela. Tudo é botão, campo de texto ou lista, e cada jogada é descrita em voz alta por uma região aria-live. O servidor não guarda nada: só entrega as páginas.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: <code>studio games</code> abre o endereço público pelo Cloudflare Access; <code>studio games --local</code> (ou <code>-L</code>) abre http://localhost:8014 direto neste Mac, depois de subir o sistema.</li>
-<li>De fora de casa: games.heimdall-ai.tech, pelo túnel Cloudflare (veja Colocar no ar, abaixo).</li>
+<li>De fora de casa: games.studiolibre.io, pelo túnel Cloudflare (veja Colocar no ar, abaixo).</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Lab, do Notas, do News e do Saúde.</li></ol></section>
 <section aria-labelledby="lista"><h2 id="lista">Os jogos</h2>
 <p>As categorias são as abas do Games, em ordem alfabética (cinco, com nome de uma palavra: Ação, Aventuras, Cassino, Estratégia e Lógica; se há jogos extras de terceiros no .env, são 6 itens e o menu Mais, na quinta posição, guarda Lógica e Extras: nunca passa de 5 posições; as rotas antigas, como /categoria/cartas e /outros, redirecionam para as atuais). A página inicial é a primeira aba, com a lista de jogos de cada categoria. Num jogo, a aba da categoria dele fica marcada e trocar de aba carrega a página inteira, para o jogo não deixar teclas ou sons para trás: Ação (arqueiro, labirinto, vilarejo), Aventuras (as aventuras de texto, com a Travessia das Três Provas), Cassino (poker, caça-níqueis, blackjack, roleta, bacará e poker caribenho), Estratégia (xadrez, batalha naval, sonar, jogo da velha, campo minado, gramado) e Lógica (forca, cinco letras, senha, número secreto, sudoku, 2048 e paciência).</p>
@@ -997,7 +997,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
 <ol><li>Atualize e reinicie: <code>studio update --restart</code>. O servidor sobe sozinho quando há senha e código no .env.</li>
 <li>Conferir: <code>curl -s http://localhost:8014/saude</code> deve responder ok.</li>
-<li>Para acessar de fora, no painel da Cloudflare (Zero Trust, Redes, Túneis, o seu túnel, Public Hostnames), adicione o nome games.heimdall-ai.tech apontando para o serviço HTTP localhost:8014. O DNS é criado junto.</li>
+<li>Para acessar de fora, no painel da Cloudflare (Zero Trust, Redes, Túneis, o seu túnel, Public Hostnames), adicione o nome games.studiolibre.io apontando para o serviço HTTP localhost:8014. O DNS é criado junto.</li>
 <li>Se algo falhar: <code>studio logs --service games</code></li></ol></section>
 <section aria-labelledby="mais"><h2 id="mais">Extras de terceiros</h2>
 <p>O portal também lista, no item Extras do menu Mais, jogos de terceiros que você hospeda à parte. Para listar um jogo hospedado por você, e só se ele tiver versão em português ou permitir tradução, ponha-o em STUDIO_JOGOS_EXTRAS no .env, no formato Nome|endereço|descrição, separados por ponto e vírgula, e reinicie. Só endereços http e https são aceitos.</p></section>
@@ -1011,7 +1011,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <p>Suas finanças em páginas de texto e tabelas, feitas para leitor de tela. Você importa os extratos do banco e as faturas do cartão; o painel classifica os gastos por categoria, mostra o resumo do mês, compara com o mês anterior, lista os maiores gastos e avisa quando uma categoria dispara. Nada é lido de bancos por conta própria: os dados entram por arquivo (OFX, CSV ou PDF), pelo formulário ou soltos numa pasta vigiada.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: <code>studio finance</code> (http://localhost:8016), depois de subir o sistema.</li>
-<li>De fora de casa: finance.heimdall-ai.tech, pelo túnel Cloudflare.</li>
+<li>De fora de casa: finance.studiolibre.io, pelo túnel Cloudflare.</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Lab, ou a aprovação no Microsoft Authenticator, se você ligar o Cloudflare Access.</li></ol></section>
 <section aria-labelledby="usar"><h2 id="usar">Como usar</h2>
 <ol><li><strong>Importar:</strong> na página Importar extrato, escolha o arquivo (OFX, CSV com colunas de data, descrição e valor, ou PDF de extrato ou de fatura). O banco (Nubank, Itaú, Mercado Pago) e o tipo (conta ou cartão) são identificados pelo conteúdo e pelo nome do arquivo; deixe o nome da conta em branco para usar o que foi identificado (por exemplo "Nubank cartão") ou digite o seu. Importar o mesmo arquivo de novo não duplica nada. Em CSV de cartão em que os gastos vêm positivos, marque a opção de inverter (o CSV de fatura do Nubank no formato date, category, title, amount já é reconhecido sozinho).</li>
@@ -1036,7 +1036,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
 <ol><li>Atualize e reinicie: <code>studio update --restart</code>. O servidor sobe sozinho quando há senha e código no .env, e não precisa de instalador.</li>
 <li>Conferir: <code>curl -s http://localhost:8016/saude</code> deve responder ok.</li>
-<li>De fora de casa, o nome finance.heimdall-ai.tech já existe no túnel (aponta para localhost:8016, com o DNS), então responde assim que o serviço estiver no ar.</li>
+<li>De fora de casa, o nome finance.studiolibre.io já existe no túnel (aponta para localhost:8016, com o DNS), então responde assim que o serviço estiver no ar.</li>
 <li>Se algo falhar: <code>studio logs --service finance</code></li></ol></section>
 <section aria-labelledby="seg"><h2 id="seg">Privacidade e segurança</h2>
 <ul><li>Os dados ficam em um banco SQLite na pasta finance do projeto (permissão só do seu usuário), fora do git e fora dos backups da nuvem. Nada é enviado para a internet, para a Cloudflare ou para modelo de fora.</li>
@@ -1049,7 +1049,7 @@ def gerar_paginas(ferr, modelos, mcp, fluxos):
 <p>O Studio Health guarda os dados do app Saúde do iPhone e do Apple Watch no banco pessoal do Mac, analisa e mostra em um painel de texto e tabelas feito para leitor de tela. Não é diagnóstico: são números e comparações com a sua própria média.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: http://localhost:8013, depois de subir o sistema.</li>
-<li>De fora de casa: health.heimdall-ai.tech, pelo túnel Cloudflare.</li>
+<li>De fora de casa: health.studiolibre.io, pelo túnel Cloudflare.</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Lab, do Notas e do News. O painel é somente de leitura.</li></ol></section>
 <section aria-labelledby="dados"><h2 id="dados">De onde vêm os dados</h2>
 <ol><li><strong>Importação do histórico:</strong> exporte o app Saúde (export.zip) e rode <code>python3 heimdall_saude.py --importar ~/Downloads/export.zip</code>. Pode repetir sem duplicar.</li>

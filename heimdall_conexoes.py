@@ -94,7 +94,7 @@ def configurados(grupo: str = "") -> list:
 
 
 def url_retorno() -> str:
-    return (os.environ.get("STUDIO_HUB_URL") or os.environ.get("STUDIO_HUB_URL") or "https://memory.heimdall-ai.tech").rstrip("/") + "/nuvem/retorno"
+    return (os.environ.get("STUDIO_HUB_URL") or os.environ.get("STUDIO_HUB_URL") or "https://hub.studiolibre.io").rstrip("/") + "/nuvem/retorno"
 
 
 def _aead():

@@ -3,7 +3,7 @@ LEARN: PLATAFORMA DE ESTUDOS DO HEIMDALL (ESPECIFICAÇÃO, 22/11/2026)
 Este é o desenho combinado em conversa. Nada aqui está construído ainda. Cada fase, quando entrar, atualiza gerar_docs.py, README, guides/heimdall_ajuda.txt e CHANGELOG.md, e tem interruptor no .env (STUDIO_LEARN=0 devolve o comportamento anterior).
 
 O QUE É
-  Um site novo, no padrão dos outros (Studio Design, leitor de tela, teclado), com acesso próprio, como learn.heimdall-ai.tech. Reúne tudo que hoje é estudo e nota: os temas de knowledge/, os estudos das 6h, 13h e 20h, as notas e a leitura em áudio. O modelo Notes do chat vira o modelo Learn quando o serviço existir; ele consulta as pastas, as lições e o progresso.
+  Um site novo, no padrão dos outros (Studio Design, leitor de tela, teclado), com acesso próprio, como learn.studiolibre.io. Reúne tudo que hoje é estudo e nota: os temas de knowledge/, os estudos das 6h, 13h e 20h, as notas e a leitura em áudio. O modelo Notes do chat vira o modelo Learn quando o serviço existir; ele consulta as pastas, as lições e o progresso.
 
 PASTAS E CATEGORIAS
   1. Pastas e subpastas dentro de knowledge/, criadas e preenchidas pela plataforma (criar pasta, importar documentos), sem mexer no Finder.

@@ -3,7 +3,7 @@ Entrar no Open WebUI e no Uptime Kuma sem senha (pelo Cloudflare Access)
 Depois de passar pelo Access (Microsoft ou código por e-mail), o Open WebUI e o Kuma deixam de pedir usuário e senha.
 
 Open WebUI
-1. Confira que o Cloudflare Access protege o endereço público do chat (chat.heimdall-ai.tech): studio chat --check. A resposta tem de dizer que manda entrar pelo Cloudflare Access.
+1. Confira que o Cloudflare Access protege o endereço público do chat (chat.studiolibre.io): studio chat --check. A resposta tem de dizer que manda entrar pelo Cloudflare Access.
 2. Ponha no .env: STUDIO_WEBUI_ACCESS='1'. Se o endereço do chat for outro, também STUDIO_WEBUI_HOST='endereço'.
 3. Rode studio restart. O start_heimdall.sh refaz a checagem e só liga o modo se o Access estiver na frente. Se não estiver, avisa e deixa o login por senha como estava.
 4. Entre pelo endereço público. O Open WebUI cria ou reconhece o usuário pelo e-mail que o Access informa. Para manter o seu histórico, o e-mail do Access tem de ser o mesmo da sua conta atual no Open WebUI. Quem entrar primeiro, se não houver conta nenhuma, vira administrador; as demais contas novas ficam pendentes até você aprovar.
@@ -18,11 +18,11 @@ Para voltar atrás, ligue o login de novo em Settings, Security.
 
 Não é possível desligar o login do Kuma sem a senha atual: é uma proteção do próprio Kuma.
 
-Webhook de saúde do n8n (flows.heimdall-ai.tech)
-O Health Auto Export do iPhone e o Worker "heimdall-saude-caixa" mandam os dados de saúde para flows.heimdall-ai.tech/webhook/heimdall-saude, sem login. Com o Access na frente de flows.heimdall-ai.tech, esse caminho precisa de um aplicativo próprio com política Bypass (Todos), só para ele, como o do RSS do News. A proteção ali é o token do fluxo (cabeçalho X-Heimdall-Saude). Sem isso os envios batem na tela de login do Access e os dados não chegam.
+Webhook de saúde do n8n (flows.studiolibre.io)
+O Health Auto Export do iPhone e o Worker "heimdall-saude-caixa" mandam os dados de saúde para flows.studiolibre.io/webhook/heimdall-saude, sem login. Com o Access na frente de flows.studiolibre.io, esse caminho precisa de um aplicativo próprio com política Bypass (Todos), só para ele, como o do RSS do News. A proteção ali é o token do fluxo (cabeçalho X-Heimdall-Saude). Sem isso os envios batem na tela de login do Access e os dados não chegam.
 
 Teste do webhook de saúde (um GET dá 404 porque o n8n só aceita POST; isso é normal e mostra que o Access não está na frente).
-Com o token lido do .env, sem mostrá-lo: curl -s -o /dev/null -w '%{http_code}\n' -X POST -H "X-Heimdall-Saude: $(grep '^STUDIO_SAUDE_TOKEN=' .env | cut -d= -f2- | tr -d "'")" -H 'Content-Type: application/json' -d '{"data":{"metrics":[]}}' https://flows.heimdall-ai.tech/webhook/heimdall-saude
+Com o token lido do .env, sem mostrá-lo: curl -s -o /dev/null -w '%{http_code}\n' -X POST -H "X-Heimdall-Saude: $(grep '^STUDIO_SAUDE_TOKEN=' .env | cut -d= -f2- | tr -d "'")" -H 'Content-Type: application/json' -d '{"data":{"metrics":[]}}' https://flows.studiolibre.io/webhook/heimdall-saude
 Resposta 200 = chegou ao fluxo; 401 ou 403 do fluxo = o token não confere; 302 = o Access ainda está na frente; 404 de novo = fluxo desativado no n8n.
 
 Trocar o e-mail da conta do Open WebUI sem apagar o volume: studio chat --email novo@email (ou -e). Ele guarda uma cópia em backups/.

@@ -61,7 +61,7 @@ diff --git a/x.py b/x.py
 +caminho = "/Users/%s/heimdall-ai"
 +ip = "192.168.0.15"
 +token = os.environ.get("TOKEN_DA_API_AQUI_12345")
-+contato = "suporte@heimdall-ai.tech"
++contato = "suporte@studiolibre.io"
 +pessoal = "alguem@gmail.com"
 @@COMMIT def5678 env
 +++ b/.env

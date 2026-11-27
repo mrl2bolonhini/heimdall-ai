@@ -6,7 +6,7 @@
 <title>Jogos · Heimdall-ai</title>
 <meta name="description" content="Studio Games: jogos leves no navegador, feitos para leitor de tela, atrás do mesmo login dos outros painéis.">
 <meta name="theme-color" content="#080d1f">
-<link rel="canonical" href="https://heimdall-ai.tech/jogos.html">
+<link rel="canonical" href="https://studiolibre.io/jogos.html">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
@@ -14,8 +14,8 @@
 <meta property="og:site_name" content="StudioLibre">
 <meta property="og:title" content="Jogos · Heimdall-ai">
 <meta property="og:description" content="Studio Games: jogos leves no navegador, feitos para leitor de tela, atrás do mesmo login dos outros painéis.">
-<meta property="og:url" content="https://heimdall-ai.tech/jogos.html">
-<meta property="og:image" content="https://heimdall-ai.tech/og.png">
+<meta property="og:url" content="https://studiolibre.io/jogos.html">
+<meta property="og:image" content="https://studiolibre.io/og.png">
 <meta property="og:image:alt" content="StudioLibre: uma ponte em arco de seis faixas azuis e douradas com um olho no centro.">
 <meta name="twitter:card" content="summary_large_image">
 <script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
@@ -27,7 +27,7 @@
 <a class="marca" href="index.html" aria-label="StudioLibre, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>StudioLibre</span></a>
 <span class="gap"></span>
 <nav class="menu" aria-label="Páginas do site"><ul><li><a href="index.html">Início</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="tecnologias.html">Tecnologias</a></li><li><a href="llms.html">Modelos</a></li><li><a href="mcp.html">Ferramentas</a></li><li><a href="fluxos.html">Fluxos</a></li><li><a href="news.html">News</a></li><li><a href="saude.html">Health</a></li><li><a href="jogos.html" aria-current="page">Games</a></li><li><a href="finance.html">Finance</a></li><li><a href="lab.html">Lab</a></li><li><a href="comandos.html">Comandos</a></li><li><a href="comando-heimdall.html">Comando heimdall</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="design.html">Design</a></li></ul></nav>
-<div class="ferram"><div class="conta-site" id="conta-site" data-url="https://account.heimdall-ai.tech/"><a href="https://account.heimdall-ai.tech/">Entrar no StudioLibre</a></div><button type="button" id="tema">Tema escuro</button></div>
+<div class="ferram"><div class="conta-site" id="conta-site" data-url="https://account.studiolibre.io/"><a href="https://account.studiolibre.io/">Entrar no StudioLibre</a></div><button type="button" id="tema">Tema escuro</button></div>
 </div></div></header>
 <main id="conteudo" tabindex="-1"><div class="wrap">
 <div class="doc"><div>
@@ -35,7 +35,7 @@
 <p>Jogos leves para jogar no navegador, pensados para leitor de tela. Tudo é botão, campo de texto ou lista, e cada jogada é descrita em voz alta por uma região aria-live. O servidor não guarda nada: só entrega as páginas.</p>
 <section aria-labelledby="abrir"><h2 id="abrir">Como abrir</h2>
 <ol><li>No próprio computador: <code>studio games</code> abre o endereço público pelo Cloudflare Access; <code>studio games --local</code> (ou <code>-L</code>) abre http://localhost:8014 direto neste Mac, depois de subir o sistema.</li>
-<li>De fora de casa: games.heimdall-ai.tech, pelo túnel Cloudflare (veja Colocar no ar, abaixo).</li>
+<li>De fora de casa: games.studiolibre.io, pelo túnel Cloudflare (veja Colocar no ar, abaixo).</li>
 <li>A entrada usa a mesma senha e o mesmo código de 6 dígitos do Lab, do Notas, do News e do Saúde.</li></ol></section>
 <section aria-labelledby="lista"><h2 id="lista">Os jogos</h2>
 <p>As categorias são as abas do Games, em ordem alfabética (cinco, com nome de uma palavra: Ação, Aventuras, Cassino, Estratégia e Lógica; se há jogos extras de terceiros no .env, são 6 itens e o menu Mais, na quinta posição, guarda Lógica e Extras: nunca passa de 5 posições; as rotas antigas, como /categoria/cartas e /outros, redirecionam para as atuais). A página inicial é a primeira aba, com a lista de jogos de cada categoria. Num jogo, a aba da categoria dele fica marcada e trocar de aba carrega a página inteira, para o jogo não deixar teclas ou sons para trás: Ação (arqueiro, labirinto, vilarejo), Aventuras (as aventuras de texto, com a Travessia das Três Provas), Cassino (poker, caça-níqueis, blackjack, roleta, bacará e poker caribenho), Estratégia (xadrez, batalha naval, sonar, jogo da velha, campo minado, gramado) e Lógica (forca, cinco letras, senha, número secreto, sudoku, 2048 e paciência).</p>
@@ -81,7 +81,7 @@
 <section aria-labelledby="no-ar"><h2 id="no-ar">Colocar no ar</h2>
 <ol><li>Atualize e reinicie: <code>studio update --restart</code>. O servidor sobe sozinho quando há senha e código no .env.</li>
 <li>Conferir: <code>curl -s http://localhost:8014/saude</code> deve responder ok.</li>
-<li>Para acessar de fora, no painel da Cloudflare (Zero Trust, Redes, Túneis, o seu túnel, Public Hostnames), adicione o nome games.heimdall-ai.tech apontando para o serviço HTTP localhost:8014. O DNS é criado junto.</li>
+<li>Para acessar de fora, no painel da Cloudflare (Zero Trust, Redes, Túneis, o seu túnel, Public Hostnames), adicione o nome games.studiolibre.io apontando para o serviço HTTP localhost:8014. O DNS é criado junto.</li>
 <li>Se algo falhar: <code>studio logs --service games</code></li></ol></section>
 <section aria-labelledby="mais"><h2 id="mais">Extras de terceiros</h2>
 <p>O portal também lista, no item Extras do menu Mais, jogos de terceiros que você hospeda à parte. Para listar um jogo hospedado por você, e só se ele tiver versão em português ou permitir tradução, ponha-o em STUDIO_JOGOS_EXTRAS no .env, no formato Nome|endereço|descrição, separados por ponto e vírgula, e reinicie. Só endereços http e https são aceitos.</p></section>
@@ -93,7 +93,7 @@
 <footer><div class="wrap"><div class="linha">
 <div><a class="marca" href="index.html" aria-label="StudioLibre, página inicial"><svg class="" viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M5 46A45 45 0 0 1 95 46" fill="none" stroke="#bfe3fb" stroke-width="6"/><path d="M11.5 46A38.5 38.5 0 0 1 88.5 46" fill="none" stroke="#93d2fa" stroke-width="6"/><path d="M18 46A32 32 0 0 1 82 46" fill="none" stroke="#42a5f5" stroke-width="6"/><path d="M24.5 46A25.5 25.5 0 0 1 75.5 46" fill="none" stroke="#26c6da" stroke-width="6"/><path d="M31 46A19 19 0 0 1 69 46" fill="none" stroke="#1e88e5" stroke-width="6"/><path d="M37.5 46A12.5 12.5 0 0 1 62.5 46" fill="none" stroke="#ffc107" stroke-width="6"/><ellipse cx="50" cy="46" rx="17" ry="9" fill="var(--sclera, #ffffff)"/><g><circle cx="50" cy="46" r="6.6" fill="#ffc107"/><circle cx="50" cy="46" r="3.1" fill="var(--pupil, #0c1530)"/><circle cx="52.2" cy="43.8" r="1.1" fill="#fff" opacity=".85"/></g></svg><span>StudioLibre</span></a>
 <p>&copy; 2026 Murillo Bolonhini Cita. Todos os direitos reservados.</p><p>Documentação gerada do código do projeto.</p></div>
-<div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:suporte@heimdall-ai.tech">suporte@heimdall-ai.tech</a></li><li><a href="https://www.linkedin.com/in/murillobolonhinicita">LinkedIn de Murillo Bolonhini Cita</a></li></ul></div>
+<div><p><strong>Contato</strong></p><ul aria-label="Contato"><li><a href="mailto:suporte@studiolibre.io">suporte@studiolibre.io</a></li><li><a href="https://www.linkedin.com/in/murillobolonhinicita">LinkedIn de Murillo Bolonhini Cita</a></li></ul></div>
 <ul aria-label="Links do rodapé"><li><a href="https://github.com/studiolibre/StudioApps">Código no GitHub</a></li><li><a href="novidades.html">Novidades</a></li><li><a href="roadmap.html">Roadmap</a></li><li><a href="marca.html">Marca</a></li><li><a href="comandos.html">Comandos</a></li></ul>
 </div></div></footer>
 <p id="aviso" class="sr" role="status" aria-live="polite"></p>

@@ -15,7 +15,7 @@ globalThis.fetch = async (a, b) => {
   return new Response("ok", { status: 200 });
 };
 const env = { FILA: new KV() };
-const post = (corpo, h = {}) => new Request("https://flows.heimdall-ai.tech/webhook/heimdall-saude", { method: "POST", body: corpo, headers: { "content-type": "application/json", "x-heimdall-saude": "segredo-longo-123", ...h } });
+const post = (corpo, h = {}) => new Request("https://flows.studiolibre.io/webhook/heimdall-saude", { method: "POST", body: corpo, headers: { "content-type": "application/json", "x-heimdall-saude": "segredo-longo-123", ...h } });
 let r = await caixa.fetch(post('{"a":1}'), env);
 confere("origem fora: responde 202 e guarda", r.status === 202 && env.FILA.m.size === 1);
 origem = "530"; r = await caixa.fetch(post('{"a":2}'), env);

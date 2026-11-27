@@ -5,7 +5,7 @@ e as páginas de Termos de Uso e de Privacidade, que o rodapé de todos os servi
 Suporte: a mensagem recebe um protocolo, é gravada em db/suporte/mensagens.jsonl (permissão 600) e, se o envio de e-mail estiver configurado, segue para
 o endereço de suporte pelo Cloudflare Email Sending (POST /email/sending/send). Sem a configuração, a mensagem fica só gravada e a página diz isso.
 Variáveis no .env: STUDIO_SUPORTE_EMAIL=1 liga o envio; STUDIO_SUPORTE_DE (remetente no domínio já ativado no Email Sending) e
-STUDIO_SUPORTE_PARA (destino; padrão suporte@heimdall-ai.tech); CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID, como nos demais usos da Cloudflare.
+STUDIO_SUPORTE_PARA (destino; padrão suporte@studiolibre.io); CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID, como nos demais usos da Cloudflare.
 STUDIO_POLITICA_APROVADA=1 tira o aviso de minuta das páginas de política, depois que o texto for revisado e aprovado pelo dono.
 """
 import html
@@ -21,7 +21,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 e = html.escape
-EMAIL_SUPORTE = "suporte@heimdall-ai.tech"
+EMAIL_SUPORTE = "suporte@studiolibre.io"
 PASTA = AQUI / "db" / "suporte"
 LIMITE_POR_HORA = 5
 MAX_MENSAGEM = 4000

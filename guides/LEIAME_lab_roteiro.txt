@@ -5,7 +5,7 @@ ONDE VOCÊ PAROU
 
 1. Funcionando: o painel em http://localhost:8010 (senha e código de 6 dígitos do app Senhas) e o LocalStack saudável, com a chave nova. O Lambda está ligado por padrão.
 2. Ainda não testado: criar bucket, tabela e consulta, e executar uma função Lambda.
-3. Pendente: confirmar que https://lab.heimdall-ai.tech abre fora de casa (use o iPhone no 4G). Se o Safari disser que não achou o endereço, é cache de DNS: veja a seção de problemas, no fim.
+3. Pendente: confirmar que https://lab.studiolibre.io abre fora de casa (use o iPhone no 4G). Se o Safari disser que não achou o endereço, é cache de DNS: veja a seção de problemas, no fim.
 4. Pendente: depois da correção da voz, conferir se o próximo estudo (6h, 13h ou 20h) traz o áudio anexado na nota.
 
 ROTEIRO 1: DO ARQUIVO À CONSULTA (S3, GLUE E ATHENA)
@@ -44,7 +44,7 @@ REFERÊNCIA RÁPIDA
 
 Endereços
 1. Painel no Mac: http://localhost:8010
-2. Painel público: https://lab.heimdall-ai.tech (só funciona com o Mac ligado e o sistema rodando)
+2. Painel público: https://lab.studiolibre.io (só funciona com o Mac ligado e o sistema rodando)
 3. Emulador de AWS: http://localhost:4566 (é uma API, não uma página; chave de acesso e chave secreta: test; região: us-east-1)
 
 Comandos, na pasta do projeto
@@ -68,7 +68,7 @@ Segurança
 
 SE ALGO FALHAR
 
-1. O Safari diz que não achou o endereço de lab.heimdall-ai.tech: é cache de DNS. Teste dig +short lab.heimdall-ai.tech @1.1.1.1 (se mostrar IPs, o registro está no ar). Limpe o cache do Mac: sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder. No iPhone, ligue e desligue o Modo Avião por 5 segundos ou use o 4G.
+1. O Safari diz que não achou o endereço de lab.studiolibre.io: é cache de DNS. Teste dig +short lab.studiolibre.io @1.1.1.1 (se mostrar IPs, o registro está no ar). Limpe o cache do Mac: sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder. No iPhone, ligue e desligue o Modo Avião por 5 segundos ou use o 4G.
 2. A página inicial do painel avisa em vermelho que o emulador não respondeu: veja se o LocalStack está Up (comando 2 acima) e espere cerca de um minuto depois de subir o sistema.
 3. O LocalStack parou com "License activation failed": a chave do .env foi recusada. Gere outra em app.localstack.cloud e grave com o comando 11. Enquanto isso o sistema usa o Moto, onde Lambda, Glue e Athena são só simulados.
 4. Uma consulta do Athena falha: a mensagem aparece na própria página. Confira se o banco escolhido é o certo, se a tabela existe e se o arquivo está na pasta do S3 indicada na tabela.

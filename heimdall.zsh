@@ -53,7 +53,7 @@ _heimdall_web() {  # $1 nome, $2 chave (LAB, NEWS, SAUDE_PAINEL, JOGOS, FINANCE)
     h="${h// /}"
     case "$h" in ""|localhost|127.*|*.ts.net|[0-9]*) ;; *) host="$h"; break ;; esac
   done
-  [ -z "$host" ] && host="$sub.heimdall-ai.tech"
+  [ -z "$host" ] && host="$sub.studiolibre.io"
   echo "(Sem internet ou sem passar pelo Cloudflare: use --local, ou -L, para abrir o endereço deste Mac.)"
   _heimdall_open "$nome" "https://$host$caminho"
 }
@@ -292,7 +292,7 @@ studio() {
       case "$1" in
         "") _heimdall_open "Open WebUI (chat)" "http://localhost:3000" ;;
         --diagnose) _heimdall_sh scripts/diagnostico_chat.sh ;;
-        --check) _heimdall_py verificar_access.py "https://$(_heimdall_envval STUDIO_WEBUI_HOST chat.heimdall-ai.tech)" ;;
+        --check) _heimdall_py verificar_access.py "https://$(_heimdall_envval STUDIO_WEBUI_HOST chat.studiolibre.io)" ;;
         --password) shift; _heimdall_sh scripts/trocar_senha_webui.sh "$@" ;;
         --email) shift; _heimdall_sh scripts/trocar_email_webui.sh "$@" ;;
         --delete-user) shift; _heimdall_sh scripts/excluir_usuario_webui.sh "$@" ;;

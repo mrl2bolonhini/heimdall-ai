@@ -52,10 +52,10 @@ ok2, _ = c.gravar_padroes()
 confere("gravar padrões de novo não repete nada", ok2 == [])
 
 # ---- o Cloud virou Lab: nomes antigos do .env ----
-c.ARQUIVO.write_text("HEIMDALL_CLOUD_PORT='8010'\nHEIMDALL_CLOUD_HOSTS='cloud.heimdall-ai.tech,localhost'\nHEIMDALL_CLOUD_SENHA_HASH='x'\nHEIMDALL_CLOUD_TOTP_SEGREDO='y'\nSTUDIO_LAB_MAX_MB='9'\nHEIMDALL_CLOUD_MAX_MB='50'\n", encoding="utf-8")
+c.ARQUIVO.write_text("HEIMDALL_CLOUD_PORT='8010'\nHEIMDALL_CLOUD_HOSTS='cloud.studiolibre.io,localhost'\nHEIMDALL_CLOUD_SENHA_HASH='x'\nHEIMDALL_CLOUD_TOTP_SEGREDO='y'\nSTUDIO_LAB_MAX_MB='9'\nHEIMDALL_CLOUD_MAX_MB='50'\n", encoding="utf-8")
 trocadas = c.renomear_antigas()
 lido = {d["nome"]: d["valor"] for d in c.ler()}
-confere("renomear_antigas: troca porta e endereços pelos nomes do Lab", lido.get("STUDIO_LAB_PORT") == "8010" and lido.get("STUDIO_LAB_HOSTS") == "cloud.heimdall-ai.tech,localhost" and "HEIMDALL_CLOUD_PORT" not in lido, str(lido))
+confere("renomear_antigas: troca porta e endereços pelos nomes do Lab", lido.get("STUDIO_LAB_PORT") == "8010" and lido.get("STUDIO_LAB_HOSTS") == "cloud.studiolibre.io,localhost" and "HEIMDALL_CLOUD_PORT" not in lido, str(lido))
 confere("renomear_antigas: senha e código continuam com o nome de sempre", lido.get("HEIMDALL_CLOUD_SENHA_HASH") == "x" and lido.get("HEIMDALL_CLOUD_TOTP_SEGREDO") == "y")
 confere("renomear_antigas: se o novo já existe, vale o novo e o antigo sai", lido.get("STUDIO_LAB_MAX_MB") == "9" and "HEIMDALL_CLOUD_MAX_MB" not in lido and len(trocadas) == 3, str(trocadas))
 confere("renomear_antigas: de novo não muda nada e faz cópia na primeira vez", c.renomear_antigas() == [] and (tmp / ".env.bak").exists())

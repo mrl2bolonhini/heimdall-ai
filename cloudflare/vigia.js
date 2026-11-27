@@ -1,27 +1,27 @@
-// Heimdall Vigia: Worker da Cloudflare que roda de 5 em 5 minutos (cron) e confere, de fora de casa,
-// se os endereços públicos do Heimdall respondem. Avisa por e-mail só quando algo cai ou volta.
+// StudioLibre Status: Worker da Cloudflare que roda de 5 em 5 minutos (cron) e confere, de fora de casa,
+// se os endereços públicos do StudioLibre respondem. Avisa por e-mail só quando algo cai ou volta.
 // Quando o Mac dorme ou perde a rede, o túnel cai e a Cloudflare responde 5xx (530/502): é isso que ele detecta.
 //
 // Ligações (bindings) na Cloudflare:
 //   ESTADO       KV   guarda o último estado de cada endereço (para avisar só nas mudanças)
 //   EMAIL        send_email   envia o aviso (Email Routing precisa estar ligado e o destino verificado)
 //   ALERTA_PARA  texto: o e-mail que recebe o aviso (não fica no GitHub)
-//   ALERTA_DE    texto: remetente no seu domínio, por exemplo vigia@heimdall-ai.tech
+//   ALERTA_DE    texto: remetente no seu domínio, por exemplo vigia@studiolibre.io
 import { EmailMessage } from "cloudflare:email";
 
 const ALVOS = [
-  ["Chat", "https://chat.heimdall-ai.tech/health"],
-  ["Automações", "https://flows.heimdall-ai.tech/healthz"],
-  ["Lab", "https://lab.heimdall-ai.tech/saude"],
-  ["News", "https://news.heimdall-ai.tech/saude"],
-  ["Saúde", "https://health.heimdall-ai.tech/saude"],
+  ["Chat", "https://chat.studiolibre.io/health"],
+  ["Automações", "https://flows.studiolibre.io/healthz"],
+  ["Lab", "https://lab.studiolibre.io/saude"],
+  ["News", "https://news.studiolibre.io/saude"],
+  ["Saúde", "https://health.studiolibre.io/saude"],
 ];
 const BATIMENTO_MS = 60 * 60 * 1000; // a hora da última conferência é regravada no máximo a cada 1 hora
 const FALHAS_PARA_AVISAR = 2; // duas conferências seguidas (10 min) para não avisar por um soluço
 
 async function conferir(url) {
   try {
-    const r = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(10000), headers: { "User-Agent": "heimdall-vigia" } });
+    const r = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(10000), headers: { "User-Agent": "studiolibre-status" } });
     return r.status < 500 ? { ok: true, detalhe: String(r.status) } : { ok: false, detalhe: "HTTP " + r.status };
   } catch (e) {
     return { ok: false, detalhe: "sem resposta" };
@@ -29,9 +29,9 @@ async function conferir(url) {
 }
 
 function mime(de, para, assunto, texto) {
-  const id = crypto.randomUUID() + "@heimdall-ai.tech";
+  const id = crypto.randomUUID() + "@studiolibre.io";
   const b64 = btoa(unescape(encodeURIComponent(assunto)));
-  return `From: Heimdall Vigia <${de}>\r\nTo: ${para}\r\nSubject: =?UTF-8?B?${b64}?=\r\nMessage-ID: <${id}>\r\nDate: ${new Date().toUTCString()}\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${btoa(unescape(encodeURIComponent(texto))).replace(/.{1,76}/g, "$&\r\n")}`;
+  return `From: StudioLibre Status <${de}>\r\nTo: ${para}\r\nSubject: =?UTF-8?B?${b64}?=\r\nMessage-ID: <${id}>\r\nDate: ${new Date().toUTCString()}\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${btoa(unescape(encodeURIComponent(texto))).replace(/.{1,76}/g, "$&\r\n")}`;
 }
 
 async function avisar(env, assunto, texto) {
@@ -63,8 +63,8 @@ async function rodar(env) {
   if (novo !== JSON.stringify(antes)) await env.ESTADO.put("estado", novo);
   const ultima = await env.ESTADO.get("ultima");
   if (!ultima || Date.now() - Date.parse(ultima) >= BATIMENTO_MS) await env.ESTADO.put("ultima", new Date(Date.now()).toISOString());
-  if (caiu.length) await avisar(env, "Heimdall: fora do ar", "Não responderam: " + caiu.join(", ") + ".\nSe forem todos, o Mac provavelmente está dormindo, sem rede ou com o túnel parado.\nNo Mac: ./subir.sh --status");
-  if (voltou.length) await avisar(env, "Heimdall: voltou", "Voltaram a responder: " + voltou.join(", ") + ".");
+  if (caiu.length) await avisar(env, "StudioLibre: fora do ar", "Não responderam: " + caiu.join(", ") + ".\nSe forem todos, o Mac provavelmente está dormindo, sem rede ou com o túnel parado.\nNo Mac: ./subir.sh --status");
+  if (voltou.length) await avisar(env, "StudioLibre: voltou", "Voltaram a responder: " + voltou.join(", ") + ".");
   return agora;
 }
 
@@ -74,6 +74,6 @@ export default {
   async fetch(req, env) {
     const estado = JSON.parse((await env.ESTADO.get("estado")) || "{}");
     const linhas = Object.entries(estado).map(([n, e]) => `${n}: ${e.fora ? "FORA" : "ok"} (${e.detalhe})`);
-    return new Response(`Heimdall Vigia\nÚltima conferência registrada (atualiza a cada hora, ou na hora se algo mudar): ${(await env.ESTADO.get("ultima")) || "nunca"}\n${linhas.join("\n")}\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    return new Response(`StudioLibre Status\nÚltima conferência registrada (atualiza a cada hora, ou na hora se algo mudar): ${(await env.ESTADO.get("ultima")) || "nunca"}\n${linhas.join("\n")}\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
   },
 };

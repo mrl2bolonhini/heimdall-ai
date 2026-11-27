@@ -48,7 +48,7 @@ confere("ajuda: campos com label e botão de envio", all(f'for="{i}"' in corpo f
 confere("ajuda: serviço desconhecido volta ao geral, sem erro", "Perguntas frequentes: Geral" in aj.pagina_ajuda("tok", "<script>")[1] and "<script>" not in aj.pagina_ajuda("tok", "<script>")[1])
 confere("termos de uso e de privacidade: um só h1, índice, aviso de minuta e, sem dados no .env, o marcador do responsável", all(x[1].count("<h1>") == 1 and "Minuta em revisão" in x[1] and 'aria-label="Conteúdo desta página"' in x[1] and "Em vigor desde 24 de novembro de 2026" in x[1] for x in (aj.pagina_termos_de_uso(), aj.pagina_privacidade())) and "[NOME E DOCUMENTO DO RESPONSÁVEL" in aj.pagina_termos_de_uso()[1])
 aj.os.environ.update({"STUDIO_RESPONSAVEL": "Fulano de Tal, CPF/MF nº 000.000.000-00", "STUDIO_FORO": "Campinas"})
-confere("com os dados no .env: o responsável e o foro aparecem nos dois documentos, e o encarregado padrão é o suporte", "Fulano de Tal, CPF/MF nº 000.000.000-00" in aj.pagina_termos_de_uso()[1] and "foro de Campinas" in aj.pagina_termos_de_uso()[1] and "Fulano de Tal" in aj.pagina_privacidade()[1] and "suporte@heimdall-ai.tech" in aj.pagina_privacidade()[1])
+confere("com os dados no .env: o responsável e o foro aparecem nos dois documentos, e o encarregado padrão é o suporte", "Fulano de Tal, CPF/MF nº 000.000.000-00" in aj.pagina_termos_de_uso()[1] and "foro de Campinas" in aj.pagina_termos_de_uso()[1] and "Fulano de Tal" in aj.pagina_privacidade()[1] and "suporte@studiolibre.io" in aj.pagina_privacidade()[1])
 confere("nenhum documento deixa marcador entre colchetes quando os dados estão definidos", "[" not in aj.texto_documento("termos") and "[" not in aj.texto_documento("privacidade"))
 confere("texto puro: título, vigência, índice e seções numeradas", aj.texto_documento("termos").startswith("TERMOS DE USO DO HEIMDALL") and "Conteúdo" in aj.texto_documento("termos") and "13. Lei aplicável e foro" in aj.texto_documento("termos") and "POLÍTICA DE PRIVACIDADE" in aj.texto_documento("privacidade"))
 for k in ("STUDIO_RESPONSAVEL", "STUDIO_FORO"):
@@ -84,7 +84,7 @@ confere("o limite é por pessoa, e passada 1 hora a pessoa volta a enviar", outr
 
 # ---- envio por e-mail (simulado) ----
 confere("sem configuração, o envio por e-mail fica desligado e a mensagem continua gravada", not aj.envio_configurado() and aj.enviar_email(r) is False)
-aj.os.environ.update({"STUDIO_SUPORTE_EMAIL": "1", "STUDIO_SUPORTE_DE": "no-reply@heimdall-ai.tech", "CLOUDFLARE_API_TOKEN": "tk", "CLOUDFLARE_ACCOUNT_ID": "acc"})
+aj.os.environ.update({"STUDIO_SUPORTE_EMAIL": "1", "STUDIO_SUPORTE_DE": "no-reply@studiolibre.io", "CLOUDFLARE_API_TOKEN": "tk", "CLOUDFLARE_ACCOUNT_ID": "acc"})
 chamadas = []
 
 
@@ -103,7 +103,7 @@ def falso(req, timeout):
 aj._post = falso
 r2 = aj.registrar({"email": "caio@x.com", "nome": "Caio"}, "problema", "saude", "O painel de saúde não carrega.", agora)
 confere("envio: POST no endereço do Email Sending, com o token e o protocolo no assunto", aj.envio_configurado() and aj.enviar_email(r2) is True and chamadas[0][0] == "https://api.cloudflare.com/client/v4/accounts/acc/email/sending/send"
-        and chamadas[0][1] == "POST" and chamadas[0][2].get("Authorization") == "Bearer tk" and r2["protocolo"] in chamadas[0][3]["subject"] and chamadas[0][3]["to"] == "suporte@heimdall-ai.tech")
+        and chamadas[0][1] == "POST" and chamadas[0][2].get("Authorization") == "Bearer tk" and r2["protocolo"] in chamadas[0][3]["subject"] and chamadas[0][3]["to"] == "suporte@studiolibre.io")
 confere("envio: o texto leva quem escreveu, o serviço e a mensagem", "caio@x.com" in chamadas[0][3]["text"] and "Health" in chamadas[0][3]["text"] and "O painel de saúde não carrega." in chamadas[0][3]["text"])
 confere("envio aceito: o estado do registro vira enviada", [x for x in aj._ler_registros() if x["protocolo"] == r2["protocolo"]][0]["estado"] == "enviada")
 
@@ -115,7 +115,7 @@ def quebra(req, timeout):
 aj._post = quebra
 r3 = aj.registrar({"email": "dora@x.com"}, "duvida", "geral", "Teste com falha de envio.", agora)
 confere("falha na Cloudflare: não levanta erro e o estado vira gravada_sem_envio", aj.enviar_email(r3) is False and [x for x in aj._ler_registros() if x["protocolo"] == r3["protocolo"]][0]["estado"] == "gravada_sem_envio")
-confere("confirmação: com e sem envio, sempre traz o protocolo; sem envio indica o e-mail de suporte", r3["protocolo"] in aj.mensagem_de_confirmacao(r3, False) and "suporte@heimdall-ai.tech" in aj.mensagem_de_confirmacao(r3, False) and "enviada ao suporte" in aj.mensagem_de_confirmacao(r3, True))
+confere("confirmação: com e sem envio, sempre traz o protocolo; sem envio indica o e-mail de suporte", r3["protocolo"] in aj.mensagem_de_confirmacao(r3, False) and "suporte@studiolibre.io" in aj.mensagem_de_confirmacao(r3, False) and "enviada ao suporte" in aj.mensagem_de_confirmacao(r3, True))
 for k in ("STUDIO_SUPORTE_EMAIL", "STUDIO_SUPORTE_DE", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"):
     aj.os.environ.pop(k, None)
 
@@ -127,7 +127,7 @@ c._buscar_identidade = lambda eq, jwt: {"name": {"tokdono": "Murillo", "tokana":
 srv = ThreadingHTTPServer(("127.0.0.1", 0), a.Account)
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 porta = srv.server_address[1]
-HOST = "account.heimdall-ai.tech"
+HOST = "account.studiolibre.io"
 
 
 def pedir(caminho, jwt=None, origem=None, metodo="GET", corpo=None, host=HOST):
@@ -175,7 +175,7 @@ s, b = pedir("/suporte", jwt="tokana", origem=origem, metodo="POST", corpo=urlli
 confere("mensagem com HTML é gravada como texto (sem executar) e a confirmação não a repete", s == 200 and "<script>alert" not in b)
 
 # ---- resposta de suporte@ (CLI e Account) ----
-for k, v in (("STUDIO_SUPORTE_EMAIL", "1"), ("STUDIO_SUPORTE_DE", "suporte@heimdall-ai.tech"), ("CLOUDFLARE_API_TOKEN", "tk"), ("CLOUDFLARE_ACCOUNT_ID", "acc")):
+for k, v in (("STUDIO_SUPORTE_EMAIL", "1"), ("STUDIO_SUPORTE_DE", "suporte@studiolibre.io"), ("CLOUDFLARE_API_TOKEN", "tk"), ("CLOUDFLARE_ACCOUNT_ID", "acc")):
     aj.os.environ[k] = v
 chamadas.clear()
 aj._post = falso
@@ -184,7 +184,7 @@ aj.enviar_email(rr)
 confere("mensagem do formulário leva o e-mail de quem escreveu como reply_to", chamadas[-1][3].get("reply_to") == "eva@x.com")
 ok, msg = aj.responder(rr["protocolo"], "Olá Eva, abra Finance e use Conectar banco.")
 env = chamadas[-1][3]
-confere("responder: envia de suporte@ para quem escreveu, com Re: e protocolo no assunto e reply_to do suporte", ok and env["to"] == "eva@x.com" and env["from"] == "suporte@heimdall-ai.tech" and env["subject"].startswith("Re: [" + rr["protocolo"] + "]") and env["reply_to"] == "suporte@heimdall-ai.tech" and "Conectar banco" in env["text"])
+confere("responder: envia de suporte@ para quem escreveu, com Re: e protocolo no assunto e reply_to do suporte", ok and env["to"] == "eva@x.com" and env["from"] == "suporte@studiolibre.io" and env["subject"].startswith("Re: [" + rr["protocolo"] + "]") and env["reply_to"] == "suporte@studiolibre.io" and "Conectar banco" in env["text"])
 reg_r = [x for x in aj._ler_registros() if x["protocolo"] == rr["protocolo"]][0]
 confere("responder: o registro vira respondida e guarda o texto", reg_r["estado"] == "respondida" and reg_r["respostas"][0]["texto"].startswith("Olá Eva"))
 confere("responder sem protocolo exige endereço válido", aj.responder("", "texto", "")[0] is False and aj.responder("", "texto", "fulano@x.com")[0] is True and chamadas[-1][3]["to"] == "fulano@x.com")

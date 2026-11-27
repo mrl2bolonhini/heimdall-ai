@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Texto do tour da página Account (account.heimdall-ai.tech): o que cada serviço faz e como configurar. A chave é a mesma de heimdall_usuarios.SERVICOS.
+"""Texto do tour da página Account (account.studiolibre.io): o que cada serviço faz e como configurar. A chave é a mesma de heimdall_usuarios.SERVICOS.
 
 Para acrescentar um serviço ou mudar um texto, edite só aqui. "como" é uma lista de passos; "so_dono" avisa que convidados não o recebem;
 "multiusuario" diz o que muda quando outras pessoas puderem usá-lo (aparece só para quem pode abrir o serviço).

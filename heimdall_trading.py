@@ -7,7 +7,7 @@ Abas: Mesa, Carteira, Ordens (Abertas, Histórico), Análise (Sinais, Lista). Aj
 Atalhos da Mesa (Option+Shift no macOS, Alt+Shift no Windows e no Linux): B comprar, S vender, F fechar posição, X cancelar ordens abertas, Q ir ao campo do ativo.
 
 Variáveis: STUDIO_TRADING (1 liga; padrão 0, o start_heimdall.sh só sobe com 1), STUDIO_TRADING_PORT (8020), STUDIO_TRADING_HOST (127.0.0.1),
-STUDIO_TRADING_HOSTS (trading.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_TRADING_FONTE (brapi, padrão, com cotações reais da B3; simulada ou manual), STUDIO_TRADING_BRAPI_TOKEN (opcional).
+STUDIO_TRADING_HOSTS (trading.studiolibre.io,localhost,127.0.0.1), STUDIO_TRADING_FONTE (brapi, padrão, com cotações reais da B3; simulada ou manual), STUDIO_TRADING_BRAPI_TOKEN (opcional).
 
     python3 heimdall_trading.py
 
@@ -277,7 +277,7 @@ GRUPOS = [
     ("Análise", [("/analise", "Sinais"), ("/lista", "Lista")]),
 ]
 CFG = web.Config(
-    chave="trading", nome="Trading", porta_env="STUDIO_TRADING_PORT", porta=8020, hosts="trading.studiolibre.io,trading.heimdall-ai.tech,localhost,127.0.0.1",
+    chave="trading", nome="Trading", porta_env="STUDIO_TRADING_PORT", porta=8020, hosts="trading.studiolibre.io,localhost,127.0.0.1",
     abas=GRUPOS, ajustes=[("/ajustes/limites", "Limites"), ("/ajustes/cotacoes", "Cotações"), ("/ajustes/conta", "Conta")],
     get={"/mesa": pg_mesa, "/carteira": pg_carteira, "/ordens": pg_ordens, "/historico": pg_historico, "/analise": pg_analise, "/lista": pg_lista,
          "/ajustes/limites": aj_limites, "/ajustes/cotacoes": aj_cotacoes, "/ajustes/conta": aj_conta},

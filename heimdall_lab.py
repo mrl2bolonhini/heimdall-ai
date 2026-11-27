@@ -6,7 +6,7 @@ pelo navegador: S3 (buckets e arquivos), Lambda (criar, executar, apagar), Glue,
 operação de qualquer serviço da AWS (DynamoDB, SQS, SNS, Kinesis, IAM, CloudFormation etc.), além de páginas próprias para Glue
 (bancos, tabelas, crawlers e jobs) e Athena (consultas SQL sobre o S3).
 
-Segurança (o painel pode ficar público em lab.heimdall-ai.tech, então tem camadas):
+Segurança (o painel pode ficar público em lab.studiolibre.io, então tem camadas):
   1. Escuta só em 127.0.0.1. O emulador (porta 4566) nunca é exposto: não tem senha.
   2. Entrada com senha forte (guardada só como hash PBKDF2 no .env) E código de 6 dígitos (TOTP, o mesmo do app Senhas).
   3. Limite de tentativas por endereço e global, com bloqueio temporário; o código de 6 dígitos não pode ser reaproveitado.
@@ -22,7 +22,7 @@ Configuração (tudo no .env):
     python3 heimdall_lab.py                   sobe o painel (o start_heimdall.sh faz isso sozinho se houver senha e código)
 
 Variáveis opcionais: STUDIO_LAB_PORT (8010), STUDIO_LAB_HOST (127.0.0.1), STUDIO_LAB_ENDPOINT
-(http://127.0.0.1:4566), STUDIO_LAB_HOSTS (lab.heimdall-ai.tech,localhost,127.0.0.1), HEIMDALL_CLOUD_SESSAO_HORAS (8),
+(http://127.0.0.1:4566), STUDIO_LAB_HOSTS (lab.studiolibre.io,localhost,127.0.0.1), HEIMDALL_CLOUD_SESSAO_HORAS (8),
 STUDIO_LAB_MAX_MB (50, tamanho máximo de envio ao S3).
 
 Usa a biblioteca padrão do Python e o boto3 (já está no requirements.txt).
@@ -85,7 +85,7 @@ HOST = os.environ.get("STUDIO_LAB_HOST", "127.0.0.1")
 PORT = int(os.environ.get("STUDIO_LAB_PORT", "8010"))
 ENDPOINT = os.environ.get("STUDIO_LAB_ENDPOINT", "http://127.0.0.1:4566").rstrip("/")
 REGIAO = os.environ.get("STUDIO_LAB_REGIAO", "us-east-1")
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_LAB_HOSTS", "lab.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_LAB_HOSTS", "lab.studiolibre.io,localhost,127.0.0.1").split(",") if h.strip()}
 HOSTS_OK |= __import__("heimdall_links").hosts_padrao("lab", "cloud")   # domínio novo e antigo valem juntos durante a transição
 SENHA_HASH = os.environ.get("HEIMDALL_CLOUD_SENHA_HASH", "")
 TOTP_SEGREDO = os.environ.get("HEIMDALL_CLOUD_TOTP_SEGREDO", "")
@@ -95,7 +95,6 @@ MAX_ENVIO = int(float(os.environ.get("STUDIO_LAB_MAX_MB", "50")) * 1024 * 1024)
 ITERACOES = 600_000
 COOKIE = "heimdall_sessao"  # o mesmo nome nos quatro serviços (Lab, Notas, News e Saúde)
 COOKIE_DOMINIO = os.environ.get("STUDIO_COOKIE_DOMINIO", "studiolibre.io").strip().lstrip(".").lower()
-COOKIE_DOMINIO_ANTIGO = "heimdall-ai.tech"   # sessões em endereços antigos continuam valendo durante a transição
 
 _lock = threading.Lock()
 
@@ -322,13 +321,11 @@ def pagina_continuar(destino: str = "/") -> bytes:
 
 
 def cabecalho_cookie(token: str, host: str, https: bool, apagar: bool = False) -> tuple:
-    """Set-Cookie da sessão. Em *.studiolibre.io (e no domínio antigo) vale para todos os subdomínios; em localhost fica só naquele endereço."""
+    """Set-Cookie da sessão. Em *.studiolibre.io vale para todos os subdomínios; em localhost fica só naquele endereço."""
     v = f"{COOKIE}={'' if apagar else token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if apagar else SESSAO_SEG}"
     h = (host or "").split(":")[0].strip().lower()
-    for dom in (COOKIE_DOMINIO, COOKIE_DOMINIO_ANTIGO):
-        if dom and (h == dom or h.endswith("." + dom)):
-            v += f"; Domain={dom}"
-            break
+    if COOKIE_DOMINIO and (h == COOKIE_DOMINIO or h.endswith("." + COOKIE_DOMINIO)):
+        v += f"; Domain={COOKIE_DOMINIO}"
     if https:
         v += "; Secure"
     return ("Set-Cookie", v)
@@ -401,7 +398,7 @@ e = html.escape
 CSS = design.CSS  # tudo de aparência mora no heimdall_design.py
 
 # ----------------------------------------------------------------------------------------
-# Marca (a mesma do site heimdall-ai.tech: ponte de seis faixas com um olho dourado). Todos os sites com login usam estas peças.
+# Marca (a mesma do site studiolibre.io: ponte de seis faixas com um olho dourado). Todos os sites com login usam estas peças.
 # ----------------------------------------------------------------------------------------
 _BANDAS = ("#bfe3fb", "#93d2fa", "#42a5f5", "#26c6da", "#1e88e5", "#ffc107")
 SIMBOLO = ('<svg viewBox="0 -4 100 62" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">'

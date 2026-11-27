@@ -11,7 +11,7 @@ grep -n "atualizada\|Backup" heimdall.log
 tail -n 10 heimdall.log
 
 URL do Uptime com subdomínio
-https://status.heimdall-ai.tech
+https://status.studiolibre.io
 
 URL do Tailscale para o Uptime
 https://<nome-do-mac>.<nome-da-sua-rede>.ts.net:8443/   (o endereço real fica no app Tailscale)

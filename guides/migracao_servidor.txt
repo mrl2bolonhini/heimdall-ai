@@ -32,7 +32,7 @@ O teto de US$ 15 por mês da Cloudflare continua valendo para Workers, Workers A
 Embeddings no Workers AI: o modelo bge-m3 custa US$ 0,012 por milhão de tokens. Reindexar um acervo de 10 milhões de tokens custa cerca de US$ 0,12; o uso diário é de centavos.
 
 5. Peças da Cloudflare
-1) Túnel (cloudflared): continua sendo a entrada dos sites *.heimdall-ai.tech, agora instalado no servidor.
+1) Túnel (cloudflared): continua sendo a entrada dos sites *.studiolibre.io, agora instalado no servidor.
 2) Workers VPC (beta; grátis em todos os planos Workers enquanto durar o beta): é uma rede privada que deixa um Worker chamar um serviço que não está aberto na internet, por um túnel. Não é uma máquina virtual. Serve para o Worker de entrada e os Workers de continuidade falarem com o servidor sem expô-lo. A documentação não diz se funciona com uma VPS de endereço público nem com uma máquina doméstica; testar antes de depender dele. Se não servir, o Worker chama o endereço público do túnel protegido por Cloudflare Access.
 3) Workers AI para embeddings: @cf/baai/bge-m3 (multilíngue, janela de 60.000 tokens, sem retenção de dados) é o candidato; @cf/google/embeddinggemma-300m (beta, mais de 100 idiomas) é a alternativa. O endpoint /v1/embeddings é compatível com a API da OpenAI. A documentação diz que os endpoints OpenAI-compatíveis do Workers AI também funcionam no AI Gateway, mas o suporte a embeddings no caminho /compat do gateway não foi confirmado: validar com uma chamada real antes de ligar.
 4) R2 com chave do cliente: continua guardando cópias cifradas (AES-256-GCM) dos bancos e dos arquivos, agora como o segundo local de cópia do servidor.

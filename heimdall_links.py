@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Endereço da tela de cada produto, para as notificações apontarem para ele (decisão do usuário em 26/11/2026).
 
-Um só ponto define o domínio: STUDIO_DOMINIO (padrão studiolibre.io; o domínio antigo heimdall-ai.tech continua aceito pelos serviços durante a transição).
+Um só ponto define o domínio: STUDIO_DOMINIO (padrão studiolibre.io).
 Cada produto tem um subdomínio (finance., health. e assim por diante). Se o .env definir os hosts do serviço (STUDIO_<X>_HOSTS ou
 STUDIO_<X>_HOSTS), vale o primeiro host público dessa lista. Sem domínio válido, não há link: a notificação segue sem ele.
 Desligar os links: STUDIO_NOTIFICACAO_LINK=0.
@@ -10,8 +10,6 @@ import os
 import re
 
 DOMINIO_PADRAO = "studiolibre.io"
-DOMINIO_ANTIGO = "heimdall-ai.tech"   # aceito em paralelo até o fim da transição
-DOMINIOS = (DOMINIO_PADRAO, DOMINIO_ANTIGO)
 # chave usada pelo código -> (subdomínio, variável de hosts, caminho da tela de avisos ou da página inicial)
 PRODUTOS = {
     "saude": ("health", "SAUDE_PAINEL", "/avisos"), "health": ("health", "SAUDE_PAINEL", "/avisos"),
@@ -30,7 +28,7 @@ def _env(nome: str, padrao: str = "") -> str:
 
 def hosts_padrao(*subs: str) -> set:
     """Nomes de site que um serviço aceita por padrão: o subdomínio em cada domínio, mais o endereço local."""
-    return {f"{s}.{d}" for s in subs for d in DOMINIOS} | {"localhost", "127.0.0.1"}
+    return {f"{s}.{d}" for s in subs for d in (DOMINIO_PADRAO,)} | {"localhost", "127.0.0.1"}
 
 
 def dominio() -> str:

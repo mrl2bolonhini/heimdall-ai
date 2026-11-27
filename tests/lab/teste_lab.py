@@ -396,14 +396,14 @@ hc.SENHA_HASH = _hash0
 confere("voltando ao valor, a sessão volta a valer (a chave sai do .env)", hc.sessao_valida(tk) is not None)
 hc.encerrar_sessao(tk)
 confere("sair encerra a sessão", hc.sessao_valida(tk) is None)
-k1 = hc.cabecalho_cookie("T", "learn.heimdall-ai.tech", True)[1]
-confere("em *.heimdall-ai.tech o cookie vale para o domínio todo, seguro", "Domain=heimdall-ai.tech" in k1 and "Secure" in k1 and "HttpOnly" in k1 and "SameSite=Strict" in k1 and k1.startswith("heimdall_sessao=T;"))
+k1 = hc.cabecalho_cookie("T", "learn.studiolibre.io", True)[1]
+confere("em *.studiolibre.io o cookie vale para o domínio todo, seguro", "Domain=studiolibre.io" in k1 and "Secure" in k1 and "HttpOnly" in k1 and "SameSite=Strict" in k1 and k1.startswith("heimdall_sessao=T;"))
 k2 = hc.cabecalho_cookie("T", "localhost:8019", False)[1]
 confere("em localhost o cookie não leva Domain", "Domain" not in k2 and "Secure" not in k2)
-k3 = hc.cabecalho_cookie("T", "evil-heimdall-ai.tech", True)[1]
+k3 = hc.cabecalho_cookie("T", "evil-studiolibre.io", True)[1]
 confere("domínio parecido não ganha Domain", "Domain" not in k3)
-k4 = hc.cabecalho_cookie("", "news.heimdall-ai.tech", True, apagar=True)[1]
-confere("apagar o cookie usa o mesmo Domain e Max-Age=0", "Domain=heimdall-ai.tech" in k4 and "Max-Age=0" in k4)
+k4 = hc.cabecalho_cookie("", "news.studiolibre.io", True, apagar=True)[1]
+confere("apagar o cookie usa o mesmo Domain e Max-Age=0", "Domain=studiolibre.io" in k4 and "Max-Age=0" in k4)
 
 # ---- Perguntar do Lab ----
 print("\nPerguntar")

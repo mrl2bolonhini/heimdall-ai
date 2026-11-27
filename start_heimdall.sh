@@ -608,7 +608,7 @@ if [ "${STUDIO_HUB:-${STUDIO_HUB:-0}}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HA
 fi
 
 # --- Studio News (notícias das últimas 24 h com resumo de IA e feeds RSS): mesmo login do Studio Lab ---
-# Atualiza sozinho de 30 em 30 minutos. Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (news.heimdall-ai.tech).
+# Atualiza sozinho de 30 em 30 minutos. Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (news.studiolibre.io).
 # Os resumos usam o LiteLLM (porta $LLM_PORT): enquanto ele não estiver no ar, as matérias ficam na fila e o serviço tenta de novo na próxima atualização.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_news.py ]; then
@@ -630,7 +630,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
 fi
 
 # --- Studio Health (painel com as análises do app Saúde, somente leitura): mesmo login do Studio Lab ---
-# Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (health.heimdall-ai.tech).
+# Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (health.studiolibre.io).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_painel_saude.py ]; then
         STUDIO_SAUDE_PAINEL_PORT="$SAUDE_PAINEL_PORT" "$VENV_PYTHON" heimdall_painel_saude.py > "$(nova_log saude_painel_debug)" 2>&1 &
@@ -648,7 +648,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
 fi
 
 # --- Controls (terminal completo e painel de serviços): mesmo login do Studio Lab ---
-# Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare (controls.heimdall-ai.tech), atrás do Cloudflare Access. Quem entra manda no Mac.
+# Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare (controls.studiolibre.io), atrás do Cloudflare Access. Quem entra manda no Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_controls.py ]; then
         if nc -z localhost $CONTROLS_PORT > /dev/null 2>&1; then
@@ -670,7 +670,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
 fi
 
 # --- Studio Games (jogos leves para leitor de tela, no navegador): mesmo login do Studio Lab ---
-# Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (games.heimdall-ai.tech).
+# Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (games.studiolibre.io).
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_jogos.py ]; then
         STUDIO_JOGOS_PORT="$JOGOS_PORT" "$VENV_PYTHON" heimdall_jogos.py > "$(nova_log jogos_debug)" 2>&1 &
@@ -687,7 +687,7 @@ if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ];
     fi
 fi
 
-# --- Account (account.heimdall-ai.tech): tour dos serviços de cada pessoa e a identidade que o site heimdall-ai.tech mostra ---
+# --- Account (account.studiolibre.io): tour dos serviços de cada pessoa e a identidade que o site studiolibre.io mostra ---
 # Escuta só em 127.0.0.1; o acesso de fora vem do túnel Cloudflare, com o Access na frente. Não precisa de senha: só atende quem o Access aprovou.
 if [ -f heimdall_account.py ]; then
     STUDIO_ACCOUNT_PORT="$ACCOUNT_PORT" "$VENV_PYTHON" heimdall_account.py > "$(nova_log account_debug)" 2>&1 &
@@ -704,7 +704,7 @@ if [ -f heimdall_account.py ]; then
 fi
 
 # --- Studio Finance (extratos, categorias e tendências): mesmo login do Studio Lab ---
-# Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (finance.heimdall-ai.tech).
+# Escuta só em 127.0.0.1; o acesso de fora, se você quiser, vem do túnel Cloudflare (finance.studiolibre.io).
 # Os dados ficam em finance/ (fora do git) e nunca saem do Mac.
 if [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
     if [ -f heimdall_finance.py ]; then
@@ -762,12 +762,12 @@ if [ "$WANT_WEBUI" = "1" ]; then
     echo "[6/7] Subindo o Open WebUI..."
     docker rm -f open-webui > /dev/null 2>&1
     # Login pelo Cloudflare Access (STUDIO_WEBUI_ACCESS=1): o Open WebUI confia no e-mail que o Access manda no cabeçalho e entra sem senha.
-    # Só liga se o endereço público (STUDIO_WEBUI_HOST, padrão chat.heimdall-ai.tech) estiver mesmo atrás do Access, porque qualquer um
+    # Só liga se o endereço público (STUDIO_WEBUI_HOST, padrão chat.studiolibre.io) estiver mesmo atrás do Access, porque qualquer um
     # que alcance o serviço sem passar pelo Access poderia inventar o cabeçalho. Nesse modo a porta fica só em 127.0.0.1 (sem Tailscale/rede local).
     WEBUI_BIND=""
     WEBUI_EXTRA=()
     if [ "$STUDIO_WEBUI_ACCESS" = "1" ]; then
-        WEBUI_HOST_PUB="${STUDIO_WEBUI_HOST:-chat.heimdall-ai.tech}"
+        WEBUI_HOST_PUB="${STUDIO_WEBUI_HOST:-chat.studiolibre.io}"
         "$VENV_PYTHON" verificar_access.py "https://$WEBUI_HOST_PUB" > /tmp/heimdall_access_webui.txt 2>&1
         ACC_RC=$?
         if [ "$ACC_RC" = "1" ]; then

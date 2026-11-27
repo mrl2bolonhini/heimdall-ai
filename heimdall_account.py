@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Account (account.heimdall-ai.tech): a porta de entrada do ecossistema. Mostra, a quem entrou pelo Cloudflare Access, um tour dos serviços
-a que a pessoa tem acesso, com link, o que cada um faz e como configurar. Também responde /quem.json, que o site heimdall-ai.tech usa para mostrar
+"""Account (account.studiolibre.io): a porta de entrada do ecossistema. Mostra, a quem entrou pelo Cloudflare Access, um tour dos serviços
+a que a pessoa tem acesso, com link, o que cada um faz e como configurar. Também responde /quem.json, que o site studiolibre.io usa para mostrar
 "Entrar" (quando não há login) ou o nome e os serviços (quando há).
 
 Segurança:
@@ -11,7 +11,7 @@ Segurança:
   4. Só atende os nomes de site permitidos (STUDIO_ACCOUNT_HOSTS) e manda cabeçalhos de segurança; a página não usa script.
 
 Variáveis opcionais no .env: STUDIO_ACCOUNT_PORT (8018), STUDIO_ACCOUNT_HOST (127.0.0.1),
-STUDIO_ACCOUNT_HOSTS (account.heimdall-ai.tech,localhost,127.0.0.1), STUDIO_ACCOUNT_ORIGENS (https://heimdall-ai.tech,https://www.heimdall-ai.tech).
+STUDIO_ACCOUNT_HOSTS (account.studiolibre.io,localhost,127.0.0.1), STUDIO_ACCOUNT_ORIGENS (https://studiolibre.io,https://www.studiolibre.io).
 """
 import html
 import json
@@ -68,11 +68,11 @@ def _lista(nome: str, padrao: str) -> set:
 
 def hosts_ok() -> set:
     import heimdall_links
-    return _lista("STUDIO_ACCOUNT_HOSTS", "account.studiolibre.io,account.heimdall-ai.tech,localhost,127.0.0.1") | heimdall_links.hosts_padrao("account")
+    return _lista("STUDIO_ACCOUNT_HOSTS", "account.studiolibre.io,localhost,127.0.0.1") | heimdall_links.hosts_padrao("account")
 
 
 def origens_ok() -> set:
-    return _lista("STUDIO_ACCOUNT_ORIGENS", "https://studiolibre.io,https://www.studiolibre.io,https://heimdall-ai.tech,https://www.heimdall-ai.tech")
+    return _lista("STUDIO_ACCOUNT_ORIGENS", "https://studiolibre.io,https://www.studiolibre.io")
 
 
 def dados_quem(p: dict) -> dict:

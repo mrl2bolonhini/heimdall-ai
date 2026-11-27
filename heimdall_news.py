@@ -23,8 +23,8 @@ Segurança: escuta só em 127.0.0.1; o site exige senha forte + código de 6 dí
 HTML sempre escapado; matérias e feeds são baixados só de endereços públicos (nunca da sua rede ou do próprio Mac) e o
 texto deles nunca é obedecido como instrução pelo modelo. O RSS só aceita a chave certa; tentativas erradas têm limite próprio por endereço (não travam o login).
 
-Variáveis opcionais no .env: STUDIO_NEWS_PORT (8012), STUDIO_NEWS_HOSTS (news.heimdall-ai.tech,localhost,127.0.0.1),
-STUDIO_NEWS_URL (https://news.heimdall-ai.tech), STUDIO_NEWS_RSS_TOKEN, STUDIO_NEWS_MODELO (gemma3-4b),
+Variáveis opcionais no .env: STUDIO_NEWS_PORT (8012), STUDIO_NEWS_HOSTS (news.studiolibre.io,localhost,127.0.0.1),
+STUDIO_NEWS_URL (https://news.studiolibre.io), STUDIO_NEWS_RSS_TOKEN, STUDIO_NEWS_MODELO (gemma3-4b),
 STUDIO_NEWS_LLM_URL (http://127.0.0.1:9000/v1/chat/completions; usa LITELLM_MASTER_KEY), STUDIO_NEWS_INTERVALO_MIN (30),
 STUDIO_NEWS_RESUMOS_POR_CICLO (10), STUDIO_NEWS_ORCAMENTO_MIN (20), STUDIO_NEWS_PAUSA (horas sem resumos, ex.: 1-6),
 STUDIO_NEWS_COLETAR (0 desliga a coleta e deixa só o site), STUDIO_NEWS_FONTES (outro arquivo de fontes),
@@ -101,9 +101,9 @@ def _inteiro(nome: str, padrao: int, minimo: int = 0) -> int:
 
 HOST = os.environ.get("STUDIO_NEWS_HOST", "127.0.0.1")
 PORT = _inteiro("STUDIO_NEWS_PORT", 8012, 1)
-HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_NEWS_HOSTS", "news.heimdall-ai.tech,localhost,127.0.0.1").split(",") if h.strip()}
+HOSTS_OK = {h.strip().lower() for h in os.environ.get("STUDIO_NEWS_HOSTS", "news.studiolibre.io,localhost,127.0.0.1").split(",") if h.strip()}
 HOSTS_OK |= __import__("heimdall_links").hosts_padrao("news")   # domínio novo e antigo valem juntos durante a transição
-URL_BASE = os.environ.get("STUDIO_NEWS_URL", "https://news.heimdall-ai.tech").rstrip("/")
+URL_BASE = os.environ.get("STUDIO_NEWS_URL", "https://news.studiolibre.io").rstrip("/")
 FONTES_ARQ = Path(os.environ.get("STUDIO_NEWS_FONTES", str(PROJECT_DIR / "noticias_fontes.json"))).expanduser()
 MODELO = os.environ.get("STUDIO_NEWS_MODELO", "gemma3-4b")
 LLM_URL = os.environ.get("STUDIO_NEWS_LLM_URL", "http://127.0.0.1:9000/v1/chat/completions")
