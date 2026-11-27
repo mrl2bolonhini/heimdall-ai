@@ -2,6 +2,11 @@
 
 Registro dos recursos do Heimdall-ai, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-27 - Pastas do app Notas no Studio Hub
+- As notas gravadas pelo sistema passam a ficar na pasta Studio Hub do app Notas (Digest, Saúde, Estudos e as demais subpastas); as pastas de finanças e do catálogo passam a se chamar Studio Finance e Catálogo.
+- O comando `studio notes --copy-old --run` copia as notas das pastas antigas para o Studio Hub, sem mover nem apagar nada e sem duplicar ao repetir; as pastas antigas ficam intactas até você apagá-las.
+- Fluxos que ainda enviam o nome antigo da pasta continuam funcionando: a nota vai para a pasta nova.
+
 ## 2026-11-27 - Studio Hub com a aba Notas
 - O Studio Hub ganhou a aba Notas, com as subabas Recentes, Temas, Busca e Catálogo: notas e documentos de estudo, áudio com avanço e retomada, busca e o catálogo de notas escritas (lembretes e eventos só depois do seu aceite). O Perguntar da aba responde só com trechos das notas. A área é só do dono.
 - O Studio Notes continua no ar por enquanto.

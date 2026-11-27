@@ -107,13 +107,13 @@ Opções:
   -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público, que passa pelo Cloudflare Access e pelo Authenticator
   -m, --clean-mirrors  limpa o que o Second Brain criou por engano a partir de notas do próprio StudioLibre
   -p, --clean-private  apaga o que o Second Brain guardou de notas que depois foram para uma pasta privada
-  -o, --move-old       conta as notas das pastas antigas; com --run, move-as para as subpastas de StudioLibre
-  -r, --run            com --move-old, executa de verdade (sem isto só conta)
+  -o, --copy-old       conta as notas das pastas antigas; com --run, copia-as para o Studio Hub (nada é apagado)
+  -r, --run            com --copy-old, executa de verdade (sem isto só conta)
   -h, --help           mostra esta ajuda
 Exemplos:
   studio notes
-  studio notes --move-old
-  studio notes --move-old --run
+  studio notes --copy-old
+  studio notes --copy-old --run
 
 @ learn | Studio Learn, plataforma de estudos (fase 1)
 Sem opção, abre o site de estudos (porta 8019), com um Resumo em texto (quantos temas, e por tema os documentos de consulta, estudos e lições) e a lista de temas na tela inicial (botões Novo estudo e Ajustes). Novo estudo é um formulário só: nome do tema ou pasta mãe, arquivos, categoria e tipo (lista com a explicação de cada um), Criar. Ao escolher um tema, as abas dele aparecem: tema sequencial tem Lições, Exercícios, Cards e Progresso; tema aleatório tem Estudos, Cards e Progresso (um tema que mudou de categoria mantém a aba do que já tem, para consulta). Trocar de tema volta à lista. Em cada aba há o campo Perguntar (modelo local, só com o seu progresso, os seus estudos e os trechos estudados do tema; na lista de temas, de todos). O botão Ajustes abre uma tela sem abas (a página Tipos de estudo e suas regras fica ali; pausar agenda e avisos, estudos por dia, agenda, importar documentos, mudar categoria, arquivar sem apagar nada). Material: pastas de material com categoria (aleatório ou sequencial) e tipo com regras próprias (idiomas, programação, exatas, arquitetura e dados, filosofia, humanas, direito, medicina, esoterismo e outros), importação de documentos, estudo por sorteio de trecho com pergunta, correção, áudio e matérias sugeridas, lições sequenciais com exercícios e correção, voz do aluno (gravar, transcrever, editar, enviar), cards e lições agendados com aviso no Mac e no Bark, e banco próprio (db/learn.db). Variáveis: STUDIO_LEARN_AGENDA=0 desliga a agenda (studio env --set STUDIO_LEARN_AGENDA 0 e reinicie), STUDIO_LEARN_NOTIFICAR=0 tira o aviso, STUDIO_LEARN_WHISPER_MODELO e STUDIO_LEARN_WHISPER_TAMANHO configuram a transcrição, STUDIO_LEARN_GUARDAR_VOZ=1 guarda o áudio do aluno. Cada convidado tem os seus dados separados (db/people/<id>/); STUDIO_PESSOAS=0 desliga a separação e todos usam os dados do dono. Desligado por padrão: ligue com studio env --set STUDIO_LEARN 1 e reinicie.

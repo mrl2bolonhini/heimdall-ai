@@ -162,7 +162,7 @@ def main() -> int:
     def osa(script, *args):
         with ag._lock:
             return ag.osascript(script, *args)
-    r = migrar(cofre, osa if sys.platform == "darwin" else None, ag.RAIZ_NOTAS, not a.executar)
+    r = migrar(cofre, osa if sys.platform == "darwin" else None, ag.RAIZ_ANTIGA, not a.executar)
     print(f"Importados: {r['importados']}. Notas apagadas no app Notas: {r['apagados_notas']}. Arquivos apagados do cofre: {r['apagados_arquivos']}.")
     for e in r["erros"]:
         print("Aviso:", e)

@@ -108,7 +108,7 @@ _heimdall_short() {  # opções curtas de cada comando -> opção longa em ingl�
     lab) printf '%s\n' "-L=--local" "-s=--start" "-p=--stop" ;;
     chat) printf '%s\n' "-d=--diagnose" "-p=--password" "-e=--email" "-D=--delete-user" "-c=--check" "-m=--models" "-t=--tools" ;;
     news) printf '%s\n' "-t=--token" "-u=--urls" "-c=--copy" "-o=--opml" "-s=--sources" "-q=--queue" "-n=--now"  "-L=--local" ;;
-    notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--move-old" "-r=--run" "-L=--local" ;;
+    notes) printf '%s\n' "-m=--clean-mirrors" "-p=--clean-private" "-o=--copy-old" "-r=--run" "-L=--local" ;;
     health) printf '%s\n' "-o=--open" "-t=--today" "-n=--now" "-w=--weekly" "-a=--anomalies" "-y=--analysis" "-r=--report" "-s=--sleep" "-A=--activity" "-R=--recovery" "-T=--trends" "-W=--workouts" "-e=--ecg" "-f=--fc" "-i=--import" "-N=--import-n8n" "-l=--labs" "-L=--local" ;;
     controls) printf '%s\n' "-o=--open" "-L=--local" ;;
     account) printf '%s\n' "-L=--local" ;;
@@ -307,8 +307,8 @@ studio() {
         "") _heimdall_web "Studio Notes" NOTAS 8011 notes ;;
         --clean-mirrors) shift; _heimdall_py limpar_espelhos.py "$@" ;;
         --clean-private) shift; _heimdall_py limpar_privadas.py "$@" ;;
-        --move-old) shift; _heimdall_tr "--run=--executar" "$@"; _heimdall_py mover_notas_antigas.py "${_HA[@]}" ;;
-        *) echo "Use: studio notes [--clean-mirrors] [--clean-private] [--move-old [--run]]"; return 1 ;;
+        --copy-old) shift; _heimdall_tr "--run=--executar" "$@"; _heimdall_py mover_notas_antigas.py "${_HA[@]}" ;;
+        *) echo "Use: studio notes [--clean-mirrors] [--clean-private] [--copy-old [--run]]"; return 1 ;;
       esac ;;
     news)
       case "$1" in
@@ -596,7 +596,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent lab notes learn trading hub news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
       chat) compadd -- --diagnose --password --email --delete-user --tools --models --import --check ;;
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
-      notes) compadd -- --local --clean-mirrors --clean-private --move-old --run ;;
+      notes) compadd -- --local --clean-mirrors --clean-private --copy-old --run ;;
       health)
         if [[ ${words[CURRENT-1]} == --open ]]; then compadd -- anomalies today week sleep activity recovery heart workouts events diary labs documents data notices
         elif [[ ${words[CURRENT-1]} == --labs ]]; then compadd -- summary pending read confirm discard folder import result analysis prescriptions referrals requests suggestions profile certificates reports appointments appointment calendar documents token --open

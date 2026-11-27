@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SERVICOS = {"saude": "Studio Health", "financas": "Studio Finance"}
-PASTAS_SENSIVEIS = {"Saúde": "saude", "Saude": "saude", "Heimdall Finanças": "financas", "Finanças": "financas", "Financas": "financas"}
+PASTAS_SENSIVEIS = {"Saúde": "saude", "Saude": "saude", "Heimdall Finanças": "financas", "Studio Finance": "financas", "Finanças": "financas", "Financas": "financas"}
 _trava = threading.Lock()
 MAX_TITULO, MAX_TEXTO, MAX_AVISOS = 200, 20000, 500
 

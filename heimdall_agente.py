@@ -99,17 +99,21 @@ HOST = os.environ.get("STUDIO_AGENTE_HOST", "127.0.0.1")
 PORT = int(os.environ.get("STUDIO_AGENTE_PORT", "8003"))
 TOKEN = os.environ.get("STUDIO_AGENTE_TOKEN", "")
 VAULT = Path(os.environ.get("STUDIO_VAULT_DIR", str(heimdall_pastas.brain(PROJECT_DIR)))).expanduser()
-PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continuam aceitos e ignorados
+PREFIXO_ESCRITA = "Heimdall"  # nomes antigos ("Heimdall Cérebro" etc.) continuam aceitos (ver LEGADAS) e nunca são lidos como fonte
+# Nome antigo -> pasta atual (dentro da raiz). Fluxos antigos que ainda mandam o nome velho gravam na pasta nova.
+LEGADAS = {"Heimdall Cérebro": "Second Brain", "Heimdall Digest": "Digest", "Heimdall Privacidade": "Monitor de Privacidade",
+           "Heimdall Finanças": "Studio Finance", "Heimdall Notas": "Catálogo"}
 # Pastas do app Notas que o Heimdall cria e onde só ele escreve. Nunca são lidas como fonte (evita laço) e as
 # suas notas pessoais nunca são alteradas. Para mudar, use no .env: STUDIO_PASTAS_PROPRIAS="Monitor de Privacidade,Digest,Cérebro"
 PASTAS_PROPRIAS = [p.strip() for p in os.environ.get("STUDIO_PASTAS_PROPRIAS", "Monitor de Privacidade,Digest,Second Brain,Cérebro").split(",") if p.strip()]
-for _p in ("Saúde", "Segurança", "GitOps", "Second Brain", "Cérebro"):  # sempre permitidas, mesmo com o .env personalizado ("Cérebro" é o nome antigo)
+for _p in ("Saúde", "Segurança", "GitOps", "Second Brain", "Cérebro", "Studio Finance", "Catálogo"):  # sempre permitidas, mesmo com o .env personalizado ("Cérebro" é o nome antigo)
     if _p not in PASTAS_PROPRIAS:
         PASTAS_PROPRIAS.append(_p)
-# No app Notas, tudo que o Heimdall grava fica dentro de uma pasta-raiz: Heimdall-ai/Digest, Heimdall-ai/Saúde,
-# Heimdall-ai/Estudos/<tema> etc. Os fluxos continuam mandando só o nome da pasta; o agente monta o caminho.
+# No app Notas, tudo que o sistema grava fica dentro de uma pasta-raiz: Studio Hub/Digest, Studio Hub/Saúde,
+# Studio Hub/Estudos/<tema> etc. Os fluxos continuam mandando só o nome da pasta; o agente monta o caminho.
 # Para voltar às pastas soltas: STUDIO_NOTAS_RAIZ="" no .env.
-RAIZ_NOTAS = os.environ.get("STUDIO_NOTAS_RAIZ", "Heimdall-ai").strip()
+RAIZ_NOTAS = os.environ.get("STUDIO_NOTAS_RAIZ", "Studio Hub").strip()
+RAIZ_ANTIGA = "Heimdall-ai"  # raiz anterior: continua intacta no app Notas até o usuário apagá-la, e nunca é lida como fonte
 # Subpasta do cofre de cada pasta (mantém os nomes antigos para não separar o que já foi gravado).
 PASTA_DO_COFRE = {"Monitor de Privacidade": "heimdall-privacidade", "Digest": "heimdall-digest", "Cérebro": "heimdall-cerebro", "Second Brain": "heimdall-cerebro"}
 
@@ -515,7 +519,7 @@ TITULO_DO_HEIMDALL = re.compile(r"^(C[ée]rebro: |Second Brain: )")
 def pasta_ignorada(nome: str) -> bool:
     n = nome.strip().lower()
     nn = norm_nome(nome)
-    return (n.startswith(PREFIXO_ESCRITA.lower()) or n == "estudos" or n in IGNORAR_PASTAS or nn in {norm_nome(p) for p in PRIVADAS}
+    return (n.startswith(PREFIXO_ESCRITA.lower()) or n in {r.lower() for r in (RAIZ_NOTAS, "Studio Hub", "Studio Finance", "Catálogo") if r} or n == "estudos" or n in IGNORAR_PASTAS or nn in {norm_nome(p) for p in PRIVADAS}
             or nn in {"second brain", "cerebro"})
 
 
@@ -715,6 +719,7 @@ def _limpar(s: str) -> str:
 
 def caminho_notas(pasta: str) -> str:
     """Caminho da pasta no app Notas, com "/" entre os níveis. Pastas antigas (Heimdall ...) ficam soltas."""
+    pasta = LEGADAS.get(pasta, pasta)
     if not RAIZ_NOTAS or pasta.startswith(PREFIXO_ESCRITA):
         return pasta
     if pasta in PASTAS_PROPRIAS:
@@ -724,6 +729,7 @@ def caminho_notas(pasta: str) -> str:
 
 def gravar(pasta: str, titulo: str, markdown: str, audio: str = "") -> dict:
     titulo, markdown, audio = _limpar(titulo), _limpar(markdown), _limpar(audio)
+    pasta = LEGADAS.get(pasta, pasta)
     if pasta not in PASTAS_PROPRIAS and not pasta.startswith(PREFIXO_ESCRITA) and pasta not in temas_conhecimento():
         raise PermissionError("só escrevo nas pastas do Heimdall e nas pastas de temas de knowledge/: " + ", ".join(PASTAS_PROPRIAS))
     if not titulo.strip() or len(titulo) > 200:

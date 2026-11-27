@@ -4,7 +4,7 @@
 Você escreve uma nota livre; o modelo local separa o que é ideia, contato, endereço, lembrete e evento:
   - lembrete  -> app Lembretes (heimdall_agenda, tipo lembrete_nota), só depois do aceite do usuário
   - evento    -> Calendário (heimdall_agenda, tipo evento_nota)
-  - ideia, contato, endereço -> Notion (heimdall_notion); sem Notion configurado, vão para uma nota local "Heimdall Notas"
+  - ideia, contato, endereço -> Notion (heimdall_notion); sem Notion configurado, vão para uma nota local na pasta Catálogo
 Regras: lembrete e evento ficam pendentes até o usuário aceitar (botão Criar, com a data conferida); depois de criados, têm botão Desfazer.
 Saúde e finanças nunca vão para o Notion: o item fica só em nota local. O modelo nunca recebe ordem de fora: o texto da nota é dado.
 """
@@ -24,7 +24,7 @@ import heimdall_perguntar as perguntar
 
 TIPOS = ("ideia", "contato", "endereco", "lembrete", "evento")
 ROTULO = {"ideia": "Ideia", "contato": "Contato", "endereco": "Endereço", "lembrete": "Lembrete", "evento": "Evento"}
-PASTA_LOCAL = "Heimdall Notas"
+PASTA_LOCAL = "Catálogo"
 MAX_ITENS = 12
 SENSIVEL_RE = re.compile(r"\b(sa[úu]de|m[ée]dic[oa]s?|exames?|diagn[óo]stic\w*|rem[ée]dios?|medicamentos?|receitas? m[ée]dica|press[ãa]o arterial|glicemia|hipoglicemia|doen[çc]a|"
                          r"sal[áa]rio|saldo|extrato|cart[ãa]o de cr[ée]dito|conta banc[áa]ria|banco|d[íi]vidas?|empr[ée]stimo|investimentos?|imposto de renda|cpf|senha|fatura)\b", re.I)

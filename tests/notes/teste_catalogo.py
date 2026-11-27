@@ -78,7 +78,7 @@ for txt in ("saldo da conta", "resultado do exame de sangue", "minha senha do ba
 falho = dict(deps, notion=lambda t, ti, tx: (False, "o Notion recusou (401)"))
 r = cat.executar({"tipo": "ideia", "titulo": "Ideia boa", "texto": "x", "data": "", "hora": "", "incerto": False}, falho)
 confere("Notion fora do ar: a ideia não se perde, vai para nota local", r["estado"] == "feito" and r["destino"] == "nota local")
-confere("nota local vai para uma pasta Heimdall", locais[-1]["pasta"].startswith("Heimdall"))
+confere("nota local vai para a pasta Catálogo", locais[-1]["pasta"] == "Catálogo")
 
 # Notion
 confere("id do banco aceita endereço colado do Notion", nt.id_do_banco("ideia") == "0123456789abcdef0123456789abcdef")
