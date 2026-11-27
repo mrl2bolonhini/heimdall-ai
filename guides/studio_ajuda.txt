@@ -124,6 +124,15 @@ Exemplos:
   studio trading
   studio trading --local
 
+@ miner | Studio Miner, acompanhamento de fontes públicas por área da vida
+Sem opção, abre o Studio Miner (porta 8022): cinco áreas fixas (Identidade, Cidadania, Patrimônio, Carreira e Rotina), cada uma com os itens pendentes, aceite antes de qualquer lembrete ou evento (Calendário e app Lembretes pelo agente do Mac), adiar e ignorar. Reúne os alertas que já existem (e-mail oficial, Diário Oficial, Justiça e privacidade); aviso de boleto só indica a identificação do termo e, com o Studio Finance ativo, o botão Abrir no Studio Finance leva a ele. Liga com STUDIO_MINER=1 no .env (studio env --set STUDIO_MINER 1); com a variável ligada, a notificação de cada alerta passa a apontar para a área do Miner. O endereço público miner.studiolibre.io precisa de registro DNS, entrada no túnel e aplicativo no Cloudflare Access.
+Opções:
+  -L, --local          abre o endereço deste Mac (http://localhost, senha e código de 6 dígitos) em vez do endereço público
+  -h, --help           mostra esta ajuda
+Exemplos:
+  studio miner
+  studio miner --local
+
 @ hub | Studio Hub, documentos pesquisáveis
 Sem opção, abre o acervo de documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto (OCR em imagens), etiquetas sugeridas com revisão e busca em todo o conteúdo. Liga com STUDIO_HUB=1 no .env. Cada pessoa pode conectar o próprio Dropbox ou OneDrive (somente leitura) na subaba Nuvem; o administrador registra o aplicativo no provedor, cadastra o endereço de retorno https://hub.studiolibre.io/nuvem/retorno e grava STUDIO_NUVEM_DROPBOX_ID, STUDIO_NUVEM_DROPBOX_SEGREDO, STUDIO_NUVEM_ONEDRIVE_ID e STUDIO_NUVEM_ONEDRIVE_SEGREDO no .env (studio env --set). Em Adicionar > Apps, cada pessoa conecta a conta Microsoft (OneNote, To Do, Planner em conta de trabalho ou escola, Calendário e Contatos), o Google (Agenda, Tarefas e Contatos), o iCloud (Calendário e Contatos, com senha de aplicativo, sem configuração do administrador), o Notion, o Todoist e o Trello, e o Hub lê tudo sozinho, para qualquer sistema (administrador: STUDIO_NUVEM_GOOGLE_ID e _SEGREDO; STUDIO_NUVEM_NOTION_ID e _SEGREDO; STUDIO_NUVEM_TODOIST_ID e _SEGREDO; STUDIO_NUVEM_TRELLO_ID com a chave de API); em Adicionar > Nuvem, Dropbox e OneDrive, com subpastas e, se a pessoa permitir, mover o importado para a pasta Importados pelo StudioLibre.
 Opções:

@@ -18,7 +18,7 @@ import time
 
 GB = 1024 ** 3
 SERVICOS = {8000: "MCP busca", 8001: "MCP arquivos", 8002: "Open Terminal", 8003: "agente do Mac", 8004: "MCP banco", 8010: "Lab",
-            8012: "News", 8013: "Saúde", 8014: "Jogos", 8019: "Learn", 8020: "Trading", 8021: "Library", 8016: "Finance", 8017: "Controls", 8018: "Account", 8099: "painel", 9000: "LiteLLM", 3000: "Open WebUI", 5678: "n8n", 11434: "Ollama"}
+            8012: "News", 8013: "Saúde", 8014: "Jogos", 8019: "Learn", 8020: "Trading", 8022: "Miner", 8021: "Library", 8016: "Finance", 8017: "Controls", 8018: "Account", 8099: "painel", 9000: "LiteLLM", 3000: "Open WebUI", 5678: "n8n", 11434: "Ollama"}
 
 
 def run(cmd: list, timeout: int = 15):

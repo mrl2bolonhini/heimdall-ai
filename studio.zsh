@@ -116,7 +116,7 @@ _studio_short() {  # opções curtas de cada comando -> opção longa em inglês
     controls) printf '%s\n' "-o=--open" "-L=--local" ;;
     account) printf '%s\n' "-L=--local" ;;
     learn) printf '%s\n' "-L=--local" "-s=--sync" "-m=--migrate" "-a=--apply" ;;
-    trading) printf '%s\n' "-L=--local" ;;
+    trading|miner) printf '%s\n' "-L=--local" ;;
     hub) printf '%s\n' "-L=--local" "-P=--paperless" "-m=--clean-mirrors" "-p=--clean-private" "-o=--copy-old" "-r=--run" ;;
     games) printf '%s\n' "-p=--play" "-l=--list" "-L=--local" ;;
     finance) printf '%s\n' "-o=--open" "-i=--inspect" "-x=--explain" "-p=--preview" "-m=--import" "-b=--inbox" "-r=--retry" "-v=--values" "-f=--folder" "-l=--lines" "-a=--account" "-F=--force" "-B=--bill" "-D=--bills" "-P=--person" "-E=--read-email" "-S=--sync" "-L=--local" ;;
@@ -254,7 +254,7 @@ studio() {
   done
   _HLOCAL=0
   case "$cmd" in
-    lab|learn|trading|hub|news|health|games|finance|controls|account)
+    lab|learn|trading|miner|hub|news|health|games|finance|controls|account)
       local _x _n=()
       for _x in "$@"; do
         if [ "$_x" = "--local" ]; then _HLOCAL=1; else _n+=("$_x"); fi
@@ -349,6 +349,7 @@ studio() {
       esac ;;
     account) _studio_web "Account" ACCOUNT 8018 account ;;
     trading) _studio_web "Studio Trading" TRADING 8020 trading ;;
+    miner) _studio_web "Studio Miner" MINER 8022 miner ;;
     hub)
       case "$1" in
         -P|--paperless) bash "$STUDIO_DIR/scripts/iniciar_paperless.sh" ;;
@@ -432,6 +433,7 @@ studio() {
       echo "chat: http://localhost:3000"
       echo "learn: http://localhost:$(_studio_port STUDIO_LEARN_PORT 8019)"
       echo "trading: http://localhost:$(_studio_port STUDIO_TRADING_PORT 8020)"
+      echo "miner: http://localhost:$(_studio_port STUDIO_MINER_PORT 8022)"
       echo "hub: http://localhost:$(_studio_port STUDIO_HUB_PORT "$(_studio_port STUDIO_HUB_PORT 8021)")"
       echo "news: http://localhost:$(_studio_port STUDIO_NEWS_PORT 8012)"
       echo "lab: http://localhost:$(_studio_port STUDIO_LAB_PORT 8010)"
@@ -583,7 +585,7 @@ studio() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _studio_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat learn trading hub news lab health games finance controls account n8n kuma dozzle urls notices notion cloudai mailbox app ask usage support db doctor backup continuity mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat learn trading miner hub news lab health games finance controls account n8n kuma dozzle urls notices notion cloudai mailbox app ask usage support db doctor backup continuity mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -591,7 +593,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
     fi
     case ${words[2]} in
       up|restart) compadd -- --webui --terminal --n8n --agent --ingest --docling --update ;;
-      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent lab learn trading hub news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
+      logs) if [[ ${words[CURRENT-1]} == --service ]]; then compadd -- mcp mcp-public mcp-data agent lab learn trading miner hub news health games finance terminal ingest; else compadd -- --list --clean --service; fi ;;
       chat) compadd -- --diagnose --password --email --delete-user --tools --models --import --check ;;
       news) compadd -- --local --token --urls --copy --opml --sources --queue --now ;;
       health)

@@ -23,6 +23,7 @@ SERVICOS = {
     "lab": ("Lab", "STUDIO_LAB_HOSTS", "lab", True),
     "learn": ("Learn", "STUDIO_LEARN_HOSTS", "learn", True),
     "trading": ("Trading", "STUDIO_TRADING_HOSTS", "trading", True),
+    "miner": ("Miner", "STUDIO_MINER_HOSTS", "miner", True),
     "memory": ("Hub", "STUDIO_HUB_HOSTS", "hub", True),
     "news": ("News", "STUDIO_NEWS_HOSTS", "news", True),
     "jogos": ("Games", "STUDIO_JOGOS_HOSTS", "games", True),

@@ -94,7 +94,7 @@ class Config:
 
     def __init__(self, chave: str, nome: str, porta_env: str, porta: int, hosts: str, abas: list, ajustes: list, get: dict, post: dict,
                  aliases: dict = None, sistema_perguntar: str = "", contexto_perguntar=None, dica_perguntar: str = "", max_post: int = 20000, ao_iniciar=None,
-                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None, publicas_post: dict = None, arquivos: dict = None):
+                 css: str = "", script_pagina=None, erro=ValueError, pertence: dict = None, publicas: dict = None, publicas_post: dict = None, arquivos: dict = None, inicio=None, aviso_rodape: str = ""):
         self.chave, self.nome, self.porta_env, self.porta, self.hosts = chave, nome, porta_env, porta, hosts
         self.abas, self.ajustes, self.get, self.post = abas, ajustes, get, post
         self.aliases = aliases or {}
@@ -103,6 +103,8 @@ class Config:
         self.publicas = publicas or {}   # {rota GET sem sessão: func(q) -> (titulo, corpo) ou (titulo, corpo, script)}; só para retornos de terceiros (OAuth), que chegam sem o cookie
         self.publicas_post = publicas_post or {}   # {rota POST sem sessão: func(campos) -> (titulo, corpo)}; só para o passo final de um retorno de terceiros (o state de uso único vale como credencial)
         self.arquivos = arquivos or {}   # {rota GET: func(ctx) -> Path ou None}: entrega o arquivo com suporte a Range (o Safari do iPhone exige para tocar áudio); None é 404
+        self.inicio = inicio   # func(ctx) -> rota: para onde a raiz leva (padrão: a primeira aba); a ordem das abas não muda
+        self.aviso_rodape = aviso_rodape   # texto único no rodapé de toda página com sessão (ex.: aviso de que o serviço não dá parecer)
         self.pertence = pertence or {}   # {rota que não é aba: rota da aba a destacar}, como /documento dentro de Documentos
         assert len(abas) <= design.MAX_ABAS, "mais abas do que o Studio Design permite"
         self.prefixo = f"STUDIO_{PREFIXO_DO_SERVICO.get(chave, chave.upper())}_"
@@ -178,7 +180,7 @@ def pagina(cfg: Config, titulo: str, corpo: str, sess: dict = None, rota: str = 
             f'<meta name="robots" content="noindex,nofollow"><title>{e(titulo)} - Studio {e(cfg.nome)}</title>{nuvem.ICONE}<style>{nuvem.CSS}{cfg.css}</style></head>'
             f'<body{(" data-csrf=" + chr(34) + e(sess["csrf"]) + chr(34)) if sess else ""}>'
             f'{design.topo()}<a class="pular" href="#principal">Pular para o conteúdo</a>{nuvem.cabecalho("Studio " + cfg.nome, nav, sair_html=sair, ajustes_html=ajustes_html)}'
-            f'<main id="principal">{conteudo}</main>{design.rodape(servico=cfg.chave)}{js}</body></html>').encode("utf-8")
+            f'<main id="principal">{conteudo}</main>{design.rodape((f'<p class="aviso-rodape">{e(cfg.aviso_rodape)}</p>' if (sess and cfg.aviso_rodape) else ""), servico=cfg.chave)}{js}</body></html>').encode("utf-8")
 
 
 def pg_entrar(cfg: Config, erro: str = "") -> bytes:
@@ -338,7 +340,8 @@ def criar_manipulador(cfg: Config, hosts_ok: set):
         def _get(self, rota: str, q: dict, sess: dict) -> None:
             ctx = Ctx(q, sess, rota)
             if rota == "/":
-                self._ir(cfg.abas[0][1][0][0])
+                destino_inicial = cfg.inicio(ctx) if cfg.inicio else cfg.abas[0][1][0][0]
+                self._ir(destino_inicial if destino_inicial in cfg.rotas_abas() else cfg.abas[0][1][0][0])
                 return
             if rota == "/ajustes" and cfg.ajustes:
                 self._ir(cfg.ajustes[0][0])

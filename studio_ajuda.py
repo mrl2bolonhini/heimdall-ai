@@ -33,7 +33,7 @@ ASSUNTOS = {"duvida": "Dúvida de uso", "problema": "Problema ou erro", "sugesta
 SERVICOS = {
     "geral": "Geral",
     "account": "Account", "controls": "Controls", "finance": "Finance", "saude": "Health", "news": "News",
-    "learn": "Learn", "trading": "Trading", "memory": "Hub", "jogos": "Games", "lab": "Lab", "chat": "Chat",
+    "learn": "Learn", "trading": "Trading", "miner": "Miner", "memory": "Hub", "jogos": "Games", "lab": "Lab", "chat": "Chat",
 }
 
 # Perguntas frequentes: uma lista de (pergunta, resposta) por serviço. Linguagem de produto: clara, objetiva e neutra.
@@ -107,6 +107,16 @@ FAQ = {
          "Por padrão, as cotações são reais, da B3, pela brapi (um token da brapi, configurado por quem administra o StudioLibre, amplia o acesso). Em Ajustes, na aba Cotações, você pode trocar a fonte por simulada (preços gerados, sem internet) ou manual (você informa o preço de cada ativo)."),
         ("A inteligência artificial recomenda comprar ou vender?",
          "Nunca. Os sinais descrevem de forma objetiva o movimento recente do preço, e o campo Perguntar explica os números da conta. A decisão é sempre sua, e nada aqui é aconselhamento financeiro."),
+    ],
+    "miner": [
+        ("O que o Studio Miner faz?",
+         "Acompanha fontes públicas e reúne o que pede atenção em cinco áreas: Identidade, Cidadania, Patrimônio, Carreira e Rotina. Ele informa o que a fonte registra; não substitui um parecer jurídico."),
+        ("O que significa aceitar um item?",
+         "Nada vira lembrete ou evento sem o seu aceite. Ao aceitar, o item com prazo oficial vira evento no Calendário e os demais viram lembrete. Você também pode adiar para rever depois ou ignorar."),
+        ("Como o Miner trata boletos?",
+         "Apenas identifica que o aviso trata de boleto. Se o Studio Finance estiver ativo, o botão Abrir no Studio Finance leva à conferência lá; o Miner não paga nem confere valores."),
+        ("Posso escolher a área que abre primeiro?",
+         "Sim. Em Ajustes, na subaba Perfil, escolha a área inicial."),
     ],
     "memory": [
         ("O que mostra a aba Notas?",

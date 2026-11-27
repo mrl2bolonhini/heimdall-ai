@@ -130,6 +130,11 @@ CREATE TABLE IF NOT EXISTS triagem (
 );
 CREATE INDEX IF NOT EXISTS ix_triagem_estado ON triagem (estado, criado);
 
+CREATE TABLE IF NOT EXISTS miner_config (
+    chave TEXT PRIMARY KEY,         -- ex.: inicio (área inicial do Studio Miner)
+    valor TEXT NOT NULL DEFAULT ''
+);
+
 CREATE TABLE IF NOT EXISTS noticias (
     id TEXT PRIMARY KEY,            -- hash do link sem rastreadores
     fonte TEXT NOT NULL DEFAULT '',

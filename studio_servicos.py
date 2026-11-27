@@ -61,6 +61,8 @@ def catalogo() -> list:
          "porta_env": "STUDIO_LEARN_PORT", "log": "learn_debug", "opcional": True},
         {"id": "trading", "nome": "Trading", "porta": _porta("STUDIO_TRADING_PORT", 8020), "tipo": "py", "script": ["studio_trading.py"],
          "porta_env": "STUDIO_TRADING_PORT", "log": "trading_debug", "opcional": True},
+        {"id": "miner", "nome": "Miner", "porta": _porta("STUDIO_MINER_PORT", 8022), "tipo": "py", "script": ["studio_miner.py"],
+         "porta_env": "STUDIO_MINER_PORT", "log": "miner_debug", "opcional": True},
         {"id": "memory", "nome": "Hub", "apelidos": ["memory", "hub"], "porta": _porta("STUDIO_HUB_PORT", _porta("STUDIO_HUB_PORT", 8021)), "tipo": "py", "script": ["studio_memory.py"],
          "porta_env": "STUDIO_HUB_PORT", "log": "memory_debug", "opcional": True},
         {"id": "news", "nome": "News", "porta": _porta("STUDIO_NEWS_PORT", 8012), "tipo": "py", "script": ["studio_news.py"],

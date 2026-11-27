@@ -50,6 +50,7 @@ LAB_PORT="${STUDIO_LAB_PORT:-8010}"
 NEWS_PORT="${STUDIO_NEWS_PORT:-8012}"
 LEARN_PORT="${STUDIO_LEARN_PORT:-8019}"
 TRADING_PORT="${STUDIO_TRADING_PORT:-8020}"
+MINER_PORT="${STUDIO_MINER_PORT:-8022}"
 MEMORY_PORT="${STUDIO_HUB_PORT:-${STUDIO_HUB_PORT:-8021}}"   # STUDIO_HUB_PORT: nome antigo, ainda aceito
 SAUDE_PAINEL_PORT="${STUDIO_SAUDE_PAINEL_PORT:-8013}"
 CONTROLS_PORT="${STUDIO_CONTROLS_PORT:-8017}"
@@ -133,6 +134,7 @@ lsof -ti:$LAB_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$NEWS_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$LEARN_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$TRADING_PORT | xargs kill -9 2>/dev/null
+lsof -ti:$MINER_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$MEMORY_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$SAUDE_PAINEL_PORT | xargs kill -9 2>/dev/null
 lsof -ti:$CONTROLS_PORT | xargs kill -9 2>/dev/null
@@ -593,6 +595,24 @@ if [ "${STUDIO_TRADING:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ 
             fi
         done
         echo "     Studio Trading (mesa de operações em simulação) em http://localhost:$TRADING_PORT"
+    fi
+fi
+
+# --- Studio Miner (acompanhamento de fontes públicas por área da vida) ---
+# Desligado por padrão: ligue com STUDIO_MINER=1 no .env (studio env --set STUDIO_MINER 1). Mesmo login do Studio Lab.
+if [ "${STUDIO_MINER:-0}" = "1" ] && [ -n "$HEIMDALL_CLOUD_SENHA_HASH" ] && [ -n "$HEIMDALL_CLOUD_TOTP_SEGREDO" ]; then
+    if [ -f studio_miner.py ]; then
+        STUDIO_MINER_PORT="$MINER_PORT" "$VENV_PYTHON" studio_miner.py > "$(nova_log miner_debug)" 2>&1 &
+        COUNTER=0
+        while ! nc -z localhost $MINER_PORT > /dev/null 2>&1; do
+            sleep 1
+            COUNTER=$((COUNTER+1))
+            if [ $COUNTER -gt 10 ]; then
+                echo "Aviso: o Studio Miner não respondeu em 10s. Veja logs/miner_debug.log."
+                break
+            fi
+        done
+        echo "     Studio Miner (acompanhamento de fontes públicas) em http://localhost:$MINER_PORT"
     fi
 fi
 

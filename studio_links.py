@@ -17,6 +17,7 @@ PRODUTOS = {
     "learn": ("learn", "LEARN", "/"), "news": ("news", "NEWS", "/"),
     "games": ("games", "JOGOS", "/"), "jogos": ("games", "JOGOS", "/"), "lab": ("lab", "LAB", "/"),
     "memory": ("hub", "HUB", "/"), "hub": ("hub", "HUB", "/"), "trading": ("trading", "TRADING", "/"),
+    "miner": ("miner", "MINER", "/rotina"),
     "controls": ("controls", "CONTROLS", "/"), "account": ("account", "ACCOUNT", "/"),
 }
 _HOST_OK = re.compile(r"^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$")

@@ -20,6 +20,14 @@ import studio_links as links
 
 NIVEIS = {"critico": "timeSensitive", "alto": "active", "medio": "passive"}
 FONTE_PRODUTO = {"saude": "saude"}   # fonte do alerta -> chave do produto em studio_avisos.SERVICOS
+# Fonte do alerta -> tela do Studio Miner que a recebe (usada só com STUDIO_MINER=1)
+MINER_CAMINHO = {"email": "/rotina", "justica": "/cidadania", "diarios": "/cidadania", "privacidade": "/identidade"}
+
+
+def _caminho_miner(fonte):
+    if os.environ.get("STUDIO_MINER", "0") != "1":
+        return None
+    return MINER_CAMINHO.get(fonte)
 
 
 def _texto(s, limite: int) -> str:
@@ -67,11 +75,17 @@ def publicar(dado: dict) -> dict:
         except (ValueError, OSError):
             pass
     completo = {"title": titulo, "body": resumo, "group": fonte or "alertas", "level": NIVEIS[nivel]}
-    r["mac"] = mac.publicar(links.com_link(completo, produto) if produto else completo)
+    miner = None if produto else _caminho_miner(fonte)
+    if produto:
+        completo = links.com_link(completo, produto)
+    elif miner:
+        completo = links.com_link(completo, "miner", miner)
+    r["mac"] = mac.publicar(completo)
     if produto and r["aba"] and avisos.bark_ligado(produto):
         r["bark"] = bark.enviar_bark(avisos.texto_bark(produto))
     elif not produto:
-        r["bark"] = bark.enviar_bark({"title": "StudioLibre: alerta novo", "body": "Há um alerta novo. Abra o aplicativo do Mac.", "group": fonte or "alertas", "level": NIVEIS[nivel]})
+        generico = {"title": "StudioLibre: alerta novo", "body": "Há um alerta novo. Abra o aplicativo do Mac.", "group": fonte or "alertas", "level": NIVEIS[nivel]}
+        r["bark"] = bark.enviar_bark(links.com_link(generico, "miner", miner) if miner else generico)
     return r
 
 

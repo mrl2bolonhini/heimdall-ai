@@ -45,6 +45,13 @@ INFO = {
                  "A IA só descreve os números e os movimentos recentes: nunca recomenda comprar ou vender. Quem decide é você."],
         "so_dono": False,
     },
+    "miner": {
+        "oque": "Acompanhamento de fontes públicas por área da vida: identidade, cidadania, patrimônio, carreira e rotina. Reúne avisos de diários oficiais, processos, e-mail oficial e privacidade e os organiza em pendentes, com aceite antes de qualquer lembrete ou evento.",
+        "como": ["Em cada área, a aba Pendentes lista o que pede atenção. Use Aceitar para criar o lembrete ou o evento correspondente, Adiar para rever depois ou Ignorar para dispensar.",
+                 "Quando um aviso trata de boleto e o Studio Finance está ativo, o botão Abrir no Studio Finance leva à conferência no Finance.",
+                 "Em Ajustes, escolha a área que abre primeiro."],
+        "so_dono": False,
+    },
     "memory": {
         "oque": "Documentos pesquisáveis: envie PDF, foto, Word ou texto, e o Memory lê o texto (com OCR em imagens), sugere título, tipo e etiquetas e permite pesquisar em tudo.",
         "como": ["Em Adicionar, envie arquivos pelo navegador ou coloque-os na pasta de entrada.",

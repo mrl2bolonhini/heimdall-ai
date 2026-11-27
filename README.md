@@ -54,6 +54,7 @@ Detalhes em https://studiolibre.io/arquitetura.html.
 | Dozzle | 8081 | Leitor de logs dos contêineres. |
 | Emulador de AWS (Moto ou LocalStack) | 4566 | Para testar código de AWS sem custo. |
 | Studio Learn | 8019 | Plataforma de estudos (fases 1 e 2): pastas em knowledge/ com categoria (aleatório ou sequencial) e tipo com regras próprias (catálogo em studio_learn_tipos.py), importação de documentos, modo aleatório (sorteia trecho, pergunta, corrige, grava áudio e sugere matérias) e banco próprio db/learn.db. Mesmo login do Studio Lab. |
+| Studio Miner | 8022 | Acompanhamento de fontes públicas por área da vida (porta 8022): Identidade, Cidadania, Patrimônio, Carreira e Rotina, cada uma com pendentes e aceite antes de qualquer lembrete ou evento. |
 | Studio Trading | 8020 | Mesa de operações em simulação (porta 8020), feita para teclado e leitor de tela: cotação, ordens a mercado e limitadas, carteira, histórico, sinais descritivos, limites por ordem e de perda por dia. Nenhuma ordem é enviada a corretora. |
 | Studio Hub | 8021 | Documentos pesquisáveis: envio de PDF, foto, Word e texto, leitura de texto com OCR, etiquetas sugeridas com revisão e busca em todo o conteúdo; motor opcional Paperless-ngx (Docker local) para e-mail e classificação que aprende. |
 | Studio News | 8012 | Notícias das últimas 24 horas com resumo feito por IA (sinalizado como tal), 10 por página, e feeds RSS com chave secreta para o app de feeds do iPhone. Atualiza de 30 em 30 minutos e guarda 30 dias no banco pessoal. Mesmo login do Studio Lab. Escuta só em 127.0.0.1. |

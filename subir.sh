@@ -5,7 +5,7 @@
 #   ./subir.sh --update           sobe com os argumentos que você passar (os mesmos do start_studio.sh)
 #   ./subir.sh --status           só confere agora o que está no ar, sem subir nada
 #   ./subir.sh --log              mostra as últimas 40 linhas do log da subida atual
-#   ./subir.sh --log lab          idem, do serviço indicado (mcp, mcp_public, mcp_dados, agente, lab, learn, trading, memory, news, saude_painel, jogos, account, finance, controls, open_terminal, ingest)
+#   ./subir.sh --log lab          idem, do serviço indicado (mcp, mcp_public, mcp_dados, agente, lab, learn, trading, miner, memory, news, saude_painel, jogos, account, finance, controls, open_terminal, ingest)
 #   ./subir.sh --logs             lista os logs em logs/
 #   ./subir.sh --limpar           apaga os logs antigos que ficavam soltos na pasta do projeto (agora ficam em logs/)
 #   ./subir.sh --reiniciar [args] encerra a subida em andamento e sobe de novo
@@ -42,7 +42,7 @@ case "$1" in
     --logs) ls -lt "$LOGS" 2> /dev/null | tail -n +2 || echo "Ainda não há logs."; exit 0 ;;
     --limpar)
         n=0
-        for f in mcp_debug mcp_public_debug mcp_dados_debug agente_debug lab_debug learn_debug trading_debug memory_debug open_terminal ingest; do
+        for f in mcp_debug mcp_public_debug mcp_dados_debug agente_debug lab_debug learn_debug trading_debug miner_debug memory_debug open_terminal ingest; do
             if [ -f "$PROJECT_DIR/$f.log" ] && [ ! -L "$PROJECT_DIR/$f.log" ]; then rm -f "$PROJECT_DIR/$f.log" && n=$((n+1)) && echo "Apagado: $f.log"; fi
         done
         echo "$n arquivo(s) de log antigo apagado(s). Os logs atuais estão em logs/."
@@ -95,6 +95,7 @@ montar_lista() {
         case "${STUDIO_AWS_EMULATOR:-auto}" in off) ;; *) LISTA+=("Studio Lab|http|http://127.0.0.1:${STUDIO_LAB_PORT:-8010}/saude") ;; esac
         [ "${STUDIO_LEARN:-0}" = "1" ] && LISTA+=("Studio Learn|http|http://127.0.0.1:${STUDIO_LEARN_PORT:-8019}/saude")
         [ "${STUDIO_TRADING:-0}" = "1" ] && LISTA+=("Studio Trading|http|http://127.0.0.1:${STUDIO_TRADING_PORT:-8020}/saude")
+        [ "${STUDIO_MINER:-0}" = "1" ] && LISTA+=("Studio Miner|http|http://127.0.0.1:${STUDIO_MINER_PORT:-8022}/saude")
         [ "${STUDIO_HUB:-${STUDIO_HUB:-0}}" = "1" ] && LISTA+=("Studio Hub|http|http://127.0.0.1:${STUDIO_HUB_PORT:-${STUDIO_HUB_PORT:-8021}}/saude")
         LISTA+=("Studio News|http|http://127.0.0.1:${STUDIO_NEWS_PORT:-8012}/saude")
         LISTA+=("Studio Health|http|http://127.0.0.1:${STUDIO_SAUDE_PAINEL_PORT:-8013}/saude")

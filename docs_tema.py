@@ -21,6 +21,7 @@ ACESSOS = {
     "jogos": "https://games.studiolibre.io",
     "learn": "https://learn.studiolibre.io",
     "trading": "https://trading.studiolibre.io",
+    "miner": "https://miner.studiolibre.io",
     "memory": "https://hub.studiolibre.io",
     "finance": "https://finance.studiolibre.io",
 }
