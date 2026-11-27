@@ -4,6 +4,14 @@ Os próximos recursos do Heimdall-ai, na ordem em que pretendo fazê-los. São i
 
 <!-- Formato: cada "## Nome" é uma etapa, com uma linha de nota e itens "- Título: descrição". O site é gerado deste arquivo (python3 gerar_docs.py); o que for entregue passa para o CHANGELOG.md. Ordem revisada pelo PO em 25/11/2026, com as prioridades escolhidas pelo usuário e o contexto de guides/contexto_projeto.txt. -->
 
+## Proposta do PO (26/11/2026, aguarda a aprovação do usuário)
+Entregas que surgiram das decisões de 26/11/2026, na ordem proposta. Detalhes e levantamento de cada aviso em guides/avisos_e_produtos.txt.
+- 1. Domínio base único e link nas notificações: toda notificação (Bark e Mac) leva o link da tela do produto que a gerou; um só ponto define o endereço, para acompanhar a troca de domínio. Quando houver app para celular, a notificação passa a ser a do app (Studio Health, Studio Finance etc.).
+- 2. Lembrete só com aceite: a triagem de avisos, o vigia de e-mail oficial e o catálogo de notas deixam de criar lembrete sozinhos; o item aparece na tela do produto e só vira lembrete ou evento depois do aceite do usuário. A lista "Heimdall: Triagem" deixa de ser canal de aviso: a fila de pendências vira tela do produto de origem.
+- 3. Notes dentro do Memory: o Notes deixa de ser serviço próprio e passa a ser a área de resumos e informações coletadas dos outros serviços, no Memory, com o catálogo; pastas do app Notas sem "Heimdall", com migração com cópia e rotas antigas redirecionando. Depende da escolha do nome (opções já apresentadas: Muninn, Mimir, Yggdrasil, Bifrost, Acervo, Cofre, Trama, Memória).
+- 4. Produtos para o que hoje serve só ao dono: estudo de necessidade e de mercado para (a) comunicados oficiais (e-mail e Diário Oficial, com fila de pendências e prazo no Calendário) e (b) proteção de identidade e reputação (monitor de privacidade); decidir produto, serviço de apoio ou desligar. Até a decisão, nenhum deles é oferecido a outros usuários.
+- 5. Renomeação, restante: fase 3b (módulos, arquivos, pastas e app) e fase 4 (Cloudflare e subdomínios em studiolibre.io), depois a atualização da main.
+
 ## Em andamento
 O que está sendo feito agora, na ordem de prioridade escolhida em 25/11/2026.
 - Dados separados por pessoa (plano em guides/dados_por_pessoa_plano.txt): a fundação, o Learn e o Health (perfil, sugestões e painel por pessoa) já separam os dados. A cópia de segurança diária já inclui o banco de cada pessoa e os demais bancos da pasta db/ (o do Learn, por exemplo). Próximos passos: Notes, News, Games e o Chat guardarem os dados de cada pessoa, um serviço por vez, cada um com teste de que uma pessoa não vê os dados da outra.

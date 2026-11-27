@@ -1,0 +1,34 @@
+Avisos, verificações e o produto de cada um (levantamento de 26/11/2026)
+
+Regra de projeto (decisão do usuário em 26/11/2026): todo aviso ou verificação precisa de um produto associado, que o usuário final possa usar. O que serve só ao dono do projeto não entra na oferta: ou vira produto (com análise de necessidade e de mercado) ou é desligado. Toda notificação aponta para o produto: um link para a tela dele enquanto não houver app para celular e, depois, a notificação do próprio app (Studio Health, Studio Finance etc.). Lembrete e evento só nascem nas situações previstas em heimdall_agenda.py e depois do aceite do usuário; avisos vão pelos serviços próprios (aba Avisos, notificação).
+
+1) Avisos que já têm produto
+1. Relatório semanal de saúde, documento clínico para conferir, documento não lido, anomalias e análise de saúde: Studio Health (aba Avisos). Falta: a notificação apontar para a tela do Studio Health.
+2. Avisos de finanças (importação, boletos, vencimentos, anomalias de gasto): Studio Finance (aba Avisos). Falta: o link na notificação.
+3. Estudo do dia (card e lição): Studio Learn. Falta: o link na notificação.
+4. Cotações e movimentos da simulação: Studio Trading. Falta: o link na notificação.
+5. Notas alteradas e catálogo de notas (ideia, contato, endereço, lembrete, evento): Studio Notes, que será absorvido pelo Studio Memory (decisão de 26/11/2026). Falta: lembrete e evento só depois do aceite.
+6. Documentos do acervo (envio, etiquetas, revisão): Studio Memory. Falta: o nome (em reavaliação).
+
+2) Avisos de sistema (serviços de apoio, sem prefixo Studio)
+1. Estado dos serviços, alerta de memória e contêineres, backup, versões, monitor da Cloudflare, continuidade: Status e Controls. Aviso ao administrador, não ao usuário final. Falta: o link na notificação para a tela do serviço de apoio.
+
+3) Avisos SEM produto (servem hoje só ao dono do projeto)
+1. Vigia do e-mail oficial (INSS, gov.br, Receita, tribunais, Detran): lê o Gmail por IMAP, confere o remetente, resume, alerta imitação e cria lembrete e evento de prazo. Hoje não tem tela de produto nem serviço próprio. Candidato a produto: "caixa de comunicados oficiais" (ver item 4).
+2. Monitor de Diário Oficial e Diário da Justiça (fluxo 11-diarios-oficiais, busca pelo nome do dono): publicações que citam uma pessoa. Hoje as buscas usam o nome do dono. Candidato a produto: "acompanhamento de publicações oficiais" (ver item 4).
+3. Triagem obrigatória de avisos (lista "Heimdall: Triagem" do app Lembretes): junta itens do Diário da Justiça, de saúde e de e-mails suspeitos e insiste por notificação. Usa o app Lembretes como canal de aviso, o que contraria a regra. Precisa de redesenho: a fila de pendências vira uma tela de produto, e o lembrete só nasce depois do aceite.
+4. Monitor de privacidade (fluxo diário do n8n: pesquisa os identificadores do dono na web, separa homônimos, analisa menções e possíveis vazamentos e entrega relatório no app Notas e resumo por Bark): sem tela de produto. Candidato a produto de proteção de identidade e reputação (ver item 4).
+5. Tarefas de segurança por modelo local (logs, commits e outras, em heimdall_seguranca.py): análise técnica para o dono; sem produto. Tende a serviço de apoio (Controls) ou a ser desligado.
+
+4) Desenho dos produtos que faltam (a decidir com o PO)
+Para cada candidato, antes de construir: quem é o usuário final, que problema resolve, o que existe no mercado, a promessa de valor, o risco (privacidade, golpe, aviso jurídico) e o apetite de mercado. Perguntas já levantadas:
+1. Comunicados oficiais (e-mail e Diário Oficial): o público é amplo no Brasil (autônomos, pequenas empresas, advogados, quem tem pendência com órgão público); concorrentes: serviços de monitoramento de publicações para advogados, apps de caixa postal do governo e alertas do próprio gov.br. Hipótese: um só produto, com duas fontes (e-mail e Diário Oficial), a fila de pendências e o prazo no Calendário, tudo com aceite. Nome provisório: Studio Mail ou Studio Oficial (nome a decidir).
+2. Fila de pendências (triagem): não é produto por si; vira a tela de "A conferir" dentro do produto que gerou o aviso, com ações concluir, adiar e classificar, e a notificação aponta para ela.
+3. Privacidade: avaliar se cabe como serviço de apoio (Controls) ou se é produto próprio; hoje sem dono.
+
+5) Ordem de entrega proposta (para o PO confirmar; o backlog oficial é o ROADMAP.md)
+1. Regra "notificação aponta para o produto": campo de link em toda notificação (Bark, Mac) e URL de cada produto, no domínio vigente.
+2. Fim dos lembretes automáticos: triagem, e-mail oficial e catálogo de notas passam a pedir o aceite na tela do produto.
+3. Notes dentro do Memory, com o catálogo e sem pastas "Heimdall" no app Notas (migração com cópia).
+4. Estudo de produto de comunicados oficiais (item 3.1 e 3.2).
+5. Nome do Memory.
