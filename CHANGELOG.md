@@ -3,7 +3,7 @@
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
 ## 2026-11-28 - Testes do projeto com o motivo das falhas
-- O comando `studio tests` roda os testes e, quando um falha, mostra o motivo (as últimas linhas da saída do teste) e um resumo no fim. Aceita pastas (`finance`, `health`) e trechos de nome (`agenda`, `banco`), em qualquer combinação, e as opções -l (listar), -x (parar na primeira falha), -q (só falhas), -v (saída completa) e -n (linhas mostradas por falha). `studio tests -h` mostra a ajuda. O comando antigo `studio test` foi substituído.
+- O comando `studio tests` roda os testes e, quando um falha, mostra o motivo (as últimas linhas da saída do teste) e um resumo no fim. Aceita pastas (`finance`, `health`) e trechos de nome (`agenda`, `banco`), em qualquer combinação, e as opções -l (listar), -x (parar na primeira falha), -q (só falhas), -v (saída completa) e -n (linhas mostradas por falha). `studio tests -h` mostra a ajuda. Cada teste roda em ambiente limpo, sem usar os serviços reais nem a nuvem. O comando antigo `studio test` foi substituído. O documento do comando (`studio help --doc`) passa a escolher uma porta local que realmente sirva a página.
 
 ## 2026-11-28 - Correio assume e-mail oficial, boletos e documentos de saúde
 - O aviso de e-mail oficial e de possível golpe por imitação passa a funcionar para qualquer conta conectada no Correio, de qualquer provedor, para cada pessoa. O provedor precisa informar a autenticação do remetente; sem ela, o Miner não afirma golpe nem autenticidade.

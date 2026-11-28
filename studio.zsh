@@ -164,14 +164,20 @@ _studio_usage() {  # ajuda de um comando só
   printf '%s\n' "$out"
 }
 
-_studio_doc() {  # o Safari recusa file:// fora da área permitida; por isso o documento é servido por um servidor local mínimo (porta 8099, só 127.0.0.1)
-  local dir="$STUDIO_DIR/docs" porta=8099
+_studio_doc() {  # o Safari recusa file:// fora da área permitida; por isso o documento é servido por um servidor local mínimo (só 127.0.0.1). Usa a primeira porta que já serve o documento ou que esteja livre (a 8099 pode estar com outro programa ou com um servidor de uma pasta antiga)
+  local dir="$STUDIO_DIR/docs" porta url
   if [ ! -f "$dir/comando-studio.html" ]; then echo "Não achei $dir/comando-studio.html. Rode: studio update   (ou: studio docs)"; return 1; fi
-  if ! nc -z 127.0.0.1 "$porta" > /dev/null 2>&1; then
-    local py; py="$(command -v python3)"
+  local py; py="$(command -v python3)"
+  for porta in 8099 8098 8097 8096 8095; do
+    url="http://localhost:$porta/comando-studio.html"
+    if nc -z 127.0.0.1 "$porta" > /dev/null 2>&1; then
+      curl -fsS --noproxy "*" -o /dev/null --max-time 3 "$url" > /dev/null 2>&1 && break   # a porta já serve o documento
+      continue                                                              # ocupada por outro programa ou por pasta antiga
+    fi
     ( cd "$dir" && nohup "$py" -m http.server "$porta" --bind 127.0.0.1 > /dev/null 2>&1 & ) > /dev/null 2>&1
     sleep 1
-  fi
+    curl -fsS --noproxy "*" -o /dev/null --max-time 3 "$url" > /dev/null 2>&1 && break
+  done
   _studio_open "Documento do comando studio" "http://localhost:$porta/comando-studio.html"
 }
 

@@ -110,11 +110,15 @@ with tempfile.TemporaryDirectory() as d:
     confere("help --doc sem o arquivo avisa", rc != 0 and "comando-studio.html" in out, out)
     (Path(d) / "docs").mkdir()
     (Path(d) / "docs" / "comando-studio.html").write_text("<html></html>")
-    rc, out = bash("studio help --doc", d)
+    # nc, curl e python3 de mentira: o teste nunca sobe um servidor de verdade (um servidor preso numa pasta apagada responderia 404 na porta 8099)
+    bin_ = Path(d, "falsos"); bin_.mkdir()
+    for nome, corpo in (("nc", "exit 1"), ("curl", "exit 0"), ("python3", "exit 0")):
+        (bin_ / nome).write_text("#!/bin/bash\n" + corpo + "\n"); (bin_ / nome).chmod(0o755)
+    rc, out = bash(f'export PATH="{bin_}:$PATH"; studio help --doc', d)
     confere("help --doc abre o documento por http, não por file://", "http://localhost:8099/comando-studio.html" in out and "file://" not in out, out)
-    rc, out = bash("studio help -d", d)
+    rc, out = bash(f'export PATH="{bin_}:$PATH"; studio help -d', d)
     confere("help -d abre o documento", "comando-studio.html" in out, out)
-    rc, out = bash("studio --doc", d)
+    rc, out = bash(f'export PATH="{bin_}:$PATH"; studio --doc', d)
     confere("studio --doc abre o documento", "comando-studio.html" in out, out)
 
 confere("a página do documento existe no site", (AQUI / "docs" / "comando-studio.html").exists())

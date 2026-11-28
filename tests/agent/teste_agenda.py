@@ -14,6 +14,7 @@ from pathlib import Path
 os.environ["STUDIO_DB_DIR"] = tempfile.mkdtemp()
 os.environ["STUDIO_EXAMES_DIR"] = tempfile.mkdtemp()
 os.environ["STUDIO_EXAMES_LLM"] = "0"
+os.environ["STUDIO_AGENTE_URL"] = "http://127.0.0.1:9"  # nunca o agente real: o teste criaria eventos no Calendário
 sys.path.insert(0, str(RAIZ))
 import studio_agenda as ag  # noqa: E402
 import studio_banco as banco  # noqa: E402
