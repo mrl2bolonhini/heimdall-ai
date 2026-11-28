@@ -165,6 +165,24 @@ REMOVIDAS = ("STUDIO_NOTAS_PORT", "STUDIO_NOTAS_HOST", "STUDIO_NOTAS_HOSTS", "HE
              "STUDIO_BIBLIOTECA_PORT", "HEIMDALL_BIBLIOTECA_PORT")
 
 
+HOSTS_ANTIGOS = {"cloud": "lab", "memory": "hub"}   # subdomínios de serviços renomeados: o endereço antigo deixou de existir na Cloudflare
+
+
+def _hosts_atuais(ln: str) -> str:
+    """Numa linha NOME_HOSTS=... troca os endereços de serviços renomeados (cloud.<domínio> vira lab.<domínio>) e tira repetidos; outras linhas passam como estão."""
+    m = re.match(r"^(\s*(?:export\s+)?[A-Z0-9_]+_HOSTS\s*=\s*)(['\"]?)(.*?)(['\"]?)\s*$", ln)
+    if not m:
+        return ln
+    novos = []
+    for h in m.group(3).split(","):
+        h = h.strip()
+        sub, _, resto = h.partition(".")
+        h = f"{HOSTS_ANTIGOS[sub]}.{resto}" if sub in HOSTS_ANTIGOS and resto else h
+        if h and h not in novos:
+            novos.append(h)
+    return f"{m.group(1)}{m.group(2)}{','.join(novos)}{m.group(4)}"
+
+
 def renomear_antigas() -> list:
     """Troca no .env os nomes antigos (HEIMDALL_*) pelos novos (STUDIO_*), sem perder valor: se o novo já existe, o antigo só sai.
     Faz cópia em .env.bak antes de gravar e devolve os nomes trocados. Roda a cada subida dos serviços e não faz nada quando não há o que trocar."""
@@ -182,11 +200,14 @@ def renomear_antigas() -> list:
             continue
         novo = novo_nome(nome) if nome else ""
         if not novo:
-            saida.append(ln)
+            atual = _hosts_atuais(ln)
+            if atual != ln:
+                trocadas.append(nome + " (endereços)")
+            saida.append(atual)
             continue
         trocadas.append(nome)
         if not any(_e_do_nome(x, novo) for x in linhas) and not any(_e_do_nome(x, novo) for x in saida):
-            saida.append(ln.replace(nome, novo, 1))
+            saida.append(_hosts_atuais(ln.replace(nome, novo, 1)))
     if trocadas:
         _copia()
         _gravar(saida)

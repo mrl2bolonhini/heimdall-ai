@@ -163,7 +163,11 @@ def _exige_mfa(politica: dict) -> bool:
 def host_publico(chave: str) -> str:
     env = {**_env(), **os.environ}
     _, var, sub, _ = SERVICOS[chave]
+    import studio_config
     for h in _lista(env.get(var, "")):
+        sub_, _, resto_ = h.partition(".")
+        if sub_ in studio_config.HOSTS_ANTIGOS and resto_:   # endereço de serviço renomeado que ainda está no .env
+            h = f"{studio_config.HOSTS_ANTIGOS[sub_]}.{resto_}"
         if h not in ("localhost",) and not h.startswith(("127.", "[")) and not h[:1].isdigit() and not h.endswith(".ts.net"):
             return h
     import studio_links
