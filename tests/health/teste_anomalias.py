@@ -284,5 +284,12 @@ grava("spo2", HOJE, 92)
 grava("x:breathing_disturbances", HOJE, 25)
 confere("oxigênio baixo e distúrbios respiratórios continuam alertando apesar do treino", an.alerta(HOJE, datetime.now(), lambda *x: {}) is not None)
 
+grava("x:body_temperature", HOJE, 38.4)
+for i in range(1, 31):
+    grava("x:body_temperature", dia(i), 36.4 + (i % 3) * 0.1)
+ft = [a for a in an.analisar(HOJE)["achados"] if a["chave"] == "x:body_temperature"]
+confere("temperatura corporal alta entra como achado forte do sistema temperatura", ft and ft[0]["nivel"] == "forte" and an.SISTEMA["x:body_temperature"] == "temperatura", ft)
+confere("temperatura tem explicação de febre", "febre" in an.explicar(ft))
+
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)

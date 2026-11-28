@@ -36,6 +36,7 @@ METRICAS = {
     "fc_media": ("Frequência cardíaca média do dia", "bpm", 1, 6, 0.07, True, 0),
     "passos": ("Passos", "", -1, 0, 0.4, True, 0),
     "energia": ("Energia ativa", "kcal", -1, 0, 0.4, True, 0),
+    "x:body_temperature": ("Temperatura corporal", "°C", 1, 0.6, 0.0, False, 1),
     "x:apple_exercise_time": ("Minutos de exercício", "min", -1, 10, 0.4, True, 0),
     "x:apple_stand_hour": ("Horas em pé", "h", -1, 2, 0.3, True, 0),
     "x:flights_climbed": ("Andares subidos", "", -1, 0, 0.5, True, 0),
@@ -58,14 +59,14 @@ IGNORAR_PREFIXO = ("x:anel_",)
 
 # faixas fisiologicamente possíveis para o valor de um dia: fora delas o problema é do dado (unidade errada, dia incompleto, sensor), não do corpo
 LIMITES = {"x:basal_energy_burned": (800, 4500), "fc_media": (35, 180), "fc_min": (30, 140), "fc_repouso": (30, 130), "spo2": (80, 100), "spo2_min": (60, 100),
-           "x:environmental_audio_exposure": (20, 130), "hrv": (5, 300), "resp": (6, 40), "x:weight_body_mass": (20, 400)}
+           "x:environmental_audio_exposure": (20, 130), "hrv": (5, 300), "resp": (6, 40), "x:body_temperature": (30, 43), "x:weight_body_mass": (20, 400)}
 
 # O que pode alertar. Cada medida pertence a um sistema do corpo; só valem para o alerta medidas FISIOLÓGICAS, e dois sinais do mesmo sistema (pulso em repouso e pulso
 # mínimo, por exemplo) contam como um só. Todo o resto (passos, energia, exercício, ruído, caminhada, peso, frequência média do dia...) é CONTEXTO: aparece no
 # relatório e ajuda a interpretar, mas sozinho ou em dupla nunca vira aviso.
 SISTEMA = {"fc_repouso": "coração", "fc_madrugada": "coração", "fc_min": "coração", "fc_horas": "coração", "hrv": "autonômico",
            "resp": "respiração", "spo2": "respiração", "spo2_min": "respiração", "x:breathing_disturbances": "respiração",
-           "sono_total": "sono", "sono_profundo": "sono", "sono_rem": "sono", "x:apple_sleeping_wrist_temperature": "temperatura"}
+           "sono_total": "sono", "sono_profundo": "sono", "sono_rem": "sono", "x:apple_sleeping_wrist_temperature": "temperatura", "x:body_temperature": "temperatura"}
 # esforço físico forte recente explica estes desvios (pulso e respiração mais altos, variabilidade menor), a menos que durem 3 dias ou mais
 EFEITO_ESFORCO = {"fc_repouso", "fc_madrugada", "fc_min", "fc_horas", "hrv", "resp"}
 # exposição que só faz mal acima de um nível: (aviso, forte) em dB, média do dia. 70 dB em 24 h é o limite de referência da OMS e da EPA; abaixo disso nunca é achado.
@@ -90,6 +91,7 @@ EXPLICACAO = {
     "sono_rem": ("O sono REM é a fase ligada à memória e ao humor.", "Menos REM costuma acompanhar álcool, estresse ou sono interrompido."),
     "x:breathing_disturbances": ("Os distúrbios respiratórios no sono medem o quanto sua respiração foi interrompida ou irregular durante a noite.", "Valores altos e repetidos costumam ser investigados por suspeita de apneia do sono."),
     "x:apple_sleeping_wrist_temperature": ("É a temperatura do pulso durante o sono, comparada à sua linha de base.", "Acima do normal pode acompanhar febre, infecção ou ambiente quente."),
+    "x:body_temperature": ("A temperatura corporal é a medida de temperatura do corpo registrada no app Saúde.", "Acima do seu normal, e principalmente a partir de 37,8 graus, indica febre, comum em infecções. Meça de novo com um termômetro, hidrate-se, descanse e procure atendimento se a febre persistir, passar de 39 graus ou vier com falta de ar ou confusão."),
     "x:environmental_audio_exposure": ("O ruído do ambiente é o volume médio do som ao seu redor ao longo do dia, medido pelo microfone do relógio, em decibéis (dB).",
                                        "A média acima de 70 dB em 24 horas é o limite de referência da OMS: ruído constante nesse nível, com o tempo, prejudica a audição e aumenta o estresse. Um dia isolado pesa pouco."),
     "x:basal_energy_burned": ("A energia em repouso é uma estimativa das calorias que o corpo gasta só para se manter vivo, calculada pelo relógio.", "Varia com o tamanho do dia medido, a massa muscular e a temperatura; sozinha não indica problema, mas junto com febre ou pulso alto merece olhar."),

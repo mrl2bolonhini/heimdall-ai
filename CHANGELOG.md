@@ -7,6 +7,7 @@ Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recur
 - O analista agora também considera o que não mudou (sono, variabilidade, pulso e atividade dentro do normal) para correlacionar e descartar causas.
 - Os avisos do Diário da Justiça passam a dizer o que o tipo de ato significa (audiência, mandado, penhora, citação, sentença, intimação) e o que conferir, em vez de só mostrar o trecho.
 - Os avisos de e-mail oficial urgente e de possível golpe explicam o que significam, o risco e o que fazer, inclusive se você já clicou no link.
+- Os avisos de segurança (exposição do Mac, registros e alterações de código) explicam o que significam e o que fazer. A temperatura corporal alta passa a entrar na análise de saúde, com a explicação de febre.
 - Febre e oxigênio baixo continuam avisando na hora, agora com o significado da medida e como conferir de novo.
 
 ## 2026-11-27 - Studio Miner (primeira versão)
