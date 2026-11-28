@@ -25,6 +25,13 @@ Cuidados de projeto
 
 Fontes a verificar (nada foi consultado ainda): DataJud e Comunica PJe (CNJ), DOU, Querido Diário (diários municipais), PNCP, LexML e APIs da Câmara e do Senado, RDAP do Registro.br, revista do INPI, Fipe, base de vazamentos por prefixo de hash. Fontes de risco: protestos, multas, passagens, imóveis, vagas de emprego, leilões e agendamentos (captcha, login ou termos de uso).
 
+Checagem das fontes da Cidadania (27/11/2026, só leitura de documentação pública; nenhuma consulta de dados foi feita)
+1. DataJud (CNJ, processos): API pública com chave pública fornecida pelo CNJ, que pode trocá-la a qualquer momento. Termos: uso só para fins legais, o CNJ pode limitar as requisições sem aviso, não garante precisão nem atualidade, e proíbe coleta em volume sem autorização escrita. Não traz processos em segredo de Justiça. Dá capa e movimentações, não o texto das intimações. Uso permitido para o próprio usuário acompanhar processos em que é parte, por número único, com intervalo mínimo entre consultas. Busca por nome de terceiros fica fora (regra: nenhuma inferência sobre terceiros).
+2. Querido Diário (Open Knowledge Brasil, diários municipais): API aberta e gratuita, sem chave, licença aberta; pede uso moderado (referência de 60 requisições por minuto). A cobertura é parcial (centenas de municípios), então o aviso precisa dizer quando a cidade do usuário não está coberta. Busca por texto no território escolhido, com trecho.
+3. Câmara dos Deputados (dados abertos, API v2): pública e sem chave; proposições por palavra-chave, tipo e tramitação. O Senado tem API equivalente (a conferir no momento da construção).
+4. Ainda por verificar antes de construir: Comunica PJe (intimações), DOU (Imprensa Nacional), PNCP (licitações, vai para Carreira), LexML e agendamentos públicos escassos (passaporte, consulado, INSS: provável captcha ou login, o que tira a fonte da oferta).
+Ordem sugerida dentro da Cidadania: 1) Legislação (Câmara e Senado por palavras-chave do usuário, sem chave e sem custo); 2) diários municipais pelo Querido Diário, com aviso de cobertura; 3) processos por número único no DataJud (exige o usuário informar a chave pública e os números); 4) agendamentos só se houver fonte sem captcha.
+
 Ordem de entrega proposta
 1. Casca do produto com as cinco áreas, Pendentes e aceite, migrando e-mail oficial (Rotina), Diário Oficial e Justiça (Cidadania) e privacidade (Identidade).
 2. Cidadania completa, Carreira (concursos, editais, bolsas) e o monitor genérico de páginas (Rotina).
