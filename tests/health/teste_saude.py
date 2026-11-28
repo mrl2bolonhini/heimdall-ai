@@ -1,3 +1,4 @@
+# AO_VIVO: usa serviços ou a rede de verdade (rode com ./rodar_testes.sh --live ou studio tests --live)
 """Testa a análise de saúde com dados FICTÍCIOS de um dia, pelo LiteLLM (porta 9000).
 As regras (em Python) decidem o que é relevante e o modelo só redige; assim ele não trata variação pequena como alerta.
 Uso, na pasta do projeto, com o sistema no ar:

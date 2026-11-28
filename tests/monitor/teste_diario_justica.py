@@ -1,3 +1,4 @@
+# AO_VIVO: usa serviços ou a rede de verdade (rode com ./rodar_testes.sh --live ou studio tests --live)
 """Confere a consulta ao Diário da Justiça (DJEN) e ao Querido Diário. Mostra só estrutura, nunca o conteúdo das publicações.
 Uso: python3 tests/monitor/teste_diario_justica.py [dias]   (lê STUDIO_OAB=NUMERO/UF do .env; dias padrão: 30)"""
 import sys as _sys

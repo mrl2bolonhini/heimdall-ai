@@ -1,3 +1,4 @@
+# AO_VIVO: usa serviços ou a rede de verdade (rode com ./rodar_testes.sh --live ou studio tests --live)
 """Testa o tool calling de cada modelo do litellm_config.yaml, um por um.
 
 Para cada modelo ele faz duas etapas pelo LiteLLM (porta 9000):

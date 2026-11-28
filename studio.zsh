@@ -142,7 +142,7 @@ _studio_short() {  # opções curtas de cada comando -> opção longa em inglês
     hook) printf '%s\n' "-i=--install" "-r=--remove" ;;
     update) printf '%s\n' "-r=--restart" "-a=--app" ;;
     docs) printf '%s\n' "-b=--brand" ;;
-    tests) printf '%s\n' "-l=--list" "-x=--stop" "-q=--quiet" "-v=--verbose" "-n=--lines" ;;
+    tests) printf '%s\n' "-l=--list" "-x=--stop" "-q=--quiet" "-v=--verbose" "-n=--lines" "-L=--live" ;;
     help) printf '%s\n' "-d=--doc" ;;
   esac
   printf '%s\n' "-h=--help"
@@ -174,7 +174,7 @@ _studio_doc() {  # o Safari recusa file:// fora da área permitida; por isso o d
       curl -fsS --noproxy "*" -o /dev/null --max-time 3 "$url" > /dev/null 2>&1 && break   # a porta já serve o documento
       continue                                                              # ocupada por outro programa ou por pasta antiga
     fi
-    ( cd "$dir" && nohup "$py" -m http.server "$porta" --bind 127.0.0.1 > /dev/null 2>&1 & ) > /dev/null 2>&1
+    ( cd "$dir" && nohup "$py" -m http.server "$porta" --bind 127.0.0.1 < /dev/null > /dev/null 2>&1 & ) > /dev/null 2>&1
     sleep 1
     curl -fsS --noproxy "*" -o /dev/null --max-time 3 "$url" > /dev/null 2>&1 && break
   done

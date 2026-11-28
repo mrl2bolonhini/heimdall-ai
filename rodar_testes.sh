@@ -7,22 +7,24 @@
 #   -x, --stop       para no primeiro teste que falhar
 #   -q, --quiet      não mostra os testes que passaram
 #   -v, --verbose    mostra a saída completa de todos os testes
-#   Cada teste roda em ambiente limpo (sem o .env exportado no terminal; nuvem desligada, motor interno, agente numa porta morta).
+#   Cada teste roda em ambiente limpo (sem o .env exportado no terminal; nuvem desligada, motor interno, agente e modelos numa porta morta).
+#   --live           inclui os testes ao vivo (marcados com AO_VIVO: usam serviços ou a rede de verdade); sem isto são pulados
 #   -n, --lines N    linhas finais da saída de cada falha (padrão 40; 0 mostra tudo)
 # Alguns testes (test_mcp.py, test_models_tools.py) precisam dos serviços no ar; os demais não usam rede.
 cd "$(dirname "$0")" || exit 1
 PY="${PYTHON:-}"
 [ -z "$PY" ] && [ -x venv/bin/python ] && PY="venv/bin/python"   # o mesmo Python dos serviços, com as dependências instaladas
 [ -z "$PY" ] && PY="python3"
-LISTAR=0; PARAR=0; QUIETO=0; VERBOSO=0; LINHAS=40; ALVOS=()
+VIVO=0; LISTAR=0; PARAR=0; QUIETO=0; VERBOSO=0; LINHAS=40; ALVOS=()
 while [ $# -gt 0 ]; do
   case "$1" in
     -l|--list) LISTAR=1 ;;
+    --live) VIVO=1 ;;
     -x|--stop) PARAR=1 ;;
     -q|--quiet) QUIETO=1 ;;
     -v|--verbose) VERBOSO=1 ;;
     -n|--lines) shift; LINHAS="${1:-40}" ;;
-    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*) echo "Opção desconhecida: $1 (veja ./rodar_testes.sh --help)"; exit 2 ;;
     *) ALVOS+=("$1") ;;
   esac
@@ -53,16 +55,18 @@ else
 fi
 if [ "$LISTAR" = 1 ]; then printf '%s\n' "${SEL[@]}"; exit 0; fi
 
-AMBIENTE=(STUDIO_NUVEM=0 STUDIO_HUB_MOTOR=interno STUDIO_AGENTE_URL=http://127.0.0.1:9)
+MORTO=http://127.0.0.1:9
+AMBIENTE=(STUDIO_NUVEM=0 STUDIO_HUB_MOTOR=interno STUDIO_AGENTE_URL=$MORTO OLLAMA_URL=$MORTO STUDIO_PERGUNTAR_LLM_URL=$MORTO/v1/chat/completions STUDIO_SAUDE_LLM_URL=$MORTO/v1/chat/completions STUDIO_NEWS_LLM_URL=$MORTO/v1/chat/completions STUDIO_LITELLM_URL=$MORTO/v1/chat/completions)
 for v in PLAYWRIGHT_BROWSERS_PATH XDG_CACHE_HOME HOME PATH LANG LC_ALL TZ TMPDIR USER SHELL TERM SSL_CERT_FILE REQUESTS_CA_BUNDLE NODE_EXTRA_CA_CERTS HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy; do
   [ -n "${!v:-}" ] && AMBIENTE+=("$v=${!v}")
 done
 SAIDA="$(mktemp)"; trap 'rm -f "$SAIDA"' EXIT
-FALHAS=(); N=0
+FALHAS=(); N=0; PULADOS=0
 for t in "${SEL[@]}"; do
   case "$t" in *.js|*.mjs) CMD=(node "$t") ;; *.sh) CMD=(bash "$t") ;; *) CMD=("$PY" "$t") ;; esac
   # ambiente limpo: o terminal pode ter o .env exportado (agente, nuvem, motor do Hub), e o teste não pode falar com serviços reais
   CMD=(env -i "${AMBIENTE[@]}" "${CMD[@]}")
+  if [ "$VIVO" = 0 ] && grep -q "^# AO_VIVO" "$t" 2>/dev/null; then PULADOS=$((PULADOS + 1)); continue; fi
   N=$((N + 1))
   if timeout 300 "${CMD[@]}" >"$SAIDA" 2>&1; then
     [ "$QUIETO" = 0 ] && echo "ok      $t"
@@ -70,10 +74,17 @@ for t in "${SEL[@]}"; do
   else
     COD=$?; FALHAS+=("$t")
     echo "FALHOU  $t (código $COD$([ "$COD" = 124 ] && echo ', tempo esgotado'))"
-    if [ "$LINHAS" = 0 ] || [ "$VERBOSO" = 1 ]; then sed 's/^/    | /' "$SAIDA"; else tail -n "$LINHAS" "$SAIDA" | sed 's/^/    | /'; fi
+    if [ "$LINHAS" = 0 ] || [ "$VERBOSO" = 1 ]; then sed 's/^/    | /' "$SAIDA"
+    else
+      # primeiro as linhas que dizem o que falhou (e a seguinte, com o detalhe); depois o final da saída
+      if grep -q -i "FALHOU\|FAIL\|Error\|Traceback" "$SAIDA"; then
+        echo "    Linhas com falha:"; grep -n -i -A1 "FALHOU\|FAIL\|Error" "$SAIDA" | grep -v "^--$" | head -n "$LINHAS" | cut -c1-300 | sed 's/^/    | /'
+      fi
+      echo "    Fim da saída:"; tail -n "$LINHAS" "$SAIDA" | cut -c1-300 | sed 's/^/    | /'
+    fi
     [ "$PARAR" = 1 ] && break
   fi
 done
-echo; echo "$N testes rodados, ${#FALHAS[@]} com falha."
+echo; echo "$N testes rodados, ${#FALHAS[@]} com falha.$([ "$PULADOS" -gt 0 ] && echo " $PULADOS testes ao vivo pulados (use --live).")"
 for f in "${FALHAS[@]}"; do echo "  falhou: $f"; done
 [ ${#FALHAS[@]} -eq 0 ]

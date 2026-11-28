@@ -1,3 +1,4 @@
+# AO_VIVO: usa serviços ou a rede de verdade (rode com ./rodar_testes.sh --live ou studio tests --live)
 """Testa o MCP do StudioLibre em dois pontos:
 
 1. direto em cada grupo (8000 = ferramentas do Mac, 8001 = ferramentas públicas), sem autenticação;
