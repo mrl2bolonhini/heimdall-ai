@@ -1,11 +1,11 @@
-# Referência do comando heimdall. Uma seção por comando, no formato:
+# Referência do comando studio. Uma seção por comando, no formato:
 #   @ comando | resumo de uma linha
 #   texto livre
 #   Opções:
 #     -x, --longa  <duas ou mais espaços>  o que faz
 #   Exemplos:
-#     heimdall comando --opção
-# É lida pelo studio.zsh (heimdall COMANDO --help e studio help) e por gerar_docs.py (página Comando heimdall do site e studio help --doc).
+#     studio comando --opção
+# É lida pelo studio.zsh (studio COMANDO --help e studio help) e por gerar_catalogo.py (catálogo de comandos do dono, guides/catalogo_comandos.html, aberto por studio help --doc).
 # Toda opção aceita também a forma curta de uma letra; -h e --help existem em todos os comandos.
 
 @ up | Sobe todo o ecossistema
@@ -596,7 +596,7 @@ Exemplos:
   studio hook --remove ~/projetos/meu-repo
 
 @ update | Traz as novidades do GitHub
-Faz git pull --ff-only da branch atual do projeto e diz se precisa reiniciar ou reinstalar fluxos. Depois recarrega os comandos do heimdall no próprio terminal, então não precisa dar source de novo.
+Faz git pull --ff-only da branch atual do projeto e diz se precisa reiniciar ou reinstalar fluxos. Depois recarrega os comandos do studio no próprio terminal, então não precisa dar source de novo.
 Opções:
   -r, --restart        reinicia os serviços em seguida; se a atualização mudou o app de barra de menus (macapp/), compila o app de novo
   -a, --app            reinicia os serviços e compila o app sempre
@@ -645,7 +645,7 @@ Exemplos:
   studio cd
 
 @ help | Ajuda do comando studio
-Sem argumentos lista os comandos. Com o nome de um comando mostra só as variações dele, o mesmo que heimdall COMANDO --help.
+Sem argumentos lista os comandos. Com o nome de um comando mostra só as variações dele, o mesmo que studio COMANDO --help.
 Opções:
   -d, --doc            abre no navegador o documento com todos os comandos e opções explicados (servido em http://localhost:8099 enquanto o terminal estiver aberto; o servidor sai com studio stop)
   -h, --help           mostra esta ajuda

@@ -364,7 +364,6 @@ PAGINAS = [
     ("finance.html", "Finance", "Studio Finance: extratos, categorias e tendências das suas finanças"),
     ("lab.html", "Lab", "Painel do emulador de AWS: acesso, segurança e roteiro"),
     ("comandos.html", "Comandos", "Subir, testar, instalar e manter"),
-    ("comando-studio.html", "Comando heimdall", "O comando heimdall do terminal: todos os comandos e opções"),
     ("novidades.html", "Novidades", "Histórico de recursos"),
     ("roadmap.html", "Roadmap", "Próximos recursos"),
     ("marca.html", "Marca", "O nome StudioLibre, logotipo, cores e tipografia"),

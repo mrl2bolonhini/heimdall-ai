@@ -2,6 +2,9 @@
 
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-28 - Catálogo de comandos do dono
+- O documento aberto por `studio help --doc` passa a ser o catálogo de comandos do studio, só do dono e fora do site público: todos os comandos em cinco grupos, com índice, busca por comando, opção ou texto, tabelas de opções com a forma longa e a curta, exemplos e o programa por trás de cada um. É gerado do guia de comandos e conferido por teste. A página antiga do site, com o nome anterior, foi removida.
+
 ## 2026-11-28 - Testes do projeto com o motivo das falhas
 - O comando `studio tests` roda os testes e, quando um falha, mostra o motivo (as últimas linhas da saída do teste) e um resumo no fim. Aceita pastas (`finance`, `health`) e trechos de nome (`agenda`, `banco`), em qualquer combinação, e as opções -l (listar), -x (parar na primeira falha), -q (só falhas), -v (saída completa) e -n (linhas mostradas por falha). `studio tests -h` mostra a ajuda. Cada teste roda em ambiente limpo, sem usar os serviços reais nem a nuvem. O comando antigo `studio test` foi substituído. O documento do comando (`studio help --doc`) passa a escolher uma porta local que realmente sirva a página.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testa o comando heimdall (studio.zsh): ajuda por comando, formas curtas de todas as opções documentadas, help --doc e a tradução das opções."""
+"""Testa o comando studio (studio.zsh): ajuda por comando, formas curtas de todas as opções documentadas, help --doc e a tradução das opções."""
 import sys as _sys
 from pathlib import Path as _Path
 RAIZ = next(p for p in _Path(__file__).resolve().parents if (p / "studio_config.py").exists())
@@ -107,20 +107,28 @@ with tempfile.TemporaryDirectory() as d:
         rc, out = bash(f"studio {cmd}", d)
         confere(f"studio {cmd}", esperado in out, out[:200])
     rc, out = bash("studio help --doc", d)
-    confere("help --doc sem o arquivo avisa", rc != 0 and "comando-studio.html" in out, out)
-    (Path(d) / "docs").mkdir()
-    (Path(d) / "docs" / "comando-studio.html").write_text("<html></html>")
+    confere("help --doc sem o arquivo avisa", rc != 0 and "catalogo_comandos.html" in out, out)
+    (Path(d) / "guides").mkdir()
+    (Path(d) / "guides" / "catalogo_comandos.html").write_text("<html></html>")
     # nc, curl e python3 de mentira: o teste nunca sobe um servidor de verdade (um servidor preso numa pasta apagada responderia 404 na porta 8099)
     bin_ = Path(d, "falsos"); bin_.mkdir()
     for nome, corpo in (("nc", "exit 1"), ("curl", "exit 0"), ("python3", "exit 0")):
         (bin_ / nome).write_text("#!/bin/bash\n" + corpo + "\n"); (bin_ / nome).chmod(0o755)
     rc, out = bash(f'export PATH="{bin_}:$PATH"; studio help --doc', d)
-    confere("help --doc abre o documento por http, não por file://", "http://localhost:8099/comando-studio.html" in out and "file://" not in out, out)
+    confere("help --doc abre o documento por http, não por file://", "http://localhost:8099/catalogo_comandos.html" in out and "file://" not in out, out)
     rc, out = bash(f'export PATH="{bin_}:$PATH"; studio help -d', d)
-    confere("help -d abre o documento", "comando-studio.html" in out, out)
+    confere("help -d abre o documento", "catalogo_comandos.html" in out, out)
     rc, out = bash(f'export PATH="{bin_}:$PATH"; studio --doc', d)
-    confere("studio --doc abre o documento", "comando-studio.html" in out, out)
+    confere("studio --doc abre o documento", "catalogo_comandos.html" in out, out)
 
-confere("a página do documento existe no site", (AQUI / "docs" / "comando-studio.html").exists())
+# --- catálogo do dono (guides/catalogo_comandos.html): completo, atual, acessível e fora do site público
+import gerar_catalogo  # noqa: E402
+cat = (AQUI / "guides" / "catalogo_comandos.html").read_text(encoding="utf-8") if (AQUI / "guides" / "catalogo_comandos.html").exists() else ""
+confere("catálogo: está atualizado em relação ao guides/studio_ajuda.txt", gerar_catalogo.main(True))
+confere("catálogo: todo comando do studio.zsh aparece", all(f'id="c-{n}"' in cat for n in no_case if n not in ("*",)), [n for n in no_case if f'id="c-{n}"' not in cat])
+confere("catálogo: lang pt-BR, um só h1, pular para o conteúdo, busca com rótulo", 'lang="pt-BR"' in cat and cat.count("<h1") == 1 and 'class="skip"' in cat and 'for="busca"' in cat)
+confere("catálogo: tabelas com caption e scope", cat.count("<caption>") >= 40 and 'scope="col"' in cat and 'scope="row"' in cat)
+confere("catálogo: sem o nome antigo nos comandos", "heimdall " not in cat.replace("HEIMDALL_", ""))
+confere("catálogo: não vai para o site público", not (AQUI / "docs" / "comando-studio.html").exists() and "comando-studio" not in (AQUI / "docs_tema.py").read_text(encoding="utf-8"))
 print("\nFALHAS:", falhas)
 sys.exit(1 if falhas else 0)

@@ -165,11 +165,11 @@ _studio_usage() {  # ajuda de um comando só
 }
 
 _studio_doc() {  # o Safari recusa file:// fora da área permitida; por isso o documento é servido por um servidor local mínimo (só 127.0.0.1). Usa a primeira porta que já serve o documento ou que esteja livre (a 8099 pode estar com outro programa ou com um servidor de uma pasta antiga)
-  local dir="$STUDIO_DIR/docs" porta url
-  if [ ! -f "$dir/comando-studio.html" ]; then echo "Não achei $dir/comando-studio.html. Rode: studio update   (ou: studio docs)"; return 1; fi
+  local dir="$STUDIO_DIR/guides" porta url
+  if [ ! -f "$dir/catalogo_comandos.html" ]; then echo "Não achei $dir/catalogo_comandos.html. Rode: studio docs"; return 1; fi
   local py; py="$(command -v python3)"
   for porta in 8099 8098 8097 8096 8095; do
-    url="http://localhost:$porta/comando-studio.html"
+    url="http://localhost:$porta/catalogo_comandos.html"
     if nc -z 127.0.0.1 "$porta" > /dev/null 2>&1; then
       curl -fsS --noproxy "*" -o /dev/null --max-time 3 "$url" > /dev/null 2>&1 && break   # a porta já serve o documento
       continue                                                              # ocupada por outro programa ou por pasta antiga
@@ -178,7 +178,7 @@ _studio_doc() {  # o Safari recusa file:// fora da área permitida; por isso o d
     sleep 1
     curl -fsS --noproxy "*" -o /dev/null --max-time 3 "$url" > /dev/null 2>&1 && break
   done
-  _studio_open "Documento do comando studio" "http://localhost:$porta/comando-studio.html"
+  _studio_open "Documento do comando studio" "http://localhost:$porta/catalogo_comandos.html"
 }
 
 _studio_labs() {  # studio health --labs: exames, receitas, encaminhamentos, atestados, laudos e consultas

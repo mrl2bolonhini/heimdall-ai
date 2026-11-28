@@ -52,7 +52,7 @@ Plataforma e operação
 6) Fase 2 (embeddings na nuvem) pode andar antes da contratação, pois só depende da Cloudflare.
 
 6. Tarefas agendadas e Open Finance
-1) Open Finance: o StudioLibre usa o Meu Pluggy (plano pessoal gratuito, 5 conexões, atualização a cada 24 h, consentimento de 1 ano por banco) pelo comando heimdall finance --sync, somente leitura. O plano comercial da Pluggy (a partir de R$ 2.500 por mês) foi considerado caro demais.
+1) Open Finance: o StudioLibre usa o Meu Pluggy (plano pessoal gratuito, 5 conexões, atualização a cada 24 h, consentimento de 1 ano por banco) pelo comando studio finance --sync, somente leitura. O plano comercial da Pluggy (a partir de R$ 2.500 por mês) foi considerado caro demais.
 2) Para um app com o próprio uso e de 5 a 20 convidados, o usuário pediu cotação e dúvidas técnicas em 22/11/2026 a Tecnospeed, Klavi, Belvo e Pluggy (por e-mail e formulário, usando suporte@ como endereço de resposta). Perguntas: plano e preço para pequeno volume e por conexão extra, se pessoa física pode contratar, dados cobertos (contas, cartões, investimentos, empréstimos), consentimento, ambiente de testes, LGPD e retenção, SLA e documentação. A Quanto saiu da lista (certificado vencido no site).
 3) Tarefa agendada existente: "Acompanhar cotações de Open Finance", todo dia às 17h47 (horário de São Paulo), sem sessão persistente. Ela lê no Gmail (inclusive spam) as respostas das quatro empresas e as mensagens para o endereço de suporte, lê as threads inteiras e gera um documento (Docs) com tabela por empresa (situação, preço mensal, preço por conexão extra, exige CNPJ, dados cobertos, consentimento, ambiente de testes, LGPD, SLA, data), resumo por empresa e uma conclusão com a opção mais viável e o que falta perguntar. Ela só lê: nunca responde, envia nem aceita nada. Rodou com sucesso em 24/11/2026.
 4) Não existe tarefa agendada para a Locaweb. Se o usuário quiser, criar uma igual, só de leitura, para as respostas do chamado.
@@ -67,7 +67,7 @@ Plataforma e operação
 4) Texto de produto: profissional, claro, objetivo, neutro e sem dados do dono. Textos antigos são ajustados ao serem mexidos (ainda há restos, por exemplo no fluxo de digest hiperpersonalizado).
 5) Comandos do terminal: nomes em inglês; opções com dois hífens e forma curta; studio.zsh traduz para scripts com opções em português.
 6) Evento versus lembrete: evento é data e hora ou data fixa (Calendário); lembrete é algo a fazer (app Lembretes). Tabela em studio_agenda.py.
-7) Vários sistemas: Windows, macOS, iPhone e Android entram em toda decisão. O comando heimdall é do zsh; o equivalente em Python serve nos três sistemas. Dependência do Mac (agente da Apple) registra alternativa no ROADMAP.
+7) Vários sistemas: Windows, macOS, iPhone e Android entram em toda decisão. O comando studio é do zsh; o equivalente em Python serve nos três sistemas. Dependência do Mac (agente da Apple) registra alternativa no ROADMAP.
 
 8. Time de desenvolvimento (skills)
 1) Cinco papéis em .claude/skills/: po, tech-lead, ux, qa-funcional e qa-acessibilidade. O comando /time <demanda> aciona os necessários (--so po,ux limita; --analisar só analisa; --backlog roda só o PO).
