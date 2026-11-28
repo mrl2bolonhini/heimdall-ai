@@ -62,6 +62,8 @@ r = an.analisar(HOJE)
 ch = [a["chave"] for a in r["achados"]]
 confere("pulso em repouso muito alto é achado forte", ch == ["fc_repouso"] and r["achados"][0]["nivel"] == "forte", r["achados"])
 confere("um achado só não gera alerta de triagem", an.alerta(HOJE) is None)
+nm = " ".join(an.analisar(HOJE)["normais"])
+confere("o que não mudou (sono, variabilidade) vai como contexto, e o que saiu do normal não", "Duração do sono" in nm and "Variabilidade" in nm and "Pulso em repouso" not in nm, nm)
 
 # 3. HRV mais alta que o normal é positivo, não alerta
 grava("fc_repouso", HOJE, 58)

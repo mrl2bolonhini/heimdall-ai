@@ -4,6 +4,7 @@ Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recur
 
 ## 2026-11-27 - Avisos de saúde com contexto
 - O aviso de saúde deixa de listar só a medida e a média. Pulso, variabilidade, sono e respiração passam a ser analisados em conjunto, com o treino recente e o histórico, e o aviso explica o que a medida significa, o tamanho do desvio, as causas mais comuns e o que fazer.
+- O analista agora também considera o que não mudou (sono, variabilidade, pulso e atividade dentro do normal) para correlacionar e descartar causas.
 - Febre e oxigênio baixo continuam avisando na hora, agora com o significado da medida e como conferir de novo.
 
 ## 2026-11-27 - Studio Miner (primeira versão)

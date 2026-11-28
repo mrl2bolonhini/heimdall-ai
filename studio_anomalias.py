@@ -120,6 +120,8 @@ def _cortar(txt: str, n: int) -> str:
     return (c[:i + 1] if i > n * 0.5 else c.rstrip()) + ("" if i > n * 0.5 else "...")
 
 
+# medidas que, quando estão normais, ajudam a explicar o que saiu do normal (ex.: pulso alto com sono e treino normais pesa mais do que com noite curta)
+CONTEXTO_NORMAL = ("sono_total", "fc_repouso", "hrv", "resp", "spo2", "passos", "energia", "x:apple_exercise_time")
 BASE_DIAS = 30        # janela do "normal"
 BASE_MIN = 10         # dias mínimos de histórico para comparar
 Z_ALERTA = 2.5        # desvios robustos para sair do normal
@@ -297,7 +299,7 @@ def analisar(hoje: str = None) -> dict:
     hoje = hoje or datetime.now().strftime("%Y-%m-%d")
     hs.banco.normalizar_energia()   # energia que chegou em kJ vira kcal antes de qualquer comparação
     chaves = [r["metrica"] for r in hs._ler("SELECT DISTINCT metrica FROM saude_diaria WHERE dia >= ?", ((datetime.strptime(hoje, "%Y-%m-%d") - timedelta(days=BASE_DIAS + 10)).strftime("%Y-%m-%d"),))]
-    achados, positivos, sem_base, sem_recente, analisadas, suspeitos = [], [], [], [], 0, []
+    achados, positivos, sem_base, sem_recente, analisadas, suspeitos, normais = [], [], [], [], 0, [], []
     for ch in sorted(chaves):
         r = _analisa_metrica(ch, hoje)
         if not r:
@@ -316,6 +318,9 @@ def analisar(hoje: str = None) -> dict:
             achados.append(r)
         elif r.get("nivel") == "positivo":
             positivos.append(r)
+        elif r.get("nivel") == "normal" and r["chave"] in CONTEXTO_NORMAL and "normal" in r:
+            u = METRICAS[r["chave"]]
+            normais.append(f"{u[0]}: {_fmt(r['chave'], r['valor'], u[6], u[1])} em {hs._br(r['dia'])}, dentro do seu normal de {_fmt(r['chave'], r['normal'], u[6], u[1])}")
     for extra in (_fc_madrugada(hoje), _fc_horas(hoje)):
         if extra:
             analisadas += 1
@@ -329,7 +334,7 @@ def analisar(hoje: str = None) -> dict:
     achados.sort(key=lambda a: (a["nivel"] != "forte", -abs(a["z"])))
     combos = _combos({a["chave"]: a for a in achados if a["ruim"] and a["chave"] in SISTEMA and not a.get("explicado")})
     return {"dia": hoje, "achados": achados, "combos": combos, "positivos": positivos, "sem_base": sem_base, "sem_dado_recente": sem_recente, "analisadas": analisadas,
-            "suspeitos": suspeitos, "esforco": esforco}
+            "suspeitos": suspeitos, "esforco": esforco, "normais": normais}
 
 
 def relatorio(hoje: str = None) -> str:
@@ -417,6 +422,7 @@ def _interpretar(r: dict, fortes: list, antes: dict, mudou: dict) -> dict:
         + "\nACHADOS DE HOJE:\n" + "\n".join(achados)
         + ("\nCONTEXTO (não são alerta por si): " + "; ".join(a["texto"] for a in r["achados"] if a.get("contexto") or a.get("explicado"))[:700]
            if any(a.get("contexto") or a.get("explicado") for a in r["achados"]) else "")
+        + ("\nO QUE NÃO MUDOU (dentro do normal; use para correlacionar e para descartar causas): " + "; ".join(r["normais"])[:700] if r.get("normais") else "")
         + ("\nESFORÇO RECENTE: " + r["esforco"]["texto"] if r.get("esforco", {}).get("texto") else "")
         + "\n\nO QUE JÁ FOI AVISADO ANTES: " + ja_avisado
         + "\nO QUE MUDOU DESDE O ÚLTIMO AVISO: " + (mudou.get("resumo") or "primeiro aviso")
