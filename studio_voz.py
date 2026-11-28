@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Dicionário de pronúncia do Heimdall: troca palavras por uma grafia que a voz do macOS lê do jeito certo
-(por exemplo, "Heimdall" por "Háimdal"). Vale para o anúncio falado do subir.sh e para o áudio das notas.
+"""Dicionário de pronúncia do StudioLibre: troca palavras por uma grafia que a voz do macOS lê do jeito certo
+(por exemplo, "StudioLibre" por "Estúdio Líbre"). Vale para o anúncio falado do subir.sh e para o áudio das notas.
 
 Os dicionários são arquivos de texto, uma entrada por linha no formato  palavra = como falar  (linhas com # são comentário):
   pronuncias.txt        entradas que vêm com o projeto (o git reset pode sobrescrever)
@@ -8,7 +8,7 @@ Os dicionários são arquivos de texto, uma entrada por linha no formato  palavr
 A busca ignora maiúsculas e só pega palavras inteiras. Sem dependências além do Python.
 
 Para trazer o que você já tem no VoiceOver: python3 studio_voz.py --importar arquivo.csv (grava em pronuncias.local.txt).
-Uso na linha de comando:  python3 studio_voz.py "Heimdall no ar"  ->  Háimdal no ar
+Uso na linha de comando:  python3 studio_voz.py "StudioLibre no ar"  ->  Estúdio Líbre no ar
 """
 import csv
 import re
@@ -40,7 +40,7 @@ def aplicar(texto: str, raiz: Path = RAIZ) -> str:
     d = carregar(raiz)
     if not d:
         return texto
-    chaves = sorted((v[0] for v in d.values()), key=len, reverse=True)   # "StudioLibre" antes de "Heimdall"
+    chaves = sorted((v[0] for v in d.values()), key=len, reverse=True)   # a entrada mais longa vem antes
     padrao = re.compile(r"(?<![\w-])(" + "|".join(re.escape(c) for c in chaves) + r")(?![\w-]|\.\w)", re.I)
     return padrao.sub(lambda m: d[m.group(1).lower()][1], texto)
 

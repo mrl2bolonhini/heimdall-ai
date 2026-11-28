@@ -135,7 +135,7 @@ avisar() {  # $1 = texto curto para a notificação e a voz
     command -v osascript > /dev/null 2>&1 && osascript -e "display notification \"$1\" with title \"StudioLibre\"" > /dev/null 2>&1
     if command -v say > /dev/null 2>&1; then
         [ -z "${VOZ_ESCOLHIDA:-}" ] && { escolher_voz; VOZ_ESCOLHIDA=1; }
-        local fala="Heimdall. $1"
+        local fala="StudioLibre. $1"
         command -v python3 > /dev/null 2>&1 && fala=$(python3 "$PROJECT_DIR/studio_voz.py" "$fala" 2> /dev/null || printf '%s' "$fala")   # dicionário de pronúncia (pronuncias.txt)
         if [ -n "$VOZ_SUBIR" ]; then say -v "$VOZ_SUBIR" -r "${SUBIR_VOZ_PPM:-290}" "$fala" > /dev/null 2>&1 &
         else say -r "${SUBIR_VOZ_PPM:-290}" "$fala" > /dev/null 2>&1 &
