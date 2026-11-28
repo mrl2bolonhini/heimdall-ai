@@ -2,6 +2,11 @@
 
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-27 - Intimações e processos no Studio Miner
+- Em Ajustes, na subaba Cidadania, você informa o seu nome completo, a OAB (número e UF) e os números dos processos que acompanha. Nada disso é preenchido por padrão.
+- Todos os dias o Miner consulta o Diário de Justiça Eletrônico Nacional e avisa as comunicações novas na área Cidadania, com o que o ato significa, como foi encontrado, quando a publicação vale e uma estimativa do prazo em dias úteis (com feriados nacionais e recesso), além do que conferir. O botão Consultar agora faz a consulta na hora.
+- A busca pelo nome pode trazer homônimos, e o aviso pede a conferência. A estimativa de prazo nunca substitui a conferência no processo. Se a consulta falhar três vezes seguidas, o Miner avisa e indica o Domicílio Judicial Eletrônico.
+
 ## 2026-11-27 - Anúncio falado da subida
 - O aviso falado quando o StudioLibre termina de subir passa a dizer StudioLibre, com a pronúncia do dicionário de pronúncias do sistema.
 

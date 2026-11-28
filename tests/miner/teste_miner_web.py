@@ -114,6 +114,19 @@ s, _, r = req("POST", "/ajustes/inicio", {"csrf": csrf, "area": "nada"}, tk)
 confere("área inicial inválida não quebra", s in (303, 400) and req("GET", "/", cookie=tk)[2].getheader("Location") == "/cidadania")
 s, _, r = req("POST", "/perguntar", {"csrf": csrf, "pergunta": "O que há pendente?", "rota": "/rotina"}, tk)
 confere("Perguntar aceito com CSRF", s in (200, 202, 303), s)
+import studio_djen as dj
+s, h, _ = req("GET", "/ajustes/cidadania", tk)
+confere("Ajustes Cidadania: campos com label e sem botão Consultar sem configuração", s == 200 and all(f'for="{i}"' in h for i in ("nome", "oab", "uf", "procs")) and "Consultar agora" not in h, h[:200])
+s, _, _ = req("POST", "/ajustes/cidadania", {"csrf": "x", "nome": "Fulano de Tal"}, tk)
+confere("salvar sem CSRF: 403", s == 403)
+s, _, r = req("POST", "/ajustes/cidadania", {"csrf": csrf, "nome": "Fulano de Tal", "oab_numero": "123456", "oab_uf": "SP", "processos": "0000832-35.2018.4.01.3202"}, tk)
+h = req("GET", "/ajustes/cidadania", tk)[1]
+confere("salvar configura e mostra Consultar agora", s == 303 and r.getheader("Location") == "/ajustes/cidadania" and "Configuração salva." in h and "Consultar agora" in h and "0000832-35.2018.4.01.3202" in h and 'value="Fulano de Tal"' in h, h[-500:])
+s, h, r = req("POST", "/ajustes/cidadania", {"csrf": csrf, "nome": "Fulano", "oab_numero": "", "oab_uf": "", "processos": ""}, tk)
+confere("nome inválido: mensagem clara e dados antigos mantidos", s in (303, 400, 422) and "nome completo" in (h + (req("GET", "/ajustes/cidadania", tk)[1] if s == 303 else "")) and dj.configuracao()["nome"] == "Fulano de Tal", (s, h[-300:]))
+dj.executar = lambda: {"ok": True, "mensagem": "Consulta concluída: 0 comunicações, 0 novas."}
+s, _, r = req("POST", "/ajustes/cidadania/consultar", {"csrf": csrf}, tk)
+confere("Consultar agora mostra o resultado", s == 303 and "Consulta concluída" in req("GET", "/ajustes/cidadania", tk)[1])
 import studio_alertas as al
 os.environ.pop("STUDIO_MINER", None)
 confere("alerta aponta para a área do Miner por padrão", al._caminho_miner("justica") == "/cidadania" and al._caminho_miner("privacidade") == "/identidade" and al._caminho_miner("email") == "/rotina")

@@ -19,6 +19,7 @@ web.carregar_env("STUDIO_MINER_")
 
 import studio_design as design  # noqa: E402
 import studio_links as links  # noqa: E402
+import studio_djen as djen  # noqa: E402
 import studio_miner_dados as dados  # noqa: E402
 
 e = web.e
@@ -158,7 +159,48 @@ def post_inicio(ctx, campos, arquivos):
     return "/ajustes/perfil"
 
 
-GET = {"/ajustes/perfil": aj_perfil}
+def aj_cidadania(ctx) -> tuple:
+    c = djen.configuracao()
+    processos = "\n".join(djen.mascara_cnj(p) for p in c["processos"])
+    form = (f'<form method="post" action="/ajustes/cidadania"><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
+            f'<p><label for="nome">Nome completo (para encontrar publicações em que você é parte)</label><br><input id="nome" name="nome" type="text" maxlength="100" autocomplete="name" value="{e(c["nome"])}"></p>'
+            f'<p><label for="oab">Número da OAB (só dígitos, opcional)</label><br><input id="oab" name="oab_numero" type="text" inputmode="numeric" maxlength="7" value="{e(c["oab_numero"])}"></p>'
+            f'<p><label for="uf">UF da OAB</label><br><input id="uf" name="oab_uf" type="text" maxlength="2" value="{e(c["oab_uf"])}"></p>'
+            f'<p><label for="procs">Processos que você acompanha (número único, um por linha)</label><br><textarea id="procs" name="processos" rows="5" cols="40">{e(processos)}</textarea></p>'
+            '<button type="submit">Salvar</button></form>')
+    estado = f'<p class="meta" role="status">Última consulta ao DJEN: {e(c["estado"])}</p>' if c["estado"] else ""
+    consultar = design.botao_post("/ajustes/cidadania/consultar", "Consultar agora", ctx.csrf, None, "Consultar o DJEN agora") if djen.configurado() else ""
+    return "Cidadania", "<h2>Publicações e processos</h2>" + form + estado + consultar
+
+
+def post_cidadania(ctx, campos, arquivos):
+    ctx.flash("ok", djen.salvar(campos.get("nome", ""), campos.get("oab_numero", ""), campos.get("oab_uf", ""), campos.get("processos", "")))
+    return "/ajustes/cidadania"
+
+
+def post_consultar(ctx, campos, arquivos):
+    r = djen.executar()
+    ctx.flash("ok" if r["ok"] else "erro", r["mensagem"])
+    return "/ajustes/cidadania"
+
+
+def _agendador() -> None:
+    """Consulta diária ao DJEN (hora local em STUDIO_MINER_DJEN_HORA) para o dono; verifica a cada 15 minutos. Convidados usam o botão Consultar agora."""
+    import threading
+    import time
+
+    def laco():
+        while True:
+            try:
+                if djen.devida():
+                    djen.executar()
+            except Exception as ex:  # a consulta nunca derruba o serviço
+                print("Miner: consulta ao DJEN falhou:", type(ex).__name__)
+            time.sleep(900)
+    threading.Thread(target=laco, name="miner-djen", daemon=True).start()
+
+
+GET = {"/ajustes/perfil": aj_perfil, "/ajustes/cidadania": aj_cidadania}
 for _area in dados.AREAS:
     GET["/" + _area] = _rota_area(_area)
 for _rota in LISTAS:
@@ -166,13 +208,14 @@ for _rota in LISTAS:
 
 CFG = web.Config(
     chave="miner", nome="Miner", porta_env="STUDIO_MINER_PORT", porta=8022, hosts="miner.studiolibre.io,localhost,127.0.0.1",
-    abas=GRUPOS, ajustes=[("/ajustes/perfil", "Perfil")], get=GET,
+    abas=GRUPOS, ajustes=[("/ajustes/perfil", "Perfil"), ("/ajustes/cidadania", "Cidadania")], get=GET,
     post={"/pendentes/aceitar": post_aceitar, "/pendentes/adiar": post_adiar, "/pendentes/ignorar": post_ignorar, "/abrir/finance": post_abrir_finance,
-          "/ajustes/inicio": post_inicio},
+          "/ajustes/inicio": post_inicio, "/ajustes/cidadania": post_cidadania, "/ajustes/cidadania/consultar": post_consultar},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: o que há de mais urgente nesta área? qual comunicado chegou por último? O modelo descreve só o que está na tela.",
     css=CSS, erro=dados.ErroMiner, inicio=lambda ctx: "/" + dados.area_inicial(), aviso_rodape=AVISO)
 
 
 if __name__ == "__main__":
+    _agendador()
     web.servir(CFG)

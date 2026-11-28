@@ -117,6 +117,8 @@ FAQ = {
          "Apenas identifica que o aviso trata de boleto. Se o Studio Finance estiver ativo, o botão Abrir no Studio Finance leva à conferência lá; o Miner não paga nem confere valores."),
         ("Posso escolher a área que abre primeiro?",
          "Sim. Em Ajustes, na subaba Perfil, escolha a área inicial."),
+        ("Como acompanho intimações e processos?",
+         "Em Ajustes, na subaba Cidadania, informe seu nome completo, o número e a UF da OAB (se for advogado) e os números dos processos que você acompanha. Todos os dias o Miner consulta o Diário de Justiça Eletrônico Nacional e avisa as comunicações novas, com o que o ato significa e uma estimativa de prazo. A busca por nome pode trazer homônimos, por isso o aviso pede conferência. A estimativa de prazo nunca substitui a conferência no processo."),
     ],
     "memory": [
         ("O que mostra a aba Notas?",
