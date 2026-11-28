@@ -132,7 +132,7 @@
     },
     "sendBody": true,
     "specifyBody": "json",
-    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: 'Versões novas no Heimdall', linha: String($json.choices[0].message.content).slice(0, 700) }) }}",
+    "jsonBody": "={{ JSON.stringify({ slot: 'meio', titulo: 'Versões novas no StudioLibre', linha: String($json.choices[0].message.content).slice(0, 700) }) }}",
     "options": {
      "timeout": 30000
     }

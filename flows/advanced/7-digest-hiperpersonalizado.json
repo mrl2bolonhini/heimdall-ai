@@ -57,7 +57,7 @@
           "parameters": [
             {
               "name": "User-Agent",
-              "value": "Mozilla/5.0 (compatible; Heimdall-ai/1.0)"
+              "value": "Mozilla/5.0 (compatible; StudioLibre/1.0)"
             },
             {
               "name": "Accept",

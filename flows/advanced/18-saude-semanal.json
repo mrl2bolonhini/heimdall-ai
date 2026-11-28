@@ -77,7 +77,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "// Se o relatório não foi gravado, o fluxo falha e o aviso de falha do Heimdall chega pelo Bark.\nconst j = $input.first().json || {};\nif (j.ok !== true) {\n  throw new Error('O relatório semanal de saúde não foi gerado. ' + String(j.erro || 'sem resposta do agente').slice(0, 300));\n}\nreturn [{ json: j }];"
+        "jsCode": "// Se o relatório não foi gravado, o fluxo falha e o aviso de falha do StudioLibre chega pelo Bark.\nconst j = $input.first().json || {};\nif (j.ok !== true) {\n  throw new Error('O relatório semanal de saúde não foi gerado. ' + String(j.erro || 'sem resposta do agente').slice(0, 300));\n}\nreturn [{ json: j }];"
       }
     }
   ],

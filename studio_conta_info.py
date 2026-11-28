@@ -74,7 +74,7 @@ INFO = {
         "multiusuario": "Hoje o serviço é usado apenas pelo dono. Uma versão para outras pessoas está prevista no roadmap: cada uma conectará as próprias contas bancárias, com os dados guardados separadamente.",
     },
     "controls": {
-        "oque": "Central de controle do Heimdall: Terminal no navegador, serviços ligados e desligados, usuários e acessos, ajustes do .env e manutenção.",
+        "oque": "Central de controle do StudioLibre: Terminal no navegador, serviços ligados e desligados, usuários e acessos, ajustes do .env e manutenção.",
         "como": ["Entre como dono pelo Cloudflare Access.",
                  "Use a aba Usuários para convidar pessoas e escolher os serviços de cada uma.",
                  "Use a aba Ajustes para mudar as variáveis e Manutenção para reiniciar e atualizar."],

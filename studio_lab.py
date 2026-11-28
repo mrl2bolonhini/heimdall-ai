@@ -461,7 +461,7 @@ SUBABAS_PROCESSAMENTO = [("/lambda", "Lambda"), ("/glue", "Glue")]
 ROTAS_PERGUNTAR = re.compile(r"^(/|/s3|/s3/b|/lambda|/glue|/glue/tabelas|/athena|/athena/resultado|/console)(\?[A-Za-z0-9_=&%.+-]{0,300})?$")
 
 SISTEMA_CLOUD = (
-    "Você é o assistente do laboratório de dados do Heimdall: um emulador de AWS (LocalStack ou Moto) com este site para usá-lo (abas Início, S3, Processamento com as subabas Lambda e Glue, Athena e Console). "
+    "Você é o assistente do laboratório de dados do Studio Lab: um emulador de AWS (LocalStack ou Moto) com este site para usá-lo (abas Início, S3, Processamento com as subabas Lambda e Glue, Athena e Console). "
     "O usuário estuda engenharia e arquitetura de dados com serviços AWS e usa leitor de tela. Responda em português do Brasil, em texto corrido ou lista numerada simples, "
     "sem tabelas, sem emojis e sem formatação visual. Pode usar o seu conhecimento geral de AWS, SQL, Python, Spark e engenharia de dados para tirar dúvidas e ajudar a construir "
     "recursos no emulador. Ao ajudar a construir algo, diga o caminho completo: qual aba do site usar e o que preencher em cada campo, ou o comando da AWS CLI com --endpoint-url, "

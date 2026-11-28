@@ -128,7 +128,7 @@
     },
     "sendBody": true,
     "specifyBody": "json",
-    "jsonBody": "={{ JSON.stringify({ slot: 'manha1', titulo: 'Disponibilidade do Heimdall (24 h)', linha: String($json.choices[0].message.content).slice(0, 700) }) }}",
+    "jsonBody": "={{ JSON.stringify({ slot: 'manha1', titulo: 'Disponibilidade do StudioLibre (24 h)', linha: String($json.choices[0].message.content).slice(0, 700) }) }}",
     "options": {
      "timeout": 30000
     }

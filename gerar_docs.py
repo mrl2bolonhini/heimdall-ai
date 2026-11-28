@@ -386,7 +386,7 @@ SCRIPTS = [
     ("studio_servicos.py", "Catálogo dos serviços do StudioLibre e o liga e desliga de cada um (usado pela aba Serviços do Controls); lembra o que foi desligado em .studio_desligados.json e um vigia mantém desligado."),
     ("studio_config.py", "Lê, grava e remove valores do .env (NOME='valor', permissão 600, cópia em .env.bak) e lista as opções HEIMDALL_* que o código aceita; usado pela aba Ajustes do Controls."),
     ("tests/core/teste_config.py", "Testa ler, salvar, remover e o catálogo de opções, num .env simulado."),
-    ("studio_usuarios.py", "Usuários do Heimdall: donos e convidados no .env (quem entra em quais serviços) e a sincronização com o Cloudflare Access, com plano antes e aplicar depois; usado pela aba Usuários do Controls."),
+    ("studio_usuarios.py", "Usuários do StudioLibre: donos e convidados no .env (quem entra em quais serviços) e a sincronização com o Cloudflare Access, com plano antes e aplicar depois; usado pela aba Usuários do Controls."),
     ("tests/account/teste_usuarios.py", "Testa a lista de usuários e a sincronização, com uma Cloudflare simulada (servidor local)."),
     ("studio_kuma.py", "Lê a situação dos monitores na página de status do Uptime Kuma e pausa e retoma o monitor de um serviço, com usuário e senha no .env ou, se o login do Kuma estiver desligado, sem senha."),
     ("verificar_access.py", "Confere, sem entrar, se um endereço público está atrás do Cloudflare Access. O start_studio.sh o usa antes de ligar o login do Open WebUI pelo Access (STUDIO_WEBUI_ACCESS=1); studio chat --check roda à mão."),
