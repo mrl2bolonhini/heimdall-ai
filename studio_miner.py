@@ -275,8 +275,8 @@ CFG = web.Config(
     post={"/pendentes/aceitar": post_aceitar, "/pendentes/adiar": post_adiar, "/pendentes/ignorar": post_ignorar, "/abrir/finance": post_abrir_finance,
           "/ajustes/inicio": post_inicio, "/ajustes/cidadania": post_cidadania, "/ajustes/cidadania/consultar": post_consultar,
           "/ajustes/fontes/push": post_push, "/ajustes/fontes/consultar": post_fontes_consultar,
-          **{f"/ajustes/fontes/{k}": _post_fonte(k, "salvar") for k in ("certidoes", "dou", "legislacao", "licitacoes", "diarios", "agendamentos", "mni")},
-          **{f"/ajustes/fontes/{k}/remover": _post_fonte(k, "remover") for k in ("certidoes", "agendamentos")}},
+          **{f"/ajustes/fontes/{k}": _post_fonte(k, "salvar") for k in ("correio", "certidoes", "dou", "legislacao", "licitacoes", "diarios", "agendamentos", "mni")},
+          **{f"/ajustes/fontes/{k}/remover": _post_fonte(k, "remover") for k in ("correio", "certidoes", "agendamentos")}},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: o que há de mais urgente nesta área? qual comunicado chegou por último? O modelo descreve só o que está na tela.",
     css=CSS, erro=dados.ErroMiner, inicio=lambda ctx: "/" + dados.area_inicial(), aviso_rodape=AVISO)

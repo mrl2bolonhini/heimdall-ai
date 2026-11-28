@@ -22,7 +22,7 @@ import studio_pessoas as pessoas
 NIVEIS = {"critico": "timeSensitive", "alto": "active", "medio": "passive"}
 FONTE_PRODUTO = {"saude": "saude"}   # fonte do alerta -> chave do produto em studio_avisos.SERVICOS
 # Fonte do alerta -> tela do Studio Miner que a recebe (usada enquanto STUDIO_MINER não for 0)
-MINER_CAMINHO = {"email": "/rotina", "justica": "/cidadania", "diarios": "/cidadania", "legislacao": "/cidadania", "licitacoes": "/cidadania", "certidoes": "/cidadania", "agendamentos": "/cidadania", "privacidade": "/identidade"}
+MINER_CAMINHO = {"email": "/rotina", "justica": "/cidadania", "diarios": "/cidadania", "legislacao": "/cidadania", "licitacoes": "/cidadania", "certidoes": "/cidadania", "agendamentos": "/cidadania", "correio": "/rotina", "privacidade": "/identidade"}
 
 
 def _caminho_miner(fonte):

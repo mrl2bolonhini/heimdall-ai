@@ -339,7 +339,8 @@ def fontes() -> list:
     import studio_legislacao
     import studio_licitacoes
     import studio_mni
-    return [studio_certidoes, studio_dou, studio_legislacao, studio_licitacoes, studio_diarios, studio_agendamentos, studio_mni]
+    import studio_correio
+    return [studio_correio, studio_certidoes, studio_dou, studio_legislacao, studio_licitacoes, studio_diarios, studio_agendamentos, studio_mni]
 
 
 def ligada(mod) -> bool:

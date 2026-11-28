@@ -186,7 +186,7 @@ confere("três falhas seguidas geram aviso", any(a["id"].startswith("cid-falha:f
 os.environ["STUDIO_CIDADANIA"] = "0"
 confere("interruptor desliga as fontes", not cid.ligada(cert))
 os.environ["STUDIO_CIDADANIA"] = "1"
-confere("todas as fontes importam", len(cid.fontes()) == 7)
+confere("todas as fontes importam", len(cid.fontes()) == 8)
 confere("fontes registradas na área", all(m.CHAVE in d.AREAS["cidadania"][1] for m in cid.fontes() if m.CHAVE in ("certidoes", "legislacao", "licitacoes", "agendamentos")))
 
 # --- legislação, licitações, diários e agendamentos: configuração, validação e rodada sem resposta

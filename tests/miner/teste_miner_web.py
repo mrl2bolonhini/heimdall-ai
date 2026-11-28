@@ -146,6 +146,13 @@ s, _, r = req("POST", "/ajustes/fontes/mni", {"csrf": csrf, "tribunais": "tjsp=h
 confere("MNI recusa domínio fora de jus.br sem erro 500", s in (303, 400, 422), s)
 s, _, r = req("POST", "/ajustes/fontes/legislacao", {"csrf": csrf, "palavras": "licitação", "camara": "1"}, tk)
 confere("salvar legislação", s == 303)
+s, h, _ = req("GET", "/ajustes/fontes", tk)
+confere("Ajustes Fontes traz o Correio com campos rotulados e senha oculta", 'id="h-correio"' in h and all(f'for="{i}"' in h for i in ("cprov", "cusu", "csen", "crot")) and 'name="senha" type="password"' in h, h[:200])
+s, _, r = req("POST", "/ajustes/fontes/correio", {"csrf": csrf, "provedor": "gmail", "usuario": "ana@gmail.com", "senha": "abcdefghijklmnop"}, tk)
+h = req("GET", "/ajustes/fontes", tk)[1]
+confere("conectar conta mostra a conta e nunca a senha", s == 303 and "ana@gmail.com" in h and "abcdefghijklmnop" not in h and "Remover conta" in h, h[-300:])
+s, _, _ = req("POST", "/ajustes/fontes/correio/remover", {"csrf": csrf, "id": __import__("studio_correio").contas()[0]["id"]}, tk)
+confere("remover conta", s == 303 and not __import__("studio_correio").contas())
 s, h, _ = req("GET", "/ajustes/ajuda", tk)
 confere("Ajustes termina em Ajuda", s == 200 and "Ajuda" in h)
 import studio_alertas as al

@@ -2,6 +2,12 @@
 
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-28 - Correio: vigilância do seu e-mail e rotinas no Studio Miner
+- Em Ajustes, na subaba Fontes, você conecta a sua conta de e-mail (Gmail, Outlook, iCloud, Yahoo, UOL, Zoho ou outro servidor IMAP) com uma senha de aplicativo, que você pode revogar no provedor a qualquer momento.
+- A leitura é só de consulta: nada é marcado como lido, movido, apagado nem enviado, e só viram aviso as mensagens que casam com uma regra. O Miner não guarda a sua caixa e não segue links.
+- Você cria rotinas informando remetente ou domínio e, se quiser, uma palavra: cada e-mail que casar vira um aviso na área Rotina, com a conferência de autenticidade do remetente.
+- O aviso do Push dos tribunais e o e-mail de liberação de vagas passam a funcionar para qualquer pessoa e conta conectada. A senha fica num cofre cifrado de cada pessoa e pode ser apagada ao remover a conta.
+
 ## 2026-11-28 - Novas fontes da Cidadania no Studio Miner
 - Em Ajustes, a nova subaba Fontes reúne o Diário Oficial da União, a legislação (Câmara, Senado, LexML e câmaras municipais), os editais e as sanções, os diários municipais, as certidões, os agendamentos públicos e o webservice dos tribunais, cada um com os próprios termos de busca.
 - O Miner avisa publicações que citam os seus termos, proposições acompanhadas, editais com prazo, certidões a vencer e vencidas, mutirões e liberação de vagas, e movimentações lidas direto do tribunal. Cada aviso diz o que significa e o que fazer.

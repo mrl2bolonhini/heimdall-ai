@@ -21,16 +21,16 @@ AREAS = {
     "cidadania": ("Cidadania", ["justica", "diarios", "legislacao", "licitacoes", "certidoes", "agendamentos"]),
     "patrimonio": ("Patrimônio", []),
     "carreira": ("Carreira", []),
-    "rotina": ("Rotina", ["email"]),
+    "rotina": ("Rotina", ["email", "correio"]),
 }
-FONTE_ROTULO = {"privacidade": "Privacidade", "justica": "Justiça", "diarios": "Diário Oficial", "legislacao": "Legislação", "licitacoes": "Licitações", "certidoes": "Certidões", "agendamentos": "Agendamentos", "email": "E-mail oficial"}
+FONTE_ROTULO = {"privacidade": "Privacidade", "justica": "Justiça", "diarios": "Diário Oficial", "legislacao": "Legislação", "licitacoes": "Licitações", "certidoes": "Certidões", "agendamentos": "Agendamentos", "email": "E-mail oficial", "correio": "Correio"}
 FONTE_AREA = {f: a for a, (_, fontes) in AREAS.items() for f in fontes}
 NIVEL_ROTULO = {"critico": "crítico", "alto": "alto", "medio": "médio"}
 AREA_INICIAL_PADRAO = "identidade"
 ENCERRADOS = ("concluida", "descartada")
 # fonte -> título do lembrete ou evento: só a ação, sem dados do conteúdo (regra do studio_agenda.py)
 ACAO_AGENDA = {"email": "Conferir comunicado oficial", "justica": "Conferir publicação oficial", "diarios": "Conferir publicação oficial",
-              "legislacao": "Conferir norma ou proposição", "licitacoes": "Conferir edital ou sanção", "certidoes": "Renovar certidão", "agendamentos": "Conferir agendamento"}
+              "legislacao": "Conferir norma ou proposição", "licitacoes": "Conferir edital ou sanção", "certidoes": "Renovar certidão", "agendamentos": "Conferir agendamento", "correio": "Conferir e-mail recebido"}
 _PRAZO = re.compile(r"Prazo:\s*(\d{2})/(\d{2})/(\d{4})")
 _BOLETO = re.compile(r"\bboletos?\b", re.IGNORECASE)
 
