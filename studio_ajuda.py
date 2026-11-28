@@ -118,7 +118,7 @@ FAQ = {
         ("Posso escolher a área que abre primeiro?",
          "Sim. Em Ajustes, na subaba Perfil, escolha a área inicial."),
         ("Como acompanho intimações e processos?",
-         "Em Ajustes, na subaba Cidadania, informe seu nome completo, o número e a UF da OAB (se for advogado) e os números dos processos que você acompanha. Todos os dias o Miner consulta o Diário de Justiça Eletrônico Nacional e avisa as comunicações novas, com o que o ato significa e uma estimativa de prazo. A busca por nome pode trazer homônimos, por isso o aviso pede conferência. A estimativa de prazo nunca substitui a conferência no processo."),
+         "Em Ajustes, na subaba Cidadania, informe seu nome completo, o número e a UF da OAB (se for advogado) e os números dos processos que você acompanha. Todos os dias o Miner consulta o Diário de Justiça Eletrônico Nacional e avisa as comunicações novas, com o que o ato significa e uma estimativa de prazo. Para cada processo informado, o Miner também avisa os andamentos novos registrados pelo CNJ (DataJud), com alguns dias de atraso e sem o texto das decisões; processos sigilosos e do STF não aparecem ali. A busca por nome pode trazer homônimos, por isso o aviso pede conferência. A estimativa de prazo nunca substitui a conferência no processo."),
     ],
     "memory": [
         ("O que mostra a aba Notas?",

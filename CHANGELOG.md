@@ -7,6 +7,10 @@ Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recur
 - Todos os dias o Miner consulta o Diário de Justiça Eletrônico Nacional e avisa as comunicações novas na área Cidadania, com o que o ato significa, como foi encontrado, quando a publicação vale e uma estimativa do prazo em dias úteis (com feriados nacionais e recesso), além do que conferir. A consulta diária vale para todas as pessoas, cada uma com os próprios dados; o aviso de um convidado fica só na tela dele. O botão Consultar agora faz a consulta na hora.
 - A busca pelo nome pode trazer homônimos, e o aviso pede a conferência. A estimativa de prazo nunca substitui a conferência no processo. Se a consulta falhar três vezes seguidas, o Miner avisa e indica o Domicílio Judicial Eletrônico.
 
+## 2026-11-27 - Andamentos de processos no Studio Miner
+- Para cada processo informado em Ajustes, na subaba Cidadania, o Miner consulta o DataJud, do CNJ, e avisa o início do acompanhamento e os andamentos novos, com o que o movimento significa e o que conferir. Vale para todas as justiças com dados públicos (estaduais, federais, trabalhistas, eleitorais, militares e tribunais superiores).
+- O DataJud tem alguns dias de atraso e não traz o texto das decisões, processos sigilosos nem o STF. Quando o processo não aparece, o aviso indica as alternativas (intimações no DJEN, sistemas Push dos tribunais e Domicílio Judicial Eletrônico).
+
 ## 2026-11-27 - Anúncio falado da subida
 - O aviso falado quando o StudioLibre termina de subir passa a dizer StudioLibre, com a pronúncia do dicionário de pronúncias do sistema.
 

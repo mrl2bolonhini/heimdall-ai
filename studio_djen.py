@@ -379,7 +379,7 @@ def _publicar(dado: dict) -> dict:
     return alertas.publicar(dado)
 
 
-def executar(hoje: date = None, requisitar=None, dormir=None, publicar=None) -> dict:
+def executar(hoje: date = None, requisitar=None, dormir=None, publicar=None, requisitar_datajud=None) -> dict:
     """Consulta o DJEN para a pessoa atual e publica as comunicações novas. Devolve {ok, novas, total, erros, mensagem}."""
     hoje = hoje or date.today()
     publicar = publicar or _publicar
@@ -407,6 +407,12 @@ def executar(hoje: date = None, requisitar=None, dormir=None, publicar=None) -> 
         if falhas >= 3:
             publicar({"id": f"djen-falha:{hoje.isoformat()}", "titulo": "Consulta ao DJEN indisponível", "nivel": "alto", "fonte": "justica",
                       "resumo": f"A consulta ao DJEN falhou {falhas} vezes seguidas: {erros[0]} Enquanto isso, intimações novas podem não aparecer aqui. Confira o Domicílio Judicial Eletrônico e os e-mails dos sistemas Push dos tribunais."})
+    if cfg["processos"]:   # andamentos dos processos acompanhados (DataJud); uma falha dele não conta como falha do DJEN
+        import studio_datajud
+        rd = studio_datajud.executar(cfg["processos"], requisitar_datajud, dormir, publicar)
+        if not rd.get("desligado"):
+            msg += f" Andamentos: {rd['novos']} aviso(s) novo(s)." + (" " + rd["erros"][0] if rd["erros"] else "")
+            novas += rd["novos"]
     return {"ok": not erros, "novas": novas, "total": len(itens), "erros": erros, "mensagem": msg, "falhou": falhou}
 
 

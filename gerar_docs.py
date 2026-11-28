@@ -296,6 +296,8 @@ SCRIPTS = [
     ("studio_trading_motor.py", "Motor da simulação do Trading: ordens a mercado e limitadas, limites por ordem e de perda por dia, caixa, posições, resultado, cotações (simulada, manual ou brapi) e sinais descritivos."),
     ("studio_trading.py", "Studio Trading (porta 8020): mesa em simulação com as abas Mesa, Carteira, Ordens e Análise, atalhos de teclado e Ajustes (Limites, Cotações, Conta, Ajuda)."),
     ("tests/trading/teste_trading_motor.py", "Testa o motor do Trading: ordens, limites, venda sem posição, perda do dia, cotações e sinais."),
+    ("studio_datajud.py", "Andamentos de processos pelo DataJud (API pública do CNJ) para a Cidadania do Miner: índice do tribunal pelo número único, início do acompanhamento, andamento novo com significado e alternativas quando o processo não aparece."),
+    ("tests/miner/teste_datajud.py", "Testa os andamentos do DataJud: índice do tribunal, início, andamento novo, sem repetir, ausente, STF e chave recusada."),
     ("studio_djen.py", "Coletor do DJEN (Comunica PJe, do CNJ) para a Cidadania do Miner: consulta por OAB, nome e número de processo informados pelo usuário, estimativa de prazo em dias úteis, significado do ato e alerta com contexto."),
     ("tests/miner/teste_djen.py", "Testa o coletor do DJEN: configuração, número CNJ, prazo e recesso, significado do ato, deduplicação, homônimo, falhas e limite de consultas."),
     ("studio_miner_dados.py", "Dados do Studio Miner: pendentes por área sobre a tabela de triagem, aceite (evento ou lembrete pela agenda), adiar, ignorar, identificação de boleto e área inicial."),
