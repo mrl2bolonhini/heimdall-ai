@@ -185,15 +185,14 @@ def post_consultar(ctx, campos, arquivos):
 
 
 def _agendador() -> None:
-    """Consulta diária ao DJEN (hora local em STUDIO_MINER_DJEN_HORA) para o dono; verifica a cada 15 minutos. Convidados usam o botão Consultar agora."""
+    """Consulta diária ao DJEN (hora local em STUDIO_MINER_DJEN_HORA) para todas as pessoas, cada uma com os próprios dados; verifica a cada 15 minutos."""
     import threading
     import time
 
     def laco():
         while True:
             try:
-                if djen.devida():
-                    djen.executar()
+                djen.executar_todos()
             except Exception as ex:  # a consulta nunca derruba o serviço
                 print("Miner: consulta ao DJEN falhou:", type(ex).__name__)
             time.sleep(900)

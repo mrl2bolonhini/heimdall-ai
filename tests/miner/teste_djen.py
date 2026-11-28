@@ -173,5 +173,42 @@ confere("interruptor desliga", not dj.devida(datetime(2026, 11, 29, 12, 0)) and 
 del os.environ["STUDIO_MINER_DJEN"]
 confere("limpar configuração", dj.salvar("", "", "", "") .startswith("Configuração limpa") and not dj.configurado())
 
+# todas as pessoas: cada uma com a própria configuração, o próprio banco e sem aviso no Mac do dono
+import studio_pessoas as pe  # noqa: E402
+ANA = "p" + "a" * 12
+BETO = "p" + "b" * 12
+dj.salvar("Dona da Casa", "", "", NUM)
+dj._gravar(djen_ultimo="", djen_tentativa="")
+os.environ["STUDIO_MINER_DJEN_HORA"] = "0"
+for quem, nome, num in ((ANA, "Ana Convidada", ""), (BETO, "Beto Convidado", "")):
+    with pe.definir(quem), banco.da_pessoa(quem):
+        dj.salvar(nome, "", "", num)
+con_dono = banco.conectar(somente_leitura=True)
+con_dono.close()
+avisos_mac = []
+al.mac.publicar = lambda x: avisos_mac.append(x) or True
+al.bark.enviar_bark = lambda x: avisos_mac.append(x) or True
+chamadas2 = []
+
+
+def falso2(p):
+    chamadas2.append(dict(p))
+    return {"count": 1, "items": [dict(bruto_nome, id=7000 + len(chamadas2))]}
+
+
+feitos = dj.executar_todos(hoje=date.today(), requisitar=falso2, dormir=lambda s: None)
+confere("percorre o dono e os convidados", set(feitos) == {"dono", ANA, BETO}, feitos)
+confere("cada pessoa consulta o próprio nome", {p.get("nomeParte") for p in chamadas2 if "nomeParte" in p} == {"Dona da Casa", "Ana Convidada", "Beto Convidado"}, chamadas2)
+with pe.definir(ANA), banco.da_pessoa(ANA):
+    con = banco.conectar(somente_leitura=True)
+    n_ana = con.execute("SELECT COUNT(*) FROM triagem WHERE id LIKE 'djen:%'").fetchone()[0]
+    con.close()
+confere("a triagem do convidado fica no banco dele", n_ana >= 1, n_ana)
+con = banco.conectar(somente_leitura=True)
+ids_dono = {r[0] for r in con.execute("SELECT id FROM triagem WHERE id LIKE 'djen:%'")}
+con.close()
+confere("o dono não vê os alertas dos convidados", not any(i in ids_dono for i in ("djen:7003", "djen:7004")), ids_dono)
+confere("só o alerta do dono notifica o Mac", len(avisos_mac) >= 1 and all("Ana" not in str(x) and "Beto" not in str(x) for x in avisos_mac), avisos_mac)
+
 print("\nFALHAS:", falhas)
 _sys.exit(1 if falhas else 0)

@@ -17,6 +17,7 @@ import studio_avisos_mac as mac
 import studio_banco as banco
 import studio_bark as bark
 import studio_links as links
+import studio_pessoas as pessoas
 
 NIVEIS = {"critico": "timeSensitive", "alto": "active", "medio": "passive"}
 FONTE_PRODUTO = {"saude": "saude"}   # fonte do alerta -> chave do produto em studio_avisos.SERVICOS
@@ -67,6 +68,8 @@ def publicar(dado: dict) -> dict:
     if not _registrar(origem, {"fonte": fonte, "nivel": nivel, "titulo": titulo, "resumo": resumo}):
         return r
     r["novo"] = True
+    if not pessoas.e_dono():   # o alerta de um convidado fica só na triagem dele: nunca aparece no Mac nem no Bark do dono
+        return {**r, "convidado": True}
     produto = FONTE_PRODUTO.get(fonte)
     if produto in avisos.SERVICOS:
         try:

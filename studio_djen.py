@@ -26,6 +26,7 @@ from datetime import date, datetime, timedelta
 
 import studio_banco as banco
 import studio_miner_dados as dados
+import studio_pessoas as pessoas
 
 URL = os.environ.get("STUDIO_MINER_DJEN_URL", "https://comunicaapi.pje.jus.br/api/v1/comunicacao")
 SUFIXOS_OAB = ("", "A", "B", "N", "S", "E", "O")   # a API compara o texto exato: sem as variantes, parte das publicações some
@@ -407,6 +408,19 @@ def executar(hoje: date = None, requisitar=None, dormir=None, publicar=None) -> 
             publicar({"id": f"djen-falha:{hoje.isoformat()}", "titulo": "Consulta ao DJEN indisponível", "nivel": "alto", "fonte": "justica",
                       "resumo": f"A consulta ao DJEN falhou {falhas} vezes seguidas: {erros[0]} Enquanto isso, intimações novas podem não aparecer aqui. Confira o Domicílio Judicial Eletrônico e os e-mails dos sistemas Push dos tribunais."})
     return {"ok": not erros, "novas": novas, "total": len(itens), "erros": erros, "mensagem": msg, "falhou": falhou}
+
+
+def executar_todos(**kw) -> dict:
+    """A consulta diária vale para todas as pessoas, não só para o dono: percorre quem já tem pasta e roda a consulta devida de cada uma, com os dados dela."""
+    feitos = {}
+    for quem in pessoas.existentes(banco.DB_DIR):
+        try:
+            with pessoas.definir(quem), banco.da_pessoa(quem):
+                if devida():
+                    feitos[quem] = executar(**kw)
+        except Exception as ex:  # a falha de uma pessoa não impede a das outras
+            feitos[quem] = {"ok": False, "mensagem": type(ex).__name__}
+    return feitos
 
 
 def hora_da_consulta() -> int:
