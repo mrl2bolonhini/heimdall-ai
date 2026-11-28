@@ -148,10 +148,17 @@ for hora, slot in ((7, "manha2"), (9, "meio"), (12, "direto"), (21, "direto")):
 TRI = codigo("Itens de triagem")
 P = {"ymd": "2026-11-14", "rel": ["Vários sinais vitais fora do seu intervalo típico ao mesmo tempo, como no app Sinais Vitais da Apple: oxigênio no sangue abaixo do normal (93 %); duração do sono abaixo do normal (215 min) [MUITO RELEVANTE]"]}
 r = rodar(TRI, {}, anterior=P)
-confere("aviso conjunto vira item 'alto', nunca 'crítico' só por citar oxigênio", len(r["saida"]) == 1 and r["saida"][0]["json"]["nivel"] == "alto", r["saida"])
+P = {"ymd": "2026-11-14", "rel": ["Vários sinais vitais fora do seu intervalo típico ao mesmo tempo, como no app Sinais Vitais da Apple: oxigênio no sangue abaixo do normal (93 %); duração do sono abaixo do normal (215 min) [MUITO RELEVANTE]"]}
+r = rodar(TRI, {}, anterior=P)
+confere("aviso conjunto sai do fluxo: o analista de anomalias o trata com contexto", r["saida"] == [], r["saida"])
+P = {"ymd": "2026-11-14", "rel": ["HRV: hoje 15 ms, média de 30 dias 28,8 (-48%) [MUITO RELEVANTE]"]}
+r = rodar(TRI, {}, anterior=P)
+confere("variabilidade isolada não vira aviso solto no fluxo", r["saida"] == [], r["saida"])
 P = {"ymd": "2026-11-14", "rel": ["Oxigênio no sangue: hoje 89 %, média de 30 dias 95 % (-6%) [MUITO RELEVANTE]"]}
 r = rodar(TRI, {}, anterior=P)
-confere("oxigênio muito baixo continua 'crítico'", r["saida"][0]["json"]["nivel"] == "critico", r["saida"])
+it = r["saida"][0]["json"]
+confere("oxigênio muito baixo continua 'crítico' e explica o que a medida significa", it["nivel"] == "critico" and "chega ao sangue" in it["resumo"] and "meça de novo" in it["resumo"], r["saida"])
+P = {"ymd": "2026-11-14", "rel": ["SpO2 mínimo (menor leitura do dia) 89 %, abaixo de 91 % [MUITO RELEVANTE]"]}
 
 # oxigênio mínimo: guardar a menor leitura do dia e alertar
 GD = codigo("Guardar dados")

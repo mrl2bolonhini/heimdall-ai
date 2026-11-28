@@ -2,6 +2,10 @@
 
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-27 - Avisos de saúde com contexto
+- O aviso de saúde deixa de listar só a medida e a média. Pulso, variabilidade, sono e respiração passam a ser analisados em conjunto, com o treino recente e o histórico, e o aviso explica o que a medida significa, o tamanho do desvio, as causas mais comuns e o que fazer.
+- Febre e oxigênio baixo continuam avisando na hora, agora com o significado da medida e como conferir de novo.
+
 ## 2026-11-27 - Studio Miner (primeira versão)
 - Novo produto, o Studio Miner, reúne em cinco áreas fixas da vida (Identidade, Cidadania, Patrimônio, Carreira e Rotina) o que as fontes públicas e o e-mail oficial registram, com os itens pendentes de cada área.
 - Nada vira lembrete ou evento sem o seu aceite: Aceitar cria o evento (quando há prazo) ou o lembrete; Adiar e Ignorar dispensam o item por ora ou de vez.
