@@ -89,6 +89,7 @@ with tempfile.TemporaryDirectory() as d:
     for f in ("studio_saude", "studio_banco", "studio_backup", "studio_email_oficial", "studio_acesso", "studio_voz", "ingest_docs", "cloudflare_chave",
               "importar_saude_n8n", "limpar_espelhos", "limpar_privadas", "mover_notas_antigas", "gerar_docs", "gerar_marca_png"):
         Path(d, f + ".py").write_text(f'import sys\nprint("[{f}]", *sys.argv[1:])\n')
+    Path(d, "rodar_testes.sh").write_text('#!/bin/bash\necho "[rodar_testes] $@"\n')  # fica na raiz do projeto
     casos = [
         ("health -t", "[studio_saude] --hoje"), ("health -r 30", "[studio_saude] --relatorio 30"), ("health -a 2026-11-10", "[studio_saude] --anomalias 2026-11-10"),
         ("health -A", "[studio_saude] --atividade"), ("health -R 90", "[studio_saude] --recuperacao 90"), ("health -i x.zip", "[studio_saude] --importar x.zip"),
@@ -100,7 +101,7 @@ with tempfile.TemporaryDirectory() as d:
         ("restart -a", "[subir] --reiniciar --agente"), ("logs -s agent", "[subir] --log agente"), ("logs -l", "[subir] --logs"), ("flows -p", "[instalar_monitor_privacidade]"),
         ("flows -b", "[instalar_fluxos_n8n]"), ("docs -b", "[gerar_marca_png]"), ("db -s SELECT", "[studio_banco] --sql SELECT"),
         ("voice -i f.csv", "[studio_voz] --importar f.csv"), ("ingest -r", "[ingest_docs] --reset"), ("mcp -v", "[verificar_mcp_dados]"),
-        ("health --today", "[studio_saude] --hoje"), ("test -r nada", "Teste desconhecido"),
+        ("health --today", "[studio_saude] --hoje"), ("tests -x -q core", "[rodar_testes] --stop --quiet core"), ("tests -n 5 -v", "[rodar_testes] --lines 5 --verbose"),
     ]
     for cmd, esperado in casos:
         rc, out = bash(f"studio {cmd}", d)

@@ -614,17 +614,21 @@ Opções:
 Exemplos:
   studio docs
 
-@ test | Testes do projeto
-Sem opção lista os testes.
+@ tests | Testes do projeto
+Roda os testes do projeto e mostra o motivo de cada falha (as últimas linhas da saída do teste), com um resumo no fim. Sem argumento roda todos. Os argumentos são nomes de pasta (finance, health) ou trechos do nome de um teste (agenda, banco); vários podem ser combinados.
 Opções:
-  -l, --list           lista os testes
-  -a, --all            roda todos os testes teste_*.py e diz quantos falharam
-  -r, --run NOME       roda um teste (studio test --run anomalias roda tests/health/teste_anomalias.py)
+  -l, --list           lista as pastas de testes, ou os testes dos argumentos
+  -x, --stop           para no primeiro teste que falhar
+  -q, --quiet          não mostra os testes que passaram
+  -v, --verbose        mostra a saída completa de todos os testes
+  -n, --lines N        linhas finais da saída de cada falha (padrão 40; 0 mostra tudo)
   -h, --help           mostra esta ajuda
 Exemplos:
-  studio test --list
-  studio test --run anomalias
-  studio test --all
+  studio tests
+  studio tests finance health
+  studio tests agenda banco -q
+  studio tests -x -n 80 lab
+  studio tests --list finance
 
 @ dir | Pasta do projeto
 Mostra o caminho da pasta do projeto (STUDIO_DIR).

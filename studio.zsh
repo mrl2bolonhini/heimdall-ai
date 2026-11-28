@@ -142,7 +142,7 @@ _studio_short() {  # opções curtas de cada comando -> opção longa em inglês
     hook) printf '%s\n' "-i=--install" "-r=--remove" ;;
     update) printf '%s\n' "-r=--restart" "-a=--app" ;;
     docs) printf '%s\n' "-b=--brand" ;;
-    test) printf '%s\n' "-l=--list" "-a=--all" "-r=--run" ;;
+    tests) printf '%s\n' "-l=--list" "-x=--stop" "-q=--quiet" "-v=--verbose" "-n=--lines" ;;
     help) printf '%s\n' "-d=--doc" ;;
   esac
   printf '%s\n' "-h=--help"
@@ -555,25 +555,7 @@ studio() {
         --brand) _studio_py gerar_marca_png.py ;;
         *) echo "Use: studio docs [--brand]"; return 1 ;;
       esac ;;
-    test)
-      case "$1" in
-        ""|--list) ( cd "$STUDIO_DIR" && ls teste_*.py teste_*.sh test_*.py 2>/dev/null | sed 's/^teste_//; s/\.py$//; s/\.sh$//' ) ;;
-        --all)
-          local f falhas=0
-          for f in "$STUDIO_DIR"/teste_*.py; do
-            echo "== $(basename "$f")"
-            _studio_py "$(basename "$f")" > /dev/null 2>&1 && echo "ok" || { echo "FALHOU"; falhas=$((falhas+1)); }
-          done
-          echo "Testes com falha: $falhas"
-          [ "$falhas" = 0 ] ;;
-        --run)
-          a="$2"; shift 2 2>/dev/null
-          if [ -f "$STUDIO_DIR/teste_$a.py" ]; then _studio_py "teste_$a.py" "$@"
-          elif [ -f "$STUDIO_DIR/teste_$a.sh" ]; then _studio_sh "teste_$a.sh" "$@"
-          elif [ -f "$STUDIO_DIR/test_$a.py" ]; then _studio_py "test_$a.py" "$@"
-          else echo "Teste desconhecido. Veja a lista com: studio test --list"; return 1; fi ;;
-        *) echo "Use: studio test [--list] [--all] [--run NOME]"; return 1 ;;
-      esac ;;
+    tests) _studio_sh rodar_testes.sh "$@" ;;
     dir) echo "$STUDIO_DIR" ;;
     cd) cd "$STUDIO_DIR" ;;
 
@@ -585,7 +567,7 @@ studio() {
 if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
   _studio_complete() {
     local -a cmds
-    cmds=(up restart stop status logs containers models chat learn trading miner hub news lab health games finance controls account n8n kuma dozzle urls notices notion cloudai mailbox app ask usage support db doctor backup continuity mail access voice listen ingest env cloudflare mcp flows hook update docs test dir cd help)
+    cmds=(up restart stop status logs containers models chat learn trading miner hub news lab health games finance controls account n8n kuma dozzle urls notices notion cloudai mailbox app ask usage support db doctor backup continuity mail access voice listen ingest env cloudflare mcp flows hook update docs tests dir cd help)
     if (( CURRENT == 2 )); then
       compadd -a cmds
       compadd -- --help --doc
@@ -630,9 +612,9 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       update) compadd -- --restart --app ;;
       docs) compadd -- --brand ;;
       help) compadd -- --doc $cmds ;;
-      test)
-        if [[ ${words[CURRENT-1]} == --run ]]; then compadd -- $(cd "$STUDIO_DIR" 2>/dev/null && ls teste_*.py teste_*.sh test_*.py 2>/dev/null | sed 's/^teste_//; s/\.py$//; s/\.sh$//')
-        else compadd -- --list --all --run; fi ;;
+      tests)
+        if [[ ${words[CURRENT-1]} == --lines ]]; then :
+        else compadd -- --list --stop --quiet --verbose --lines $(cd "$STUDIO_DIR" 2>/dev/null && ls tests 2>/dev/null); fi ;;
     esac
     compadd -- --help
   }
