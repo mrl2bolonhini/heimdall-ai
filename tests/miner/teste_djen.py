@@ -11,6 +11,7 @@ from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="djen_"))
 os.environ["STUDIO_DB_DIR"] = str(TMP / "db")
+os.environ["STUDIO_FERIADOS"] = "0"   # o teste não usa a rede
 import studio_banco as banco  # noqa: E402
 import studio_djen as dj  # noqa: E402
 import studio_miner_dados as d  # noqa: E402

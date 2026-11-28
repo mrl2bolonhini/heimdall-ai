@@ -2,6 +2,11 @@
 
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-27 - Prazos com feriados estaduais e municipais no Studio Miner
+- A estimativa de prazo passa a considerar, em camadas, os feriados nacionais, o recesso forense, os feriados do estado do foro, os feriados do município do foro e as suspensões de prazo publicadas pelo tribunal que você informar. Em Ajustes, na subaba Cidadania, você informa o município do foro (padrão ou por processo, com @ Cidade/UF depois do número) e as suspensões.
+- O aviso diz quais calendários foram considerados e quais ficaram de fora, e lembra que feriado local e suspensão de prazo precisam ser comprovados no ato do recurso, com o calendário publicado no site do tribunal.
+- O Miner passa a renovar sozinho, uma vez por semana, a chave pública do DataJud, lida da página oficial do CNJ, e também quando o DataJud recusar a chave.
+
 ## 2026-11-27 - Intimações e processos no Studio Miner
 - Em Ajustes, na subaba Cidadania, você informa o seu nome completo, a OAB (número e UF) e os números dos processos que acompanha. Nada disso é preenchido por padrão.
 - Todos os dias o Miner consulta o Diário de Justiça Eletrônico Nacional e avisa as comunicações novas na área Cidadania, com o que o ato significa, como foi encontrado, quando a publicação vale e uma estimativa do prazo em dias úteis (com feriados nacionais e recesso), além do que conferir. A consulta diária vale para todas as pessoas, cada uma com os próprios dados; o aviso de um convidado fica só na tela dele. O botão Consultar agora faz a consulta na hora.

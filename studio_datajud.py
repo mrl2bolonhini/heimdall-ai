@@ -8,6 +8,7 @@ o DataJud traz capa e movimentações, com atraso de alguns dias, sem partes, se
 Termos do CNJ (levantamento de 27/11/2026): limite de 120 consultas por minuto (aqui, uma por segundo), uso só para fins legais, sem coleta de dados pessoais
 de terceiros e sem exploração comercial sem autorização escrita (uso pessoal por enquanto; revisar quando virar produto). A chave é pública e única para todos
 os usuários, mas o CNJ pode trocá-la: STUDIO_DATAJUD_CHAVE (no .env) substitui a que vem de fábrica.
+A chave é relida da wiki do CNJ uma vez por semana (respeitando o robots.txt) e quando o DataJud a recusa; a precedência é STUDIO_DATAJUD_CHAVE, a chave lida, a de fábrica.
 Variáveis: STUDIO_MINER_DATAJUD (padrão 1; 0 desliga), STUDIO_DATAJUD_CHAVE, STUDIO_DATAJUD_URL.
 Usa só a biblioteca padrão do Python.
 """
@@ -16,13 +17,18 @@ import os
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
 
+import studio_banco as banco
 import studio_djen as djen
 
 BASE = os.environ.get("STUDIO_DATAJUD_URL", "https://api-publica.datajud.cnj.jus.br").rstrip("/")
-CHAVE_PADRAO = "cDZHYzlZa0JadVREZDJCendFbXNpMDI="   # chave pública divulgada pelo CNJ; o CNJ pode trocá-la (veja STUDIO_DATAJUD_CHAVE)
+CHAVE_PADRAO = "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=="   # chave pública divulgada pelo CNJ em 27/11/2026; o CNJ pode trocá-la (o Miner a relê da wiki do CNJ toda semana)
+PAGINA_CHAVE = "https://datajud-wiki.cnj.jus.br/api-publica/acesso"
+RENOVAR_A_CADA = timedelta(days=7)
 PAUSA_S = 1.0
 MAX_MOVIMENTOS_NO_ALERTA = 5
 
@@ -54,11 +60,77 @@ def indice(numero: str) -> str:
     return ""   # J=1 é o STF, que não tem índice público
 
 
+def _arquivo_chave() -> Path:
+    """Arquivo global (a chave é a mesma para todas as pessoas): a chave lida da wiki do CNJ e a data da leitura."""
+    return Path(getattr(banco, "_RAIZ", banco.DB_DIR)) / "datajud_chave.json"
+
+
+def _chave_salva() -> dict:
+    try:
+        r = json.loads(_arquivo_chave().read_text("utf-8"))
+        return r if isinstance(r, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
 def chave() -> str:
-    return os.environ.get("STUDIO_DATAJUD_CHAVE", "").strip() or CHAVE_PADRAO
+    """Precedência: variável de ambiente, chave lida da wiki do CNJ, chave de fábrica."""
+    return os.environ.get("STUDIO_DATAJUD_CHAVE", "").strip() or _chave_salva().get("chave", "") or CHAVE_PADRAO
 
 
-def _requisitar(alias: str, numero: str, urlopen=None) -> dict:
+def _pagina(url: str, urlopen=None) -> str:
+    req = urllib.request.Request(url, headers={"Accept": "text/html,text/plain", "User-Agent": "StudioLibre-Miner/1.0 (leitura da chave pública)"})
+    with (urlopen or urllib.request.urlopen)(req, timeout=30) as r:
+        return r.read(2_000_000).decode("utf-8", "replace")
+
+
+def _permitido(url: str, urlopen=None) -> bool:
+    """Respeita o robots.txt do site. Sem robots.txt legível, a leitura é permitida (o CNJ divulga a chave para uso público)."""
+    import urllib.robotparser
+    partes = urllib.parse.urlsplit(url)
+    rp = urllib.robotparser.RobotFileParser()
+    try:
+        rp.parse(_pagina(f"{partes.scheme}://{partes.netloc}/robots.txt", urlopen).splitlines())
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        return True
+    return rp.can_fetch("StudioLibre-Miner", url)
+
+
+def ler_chave_da_wiki(urlopen=None) -> str:
+    """Chave pública vigente lida da página de acesso da wiki do CNJ (texto 'Authorization: APIKey <chave>'). Texto vazio se não achar."""
+    if not _permitido(PAGINA_CHAVE, urlopen):
+        return ""
+    html = re.sub(r"<[^>]+>", " ", _pagina(PAGINA_CHAVE, urlopen))
+    achados = re.findall(r"APIKey\s+([A-Za-z0-9+/=_\-]{20,})", html.replace("&#43;", "+").replace("&amp;", "&"))
+    return achados[0] if achados else ""
+
+
+def atualizar_chave(urlopen=None, forcar: bool = False, agora: datetime = None) -> dict:
+    """Relê a chave na wiki do CNJ uma vez por semana (ou quando o DataJud a recusa) e guarda em arquivo. Devolve {ok, mudou, mensagem}."""
+    agora = agora or datetime.now()
+    salva = _chave_salva()
+    try:
+        ultima = datetime.fromisoformat(salva.get("lida_em", ""))
+    except ValueError:
+        ultima = None
+    if ultima and agora - ultima < (timedelta(hours=1) if forcar else RENOVAR_A_CADA):   # mesmo forçada, a wiki não é lida mais de uma vez por hora
+        return {"ok": True, "mudou": False, "mensagem": "A chave foi conferida há pouco."}
+    try:
+        nova = ler_chave_da_wiki(urlopen)
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+        return {"ok": False, "mudou": False, "mensagem": "Não foi possível ler a wiki do CNJ agora."}
+    if not nova:
+        return {"ok": False, "mudou": False, "mensagem": "A wiki do CNJ não trouxe a chave no formato esperado ou não permite a leitura."}
+    antes = chave()
+    try:
+        _arquivo_chave().parent.mkdir(parents=True, exist_ok=True)
+        _arquivo_chave().write_text(json.dumps({"chave": nova, "lida_em": agora.isoformat(timespec="seconds")}), "utf-8")
+    except OSError:
+        return {"ok": False, "mudou": False, "mensagem": "Não foi possível guardar a chave lida."}
+    return {"ok": True, "mudou": nova != antes, "mensagem": "Chave do DataJud atualizada." if nova != antes else "A chave do DataJud continua a mesma."}
+
+
+def _requisitar(alias: str, numero: str, urlopen=None, renovar: bool = True, urlopen_wiki=None) -> dict:
     corpo = json.dumps({"query": {"match": {"numeroProcesso": numero}}, "size": 10}).encode()
     req = urllib.request.Request(f"{BASE}/api_publica_{alias.replace('-', '_')}/_search", data=corpo, method="POST",
                                  headers={"Authorization": "APIKey " + chave(), "Content-Type": "application/json", "User-Agent": "StudioLibre-Miner/1.0"})
@@ -67,6 +139,8 @@ def _requisitar(alias: str, numero: str, urlopen=None) -> dict:
             return json.loads(r.read().decode("utf-8", "replace") or "{}")
     except urllib.error.HTTPError as ex:
         if ex.code in (401, 403):
+            if renovar and os.environ.get("STUDIO_DATAJUD_CHAVE", "").strip() == "" and atualizar_chave(urlopen_wiki, forcar=True).get("mudou"):
+                return _requisitar(alias, numero, urlopen, renovar=False)   # o CNJ trocou a chave: usa a nova e tenta uma vez
             raise djen.ErroDJEN("O DataJud recusou a chave de acesso. O CNJ pode ter trocado a chave pública.")
         if ex.code == 429:
             raise djen.ErroDJEN("O DataJud limitou as consultas.")

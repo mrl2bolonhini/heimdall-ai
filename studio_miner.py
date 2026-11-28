@@ -161,12 +161,14 @@ def post_inicio(ctx, campos, arquivos):
 
 def aj_cidadania(ctx) -> tuple:
     c = djen.configuracao()
-    processos = "\n".join(djen.mascara_cnj(p) for p in c["processos"])
+    processos = "\n".join(djen.mascara_cnj(p) + (" @ " + c["proc_municipios"][p] if p in c["proc_municipios"] else "") for p in c["processos"])
     form = (f'<form method="post" action="/ajustes/cidadania"><input type="hidden" name="csrf" value="{e(ctx.csrf)}">'
             f'<p><label for="nome">Nome completo (para encontrar publicações em que você é parte)</label><br><input id="nome" name="nome" type="text" maxlength="100" autocomplete="name" value="{e(c["nome"])}"></p>'
             f'<p><label for="oab">Número da OAB (só dígitos, opcional)</label><br><input id="oab" name="oab_numero" type="text" inputmode="numeric" maxlength="7" value="{e(c["oab_numero"])}"></p>'
             f'<p><label for="uf">UF da OAB</label><br><input id="uf" name="oab_uf" type="text" maxlength="2" value="{e(c["oab_uf"])}"></p>'
-            f'<p><label for="procs">Processos que você acompanha (número único, um por linha)</label><br><textarea id="procs" name="processos" rows="5" cols="40">{e(processos)}</textarea></p>'
+            f'<p><label for="procs">Processos que você acompanha (número único, um por linha; para o município do foro, acrescente @ Cidade/UF)</label><br><textarea id="procs" name="processos" rows="5" cols="40">{e(processos)}</textarea></p>'
+            f'<p><label for="mun">Município do foro, padrão para os prazos (Cidade/UF, opcional)</label><br><input id="mun" name="municipio" type="text" maxlength="70" value="{e(c["municipio"])}"></p>'
+            f'<p><label for="susp">Suspensões de prazo publicadas pelo tribunal (uma por linha: dd/mm/aaaa ou dd/mm/aaaa a dd/mm/aaaa, com o motivo)</label><br><textarea id="susp" name="suspensoes" rows="3" cols="40">{e(c["suspensoes"])}</textarea></p>'
             '<button type="submit">Salvar</button></form>')
     estado = f'<p class="meta" role="status">Última consulta ao DJEN: {e(c["estado"])}</p>' if c["estado"] else ""
     consultar = design.botao_post("/ajustes/cidadania/consultar", "Consultar agora", ctx.csrf, None, "Consultar o DJEN agora") if djen.configurado() else ""
@@ -174,7 +176,7 @@ def aj_cidadania(ctx) -> tuple:
 
 
 def post_cidadania(ctx, campos, arquivos):
-    ctx.flash("ok", djen.salvar(campos.get("nome", ""), campos.get("oab_numero", ""), campos.get("oab_uf", ""), campos.get("processos", "")))
+    ctx.flash("ok", djen.salvar(campos.get("nome", ""), campos.get("oab_numero", ""), campos.get("oab_uf", ""), campos.get("processos", ""), campos.get("municipio", ""), campos.get("suspensoes", "")))
     return "/ajustes/cidadania"
 
 
@@ -195,6 +197,11 @@ def _agendador() -> None:
                 djen.executar_todos()
             except Exception as ex:  # a consulta nunca derruba o serviço
                 print("Miner: consulta ao DJEN falhou:", type(ex).__name__)
+            try:
+                import studio_datajud
+                studio_datajud.atualizar_chave()   # a leitura da chave do CNJ se limita a uma por semana
+            except Exception as ex:
+                print("Miner: leitura da chave do DataJud falhou:", type(ex).__name__)
             time.sleep(900)
     threading.Thread(target=laco, name="miner-djen", daemon=True).start()
 

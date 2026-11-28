@@ -25,6 +25,7 @@ import urllib.request
 from datetime import date, datetime, timedelta
 
 import studio_banco as banco
+import studio_feriados as feriados
 import studio_miner_dados as dados
 import studio_pessoas as pessoas
 
@@ -90,7 +91,12 @@ def mascara_cnj(d: str) -> str:
 
 def configuracao() -> dict:
     procs = [p for p in _ler("processos").split(",") if p]
+    try:
+        por_proc = json.loads(_ler("proc_municipios") or "{}")
+    except ValueError:
+        por_proc = {}
     return {"nome": _ler("nome"), "oab_numero": _ler("oab_numero"), "oab_uf": _ler("oab_uf"), "processos": procs,
+            "municipio": _ler("municipio"), "proc_municipios": por_proc if isinstance(por_proc, dict) else {}, "suspensoes": _ler("suspensoes"),
             "ultimo": _ler("djen_ultimo"), "estado": _ler("djen_estado")}
 
 
@@ -99,7 +105,7 @@ def configurado() -> bool:
     return bool(c["nome"] or c["oab_numero"] or c["processos"])
 
 
-def salvar(nome: str, oab_numero: str, oab_uf: str, processos_texto: str) -> str:
+def salvar(nome: str, oab_numero: str, oab_uf: str, processos_texto: str, municipio: str = None, suspensoes: str = None) -> str:
     """Valida e grava a configuração. Levanta dados.ErroMiner com a mensagem para o usuário."""
     nome = re.sub(r"\s+", " ", nome or "").strip()
     if nome and (len(nome) < 5 or len(nome) > 100 or len(nome.split()) < 2):
@@ -112,21 +118,45 @@ def salvar(nome: str, oab_numero: str, oab_uf: str, processos_texto: str) -> str
         raise dados.ErroMiner("Informe a UF da OAB com duas letras, por exemplo SP.")
     if not num:
         uf = ""
-    validos, invalidos = [], []
+    validos, invalidos, por_proc = [], [], {}
     for linha in re.split(r"[\n;,]+", processos_texto or ""):
         linha = linha.strip()
         if not linha:
             continue
-        d = numero_cnj_valido(linha)
+        numero_txt, _, local = linha.partition("@")
+        d = numero_cnj_valido(numero_txt)
         if not d:
             invalidos.append(linha[:30])
-        elif d not in validos:
+            continue
+        if local.strip():
+            try:
+                cidade, uf_c = feriados.partir_municipio(local)
+            except feriados.ErroFeriados as ex:
+                raise dados.ErroMiner(f"Município do processo {mascara_cnj(d)}: {ex}")
+            por_proc[d] = f"{cidade}/{uf_c}"
+        if d not in validos:
             validos.append(d)
     if invalidos:
         raise dados.ErroMiner("Número de processo inválido: " + "; ".join(invalidos[:3]) + ". Use o número único de 20 dígitos, com ou sem pontuação.")
     if len(validos) > MAX_PROCESSOS:
         raise dados.ErroMiner(f"Acompanhe no máximo {MAX_PROCESSOS} processos.")
-    _gravar(nome=nome, oab_numero=num, oab_uf=uf, processos=",".join(validos))
+    campos = {}
+    if municipio is not None:
+        municipio = (municipio or "").strip()
+        if municipio:
+            try:
+                cidade, uf_c = feriados.partir_municipio(municipio)
+            except feriados.ErroFeriados as ex:
+                raise dados.ErroMiner(str(ex))
+            municipio = f"{cidade}/{uf_c}"
+        campos["municipio"] = municipio
+    if suspensoes is not None:
+        try:
+            feriados.ler_suspensoes(suspensoes)
+        except feriados.ErroFeriados as ex:
+            raise dados.ErroMiner(str(ex))
+        campos["suspensoes"] = "\n".join(l.strip() for l in suspensoes.splitlines() if l.strip())
+    _gravar(nome=nome, oab_numero=num, oab_uf=uf, processos=",".join(validos), proc_municipios=json.dumps(por_proc, ensure_ascii=False), **campos)
     if not (nome or num or validos):
         return "Configuração limpa. Nenhuma consulta será feita."
     return "Configuração salva."
@@ -134,46 +164,16 @@ def salvar(nome: str, oab_numero: str, oab_uf: str, processos_texto: str) -> str
 
 # ---------- prazo ----------
 
-def _pascoa(ano: int) -> date:
-    a, b, c = ano % 19, ano // 100, ano % 100
-    d, e = b // 4, b % 4
-    f = (b + 8) // 25
-    g = (b - f + 1) // 3
-    h = (19 * a + b - d - g + 15) % 30
-    i, k = c // 4, c % 4
-    l = (32 + 2 * e + 2 * i - h - k) % 7
-    m = (a + 11 * h + 22 * l) // 451
-    mes = (h + l - 7 * m + 114) // 31
-    dia = (h + l - 7 * m + 114) % 31 + 1
-    return date(ano, mes, dia)
+def dia_util(d: date, cal=None) -> bool:
+    return (cal or feriados.nacional()).dia_util(d)
 
 
-def _feriados(ano: int) -> set:
-    fixos = {(1, 1), (4, 21), (5, 1), (9, 7), (10, 12), (11, 2), (11, 15), (11, 20), (12, 25)}
-    f = {date(ano, m, d) for m, d in fixos}
-    p = _pascoa(ano)
-    return f | {p - timedelta(days=48), p - timedelta(days=47), p - timedelta(days=2), p + timedelta(days=60)}   # carnaval, sexta-feira santa, Corpus Christi
+def proximo_util(d: date, cal=None) -> date:
+    return (cal or feriados.nacional()).proximo_util(d)
 
 
-def dia_util(d: date) -> bool:
-    if d.weekday() >= 5 or d in _feriados(d.year):
-        return False
-    if (d.month == 12 and d.day >= 20) or (d.month == 1 and d.day <= 20):   # recesso forense (art. 220 do CPC)
-        return False
-    return True
-
-
-def proximo_util(d: date) -> date:
-    d += timedelta(days=1)
-    while not dia_util(d):
-        d += timedelta(days=1)
-    return d
-
-
-def somar_uteis(d: date, n: int) -> date:
-    for _ in range(n):
-        d = proximo_util(d)
-    return d
+def somar_uteis(d: date, n: int, cal=None) -> date:
+    return (cal or feriados.nacional()).somar_uteis(d, n)
 
 
 _NUM = {"um": 1, "dois": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8, "nove": 9, "dez": 10, "quinze": 15, "vinte": 20, "trinta": 30}
@@ -194,22 +194,46 @@ def dias_de_prazo(texto: str):
     return None
 
 
-def prazo_do_ato(disponibilizacao: date, texto: str):
+def prazo_do_ato(disponibilizacao: date, texto: str, cal=None):
     """(publicacao, inicio, fim, dias, uteis): a publicação vale no primeiro dia útil depois da disponibilização e a contagem começa no dia útil seguinte."""
-    pub = proximo_util(disponibilizacao)
-    inicio = proximo_util(pub)
+    cal = cal or feriados.nacional()
+    pub = cal.proximo_util(disponibilizacao)
+    inicio = cal.proximo_util(pub)
     p = dias_de_prazo(texto)
     if not p:
         return pub, inicio, None, None, True
     n, uteis = p
-    fim = somar_uteis(pub, n) if uteis else _ajustar_fim(inicio + timedelta(days=n - 1))
+    fim = cal.somar_uteis(pub, n) if uteis else cal.ajustar(inicio + timedelta(days=n - 1))
     return pub, inicio, fim, n, uteis
 
 
-def _ajustar_fim(d: date) -> date:
-    while not dia_util(d):
-        d += timedelta(days=1)
-    return d
+def calendario_do(numero: str, cfg: dict, urlopen=None, rede: bool = True, cache: dict = None):
+    """Calendário do foro de um processo: UF pelo número (ou pelo município informado), município do processo ou o padrão e as suspensões informadas."""
+    por_proc = cfg.get("proc_municipios") or {}
+    local = por_proc.get(numero) or cfg.get("municipio") or ""
+    uf = feriados.uf_do_processo(numero)
+    chave = f"{local}|{uf}"
+    if cache is not None and chave in cache:
+        return cache[chave]
+    cidade, uf_m, ibge = "", "", 0
+    erro = ""
+    if local:
+        try:
+            cidade, uf_m = feriados.partir_municipio(local)
+            if not uf or uf == uf_m:   # num processo estadual de outra UF, o município informado não vale
+                ibge = feriados.codigo_ibge(cidade, uf_m, urlopen) if rede else 0
+        except feriados.ErroFeriados as ex:
+            erro = f"município {local}: {ex}"
+    try:
+        susp = [(a, b, m) for a, b, m in feriados.ler_suspensoes(cfg.get("suspensoes", ""))]
+    except feriados.ErroFeriados:
+        susp = []
+    cal = feriados.Calendario(uf=uf or uf_m, cidade=cidade, ibge=ibge, suspensoes=susp, urlopen=urlopen, rede=rede)
+    if erro:
+        cal.faltas.append(erro)
+    if cache is not None:
+        cache[chave] = cal
+    return cal
 
 
 # ---------- significado do ato ----------
@@ -350,18 +374,19 @@ def coletar(cfg: dict, inicio: date, fim: date, requisitar=None, dormir=None) ->
 
 # ---------- alerta com contexto ----------
 
-def alerta(it: dict, hoje: date = None) -> dict:
+def alerta(it: dict, hoje: date = None, cal=None) -> dict:
     """Monta o alerta (id, título, resumo com contexto, nível, fonte) de uma comunicação."""
     hoje = hoje or date.today()
     significa, fazer, nivel = classificar(it)
-    pub, inicio, fim, dias, uteis = prazo_do_ato(it["disponibilizacao"], it["texto"])
+    cal = cal or feriados.nacional()
+    pub, inicio, fim, dias, uteis = prazo_do_ato(it["disponibilizacao"], it["texto"], cal)
     onde = ", ".join(x for x in (it["tribunal"], it["orgao"]) if x)
     tipo = it["tipo"] or it["documento"] or "Comunicação"
     partes = [f"{tipo} no processo {mascara_cnj(it['numero']) if len(it['numero']) == 20 else it['numero']}" + (f" ({onde})" if onde else "") + f", disponibilizada em {it['disponibilizacao']:%d/%m/%Y}.",
               significa, MOTIVO[it["motivo"]],
               f"A publicação vale em {pub:%d/%m/%Y} e a contagem de prazo começa em {inicio:%d/%m/%Y}."]
     if fim:
-        partes.append(f"O texto cita prazo de {dias} dias {'úteis' if uteis else 'corridos'}: termina em torno de {fim:%d/%m/%Y} (estimativa com feriados nacionais e recesso; confira no processo).")
+        partes.append(f"O texto cita prazo de {dias} dias {'úteis' if uteis else 'corridos'}: termina em torno de {fim:%d/%m/%Y}. {cal.aplicados()} Feriado local e suspensão de prazo precisam ser comprovados no ato do recurso (art. 1.003, § 6º, do CPC): confira no calendário publicado no site do tribunal (Recomendação CNJ 44/2020) e no processo.")
         if fim <= hoje + timedelta(days=5):
             nivel = "critico"
         partes.append(f"Prazo: {fim:%d/%m/%Y}")
@@ -379,7 +404,7 @@ def _publicar(dado: dict) -> dict:
     return alertas.publicar(dado)
 
 
-def executar(hoje: date = None, requisitar=None, dormir=None, publicar=None, requisitar_datajud=None) -> dict:
+def executar(hoje: date = None, requisitar=None, dormir=None, publicar=None, requisitar_datajud=None, urlopen_feriados=None, sem_rede: bool = False) -> dict:
     """Consulta o DJEN para a pessoa atual e publica as comunicações novas. Devolve {ok, novas, total, erros, mensagem}."""
     hoje = hoje or date.today()
     publicar = publicar or _publicar
@@ -393,8 +418,9 @@ def executar(hoje: date = None, requisitar=None, dormir=None, publicar=None, req
     _gravar(djen_tentativa=datetime.now().isoformat(timespec="seconds"))
     itens, erros = coletar(cfg, inicio, hoje, requisitar, dormir)
     novas = 0
+    cache = {}
     for it in itens:
-        r = publicar(alerta(it, hoje))
+        r = publicar(alerta(it, hoje, calendario_do(it["numero"], cfg, urlopen_feriados, rede=not sem_rede, cache=cache)))
         novas += 1 if r.get("novo") else 0
     falhou = bool(erros) and not itens
     if not erros:

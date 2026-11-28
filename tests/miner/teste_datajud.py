@@ -99,5 +99,82 @@ publicados.clear()
 estado["r"] = resp([("Petição", "2024-05-02T09:00:00.000Z")])
 r = dj.executar(hoje=date(2026, 11, 27), requisitar=lambda p: {"count": 0, "items": []}, dormir=lambda s: None, publicar=pub, requisitar_datajud=lambda a, n: estado["r"])
 confere("consulta do dia inclui os andamentos", r["ok"] and "Andamentos: 1 aviso(s) novo(s)." in r["mensagem"] and any(p["id"].startswith("datajud-inicio:") for p in publicados), (r, publicados))
+# ---- leitura semanal da chave na wiki do CNJ ----
+import io
+import json
+import urllib.error
+from datetime import datetime, timedelta
+
+
+class Resp(io.BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def wiki(chave_nova, robots="User-agent: *\nAllow: /\n"):
+    def f(req, timeout=0):
+        u = req.full_url
+        if u.endswith("/robots.txt"):
+            return Resp(robots.encode())
+        if u == dd.PAGINA_CHAVE:
+            return Resp(f"<html><body><p>Utilize o formato</p><pre>Authorization: APIKey {chave_nova}</pre></body></html>".encode())
+        raise urllib.error.URLError("404")
+    return f
+
+
+os.environ.pop("STUDIO_DATAJUD_CHAVE", None)
+confere("chave de fábrica é a vigente de 27/11/2026", dd.CHAVE_PADRAO.startswith("cDZHYzlZa0JadVREZDJCendQbXY6") and dd.chave() == dd.CHAVE_PADRAO)
+NOVA = "ZZZZabcdefghijklmnopqrstuvwxyz0123456789=="
+r = dd.atualizar_chave(wiki(NOVA), agora=datetime(2026, 12, 1, 8))
+confere("lê a chave da wiki e guarda", r["ok"] and r["mudou"] and dd.chave() == NOVA, r)
+confere("não relê dentro da semana", dd.atualizar_chave(wiki("OUTRA" * 8), agora=datetime(2026, 12, 5, 8))["mudou"] is False and dd.chave() == NOVA)
+confere("relê depois da semana", dd.atualizar_chave(wiki("OUTRA" * 8), agora=datetime(2026, 12, 9, 8))["mudou"] and dd.chave() == "OUTRA" * 8)
+confere("forçada não passa de uma leitura por hora", dd.atualizar_chave(wiki(NOVA), forcar=True, agora=datetime(2026, 12, 9, 8, 30))["mudou"] is False)
+confere("forçada depois de uma hora lê", dd.atualizar_chave(wiki(NOVA), forcar=True, agora=datetime(2026, 12, 9, 10))["mudou"] and dd.chave() == NOVA)
+os.environ["STUDIO_DATAJUD_CHAVE"] = "do-env"
+confere("variável de ambiente vence a chave lida", dd.chave() == "do-env")
+del os.environ["STUDIO_DATAJUD_CHAVE"]
+bloq = dd.atualizar_chave(wiki("BLOQ" * 8, "User-agent: *\nDisallow: /\n"), forcar=True, agora=datetime(2027, 1, 1))
+confere("respeita o robots.txt", not bloq["ok"] and dd.chave() == NOVA, bloq)
+
+
+def sem_chave(req, timeout=0):
+    if req.full_url.endswith("/robots.txt"):
+        raise urllib.error.URLError("sem robots")
+    return Resp(b"<html>sem a chave aqui</html>")
+
+
+confere("página sem a chave não altera", not dd.atualizar_chave(sem_chave, forcar=True, agora=datetime(2027, 2, 1))["ok"] and dd.chave() == NOVA)
+
+
+def fora(req, timeout=0):
+    raise urllib.error.URLError("sem rede")
+
+
+confere("sem rede não altera", not dd.atualizar_chave(fora, forcar=True, agora=datetime(2027, 3, 1))["ok"] and dd.chave() == NOVA)
+confere("robots.txt ausente permite a leitura", dd._permitido(dd.PAGINA_CHAVE, sem_chave))
+
+# chave recusada (401): relê a wiki, usa a nova e tenta uma vez
+os.environ.pop("STUDIO_DATAJUD_CHAVE", None)
+usadas = []
+
+
+def api(req, timeout=0):
+    usadas.append(req.get_header("Authorization"))
+    if req.get_header("Authorization") == "APIKey " + dd.CHAVE_PADRAO:
+        raise urllib.error.HTTPError(req.full_url, 401, "x", {}, None)
+    return Resp(json.dumps({"hits": {"hits": []}}).encode())
+
+
+arq = dd._arquivo_chave()
+arq.unlink()
+dd.atualizar_chave(wiki("NOVISSIMA" * 4), forcar=True, agora=datetime(2020, 1, 1))   # grava uma leitura antiga
+arq.write_text(json.dumps({"chave": dd.CHAVE_PADRAO, "lida_em": "2020-01-01T00:00:00"}))
+r = dd._requisitar("tjsp", TJSP, api, urlopen_wiki=wiki("NOVISSIMA" * 4))
+confere("401 renova a chave e repete uma vez", len(usadas) == 2 and usadas[1] == "APIKey " + "NOVISSIMA" * 4 and r == {"hits": {"hits": []}}, usadas)
+
 print("\nFALHAS:", falhas)
 _sys.exit(1 if falhas else 0)

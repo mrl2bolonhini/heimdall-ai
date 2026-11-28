@@ -122,6 +122,13 @@ confere("salvar sem CSRF: 403", s == 403)
 s, _, r = req("POST", "/ajustes/cidadania", {"csrf": csrf, "nome": "Fulano de Tal", "oab_numero": "123456", "oab_uf": "SP", "processos": "0000832-35.2018.4.01.3202"}, tk)
 h = req("GET", "/ajustes/cidadania", tk)[1]
 confere("salvar configura e mostra Consultar agora", s == 303 and r.getheader("Location") == "/ajustes/cidadania" and "Configuração salva." in h and "Consultar agora" in h and "0000832-35.2018.4.01.3202" in h and 'value="Fulano de Tal"' in h, h[-500:])
+s, _, r = req("POST", "/ajustes/cidadania", {"csrf": csrf, "nome": "Fulano de Tal", "oab_numero": "123456", "oab_uf": "SP", "processos": "0000832-35.2018.4.01.3202 @ Campinas/SP", "municipio": "São Paulo/SP", "suspensoes": "20/04/2026 portaria 12"}, tk)
+h = req("GET", "/ajustes/cidadania", tk)[1]
+confere("município, município por processo e suspensões aparecem e persistem", s == 303 and 'value="São Paulo/SP"' in h and "@ Campinas/SP" in h and "20/04/2026 portaria 12" in h and 'for="mun"' in h and 'for="susp"' in h, h[-700:])
+s, h, r = req("POST", "/ajustes/cidadania", {"csrf": csrf, "nome": "Fulano de Tal", "oab_numero": "123456", "oab_uf": "SP", "processos": "0000832-35.2018.4.01.3202", "municipio": "Campinas", "suspensoes": ""}, tk)
+confere("município sem UF: mensagem clara e dados mantidos", s in (303, 400, 422) and "Cidade/UF" in (h + (req("GET", "/ajustes/cidadania", tk)[1] if s == 303 else "")) and dj.configuracao()["municipio"] == "São Paulo/SP", (s, h[-300:]))
+s, _, r = req("POST", "/ajustes/cidadania", {"csrf": csrf, "nome": "Fulano de Tal", "oab_numero": "123456", "oab_uf": "SP", "processos": "0000832-35.2018.4.01.3202", "municipio": "", "suspensoes": ""}, tk)
+confere("campos novos podem ser limpos", s == 303 and dj.configuracao()["municipio"] == "" and dj.configuracao()["proc_municipios"] == {})
 s, h, r = req("POST", "/ajustes/cidadania", {"csrf": csrf, "nome": "Fulano", "oab_numero": "", "oab_uf": "", "processos": ""}, tk)
 confere("nome inválido: mensagem clara e dados antigos mantidos", s in (303, 400, 422) and "nome completo" in (h + (req("GET", "/ajustes/cidadania", tk)[1] if s == 303 else "")) and dj.configuracao()["nome"] == "Fulano de Tal", (s, h[-300:]))
 dj.executar = lambda: {"ok": True, "mensagem": "Consulta concluída: 0 comunicações, 0 novas."}
