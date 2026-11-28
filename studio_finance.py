@@ -1177,12 +1177,12 @@ def _vigiar_email() -> None:
     if os.environ.get("STUDIO_FINANCE_EMAIL", "1") == "0":
         return
     cfg = femail.credenciais()
-    if not cfg:
-        sys.stderr.write(f"{time.strftime('%H:%M:%S')} e-mail: sem senha de e-mail no .env; leitura de boletos por e-mail desligada\n")
+    if not cfg and not femail.buscar_correio(1):
+        sys.stderr.write(f"{time.strftime('%H:%M:%S')} e-mail: sem conta de e-mail conectada; leitura de boletos por e-mail desligada\n")
         return
     while True:
         try:
-            msgs = femail.buscar(cfg)  # rede fora da trava
+            msgs = (femail.buscar(cfg) if cfg else []) + femail.buscar_correio()  # rede fora da trava; o Correio cobre qualquer provedor
             with _trava:
                 estado_arq = DIR_DADOS / "email_estado.json"
                 try:

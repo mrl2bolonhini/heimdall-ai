@@ -299,6 +299,7 @@ SCRIPTS = [
     ("studio_feriados.py", "Calendário forense em camadas para a estimativa de prazos do Miner: feriados nacionais, recesso, estaduais e municipais (dados abertos, com cópia em disco) e suspensões informadas; diz o que foi considerado."),
     ("studio_cidadania.py", "Base das fontes da Cidadania do Miner: consulta segura a sites públicos (https, sem endereços internos, pausa por site, limite de tamanho), cofre cifrado por pessoa, rodada para o dono e cada convidado e aviso após três falhas seguidas."),
     ("studio_correio.py", "Correio compartilhado: lê, só para leitura (IMAP), a caixa de e-mail de cada pessoa quando ela autoriza, com senha de aplicativo no cofre; serviços registram regras e a pessoa cria rotinas; só as mensagens que casam viram aviso."),
+    ("studio_correio_regras.py", "Regras de serviços para o Correio: e-mail oficial e golpes por imitação (Miner) e anexos de documentos de saúde, que vão para A revisar no Studio Health."),
     ("studio_certidoes.py", "Validade de certidões (CNDT, federal, FGTS, estadual, municipal) e lembrete do Domicílio Judicial Eletrônico: avisa a vencer e vencida, uma vez por marco."),
     ("studio_push.py", "Sistema Push dos tribunais: orienta onde cadastrar o e-mail por processo e transforma o aviso recebido de remetente oficial .jus.br em alerta."),
     ("studio_dou.py", "Diário Oficial da União pelo INLABS: lê o pacote do dia e avisa publicações que citam os termos, o nome ou os processos do usuário."),

@@ -138,6 +138,15 @@ def motivo_descarte(msg, corpo: str, pdfs: list) -> str:
     return "não traz linha digitável nem Pix no texto, e não há PDF com boleto"
 
 
+def buscar_correio(dias: int = DIAS) -> list:
+    """Mensagens com boleto ou Pix das contas conectadas no Correio (qualquer provedor), com a autenticação já conferida. Vazio se não houver conta conectada."""
+    try:
+        import studio_correio
+        return studio_correio.buscar_completas(["boleto", "fatura", "mensalidade", "linha digitavel", "codigo de barras", "pix copia e cola", "chave pix"], dias, LIMITE)
+    except Exception:  # noqa: BLE001 - o Correio nunca derruba a leitura de boletos
+        return []
+
+
 def processar(con, msgs: list, estado: dict, agora: str = None, diag: dict = None, ignorar_vistos: bool = False) -> list:
     """Registra os boletos e Pix achados. estado['ids'] guarda os e-mails já lidos. Devolve [{assunto, remetente, novos, repetidos, aviso}].
     Com diag (um dicionário), anota quantas mensagens vieram da busca e por que cada uma foi descartada. Com ignorar_vistos, relê também as já lidas."""

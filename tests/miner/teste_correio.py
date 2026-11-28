@@ -32,7 +32,7 @@ def cnj(seq, ano, j, tr, origem):
     return f"{seq:07d}{98 - (int(base[:7] + base[7:] + '00') % 97):02d}{base[7:]}"
 
 
-def bruto(de, assunto, corpo, mid, auth="mx.provedor.com; dmarc=pass header.from=jus.br; spf=pass; dkim=pass"):
+def bruto(de, assunto, corpo, mid, auth="mx.google.com; dmarc=pass header.from=jus.br; spf=pass; dkim=pass"):
     return (f"Authentication-Results: {auth}\r\nFrom: {de}\r\nSubject: {assunto}\r\nDate: Sat, 28 Nov 2026 08:00:00 -0300\r\nMessage-ID: <{mid}>\r\n"
             f"Content-Type: text/plain; charset=utf-8\r\n\r\n{corpo}\r\n").encode()
 
@@ -121,8 +121,8 @@ num = cnj(1234, 2025, 8, 26, 100)
 msgs = {
     "1": bruto("Tribunal <push@tjsp.jus.br>", "Andamento", f"Processo {num[:7]}-{num[7:9]}.{num[9:13]}.{num[13]}.{num[14:16]}.{num[16:]} teve movimentação.", "a1@x"),
     "2": bruto("Banco <spam@golpe.com>", "Promoção", "compre", "a2@x"),
-    "3": bruto("Empresa <cobranca@empresa.com.br>", "Sua fatura chegou", "Valor da fatura 100", "a3@x", auth="mx.provedor.com; dmarc=fail"),
-    "4": bruto("Falso <x@tjsp.jus.br>", "Andamento", f"Processo {num} movimentação", "a4@x", auth="mx.provedor.com; dmarc=fail"),
+    "3": bruto("Empresa <cobranca@empresa.com.br>", "Sua fatura chegou", "Valor da fatura 100", "a3@x", auth="mx.google.com; dmarc=fail"),
+    "4": bruto("Falso <x@tjsp.jus.br>", "Andamento", f"Processo {num} movimentação", "a4@x", auth="mx.google.com; dmarc=fail"),
 }
 imap = FakeImap(msgs)
 r = cor.executar(ctx(imap))
@@ -162,6 +162,55 @@ chamou = []
 cor.registrar(lambda: [cor.Regra("teste", lambda m: m.dominio == "empresa.com.br", lambda m: chamou.append(m.assunto) or None, "teste")])
 cor.executar(ctx(FakeImap({"9": bruto("a@empresa.com.br", "Algo", "x", "z@x")})))
 confere("serviço registra regra e recebe só o que casa", chamou == ["Algo"], chamou)
+
+# --- regras de serviços: e-mail oficial, saúde, provedores e Finance
+import studio_correio_regras as reg  # noqa: E402
+cor.salvar({"provedor": "gmail", "usuario": "ana@gmail.com", "senha": "abcdefghijklmnop"})
+M = cor.Mensagem
+
+
+def msg(de, assunto, auth, corpo="x", mid="m1"):
+    return M("c", "INBOX", "1", mid, de, assunto, "", auth, lambda: corpo)
+
+
+ok_ = {"dmarc": "pass", "from": "inss.gov.br"}
+confere("oficial autêntico com urgência vira alerta", (reg.email_oficial(msg("INSS <a@inss.gov.br>", "Pendência no seu benefício", ok_)) or {}).get("nivel") == "alto")
+confere("oficial autêntico sem urgência não gera alerta", reg.email_oficial(msg("INSS <a@inss.gov.br>", "Informativo", ok_)) is None)
+confere("imitação de serviço vira possível golpe", "golpe" in (reg.email_oficial(msg("INSS Atendimento <x@inss-gov.xyz>", "Seu benefício", {"dmarc": "pass"})) or {}).get("titulo", ""))
+confere("domínio oficial sem autenticação do provedor não é chamado de golpe", reg.email_oficial(msg("INSS <a@inss.gov.br>", "Pendência", {"dmarc": ""})) is None)
+confere("domínio oficial com DMARC falho é possível golpe", "golpe" in (reg.email_oficial(msg("INSS <a@inss.gov.br>", "Pendência", {"dmarc": "fail"})) or {}).get("titulo", ""))
+confere("Serasa fica em baixa prioridade", reg.email_oficial(msg("Serasa <a@serasa.com.br>", "Seu boleto está disponível, prazo", {"dmarc": "pass", "from": "serasa.com.br"})) is None)
+confere("autenticação só vale com o servidor do provedor da conta", cor.autenticacao(__import__("email").message_from_bytes(b"Authentication-Results: mx.falso.com; dmarc=pass\r\n\r\n"), "gmail")["dmarc"] == "" and
+        cor.autenticacao(__import__("email").message_from_bytes(b"Authentication-Results: mx.google.com; dmarc=pass\r\n\r\n"), "gmail")["dmarc"] == "pass" and
+        cor.autenticacao(__import__("email").message_from_bytes(b"Authentication-Results: mx.google.com; dmarc=pass\r\n\r\n"), "outro")["dmarc"] == "")
+# saúde: anexos vão para A revisar sem aceite
+import email.message as _em  # noqa: E402
+import studio_exames as exa  # noqa: E402
+guardados = []
+exa.registrar = lambda dados, nome, origem="pasta": guardados.append((nome, origem))
+em = _em.EmailMessage()
+em["Subject"] = "Resultado de exame"
+em.set_content("segue")
+em.add_attachment(b"%PDF-1.4 x", maintype="application", subtype="pdf", filename="exame.pdf")
+em.add_attachment(b"zip", maintype="application", subtype="zip", filename="a.zip")
+mm = msg("lab@lab.com.br", "Resultado de exame", ok_, mid="s1")
+mm._completa = lambda: em
+r = reg.saude(mm)
+confere("saúde guarda só PDF e imagem, sem aceitar, e o aviso não traz conteúdo", guardados == [("exame.pdf", "e-mail")] and r["fonte"] == "saude" and "exame.pdf" not in r["resumo"], (guardados, r))
+confere("mensagem sem anexo de saúde não gera aviso", reg.saude(msg("a@b.com", "exame", ok_)) is None)
+# Finance lê pelo Correio
+import financas_email as fem  # noqa: E402
+raw = bruto("Banco <b@banco.com>", "Sua fatura", "Pague o boleto", "f1@x").replace(b"Authentication-Results: mx.google.com", b"Authentication-Results: mx.google.com")
+class Imap2(FakeImap):
+    def uid(self, cmd, *a):
+        if cmd == "SEARCH":
+            self.chamadas.append((cmd,) + a)
+            return "OK", [b"1"]
+        return super().uid(cmd, *a)
+im = Imap2({"1": raw})
+achadas = cor.buscar_completas(["boleto", "fatura"], 7, 10, conectar_=lambda c_, s_: im)
+confere("buscar_completas devolve e-mail com autenticação conferida do provedor", len(achadas) == 1 and fem.eo.autenticacao(achadas[0])["dmarc"] == "pass", achadas)
+confere("busca do Finance é só leitura com critério OR TEXT", any(c[0] == "SEARCH" and "OR TEXT" in c[2] for c in im.chamadas) and all(c[2] is True for c in im.chamadas if c[0] == "select"), im.chamadas)
 
 # remoção
 cor.remover({"id": conta["id"]})

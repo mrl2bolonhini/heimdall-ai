@@ -10,6 +10,7 @@ Regras de serviços: `registrar(funcao)`, onde funcao() devolve uma lista de `Re
 """
 import email
 import email.header
+import email.message
 import email.policy
 import html
 import imaplib
@@ -34,7 +35,7 @@ PROVEDORES = {
     "outro": ("Outro servidor IMAP", ""),
 }
 MAX_CONTAS, MAX_ROTINAS = 3, 20
-LIMITE_CABECALHOS, LIMITE_CORPO, JANELA_INICIAL_DIAS = 200, 200_000, 3
+LIMITE_CABECALHOS, LIMITE_CORPO, LIMITE_COMPLETA, JANELA_INICIAL_DIAS = 200, 200_000, 30_000_000, 3
 _CAMPOS = "FROM SUBJECT DATE MESSAGE-ID AUTHENTICATION-RESULTS"
 
 
@@ -50,6 +51,7 @@ class Mensagem:
     auth: dict
     _baixar: Callable = None
     _corpo: str = None
+    _completa: Callable = None
 
     @property
     def endereco(self) -> str:
@@ -59,6 +61,10 @@ class Mensagem:
     @property
     def dominio(self) -> str:
         return self.endereco.split("@")[-1]
+
+    def completa(self):
+        """A mensagem inteira (com anexos) como objeto de e-mail, com a autenticação do provedor já conferida. Só para regras que precisam dos anexos."""
+        return self._completa() if self._completa else None
 
     @property
     def corpo(self) -> str:
@@ -177,7 +183,8 @@ def regras_da_pessoa() -> list:
 def _regras_padrao() -> list:
     import studio_agendamentos
     import studio_push
-    regras = []
+    import studio_correio_regras
+    regras = studio_correio_regras.regras(Regra)
 
     def push_cab(m):
         return m.endereco.endswith(".jus.br")
@@ -225,13 +232,24 @@ def _texto_cab(valor) -> str:
         return str(valor or "")
 
 
-def autenticacao(msg) -> dict:
-    """Resultado de SPF, DKIM e DMARC escrito pelo próprio provedor do destinatário: o primeiro cabeçalho (o mais recente) é o do nosso provedor; os demais podem ser forjados."""
-    h = msg.get_all("Authentication-Results", [])
+# trecho do identificador do servidor (antes do primeiro ";") que cada provedor usa no cabeçalho Authentication-Results que ele mesmo escreve
+AUTHSERV = {"gmail": ("mx.google.com",), "outlook": ("protection.outlook.com", "outlook.com", "hotmail.com"), "icloud": ("icloud.com", "apple.com"),
+            "yahoo": ("yahoo.com", "yahoo.", "mta"), "uol": ("uol.com.br",), "zoho": ("zoho.com", "zohomail")}
+
+
+def autenticacao(msg, provedor: str = "gmail") -> dict:
+    """Resultado de SPF, DKIM e DMARC escrito pelo próprio provedor do destinatário. Só vale o cabeçalho cujo identificador de servidor é do provedor da conta:
+    cabeçalhos iguais vindos do remetente são ignorados. Provedor sem identificador conhecido (outro servidor) não confirma nada."""
     r = {"dmarc": "", "dkim": "", "spf": "", "from": ""}
-    if not h:
+    t = ""
+    for h in msg.get_all("Authentication-Results", []):
+        h = re.sub(r"\s+", " ", str(h)).strip()
+        serv = h.split(";")[0].strip().lower()
+        if any(x in serv for x in AUTHSERV.get(provedor, ())):
+            t = h
+            break
+    if not t:
         return r
-    t = re.sub(r"\s+", " ", str(h[0]))
     for chave in ("dmarc", "dkim", "spf"):
         m = re.search(r"\b" + chave + r"=(\w+)", t)
         r[chave] = m.group(1).lower() if m else ""
@@ -311,8 +329,9 @@ def ler_conta(conta: dict, regras: list, c, conectar_=None) -> list:
                     continue
                 cab = email.message_from_bytes(partes[0][1], policy=email.policy.default)
                 m = Mensagem(conta["id"], pasta, uid, (str(cab.get("Message-ID", "")).strip() or f"{conta['id']}-{uid}"), _texto_cab(cab.get("From")),
-                             _texto_cab(cab.get("Subject")), str(cab.get("Date", "")), autenticacao(cab))
+                             _texto_cab(cab.get("Subject")), str(cab.get("Date", "")), autenticacao(cab, conta["provedor"]))
                 m._baixar = lambda u=uid: _corpo_texto(_buscar_corpo(imap, u))
+                m._completa = lambda u=uid, p=conta["provedor"]: _mensagem_completa(_buscar_corpo(imap, u, LIMITE_COMPLETA), p)
                 for rg in regras:
                     try:
                         if rg.cabecalho(m):
@@ -331,8 +350,19 @@ def ler_conta(conta: dict, regras: list, c, conectar_=None) -> list:
     return achados
 
 
-def _buscar_corpo(imap, uid: str) -> bytes:
-    tipo, partes = imap.uid("FETCH", uid, f"(BODY.PEEK[]<0.{LIMITE_CORPO}>)")
+class MensagemVerificada(email.message.EmailMessage):
+    """E-mail cuja autenticação foi conferida por este módulo (atributo, nunca cabeçalho: o remetente não consegue forjá-lo)."""
+    auth_confiavel = None
+
+
+def _mensagem_completa(bruto: bytes, provedor: str):
+    msg = email.message_from_bytes(bruto, policy=email.policy.default, _class=MensagemVerificada)
+    msg.auth_confiavel = autenticacao(msg, provedor)
+    return msg
+
+
+def _buscar_corpo(imap, uid: str, limite: int = None) -> bytes:
+    tipo, partes = imap.uid("FETCH", uid, f"(BODY.PEEK[]<0.{limite or LIMITE_CORPO}>)")
     if tipo == "OK" and partes and isinstance(partes[0], tuple):
         return partes[0][1]
     return b""
@@ -374,3 +404,43 @@ def formulario(csrf: str) -> str:
             '<p><label for="crot">Rotinas de e-mail (uma por linha: remetente ou domínio | palavra no assunto ou no texto | nome da rotina; a palavra e o nome são opcionais)</label><br>'
             f'<textarea id="crot" name="rotinas" rows="4" cols="40">{e(chr(10).join(r["de"] + " | " + r["palavra"] + " | " + r["rotulo"] for r in c.get("rotinas", [])))}</textarea></p>'
             '<button type="submit">Salvar rotinas</button></form>' + (f'<p class="meta" role="status">{e(est)}</p>' if est else ""))
+
+
+def buscar_completas(termos: list, dias: int = 7, limite: int = 150, conectar_=None) -> list:
+    """Mensagens recentes da caixa de entrada de todas as contas da pessoa que citam algum dos termos (busca do próprio servidor, só leitura), como objetos de e-mail com a
+    autenticação conferida (MensagemVerificada). Para serviços que leem anexos, como o Finance. Falha de uma conta não impede as demais."""
+    achadas = []
+    ascii_ = [re.sub(r"[^\w ]", "", cid.sem_acento(t)) for t in termos]
+    ascii_ = [t for t in ascii_ if t]
+    if not ascii_:
+        return []
+    criterio = ""
+    for t in reversed(ascii_):
+        criterio = f'TEXT "{t}"' if not criterio else f'OR TEXT "{t}" {criterio}'
+    desde = (date.today() - timedelta(days=max(1, min(int(dias), 365)))).strftime("%d-%b-%Y")
+    for conta in contas():
+        if not cid.tem_segredo("correio_senha_" + conta["id"]):
+            continue
+        try:
+            imap = (conectar_ or conectar)(conta, cid.segredo("correio_senha_" + conta["id"]))
+        except (imaplib.IMAP4.error, OSError, ssl.SSLError, dados.ErroMiner):
+            continue
+        try:
+            if imap.select("INBOX", readonly=True)[0] != "OK":
+                continue
+            tipo, d = imap.uid("SEARCH", None, f"SINCE {desde} {criterio}")
+            if tipo != "OK" or not d or not d[0]:
+                continue
+            for uid in d[0].split()[-limite:]:
+                uid = uid.decode() if isinstance(uid, bytes) else uid
+                bruto = _buscar_corpo(imap, uid, LIMITE_COMPLETA)
+                if bruto:
+                    achadas.append(_mensagem_completa(bruto, conta["provedor"]))
+        except (imaplib.IMAP4.error, OSError):
+            continue
+        finally:
+            try:
+                imap.logout()
+            except Exception:  # noqa: BLE001
+                pass
+    return achadas

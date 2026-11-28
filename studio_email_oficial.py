@@ -96,6 +96,9 @@ def dominio_oficial(dom, extras):
 
 def autenticacao(msg):
     """Lê só o cabeçalho que o próprio Gmail (mx.google.com) escreveu; cabeçalhos iguais vindos do remetente são ignorados."""
+    conferida = getattr(msg, "auth_confiavel", None)   # e-mail vindo do módulo Correio, que já conferiu o cabeçalho do provedor da conta
+    if conferida is not None:
+        return conferida
     for h in msg.get_all("Authentication-Results", []):
         h = re.sub(r"\s+", " ", str(h))
         if h.lstrip().lower().startswith("mx.google.com"):
@@ -452,6 +455,9 @@ def salvar_estado(caminho, estado):
 
 
 def executar(cfg, simular=False, agora=None, buscar=buscar_mensagens, estado_arq=None):
+    if os.environ.get("STUDIO_EMAIL_OFICIAL_LEGADO", cfg.get("STUDIO_EMAIL_OFICIAL_LEGADO", "1")) == "0":
+        print("Monitor antigo desligado: o Correio (studio_correio) faz esta vigilância.", file=sys.stderr)
+        return 0
     agora = agora or datetime.datetime.now()
     hoje = agora.strftime("%Y-%m-%d")
     estado_arq = estado_arq or os.path.join(AQUI, ".email_oficial_estado.json")

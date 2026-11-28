@@ -2,6 +2,11 @@
 
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-28 - Correio assume e-mail oficial, boletos e documentos de saúde
+- O aviso de e-mail oficial e de possível golpe por imitação passa a funcionar para qualquer conta conectada no Correio, de qualquer provedor, para cada pessoa. O provedor precisa informar a autenticação do remetente; sem ela, o Miner não afirma golpe nem autenticidade.
+- O Studio Finance passa a procurar boletos e Pix também nas contas conectadas no Correio, com a mesma conferência do remetente e sem abrir links.
+- E-mails com resultado de exame, laudo, receita médica ou encaminhamento têm os anexos (PDF ou imagem) guardados em A revisar no Studio Health. Nada é aceito sozinho.
+
 ## 2026-11-28 - Correio: vigilância do seu e-mail e rotinas no Studio Miner
 - Em Ajustes, na subaba Fontes, você conecta a sua conta de e-mail (Gmail, Outlook, iCloud, Yahoo, UOL, Zoho ou outro servidor IMAP) com uma senha de aplicativo, que você pode revogar no provedor a qualquer momento.
 - A leitura é só de consulta: nada é marcado como lido, movido, apagado nem enviado, e só viram aviso as mensagens que casam com uma regra. O Miner não guarda a sua caixa e não segue links.
