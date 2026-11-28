@@ -300,6 +300,7 @@ SCRIPTS = [
     ("studio_miner.py", "Studio Miner (porta 8022): acompanhamento de fontes públicas em cinco áreas fixas (Identidade, Cidadania, Patrimônio, Carreira e Rotina), cada uma com Pendentes, aceite antes de qualquer lembrete, botão para o Studio Finance quando há boleto e Ajustes com a área inicial."),
     ("tests/miner/teste_miner_dados.py", "Testa os dados do Miner: pendentes por área, aceite com evento ou lembrete, falha do agente, adiar, ignorar, boleto e área inicial."),
     ("tests/miner/teste_miner_web.py", "Testa o site do Miner: login, CSRF, abas fixas, aceitar, adiar, ignorar, botão do Finance, área inicial, Ajustes e Perguntar."),
+    ("tests/monitor/teste_diario_fluxo.py", "Testa o nó de aviso do fluxo dos diários oficiais com Node: significado do tipo de ato, o que fazer, níveis e fonte indisponível."),
     ("tests/trading/teste_trading_web.py", "Testa o site do Trading: login, CSRF, abas, ordens e rejeições, fechar posição, cancelar, lista, Ajustes, atalhos e Perguntar."),
     ("studio_memory_dados.py", "Dados do Hub: arquivos por hash, texto e OCR, busca SQLite FTS5 sem acento, sugestão de tipo, data e etiquetas por regras e pela IA com revisão, lixeira e pasta de entrada."),
     ("studio_memory.py", "Studio Hub (porta 8021): acervo pesquisável com as abas Documentos, Adicionar e Organização, detalhe com revisão e download, e Ajustes (Estado, Lixeira, Ajuda)."),

@@ -344,11 +344,14 @@ def criar_alertas(cfg, itens, simular=False):
         if it["classe"] == "suspeito":
             nivel = "alto"
             titulo = "Possível golpe por e-mail: " + (it["servico"] or "serviço público")
-            resumo = "De: %s. Assunto: %s. %s Não clique em links, não responda e não informe dados." % (it["de"], it["assunto"][:100], it["motivo"] or "")
+            resumo = ("De: %s. Assunto: %s. %s O que significa: o e-mail imita um serviço oficial; golpes assim costumam levar a uma página falsa que pede dados, senha ou pagamento. "
+                      "O que fazer: não clique em links, não responda e não informe dados; se quiser conferir, abra o app ou o site oficial digitando o endereço por conta própria e, se já clicou ou informou algo, troque a senha e avise o banco ou o serviço." % (it["de"], it["assunto"][:100], it["motivo"] or ""))
         elif it["classe"] == "oficial" and it.get("urg") in ("alta", "media") and not baixa_prioridade(cfg, it):
             nivel = "critico" if it["urg"] == "alta" else "alto"
             titulo = "E-mail oficial (urgência %s): %s" % (it["urg"], it["servico"] or "serviço público")
-            resumo = "Assunto: %s.%s Abra o app ou o site oficial por conta própria." % (it["assunto"][:100], (" Prazo: %s." % it["prazo"]) if it.get("prazo") else "")
+            resumo = ("Assunto: %s.%s%s O que significa: comunicado de um serviço oficial classificado como de urgência %s, o que costuma indicar prazo, cobrança ou pendência que muda se não for tratada a tempo. "
+                      "O que fazer: abra o app ou o site oficial por conta própria, sem usar links do e-mail, confira o que é pedido e até quando; ao aceitar este item no Studio Miner, ele vira evento (se houver prazo) ou lembrete."
+                      % (it["assunto"][:100], (" Prazo: %s." % it["prazo"]) if it.get("prazo") else "", (" " + it["motivo"] + ".") if it.get("motivo") and not str(it["motivo"]).endswith(".") else (" " + it["motivo"]) if it.get("motivo") else "", it["urg"]))
         else:
             continue
         try:
