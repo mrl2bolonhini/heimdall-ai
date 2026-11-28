@@ -621,6 +621,7 @@ Opções:
   -x, --stop           para no primeiro teste que falhar
   -q, --quiet          não mostra os testes que passaram
   -v, --verbose        mostra a saída completa de todos os testes
+  -t, --timeout N      segundos de limite por teste (padrão 120); um teste parado falha com "tempo esgotado" em vez de travar a rodada
   -n, --lines N        linhas mostradas por falha (padrão 40; 0 mostra tudo): primeiro as que dizem o que falhou, depois o fim da saída
   -H, --here           roda na pasta real do projeto, com o seu .env e os seus dados (padrão: numa cópia só do código, sem .env nem dados)
   -L, --live           inclui os testes ao vivo, que usam serviços ou a rede de verdade (sem isto são pulados)

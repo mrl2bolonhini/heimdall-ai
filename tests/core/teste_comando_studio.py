@@ -108,7 +108,7 @@ with tempfile.TemporaryDirectory() as d:
         ("restart -a", "[subir] --reiniciar --agente"), ("logs -s agent", "[subir] --log agente"), ("logs -l", "[subir] --logs"), ("flows -p", "[instalar_monitor_privacidade]"),
         ("flows -b", "[instalar_fluxos_n8n]"), ("docs -b", "[gerar_marca_png]"), ("db -s SELECT", "[studio_banco] --sql SELECT"),
         ("voice -i f.csv", "[studio_voz] --importar f.csv"), ("ingest -r", "[ingest_docs] --reset"), ("mcp -v", "[verificar_mcp_dados]"),
-        ("health --today", "[studio_saude] --hoje"), ("tests -x -q core", "[rodar_testes] --stop --quiet core"), ("tests -L", "[rodar_testes] --live"), ("tests -H", "[rodar_testes] --here"), ("tests -n 5 -v", "[rodar_testes] --lines 5 --verbose"),
+        ("health --today", "[studio_saude] --hoje"), ("tests -x -q core", "[rodar_testes] --stop --quiet core"), ("tests -L", "[rodar_testes] --live"), ("tests -H", "[rodar_testes] --here"), ("tests -t 30", "[rodar_testes] --timeout 30"), ("tests -n 5 -v", "[rodar_testes] --lines 5 --verbose"),
     ]
     for cmd, esperado in casos:
         rc, out = bash(f"studio {cmd}", d)

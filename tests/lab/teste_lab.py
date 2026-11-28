@@ -338,6 +338,8 @@ from pathlib import Path
 _dir = Path(_tf.mkdtemp(prefix="acesso_teste_"))
 _orig = (hc.PROJECT_DIR, _gp.getpass)
 hc.PROJECT_DIR = _dir
+hc.aplicar_no_webui = lambda _senha: None  # nunca troca a senha do Open WebUI nem do Uptime Kuma de verdade (nem espera resposta no terminal)
+hc.aplicar_no_kuma = lambda: None
 (_dir / ".env").write_text("OUTRA='coisa'\n", encoding="utf-8")
 
 
