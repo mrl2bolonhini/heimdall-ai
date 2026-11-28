@@ -35,6 +35,8 @@ def confere(nome, ok, extra=""):
 
 
 # 1. variáveis do .env com o prefixo STUDIO_HUB_
+for _k in [k for k in os.environ if k.startswith("STUDIO_HUB_")]:
+    del os.environ[_k]  # o import já leu o .env de verdade; o teste parte do zero
 web.PROJECT_DIR = TMP
 (TMP / ".env").write_text("STUDIO_HUB_PORT=9111\nSTUDIO_HUB_MAX_MB=9\nSTUDIO_HUB_HOSTS='novo.test,localhost'\nSTUDIO_OUTRA=1\n", encoding="utf-8")
 web.carregar_env("STUDIO_HUB_")

@@ -142,7 +142,7 @@ _studio_short() {  # opções curtas de cada comando -> opção longa em inglês
     hook) printf '%s\n' "-i=--install" "-r=--remove" ;;
     update) printf '%s\n' "-r=--restart" "-a=--app" ;;
     docs) printf '%s\n' "-b=--brand" ;;
-    tests) printf '%s\n' "-l=--list" "-x=--stop" "-q=--quiet" "-v=--verbose" "-n=--lines" "-L=--live" ;;
+    tests) printf '%s\n' "-l=--list" "-x=--stop" "-q=--quiet" "-v=--verbose" "-n=--lines" "-L=--live" "-H=--here" ;;
     help) printf '%s\n' "-d=--doc" ;;
   esac
   printf '%s\n' "-h=--help"
@@ -620,7 +620,7 @@ if [ -n "$ZSH_VERSION" ] && whence compdef > /dev/null 2>&1; then
       help) compadd -- --doc $cmds ;;
       tests)
         if [[ ${words[CURRENT-1]} == --lines ]]; then :
-        else compadd -- --list --stop --quiet --verbose --lines $(cd "$STUDIO_DIR" 2>/dev/null && ls tests 2>/dev/null); fi ;;
+        else compadd -- --list --stop --quiet --verbose --lines --live --here $(cd "$STUDIO_DIR" 2>/dev/null && ls tests 2>/dev/null); fi ;;
     esac
     compadd -- --help
   }

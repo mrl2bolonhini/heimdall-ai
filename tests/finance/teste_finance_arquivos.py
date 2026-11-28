@@ -31,16 +31,21 @@ def confere(nome, ok, detalhe=""):
 
 
 def pdf_de(texto: str) -> bytes:
-    from reportlab.lib.pagesizes import A4
-    from reportlab.pdfgen import canvas
-    buf = io.BytesIO()
-    c = canvas.Canvas(buf, pagesize=A4)
-    y = 800
-    for ln in texto.splitlines():
-        c.drawString(40, y, ln)
-        y -= 14
-    c.save()
-    return buf.getvalue()
+    """PDF mínimo (Helvetica), uma linha de texto por linha, sem depender do reportlab (que pode faltar no venv)."""
+    def esc(x):
+        return x.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+    cont = ("BT /F1 10 Tf 40 800 Td 14 TL\n" + "\n".join(f"({esc(l)}) '" for l in texto.splitlines()) + "\nET").encode("latin-1", "replace")
+    objs = [b"<< /Type /Catalog /Pages 2 0 R >>", b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+            b"<< /Length %d >>\nstream\n" % len(cont) + cont + b"\nendstream",
+            b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"]
+    out, pos = b"%PDF-1.4\n", []
+    for k, o in enumerate(objs, 1):
+        pos.append(len(out))
+        out += b"%d 0 obj\n" % k + o + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1) + b"".join(b"%010d 00000 n \n" % q for q in pos)
+    return out + b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, xref)
 
 
 FATURA = """Fatura do cartão Nubank

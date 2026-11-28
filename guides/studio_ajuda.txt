@@ -615,13 +615,14 @@ Exemplos:
   studio docs
 
 @ tests | Testes do projeto
-Roda os testes do projeto, cada um em ambiente limpo (sem o .env do terminal, sem nuvem, sem agente nem modelos reais), e mostra o motivo de cada falha com um resumo no fim. Sem argumento roda todos. Os argumentos são nomes de pasta (finance, health) ou trechos do nome de um teste (agenda, banco); vários podem ser combinados.
+Roda os testes do projeto, cada um numa cópia só do código, em ambiente limpo (sem o seu .env nem os seus dados, sem nuvem, sem agente nem modelos reais, sem abrir navegador), e mostra o motivo de cada falha com um resumo no fim. Sem argumento roda todos. Os argumentos são nomes de pasta (finance, health) ou trechos do nome de um teste (agenda, banco); vários podem ser combinados.
 Opções:
   -l, --list           lista as pastas de testes, ou os testes dos argumentos
   -x, --stop           para no primeiro teste que falhar
   -q, --quiet          não mostra os testes que passaram
   -v, --verbose        mostra a saída completa de todos os testes
   -n, --lines N        linhas mostradas por falha (padrão 40; 0 mostra tudo): primeiro as que dizem o que falhou, depois o fim da saída
+  -H, --here           roda na pasta real do projeto, com o seu .env e os seus dados (padrão: numa cópia só do código, sem .env nem dados)
   -L, --live           inclui os testes ao vivo, que usam serviços ou a rede de verdade (sem isto são pulados)
   -h, --help           mostra esta ajuda
 Exemplos:

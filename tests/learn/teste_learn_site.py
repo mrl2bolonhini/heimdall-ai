@@ -49,7 +49,10 @@ def req(metodo, caminho, corpo=None, cab=None, host="localhost", com_cookie=True
     if com_cookie:
         h["Cookie"] = cookie
     h.update(cab or {})
-    c.request(metodo, caminho, body=corpo, headers=h)
+    try:
+        c.request(metodo, caminho, body=corpo, headers=h)
+    except (BrokenPipeError, ConnectionResetError):
+        pass  # o servidor respondeu (ex.: 413) antes de ler o corpo inteiro; no macOS o envio falha, mas a resposta está lá
     r = c.getresponse()
     return r.status, r.read().decode("utf-8", "replace"), r
 

@@ -22,9 +22,16 @@ def confere(nome, ok, detalhe=""):
         print("     " + str(detalhe)[:500])
 
 
+# `open` de mentira: sem isto o teste abriria o navegador de verdade no Mac a cada comando que abre um endereço
+_FALSOS = Path(tempfile.mkdtemp())
+for _n in ("open", "xdg-open"):
+    (_FALSOS / _n).write_text("#!/bin/bash\nexit 0\n")
+    (_FALSOS / _n).chmod(0o755)
+
+
 def bash(cmd, projeto=None):
     env_dir = projeto or str(AQUI)
-    r = subprocess.run(["bash", "-c", f'export STUDIO_DIR="{env_dir}"; source "{AQUI}/studio.zsh"; {cmd}'], capture_output=True, text=True, timeout=60)
+    r = subprocess.run(["bash", "-c", f'export PATH="{_FALSOS}:$PATH"; export STUDIO_DIR="{env_dir}"; source "{AQUI}/studio.zsh"; {cmd}'], capture_output=True, text=True, timeout=60)
     return r.returncode, r.stdout + r.stderr
 
 
@@ -101,7 +108,7 @@ with tempfile.TemporaryDirectory() as d:
         ("restart -a", "[subir] --reiniciar --agente"), ("logs -s agent", "[subir] --log agente"), ("logs -l", "[subir] --logs"), ("flows -p", "[instalar_monitor_privacidade]"),
         ("flows -b", "[instalar_fluxos_n8n]"), ("docs -b", "[gerar_marca_png]"), ("db -s SELECT", "[studio_banco] --sql SELECT"),
         ("voice -i f.csv", "[studio_voz] --importar f.csv"), ("ingest -r", "[ingest_docs] --reset"), ("mcp -v", "[verificar_mcp_dados]"),
-        ("health --today", "[studio_saude] --hoje"), ("tests -x -q core", "[rodar_testes] --stop --quiet core"), ("tests -L", "[rodar_testes] --live"), ("tests -n 5 -v", "[rodar_testes] --lines 5 --verbose"),
+        ("health --today", "[studio_saude] --hoje"), ("tests -x -q core", "[rodar_testes] --stop --quiet core"), ("tests -L", "[rodar_testes] --live"), ("tests -H", "[rodar_testes] --here"), ("tests -n 5 -v", "[rodar_testes] --lines 5 --verbose"),
     ]
     for cmd, esperado in casos:
         rc, out = bash(f"studio {cmd}", d)
