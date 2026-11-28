@@ -335,12 +335,36 @@ def baixa_prioridade(cfg, it) -> bool:
     return any(n in alvo for n in nomes)
 
 
+def alerta_de_fonte_propria(it):
+    """Alerta da área Cidadania para e-mail oficial de sistema Push de tribunal ou e-mail de liberação de agenda; None nos demais casos."""
+    if it.get("classe") != "oficial" or not it.get("_msg"):
+        return None
+    try:
+        import studio_agendamentos
+        import studio_push
+        corpo = texto_do_corpo(it["_msg"])
+        p = studio_push.analisar(it["de"], it["assunto"], corpo)
+        if p:
+            return studio_push.alerta(p, it["mid"])
+        return studio_agendamentos.alerta_de_email(it["de"], it["assunto"], corpo, it["mid"])
+    except Exception as e:  # o módulo novo nunca derruba o monitor de e-mail
+        print("Leitura do Push falhou:", type(e).__name__, file=sys.stderr)
+        return None
+
+
 def criar_alertas(cfg, itens, simular=False):
     """Cada e-mail suspeito de golpe ou oficial e urgente vira um alerta (aviso no Mac e Bark genérico; nunca lembrete: decisão do usuário em
     26/11/2026). Não cria nada para e-mails de rotina."""
     if simular or not itens:
         return
     for it in itens:
+        extra = alerta_de_fonte_propria(it)   # Push de tribunal e e-mail de liberação de agenda têm alerta próprio, na área Cidadania
+        if extra:
+            try:
+                post_json(url_agente(cfg) + "/triagem/criar", extra, {"X-Heimdall-Token": cfg.get("STUDIO_AGENTE_TOKEN", "")}, timeout=60)
+            except Exception as e:
+                print("Alerta falhou:", e, file=sys.stderr)
+            continue
         if it["classe"] == "suspeito":
             nivel = "alto"
             titulo = "Possível golpe por e-mail: " + (it["servico"] or "serviço público")
@@ -433,6 +457,11 @@ def executar(cfg, simular=False, agora=None, buscar=buscar_mensagens, estado_arq
     estado_arq = estado_arq or os.path.join(AQUI, ".email_oficial_estado.json")
     estado = carregar_estado(estado_arq)
     extras = [d.strip().lower() for d in cfg.get("STUDIO_EMAIL_DOMINIOS_EXTRA", "").split(",") if d.strip()]
+    try:
+        import studio_agendamentos
+        extras += [d for d in studio_agendamentos.dominios() if d not in extras]
+    except Exception:
+        pass
     try:
         msgs = buscar(cfg, extras)
     except imaplib.IMAP4.error as e:

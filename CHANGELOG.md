@@ -2,6 +2,13 @@
 
 Registro dos recursos do StudioLibre, do mais recente ao mais antigo. Cada recurso novo ganha um bloco "## AAAA-MM-DD - título" com itens iniciados por hífen, acima dos anteriores. As páginas do site são geradas deste arquivo.
 
+## 2026-11-28 - Novas fontes da Cidadania no Studio Miner
+- Em Ajustes, a nova subaba Fontes reúne o Diário Oficial da União, a legislação (Câmara, Senado, LexML e câmaras municipais), os editais e as sanções, os diários municipais, as certidões, os agendamentos públicos e o webservice dos tribunais, cada um com os próprios termos de busca.
+- O Miner avisa publicações que citam os seus termos, proposições acompanhadas, editais com prazo, certidões a vencer e vencidas, mutirões e liberação de vagas, e movimentações lidas direto do tribunal. Cada aviso diz o que significa e o que fazer.
+- A subaba Fontes orienta onde cadastrar o e-mail no Push de cada tribunal e passa a reconhecer o aviso do Push recebido de um remetente oficial. O lembrete do Domicílio Judicial Eletrônico é opcional.
+- Logins e senhas informados ficam num cofre cifrado de cada pessoa, nunca aparecem na tela e nunca entram em avisos. Todas as consultas respeitam a pausa entre acessos, os termos de cada site e o limite de tamanho. Cada pessoa usa as próprias fontes.
+- A subaba Ajuda passa a fechar os Ajustes do Miner.
+
 ## 2026-11-27 - Prazos com feriados estaduais e municipais no Studio Miner
 - A estimativa de prazo passa a considerar, em camadas, os feriados nacionais, o recesso forense, os feriados do estado do foro, os feriados do município do foro e as suspensões de prazo publicadas pelo tribunal que você informar. Em Ajustes, na subaba Cidadania, você informa o município do foro (padrão ou por processo, com @ Cidade/UF depois do número) e as suspensões.
 - O aviso diz quais calendários foram considerados e quais ficaram de fora, e lembra que feriado local e suspensão de prazo precisam ser comprovados no ato do recurso, com o calendário publicado no site do tribunal.

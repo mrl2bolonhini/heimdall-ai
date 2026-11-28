@@ -186,6 +186,58 @@ def post_consultar(ctx, campos, arquivos):
     return "/ajustes/cidadania"
 
 
+def _orientacao_push(ctx) -> str:
+    import studio_push
+    c = djen.configuracao()
+    cad = [x for x in (djen._ler("push_cadastrados") or "").split(",") if x]
+    itens = studio_push.orientacoes(c["processos"], cad)
+    if not itens:
+        return ""
+    linhas = []
+    for o in itens:
+        botao = ""
+        if o["tem_push"] and not o["cadastrado"]:
+            botao = design.botao_post("/ajustes/fontes/push", "Já cadastrei", ctx.csrf, {"numero": o["numero"]}, "Marcar o Push como cadastrado no processo " + djen.mascara_cnj(o["numero"]))
+        linhas.append(f"<li>{e(o['texto'])}{' Já cadastrado.' if o['cadastrado'] else ''} {botao}</li>")
+    return ('<h2 id="h-push">Push dos tribunais</h2><p>Cadastre o seu e-mail no Push do tribunal de cada processo; o Miner lê o aviso que chegar de um endereço oficial .jus.br e o transforma em alerta.</p><ol>'
+            + "".join(linhas) + "</ol>")
+
+
+def aj_fontes(ctx) -> tuple:
+    import studio_cidadania
+    partes = [_orientacao_push(ctx)]
+    for mod in studio_cidadania.fontes():
+        partes.append(mod.formulario(ctx.csrf))
+    consultar = design.botao_post("/ajustes/fontes/consultar", "Consultar fontes agora", ctx.csrf, None, "Consultar agora as fontes da Cidadania")
+    return "Fontes", "".join(partes) + consultar
+
+
+def _post_fonte(chave: str, acao: str):
+    def f(ctx, campos, arquivos):
+        import studio_cidadania
+        mod = next((m for m in studio_cidadania.fontes() if m.CHAVE == chave), None)
+        ctx.flash("ok", getattr(mod, acao)(campos))
+        return "/ajustes/fontes"
+    return f
+
+
+def post_push(ctx, campos, arquivos):
+    n = djen.numero_cnj_valido(campos.get("numero", ""))
+    if n:
+        atual = [x for x in (djen._ler("push_cadastrados") or "").split(",") if x]
+        if n not in atual:
+            djen._gravar(push_cadastrados=",".join(atual + [n]))
+        ctx.flash("ok", "Push marcado como cadastrado.")
+    return "/ajustes/fontes"
+
+
+def post_fontes_consultar(ctx, campos, arquivos):
+    import studio_cidadania
+    r = studio_cidadania.executar_todos_da_pessoa(forcar=True)
+    ctx.flash("ok", r)
+    return "/ajustes/fontes"
+
+
 def _agendador() -> None:
     """Consulta diária ao DJEN (hora local em STUDIO_MINER_DJEN_HORA) para todas as pessoas, cada uma com os próprios dados; verifica a cada 15 minutos."""
     import threading
@@ -198,6 +250,11 @@ def _agendador() -> None:
             except Exception as ex:  # a consulta nunca derruba o serviço
                 print("Miner: consulta ao DJEN falhou:", type(ex).__name__)
             try:
+                import studio_cidadania
+                studio_cidadania.executar_todos()
+            except Exception as ex:
+                print("Miner: rodada das fontes da Cidadania falhou:", type(ex).__name__)
+            try:
                 import studio_datajud
                 studio_datajud.atualizar_chave()   # a leitura da chave do CNJ se limita a uma por semana
             except Exception as ex:
@@ -206,7 +263,7 @@ def _agendador() -> None:
     threading.Thread(target=laco, name="miner-djen", daemon=True).start()
 
 
-GET = {"/ajustes/perfil": aj_perfil, "/ajustes/cidadania": aj_cidadania}
+GET = {"/ajustes/perfil": aj_perfil, "/ajustes/cidadania": aj_cidadania, "/ajustes/fontes": aj_fontes}
 for _area in dados.AREAS:
     GET["/" + _area] = _rota_area(_area)
 for _rota in LISTAS:
@@ -214,9 +271,12 @@ for _rota in LISTAS:
 
 CFG = web.Config(
     chave="miner", nome="Miner", porta_env="STUDIO_MINER_PORT", porta=8022, hosts="miner.studiolibre.io,localhost,127.0.0.1",
-    abas=GRUPOS, ajustes=[("/ajustes/perfil", "Perfil"), ("/ajustes/cidadania", "Cidadania")], get=GET,
+    abas=GRUPOS, ajustes=[("/ajustes/perfil", "Perfil"), ("/ajustes/cidadania", "Cidadania"), ("/ajustes/fontes", "Fontes")], get=GET,
     post={"/pendentes/aceitar": post_aceitar, "/pendentes/adiar": post_adiar, "/pendentes/ignorar": post_ignorar, "/abrir/finance": post_abrir_finance,
-          "/ajustes/inicio": post_inicio, "/ajustes/cidadania": post_cidadania, "/ajustes/cidadania/consultar": post_consultar},
+          "/ajustes/inicio": post_inicio, "/ajustes/cidadania": post_cidadania, "/ajustes/cidadania/consultar": post_consultar,
+          "/ajustes/fontes/push": post_push, "/ajustes/fontes/consultar": post_fontes_consultar,
+          **{f"/ajustes/fontes/{k}": _post_fonte(k, "salvar") for k in ("certidoes", "dou", "legislacao", "licitacoes", "diarios", "agendamentos", "mni")},
+          **{f"/ajustes/fontes/{k}/remover": _post_fonte(k, "remover") for k in ("certidoes", "agendamentos")}},
     sistema_perguntar=SISTEMA, contexto_perguntar=contexto_perguntar,
     dica_perguntar="Pergunte em português, por exemplo: o que há de mais urgente nesta área? qual comunicado chegou por último? O modelo descreve só o que está na tela.",
     css=CSS, erro=dados.ErroMiner, inicio=lambda ctx: "/" + dados.area_inicial(), aviso_rodape=AVISO)

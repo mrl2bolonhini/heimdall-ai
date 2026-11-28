@@ -119,6 +119,8 @@ FAQ = {
          "Sim. Em Ajustes, na subaba Perfil, escolha a área inicial."),
         ("Como acompanho intimações e processos?",
          "Em Ajustes, na subaba Cidadania, informe seu nome completo, o número e a UF da OAB (se for advogado) e os números dos processos que você acompanha. Todos os dias o Miner consulta o Diário de Justiça Eletrônico Nacional e avisa as comunicações novas, com o que o ato significa e uma estimativa de prazo. Para cada processo informado, o Miner também avisa os andamentos novos registrados pelo CNJ (DataJud), com alguns dias de atraso e sem o texto das decisões; processos sigilosos e do STF não aparecem ali. A busca por nome pode trazer homônimos, por isso o aviso pede conferência. A estimativa de prazo considera feriados nacionais, estaduais e municipais, o recesso forense e as suspensões que você informar em Ajustes (informe também o município do foro, como Campinas/SP, padrão ou por processo); o aviso diz o que foi considerado. Feriado local e suspensão de prazo precisam ser comprovados no ato do recurso, e a estimativa nunca substitui a conferência no processo e no calendário do tribunal."),
+        ("Como uso as outras fontes da Cidadania?",
+         "Em Ajustes, na subaba Fontes, ative as que interessam e informe os termos de busca: Diário Oficial da União, legislação, editais e sanções, diários municipais, certidões, agendamentos e o webservice dos tribunais. Você pode registrar a validade das suas certidões e receber o aviso antes de vencerem. Logins e senhas ficam num cofre cifrado e não aparecem em avisos. O Miner informa o que a fonte registra e nunca substitui a conferência no site oficial."),
     ],
     "memory": [
         ("O que mostra a aba Notas?",

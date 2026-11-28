@@ -48,3 +48,5 @@ Ordem de entrega proposta
 4. Protestos, multas, agendamentos, leilões, cofre de credenciais e conectores.
 
 Pendente de decisão: a área inicial é a primeira aba (regra atual do CLAUDE.md) ou a ordem das abas é fixa e a área inicial só define para onde o endereço leva (recomendação do PO, pela previsibilidade para leitor de tela).
+
+Status em 28/11/2026: fases 3 a 10 implementadas (studio_push, studio_certidoes, studio_dou, studio_legislacao, studio_licitacoes, studio_diarios, studio_agendamentos, studio_mni sobre studio_cidadania), ainda sem validação contra as fontes reais.

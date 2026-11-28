@@ -13,22 +13,24 @@ from datetime import date, datetime, timedelta, timezone
 
 import studio_agenda as agenda
 import studio_banco as banco
+import studio_pessoas as pessoas
 
 # slug da área (e da rota) -> (nome na aba, fontes de alerta que alimentam a área)
 AREAS = {
     "identidade": ("Identidade", ["privacidade"]),
-    "cidadania": ("Cidadania", ["justica", "diarios"]),
+    "cidadania": ("Cidadania", ["justica", "diarios", "legislacao", "licitacoes", "certidoes", "agendamentos"]),
     "patrimonio": ("Patrimônio", []),
     "carreira": ("Carreira", []),
     "rotina": ("Rotina", ["email"]),
 }
-FONTE_ROTULO = {"privacidade": "Privacidade", "justica": "Justiça", "diarios": "Diário Oficial", "email": "E-mail oficial"}
+FONTE_ROTULO = {"privacidade": "Privacidade", "justica": "Justiça", "diarios": "Diário Oficial", "legislacao": "Legislação", "licitacoes": "Licitações", "certidoes": "Certidões", "agendamentos": "Agendamentos", "email": "E-mail oficial"}
 FONTE_AREA = {f: a for a, (_, fontes) in AREAS.items() for f in fontes}
 NIVEL_ROTULO = {"critico": "crítico", "alto": "alto", "medio": "médio"}
 AREA_INICIAL_PADRAO = "identidade"
 ENCERRADOS = ("concluida", "descartada")
 # fonte -> título do lembrete ou evento: só a ação, sem dados do conteúdo (regra do studio_agenda.py)
-ACAO_AGENDA = {"email": "Conferir comunicado oficial", "justica": "Conferir publicação oficial", "diarios": "Conferir publicação oficial"}
+ACAO_AGENDA = {"email": "Conferir comunicado oficial", "justica": "Conferir publicação oficial", "diarios": "Conferir publicação oficial",
+              "legislacao": "Conferir norma ou proposição", "licitacoes": "Conferir edital ou sanção", "certidoes": "Renovar certidão", "agendamentos": "Conferir agendamento"}
 _PRAZO = re.compile(r"Prazo:\s*(\d{2})/(\d{2})/(\d{4})")
 _BOLETO = re.compile(r"\bboletos?\b", re.IGNORECASE)
 
@@ -168,7 +170,7 @@ def aceitar(id_: str, enviar=None) -> str:
     o item continua pendente. Devolve a frase para mostrar ao usuário."""
     it = _aberto(id_)
     enviar = enviar or agenda.enviar
-    if not cria_agenda(it):
+    if not cria_agenda(it) or not pessoas.e_dono():   # a agenda do Mac é do dono: o aceite de convidado só conclui o item
         _marcar(id_, "concluida")
         return "Item aceito."
     titulo = ACAO_AGENDA[it["fonte"]]

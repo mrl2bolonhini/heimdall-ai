@@ -14,7 +14,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 TMP = Path(tempfile.mkdtemp(prefix="minerweb_"))
-os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
+os.environ.update({"STUDIO_DB_DIR": str(TMP / "db"), "STUDIO_NUVEM_CHAVE": "chave-de-teste", "NO_PROXY": "127.0.0.1,localhost", "no_proxy": "127.0.0.1,localhost"})
 import studio_banco as banco  # noqa: E402
 import studio_lab as hc  # noqa: E402
 import studio_miner as mi  # noqa: E402
@@ -134,6 +134,20 @@ confere("nome inválido: mensagem clara e dados antigos mantidos", s in (303, 40
 dj.executar = lambda: {"ok": True, "mensagem": "Consulta concluída: 0 comunicações, 0 novas."}
 s, _, r = req("POST", "/ajustes/cidadania/consultar", {"csrf": csrf}, tk)
 confere("Consultar agora mostra o resultado", s == 303 and "Consulta concluída" in req("GET", "/ajustes/cidadania", tk)[1])
+s, h, _ = req("GET", "/ajustes/fontes", tk)
+confere("Ajustes Fontes: formulários com label e uma seção por fonte", s == 200 and all(f'id="{i}"' in h for i in ("h-mni", "h-push")) and h.count("<form") >= 6 and "Consultar fontes agora" in h and "Push dos tribunais" in h, h[:300])
+confere("Ajustes Fontes: sem senha na tela", "type=\"password\"" in h and "value=\"segredo" not in h)
+s, _, r = req("POST", "/ajustes/fontes/certidoes", {"csrf": csrf, "tipo": "fgts", "emissao": "20/11/2026", "nome": "Empresa"}, tk)
+h = req("GET", "/ajustes/fontes", tk)[1]
+confere("registrar certidão aparece na tela", s == 303 and r.getheader("Location") == "/ajustes/fontes" and "Certidão registrada." in h and "Empresa" in h, h[-400:])
+s, _, _ = req("POST", "/ajustes/fontes/certidoes", {"csrf": "x", "tipo": "fgts"}, tk)
+confere("fontes exigem CSRF", s in (400, 403), s)
+s, _, r = req("POST", "/ajustes/fontes/mni", {"csrf": csrf, "tribunais": "tjsp=https://exemplo.com/x", "mni_cpf": "12345678901", "mni_senha": "abc"}, tk)
+confere("MNI recusa domínio fora de jus.br sem erro 500", s in (303, 400, 422), s)
+s, _, r = req("POST", "/ajustes/fontes/legislacao", {"csrf": csrf, "palavras": "licitação", "camara": "1"}, tk)
+confere("salvar legislação", s == 303)
+s, h, _ = req("GET", "/ajustes/ajuda", tk)
+confere("Ajustes termina em Ajuda", s == 200 and "Ajuda" in h)
 import studio_alertas as al
 os.environ.pop("STUDIO_MINER", None)
 confere("alerta aponta para a área do Miner por padrão", al._caminho_miner("justica") == "/cidadania" and al._caminho_miner("privacidade") == "/identidade" and al._caminho_miner("email") == "/rotina")
